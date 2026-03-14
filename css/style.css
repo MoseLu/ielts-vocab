@@ -3445,13 +3445,15 @@
             border-radius: var(--radius-lg);
             cursor: pointer;
             text-align: left;
-            font-size: 14px;
+            font-size: 15px;
             color: var(--text-primary);
             display: flex;
-            align-items: flex-start;
-            gap: var(--space-sm);
+            flex-direction: column;
+            gap: var(--space-xs);
             transition: all var(--transition-fast);
-            line-height: 1.4;
+            line-height: 1.5;
+            min-height: 80px;
+            justify-content: flex-start;
         }
 
         .option-btn:hover:not(:disabled) {
@@ -3464,12 +3466,20 @@
         .option-btn.correct {
             background: var(--success-light);
             border-color: var(--success);
+        }
+
+        .option-btn.correct .option-pos,
+        .option-btn.correct .option-text {
             color: var(--success);
         }
 
         .option-btn.wrong {
             background: var(--error-light);
             border-color: var(--error);
+        }
+
+        .option-btn.wrong .option-pos,
+        .option-btn.wrong .option-text {
             color: var(--error);
         }
 
@@ -3478,23 +3488,42 @@
             background: var(--accent-light);
         }
 
-        .option-key {
-            font-size: 12px;
-            font-weight: 700;
-            background: var(--bg-tertiary);
-            color: var(--text-tertiary);
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
+        /* Top row: pos on left, shortcut hint on right */
+        .option-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            margin-top: 1px;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .option-pos {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+
+        .option-key {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            opacity: 0.7;
+            font-weight: 400;
+            white-space: nowrap;
         }
 
         .option-text {
-            flex: 1;
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        /* Footer row below options */
+        .options-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 680px;
+            margin-top: var(--space-xs);
         }
 
         .skip-btn {
@@ -3514,8 +3543,49 @@
         }
 
         .shortcut-hint {
-            opacity: 0.6;
+            opacity: 0.55;
             font-size: 12px;
+            margin-left: var(--space-xs);
+        }
+
+        /* Replay (play again) button below options */
+        .replay-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            border: none;
+            background: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            position: relative;
+        }
+
+        .replay-btn:hover {
+            color: var(--accent);
+        }
+
+        .replay-btn:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: var(--bg-color);
+            font-size: 11px;
+            white-space: nowrap;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            pointer-events: none;
+        }
+
+        .replay-btn svg {
+            width: 20px;
+            height: 20px;
         }
 
         /* Dictation Mode */
@@ -3610,54 +3680,98 @@
             gap: var(--space-sm);
         }
 
-        /* Radio Mode */
+        /* ── Radio Mode ─────────────────────────────────────────── */
         .radio-mode {
             background: var(--bg-secondary);
-        }
-
-        .radio-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 55vh;
-            gap: var(--space-lg);
-            text-align: center;
-            padding: var(--space-2xl);
+            min-height: 100vh;
+            gap: var(--space-xl);
         }
 
-        .radio-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--accent-light);
-            border-radius: var(--radius-full);
+        /* Central card that reveals on hover */
+        .radio-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: var(--space-2xl) var(--space-2xl);
+            min-width: 340px;
+            text-align: center;
+            cursor: default;
+            user-select: none;
+        }
+
+        /* Each row transitions from placeholder to real content */
+        .radio-row {
+            transition: opacity 0.2s ease;
+        }
+
+        /* Row 1 – word */
+        .radio-row-word {
+            min-height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent);
-            transition: transform 0.3s ease;
         }
 
-        .radio-icon.playing {
-            animation: radioPulse 2s ease-in-out infinite;
+        .radio-word-syllables {
+            font-size: 44px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.01em;
+            display: flex;
+            align-items: baseline;
+            gap: 0;
         }
 
-        @keyframes radioPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
-            50% { transform: scale(1.06); box-shadow: 0 0 0 10px transparent; }
+        .radio-syl-dot {
+            font-size: 28px;
+            color: var(--text-tertiary);
+            padding: 0 4px;
+            font-weight: 400;
         }
 
-        .radio-icon svg {
-            width: 36px;
-            height: 36px;
+        /* Blank line placeholder for word */
+        .radio-word-blank {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Playback controls row */
+        .radio-blank-line {
+            display: inline-block;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--text-primary);
+            opacity: 0.85;
+        }
+
+        /* Row 2 – phonetic */
+        .radio-row-phonetic {
+            font-size: 20px;
+            color: var(--text-tertiary);
+            min-height: 28px;
+        }
+
+        /* Row 3 – definition */
+        .radio-row-def {
+            font-size: 16px;
+            color: var(--text-secondary);
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            justify-content: center;
+        }
+
+        /* Controls row */
         .radio-controls {
             display: flex;
             align-items: center;
-            gap: var(--space-lg);
-            margin: var(--space-md) 0;
+            gap: var(--space-xl);
         }
 
         .radio-ctrl-btn {
@@ -3667,33 +3781,33 @@
             width: 44px;
             height: 44px;
             border-radius: var(--radius-full);
-            border: 1.5px solid var(--border);
-            background: var(--bg-color);
-            color: var(--text-primary);
+            border: none;
+            background: none;
+            color: var(--text-tertiary);
             cursor: pointer;
             transition: all var(--transition-fast);
         }
 
         .radio-ctrl-btn:hover {
-            background: var(--bg-tertiary);
+            color: var(--text-primary);
         }
 
         .radio-ctrl-btn svg {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
         }
 
         .radio-play-btn {
-            width: 56px;
-            height: 56px;
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
+            width: 52px;
+            height: 52px;
+            background: var(--text-primary);
+            border-radius: var(--radius-full);
+            color: var(--bg-color);
         }
 
         .radio-play-btn:hover {
-            background: var(--accent-hover, var(--accent));
-            filter: brightness(0.9);
+            opacity: 0.8;
+            color: var(--bg-color);
         }
 
         .radio-play-btn svg {
@@ -3701,69 +3815,121 @@
             height: 22px;
         }
 
+        .radio-star-btn {
+            color: var(--text-tertiary);
+        }
+
+        .radio-star-btn:hover {
+            color: #f59e0b;
+        }
+
+        /* Thin progress bar */
+        .radio-progress-bar {
+            width: 260px;
+            height: 2px;
+            background: var(--border);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .radio-progress-fill {
+            height: 100%;
+            background: var(--text-tertiary);
+            border-radius: 1px;
+            transition: width 0.4s ease;
+        }
+
+        .radio-progress-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: -4px;
+        }
+
         /* Bottom action buttons */
         .radio-bottom-btns {
             display: flex;
             gap: var(--space-md);
-            margin-top: var(--space-md);
-        }
-
-        .radio-word {
-            font-size: 40px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .radio-phonetic {
-            font-size: 18px;
-            color: var(--text-tertiary);
-        }
-
-        .radio-definition {
-            font-size: 16px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .radio-progress {
-            font-size: 14px;
-            color: var(--text-tertiary);
+            margin-top: var(--space-sm);
         }
 
         .radio-stop-btn {
-            padding: var(--space-sm) var(--space-xl);
+            padding: var(--space-xs) var(--space-lg);
             background: none;
-            color: var(--error);
-            border: 1.5px solid var(--error);
+            color: var(--text-tertiary);
+            border: 1px solid var(--border);
             border-radius: var(--radius-md);
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
             transition: all var(--transition-fast);
         }
 
         .radio-stop-btn:hover {
-            background: var(--error);
-            color: white;
+            color: var(--error);
+            border-color: var(--error);
         }
 
         .radio-home-btn {
-            padding: var(--space-sm) var(--space-xl);
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 1.5px solid var(--border);
+            padding: var(--space-xs) var(--space-lg);
+            background: none;
+            color: var(--text-tertiary);
+            border: 1px solid var(--border);
             border-radius: var(--radius-md);
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
             transition: all var(--transition-fast);
         }
 
         .radio-home-btn:hover {
-            background: var(--bg-secondary);
             color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+
+        /* Mic button in dictation */
+        .mic-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all var(--transition-fast);
+        }
+
+        .mic-btn:hover {
+            color: var(--accent);
+        }
+
+        .mic-btn.recording {
+            color: var(--error);
+            animation: micPulse 1s ease-in-out infinite;
+        }
+
+        .mic-btn.transcribing {
+            color: var(--accent);
+            cursor: wait;
+        }
+
+        @keyframes micPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .mic-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .spin {
+            animation: spinAnim 1s linear infinite;
+        }
+
+        @keyframes spinAnim {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         /* Loading */
@@ -4171,20 +4337,6 @@
             padding: var(--space-sm) var(--space-xl) var(--space-md);
             background: var(--bg-color);
             margin-top: auto;
-        }
-
-        .bottom-stat-correct {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--success);
-            white-space: nowrap;
-        }
-
-        .bottom-stat-wrong {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--error);
-            white-space: nowrap;
         }
 
         .bottom-progress-track {

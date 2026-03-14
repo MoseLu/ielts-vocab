@@ -5,6 +5,7 @@ from models import db
 from routes.auth import auth_bp, init_auth
 from routes.progress import progress_bp
 from routes.vocabulary import vocabulary_bp
+from routes.speech import speech_bp
 
 
 def create_app(config_class=Config):
@@ -22,6 +23,7 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(progress_bp, url_prefix='/api/progress')
     app.register_blueprint(vocabulary_bp, url_prefix='/api/vocabulary')
+    app.register_blueprint(speech_bp, url_prefix='/api/speech')
 
     # Create database tables
     with app.app_context():

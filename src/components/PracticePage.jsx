@@ -10,12 +10,90 @@ function shuffleArray(arr) {
   return a
 }
 
+// ── Syllabification helpers ─────────────────────────────────────────────────
+// IPA vowel characters (excluding stress/length markers)
+const IPA_VOWELS = 'aeiouəɪʊʌæɒɔɑɛɜɐøœɨɯɵ'
+
+function countPhoneticSyllables(phonetic) {
+  const ipa = phonetic.replace(/[/[\]ˈˌ.ː]/g, '')
+  let count = 0
+  let i = 0
+  while (i < ipa.length) {
+    if (IPA_VOWELS.includes(ipa[i])) {
+      count++
+      i++
+      // skip remainder of diphthong/triphthong
+      while (i < ipa.length && IPA_VOWELS.includes(ipa[i])) i++
+    } else i++
+  }
+  return Math.max(1, count)
+}
+
+const VALID_ONSET2 = new Set([
+  'bl','br','ch','cl','cr','dr','dw','fl','fr','gl','gr','kl','kn',
+  'ph','pl','pr','sc','sh','sk','sl','sm','sn','sp','st','sw','th','tr','tw','wh','wr',
+])
+const VALID_ONSET3 = new Set(['str','scr','spr','spl','squ','thr','chr'])
+
+function syllabifyWord(word, phonetic) {
+  const n = countPhoneticSyllables(phonetic)
+  if (n <= 1 || word.length <= 2) return [word]
+
+  const lower = word.toLowerCase()
+  const isVowel = (ch, i) => {
+    if ('aeiou'.includes(ch)) return true
+    if (ch === 'y' && i > 0 && !'aeiou'.includes(lower[i - 1])) return true
+    return false
+  }
+
+  // Collect vowel groups
+  const vg = []
+  for (let i = 0; i < lower.length; ) {
+    if (isVowel(lower[i], i)) {
+      let j = i
+      while (j < lower.length && isVowel(lower[j], j)) j++
+      vg.push({ start: i, end: j })
+      i = j
+    } else i++
+  }
+
+  if (vg.length <= 1) return [word]
+
+  // Find potential split points between adjacent vowel groups
+  const potentialSplits = []
+  for (let g = 0; g < vg.length - 1; g++) {
+    const v1End = vg[g].end
+    const v2Start = vg[g + 1].start
+    const gap = v2Start - v1End
+    const cons = lower.slice(v1End, v2Start)
+    let sp
+    if (gap <= 1) sp = v1End                                          // V·CV
+    else if (gap === 2) sp = VALID_ONSET2.has(cons) ? v1End : v1End + 1  // VC·CV unless valid onset
+    else sp = (VALID_ONSET3.has(cons) || VALID_ONSET2.has(cons.slice(1))) ? v1End + 1 : v1End + 1
+    potentialSplits.push(sp)
+  }
+
+  const splits = potentialSplits.slice(0, n - 1)
+  const parts = []
+  let prev = 0
+  for (const s of splits) {
+    if (s > prev) parts.push(word.slice(prev, s))
+    prev = s
+  }
+  if (prev < word.length) parts.push(word.slice(prev))
+  return parts.filter(p => p.length > 0)
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 function generateOptions(currentWord, allWords) {
-  const correct = currentWord.definition
-  const others = allWords.filter(w => w.definition !== correct).map(w => w.definition)
+  const correctDef = currentWord.definition
+  const others = allWords
+    .filter(w => w.definition !== correctDef)
+    .map(w => ({ definition: w.definition, pos: w.pos }))
   const distractors = shuffleArray(others).slice(0, 3)
-  const options = shuffleArray([correct, ...distractors])
-  return { options, correctIndex: options.indexOf(correct) }
+  const correct = { definition: correctDef, pos: currentWord.pos }
+  const allOpts = shuffleArray([correct, ...distractors])
+  return { options: allOpts, correctIndex: allOpts.findIndex(o => o.definition === correctDef) }
 }
 
 function PracticePage({ user, currentDay, mode, showToast }) {
@@ -30,20 +108,27 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
   const [previousWord, setPreviousWord] = useState(null)
-  // lastState enables single-level undo (back arrow)
   const [lastState, setLastState] = useState(null)
   const [spellingInput, setSpellingInput] = useState('')
   const [spellingResult, setSpellingResult] = useState(null)
+  // Radio mode state
   const [radioIndex, setRadioIndex] = useState(0)
   const [radioPaused, setRadioPaused] = useState(false)
   const [radioStopped, setRadioStopped] = useState(false)
+  const [radioHovered, setRadioHovered] = useState(false)
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
+
   const spellingRef = useRef(null)
-  // Refs for radio mode (avoid stale closures inside callbacks)
   const radioActiveRef = useRef(false)
   const radioTimerRef = useRef(null)
   const radioIndexRef = useRef(0)
   const queueRef = useRef([])
   const vocabRef = useRef([])
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
+
   const settings = (() => {
     try { return JSON.parse(localStorage.getItem('app_settings') || '{}') } catch { return {} }
   })()
@@ -78,7 +163,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     if (mode === 'dictation') setTimeout(() => spellingRef.current?.focus(), 400)
   }, [queueIndex, currentWord?.word, mode])
 
-  // Radio mode: ref-based playback so pause/resume/stop work reliably
+  // ── Radio mode playback ──────────────────────────────────────────────────
   const radioPlayFrom = useCallback((idx) => {
     const q = queueRef.current
     const vocab = vocabRef.current
@@ -120,13 +205,11 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     speechSynthesis.cancel()
     setRadioPaused(true)
   }
-
   const radioResume = () => {
     radioActiveRef.current = true
     setRadioPaused(false)
     radioPlayFrom(radioIndexRef.current)
   }
-
   const radioStop = () => {
     radioActiveRef.current = false
     clearTimeout(radioTimerRef.current)
@@ -134,7 +217,6 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     setRadioStopped(true)
     setRadioPaused(false)
   }
-
   const radioRestart = () => {
     radioActiveRef.current = true
     radioIndexRef.current = 0
@@ -142,34 +224,23 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     setRadioStopped(false)
     radioPlayFrom(0)
   }
-
   const radioSkipPrev = () => {
     clearTimeout(radioTimerRef.current)
     speechSynthesis.cancel()
     const idx = Math.max(0, radioIndexRef.current - 1)
     radioIndexRef.current = idx
     setRadioIndex(idx)
-    if (!radioPaused && !radioStopped) {
-      radioActiveRef.current = true
-      radioPlayFrom(idx)
-    } else {
-      setRadioIndex(idx)
-    }
+    if (!radioPaused && !radioStopped) { radioActiveRef.current = true; radioPlayFrom(idx) }
   }
-
   const radioSkipNext = () => {
     clearTimeout(radioTimerRef.current)
     speechSynthesis.cancel()
     const idx = Math.min(queueRef.current.length - 1, radioIndexRef.current + 1)
     radioIndexRef.current = idx
     setRadioIndex(idx)
-    if (!radioPaused && !radioStopped) {
-      radioActiveRef.current = true
-      radioPlayFrom(idx)
-    } else {
-      setRadioIndex(idx)
-    }
+    if (!radioPaused && !radioStopped) { radioActiveRef.current = true; radioPlayFrom(idx) }
   }
+  // ────────────────────────────────────────────────────────────────────────
 
   const playWord = (word) => {
     speechSynthesis.cancel()
@@ -178,6 +249,40 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     u.volume = parseFloat(settings.volume || '100') / 100
     speechSynthesis.speak(u)
   }
+
+  // ── Voice recording for dictation ────────────────────────────────────────
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mr = new MediaRecorder(stream)
+      mediaRecorderRef.current = mr
+      audioChunksRef.current = []
+      mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        setTranscribing(true)
+        try {
+          const fd = new FormData()
+          fd.append('audio', blob, 'recording.webm')
+          const res = await fetch('/api/speech/transcribe', { method: 'POST', body: fd })
+          const data = await res.json()
+          if (data.text) { setSpellingInput(data.text.trim()); spellingRef.current?.focus() }
+          else showToast?.('未识别到内容', 'error')
+        } catch { showToast?.('语音识别失败', 'error') }
+        finally { setTranscribing(false) }
+      }
+      mr.start()
+      setIsRecording(true)
+    } catch { showToast?.('麦克风访问失败，请检查权限', 'error') }
+  }
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────────
 
   const saveProgress = useCallback((correct, wrong) => {
     const dayProgress = JSON.parse(localStorage.getItem('day_progress') || '{}')
@@ -193,7 +298,6 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   }
 
   const goNext = (wasCorrect) => {
-    // Save state for undo
     setLastState({ qi: queueIndex, cc: correctCount, wc: wrongCount, prevWord: previousWord })
     setPreviousWord(currentWord)
     if (!wasCorrect && settings.repeatWrong !== false) {
@@ -205,11 +309,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
   const goBack = () => {
     if (!lastState) return
-    setQueueIndex(lastState.qi)
-    setCorrectCount(lastState.cc)
-    setWrongCount(lastState.wc)
-    setPreviousWord(lastState.prevWord)
-    setLastState(null)
+    setQueueIndex(lastState.qi); setCorrectCount(lastState.cc); setWrongCount(lastState.wc); setPreviousWord(lastState.prevWord); setLastState(null)
     setSelectedAnswer(null); setShowResult(false); setSpellingInput(''); setSpellingResult(null)
   }
 
@@ -250,7 +350,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
       if (['listening', 'meaning', 'smart'].includes(mode)) {
         if (e.key >= '1' && e.key <= '4') { const idx = parseInt(e.key) - 1; if (idx < options.length) handleOptionSelect(idx) }
         if (e.key === '5') handleSkip()
-        if (e.key === ' ') { e.preventDefault(); playWord(currentWord?.word) }
+        if (e.key === 'Tab') { e.preventDefault(); playWord(currentWord?.word) }
       }
       if (e.key === 'Escape') navigate('/')
     }
@@ -280,59 +380,76 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   const showWord = mode === 'meaning' || mode === 'smart'
   const showAudio = mode === 'listening' || mode === 'smart'
 
-  // Previous word inline block (shared across modes)
   const PrevWordBlock = () => previousWord ? (
     <div className="prev-word-inline">
-      <button className="prev-back-btn" onClick={goBack} disabled={!lastState} title="返回上一个词">
-        ←
-      </button>
+      <button className="prev-back-btn" onClick={goBack} disabled={!lastState} title="返回上一个词">←</button>
       <div className="prev-word-info">
         <div className="prev-word-text">{previousWord.word}</div>
         <div className="prev-word-phonetic">{previousWord.phonetic}</div>
-        <div className="prev-word-def">
-          <span className="word-pos-tag">{previousWord.pos}</span>
-          {previousWord.definition}
-        </div>
+        <div className="prev-word-def"><span className="word-pos-tag">{previousWord.pos}</span>{previousWord.definition}</div>
       </div>
     </div>
   ) : null
 
-  // Bottom bar with stats + progress (shared)
+  // Progress bar only — no correct/wrong counts shown
   const BottomBar = ({ progressValue, total }) => (
     <div className="practice-bottom-bar">
-      <span className="bottom-stat-correct">✓ {correctCount}</span>
       <div className="bottom-progress-track">
         <div className="bottom-progress-fill" style={{ width: `${progressValue * 100}%` }}>
           <div className="bottom-progress-dot"></div>
         </div>
       </div>
       <span className="bottom-progress-count">{queueIndex + 1}/{total}</span>
-      <span className="bottom-stat-wrong">✗ {wrongCount}</span>
     </div>
   )
 
-  // RADIO MODE
+  // ── RADIO MODE ────────────────────────────────────────────────────────────
   if (mode === 'radio') {
     const radioWord = vocabulary[queue[radioIndex]] || currentWord
+    const syllables = radioWord ? syllabifyWord(radioWord.word, radioWord.phonetic) : []
+    const isPlaying = !radioPaused && !radioStopped
+
     return (
       <div className="practice-page radio-mode">
-        <div className="radio-container">
-          <div className={`radio-icon ${radioPaused || radioStopped ? '' : 'playing'}`}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="2"></circle>
-              <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
-            </svg>
+        {/* Word info — hidden by default, revealed on hover */}
+        <div
+          className="radio-card"
+          onMouseEnter={() => setRadioHovered(true)}
+          onMouseLeave={() => setRadioHovered(false)}
+        >
+          {/* Row 1: word (dots style) or blank line */}
+          <div className={`radio-row radio-row-word ${radioHovered ? 'revealed' : ''}`}>
+            {radioHovered ? (
+              <div className="radio-word-syllables">
+                {syllables.map((syl, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && <span className="radio-syl-dot">·</span>}
+                    <span>{syl}</span>
+                  </React.Fragment>
+                ))}
+              </div>
+            ) : (
+              <div className="radio-word-blank">
+                <span className="radio-blank-line" style={{ width: `${Math.min(Math.max(radioWord?.word?.length * 18, 80), 300)}px` }} />
+              </div>
+            )}
           </div>
-          {radioWord && (
-            <>
-              <div className="radio-word">{radioWord.word}</div>
-              <div className="radio-phonetic">{radioWord.phonetic}</div>
-              <div className="radio-definition"><span className="word-pos-tag">{radioWord.pos}</span>{radioWord.definition}</div>
-            </>
-          )}
+
+          {/* Row 2: phonetic or stars */}
+          <div className={`radio-row radio-row-phonetic ${radioHovered ? 'revealed' : ''}`}>
+            {radioHovered ? radioWord?.phonetic : '★ ★ ★'}
+          </div>
+
+          {/* Row 3: pos + definition or stars */}
+          <div className={`radio-row radio-row-def ${radioHovered ? 'revealed' : ''}`}>
+            {radioHovered
+              ? <><span className="word-pos-tag">{radioWord?.pos}</span>{radioWord?.definition}</>
+              : '★ ★ ★'
+            }
+          </div>
         </div>
 
-        {/* Playback controls */}
+        {/* Controls: prev | play/pause | next | stop */}
         <div className="radio-controls">
           <button className="radio-ctrl-btn" onClick={radioSkipPrev} title="上一个">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -343,9 +460,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
           {radioPaused || radioStopped ? (
             <button className="radio-ctrl-btn radio-play-btn" onClick={radioStopped ? radioRestart : radioResume} title="继续">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             </button>
           ) : (
             <button className="radio-ctrl-btn radio-play-btn" onClick={radioPause} title="暂停">
@@ -362,9 +477,19 @@ function PracticePage({ user, currentDay, mode, showToast }) {
               <line x1="19" y1="5" x2="19" y2="19"></line>
             </svg>
           </button>
+
+          {/* Star bookmark (decorative / future favorites feature) */}
+          <button className="radio-ctrl-btn radio-star-btn" title="收藏">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </button>
         </div>
 
-        <BottomBar progressValue={radioIndex / Math.max(queue.length, 1)} total={queue.length} />
+        <div className="radio-progress-bar">
+          <div className="radio-progress-fill" style={{ width: `${(radioIndex / Math.max(queue.length - 1, 1)) * 100}%` }} />
+        </div>
+        <div className="radio-progress-label">{radioIndex + 1} / {queue.length}</div>
 
         <div className="radio-bottom-btns">
           <button className="radio-stop-btn" onClick={radioStop}>停止</button>
@@ -374,7 +499,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     )
   }
 
-  // DICTATION MODE
+  // ── DICTATION MODE ────────────────────────────────────────────────────────
   if (mode === 'dictation') {
     return (
       <div className="practice-page">
@@ -401,8 +526,30 @@ function PracticePage({ user, currentDay, mode, showToast }) {
             <input ref={spellingRef} type="text" className="spelling-input" value={spellingInput}
               onChange={e => setSpellingInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSpellingSubmit() }}
-              placeholder="输入你听到的单词..." disabled={!!spellingResult}
+              placeholder="输入你听到的单词..." disabled={!!spellingResult || transcribing}
               autoComplete="off" spellCheck={false} />
+            {/* Mic button */}
+            {!spellingResult && (
+              <button
+                className={`mic-btn ${isRecording ? 'recording' : ''} ${transcribing ? 'transcribing' : ''}`}
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={transcribing}
+                title={isRecording ? '停止录音' : '语音输入'}
+              >
+                {transcribing ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin">
+                    <circle cx="12" cy="12" r="10" strokeDasharray="30 10"></circle>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                )}
+              </button>
+            )}
             {!spellingResult && <button className="spelling-submit-btn" onClick={handleSpellingSubmit}>确认</button>}
           </div>
         </div>
@@ -412,14 +559,17 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     )
   }
 
-  // LISTENING / MEANING / SMART MODE
+  // ── LISTENING / MEANING / SMART MODE ─────────────────────────────────────
+  // Build syllabified word for meaning mode display
+  const wordDisplay = showWord
+    ? syllabifyWord(currentWord.word, currentWord.phonetic).join(' ')
+    : currentWord.word
+
   return (
     <div className="practice-page">
       <PrevWordBlock />
 
-      {/* Main practice area */}
       <div className="practice-main">
-        {/* Word / Audio */}
         <div className="word-display-area">
           {showAudio && (
             <button className="play-btn-large" onClick={() => playWord(currentWord.word)}>
@@ -431,7 +581,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
           )}
           {showWord && (
             <div className="word-display">
-              <div className="word-text">{currentWord.word}</div>
+              <div className="word-text">{wordDisplay}</div>
               <div className="word-phonetic-row">
                 <span className="word-phonetic">{currentWord.phonetic}</span>
                 {mode === 'meaning' && (
@@ -447,7 +597,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
           )}
         </div>
 
-        {/* Options */}
+        {/* Options grid */}
         <div className="options-grid">
           {options.map((option, idx) => {
             let cls = 'option-btn'
@@ -457,16 +607,32 @@ function PracticePage({ user, currentDay, mode, showToast }) {
             } else if (selectedAnswer === idx) cls += ' selected'
             return (
               <button key={idx} className={cls} onClick={() => handleOptionSelect(idx)} disabled={showResult}>
-                <span className="option-key">{idx + 1}</span>
-                <span className="option-text">{option}</span>
+                <div className="option-header">
+                  <span className="option-pos">{option.pos}</span>
+                  <span className="option-key">快捷键: {idx + 1}</span>
+                </div>
+                <span className="option-text">{option.definition}</span>
               </button>
             )
           })}
         </div>
 
-        <button className="skip-btn" onClick={handleSkip}>
-          不知道 <span className="shortcut-hint">(5)</span>
-        </button>
+        {/* Skip row + replay button */}
+        <div className="options-footer">
+          <button className="skip-btn" onClick={handleSkip}>
+            不知道 <span className="shortcut-hint">快捷键: 5</span>
+          </button>
+          <button
+            className="replay-btn"
+            onClick={() => playWord(currentWord?.word)}
+            title="再读一遍，快捷键 Tab"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <BottomBar progressValue={progress} total={vocabulary.length} />
