@@ -26,7 +26,9 @@ const DEFAULT_SETTINGS = {
     fontSize: 'medium',
     reviewInterval: 1,
     reviewLimit: 20,
-    errorBook: true
+    errorBook: true,
+    showPhonetic: true,
+    showPos: true
 };
 
 // ========== VOCABULARY DATA (3000 words, Day 1-30) ==========
@@ -237,14 +239,26 @@ function applySettings() {
     // Apply theme
     document.documentElement.setAttribute('data-theme', state.settings.theme);
     document.documentElement.setAttribute('data-font-size', state.settings.fontSize);
-    
+
+    // Apply phonetic visibility
+    const phoneticEls = document.querySelectorAll('.word-phonetic');
+    phoneticEls.forEach(el => {
+        el.style.display = state.settings.showPhonetic ? '' : 'none';
+    });
+
+    // Apply pos visibility
+    const posEls = document.querySelectorAll('.word-pos');
+    posEls.forEach(el => {
+        el.style.display = state.settings.showPos ? '' : 'none';
+    });
+
     // Update UI elements
     updateSettingsUI();
 }
 
 function updateSettingsUI() {
     const s = state.settings;
-    
+
     // Checkboxes
     const checkboxes = {
         'setting-repeat-wrong': s.wrongWordLoop,
@@ -252,14 +266,17 @@ function updateSettingsUI() {
         'setting-dictation-mode': s.continuousMode,
         'setting-shuffle': s.shufflePlay,
         'setting-auto-submit': s.autoSubmit,
-        'setting-error-book': s.errorBook
+        'setting-error-book': s.errorBook,
+        'setting-show-phonetic': s.showPhonetic,
+        'setting-show-pos': s.showPos,
+        'darkMode': s.theme === 'dark'
     };
-    
+
     for (const [id, checked] of Object.entries(checkboxes)) {
         const el = document.getElementById(id);
         if (el) el.checked = checked;
     }
-    
+
     // Selects
     const selects = {
         'setting-playback-speed': s.playSpeed.toString(),
@@ -267,12 +284,11 @@ function updateSettingsUI() {
         'setting-volume': s.volume.toString(),
         'setting-voice': s.voice,
         'setting-interval': s.interval.toString(),
-        'setting-theme': s.theme,
         'setting-font-size': s.fontSize,
         'setting-review-interval': s.reviewInterval.toString(),
         'setting-review-limit': s.reviewLimit.toString()
     };
-    
+
     for (const [id, value] of Object.entries(selects)) {
         const el = document.getElementById(id);
         if (el) el.value = value;
@@ -581,17 +597,23 @@ function initSettingsPanel() {
 
 function openSettingsPanel() {
     const overlay = document.getElementById('settingsOverlay');
-    const modal = overlay?.querySelector('.settings-modal');
     if (overlay) overlay.classList.add('show');
-    if (modal) modal.classList.add('show');
     updateSettingsUI();
 }
 
 function closeSettingsPanel() {
     const overlay = document.getElementById('settingsOverlay');
-    const modal = overlay?.querySelector('.settings-modal');
     if (overlay) overlay.classList.remove('show');
-    if (modal) modal.classList.remove('show');
+}
+
+function openHelpModal() {
+    const overlay = document.getElementById('helpOverlay');
+    if (overlay) overlay.classList.add('show');
+}
+
+function closeHelpModal() {
+    const overlay = document.getElementById('helpOverlay');
+    if (overlay) overlay.classList.remove('show');
 }
 
 function switchSettingsTab(tabName) {
@@ -603,38 +625,40 @@ function switchSettingsTab(tabName) {
 }
 
 function initSettingsControls() {
-    // Checkbox settings
+    // Checkbox settings (id → camelCase setting key via auto-conversion)
     const checkboxSettings = [
         'setting-repeat-wrong',
         'setting-show-answer',
         'setting-dictation-mode',
         'setting-shuffle',
         'setting-auto-submit',
-        'setting-error-book'
+        'setting-error-book',
+        'setting-show-phonetic',
+        'setting-show-pos'
     ];
-    
+
     checkboxSettings.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('change', () => {
                 const settingName = id.replace('setting-', '').replace(/-([a-z])/g, (_, c) => c.toUpperCase());
                 state.settings[settingName] = el.checked;
+                applySettings();
                 saveSettings();
             });
         }
     });
-    
+
     // Dark mode toggle (special handling)
     const darkModeToggle = document.getElementById('darkMode');
     if (darkModeToggle) {
-        darkModeToggle.checked = state.settings.theme === 'dark';
         darkModeToggle.addEventListener('change', () => {
             state.settings.theme = darkModeToggle.checked ? 'dark' : 'light';
             applySettings();
             saveSettings();
         });
     }
-    
+
     // Select settings
     const selectSettings = [
         { id: 'setting-playback-speed', key: 'playSpeed', parse: parseFloat },
@@ -642,17 +666,17 @@ function initSettingsControls() {
         { id: 'setting-volume', key: 'volume', parse: parseInt },
         { id: 'setting-voice', key: 'voice' },
         { id: 'setting-interval', key: 'interval', parse: parseInt },
-        { id: 'setting-theme', key: 'theme' },
         { id: 'setting-font-size', key: 'fontSize' },
         { id: 'setting-review-interval', key: 'reviewInterval', parse: parseInt },
         { id: 'setting-review-limit', key: 'reviewLimit', parse: parseInt }
     ];
-    
+
     selectSettings.forEach(({ id, key, parse }) => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('change', () => {
                 state.settings[key] = parse ? parse(el.value) : el.value;
+                applySettings();
                 saveSettings();
             });
         }
@@ -794,8 +818,8 @@ function initKeyboardShortcuts() {
         if (!document.getElementById('practicePage')?.classList.contains('active')) return;
         if (state.isAnswered && state.mode !== 'dictation' && state.mode !== 'blind') return;
         
-        const keyMap = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4 };
-        
+        const keyMap = { '1': 0, '2': 1, '3': 2, '4': 3 };
+
         // Mode-specific handling
         if (state.mode === 'listening' || state.mode === 'smart' || state.mode === 'meaning') {
             if (keyMap.hasOwnProperty(e.key)) {
@@ -931,6 +955,24 @@ function setupEventListeners() {
     initSettingsPanel();
     initKeyboardShortcuts();
     
+    // Help modal
+    document.getElementById('helpBtn')?.addEventListener('click', openHelpModal);
+    document.getElementById('helpClose')?.addEventListener('click', closeHelpModal);
+    document.getElementById('helpOverlay')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('helpOverlay')) closeHelpModal();
+    });
+
+    // Skip button
+    document.getElementById('skipBtn')?.addEventListener('click', handleDontKnow);
+
+    // Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeSettingsPanel();
+            closeHelpModal();
+        }
+    });
+
     // Auth
     document.getElementById('authBtn')?.addEventListener('click', handleAuth);
     document.getElementById('switchAuthBtn')?.addEventListener('click', toggleAuthMode);
@@ -1227,8 +1269,16 @@ function updateWordDisplay() {
     const word = state.shuffledVocabulary[state.currentIndex];
 
     document.getElementById('currentWord').textContent = word.word;
-    document.getElementById('wordPhonetic').textContent = word.phonetic;
-    document.getElementById('wordPos').textContent = word.pos;
+    const phoneticEl = document.getElementById('wordPhonetic');
+    if (phoneticEl) {
+        phoneticEl.textContent = word.phonetic;
+        phoneticEl.style.display = state.settings.showPhonetic ? '' : 'none';
+    }
+    const posEl = document.getElementById('wordPos');
+    if (posEl) {
+        posEl.textContent = word.pos;
+        posEl.style.display = state.settings.showPos ? '' : 'none';
+    }
     document.getElementById('progressFill').style.width = `${(state.currentIndex / state.shuffledVocabulary.length) * 100}%`;
     document.getElementById('correctCount').textContent = state.correctCount;
     document.getElementById('wrongCount').textContent = state.wrongCount;
