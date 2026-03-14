@@ -1130,18 +1130,30 @@
 
         .settings-panel {
             display: none;
-            animation: fadeIn 0.2s ease;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            will-change: opacity, transform;
         }
 
         .settings-panel.active {
             display: block;
+            opacity: 1;
+            transform: translateY(0);
+            animation: none;
         }
 
+        /* 使用CSS过渡替代关键帧动画，更流畅 */
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(8px);
             }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
             to {
                 opacity: 1;
                 transform: translateY(0);

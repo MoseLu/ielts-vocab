@@ -598,7 +598,8 @@ function initSettingsPanel() {
 function openSettingsPanel() {
     const overlay = document.getElementById('settingsOverlay');
     if (overlay) overlay.classList.add('show');
-    updateSettingsUI();
+    // 使用 setTimeout 延迟更新UI，确保面板先显示出来
+    setTimeout(() => updateSettingsUI(), 0);
 }
 
 function closeSettingsPanel() {
@@ -619,9 +620,16 @@ function closeHelpModal() {
 function switchSettingsTab(tabName) {
     const tabs = document.querySelectorAll('.settings-tab');
     const panels = document.querySelectorAll('.settings-panel');
-    
-    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
-    panels.forEach(p => p.classList.toggle('active', p.id === `panel-${tabName}`));
+
+    // 使用 requestAnimationFrame 优化渲染，避免阻塞主线程
+    requestAnimationFrame(() => {
+        tabs.forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tabName);
+        });
+        panels.forEach(p => {
+            p.classList.toggle('active', p.id === `panel-${tabName}`);
+        });
+    });
 }
 
 function initSettingsControls() {
