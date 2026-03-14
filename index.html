@@ -42,6 +42,9 @@
         
         <!-- Right: Mode + Actions -->
         <div class="header-right">
+            <!-- Progress Indicator -->
+            <span class="progress-indicator" id="progressIndicator"></span>
+
             <!-- Current Mode Display -->
             <div class="current-mode" id="currentMode">
                 <span class="mode-icon">
@@ -207,6 +210,20 @@
                     <div class="previous-word-definition" id="prevDefinition"></div>
                 </div>
 
+                <!-- Stats Row -->
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-dot correct"></span>
+                        <span class="stat-value correct" id="correctCount">0</span>
+                        <span class="stat-label">正确</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-dot wrong"></span>
+                        <span class="stat-value wrong" id="wrongCount">0</span>
+                        <span class="stat-label">错误</span>
+                    </div>
+                </div>
+
                 <!-- Play Button Area -->
                 <div class="play-area" id="playArea">
                     <button class="play-btn-large" id="playBtn">
@@ -274,20 +291,20 @@
     </main>
 
     <!-- Settings Modal -->
-    <div class="modal-overlay hidden" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">设置</h2>
-                <button class="modal-close" id="closeSettingsBtn">
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-modal">
+            <div class="settings-header">
+                <h2 class="settings-title">设置</h2>
+                <button class="settings-close" id="settingsClose" title="关闭">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
             </div>
-            <div class="modal-body">
-                <!-- Settings Tabs -->
-                <div class="settings-tabs">
+            <div class="settings-body">
+                <!-- Sidebar Tabs -->
+                <div class="settings-sidebar">
                     <button class="settings-tab active" data-tab="answer">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -318,163 +335,202 @@
                         <span>复习</span>
                     </button>
                 </div>
-                
-                <!-- Settings Content -->
+
+                <!-- Settings Content Panels -->
                 <div class="settings-content">
                     <!-- Answer Settings -->
-                    <div class="settings-panel active" id="settingsAnswer">
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">答题顺序</span>
-                                <span class="setting-desc">选择答题时选项的显示顺序</span>
+                    <div class="settings-panel active" id="panel-answer">
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">错词循环</div>
+                                <div class="settings-item-desc">答错的单词将在本轮中循环出现</div>
                             </div>
-                            <select class="setting-select" id="answerOrder">
-                                <option value="random">随机顺序</option>
-                                <option value="fixed">固定顺序</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">自动进入下一题</span>
-                                <span class="setting-desc">答题后自动进入下一题</span>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="autoNext" checked>
-                                <span class="toggle-slider"></span>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-repeat-wrong" checked>
+                                <span class="switch-slider"></span>
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">答题音效</span>
-                                <span class="setting-desc">答题正确或错误时的提示音</span>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">答错显示答案</div>
+                                <div class="settings-item-desc">答错后显示正确答案供参考</div>
                             </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="soundEffects" checked>
-                                <span class="toggle-slider"></span>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-show-answer">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">随机顺序</div>
+                                <div class="settings-item-desc">随机打乱单词学习顺序</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-shuffle" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">自动提交</div>
+                                <div class="settings-item-desc">拼写模式下输入完成自动提交</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-auto-submit">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">错误本</div>
+                                <div class="settings-item-desc">记录答错单词到错误本</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-error-book" checked>
+                                <span class="switch-slider"></span>
                             </label>
                         </div>
                     </div>
-                    
+
                     <!-- Sound Settings -->
-                    <div class="settings-panel" id="settingsSound">
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">发音播放</span>
-                                <span class="setting-desc">选择单词发音来源</span>
+                    <div class="settings-panel" id="panel-sound">
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">语音选择</div>
+                                <div class="settings-item-desc">选择单词发音口音</div>
                             </div>
-                            <select class="setting-select" id="voiceSource">
-                                <option value="auto">自动</option>
+                            <select class="settings-select" id="setting-voice">
+                                <option value="default">默认</option>
                                 <option value="uk">英式发音</option>
                                 <option value="us">美式发音</option>
                             </select>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">播放次数</span>
-                                <span class="setting-desc">单词发音播放次数</span>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">播放次数</div>
+                                <div class="settings-item-desc">每个单词的发音播放次数</div>
                             </div>
-                            <select class="setting-select" id="playCount">
+                            <select class="settings-select" id="setting-playback-count">
                                 <option value="1">1次</option>
                                 <option value="2" selected>2次</option>
                                 <option value="3">3次</option>
                             </select>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">朗读例句</span>
-                                <span class="setting-desc">播放单词时同时朗读例句</span>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">播放速度</div>
+                                <div class="settings-item-desc">发音播放的语速快慢</div>
                             </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="readExample">
-                                <span class="toggle-slider"></span>
-                            </label>
+                            <select class="settings-select" id="setting-playback-speed">
+                                <option value="0.7">慢速 0.7x</option>
+                                <option value="1.0" selected>正常 1.0x</option>
+                                <option value="1.2">快速 1.2x</option>
+                                <option value="1.5">极速 1.5x</option>
+                            </select>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">语速</span>
-                                <span class="setting-desc">发音播放速度</span>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">音量</div>
+                                <div class="settings-item-desc">发音播放音量大小</div>
                             </div>
-                            <input type="range" class="setting-range" id="speechRate" min="0.5" max="1.5" step="0.1" value="1">
-                            <span class="range-value" id="speechRateValue">1.0x</span>
+                            <select class="settings-select" id="setting-volume">
+                                <option value="40">低</option>
+                                <option value="70">中</option>
+                                <option value="100" selected>高</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">播放间隔</div>
+                                <div class="settings-item-desc">连续播放时每词间隔秒数</div>
+                            </div>
+                            <select class="settings-select" id="setting-interval">
+                                <option value="1">1秒</option>
+                                <option value="2" selected>2秒</option>
+                                <option value="3">3秒</option>
+                                <option value="5">5秒</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">连续播放模式</div>
+                                <div class="settings-item-desc">自动依次播放每个单词</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-dictation-mode">
+                                <span class="switch-slider"></span>
+                            </label>
                         </div>
                     </div>
-                    
+
                     <!-- Display Settings -->
-                    <div class="settings-panel" id="settingsDisplay">
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">显示音标</span>
-                                <span class="setting-desc">在单词下方显示国际音标</span>
+                    <div class="settings-panel" id="panel-display">
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">深色模式</div>
+                                <div class="settings-item-desc">切换深色/浅色主题</div>
                             </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="showPhonetic" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">显示词性</span>
-                                <span class="setting-desc">显示单词的词性标签</span>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="showPos" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">深色模式</span>
-                                <span class="setting-desc">切换深色/浅色主题</span>
-                            </div>
-                            <label class="toggle-switch">
+                            <label class="switch">
                                 <input type="checkbox" id="darkMode">
-                                <span class="toggle-slider"></span>
+                                <span class="switch-slider"></span>
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">字体大小</span>
-                                <span class="setting-desc">调整界面字体大小</span>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">字体大小</div>
+                                <div class="settings-item-desc">调整界面显示字体大小</div>
                             </div>
-                            <select class="setting-select" id="fontSize">
+                            <select class="settings-select" id="setting-font-size">
                                 <option value="small">小</option>
                                 <option value="medium" selected>中</option>
                                 <option value="large">大</option>
                             </select>
                         </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">显示音标</div>
+                                <div class="settings-item-desc">在单词下方显示国际音标</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-show-phonetic" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">显示词性</div>
+                                <div class="settings-item-desc">显示单词的词性标签</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-show-pos" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
                     </div>
-                    
+
                     <!-- Review Settings -->
-                    <div class="settings-panel" id="settingsReview">
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">错题重练</span>
-                                <span class="setting-desc">完成后复习答错的题目</span>
+                    <div class="settings-panel" id="panel-review">
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">复习间隔</div>
+                                <div class="settings-item-desc">艾宾浩斯遗忘曲线复习间隔天数</div>
                             </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="reviewWrong" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
+                            <select class="settings-select" id="setting-review-interval">
+                                <option value="1" selected>1天</option>
+                                <option value="3">3天</option>
+                                <option value="7">7天</option>
+                            </select>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">复习提醒</span>
-                                <span class="setting-desc">每日学习提醒</span>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-title">复习数量</div>
+                                <div class="settings-item-desc">每次复习的单词数量上限</div>
                             </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="reviewReminder">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-label">
-                                <span class="setting-title">记忆曲线</span>
-                                <span class="setting-desc">根据艾宾浩斯遗忘曲线安排复习</span>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="spacedReview" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
+                            <select class="settings-select" id="setting-review-limit">
+                                <option value="10">10个</option>
+                                <option value="20" selected>20个</option>
+                                <option value="50">50个</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -483,34 +539,48 @@
     </div>
 
     <!-- Help Modal -->
-    <div class="modal-overlay hidden" id="helpModal">
-        <div class="modal-content modal-small">
-            <div class="modal-header">
-                <h2 class="modal-title">帮助</h2>
-                <button class="modal-close" id="closeHelpBtn">
+    <div class="settings-overlay" id="helpOverlay">
+        <div class="settings-modal" style="max-width: 480px;">
+            <div class="settings-header">
+                <h2 class="settings-title">帮助</h2>
+                <button class="settings-close" id="helpClose" title="关闭">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="help-content">
-                    <h3>键盘快捷键</h3>
-                    <ul class="shortcut-list">
-                        <li><span class="shortcut-key">1-4</span> 选择选项</li>
-                        <li><span class="shortcut-key">5</span> 不知道（跳过）</li>
-                        <li><span class="shortcut-key">空格</span> 播放发音</li>
-                        <li><span class="shortcut-key">Esc</span> 退出学习</li>
-                    </ul>
-                    <h3>学习模式</h3>
-                    <ul class="help-list">
-                        <li><strong>智能模式</strong> - 根据你的水平智能调整难度</li>
-                        <li><strong>听写模式</strong> - 听发音拼写单词</li>
-                        <li><strong>听音选义</strong> - 听发音选择中文释义</li>
-                        <li><strong>随身听</strong> - 连续播放听力练习</li>
-                        <li><strong>默写模式</strong> - 看中文默写英文</li>
-                    </ul>
+            <div class="settings-content" style="padding: 24px;">
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">键盘快捷键</h3>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <kbd style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--text-primary);">1 - 4</kbd>
+                            <span style="font-size:14px;color:var(--text-secondary);">选择答案选项</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <kbd style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--text-primary);">5</kbd>
+                            <span style="font-size:14px;color:var(--text-secondary);">不知道（跳过）</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <kbd style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--text-primary);">空格</kbd>
+                            <span style="font-size:14px;color:var(--text-secondary);">重新播放发音</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <kbd style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--text-primary);">Esc</kbd>
+                            <span style="font-size:14px;color:var(--text-secondary);">退出练习</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size:14px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">学习模式</h3>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-size:14px;color:var(--text-secondary);"><strong style="color:var(--text-primary);">智能模式</strong> — 根据水平自动调整练习方式</div>
+                        <div style="font-size:14px;color:var(--text-secondary);"><strong style="color:var(--text-primary);">听写模式</strong> — 听发音后拼写单词</div>
+                        <div style="font-size:14px;color:var(--text-secondary);"><strong style="color:var(--text-primary);">听音选义</strong> — 听发音选择中文释义</div>
+                        <div style="font-size:14px;color:var(--text-secondary);"><strong style="color:var(--text-primary);">随身听</strong> — 连续播放单词音频</div>
+                        <div style="font-size:14px;color:var(--text-secondary);"><strong style="color:var(--text-primary);">默写模式</strong> — 看中文释义写出英文</div>
+                    </div>
                 </div>
             </div>
         </div>
