@@ -79,7 +79,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
         if (word) await new Promise(resolve => {
           const u = new SpeechSynthesisUtterance(word.word)
           u.rate = parseFloat(settings.playbackSpeed || '1.0')
-          u.volume = parseFloat(settings.volume || '1.0') / 100
+          u.volume = parseFloat(settings.volume || '100') / 100
           u.onend = () => setTimeout(resolve, parseFloat(settings.interval || '2') * 1000)
           speechSynthesis.speak(u)
         })
@@ -92,7 +92,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     speechSynthesis.cancel()
     const u = new SpeechSynthesisUtterance(word)
     u.rate = parseFloat(settings.playbackSpeed || '1.0')
-    u.volume = parseFloat(settings.volume || '1.0') / 100
+    u.volume = parseFloat(settings.volume || '100') / 100
     speechSynthesis.speak(u)
   }
 

@@ -129,6 +129,7 @@
             padding: 0 var(--space-lg);
             z-index: 100;
             box-shadow: var(--shadow-sm);
+            overflow: visible; /* allow dropdowns to overflow */
         }
 
         .header-left {
@@ -4316,6 +4317,56 @@
             padding: var(--space-md) var(--space-lg);
         }
 
+        /* Clickable avatar in dropdown — replaces .user-dropdown-avatar */
+        .user-dropdown-avatar-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: filter 0.15s ease;
+        }
+
+        .user-dropdown-avatar-btn:hover {
+            filter: brightness(0.85);
+        }
+
+        .user-dropdown-avatar-btn .user-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-edit-hint {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            border-radius: var(--radius-full);
+        }
+
+        .user-dropdown-avatar-btn:hover .avatar-edit-hint {
+            opacity: 1;
+        }
+
+        /* Keep old class as alias in case used elsewhere */
         .user-dropdown-avatar {
             width: 36px;
             height: 36px;
