@@ -1,5 +1,5 @@
 // ========== CONFIG ==========
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 
 // ========== MODE DEFINITIONS ==========
 const LEARNING_MODES = {
@@ -321,7 +321,7 @@ function initModeSelector() {
     
     // Close on outside click
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.header-right') && !e.target.closest('#modeBtn')) {
+        if (!e.target.closest('#modeDropdown') && !e.target.closest('#modeBtn')) {
             modeDropdown.classList.add('hidden');
         }
     });
@@ -532,7 +532,7 @@ function initDaySelector() {
     
     // Close on outside click
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.header-center') && !e.target.closest('#daySelector')) {
+        if (!e.target.closest('.day-selector-wrapper') && !e.target.closest('#daySelector')) {
             dayDropdown.classList.add('hidden');
         }
     });
@@ -608,8 +608,32 @@ function closeSettingsPanel() {
 }
 
 function openHelpModal() {
+    console.log('[Help] openHelpModal called');
     const overlay = document.getElementById('helpOverlay');
-    if (overlay) overlay.classList.add('show');
+    console.log('[Help] helpOverlay element:', overlay);
+
+    if (overlay) {
+        overlay.classList.add('show');
+        console.log('[Help] Added "show" class to helpOverlay');
+        console.log('[Help] overlay classes:', overlay.className);
+    } else {
+        console.error('[Help] helpOverlay element not found!');
+        // Try to find it in the help-container
+        const helpContainer = document.getElementById('help-container');
+        console.log('[Help] help-container:', helpContainer);
+        if (helpContainer) {
+            console.log('[Help] help-container innerHTML:', helpContainer.innerHTML.substring(0, 200));
+
+            // Try to manually find the overlay in the container
+            const foundOverlay = helpContainer.querySelector('#helpOverlay');
+            if (foundOverlay) {
+                console.log('[Help] Found overlay in container, showing it');
+                foundOverlay.classList.add('show');
+            } else {
+                console.error('[Help] helpOverlay not found even in container');
+            }
+        }
+    }
 }
 
 function closeHelpModal() {
@@ -881,15 +905,22 @@ function handleDontKnow() {
 }
 
 // ========== INIT ==========
-document.addEventListener('DOMContentLoaded', async () => {
+// 等待模块加载完成后再初始化
+console.log('[Init] Setting up modulesLoaded event listener...');
+document.addEventListener('modulesLoaded', async () => {
+    console.log('[Init] ========== modulesLoaded EVENT FIRED ==========');
+    console.log('[Init] Checking loaded modules...');
+    console.log('[Init] - header-container:', document.getElementById('header-container')?.innerHTML.length || 0, 'bytes');
+    console.log('[Init] - help-container:', document.getElementById('help-container')?.innerHTML.length || 0, 'bytes');
+    console.log('[Init] Modules loaded, initializing app...');
     // Load settings first
     loadSettings();
-    
+
     // Apply saved mode
     if (state.settings.currentMode) {
         state.mode = state.settings.currentMode;
     }
-    
+
     // Check for existing token
     const savedToken = localStorage.getItem('auth_token');
     const savedUser = localStorage.getItem('auth_user');
@@ -907,11 +938,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             await loadProgress();
             showHomePage();
             setupEventListeners();
-            
+
             // Initialize UI state
             updateModeDisplay();
             updateDayDisplay();
-            
+
             console.log('Session restored successfully');
             return;
         } catch (e) {
@@ -921,10 +952,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     showAuthPage();
     setupEventListeners();
-    
+
+    // Debug: Check if help modal is loaded correctly
+    setTimeout(() => {
+        const helpContainer = document.getElementById('help-container');
+        const helpOverlay = document.getElementById('helpOverlay');
+        console.log('[Debug] Help container:', helpContainer);
+        console.log('[Debug] Help container has content:', helpContainer && helpContainer.innerHTML.length > 0);
+        console.log('[Debug] Help overlay:', helpOverlay);
+        if (helpContainer && !helpOverlay) {
+            console.warn('[Debug] Help container exists but helpOverlay not found');
+            console.log('[Debug] Help container innerHTML preview:', helpContainer.innerHTML.substring(0, 500));
+        }
+    }, 1000);
+
     // Initialize UI state
     updateModeDisplay();
     updateDayDisplay();
+});
+
+// 兼容模式：如果 modules.js 未加载，直接初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 延迟检查，如果模块加载器未触发 modulesLoaded，则直接初始化
+    setTimeout(() => {
+        if (!window.modulesInitialized) {
+            console.log('[Init] Modules loader not detected, using fallback init');
+            window.dispatchEvent(new CustomEvent('modulesLoaded'));
+        }
+    }, 500);
 });
 
 // Helper to update mode display on load
@@ -957,18 +1012,52 @@ function updateDayDisplay() {
 
 // ========== EVENT LISTENERS ==========
 function setupEventListeners() {
+    console.log('[Setup] ========== setupEventListeners STARTED ==========');
+    console.log('[Setup] Current DOM state:');
+    console.log('[Setup] - helpBtn:', document.getElementById('helpBtn'));
+    console.log('[Setup] - help-container:', document.getElementById('help-container'));
+    console.log('[Setup] - helpOverlay:', document.getElementById('helpOverlay'));
+    console.log('[Setup] - header-container:', document.getElementById('header-container'));
+
     // Initialize UI components
     initModeSelector();
     initDaySelector();
     initSettingsPanel();
     initKeyboardShortcuts();
-    
+
     // Help modal
-    document.getElementById('helpBtn')?.addEventListener('click', openHelpModal);
-    document.getElementById('helpClose')?.addEventListener('click', closeHelpModal);
-    document.getElementById('helpOverlay')?.addEventListener('click', (e) => {
-        if (e.target === document.getElementById('helpOverlay')) closeHelpModal();
-    });
+    console.log('[Setup] Setting up help modal listeners...');
+    const helpBtn = document.getElementById('helpBtn');
+    console.log('[Setup] helpBtn element:', helpBtn);
+    if (helpBtn) {
+        // Use onclick instead of addEventListener for debugging
+        helpBtn.onclick = function(e) {
+            console.log('[Setup] Help button CLICKED!', e);
+            openHelpModal();
+        };
+        console.log('[Setup] Help button onclick handler set');
+    } else {
+        console.error('[Setup] ❌ helpBtn NOT FOUND!');
+        console.log('[Setup] Checking if header is loaded...');
+        const header = document.getElementById('header-container');
+        if (header) {
+            console.log('[Setup] Header HTML:', header.innerHTML.substring(0, 500));
+        }
+    }
+
+    const helpClose = document.getElementById('helpClose');
+    if (helpClose) {
+        helpClose.addEventListener('click', closeHelpModal);
+        console.log('[Setup] helpClose listener added');
+    }
+
+    const helpOverlay = document.getElementById('helpOverlay');
+    if (helpOverlay) {
+        helpOverlay.addEventListener('click', (e) => {
+            if (e.target === helpOverlay) closeHelpModal();
+        });
+        console.log('[Setup] helpOverlay click listener added');
+    }
 
     // Skip button
     document.getElementById('skipBtn')?.addEventListener('click', handleDontKnow);
@@ -1152,33 +1241,49 @@ async function handleLogout() {
 
 // ========== PAGES ==========
 function showAuthPage() {
-    document.getElementById('authPage').style.display = 'flex';
-    document.getElementById('homePage')?.classList.add('hidden');
-    document.getElementById('practicePage')?.classList.remove('active');
-    document.getElementById('completeScreen')?.classList.remove('active');
-    
+    const authPage = document.getElementById('authPage');
+    const homePage = document.getElementById('homePage');
+    const practicePage = document.getElementById('practicePage');
+    const completeScreen = document.getElementById('completeScreen');
+
+    if (authPage) authPage.style.display = 'flex';
+    if (homePage) homePage.classList.add('hidden');
+    if (practicePage) practicePage.classList.remove('active');
+    if (completeScreen) completeScreen.classList.remove('active');
+
+    // Hide auth-only elements
+    document.querySelectorAll('.auth-only').forEach(el => el.classList.add('hidden'));
+
     const userInitial = document.getElementById('userInitial');
     if (userInitial) userInitial.textContent = '?';
-    
+
     const progressIndicator = document.getElementById('progressIndicator');
     if (progressIndicator) progressIndicator.textContent = '';
-    
+
     const progressText = document.getElementById('progressText');
     if (progressText) progressText.textContent = '0/100';
 }
 
 function showHomePage() {
-    document.getElementById('authPage').style.display = 'none';
-    document.getElementById('homePage')?.classList.remove('hidden');
-    document.getElementById('practicePage')?.classList.remove('active');
-    document.getElementById('completeScreen')?.classList.remove('active');
+    const authPage = document.getElementById('authPage');
+    const homePage = document.getElementById('homePage');
+    const practicePage = document.getElementById('practicePage');
+    const completeScreen = document.getElementById('completeScreen');
+
+    if (authPage) authPage.style.display = 'none';
+    if (homePage) homePage.classList.remove('hidden');
+    if (practicePage) practicePage.classList.remove('active');
+    if (completeScreen) completeScreen.classList.remove('active');
+
+    // Show auth-only elements
+    document.querySelectorAll('.auth-only').forEach(el => el.classList.remove('hidden'));
 
     if (state.user) {
         const userInitial = document.getElementById('userInitial');
         if (userInitial) {
             userInitial.textContent = state.user.username ? state.user.username[0].toUpperCase() : state.user.email[0].toUpperCase();
         }
-        
+
         const progressIndicator = document.getElementById('progressIndicator');
         if (progressIndicator) {
             progressIndicator.textContent = `Day ${state.currentDay}`;

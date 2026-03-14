@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Test</title>
+    <style>
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .settings-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            display: flex;
+        }
+        .settings-modal {
+            width: 90%;
+            max-width: 480px;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+    <button id="helpBtn">Help</button>
+
+    <div class="settings-overlay" id="helpOverlay">
+        <div class="settings-modal">
+            <h2>帮助</h2>
+            <p>这是帮助内容</p>
+            <button id="helpClose">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        function openHelpModal() {
+            const overlay = document.getElementById('helpOverlay');
+            console.log('openHelpModal called, overlay:', overlay);
+            if (overlay) overlay.classList.add('show');
+        }
+
+        function closeHelpModal() {
+            const overlay = document.getElementById('helpOverlay');
+            console.log('closeHelpModal called, overlay:', overlay);
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        document.getElementById('helpBtn').addEventListener('click', openHelpModal);
+        document.getElementById('helpClose').addEventListener('click', closeHelpModal);
+        document.getElementById('helpOverlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('helpOverlay')) closeHelpModal();
+        });
+
+        console.log('Event listeners attached');
+    </script>
+</body>
+</html>

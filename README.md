@@ -16,7 +16,7 @@
 
 ## 技术栈
 
-- **前端**：原生 HTML + CSS + JavaScript
+- **前端**：原生 HTML + CSS + JavaScript + Vite
 - **后端**：Python Flask + SQLite
 - **认证**：JWT Token
 - **字体**：Inter + Noto Sans SC
@@ -45,9 +45,26 @@ python app.py
 
 后端将运行在 `http://localhost:5000`
 
-### 4. 运行前端
+### 4. 安装前端依赖
 
-直接在浏览器中打开 `index.html` 即可使用。
+```bash
+pnpm install
+```
+
+### 5. 启动前端开发服务器
+
+```bash
+pnpm dev
+```
+
+前端将运行在 `http://localhost:3000`，自动打开浏览器。
+
+**生产构建：**
+
+```bash
+pnpm build
+pnpm preview
+```
 
 ## 项目结构
 
@@ -56,6 +73,8 @@ ielts-vocab/
 ├── index.html          # 主页面
 ├── css/style.css       # 样式文件
 ├── js/main.js          # 应用逻辑
+├── package.json        # npm 依赖配置
+├── vite.config.js      # Vite 配置文件
 ├── backend/            # Flask 后端
 │   ├── app.py          # 应用入口
 │   ├── config.py       # 配置文件
