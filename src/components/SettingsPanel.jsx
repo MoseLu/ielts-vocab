@@ -109,8 +109,7 @@ function SettingsPanel({ showSettings, onClose }) {
           {/* Settings Content Panels */}
           <div className="settings-content">
             {/* Answer Settings */}
-            {activeTab === 'answer' && (
-              <div className="settings-panel active">
+            <div className={`settings-panel${activeTab === 'answer' ? ' active' : ''}`}>
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">错词循环</div>
@@ -162,11 +161,9 @@ function SettingsPanel({ showSettings, onClose }) {
                   </label>
                 </div>
               </div>
-            )}
 
             {/* Sound Settings */}
-            {activeTab === 'sound' && (
-              <div className="settings-panel active">
+            <div className={`settings-panel${activeTab === 'sound' ? ' active' : ''}`}>
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">语音选择</div>
@@ -235,11 +232,9 @@ function SettingsPanel({ showSettings, onClose }) {
                   </label>
                 </div>
               </div>
-            )}
 
             {/* Display Settings */}
-            {activeTab === 'display' && (
-              <div className="settings-panel active">
+            <div className={`settings-panel${activeTab === 'display' ? ' active' : ''}`}>
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">深色模式</div>
@@ -282,11 +277,9 @@ function SettingsPanel({ showSettings, onClose }) {
                   </label>
                 </div>
               </div>
-            )}
 
             {/* Review Settings */}
-            {activeTab === 'review' && (
-              <div className="settings-panel active">
+            <div className={`settings-panel${activeTab === 'review' ? ' active' : ''}`}>
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">复习间隔</div>
@@ -310,7 +303,6 @@ function SettingsPanel({ showSettings, onClose }) {
                   </select>
                 </div>
               </div>
-            )}
           </div>
         </div>
       </div>

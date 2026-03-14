@@ -88,11 +88,12 @@
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
         }
 
-        /* Theme Transition */
+        /* Theme Transition - use fast timing for natural feel */
         * {
-            transition: background-color var(--transition-normal), 
-                        border-color var(--transition-normal), 
-                        color var(--transition-normal);
+            transition: background-color 120ms ease,
+                        border-color 120ms ease,
+                        color 120ms ease,
+                        box-shadow 120ms ease;
         }
 
         * {
@@ -3723,4 +3724,227 @@
         .icon-btn svg {
             width: 18px;
             height: 18px;
+        }
+
+        /* ========================================
+           CONSOLIDATED FIXES
+        ======================================== */
+
+        /* FIX 1: Double scrollbar - remove scroll from outer container,
+           keep only on .day-dropdown-scroll inner wrapper */
+        .day-dropdown {
+            position: absolute !important;
+            top: calc(100% + 8px) !important;
+            right: 0 !important;
+            left: auto !important;
+            transform: none !important;
+            min-width: 220px;
+            max-width: 400px;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            padding: 0;
+            z-index: 300;
+            overflow: hidden;
+            max-height: none;
+            animation: dropdownFadeIn 0.18s ease;
+        }
+
+        .day-dropdown.show {
+            display: block !important;
+        }
+
+        .day-dropdown-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* FIX 2: Mode dropdown - reset conflicting left/transform from old rules,
+           ensure it appears correctly right-aligned under its button */
+        .mode-dropdown {
+            position: absolute !important;
+            top: calc(100% + 8px) !important;
+            right: 0 !important;
+            left: auto !important;
+            transform: none !important;
+            width: 240px;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            padding: var(--space-xs);
+            z-index: 300;
+            animation: dropdownFadeIn 0.18s ease;
+        }
+
+        .mode-dropdown.show {
+            display: block !important;
+        }
+
+        /* FIX 3: Day cards - cleaner, compact square grid design */
+        .day-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: var(--space-sm);
+        }
+
+        .day-card {
+            background: var(--bg-secondary);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-sm);
+            cursor: pointer;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .day-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-subtle);
+            transform: translateY(-1px);
+            background: var(--bg-color);
+        }
+
+        .day-card.active {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            box-shadow: 0 0 0 2px var(--accent-subtle);
+        }
+
+        .day-card.completed {
+            border-color: var(--success);
+            background: var(--success-light);
+        }
+
+        .day-number {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .day-card.active .day-number {
+            color: var(--accent);
+        }
+
+        .day-card.completed .day-number {
+            color: var(--success);
+        }
+
+        .day-card-top {
+            display: none; /* remove top row with badges - use card state instead */
+        }
+
+        .day-words {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+
+        .day-progress-bar {
+            width: 100%;
+            height: 2px;
+            background: var(--border);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .day-progress-fill {
+            height: 100%;
+            background: var(--accent);
+        }
+
+        .day-card.completed .day-progress-fill {
+            background: var(--success);
+        }
+
+        .day-progress-text {
+            font-size: 10px;
+            color: var(--text-tertiary);
+        }
+
+        .day-card.active .day-progress-text {
+            color: var(--accent);
+        }
+
+        .day-card.completed .day-progress-text {
+            color: var(--success);
+        }
+
+        .day-badge,
+        .day-check {
+            display: none; /* remove badges from inside cards */
+        }
+
+        /* FIX 4 & 6: Settings panel - fixed height, no flicker
+           All panels always in DOM, show/hide with display only */
+        .settings-modal {
+            width: 90%;
+            max-width: 640px;
+            height: 520px;
+            max-height: 90vh;
+            background: var(--bg-color);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: none !important; /* no transition on modal itself */
+        }
+
+        .settings-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0; /* important for flex children to scroll */
+        }
+
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-xl);
+            position: relative;
+        }
+
+        /* All panels always rendered - use display none/block only, no transition */
+        .settings-panel {
+            display: none;
+            opacity: 1;
+            transform: none;
+            transition: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        /* FIX 5: Theme transition - handled globally in :root block (already updated to 120ms) */
+        /* Disable transitions on SVG paths to prevent flicker */
+        svg, svg * {
+            transition: none;
+        }
+        /* Re-enable transition only for color on interactive elements */
+        .header-btn svg,
+        .option-btn,
+        .day-card,
+        .settings-tab {
+            transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+        }
+
+        /* Responsive overrides for new day card grid */
+        @media (min-width: 640px) {
+            .day-grid {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .day-grid {
+                grid-template-columns: repeat(10, 1fr);
+            }
         }
