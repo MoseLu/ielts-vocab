@@ -12,16 +12,23 @@ function App() {
     const saved = localStorage.getItem('current_day')
     return saved ? parseInt(saved, 10) : null
   })
-  const [mode, setMode] = useState('listening')
+  const [mode, setMode] = useState(() => localStorage.getItem('current_mode') || 'listening')
   const [toast, setToast] = useState(null)
 
   useEffect(() => {
     // Check for saved session
     const savedToken = localStorage.getItem('auth_token')
     const savedUser = localStorage.getItem('auth_user')
-
     if (savedToken && savedUser) {
       setUser(JSON.parse(savedUser))
+    }
+
+    // Apply saved settings on startup
+    const savedSettings = localStorage.getItem('app_settings')
+    if (savedSettings) {
+      const s = JSON.parse(savedSettings)
+      document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light')
+      document.documentElement.setAttribute('data-font-size', s.fontSize || 'medium')
     }
   }, [])
 
@@ -49,7 +56,7 @@ function App() {
           currentDay={currentDay}
           mode={mode}
           onLogout={handleLogout}
-          onModeChange={setMode}
+          onModeChange={(m) => { setMode(m); localStorage.setItem('current_mode', m) }}
           onDayChange={handleDayChange}
         />
 
