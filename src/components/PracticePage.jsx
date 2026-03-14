@@ -30,6 +30,8 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
   const [previousWord, setPreviousWord] = useState(null)
+  // lastState enables single-level undo (back arrow)
+  const [lastState, setLastState] = useState(null)
   const [spellingInput, setSpellingInput] = useState('')
   const [spellingResult, setSpellingResult] = useState(null)
   const [radioIndex, setRadioIndex] = useState(0)
@@ -47,7 +49,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
         setVocabulary(words)
         const indices = Array.from({ length: words.length }, (_, i) => i)
         setQueue(settings.shuffle !== false ? shuffleArray(indices) : indices)
-        setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null)
+        setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
   }, [currentDay])
@@ -108,12 +110,24 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   }
 
   const goNext = (wasCorrect) => {
+    // Save state for undo
+    setLastState({ qi: queueIndex, cc: correctCount, wc: wrongCount, prevWord: previousWord })
     setPreviousWord(currentWord)
     if (!wasCorrect && settings.repeatWrong !== false) {
       setQueue(prev => { const c = [...prev]; c.push(queue[queueIndex]); return c })
     }
     if (queueIndex + 1 >= queue.length) navigate('/')
     else setQueueIndex(prev => prev + 1)
+  }
+
+  const goBack = () => {
+    if (!lastState) return
+    setQueueIndex(lastState.qi)
+    setCorrectCount(lastState.cc)
+    setWrongCount(lastState.wc)
+    setPreviousWord(lastState.prevWord)
+    setLastState(null)
+    setSelectedAnswer(null); setShowResult(false); setSpellingInput(''); setSpellingResult(null)
   }
 
   const handleOptionSelect = (idx) => {
@@ -183,19 +197,43 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   const showWord = mode === 'meaning' || mode === 'smart'
   const showAudio = mode === 'listening' || mode === 'smart'
 
+  // Previous word inline block (shared across modes)
+  const PrevWordBlock = () => previousWord ? (
+    <div className="prev-word-inline">
+      <button className="prev-back-btn" onClick={goBack} disabled={!lastState} title="返回上一个词">
+        ←
+      </button>
+      <div className="prev-word-info">
+        <div className="prev-word-text">{previousWord.word}</div>
+        <div className="prev-word-phonetic">{previousWord.phonetic}</div>
+        <div className="prev-word-def">
+          <span className="word-pos-tag">{previousWord.pos}</span>
+          {previousWord.definition}
+        </div>
+      </div>
+    </div>
+  ) : null
+
+  // Bottom bar with stats + progress (shared)
+  const BottomBar = ({ progressValue, total }) => (
+    <div className="practice-bottom-bar">
+      <span className="bottom-stat-correct">✓ {correctCount}</span>
+      <div className="bottom-progress-track">
+        <div className="bottom-progress-fill" style={{ width: `${progressValue * 100}%` }}>
+          <div className="bottom-progress-dot"></div>
+        </div>
+      </div>
+      <span className="bottom-progress-count">{queueIndex + 1}/{total}</span>
+      <span className="bottom-stat-wrong">✗ {wrongCount}</span>
+    </div>
+  )
+
   // RADIO MODE
   if (mode === 'radio') {
     const radioWord = vocabulary[queue[radioIndex]] || currentWord
     return (
       <div className="practice-page radio-mode">
-        <div className="prev-word-panel">
-          {previousWord && <>
-            <div className="prev-word-label">上一个词</div>
-            <div className="prev-word-text">{previousWord.word}</div>
-            <div className="prev-word-phonetic">{previousWord.phonetic}</div>
-            <div className="prev-word-def"><span className="word-pos-tag">{previousWord.pos}</span>{previousWord.definition}</div>
-          </>}
-        </div>
+        <PrevWordBlock />
         <div className="radio-container">
           <div className="radio-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -207,14 +245,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
           <div className="radio-phonetic">{radioWord.phonetic}</div>
           <div className="radio-definition"><span className="word-pos-tag">{radioWord.pos}</span>{radioWord.definition}</div>
         </div>
-        <div className="practice-bottom-bar">
-          <div className="bottom-progress-track">
-            <div className="bottom-progress-fill" style={{ width: `${(radioIndex / queue.length) * 100}%` }}>
-              <div className="bottom-progress-dot"></div>
-            </div>
-          </div>
-          <span className="bottom-progress-count">{radioIndex + 1}/{queue.length}</span>
-        </div>
+        <BottomBar progressValue={radioIndex / queue.length} total={queue.length} />
         <button className="radio-stop-btn" onClick={() => { speechSynthesis.cancel(); navigate('/') }}>停止播放</button>
       </div>
     )
@@ -224,23 +255,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   if (mode === 'dictation') {
     return (
       <div className="practice-page">
-        {/* Previous word - top left */}
-        <div className={`prev-word-panel${previousWord ? ' show' : ''}`}>
-          {previousWord && <>
-            <div className="prev-word-label">上一个词</div>
-            <div className="prev-word-text">{previousWord.word}</div>
-            <div className="prev-word-phonetic">{previousWord.phonetic}</div>
-            <div className="prev-word-def"><span className="word-pos-tag">{previousWord.pos}</span>{previousWord.definition}</div>
-          </>}
-        </div>
-
-        {/* Stats bar */}
-        <div className="practice-stats-bar">
-          <span className="stat-correct-count">✓ {correctCount}</span>
-          <span className="practice-count">{queueIndex + 1} / {vocabulary.length}</span>
-          <span className="stat-wrong-count">✗ {wrongCount}</span>
-        </div>
-
+        <PrevWordBlock />
         <div className="dictation-container">
           <div className="dictation-play-area">
             <button className="play-btn-large" onClick={() => playWord(currentWord.word)}>
@@ -266,18 +281,8 @@ function PracticePage({ user, currentDay, mode, showToast }) {
             <span className="word-pos-tag">{currentWord.pos}</span>{currentWord.definition}
           </div>
         </div>
-
         <button className="skip-btn" onClick={handleSkip}>不知道 <span className="shortcut-hint">(5)</span></button>
-
-        {/* Bottom progress */}
-        <div className="practice-bottom-bar">
-          <div className="bottom-progress-track">
-            <div className="bottom-progress-fill" style={{ width: `${progress * 100}%` }}>
-              <div className="bottom-progress-dot"></div>
-            </div>
-          </div>
-          <span className="bottom-progress-count">{queueIndex + 1}/{vocabulary.length}</span>
-        </div>
+        <BottomBar progressValue={progress} total={vocabulary.length} />
       </div>
     )
   }
@@ -285,25 +290,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   // LISTENING / MEANING / SMART MODE
   return (
     <div className="practice-page">
-      {/* Previous word - top left */}
-      <div className={`prev-word-panel${previousWord ? ' show' : ''}`}>
-        {previousWord && <>
-          <div className="prev-word-label">上一个词</div>
-          <div className="prev-word-text">{previousWord.word}</div>
-          <div className="prev-word-phonetic">{previousWord.phonetic}</div>
-          <div className="prev-word-def">
-            <span className="word-pos-tag">{previousWord.pos}</span>
-            {previousWord.definition}
-          </div>
-        </>}
-      </div>
-
-      {/* Stats bar */}
-      <div className="practice-stats-bar">
-        <span className="stat-correct-count">✓ {correctCount}</span>
-        <span className="practice-count">{queueIndex + 1} / {vocabulary.length}</span>
-        <span className="stat-wrong-count">✗ {wrongCount}</span>
-      </div>
+      <PrevWordBlock />
 
       {/* Main practice area */}
       <div className="practice-main">
@@ -347,15 +334,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
         </button>
       </div>
 
-      {/* Bottom progress bar */}
-      <div className="practice-bottom-bar">
-        <div className="bottom-progress-track">
-          <div className="bottom-progress-fill" style={{ width: `${progress * 100}%` }}>
-            <div className="bottom-progress-dot"></div>
-          </div>
-        </div>
-        <span className="bottom-progress-count">{queueIndex + 1}/{vocabulary.length}</span>
-      </div>
+      <BottomBar progressValue={progress} total={vocabulary.length} />
     </div>
   )
 }

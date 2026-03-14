@@ -3291,12 +3291,7 @@
         }
 
         .practice-stats-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--space-sm) var(--space-xl);
-            font-size: 14px;
-            border-bottom: 1px solid var(--border);
+            display: none; /* stats moved to bottom bar */
         }
 
         .stat-correct-count {
@@ -3954,51 +3949,64 @@
         ======================================== */
 
         /* Previous word panel - top-left of practice page */
-        .prev-word-panel {
-            position: absolute;
-            top: calc(var(--header-height) + 56px); /* below stats bar */
-            left: var(--space-xl);
-            width: 200px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: var(--space-md);
-            font-size: 12px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-            z-index: 10;
+        /* Previous word inline — no card, blends with background */
+        .prev-word-inline {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            padding: var(--space-md) var(--space-xl);
+            animation: fadeInDown 0.18s ease;
         }
 
-        .prev-word-panel.show {
-            opacity: 1;
-            pointer-events: auto;
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        .prev-word-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
+        .prev-back-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
             color: var(--text-tertiary);
-            margin-bottom: 4px;
+            font-size: 18px;
+            line-height: 1;
+            padding: 2px 4px;
+            border-radius: var(--radius-sm);
+            margin-top: 2px;
+            flex-shrink: 0;
+            transition: color 0.12s ease;
+        }
+
+        .prev-back-btn:hover:not(:disabled) {
+            color: var(--accent);
+        }
+
+        .prev-back-btn:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .prev-word-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
         }
 
         .prev-word-text {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 2px;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            line-height: 1.2;
         }
 
         .prev-word-phonetic {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--text-tertiary);
-            margin-bottom: 4px;
         }
 
         .prev-word-def {
             font-size: 12px;
-            color: var(--text-secondary);
+            color: var(--text-tertiary);
             line-height: 1.4;
             display: flex;
             align-items: flex-start;
@@ -4017,20 +4025,33 @@
             margin-top: 1px;
         }
 
-        /* Bottom progress bar */
+        /* Bottom bar: stats + progress */
         .practice-bottom-bar {
             display: flex;
             align-items: center;
             gap: var(--space-md);
-            padding: var(--space-sm) var(--space-xl);
-            border-top: 1px solid var(--border);
+            padding: var(--space-sm) var(--space-xl) var(--space-md);
             background: var(--bg-color);
             margin-top: auto;
         }
 
+        .bottom-stat-correct {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--success);
+            white-space: nowrap;
+        }
+
+        .bottom-stat-wrong {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--error);
+            white-space: nowrap;
+        }
+
         .bottom-progress-track {
             flex: 1;
-            height: 6px;
+            height: 4px;
             background: var(--bg-tertiary);
             border-radius: var(--radius-full);
             position: relative;
@@ -4050,20 +4071,17 @@
             right: -4px;
             top: 50%;
             transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background: var(--accent);
             border-radius: var(--radius-full);
             border: 2px solid var(--bg-color);
-            box-shadow: 0 0 0 2px var(--accent);
         }
 
         .bottom-progress-count {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-tertiary);
             white-space: nowrap;
-            min-width: 50px;
-            text-align: right;
         }
 
         /* Completion screen updates */
@@ -4438,7 +4456,7 @@
             }
 
             /* Practice page */
-            .prev-word-panel {
+            .prev-word-inline {
                 display: none; /* hide on mobile - not enough space */
             }
 
@@ -4514,11 +4532,7 @@
                 grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
             }
 
-            /* Practice page */
-            .prev-word-panel {
-                width: 160px;
-                left: var(--space-lg);
-            }
+            /* Practice page - prev word shown on tablet+ */
 
             .practice-main {
                 max-width: 600px;
@@ -4529,10 +4543,6 @@
 
         /* ------ DESKTOP (≥ 1024px) ------ */
         @media (min-width: 1024px) {
-            /* Prev word panel has enough room */
-            .prev-word-panel {
-                width: 200px;
-            }
 
             /* Practice page centered nicely */
             .practice-main {
