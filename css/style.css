@@ -1130,17 +1130,24 @@
 
         .settings-panel {
             display: none;
-            animation: fadeIn 0.2s ease;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            will-change: opacity, transform;
         }
 
         .settings-panel.active {
             display: block;
+            opacity: 1;
+            transform: translateY(0);
+            animation: none;
         }
 
+        /* 使用CSS过渡替代关键帧动画，更流畅 */
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(8px);
             }
             to {
                 opacity: 1;
@@ -2467,6 +2474,12 @@
             flex-shrink: 0;
         }
 
+        /* Day Selector Wrapper */
+        .day-selector-wrapper {
+            position: relative;
+            margin-right: var(--space-sm);
+        }
+
         /* Day Selector */
         .day-selector {
             display: flex;
@@ -2555,6 +2568,29 @@
             height: 20px;
         }
 
+        /* Mode Button with text */
+        #modeBtn {
+            width: auto;
+            padding: 0 var(--space-sm);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #modeBtn:hover {
+            color: var(--accent);
+        }
+
+        /* Mode Section (contains button and dropdown) */
+        .mode-section {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
         /* Mode Dropdown */
         .mode-dropdown {
             position: absolute;
@@ -2618,8 +2654,9 @@
         .day-dropdown {
             position: absolute;
             top: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
+            right: 0;
+            left: auto;
+            transform: none;
             min-width: 220px;
             max-width: 400px;
             background: var(--bg-color);
@@ -2707,4 +2744,37 @@
 
         .user-dropdown .dropdown-item:hover {
             background: var(--bg-secondary);
+        }
+
+        /* Mode Selector Wrapper */
+        .mode-selector-wrapper {
+            position: relative;
+        }
+
+        .mode-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 var(--space-md);
+            min-width: auto;
+        }
+
+        /* Day Card Active State */
+        .day-card.active {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-subtle);
+        }
+
+        .day-card.active .day-number {
+            color: var(--accent);
+        }
+
+        .day-indicator {
+            margin-top: var(--space-xs);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
