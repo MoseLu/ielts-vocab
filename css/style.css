@@ -3620,7 +3620,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 70vh;
+            min-height: 55vh;
             gap: var(--space-lg);
             text-align: center;
             padding: var(--space-2xl);
@@ -3635,11 +3635,77 @@
             align-items: center;
             justify-content: center;
             color: var(--accent);
+            transition: transform 0.3s ease;
+        }
+
+        .radio-icon.playing {
+            animation: radioPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes radioPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
+            50% { transform: scale(1.06); box-shadow: 0 0 0 10px transparent; }
         }
 
         .radio-icon svg {
             width: 36px;
             height: 36px;
+        }
+
+        /* Playback controls row */
+        .radio-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+            margin: var(--space-md) 0;
+        }
+
+        .radio-ctrl-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-full);
+            border: 1.5px solid var(--border);
+            background: var(--bg-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .radio-ctrl-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .radio-ctrl-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .radio-play-btn {
+            width: 56px;
+            height: 56px;
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .radio-play-btn:hover {
+            background: var(--accent-hover, var(--accent));
+            filter: brightness(0.9);
+        }
+
+        .radio-play-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* Bottom action buttons */
+        .radio-bottom-btns {
+            display: flex;
+            gap: var(--space-md);
+            margin-top: var(--space-md);
         }
 
         .radio-word {
@@ -3668,13 +3734,36 @@
 
         .radio-stop-btn {
             padding: var(--space-sm) var(--space-xl);
-            background: var(--error);
-            color: white;
-            border: none;
+            background: none;
+            color: var(--error);
+            border: 1.5px solid var(--error);
             border-radius: var(--radius-md);
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .radio-stop-btn:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        .radio-home-btn {
+            padding: var(--space-sm) var(--space-xl);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .radio-home-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         /* Loading */
