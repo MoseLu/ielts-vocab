@@ -129,3 +129,15 @@ def logout(current_user):
 @token_required
 def get_current_user(current_user):
     return jsonify({'user': current_user.to_dict()}), 200
+
+
+@auth_bp.route('/avatar', methods=['PUT'])
+@token_required
+def update_avatar(current_user):
+    data = request.get_json()
+    avatar_url = data.get('avatar_url', '')
+    if len(avatar_url) > 700000:
+        return jsonify({'error': '头像图片过大，请选择小于500KB的图片'}), 400
+    current_user.avatar_url = avatar_url
+    db.session.commit()
+    return jsonify({'message': 'Avatar updated', 'user': current_user.to_dict()}), 200

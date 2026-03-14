@@ -48,6 +48,11 @@ function App() {
     setUser(null)
   }
 
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser)
+    localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+  }
+
   return (
     <Router>
       <div className="app">
@@ -58,6 +63,7 @@ function App() {
           onLogout={handleLogout}
           onModeChange={(m) => { setMode(m); localStorage.setItem('current_mode', m) }}
           onDayChange={handleDayChange}
+          onUserUpdate={handleUserUpdate}
         />
 
         <main className="main">

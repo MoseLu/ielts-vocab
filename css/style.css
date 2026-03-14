@@ -3948,3 +3948,607 @@
                 grid-template-columns: repeat(10, 1fr);
             }
         }
+
+        /* ========================================
+           ROUND 4: PRACTICE PAGE PREV-WORD + PROGRESS BAR
+        ======================================== */
+
+        /* Previous word panel - top-left of practice page */
+        .prev-word-panel {
+            position: absolute;
+            top: calc(var(--header-height) + 56px); /* below stats bar */
+            left: var(--space-xl);
+            width: 200px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md);
+            font-size: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+
+        .prev-word-panel.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .prev-word-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+        }
+
+        .prev-word-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .prev-word-phonetic {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+        }
+
+        .prev-word-def {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        /* word-pos-tag alias */
+        .word-pos-tag {
+            font-size: 10px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            padding: 1px 5px;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* Bottom progress bar */
+        .practice-bottom-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-sm) var(--space-xl);
+            border-top: 1px solid var(--border);
+            background: var(--bg-color);
+            margin-top: auto;
+        }
+
+        .bottom-progress-track {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-full);
+            position: relative;
+            overflow: visible;
+        }
+
+        .bottom-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: var(--radius-full);
+            transition: width 0.4s ease;
+            position: relative;
+        }
+
+        .bottom-progress-dot {
+            position: absolute;
+            right: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: var(--radius-full);
+            border: 2px solid var(--bg-color);
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        .bottom-progress-count {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* Completion screen updates */
+        .complete-emoji {
+            font-size: 64px;
+        }
+
+        .complete-stats-row {
+            display: flex;
+            gap: var(--space-xl);
+        }
+
+        .complete-stats-row .stat-correct {
+            color: var(--success);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .complete-stats-row .stat-wrong {
+            color: var(--error);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        /* ========================================
+           ROUND 4: AVATAR UPLOAD MODAL
+        ======================================== */
+
+        .avatar-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(2px);
+        }
+
+        .avatar-modal {
+            width: 90%;
+            max-width: 400px;
+            background: var(--bg-color);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .avatar-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-lg) var(--space-xl);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .avatar-modal-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .avatar-modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-modal-close:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .avatar-modal-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .avatar-modal-body {
+            padding: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+
+        .avatar-preview-area {
+            width: 120px;
+            height: 120px;
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            border: 3px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .avatar-preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-preview-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            background: var(--bg-tertiary);
+        }
+
+        .avatar-actions {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        .avatar-upload-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-lg);
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        .avatar-upload-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .avatar-upload-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .avatar-remove-btn {
+            padding: var(--space-sm) var(--space-lg);
+            background: none;
+            color: var(--error);
+            border: 1px solid var(--error);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        .avatar-remove-btn:hover {
+            background: var(--error-light);
+        }
+
+        .avatar-hint {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin: 0;
+        }
+
+        .avatar-error {
+            font-size: 13px;
+            color: var(--error);
+            background: var(--error-light);
+            border: 1px solid var(--error);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-md);
+            width: 100%;
+            text-align: center;
+        }
+
+        .avatar-modal-footer {
+            display: flex;
+            gap: var(--space-sm);
+            padding: var(--space-lg) var(--space-xl);
+            border-top: 1px solid var(--border);
+            justify-content: flex-end;
+        }
+
+        .avatar-cancel-btn {
+            padding: var(--space-sm) var(--space-xl);
+            background: none;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        .avatar-cancel-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .avatar-save-btn {
+            padding: var(--space-sm) var(--space-xl);
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        .avatar-save-btn:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        .avatar-save-btn:disabled,
+        .avatar-cancel-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* User avatar image in header button */
+        .user-avatar-img {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-full);
+            object-fit: cover;
+        }
+
+        /* User dropdown header section */
+        .user-dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md) var(--space-lg);
+        }
+
+        .user-dropdown-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .user-dropdown-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-dropdown-email {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .user-dropdown-divider {
+            height: 1px;
+            background: var(--border);
+            margin: var(--space-xs) 0;
+        }
+
+        /* ========================================
+           ROUND 4: RESPONSIVE LAYOUT
+        ======================================== */
+
+        /* ------ MOBILE (< 640px) ------ */
+        @media (max-width: 639px) {
+            :root {
+                --header-height: 52px;
+                --space-xl: 16px;
+                --space-2xl: 24px;
+            }
+
+            /* Header */
+            .header-inner {
+                padding: 0 var(--space-md);
+                gap: var(--space-sm);
+            }
+
+            .day-btn span,
+            .mode-btn span:first-child {
+                display: none; /* hide label text on small screens */
+            }
+
+            .header-right {
+                gap: var(--space-xs);
+            }
+
+            /* Day dropdown full-width on mobile */
+            .day-dropdown {
+                right: 0 !important;
+                left: 0 !important;
+                width: auto !important;
+                min-width: unset !important;
+                max-width: unset !important;
+                position: fixed !important;
+                top: var(--header-height) !important;
+                border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+            }
+
+            .mode-dropdown {
+                right: 0 !important;
+                left: 0 !important;
+                width: auto !important;
+                position: fixed !important;
+                top: var(--header-height) !important;
+                border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+            }
+
+            /* User dropdown */
+            .user-dropdown {
+                right: 0 !important;
+                left: 0 !important;
+                position: fixed !important;
+                top: var(--header-height) !important;
+                border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+            }
+
+            /* Home page */
+            .home-content {
+                padding: var(--space-md);
+            }
+
+            .welcome-banner {
+                padding: var(--space-md);
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-md);
+            }
+
+            .welcome-stats {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .menu-cards-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--space-sm);
+            }
+
+            /* Day grid mobile */
+            .day-grid {
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 6px;
+            }
+
+            .day-card {
+                padding: var(--space-sm) 4px;
+            }
+
+            .day-number {
+                font-size: 12px;
+            }
+
+            .day-words {
+                display: none;
+            }
+
+            /* Practice page */
+            .prev-word-panel {
+                display: none; /* hide on mobile - not enough space */
+            }
+
+            .practice-main {
+                padding: var(--space-md);
+                gap: var(--space-md);
+            }
+
+            .word-text {
+                font-size: 26px;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-sm);
+            }
+
+            .play-btn-large {
+                width: 64px;
+                height: 64px;
+            }
+
+            .play-btn-large svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            /* Dictation */
+            .dictation-container {
+                padding: var(--space-md);
+                gap: var(--space-md);
+            }
+
+            /* Settings modal */
+            .settings-modal {
+                width: 100%;
+                height: 100%;
+                max-height: 100%;
+                border-radius: 0;
+            }
+
+            .settings-overlay {
+                align-items: flex-end;
+            }
+
+            /* Avatar modal */
+            .avatar-modal {
+                width: 100%;
+                border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+                margin: 0;
+                position: absolute;
+                bottom: 0;
+            }
+
+            .avatar-modal-overlay {
+                align-items: flex-end;
+            }
+
+            /* Radio mode */
+            .radio-word {
+                font-size: 28px;
+            }
+        }
+
+        /* ------ TABLET (640px – 1023px) ------ */
+        @media (min-width: 640px) and (max-width: 1023px) {
+            /* Home page */
+            .menu-cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .day-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+            }
+
+            /* Practice page */
+            .prev-word-panel {
+                width: 160px;
+                left: var(--space-lg);
+            }
+
+            .practice-main {
+                max-width: 600px;
+            }
+
+            /* Dropdowns stay absolute (not fixed) */
+        }
+
+        /* ------ DESKTOP (≥ 1024px) ------ */
+        @media (min-width: 1024px) {
+            /* Prev word panel has enough room */
+            .prev-word-panel {
+                width: 200px;
+            }
+
+            /* Practice page centered nicely */
+            .practice-main {
+                max-width: 800px;
+            }
+
+            /* Wider home content */
+            .home-content {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+        }
+
+        /* ------ WIDE (≥ 1440px) ------ */
+        @media (min-width: 1440px) {
+            .home-content {
+                max-width: 1400px;
+            }
+        }
