@@ -12,6 +12,7 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     username = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    avatar_url = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     progress = db.relationship('UserProgress', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -27,6 +28,7 @@ class User(db.Model):
             'id': self.id,
             'email': self.email,
             'username': self.username,
+            'avatar_url': self.avatar_url,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
