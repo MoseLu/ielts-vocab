@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 function SettingsPanel({ showSettings, onClose }) {
   const [activeTab, setActiveTab] = useState('answer')
@@ -29,10 +29,33 @@ function SettingsPanel({ showSettings, onClose }) {
     }
   })
 
+  // Apply settings to document on mount and when settings change
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', settings.darkMode ? 'dark' : 'light')
+    document.documentElement.setAttribute('data-font-size', settings.fontSize || 'medium')
+  }, [settings.darkMode, settings.fontSize])
+
+  // Apply saved settings on initial load
+  useEffect(() => {
+    const saved = localStorage.getItem('app_settings')
+    if (saved) {
+      const s = JSON.parse(saved)
+      document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light')
+      document.documentElement.setAttribute('data-font-size', s.fontSize || 'medium')
+    }
+  }, [])
+
   const updateSetting = (key, value) => {
     const newSettings = { ...settings, [key]: value }
     setSettings(newSettings)
     localStorage.setItem('app_settings', JSON.stringify(newSettings))
+    // Apply immediately
+    if (key === 'darkMode') {
+      document.documentElement.setAttribute('data-theme', value ? 'dark' : 'light')
+    }
+    if (key === 'fontSize') {
+      document.documentElement.setAttribute('data-font-size', value)
+    }
   }
 
   if (!showSettings) return null

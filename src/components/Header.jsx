@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import SettingsPanel from './SettingsPanel'
 
 function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange }) {
@@ -9,14 +9,45 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
   const [showHelp, setShowHelp] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  const userMenuRef = useRef(null)
+  const dayDropdownRef = useRef(null)
+  const modeDropdownRef = useRef(null)
+
+  const isPracticePage = location.pathname === '/practice'
 
   const modeNames = {
     'smart': '智能模式',
-    'dictation': '听写模式',
     'listening': '听音选义',
-    'radio': '随身听',
-    'blind': '默写模式'
+    'meaning': '看词选义',
+    'dictation': '听写模式',
+    'radio': '随身听'
   }
+
+  const modeDescriptions = {
+    'smart': '根据水平自动调整',
+    'listening': '听发音选中文释义',
+    'meaning': '看英文选中文释义',
+    'dictation': '听发音拼写单词',
+    'radio': '连续播放音频'
+  }
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserDropdown(false)
+      }
+      if (dayDropdownRef.current && !dayDropdownRef.current.contains(e.target)) {
+        setShowDayDropdown(false)
+      }
+      if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target)) {
+        setShowModeDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleLogout = () => {
     onLogout()
@@ -26,8 +57,8 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
   return (
     <header className="header">
       <div className="header-left">
-        <div className="logo">
-          <img src="/images/logo.png" alt="Logo" className="logo-img" />
+        <div className="logo" onClick={() => navigate('/')}>
+          <img src="/images/logo.png" alt="Logo" className="logo-img" onError={(e) => { e.target.style.display='none' }} />
           <span className="logo-text">雅思冲刺</span>
         </div>
       </div>
@@ -35,60 +66,132 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
       <div className="header-center"></div>
 
       <div className="header-right">
-        {user && currentDay && (
+        {user && (
           <>
-            <div className="day-selector-wrapper">
-              <div className="day-selector" onClick={() => setShowDayDropdown(!showDayDropdown)}>
-                <span className="day-selector-current">超核心词汇 Day {currentDay}</span>
-                <svg className="day-selector-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {/* Day Selector */}
+            <div className="day-selector-wrapper" ref={dayDropdownRef}>
+              <div
+                className="day-selector"
+                onClick={() => setShowDayDropdown(!showDayDropdown)}
+              >
+                <span className="day-selector-current">
+                  超核心词汇 {currentDay ? `Day ${currentDay}` : '选择单元'}
+                </span>
+                <svg
+                  className="day-selector-arrow"
+                  style={{ transform: showDayDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                >
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </div>
               {showDayDropdown && (
                 <div className="day-dropdown">
-                  {Array.from({ length: 30 }, (_, i) => (
-                    <div
-                      key={i + 1}
-                      className={`day-dropdown-item ${currentDay === i + 1 ? 'active' : ''}`}
-                      onClick={() => {
-                        onDayChange(i + 1)
-                        setShowDayDropdown(false)
-                      }}
-                    >
-                      Day {i + 1}
-                    </div>
-                  ))}
+                  <div className="day-dropdown-header">选择学习单元</div>
+                  <div className="day-dropdown-scroll">
+                    {Array.from({ length: 30 }, (_, i) => (
+                      <div
+                        key={i + 1}
+                        className={`day-dropdown-item ${currentDay === i + 1 ? 'active' : ''}`}
+                        onClick={() => {
+                          onDayChange(i + 1)
+                          setShowDayDropdown(false)
+                          if (isPracticePage) {
+                            // reload practice
+                          }
+                        }}
+                      >
+                        <span>超核心词汇 Day {i + 1}</span>
+                        {currentDay === i + 1 && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="mode-selector-wrapper">
-              <button className="header-btn mode-btn" onClick={() => setShowModeDropdown(!showModeDropdown)}>
-                <span>{modeNames[mode]}</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </button>
+            {/* Mode Selector (only on practice page) */}
+            {isPracticePage && (
+              <div className="mode-selector-wrapper" ref={modeDropdownRef}>
+                <button
+                  className="header-btn mode-btn"
+                  onClick={() => setShowModeDropdown(!showModeDropdown)}
+                >
+                  <span>{modeNames[mode]}</span>
+                  <svg
+                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                    style={{ transform: showModeDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
 
-              {showModeDropdown && (
-                <div className="mode-dropdown">
-                  {Object.entries(modeNames).map(([key, name]) => (
-                    <div
-                      key={key}
-                      className={`mode-dropdown-item ${mode === key ? 'active' : ''}`}
-                      onClick={() => {
-                        onModeChange(key)
-                        setShowModeDropdown(false)
-                      }}
-                    >
-                      <span>{name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                {showModeDropdown && (
+                  <div className="mode-dropdown">
+                    {Object.entries(modeNames).map(([key, name]) => (
+                      <div
+                        key={key}
+                        className={`mode-dropdown-item ${mode === key ? 'active' : ''}`}
+                        onClick={() => {
+                          onModeChange(key)
+                          setShowModeDropdown(false)
+                        }}
+                      >
+                        <div className="mode-item-icon">
+                          {key === 'smart' && (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                          )}
+                          {key === 'listening' && (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                          )}
+                          {key === 'meaning' && (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                            </svg>
+                          )}
+                          {key === 'dictation' && (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                              <line x1="12" y1="19" x2="12" y2="23"></line>
+                              <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                          )}
+                          {key === 'radio' && (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="2"></circle>
+                              <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="mode-item-text">
+                          <div className="mode-item-name">{name}</div>
+                          <div className="mode-item-desc">{modeDescriptions[key]}</div>
+                        </div>
+                        {mode === key && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-            <button className="header-btn" title="设置" onClick={() => setShowSettings(true)}>
+            {/* Settings Button */}
+            <button className="header-btn icon-btn" title="设置" onClick={() => setShowSettings(true)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -97,7 +200,8 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
           </>
         )}
 
-        <button className="header-btn" title="帮助" onClick={() => setShowHelp(true)}>
+        {/* Help Button */}
+        <button className="header-btn icon-btn" title="帮助" onClick={() => setShowHelp(true)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M9.09 9a3 3 0 0 1 5.66 0 2.48 2.48 0 0 1-.6 1.85c-.55.6-1.26 1.08-1.9 1.63-.6.52-.96 1.25-.96 2.07V15"></path>
@@ -105,21 +209,37 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
           </svg>
         </button>
 
-        <button className="header-btn" title="主页" onClick={() => navigate('/')}>
+        {/* Home Button */}
+        <button className="header-btn icon-btn" title="主页" onClick={() => navigate('/')}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
         </button>
 
+        {/* User Menu */}
         {user && (
-          <div className="user-menu">
-            <button className="user-btn" onClick={() => setShowUserDropdown(!showUserDropdown)}>
-              <span>{user.username?.[0]?.toUpperCase() || '?'}</span>
+          <div className="user-menu" ref={userMenuRef}>
+            <button
+              className="user-btn"
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              title={user.username || user.email}
+            >
+              <span>{user.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}</span>
             </button>
             {showUserDropdown && (
               <div className="user-dropdown">
+                <div className="user-dropdown-header">
+                  <div className="user-dropdown-name">{user.username || user.email}</div>
+                  <div className="user-dropdown-email">{user.email}</div>
+                </div>
+                <div className="user-dropdown-divider"></div>
                 <button className="dropdown-item" onClick={handleLogout}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
                   退出登录
                 </button>
               </div>
@@ -128,6 +248,7 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
         )}
       </div>
 
+      {/* Help Modal */}
       {showHelp && (
         <div className="settings-overlay show" onClick={(e) => e.target.classList.contains('settings-overlay') && setShowHelp(false)}>
           <div className="settings-modal" style={{ maxWidth: '480px' }}>
@@ -144,32 +265,22 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>键盘快捷键</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <kbd style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>1 - 4</kbd>
-                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>选择答案选项</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <kbd style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>5</kbd>
-                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>不知道（跳过）</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <kbd style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>空格</kbd>
-                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>重新播放发音</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <kbd style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>Esc</kbd>
-                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>退出练习</span>
-                  </div>
+                  {[['1 - 4', '选择答案选项'], ['5', '不知道（跳过）'], ['空格', '重新播放发音'], ['Esc', '退出练习']].map(([key, desc]) => (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <kbd style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', minWidth: '52px', textAlign: 'center' }}>{key}</kbd>
+                      <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{desc}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div>
-                <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>学习模式</h3>
+                <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>学习模式说明</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>智能模式</strong> — 根据水平自动调整练习方式</div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>听写模式</strong> — 听发音后拼写单词</div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>听音选义</strong> — 听发音选择中文释义</div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>随身听</strong> — 连续播放单词音频</div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>默写模式</strong> — 看中文释义写出英文</div>
+                  {Object.entries(modeNames).map(([key, name]) => (
+                    <div key={key} style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>{name}</strong> — {modeDescriptions[key]}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
