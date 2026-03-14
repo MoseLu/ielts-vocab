@@ -1,0 +1,58 @@
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+
+db = SQLAlchemy()
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    username = db.Column(db.String(100), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    progress = db.relationship('UserProgress', backref='user', lazy=True, cascade='all, delete-orphan')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'username': self.username,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class UserProgress(db.Model):
+    __tablename__ = 'user_progress'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    day = db.Column(db.Integer, nullable=False)
+    current_index = db.Column(db.Integer, default=0)
+    correct_count = db.Column(db.Integer, default=0)
+    wrong_count = db.Column(db.Integer, default=0)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'day', name='unique_user_day'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'day': self.day,
+            'current_index': self.current_index,
+            'correct_count': self.correct_count,
+            'wrong_count': self.wrong_count,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

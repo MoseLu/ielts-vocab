@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "chrome": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--headless"],
+      "description": "Chrome DevTools - 控制浏览器、截图、执行脚本"
+    }
+  }
+}
