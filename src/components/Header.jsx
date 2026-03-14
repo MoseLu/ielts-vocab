@@ -86,7 +86,7 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
                 </svg>
               </div>
               {showDayDropdown && (
-                <div className="day-dropdown">
+                <div className="day-dropdown show">
                   <div className="day-dropdown-header">选择学习单元</div>
                   <div className="day-dropdown-scroll">
                     {Array.from({ length: 30 }, (_, i) => (
@@ -131,7 +131,7 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
                 </button>
 
                 {showModeDropdown && (
-                  <div className="mode-dropdown">
+                  <div className="mode-dropdown show">
                     {Object.entries(modeNames).map(([key, name]) => (
                       <div
                         key={key}
@@ -228,7 +228,7 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange })
               <span>{user.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}</span>
             </button>
             {showUserDropdown && (
-              <div className="user-dropdown">
+              <div className="user-dropdown show">
                 <div className="user-dropdown-header">
                   <div className="user-dropdown-name">{user.username || user.email}</div>
                   <div className="user-dropdown-email">{user.email}</div>
