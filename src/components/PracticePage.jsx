@@ -252,32 +252,63 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
   // ── Voice recording for dictation ────────────────────────────────────────
   const startRecording = async () => {
+    // Use Web Speech API for speech recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+
+    if (!SpeechRecognition) {
+      showToast?.('您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器', 'error')
+      return
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mr = new MediaRecorder(stream)
-      mediaRecorderRef.current = mr
-      audioChunksRef.current = []
-      mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        setTranscribing(true)
-        try {
-          const fd = new FormData()
-          fd.append('audio', blob, 'recording.webm')
-          const res = await fetch('/api/speech/transcribe', { method: 'POST', body: fd })
-          const data = await res.json()
-          if (data.text) { setSpellingInput(data.text.trim()); spellingRef.current?.focus() }
-          else showToast?.('未识别到内容', 'error')
-        } catch { showToast?.('语音识别失败', 'error') }
-        finally { setTranscribing(false) }
+      const recognition = new SpeechRecognition()
+      recognition.lang = 'en-US' // English for spelling words
+      recognition.interimResults = false
+      recognition.maxAlternatives = 1
+
+      recognition.onstart = () => {
+        setIsRecording(true)
+        showToast?.('正在录音，请说出单词...', 'info')
       }
-      mr.start()
-      setIsRecording(true)
-    } catch { showToast?.('麦克风访问失败，请检查权限', 'error') }
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        console.log('Recognized:', transcript)
+        setSpellingInput(transcript.trim())
+        spellingRef.current?.focus()
+        showToast?.('识别成功！', 'success')
+      }
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        setIsRecording(false)
+        if (event.error === 'no-speech') {
+          showToast?.('未检测到语音，请重试', 'error')
+        } else if (event.error === 'audio-capture') {
+          showToast?.('麦克风访问失败，请检查权限', 'error')
+        } else if (event.error === 'not-allowed') {
+          showToast?.('麦克风权限被拒绝，请在浏览器设置中允许访问麦克风', 'error')
+        } else {
+          showToast?.('语音识别失败: ' + event.error, 'error')
+        }
+      }
+
+      recognition.onend = () => {
+        setIsRecording(false)
+      }
+
+      recognition.start()
+      mediaRecorderRef.current = { stop: () => recognition.stop() }
+
+    } catch (error) {
+      console.error('Speech recognition error:', error)
+      showToast?.('语音识别初始化失败: ' + error.message, 'error')
+      setIsRecording(false)
+    }
   }
+
   const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') {
+    if (mediaRecorderRef.current?.stop) {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
     }
