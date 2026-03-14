@@ -3363,6 +3363,64 @@
             color: var(--text-tertiary);
         }
 
+        .word-phonetic-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            justify-content: center;
+        }
+
+        /* Small play button next to phonetic in meaning mode */
+        .play-btn-mini {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-full);
+            border: 1.5px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            flex-shrink: 0;
+        }
+
+        .play-btn-mini:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .play-btn-mini svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Dictation letter-count hint */
+        .dictation-letter-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 4px 0 16px;
+            flex-wrap: wrap;
+        }
+
+        .letter-hint-blank {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            line-height: 1;
+            letter-spacing: 0;
+            user-select: none;
+        }
+
+        .letter-hint-space {
+            display: inline-block;
+            width: 12px;
+        }
+
         .word-pos {
             font-size: 11px;
             background: var(--bg-tertiary);

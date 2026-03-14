@@ -266,6 +266,11 @@ function PracticePage({ user, currentDay, mode, showToast }) {
             </button>
             <p className="dictation-hint">听发音，拼写单词</p>
           </div>
+          <div className="dictation-letter-hint">
+            {currentWord.word.split('').map((ch, i) => (
+              ch === ' ' ? <span key={i} className="letter-hint-space" /> : <span key={i} className="letter-hint-blank">_</span>
+            ))}
+          </div>
           {spellingResult === 'wrong' && (
             <div className="spelling-answer">正确答案：<strong>{currentWord.word}</strong></div>
           )}
@@ -276,9 +281,6 @@ function PracticePage({ user, currentDay, mode, showToast }) {
               placeholder="输入你听到的单词..." disabled={!!spellingResult}
               autoComplete="off" spellCheck={false} />
             {!spellingResult && <button className="spelling-submit-btn" onClick={handleSpellingSubmit}>确认</button>}
-          </div>
-          <div className="dictation-definition">
-            <span className="word-pos-tag">{currentWord.pos}</span>{currentWord.definition}
           </div>
         </div>
         <button className="skip-btn" onClick={handleSkip}>不知道 <span className="shortcut-hint">(5)</span></button>
@@ -307,7 +309,17 @@ function PracticePage({ user, currentDay, mode, showToast }) {
           {showWord && (
             <div className="word-display">
               <div className="word-text">{currentWord.word}</div>
-              <div className="word-phonetic">{currentWord.phonetic}</div>
+              <div className="word-phonetic-row">
+                <span className="word-phonetic">{currentWord.phonetic}</span>
+                {mode === 'meaning' && (
+                  <button className="play-btn-mini" onClick={() => playWord(currentWord.word)} title="播放发音">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
