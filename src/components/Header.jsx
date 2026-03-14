@@ -47,8 +47,8 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
         setShowModeDropdown(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('pointerdown', handleClickOutside)
+    return () => document.removeEventListener('pointerdown', handleClickOutside)
   }, [])
 
   const handleLogout = () => {
@@ -77,7 +77,7 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
                 onClick={() => setShowDayDropdown(!showDayDropdown)}
               >
                 <span className="day-selector-current">
-                  超核心词汇 {currentDay ? `Day ${currentDay}` : '选择单元'}
+                  {currentDay ? `Day ${currentDay}` : '选择单元'}
                 </span>
                 <svg
                   className="day-selector-arrow"
@@ -103,7 +103,7 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
                           }
                         }}
                       >
-                        <span>超核心词汇 Day {i + 1}</span>
+                        <span>Day {i + 1}</span>
                         {currentDay === i + 1 && (
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <polyline points="20 6 9 17 4 12"></polyline>
@@ -236,26 +236,24 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
             {showUserDropdown && (
               <div className="user-dropdown show">
                 <div className="user-dropdown-header">
-                  <div className="user-dropdown-avatar">
+                  <button
+                    className="user-dropdown-avatar-btn"
+                    onClick={() => { setShowUserDropdown(false); setShowAvatarUpload(true) }}
+                    title="点击更换头像"
+                  >
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt="avatar" className="user-avatar-img" />
                     ) : (
                       <span>{user.username?.[0]?.toUpperCase() || '?'}</span>
                     )}
-                  </div>
+                    <div className="avatar-edit-hint">换</div>
+                  </button>
                   <div>
                     <div className="user-dropdown-name">{user.username || user.email}</div>
                     <div className="user-dropdown-email">{user.email}</div>
                   </div>
                 </div>
                 <div className="user-dropdown-divider"></div>
-                <button className="dropdown-item" onClick={() => { setShowUserDropdown(false); setShowAvatarUpload(true) }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                  更换头像
-                </button>
                 <button className="dropdown-item logout-item" onClick={handleLogout}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
