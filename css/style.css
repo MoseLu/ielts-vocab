@@ -2654,14 +2654,18 @@
         }
 
         .mode-dropdown-item .mode-check-icon {
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
+            width: 16px;
+            height: 16px;
             flex-shrink: 0;
             margin-left: auto;
             color: var(--accent);
+        }
+
+        .mode-dropdown-item.active .mode-check-icon {
+            display: flex;
         }
 
         /* Day Dropdown */

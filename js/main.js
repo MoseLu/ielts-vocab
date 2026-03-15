@@ -401,13 +401,22 @@ function setupModeUI() {
             // Show input for spelling
             if (optionsGrid) {
                 optionsGrid.innerHTML = `
-                    <div class="spelling-input-area">
-                        <input type="text" class="spelling-input" id="spellingInput" 
+                    <div class="spelling-input-wrapper">
+                        <input type="text" class="spelling-input" id="spellingInput"
                                placeholder="请拼写听到的单词" autocomplete="off" spellcheck="false">
-                        <button class="spelling-submit" id="spellingSubmit">提交</button>
+                        <button class="mic-btn" id="micBtn" title="语音输入" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                        </button>
+                        <button class="spelling-submit-btn" id="spellingSubmit" type="button">提交</button>
                     </div>
                 `;
                 setupSpellingInput();
+                setupMicButton();
             }
             break;
             
@@ -433,17 +442,117 @@ function setupModeUI() {
 function setupSpellingInput() {
     const input = document.getElementById('spellingInput');
     const submit = document.getElementById('spellingSubmit');
-    
+
     if (!input || !submit) return;
-    
+
     input.focus();
-    
+
     submit.addEventListener('click', () => checkSpelling());
-    
+
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             checkSpelling();
         }
+    });
+}
+
+// ========== MIC BUTTON ==========
+let _mediaRecorder = null;
+let _audioChunks = [];
+
+function setupMicButton() {
+    const micBtn = document.getElementById('micBtn');
+    if (!micBtn) return;
+
+    micBtn.addEventListener('click', () => {
+        if (_mediaRecorder && _mediaRecorder.state === 'recording') {
+            _mediaRecorder.stop();
+        } else {
+            startVoiceInput();
+        }
+    });
+}
+
+function startVoiceInput() {
+    const micBtn = document.getElementById('micBtn');
+    const input = document.getElementById('spellingInput');
+    if (!micBtn || !input) return;
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+        showToast('浏览器不支持录音', 'error');
+        return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        _audioChunks = [];
+        _mediaRecorder = new MediaRecorder(stream);
+
+        // Enter recording state
+        micBtn.classList.add('recording');
+        micBtn.title = '点击停止录音';
+        input.placeholder = '录音中...';
+
+        _mediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) _audioChunks.push(e.data);
+        };
+
+        _mediaRecorder.onstop = () => {
+            // Stop all tracks
+            stream.getTracks().forEach(t => t.stop());
+
+            // Enter transcribing state
+            micBtn.classList.remove('recording');
+            micBtn.classList.add('transcribing');
+            micBtn.title = '识别中...';
+            input.placeholder = '识别中...';
+
+            // Change mic icon to spinner
+            micBtn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+            </svg>`;
+
+            const blob = new Blob(_audioChunks, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('audio', blob, 'recording.webm');
+
+            fetch('/api/speech/transcribe', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    micBtn.classList.remove('transcribing');
+                    micBtn.title = '语音输入';
+                    // Restore mic icon
+                    micBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>`;
+                    if (data.text) {
+                        input.value = data.text.trim().toLowerCase();
+                        input.placeholder = '请拼写听到的单词';
+                        input.focus();
+                    } else {
+                        input.placeholder = '未识别到语音，请重试';
+                        setTimeout(() => { input.placeholder = '请拼写听到的单词'; }, 2000);
+                    }
+                })
+                .catch(() => {
+                    micBtn.classList.remove('transcribing');
+                    micBtn.title = '语音输入';
+                    micBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>`;
+                    input.placeholder = '识别失败，请重试';
+                    setTimeout(() => { input.placeholder = '请拼写听到的单词'; }, 2000);
+                });
+        };
+
+        _mediaRecorder.start();
+    }).catch(() => {
+        showToast('无法访问麦克风，请检查权限', 'error');
     });
 }
 
