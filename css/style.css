@@ -2650,6 +2650,18 @@
 
         .mode-dropdown-item .mode-item-text {
             font-weight: 500;
+            flex: 1;
+        }
+
+        .mode-dropdown-item .mode-check-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            margin-left: auto;
+            color: var(--accent);
         }
 
         /* Day Dropdown */
@@ -3897,25 +3909,37 @@
             cursor: pointer;
             flex-shrink: 0;
             transition: all var(--transition-fast);
+            border-left: 1px solid var(--border);
+            background: var(--bg-secondary);
         }
 
         .mic-btn:hover {
             color: var(--accent);
+            background: var(--bg-hover);
         }
 
         .mic-btn.recording {
-            color: var(--error);
+            color: white;
+            background: var(--error);
+            border-color: var(--error);
             animation: micPulse 1s ease-in-out infinite;
         }
 
         .mic-btn.transcribing {
             color: var(--accent);
             cursor: wait;
+            background: var(--bg-hover);
         }
 
         @keyframes micPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
         }
 
         .mic-btn svg {

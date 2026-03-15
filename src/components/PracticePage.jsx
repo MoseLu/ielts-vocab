@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { io } from 'socket.io-client'
 
 function shuffleArray(arr) {
   const a = [...arr]
@@ -252,63 +253,126 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
   // ── Voice recording for dictation ────────────────────────────────────────
   const startRecording = async () => {
-    // Use Web Speech API for speech recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-
-    if (!SpeechRecognition) {
-      showToast?.('您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器', 'error')
-      return
-    }
-
     try {
-      const recognition = new SpeechRecognition()
-      recognition.lang = 'en-US' // English for spelling words
-      recognition.interimResults = false
-      recognition.maxAlternatives = 1
+      // Connect to WebSocket server
+      const socket = io('http://localhost:5000/speech', {
+        transports: ['websocket']
+      })
 
-      recognition.onstart = () => {
+      let isRecordingActive = true  // Track recording state locally
+
+      socket.on('connect', () => {
+        console.log('Connected to speech recognition service')
+      })
+
+      socket.on('recognition_started', (data) => {
+        console.log('Recognition started:', data)
         setIsRecording(true)
         showToast?.('正在录音，请说出单词...', 'info')
-      }
+      })
 
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript
-        console.log('Recognized:', transcript)
-        setSpellingInput(transcript.trim())
-        spellingRef.current?.focus()
-        showToast?.('识别成功！', 'success')
-      }
+      socket.on('partial_result', (data) => {
+        console.log('Partial result:', data)
+        if (data.text) {
+          setSpellingInput(data.text)
+        }
+      })
 
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error)
+      socket.on('final_result', (data) => {
+        console.log('Final result:', data)
+        if (data.text) {
+          setSpellingInput(data.text)
+          showToast?.('识别成功！', 'success')
+        }
+      })
+
+      socket.on('recognition_complete', () => {
+        console.log('Recognition complete')
+        stopRecording()
+      })
+
+      socket.on('recognition_error', (data) => {
+        console.error('Recognition error:', data.error)
+        showToast?.('识别失败: ' + data.error, 'error')
+        isRecordingActive = false
         setIsRecording(false)
-        if (event.error === 'no-speech') {
-          showToast?.('未检测到语音，请重试', 'error')
-        } else if (event.error === 'audio-capture') {
-          showToast?.('麦克风访问失败，请检查权限', 'error')
-        } else if (event.error === 'not-allowed') {
-          showToast?.('麦克风权限被拒绝，请在浏览器设置中允许访问麦克风', 'error')
-        } else {
-          showToast?.('语音识别失败: ' + event.error, 'error')
+      })
+
+      socket.on('recognition_stopped', () => {
+        console.log('Recognition stopped')
+        isRecordingActive = false
+        socket.disconnect()
+      })
+
+      // Start recognition session
+      socket.emit('start_recognition', {
+        model: 'fun-asr-realtime',
+        language: 'en-US'
+      })
+
+      // Get microphone access and start streaming audio
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true
+        }
+      })
+
+      // Use AudioContext to process audio in real-time
+      const audioContext = new AudioContext({ sampleRate: 16000 })
+      const source = audioContext.createMediaStreamSource(stream)
+      const processor = audioContext.createScriptProcessor(4096, 1, 1)
+
+      processor.onaudioprocess = (event) => {
+        if (isRecordingActive) {
+          const inputData = event.inputBuffer.getChannelData(0)
+          // Convert Float32 to Int16 PCM
+          const pcmData = new Int16Array(inputData.length)
+          for (let i = 0; i < inputData.length; i++) {
+            const s = Math.max(-1, Math.min(1, inputData[i]))
+            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
+          }
+          // Send PCM data to server
+          socket.emit('audio_data', pcmData.buffer)
         }
       }
 
-      recognition.onend = () => {
-        setIsRecording(false)
+      source.connect(processor)
+      processor.connect(audioContext.destination)
+
+      // Store references for cleanup
+      mediaRecorderRef.current = {
+        socket,
+        stream,
+        audioContext,
+        processor,
+        stop: () => {
+          isRecordingActive = false
+          processor.disconnect()
+          source.disconnect()
+          audioContext.close()
+          stream.getTracks().forEach(track => track.stop())
+          socket.emit('stop_recognition')
+        }
       }
 
-      recognition.start()
-      mediaRecorderRef.current = { stop: () => recognition.stop() }
-
     } catch (error) {
-      console.error('Speech recognition error:', error)
-      showToast?.('语音识别初始化失败: ' + error.message, 'error')
+      console.error('Microphone access error:', error)
+      if (error.name === 'NotAllowedError') {
+        showToast?.('麦克风权限被拒绝，请在浏览器设置中允许访问麦克风', 'error')
+      } else if (error.name === 'NotFoundError') {
+        showToast?.('未找到麦克风设备', 'error')
+      } else {
+        showToast?.('无法访问麦克风: ' + error.message, 'error')
+      }
       setIsRecording(false)
     }
   }
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current?.stop) {
+    if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
     }
@@ -570,6 +634,10 @@ function PracticePage({ user, currentDay, mode, showToast }) {
                 {transcribing ? (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin">
                     <circle cx="12" cy="12" r="10" strokeDasharray="30 10"></circle>
+                  </svg>
+                ) : isRecording ? (
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
                   </svg>
                 ) : (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

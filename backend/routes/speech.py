@@ -1,15 +1,25 @@
 import os
 import tempfile
+import subprocess
 from pathlib import Path
 from flask import Blueprint, request, jsonify
 from dotenv import load_dotenv
-import requests
+import dashscope
+from dashscope.audio.asr import Recognition, RecognitionCallback, RecognitionResult
+import imageio_ffmpeg
 
 # Load .env from backend directory
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(env_path)
 
+# Get FFmpeg executable path
+FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
+
 speech_bp = Blueprint('speech', __name__)
+
+# Configure DashScope
+dashscope.api_key = os.environ.get('DASHSCOPE_API_KEY', '')
+dashscope.base_websocket_api_url = 'wss://dashscope.aliyuncs.com/api-ws/v1/inference'
 
 
 @speech_bp.route('/transcribe', methods=['POST'])
@@ -32,60 +42,109 @@ def transcribe():
         audio_file.save(tmp.name)
         tmp_path = tmp.name
 
+    # Debug: Save a copy of the uploaded file
+    debug_path = tempfile.mktemp(suffix=suffix)
+    import shutil
+    shutil.copy2(tmp_path, debug_path)
+    print(f"Debug: Audio saved to {debug_path}")
+
+    wav_path = None
     try:
-        api_key = os.environ.get('DASHSCOPE_API_KEY', '')
-        base_url = os.environ.get('DASHSCOPE_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
-        model = os.environ.get('ASR_MODEL', 'fun-asr-mtl-2025-08-25')
+        model = os.environ.get('ASR_MODEL', 'fun-asr-realtime')
 
         print(f"\n=== Speech Recognition Request ===")
         print(f"Model: {model}")
         print(f"File: audio{suffix}")
         print(f"Content-Type: {content_type}")
 
-        # Read audio file
-        with open(tmp_path, 'rb') as f:
-            audio_data = f.read()
-
-        print(f"File size: {len(audio_data)} bytes")
-
-        # Use audio transcriptions endpoint
-        files = {
-            'file': (f'audio{suffix}', audio_data, content_type or 'audio/webm')
-        }
-        headers = {
-            'Authorization': f'Bearer {api_key}'
-        }
-        data = {
-            'model': model
-        }
-
-        response = requests.post(
-            f'{base_url}/audio/transcriptions',
-            headers=headers,
-            files=files,
-            data=data,
-            timeout=30
-        )
-
-        print(f"Response Status: {response.status_code}")
-        print(f"Response Body: {response.text}")
-
-        if response.status_code != 200:
-            error_msg = f'API error ({response.status_code})'
+        # Convert audio to WAV format if needed
+        audio_format = 'wav'
+        if suffix != '.wav':
             try:
-                error_data = response.json()
-                if 'error' in error_data:
-                    error_msg = error_data['error'].get('message', error_msg)
-            except:
-                error_msg = response.text or error_msg
-            print(f"Error: {error_msg}")
-            return jsonify({'error': error_msg}), 500
+                # Convert to WAV using ffmpeg
+                wav_path = tmp_path.replace(suffix, '.wav')
+                result = subprocess.run(
+                    [FFMPEG_EXE, '-i', tmp_path, '-ar', '16000', '-ac', '1', '-f', 'wav', wav_path, '-y'],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                if result.returncode != 0:
+                    print(f"FFmpeg error: {result.stderr}")
+                    raise Exception(f"音频转换失败: {result.stderr}")
 
-        result = response.json()
-        text = result.get('text', '')
+                print(f"Converted {suffix} to WAV format")
+                audio_path = wav_path
+            except FileNotFoundError:
+                # FFmpeg not found, try to process original file
+                print("FFmpeg not found, trying to process original file")
+                audio_format = 'pcm' if 'webm' in content_type else suffix[1:]
+                audio_path = tmp_path
+        else:
+            audio_path = tmp_path
 
-        print(f"Recognized text: {text}")
-        return jsonify({'text': text.strip()})
+        try:
+            from dashscope.audio.asr import Recognition
+
+            # Create a simple callback to capture results
+            result_text = []
+
+            class SimpleCallback(RecognitionCallback):
+                def on_event(self, result: RecognitionResult):
+                    sentence = result.get_sentence()
+                    # Only collect text when sentence ends
+                    if RecognitionResult.is_sentence_end(sentence):
+                        text = sentence.get('text', '').strip()
+                        if text:
+                            result_text.append(text)
+                            print(f"Final result: {text}")
+
+                def on_complete(self):
+                    print("Recognition complete")
+
+                def on_error(self, message):
+                    print(f"Recognition error: {message}")
+
+            callback = SimpleCallback()
+
+            recognition = Recognition(
+                model=model,
+                callback=callback,
+                format=audio_format,
+                sample_rate=16000
+            )
+
+            # Read and send audio file
+            with open(audio_path, 'rb') as f:
+                audio_data = f.read()
+
+            print(f"File size: {len(audio_data)} bytes")
+
+            # Start recognition
+            recognition.start()
+
+            # Send audio in chunks
+            chunk_size = 3200
+            offset = 0
+            while offset < len(audio_data):
+                chunk = audio_data[offset:offset + chunk_size]
+                recognition.send_audio_frame(chunk)
+                offset += chunk_size
+
+            # Stop recognition
+            recognition.stop()
+
+            # Combine results
+            final_text = ' '.join(result_text) if result_text else ''
+
+            print(f"Recognized text: {final_text}")
+            return jsonify({'text': final_text.strip()})
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Error: {str(e)}")
+            return jsonify({'error': f'识别失败: {str(e)}'}), 500
 
     except Exception as e:
         import traceback
@@ -98,3 +157,8 @@ def transcribe():
             os.unlink(tmp_path)
         except OSError:
             pass
+        if wav_path:
+            try:
+                os.unlink(wav_path)
+            except OSError:
+                pass

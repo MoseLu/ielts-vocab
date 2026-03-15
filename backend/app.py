@@ -1,11 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
+from flask_socketio import SocketIO
 from config import Config
 from models import db
 from routes.auth import auth_bp, init_auth
 from routes.progress import progress_bp
 from routes.vocabulary import vocabulary_bp
 from routes.speech import speech_bp
+from routes.speech_socketio import register_socketio_events
 
 
 def create_app(config_class=Config):
@@ -35,6 +37,12 @@ def create_app(config_class=Config):
 # Create app instance
 app = create_app()
 
+# Initialize SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Register SocketIO events for speech recognition
+register_socketio_events(socketio)
+
 
 if __name__ == '__main__':
     print("=" * 50)
@@ -52,5 +60,9 @@ if __name__ == '__main__':
     print("  GET  /api/progress/<day> - Get day progress")
     print("  GET  /api/vocabulary    - Get all vocabulary")
     print("  GET  /api/vocabulary/day/<day> - Get day vocabulary")
+    print()
+    print("WebSocket Endpoints:")
+    print("  /speech - Real-time speech recognition")
     print("=" * 50)
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
