@@ -267,8 +267,6 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
       socket.on('recognition_started', (data) => {
         console.log('Recognition started:', data)
-        setIsRecording(true)
-        showToast?.('正在录音，请说出单词...', 'info')
       })
 
       socket.on('partial_result', (data) => {
@@ -306,8 +304,8 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
       // Start recognition session
       socket.emit('start_recognition', {
-        model: 'fun-asr-realtime',
-        language: 'en-US'
+        model: 'qwen3-asr-flash-realtime',
+        language: 'en'
       })
 
       // Get microphone access and start streaming audio
@@ -319,6 +317,9 @@ function PracticePage({ user, currentDay, mode, showToast }) {
           noiseSuppression: true
         }
       })
+
+      // Show recording UI immediately after permission granted
+      setIsRecording(true)
 
       // Use AudioContext to process audio in real-time
       const audioContext = new AudioContext({ sampleRate: 16000 })
