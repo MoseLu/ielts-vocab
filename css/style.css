@@ -2638,9 +2638,8 @@
             flex-shrink: 0;
         }
 
-        .mode-dropdown-item.active .mode-item-icon {
-            background: var(--accent);
-            color: white;
+        .mode-dropdown-item.active .mode-item-name {
+            color: var(--accent);
         }
 
         .mode-dropdown-item .mode-item-icon svg {
@@ -2654,14 +2653,18 @@
         }
 
         .mode-dropdown-item .mode-check-icon {
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
+            width: 18px;
+            height: 18px;
             flex-shrink: 0;
             margin-left: auto;
             color: var(--accent);
+        }
+
+        .mode-dropdown-item.active .mode-check-icon {
+            display: flex;
         }
 
         /* Day Dropdown */
@@ -3638,7 +3641,7 @@
         .spelling-input-wrapper {
             display: flex;
             width: 100%;
-            gap: var(--space-sm);
+            gap: 0;
             border: 2px solid var(--border);
             border-radius: var(--radius-lg);
             overflow: hidden;

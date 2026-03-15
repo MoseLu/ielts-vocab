@@ -50,8 +50,8 @@ def register_socketio_events(socketio):
         from flask import request
 
         session_id = request.sid
-        model = data.get('model', 'fun-asr-realtime')
-        language = data.get('language', 'en-US')  # For English words
+        model = data.get('model', 'qwen3-asr-flash-realtime')
+        language = data.get('language', 'en')  # For English words
 
         print(f"Starting recognition session: {session_id}")
         print(f"Model: {model}, Language: {language}")
@@ -90,7 +90,8 @@ def register_socketio_events(socketio):
                 model=model,
                 callback=callback,
                 format='pcm',
-                sample_rate=16000
+                sample_rate=16000,
+                language_hints=['en', 'zh'],
             )
 
             # Start recognition
