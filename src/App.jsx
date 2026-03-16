@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Header from './components/Header'
+import LeftSidebar from './components/LeftSidebar'
 import AuthPage from './components/AuthPage'
 import HomePage from './components/HomePage'
 import PracticePage from './components/PracticePage'
+import VocabBookPage from './components/VocabBookPage'
 import Toast from './components/Toast'
 
 function App() {
@@ -66,8 +68,10 @@ function App() {
           onUserUpdate={handleUserUpdate}
         />
 
-        <main className="main">
-          <Routes>
+        <div className="app-body">
+          {user && <LeftSidebar />}
+          <main className="main">
+            <Routes>
             <Route
               path="/login"
               element={
@@ -86,6 +90,17 @@ function App() {
 
             <Route
               path="/"
+              element={
+                user ? (
+                  <VocabBookPage />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+
+            <Route
+              path="/plan"
               element={
                 user ? (
                   <HomePage
@@ -121,6 +136,7 @@ function App() {
             <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
           </Routes>
         </main>
+        </div>
 
         {toast && <Toast message={toast.message} type={toast.type} />}
       </div>

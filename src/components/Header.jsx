@@ -10,6 +10,7 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
   const [showHelp, setShowHelp] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAvatarUpload, setShowAvatarUpload] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
   const userMenuRef = useRef(null)
@@ -17,6 +18,8 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
   const modeDropdownRef = useRef(null)
 
   const isPracticePage = location.pathname === '/practice'
+  const isHomePage = location.pathname === '/'
+  const isPlanPage = location.pathname === '/plan'
 
   const modeNames = {
     'smart': '智能模式',
@@ -33,6 +36,12 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
     'dictation': '听发音拼写单词',
     'radio': '连续播放音频'
   }
+
+  // Main navigation items
+  const mainNavItems = [
+    { key: 'plan', label: '学习中心', path: '/plan' },
+    { key: 'books', label: '词书', path: '/' },
+  ]
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -56,6 +65,14 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
     navigate('/login')
   }
 
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      // TODO: Implement search
+      console.log('Search:', searchQuery)
+    }
+  }
+
   return (
     <header className="header">
       <div className="header-left">
@@ -63,9 +80,20 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
           <img src="/images/logo.png" alt="Logo" className="logo-img" onError={(e) => { e.target.style.display='none' }} />
           <span className="logo-text">雅思冲刺</span>
         </div>
-      </div>
 
-      <div className="header-center"></div>
+        {/* Main Navigation */}
+        <nav className="main-nav">
+          {mainNavItems.map(item => (
+            <button
+              key={item.key}
+              className={`main-nav-item ${location.pathname === item.path ? 'active' : ''}`}
+              onClick={() => navigate(item.path)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
       <div className="header-right">
         {user && (
@@ -210,14 +238,6 @@ function Header({ user, currentDay, mode, onLogout, onModeChange, onDayChange, o
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M9.09 9a3 3 0 0 1 5.66 0 2.48 2.48 0 0 1-.6 1.85c-.55.6-1.26 1.08-1.9 1.63-.6.52-.96 1.25-.96 2.07V15"></path>
             <circle cx="12" cy="18.5" r="0.8" fill="currentColor" stroke="none"></circle>
-          </svg>
-        </button>
-
-        {/* Home Button */}
-        <button className="header-btn icon-btn" title="主页" onClick={() => navigate('/')}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
         </button>
 
