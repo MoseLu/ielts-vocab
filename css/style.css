@@ -5488,3 +5488,677 @@
                 display: none;
             }
         }
+
+        /* ========================================
+           VOCAB BOOK PAGE - 新版词书页面
+        ======================================== */
+
+        /* Filter area */
+        .vb-filters {
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 32px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .vb-filter-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .vb-filter-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .vb-filter-btn {
+            padding: 6px 14px;
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: color var(--transition-fast);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .vb-filter-btn:hover {
+            color: var(--accent);
+        }
+
+        .vb-filter-btn.active {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .vb-filter-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 14px;
+            right: 14px;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 1px;
+        }
+
+        /* Search input */
+        .vb-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--bg-color);
+            min-width: 160px;
+            align-self: flex-start;
+            margin-top: 4px;
+        }
+
+        .vb-search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 13px;
+            color: var(--text-primary);
+            min-width: 80px;
+        }
+
+        .vb-search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .vb-search-icon {
+            width: 14px;
+            height: 14px;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+        }
+
+        /* Book grid */
+        .vb-main {
+            flex: 1;
+            padding: 24px 32px;
+            background: var(--bg-secondary);
+            min-height: calc(100vh - 160px);
+        }
+
+        .vb-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 1200px) {
+            .vb-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .vb-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .vb-grid { grid-template-columns: repeat(2, 1fr); }
+            .vb-filters { padding: 12px 16px; }
+            .vb-main { padding: 16px; }
+        }
+
+        /* Book card - minimal style */
+        .vb-card {
+            position: relative;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            min-height: 90px;
+        }
+
+        .vb-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .vb-card-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 2px 6px;
+            background: var(--accent);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .vb-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.45;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .vb-card-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .vb-card-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .vb-card-desc {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .vb-card-progress {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .vb-card-progress-bar {
+            flex: 1;
+            height: 3px;
+            background: var(--bg-tertiary);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .vb-card-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 99px;
+        }
+
+        .vb-card-progress-text {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+        }
+
+        /* ========================================
+           STUDY CENTER PAGE - 学习中心 (新版)
+        ======================================== */
+
+        .study-center-page {
+            padding: 32px;
+            min-height: calc(100vh - var(--header-height));
+            background: var(--bg-secondary);
+        }
+
+        .study-center-grid {
+            display: grid;
+            grid-template-columns: 260px 180px 1fr 1fr 120px;
+            gap: 16px;
+            max-width: 1100px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .study-center-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .study-center-page { padding: 16px; }
+            .study-center-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Base book card */
+        .study-book-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .study-book-card:hover {
+            border-color: #ccc;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Main plan card */
+        .study-book-card-main {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .study-book-header {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .study-book-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .study-book-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .study-book-progress-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .study-book-progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .study-book-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 99px;
+            transition: width 0.4s ease;
+        }
+
+        .study-book-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* Quick-start CTA card */
+        .study-book-card-cta {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .study-book-card-cta:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        .study-cta-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .study-cta-icon svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+        }
+
+        .study-cta-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .study-cta-subtitle {
+            font-size: 12px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        /* Wrong words review card */
+        .study-book-card-review {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .study-review-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--accent);
+        }
+
+        .study-review-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .study-review-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .study-review-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Stats card */
+        .study-book-card-stats {
+            cursor: default;
+        }
+
+        .study-stats-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .study-stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .study-stat-num {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1.2;
+        }
+
+        .study-stat-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        /* Add custom book card */
+        .study-add-card {
+            background: var(--bg-color);
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            transition: all var(--transition-fast);
+            min-height: 90px;
+            text-align: center;
+        }
+
+        .study-add-card:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .study-add-card svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* ========================================
+           CHAPTER SELECTION MODAL
+        ======================================== */
+
+        .chapter-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chapter-modal {
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 900px;
+            max-width: 95vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            animation: modalFadeIn 0.2s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .chapter-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .chapter-modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chapter-modal-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .chapter-modal-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .chapter-continue-btn {
+            padding: 8px 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .chapter-continue-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .chapter-modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .chapter-modal-close:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .chapter-modal-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .chapter-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+        }
+
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 700px) {
+            .chapter-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .chapter-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 12px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            position: relative;
+        }
+
+        .chapter-card:hover {
+            border-color: #ccc;
+            background: var(--bg-secondary);
+        }
+
+        .chapter-card.current {
+            border-color: var(--accent);
+            border-width: 2px;
+        }
+
+        .chapter-card.completed {
+            background: var(--success-light);
+            border-color: var(--success);
+        }
+
+        .chapter-card-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .chapter-card-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .chapter-card-status {
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .chapter-card-status.done {
+            color: var(--success);
+        }
+
+        .chapter-card-status.inprogress {
+            color: var(--text-secondary);
+        }
+
+        .chapter-card-recent {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            font-size: 10px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ========================================
+           HEADER - Updated search box style
+        ======================================== */
+
+        .header-search-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            min-width: 220px;
+            transition: border-color var(--transition-fast);
+        }
+
+        .header-search-box:focus-within {
+            border-color: var(--accent);
+        }
+
+        .header-search-box svg {
+            width: 14px;
+            height: 14px;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+        }
+
+        .header-search-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .header-search-box input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .header-search-shortcut {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
