@@ -384,6 +384,7 @@
             transition: all var(--transition-fast);
             color: var(--text-tertiary);
             text-decoration: none;
+            position: relative;
         }
 
         .left-sidebar-item:hover {
@@ -399,9 +400,11 @@
             content: '';
             position: absolute;
             left: 0;
+            top: 0;
+            bottom: 0;
             width: 3px;
-            height: 100%;
             background: var(--accent);
+            border-radius: 0 2px 2px 0;
         }
 
         .left-sidebar-icon {
@@ -5699,6 +5702,20 @@
             white-space: nowrap;
         }
 
+        .vb-card-added {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--accent);
+            margin-top: 8px;
+        }
+
+        .vb-card-added svg {
+            width: 14px;
+            height: 14px;
+        }
+
         /* ========================================
            STUDY CENTER PAGE - 学习中心 (新版)
         ======================================== */
@@ -5714,7 +5731,7 @@
             grid-template-columns: 260px 180px 1fr 1fr 120px;
             gap: 16px;
             max-width: 1100px;
-            align-items: start;
+            align-items: stretch;
         }
 
         @media (max-width: 1024px) {
@@ -5750,6 +5767,39 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            position: relative;
+        }
+
+        .study-book-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all var(--transition-fast);
+        }
+
+        .study-book-card-main:hover .study-book-remove {
+            opacity: 1;
+        }
+
+        .study-book-remove:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .study-book-remove svg {
+            width: 14px;
+            height: 14px;
         }
 
         .study-book-header {
@@ -5846,7 +5896,9 @@
         .study-book-card-review {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 14px;
+            text-align: center;
         }
 
         .study-review-icon {
@@ -5881,6 +5933,9 @@
         /* Stats card */
         .study-book-card-stats {
             cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .study-stats-row {
@@ -5936,6 +5991,159 @@
         .study-add-card svg {
             width: 22px;
             height: 22px;
+        }
+
+        /* ========================================
+           ERRORS PAGE
+        ======================================== */
+
+        .errors-page {
+            padding: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .errors-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .errors-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .errors-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .errors-practice-btn,
+        .errors-clear-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .errors-practice-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+        }
+
+        .errors-practice-btn:hover {
+            background: var(--accent-dark);
+        }
+
+        .errors-clear-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .errors-clear-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .errors-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .errors-empty svg {
+            width: 64px;
+            height: 64px;
+            color: var(--text-tertiary);
+            margin-bottom: 16px;
+        }
+
+        .errors-empty p {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .errors-empty span {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        .errors-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .errors-item {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-rows: auto auto;
+            gap: 4px 16px;
+            align-items: center;
+            transition: all var(--transition-fast);
+        }
+
+        .errors-item:hover {
+            border-color: var(--accent);
+        }
+
+        .errors-item-word {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .errors-item-phonetic {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .errors-item-definition {
+            font-size: 13px;
+            color: var(--text-secondary);
+            grid-column: 1;
+        }
+
+        .errors-item-remove {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+        }
+
+        .errors-item-remove:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .errors-item-remove svg {
+            width: 16px;
+            height: 16px;
         }
 
         /* ========================================
@@ -6114,6 +6322,169 @@
             font-size: 10px;
             color: var(--accent);
             font-weight: 600;
+        }
+
+        /* ========================================
+           PLAN MODAL - 学习计划选择弹窗
+        ======================================== */
+
+        .plan-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .plan-modal {
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 480px;
+            max-width: 95vw;
+            box-shadow: var(--shadow-xl);
+            animation: modalFadeIn 0.2s ease;
+        }
+
+        .plan-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .plan-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .plan-modal-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .plan-modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            flex-shrink: 0;
+        }
+
+        .plan-modal-close:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .plan-modal-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .plan-modal-progress {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .plan-progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .plan-progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .plan-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .plan-continue-btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        .plan-continue-btn:hover {
+            background: var(--accent-dark);
+        }
+
+        .plan-modal-body {
+            padding: 20px 24px;
+        }
+
+        .plan-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .plan-options {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .plan-options { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .plan-option-card {
+            padding: 16px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .plan-option-card:hover {
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+        }
+
+        .plan-option-daily {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .plan-option-days {
+            font-size: 12px;
+            color: var(--text-tertiary);
         }
 
         /* ========================================

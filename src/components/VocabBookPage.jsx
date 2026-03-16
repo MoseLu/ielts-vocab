@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVocabBooks, useAllBookProgress } from '../hooks/useVocabBooks'
+import PlanModal from './PlanModal'
 
 const CATEGORY_LABELS = {
   listening: '听力',
@@ -43,7 +44,7 @@ const LEVEL_TYPES = [
   { key: 'advanced', label: '高级' },
 ]
 
-function VocabBookCard({ book, progress, onSelect }) {
+function VocabBookCard({ book, progress, onSelect, isInMyBooks }) {
   const currentIndex = progress?.current_index || 0
   const progressPercent = progress
     ? Math.round((currentIndex / book.word_count) * 100)
@@ -70,6 +71,14 @@ function VocabBookCard({ book, progress, onSelect }) {
           <span className="vb-card-progress-text">{currentIndex}/{book.word_count}</span>
         </div>
       )}
+      {isInMyBooks && (
+        <div className="vb-card-added">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          已添加
+        </div>
+      )}
     </div>
   )
 }
@@ -80,6 +89,8 @@ function VocabBookPage() {
   const [activeCategory, setActiveCategory] = useState(null)
   const [activeLevel, setActiveLevel] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [myBooks, setMyBooks] = useState([])
+  const [selectedBook, setSelectedBook] = useState(null)
 
   const { books, loading, error } = useVocabBooks({
     category: activeCategory,
@@ -87,9 +98,35 @@ function VocabBookPage() {
   })
   const { progressMap } = useAllBookProgress()
 
+  // Load my books
+  useEffect(() => {
+    const savedBooks = localStorage.getItem('my_books')
+    if (savedBooks) {
+      try {
+        setMyBooks(JSON.parse(savedBooks))
+      } catch (e) {
+        setMyBooks([])
+      }
+    }
+  }, [])
+
   const handleSelectBook = (book) => {
-    localStorage.setItem('selected_book', JSON.stringify(book))
-    navigate(`/practice?book=${book.id}`)
+    // Add to my books if not already added
+    if (!myBooks.find(b => b.id === book.id)) {
+      const newBooks = [...myBooks, book]
+      setMyBooks(newBooks)
+      localStorage.setItem('my_books', JSON.stringify(newBooks))
+    }
+    // Show plan modal
+    setSelectedBook(book)
+  }
+
+  const handleStartStudy = (plan) => {
+    if (plan) {
+      localStorage.setItem('study_plan', JSON.stringify(plan))
+    }
+    localStorage.setItem('selected_book', JSON.stringify(selectedBook))
+    navigate(`/practice?book=${selectedBook.id}`)
   }
 
   const filteredBooks = searchQuery.trim()
@@ -183,11 +220,22 @@ function VocabBookPage() {
                 book={book}
                 progress={progressMap[book.id]}
                 onSelect={handleSelectBook}
+                isInMyBooks={myBooks.some(b => b.id === book.id)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Plan Modal */}
+      {selectedBook && (
+        <PlanModal
+          book={selectedBook}
+          progress={progressMap[selectedBook.id]}
+          onClose={() => setSelectedBook(null)}
+          onStart={handleStartStudy}
+        />
+      )}
     </div>
   )
 }

@@ -6,6 +6,7 @@ import AuthPage from './components/AuthPage'
 import HomePage from './components/HomePage'
 import PracticePage from './components/PracticePage'
 import VocabBookPage from './components/VocabBookPage'
+import ErrorsPage from './components/ErrorsPage'
 import Toast from './components/Toast'
 
 function App() {
@@ -103,11 +104,7 @@ function App() {
               path="/plan"
               element={
                 user ? (
-                  <HomePage
-                    user={user}
-                    currentDay={currentDay}
-                    onDayChange={handleDayChange}
-                  />
+                  <HomePage user={user} />
                 ) : (
                   <Navigate to="/login" replace />
                 )
@@ -127,6 +124,17 @@ function App() {
                     showToast={showToast}
                     onDayChange={handleDayChange}
                   />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+
+            <Route
+              path="/errors"
+              element={
+                user ? (
+                  <ErrorsPage />
                 ) : (
                   <Navigate to="/login" replace />
                 )
