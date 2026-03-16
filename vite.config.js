@@ -13,12 +13,12 @@ export default defineConfig({
     allowedHosts: true, // 允许所有域名访问
     proxy: {
       '/api': {
-        target: 'http://localhost:5002',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       },
       '/socket.io': {
-        target: 'http://localhost:5002',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
         ws: true,

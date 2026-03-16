@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 
 function shuffleArray(arr) {
@@ -99,6 +99,8 @@ function generateOptions(currentWord, allWords) {
 
 function PracticePage({ user, currentDay, mode, showToast }) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const bookId = searchParams.get('book')
   const [vocabulary, setVocabulary] = useState([])
   const [queue, setQueue] = useState([])
   const [queueIndex, setQueueIndex] = useState(0)
@@ -139,13 +141,17 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   } = useSpeechRecognition({
     language: 'en',
     enableVad: true,
+    autoStop: true,
     onResult: (text) => {
       console.log('[Practice] Speech result:', text)
-      setSpellingInput(text.toLowerCase())
+      // Remove trailing punctuation
+      const cleanText = text.replace(/[.,!?;:'" ]+$/, '')
+      setSpellingInput(cleanText.toLowerCase())
       showToast?.('识别成功！', 'success')
     },
     onPartial: (text) => {
-      setSpellingInput(text.toLowerCase())
+      const cleanText = text.replace(/[.,!?;:'" ]+$/, '')
+      setSpellingInput(cleanText.toLowerCase())
     },
     onError: (error) => {
       showToast?.('识别失败: ' + error, 'error')
@@ -154,6 +160,25 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   // ────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    // Book-based vocabulary loading
+    if (bookId) {
+      fetch(`/api/books/${bookId}/words?per_page=100`)
+        .then(res => res.json())
+        .then(data => {
+          const words = data.words || []
+          setVocabulary(words)
+          vocabRef.current = words
+          const indices = Array.from({ length: words.length }, (_, i) => i)
+          const q = settings.shuffle !== false ? shuffleArray(indices) : indices
+          setQueue(q)
+          queueRef.current = q
+          setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
+        })
+        .catch(() => showToast?.('加载词书失败', 'error'))
+      return
+    }
+
+    // Day-based vocabulary loading (original)
     if (!currentDay) { navigate('/'); return }
     fetch(`/api/vocabulary/day/${currentDay}`)
       .then(res => res.json())
@@ -168,7 +193,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
         setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
-  }, [currentDay])
+  }, [currentDay, bookId])
 
   const currentWord = vocabulary[queue[queueIndex]]
 

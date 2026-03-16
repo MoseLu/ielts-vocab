@@ -3,6 +3,8 @@ import base64
 import json
 import time
 import threading
+import eventlet
+from eventlet.semaphore import Semaphore
 from pathlib import Path
 from dotenv import load_dotenv
 from flask_socketio import emit
@@ -63,7 +65,9 @@ def register_socketio_events(socketio):
         language = data.get('language', 'zh')
         enable_vad = data.get('enable_vad', True)
 
-        print(f"[Speech] Starting recognition: {session_id}, lang={language}, vad={enable_vad}")
+        print(f"[Speech] Starting recognition: session_id={session_id}, lang={language}, vad={enable_vad}")
+        print(f"[Speech] Current request.sid={request.sid}")
+        print(f"[Speech] Active sessions: {list(active_sessions.keys())}")
 
         if not API_KEY:
             print(f"[Speech] Error: API_KEY not configured")
@@ -78,7 +82,7 @@ def register_socketio_events(socketio):
             'ready': False,
             'enable_vad': enable_vad,
             'audio_queue': [],
-            'lock': threading.Lock()
+            'lock': Semaphore(1)
         }
         active_sessions[session_id] = session_state
 
@@ -161,9 +165,11 @@ def register_socketio_events(socketio):
                     text = data.get('transcript', '')
                     if text:
                         print(f"[{session_id}] Final: {text}")
+                        print(f"[{session_id}] Emitting final_result to={session_id}")
+                        # Use eventlet.spawn to emit in the correct context
                         socketio.emit('final_result', {
                             'text': text
-                        }, namespace='/speech', to=session_id)
+                        }, to=session_id, namespace='/speech')
 
                 elif event_type == 'input_audio_buffer.speech_started':
                     print(f"[{session_id}] VAD: Speech started")
@@ -229,9 +235,9 @@ def register_socketio_events(socketio):
 
             session_state['ws'] = ws
 
-            ws_thread = threading.Thread(target=ws.run_forever)
-            ws_thread.daemon = True
-            ws_thread.start()
+            # Use eventlet spawn instead of threading for proper message routing
+            import eventlet
+            eventlet.spawn(ws.run_forever)
 
         except Exception as e:
             print(f"[Speech] Error starting recognition: {e}")
@@ -239,7 +245,7 @@ def register_socketio_events(socketio):
             traceback.print_exc()
             socketio.emit('recognition_error', {
                 'error': str(e)
-            }, namespace='/speech')
+            }, namespace='/speech', to=session_id)
 
     @socketio.on('audio_data', namespace='/speech')
     def handle_audio_data(data):

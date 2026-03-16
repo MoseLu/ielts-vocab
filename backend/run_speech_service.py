@@ -16,7 +16,7 @@ sys.path.insert(0, str(backend_dir))
 os.chdir(backend_dir)
 
 # 导入并运行服务
-from speech_service import print_banner, sio, app, active_sessions, PORT
+from speech_service import print_banner, socketio, app, active_sessions, PORT
 
 if __name__ == '__main__':
     print_banner()

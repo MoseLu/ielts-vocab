@@ -7,6 +7,8 @@ import { io } from 'socket.io-client'
 export function useSpeechRecognition({
   language = 'zh',
   enableVad = true,
+  autoStop = true,
+  autoStopDelay = 1500,
   onResult,
   onPartial,
   onError,
@@ -21,9 +23,17 @@ export function useSpeechRecognition({
   const streamRef = useRef(null)
   const isRecordingRef = useRef(false)
   const mountedRef = useRef(false)
+  const autoStopTimeoutRef = useRef(null)
 
   // Use refs to keep callbacks fresh without triggering re-renders
   const callbacksRef = useRef({ onResult, onPartial, onError })
+  const autoStopRef = useRef(autoStop)
+  const autoStopDelayRef = useRef(autoStopDelay)
+
+  useEffect(() => {
+    autoStopRef.current = autoStop
+    autoStopDelayRef.current = autoStopDelay
+  }, [autoStop, autoStopDelay])
   useEffect(() => {
     callbacksRef.current = { onResult, onPartial, onError }
   }, [onResult, onPartial, onError])
@@ -44,7 +54,7 @@ export function useSpeechRecognition({
     console.log('[Speech] Connecting to:', speechUrl)
 
     const socket = io(`${speechUrl}/speech`, {
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
@@ -54,6 +64,7 @@ export function useSpeechRecognition({
 
     socket.on('connect', () => {
       console.log('[Speech] Connected to server')
+      console.log('[Speech] Socket ID:', socket.id)
       setIsConnected(true)
     })
 
@@ -72,6 +83,7 @@ export function useSpeechRecognition({
 
     socket.on('recognition_started', (data) => {
       console.log('[Speech] Recognition started:', data)
+      console.log('[Speech] Socket connected:', socketRef.current?.connected)
       setIsReady(true)
     })
 
@@ -90,6 +102,29 @@ export function useSpeechRecognition({
       console.log('[Speech] Final result received:', data)
       if (data.text) {
         callbacksRef.current.onResult?.(data.text)
+      }
+      // Auto-stop after final result if enabled
+      if (autoStopRef.current && isRecordingRef.current) {
+        console.log('[Speech] Auto-stopping after final result')
+        // Clear any existing timeout
+        if (autoStopTimeoutRef.current) {
+          clearTimeout(autoStopTimeoutRef.current)
+        }
+        // Stop after a short delay
+        autoStopTimeoutRef.current = setTimeout(() => {
+          if (isRecordingRef.current && socketRef.current?.connected) {
+            socketRef.current.emit('stop_recognition')
+          }
+        }, 500)
+      }
+    })
+
+    socket.on('speech_started', () => {
+      console.log('[Speech] VAD: Speech started')
+      // Cancel any pending auto-stop if user starts speaking again
+      if (autoStopTimeoutRef.current) {
+        clearTimeout(autoStopTimeoutRef.current)
+        autoStopTimeoutRef.current = null
       }
     })
 
@@ -119,6 +154,11 @@ export function useSpeechRecognition({
     // Cleanup on unmount
     return () => {
       console.log('[Speech] Cleaning up...')
+      // Clear auto-stop timeout
+      if (autoStopTimeoutRef.current) {
+        clearTimeout(autoStopTimeoutRef.current)
+        autoStopTimeoutRef.current = null
+      }
       // Stop audio
       if (processorRef.current) {
         processorRef.current.disconnect()
@@ -226,6 +266,12 @@ export function useSpeechRecognition({
   // Stop recording
   const stopRecording = useCallback(() => {
     isRecordingRef.current = false
+
+    // Clear auto-stop timeout
+    if (autoStopTimeoutRef.current) {
+      clearTimeout(autoStopTimeoutRef.current)
+      autoStopTimeoutRef.current = null
+    }
 
     if (processorRef.current) {
       processorRef.current.disconnect()
