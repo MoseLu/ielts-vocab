@@ -143,7 +143,7 @@ def register_socketio_events(socketio):
                     socketio.emit('recognition_started', {
                         'session_id': session_id,
                         'dashscope_session_id': ds_session_id
-                    }, namespace='/speech')
+                    }, namespace='/speech', to=session_id)
 
                 elif event_type == 'session.updated':
                     print(f"[{session_id}] Session updated")
@@ -155,7 +155,7 @@ def register_socketio_events(socketio):
                         socketio.emit('partial_result', {
                             'text': text,
                             'is_final': False
-                        }, namespace='/speech')
+                        }, namespace='/speech', to=session_id)
 
                 elif event_type == 'conversation.item.input_audio_transcription.completed':
                     text = data.get('transcript', '')
@@ -163,18 +163,18 @@ def register_socketio_events(socketio):
                         print(f"[{session_id}] Final: {text}")
                         socketio.emit('final_result', {
                             'text': text
-                        }, namespace='/speech')
+                        }, namespace='/speech', to=session_id)
 
                 elif event_type == 'input_audio_buffer.speech_started':
                     print(f"[{session_id}] VAD: Speech started")
-                    socketio.emit('speech_started', {}, namespace='/speech')
+                    socketio.emit('speech_started', {}, namespace='/speech', to=session_id)
 
                 elif event_type == 'input_audio_buffer.speech_stopped':
                     print(f"[{session_id}] VAD: Speech stopped")
 
                 elif event_type == 'session.finished':
                     print(f"[{session_id}] Session finished")
-                    socketio.emit('recognition_complete', {}, namespace='/speech')
+                    socketio.emit('recognition_complete', {}, namespace='/speech', to=session_id)
                     with session_state['lock']:
                         session_state['ready'] = False
 
@@ -183,7 +183,7 @@ def register_socketio_events(socketio):
                     print(f"[{session_id}] DashScope error: {error_msg}")
                     socketio.emit('recognition_error', {
                         'error': error_msg
-                    }, namespace='/speech')
+                    }, namespace='/speech', to=session_id)
 
             except Exception as e:
                 print(f"[{session_id}] Error parsing message: {e}")
@@ -192,7 +192,7 @@ def register_socketio_events(socketio):
             print(f"[{session_id}] DashScope WS error: {error}")
             socketio.emit('recognition_error', {
                 'error': str(error)
-            }, namespace='/speech')
+            }, namespace='/speech', to=session_id)
 
         def on_ws_close(ws, close_status_code, close_msg):
             print(f"[{session_id}] DashScope WS closed: {close_status_code} - {close_msg}")
