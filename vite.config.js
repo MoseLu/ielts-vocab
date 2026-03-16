@@ -25,13 +25,7 @@ export default defineConfig({
         // 确保所有 socket.io 路径都被代理
         rewrite: (path) => path
       },
-      // Socket.IO namespace 路径也需要代理
-      '/speech': {
-        target: 'http://localhost:5002/socket.io',
-        changeOrigin: true,
-        secure: false,
-        ws: true
-      }
+      // Socket.IO namespace /speech 的握手走 /socket.io 路径，无需单独代理
     }
   },
   build: {
