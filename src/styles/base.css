@@ -1,0 +1,111 @@
+/* Base: CSS Variables, Dark Mode, Reset, Typography */
+
+
+:root {
+    /* Base Colors */
+    --bg-color: #FFFFFF;
+    --bg-secondary: #F8F9FA;
+    --bg-tertiary: #F1F3F5;
+    --text-primary: #1F2937;
+    --text-secondary: #6B7280;
+    --text-tertiary: #9CA3AF;
+    
+    /* Accent Colors - Orange theme for 爱听写 */
+    --accent: #FF7E36;
+    --accent-hover: #E56F2A;
+    --accent-light: #FFF4ED;
+    --accent-subtle: #FFF8F3;
+    
+    /* Semantic Colors */
+    --success: #10B981;
+    --success-bg: #D1FAE5;
+    --success-light: #ECFDF5;
+    --error: #EF4444;
+    --error-bg: #FEE2E2;
+    --error-light: #FEF2F2;
+    --warning: #F59E0B;
+    --warning-bg: #FEF3C7;
+    
+    /* Border & Shadow */
+    --border: #E5E7EB;
+    --border-hover: #D1D5DB;
+    --border-focus: #FF7E36;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+    
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+    
+    /* Typography */
+    --font-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    
+    /* Layout */
+    --header-height: 60px;
+    --sidebar-width: 280px;
+}
+
+/* Dark Mode Theme */
+[data-theme="dark"] {
+    --bg-color: #1A1A1A;
+    --bg-secondary: #242424;
+    --bg-tertiary: #2E2E2E;
+    --text-primary: #F5F5F5;
+    --text-secondary: #A3A3A3;
+    --text-tertiary: #737373;
+    
+    --accent-light: #3D2A1A;
+    --accent-subtle: #2D2015;
+    
+    --border: #3A3A3A;
+    --border-hover: #4A4A4A;
+    
+    --success-bg: #1A3D2E;
+    --success-light: #0D261C;
+    --error-bg: #3D1A1A;
+    --error-light: #2D1515;
+    --warning-bg: #3D2A1A;
+    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+}
+
+/* Theme Transition - use fast timing for natural feel */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    background: var(--bg-color);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+

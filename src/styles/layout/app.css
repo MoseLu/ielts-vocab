@@ -1,0 +1,80 @@
+/* Layout: App Shell, Sidebar, Main Content */
+
+.app-body {
+    display: flex;
+    min-height: calc(100vh - var(--header-height));
+    padding-top: var(--header-height);
+}
+
+.left-sidebar {
+    width: 64px;
+    min-width: 64px;
+    background: var(--bg-color);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+}
+
+.left-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-sm) 0;
+}
+
+.left-sidebar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--text-tertiary);
+    text-decoration: none;
+}
+
+.left-sidebar-item:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+.left-sidebar-item.active {
+    color: var(--accent);
+}
+
+.left-sidebar-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+}
+
+.left-sidebar-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.left-sidebar-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.left-sidebar-label {
+    font-size: 10px;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.main {
+    flex: 1;
+    min-height: calc(100vh - var(--header-height));
+}

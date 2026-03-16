@@ -1,0 +1,28 @@
+/* ============================================================
+   IELTS Vocab App — Master CSS Entry Point
+   Import order matters: base → layout → components → pages → utils
+   ============================================================ */
+
+/* 1. Base: variables, reset, typography */
+@import './base.css';
+
+/* 2. Layout: app shell, header, sidebar */
+@import './layout/app.css';
+@import './layout/header.css';
+
+/* 3. Components: reusable UI pieces */
+@import './components/dropdowns.css';
+@import './components/toast.css';
+@import './components/complete.css';
+@import './components/settings.css';
+@import './components/avatar.css';
+
+/* 4. Pages */
+@import './pages/auth.css';
+@import './pages/home.css';
+@import './pages/practice.css';
+@import './pages/vocab-book.css';
+
+/* 5. Utils: helpers, animations, responsive (last to allow overrides) */
+@import './utils/utilities.css';
+@import './utils/responsive.css';

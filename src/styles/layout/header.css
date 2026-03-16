@@ -1,0 +1,710 @@
+/* Layout: Header, Logo, Main Nav, Search */
+
+
+
+/* Logo - 爱听写风格 */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.logo:hover {
+    opacity: 0.85;
+}
+
+.logo-img {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent) 0%, #FF9A5C 100%);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    box-shadow: var(--shadow-sm);
+}
+
+.logo-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.logo-text {
+    letter-spacing: -0.5px;
+}
+
+/* Day Selector Dropdown */
+
+
+
+
+.day-selector-btn.active svg {
+    transform: rotate(180deg);
+}
+
+
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+
+
+.day-dropdown-item .day-label {
+    font-weight: 500;
+}
+
+.day-dropdown-item .day-status {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Header Right - Tool Buttons */
+
+.progress-indicator {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Tool Buttons Group */
+.tool-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.tool-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.tool-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--accent);
+}
+
+.tool-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* User Button */
+
+
+
+/* Day Selector (Full Header Style) */
+
+.day-selector-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.day-selector-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+}
+
+.day-selector-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--transition-fast);
+}
+
+.day-selector-btn.active svg,
+.day-selector-btn[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+
+
+.day-dropdown.show {
+    display: block;
+}
+
+.day-dropdown-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--space-sm);
+}
+
+.day-grid-dropdown {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--space-xs);
+}
+
+.day-item {
+    padding: var(--space-sm);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.day-item:hover {
+    background: var(--accent-subtle);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.day-item.selected {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+/* Mode Selector */
+.mode-selector {
+    position: relative;
+}
+
+.mode-selector-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.mode-selector-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+}
+
+.mode-selector-btn svg.dropdown-arrow {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+
+.mode-dropdown.show {
+    display: block;
+}
+
+.mode-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+}
+
+.mode-option:hover {
+    background: var(--bg-secondary);
+}
+
+.mode-option.active {
+    background: var(--accent-subtle);
+}
+
+.mode-icon {
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.mode-option.active .mode-icon {
+    background: var(--accent);
+}
+
+.mode-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.mode-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    display: block;
+}
+
+/* Settings Button */
+.settings-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.settings-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-subtle);
+}
+
+/* Hidden class for JS toggling */
+.hidden {
+    display: none !important;
+}
+
+/* Header Layout Fix */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-lg);
+    gap: var(--space-md);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+/* Day Selector Wrapper */
+.day-selector-wrapper {
+    position: relative;
+    margin-right: var(--space-sm);
+}
+
+/* Day Selector */
+.day-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.day-selector:hover {
+    background: var(--accent);
+    color: white;
+}
+
+.day-selector:hover .day-selector-current,
+.day-selector:hover .day-selector-arrow {
+    color: white;
+}
+
+.day-selector-current {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.day-selector-arrow {
+    width: 16px;
+    height: 16px;
+    color: var(--accent);
+    transition: transform var(--transition-fast);
+}
+
+/* Current Mode Display */
+.current-mode {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.current-mode .mode-icon {
+    display: flex;
+    align-items: center;
+}
+
+.current-mode .mode-icon svg {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+}
+
+.current-mode .mode-text {
+    font-weight: 500;
+}
+
+/* Header Buttons */
+.header-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.header-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--accent);
+}
+
+.header-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Mode Button with text */
+#modeBtn {
+    width: auto;
+    padding: 0 var(--space-sm);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#modeBtn:hover {
+    color: var(--accent);
+}
+
+/* Mode Section (contains button and dropdown) */
+.mode-section {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Mode Dropdown */
+.mode-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: var(--space-sm);
+    z-index: 200;
+}
+
+.mode-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 14px;
+}
+
+.mode-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.mode-dropdown-item.active {
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+.mode-dropdown-item .mode-item-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.mode-dropdown-item.active .mode-item-name {
+    color: var(--accent);
+}
+
+.mode-dropdown-item .mode-item-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mode-dropdown-item .mode-item-text {
+    font-weight: 500;
+    flex: 1;
+}
+
+.mode-dropdown-item .mode-check-icon {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-left: auto;
+    color: var(--accent);
+}
+
+.mode-dropdown-item.active .mode-check-icon {
+    display: flex;
+}
+
+/* Day Dropdown */
+.day-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: auto;
+    transform: none;
+    min-width: 220px;
+    max-width: 400px;
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: var(--space-sm);
+    z-index: 200;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.day-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 14px;
+}
+
+.day-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.day-dropdown-item.selected {
+    background: var(--accent);
+    color: white;
+}
+
+/* User Button & Dropdown */
+.user-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.user-btn:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.user-menu {
+    position: relative;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 160px;
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-xs);
+    z-index: 200;
+}
+
+.user-dropdown .dropdown-item {
+    display: block;
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+}
+
+.user-dropdown .dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+/* Mode Selector Wrapper */
+.mode-selector-wrapper {
+    position: relative;
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 var(--space-md);
+    width: auto;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Day Card Active State */
+.day-card.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.day-card.active .day-number {
+    color: var(--accent);
+}
+
+.day-indicator {
+    margin-top: var(--space-xs);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.header-search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    min-width: 220px;
+    transition: border-color var(--transition-fast);
+}
+
+.header-search-box:focus-within {
+    border-color: var(--accent);
+}
+
+.header-search-box svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.header-search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.header-search-box input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.header-search-shortcut {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
