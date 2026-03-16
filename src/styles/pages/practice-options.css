@@ -1,0 +1,371 @@
+/* Page: Practice – options grid, answer states, prev-word, progress */
+
+/* Options Grid - 2x2 Layout */
+
+@media (max-width: 600px) {
+    .options-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Option Card - New Style */
+
+
+.option-btn:disabled {
+    cursor: default;
+}
+
+/* POS Tag - Top Right */
+
+/* Definition - Center */
+.option-definition {
+    font-size: 16px;
+    color: var(--text-primary);
+    text-align: center;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 0 var(--space-sm);
+}
+
+/* Hotkey - Top Right corner */
+.option-btn .hotkey {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+}
+
+/* Hover effect for hotkey */
+.option-btn:hover .hotkey {
+    background: var(--accent);
+    color: white;
+}
+
+/* Correct State */
+
+@keyframes correctPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.option-btn.correct .option-definition {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.option-btn.correct .hotkey {
+    background: var(--success);
+    color: white;
+}
+
+.option-btn.correct .option-pos {
+    background: var(--success);
+    color: white;
+}
+
+/* Wrong State */
+
+@keyframes wrongShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+.option-btn.wrong .option-definition {
+    color: var(--error);
+}
+
+.option-btn.wrong .hotkey {
+    background: var(--error);
+    color: white;
+}
+
+.option-btn.wrong .option-pos {
+    background: var(--error);
+    color: white;
+}
+
+/* "I Don't Know" Button - Left aligned, separate row */
+.dont-know-btn {
+    display: block;
+    width: auto;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: var(--space-xl);
+}
+
+.dont-know-btn:hover {
+    border-color: var(--error);
+    color: var(--error);
+    background: var(--error-light);
+}
+
+/* Practice Stats (old style, hidden) */
+.practice-stats {
+    display: none;
+}
+
+/* Previous Word */
+.previous-word {
+    position: fixed;
+    top: 80px;
+    left: var(--space-lg);
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    max-width: 260px;
+    z-index: 50;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+}
+
+.previous-word.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.previous-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--space-sm);
+    font-weight: 600;
+}
+
+.previous-word-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.previous-word-phonetic {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.previous-word-pos {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+}
+
+.previous-word-definition {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Progress Bar (inline) */
+.progress-bar {
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-xl);
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, #FF9A5C 100%);
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+/* Practice Controls */
+.practice-controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+}
+
+.control-btn {
+    padding: var(--space-md) var(--space-xl);
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.control-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+}
+
+.spelling-input-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+
+.spelling-input:focus {
+    border-color: var(--accent);
+    box-shadow: none;
+    outline: none;
+}
+
+.spelling-input.show-answer {
+    border-color: var(--success);
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.spelling-submit {
+    padding: var(--space-md) var(--space-2xl);
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.spelling-submit:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+/* Portable Mode Message */
+.portable-message {
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.portable-message p {
+    font-size: 18px;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.portable-tip {
+    font-size: 14px;
+    color: var(--text-tertiary) !important;
+}
+
+.speed-control,
+.play-count-control {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.speed-btn,
+.count-btn {
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.speed-btn:hover,
+.count-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.speed-btn.active,
+.count-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+/* Toggle Switch (alternate name) */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-fast);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: var(--radius-full);
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--accent);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+/* Theme support */
+[data-theme="dark"] {
+    --bg-color: #1F2937;
+    --bg-secondary: #111827;
+    --bg-tertiary: #374151;
+    --text-primary: #F9FAFB;
+    --text-secondary: #D1D5DB;
+    --text-tertiary: #9CA3AF;
+    --border: #374151;
+}
+
+/* Font size support */
+[data-font-size="small"] {
+    font-size: 14px;
+}
+
+[data-font-size="large"] {
+    font-size: 18px;
+}

@@ -1,0 +1,238 @@
+/* Page: Practice – loading state, complete screen, bottom stats bar */
+
+/* Loading */
+.practice-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    gap: var(--space-md);
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--bg-tertiary);
+    border-top-color: var(--accent);
+    border-radius: var(--radius-full);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Complete Screen */
+.practice-complete {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    gap: var(--space-lg);
+    text-align: center;
+    padding: var(--space-2xl);
+}
+
+.practice-complete .complete-icon {
+    font-size: 64px;
+}
+
+.practice-complete h2 {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.practice-complete .complete-stats {
+    display: flex;
+    gap: var(--space-xl);
+}
+
+.practice-complete .stat-correct {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.practice-complete .stat-wrong {
+    color: var(--error);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.complete-btn {
+    padding: var(--space-sm) var(--space-2xl);
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.complete-btn:hover {
+    background: var(--accent-hover);
+}
+
+/* Icon button in header */
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Previous word panel - top-left of practice page */
+/* Previous word inline — no card, blends with background */
+.prev-word-inline {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-xl);
+    animation: fadeInDown 0.18s ease;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.prev-back-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    margin-top: 2px;
+    flex-shrink: 0;
+    transition: color 0.12s ease;
+}
+
+.prev-back-btn:hover:not(:disabled) {
+    color: var(--accent);
+}
+
+.prev-back-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.prev-word-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.prev-word-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    line-height: 1.2;
+}
+
+.prev-word-phonetic {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.prev-word-def {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+/* word-pos-tag alias */
+.word-pos-tag {
+    font-size: 10px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 1px 5px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Bottom bar: stats + progress */
+.practice-bottom-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-xl) var(--space-md);
+    background: var(--bg-color);
+    margin-top: auto;
+}
+
+.bottom-progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    position: relative;
+    overflow: visible;
+}
+
+.bottom-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: var(--radius-full);
+    transition: width 0.4s ease;
+    position: relative;
+}
+
+.bottom-progress-dot {
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: var(--radius-full);
+    border: 2px solid var(--bg-color);
+}
+
+.bottom-progress-count {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+}
+
+/* Completion screen updates */
+.complete-emoji {
+    font-size: 64px;
+}
+
+.complete-stats-row {
+    display: flex;
+    gap: var(--space-xl);
+}
+
+.complete-stats-row .stat-correct {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.complete-stats-row .stat-wrong {
+    color: var(--error);
+    font-weight: 600;
+    font-size: 16px;
+}

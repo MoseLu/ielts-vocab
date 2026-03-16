@@ -1,0 +1,126 @@
+/* Page: Practice – dictation container, mic button */
+
+/* Dictation Mode */
+.dictation-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    width: 100%;
+    max-width: 500px;
+    margin: auto;
+    padding: var(--space-xl);
+}
+
+.dictation-play-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.dictation-hint {
+    font-size: 15px;
+    color: var(--text-secondary);
+}
+
+.spelling-answer {
+    font-size: 14px;
+    color: var(--error);
+    background: var(--error-light);
+    border: 1px solid var(--error-bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    width: 100%;
+    text-align: center;
+}
+
+.spelling-input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color var(--transition-fast);
+}
+
+.spelling-input-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: none;
+}
+
+.spelling-input-wrapper:focus-within .mic-btn,
+.spelling-input-wrapper:focus-within .spelling-submit-btn {
+    box-shadow: none;
+    outline: none;
+}
+
+.spelling-input-wrapper.correct {
+    border-color: var(--success);
+}
+
+.spelling-input-wrapper.wrong {
+    border-color: var(--error);
+}
+
+.spelling-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 18px;
+    font-weight: 600;
+    background: transparent;
+    color: var(--text-primary);
+    letter-spacing: 0.05em;
+    height: 56px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.spelling-submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 56px;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+.spelling-submit-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-left-color: var(--accent);
+}
+
+.spelling-submit-btn:focus {
+    background: transparent;
+    color: var(--text-tertiary);
+    outline: none;
+}
+
+.spelling-submit-btn:focus:hover {
+    background: var(--accent);
+    color: white;
+}
+
+.spelling-submit-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.dictation-definition {
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
