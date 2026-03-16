@@ -1,0 +1,272 @@
+[
+  {
+    "word": "according to",
+    "translation": "根据",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 90,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "as a result",
+    "translation": "因此",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "as well as",
+    "translation": "以及",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "4",
+    "frequency": 90,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "based on",
+    "translation": "基于",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "because of",
+    "translation": "因为",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "4",
+    "frequency": 90,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "by means of",
+    "translation": "通过",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 75,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "due to",
+    "translation": "由于",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "for example",
+    "translation": "例如",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "4",
+    "frequency": 90,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "for instance",
+    "translation": "例如",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in addition",
+    "translation": "此外",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in case of",
+    "translation": "万一",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 75,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in contrast",
+    "translation": "相比之下",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 80,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in fact",
+    "translation": "事实上",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "4",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in general",
+    "translation": "一般来说",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 80,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in order to",
+    "translation": "为了",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "4",
+    "frequency": 90,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in other words",
+    "translation": "换句话说",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 80,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in particular",
+    "translation": "特别是",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 80,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in relation to",
+    "translation": "关于",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "6",
+    "frequency": 75,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in terms of",
+    "translation": "就...而言",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "in turn",
+    "translation": "转而",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 75,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "instead of",
+    "translation": "代替",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "moreover",
+    "translation": "而且",
+    "pos": "adverb",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "on average",
+    "translation": "平均",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 75,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "on the other hand",
+    "translation": "另一方面",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 85,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "on the contrary",
+    "translation": "相反",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 75,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "prior to",
+    "translation": "在...之前",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "6",
+    "frequency": 70,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "such as",
+    "translation": "例如",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "4",
+    "frequency": 90,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "that is",
+    "translation": "即",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 80,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "with regard to",
+    "translation": "关于",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "5",
+    "frequency": 75,
+    "source": "Academic_Phrases"
+  },
+  {
+    "word": "with respect to",
+    "translation": "关于",
+    "pos": "phrase",
+    "category": "academic_phrases",
+    "level": "6",
+    "frequency": 75,
+    "source": "Academic_Phrases"
+  }
+]

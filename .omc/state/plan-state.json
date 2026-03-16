@@ -1,0 +1,28 @@
+{
+  "mode": "plan",
+  "stage": "explore",
+  "status": "active",
+  "startedAt": "2026-03-16T12:00:00Z",
+  "context": {
+    "project": "ielts-vocab",
+    "type": "strategic-planning"
+  },
+  "agents": [
+    {
+      "name": "explore",
+      "type": "oh-my-claudecode:explore",
+      "status": "ready",
+      "model": "haiku"
+    },
+    {
+      "name": "planner",
+      "type": "oh-my-claudecode:planner",
+      "status": "ready",
+      "model": "opus"
+    }
+  ],
+  "flags": {
+    "consensus": false,
+    "review": false
+  }
+}

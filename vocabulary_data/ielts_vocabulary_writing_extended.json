@@ -1,0 +1,938 @@
+[
+  {
+    "word": "argue",
+    "translation": "争论",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "argument",
+    "translation": "论点",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "claim",
+    "translation": "声称",
+    "pos": "verb/noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "contend",
+    "translation": "主张",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "assert",
+    "translation": "断言",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "maintain",
+    "translation": "坚持",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "acknowledge",
+    "translation": "承认",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "admit",
+    "translation": "承认",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "accept",
+    "translation": "接受",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "recognize",
+    "translation": "认识",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "realize",
+    "translation": "意识到",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "understand",
+    "translation": "理解",
+    "pos": "verb",
+    "category": "writing",
+    "level": "4",
+    "frequency": 42,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "comprehend",
+    "translation": "理解",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "perceive",
+    "translation": "感知",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "believe",
+    "translation": "相信",
+    "pos": "verb",
+    "category": "writing",
+    "level": "4",
+    "frequency": 42,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "consider",
+    "translation": "考虑",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "regard",
+    "translation": "认为",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "view",
+    "translation": "看待",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "think",
+    "translation": "想",
+    "pos": "verb",
+    "category": "writing",
+    "level": "4",
+    "frequency": 42,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "suppose",
+    "translation": "假设",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "assume",
+    "translation": "假设",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "presume",
+    "translation": "推测",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "imply",
+    "translation": "暗示",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "suggest",
+    "translation": "建议",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "indicate",
+    "translation": "表明",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "demonstrate",
+    "translation": "证明",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "show",
+    "translation": "展示",
+    "pos": "verb",
+    "category": "writing",
+    "level": "4",
+    "frequency": 42,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "illustrate",
+    "translation": "说明",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "reveal",
+    "translation": "揭示",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "reflect",
+    "translation": "反映",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "represent",
+    "translation": "代表",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "however",
+    "translation": "然而",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "nevertheless",
+    "translation": "尽管如此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "nonetheless",
+    "translation": "尽管如此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "whereas",
+    "translation": "然而",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "while",
+    "translation": "然而",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "although",
+    "translation": "虽然",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "though",
+    "translation": "虽然",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "despite",
+    "translation": "尽管",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "in spite of",
+    "translation": "尽管",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "regardless of",
+    "translation": "不管",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "conversely",
+    "translation": "相反地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "on the contrary",
+    "translation": "相反",
+    "pos": "phrase",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "in contrast",
+    "translation": "相比之下",
+    "pos": "phrase",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "by contrast",
+    "translation": "相比之下",
+    "pos": "phrase",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "compared with",
+    "translation": "与...相比",
+    "pos": "phrase",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "in comparison with",
+    "translation": "与...相比",
+    "pos": "phrase",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "similarly",
+    "translation": "同样",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "likewise",
+    "translation": "同样",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "equally",
+    "translation": "同样",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "in the same way",
+    "translation": "同样",
+    "pos": "phrase",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "therefore",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "thus",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "hence",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "consequently",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "as a result",
+    "translation": "结果",
+    "pos": "phrase",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "accordingly",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "so",
+    "translation": "所以",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "4",
+    "frequency": 42,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "because",
+    "translation": "因为",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "4",
+    "frequency": 42,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "since",
+    "translation": "因为",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "as",
+    "translation": "因为",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "4",
+    "frequency": 42,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "due to",
+    "translation": "由于",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "owing to",
+    "translation": "由于",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "thanks to",
+    "translation": "多亏",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "because of",
+    "translation": "因为",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "on account of",
+    "translation": "因为",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "furthermore",
+    "translation": "此外",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "moreover",
+    "translation": "此外",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "in addition",
+    "translation": "此外",
+    "pos": "phrase",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "additionally",
+    "translation": "此外",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "besides",
+    "translation": "此外",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "also",
+    "translation": "也",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "4",
+    "frequency": 42,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "as well as",
+    "translation": "以及",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "not only...but also",
+    "translation": "不仅...而且",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "both...and",
+    "translation": "既...又",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "either...or",
+    "translation": "要么...要么",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "neither...nor",
+    "translation": "既不...也不",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "extremely",
+    "translation": "极其",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "highly",
+    "translation": "非常",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "remarkably",
+    "translation": "显著地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "significantly",
+    "translation": "显著地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "substantially",
+    "translation": "实质上",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "considerably",
+    "translation": "相当",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "dramatically",
+    "translation": "显著地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "radically",
+    "translation": "根本上",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "fundamentally",
+    "translation": "根本上",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "completely",
+    "translation": "完全",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "totally",
+    "translation": "完全",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "entirely",
+    "translation": "完全",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "absolutely",
+    "translation": "绝对",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "utterly",
+    "translation": "完全",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "fairly",
+    "translation": "相当",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "quite",
+    "translation": "相当",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "rather",
+    "translation": "相当",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "somewhat",
+    "translation": "有点",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "relatively",
+    "translation": "相对",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "comparatively",
+    "translation": "相对地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "slightly",
+    "translation": "稍微",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "barely",
+    "translation": "几乎不",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "hardly",
+    "translation": "几乎不",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "scarcely",
+    "translation": "几乎不",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "merely",
+    "translation": "仅仅",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "simply",
+    "translation": "简单地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "purely",
+    "translation": "纯粹",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Writing"
+  }
+]

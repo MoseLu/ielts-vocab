@@ -1,0 +1,8796 @@
+[
+  {
+    "word": "about",
+    "translation": "关于",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "above",
+    "translation": "在...之上",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "across",
+    "translation": "穿过",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "add",
+    "translation": "添加",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "afraid",
+    "translation": "害怕的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "after",
+    "translation": "在...之后",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "afternoon",
+    "translation": "下午",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "again",
+    "translation": "再次",
+    "pos": "adverb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "age",
+    "translation": "年龄",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "ago",
+    "translation": "以前",
+    "pos": "adverb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "agree",
+    "translation": "同意",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "air",
+    "translation": "空气",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "all",
+    "translation": "所有",
+    "pos": "determiner",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "along",
+    "translation": "沿着",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "also",
+    "translation": "也",
+    "pos": "adverb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "always",
+    "translation": "总是",
+    "pos": "adverb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "and",
+    "translation": "和",
+    "pos": "conjunction",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "angry",
+    "translation": "生气的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "animal",
+    "translation": "动物",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "another",
+    "translation": "另一个",
+    "pos": "determiner",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "answer",
+    "translation": "答案",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "any",
+    "translation": "任何",
+    "pos": "determiner",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "anybody",
+    "translation": "任何人",
+    "pos": "pronoun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "anyone",
+    "translation": "任何人",
+    "pos": "pronoun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "anything",
+    "translation": "任何事",
+    "pos": "pronoun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "anywhere",
+    "translation": "任何地方",
+    "pos": "adverb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "appear",
+    "translation": "出现",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "arm",
+    "translation": "手臂",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "around",
+    "translation": "周围",
+    "pos": "adverb/preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "arrive",
+    "translation": "到达",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "art",
+    "translation": "艺术",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "as",
+    "translation": "作为",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "ask",
+    "translation": "问",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "asleep",
+    "translation": "睡着的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "away",
+    "translation": "离开",
+    "pos": "adverb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "baby",
+    "translation": "婴儿",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "back",
+    "translation": "后面",
+    "pos": "noun/adverb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bad",
+    "translation": "坏的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bag",
+    "translation": "包",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "ball",
+    "translation": "球",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bar",
+    "translation": "酒吧",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "basket",
+    "translation": "篮子",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bath",
+    "translation": "洗澡",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "beach",
+    "translation": "海滩",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bean",
+    "translation": "豆子",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bear",
+    "translation": "熊",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "beautiful",
+    "translation": "美丽的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "because",
+    "translation": "因为",
+    "pos": "conjunction",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "become",
+    "translation": "成为",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bed",
+    "translation": "床",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "beef",
+    "translation": "牛肉",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "beer",
+    "translation": "啤酒",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "before",
+    "translation": "在...之前",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "begin",
+    "translation": "开始",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "beginning",
+    "translation": "开始",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "behind",
+    "translation": "在...后面",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "believe",
+    "translation": "相信",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bell",
+    "translation": "铃",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "below",
+    "translation": "在...下面",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "best",
+    "translation": "最好的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "better",
+    "translation": "更好的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "between",
+    "translation": "在...之间",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bicycle",
+    "translation": "自行车",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "big",
+    "translation": "大的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bike",
+    "translation": "自行车",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bin",
+    "translation": "垃圾箱",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bird",
+    "translation": "鸟",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "birthday",
+    "translation": "生日",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "biscuit",
+    "translation": "饼干",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bit",
+    "translation": "一点",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bite",
+    "translation": "咬",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "black",
+    "translation": "黑色的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "blood",
+    "translation": "血",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "blow",
+    "translation": "吹",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "blue",
+    "translation": "蓝色的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "board",
+    "translation": "板",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "boat",
+    "translation": "船",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "body",
+    "translation": "身体",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bone",
+    "translation": "骨头",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "book",
+    "translation": "书",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bored",
+    "translation": "无聊的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "boring",
+    "translation": "无聊的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "born",
+    "translation": "出生",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "borrow",
+    "translation": "借",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "both",
+    "translation": "两者都",
+    "pos": "determiner",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bottle",
+    "translation": "瓶子",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bottom",
+    "translation": "底部",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bowl",
+    "translation": "碗",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "box",
+    "translation": "盒子",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "boy",
+    "translation": "男孩",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bread",
+    "translation": "面包",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "break",
+    "translation": "打破",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "breakfast",
+    "translation": "早餐",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bridge",
+    "translation": "桥",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bright",
+    "translation": "明亮的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bring",
+    "translation": "带来",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brother",
+    "translation": "兄弟",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brown",
+    "translation": "棕色的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brush",
+    "translation": "刷子",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "build",
+    "translation": "建造",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "building",
+    "translation": "建筑物",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "burn",
+    "translation": "燃烧",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bus",
+    "translation": "公共汽车",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "busy",
+    "translation": "忙碌的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "but",
+    "translation": "但是",
+    "pos": "conjunction",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "butter",
+    "translation": "黄油",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "button",
+    "translation": "按钮",
+    "pos": "noun",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "buy",
+    "translation": "买",
+    "pos": "verb",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "by",
+    "translation": "通过",
+    "pos": "preposition",
+    "category": "core",
+    "level": "4",
+    "frequency": 50,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "a great deal of",
+    "translation": "大量的",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "a large number of",
+    "translation": "大量的",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "ability",
+    "translation": "能力",
+    "pos": "noun",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "core"
+    ]
+  },
+  {
+    "word": "able",
+    "translation": "能够",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "accept",
+    "translation": "接受",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "access",
+    "translation": "通道",
+    "pos": "noun",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "accident",
+    "translation": "事故",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "accommodation",
+    "translation": "住宿",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "IELTS_Core"
+    ],
+    "categories": [
+      "listening"
+    ]
+  },
+  {
+    "word": "according",
+    "translation": "根据",
+    "pos": "preposition",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "according to",
+    "translation": "根据",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "account",
+    "translation": "账户",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "act",
+    "translation": "行动",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "action",
+    "translation": "行动",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "active",
+    "translation": "活跃的",
+    "pos": "adjective",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "activity",
+    "translation": "活动",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "actor",
+    "translation": "演员",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "actual",
+    "translation": "实际的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "actually",
+    "translation": "实际上",
+    "pos": "adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "addition",
+    "translation": "添加",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "additional",
+    "translation": "额外的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "address",
+    "translation": "地址",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "admit",
+    "translation": "承认",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "adult",
+    "translation": "成人",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "advance",
+    "translation": "前进",
+    "pos": "noun/verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "advanced",
+    "translation": "高级的",
+    "pos": "adjective",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "advantage",
+    "translation": "优势",
+    "pos": "noun",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "core"
+    ]
+  },
+  {
+    "word": "adventure",
+    "translation": "冒险",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "advertisement",
+    "translation": "广告",
+    "pos": "noun",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "advertising",
+    "translation": "广告",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "advice",
+    "translation": "建议",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "afford",
+    "translation": "负担得起",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "afterwards",
+    "translation": "后来",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "against",
+    "translation": "反对",
+    "pos": "preposition",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "agent",
+    "translation": "代理人",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "agreement",
+    "translation": "协议",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "ahead",
+    "translation": "向前",
+    "pos": "adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "aircraft",
+    "translation": "飞机",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "airline",
+    "translation": "航空公司",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "airport",
+    "translation": "机场",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "alarm",
+    "translation": "警报",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "alive",
+    "translation": "活着的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "allow",
+    "translation": "允许",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "almost",
+    "translation": "几乎",
+    "pos": "adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "alone",
+    "translation": "独自",
+    "pos": "adjective/adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "already",
+    "translation": "已经",
+    "pos": "adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "although",
+    "translation": "虽然",
+    "pos": "conjunction",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "amaze",
+    "translation": "使惊奇",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "amazing",
+    "translation": "令人惊奇的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "amount",
+    "translation": "数量",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "ancient",
+    "translation": "古代的",
+    "pos": "adjective",
+    "category": "reading",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "reading",
+      "core"
+    ]
+  },
+  {
+    "word": "anger",
+    "translation": "愤怒",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "angle",
+    "translation": "角度",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "announce",
+    "translation": "宣布",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "annoying",
+    "translation": "烦人的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "anyway",
+    "translation": "无论如何",
+    "pos": "adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "apart",
+    "translation": "分开",
+    "pos": "adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "apartment",
+    "translation": "公寓",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "apology",
+    "translation": "道歉",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "appeal",
+    "translation": "呼吁",
+    "pos": "noun/verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "appearance",
+    "translation": "外观",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "application",
+    "translation": "申请",
+    "pos": "noun",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "core"
+    ]
+  },
+  {
+    "word": "apply",
+    "translation": "申请",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "apply for",
+    "translation": "申请",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "appointment",
+    "translation": "预约",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "approve",
+    "translation": "批准",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "argue",
+    "translation": "争论",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "argument",
+    "translation": "论点",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "armed",
+    "translation": "武装的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "army",
+    "translation": "军队",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "arrange",
+    "translation": "安排",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "arrangement",
+    "translation": "安排",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "arrest",
+    "translation": "逮捕",
+    "pos": "verb/noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "arrival",
+    "translation": "到达",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "article",
+    "translation": "文章",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "artist",
+    "translation": "艺术家",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "as a result",
+    "translation": "结果",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "as far as",
+    "translation": "至于",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "as for",
+    "translation": "至于",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "as long as",
+    "translation": "只要",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "as soon as",
+    "translation": "一...就",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "as well as",
+    "translation": "也",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "ashamed",
+    "translation": "羞愧的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "aside",
+    "translation": "在旁边",
+    "pos": "adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "assistant",
+    "translation": "助手",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "associate",
+    "translation": "联系",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "association",
+    "translation": "协会",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "at least",
+    "translation": "至少",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "at most",
+    "translation": "至多",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "at the same time",
+    "translation": "同时",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "attack",
+    "translation": "攻击",
+    "pos": "verb/noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "attempt",
+    "translation": "尝试",
+    "pos": "noun",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "core"
+    ]
+  },
+  {
+    "word": "attend",
+    "translation": "参加",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "attention",
+    "translation": "注意",
+    "pos": "noun",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "core"
+    ]
+  },
+  {
+    "word": "attitude",
+    "translation": "态度",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "attract",
+    "translation": "吸引",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "attractive",
+    "translation": "有吸引力的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "audience",
+    "translation": "观众",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "author",
+    "translation": "作者",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "average",
+    "translation": "平均的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "avoid",
+    "translation": "避免",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "award",
+    "translation": "奖励",
+    "pos": "noun/verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "aware",
+    "translation": "知道的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "awful",
+    "translation": "糟糕的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "background",
+    "translation": "背景",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "backwards",
+    "translation": "向后",
+    "pos": "adverb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bake",
+    "translation": "烘烤",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "balance",
+    "translation": "平衡",
+    "pos": "noun/verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "ban",
+    "translation": "禁止",
+    "pos": "verb/noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "band",
+    "translation": "乐队",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bank",
+    "translation": "银行",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "base",
+    "translation": "基础",
+    "pos": "noun/verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "based",
+    "translation": "基于",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "basic",
+    "translation": "基本的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "basically",
+    "translation": "基本上",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "basis",
+    "translation": "基础",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bathroom",
+    "translation": "浴室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "battery",
+    "translation": "电池",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "battle",
+    "translation": "战斗",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "beat",
+    "translation": "打败",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "beauty",
+    "translation": "美丽",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "because of",
+    "translation": "因为",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "bedroom",
+    "translation": "卧室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "behaviour",
+    "translation": "行为",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "being",
+    "translation": "存在",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "belief",
+    "translation": "信仰",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "belong",
+    "translation": "属于",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "belong to",
+    "translation": "属于",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "belt",
+    "translation": "腰带",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "besides",
+    "translation": "此外",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "beyond",
+    "translation": "超过",
+    "pos": "preposition",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bill",
+    "translation": "账单",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "billion",
+    "translation": "十亿",
+    "pos": "number",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "biology",
+    "translation": "生物学",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "birth",
+    "translation": "出生",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bitter",
+    "translation": "苦的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "blame",
+    "translation": "责备",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "blind",
+    "translation": "盲的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "block",
+    "translation": "街区",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "blog",
+    "translation": "博客",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "blonde",
+    "translation": "金发的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "boil",
+    "translation": "沸腾",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bomb",
+    "translation": "炸弹",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bookshop",
+    "translation": "书店",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "bookstore",
+    "translation": "书店",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "border",
+    "translation": "边界",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "boss",
+    "translation": "老板",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bother",
+    "translation": "打扰",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brain",
+    "translation": "大脑",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brand",
+    "translation": "品牌",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brave",
+    "translation": "勇敢的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "breast",
+    "translation": "胸部",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "breath",
+    "translation": "呼吸",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "breathe",
+    "translation": "呼吸",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brick",
+    "translation": "砖",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brief",
+    "translation": "简短的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "brilliant",
+    "translation": "杰出的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "broad",
+    "translation": "宽的",
+    "pos": "adjective",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "broadcast",
+    "translation": "广播",
+    "pos": "verb/noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bullet",
+    "translation": "子弹",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bunch",
+    "translation": "一束",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "bury",
+    "translation": "埋葬",
+    "pos": "verb",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "business",
+    "translation": "生意",
+    "pos": "noun",
+    "category": "core",
+    "level": "5",
+    "frequency": 45,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "campus",
+    "translation": "校园",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "care for",
+    "translation": "关心",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "certainly",
+    "translation": "当然",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "check in",
+    "translation": "登记入住",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "check out",
+    "translation": "结账离开",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "cinema",
+    "translation": "电影院",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "clearly",
+    "translation": "清楚地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "clinic",
+    "translation": "诊所",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "coffee shop",
+    "translation": "咖啡店",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "college",
+    "translation": "学院",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "concert",
+    "translation": "音乐会",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "convenience store",
+    "translation": "便利店",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "count on",
+    "translation": "指望",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "currently",
+    "translation": "目前",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "deal with",
+    "translation": "处理",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "definitely",
+    "translation": "肯定地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "dentist",
+    "translation": "牙医",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "department",
+    "translation": "部门",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "depend on",
+    "translation": "依赖",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "dining room",
+    "translation": "餐厅",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "dormitory",
+    "translation": "宿舍",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "downtown",
+    "translation": "市中心",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "elevator",
+    "translation": "电梯",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "emergency",
+    "translation": "紧急情况",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "engineer",
+    "translation": "工程师",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "entrance",
+    "translation": "入口",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "especially",
+    "translation": "尤其",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "eventually",
+    "translation": "最终",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "extremely",
+    "translation": "极其",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "fall behind",
+    "translation": "落后",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "figure out",
+    "translation": "弄明白",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "fill in",
+    "translation": "填写",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "fill out",
+    "translation": "填写",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "flight",
+    "translation": "航班",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "for example",
+    "translation": "例如",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "for instance",
+    "translation": "例如",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "garage",
+    "translation": "车库",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "garden",
+    "translation": "花园",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "generally",
+    "translation": "通常",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "get along with",
+    "translation": "相处",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "get rid of",
+    "translation": "摆脱",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "give up",
+    "translation": "放弃",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "go over",
+    "translation": "复习",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "gradually",
+    "translation": "逐渐地",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "gym",
+    "translation": "健身房",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "hall",
+    "translation": "大厅",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "happen to",
+    "translation": "碰巧",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "head for",
+    "translation": "前往",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "health center",
+    "translation": "健康中心",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "hear from",
+    "translation": "收到...来信",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "high school",
+    "translation": "高中",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "hopefully",
+    "translation": "希望",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "hospital",
+    "translation": "医院",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "hostel",
+    "translation": "旅舍",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "hotel",
+    "translation": "酒店",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "house",
+    "translation": "房子",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "however",
+    "translation": "然而",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "immediately",
+    "translation": "立即",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "in case of",
+    "translation": "万一",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in charge of",
+    "translation": "负责",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in fact",
+    "translation": "事实上",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in front of",
+    "translation": "在...前面",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in general",
+    "translation": "一般来说",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in order to",
+    "translation": "为了",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in other words",
+    "translation": "换句话说",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "information desk",
+    "translation": "咨询台",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "instantly",
+    "translation": "立即",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "instead of",
+    "translation": "代替",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "insurance",
+    "translation": "保险",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "interview",
+    "translation": "面试",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "keep up with",
+    "translation": "跟上",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "kitchen",
+    "translation": "厨房",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "lecture",
+    "translation": "讲座",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "lecture hall",
+    "translation": "阶梯教室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "librarian",
+    "translation": "图书管理员",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "library",
+    "translation": "图书馆",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "lift",
+    "translation": "电梯",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "likely",
+    "translation": "可能",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "live on",
+    "translation": "靠...生活",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "living room",
+    "translation": "客厅",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "look after",
+    "translation": "照顾",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "look forward to",
+    "translation": "期待",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "lounge",
+    "translation": "休息室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "make out",
+    "translation": "辨认出",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "make up",
+    "translation": "组成，编造",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "manager",
+    "translation": "经理",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "map",
+    "translation": "地图",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "market",
+    "translation": "市场",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "meanwhile",
+    "translation": "同时",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "more and more",
+    "translation": "越来越多",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "more or less",
+    "translation": "或多或少",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "mostly",
+    "translation": "主要地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "museum",
+    "translation": "博物馆",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "no longer",
+    "translation": "不再",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "normally",
+    "translation": "通常",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "not only...but also",
+    "translation": "不仅...而且",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "nurse",
+    "translation": "护士",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "nursery",
+    "translation": "托儿所",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "obviously",
+    "translation": "显然",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "occasionally",
+    "translation": "偶尔",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "office",
+    "translation": "办公室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "on the other hand",
+    "translation": "另一方面",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "park",
+    "translation": "公园",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "parking lot",
+    "translation": "停车场",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "particularly",
+    "translation": "特别",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "passport",
+    "translation": "护照",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "pay for",
+    "translation": "支付",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "pharmacy",
+    "translation": "药店",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "photocopy",
+    "translation": "复印件",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "pick up",
+    "translation": "捡起，学会",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "post office",
+    "translation": "邮局",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "prepare for",
+    "translation": "准备",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "probably",
+    "translation": "可能",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "professor",
+    "translation": "教授",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "program",
+    "translation": "节目",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "pull up",
+    "translation": "停下",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "put away",
+    "translation": "收起来",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "put off",
+    "translation": "推迟",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "put on",
+    "translation": "穿上",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "quickly",
+    "translation": "快速地",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "rarely",
+    "translation": "很少",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "reception",
+    "translation": "接待处",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "reference room",
+    "translation": "资料室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "rent",
+    "translation": "租金",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "repair",
+    "translation": "修理",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "reporter",
+    "translation": "记者",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "reservation",
+    "translation": "预订",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "restaurant",
+    "translation": "餐厅",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "roommate",
+    "translation": "室友",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "route",
+    "translation": "路线",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "run out of",
+    "translation": "用完",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "school",
+    "translation": "学校",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "semester",
+    "translation": "学期",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "service",
+    "translation": "服务",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "set off",
+    "translation": "出发",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "settle down",
+    "translation": "定居",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "shop",
+    "translation": "商店",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "shopping center",
+    "translation": "购物中心",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "show up",
+    "translation": "出现",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "similarly",
+    "translation": "同样",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "slightly",
+    "translation": "稍微",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "slow down",
+    "translation": "减速",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "so far",
+    "translation": "到目前为止",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "sort out",
+    "translation": "解决",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "souvenir",
+    "translation": "纪念品",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "speak up",
+    "translation": "大声说",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "stadium",
+    "translation": "体育场",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "station",
+    "translation": "车站",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "stick to",
+    "translation": "坚持",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "student",
+    "translation": "学生",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "studio",
+    "translation": "工作室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "study",
+    "translation": "书房",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "such as",
+    "translation": "例如",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "suddenly",
+    "translation": "突然",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "supermarket",
+    "translation": "超市",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "switch off",
+    "translation": "关掉",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "switch on",
+    "translation": "打开",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "take after",
+    "translation": "像",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "take away",
+    "translation": "拿走",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "take care of",
+    "translation": "照顾",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "take off",
+    "translation": "起飞",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "talk over",
+    "translation": "讨论",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "teacher",
+    "translation": "教师",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "tell off",
+    "translation": "责备",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "thanks to",
+    "translation": "多亏",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "theater",
+    "translation": "剧院",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "theatre",
+    "translation": "剧院",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "think over",
+    "translation": "仔细考虑",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "throw away",
+    "translation": "扔掉",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "ticket",
+    "translation": "票",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "tour",
+    "translation": "旅行",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "tourist",
+    "translation": "游客",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "towel",
+    "translation": "毛巾",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "traffic",
+    "translation": "交通",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "travel",
+    "translation": "旅行",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "try on",
+    "translation": "试穿",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "try out",
+    "translation": "试用",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "turn down",
+    "translation": "拒绝，调小",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "turn off",
+    "translation": "关掉",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "turn on",
+    "translation": "打开",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "turn up",
+    "translation": "出现，调大",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "tutor",
+    "translation": "导师",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "unfortunately",
+    "translation": "不幸",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "university",
+    "translation": "大学",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "use up",
+    "translation": "用完",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "usually",
+    "translation": "通常",
+    "pos": "adverb",
+    "category": "general",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "vacation",
+    "translation": "假期",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "visa",
+    "translation": "签证",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "waiting room",
+    "translation": "候诊室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "wake up",
+    "translation": "醒来",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "warm up",
+    "translation": "热身",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "watch out",
+    "translation": "小心",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "work on",
+    "translation": "从事",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "work out",
+    "translation": "解决，锻炼",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "write down",
+    "translation": "写下",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "5",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "youth hostel",
+    "translation": "青年旅社",
+    "pos": "noun",
+    "category": "listening",
+    "level": "5",
+    "frequency": 40,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "a wide range of",
+    "translation": "广泛的",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "abbreviation",
+    "translation": "缩写",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "abstract",
+    "translation": "摘要",
+    "pos": "noun/adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "abundant",
+    "translation": "丰富的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "academy",
+    "translation": "学院",
+    "pos": "noun",
+    "category": "reading",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "acceptance",
+    "translation": "接受",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "account for",
+    "translation": "解释，占",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "accountant",
+    "translation": "会计",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "accuracy",
+    "translation": "准确性",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "accurate",
+    "translation": "精确的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "achievement",
+    "translation": "成就",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "acquaintance",
+    "translation": "熟人",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "adapt",
+    "translation": "适应",
+    "pos": "verb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "adapt to",
+    "translation": "适应",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "addiction",
+    "translation": "上瘾",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "additionally",
+    "translation": "此外",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "adequate",
+    "translation": "足够的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "adjust",
+    "translation": "调整",
+    "pos": "verb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "adjustment",
+    "translation": "调整",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "administration",
+    "translation": "管理",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "admission",
+    "translation": "准许进入",
+    "pos": "noun",
+    "category": "reading",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "affection",
+    "translation": "感情",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "affordable",
+    "translation": "负担得起的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "agency",
+    "translation": "代理",
+    "pos": "noun",
+    "category": "core",
+    "level": "6",
+    "frequency": 40,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "aggressive",
+    "translation": "侵略性的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "agriculture",
+    "translation": "农业",
+    "pos": "noun",
+    "category": "reading",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "aid",
+    "translation": "援助",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "aim at",
+    "translation": "旨在",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "alarming",
+    "translation": "令人担忧的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "allow for",
+    "translation": "考虑到",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "allowance",
+    "translation": "津贴",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "alter",
+    "translation": "改变",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "alternatively",
+    "translation": "或者",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "altogether",
+    "translation": "总共",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "ambition",
+    "translation": "雄心",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "ambitious",
+    "translation": "有野心的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "analyse",
+    "translation": "分析",
+    "pos": "verb",
+    "category": "core",
+    "level": "6",
+    "frequency": 40,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "ancestor",
+    "translation": "祖先",
+    "pos": "noun",
+    "category": "reading",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "annual",
+    "translation": "年度的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "anxiety",
+    "translation": "焦虑",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "anxious",
+    "translation": "焦虑的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "apart from",
+    "translation": "除了",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "apparent",
+    "translation": "明显的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "apparently",
+    "translation": "显然地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "appoint",
+    "translation": "任命",
+    "pos": "verb",
+    "category": "core",
+    "level": "6",
+    "frequency": 40,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "appreciate",
+    "translation": "欣赏",
+    "pos": "verb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "appreciation",
+    "translation": "欣赏",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "approval",
+    "translation": "批准",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "approximate",
+    "translation": "大约的",
+    "pos": "adjective",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "approximately",
+    "translation": "大约",
+    "pos": "adverb",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "architect",
+    "translation": "建筑师",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "architecture",
+    "translation": "建筑",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "arise",
+    "translation": "出现",
+    "pos": "verb",
+    "category": "core",
+    "level": "6",
+    "frequency": 40,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "artificial",
+    "translation": "人工的",
+    "pos": "adjective",
+    "category": "reading",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "artistic",
+    "translation": "艺术的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "assess",
+    "translation": "评估",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "assign",
+    "translation": "分配",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "assignment",
+    "translation": "任务",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "assistance",
+    "translation": "帮助",
+    "pos": "noun",
+    "category": "general",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "core"
+    ]
+  },
+  {
+    "word": "associate with",
+    "translation": "与...有关",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "assumption",
+    "translation": "假设",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "atmosphere",
+    "translation": "气氛",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "attach",
+    "translation": "附上",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "attendance",
+    "translation": "出席",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "attraction",
+    "translation": "吸引力",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "speaking",
+      "core"
+    ]
+  },
+  {
+    "word": "automatic",
+    "translation": "自动的",
+    "pos": "adjective",
+    "category": "reading",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "awareness",
+    "translation": "意识",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "IELTS_Core"
+    ],
+    "categories": [
+      "speaking"
+    ]
+  },
+  {
+    "word": "bacteria",
+    "translation": "细菌",
+    "pos": "noun",
+    "category": "core",
+    "level": "6",
+    "frequency": 40,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "barrier",
+    "translation": "障碍",
+    "pos": "noun",
+    "category": "core",
+    "level": "6",
+    "frequency": 40,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "base on",
+    "translation": "基于",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "beneath",
+    "translation": "在...下方",
+    "pos": "preposition",
+    "category": "core",
+    "level": "6",
+    "frequency": 40,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "benefit from",
+    "translation": "受益于",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "branch",
+    "translation": "分店",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "listening",
+      "core"
+    ]
+  },
+  {
+    "word": "budget",
+    "translation": "预算",
+    "pos": "noun",
+    "category": "core",
+    "level": "6",
+    "frequency": 40,
+    "source": "Oxford3000"
+  },
+  {
+    "word": "by means of",
+    "translation": "通过",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "cafeteria",
+    "translation": "自助餐厅",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "call for",
+    "translation": "需要",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "cancellation",
+    "translation": "取消",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "cater for",
+    "translation": "迎合",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "chemist",
+    "translation": "药剂师",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "commonly",
+    "translation": "通常",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "comply with",
+    "translation": "遵守",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "conference",
+    "translation": "会议",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "consequently",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "considerably",
+    "translation": "相当",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "consist of",
+    "translation": "由...组成",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "constantly",
+    "translation": "不断地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "consultation",
+    "translation": "咨询",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "continually",
+    "translation": "持续地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "cope with",
+    "translation": "应对",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "cut down on",
+    "translation": "削减",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "deposit",
+    "translation": "存款",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "devote to",
+    "translation": "致力于",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "dispose of",
+    "translation": "处理",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "dramatically",
+    "translation": "显著地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "draw on",
+    "translation": "利用",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "due to",
+    "translation": "由于",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "effectively",
+    "translation": "有效地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "engage in",
+    "translation": "从事",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "equip with",
+    "translation": "配备",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "essentially",
+    "translation": "本质上",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "except for",
+    "translation": "除了",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "exhibition",
+    "translation": "展览",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "facilities",
+    "translation": "设施",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "faculty",
+    "translation": "教职员",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "focus on",
+    "translation": "集中于",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "furthermore",
+    "translation": "此外",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "immigration",
+    "translation": "移民",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "in addition to",
+    "translation": "除了",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in comparison with",
+    "translation": "与...相比",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in conclusion",
+    "translation": "总之",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in contrast to",
+    "translation": "与...对比",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in favor of",
+    "translation": "支持",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in particular",
+    "translation": "尤其",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in short",
+    "translation": "简言之",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in spite of",
+    "translation": "尽管",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "in terms of",
+    "translation": "就...而言",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "increasingly",
+    "translation": "越来越",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "initially",
+    "translation": "最初",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "insist on",
+    "translation": "坚持",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "interact with",
+    "translation": "互动",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "invest in",
+    "translation": "投资",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "journalist",
+    "translation": "记者",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "laboratory",
+    "translation": "实验室",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "largely",
+    "translation": "主要地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "lay off",
+    "translation": "解雇",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "lead to",
+    "translation": "导致",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "leave out",
+    "translation": "省略",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "look into",
+    "translation": "调查",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "membership",
+    "translation": "会员资格",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "merely",
+    "translation": "仅仅",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "moderately",
+    "translation": "适度地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "namely",
+    "translation": "即",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "necessarily",
+    "translation": "必然地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "nevertheless",
+    "translation": "尽管如此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "object to",
+    "translation": "反对",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "on average",
+    "translation": "平均",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "on the contrary",
+    "translation": "相反",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "participate in",
+    "translation": "参与",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "point out",
+    "translation": "指出",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "potentially",
+    "translation": "潜在地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "prevent from",
+    "translation": "阻止",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "previously",
+    "translation": "先前",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "primarily",
+    "translation": "主要地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "promptly",
+    "translation": "迅速地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "put up with",
+    "translation": "忍受",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "readily",
+    "translation": "容易地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "recreation",
+    "translation": "娱乐",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "refer to",
+    "translation": "参考，指的是",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "refund",
+    "translation": "退款",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "regardless",
+    "translation": "不管",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "regardless of",
+    "translation": "不管",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "relatively",
+    "translation": "相对地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "rely on",
+    "translation": "依赖",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "residence",
+    "translation": "住宅",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "resort",
+    "translation": "度假胜地",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "result in",
+    "translation": "导致",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "scarcely",
+    "translation": "几乎不",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "seemingly",
+    "translation": "表面上",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "seldom",
+    "translation": "很少",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "seminar",
+    "translation": "研讨会",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "separately",
+    "translation": "分别地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "set out",
+    "translation": "出发，开始",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "set up",
+    "translation": "建立",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "shut down",
+    "translation": "关闭",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "significantly",
+    "translation": "显著地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "speak out",
+    "translation": "大声说",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "specialist",
+    "translation": "专家",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "specifically",
+    "translation": "具体地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "speed up",
+    "translation": "加速",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "stand for",
+    "translation": "代表",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "stand out",
+    "translation": "突出",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "start up",
+    "translation": "启动",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "steadily",
+    "translation": "稳定地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "subscribe to",
+    "translation": "订阅",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "subsequently",
+    "translation": "随后",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "successfully",
+    "translation": "成功地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "suffer from",
+    "translation": "遭受",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "sufficiently",
+    "translation": "充分地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "surgery",
+    "translation": "外科手术",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "take on",
+    "translation": "承担",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "take over",
+    "translation": "接管",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "take up",
+    "translation": "开始从事",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "temporarily",
+    "translation": "暂时",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "terminal",
+    "translation": "终点站",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "to some extent",
+    "translation": "在某种程度上",
+    "pos": "fixed phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "traditionally",
+    "translation": "传统上",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "translate into",
+    "translation": "翻译成",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "turn into",
+    "translation": "变成",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "turn out",
+    "translation": "结果是",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "ultimately",
+    "translation": "最终",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "undoubtedly",
+    "translation": "无疑",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "IELTS_Core",
+      "IELTS_Core"
+    ],
+    "categories": [
+      "writing"
+    ]
+  },
+  {
+    "word": "widely",
+    "translation": "广泛地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "with regard to",
+    "translation": "关于",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "6",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "workshop",
+    "translation": "研讨会",
+    "pos": "noun",
+    "category": "listening",
+    "level": "6",
+    "frequency": 38,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "accommodate",
+    "translation": "容纳",
+    "pos": "verb",
+    "category": "reading",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "accomplishment",
+    "translation": "成就",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "accordingly",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "accumulate",
+    "translation": "积累",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "acknowledge",
+    "translation": "承认",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "acquisition",
+    "translation": "获得",
+    "pos": "noun",
+    "category": "reading",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "adaptation",
+    "translation": "适应",
+    "pos": "noun",
+    "category": "reading",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "adjacent",
+    "translation": "邻近的",
+    "pos": "adjective",
+    "category": "listening",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "adolescent",
+    "translation": "青少年",
+    "pos": "noun/adjective",
+    "category": "speaking",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "advocate",
+    "translation": "提倡",
+    "pos": "verb/noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core",
+    "sources": [
+      "IELTS_Core",
+      "IELTS_Core"
+    ],
+    "categories": [
+      "writing"
+    ]
+  },
+  {
+    "word": "aesthetic",
+    "translation": "美学的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "affordability",
+    "translation": "负担能力",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "allocate",
+    "translation": "分配",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "ambiguity",
+    "translation": "歧义",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "ambiguous",
+    "translation": "模糊的",
+    "pos": "adjective",
+    "category": "reading",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "analysis",
+    "translation": "分析",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 60,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "anticipate",
+    "translation": "预期",
+    "pos": "verb",
+    "category": "speaking",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "anticipation",
+    "translation": "预期",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "appalling",
+    "translation": "可怕的",
+    "pos": "adjective",
+    "category": "speaking",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "append",
+    "translation": "附加",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "approach",
+    "translation": "方法，接近",
+    "pos": "noun/verb",
+    "sublist": 1,
+    "frequency": 55,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "approximation",
+    "translation": "近似值",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "arbitrary",
+    "translation": "任意的",
+    "pos": "adjective",
+    "category": "reading",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "archaeology",
+    "translation": "考古学",
+    "pos": "noun",
+    "category": "reading",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "area",
+    "translation": "领域",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7",
+    "sources": [
+      "AWL",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "core"
+    ]
+  },
+  {
+    "word": "articulate",
+    "translation": "明确表达",
+    "pos": "verb",
+    "category": "speaking",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "aspiration",
+    "translation": "愿望",
+    "pos": "noun",
+    "category": "speaking",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "assert",
+    "translation": "断言",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "assessment",
+    "translation": "评估",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "asset",
+    "translation": "资产",
+    "pos": "noun",
+    "category": "reading",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "assume",
+    "translation": "假设",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "reading",
+      "core"
+    ]
+  },
+  {
+    "word": "attain",
+    "translation": "达到",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "attribute",
+    "translation": "归因于",
+    "pos": "verb/noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "auditorium",
+    "translation": "礼堂",
+    "pos": "noun",
+    "category": "listening",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "authority",
+    "translation": "权威",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "availability",
+    "translation": "可用性",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "available",
+    "translation": "可用的",
+    "pos": "adjective",
+    "sublist": 1,
+    "frequency": 65,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "academic",
+      "core"
+    ]
+  },
+  {
+    "word": "benefit",
+    "translation": "益处",
+    "pos": "noun/verb",
+    "sublist": 1,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7",
+    "sources": [
+      "AWL",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "core"
+    ]
+  },
+  {
+    "word": "coincidentally",
+    "translation": "巧合地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "collectively",
+    "translation": "共同地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "comparatively",
+    "translation": "相对地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "concept",
+    "translation": "概念",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "concurrently",
+    "translation": "同时地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "consist",
+    "translation": "由...组成",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "consistently",
+    "translation": "一贯地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "constitute",
+    "translation": "构成",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "context",
+    "translation": "上下文",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 58,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "contract",
+    "translation": "合同",
+    "pos": "noun/verb",
+    "sublist": 1,
+    "frequency": 30,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "conversely",
+    "translation": "相反地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "create",
+    "translation": "创造",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 62,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "data",
+    "translation": "数据",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 70,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "define",
+    "translation": "定义",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "deliberately",
+    "translation": "故意地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "derive",
+    "translation": "推导，源自",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "derive from",
+    "translation": "源自",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "distribute",
+    "translation": "分配",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "dwell on",
+    "translation": "详述",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "economy",
+    "translation": "经济",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 55,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "environment",
+    "translation": "环境",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 58,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "establish",
+    "translation": "建立",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "estimate",
+    "translation": "估计",
+    "pos": "verb/noun",
+    "sublist": 1,
+    "frequency": 44,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "evidence",
+    "translation": "证据",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 56,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "evidently",
+    "translation": "明显地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "exceedingly",
+    "translation": "极其",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "exclusively",
+    "translation": "专门地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "explicitly",
+    "translation": "明确地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "export",
+    "translation": "出口",
+    "pos": "verb/noun",
+    "sublist": 1,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "extensively",
+    "translation": "广泛地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "factor",
+    "translation": "因素",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "finance",
+    "translation": "金融",
+    "pos": "noun/verb",
+    "sublist": 1,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "formula",
+    "translation": "公式",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "function",
+    "translation": "功能",
+    "pos": "noun/verb",
+    "sublist": 1,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "fundamentally",
+    "translation": "根本上",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "identify",
+    "translation": "识别",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 60,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "in accordance with",
+    "translation": "按照",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "income",
+    "translation": "收入",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "indicate",
+    "translation": "表明",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "individual",
+    "translation": "个人的",
+    "pos": "adjective/noun",
+    "sublist": 1,
+    "frequency": 55,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "inevitably",
+    "translation": "不可避免地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "interpret",
+    "translation": "解释",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 44,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "involve",
+    "translation": "涉及",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 58,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "issue",
+    "translation": "问题",
+    "pos": "noun/verb",
+    "sublist": 1,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "labour",
+    "translation": "劳动",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "legal",
+    "translation": "合法的",
+    "pos": "adjective",
+    "sublist": 1,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "legislate",
+    "translation": "立法",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "lie in",
+    "translation": "在于",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "major",
+    "translation": "主要的",
+    "pos": "adjective",
+    "sublist": 1,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "method",
+    "translation": "方法",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 55,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "notably",
+    "translation": "显著地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "occur",
+    "translation": "发生",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "on account of",
+    "translation": "因为",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "on behalf of",
+    "translation": "代表",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "percent",
+    "translation": "百分比",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "period",
+    "translation": "时期",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 46,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "policy",
+    "translation": "政策",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "presumably",
+    "translation": "推测起来",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "principle",
+    "translation": "原则",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "prior to",
+    "translation": "在...之前",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "proceed",
+    "translation": "继续进行",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "process",
+    "translation": "过程",
+    "pos": "noun/verb",
+    "sublist": 1,
+    "frequency": 62,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "prohibit from",
+    "translation": "禁止",
+    "pos": "phrasal verb",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases"
+  },
+  {
+    "word": "rehearsal",
+    "translation": "排练",
+    "pos": "noun",
+    "category": "listening",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "remarkably",
+    "translation": "显著地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "require",
+    "translation": "需要",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 65,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "respond",
+    "translation": "回应",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "role",
+    "translation": "角色",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "section",
+    "translation": "部分",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "sector",
+    "translation": "部门",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "significant",
+    "translation": "重要的",
+    "pos": "adjective",
+    "sublist": 1,
+    "frequency": 58,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "similar",
+    "translation": "相似的",
+    "pos": "adjective",
+    "sublist": 1,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "simultaneously",
+    "translation": "同时地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "source",
+    "translation": "来源",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "specific",
+    "translation": "具体的",
+    "pos": "adjective",
+    "sublist": 1,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "structure",
+    "translation": "结构",
+    "pos": "noun/verb",
+    "sublist": 1,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "substantially",
+    "translation": "实质上",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "symposium",
+    "translation": "座谈会",
+    "pos": "noun",
+    "category": "listening",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "theory",
+    "translation": "理论",
+    "pos": "noun",
+    "sublist": 1,
+    "frequency": 55,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "thereafter",
+    "translation": "此后",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "vary",
+    "translation": "变化",
+    "pos": "verb",
+    "sublist": 1,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "7"
+  },
+  {
+    "word": "virtually",
+    "translation": "几乎",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 36,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "with respect to",
+    "translation": "关于",
+    "pos": "prepositional phrase",
+    "category": "phrase",
+    "level": "7",
+    "frequency": 45,
+    "source": "Phrases",
+    "sources": [
+      "Phrases",
+      "Phrases"
+    ],
+    "categories": [
+      "phrase"
+    ]
+  },
+  {
+    "word": "achieve",
+    "translation": "实现",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "academic",
+      "core"
+    ]
+  },
+  {
+    "word": "acquire",
+    "translation": "获得",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8",
+    "sources": [
+      "AWL",
+      "IELTS_Core"
+    ],
+    "categories": [
+      "academic",
+      "reading"
+    ]
+  },
+  {
+    "word": "administrate",
+    "translation": "管理",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "affect",
+    "translation": "影响",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 55,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8",
+    "sources": [
+      "AWL",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "core"
+    ]
+  },
+  {
+    "word": "appropriate",
+    "translation": "适当的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "aspect",
+    "translation": "方面",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "academic",
+      "writing",
+      "core"
+    ]
+  },
+  {
+    "word": "assist",
+    "translation": "帮助",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "Oxford3000"
+    ],
+    "categories": [
+      "general",
+      "academic",
+      "core"
+    ]
+  },
+  {
+    "word": "category",
+    "translation": "类别",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "chapter",
+    "translation": "章节",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "commission",
+    "translation": "委员会",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "community",
+    "translation": "社区",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "complex",
+    "translation": "复杂的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "compute",
+    "translation": "计算",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "conclude",
+    "translation": "结论",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 44,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "conduct",
+    "translation": "进行",
+    "pos": "verb/noun",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "consequence",
+    "translation": "后果",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "construct",
+    "translation": "构建",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "consume",
+    "translation": "消费",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "credit",
+    "translation": "信用",
+    "pos": "noun/verb",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "culture",
+    "translation": "文化",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "design",
+    "translation": "设计",
+    "pos": "verb/noun",
+    "sublist": 2,
+    "frequency": 55,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "distinct",
+    "translation": "明显的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "element",
+    "translation": "元素",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "equate",
+    "translation": "等同",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "evaluate",
+    "translation": "评估",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "feature",
+    "translation": "特征",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "final",
+    "translation": "最终的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "focus",
+    "translation": "焦点",
+    "pos": "noun/verb",
+    "sublist": 2,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "impact",
+    "translation": "影响",
+    "pos": "noun/verb",
+    "sublist": 2,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "injure",
+    "translation": "伤害",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "institute",
+    "translation": "机构",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "invest",
+    "translation": "投资",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "item",
+    "translation": "项目",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "journal",
+    "translation": "期刊",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "maintain",
+    "translation": "维持",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "measure",
+    "translation": "测量",
+    "pos": "verb/noun",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "obtain",
+    "translation": "获得",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "participate",
+    "translation": "参与",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "perceive",
+    "translation": "感知",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "positive",
+    "translation": "积极的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "potential",
+    "translation": "潜在的",
+    "pos": "adjective/noun",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "previous",
+    "translation": "以前的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "primary",
+    "translation": "主要的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "purchase",
+    "translation": "购买",
+    "pos": "verb/noun",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "range",
+    "translation": "范围",
+    "pos": "noun/verb",
+    "sublist": 2,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "region",
+    "translation": "地区",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "regulate",
+    "translation": "调节",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "relevant",
+    "translation": "相关的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "resource",
+    "translation": "资源",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "restrict",
+    "translation": "限制",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "secure",
+    "translation": "安全的",
+    "pos": "adjective",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "seek",
+    "translation": "寻找",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "select",
+    "translation": "选择",
+    "pos": "verb",
+    "sublist": 2,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "site",
+    "translation": "地点",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "strategy",
+    "translation": "策略",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "survey",
+    "translation": "调查",
+    "pos": "noun/verb",
+    "sublist": 2,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "text",
+    "translation": "文本",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "tradition",
+    "translation": "传统",
+    "pos": "noun",
+    "sublist": 2,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "transfer",
+    "translation": "转移",
+    "pos": "verb/noun",
+    "sublist": 2,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "8"
+  },
+  {
+    "word": "alternative",
+    "translation": "替代的",
+    "pos": "adjective/noun",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9",
+    "sources": [
+      "AWL",
+      "IELTS_Core",
+      "IELTS_Core"
+    ],
+    "categories": [
+      "academic",
+      "writing"
+    ]
+  },
+  {
+    "word": "circumstance",
+    "translation": "环境",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "comment",
+    "translation": "评论",
+    "pos": "noun/verb",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "compensate",
+    "translation": "补偿",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "component",
+    "translation": "组件",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "consent",
+    "translation": "同意",
+    "pos": "noun/verb",
+    "sublist": 3,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "considerable",
+    "translation": "相当大的",
+    "pos": "adjective",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "constant",
+    "translation": "持续的",
+    "pos": "adjective",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "constrain",
+    "translation": "约束",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "contribute",
+    "translation": "贡献",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "convene",
+    "translation": "召集",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 30,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "coordinate",
+    "translation": "协调",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "core",
+    "translation": "核心",
+    "pos": "noun/adjective",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "corporate",
+    "translation": "公司的",
+    "pos": "adjective",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "correspond",
+    "translation": "对应",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "criteria",
+    "translation": "标准",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "deduce",
+    "translation": "推论",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "demonstrate",
+    "translation": "证明",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "document",
+    "translation": "文件",
+    "pos": "noun/verb",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "dominate",
+    "translation": "支配",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "emphasis",
+    "translation": "强调",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "ensure",
+    "translation": "确保",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "exclude",
+    "translation": "排除",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "framework",
+    "translation": "框架",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "fund",
+    "translation": "资金",
+    "pos": "noun/verb",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "illustrate",
+    "translation": "说明",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "immigrate",
+    "translation": "移民",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "imply",
+    "translation": "暗示",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "initial",
+    "translation": "最初的",
+    "pos": "adjective",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "instance",
+    "translation": "例子",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "interact",
+    "translation": "互动",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "justify",
+    "translation": "证明正当",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "layer",
+    "translation": "层",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "link",
+    "translation": "链接",
+    "pos": "noun/verb",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "locate",
+    "translation": "定位",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "maximise",
+    "translation": "最大化",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 35,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "minority",
+    "translation": "少数",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "negate",
+    "translation": "否定",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 32,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "outcome",
+    "translation": "结果",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "partner",
+    "translation": "伙伴",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "philosophy",
+    "translation": "哲学",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 38,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "physical",
+    "translation": "身体的",
+    "pos": "adjective",
+    "sublist": 3,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "proportion",
+    "translation": "比例",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "publish",
+    "translation": "出版",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "react",
+    "translation": "反应",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "register",
+    "translation": "注册",
+    "pos": "verb/noun",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "rely",
+    "translation": "依赖",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "remove",
+    "translation": "移除",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "scheme",
+    "translation": "方案",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "sequence",
+    "translation": "序列",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "sex",
+    "translation": "性别",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "shift",
+    "translation": "转移",
+    "pos": "verb/noun",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "specify",
+    "translation": "指定",
+    "pos": "verb",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "sufficient",
+    "translation": "足够的",
+    "pos": "adjective",
+    "sublist": 3,
+    "frequency": 45,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "task",
+    "translation": "任务",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 50,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "technical",
+    "translation": "技术的",
+    "pos": "adjective",
+    "sublist": 3,
+    "frequency": 48,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "technology",
+    "translation": "技术",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 52,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "valid",
+    "translation": "有效的",
+    "pos": "adjective",
+    "sublist": 3,
+    "frequency": 40,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  },
+  {
+    "word": "volume",
+    "translation": "体积",
+    "pos": "noun",
+    "sublist": 3,
+    "frequency": 42,
+    "category": "academic",
+    "source": "AWL",
+    "level": "9"
+  }
+]

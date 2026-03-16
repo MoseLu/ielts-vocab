@@ -8,13 +8,29 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // 允许所有端口访问
     port: 3002,
+    strictPort: true, // 端口被占用时报错而非切换端口
     open: true,
-    allowedHosts: ['axiomaticworld.com', '.axiomaticworld.com'], // 允许该域名访问
+    allowedHosts: true, // 允许所有域名访问
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5002',
         changeOrigin: true,
         secure: false
+      },
+      '/socket.io': {
+        target: 'http://localhost:5002',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        // 确保所有 socket.io 路径都被代理
+        rewrite: (path) => path
+      },
+      // Socket.IO namespace 路径也需要代理
+      '/speech': {
+        target: 'http://localhost:5002/socket.io',
+        changeOrigin: true,
+        secure: false,
+        ws: true
       }
     }
   },

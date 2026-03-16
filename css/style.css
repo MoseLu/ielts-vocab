@@ -2073,14 +2073,16 @@
             border-radius: var(--radius-lg);
             font-size: 20px;
             font-weight: 600;
-            text-align: center;
+            text-align: left;
             outline: none;
             transition: all var(--transition-fast);
+            background: transparent;
         }
 
         .spelling-input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 4px var(--accent-subtle);
+            box-shadow: none;
+            outline: none;
         }
 
         .spelling-input.show-answer {
@@ -3640,6 +3642,7 @@
 
         .spelling-input-wrapper {
             display: flex;
+            align-items: center;
             width: 100%;
             gap: 0;
             border: 2px solid var(--border);
@@ -3650,6 +3653,13 @@
 
         .spelling-input-wrapper:focus-within {
             border-color: var(--accent);
+            box-shadow: none;
+        }
+
+        .spelling-input-wrapper:focus-within .mic-btn,
+        .spelling-input-wrapper:focus-within .spelling-submit-btn {
+            box-shadow: none;
+            outline: none;
         }
 
         .spelling-input-wrapper.correct {
@@ -3667,24 +3677,49 @@
             padding: var(--space-md) var(--space-lg);
             font-size: 18px;
             font-weight: 600;
-            background: var(--bg-color);
+            background: transparent;
             color: var(--text-primary);
             letter-spacing: 0.05em;
+            height: 56px;
+            box-sizing: border-box;
+            text-align: left;
         }
 
         .spelling-submit-btn {
-            padding: var(--space-sm) var(--space-lg);
-            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 56px;
+            background: transparent;
             border: none;
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
+            border-left: 1px solid var(--border);
+            color: var(--text-tertiary);
             cursor: pointer;
-            transition: background var(--transition-fast);
+            transition: all var(--transition-fast);
+            outline: none;
         }
 
         .spelling-submit-btn:hover {
-            background: var(--accent-hover);
+            background: var(--accent);
+            color: white;
+            border-left-color: var(--accent);
+        }
+
+        .spelling-submit-btn:focus {
+            background: transparent;
+            color: var(--text-tertiary);
+            outline: none;
+        }
+
+        .spelling-submit-btn:focus:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .spelling-submit-btn svg {
+            width: 20px;
+            height: 20px;
         }
 
         .dictation-definition {
@@ -3904,34 +3939,34 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 56px;
             border: none;
-            background: none;
+            background: transparent;
             color: var(--text-tertiary);
             cursor: pointer;
             flex-shrink: 0;
             transition: all var(--transition-fast);
-            border-left: 1px solid var(--border);
-            background: var(--bg-secondary);
+            outline: none;
         }
 
         .mic-btn:hover {
             color: var(--accent);
-            background: var(--bg-hover);
+        }
+
+        .mic-btn:focus {
+            background: transparent;
+            outline: none;
         }
 
         .mic-btn.recording {
-            color: white;
-            background: var(--error);
-            border-color: var(--error);
-            animation: micPulse 1s ease-in-out infinite;
+            color: var(--error);
         }
 
-        .mic-btn.transcribing {
-            color: var(--accent);
-            cursor: wait;
-            background: var(--bg-hover);
+        .mic-btn.disconnected {
+            color: var(--text-muted);
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         @keyframes micPulse {

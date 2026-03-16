@@ -1,0 +1,105 @@
+﻿word,translation,pos,category,level,frequency,source
+argue,争论,verb,writing,6,38,IELTS_Writing
+argument,论点,noun,writing,6,38,IELTS_Writing
+claim,声称,verb/noun,writing,6,38,IELTS_Writing
+contend,主张,verb,writing,7,36,IELTS_Writing
+assert,断言,verb,writing,7,36,IELTS_Writing
+maintain,坚持,verb,writing,6,38,IELTS_Writing
+acknowledge,承认,verb,writing,7,36,IELTS_Writing
+admit,承认,verb,writing,5,40,IELTS_Writing
+accept,接受,verb,writing,5,40,IELTS_Writing
+recognize,认识,verb,writing,5,40,IELTS_Writing
+realize,意识到,verb,writing,5,40,IELTS_Writing
+understand,理解,verb,writing,4,42,IELTS_Writing
+comprehend,理解,verb,writing,7,36,IELTS_Writing
+perceive,感知,verb,writing,6,38,IELTS_Writing
+believe,相信,verb,writing,4,42,IELTS_Writing
+consider,考虑,verb,writing,5,40,IELTS_Writing
+regard,认为,verb,writing,5,40,IELTS_Writing
+view,看待,verb,writing,5,40,IELTS_Writing
+think,想,verb,writing,4,42,IELTS_Writing
+suppose,假设,verb,writing,5,40,IELTS_Writing
+assume,假设,verb,writing,6,38,IELTS_Writing
+presume,推测,verb,writing,7,36,IELTS_Writing
+imply,暗示,verb,writing,6,38,IELTS_Writing
+suggest,建议,verb,writing,5,40,IELTS_Writing
+indicate,表明,verb,writing,6,38,IELTS_Writing
+demonstrate,证明,verb,writing,6,38,IELTS_Writing
+show,展示,verb,writing,4,42,IELTS_Writing
+illustrate,说明,verb,writing,6,38,IELTS_Writing
+reveal,揭示,verb,writing,6,38,IELTS_Writing
+reflect,反映,verb,writing,6,38,IELTS_Writing
+represent,代表,verb,writing,6,38,IELTS_Writing
+however,然而,adverb,writing,5,40,IELTS_Writing
+nevertheless,尽管如此,adverb,writing,6,38,IELTS_Writing
+nonetheless,尽管如此,adverb,writing,7,36,IELTS_Writing
+whereas,然而,conjunction,writing,6,38,IELTS_Writing
+while,然而,conjunction,writing,5,40,IELTS_Writing
+although,虽然,conjunction,writing,5,40,IELTS_Writing
+though,虽然,conjunction,writing,5,40,IELTS_Writing
+despite,尽管,preposition,writing,6,38,IELTS_Writing
+in spite of,尽管,preposition,writing,6,38,IELTS_Writing
+regardless of,不管,preposition,writing,6,38,IELTS_Writing
+conversely,相反地,adverb,writing,7,36,IELTS_Writing
+on the contrary,相反,phrase,writing,6,38,IELTS_Writing
+in contrast,相比之下,phrase,writing,6,38,IELTS_Writing
+by contrast,相比之下,phrase,writing,6,38,IELTS_Writing
+compared with,与...相比,phrase,writing,5,40,IELTS_Writing
+in comparison with,与...相比,phrase,writing,6,38,IELTS_Writing
+similarly,同样,adverb,writing,6,38,IELTS_Writing
+likewise,同样,adverb,writing,6,38,IELTS_Writing
+equally,同样,adverb,writing,5,40,IELTS_Writing
+in the same way,同样,phrase,writing,5,40,IELTS_Writing
+therefore,因此,adverb,writing,5,40,IELTS_Writing
+thus,因此,adverb,writing,6,38,IELTS_Writing
+hence,因此,adverb,writing,7,36,IELTS_Writing
+consequently,因此,adverb,writing,6,38,IELTS_Writing
+as a result,结果,phrase,writing,5,40,IELTS_Writing
+accordingly,因此,adverb,writing,7,36,IELTS_Writing
+so,所以,conjunction,writing,4,42,IELTS_Writing
+because,因为,conjunction,writing,4,42,IELTS_Writing
+since,因为,conjunction,writing,5,40,IELTS_Writing
+as,因为,conjunction,writing,4,42,IELTS_Writing
+due to,由于,preposition,writing,5,40,IELTS_Writing
+owing to,由于,preposition,writing,6,38,IELTS_Writing
+thanks to,多亏,preposition,writing,5,40,IELTS_Writing
+because of,因为,preposition,writing,5,40,IELTS_Writing
+on account of,因为,preposition,writing,6,38,IELTS_Writing
+furthermore,此外,adverb,writing,6,38,IELTS_Writing
+moreover,此外,adverb,writing,6,38,IELTS_Writing
+in addition,此外,phrase,writing,5,40,IELTS_Writing
+additionally,此外,adverb,writing,6,38,IELTS_Writing
+besides,此外,adverb,writing,5,40,IELTS_Writing
+also,也,adverb,writing,4,42,IELTS_Writing
+as well as,以及,conjunction,writing,5,40,IELTS_Writing
+not only...but also,不仅...而且,conjunction,writing,5,40,IELTS_Writing
+both...and,既...又,conjunction,writing,5,40,IELTS_Writing
+either...or,要么...要么,conjunction,writing,5,40,IELTS_Writing
+neither...nor,既不...也不,conjunction,writing,6,38,IELTS_Writing
+extremely,极其,adverb,writing,5,40,IELTS_Writing
+highly,非常,adverb,writing,5,40,IELTS_Writing
+remarkably,显著地,adverb,writing,7,36,IELTS_Writing
+significantly,显著地,adverb,writing,6,38,IELTS_Writing
+substantially,实质上,adverb,writing,7,36,IELTS_Writing
+considerably,相当,adverb,writing,6,38,IELTS_Writing
+dramatically,显著地,adverb,writing,6,38,IELTS_Writing
+radically,根本上,adverb,writing,7,36,IELTS_Writing
+fundamentally,根本上,adverb,writing,7,36,IELTS_Writing
+completely,完全,adverb,writing,5,40,IELTS_Writing
+totally,完全,adverb,writing,5,40,IELTS_Writing
+entirely,完全,adverb,writing,6,38,IELTS_Writing
+absolutely,绝对,adverb,writing,5,40,IELTS_Writing
+utterly,完全,adverb,writing,7,36,IELTS_Writing
+fairly,相当,adverb,writing,5,40,IELTS_Writing
+quite,相当,adverb,writing,5,40,IELTS_Writing
+rather,相当,adverb,writing,5,40,IELTS_Writing
+somewhat,有点,adverb,writing,6,38,IELTS_Writing
+relatively,相对,adverb,writing,6,38,IELTS_Writing
+comparatively,相对地,adverb,writing,7,36,IELTS_Writing
+slightly,稍微,adverb,writing,5,40,IELTS_Writing
+barely,几乎不,adverb,writing,6,38,IELTS_Writing
+hardly,几乎不,adverb,writing,5,40,IELTS_Writing
+scarcely,几乎不,adverb,writing,6,38,IELTS_Writing
+merely,仅仅,adverb,writing,6,38,IELTS_Writing
+simply,简单地,adverb,writing,5,40,IELTS_Writing
+purely,纯粹,adverb,writing,6,38,IELTS_Writing

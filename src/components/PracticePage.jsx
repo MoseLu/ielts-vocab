@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { io } from 'socket.io-client'
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 
 function shuffleArray(arr) {
   const a = [...arr]
@@ -117,9 +117,6 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   const [radioPaused, setRadioPaused] = useState(false)
   const [radioStopped, setRadioStopped] = useState(false)
   const [radioHovered, setRadioHovered] = useState(false)
-  // Voice recording state
-  const [isRecording, setIsRecording] = useState(false)
-  const [transcribing, setTranscribing] = useState(false)
 
   const spellingRef = useRef(null)
   const radioActiveRef = useRef(false)
@@ -127,12 +124,34 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   const radioIndexRef = useRef(0)
   const queueRef = useRef([])
   const vocabRef = useRef([])
-  const mediaRecorderRef = useRef(null)
-  const audioChunksRef = useRef([])
 
   const settings = (() => {
     try { return JSON.parse(localStorage.getItem('app_settings') || '{}') } catch { return {} }
   })()
+
+  // ── Real-time Speech Recognition Hook ───────────────────────────────────
+  const {
+    isConnected: speechConnected,
+    isRecording: speechRecording,
+    isReady: speechReady,
+    startRecording: startSpeechRecording,
+    stopRecording: stopSpeechRecording,
+  } = useSpeechRecognition({
+    language: 'en',
+    enableVad: true,
+    onResult: (text) => {
+      console.log('[Practice] Speech result:', text)
+      setSpellingInput(text.toLowerCase())
+      showToast?.('识别成功！', 'success')
+    },
+    onPartial: (text) => {
+      setSpellingInput(text.toLowerCase())
+    },
+    onError: (error) => {
+      showToast?.('识别失败: ' + error, 'error')
+    },
+  })
+  // ────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!currentDay) { navigate('/'); return }
@@ -253,130 +272,17 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
   // ── Voice recording for dictation ────────────────────────────────────────
   const startRecording = async () => {
-    try {
-      // Connect to WebSocket server
-      const socket = io('http://localhost:5000/speech', {
-        transports: ['websocket']
-      })
-
-      let isRecordingActive = true  // Track recording state locally
-
-      socket.on('connect', () => {
-        console.log('Connected to speech recognition service')
-      })
-
-      socket.on('recognition_started', (data) => {
-        console.log('Recognition started:', data)
-      })
-
-      socket.on('partial_result', (data) => {
-        console.log('Partial result:', data)
-        if (data.text) {
-          setSpellingInput(data.text)
-        }
-      })
-
-      socket.on('final_result', (data) => {
-        console.log('Final result:', data)
-        if (data.text) {
-          setSpellingInput(data.text)
-          showToast?.('识别成功！', 'success')
-        }
-      })
-
-      socket.on('recognition_complete', () => {
-        console.log('Recognition complete')
-        stopRecording()
-      })
-
-      socket.on('recognition_error', (data) => {
-        console.error('Recognition error:', data.error)
-        showToast?.('识别失败: ' + data.error, 'error')
-        isRecordingActive = false
-        setIsRecording(false)
-      })
-
-      socket.on('recognition_stopped', () => {
-        console.log('Recognition stopped')
-        isRecordingActive = false
-        socket.disconnect()
-      })
-
-      // Start recognition session
-      socket.emit('start_recognition', {
-        model: 'qwen3-asr-flash-realtime',
-        language: 'en'
-      })
-
-      // Get microphone access and start streaming audio
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 16000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true
-        }
-      })
-
-      // Show recording UI immediately after permission granted
-      setIsRecording(true)
-
-      // Use AudioContext to process audio in real-time
-      const audioContext = new AudioContext({ sampleRate: 16000 })
-      const source = audioContext.createMediaStreamSource(stream)
-      const processor = audioContext.createScriptProcessor(4096, 1, 1)
-
-      processor.onaudioprocess = (event) => {
-        if (isRecordingActive) {
-          const inputData = event.inputBuffer.getChannelData(0)
-          // Convert Float32 to Int16 PCM
-          const pcmData = new Int16Array(inputData.length)
-          for (let i = 0; i < inputData.length; i++) {
-            const s = Math.max(-1, Math.min(1, inputData[i]))
-            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
-          }
-          // Send PCM data to server
-          socket.emit('audio_data', pcmData.buffer)
-        }
-      }
-
-      source.connect(processor)
-      processor.connect(audioContext.destination)
-
-      // Store references for cleanup
-      mediaRecorderRef.current = {
-        socket,
-        stream,
-        audioContext,
-        processor,
-        stop: () => {
-          isRecordingActive = false
-          processor.disconnect()
-          source.disconnect()
-          audioContext.close()
-          stream.getTracks().forEach(track => track.stop())
-          socket.emit('stop_recognition')
-        }
-      }
-
-    } catch (error) {
-      console.error('Microphone access error:', error)
-      if (error.name === 'NotAllowedError') {
-        showToast?.('麦克风权限被拒绝，请在浏览器设置中允许访问麦克风', 'error')
-      } else if (error.name === 'NotFoundError') {
-        showToast?.('未找到麦克风设备', 'error')
-      } else {
-        showToast?.('无法访问麦克风: ' + error.message, 'error')
-      }
-      setIsRecording(false)
+    if (!speechConnected) {
+      showToast?.('语音服务未连接，请稍后重试', 'error')
+      return
     }
+    
+    showToast?.('请说出单词...', 'info')
+    await startSpeechRecording()
   }
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
-    }
+    stopSpeechRecording()
   }
   // ────────────────────────────────────────────────────────────────────────
 
@@ -622,21 +528,25 @@ function PracticePage({ user, currentDay, mode, showToast }) {
             <input ref={spellingRef} type="text" className="spelling-input" value={spellingInput}
               onChange={e => setSpellingInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSpellingSubmit() }}
-              placeholder="输入你听到的单词..." disabled={!!spellingResult || transcribing}
+              placeholder="输入你听到的单词..." disabled={!!spellingResult}
               autoComplete="off" spellCheck={false} />
             {/* Mic button */}
             {!spellingResult && (
               <button
-                className={`mic-btn ${isRecording ? 'recording' : ''} ${transcribing ? 'transcribing' : ''}`}
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={transcribing}
-                title={isRecording ? '停止录音' : '语音输入'}
+                className={`mic-btn ${speechRecording ? 'recording' : ''} ${!speechConnected ? 'disconnected' : ''}`}
+                onClick={speechRecording ? stopRecording : startRecording}
+                disabled={!speechConnected}
+                title={speechRecording ? '停止录音' : speechConnected ? '语音输入' : '语音服务未连接'}
               >
-                {transcribing ? (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin">
-                    <circle cx="12" cy="12" r="10" strokeDasharray="30 10"></circle>
+                {!speechConnected ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                    <line x1="4" y1="4" x2="20" y2="20" stroke="red" strokeWidth="2"></line>
                   </svg>
-                ) : isRecording ? (
+                ) : speechRecording ? (
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="6" width="12" height="12" rx="2"></rect>
                   </svg>
@@ -650,7 +560,13 @@ function PracticePage({ user, currentDay, mode, showToast }) {
                 )}
               </button>
             )}
-            {!spellingResult && <button className="spelling-submit-btn" onClick={handleSpellingSubmit}>确认</button>}
+            {!spellingResult && (
+              <button className="spelling-submit-btn" onClick={handleSpellingSubmit} title="确认">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
         <button className="skip-btn" onClick={handleSkip}>不知道 <span className="shortcut-hint">(5)</span></button>

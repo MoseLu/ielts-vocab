@@ -37,10 +37,10 @@ def create_app(config_class=Config):
 # Create app instance
 app = create_app()
 
-# Initialize SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Initialize SocketIO with eventlet for better WebSocket support
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet', ping_timeout=60, ping_interval=25, logger=True, engineio_logger=True)
 
-# Register SocketIO events for speech recognition
+# Register Socket.IO events for speech recognition
 register_socketio_events(socketio)
 
 
@@ -65,4 +65,4 @@ if __name__ == '__main__':
     print("  /speech - Real-time speech recognition")
     print("=" * 50)
 
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=False, host='0.0.0.0', port=5002)

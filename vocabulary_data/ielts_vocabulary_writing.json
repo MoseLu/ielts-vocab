@@ -1,0 +1,4709 @@
+[
+  {
+    "word": "accordingly",
+    "translation": "相应地",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "acknowledge",
+    "translation": "承认",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "acquire",
+    "translation": "获得",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "adequate",
+    "translation": "足够的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "advocate",
+    "translation": "提倡",
+    "pos": "verb/noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "alleviate",
+    "translation": "减轻",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "alternative",
+    "translation": "替代的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "anticipate",
+    "translation": "预期",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "apparent",
+    "translation": "明显的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "appendix",
+    "translation": "附录",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "applicable",
+    "translation": "适用的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "arbitrary",
+    "translation": "任意的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "assert",
+    "translation": "断言",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "assess",
+    "translation": "评估",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "assign",
+    "translation": "分配",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "assume",
+    "translation": "假设",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "assure",
+    "translation": "保证",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "attach",
+    "translation": "附加",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "attain",
+    "translation": "达到",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "attitude",
+    "translation": "态度",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "attribute",
+    "translation": "属性",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "authority",
+    "translation": "权威",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "automate",
+    "translation": "自动化",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "benefit",
+    "translation": "益处",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "bias",
+    "translation": "偏见",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "breach",
+    "translation": "违反",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "brief",
+    "translation": "简短的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "capable",
+    "translation": "有能力的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "capacity",
+    "translation": "容量",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "cease",
+    "translation": "停止",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "challenge",
+    "translation": "挑战",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "channel",
+    "translation": "渠道",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "chapter",
+    "translation": "章节",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "chart",
+    "translation": "图表",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "circumstance",
+    "translation": "情况",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "cite",
+    "translation": "引用",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "civil",
+    "translation": "公民的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "clarify",
+    "translation": "澄清",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "classic",
+    "translation": "经典的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "clause",
+    "translation": "条款",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "code",
+    "translation": "代码",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "coherent",
+    "translation": "连贯的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "coincide",
+    "translation": "巧合",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "collapse",
+    "translation": "崩溃",
+    "pos": "noun/verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "colleague",
+    "translation": "同事",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "commence",
+    "translation": "开始",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "comment",
+    "translation": "评论",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "commission",
+    "translation": "委员会",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "commit",
+    "translation": "承诺",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "commodity",
+    "translation": "商品",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "communicate",
+    "translation": "交流",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "compatible",
+    "translation": "兼容的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "compensate",
+    "translation": "补偿",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "compile",
+    "translation": "编译",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "complement",
+    "translation": "补充",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "complex",
+    "translation": "复杂的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "complicate",
+    "translation": "使复杂",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "component",
+    "translation": "组件",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "compose",
+    "translation": "组成",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "compound",
+    "translation": "化合物",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "comprehensive",
+    "translation": "全面的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "comprise",
+    "translation": "包含",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "compute",
+    "translation": "计算",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "conceive",
+    "translation": "构想",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "concentrate",
+    "translation": "集中",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "concept",
+    "translation": "概念",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "conclude",
+    "translation": "总结",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "concurrent",
+    "translation": "同时的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "conduct",
+    "translation": "进行",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "confer",
+    "translation": "授予",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "confine",
+    "translation": "限制",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "confirm",
+    "translation": "确认",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "conflict",
+    "translation": "冲突",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "conform",
+    "translation": "符合",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "consent",
+    "translation": "同意",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "consequent",
+    "translation": "结果",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "considerable",
+    "translation": "相当的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "consist",
+    "translation": "由...组成",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "constant",
+    "translation": "持续的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "constitute",
+    "translation": "构成",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "constrain",
+    "translation": "限制",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "construct",
+    "translation": "构建",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "consult",
+    "translation": "咨询",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "consume",
+    "translation": "消费",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "contact",
+    "translation": "联系",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "contemporary",
+    "translation": "当代的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "context",
+    "translation": "上下文",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "contract",
+    "translation": "合同",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "contradict",
+    "translation": "矛盾",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "contrary",
+    "translation": "相反的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "contrast",
+    "translation": "对比",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "contribute",
+    "translation": "贡献",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "controversy",
+    "translation": "争议",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "convene",
+    "translation": "召集",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "converse",
+    "translation": "交谈",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "convert",
+    "translation": "转换",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "convince",
+    "translation": "说服",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "cooperate",
+    "translation": "合作",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "coordinate",
+    "translation": "协调",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "core",
+    "translation": "核心",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "corporate",
+    "translation": "公司的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "correspond",
+    "translation": "对应",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "criteria",
+    "translation": "标准",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "crucial",
+    "translation": "关键的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "data",
+    "translation": "数据",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "debate",
+    "translation": "辩论",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "decade",
+    "translation": "十年",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "decline",
+    "translation": "下降",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "deduce",
+    "translation": "推断",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "define",
+    "translation": "定义",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "definite",
+    "translation": "明确的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "demonstrate",
+    "translation": "证明",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "denote",
+    "translation": "表示",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "deny",
+    "translation": "否认",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "depress",
+    "translation": "压抑",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "derive",
+    "translation": "推导",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "design",
+    "translation": "设计",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "despite",
+    "translation": "尽管",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "detect",
+    "translation": "检测",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "deviate",
+    "translation": "偏离",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "device",
+    "translation": "装置",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "devise",
+    "translation": "设计",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "differentiate",
+    "translation": "区分",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "diminish",
+    "translation": "减少",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "discrete",
+    "translation": "离散的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "discriminate",
+    "translation": "歧视",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "displace",
+    "translation": "取代",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "display",
+    "translation": "显示",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "dispose",
+    "translation": "处理",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "distinct",
+    "translation": "明显的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "distort",
+    "translation": "扭曲",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "distribute",
+    "translation": "分配",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "diverse",
+    "translation": "多样的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "document",
+    "translation": "文件",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "domain",
+    "translation": "领域",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "domestic",
+    "translation": "国内的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "dominant",
+    "translation": "主导的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "draft",
+    "translation": "草稿",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "drama",
+    "translation": "戏剧",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "duration",
+    "translation": "持续",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "dynamic",
+    "translation": "动态的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "economy",
+    "translation": "经济",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "edit",
+    "translation": "编辑",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "element",
+    "translation": "元素",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "eliminate",
+    "translation": "消除",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "emerge",
+    "translation": "出现",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "emphasis",
+    "translation": "强调",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "empirical",
+    "translation": "实证的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "enable",
+    "translation": "使能",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "encounter",
+    "translation": "遇到",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "energy",
+    "translation": "能量",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "enforce",
+    "translation": "执行",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "enhance",
+    "translation": "增强",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "enormous",
+    "translation": "巨大的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "ensure",
+    "translation": "确保",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "entity",
+    "translation": "实体",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "environment",
+    "translation": "环境",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "equate",
+    "translation": "等同",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "equip",
+    "translation": "装备",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "equivalent",
+    "translation": "等价的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "erode",
+    "translation": "侵蚀",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "error",
+    "translation": "错误",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "establish",
+    "translation": "建立",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "estate",
+    "translation": "地产",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "estimate",
+    "translation": "估计",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "ethic",
+    "translation": "伦理",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "evaluate",
+    "translation": "评估",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "eventual",
+    "translation": "最终的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "evident",
+    "translation": "明显的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "evolve",
+    "translation": "进化",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "exceed",
+    "translation": "超过",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "exclude",
+    "translation": "排除",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "exhibit",
+    "translation": "展示",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "expand",
+    "translation": "扩展",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "expert",
+    "translation": "专家",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "explicit",
+    "translation": "明确的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "exploit",
+    "translation": "利用",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "export",
+    "translation": "出口",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "expose",
+    "translation": "暴露",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "extract",
+    "translation": "提取",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "facilitate",
+    "translation": "促进",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "factor",
+    "translation": "因素",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "feature",
+    "translation": "特征",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "federal",
+    "translation": "联邦的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "fee",
+    "translation": "费用",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "file",
+    "translation": "文件",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "final",
+    "translation": "最终的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "finance",
+    "translation": "金融",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "finite",
+    "translation": "有限的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "flexible",
+    "translation": "灵活的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "fluctuate",
+    "translation": "波动",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "focus",
+    "translation": "焦点",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "format",
+    "translation": "格式",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "formula",
+    "translation": "公式",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "forthcoming",
+    "translation": "即将到来的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "found",
+    "translation": "建立",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "framework",
+    "translation": "框架",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "function",
+    "translation": "功能",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "fund",
+    "translation": "资金",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "fundamental",
+    "translation": "基本的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "furthermore",
+    "translation": "此外",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "generate",
+    "translation": "产生",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "generation",
+    "translation": "一代",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "globe",
+    "translation": "地球",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "goal",
+    "translation": "目标",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "grade",
+    "translation": "成绩",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "grant",
+    "translation": "授予",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "guarantee",
+    "translation": "保证",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "guideline",
+    "translation": "指南",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "hence",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "hierarchy",
+    "translation": "等级制度",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "highlight",
+    "translation": "强调",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "hypothesis",
+    "translation": "假设",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "identical",
+    "translation": "相同的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "identify",
+    "translation": "识别",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "ideology",
+    "translation": "意识形态",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "ignore",
+    "translation": "忽视",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "illustrate",
+    "translation": "说明",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "image",
+    "translation": "图像",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "immigrate",
+    "translation": "移民",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "impact",
+    "translation": "影响",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "implement",
+    "translation": "实施",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "implicate",
+    "translation": "牵连",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "implicit",
+    "translation": "隐含的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "imply",
+    "translation": "暗示",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "impose",
+    "translation": "强加",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "incentive",
+    "translation": "激励",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "incidence",
+    "translation": "发生率",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "incline",
+    "translation": "倾斜",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "income",
+    "translation": "收入",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "incorporate",
+    "translation": "合并",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "index",
+    "translation": "指数",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "indicate",
+    "translation": "表明",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "individual",
+    "translation": "个人的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "induce",
+    "translation": "诱导",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "inevitable",
+    "translation": "不可避免的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "infer",
+    "translation": "推断",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "infrastructure",
+    "translation": "基础设施",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "inherent",
+    "translation": "固有的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "inhibit",
+    "translation": "抑制",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "initial",
+    "translation": "最初的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "initiate",
+    "translation": "开始",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "injure",
+    "translation": "伤害",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "innovate",
+    "translation": "创新",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "input",
+    "translation": "输入",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "insert",
+    "translation": "插入",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "insight",
+    "translation": "洞察",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "inspect",
+    "translation": "检查",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "instance",
+    "translation": "例子",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "institute",
+    "translation": "机构",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "instruct",
+    "translation": "指导",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "integral",
+    "translation": "完整的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "integrate",
+    "translation": "整合",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "integrity",
+    "translation": "正直",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "intelligence",
+    "translation": "智力",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "intense",
+    "translation": "强烈的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "interact",
+    "translation": "互动",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "intermediate",
+    "translation": "中间的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "internal",
+    "translation": "内部的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "interpret",
+    "translation": "解释",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "interval",
+    "translation": "间隔",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "intervene",
+    "translation": "干预",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "intrinsic",
+    "translation": "内在的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "invest",
+    "translation": "投资",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "investigate",
+    "translation": "调查",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "involve",
+    "translation": "涉及",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "isolate",
+    "translation": "隔离",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "issue",
+    "translation": "问题",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "item",
+    "translation": "项目",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "job",
+    "translation": "工作",
+    "pos": "noun",
+    "category": "writing",
+    "level": "3",
+    "frequency": 90,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "journal",
+    "translation": "期刊",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "justify",
+    "translation": "证明正当",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "label",
+    "translation": "标签",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "labour",
+    "translation": "劳动",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "layer",
+    "translation": "层",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "lecture",
+    "translation": "讲座",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "legal",
+    "translation": "合法的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "legislate",
+    "translation": "立法",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "levy",
+    "translation": "征税",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "liberal",
+    "translation": "自由的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "likewise",
+    "translation": "同样",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "link",
+    "translation": "链接",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "locate",
+    "translation": "定位",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "logic",
+    "translation": "逻辑",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "maintain",
+    "translation": "维持",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "major",
+    "translation": "主要的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "manipulate",
+    "translation": "操纵",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "manual",
+    "translation": "手册",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "margin",
+    "translation": "边缘",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "mature",
+    "translation": "成熟的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "maximize",
+    "translation": "最大化",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "mechanism",
+    "translation": "机制",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "media",
+    "translation": "媒体",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "mediate",
+    "translation": "调解",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "medical",
+    "translation": "医学的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "medium",
+    "translation": "媒介",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "mental",
+    "translation": "精神的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "method",
+    "translation": "方法",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "migrate",
+    "translation": "迁移",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "military",
+    "translation": "军事的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "minimal",
+    "translation": "最小的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "minimize",
+    "translation": "最小化",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "minimum",
+    "translation": "最小值",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "ministry",
+    "translation": "部",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "minor",
+    "translation": "较小的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "mode",
+    "translation": "模式",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "modify",
+    "translation": "修改",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "monitor",
+    "translation": "监控",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "motive",
+    "translation": "动机",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "mutual",
+    "translation": "相互的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "negate",
+    "translation": "否定",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "network",
+    "translation": "网络",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "neutral",
+    "translation": "中立的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "nevertheless",
+    "translation": "然而",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "nonetheless",
+    "translation": "尽管如此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "norm",
+    "translation": "规范",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "normal",
+    "translation": "正常的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "notion",
+    "translation": "概念",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "notwithstanding",
+    "translation": "尽管",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "nuclear",
+    "translation": "核的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "objective",
+    "translation": "客观的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "obtain",
+    "translation": "获得",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "obvious",
+    "translation": "明显的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "occasion",
+    "translation": "场合",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "occupy",
+    "translation": "占据",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "occur",
+    "translation": "发生",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "odd",
+    "translation": "奇怪的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "offset",
+    "translation": "抵消",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "ongoing",
+    "translation": "持续的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "option",
+    "translation": "选项",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "orient",
+    "translation": "定向",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "outcome",
+    "translation": "结果",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "output",
+    "translation": "输出",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "overall",
+    "translation": "总的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "overlap",
+    "translation": "重叠",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "overseas",
+    "translation": "海外的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "panel",
+    "translation": "小组",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "paradigm",
+    "translation": "范式",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "paragraph",
+    "translation": "段落",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "parallel",
+    "translation": "平行的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "parameter",
+    "translation": "参数",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "participate",
+    "translation": "参与",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "partner",
+    "translation": "伙伴",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "passive",
+    "translation": "被动的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "perceive",
+    "translation": "感知",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "percent",
+    "translation": "百分比",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "period",
+    "translation": "时期",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "permanent",
+    "translation": "永久的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "persist",
+    "translation": "坚持",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "perspective",
+    "translation": "视角",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "phase",
+    "translation": "阶段",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "phenomenon",
+    "translation": "现象",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "philosophy",
+    "translation": "哲学",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "physical",
+    "translation": "物理的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "plus",
+    "translation": "加",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "policy",
+    "translation": "政策",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "portion",
+    "translation": "部分",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "pose",
+    "translation": "姿势",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "positive",
+    "translation": "积极的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "potential",
+    "translation": "潜在的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "practitioner",
+    "translation": "从业者",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "precede",
+    "translation": "先于",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "precise",
+    "translation": "精确的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "predict",
+    "translation": "预测",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "predominant",
+    "translation": "主导的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "preliminary",
+    "translation": "初步的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "presume",
+    "translation": "假定",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "previous",
+    "translation": "以前的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "primary",
+    "translation": "主要的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "prime",
+    "translation": "主要的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "principal",
+    "translation": "主要的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "principle",
+    "translation": "原则",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "prior",
+    "translation": "在先的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "priority",
+    "translation": "优先",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "proceed",
+    "translation": "继续进行",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "process",
+    "translation": "过程",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "professional",
+    "translation": "专业的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "prohibit",
+    "translation": "禁止",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "project",
+    "translation": "项目",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "promote",
+    "translation": "促进",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "proportion",
+    "translation": "比例",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "prospect",
+    "translation": "前景",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "protocol",
+    "translation": "协议",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "psychology",
+    "translation": "心理学",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "publication",
+    "translation": "出版物",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "publish",
+    "translation": "出版",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "purchase",
+    "translation": "购买",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "pursue",
+    "translation": "追求",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "qualitative",
+    "translation": "定性的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "quote",
+    "translation": "引用",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "radical",
+    "translation": "激进的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "random",
+    "translation": "随机的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "range",
+    "translation": "范围",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "ratio",
+    "translation": "比例",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "rational",
+    "translation": "理性的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "react",
+    "translation": "反应",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "recover",
+    "translation": "恢复",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "refine",
+    "translation": "提炼",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "regime",
+    "translation": "政权",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "region",
+    "translation": "地区",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "register",
+    "translation": "注册",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "regulate",
+    "translation": "调节",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "reinforce",
+    "translation": "加强",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "reject",
+    "translation": "拒绝",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "relate",
+    "translation": "关联",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "relative",
+    "translation": "相对的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "relevant",
+    "translation": "相关的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "reluctance",
+    "translation": "勉强",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "rely",
+    "translation": "依赖",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "remove",
+    "translation": "移除",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "require",
+    "translation": "需要",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "research",
+    "translation": "研究",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "reside",
+    "translation": "居住",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "resolve",
+    "translation": "解决",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "resource",
+    "translation": "资源",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "respond",
+    "translation": "回应",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "responsible",
+    "translation": "负责的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "restrict",
+    "translation": "限制",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "retain",
+    "translation": "保留",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "reveal",
+    "translation": "揭示",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "revenue",
+    "translation": "收入",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "reverse",
+    "translation": "反向",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "revise",
+    "translation": "修订",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "revolution",
+    "translation": "革命",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "rigid",
+    "translation": "严格的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "role",
+    "translation": "角色",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "route",
+    "translation": "路线",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "scenario",
+    "translation": "情景",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "schedule",
+    "translation": "时刻表",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "scheme",
+    "translation": "计划",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "scope",
+    "translation": "范围",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "section",
+    "translation": "部分",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "sector",
+    "translation": "部门",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "secure",
+    "translation": "安全的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "seek",
+    "translation": "寻找",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "select",
+    "translation": "选择",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "sequence",
+    "translation": "序列",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "series",
+    "translation": "系列",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "sex",
+    "translation": "性别",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "shift",
+    "translation": "转变",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "significant",
+    "translation": "重要的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "similar",
+    "translation": "相似的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "simulate",
+    "translation": "模拟",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "site",
+    "translation": "地点",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "so-called",
+    "translation": "所谓的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "sole",
+    "translation": "唯一的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "somewhat",
+    "translation": "有点",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "source",
+    "translation": "来源",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "specific",
+    "translation": "具体的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "specify",
+    "translation": "指定",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "sphere",
+    "translation": "球体",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "stable",
+    "translation": "稳定的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "statistic",
+    "translation": "统计",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "status",
+    "translation": "地位",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "straightforward",
+    "translation": "直截了当的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "strategy",
+    "translation": "策略",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "stress",
+    "translation": "压力",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "structure",
+    "translation": "结构",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "style",
+    "translation": "风格",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "submit",
+    "translation": "提交",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "subordinate",
+    "translation": "下属的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "subsequent",
+    "translation": "随后的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "subsidy",
+    "translation": "补贴",
+    "pos": "noun",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "substitute",
+    "translation": "替代",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "successor",
+    "translation": "继任者",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "sufficient",
+    "translation": "足够的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "sum",
+    "translation": "总和",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "summary",
+    "translation": "总结",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "supplement",
+    "translation": "补充",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "survey",
+    "translation": "调查",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "survive",
+    "translation": "生存",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "sustainable",
+    "translation": "可持续的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "symbol",
+    "translation": "符号",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "tape",
+    "translation": "磁带",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "task",
+    "translation": "任务",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "team",
+    "translation": "团队",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "technical",
+    "translation": "技术的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "technique",
+    "translation": "技术",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "technology",
+    "translation": "技术",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "temporary",
+    "translation": "临时的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "tense",
+    "translation": "紧张的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "terminate",
+    "translation": "终止",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "text",
+    "translation": "文本",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "theme",
+    "translation": "主题",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "theory",
+    "translation": "理论",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "thereby",
+    "translation": "因此",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "thesis",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "topic",
+    "translation": "主题",
+    "pos": "noun",
+    "category": "writing",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "trace",
+    "translation": "追踪",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "tradition",
+    "translation": "传统",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "transfer",
+    "translation": "转移",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "transform",
+    "translation": "转变",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "transit",
+    "translation": "过境",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "transmit",
+    "translation": "传输",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "transport",
+    "translation": "运输",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "trend",
+    "translation": "趋势",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "trigger",
+    "translation": "触发",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "ultimately",
+    "translation": "最终",
+    "pos": "adverb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "undergo",
+    "translation": "经历",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "underlie",
+    "translation": "构成基础",
+    "pos": "verb",
+    "category": "writing",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "undertake",
+    "translation": "承担",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "uniform",
+    "translation": "统一的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "unify",
+    "translation": "统一",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "unique",
+    "translation": "独特的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "utilize",
+    "translation": "利用",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "valid",
+    "translation": "有效的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "vary",
+    "translation": "变化",
+    "pos": "verb",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "vehicle",
+    "translation": "车辆",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "version",
+    "translation": "版本",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "via",
+    "translation": "通过",
+    "pos": "preposition",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "violate",
+    "translation": "违反",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "virtual",
+    "translation": "虚拟的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "visible",
+    "translation": "可见的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "vision",
+    "translation": "视觉",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "visual",
+    "translation": "视觉的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "volume",
+    "translation": "卷",
+    "pos": "noun",
+    "category": "writing",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "voluntary",
+    "translation": "自愿的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "welfare",
+    "translation": "福利",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "whereas",
+    "translation": "然而",
+    "pos": "conjunction",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "widespread",
+    "translation": "广泛的",
+    "pos": "adjective",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "wisdom",
+    "translation": "智慧",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "withdraw",
+    "translation": "撤回",
+    "pos": "verb",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  },
+  {
+    "word": "workshop",
+    "translation": "研讨会",
+    "pos": "noun",
+    "category": "writing",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Writing"
+  }
+]

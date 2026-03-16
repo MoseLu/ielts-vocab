@@ -1,0 +1,947 @@
+[
+  {
+    "word": "scientific",
+    "translation": "科学的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "scientist",
+    "translation": "科学家",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "research",
+    "translation": "研究",
+    "pos": "noun/verb",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "researcher",
+    "translation": "研究者",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "experiment",
+    "translation": "实验",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "experimental",
+    "translation": "实验的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "hypothesis",
+    "translation": "假设",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "theory",
+    "translation": "理论",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "theoretical",
+    "translation": "理论的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "phenomenon",
+    "translation": "现象",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "phenomena",
+    "translation": "现象",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "observation",
+    "translation": "观察",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "evidence",
+    "translation": "证据",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "data",
+    "translation": "数据",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "statistics",
+    "translation": "统计",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "analysis",
+    "translation": "分析",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "analyze",
+    "translation": "分析",
+    "pos": "verb",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "investigation",
+    "translation": "调查",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "measurement",
+    "translation": "测量",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "calculation",
+    "translation": "计算",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "precise",
+    "translation": "精确的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "accurate",
+    "translation": "精确的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "valid",
+    "translation": "有效的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "reliable",
+    "translation": "可靠的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "significant",
+    "translation": "重要的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "conclusion",
+    "translation": "结论",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "finding",
+    "translation": "发现",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "discovery",
+    "translation": "发现",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "invention",
+    "translation": "发明",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "innovation",
+    "translation": "创新",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "technology",
+    "translation": "技术",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "technological",
+    "translation": "技术的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "biological",
+    "translation": "生物的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "chemical",
+    "translation": "化学的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "physical",
+    "translation": "物理的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "genetic",
+    "translation": "基因的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "molecular",
+    "translation": "分子的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "cellular",
+    "translation": "细胞的",
+    "pos": "adjective",
+    "category": "reading_science",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "organism",
+    "translation": "生物",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "species",
+    "translation": "物种",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "evolution",
+    "translation": "进化",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "ecosystem",
+    "translation": "生态系统",
+    "pos": "noun",
+    "category": "reading_science",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "environment",
+    "translation": "环境",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "environmental",
+    "translation": "环境的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "ecology",
+    "translation": "生态学",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "ecological",
+    "translation": "生态的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "pollution",
+    "translation": "污染",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "pollutant",
+    "translation": "污染物",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "contamination",
+    "translation": "污染",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "climate",
+    "translation": "气候",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "climate change",
+    "translation": "气候变化",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "global warming",
+    "translation": "全球变暖",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "greenhouse",
+    "translation": "温室",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "emission",
+    "translation": "排放",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "carbon dioxide",
+    "translation": "二氧化碳",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "sustainable",
+    "translation": "可持续的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "sustainability",
+    "translation": "可持续性",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "renewable",
+    "translation": "可再生的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "conservation",
+    "translation": "保护",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "preserve",
+    "translation": "保护",
+    "pos": "verb",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "protection",
+    "translation": "保护",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "biodiversity",
+    "translation": "生物多样性",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "habitat",
+    "translation": "栖息地",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "wildlife",
+    "translation": "野生动物",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "endangered",
+    "translation": "濒危的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "extinct",
+    "translation": "灭绝的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "extinction",
+    "translation": "灭绝",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "natural",
+    "translation": "自然的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "nature",
+    "translation": "自然",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "4",
+    "frequency": 47,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "resource",
+    "translation": "资源",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "energy",
+    "translation": "能源",
+    "pos": "noun",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "solar",
+    "translation": "太阳的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "nuclear",
+    "translation": "核的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "health",
+    "translation": "健康",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "4",
+    "frequency": 47,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "healthy",
+    "translation": "健康的",
+    "pos": "adjective",
+    "category": "reading_health",
+    "level": "4",
+    "frequency": 47,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "medicine",
+    "translation": "医学",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "medical",
+    "translation": "医学的",
+    "pos": "adjective",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "patient",
+    "translation": "病人",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "doctor",
+    "translation": "医生",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "4",
+    "frequency": 47,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "physician",
+    "translation": "内科医生",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "surgeon",
+    "translation": "外科医生",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "nurse",
+    "translation": "护士",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "4",
+    "frequency": 47,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "hospital",
+    "translation": "医院",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "4",
+    "frequency": 47,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "clinic",
+    "translation": "诊所",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "pharmacy",
+    "translation": "药房",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "treatment",
+    "translation": "治疗",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "therapy",
+    "translation": "治疗",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "diagnosis",
+    "translation": "诊断",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "symptom",
+    "translation": "症状",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "disease",
+    "translation": "疾病",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "illness",
+    "translation": "疾病",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "infection",
+    "translation": "感染",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "virus",
+    "translation": "病毒",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "bacteria",
+    "translation": "细菌",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "immune",
+    "translation": "免疫的",
+    "pos": "adjective",
+    "category": "reading_health",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "vaccine",
+    "translation": "疫苗",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "prescription",
+    "translation": "处方",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "medication",
+    "translation": "药物",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "drug",
+    "translation": "药物",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "antibiotic",
+    "translation": "抗生素",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "7",
+    "frequency": 41,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "nutrition",
+    "translation": "营养",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "nutritional",
+    "translation": "营养的",
+    "pos": "adjective",
+    "category": "reading_health",
+    "level": "6",
+    "frequency": 43,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "diet",
+    "translation": "饮食",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "exercise",
+    "translation": "锻炼",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "4",
+    "frequency": 47,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "fitness",
+    "translation": "健康",
+    "pos": "noun",
+    "category": "reading_health",
+    "level": "5",
+    "frequency": 45,
+    "source": "IELTS_Reading"
+  }
+]

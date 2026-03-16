@@ -1,0 +1,461 @@
+[
+  {
+    "word": "actually",
+    "translation": "实际上",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "basically",
+    "translation": "基本上",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "certainly",
+    "translation": "当然",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "definitely",
+    "translation": "肯定",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "honestly",
+    "translation": "诚实地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "literally",
+    "translation": "字面上",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "obviously",
+    "translation": "显然",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "personally",
+    "translation": "就个人而言",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "probably",
+    "translation": "可能",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "simply",
+    "translation": "简单地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "supposedly",
+    "translation": "据说",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "totally",
+    "translation": "完全",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "apparently",
+    "translation": "显然",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "approximately",
+    "translation": "大约",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "essentially",
+    "translation": "本质上",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "fortunately",
+    "translation": "幸运地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "frankly",
+    "translation": "坦率地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "generally",
+    "translation": "一般",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "hopefully",
+    "translation": "希望",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "ideally",
+    "translation": "理想地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "incidentally",
+    "translation": "顺便",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "interestingly",
+    "translation": "有趣的是",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "luckily",
+    "translation": "幸运地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "mainly",
+    "translation": "主要",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "mostly",
+    "translation": "主要",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "naturally",
+    "translation": "自然地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "normally",
+    "translation": "通常",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "originally",
+    "translation": "最初",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "particularly",
+    "translation": "特别",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "perhaps",
+    "translation": "也许",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "possibly",
+    "translation": "可能",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "practically",
+    "translation": "实际上",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "presumably",
+    "translation": "大概",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "primarily",
+    "translation": "主要",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "rarely",
+    "translation": "很少",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "really",
+    "translation": "真地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "3",
+    "frequency": 95,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "relatively",
+    "translation": "相对",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "seriously",
+    "translation": "认真地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "significantly",
+    "translation": "显著地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "slightly",
+    "translation": "稍微",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "somehow",
+    "translation": "以某种方式",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "somewhat",
+    "translation": "有点",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "specifically",
+    "translation": "具体",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "strongly",
+    "translation": "强烈",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "supposedly",
+    "translation": "据说",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "surprisingly",
+    "translation": "令人惊讶",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "typically",
+    "translation": "典型地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "ultimately",
+    "translation": "最终",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "unfortunately",
+    "translation": "不幸",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "virtually",
+    "translation": "几乎",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Speaking"
+  },
+  {
+    "word": "wonderfully",
+    "translation": "精彩地",
+    "pos": "adverb",
+    "category": "speaking",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Speaking"
+  }
+]

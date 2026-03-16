@@ -1,0 +1,1202 @@
+[
+  {
+    "word": "astronomy",
+    "translation": "天文学",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "biology",
+    "translation": "生物学",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "chemistry",
+    "translation": "化学",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "physics",
+    "translation": "物理",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "genetics",
+    "translation": "遗传学",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "evolution",
+    "translation": "进化",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "experiment",
+    "translation": "实验",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "hypothesis",
+    "translation": "假设",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "laboratory",
+    "translation": "实验室",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "molecule",
+    "translation": "分子",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "organism",
+    "translation": "有机体",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "species",
+    "translation": "物种",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "algorithm",
+    "translation": "算法",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "artificial",
+    "translation": "人工的",
+    "pos": "adjective",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "automation",
+    "translation": "自动化",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "breakthrough",
+    "translation": "突破",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "computing",
+    "translation": "计算",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "cyberspace",
+    "translation": "网络空间",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "digital",
+    "translation": "数字的",
+    "pos": "adjective",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "innovation",
+    "translation": "创新",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "mechanism",
+    "translation": "机制",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "network",
+    "translation": "网络",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "satellite",
+    "translation": "卫星",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "software",
+    "translation": "软件",
+    "pos": "noun",
+    "category": "reading_science_technology",
+    "topic": "science_technology",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "agriculture",
+    "translation": "农业",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "biodiversity",
+    "translation": "生物多样性",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "8",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "carbon",
+    "translation": "碳",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "climate",
+    "translation": "气候",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "conservation",
+    "translation": "保护",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "contamination",
+    "translation": "污染",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "deforestation",
+    "translation": "森林砍伐",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "8",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "drought",
+    "translation": "干旱",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "ecology",
+    "translation": "生态学",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "ecosystem",
+    "translation": "生态系统",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "emission",
+    "translation": "排放",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "endangered",
+    "translation": "濒危的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "erosion",
+    "translation": "侵蚀",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "extinction",
+    "translation": "灭绝",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "flood",
+    "translation": "洪水",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "fossil fuel",
+    "translation": "化石燃料",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "global warming",
+    "translation": "全球变暖",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "greenhouse",
+    "translation": "温室",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "habitat",
+    "translation": "栖息地",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "irrigation",
+    "translation": "灌溉",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "pollutant",
+    "translation": "污染物",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "recycling",
+    "translation": "回收",
+    "pos": "noun",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "renewable",
+    "translation": "可再生的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "sustainable",
+    "translation": "可持续的",
+    "pos": "adjective",
+    "category": "reading_environment",
+    "topic": "environment",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "addiction",
+    "translation": "上瘾",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "antibody",
+    "translation": "抗体",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "bacteria",
+    "translation": "细菌",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "cardiovascular",
+    "translation": "心血管的",
+    "pos": "adjective",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "8",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "chronic",
+    "translation": "慢性的",
+    "pos": "adjective",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "diabetes",
+    "translation": "糖尿病",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "epidemic",
+    "translation": "流行病",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "fatigue",
+    "translation": "疲劳",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "hormone",
+    "translation": "荷尔蒙",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "hygiene",
+    "translation": "卫生",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "metabolism",
+    "translation": "新陈代谢",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "nutrition",
+    "translation": "营养",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "obesity",
+    "translation": "肥胖",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "paralysis",
+    "translation": "瘫痪",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "prevention",
+    "translation": "预防",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "protein",
+    "translation": "蛋白质",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "psychiatry",
+    "translation": "精神病学",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "8",
+    "frequency": 60,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "remedy",
+    "translation": "疗法",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "resistance",
+    "translation": "抵抗力",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "therapy",
+    "translation": "治疗",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "tissue",
+    "translation": "组织",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "toxic",
+    "translation": "有毒的",
+    "pos": "adjective",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "virus",
+    "translation": "病毒",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "wellness",
+    "translation": "健康",
+    "pos": "noun",
+    "category": "reading_health_medicine",
+    "topic": "health_medicine",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "ancestor",
+    "translation": "祖先",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "anthropology",
+    "translation": "人类学",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "8",
+    "frequency": 60,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "archeology",
+    "translation": "考古学",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "8",
+    "frequency": 60,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "civilization",
+    "translation": "文明",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "custom",
+    "translation": "习俗",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "democracy",
+    "translation": "民主",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "discrimination",
+    "translation": "歧视",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "diversity",
+    "translation": "多样性",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "ethnic",
+    "translation": "民族的",
+    "pos": "adjective",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "generation",
+    "translation": "一代",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "heritage",
+    "translation": "遗产",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "immigrant",
+    "translation": "移民",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "indigenous",
+    "translation": "土著的",
+    "pos": "adjective",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "inequality",
+    "translation": "不平等",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "institution",
+    "translation": "机构",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "minority",
+    "translation": "少数",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "prejudice",
+    "translation": "偏见",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "ritual",
+    "translation": "仪式",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "social",
+    "translation": "社会的",
+    "pos": "adjective",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "society",
+    "translation": "社会",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "tradition",
+    "translation": "传统",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "tribe",
+    "translation": "部落",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "urban",
+    "translation": "城市的",
+    "pos": "adjective",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "welfare",
+    "translation": "福利",
+    "pos": "noun",
+    "category": "reading_society_culture",
+    "topic": "society_culture",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "adolescent",
+    "translation": "青少年",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "anxiety",
+    "translation": "焦虑",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "assumption",
+    "translation": "假设",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "behavior",
+    "translation": "行为",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "cognitive",
+    "translation": "认知的",
+    "pos": "adjective",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "conscious",
+    "translation": "有意识的",
+    "pos": "adjective",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "depression",
+    "translation": "抑郁",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "disorder",
+    "translation": "失调",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "emotion",
+    "translation": "情绪",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "empathy",
+    "translation": "共情",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "instinct",
+    "translation": "本能",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "intelligence",
+    "translation": "智力",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "motivation",
+    "translation": "动机",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "perception",
+    "translation": "感知",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "personality",
+    "translation": "个性",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "psychological",
+    "translation": "心理的",
+    "pos": "adjective",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "reinforcement",
+    "translation": "强化",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "self-esteem",
+    "translation": "自尊",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "sensation",
+    "translation": "感觉",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "stimulus",
+    "translation": "刺激",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "subconscious",
+    "translation": "潜意识",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "syndrome",
+    "translation": "综合征",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "therapy",
+    "translation": "治疗",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Reading"
+  },
+  {
+    "word": "trait",
+    "translation": "特征",
+    "pos": "noun",
+    "category": "reading_psychology",
+    "topic": "psychology",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Reading"
+  }
+]

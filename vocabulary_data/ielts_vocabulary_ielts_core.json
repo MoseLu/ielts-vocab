@@ -1,0 +1,1812 @@
+[
+  {
+    "word": "academic",
+    "translation": "学术的",
+    "pos": "adjective",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "academy",
+    "translation": "学院",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "admission",
+    "translation": "入学",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "advanced",
+    "translation": "高级的",
+    "pos": "adjective",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "assignment",
+    "translation": "作业",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "attend",
+    "translation": "参加",
+    "pos": "verb",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "attendance",
+    "translation": "出勤",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "auditorium",
+    "translation": "礼堂",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 60,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "bachelor",
+    "translation": "学士",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "campus",
+    "translation": "校园",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "certificate",
+    "translation": "证书",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "classroom",
+    "translation": "教室",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "compulsory",
+    "translation": "强制的",
+    "pos": "adjective",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "course",
+    "translation": "课程",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "credit",
+    "translation": "学分",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "curriculum",
+    "translation": "课程",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "degree",
+    "translation": "学位",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "diploma",
+    "translation": "文凭",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "discipline",
+    "translation": "学科",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "dissertation",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "8",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "doctorate",
+    "translation": "博士",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "dropout",
+    "translation": "退学",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "elective",
+    "translation": "选修的",
+    "pos": "adjective",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "enroll",
+    "translation": "注册",
+    "pos": "verb",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "enrollment",
+    "translation": "注册",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "essay",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "examination",
+    "translation": "考试",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "exam",
+    "translation": "考试",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 98,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "faculty",
+    "translation": "院系",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "fellowship",
+    "translation": "奖学金",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "fraternity",
+    "translation": "兄弟会",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 60,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "freshman",
+    "translation": "大一新生",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "grade",
+    "translation": "成绩",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "graduation",
+    "translation": "毕业",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "grant",
+    "translation": "助学金",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "headmaster",
+    "translation": "校长",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "honors",
+    "translation": "荣誉",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "instructor",
+    "translation": "讲师",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "intellect",
+    "translation": "智力",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "interdisciplinary",
+    "translation": "跨学科的",
+    "pos": "adjective",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "8",
+    "frequency": 65,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "junior",
+    "translation": "大三学生",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "kindergarten",
+    "translation": "幼儿园",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "lecture",
+    "translation": "讲座",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "lecturer",
+    "translation": "讲师",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "literacy",
+    "translation": "读写能力",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "major",
+    "translation": "专业",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "master",
+    "translation": "硕士",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "matriculation",
+    "translation": "入学",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "8",
+    "frequency": 60,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "mentor",
+    "translation": "导师",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "minor",
+    "translation": "辅修",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "module",
+    "translation": "模块",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "optional",
+    "translation": "选修的",
+    "pos": "adjective",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "paper",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "placement",
+    "translation": "分班",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "postgraduate",
+    "translation": "研究生",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "prerequisite",
+    "translation": "先决条件",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "preschool",
+    "translation": "学前",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "principal",
+    "translation": "校长",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "professor",
+    "translation": "教授",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "project",
+    "translation": "项目",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "pupil",
+    "translation": "学生",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "quiz",
+    "translation": "小测验",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "reading",
+    "translation": "阅读",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "recitation",
+    "translation": "背诵",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 60,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "register",
+    "translation": "注册",
+    "pos": "verb",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "registration",
+    "translation": "注册",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "scholarship",
+    "translation": "奖学金",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "schooling",
+    "translation": "教育",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "semester",
+    "translation": "学期",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "seminar",
+    "translation": "研讨会",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "senior",
+    "translation": "大四学生",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "sophomore",
+    "translation": "大二学生",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "specialization",
+    "translation": "专业",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "specialize",
+    "translation": "专攻",
+    "pos": "verb",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "syllabus",
+    "translation": "大纲",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "term",
+    "translation": "学期",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "textbook",
+    "translation": "教科书",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "thesis",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "transcript",
+    "translation": "成绩单",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "transfer",
+    "translation": "转学",
+    "pos": "verb",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "tuition",
+    "translation": "学费",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "tutor",
+    "translation": "导师",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "tutorial",
+    "translation": "辅导课",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "undergraduate",
+    "translation": "本科生",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "university",
+    "translation": "大学",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "valedictorian",
+    "translation": "毕业生代表",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "9",
+    "frequency": 55,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "vocation",
+    "translation": "职业",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "workshop",
+    "translation": "研讨会",
+    "pos": "noun",
+    "category": "ielts_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "ambition",
+    "translation": "野心",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "applicant",
+    "translation": "申请者",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "application",
+    "translation": "申请",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "apply",
+    "translation": "申请",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "apprentice",
+    "translation": "学徒",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "apprenticeship",
+    "translation": "学徒期",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "assignment",
+    "translation": "任务",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "associate",
+    "translation": "同事",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "authority",
+    "translation": "权威",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "benefit",
+    "translation": "福利",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "bonus",
+    "translation": "奖金",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "boss",
+    "translation": "老板",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "candidate",
+    "translation": "候选人",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "career",
+    "translation": "职业",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "colleague",
+    "translation": "同事",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "commission",
+    "translation": "佣金",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "committee",
+    "translation": "委员会",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "company",
+    "translation": "公司",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "3",
+    "frequency": 98,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "compensation",
+    "translation": "补偿",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "contract",
+    "translation": "合同",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "cooperate",
+    "translation": "合作",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "cooperation",
+    "translation": "合作",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "corporate",
+    "translation": "公司的",
+    "pos": "adjective",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "coworker",
+    "translation": "同事",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "dismiss",
+    "translation": "解雇",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "dismissal",
+    "translation": "解雇",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "employ",
+    "translation": "雇用",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "employee",
+    "translation": "雇员",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "employer",
+    "translation": "雇主",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "employment",
+    "translation": "就业",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "executive",
+    "translation": "主管",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "experience",
+    "translation": "经验",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "fire",
+    "translation": "解雇",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "full-time",
+    "translation": "全职的",
+    "pos": "adjective",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "hire",
+    "translation": "雇用",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "income",
+    "translation": "收入",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "industry",
+    "translation": "工业",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "interview",
+    "translation": "面试",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "interviewer",
+    "translation": "面试官",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "job",
+    "translation": "工作",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "3",
+    "frequency": 98,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "labor",
+    "translation": "劳动",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "laborer",
+    "translation": "劳动者",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "layoff",
+    "translation": "解雇",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "leadership",
+    "translation": "领导力",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "leave",
+    "translation": "休假",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "manager",
+    "translation": "经理",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "management",
+    "translation": "管理",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "manual",
+    "translation": "手册",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "manufacture",
+    "translation": "制造",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "manufacturer",
+    "translation": "制造商",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "occupation",
+    "translation": "职业",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "offer",
+    "translation": "提供",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "officer",
+    "translation": "官员",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "overtime",
+    "translation": "加班",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "part-time",
+    "translation": "兼职的",
+    "pos": "adjective",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "pension",
+    "translation": "养老金",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "position",
+    "translation": "职位",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "profession",
+    "translation": "职业",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "professional",
+    "translation": "专业的",
+    "pos": "adjective",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "promote",
+    "translation": "晋升",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "promotion",
+    "translation": "晋升",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "prospective",
+    "translation": "预期的",
+    "pos": "adjective",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "qualify",
+    "translation": "使合格",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "qualification",
+    "translation": "资格",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "recruit",
+    "translation": "招聘",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "recruitment",
+    "translation": "招聘",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "redundant",
+    "translation": "多余的",
+    "pos": "adjective",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "resign",
+    "translation": "辞职",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "resignation",
+    "translation": "辞职",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "resume",
+    "translation": "简历",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "retire",
+    "translation": "退休",
+    "pos": "verb",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "retirement",
+    "translation": "退休",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "salary",
+    "translation": "薪水",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "shift",
+    "translation": "轮班",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "skill",
+    "translation": "技能",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "sick leave",
+    "translation": "病假",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "staff",
+    "translation": "员工",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "stipend",
+    "translation": "津贴",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "7",
+    "frequency": 60,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "strike",
+    "translation": "罢工",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "supervisor",
+    "translation": "主管",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "teamwork",
+    "translation": "团队合作",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "temporary",
+    "translation": "临时的",
+    "pos": "adjective",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "trainee",
+    "translation": "实习生",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "training",
+    "translation": "培训",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "unemployed",
+    "translation": "失业的",
+    "pos": "adjective",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "unemployment",
+    "translation": "失业",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "union",
+    "translation": "工会",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "vacancy",
+    "translation": "空缺",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "wage",
+    "translation": "工资",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "work",
+    "translation": "工作",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "3",
+    "frequency": 99,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "worker",
+    "translation": "工人",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "4",
+    "frequency": 95,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "workforce",
+    "translation": "劳动力",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Core"
+  },
+  {
+    "word": "workplace",
+    "translation": "工作场所",
+    "pos": "noun",
+    "category": "ielts_employment",
+    "scene": "employment",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Core"
+  }
+]

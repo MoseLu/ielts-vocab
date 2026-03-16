@@ -1,0 +1,1091 @@
+[
+  {
+    "word": "abandon",
+    "translation": "放弃",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ability",
+    "translation": "能力",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "absence",
+    "translation": "缺席",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "absolute",
+    "translation": "绝对的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "absorb",
+    "translation": "吸收",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "abstract",
+    "translation": "抽象的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "abundant",
+    "translation": "丰富的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "academic",
+    "translation": "学术的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accelerate",
+    "translation": "加速",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accent",
+    "translation": "口音",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "access",
+    "translation": "通道",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accessible",
+    "translation": "可进入的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accident",
+    "translation": "事故",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accompany",
+    "translation": "陪伴",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accomplish",
+    "translation": "完成",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accord",
+    "translation": "一致",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "account",
+    "translation": "账户",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accumulate",
+    "translation": "积累",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accuracy",
+    "translation": "准确性",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accuse",
+    "translation": "控告",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "accustomed",
+    "translation": "习惯的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ache",
+    "translation": "疼痛",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "achieve",
+    "translation": "实现",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "acid",
+    "translation": "酸",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "acknowledge",
+    "translation": "承认",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "acquaintance",
+    "translation": "熟人",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "acquire",
+    "translation": "获得",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "acquisition",
+    "translation": "获得",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "acre",
+    "translation": "英亩",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "adequate",
+    "translation": "足够的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "adjust",
+    "translation": "调整",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "administration",
+    "translation": "管理",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "admire",
+    "translation": "钦佩",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "admission",
+    "translation": "准许进入",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "adolescent",
+    "translation": "青少年",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "adopt",
+    "translation": "采用",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "advance",
+    "translation": "前进",
+    "pos": "noun/verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "adventure",
+    "translation": "冒险",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "advertise",
+    "translation": "广告",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "advocate",
+    "translation": "提倡",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "aesthetic",
+    "translation": "美学的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "affection",
+    "translation": "感情",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "afford",
+    "translation": "负担得起",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "agenda",
+    "translation": "议程",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "aggressive",
+    "translation": "侵略性的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "agriculture",
+    "translation": "农业",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "aid",
+    "translation": "援助",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "alarm",
+    "translation": "警报",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "album",
+    "translation": "相册",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "alcohol",
+    "translation": "酒精",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "alert",
+    "translation": "警惕的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "allergy",
+    "translation": "过敏",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "allocate",
+    "translation": "分配",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "allowance",
+    "translation": "津贴",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ally",
+    "translation": "同盟",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "alter",
+    "translation": "改变",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "amateur",
+    "translation": "业余爱好者",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "amaze",
+    "translation": "使惊奇",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ambassador",
+    "translation": "大使",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ambition",
+    "translation": "雄心",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ample",
+    "translation": "充足的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "amuse",
+    "translation": "娱乐",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "analyse",
+    "translation": "分析",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ancestor",
+    "translation": "祖先",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "anchor",
+    "translation": "锚",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ancient",
+    "translation": "古代的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "anecdote",
+    "translation": "轶事",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "angle",
+    "translation": "角度",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ankle",
+    "translation": "脚踝",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "anniversary",
+    "translation": "周年纪念",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "announce",
+    "translation": "宣布",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "annoy",
+    "translation": "使烦恼",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "annual",
+    "translation": "年度的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "anticipate",
+    "translation": "预期",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "anxiety",
+    "translation": "焦虑",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "apologise",
+    "translation": "道歉",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "apparatus",
+    "translation": "器械",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "appeal",
+    "translation": "呼吁",
+    "pos": "noun/verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "appetite",
+    "translation": "食欲",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "applaud",
+    "translation": "鼓掌",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "appliance",
+    "translation": "器具",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "applicant",
+    "translation": "申请人",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "appoint",
+    "translation": "任命",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "appreciate",
+    "translation": "欣赏",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "apprentice",
+    "translation": "学徒",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "appropriate",
+    "translation": "适当的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "approve",
+    "translation": "批准",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "approximate",
+    "translation": "大约的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "architect",
+    "translation": "建筑师",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "arise",
+    "translation": "出现",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "arithmetic",
+    "translation": "算术",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "arouse",
+    "translation": "引起",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "arrange",
+    "translation": "安排",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "arrest",
+    "translation": "逮捕",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "arrow",
+    "translation": "箭",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "artificial",
+    "translation": "人工的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "ashamed",
+    "translation": "羞愧的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "aspect",
+    "translation": "方面",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "aspire",
+    "translation": "渴望",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "assemble",
+    "translation": "集合",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "assess",
+    "translation": "评估",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "assign",
+    "translation": "分配",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "assist",
+    "translation": "帮助",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "associate",
+    "translation": "联系",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "assume",
+    "translation": "假设",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "assure",
+    "translation": "保证",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "astonish",
+    "translation": "使惊讶",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "athlete",
+    "translation": "运动员",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "atmosphere",
+    "translation": "气氛",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "attach",
+    "translation": "附上",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "attack",
+    "translation": "攻击",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "attain",
+    "translation": "达到",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "7",
+    "frequency": 46,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "attempt",
+    "translation": "尝试",
+    "pos": "noun/verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "attend",
+    "translation": "参加",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "attitude",
+    "translation": "态度",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "attract",
+    "translation": "吸引",
+    "pos": "verb",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "audience",
+    "translation": "观众",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "authority",
+    "translation": "权威",
+    "pos": "noun",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "automatic",
+    "translation": "自动的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "6",
+    "frequency": 48,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "available",
+    "translation": "可用的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  },
+  {
+    "word": "aware",
+    "translation": "知道的",
+    "pos": "adjective",
+    "category": "cambridge",
+    "level": "5",
+    "frequency": 50,
+    "source": "Cambridge_IELTS"
+  }
+]

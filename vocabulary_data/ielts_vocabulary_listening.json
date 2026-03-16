@@ -1,0 +1,2242 @@
+[
+  {
+    "word": "accommodation",
+    "translation": "住宿",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "apartment",
+    "translation": "公寓",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "flat",
+    "translation": "公寓",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "house",
+    "translation": "房子",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "dormitory",
+    "translation": "宿舍",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "hostel",
+    "translation": "旅舍",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "hotel",
+    "translation": "酒店",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "motel",
+    "translation": "汽车旅馆",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "residence",
+    "translation": "住宅",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "homestay",
+    "translation": "寄宿家庭",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "rent",
+    "translation": "租金",
+    "pos": "noun/verb",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "deposit",
+    "translation": "押金",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "landlord",
+    "translation": "房东",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "landlady",
+    "translation": "女房东",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "tenant",
+    "translation": "租户",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "roommate",
+    "translation": "室友",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "bathroom",
+    "translation": "浴室",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "bedroom",
+    "translation": "卧室",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "kitchen",
+    "translation": "厨房",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "living room",
+    "translation": "客厅",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "dining room",
+    "translation": "餐厅",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "garage",
+    "translation": "车库",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "garden",
+    "translation": "花园",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "balcony",
+    "translation": "阳台",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "basement",
+    "translation": "地下室",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "furniture",
+    "translation": "家具",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "furnished",
+    "translation": "带家具的",
+    "pos": "adjective",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "unfurnished",
+    "translation": "无家具的",
+    "pos": "adjective",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "6",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "facility",
+    "translation": "设施",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "utilities",
+    "translation": "公用事业",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "heating",
+    "translation": "暖气",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "air conditioning",
+    "translation": "空调",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "refrigerator",
+    "translation": "冰箱",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "fridge",
+    "translation": "冰箱",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "washing machine",
+    "translation": "洗衣机",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "microwave",
+    "translation": "微波炉",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "stove",
+    "translation": "炉子",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "oven",
+    "translation": "烤箱",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "dishwasher",
+    "translation": "洗碗机",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "vacuum cleaner",
+    "translation": "吸尘器",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "lease",
+    "translation": "租约",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "property",
+    "translation": "房产",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "neighborhood",
+    "translation": "社区",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "suburb",
+    "translation": "郊区",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "downtown",
+    "translation": "市中心",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "address",
+    "translation": "地址",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "postcode",
+    "translation": "邮编",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "meter",
+    "translation": "米/仪表",
+    "pos": "noun",
+    "category": "listening_accommodation",
+    "scene": "accommodation",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "academic",
+    "translation": "学术的",
+    "pos": "adjective",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "assignment",
+    "translation": "作业",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "bachelor",
+    "translation": "学士",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "campus",
+    "translation": "校园",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "certificate",
+    "translation": "证书",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "classroom",
+    "translation": "教室",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "course",
+    "translation": "课程",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "curriculum",
+    "translation": "课程",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "degree",
+    "translation": "学位",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "diploma",
+    "translation": "文凭",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "dissertation",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "8",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "doctorate",
+    "translation": "博士学位",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "enroll",
+    "translation": "注册",
+    "pos": "verb",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "essay",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "examination",
+    "translation": "考试",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "exam",
+    "translation": "考试",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "faculty",
+    "translation": "院系",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "freshman",
+    "translation": "大一新生",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "grade",
+    "translation": "成绩",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "graduation",
+    "translation": "毕业",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "homework",
+    "translation": "家庭作业",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "instructor",
+    "translation": "讲师",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "junior",
+    "translation": "大三学生",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "lecture",
+    "translation": "讲座",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "lecturer",
+    "translation": "讲师",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "library",
+    "translation": "图书馆",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "major",
+    "translation": "专业",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "master",
+    "translation": "硕士",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "matriculation",
+    "translation": "入学",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "8",
+    "frequency": 60,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "module",
+    "translation": "模块",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "paper",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "postgraduate",
+    "translation": "研究生",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "prerequisite",
+    "translation": "先决条件",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "professor",
+    "translation": "教授",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "project",
+    "translation": "项目",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "quiz",
+    "translation": "小测验",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "reading",
+    "translation": "阅读",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "research",
+    "translation": "研究",
+    "pos": "noun/verb",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "scholarship",
+    "translation": "奖学金",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "semester",
+    "translation": "学期",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "senior",
+    "translation": "大四学生",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "seminar",
+    "translation": "研讨会",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "sophomore",
+    "translation": "大二学生",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "syllabus",
+    "translation": "大纲",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "term",
+    "translation": "学期",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "textbook",
+    "translation": "教科书",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "thesis",
+    "translation": "论文",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "tuition",
+    "translation": "学费",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "tutorial",
+    "translation": "辅导课",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "undergraduate",
+    "translation": "本科生",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "university",
+    "translation": "大学",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "workshop",
+    "translation": "研讨会",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "auditorium",
+    "translation": "礼堂",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "7",
+    "frequency": 60,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "board",
+    "translation": "木板/董事会",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "3",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "chalk",
+    "translation": "粉笔",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "4",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "college",
+    "translation": "学院",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "computing",
+    "translation": "计算",
+    "pos": "noun",
+    "category": "listening_education",
+    "scene": "education",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "airport",
+    "translation": "机场",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "airline",
+    "translation": "航空公司",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "arrival",
+    "translation": "到达",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "baggage",
+    "translation": "行李",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "boarding pass",
+    "translation": "登机牌",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "booking",
+    "translation": "预订",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "bus",
+    "translation": "公共汽车",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "3",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "cab",
+    "translation": "出租车",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "cancellation",
+    "translation": "取消",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "carry-on",
+    "translation": "随身行李",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "check-in",
+    "translation": "办理登机手续",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "coach",
+    "translation": "长途汽车",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "conductor",
+    "translation": "售票员",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "connection",
+    "translation": "连接/转乘",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "customs",
+    "translation": "海关",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "delay",
+    "translation": "延误",
+    "pos": "noun/verb",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "depart",
+    "translation": "离开",
+    "pos": "verb",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "departure",
+    "translation": "出发",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "destination",
+    "translation": "目的地",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "elevator",
+    "translation": "电梯",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "escalator",
+    "translation": "自动扶梯",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "excursion",
+    "translation": "短途旅行",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "ferry",
+    "translation": "渡轮",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "flight",
+    "translation": "航班",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "gate",
+    "translation": "登机口",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "guidebook",
+    "translation": "指南",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "hitchhike",
+    "translation": "搭便车",
+    "pos": "verb",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "immigration",
+    "translation": "移民/入境",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "itinerary",
+    "translation": "行程",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "landing",
+    "translation": "着陆",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "lounge",
+    "translation": "休息室",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "luggage",
+    "translation": "行李",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "metro",
+    "translation": "地铁",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "platform",
+    "translation": "站台",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "porter",
+    "translation": "搬运工",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "reservation",
+    "translation": "预订",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "return ticket",
+    "translation": "往返票",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "round trip",
+    "translation": "往返",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "runway",
+    "translation": "跑道",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "safety belt",
+    "translation": "安全带",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "schedule",
+    "translation": "时刻表",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "single ticket",
+    "translation": "单程票",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "subway",
+    "translation": "地铁",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "takeoff",
+    "translation": "起飞",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "terminal",
+    "translation": "航站楼",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "ticket",
+    "translation": "票",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "timetable",
+    "translation": "时刻表",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "tour",
+    "translation": "旅行",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "tourist",
+    "translation": "游客",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "traffic",
+    "translation": "交通",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "train",
+    "translation": "火车",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "tram",
+    "translation": "有轨电车",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "transfer",
+    "translation": "转乘",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "transit",
+    "translation": "过境",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "transport",
+    "translation": "运输",
+    "pos": "noun/verb",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "transportation",
+    "translation": "交通",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "travel",
+    "translation": "旅行",
+    "pos": "noun/verb",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "trolley",
+    "translation": "手推车",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "tunnel",
+    "translation": "隧道",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "underground",
+    "translation": "地铁",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "vehicle",
+    "translation": "车辆",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "visa",
+    "translation": "签证",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "voyage",
+    "translation": "航行",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "6",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "waiting room",
+    "translation": "候车室",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "youth hostel",
+    "translation": "青年旅舍",
+    "pos": "noun",
+    "category": "listening_travel_transport",
+    "scene": "travel_transport",
+    "level": "5",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "allergy",
+    "translation": "过敏",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "ambulance",
+    "translation": "救护车",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "appointment",
+    "translation": "预约",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "aspirin",
+    "translation": "阿司匹林",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "blood pressure",
+    "translation": "血压",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "capsule",
+    "translation": "胶囊",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "chemist",
+    "translation": "药剂师",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "clinic",
+    "translation": "诊所",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "cough",
+    "translation": "咳嗽",
+    "pos": "noun/verb",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "dentist",
+    "translation": "牙医",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "diagnosis",
+    "translation": "诊断",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "diet",
+    "translation": "饮食",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "dosage",
+    "translation": "剂量",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "dose",
+    "translation": "剂量",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "emergency",
+    "translation": "紧急情况",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "exercise",
+    "translation": "锻炼",
+    "pos": "noun/verb",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "fever",
+    "translation": "发烧",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "flu",
+    "translation": "流感",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "headache",
+    "translation": "头痛",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "health",
+    "translation": "健康",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "heart attack",
+    "translation": "心脏病发作",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "hospital",
+    "translation": "医院",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 90,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "illness",
+    "translation": "疾病",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "immune",
+    "translation": "免疫的",
+    "pos": "adjective",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "infection",
+    "translation": "感染",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "injury",
+    "translation": "伤害",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "insomnia",
+    "translation": "失眠",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "medicine",
+    "translation": "药",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "nausea",
+    "translation": "恶心",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "nurse",
+    "translation": "护士",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "operation",
+    "translation": "手术",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "pain",
+    "translation": "疼痛",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "painkiller",
+    "translation": "止痛药",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "patient",
+    "translation": "病人",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "pharmacy",
+    "translation": "药房",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "physician",
+    "translation": "医生",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "pill",
+    "translation": "药片",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "prescription",
+    "translation": "处方",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "receptionist",
+    "translation": "接待员",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "recovery",
+    "translation": "康复",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "side effect",
+    "translation": "副作用",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "stomachache",
+    "translation": "胃痛",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "surgeon",
+    "translation": "外科医生",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "surgery",
+    "translation": "手术",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "symptom",
+    "translation": "症状",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "6",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "tablet",
+    "translation": "药片",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "temperature",
+    "translation": "温度",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "4",
+    "frequency": 85,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "treatment",
+    "translation": "治疗",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "vaccination",
+    "translation": "疫苗接种",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "7",
+    "frequency": 65,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "vitamin",
+    "translation": "维生素",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 75,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "ward",
+    "translation": "病房",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "X-ray",
+    "translation": "X光",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "antibiotic",
+    "translation": "抗生素",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "7",
+    "frequency": 70,
+    "source": "IELTS_Listening"
+  },
+  {
+    "word": "appointment",
+    "translation": "预约",
+    "pos": "noun",
+    "category": "listening_medical",
+    "scene": "medical",
+    "level": "5",
+    "frequency": 80,
+    "source": "IELTS_Listening"
+  }
+]
