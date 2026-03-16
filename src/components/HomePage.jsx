@@ -1,10 +1,83 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+// Chapter selection modal
+function ChapterModal({ progress, currentDay, onSelectDay, onClose }) {
+  const days = Array.from({ length: 30 }, (_, i) => i + 1)
+
+  const getDayProgress = (day) => progress[day] || {}
+
+  const lastActiveDay = (() => {
+    for (let d = 30; d >= 1; d--) {
+      if (progress[d]?.correctCount > 0) return d
+    }
+    return currentDay || 1
+  })()
+
+  return (
+    <div className="chapter-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="chapter-modal">
+        {/* Modal Header */}
+        <div className="chapter-modal-header">
+          <div className="chapter-modal-info">
+            <h2 className="chapter-modal-title">雅思标准词汇 · 30天计划</h2>
+            <p className="chapter-modal-subtitle">30章节 &nbsp; 3000词</p>
+          </div>
+          <div className="chapter-modal-actions">
+            <button
+              className="chapter-continue-btn"
+              onClick={() => { onSelectDay(lastActiveDay); onClose() }}
+            >
+              继续学习 · Day {lastActiveDay}
+            </button>
+            <button className="chapter-modal-close" onClick={onClose}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Chapter Grid */}
+        <div className="chapter-modal-body">
+          <div className="chapter-grid">
+            {days.map(day => {
+              const dp = getDayProgress(day)
+              const isCompleted = dp.completed
+              const isActive = day === lastActiveDay
+              const hasProgress = dp.correctCount > 0
+
+              return (
+                <div
+                  key={day}
+                  className={`chapter-card${isActive ? ' current' : ''}${isCompleted ? ' completed' : ''}`}
+                  onClick={() => { onSelectDay(day); onClose() }}
+                >
+                  <div className="chapter-card-name">超核心词汇 Day {day}</div>
+                  <div className="chapter-card-count">100词</div>
+                  {isCompleted ? (
+                    <div className="chapter-card-status done">已完成</div>
+                  ) : hasProgress ? (
+                    <div className="chapter-card-status inprogress">未完成</div>
+                  ) : null}
+                  {isActive && !isCompleted && (
+                    <div className="chapter-card-recent">最近学习</div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function HomePage({ user, currentDay, onDayChange }) {
   const navigate = useNavigate()
   const [progress, setProgress] = useState({})
-  const [activeSection, setActiveSection] = useState('learn')
+  const [showChapterModal, setShowChapterModal] = useState(false)
 
   useEffect(() => {
     const savedProgress = localStorage.getItem('day_progress')
@@ -13,209 +86,126 @@ function HomePage({ user, currentDay, onDayChange }) {
     }
   }, [])
 
-  const handleDayClick = (day) => {
+  const handleSelectDay = (day) => {
     onDayChange(day)
     navigate('/practice')
   }
 
   const completedDays = Object.entries(progress).filter(([, p]) => p.completed).length
   const totalWords = completedDays * 100
-  const overallPct = Math.round(completedDays / 30 * 100)
   const wrongWords = JSON.parse(localStorage.getItem('wrong_words') || '[]')
 
-  const tabs = [
-    { key: 'learn', label: '今日学习' },
-    { key: 'review', label: '复习计划' },
-    { key: 'wrong', label: wrongWords.length > 0 ? `错词本 · ${wrongWords.length}` : '错词本' },
-    { key: 'stats', label: '学习统计' },
-  ]
+  // Find last active day
+  const lastActiveDay = (() => {
+    for (let d = 30; d >= 1; d--) {
+      if (progress[d]?.correctCount > 0) return d
+    }
+    return currentDay || 1
+  })()
 
   return (
-    <div className="home-page">
+    <div className="study-center-page">
+      <div className="study-center-grid">
 
-      {/* Banner */}
-      <div className="home-banner">
-        <div className="home-banner-left">
-          <div className="home-banner-badge">
+        {/* Main book card - 30 day plan */}
+        <div
+          className="study-book-card study-book-card-main"
+          onClick={() => setShowChapterModal(true)}
+        >
+          <div className="study-book-header">
+            <h3 className="study-book-title">雅思标准词汇3000</h3>
+            <span className="study-book-subtitle">（30天计划）</span>
+          </div>
+          <div className="study-book-progress-text">
+            {totalWords} / 3000
+          </div>
+          <div className="study-book-progress-bar">
+            <div
+              className="study-book-progress-fill"
+              style={{ width: `${Math.round(totalWords / 3000 * 100)}%` }}
+            />
+          </div>
+          <div className="study-book-stats">
+            <span>{completedDays} / 30 天</span>
+            <span>{wrongWords.length > 0 ? `${wrongWords.length} 错词` : ''}</span>
+          </div>
+        </div>
+
+        {/* Quick start card */}
+        <div
+          className="study-book-card study-book-card-cta"
+          onClick={() => { onDayChange(lastActiveDay); navigate('/practice') }}
+        >
+          <div className="study-cta-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
             </svg>
-            IELTS Vocabulary · 30天计划
           </div>
-          <h1 className="home-welcome">你好，{user?.username || '同学'}</h1>
-          <p className="home-subtitle">
-            {completedDays === 0
-              ? '每天100词，30天掌握3000核心词汇，从今天开始'
-              : completedDays < 30
-              ? `已坚持 ${completedDays} 天，还剩 ${30 - completedDays} 天，继续保持！`
-              : '恭喜完成全部30天学习计划！'}
-          </p>
-          <div className="home-stats-row">
-            <div className="home-stat">
-              <span className="home-stat-num">{completedDays}</span>
-              <span className="home-stat-label">完成天数</span>
-            </div>
-            <div className="home-stat-divider"></div>
-            <div className="home-stat">
-              <span className="home-stat-num">{totalWords.toLocaleString()}</span>
-              <span className="home-stat-label">已学单词</span>
-            </div>
-            <div className="home-stat-divider"></div>
-            <div className="home-stat">
-              <span className="home-stat-num">{wrongWords.length}</span>
-              <span className="home-stat-label">待复习</span>
+          <div className="study-cta-text">
+            <div className="study-cta-title">继续学习</div>
+            <div className="study-cta-subtitle">Day {lastActiveDay} · 100词</div>
+          </div>
+        </div>
+
+        {/* Wrong words review card */}
+        <div className="study-book-card study-book-card-review">
+          <div className="study-review-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="9" y1="13" x2="15" y2="13" />
+              <line x1="9" y1="17" x2="15" y2="17" />
+            </svg>
+          </div>
+          <div className="study-review-info">
+            <div className="study-review-title">错词本</div>
+            <div className="study-review-count">
+              {wrongWords.length > 0 ? `${wrongWords.length} 个待复习` : '暂无错词'}
             </div>
           </div>
         </div>
 
-        <div className="home-banner-right">
-          <div className="home-progress-ring">
-            <svg viewBox="0 0 96 96" className="progress-ring-svg">
-              <circle cx="48" cy="48" r="38" fill="none" stroke="rgba(255,126,54,0.15)" strokeWidth="7" />
-              <circle
-                cx="48" cy="48" r="38" fill="none"
-                stroke="var(--accent)" strokeWidth="7"
-                strokeDasharray={`${2 * Math.PI * 38}`}
-                strokeDashoffset={`${2 * Math.PI * 38 * (1 - completedDays / 30)}`}
-                strokeLinecap="round"
-                transform="rotate(-90 48 48)"
-                style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-              />
-            </svg>
-            <div className="progress-ring-text">
-              <span className="progress-ring-num">{overallPct}%</span>
-              <span className="progress-ring-label">总进度</span>
+        {/* Stats card */}
+        <div className="study-book-card study-book-card-stats">
+          <div className="study-stats-row">
+            <div className="study-stat-item">
+              <span className="study-stat-num">{completedDays}</span>
+              <span className="study-stat-label">完成天数</span>
             </div>
-          </div>
-          <div className="home-current-day">
-            {currentDay ? `Day ${currentDay}` : '选择单元'}
+            <div className="study-stat-item">
+              <span className="study-stat-num">{totalWords.toLocaleString()}</span>
+              <span className="study-stat-label">已学词数</span>
+            </div>
+            <div className="study-stat-item">
+              <span className="study-stat-num">{30 - completedDays}</span>
+              <span className="study-stat-label">剩余天数</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="home-tabs">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            className={`home-tab${activeSection === t.key ? ' active' : ''}`}
-            onClick={() => setActiveSection(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Section Content */}
-      <div className="home-section">
-
-        {activeSection === 'learn' && <>
-          <div className="home-section-header">
-            <h2 className="home-section-title">选择学习单元</h2>
-            <span className="home-section-desc">每天100词 · 共30天</span>
-          </div>
-          <div className="day-grid">
-            {Array.from({ length: 30 }, (_, i) => {
-              const day = i + 1
-              const isActive = currentDay === day
-              const dayProgress = progress[day] || {}
-              const isCompleted = dayProgress.completed
-              const correctCount = dayProgress.correctCount || 0
-              return (
-                <div
-                  key={day}
-                  className={`day-card${isActive ? ' active' : ''}${isCompleted ? ' completed' : ''}`}
-                  onClick={() => handleDayClick(day)}
-                >
-                  <div className="day-number">Day {day}</div>
-                  <div className="day-words">100 词</div>
-                  <div className="day-progress-bar">
-                    <div className="day-progress-fill" style={{ width: `${Math.min(correctCount, 100)}%` }}></div>
-                  </div>
-                  <div className="day-progress-text">
-                    {isCompleted ? '✓' : correctCount > 0 ? `${correctCount}%` : ''}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </>}
-
-        {activeSection === 'review' && <>
-          <div className="home-section-header">
-            <h2 className="home-section-title">复习计划</h2>
-            <span className="home-section-desc">艾宾浩斯遗忘曲线</span>
-          </div>
-          <div className="home-empty-state">
-            <div className="home-empty-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <polyline points="1 20 1 14 7 14"></polyline>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-              </svg>
-            </div>
-            <p className="home-empty-text">完成第一天的学习后，复习计划将自动生成</p>
-            <button className="home-empty-btn" onClick={() => setActiveSection('learn')}>开始学习</button>
-          </div>
-        </>}
-
-        {activeSection === 'wrong' && <>
-          <div className="home-section-header">
-            <h2 className="home-section-title">错词本</h2>
-            <span className="home-section-desc">{wrongWords.length} 个待复习</span>
-          </div>
-          {wrongWords.length === 0 ? (
-            <div className="home-empty-state">
-              <div className="home-empty-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              </div>
-              <p className="home-empty-text">太棒了！错词本还是空的</p>
-            </div>
-          ) : (
-            <div className="wrong-words-list">
-              {wrongWords.slice(0, 20).map((w, i) => (
-                <div key={i} className="wrong-word-item">
-                  <div className="wrong-word-text">
-                    <span className="wrong-word-en">{w.word}</span>
-                    <span className="wrong-word-phonetic">{w.phonetic}</span>
-                  </div>
-                  <div className="wrong-word-def">
-                    <span className="wrong-word-pos">{w.pos}</span>
-                    <span>{w.definition}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>}
-
-        {activeSection === 'stats' && <>
-          <div className="home-section-header">
-            <h2 className="home-section-title">学习统计</h2>
-            <span className="home-section-desc">数据概览</span>
-          </div>
-          <div className="stats-grid">
-            {[
-              { num: totalWords.toLocaleString(), label: '总学习词数', bg: 'var(--accent-light)', color: 'var(--accent)' },
-              { num: completedDays, label: '完成天数', bg: '#F0FDF4', color: '#10B981' },
-              { num: wrongWords.length, label: '错词数量', bg: '#FEF2F2', color: '#EF4444' },
-              { num: 30 - completedDays, label: '剩余天数', bg: '#EFF6FF', color: '#3B82F6' },
-            ].map((s, i) => (
-              <div key={i} className="stats-card">
-                <div className="stats-card-bar" style={{ background: s.bg }}>
-                  <span className="stats-card-num" style={{ color: s.color }}>{s.num}</span>
-                </div>
-                <div className="stats-card-label">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </>}
+        {/* Go to vocab library card */}
+        <div
+          className="study-add-card"
+          onClick={() => navigate('/')}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>自定义词书</span>
+        </div>
 
       </div>
+
+      {/* Chapter Modal */}
+      {showChapterModal && (
+        <ChapterModal
+          progress={progress}
+          currentDay={currentDay}
+          onSelectDay={handleSelectDay}
+          onClose={() => setShowChapterModal(false)}
+        />
+      )}
     </div>
   )
 }
