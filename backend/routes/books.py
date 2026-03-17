@@ -135,20 +135,20 @@ VOCAB_BOOKS = [
         'color': '#2563EB',
         'category': 'listening',
         'level': 'intermediate',
-        'word_count': 3808,
+        'word_count': 3910,
         'file': 'ielts_listening_premium.json',
         'is_paid': True
     },
     {
-        'id': 'ielts_dictation_premium',
-        'title': '雅思听写高频词汇',
-        'description': '雅思听写训练核心词汇，提升拼写与听力能力',
-        'icon': 'pen-tool',
+        'id': 'ielts_reading_premium',
+        'title': '雅思阅读高频词汇',
+        'description': '雅思阅读训练核心词汇，提升阅读理解能力',
+        'icon': 'book-open',
         'color': '#7C3AED',
-        'category': 'listening',
+        'category': 'reading',
         'level': 'intermediate',
-        'word_count': 3268,
-        'file': 'ielts_dictation_premium.json',
+        'word_count': 3401,
+        'file': 'ielts_reading_premium.json',
         'is_paid': True
     }
 ]

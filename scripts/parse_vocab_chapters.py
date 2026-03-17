@@ -21,12 +21,15 @@ def parse_word_entry(text):
 
     first_line = lines[0].strip()
 
-    # Pattern: word /phonetic/ (with possible trailing content)
-    match = re.match(r'^([a-zA-Z][a-zA-Z\s\-\'\.]*?)\s*/([^/]+)/?(.*)$', first_line)
+    # Pattern: word /phonetic/ or word //phonetic// (with possible trailing content)
+    # Handle both single and double slash phonetic notation
+    match = re.match(r'^([a-zA-Z][a-zA-Z\s\-\'\.]*?)\s*(?://([^/]+)//|/([^/]+)/)(.*)$', first_line)
     if match:
         result['word'] = match.group(1).strip()
-        result['phonetic'] = '/' + match.group(2) + '/'
-        trailing = match.group(3).strip()
+        # Handle both double slash and single slash phonetic
+        phonetic = match.group(2) if match.group(2) else match.group(3)
+        result['phonetic'] = '/' + phonetic + '/'
+        trailing = match.group(4).strip()
 
         # Check if trailing has pos.definition pattern
         if trailing:
@@ -90,11 +93,48 @@ def parse_word_entry(text):
     return result
 
 
-def parse_vocab_with_chapters(file_path, skip_labels=None):
-    """Parse vocabulary JSON file with chapter/group structure."""
-    if skip_labels is None:
-        skip_labels = []
+def parse_first_group_excel(file_path):
+    """Parse the first group Excel file with columns: 单词, 音标, 释义"""
+    import pandas as pd
 
+    df = pd.read_excel(file_path)
+    words = []
+
+    for _, row in df.iterrows():
+        word = row.get('单词', '').strip()
+        phonetic = row.get('音标', '').strip()
+        definition = row.get('释义', '').strip()
+
+        if not word:
+            continue
+
+        # Parse pos from definition (e.g., "n. 艺术" -> pos="n.", def="艺术")
+        pos = 'n.'
+        clean_def = definition
+
+        pos_match = re.match(r'^([a-z]+\.)\s*(.*)', definition)
+        if pos_match:
+            pos = pos_match.group(1)
+            clean_def = pos_match.group(2)
+
+        words.append({
+            'word': word,
+            'phonetic': '/' + phonetic + '/' if phonetic else '',
+            'pos': pos,
+            'definition': clean_def
+        })
+
+    return words
+
+
+def parse_vocab_with_chapters(file_path, excel_files=None):
+    """Parse vocabulary JSON file with chapter/group structure.
+
+    Args:
+        file_path: Path to the JSON vocabulary file
+        excel_files: List of (chapter_title, excel_path) tuples for chapters to read from Excel
+                     instead of JSON (for corrupted/missing data in JSON)
+    """
     with open(file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
@@ -102,18 +142,56 @@ def parse_vocab_with_chapters(file_path, skip_labels=None):
     all_words_count = 0
     seen_words = set()
 
+    # Build a set of chapter titles that should be read from Excel
+    excel_chapters = {}
+    if excel_files:
+        for title, path in excel_files:
+            if os.path.exists(path):
+                excel_chapters[title] = path
+
+    # Add chapters from Excel files first (for corrupted JSON data)
+    excel_titles_processed = set()
+    if excel_files:
+        for excel_title, excel_path in excel_files:
+            if excel_path and os.path.exists(excel_path):
+                # Find the label from JSON for this chapter
+                chapter_label = excel_title
+                for group in data:
+                    if group.get('label', '') == excel_title or group.get('label', '').replace(' ', '') == excel_title.replace(' ', ''):
+                        chapter_label = group.get('label', '')
+                        break
+
+                words = parse_first_group_excel(excel_path)
+                chapter_words = []
+                for word_data in words:
+                    word_lower = word_data['word'].lower().strip()
+                    if len(word_lower) >= 2 and word_lower not in seen_words:
+                        seen_words.add(word_lower)
+                        chapter_words.append(word_data)
+
+                if chapter_words:
+                    chapters.append({
+                        'id': len(chapters) + 1,
+                        'title': chapter_label,
+                        'word_count': len(chapter_words),
+                        'words': chapter_words
+                    })
+                    all_words_count += len(chapter_words)
+                    excel_titles_processed.add(chapter_label)
+
     for idx, group in enumerate(data):
         label = group.get('label', '')
-        # Skip certain groups (like the first special entry that might be malformed)
-        if any(skip in label for skip in skip_labels):
+
+        # Skip chapters that were already processed from Excel
+        if label in excel_titles_processed:
             continue
 
         word_text = group.get('wordText', '')
         if not word_text or word_text.startswith('数据加载中'):
             continue
 
-        # Split by word entries
-        entries = re.split(r'\n(?=[a-zA-Z][a-zA-Z\s\-\'\.]*?\s*/[^/]+/)', word_text)
+        # Split by word entries - handle both single /phonetic/ and double //phonetic// slashes
+        entries = re.split(r'\n(?=[a-zA-Z][a-zA-Z\s\-\'\.]*?\s*(?://|/)[^/]+(?://|/))', word_text)
 
         chapter_words = []
         for entry in entries:
@@ -127,13 +205,12 @@ def parse_vocab_with_chapters(file_path, skip_labels=None):
                 if len(word_lower) < 2:
                     continue
                 # Track duplicates globally but add to chapter
-                is_duplicate = word_lower in seen_words
                 seen_words.add(word_lower)
                 chapter_words.append(word_data)
 
         if chapter_words:
             chapters.append({
-                'id': idx + 1,
+                'id': len(chapters) + 1,
                 'title': label,
                 'word_count': len(chapter_words),
                 'words': chapter_words
@@ -157,17 +234,22 @@ def main():
     print("Parsing listening vocabulary with chapters...")
     listening_data = parse_vocab_with_chapters(
         os.path.join(source_dir, '听力高频词_2026-03-17.json'),
-        skip_labels=['答案词10次及以上']  # Skip first malformed group
+        excel_files=[
+            ('答案词10次及以上', os.path.join(source_dir, '听力高频词(含答案词)_答案词10次及以上.xlsx')),
+        ]
     )
     print(f"  Found {listening_data['total_chapters']} chapters, {listening_data['total_words']} words")
 
-    # Parse dictation vocabulary (爱听写高频词)
-    print("Parsing dictation vocabulary with chapters...")
-    dictation_data = parse_vocab_with_chapters(
-        os.path.join(source_dir, '爱听写高频词_2026-03-17.json'),
-        skip_labels=['150次及以上']  # Skip first malformed group
+    # Parse reading vocabulary (阅读高频词)
+    print("Parsing reading vocabulary with chapters...")
+    reading_data = parse_vocab_with_chapters(
+        os.path.join(source_dir, '阅读高频词_2026-03-17.json'),
+        excel_files=[
+            ('150次及以上', os.path.join(source_dir, '阅读高频词_150次及以上.xlsx')),
+            ('120~149次', os.path.join(source_dir, '爱听写阅读高频词_120~149次.xlsx')),
+        ]
     )
-    print(f"  Found {dictation_data['total_chapters']} chapters, {dictation_data['total_words']} words")
+    print(f"  Found {reading_data['total_chapters']} chapters, {reading_data['total_words']} words")
 
     # Save listening vocabulary
     listening_output = os.path.join(output_dir, 'ielts_listening_premium.json')
@@ -175,11 +257,11 @@ def main():
         json.dump(listening_data, f, ensure_ascii=False, indent=2)
     print(f"  Saved to {listening_output}")
 
-    # Save dictation vocabulary
-    dictation_output = os.path.join(output_dir, 'ielts_dictation_premium.json')
-    with open(dictation_output, 'w', encoding='utf-8') as f:
-        json.dump(dictation_data, f, ensure_ascii=False, indent=2)
-    print(f"  Saved to {dictation_output}")
+    # Save reading vocabulary
+    reading_output = os.path.join(output_dir, 'ielts_reading_premium.json')
+    with open(reading_output, 'w', encoding='utf-8') as f:
+        json.dump(reading_data, f, ensure_ascii=False, indent=2)
+    print(f"  Saved to {reading_output}")
 
     # Write chapter info to file
     chapter_file = os.path.join(output_dir, '_chapter_info.txt')
@@ -188,8 +270,8 @@ def main():
         for ch in listening_data['chapters']:
             f.write(f"  {ch['id']}. {ch['title']} ({ch['word_count']}词)\n")
 
-        f.write("\n\n爱听写高频词章节:\n")
-        for ch in dictation_data['chapters']:
+        f.write("\n\n阅读高频词章节:\n")
+        for ch in reading_data['chapters']:
             f.write(f"  {ch['id']}. {ch['title']} ({ch['word_count']}词)\n")
 
     print(f"  Chapter info written to {chapter_file}")

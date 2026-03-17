@@ -1,6 +1,313 @@
 {
   "chapters": [
     {
+      "id": 1,
+      "title": "150次及以上",
+      "word_count": 50,
+      "words": [
+        {
+          "word": "language",
+          "phonetic": "/ˈlæŋɡwɪdʒ/",
+          "pos": "n.",
+          "definition": "语言"
+        },
+        {
+          "word": "according",
+          "phonetic": "/əˈkɔːdɪŋ/",
+          "pos": "v.",
+          "definition": "符合；“accord”的现在分词；"
+        },
+        {
+          "word": "understanding",
+          "phonetic": "/ˌʌndəˈstændɪŋ/",
+          "pos": "n.",
+          "definition": "理解；了解； v. “understand”的现在分词；"
+        },
+        {
+          "word": "allow",
+          "phonetic": "/əˈlaʊ/",
+          "pos": "v.",
+          "definition": "允许；留出；给予；承认；"
+        },
+        {
+          "word": "activities",
+          "phonetic": "/ækˈtɪvɪtɪz/",
+          "pos": "n.",
+          "definition": "活动；“activity”的复数；"
+        },
+        {
+          "word": "term",
+          "phonetic": "/tɜːm/",
+          "pos": "n.",
+          "definition": "术语；学期；期限；措辞；"
+        },
+        {
+          "word": "reason",
+          "phonetic": "/ˈriːz(ə)n/",
+          "pos": "n.",
+          "definition": "原因；理由；理性；"
+        },
+        {
+          "word": "evidence",
+          "phonetic": "/ˈevɪdəns/",
+          "pos": "n.",
+          "definition": "证据；"
+        },
+        {
+          "word": "ability",
+          "phonetic": "/əˈbɪləti/",
+          "pos": "n.",
+          "definition": "能力；才能；"
+        },
+        {
+          "word": "environment",
+          "phonetic": "/ɪnˈvaɪrənmənt/",
+          "pos": "n.",
+          "definition": "环境"
+        },
+        {
+          "word": "following",
+          "phonetic": "/ˈfɒləʊɪŋ/",
+          "pos": "adj.",
+          "definition": "接着的；下列的； prep. 在...之后； v. 跟随；“follow”的现在分词； n. 下列各项；"
+        },
+        {
+          "word": "brain",
+          "phonetic": "/breɪn/",
+          "pos": "n.",
+          "definition": "脑；脑力；智力；"
+        },
+        {
+          "word": "without",
+          "phonetic": "/wɪˈðaʊt/",
+          "pos": "prep.",
+          "definition": "没有；"
+        },
+        {
+          "word": "within",
+          "phonetic": "/wɪˈðɪn/",
+          "pos": "prep.",
+          "definition": "在…内；不超过；"
+        },
+        {
+          "word": "business",
+          "phonetic": "/ˈbɪznəs/",
+          "pos": "n.",
+          "definition": "生意；商业；事务；"
+        },
+        {
+          "word": "required",
+          "phonetic": "/rɪˈkwaɪəd/",
+          "pos": "adj.",
+          "definition": "必需的；必不可少的； v. 需要；要求；“require”的过去式和过去分词；"
+        },
+        {
+          "word": "likely",
+          "phonetic": "/ˈlaɪkli/",
+          "pos": "adj.",
+          "definition": "可能的"
+        },
+        {
+          "word": "period",
+          "phonetic": "/ˈpɪəriəd/",
+          "pos": "n.",
+          "definition": "时期；阶段；"
+        },
+        {
+          "word": "remains",
+          "phonetic": "/rɪˈmeɪnz/",
+          "pos": "v.",
+          "definition": "剩下；留下；依然不变；"
+        },
+        {
+          "word": "almost",
+          "phonetic": "/ˈɔːlməʊst/",
+          "pos": "adv.",
+          "definition": "几乎；"
+        },
+        {
+          "word": "market",
+          "phonetic": "/ˈmɑːkɪt/",
+          "pos": "n.",
+          "definition": "市场；行情；商场；销路；"
+        },
+        {
+          "word": "control",
+          "phonetic": "/kənˈtrəʊl/",
+          "pos": "n.",
+          "definition": "控制；管制；"
+        },
+        {
+          "word": "brought",
+          "phonetic": "/brɔːt/",
+          "pos": "v.",
+          "definition": "带来；引起；导致；“bring”的过去式和过去分词；"
+        },
+        {
+          "word": "power",
+          "phonetic": "/ˈpaʊə(r)/",
+          "pos": "n.",
+          "definition": "力量；电源；权力；强国；"
+        },
+        {
+          "word": "until",
+          "phonetic": "/ənˈtɪl/",
+          "pos": "prep.",
+          "definition": "到…时；直到…为止；"
+        },
+        {
+          "word": "tested",
+          "phonetic": "/ˈtestɪd/",
+          "pos": "v.",
+          "definition": "测试；试验；“test”的过去式和过去分词； adj. 经受过考验的；"
+        },
+        {
+          "word": "considered",
+          "phonetic": "/kənˈsɪdəd/",
+          "pos": "v.",
+          "definition": "认为；考虑；“consider”的过去式和过去分词；"
+        },
+        {
+          "word": "conditions",
+          "phonetic": "/kənˈdɪʃ(ə)nz/",
+          "pos": "n.",
+          "definition": "条件"
+        },
+        {
+          "word": "technology",
+          "phonetic": "/tekˈnɒlədʒi/",
+          "pos": "n.",
+          "definition": "技术；科技；"
+        },
+        {
+          "word": "continue",
+          "phonetic": "/kənˈtɪnjuː/",
+          "pos": "v.",
+          "definition": "继续；连续；"
+        },
+        {
+          "word": "subjects",
+          "phonetic": "/səbˈdʒekts/",
+          "pos": "n.",
+          "definition": "对象；学科；主题；“subject”的复数；"
+        },
+        {
+          "word": "products",
+          "phonetic": "/pˈrɒdʌkts/",
+          "pos": "n.",
+          "definition": "产品；产物；“product”的复数；"
+        },
+        {
+          "word": "potential",
+          "phonetic": "/pəˈtenʃ(ə)l/",
+          "pos": "n.",
+          "definition": "潜力；"
+        },
+        {
+          "word": "several",
+          "phonetic": "/ˈsevrəl/",
+          "pos": "pron.",
+          "definition": "几个；一些；"
+        },
+        {
+          "word": "factors",
+          "phonetic": "/ˈfæktəz/",
+          "pos": "n.",
+          "definition": "因素"
+        },
+        {
+          "word": "among",
+          "phonetic": "/əˈmʌŋ/",
+          "pos": "prep.",
+          "definition": "在…之间"
+        },
+        {
+          "word": "held",
+          "phonetic": "/held/",
+          "pos": "v.",
+          "definition": "举行；持有；抓住；保存；容纳；“hold”的过去式和过去分词；"
+        },
+        {
+          "word": "report",
+          "phonetic": "/rɪˈpɔːt/",
+          "pos": "n.",
+          "definition": "报告；报道；"
+        },
+        {
+          "word": "present",
+          "phonetic": "/ˈprez(ə)nt/",
+          "pos": "adj.",
+          "definition": "目前的；在场的；"
+        },
+        {
+          "word": "community",
+          "phonetic": "/kəˈmjuːnəti/",
+          "pos": "n.",
+          "definition": "社区；团体；群落；"
+        },
+        {
+          "word": "whether",
+          "phonetic": "/ˈweðə(r)/",
+          "pos": "conj.",
+          "definition": "是否；不管；无论；"
+        },
+        {
+          "word": "major",
+          "phonetic": "/ˈmeɪdʒə(r)/",
+          "pos": "adj.",
+          "definition": "主要的；"
+        },
+        {
+          "word": "industry",
+          "phonetic": "/ˈɪndəstri/",
+          "pos": "n.",
+          "definition": "行业；产业；工业；"
+        },
+        {
+          "word": "rate",
+          "phonetic": "/reɪt/",
+          "pos": "n.",
+          "definition": "率；速度；比率；价格；费用；"
+        },
+        {
+          "word": "exist",
+          "phonetic": "/ɪɡˈzɪst/",
+          "pos": "v.",
+          "definition": "存在；生存；活着；"
+        },
+        {
+          "word": "already",
+          "phonetic": "/ɔːlˈredi/",
+          "pos": "adv.",
+          "definition": "已经"
+        },
+        {
+          "word": "science",
+          "phonetic": "/ˈsaɪəns/",
+          "pos": "n.",
+          "definition": "科学"
+        },
+        {
+          "word": "resources",
+          "phonetic": "/rɪˈsɔːsɪz/",
+          "pos": "n.",
+          "definition": "资源；“resource”的复数；"
+        },
+        {
+          "word": "view",
+          "phonetic": "/vjuː/",
+          "pos": "n.",
+          "definition": "见解；风景；视野；"
+        },
+        {
+          "word": "society",
+          "phonetic": "/səˈsaɪəti/",
+          "pos": "n.",
+          "definition": "社会；社交；社团；"
+        }
+      ]
+    },
+    {
       "id": 2,
       "title": "120~149次",
       "word_count": 53,
@@ -9,187 +316,187 @@
           "word": "growth",
           "phonetic": "/ɡrəʊθ/",
           "pos": "n.",
-          "definition": "生长；增长；发展"
+          "definition": "生长；增长；发展；"
         },
         {
           "word": "focus",
           "phonetic": "/ˈfəʊkəs/",
           "pos": "v.",
-          "definition": "集中；聚焦；n. 中心点；焦点"
+          "definition": "集中；聚焦；"
         },
         {
           "word": "support",
           "phonetic": "/səˈpɔːt/",
           "pos": "v.",
-          "definition": "支持；支撑；n. 拥护；帮助"
+          "definition": "支持；支撑；"
         },
         {
           "word": "recorded",
           "phonetic": "/rɪˈkɔːdɪd/",
           "pos": "v.",
-          "definition": "记录；录制；“record”的过去式和过去分词；adj. 已记录的；已录制的"
+          "definition": "记录；录制；“record”的过去式和过去分词； adj. 已记录的；已录制的；"
         },
         {
           "word": "significant",
           "phonetic": "/sɪɡˈnɪfɪkənt/",
           "pos": "adj.",
-          "definition": "重大的；重要的；影响明显的"
+          "definition": "重大的；重要的；影响明显的；"
         },
         {
           "word": "range",
           "phonetic": "/reɪndʒ/",
-          "pos": "v.",
-          "definition": "一系列；（变化）范围；山脉；（在某范围内）变化；包括（各种不同的人或物）"
+          "pos": "n.",
+          "definition": "一系列；（变化）范围；山脉；"
         },
         {
           "word": "handed",
           "phonetic": "/ˈhændɪd/",
           "pos": "v.",
-          "definition": "交；递；（非正式）（使）轻松得到（hand 的过去式及过..."
+          "definition": "交；递；（非正式）（使）轻松得到（hand 的过去式及过...；"
         },
         {
           "word": "amount",
           "phonetic": "/əˈmaʊnt/",
-          "pos": "v.",
-          "definition": "数量；数额；总计；等于"
+          "pos": "n.",
+          "definition": "数量；数额；"
         },
         {
           "word": "approach",
           "phonetic": "/əˈprəʊtʃ/",
-          "pos": "v.",
-          "definition": "方法；接近；靠近；路径；接近；靠近；临近；处理"
+          "pos": "n.",
+          "definition": "方法；接近；靠近；路径；"
         },
         {
           "word": "across",
           "phonetic": "/əˈkrɒs/",
           "pos": "prep.",
-          "definition": "穿过；横过；在…对面；adv. 横过；穿过；越过"
+          "definition": "穿过；横过；在…对面；"
         },
         {
           "word": "happens",
           "phonetic": "/ˈhæpənz/",
           "pos": "v.",
-          "definition": "发生；碰巧"
+          "definition": "发生；碰巧；"
         },
         {
           "word": "perhaps",
           "phonetic": "/pəˈhæps/",
           "pos": "adv.",
-          "definition": "或许；可能"
+          "definition": "或许；可能；"
         },
         {
           "word": "certain",
           "phonetic": "/ˈsɜːt(ə)n/",
           "pos": "adj.",
-          "definition": "某个；确定的；一定的；一定程度上的"
+          "definition": "某个；确定的；一定的；一定程度上的；"
         },
         {
           "word": "movement",
           "phonetic": "/ˈmuːvmənt/",
           "pos": "n.",
-          "definition": "运动；动作；活动；乐章"
+          "definition": "运动；动作；活动；乐章；"
         },
         {
           "word": "energy",
           "phonetic": "/ˈenədʒi/",
           "pos": "n.",
-          "definition": "能源；能量；精力"
+          "definition": "能源；能量；精力；"
         },
         {
           "word": "reach",
           "phonetic": "/riːtʃ/",
           "pos": "v.",
-          "definition": "达到；抵达；n. 伸手可及的距离"
+          "definition": "达到；抵达；"
         },
         {
           "word": "government",
           "phonetic": "/ˈɡʌvənmənt/",
           "pos": "n.",
-          "definition": "政府"
+          "definition": "政府；"
         },
         {
           "word": "carried",
           "phonetic": "/ˈkærɪd/",
           "pos": "v.",
-          "definition": "携带；运载；输送；adj. 支撑( carry的过去式和过去分词 )"
+          "definition": "携带；运载；输送； adj. 支撑( carry的过去式和过去分词 )；"
         },
         {
           "word": "modern",
           "phonetic": "/ˈmɒd(ə)n/",
           "pos": "adj.",
-          "definition": "现代的；时髦的"
+          "definition": "现代的；时髦的；"
         },
         {
           "word": "future",
           "phonetic": "/ˈfjuːtʃə(r)/",
-          "pos": "adj.",
-          "definition": "未来；将来；前途；将来的；未来的"
+          "pos": "n.",
+          "definition": "未来；将来；前途；"
         },
         {
           "word": "average",
           "phonetic": "/ˈævərɪdʒ/",
-          "pos": "adj.",
-          "definition": "平均数；平均水平；平均的；普通的；v. 平均为…"
+          "pos": "n.",
+          "definition": "平均数；平均水平；"
         },
         {
           "word": "source",
           "phonetic": "/sɔːs/",
           "pos": "n.",
-          "definition": "来源；出处；源泉；源头；提供资料者"
+          "definition": "来源；出处；源泉；源头；提供资料者；"
         },
         {
           "word": "appear",
           "phonetic": "/əˈpɪə(r)/",
           "pos": "v.",
-          "definition": "出现；似乎；显得"
+          "definition": "出现；似乎；显得；"
         },
         {
           "word": "region",
           "phonetic": "/ˈriːdʒən/",
           "pos": "n.",
-          "definition": "地区；区域"
+          "definition": "地区；区域；"
         },
         {
           "word": "benefit",
           "phonetic": "/ˈbenɪfɪt/",
           "pos": "v.",
-          "definition": "有益于；有助于；n. 利益；好处"
+          "definition": "有益于；有助于；"
         },
         {
           "word": "benefits",
           "phonetic": "/ˈbenɪfɪts/",
-          "pos": "v.",
-          "definition": "利益；好处；“benefit”的复数；有益于；有助于"
+          "pos": "n.",
+          "definition": "利益；好处；“benefit”的复数； v. 有益于；有助于；"
         },
         {
           "word": "skills",
           "phonetic": "/skɪls/",
           "pos": "n.",
-          "definition": "技能；技巧；技术；“skill”的复数"
+          "definition": "技能；技巧；技术；“skill”的复数；"
         },
         {
           "word": "culture",
           "phonetic": "/ˈkʌltʃə(r)/",
           "pos": "n.",
-          "definition": "文化；培养"
+          "definition": "文化；培养；"
         },
         {
           "word": "limited",
           "phonetic": "/ˈlɪmɪtɪd/",
           "pos": "adj.",
-          "definition": "有限的；v. 限制；“limit”的过去式和过去分词"
+          "definition": "有限的； v. 限制；“limit”的过去式和过去分词；"
         },
         {
           "word": "field",
           "phonetic": "/fiːld/",
-          "pos": "v.",
-          "definition": "领域；田地；场地；运动场；处理，应付（问题、电话等）"
+          "pos": "n.",
+          "definition": "领域；田地；场地；运动场；"
         },
         {
           "word": "explains",
           "phonetic": "/ɪkˈspleɪnz/",
           "pos": "v.",
-          "definition": "说明；说明…的原因；讲解；解释"
+          "definition": "说明；说明…的原因；讲解；解释；"
         },
         {
           "word": "global",
@@ -201,55 +508,55 @@
           "word": "economic",
           "phonetic": "/ˌiːkəˈnɒmɪk/",
           "pos": "adj.",
-          "definition": "经济（上）的"
+          "definition": "经济（上）的；"
         },
         {
           "word": "types",
           "phonetic": "/taɪps/",
           "pos": "n.",
-          "definition": "类型；种类"
+          "definition": "类型；种类；"
         },
         {
           "word": "history",
           "phonetic": "/ˈhɪstri/",
           "pos": "n.",
-          "definition": "历史；历史学"
+          "definition": "历史；历史学；"
         },
         {
           "word": "fully",
           "phonetic": "/ˈfʊli/",
           "pos": "adv.",
-          "definition": "完全地；充分地；彻底地"
+          "definition": "完全地；充分地；彻底地；"
         },
         {
           "word": "material",
           "phonetic": "/məˈtɪəriəl/",
-          "pos": "adj.",
-          "definition": "材料；原料；物质的"
+          "pos": "n.",
+          "definition": "材料；原料；"
         },
         {
           "word": "sense",
           "phonetic": "/sens/",
-          "pos": "v.",
-          "definition": "意义；感知；理解力；知觉；感觉到；觉察出；意识到"
+          "pos": "n.",
+          "definition": "意义；感知；理解力；知觉；"
         },
         {
           "word": "discovered",
           "phonetic": "/dɪˈskʌvəd/",
           "pos": "v.",
-          "definition": "发现；发现( discover的过去式和过去分词 )"
+          "definition": "发现；发现( discover的过去式和过去分词 )；"
         },
         {
           "word": "affect",
           "phonetic": "/əˈfekt/",
           "pos": "v.",
-          "definition": "影响"
+          "definition": "影响；"
         },
         {
           "word": "usually",
           "phonetic": "/ˈjuːʒʊəli/",
           "pos": "adv.",
-          "definition": "通常；一般"
+          "definition": "通常；一般；"
         },
         {
           "word": "measures",
@@ -273,55 +580,55 @@
           "word": "knowledge",
           "phonetic": "/ˈnɒlɪdʒ/",
           "pos": "n.",
-          "definition": "知识；了解；学问；学识"
+          "definition": "知识；了解；学问；学识；"
         },
         {
           "word": "itself",
           "phonetic": "/ɪtˈself/",
-          "pos": "n.",
-          "definition": "pron. 它自己"
+          "pos": "pron.",
+          "definition": "它自己"
         },
         {
           "word": "finally",
           "phonetic": "/ˈfaɪnəli/",
           "pos": "adv.",
-          "definition": "最后；终于"
+          "definition": "最后；终于；"
         },
         {
           "word": "reduce",
           "phonetic": "/rɪˈdjuːs/",
           "pos": "v.",
-          "definition": "减少；降低；减量"
+          "definition": "减少；降低；减量；"
         },
         {
           "word": "nature",
           "phonetic": "/ˈneɪtʃə(r)/",
           "pos": "n.",
-          "definition": "本性；自然"
+          "definition": "本性；自然；"
         },
         {
           "word": "climate",
           "phonetic": "/ˈklaɪmət/",
           "pos": "n.",
-          "definition": "气候；（社会）风气"
+          "definition": "气候；（社会）风气；"
         },
         {
           "word": "training",
           "phonetic": "/ˈtreɪnɪŋ/",
-          "pos": "v.",
-          "definition": "培训；训练；锻炼；“train”的现在分词"
+          "pos": "n.",
+          "definition": "培训；训练；锻炼； v. “train”的现在分词；"
         },
         {
           "word": "concerned",
           "phonetic": "/kənˈsɜːnd/",
           "pos": "adj.",
-          "definition": "担心的；关注的；v. 涉及到；“concern”的过去式和过去分词"
+          "definition": "担心的；关注的； v. 涉及到；“concern”的过去式和过去分词；"
         },
         {
           "word": "thus",
           "phonetic": "/ðʌs/",
           "pos": "adv.",
-          "definition": "因此；从而；growth"
+          "definition": "因此；从而；"
         }
       ]
     },
@@ -1640,7 +1947,7 @@
     {
       "id": 7,
       "title": "63~71次",
-      "word_count": 51,
+      "word_count": 52,
       "words": [
         {
           "word": "fuel",
@@ -1712,7 +2019,13 @@
           "word": "native",
           "phonetic": "/ˈneɪtɪv/",
           "pos": "adj.",
-          "definition": "本土的；n. 土著；本地人；stands //stændz//"
+          "definition": "本土的；n. 土著；本地人"
+        },
+        {
+          "word": "stands",
+          "phonetic": "/stændz/",
+          "pos": "v.",
+          "definition": "位于；站立；忍受；n. 立场；站立；摊位；站立"
         },
         {
           "word": "ensure",
@@ -2284,7 +2597,7 @@
     {
       "id": 9,
       "title": "52~56次",
-      "word_count": 55,
+      "word_count": 56,
       "words": [
         {
           "word": "chance",
@@ -2403,8 +2716,14 @@
         {
           "word": "emotions",
           "phonetic": "/ɪˈməʊʃənz/",
+          "pos": "n.",
+          "definition": "情绪；情感；情感：“emotion”的复数"
+        },
+        {
+          "word": "explored",
+          "phonetic": "/ɪkˈsplɔːd/",
           "pos": "v.",
-          "definition": "情绪；情感；情感：“emotion”的复数；explored //ɪkˈsplɔːd//；探索；探究"
+          "definition": "探索；探究"
         },
         {
           "word": "expensive",
@@ -2621,7 +2940,7 @@
     {
       "id": 10,
       "title": "47~51次",
-      "word_count": 48,
+      "word_count": 49,
       "words": [
         {
           "word": "accept",
@@ -2752,8 +3071,14 @@
         {
           "word": "majority",
           "phonetic": "/məˈdʒɒrəti/",
+          "pos": "n.",
+          "definition": "大多数"
+        },
+        {
+          "word": "concluded",
+          "phonetic": "/kənˈkluːdɪd/",
           "pos": "v.",
-          "definition": "大多数；concluded //kənˈkluːdɪd//；得出结论；结束"
+          "definition": "得出结论；结束"
         },
         {
           "word": "quantities",
@@ -6347,7 +6672,7 @@
     {
       "id": 22,
       "title": "25次",
-      "word_count": 41,
+      "word_count": 43,
       "words": [
         {
           "word": "flat",
@@ -6539,7 +6864,13 @@
           "word": "activated",
           "phonetic": "/ˈæktɪveɪtɪd/",
           "pos": "v.",
-          "definition": "使激活；adj. 活性化的；有生气（activate 的过去分词）；linguists //ˈlɪŋɡwɪsts//"
+          "definition": "使激活；adj. 活性化的；有生气（activate 的过去分词）"
+        },
+        {
+          "word": "linguists",
+          "phonetic": "/ˈlɪŋɡwɪsts/",
+          "pos": "n.",
+          "definition": "语言学家"
         },
         {
           "word": "classical",
@@ -6563,7 +6894,13 @@
           "word": "resistance",
           "phonetic": "/rɪˈzɪstəns/",
           "pos": "n.",
-          "definition": "抵抗；阻力；travellers //ˈtræv.əl.əz//；旅行者"
+          "definition": "抵抗；阻力"
+        },
+        {
+          "word": "travellers",
+          "phonetic": "/ˈtræv.əl.əz/",
+          "pos": "n.",
+          "definition": "旅行者"
         },
         {
           "word": "protection",
@@ -7978,7 +8315,7 @@
     {
       "id": 27,
       "title": "20次",
-      "word_count": 51,
+      "word_count": 52,
       "words": [
         {
           "word": "bar",
@@ -8031,8 +8368,14 @@
         {
           "word": "chess",
           "phonetic": "/tʃes/",
+          "pos": "n.",
+          "definition": "国际象棋"
+        },
+        {
+          "word": "cited",
+          "phonetic": "/saɪtɪd/",
           "pos": "v.",
-          "definition": "国际象棋；cited //saɪtɪd//；引用；引证"
+          "definition": "引用；引证"
         },
         {
           "word": "float",
@@ -8688,7 +9031,7 @@
     {
       "id": 29,
       "title": "18次",
-      "word_count": 58,
+      "word_count": 59,
       "words": [
         {
           "word": "sex",
@@ -8982,7 +9325,13 @@
           "word": "corporation",
           "phonetic": "/ˌkɔːpəˈreɪʃ(ə)n/",
           "pos": "n.",
-          "definition": "公司；企业；predictions //prɪˈdɪkʃənz//；预测"
+          "definition": "公司；企业"
+        },
+        {
+          "word": "predictions",
+          "phonetic": "/prɪˈdɪkʃənz/",
+          "pos": "n.",
+          "definition": "预测"
         },
         {
           "word": "correlation",
@@ -9043,7 +9392,7 @@
     {
       "id": 30,
       "title": "17次",
-      "word_count": 64,
+      "word_count": 65,
       "words": [
         {
           "word": "gap",
@@ -9397,7 +9746,13 @@
           "word": "interrupted",
           "phonetic": "/ˌɪntəˈrʌptɪd/",
           "pos": "adj.",
-          "definition": "中断的；v. 打断；中断；fertilisers //ˈfɜː.tɪ.laɪ.zəz//"
+          "definition": "中断的；v. 打断；中断"
+        },
+        {
+          "word": "fertilisers",
+          "phonetic": "/ˈfɜː.tɪ.laɪ.zəz/",
+          "pos": "n.",
+          "definition": "肥料"
         },
         {
           "word": "overwhelming",
@@ -9434,7 +9789,7 @@
     {
       "id": 31,
       "title": "16次",
-      "word_count": 89,
+      "word_count": 90,
       "words": [
         {
           "word": "fur",
@@ -9667,8 +10022,14 @@
         {
           "word": "founder",
           "phonetic": "/ˈfaʊndə(r)/",
+          "pos": "n.",
+          "definition": "创办者"
+        },
+        {
+          "word": "insists",
+          "phonetic": "/ɪnˈsɪsts/",
           "pos": "v.",
-          "definition": "创办者；insists //ɪnˈsɪsts//；坚持；坚决要求"
+          "definition": "坚持；坚决要求"
         },
         {
           "word": "playful",
@@ -9975,7 +10336,7 @@
     {
       "id": 32,
       "title": "15次①",
-      "word_count": 47,
+      "word_count": 50,
       "words": [
         {
           "word": "feat",
@@ -10017,7 +10378,13 @@
           "word": "teeth",
           "phonetic": "/tiːθ/",
           "pos": "n.",
-          "definition": "牙齿；“tooth”的复数；reefs //riːfs//；礁石；暗礁"
+          "definition": "牙齿；“tooth”的复数"
+        },
+        {
+          "word": "reefs",
+          "phonetic": "/riːfs/",
+          "pos": "n.",
+          "definition": "礁石；暗礁"
         },
         {
           "word": "obese",
@@ -10108,6 +10475,18 @@
           "phonetic": "/ˈbʌdʒɪt/",
           "pos": "adj.",
           "definition": "预算；预算金额；廉价的；花钱少的；v. 为 ... 做预算"
+        },
+        {
+          "word": "surges",
+          "phonetic": "/ˈsɜːdʒɪz/",
+          "pos": "v.",
+          "definition": "激增；汹涌；激增；汹涌"
+        },
+        {
+          "word": "buyers",
+          "phonetic": "/ˈbaɪ.əz/",
+          "pos": "n.",
+          "definition": "买家；购买者"
         },
         {
           "word": "cotton",
@@ -10264,7 +10643,7 @@
     {
       "id": 33,
       "title": "15次②",
-      "word_count": 57,
+      "word_count": 58,
       "words": [
         {
           "word": "yourself",
@@ -10474,7 +10853,13 @@
           "word": "collective",
           "phonetic": "/kəˈlektɪv/",
           "pos": "adj.",
-          "definition": "集体的；n. 集体；practising //ˈpræktɪsɪŋ//"
+          "definition": "集体的；n. 集体"
+        },
+        {
+          "word": "practising",
+          "phonetic": "/ˈpræktɪsɪŋ/",
+          "pos": "adj.",
+          "definition": "积极从事的；从事某种职业的"
         },
         {
           "word": "regulatory",
@@ -10920,7 +11305,7 @@
     {
       "id": 35,
       "title": "14次②",
-      "word_count": 64,
+      "word_count": 66,
       "words": [
         {
           "word": "federal",
@@ -11130,7 +11515,19 @@
           "word": "reluctant",
           "phonetic": "/rɪˈlʌktənt/",
           "pos": "adj.",
-          "definition": "不情愿的；diagnosed //ˈdaɪəɡnəʊzd//；v. 诊断"
+          "definition": "不情愿的"
+        },
+        {
+          "word": "diagnosed",
+          "phonetic": "/ˈdaɪəɡnəʊzd/",
+          "pos": "v.",
+          "definition": "诊断"
+        },
+        {
+          "word": "islanders",
+          "phonetic": "/ˈaɪləndəz/",
+          "pos": "n.",
+          "definition": "岛民；岛上居民"
         },
         {
           "word": "permitted",
@@ -11618,7 +12015,7 @@
     {
       "id": 37,
       "title": "13次②",
-      "word_count": 63,
+      "word_count": 66,
       "words": [
         {
           "word": "anxiety",
@@ -11672,7 +12069,13 @@
           "word": "requests",
           "phonetic": "/rɪˈkwɛsts/",
           "pos": "n.",
-          "definition": "请求；要求；coconuts //ˈkəʊ.kə.nʌts//；椰子"
+          "definition": "请求；要求"
+        },
+        {
+          "word": "coconuts",
+          "phonetic": "/ˈkəʊ.kə.nʌts/",
+          "pos": "n.",
+          "definition": "椰子"
         },
         {
           "word": "disputes",
@@ -11732,7 +12135,13 @@
           "word": "literary",
           "phonetic": "/ˈlɪtərəri/",
           "pos": "adj.",
-          "definition": "文学的；governed //ˈɡʌvənd//；v. 统治；管理；控制"
+          "definition": "文学的"
+        },
+        {
+          "word": "governed",
+          "phonetic": "/ˈɡʌvənd/",
+          "pos": "v.",
+          "definition": "统治；管理；控制"
         },
         {
           "word": "seawater",
@@ -11972,7 +12381,13 @@
           "word": "revolutionary",
           "phonetic": "/ˌrevəˈluːʃənəri/",
           "pos": "adj.",
-          "definition": "革命的；characterised //ˈkærəktəraɪzd//；v. 描述…的特征；使具有…特征"
+          "definition": "革命的"
+        },
+        {
+          "word": "characterised",
+          "phonetic": "/ˈkærəktəraɪzd/",
+          "pos": "v.",
+          "definition": "描述…的特征；使具有…特征"
         },
         {
           "word": "physiological",
@@ -12003,7 +12418,7 @@
     {
       "id": 38,
       "title": "12次①",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "cap",
@@ -12135,7 +12550,13 @@
           "word": "mature",
           "phonetic": "/məˈtʃʊə(r)/",
           "pos": "adj.",
-          "definition": "成熟的；v. 成熟；stakes //steɪks//"
+          "definition": "成熟的；v. 成熟"
+        },
+        {
+          "word": "stakes",
+          "phonetic": "/steɪks/",
+          "pos": "n.",
+          "definition": "风险；赌注"
         },
         {
           "word": "margin",
@@ -12304,7 +12725,7 @@
     {
       "id": 39,
       "title": "12次②",
-      "word_count": 83,
+      "word_count": 87,
       "words": [
         {
           "word": "profile",
@@ -12406,7 +12827,13 @@
           "word": "sentence",
           "phonetic": "/ˈsentəns/",
           "pos": "n.",
-          "definition": "句子；判决；宣判；clusters //ˈklʌstəz//；群；簇；丛；团"
+          "definition": "句子；判决；宣判"
+        },
+        {
+          "word": "clusters",
+          "phonetic": "/ˈklʌstəz/",
+          "pos": "n.",
+          "definition": "群；簇；丛；团"
         },
         {
           "word": "spectrum",
@@ -12592,7 +13019,13 @@
           "word": "rainwater",
           "phonetic": "/ˈreɪnwɔːtə(r)/",
           "pos": "n.",
-          "definition": "雨水；seedlings //ˈsiːdlɪŋz//；幼苗"
+          "definition": "雨水"
+        },
+        {
+          "word": "seedlings",
+          "phonetic": "/ˈsiːdlɪŋz/",
+          "pos": "n.",
+          "definition": "幼苗"
         },
         {
           "word": "literally",
@@ -12621,8 +13054,14 @@
         {
           "word": "mortality",
           "phonetic": "/mɔːˈtæləti/",
+          "pos": "n.",
+          "definition": "死亡率"
+        },
+        {
+          "word": "originated",
+          "phonetic": "/əˈrɪdʒɪneɪtɪd/",
           "pos": "v.",
-          "definition": "死亡率；originated //əˈrɪdʒɪneɪtɪd//；起源于；来自"
+          "definition": "起源于；来自"
         },
         {
           "word": "guidelines",
@@ -12664,7 +13103,13 @@
           "word": "dependence",
           "phonetic": "/dɪˈpendəns/",
           "pos": "n.",
-          "definition": "依赖；信赖；therapists //ˈθerəpɪsts//；治疗专家；治疗师"
+          "definition": "依赖；信赖"
+        },
+        {
+          "word": "therapists",
+          "phonetic": "/ˈθerəpɪsts/",
+          "pos": "n.",
+          "definition": "治疗专家；治疗师"
         },
         {
           "word": "resilience",
@@ -12809,7 +13254,7 @@
     {
       "id": 40,
       "title": "11次①",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "wet",
@@ -13091,7 +13536,13 @@
           "word": "resist",
           "phonetic": "/rɪˈzɪst/",
           "pos": "v.",
-          "definition": "抵制；抵抗；sprays //spreɪz//；n. 喷雾"
+          "definition": "抵制；抵抗"
+        },
+        {
+          "word": "sprays",
+          "phonetic": "/spreɪz/",
+          "pos": "n.",
+          "definition": "喷雾"
         },
         {
           "word": "skiing",
@@ -13110,7 +13561,7 @@
     {
       "id": 41,
       "title": "11次②",
-      "word_count": 89,
+      "word_count": 91,
       "words": [
         {
           "word": "partial",
@@ -13157,8 +13608,14 @@
         {
           "word": "outlook",
           "phonetic": "/ˈaʊtlʊk/",
+          "pos": "n.",
+          "definition": "观点；人生观；前景"
+        },
+        {
+          "word": "swaying",
+          "phonetic": "/ˈsweɪ.ɪŋ/",
           "pos": "v.",
-          "definition": "观点；人生观；前景；swaying //ˈsweɪ.ɪŋ//；摇摆；摇动"
+          "definition": "摇摆；摇动"
         },
         {
           "word": "mission",
@@ -13374,7 +13831,13 @@
           "word": "sacrifice",
           "phonetic": "/ˈsækrɪfaɪs/",
           "pos": "v.",
-          "definition": "牺牲；n. 牺牲（品）；reminding //rɪˈmaɪndɪŋ//"
+          "definition": "牺牲；n. 牺牲（品）"
+        },
+        {
+          "word": "reminding",
+          "phonetic": "/rɪˈmaɪndɪŋ/",
+          "pos": "v.",
+          "definition": "提醒；使想起"
         },
         {
           "word": "fertility",
@@ -13651,7 +14114,7 @@
     {
       "id": 42,
       "title": "10次①",
-      "word_count": 48,
+      "word_count": 50,
       "words": [
         {
           "word": "sir",
@@ -13843,7 +14306,13 @@
           "word": "bonds",
           "phonetic": "/bɒndz/",
           "pos": "n.",
-          "definition": "纽带；“bond”的复数；sacks //sæks//；麻袋；大袋子；解雇"
+          "definition": "纽带；“bond”的复数"
+        },
+        {
+          "word": "sacks",
+          "phonetic": "/sæks/",
+          "pos": "n.",
+          "definition": "麻袋；大袋子；解雇"
         },
         {
           "word": "truck",
@@ -13884,8 +14353,14 @@
         {
           "word": "tennis",
           "phonetic": "/ˈtenɪs/",
+          "pos": "n.",
+          "definition": "网球"
+        },
+        {
+          "word": "deemed",
+          "phonetic": "/diːmd/",
           "pos": "v.",
-          "definition": "网球；deemed //diːmd//；认为；视为"
+          "definition": "认为；视为"
         },
         {
           "word": "pocket",
@@ -13946,7 +14421,7 @@
     {
       "id": 43,
       "title": "10次②",
-      "word_count": 48,
+      "word_count": 50,
       "words": [
         {
           "word": "innate",
@@ -14042,7 +14517,13 @@
           "word": "stacked",
           "phonetic": "/stækt/",
           "pos": "v.",
-          "definition": "堆叠；堆积；“stack”的过去式和过去分词；adj. 堆满了…的；rhythms //ˈrɪðəmz//"
+          "definition": "堆叠；堆积；“stack”的过去式和过去分词；adj. 堆满了…的"
+        },
+        {
+          "word": "rhythms",
+          "phonetic": "/ˈrɪðəmz/",
+          "pos": "n.",
+          "definition": "节奏"
         },
         {
           "word": "minimal",
@@ -14210,7 +14691,13 @@
           "word": "diagnosis",
           "phonetic": "/ˌdaɪəɡˈnəʊsɪs/",
           "pos": "n.",
-          "definition": "诊断；particles //ˈpɑːtɪk(ə)lz//；粒子；颗粒"
+          "definition": "诊断"
+        },
+        {
+          "word": "particles",
+          "phonetic": "/ˈpɑːtɪk(ə)lz/",
+          "pos": "n.",
+          "definition": "粒子；颗粒"
         },
         {
           "word": "committee",
@@ -14241,7 +14728,7 @@
     {
       "id": 44,
       "title": "10次③",
-      "word_count": 52,
+      "word_count": 54,
       "words": [
         {
           "word": "displaced",
@@ -14253,7 +14740,13 @@
           "word": "intervals",
           "phonetic": "/ˈɪntəvl/",
           "pos": "n.",
-          "definition": "间隔时间；[军事]间隔( interval的名词复数 )；outsiders //ˌaʊtˈsaɪdəz//；外人；局外人"
+          "definition": "间隔时间；[军事]间隔( interval的名词复数 )"
+        },
+        {
+          "word": "outsiders",
+          "phonetic": "/ˌaʊtˈsaɪdəz/",
+          "pos": "n.",
+          "definition": "外人；局外人"
         },
         {
           "word": "judgement",
@@ -14312,8 +14805,14 @@
         {
           "word": "addiction",
           "phonetic": "/əˈdɪkʃ(ə)n/",
+          "pos": "n.",
+          "definition": "成瘾"
+        },
+        {
+          "word": "recruited",
+          "phonetic": "/rɪˈkruːtɪd/",
           "pos": "v.",
-          "definition": "成瘾；recruited //rɪˈkruːtɪd//；招募；招聘"
+          "definition": "招募；招聘"
         },
         {
           "word": "prevalent",
@@ -14560,7 +15059,7 @@
     {
       "id": 45,
       "title": "9次①",
-      "word_count": 47,
+      "word_count": 50,
       "words": [
         {
           "word": "fox",
@@ -14734,7 +15233,13 @@
           "word": "blend",
           "phonetic": "/blend/",
           "pos": "v.",
-          "definition": "混合；融合；twigs //twɪɡz//；n. 小枝"
+          "definition": "混合；融合"
+        },
+        {
+          "word": "twigs",
+          "phonetic": "/twɪɡz/",
+          "pos": "n.",
+          "definition": "小枝"
         },
         {
           "word": "fairy",
@@ -14794,7 +15299,13 @@
           "word": "butter",
           "phonetic": "/ˈbʌtə(r)/",
           "pos": "n.",
-          "definition": "黄油；奶油；sparks //spɑːks//；闪光"
+          "definition": "黄油；奶油"
+        },
+        {
+          "word": "sparks",
+          "phonetic": "/spɑːks/",
+          "pos": "n.",
+          "definition": "闪光"
         },
         {
           "word": "advent",
@@ -14824,7 +15335,13 @@
           "word": "defeat",
           "phonetic": "/dɪˈfiːt/",
           "pos": "v.",
-          "definition": "失败；击败；战胜；odours //ˈəʊdəz//"
+          "definition": "失败；击败；战胜"
+        },
+        {
+          "word": "odours",
+          "phonetic": "/ˈəʊdəz/",
+          "pos": "n.",
+          "definition": "气味"
         },
         {
           "word": "crater",
@@ -14849,13 +15366,19 @@
     {
       "id": 46,
       "title": "9次②",
-      "word_count": 47,
+      "word_count": 50,
       "words": [
         {
           "word": "revive",
           "phonetic": "/rɪˈvaɪv/",
           "pos": "v.",
-          "definition": "复苏；复活；lenses //ˈlɛnzɪz//；n. 透镜；镜片"
+          "definition": "复苏；复活"
+        },
+        {
+          "word": "lenses",
+          "phonetic": "/ˈlɛnzɪz/",
+          "pos": "n.",
+          "definition": "透镜；镜片"
         },
         {
           "word": "estate",
@@ -14951,7 +15474,13 @@
           "word": "notable",
           "phonetic": "/ˈnəʊtəb(ə)l/",
           "pos": "adj.",
-          "definition": "值得注意的；显著的；著名的；drilled //drɪld//；v. 钻孔"
+          "definition": "值得注意的；显著的；著名的"
+        },
+        {
+          "word": "drilled",
+          "phonetic": "/drɪld/",
+          "pos": "v.",
+          "definition": "钻孔"
         },
         {
           "word": "thermal",
@@ -15077,7 +15606,13 @@
           "word": "orchards",
           "phonetic": "/ˈɔːtʃədz/",
           "pos": "n.",
-          "definition": "果园（orchard 的复数形式）；rooftops //ˈruːftɒps//；屋顶"
+          "definition": "果园（orchard 的复数形式）"
+        },
+        {
+          "word": "rooftops",
+          "phonetic": "/ˈruːftɒps/",
+          "pos": "n.",
+          "definition": "屋顶"
         },
         {
           "word": "laughter",
@@ -15138,7 +15673,7 @@
     {
       "id": 47,
       "title": "9次③",
-      "word_count": 45,
+      "word_count": 50,
       "words": [
         {
           "word": "duration",
@@ -15195,6 +15730,12 @@
           "definition": "爆炸；adj. 爆破了的，被打破的；v. （使）爆炸( explode的过去式和过去分词 )"
         },
         {
+          "word": "carolina",
+          "phonetic": "/ˌkærəˈlaɪnə/",
+          "pos": "n.",
+          "definition": "卡罗莱纳（美国州名）"
+        },
+        {
           "word": "excluded",
           "phonetic": "/ɪkˈskluːdɪd/",
           "pos": "v.",
@@ -15204,7 +15745,13 @@
           "word": "download",
           "phonetic": "/ˈdaʊnləʊd/",
           "pos": "v.",
-          "definition": "下载；squeezed //skwiːzd//；v. 挤出，榨出；挤压，捏；挤入，塞入"
+          "definition": "下载"
+        },
+        {
+          "word": "squeezed",
+          "phonetic": "/skwiːzd/",
+          "pos": "v.",
+          "definition": "挤出，榨出；挤压，捏；挤入，塞入"
         },
         {
           "word": "theorise",
@@ -15222,7 +15769,19 @@
           "word": "quantify",
           "phonetic": "/ˈkwɒntɪfaɪ/",
           "pos": "v.",
-          "definition": "量化；pathways //ˈpɑːθweɪz//；n. 路径"
+          "definition": "量化"
+        },
+        {
+          "word": "pathways",
+          "phonetic": "/ˈpɑːθweɪz/",
+          "pos": "n.",
+          "definition": "路径"
+        },
+        {
+          "word": "mariners",
+          "phonetic": "/ˈmærɪnəz/",
+          "pos": "n.",
+          "definition": "海员；水手"
         },
         {
           "word": "qualified",
@@ -15318,7 +15877,13 @@
           "word": "depressed",
           "phonetic": "/dɪˈprest/",
           "pos": "adj.",
-          "definition": "抑郁的；v. 降低；“depress”的过去式和过去分词；swallowed //ˈswɒləʊd//"
+          "definition": "抑郁的；v. 降低；“depress”的过去式和过去分词"
+        },
+        {
+          "word": "swallowed",
+          "phonetic": "/ˈswɒləʊd/",
+          "pos": "v.",
+          "definition": "吞下"
         },
         {
           "word": "wonderful",
@@ -15722,7 +16287,7 @@
     {
       "id": 49,
       "title": "8次①",
-      "word_count": 48,
+      "word_count": 50,
       "words": [
         {
           "word": "jar",
@@ -15950,13 +16515,25 @@
           "word": "entail",
           "phonetic": "/ɪnˈteɪl/",
           "pos": "v.",
-          "definition": "使…必然发生；realms //relmz//；n. 领域；范围；王国"
+          "definition": "使…必然发生"
+        },
+        {
+          "word": "realms",
+          "phonetic": "/relmz/",
+          "pos": "n.",
+          "definition": "领域；范围；王国"
         },
         {
           "word": "canary",
           "phonetic": "/kəˈneəri/",
           "pos": "n.",
-          "definition": "金丝雀；aromas //əˈrəʊməz//；香气；芳香"
+          "definition": "金丝雀"
+        },
+        {
+          "word": "aromas",
+          "phonetic": "/əˈrəʊməz/",
+          "pos": "n.",
+          "definition": "香气；芳香"
         },
         {
           "word": "doomed",
@@ -16017,7 +16594,7 @@
     {
       "id": 50,
       "title": "8次②",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "rubber",
@@ -16281,7 +16858,13 @@
           "word": "deprived",
           "phonetic": "/dɪˈpraɪvd/",
           "pos": "adj.",
-          "definition": "缺乏足够教育的；贫穷的；v. 剥夺；使丧失；“deprive”的过去式和过去分词；sceptics //ˈskɛptɪks//"
+          "definition": "缺乏足够教育的；贫穷的；v. 剥夺；使丧失；“deprive”的过去式和过去分词"
+        },
+        {
+          "word": "sceptics",
+          "phonetic": "/ˈskɛptɪks/",
+          "pos": "n.",
+          "definition": "怀疑论者"
         },
         {
           "word": "dopamine",
@@ -16318,7 +16901,7 @@
     {
       "id": 51,
       "title": "8次③",
-      "word_count": 44,
+      "word_count": 50,
       "words": [
         {
           "word": "endeavor",
@@ -16330,7 +16913,13 @@
           "word": "calendar",
           "phonetic": "/ˈkælɪndə(r)/",
           "pos": "n.",
-          "definition": "日历；aquifers //ˈækwɪfəz//；含水层"
+          "definition": "日历"
+        },
+        {
+          "word": "aquifers",
+          "phonetic": "/ˈækwɪfəz/",
+          "pos": "n.",
+          "definition": "含水层"
         },
         {
           "word": "entrance",
@@ -16354,7 +16943,13 @@
           "word": "graphics",
           "phonetic": "/ˈɡræfɪks/",
           "pos": "n.",
-          "definition": "绘图；制图；图表；surgeons //ˈsɜː.dʒənz//；外科医生"
+          "definition": "绘图；制图；图表"
+        },
+        {
+          "word": "surgeons",
+          "phonetic": "/ˈsɜː.dʒənz/",
+          "pos": "n.",
+          "definition": "外科医生"
         },
         {
           "word": "fraction",
@@ -16449,8 +17044,14 @@
         {
           "word": "highways",
           "phonetic": "/ˈhaɪweɪz/",
+          "pos": "n.",
+          "definition": "高速公路"
+        },
+        {
+          "word": "embarked",
+          "phonetic": "/ɪmˈbɑːkt/",
           "pos": "v.",
-          "definition": "高速公路；embarked //ɪmˈbɑːkt//；开始从事"
+          "definition": "开始从事"
         },
         {
           "word": "renowned",
@@ -16467,8 +17068,20 @@
         {
           "word": "optimists",
           "phonetic": "/ˈɒptɪmɪsts/",
+          "pos": "n.",
+          "definition": "乐观主义者( optimist的名词复数 )"
+        },
+        {
+          "word": "afflicted",
+          "phonetic": "/əˈflɪktɪd/",
           "pos": "adj.",
-          "definition": "乐观主义者( optimist的名词复数 )；afflicted //əˈflɪktɪd//；受折磨的；痛苦的"
+          "definition": "受折磨的；痛苦的"
+        },
+        {
+          "word": "signified",
+          "phonetic": "/ˈsɪɡ.nɪ.faɪd/",
+          "pos": "v.",
+          "definition": "表示；意味"
         },
         {
           "word": "inclusion",
@@ -16516,7 +17129,13 @@
           "word": "mechanics",
           "phonetic": "/məˈkænɪks/",
           "pos": "n.",
-          "definition": "运作方式；力学；“mechanic”的复数；craftsmen //ˈkrɑːftsmən//；工匠；手艺人；手艺人（craftsman 的复数形式）"
+          "definition": "运作方式；力学；“mechanic”的复数"
+        },
+        {
+          "word": "craftsmen",
+          "phonetic": "/ˈkrɑːftsmən/",
+          "pos": "n.",
+          "definition": "工匠；手艺人；手艺人（craftsman 的复数形式）"
         },
         {
           "word": "intrinsic",
@@ -16589,7 +17208,7 @@
     {
       "id": 52,
       "title": "8次④",
-      "word_count": 60,
+      "word_count": 62,
       "words": [
         {
           "word": "preschool",
@@ -16709,7 +17328,13 @@
           "word": "celebrated",
           "phonetic": "/ˈselɪbreɪtɪd/",
           "pos": "adj.",
-          "definition": "著名的；v. 庆祝；“celebrate”的过去式和过去分词；criticised //ˈkrɪtɪsaɪzd//"
+          "definition": "著名的；v. 庆祝；“celebrate”的过去式和过去分词"
+        },
+        {
+          "word": "criticised",
+          "phonetic": "/ˈkrɪtɪsaɪzd/",
+          "pos": "v.",
+          "definition": "批评"
         },
         {
           "word": "afterwards",
@@ -16841,7 +17466,13 @@
           "word": "aspirations",
           "phonetic": "/ˌæspəˈreɪʃnz/",
           "pos": "n.",
-          "definition": "渴望；controllers //kənˈtrəʊləz//；控制器；管理员"
+          "definition": "渴望"
+        },
+        {
+          "word": "controllers",
+          "phonetic": "/kənˈtrəʊləz/",
+          "pos": "n.",
+          "definition": "控制器；管理员"
         },
         {
           "word": "cooperation",
@@ -16956,7 +17587,7 @@
     {
       "id": 53,
       "title": "7次①",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "tin",
@@ -17142,7 +17773,13 @@
           "word": "hydro",
           "phonetic": "/ˈhaɪdrəʊ/",
           "pos": "n.",
-          "definition": "水利；voted //ˈvəʊtɪd//；表决的"
+          "definition": "水利"
+        },
+        {
+          "word": "voted",
+          "phonetic": "/ˈvəʊtɪd/",
+          "pos": "n.",
+          "definition": "表决的"
         },
         {
           "word": "incur",
@@ -17257,7 +17894,7 @@
     {
       "id": 54,
       "title": "7次②",
-      "word_count": 47,
+      "word_count": 50,
       "words": [
         {
           "word": "chaos",
@@ -17269,7 +17906,13 @@
           "word": "essay",
           "phonetic": "/ˈeseɪ/",
           "pos": "n.",
-          "definition": "文章；watts //wɒts//；瓦特（电功率单位）"
+          "definition": "文章"
+        },
+        {
+          "word": "watts",
+          "phonetic": "/wɒts/",
+          "pos": "n.",
+          "definition": "瓦特（电功率单位）"
         },
         {
           "word": "hardy",
@@ -17287,7 +17930,13 @@
           "word": "worms",
           "phonetic": "/wɜːmz/",
           "pos": "n.",
-          "definition": "蠕虫；“worm”的复数；kites //kaɪts//；风筝"
+          "definition": "蠕虫；“worm”的复数"
+        },
+        {
+          "word": "kites",
+          "phonetic": "/kaɪts/",
+          "pos": "n.",
+          "definition": "风筝"
         },
         {
           "word": "crave",
@@ -17491,7 +18140,13 @@
           "word": "litter",
           "phonetic": "/ˈlɪtə(r)/",
           "pos": "n.",
-          "definition": "垃圾；杂物；shafts //ʃɑːfts//；竖井；杆"
+          "definition": "垃圾；杂物"
+        },
+        {
+          "word": "shafts",
+          "phonetic": "/ʃɑːfts/",
+          "pos": "n.",
+          "definition": "竖井；杆"
         },
         {
           "word": "cherry",
@@ -17546,7 +18201,7 @@
     {
       "id": 55,
       "title": "7次③",
-      "word_count": 46,
+      "word_count": 50,
       "words": [
         {
           "word": "aligned",
@@ -17594,7 +18249,13 @@
           "word": "paradox",
           "phonetic": "/ˈpærədɒks/",
           "pos": "n.",
-          "definition": "悖论；priests //priːsts//；牧师；神父"
+          "definition": "悖论"
+        },
+        {
+          "word": "priests",
+          "phonetic": "/priːsts/",
+          "pos": "n.",
+          "definition": "牧师；神父"
         },
         {
           "word": "aspirin",
@@ -17617,8 +18278,14 @@
         {
           "word": "tablets",
           "phonetic": "/ˈtæblɪts/",
+          "pos": "n.",
+          "definition": "药片；平板电脑；石碑"
+        },
+        {
+          "word": "invokes",
+          "phonetic": "/ɪnˈvəʊks/",
           "pos": "v.",
-          "definition": "药片；平板电脑；石碑；invokes //ɪnˈvəʊks//；援引"
+          "definition": "援引"
         },
         {
           "word": "durable",
@@ -17726,7 +18393,13 @@
           "word": "placebo",
           "phonetic": "/pləˈsiːbəʊ/",
           "pos": "n.",
-          "definition": "安慰剂；sellers //ˈsɛləz//；卖方"
+          "definition": "安慰剂"
+        },
+        {
+          "word": "sellers",
+          "phonetic": "/ˈsɛləz/",
+          "pos": "n.",
+          "definition": "卖方"
         },
         {
           "word": "arousal",
@@ -17750,7 +18423,13 @@
           "word": "comfort",
           "phonetic": "/ˈkʌmfət/",
           "pos": "n.",
-          "definition": "舒服；安慰；安逸；rollers //ˈrəʊləz//；滚筒；滚轴；卷发器"
+          "definition": "舒服；安慰；安逸"
+        },
+        {
+          "word": "rollers",
+          "phonetic": "/ˈrəʊləz/",
+          "pos": "n.",
+          "definition": "滚筒；滚轴；卷发器"
         },
         {
           "word": "payment",
@@ -17829,7 +18508,7 @@
     {
       "id": 56,
       "title": "7次④",
-      "word_count": 47,
+      "word_count": 50,
       "words": [
         {
           "word": "illinois",
@@ -17895,7 +18574,13 @@
           "word": "feedback",
           "phonetic": "/ˈfiːdbæk/",
           "pos": "n.",
-          "definition": "反馈；voyagers //ˈvɔɪ.ɪdʒ.əz//；旅行者；航行者"
+          "definition": "反馈"
+        },
+        {
+          "word": "voyagers",
+          "phonetic": "/ˈvɔɪ.ɪdʒ.əz/",
+          "pos": "n.",
+          "definition": "旅行者；航行者"
         },
         {
           "word": "widening",
@@ -17984,8 +18669,14 @@
         {
           "word": "darkness",
           "phonetic": "/ˈdɑːknəs/",
+          "pos": "n.",
+          "definition": "黑暗"
+        },
+        {
+          "word": "diverted",
+          "phonetic": "/daɪˈvɜːtɪd/",
           "pos": "adj.",
-          "definition": "黑暗；diverted //daɪˈvɜːtɪd//；转移的；转向的"
+          "definition": "转移的；转向的"
         },
         {
           "word": "tangible",
@@ -18027,7 +18718,13 @@
           "word": "enjoyment",
           "phonetic": "/ɪnˈdʒɔɪmənt/",
           "pos": "n.",
-          "definition": "享受；乐趣；乐事；享有；skeletons //ˈskɛlɪtənz//；骨架；骨骼；梗概"
+          "definition": "享受；乐趣；乐事；享有"
+        },
+        {
+          "word": "skeletons",
+          "phonetic": "/ˈskɛlɪtənz/",
+          "pos": "n.",
+          "definition": "骨架；骨骼；梗概"
         },
         {
           "word": "vacations",
@@ -18118,7 +18815,7 @@
     {
       "id": 57,
       "title": "7次⑤",
-      "word_count": 84,
+      "word_count": 92,
       "words": [
         {
           "word": "sceptical",
@@ -18135,8 +18832,14 @@
         {
           "word": "predictor",
           "phonetic": "/prɪˈdɪktə(r)/",
+          "pos": "n.",
+          "definition": "预示物"
+        },
+        {
+          "word": "blossomed",
+          "phonetic": "/ˈblɒsəmd/",
           "pos": "v.",
-          "definition": "预示物；blossomed //ˈblɒsəmd//；繁荣"
+          "definition": "繁荣"
         },
         {
           "word": "followers",
@@ -18322,13 +19025,31 @@
           "word": "downstream",
           "phonetic": "/ˌdaʊnˈstriːm/",
           "pos": "adv.",
-          "definition": "朝下游方向；adj. 下游的；landowners //ˈlændˌəʊnəz//"
+          "definition": "朝下游方向；adj. 下游的"
+        },
+        {
+          "word": "landowners",
+          "phonetic": "/ˈlændˌəʊnəz/",
+          "pos": "n.",
+          "definition": "土地所有者"
         },
         {
           "word": "unpleasant",
           "phonetic": "/ʌnˈplez(ə)nt/",
           "pos": "adj.",
-          "definition": "令人不快的；signatures //ˈsɪɡnətʃəz//；n. 签名；署名"
+          "definition": "令人不快的"
+        },
+        {
+          "word": "signatures",
+          "phonetic": "/ˈsɪɡnətʃəz/",
+          "pos": "n.",
+          "definition": "签名；署名"
+        },
+        {
+          "word": "traversing",
+          "phonetic": "/trəˈvɜːsɪŋ/",
+          "pos": "v.",
+          "definition": "横穿；穿过；横越"
         },
         {
           "word": "suspension",
@@ -18460,7 +19181,13 @@
           "word": "partnership",
           "phonetic": "/ˈpɑːtnəʃɪp/",
           "pos": "n.",
-          "definition": "伙伴关系；合作；合作关系；specialises //ˈspɛʃəlaɪzɪz//；vi. 专门从事，专攻（specialise的第三人称单数形式）"
+          "definition": "伙伴关系；合作；合作关系"
+        },
+        {
+          "word": "specialises",
+          "phonetic": "/ˈspɛʃəlaɪzɪz/",
+          "pos": "n.",
+          "definition": "vi. 专门从事，专攻（specialise的第三人称单数形式）"
         },
         {
           "word": "pleasurable",
@@ -18514,7 +19241,13 @@
           "word": "unsuccessful",
           "phonetic": "/ˌʌnsəkˈsesf(ə)l/",
           "pos": "adj.",
-          "definition": "不成功的；失败的；specialising //ˈspɛʃəlaɪzɪŋ//；v. 专攻"
+          "definition": "不成功的；失败的"
+        },
+        {
+          "word": "specialising",
+          "phonetic": "/ˈspɛʃəlaɪzɪŋ/",
+          "pos": "v.",
+          "definition": "专攻"
         },
         {
           "word": "disagreement",
@@ -18616,7 +19349,19 @@
           "word": "implementation",
           "phonetic": "/ˌɪmplɪmenˈteɪʃ(ə)n/",
           "pos": "n.",
-          "definition": "履行；实施；revolutionised //ˌrev.əˈluː.ʃən.aɪzd//；vt. 彻底改变（revolutionise 的过去式和过去分词）"
+          "definition": "履行；实施"
+        },
+        {
+          "word": "revolutionised",
+          "phonetic": "/ˌrev.əˈluː.ʃən.aɪzd/",
+          "pos": "n.",
+          "definition": "vt. 彻底改变（revolutionise 的过去式和过去分词）"
+        },
+        {
+          "word": "misconceptions",
+          "phonetic": "/ˌmɪskənˈsɛpʃənz/",
+          "pos": "n.",
+          "definition": "错误观念"
         },
         {
           "word": "telecommunications",
@@ -18629,7 +19374,7 @@
     {
       "id": 58,
       "title": "词组20次及以上",
-      "word_count": 50,
+      "word_count": 51,
       "words": [
         {
           "word": "according to",
@@ -18887,7 +19632,13 @@
           "word": "return to",
           "phonetic": "/rɪˈtɜːn tuː/",
           "pos": "v.",
-          "definition": "回到；返回到；last year //lɑːst jɪə//；n. 去年；上一年"
+          "definition": "回到；返回到"
+        },
+        {
+          "word": "last year",
+          "phonetic": "/lɑːst jɪə/",
+          "pos": "n.",
+          "definition": "去年；上一年"
         },
         {
           "word": "as long as",
@@ -18936,7 +19687,7 @@
     {
       "id": 59,
       "title": "词组11~19次",
-      "word_count": 61,
+      "word_count": 62,
       "words": [
         {
           "word": "in part",
@@ -18977,8 +19728,14 @@
         {
           "word": "at this stage",
           "phonetic": "/æt ðɪs steɪdʒ/",
+          "pos": "n.",
+          "definition": "phrae., 眼下；现阶段"
+        },
+        {
+          "word": "more efficient",
+          "phonetic": "/mɔːr ɪˈfɪʃənt/",
           "pos": "adj.",
-          "definition": "phrae., 眼下；现阶段；more efficient //mɔːr ɪˈfɪʃənt//；更高效的；更有效的"
+          "definition": "更高效的；更有效的"
         },
         {
           "word": "think about",
@@ -19309,7 +20066,7 @@
     {
       "id": 60,
       "title": "词组8~10次",
-      "word_count": 49,
+      "word_count": 52,
       "words": [
         {
           "word": "go back",
@@ -19411,7 +20168,13 @@
           "word": "to some extent",
           "phonetic": "/tuː sʌm ɪkˈstent/",
           "pos": "n.",
-          "definition": "phrase. 某种程度上；everyday life //ˈɛvrɪdeɪ laɪf//；日常生活；平常的生活状态"
+          "definition": "phrase. 某种程度上"
+        },
+        {
+          "word": "everyday life",
+          "phonetic": "/ˈɛvrɪdeɪ laɪf/",
+          "pos": "n.",
+          "definition": "日常生活；平常的生活状态"
         },
         {
           "word": "suffer from",
@@ -19435,7 +20198,13 @@
           "word": "a host of",
           "phonetic": "/ə həʊst əv/",
           "pos": "n.",
-          "definition": "phrase. 许多；一大群；food production //fuːd prəˈdʌkʃən//；食品生产；食物制造"
+          "definition": "phrase. 许多；一大群"
+        },
+        {
+          "word": "food production",
+          "phonetic": "/fuːd prəˈdʌkʃən/",
+          "pos": "n.",
+          "definition": "食品生产；食物制造"
         },
         {
           "word": "social and economic",
@@ -19567,7 +20336,13 @@
           "word": "family members",
           "phonetic": "/ˈfæməli ˈmembəz/",
           "pos": "n.",
-          "definition": "phrase. 家庭成员；家属；new products //njuː ˈprɒdʌkts//；新产品；新上市的产品"
+          "definition": "phrase. 家庭成员；家属"
+        },
+        {
+          "word": "new products",
+          "phonetic": "/njuː ˈprɒdʌkts/",
+          "pos": "n.",
+          "definition": "新产品；新上市的产品"
         },
         {
           "word": "further research",
@@ -19610,7 +20385,7 @@
     {
       "id": 61,
       "title": "词组6~7次",
-      "word_count": 69,
+      "word_count": 74,
       "words": [
         {
           "word": "talk about",
@@ -19658,7 +20433,13 @@
           "word": "believe in",
           "phonetic": "/bɪˈliːv ɪn/",
           "pos": "n.",
-          "definition": "phrase. 相信；信任；a wide variety of //ə waɪd vəˈraɪəti ɒv//；短语. 各种各样的；多种多样的"
+          "definition": "phrase. 相信；信任"
+        },
+        {
+          "word": "a wide variety of",
+          "phonetic": "/ə waɪd vəˈraɪəti ɒv/",
+          "pos": "n.",
+          "definition": "短语. 各种各样的；多种多样的"
         },
         {
           "word": "a small number of",
@@ -19693,8 +20474,14 @@
         {
           "word": "chief executive",
           "phonetic": "/ˌtʃiːf ɪɡˈzekjətɪv/",
+          "pos": "n.",
+          "definition": "phrase. 行政长官；董事长；美国总统；（美国的）州长"
+        },
+        {
+          "word": "more quickly",
+          "phonetic": "/mɔː ˈkwɪkli/",
           "pos": "adv.",
-          "definition": "phrase. 行政长官；董事长；美国总统；（美国的）州长；more quickly //mɔː ˈkwɪkli//；更快地；更迅速地"
+          "definition": "更快地；更迅速地"
         },
         {
           "word": "in total",
@@ -19778,7 +20565,13 @@
           "word": "total number",
           "phonetic": "/ˈtəʊtl ˈnʌmbə(r)/",
           "pos": "n.",
-          "definition": "总数；总数量；one third //wʌn θɜːd//；pron. 三分之一"
+          "definition": "总数；总数量"
+        },
+        {
+          "word": "one third",
+          "phonetic": "/wʌn θɜːd/",
+          "pos": "n.",
+          "definition": "pron. 三分之一"
         },
         {
           "word": "next to",
@@ -19802,7 +20595,13 @@
           "word": "for one thing",
           "phonetic": "/fɔː wʌn θɪŋ/",
           "pos": "n.",
-          "definition": "phrase. 首先；一则；一方面；last month //lɑːst mʌnθ//；上个月；上一个月"
+          "definition": "phrase. 首先；一则；一方面"
+        },
+        {
+          "word": "last month",
+          "phonetic": "/lɑːst mʌnθ/",
+          "pos": "n.",
+          "definition": "上个月；上一个月"
         },
         {
           "word": "relate to",
@@ -19898,7 +20697,13 @@
           "word": "first century",
           "phonetic": "/fɜːst ˈsentʃəri/",
           "pos": "n.",
-          "definition": "第一世纪；公元1世纪；East Africa //iːst ˈæfrɪkə//；东非，指非洲东部地区，包括肯尼亚、坦桑尼亚、乌干达等国家"
+          "definition": "第一世纪；公元1世纪"
+        },
+        {
+          "word": "East Africa",
+          "phonetic": "/iːst ˈæfrɪkə/",
+          "pos": "n.",
+          "definition": "东非，指非洲东部地区，包括肯尼亚、坦桑尼亚、乌干达等国家"
         },
         {
           "word": "large quantities of",
@@ -20029,6 +20834,6 @@
       ]
     }
   ],
-  "total_chapters": 60,
-  "total_words": 3268
+  "total_chapters": 61,
+  "total_words": 3401
 }

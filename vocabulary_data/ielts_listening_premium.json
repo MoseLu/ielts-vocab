@@ -1,6 +1,331 @@
 {
   "chapters": [
     {
+      "id": 1,
+      "title": "答案词10次及以上",
+      "word_count": 53,
+      "words": [
+        {
+          "word": "art",
+          "phonetic": "/ɑːt/",
+          "pos": "n.",
+          "definition": "艺术"
+        },
+        {
+          "word": "time",
+          "phonetic": "/taɪm/",
+          "pos": "n.",
+          "definition": "时间；时期；次数；"
+        },
+        {
+          "word": "feed",
+          "phonetic": "/fiːd/",
+          "pos": "v.",
+          "definition": "喂；吃；"
+        },
+        {
+          "word": "park",
+          "phonetic": "/pɑːk/",
+          "pos": "n.",
+          "definition": "公园；园区；"
+        },
+        {
+          "word": "week",
+          "phonetic": "/wiːk/",
+          "pos": "n.",
+          "definition": "周；星期；礼拜；"
+        },
+        {
+          "word": "fees",
+          "phonetic": "/ˈfiːz/",
+          "pos": "n.",
+          "definition": "费用；“fee”的复数；"
+        },
+        {
+          "word": "food",
+          "phonetic": "/fuːd/",
+          "pos": "n.",
+          "definition": "食物"
+        },
+        {
+          "word": "fish",
+          "phonetic": "/fɪʃ/",
+          "pos": "n.",
+          "definition": "鱼；鱼肉；"
+        },
+        {
+          "word": "Work",
+          "phonetic": "/wɜːk/",
+          "pos": "n.",
+          "definition": "工作；活计；作品；制作品；"
+        },
+        {
+          "word": "city",
+          "phonetic": "/ˈsɪti/",
+          "pos": "n.",
+          "definition": "城市"
+        },
+        {
+          "word": "room",
+          "phonetic": "/ruːm/",
+          "pos": "n.",
+          "definition": "房间；空间；"
+        },
+        {
+          "word": "roads",
+          "phonetic": "/rəʊds/",
+          "pos": "n.",
+          "definition": "马路；“road”的复数"
+        },
+        {
+          "word": "study",
+          "phonetic": "/ˈstʌdi/",
+          "pos": "n.",
+          "definition": "学习；研究；书房；"
+        },
+        {
+          "word": "money",
+          "phonetic": "/ˈmʌni/",
+          "pos": "n.",
+          "definition": "钱；金钱；"
+        },
+        {
+          "word": "water",
+          "phonetic": "/ˈwɔːtə(r)/",
+          "pos": "n.",
+          "definition": "水；"
+        },
+        {
+          "word": "music",
+          "phonetic": "/ˈmjuːzɪk/",
+          "pos": "n.",
+          "definition": "音乐；乐曲；"
+        },
+        {
+          "word": "local",
+          "phonetic": "/ˈləʊk(ə)l/",
+          "pos": "adj.",
+          "definition": "本地的；"
+        },
+        {
+          "word": "learn",
+          "phonetic": "/lɜːn/",
+          "pos": "v.",
+          "definition": "学习；得知；"
+        },
+        {
+          "word": "light",
+          "phonetic": "/laɪt/",
+          "pos": "n.",
+          "definition": "光；灯；光线；"
+        },
+        {
+          "word": "timing",
+          "phonetic": "/ˈtaɪmɪŋ/",
+          "pos": "n.",
+          "definition": "时间的安排；时间的选择； v. “time”的现在分词；"
+        },
+        {
+          "word": "record",
+          "phonetic": "/ˈrekɔːd/",
+          "pos": "n.",
+          "definition": "记录；唱片；"
+        },
+        {
+          "word": "social",
+          "phonetic": "/ˈsəʊʃ(ə)l/",
+          "pos": "adj.",
+          "definition": "社会的；社交的；"
+        },
+        {
+          "word": "lights",
+          "phonetic": "/laɪts/",
+          "pos": "n.",
+          "definition": "灯；“light”的复数； v. 点燃；照亮；"
+        },
+        {
+          "word": "garden",
+          "phonetic": "/ˈɡɑːd(ə)n/",
+          "pos": "n.",
+          "definition": "花园；"
+        },
+        {
+          "word": "market",
+          "phonetic": "/ˈmɑːkɪt/",
+          "pos": "n.",
+          "definition": "市场；行情；商场；销路；"
+        },
+        {
+          "word": "trains",
+          "phonetic": "/treɪnz/",
+          "pos": "n.",
+          "definition": "火车；“train”的复数；"
+        },
+        {
+          "word": "people",
+          "phonetic": "/ˈpiːp(ə)l/",
+          "pos": "n.",
+          "definition": "人们；人；人民；"
+        },
+        {
+          "word": "parking",
+          "phonetic": "/ˈpɑːkɪŋ/",
+          "pos": "n.",
+          "definition": "（车辆等的）停放；停车场所；停车位； v. “park”的现在分词；"
+        },
+        {
+          "word": "records",
+          "phonetic": "/ˈrekɔːdz/",
+          "pos": "n.",
+          "definition": "记录；“record”的复数； v. 记录；"
+        },
+        {
+          "word": "fishing",
+          "phonetic": "/ˈfɪʃɪŋ/",
+          "pos": "n.",
+          "definition": "钓鱼；捕鱼； v. 钓鱼；捕鱼；“fish”的现在分词；"
+        },
+        {
+          "word": "feeding",
+          "phonetic": "/ˈfiːdɪŋ/",
+          "pos": "v.",
+          "definition": "吃；喂；“feed”的现在分词； n. 饲养；给食；"
+        },
+        {
+          "word": "gardens",
+          "phonetic": "/ˈɡɑːdnz/",
+          "pos": "n.",
+          "definition": "花园"
+        },
+        {
+          "word": "animals",
+          "phonetic": "/ˈænɪm(ə)lz/",
+          "pos": "n.",
+          "definition": "动物；“animal”的复数；"
+        },
+        {
+          "word": "training",
+          "phonetic": "/ˈtreɪnɪŋ/",
+          "pos": "n.",
+          "definition": "培训；训练；锻炼； v. “train”的现在分词；"
+        },
+        {
+          "word": "business",
+          "phonetic": "/ˈbɪznəs/",
+          "pos": "n.",
+          "definition": "生意；商业；事务；"
+        },
+        {
+          "word": "learning",
+          "phonetic": "/ˈlɜːnɪŋ/",
+          "pos": "n.",
+          "definition": "学习；学问； v. 学习；“learn”的现在分词；"
+        },
+        {
+          "word": "Students",
+          "phonetic": "/stˈjuːd(ə)nts/",
+          "pos": "n.",
+          "definition": "学生；“student”的复数；"
+        },
+        {
+          "word": "research",
+          "phonetic": "/rɪˈsɜːtʃ/",
+          "pos": "n.",
+          "definition": "研究；探索；调查；"
+        },
+        {
+          "word": "lighting",
+          "phonetic": "/ˈlaɪtɪŋ/",
+          "pos": "n.",
+          "definition": "照明；灯光； v. “light”的现在分词；"
+        },
+        {
+          "word": "Education",
+          "phonetic": "/ˌedʒuˈkeɪʃ(ə)n/",
+          "pos": "n.",
+          "definition": "教育"
+        },
+        {
+          "word": "marketing",
+          "phonetic": "/ˈmɑːkɪtɪŋ/",
+          "pos": "n.",
+          "definition": "营销；"
+        },
+        {
+          "word": "recording",
+          "phonetic": "/rɪˈkɔːdɪŋ/",
+          "pos": "n.",
+          "definition": "录音；录制； v. 记录；录制；“record”的现在分词；"
+        },
+        {
+          "word": "foods",
+          "phonetic": "/fuːdz/",
+          "pos": "n.",
+          "definition": "食品；“food”的复数；"
+        },
+        {
+          "word": "Fishes",
+          "phonetic": "/ˈfɪʃɪz/",
+          "pos": "n.",
+          "definition": "鱼；“fish”的复数；"
+        },
+        {
+          "word": "minutes",
+          "phonetic": "/ˈmɪnɪts/",
+          "pos": "n.",
+          "definition": "会议记录；“minute”的复数；"
+        },
+        {
+          "word": "animal",
+          "phonetic": "/ˈænɪm(ə)l/",
+          "pos": "n.",
+          "definition": "动物"
+        },
+        {
+          "word": "student",
+          "phonetic": "/ˈstjuːd(ə)nt/",
+          "pos": "n.",
+          "definition": "学生"
+        },
+        {
+          "word": "gardening",
+          "phonetic": "/ˈɡɑːdnɪŋ/",
+          "pos": "n.",
+          "definition": "园艺（学）； v. 从事园艺；“garden”的现在分词；"
+        },
+        {
+          "word": "system",
+          "phonetic": "/ˈsɪstəm/",
+          "pos": "n.",
+          "definition": "系统；体系；"
+        },
+        {
+          "word": "card",
+          "phonetic": "/kɑːd/",
+          "pos": "n.",
+          "definition": "银行卡；卡片；纸牌；"
+        },
+        {
+          "word": "locals",
+          "phonetic": "/ˈləʊkəls/",
+          "pos": "n.",
+          "definition": "本地人"
+        },
+        {
+          "word": "train",
+          "phonetic": "/treɪn/",
+          "pos": "n.",
+          "definition": "火车；列车；列；队；"
+        },
+        {
+          "word": "many",
+          "phonetic": "/ˈmeni/",
+          "pos": "adj.",
+          "definition": "许多的；"
+        }
+      ]
+    },
+    {
       "id": 2,
       "title": "答案词8~9次",
       "word_count": 41,
@@ -1333,7 +1658,7 @@
     {
       "id": 6,
       "title": "答案词4次①",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "dog",
@@ -1597,7 +1922,13 @@
           "word": "short",
           "phonetic": "/ʃɔːt/",
           "pos": "adj.",
-          "definition": "短的；矮的；tubes //tjuːbz//；n. 管子；管道；电子管"
+          "definition": "短的；矮的"
+        },
+        {
+          "word": "tubes",
+          "phonetic": "/tjuːbz/",
+          "pos": "n.",
+          "definition": "管子；管道；电子管"
         },
         {
           "word": "rocks",
@@ -4956,7 +5287,7 @@
     {
       "id": 17,
       "title": "答案词2次⑤",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "employees",
@@ -5004,7 +5335,13 @@
           "word": "platforms",
           "phonetic": "/ˈplætfɔːmz/",
           "pos": "n.",
-          "definition": "平台；站台；月台；“platform”的复数；exchanges //ɪksˈtʃeɪndʒɪz//；交换；交流"
+          "definition": "平台；站台；月台；“platform”的复数"
+        },
+        {
+          "word": "exchanges",
+          "phonetic": "/ɪksˈtʃeɪndʒɪz/",
+          "pos": "n.",
+          "definition": "交换；交流"
         },
         {
           "word": "activated",
@@ -5257,7 +5594,7 @@
     {
       "id": 18,
       "title": "答案词2次⑥",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "underground",
@@ -5274,8 +5611,14 @@
         {
           "word": "preparation",
           "phonetic": "/ˌprepəˈreɪʃ(ə)n/",
+          "pos": "n.",
+          "definition": "准备；预备"
+        },
+        {
+          "word": "documenting",
+          "phonetic": "/ˈdɒkjʊmɛntɪŋ/",
           "pos": "v.",
-          "definition": "准备；预备；documenting //ˈdɒkjʊmɛntɪŋ//；记录；记载"
+          "definition": "记录；记载"
         },
         {
           "word": "regulations",
@@ -5558,7 +5901,7 @@
     {
       "id": 19,
       "title": "答案词2次⑦",
-      "word_count": 63,
+      "word_count": 67,
       "words": [
         {
           "word": "law",
@@ -5702,7 +6045,13 @@
           "word": "gentle",
           "phonetic": "/ˈdʒent(ə)l/",
           "pos": "adj.",
-          "definition": "温和的；文雅的；温柔的；unions //ˈjuːnjənz//；n. 工会；联盟"
+          "definition": "温和的；文雅的；温柔的"
+        },
+        {
+          "word": "unions",
+          "phonetic": "/ˈjuːnjənz/",
+          "pos": "n.",
+          "definition": "工会；联盟"
         },
         {
           "word": "cooperate",
@@ -5726,7 +6075,13 @@
           "word": "journalists",
           "phonetic": "/ˈdʒenəlɪsts/",
           "pos": "n.",
-          "definition": "记者；“journalist”的复数；reporters //rɪˈpɔːtəz//；记者；报道者"
+          "definition": "记者；“journalist”的复数"
+        },
+        {
+          "word": "reporters",
+          "phonetic": "/rɪˈpɔːtəz/",
+          "pos": "n.",
+          "definition": "记者；报道者"
         },
         {
           "word": "organizing",
@@ -5882,7 +6237,19 @@
           "word": "contents",
           "phonetic": "/ˈkɒntents/",
           "pos": "n.",
-          "definition": "内容；含量；“content”的复数；flags //flæɡz//；旗帜"
+          "definition": "内容；含量；“content”的复数"
+        },
+        {
+          "word": "flags",
+          "phonetic": "/flæɡz/",
+          "pos": "n.",
+          "definition": "旗帜"
+        },
+        {
+          "word": "hearts",
+          "phonetic": "/hɑːts/",
+          "pos": "n.",
+          "definition": "心"
         },
         {
           "word": "vacations",
@@ -6250,7 +6617,7 @@
     {
       "id": 21,
       "title": "答案词1次②",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "vegan",
@@ -6502,7 +6869,13 @@
           "word": "flute",
           "phonetic": "/fluːt/",
           "pos": "n.",
-          "definition": "长笛；combs //kəʊmz//；梳子"
+          "definition": "长笛"
+        },
+        {
+          "word": "combs",
+          "phonetic": "/kəʊmz/",
+          "pos": "n.",
+          "definition": "梳子"
         },
         {
           "word": "blame",
@@ -6551,7 +6924,7 @@
     {
       "id": 22,
       "title": "答案词1次③",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "violin",
@@ -6635,7 +7008,13 @@
           "word": "skiing",
           "phonetic": "/ˈskiːɪŋ/",
           "pos": "v.",
-          "definition": "滑雪（运动）；“ski”的现在分词；medics //ˈmɛdɪks//"
+          "definition": "滑雪（运动）；“ski”的现在分词"
+        },
+        {
+          "word": "medics",
+          "phonetic": "/ˈmɛdɪks/",
+          "pos": "n.",
+          "definition": "医务人员；医学学生"
         },
         {
           "word": "stubby",
@@ -7159,7 +7538,7 @@
     {
       "id": 24,
       "title": "答案词1次⑤",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "bailiff",
@@ -7230,8 +7609,14 @@
         {
           "word": "posture",
           "phonetic": "/ˈpɒstʃə(r)/",
+          "pos": "n.",
+          "definition": "姿势"
+        },
+        {
+          "word": "rhyming",
+          "phonetic": "/ˈraɪmɪŋ/",
           "pos": "adj.",
-          "definition": "姿势；rhyming //ˈraɪmɪŋ//；押韵的；有韵律的"
+          "definition": "押韵的；有韵律的"
         },
         {
           "word": "objects",
@@ -7761,7 +8146,7 @@
     {
       "id": 26,
       "title": "答案词1次⑦",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "evaluate",
@@ -7935,7 +8320,13 @@
           "word": "community",
           "phonetic": "/kəˈmjuːnəti/",
           "pos": "n.",
-          "definition": "社区；团体；群落；thrillers //ˈθrɪləz//；惊悚片；惊险小说"
+          "definition": "社区；团体；群落"
+        },
+        {
+          "word": "thrillers",
+          "phonetic": "/ˈθrɪləz/",
+          "pos": "n.",
+          "definition": "惊悚片；惊险小说"
         },
         {
           "word": "cancelled",
@@ -8062,7 +8453,7 @@
     {
       "id": 27,
       "title": "答案词1次⑧",
-      "word_count": 48,
+      "word_count": 50,
       "words": [
         {
           "word": "classroom",
@@ -8140,7 +8531,13 @@
           "word": "canisters",
           "phonetic": "/ˈkænɪstəz/",
           "pos": "n.",
-          "definition": "小罐；筒；容器；[canister 的复数形式] 小罐；blockages //ˈblɒkɪdʒɪz//；阻塞物；堵塞"
+          "definition": "小罐；筒；容器；[canister 的复数形式] 小罐"
+        },
+        {
+          "word": "blockages",
+          "phonetic": "/ˈblɒkɪdʒɪz/",
+          "pos": "n.",
+          "definition": "阻塞物；堵塞"
         },
         {
           "word": "described",
@@ -8259,8 +8656,14 @@
         {
           "word": "profession",
           "phonetic": "/prəˈfeʃ(ə)n/",
+          "pos": "n.",
+          "definition": "职业；专业"
+        },
+        {
+          "word": "solidifies",
+          "phonetic": "/səˈlɪdɪfaɪz/",
           "pos": "v.",
-          "definition": "职业；专业；solidifies //səˈlɪdɪfaɪz//；使凝固"
+          "definition": "使凝固"
         },
         {
           "word": "herbivores",
@@ -8664,7 +9067,7 @@
     {
       "id": 29,
       "title": "答案词1次⑩",
-      "word_count": 49,
+      "word_count": 50,
       "words": [
         {
           "word": "satisfactory",
@@ -8856,7 +9259,13 @@
           "word": "compost",
           "phonetic": "/ˈkɒmpɒst/",
           "pos": "n.",
-          "definition": "堆肥；hallways //ˈhɔːlweɪz//；走廊"
+          "definition": "堆肥"
+        },
+        {
+          "word": "hallways",
+          "phonetic": "/ˈhɔːlweɪz/",
+          "pos": "n.",
+          "definition": "走廊"
         },
         {
           "word": "advise",
@@ -8965,7 +9374,7 @@
     {
       "id": 30,
       "title": "答案词1次⑪",
-      "word_count": 48,
+      "word_count": 50,
       "words": [
         {
           "word": "adapter",
@@ -9085,7 +9494,13 @@
           "word": "dentist's",
           "phonetic": "/ˈdentɪsts/",
           "pos": "n.",
-          "definition": "牙科医生诊疗所；revisions //rɪˈvɪʒənz//；修订；修改；复习"
+          "definition": "牙科医生诊疗所"
+        },
+        {
+          "word": "revisions",
+          "phonetic": "/rɪˈvɪʒənz/",
+          "pos": "n.",
+          "definition": "修订；修改；复习"
         },
         {
           "word": "sweater",
@@ -9235,7 +9650,13 @@
           "word": "windfarms",
           "phonetic": "/ˈwɪndfɑːmz/",
           "pos": "n.",
-          "definition": "风力发电场；风力农场（由多个风力发电机组成的用于发电的区域）；sandbanks //ˈsændbæŋks//；沙洲；沙坝"
+          "definition": "风力发电场；风力农场（由多个风力发电机组成的用于发电的区域）"
+        },
+        {
+          "word": "sandbanks",
+          "phonetic": "/ˈsændbæŋks/",
+          "pos": "n.",
+          "definition": "沙洲；沙坝"
         },
         {
           "word": "promoted",
@@ -9260,7 +9681,7 @@
     {
       "id": 31,
       "title": "答案词1次⑫",
-      "word_count": 66,
+      "word_count": 67,
       "words": [
         {
           "word": "aspirations",
@@ -9308,7 +9729,13 @@
           "word": "decoration",
           "phonetic": "/ˌdekəˈreɪʃ(ə)n/",
           "pos": "n.",
-          "definition": "装饰；submarines //ˌsʌbməˈriːnz//；潜水艇"
+          "definition": "装饰"
+        },
+        {
+          "word": "submarines",
+          "phonetic": "/ˌsʌbməˈriːnz/",
+          "pos": "n.",
+          "definition": "潜水艇"
         },
         {
           "word": "correspondence",
@@ -13293,7 +13720,7 @@
     {
       "id": 44,
       "title": "听力原文23~24次",
-      "word_count": 51,
+      "word_count": 52,
       "words": [
         {
           "word": "prey",
@@ -13527,7 +13954,13 @@
           "word": "campaign",
           "phonetic": "/kæmˈpeɪn/",
           "pos": "n.",
-          "definition": "（政治、商业或社会性）活动；运动；particles //ˈpɑːtɪk(ə)lz//；粒子；颗粒"
+          "definition": "（政治、商业或社会性）活动；运动"
+        },
+        {
+          "word": "particles",
+          "phonetic": "/ˈpɑːtɪk(ə)lz/",
+          "pos": "n.",
+          "definition": "粒子；颗粒"
         },
         {
           "word": "installed",
@@ -15466,7 +15899,7 @@
     {
       "id": 51,
       "title": "听力原文14次",
-      "word_count": 47,
+      "word_count": 48,
       "words": [
         {
           "word": "pre",
@@ -15718,7 +16151,13 @@
           "word": "pedestrians",
           "phonetic": "/pəˈdestriənz/",
           "pos": "n.",
-          "definition": "步行者；行人；specialises //ˈspɛʃəlaɪzɪz//；vi. 专门从事，专攻（specialise的第三人称单数形式）"
+          "definition": "步行者；行人"
+        },
+        {
+          "word": "specialises",
+          "phonetic": "/ˈspɛʃəlaɪzɪz/",
+          "pos": "n.",
+          "definition": "vi. 专门从事，专攻（specialise的第三人称单数形式）"
         },
         {
           "word": "competitive",
@@ -16958,7 +17397,7 @@
     {
       "id": 55,
       "title": "听力原文10次",
-      "word_count": 84,
+      "word_count": 86,
       "words": [
         {
           "word": "sap",
@@ -17096,7 +17535,13 @@
           "word": "obtain",
           "phonetic": "/əbˈteɪn/",
           "pos": "v.",
-          "definition": "获得；得到；eaters //ˈiːtəz//；n. 食者；吃某种食物的人"
+          "definition": "获得；得到"
+        },
+        {
+          "word": "eaters",
+          "phonetic": "/ˈiːtəz/",
+          "pos": "n.",
+          "definition": "食者；吃某种食物的人"
         },
         {
           "word": "advert",
@@ -17407,8 +17852,14 @@
         {
           "word": "attendance",
           "phonetic": "/əˈtendəns/",
+          "pos": "n.",
+          "definition": "出席"
+        },
+        {
+          "word": "stimulates",
+          "phonetic": "/ˈstɪmjʊleɪts/",
           "pos": "v.",
-          "definition": "出席；stimulates //ˈstɪmjʊleɪts//；刺激；激励；促进"
+          "definition": "刺激；激励；促进"
         },
         {
           "word": "counselling",
@@ -17776,7 +18227,7 @@
     {
       "id": 57,
       "title": "听力原文9次②",
-      "word_count": 54,
+      "word_count": 55,
       "words": [
         {
           "word": "wealthy",
@@ -18028,7 +18479,13 @@
           "word": "recreation",
           "phonetic": "/ˌrekriˈeɪʃ(ə)n/",
           "pos": "n.",
-          "definition": "娱乐；消遣；休闲活动；lifeguards //ˈlaɪfɡɑːdz//；救生员"
+          "definition": "娱乐；消遣；休闲活动"
+        },
+        {
+          "word": "lifeguards",
+          "phonetic": "/ˈlaɪfɡɑːdz/",
+          "pos": "n.",
+          "definition": "救生员"
         },
         {
           "word": "rainforest",
@@ -18408,7 +18865,7 @@
     {
       "id": 59,
       "title": "听力原文8次②",
-      "word_count": 74,
+      "word_count": 76,
       "words": [
         {
           "word": "buffet",
@@ -18642,7 +19099,13 @@
           "word": "medieval",
           "phonetic": "/ˌmediˈiːv(ə)l/",
           "pos": "adj.",
-          "definition": "中世纪的；中古的；concluded //kənˈkluːdɪd//；v. 得出结论；结束"
+          "definition": "中世纪的；中古的"
+        },
+        {
+          "word": "concluded",
+          "phonetic": "/kənˈkluːdɪd/",
+          "pos": "v.",
+          "definition": "得出结论；结束"
         },
         {
           "word": "eliminate",
@@ -18732,7 +19195,13 @@
           "word": "capability",
           "phonetic": "/ˌkeɪpəˈbɪləti/",
           "pos": "n.",
-          "definition": "能力；才能；性能；travellers //ˈtræv.əl.əz//；旅行者"
+          "definition": "能力；才能；性能"
+        },
+        {
+          "word": "travellers",
+          "phonetic": "/ˈtræv.əl.əz/",
+          "pos": "n.",
+          "definition": "旅行者"
         },
         {
           "word": "supplement",
@@ -19473,7 +19942,7 @@
     {
       "id": 62,
       "title": "听力原文7次③",
-      "word_count": 69,
+      "word_count": 70,
       "words": [
         {
           "word": "contrary",
@@ -19521,7 +19990,13 @@
           "word": "daylight",
           "phonetic": "/ˈdeɪlaɪt/",
           "pos": "n.",
-          "definition": "日光；白天；commands //kəˈmɑːndz//；命令；指令；控制"
+          "definition": "日光；白天"
+        },
+        {
+          "word": "commands",
+          "phonetic": "/kəˈmɑːndz/",
+          "pos": "n.",
+          "definition": "命令；指令；控制"
         },
         {
           "word": "detector",
@@ -20508,7 +20983,7 @@
     {
       "id": 65,
       "title": "听力原文6次③",
-      "word_count": 86,
+      "word_count": 89,
       "words": [
         {
           "word": "ceremony",
@@ -20604,7 +21079,13 @@
           "word": "athletes",
           "phonetic": "/ˈæθliːts/",
           "pos": "n.",
-          "definition": "运动员；craftsmen //ˈkrɑːftsmən//；工匠；手艺人；手艺人（craftsman 的复数形式）"
+          "definition": "运动员"
+        },
+        {
+          "word": "craftsmen",
+          "phonetic": "/ˈkrɑːftsmən/",
+          "pos": "n.",
+          "definition": "工匠；手艺人；手艺人（craftsman 的复数形式）"
         },
         {
           "word": "reproduce",
@@ -20861,14 +21342,26 @@
         {
           "word": "internship",
           "phonetic": "/ˈɪntɜːnʃɪp/",
+          "pos": "n.",
+          "definition": "实习；见习"
+        },
+        {
+          "word": "originated",
+          "phonetic": "/əˈrɪdʒɪneɪtɪd/",
           "pos": "v.",
-          "definition": "实习；见习；originated //əˈrɪdʒɪneɪtɪd//；起源于；来自"
+          "definition": "起源于；来自"
         },
         {
           "word": "aggressive",
           "phonetic": "/əˈɡresɪv/",
           "pos": "adj.",
-          "definition": "攻击性的；有进取心的；侵略性的；recyclables //ˌriːˈsaɪkləblz//；n. 可回收物"
+          "definition": "攻击性的；有进取心的；侵略性的"
+        },
+        {
+          "word": "recyclables",
+          "phonetic": "/ˌriːˈsaɪkləblz/",
+          "pos": "n.",
+          "definition": "可回收物"
         },
         {
           "word": "fashionable",
@@ -21031,7 +21524,7 @@
     {
       "id": 66,
       "title": "词组46次及以上",
-      "word_count": 43,
+      "word_count": 44,
       "words": [
         {
           "word": "a lot",
@@ -21151,7 +21644,13 @@
           "word": "think about",
           "phonetic": "/θɪŋk əˈbaʊt/",
           "pos": "n.",
-          "definition": "phrase. 考虑；认为；last year //lɑːst jɪə//；去年；上一年"
+          "definition": "phrase. 考虑；认为"
+        },
+        {
+          "word": "last year",
+          "phonetic": "/lɑːst jɪə/",
+          "pos": "n.",
+          "definition": "去年；上一年"
         },
         {
           "word": "a couple of",
@@ -21916,13 +22415,25 @@
     {
       "id": 69,
       "title": "词组12~14次",
-      "word_count": 47,
+      "word_count": 50,
       "words": [
         {
           "word": "a great deal of",
           "phonetic": "/ə ɡreɪt diːl əv/",
+          "pos": "n.",
+          "definition": "phrase. 大量的；许多的"
+        },
+        {
+          "word": "read about",
+          "phonetic": "/riːd əˈbaʊt/",
+          "pos": "n.",
+          "definition": "phr. 阅读关于……的内容；通过阅读了解到"
+        },
+        {
+          "word": "More important",
+          "phonetic": "/mɔːr ɪmˈpɔːtənt/",
           "pos": "adj.",
-          "definition": "phrase. 大量的；许多的；read about //riːd əˈbaʊt//；phr. 阅读关于……的内容；通过阅读了解到"
+          "definition": "更重要的；更为重要的"
         },
         {
           "word": "get hold of",
@@ -22054,7 +22565,13 @@
           "word": "apply for",
           "phonetic": "/əˈplaɪ fɔː(r)/",
           "pos": "n.",
-          "definition": "phrase. 请求；申请；have done //hæv dʌn//；已做；已完成（现在完成时结构，表示动作已经完成）"
+          "definition": "phrase. 请求；申请"
+        },
+        {
+          "word": "have done",
+          "phonetic": "/hæv dʌn/",
+          "pos": "n.",
+          "definition": "已做；已完成（现在完成时结构，表示动作已经完成）"
         },
         {
           "word": "a set of",
@@ -22205,7 +22722,7 @@
     {
       "id": 70,
       "title": "词组10~11次",
-      "word_count": 41,
+      "word_count": 44,
       "words": [
         {
           "word": "when it comes to",
@@ -22349,7 +22866,13 @@
           "word": "start at",
           "phonetic": "/stɑːt æt/",
           "pos": "n.",
-          "definition": "phrase. 从...起；开始于...；do something about //duː ˈsʌmθɪŋ əˈbaʊt//；短语动词. 采取措施处理；对……采取行动"
+          "definition": "phrase. 从...起；开始于..."
+        },
+        {
+          "word": "do something about",
+          "phonetic": "/duː ˈsʌmθɪŋ əˈbaʊt/",
+          "pos": "n.",
+          "definition": "短语动词. 采取措施处理；对……采取行动"
         },
         {
           "word": "benefit from",
@@ -22367,7 +22890,13 @@
           "word": "at all times",
           "phonetic": "/æt ɔːl taɪmz/",
           "pos": "n.",
-          "definition": "phrase. 一直；随时；每时每刻；last month //lɑːst mʌnθ//；上个月；上一个月"
+          "definition": "phrase. 一直；随时；每时每刻"
+        },
+        {
+          "word": "last month",
+          "phonetic": "/lɑːst mʌnθ/",
+          "pos": "n.",
+          "definition": "上个月；上一个月"
         },
         {
           "word": "art gallery",
@@ -22438,8 +22967,14 @@
         {
           "word": "time management",
           "phonetic": "/taɪm ˈmænɪdʒmənt/",
+          "pos": "n.",
+          "definition": "时间管理；对时间的有效规划与控制"
+        },
+        {
+          "word": "more quickly",
+          "phonetic": "/mɔː ˈkwɪkli/",
           "pos": "adv.",
-          "definition": "时间管理；对时间的有效规划与控制；more quickly //mɔː ˈkwɪkli//；更快地；更迅速地"
+          "definition": "更快地；更迅速地"
         },
         {
           "word": "make up",
@@ -22458,13 +22993,19 @@
     {
       "id": 71,
       "title": "词组8~9次",
-      "word_count": 58,
+      "word_count": 65,
       "words": [
         {
           "word": "thanks to",
           "phonetic": "/θæŋks tuː/",
+          "pos": "n.",
+          "definition": "phrase. 幸亏；由于；因为"
+        },
+        {
+          "word": "book in",
+          "phonetic": "/bʊk ɪn/",
           "pos": "v.",
-          "definition": "phrase. 幸亏；由于；因为；book in //bʊk ɪn//；登记入住；预约登记"
+          "definition": "登记入住；预约登记"
         },
         {
           "word": "take notes",
@@ -22506,7 +23047,13 @@
           "word": "act as",
           "phonetic": "/ækt æz/",
           "pos": "n.",
-          "definition": "phrase. 充当；担任；担当；keen on //kiːn ɒn//；phr. 热衷于；喜爱；对…极感兴趣"
+          "definition": "phrase. 充当；担任；担当"
+        },
+        {
+          "word": "keen on",
+          "phonetic": "/kiːn ɒn/",
+          "pos": "n.",
+          "definition": "phr. 热衷于；喜爱；对…极感兴趣"
         },
         {
           "word": "each week",
@@ -22541,8 +23088,14 @@
         {
           "word": "joining fee",
           "phonetic": "/ˈdʒɔɪnɪŋ fiː/",
+          "pos": "n.",
+          "definition": "入会费；加入时需缴纳的费用"
+        },
+        {
+          "word": "twice a week",
+          "phonetic": "/twaɪs ə wiːk/",
           "pos": "adv.",
-          "definition": "入会费；加入时需缴纳的费用；twice a week //twaɪs ə wiːk//；每周两次"
+          "definition": "每周两次"
         },
         {
           "word": "be aware of",
@@ -22554,7 +23107,13 @@
           "word": "relate to",
           "phonetic": "/rɪˈleɪt tuː/",
           "pos": "n.",
-          "definition": "phrase. 有关；涉及；four weeks //fɔː(r) wiːks//；四周；四个星期"
+          "definition": "phrase. 有关；涉及"
+        },
+        {
+          "word": "four weeks",
+          "phonetic": "/fɔː(r) wiːks/",
+          "pos": "n.",
+          "definition": "四周；四个星期"
         },
         {
           "word": "in this case",
@@ -22578,7 +23137,13 @@
           "word": "appeal to",
           "phonetic": "/əˈpiːl tuː/",
           "pos": "n.",
-          "definition": "phrase. 呼吁；有吸引力；使感兴趣；a wide variety of //ə waɪd vəˈraɪəti ɒv//；短语. 各种各样的；多种多样的"
+          "definition": "phrase. 呼吁；有吸引力；使感兴趣"
+        },
+        {
+          "word": "a wide variety of",
+          "phonetic": "/ə waɪd vəˈraɪəti ɒv/",
+          "pos": "n.",
+          "definition": "短语. 各种各样的；多种多样的"
         },
         {
           "word": "need to be able to",
@@ -22794,7 +23359,19 @@
           "word": "on campus",
           "phonetic": "/ɒn ˈkæmpəs/",
           "pos": "n.",
-          "definition": "phrase. 在校内；the near future //ðə nɪə ˈfjuːtʃə//；不久的将来；近期未来"
+          "definition": "phrase. 在校内"
+        },
+        {
+          "word": "the near future",
+          "phonetic": "/ðə nɪə ˈfjuːtʃə/",
+          "pos": "n.",
+          "definition": "不久的将来；近期未来"
+        },
+        {
+          "word": "main points",
+          "phonetic": "/meɪn pɔɪnts/",
+          "pos": "n.",
+          "definition": "要点；主要观点；核心内容"
         },
         {
           "word": "fitness centre",
@@ -22813,7 +23390,7 @@
     {
       "id": 72,
       "title": "词组7次",
-      "word_count": 47,
+      "word_count": 50,
       "words": [
         {
           "word": "turn up",
@@ -22938,8 +23515,20 @@
         {
           "word": "Health Centre",
           "phonetic": "/hɛlθ ˈsɛntə/",
+          "pos": "n.",
+          "definition": "健康中心；医疗中心（提供基本医疗服务的机构）"
+        },
+        {
+          "word": "more efficient",
+          "phonetic": "/mɔːr ɪˈfɪʃənt/",
           "pos": "adj.",
-          "definition": "健康中心；医疗中心（提供基本医疗服务的机构）；more efficient //mɔːr ɪˈfɪʃənt//；更高效的；更有效的"
+          "definition": "更高效的；更有效的"
+        },
+        {
+          "word": "local residents",
+          "phonetic": "/ˈləʊkəl ˈrɛzɪdənts/",
+          "pos": "n.",
+          "definition": "当地居民；本地住户"
         },
         {
           "word": "get in touch with",
@@ -22981,7 +23570,13 @@
           "word": "plan for",
           "phonetic": "/plæn fɔː(r)/",
           "pos": "n.",
-          "definition": "phr. 为…作计划；打算；为…做准备；everyday life //ˈɛvrɪdeɪ laɪf//；日常生活；平常的生活状态"
+          "definition": "phr. 为…作计划；打算；为…做准备"
+        },
+        {
+          "word": "everyday life",
+          "phonetic": "/ˈɛvrɪdeɪ laɪf/",
+          "pos": "n.",
+          "definition": "日常生活；平常的生活状态"
         },
         {
           "word": "fill out",
@@ -23102,7 +23697,7 @@
     {
       "id": 73,
       "title": "词组6次",
-      "word_count": 47,
+      "word_count": 51,
       "words": [
         {
           "word": "car parks",
@@ -23155,8 +23750,14 @@
         {
           "word": "once a month",
           "phonetic": "/wʌns ə mʌnθ/",
+          "pos": "n.",
+          "definition": "每月一次"
+        },
+        {
+          "word": "in a group",
+          "phonetic": "/ɪn ə ɡruːp/",
           "pos": "prep.",
-          "definition": "每月一次；in a group //ɪn ə ɡruːp//；以小组形式；成群地；集体地"
+          "definition": "以小组形式；成群地；集体地"
         },
         {
           "word": "Ticket Office",
@@ -23167,8 +23768,14 @@
         {
           "word": "the basis for",
           "phonetic": "/ðə ˈbeɪsɪs fɔː(r)/",
+          "pos": "n.",
+          "definition": "……的基础；……的根据"
+        },
+        {
+          "word": "by the sea",
+          "phonetic": "/baɪ ðə siː/",
           "pos": "prep.",
-          "definition": "……的基础；……的根据；by the sea //baɪ ðə siː//；在海边；靠近海洋"
+          "definition": "在海边；靠近海洋"
         },
         {
           "word": "main hall",
@@ -23233,8 +23840,14 @@
         {
           "word": "travel agency",
           "phonetic": "/ˈtræv(ə)l eɪdʒənsi/",
+          "pos": "n.",
+          "definition": "phrase. 旅行社"
+        },
+        {
+          "word": "so few",
+          "phonetic": "/səʊ fjuː/",
           "pos": "adv.",
-          "definition": "phrase. 旅行社；so few //səʊ fjuː//；+"
+          "definition": "+；adj. 如此少的（用于可数名词前，强调数量极少）"
         },
         {
           "word": "be part of",
@@ -23281,8 +23894,14 @@
         {
           "word": "put forward",
           "phonetic": "/pʊt ˈfɔːwəd/",
+          "pos": "n.",
+          "definition": "phrase. 提出"
+        },
+        {
+          "word": "save money",
+          "phonetic": "/seɪv ˈmʌni/",
           "pos": "v.",
-          "definition": "phrase. 提出；save money //seɪv ˈmʌni//；节省金钱；省钱"
+          "definition": "节省金钱；省钱"
         },
         {
           "word": "first class",
@@ -23389,6 +24008,6 @@
       ]
     }
   ],
-  "total_chapters": 72,
-  "total_words": 3814
+  "total_chapters": 73,
+  "total_words": 3910
 }
