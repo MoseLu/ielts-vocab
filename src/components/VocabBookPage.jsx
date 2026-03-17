@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVocabBooks, useAllBookProgress } from '../hooks/useVocabBooks'
 import PlanModal from './PlanModal'
+import ChapterModal from './ChapterModal'
 
 const CATEGORY_LABELS = {
   listening: '听力',
@@ -91,6 +92,7 @@ function VocabBookPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [myBooks, setMyBooks] = useState([])
   const [selectedBook, setSelectedBook] = useState(null)
+  const [showChapterModal, setShowChapterModal] = useState(false)
 
   const { books, loading, error } = useVocabBooks({
     category: activeCategory,
@@ -117,8 +119,15 @@ function VocabBookPage() {
       setMyBooks(newBooks)
       localStorage.setItem('my_books', JSON.stringify(newBooks))
     }
-    // Show plan modal
-    setSelectedBook(book)
+
+    // Paid books with chapters show ChapterModal, others show PlanModal
+    if (book.is_paid) {
+      setSelectedBook(book)
+      setShowChapterModal(true)
+    } else {
+      setSelectedBook(book)
+      setShowChapterModal(false)
+    }
   }
 
   const handleStartStudy = (plan) => {
@@ -127,6 +136,13 @@ function VocabBookPage() {
     }
     localStorage.setItem('selected_book', JSON.stringify(selectedBook))
     navigate(`/practice?book=${selectedBook.id}`)
+  }
+
+  const handleSelectChapter = (chapter, startIndex) => {
+    localStorage.setItem('selected_book', JSON.stringify(selectedBook))
+    localStorage.setItem('selected_chapter', JSON.stringify({ id: chapter.id, title: chapter.title }))
+    localStorage.setItem('chapter_start_index', String(startIndex))
+    navigate(`/practice?book=${selectedBook.id}&chapter=${chapter.id}`)
   }
 
   const filteredBooks = searchQuery.trim()
@@ -227,8 +243,19 @@ function VocabBookPage() {
         )}
       </div>
 
-      {/* Plan Modal */}
-      {selectedBook && (
+      {/* Modal */}
+      {selectedBook && showChapterModal && (
+        <ChapterModal
+          book={selectedBook}
+          progress={progressMap[selectedBook.id]}
+          onClose={() => {
+            setSelectedBook(null)
+            setShowChapterModal(false)
+          }}
+          onSelectChapter={handleSelectChapter}
+        />
+      )}
+      {selectedBook && !showChapterModal && (
         <PlanModal
           book={selectedBook}
           progress={progressMap[selectedBook.id]}

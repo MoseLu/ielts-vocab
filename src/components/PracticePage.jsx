@@ -162,6 +162,26 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   useEffect(() => {
     // Book-based vocabulary loading
     if (bookId) {
+      const chapterId = searchParams.get('chapter')
+
+      // If chapter specified, fetch chapter words
+      if (chapterId) {
+        fetch(`/api/books/${bookId}/chapters/${chapterId}`)
+          .then(res => res.json())
+          .then(data => {
+            const words = data.words || []
+            setVocabulary(words)
+            vocabRef.current = words
+            const indices = Array.from({ length: words.length }, (_, i) => i)
+            const q = settings.shuffle !== false ? shuffleArray(indices) : indices
+            setQueue(q)
+            queueRef.current = q
+            setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
+          })
+          .catch(() => showToast?.('加载章节词汇失败', 'error'))
+        return
+      }
+
       fetch(`/api/books/${bookId}/words?per_page=100`)
         .then(res => res.json())
         .then(data => {
