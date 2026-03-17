@@ -1,0 +1,236 @@
+/* Page: Study Center dashboard cards */
+
+.study-center-page {
+    padding: 32px;
+    min-height: calc(100vh - var(--header-height));
+    background: var(--bg-secondary);
+}
+
+.study-center-grid {
+    display: grid;
+    grid-template-columns: 260px 180px 1fr 1fr 120px;
+    gap: 16px;
+    max-width: 1100px;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .study-center-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .study-center-page { padding: 16px; }
+    .study-center-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Base book card */
+.study-book-card {
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.study-book-card:hover {
+    border-color: #ccc;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Main plan card */
+.study-book-card-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.study-book-header {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.study-book-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.study-book-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.study-book-progress-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.study-book-progress-bar {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.study-book-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+}
+
+.study-book-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* Quick-start CTA card */
+.study-book-card-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.study-book-card-cta:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.study-cta-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.study-cta-icon svg {
+    width: 16px;
+    height: 16px;
+    color: white;
+}
+
+.study-cta-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+}
+
+.study-cta-subtitle {
+    font-size: 12px;
+    color: rgba(255,255,255,0.85);
+}
+
+/* Wrong words review card */
+.study-book-card-review {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.study-review-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-light);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--accent);
+}
+
+.study-review-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.study-review-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.study-review-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* Stats card */
+.study-book-card-stats {
+    cursor: default;
+}
+
+.study-stats-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 8px;
+}
+
+.study-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.study-stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.2;
+}
+
+.study-stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+/* Add custom book card */
+.study-add-card {
+    background: var(--bg-color);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    transition: all var(--transition-fast);
+    min-height: 90px;
+    text-align: center;
+}
+
+.study-add-card:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.study-add-card svg {
+    width: 22px;
+    height: 22px;
+}

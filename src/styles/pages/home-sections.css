@@ -1,0 +1,248 @@
+/* Page: Home – tabs, section content, wrong-words, stats, empty state */
+
+/* ── Tab Navigation ── */
+.home-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+}
+
+.home-tab {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    background: none;
+    border: none;
+    border-radius: calc(var(--radius-lg) - 2px);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+
+.home-tab:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--bg-color) 60%, transparent);
+}
+
+.home-tab.active {
+    background: var(--bg-color);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ── Section Content ── */
+.home-section {
+    /* no border/shadow — content just sits on page background */
+}
+
+.home-section-header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.home-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.home-section-desc {
+    font-size: 13px;
+    color: var(--text-tertiary);
+}
+
+/* Day Grid */
+.day-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-xs);
+}
+
+.day-check {
+    width: 16px;
+    height: 16px;
+    color: var(--success);
+}
+
+.day-badge {
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--accent);
+    color: white;
+    padding: 2px 6px;
+    border-radius: var(--radius-full);
+}
+
+.day-words {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+}
+
+.day-progress-bar {
+    height: 3px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.day-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+.day-progress-text {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.day-card.completed .day-progress-text {
+    color: var(--success);
+}
+
+/* Empty State */
+.home-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-2xl) var(--space-xl);
+    color: var(--text-tertiary);
+    text-align: center;
+    gap: var(--space-md);
+}
+
+.home-empty-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-empty-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.home-empty-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.home-empty-btn {
+    padding: var(--space-sm) var(--space-xl);
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.home-empty-btn:hover {
+    background: var(--accent-hover);
+}
+
+/* Wrong Words List */
+.wrong-words-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+
+.wrong-word-item {
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-color);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 1px solid var(--bg-secondary);
+}
+
+.wrong-word-item:last-child {
+    border-bottom: none;
+}
+
+.wrong-word-text {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.wrong-word-en {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.wrong-word-phonetic {
+    font-size: 13px;
+    color: var(--text-tertiary);
+}
+
+.wrong-word-def {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.wrong-word-pos {
+    font-size: 11px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 1px 6px;
+    color: var(--text-tertiary);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+}
+
+.stats-card {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+
+.stats-card-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg) var(--space-md);
+}
+
+.stats-card-num {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stats-card-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: var(--space-sm) var(--space-md);
+}

@@ -1,0 +1,47 @@
+/* ============================================================
+   IELTS Vocab App — Master CSS Entry Point
+   Import order: base → layout → components → pages → utils
+   Max 500 lines per module; each file = one feature/section.
+   ============================================================ */
+
+/* ── Base ── */
+@import './base.css';
+
+/* ── Layout ── */
+@import './layout/app.css';
+@import './layout/header-base.css';
+@import './layout/header-selectors.css';
+
+/* ── Components ── */
+@import './components/dropdowns.css';
+@import './components/toast.css';
+@import './components/complete.css';
+@import './components/settings.css';
+@import './components/avatar.css';
+
+/* ── Pages: Auth ── */
+@import './pages/auth.css';
+
+/* ── Pages: Home / Study Center ── */
+@import './pages/home-banner.css';
+@import './pages/home-sections.css';
+@import './pages/study-center.css';
+@import './pages/chapter-modal.css';
+@import './pages/day-card.css';
+
+/* ── Pages: Practice ── */
+@import './pages/practice-layout.css';
+@import './pages/practice-options.css';
+@import './pages/practice-spelling.css';
+@import './pages/practice-dictation.css';
+@import './pages/practice-radio.css';
+@import './pages/practice-complete.css';
+
+/* ── Pages: Vocab Book ── */
+@import './pages/vocab-filters.css';
+@import './pages/vocab-cards.css';
+@import './pages/vocab-book-grid.css';
+
+/* ── Utils ── */
+@import './utils/utilities.css';
+@import './utils/responsive.css';
