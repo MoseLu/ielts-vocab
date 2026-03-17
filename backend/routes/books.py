@@ -39,50 +39,6 @@ def token_required(f):
 # Vocabulary books configuration
 VOCAB_BOOKS = [
     {
-        'id': 'ielts_listening',
-        'title': '雅思听力核心词汇',
-        'description': '雅思听力考试高频词汇，覆盖教育、租房、旅游等常见场景',
-        'icon': 'headphones',
-        'color': '#3B82F6',
-        'category': 'listening',
-        'level': 'intermediate',
-        'word_count': 224,
-        'file': 'ielts_vocabulary_listening.json'
-    },
-    {
-        'id': 'ielts_reading',
-        'title': '雅思阅读核心词汇',
-        'description': '雅思阅读同义替换词汇，提升阅读理解能力',
-        'icon': 'book-open',
-        'color': '#10B981',
-        'category': 'reading',
-        'level': 'intermediate',
-        'word_count': 120,
-        'file': 'ielts_vocabulary_reading.json'
-    },
-    {
-        'id': 'ielts_writing',
-        'title': '雅思写作核心词汇',
-        'description': '雅思写作高分词汇，学术表达必备',
-        'icon': 'edit',
-        'color': '#F59E0B',
-        'category': 'writing',
-        'level': 'advanced',
-        'word_count': 523,
-        'file': 'ielts_vocabulary_writing.json'
-    },
-    {
-        'id': 'ielts_speaking',
-        'title': '雅思口语核心词汇',
-        'description': '雅思口语话题词汇，提升口语表达能力',
-        'icon': 'mic',
-        'color': '#EF4444',
-        'category': 'speaking',
-        'level': 'beginner',
-        'word_count': 51,
-        'file': 'ielts_vocabulary_speaking.json'
-    },
-    {
         'id': 'awl_academic',
         'title': 'AWL学术词汇表',
         'description': 'Academic Word List 570核心学术词汇，雅思学术类必备',
@@ -105,17 +61,6 @@ VOCAB_BOOKS = [
         'file': 'ielts_vocabulary_6260.csv'
     },
     {
-        'id': 'ielts_phrases',
-        'title': '雅思学术短语',
-        'description': '雅思常用学术短语和搭配',
-        'icon': 'link',
-        'color': '#06B6D4',
-        'category': 'phrases',
-        'level': 'intermediate',
-        'word_count': 30,
-        'file': 'ielts_vocabulary_phrases.json'
-    },
-    {
         'id': 'ielts_ultimate',
         'title': '雅思终极词汇库',
         'description': '精选2814个雅思高频词汇',
@@ -126,7 +71,7 @@ VOCAB_BOOKS = [
         'word_count': 2814,
         'file': 'ielts_vocabulary_ultimate.csv'
     },
-    # Premium vocabulary (付费词汇)
+    # Premium vocabulary (已购词汇)
     {
         'id': 'ielts_listening_premium',
         'title': '雅思听力高频词汇',
