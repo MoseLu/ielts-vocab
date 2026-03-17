@@ -123,7 +123,7 @@ function AuthPage({ onLogin, showToast }) {
               onChange={(e) => setAgreement(e.target.checked)}
             />
             <span className="agreement-text">我已阅读并同意</span>
-            <a href="#" className="agreement-link">《用户服务协议》</a>
+            <a href="#" className="agreement-link" onClick={(e) => e.preventDefault()}>《用户服务协议》</a>
           </label>
         )}
       </div>

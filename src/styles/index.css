@@ -42,6 +42,18 @@
 @import './pages/vocab-cards.css';
 @import './pages/vocab-book-grid.css';
 
+/* ── Pages: Practice Word List + Control Bar ── */
+@import './pages/practice-wordlist.css';
+
+/* ── Pages: Errors ── */
+@import './pages/errors.css';
+
+/* ── Pages: Stats ── */
+@import './pages/stats.css';
+
+/* ── Pages: Profile ── */
+@import './pages/profile.css';
+
 /* ── Utils ── */
 @import './utils/utilities.css';
 @import './utils/responsive.css';
