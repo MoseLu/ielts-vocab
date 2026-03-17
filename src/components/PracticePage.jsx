@@ -127,6 +127,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
   const [showModeDropdown, setShowModeDropdown] = useState(false)
   // Track word statuses for word list
   const [wordStatuses, setWordStatuses] = useState({})
+  // Chapters for book mode
+  const [chapters, setChapters] = useState([])
+  const [showChapterDropdown, setShowChapterDropdown] = useState(false)
+  const chapterDropdownRef = useRef(null)
 
   const spellingRef = useRef(null)
   const radioActiveRef = useRef(false)
@@ -196,6 +200,27 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
     document.addEventListener('pointerdown', handle)
     return () => document.removeEventListener('pointerdown', handle)
   }, [])
+
+  // Close chapter dropdown on outside click
+  useEffect(() => {
+    const handle = (e) => {
+      if (chapterDropdownRef.current && !chapterDropdownRef.current.contains(e.target)) {
+        setShowChapterDropdown(false)
+      }
+    }
+    document.addEventListener('pointerdown', handle)
+    return () => document.removeEventListener('pointerdown', handle)
+  }, [])
+
+  // Fetch chapters when in book mode
+  useEffect(() => {
+    if (bookId && !errorMode) {
+      fetch(`/api/books/${bookId}/chapters`)
+        .then(res => res.json())
+        .then(data => setChapters(data.chapters || []))
+        .catch(() => {})
+    }
+  }, [bookId, errorMode])
 
   useEffect(() => {
     // Error mode: load wrong words from localStorage
@@ -392,8 +417,49 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
     dayProgress[currentDay] = { correctCount: correct, wrongCount: wrong, completed: correct + wrong >= vocabulary.length, updatedAt: new Date().toISOString() }
     localStorage.setItem('day_progress', JSON.stringify(dayProgress))
     const token = localStorage.getItem('auth_token')
-    if (token) fetch('/api/progress', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ day: currentDay, current_index: queueIndex, correct_count: correct, wrong_count: wrong }) }).catch(() => {})
-  }, [currentDay, vocabulary.length, queueIndex])
+
+    // Save book/chapter progress if logged in
+    if (token && bookId) {
+      const chapterId = searchParams.get('chapter')
+      const isCompleted = correct + wrong >= vocabulary.length
+
+      // Save book-level progress
+      const bookData = {
+        book_id: bookId,
+        current_index: queueIndex,
+        correct_count: correct,
+        wrong_count: wrong,
+        is_completed: isCompleted
+      }
+      fetch(`/api/books/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(bookData)
+      }).catch(() => {})
+
+      // Save chapter-level progress if in chapter mode
+      if (chapterId) {
+        const chapterData = {
+          words_learned: correct + wrong,
+          correct_count: correct,
+          wrong_count: wrong,
+          is_completed: isCompleted
+        }
+        fetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(chapterData)
+        }).catch(() => {})
+      }
+    } else if (token) {
+      // Original day-based progress
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ day: currentDay, current_index: queueIndex, correct_count: correct, wrong_count: wrong })
+      }).catch(() => {})
+    }
+  }, [currentDay, vocabulary.length, queueIndex, bookId, searchParams])
 
   const saveWrongWord = (word) => {
     const existing = JSON.parse(localStorage.getItem('wrong_words') || '[]')
@@ -466,97 +532,141 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
   }, [showResult, spellingResult, options, mode, queueIndex])
 
   // ── Practice Control Bar ─────────────────────────────────────────────────
-  const PracticeControlBar = () => (
-    <div className="practice-ctrl-bar">
-      <button className="practice-ctrl-back" onClick={() => navigate('/')} title="返回">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-        <span>返回</span>
-      </button>
+  const PracticeControlBar = () => {
+    const currentChapterId = searchParams.get('chapter')
+    const currentChapter = chapters.find(c => c.id === parseInt(currentChapterId))
 
-      <div className="practice-ctrl-title">
-        {errorMode ? '错词复习' : (bookId ? '词书练习' : `Day ${currentDay}`)}
-        <span className="practice-ctrl-count">{vocabulary.length}词</span>
-      </div>
+    const handleSelectChapter = (chapter) => {
+      setShowChapterDropdown(false)
+      navigate(`/practice?book=${bookId}&chapter=${chapter.id}`)
+    }
 
-      <div className="practice-ctrl-right">
-        {/* Mode selector */}
-        <div className="practice-mode-selector" ref={modeDropdownRef}>
-          <button
-            className="practice-ctrl-icon-btn practice-mode-btn"
-            onClick={() => setShowModeDropdown(v => !v)}
-            title="切换模式"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M9 19V6l12-3v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-            <span className="practice-mode-label">{modeNames[mode] || mode}</span>
-          </button>
-          {showModeDropdown && (
-            <div className="practice-mode-dropdown">
-              {modeList.map(m => (
-                <button
-                  key={m}
-                  className={`practice-mode-option ${mode === m ? 'active' : ''}`}
-                  onClick={() => { onModeChange?.(m); setShowModeDropdown(false) }}
-                >
-                  {modeNames[m]}
-                  {mode === m && (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+    return (
+      <div className="practice-ctrl-bar">
+        <button className="practice-ctrl-back" onClick={() => navigate(-1)} title="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          <span>返回</span>
+        </button>
+
+        <div className="practice-ctrl-title">
+          {errorMode ? '错词复习' : (bookId ? '词书练习' : `Day ${currentDay}`)}
+          <span className="practice-ctrl-count">{vocabulary.length}词</span>
         </div>
 
-        {/* Word list toggle */}
-        <button
-          className={`practice-ctrl-icon-btn ${showWordList ? 'active' : ''}`}
-          onClick={() => setShowWordList(v => !v)}
-          title="单词列表"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <line x1="8" y1="6" x2="21" y2="6" />
-            <line x1="8" y1="12" x2="21" y2="12" />
-            <line x1="8" y1="18" x2="21" y2="18" />
-            <line x1="3" y1="6" x2="3.01" y2="6" />
-            <line x1="3" y1="12" x2="3.01" y2="12" />
-            <line x1="3" y1="18" x2="3.01" y2="18" />
-          </svg>
-        </button>
+        {/* Chapter selector - only show in book mode with chapters */}
+        {bookId && chapters.length > 0 && (
+          <div className="practice-chapter-selector" ref={chapterDropdownRef}>
+            <button
+              className="practice-chapter-btn"
+              onClick={() => setShowChapterDropdown(v => !v)}
+              title="切换章节"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              <span>{currentChapter?.title || '选择章节'}</span>
+              <svg className="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {showChapterDropdown && (
+              <div className="practice-chapter-dropdown">
+                <div className="chapter-dropdown-scroll">
+                  {chapters.map(ch => (
+                    <button
+                      key={ch.id}
+                      className={`chapter-dropdown-item ${ch.id === parseInt(currentChapterId) ? 'active' : ''}`}
+                      onClick={() => handleSelectChapter(ch)}
+                    >
+                      <span className="chapter-name">{ch.title}</span>
+                      <span className="chapter-count">{ch.word_count}词</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Settings */}
-        <button
-          className={`practice-ctrl-icon-btn ${showPracticeSettings ? 'active' : ''}`}
-          onClick={() => setShowPracticeSettings(v => !v)}
-          title="设置"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </button>
+        <div className="practice-ctrl-right">
+          {/* Mode selector */}
+          <div className="practice-mode-selector" ref={modeDropdownRef}>
+            <button
+              className="practice-ctrl-icon-btn practice-mode-btn"
+              onClick={() => setShowModeDropdown(v => !v)}
+              title="切换模式"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M9 19V6l12-3v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+              </svg>
+              <span className="practice-mode-label">{modeNames[mode] || mode}</span>
+            </button>
+            {showModeDropdown && (
+              <div className="practice-mode-dropdown">
+                {modeList.map(m => (
+                  <button
+                    key={m}
+                    className={`practice-mode-option ${mode === m ? 'active' : ''}`}
+                    onClick={() => { onModeChange?.(m); setShowModeDropdown(false) }}
+                  >
+                    {modeNames[m]}
+                    {mode === m && (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Home */}
-        <button
-          className="practice-ctrl-icon-btn"
-          onClick={() => navigate('/')}
-          title="主页"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-        </button>
+          {/* Word list toggle */}
+          <button
+            className={`practice-ctrl-icon-btn ${showWordList ? 'active' : ''}`}
+            onClick={() => setShowWordList(v => !v)}
+            title="单词列表"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          </button>
+
+          {/* Settings */}
+          <button
+            className={`practice-ctrl-icon-btn ${showPracticeSettings ? 'active' : ''}`}
+            onClick={() => setShowPracticeSettings(v => !v)}
+            title="设置"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+
+          {/* Home */}
+          <button
+            className="practice-ctrl-icon-btn"
+            onClick={() => navigate('/')}
+            title="主页"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </button>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // ── Word List Panel ───────────────────────────────────────────────────────
   const WordListPanel = () => (

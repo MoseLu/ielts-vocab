@@ -88,3 +88,38 @@ class UserBookProgress(db.Model):
             'is_completed': self.is_completed,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+
+class UserChapterProgress(db.Model):
+    """Progress tracking for individual chapters within a book"""
+    __tablename__ = 'user_chapter_progress'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    book_id = db.Column(db.String(50), nullable=False)
+    chapter_id = db.Column(db.Integer, nullable=False)
+    words_learned = db.Column(db.Integer, default=0)
+    correct_count = db.Column(db.Integer, default=0)
+    wrong_count = db.Column(db.Integer, default=0)
+    is_completed = db.Column(db.Boolean, default=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'book_id', 'chapter_id', name='unique_user_book_chapter'),
+    )
+
+    def to_dict(self):
+        total = self.correct_count + self.wrong_count
+        accuracy = round(self.correct_count / total * 100) if total > 0 else 0
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'book_id': self.book_id,
+            'chapter_id': self.chapter_id,
+            'words_learned': self.words_learned,
+            'correct_count': self.correct_count,
+            'wrong_count': self.wrong_count,
+            'accuracy': accuracy,
+            'is_completed': self.is_completed,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

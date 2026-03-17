@@ -1,7 +1,7 @@
 import os
 import json
 from flask import Blueprint, jsonify, request
-from models import db, UserBookProgress, User
+from models import db, UserBookProgress, UserChapterProgress, User
 import jwt
 from functools import wraps
 
@@ -420,6 +420,51 @@ def save_progress(current_user):
 
     if 'current_index' in data:
         progress.current_index = data['current_index']
+    if 'correct_count' in data:
+        progress.correct_count = data['correct_count']
+    if 'wrong_count' in data:
+        progress.wrong_count = data['wrong_count']
+    if 'is_completed' in data:
+        progress.is_completed = data['is_completed']
+
+    db.session.commit()
+
+    return jsonify({'progress': progress.to_dict()}), 200
+
+
+@books_bp.route('/<book_id>/chapters/progress', methods=['GET'])
+@token_required
+def get_chapter_progress(current_user, book_id):
+    """Get user's progress for all chapters in a book"""
+    user_id = current_user.id
+    progress_records = UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
+
+    progress_dict = {}
+    for record in progress_records:
+        progress_dict[record.chapter_id] = record.to_dict()
+
+    return jsonify({'chapter_progress': progress_dict}), 200
+
+
+@books_bp.route('/<book_id>/chapters/<int:chapter_id>/progress', methods=['POST'])
+@token_required
+def save_chapter_progress(current_user, book_id, chapter_id):
+    """Save user's progress for a specific chapter"""
+    user_id = current_user.id
+    data = request.get_json()
+
+    progress = UserChapterProgress.query.filter_by(
+        user_id=user_id, book_id=book_id, chapter_id=chapter_id
+    ).first()
+
+    if not progress:
+        progress = UserChapterProgress(
+            user_id=user_id, book_id=book_id, chapter_id=chapter_id
+        )
+        db.session.add(progress)
+
+    if 'words_learned' in data:
+        progress.words_learned = data['words_learned']
     if 'correct_count' in data:
         progress.correct_count = data['correct_count']
     if 'wrong_count' in data:

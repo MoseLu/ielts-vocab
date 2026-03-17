@@ -166,6 +166,102 @@
     flex-shrink: 0;
 }
 
+/* Chapter selector */
+.practice-chapter-selector {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.practice-chapter-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.practice-chapter-btn:hover {
+    background: var(--bg-secondary);
+    border-color: #ccc;
+}
+
+.practice-chapter-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.practice-chapter-btn .dropdown-arrow {
+    width: 12px;
+    height: 12px;
+    color: var(--text-tertiary);
+}
+
+.practice-chapter-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    min-width: 160px;
+    max-height: 280px;
+    overflow: hidden;
+    animation: dropdownFadeIn 0.15s ease;
+}
+
+.chapter-dropdown-scroll {
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.chapter-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    gap: 8px;
+}
+
+.chapter-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.chapter-dropdown-item.active {
+    color: var(--accent);
+    background: var(--accent-subtle);
+}
+
+.chapter-dropdown-item .chapter-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chapter-dropdown-item .chapter-count {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
 /* ── Word List Panel ─────────────────────────────────────────────────────── */
 .wordlist-backdrop {
     position: fixed;
