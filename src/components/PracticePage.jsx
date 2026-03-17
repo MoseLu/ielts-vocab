@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
+import SettingsPanel from './SettingsPanel'
 
 function shuffleArray(arr) {
   const a = [...arr]
@@ -97,10 +98,11 @@ function generateOptions(currentWord, allWords) {
   return { options: allOpts, correctIndex: allOpts.findIndex(o => o.definition === correctDef) }
 }
 
-function PracticePage({ user, currentDay, mode, showToast }) {
+function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const bookId = searchParams.get('book')
+  const errorMode = searchParams.get('mode') === 'errors'
   const [vocabulary, setVocabulary] = useState([])
   const [queue, setQueue] = useState([])
   const [queueIndex, setQueueIndex] = useState(0)
@@ -119,6 +121,12 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   const [radioPaused, setRadioPaused] = useState(false)
   const [radioStopped, setRadioStopped] = useState(false)
   const [radioHovered, setRadioHovered] = useState(false)
+  // UI panel state
+  const [showWordList, setShowWordList] = useState(false)
+  const [showPracticeSettings, setShowPracticeSettings] = useState(false)
+  const [showModeDropdown, setShowModeDropdown] = useState(false)
+  // Track word statuses for word list
+  const [wordStatuses, setWordStatuses] = useState({})
 
   const spellingRef = useRef(null)
   const radioActiveRef = useRef(false)
@@ -126,6 +134,18 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   const radioIndexRef = useRef(0)
   const queueRef = useRef([])
   const vocabRef = useRef([])
+  const wordListRef = useRef(null)
+  const currentWordListItemRef = useRef(null)
+  const modeDropdownRef = useRef(null)
+
+  const modeNames = {
+    'smart': '智能模式',
+    'listening': '听音选义',
+    'meaning': '看词选义',
+    'dictation': '听写模式',
+    'radio': '随身听'
+  }
+  const modeList = ['smart', 'listening', 'meaning', 'dictation', 'radio']
 
   const settings = (() => {
     try { return JSON.parse(localStorage.getItem('app_settings') || '{}') } catch { return {} }
@@ -159,7 +179,43 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   })
   // ────────────────────────────────────────────────────────────────────────
 
+  // Scroll current word into view in word list panel
   useEffect(() => {
+    if (showWordList && currentWordListItemRef.current) {
+      currentWordListItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [queueIndex, showWordList])
+
+  // Close mode dropdown on outside click
+  useEffect(() => {
+    const handle = (e) => {
+      if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target)) {
+        setShowModeDropdown(false)
+      }
+    }
+    document.addEventListener('pointerdown', handle)
+    return () => document.removeEventListener('pointerdown', handle)
+  }, [])
+
+  useEffect(() => {
+    // Error mode: load wrong words from localStorage
+    if (errorMode) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('wrong_words') || '[]')
+        setVocabulary(saved)
+        vocabRef.current = saved
+        const indices = Array.from({ length: saved.length }, (_, i) => i)
+        const q = settings.shuffle !== false ? shuffleArray(indices) : indices
+        setQueue(q)
+        queueRef.current = q
+        setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
+        setWordStatuses({})
+      } catch {
+        showToast?.('加载错词失败', 'error')
+      }
+      return
+    }
+
     // Book-based vocabulary loading
     if (bookId) {
       const chapterId = searchParams.get('chapter')
@@ -213,7 +269,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
         setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
-  }, [currentDay, bookId])
+  }, [currentDay, bookId, errorMode])
 
   const currentWord = vocabulary[queue[queueIndex]]
 
@@ -369,6 +425,7 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     setCorrectCount(nc); setWrongCount(nw)
     if (!isCorrect) saveWrongWord(currentWord)
     saveProgress(nc, nw)
+    setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     setTimeout(() => goNext(isCorrect), 1200)
   }
 
@@ -381,13 +438,16 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     setCorrectCount(nc); setWrongCount(nw)
     if (!isCorrect) saveWrongWord(currentWord)
     saveProgress(nc, nw)
+    setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     setTimeout(() => goNext(isCorrect), 1500)
   }
 
   const handleSkip = () => {
     saveWrongWord(currentWord)
     const nw = wrongCount + 1
-    setWrongCount(nw); saveProgress(correctCount, nw); goNext(false)
+    setWrongCount(nw); saveProgress(correctCount, nw)
+    setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: 'wrong' }))
+    goNext(false)
   }
 
   useEffect(() => {
@@ -404,6 +464,162 @@ function PracticePage({ user, currentDay, mode, showToast }) {
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [showResult, spellingResult, options, mode, queueIndex])
+
+  // ── Practice Control Bar ─────────────────────────────────────────────────
+  const PracticeControlBar = () => (
+    <div className="practice-ctrl-bar">
+      <button className="practice-ctrl-back" onClick={() => navigate('/')} title="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        <span>返回</span>
+      </button>
+
+      <div className="practice-ctrl-title">
+        {errorMode ? '错词复习' : (bookId ? '词书练习' : `Day ${currentDay}`)}
+        <span className="practice-ctrl-count">{vocabulary.length}词</span>
+      </div>
+
+      <div className="practice-ctrl-right">
+        {/* Mode selector */}
+        <div className="practice-mode-selector" ref={modeDropdownRef}>
+          <button
+            className="practice-ctrl-icon-btn practice-mode-btn"
+            onClick={() => setShowModeDropdown(v => !v)}
+            title="切换模式"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M9 19V6l12-3v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+            <span className="practice-mode-label">{modeNames[mode] || mode}</span>
+          </button>
+          {showModeDropdown && (
+            <div className="practice-mode-dropdown">
+              {modeList.map(m => (
+                <button
+                  key={m}
+                  className={`practice-mode-option ${mode === m ? 'active' : ''}`}
+                  onClick={() => { onModeChange?.(m); setShowModeDropdown(false) }}
+                >
+                  {modeNames[m]}
+                  {mode === m && (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Word list toggle */}
+        <button
+          className={`practice-ctrl-icon-btn ${showWordList ? 'active' : ''}`}
+          onClick={() => setShowWordList(v => !v)}
+          title="单词列表"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+        </button>
+
+        {/* Settings */}
+        <button
+          className={`practice-ctrl-icon-btn ${showPracticeSettings ? 'active' : ''}`}
+          onClick={() => setShowPracticeSettings(v => !v)}
+          title="设置"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+
+        {/* Home */}
+        <button
+          className="practice-ctrl-icon-btn"
+          onClick={() => navigate('/')}
+          title="主页"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+
+  // ── Word List Panel ───────────────────────────────────────────────────────
+  const WordListPanel = () => (
+    <>
+      {/* Backdrop */}
+      {showWordList && (
+        <div className="wordlist-backdrop" onClick={() => setShowWordList(false)} />
+      )}
+      <div className={`wordlist-panel ${showWordList ? 'open' : ''}`} ref={wordListRef}>
+        <div className="wordlist-header">
+          <span className="wordlist-title">单词列表</span>
+          <span className="wordlist-total">{vocabulary.length}词</span>
+          <button className="wordlist-close" onClick={() => setShowWordList(false)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className="wordlist-body">
+          {queue.map((vocabIdx, qi) => {
+            const w = vocabulary[vocabIdx]
+            if (!w) return null
+            const isCurrent = qi === queueIndex
+            const status = wordStatuses[vocabIdx]
+            return (
+              <div
+                key={qi}
+                ref={isCurrent ? currentWordListItemRef : null}
+                className={`wordlist-item ${isCurrent ? 'current' : ''} ${status || ''}`}
+              >
+                <div className="wordlist-item-status">
+                  {isCurrent ? (
+                    <span className="wl-dot wl-dot-current" />
+                  ) : status === 'correct' ? (
+                    <svg className="wl-icon correct" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : status === 'wrong' ? (
+                    <svg className="wl-icon wrong" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  ) : (
+                    <span className="wl-dot wl-dot-pending" />
+                  )}
+                </div>
+                <div className="wordlist-item-info">
+                  <div className="wordlist-word">{w.word}</div>
+                  <div className="wordlist-phonetic">{w.phonetic}</div>
+                  <div className="wordlist-def">
+                    <span className="word-pos-tag">{w.pos}</span>
+                    {w.definition}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </>
+  )
+  // ────────────────────────────────────────────────────────────────────────
 
   if (!vocabulary.length) {
     return <div className="practice-loading"><div className="loading-spinner"></div><p>加载词汇中...</p></div>
@@ -458,6 +674,11 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
     return (
       <div className="practice-page radio-mode">
+        <PracticeControlBar />
+        <WordListPanel />
+        {showPracticeSettings && (
+          <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
+        )}
         {/* Word info — hidden by default, revealed on hover */}
         <div
           className="radio-card"
@@ -550,6 +771,11 @@ function PracticePage({ user, currentDay, mode, showToast }) {
   if (mode === 'dictation') {
     return (
       <div className="practice-page">
+        <PracticeControlBar />
+        <WordListPanel />
+        {showPracticeSettings && (
+          <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
+        )}
         <PrevWordBlock />
         <div className="dictation-container">
           <div className="dictation-play-area">
@@ -628,6 +854,11 @@ function PracticePage({ user, currentDay, mode, showToast }) {
 
   return (
     <div className="practice-page">
+      <PracticeControlBar />
+      <WordListPanel />
+      {showPracticeSettings && (
+        <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
+      )}
       <PrevWordBlock />
 
       <div className="practice-main">

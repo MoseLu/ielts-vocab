@@ -7,6 +7,8 @@ import HomePage from './components/HomePage'
 import PracticePage from './components/PracticePage'
 import VocabBookPage from './components/VocabBookPage'
 import ErrorsPage from './components/ErrorsPage'
+import StatsPage from './components/StatsPage'
+import ProfilePage from './components/ProfilePage'
 import Toast from './components/Toast'
 
 function App() {
@@ -119,6 +121,7 @@ function App() {
                     user={user}
                     currentDay={currentDay}
                     mode={mode}
+                    onModeChange={(m) => { setMode(m); localStorage.setItem('current_mode', m) }}
                     onComplete={() => window.location.href = '/'}
                     onBack={() => window.location.href = '/'}
                     showToast={showToast}
@@ -135,6 +138,28 @@ function App() {
               element={
                 user ? (
                   <ErrorsPage />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+
+            <Route
+              path="/stats"
+              element={
+                user ? (
+                  <StatsPage user={user} />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+
+            <Route
+              path="/profile"
+              element={
+                user ? (
+                  <ProfilePage user={user} onLogout={handleLogout} showToast={showToast} />
                 ) : (
                   <Navigate to="/login" replace />
                 )
