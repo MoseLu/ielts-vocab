@@ -169,7 +169,7 @@ def register_socketio_events(socketio):
                         # Use eventlet.spawn to emit in the correct context
                         socketio.emit('final_result', {
                             'text': text
-                        }, to=session_id, namespace='/speech')
+                        }, namespace='/speech', to=session_id)
 
                 elif event_type == 'input_audio_buffer.speech_started':
                     print(f"[{session_id}] VAD: Speech started")
