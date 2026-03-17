@@ -38,16 +38,30 @@ def token_required(f):
 
 # Vocabulary books configuration
 VOCAB_BOOKS = [
+    # Premium vocabulary (已购词汇)
     {
-        'id': 'awl_academic',
-        'title': 'AWL学术词汇表',
-        'description': 'Academic Word List 570核心学术词汇，雅思学术类必备',
-        'icon': 'graduation-cap',
-        'color': '#8B5CF6',
-        'category': 'academic',
-        'level': 'advanced',
-        'word_count': 570,
-        'file': 'ielts_vocabulary_awl_extended.json'
+        'id': 'ielts_reading_premium',
+        'title': '雅思阅读高频词汇',
+        'description': '雅思阅读训练核心词汇，提升阅读理解能力',
+        'icon': 'book-open',
+        'color': '#7C3AED',
+        'category': 'reading',
+        'level': 'intermediate',
+        'word_count': 3401,
+        'file': 'ielts_reading_premium.json',
+        'is_paid': True
+    },
+    {
+        'id': 'ielts_listening_premium',
+        'title': '雅思听力高频词汇',
+        'description': '雅思听力考试核心高频词汇，精选自听力真题',
+        'icon': 'headphones',
+        'color': '#2563EB',
+        'category': 'listening',
+        'level': 'intermediate',
+        'word_count': 3910,
+        'file': 'ielts_listening_premium.json',
+        'is_paid': True
     },
     {
         'id': 'ielts_comprehensive',
@@ -71,30 +85,16 @@ VOCAB_BOOKS = [
         'word_count': 2814,
         'file': 'ielts_vocabulary_ultimate.csv'
     },
-    # Premium vocabulary (已购词汇)
     {
-        'id': 'ielts_listening_premium',
-        'title': '雅思听力高频词汇',
-        'description': '雅思听力考试核心高频词汇，精选自听力真题',
-        'icon': 'headphones',
-        'color': '#2563EB',
-        'category': 'listening',
-        'level': 'intermediate',
-        'word_count': 3910,
-        'file': 'ielts_listening_premium.json',
-        'is_paid': True
-    },
-    {
-        'id': 'ielts_reading_premium',
-        'title': '雅思阅读高频词汇',
-        'description': '雅思阅读训练核心词汇，提升阅读理解能力',
-        'icon': 'book-open',
-        'color': '#7C3AED',
-        'category': 'reading',
-        'level': 'intermediate',
-        'word_count': 3401,
-        'file': 'ielts_reading_premium.json',
-        'is_paid': True
+        'id': 'awl_academic',
+        'title': 'AWL学术词汇表',
+        'description': 'Academic Word List 570核心学术词汇，雅思学术类必备',
+        'icon': 'graduation-cap',
+        'color': '#8B5CF6',
+        'category': 'academic',
+        'level': 'advanced',
+        'word_count': 570,
+        'file': 'ielts_vocabulary_awl_extended.json'
     }
 ]
 
