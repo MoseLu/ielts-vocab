@@ -178,7 +178,20 @@ def load_book_vocabulary(book_id):
         if book['file'].endswith('.json'):
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                if isinstance(data, list):
+                # Handle chapter-based structure (premium books)
+                if isinstance(data, dict) and 'chapters' in data:
+                    raw_words = []
+                    for chapter in data['chapters']:
+                        for w in chapter.get('words', []):
+                            raw_words.append({
+                                'word': w.get('word', ''),
+                                'phonetic': w.get('phonetic', ''),
+                                'pos': w.get('pos', 'n.'),
+                                'definition': w.get('definition', ''),
+                                'chapter_id': chapter.get('id'),
+                                'chapter_title': chapter.get('title')
+                            })
+                elif isinstance(data, list):
                     raw_words = data
                 elif isinstance(data, dict) and 'vocabulary' in data:
                     raw_words = data['vocabulary']
@@ -187,12 +200,18 @@ def load_book_vocabulary(book_id):
             # Normalize field names
             words = []
             for w in raw_words:
-                words.append({
+                word_entry = {
                     'word': w.get('word', ''),
                     'phonetic': w.get('phonetic', ''),
                     'pos': w.get('pos', 'n.'),
                     'definition': w.get('definition', '') or w.get('translation', ''),
-                })
+                }
+                # Preserve chapter info if present
+                if 'chapter_id' in w:
+                    word_entry['chapter_id'] = w['chapter_id']
+                if 'chapter_title' in w:
+                    word_entry['chapter_title'] = w['chapter_title']
+                words.append(word_entry)
         elif book['file'].endswith('.csv'):
             import csv
             words = []
@@ -245,6 +264,92 @@ def get_book(book_id):
         return jsonify({'error': 'Book not found'}), 404
 
     return jsonify({'book': book}), 200
+
+
+def load_book_chapters(book_id):
+    """Load chapters structure for a book"""
+    book = next((b for b in VOCAB_BOOKS if b['id'] == book_id), None)
+    if not book:
+        return None
+
+    vocab_path = get_vocab_data_path()
+    file_path = os.path.join(vocab_path, book['file'])
+
+    try:
+        if book['file'].endswith('.json'):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, dict) and 'chapters' in data:
+                    # Return chapter list without full word data
+                    chapters = []
+                    for ch in data['chapters']:
+                        chapters.append({
+                            'id': ch.get('id'),
+                            'title': ch.get('title'),
+                            'word_count': ch.get('word_count')
+                        })
+                    return {
+                        'total_chapters': data.get('total_chapters', len(chapters)),
+                        'total_words': data.get('total_words', 0),
+                        'chapters': chapters
+                    }
+        return None
+    except Exception as e:
+        print(f"Error loading chapters: {e}")
+        return None
+
+
+@books_bp.route('/<book_id>/chapters', methods=['GET'])
+def get_book_chapters(book_id):
+    """Get chapters structure for a book"""
+    chapters_data = load_book_chapters(book_id)
+    if chapters_data is None:
+        return jsonify({'error': 'No chapters found for this book'}), 404
+
+    return jsonify(chapters_data), 200
+
+
+@books_bp.route('/<book_id>/chapters/<int:chapter_id>', methods=['GET'])
+def get_chapter_words(book_id, chapter_id):
+    """Get words from a specific chapter"""
+    book = next((b for b in VOCAB_BOOKS if b['id'] == book_id), None)
+    if not book:
+        return jsonify({'error': 'Book not found'}), 404
+
+    vocab_path = get_vocab_data_path()
+    file_path = os.path.join(vocab_path, book['file'])
+
+    try:
+        if book['file'].endswith('.json'):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, dict) and 'chapters' in data:
+                    chapter = next((ch for ch in data['chapters'] if ch.get('id') == chapter_id), None)
+                    if not chapter:
+                        return jsonify({'error': 'Chapter not found'}), 404
+
+                    words = []
+                    for w in chapter.get('words', []):
+                        words.append({
+                            'word': w.get('word', ''),
+                            'phonetic': w.get('phonetic', ''),
+                            'pos': w.get('pos', 'n.'),
+                            'definition': w.get('definition', ''),
+                        })
+
+                    return jsonify({
+                        'chapter': {
+                            'id': chapter.get('id'),
+                            'title': chapter.get('title'),
+                            'word_count': chapter.get('word_count')
+                        },
+                        'words': words
+                    }), 200
+
+        return jsonify({'error': 'No chapters in this book'}), 404
+    except Exception as e:
+        print(f"Error loading chapter: {e}")
+        return jsonify({'error': 'Failed to load chapter'}), 500
 
 
 @books_bp.route('/<book_id>/words', methods=['GET'])
