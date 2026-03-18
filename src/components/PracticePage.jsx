@@ -13,7 +13,6 @@ function shuffleArray(arr) {
 }
 
 // ── Syllabification helpers ─────────────────────────────────────────────────
-// IPA vowel characters (excluding stress/length markers)
 const IPA_VOWELS = 'aeiouəɪʊʌæɒɔɑɛɜɐøœɨɯɵ'
 
 function countPhoneticSyllables(phonetic) {
@@ -24,7 +23,6 @@ function countPhoneticSyllables(phonetic) {
     if (IPA_VOWELS.includes(ipa[i])) {
       count++
       i++
-      // skip remainder of diphthong/triphthong
       while (i < ipa.length && IPA_VOWELS.includes(ipa[i])) i++
     } else i++
   }
@@ -48,7 +46,6 @@ function syllabifyWord(word, phonetic) {
     return false
   }
 
-  // Collect vowel groups
   const vg = []
   for (let i = 0; i < lower.length; ) {
     if (isVowel(lower[i], i)) {
@@ -61,7 +58,6 @@ function syllabifyWord(word, phonetic) {
 
   if (vg.length <= 1) return [word]
 
-  // Find potential split points between adjacent vowel groups
   const potentialSplits = []
   for (let g = 0; g < vg.length - 1; g++) {
     const v1End = vg[g].end
@@ -69,8 +65,8 @@ function syllabifyWord(word, phonetic) {
     const gap = v2Start - v1End
     const cons = lower.slice(v1End, v2Start)
     let sp
-    if (gap <= 1) sp = v1End                                          // V·CV
-    else if (gap === 2) sp = VALID_ONSET2.has(cons) ? v1End : v1End + 1  // VC·CV unless valid onset
+    if (gap <= 1) sp = v1End
+    else if (gap === 2) sp = VALID_ONSET2.has(cons) ? v1End : v1End + 1
     else sp = (VALID_ONSET3.has(cons) || VALID_ONSET2.has(cons.slice(1))) ? v1End + 1 : v1End + 1
     potentialSplits.push(sp)
   }
@@ -98,10 +94,11 @@ function generateOptions(currentWord, allWords) {
   return { options: allOpts, correctIndex: allOpts.findIndex(o => o.definition === correctDef) }
 }
 
-function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
+function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayChange }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const bookId = searchParams.get('book')
+  const chapterId = searchParams.get('chapter')
   const errorMode = searchParams.get('mode') === 'errors'
   const [vocabulary, setVocabulary] = useState([])
   const [queue, setQueue] = useState([])
@@ -125,12 +122,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
   const [showWordList, setShowWordList] = useState(false)
   const [showPracticeSettings, setShowPracticeSettings] = useState(false)
   const [showModeDropdown, setShowModeDropdown] = useState(false)
+  const [showCtxDropdown, setShowCtxDropdown] = useState(false)
+  // Book chapters for context switcher
+  const [bookChapters, setBookChapters] = useState([])
+  const [currentChapterTitle, setCurrentChapterTitle] = useState('')
   // Track word statuses for word list
   const [wordStatuses, setWordStatuses] = useState({})
-  // Chapters for book mode
-  const [chapters, setChapters] = useState([])
-  const [showChapterDropdown, setShowChapterDropdown] = useState(false)
-  const chapterDropdownRef = useRef(null)
 
   const spellingRef = useRef(null)
   const radioActiveRef = useRef(false)
@@ -141,6 +138,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
   const wordListRef = useRef(null)
   const currentWordListItemRef = useRef(null)
   const modeDropdownRef = useRef(null)
+  const ctxDropdownRef = useRef(null)
 
   const modeNames = {
     'smart': '智能模式',
@@ -159,7 +157,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
   const {
     isConnected: speechConnected,
     isRecording: speechRecording,
-    isReady: speechReady,
     startRecording: startSpeechRecording,
     stopRecording: stopSpeechRecording,
   } = useSpeechRecognition({
@@ -167,8 +164,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
     enableVad: true,
     autoStop: true,
     onResult: (text) => {
-      console.log('[Practice] Speech result:', text)
-      // Remove trailing punctuation
       const cleanText = text.replace(/[.,!?;:'" ]+$/, '')
       setSpellingInput(cleanText.toLowerCase())
       showToast?.('识别成功！', 'success')
@@ -190,40 +185,42 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
     }
   }, [queueIndex, showWordList])
 
-  // Close mode dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handle = (e) => {
       if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target)) {
         setShowModeDropdown(false)
       }
-    }
-    document.addEventListener('pointerdown', handle)
-    return () => document.removeEventListener('pointerdown', handle)
-  }, [])
-
-  // Close chapter dropdown on outside click
-  useEffect(() => {
-    const handle = (e) => {
-      if (chapterDropdownRef.current && !chapterDropdownRef.current.contains(e.target)) {
-        setShowChapterDropdown(false)
+      if (ctxDropdownRef.current && !ctxDropdownRef.current.contains(e.target)) {
+        setShowCtxDropdown(false)
       }
     }
     document.addEventListener('pointerdown', handle)
     return () => document.removeEventListener('pointerdown', handle)
   }, [])
 
-  // Fetch chapters when in book mode
+  // Fetch book chapters for the context switcher
   useEffect(() => {
-    if (bookId && !errorMode) {
-      fetch(`/api/books/${bookId}/chapters`)
-        .then(res => res.json())
-        .then(data => setChapters(data.chapters || []))
-        .catch(() => {})
-    }
-  }, [bookId, errorMode])
+    if (!bookId) return
+    fetch(`/api/books/${bookId}/chapters`)
+      .then(r => r.json())
+      .then(d => {
+        const chs = d.chapters || []
+        setBookChapters(chs)
+        const current = chs.find(c => String(c.id) === String(chapterId)) || chs[0]
+        if (current) setCurrentChapterTitle(current.title)
+      })
+      .catch(() => {})
+  }, [bookId])
+
+  // Update chapter title when chapterId changes
+  useEffect(() => {
+    if (!bookId || !bookChapters.length) return
+    const current = bookChapters.find(c => String(c.id) === String(chapterId)) || bookChapters[0]
+    if (current) setCurrentChapterTitle(current.title)
+  }, [chapterId, bookChapters])
 
   useEffect(() => {
-    // Error mode: load wrong words from localStorage
     if (errorMode) {
       try {
         const saved = JSON.parse(localStorage.getItem('wrong_words') || '[]')
@@ -241,11 +238,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
       return
     }
 
-    // Book-based vocabulary loading
     if (bookId) {
-      const chapterId = searchParams.get('chapter')
-
-      // If chapter specified, fetch chapter words
       if (chapterId) {
         fetch(`/api/books/${bookId}/chapters/${chapterId}`)
           .then(res => res.json())
@@ -258,6 +251,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
             setQueue(q)
             queueRef.current = q
             setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
+            setWordStatuses({})
           })
           .catch(() => showToast?.('加载章节词汇失败', 'error'))
         return
@@ -274,12 +268,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
           setQueue(q)
           queueRef.current = q
           setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
+          setWordStatuses({})
         })
         .catch(() => showToast?.('加载词书失败', 'error'))
       return
     }
 
-    // Day-based vocabulary loading (original)
     if (!currentDay) { navigate('/'); return }
     fetch(`/api/vocabulary/day/${currentDay}`)
       .then(res => res.json())
@@ -292,9 +286,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
         setQueue(q)
         queueRef.current = q
         setQueueIndex(0); setCorrectCount(0); setWrongCount(0); setPreviousWord(null); setLastState(null)
+        setWordStatuses({})
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
-  }, [currentDay, bookId, errorMode])
+  }, [currentDay, bookId, errorMode, chapterId])
 
   const currentWord = vocabulary[queue[queueIndex]]
 
@@ -402,7 +397,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
       showToast?.('语音服务未连接，请稍后重试', 'error')
       return
     }
-    
     showToast?.('请说出单词...', 'info')
     await startSpeechRecording()
   }
@@ -417,49 +411,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
     dayProgress[currentDay] = { correctCount: correct, wrongCount: wrong, completed: correct + wrong >= vocabulary.length, updatedAt: new Date().toISOString() }
     localStorage.setItem('day_progress', JSON.stringify(dayProgress))
     const token = localStorage.getItem('auth_token')
-
-    // Save book/chapter progress if logged in
-    if (token && bookId) {
-      const chapterId = searchParams.get('chapter')
-      const isCompleted = correct + wrong >= vocabulary.length
-
-      // Save book-level progress
-      const bookData = {
-        book_id: bookId,
-        current_index: queueIndex,
-        correct_count: correct,
-        wrong_count: wrong,
-        is_completed: isCompleted
-      }
-      fetch(`/api/books/progress`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(bookData)
-      }).catch(() => {})
-
-      // Save chapter-level progress if in chapter mode
-      if (chapterId) {
-        const chapterData = {
-          words_learned: correct + wrong,
-          correct_count: correct,
-          wrong_count: wrong,
-          is_completed: isCompleted
-        }
-        fetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(chapterData)
-        }).catch(() => {})
-      }
-    } else if (token) {
-      // Original day-based progress
-      fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ day: currentDay, current_index: queueIndex, correct_count: correct, wrong_count: wrong })
-      }).catch(() => {})
-    }
-  }, [currentDay, vocabulary.length, queueIndex, bookId, searchParams])
+    if (token) fetch('/api/progress', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ day: currentDay, current_index: queueIndex, correct_count: correct, wrong_count: wrong }) }).catch(() => {})
+  }, [currentDay, vocabulary.length, queueIndex])
 
   const saveWrongWord = (word) => {
     const existing = JSON.parse(localStorage.getItem('wrong_words') || '[]')
@@ -532,146 +485,144 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
   }, [showResult, spellingResult, options, mode, queueIndex])
 
   // ── Practice Control Bar ─────────────────────────────────────────────────
-  const PracticeControlBar = () => {
-    const currentChapterId = searchParams.get('chapter')
-    const currentChapter = chapters.find(c => c.id === parseInt(currentChapterId))
-
-    const handleSelectChapter = (chapter) => {
-      setShowChapterDropdown(false)
-      navigate(`/practice?book=${bookId}&chapter=${chapter.id}`)
-    }
-
-    return (
-      <div className="practice-ctrl-bar">
-        <button className="practice-ctrl-back" onClick={() => navigate(-1)} title="返回">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          <span>返回</span>
-        </button>
-
-        <div className="practice-ctrl-title">
-          {errorMode ? '错词复习' : (bookId ? '词书练习' : `Day ${currentDay}`)}
+  const PracticeControlBar = () => (
+    <div className="practice-ctrl-bar">
+      {/* Context selector (chapter/day/error label) */}
+      {errorMode ? (
+        <div className="practice-ctx-label">
+          错词复习
           <span className="practice-ctrl-count">{vocabulary.length}词</span>
         </div>
+      ) : (
+        <div className="practice-ctx-selector" ref={ctxDropdownRef}>
+          <button
+            className="practice-ctx-btn"
+            onClick={() => setShowCtxDropdown(v => !v)}
+          >
+            <span className="practice-ctx-text">
+              {bookId
+                ? (currentChapterTitle || '选择章节')
+                : `Day ${currentDay}`}
+            </span>
+            <span className="practice-ctrl-count">{vocabulary.length}词</span>
+            <svg className={`practice-ctx-arrow ${showCtxDropdown ? 'open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
 
-        {/* Chapter selector - only show in book mode with chapters */}
-        {bookId && chapters.length > 0 && (
-          <div className="practice-chapter-selector" ref={chapterDropdownRef}>
-            <button
-              className="practice-chapter-btn"
-              onClick={() => setShowChapterDropdown(v => !v)}
-              title="切换章节"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
-              <span>{currentChapter?.title || '选择章节'}</span>
-              <svg className="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-            {showChapterDropdown && (
-              <div className="practice-chapter-dropdown">
-                <div className="chapter-dropdown-scroll">
-                  {chapters.map(ch => (
+          {showCtxDropdown && (
+            <div className="practice-ctx-dropdown">
+              <div className="practice-ctx-dropdown-scroll">
+                {bookId ? (
+                  bookChapters.length > 0 ? bookChapters.map(ch => (
                     <button
                       key={ch.id}
-                      className={`chapter-dropdown-item ${ch.id === parseInt(currentChapterId) ? 'active' : ''}`}
-                      onClick={() => handleSelectChapter(ch)}
+                      className={`practice-ctx-option ${String(chapterId) === String(ch.id) ? 'active' : ''}`}
+                      onClick={() => {
+                        navigate(`/practice?book=${bookId}&chapter=${ch.id}`)
+                        setShowCtxDropdown(false)
+                      }}
                     >
-                      <span className="chapter-name">{ch.title}</span>
-                      <span className="chapter-count">{ch.word_count}词</span>
+                      <span className={`ctx-radio ${String(chapterId) === String(ch.id) ? 'checked' : ''}`} />
+                      <span className="ctx-opt-label">{ch.title}</span>
+                      <span className="ctx-opt-count">{ch.word_count}词</span>
                     </button>
-                  ))}
-                </div>
+                  )) : (
+                    <div className="ctx-loading">加载章节...</div>
+                  )
+                ) : (
+                  Array.from({ length: 30 }, (_, i) => (
+                    <button
+                      key={i + 1}
+                      className={`practice-ctx-option ${currentDay === i + 1 ? 'active' : ''}`}
+                      onClick={() => {
+                        onDayChange?.(i + 1)
+                        setShowCtxDropdown(false)
+                      }}
+                    >
+                      <span className={`ctx-radio ${currentDay === i + 1 ? 'checked' : ''}`} />
+                      <span className="ctx-opt-label">Day {i + 1}</span>
+                    </button>
+                  ))
+                )}
               </div>
-            )}
-          </div>
-        )}
-
-        <div className="practice-ctrl-right">
-          {/* Mode selector */}
-          <div className="practice-mode-selector" ref={modeDropdownRef}>
-            <button
-              className="practice-ctrl-icon-btn practice-mode-btn"
-              onClick={() => setShowModeDropdown(v => !v)}
-              title="切换模式"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M9 19V6l12-3v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-              </svg>
-              <span className="practice-mode-label">{modeNames[mode] || mode}</span>
-            </button>
-            {showModeDropdown && (
-              <div className="practice-mode-dropdown">
-                {modeList.map(m => (
-                  <button
-                    key={m}
-                    className={`practice-mode-option ${mode === m ? 'active' : ''}`}
-                    onClick={() => { onModeChange?.(m); setShowModeDropdown(false) }}
-                  >
-                    {modeNames[m]}
-                    {mode === m && (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Word list toggle */}
-          <button
-            className={`practice-ctrl-icon-btn ${showWordList ? 'active' : ''}`}
-            onClick={() => setShowWordList(v => !v)}
-            title="单词列表"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-          </button>
-
-          {/* Settings */}
-          <button
-            className={`practice-ctrl-icon-btn ${showPracticeSettings ? 'active' : ''}`}
-            onClick={() => setShowPracticeSettings(v => !v)}
-            title="设置"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </button>
-
-          {/* Home */}
-          <button
-            className="practice-ctrl-icon-btn"
-            onClick={() => navigate('/')}
-            title="主页"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-          </button>
+            </div>
+          )}
         </div>
-      </div>
-    )
-  }
+      )}
 
-  // ── Word List Panel ───────────────────────────────────────────────────────
+      <div className="practice-ctrl-right">
+        {/* Mode selector */}
+        <div className="practice-mode-selector" ref={modeDropdownRef}>
+          <button
+            className="practice-ctrl-icon-btn practice-mode-btn"
+            onClick={() => setShowModeDropdown(v => !v)}
+            title="切换模式"
+          >
+            <span className="practice-mode-label">{modeNames[mode] || mode}</span>
+            <svg className={`practice-ctx-arrow ${showModeDropdown ? 'open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {showModeDropdown && (
+            <div className="practice-mode-dropdown">
+              {modeList.map(m => (
+                <button
+                  key={m}
+                  className={`practice-mode-option ${mode === m ? 'active' : ''}`}
+                  onClick={() => { onModeChange?.(m); setShowModeDropdown(false) }}
+                >
+                  <span className={`ctx-radio ${mode === m ? 'checked' : ''}`} />
+                  {modeNames[m]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Word list toggle - cascading popup */}
+        <button
+          className={`practice-ctrl-icon-btn ${showWordList ? 'active' : ''}`}
+          onClick={() => setShowWordList(v => !v)}
+          title="单词列表"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="3" y="4" width="18" height="4" rx="1" />
+            <rect x="3" y="10" width="18" height="4" rx="1" />
+            <rect x="3" y="16" width="12" height="4" rx="1" />
+          </svg>
+        </button>
+
+        {/* Settings */}
+        <button
+          className={`practice-ctrl-icon-btn ${showPracticeSettings ? 'active' : ''}`}
+          onClick={() => setShowPracticeSettings(v => !v)}
+          title="设置"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+
+        {/* Home */}
+        <button
+          className="practice-ctrl-icon-btn"
+          onClick={() => navigate('/')}
+          title="主页"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+
+  // ── Word List Panel (cascading popup) ─────────────────────────────────────
   const WordListPanel = () => (
     <>
-      {/* Backdrop */}
       {showWordList && (
         <div className="wordlist-backdrop" onClick={() => setShowWordList(false)} />
       )}
@@ -739,7 +690,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
     return (
       <div className="practice-complete">
         <div className="complete-emoji">🎉</div>
-        <h2>Day {currentDay} 完成！</h2>
+        <h2>{errorMode ? '错词复习完成！' : bookId ? '本章完成！' : `Day ${currentDay} 完成！`}</h2>
         <div className="complete-stats-row">
           <span className="stat-correct">✓ 正确 {correctCount}</span>
           <span className="stat-wrong">✗ 错误 {wrongCount}</span>
@@ -764,7 +715,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
     </div>
   ) : null
 
-  // Progress bar only — no correct/wrong counts shown
   const BottomBar = ({ progressValue, total }) => (
     <div className="practice-bottom-bar">
       <div className="bottom-progress-track">
@@ -789,13 +739,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
         {showPracticeSettings && (
           <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
         )}
-        {/* Word info — hidden by default, revealed on hover */}
         <div
           className="radio-card"
           onMouseEnter={() => setRadioHovered(true)}
           onMouseLeave={() => setRadioHovered(false)}
         >
-          {/* Row 1: word (dots style) or blank line */}
           <div className={`radio-row radio-row-word ${radioHovered ? 'revealed' : ''}`}>
             {radioHovered ? (
               <div className="radio-word-syllables">
@@ -813,12 +761,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
             )}
           </div>
 
-          {/* Row 2: phonetic or stars */}
           <div className={`radio-row radio-row-phonetic ${radioHovered ? 'revealed' : ''}`}>
             {radioHovered ? radioWord?.phonetic : '★ ★ ★'}
           </div>
 
-          {/* Row 3: pos + definition or stars */}
           <div className={`radio-row radio-row-def ${radioHovered ? 'revealed' : ''}`}>
             {radioHovered
               ? <><span className="word-pos-tag">{radioWord?.pos}</span>{radioWord?.definition}</>
@@ -827,7 +773,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
           </div>
         </div>
 
-        {/* Controls: prev | play/pause | next | stop */}
         <div className="radio-controls">
           <button className="radio-ctrl-btn" onClick={radioSkipPrev} title="上一个">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -856,7 +801,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
             </svg>
           </button>
 
-          {/* Star bookmark (decorative / future favorites feature) */}
           <button className="radio-ctrl-btn radio-star-btn" title="收藏">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
@@ -911,7 +855,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
               onKeyDown={e => { if (e.key === 'Enter') handleSpellingSubmit() }}
               placeholder="输入你听到的单词..." disabled={!!spellingResult}
               autoComplete="off" spellCheck={false} />
-            {/* Mic button */}
             {!spellingResult && (
               <button
                 className={`mic-btn ${speechRecording ? 'recording' : ''} ${!speechConnected ? 'disconnected' : ''}`}
@@ -957,7 +900,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
   }
 
   // ── LISTENING / MEANING / SMART MODE ─────────────────────────────────────
-  // Build syllabified word for meaning mode display
   const wordDisplay = showWord
     ? syllabifyWord(currentWord.word, currentWord.phonetic).join(' ')
     : currentWord.word
@@ -999,7 +941,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
           )}
         </div>
 
-        {/* Options grid */}
         <div className="options-grid">
           {options.map((option, idx) => {
             let cls = 'option-btn'
@@ -1019,7 +960,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange }) {
           })}
         </div>
 
-        {/* Skip row + replay button */}
         <div className="options-footer">
           <button className="skip-btn" onClick={handleSkip}>
             不知道 <span className="shortcut-hint">快捷键: 5</span>

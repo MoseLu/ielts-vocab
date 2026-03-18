@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import LeftSidebar from './components/LeftSidebar'
 import AuthPage from './components/AuthPage'
@@ -11,82 +11,35 @@ import StatsPage from './components/StatsPage'
 import ProfilePage from './components/ProfilePage'
 import Toast from './components/Toast'
 
-function App() {
-  const [user, setUser] = useState(null)
-  const [currentDay, setCurrentDay] = useState(() => {
-    const saved = localStorage.getItem('current_day')
-    return saved ? parseInt(saved, 10) : null
-  })
-  const [mode, setMode] = useState(() => localStorage.getItem('current_mode') || 'listening')
-  const [toast, setToast] = useState(null)
-
-  useEffect(() => {
-    // Check for saved session
-    const savedToken = localStorage.getItem('auth_token')
-    const savedUser = localStorage.getItem('auth_user')
-    if (savedToken && savedUser) {
-      setUser(JSON.parse(savedUser))
-    }
-
-    // Apply saved settings on startup
-    const savedSettings = localStorage.getItem('app_settings')
-    if (savedSettings) {
-      const s = JSON.parse(savedSettings)
-      document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light')
-      document.documentElement.setAttribute('data-font-size', s.fontSize || 'medium')
-    }
-  }, [])
-
-  const handleDayChange = (day) => {
-    setCurrentDay(day)
-    localStorage.setItem('current_day', day.toString())
-  }
-
-  const showToast = (message, type = 'info') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-    setUser(null)
-  }
-
-  const handleUserUpdate = (updatedUser) => {
-    setUser(updatedUser)
-    localStorage.setItem('auth_user', JSON.stringify(updatedUser))
-  }
+function AppInner({ user, currentDay, mode, toast, onLogin, onLogout, onDayChange, onModeChange, onUserUpdate, showToast }) {
+  const location = useLocation()
+  const isPractice = location.pathname === '/practice'
 
   return (
-    <Router>
-      <div className="app">
+    <div className="app">
+      {!isPractice && (
         <Header
           user={user}
           currentDay={currentDay}
           mode={mode}
-          onLogout={handleLogout}
-          onModeChange={(m) => { setMode(m); localStorage.setItem('current_mode', m) }}
-          onDayChange={handleDayChange}
-          onUserUpdate={handleUserUpdate}
+          onLogout={onLogout}
+          onModeChange={onModeChange}
+          onDayChange={onDayChange}
+          onUserUpdate={onUserUpdate}
         />
+      )}
 
-        <div className="app-body">
-          {user && <LeftSidebar />}
-          <main className="main">
-            <Routes>
+      <div className={isPractice ? 'practice-fullscreen' : 'app-body'}>
+        {user && !isPractice && <LeftSidebar />}
+        <main className={isPractice ? 'practice-fullscreen-main' : 'main'}>
+          <Routes>
             <Route
               path="/login"
               element={
                 user ? (
                   <Navigate to="/" replace />
                 ) : (
-                  <AuthPage
-                    onLogin={(userData) => {
-                      setUser(userData)
-                    }}
-                    showToast={showToast}
-                  />
+                  <AuthPage onLogin={onLogin} showToast={showToast} />
                 )
               }
             />
@@ -121,11 +74,9 @@ function App() {
                     user={user}
                     currentDay={currentDay}
                     mode={mode}
-                    onModeChange={(m) => { setMode(m); localStorage.setItem('current_mode', m) }}
-                    onComplete={() => window.location.href = '/'}
-                    onBack={() => window.location.href = '/'}
+                    onModeChange={onModeChange}
+                    onDayChange={onDayChange}
                     showToast={showToast}
-                    onDayChange={handleDayChange}
                   />
                 ) : (
                   <Navigate to="/login" replace />
@@ -159,7 +110,7 @@ function App() {
               path="/profile"
               element={
                 user ? (
-                  <ProfilePage user={user} onLogout={handleLogout} showToast={showToast} />
+                  <ProfilePage user={user} onLogout={onLogout} showToast={showToast} />
                 ) : (
                   <Navigate to="/login" replace />
                 )
@@ -169,10 +120,74 @@ function App() {
             <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
           </Routes>
         </main>
-        </div>
-
-        {toast && <Toast message={toast.message} type={toast.type} />}
       </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} />}
+    </div>
+  )
+}
+
+function App() {
+  const [user, setUser] = useState(null)
+  const [currentDay, setCurrentDay] = useState(() => {
+    const saved = localStorage.getItem('current_day')
+    return saved ? parseInt(saved, 10) : null
+  })
+  const [mode, setMode] = useState(() => localStorage.getItem('current_mode') || 'listening')
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem('auth_token')
+    const savedUser = localStorage.getItem('auth_user')
+    if (savedToken && savedUser) {
+      setUser(JSON.parse(savedUser))
+    }
+
+    const savedSettings = localStorage.getItem('app_settings')
+    if (savedSettings) {
+      const s = JSON.parse(savedSettings)
+      document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light')
+      document.documentElement.setAttribute('data-font-size', s.fontSize || 'medium')
+    }
+  }, [])
+
+  const handleLogin = (userData) => setUser(userData)
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
+    setUser(null)
+  }
+  const handleDayChange = (day) => {
+    setCurrentDay(day)
+    localStorage.setItem('current_day', day.toString())
+  }
+  const handleModeChange = (m) => {
+    setMode(m)
+    localStorage.setItem('current_mode', m)
+  }
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser)
+    localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+  }
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  return (
+    <Router>
+      <AppInner
+        user={user}
+        currentDay={currentDay}
+        mode={mode}
+        toast={toast}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+        onDayChange={handleDayChange}
+        onModeChange={handleModeChange}
+        onUserUpdate={handleUserUpdate}
+        showToast={showToast}
+      />
     </Router>
   )
 }

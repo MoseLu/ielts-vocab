@@ -78,3 +78,14 @@
     flex: 1;
     min-height: calc(100vh - var(--header-height));
 }
+
+/* Practice page: full-screen, no header/sidebar offset */
+.practice-fullscreen {
+    display: flex;
+    min-height: 100vh;
+}
+
+.practice-fullscreen-main {
+    flex: 1;
+    min-height: 100vh;
+}
