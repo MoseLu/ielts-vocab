@@ -157,12 +157,18 @@
     margin-top: 4px;
 }
 
-.chapter-card-status.done {
+.chapter-status-done {
     color: var(--success);
+    font-weight: 500;
 }
 
-.chapter-card-status.inprogress {
-    color: var(--text-secondary);
+.chapter-status-progress {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.chapter-status-todo {
+    color: var(--text-tertiary);
 }
 
 .chapter-card-recent {

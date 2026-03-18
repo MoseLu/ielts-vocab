@@ -8,16 +8,9 @@
 
 .study-center-grid {
     display: grid;
-    grid-template-columns: 260px 180px 1fr 1fr 120px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 16px;
     max-width: 1100px;
-    align-items: start;
-}
-
-@media (max-width: 1024px) {
-    .study-center-grid {
-        grid-template-columns: 1fr 1fr 1fr;
-    }
 }
 
 @media (max-width: 640px) {
@@ -35,6 +28,10 @@
     padding: 18px;
     cursor: pointer;
     transition: all var(--transition-fast);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 120px;
 }
 
 .study-book-card:hover {
@@ -42,11 +39,46 @@
     box-shadow: var(--shadow-sm);
 }
 
+.study-book-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all var(--transition-fast);
+    z-index: 10;
+}
+
+.study-book-card:hover .study-book-remove {
+    opacity: 1;
+}
+
+.study-book-remove:hover {
+    background: var(--error-light);
+    color: var(--error);
+}
+
+.study-book-remove svg {
+    width: 14px;
+    height: 14px;
+}
+
 /* Main plan card */
 .study-book-card-main {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-height: 120px;
 }
 
 .study-book-header {
@@ -105,6 +137,7 @@
     background: var(--accent);
     border-color: var(--accent);
     color: white;
+    min-height: 120px;
 }
 
 .study-book-card-cta:hover {
@@ -141,16 +174,17 @@
 
 /* Wrong words review card */
 .study-book-card-review {
-    display: flex;
+    flex-direction: row;
     align-items: center;
     gap: 14px;
+    min-height: 120px;
 }
 
 .study-review-icon {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     background: var(--accent-light);
-    border-radius: 8px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -159,51 +193,64 @@
 }
 
 .study-review-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
+}
+
+.study-review-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .study-review-title {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: var(--text-primary);
+    margin-bottom: 4px;
 }
 
 .study-review-count {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
-    margin-top: 2px;
 }
 
 /* Stats card */
 .study-book-card-stats {
     cursor: default;
+    min-height: 120px;
+    padding: 18px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .study-stats-row {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    width: 100%;
+    gap: 4px;
 }
 
 .study-stat-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 6px;
+    flex: 1;
 }
 
 .study-stat-num {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
-    color: var(--accent);
-    line-height: 1.2;
+    color: var(--text-primary);
+    line-height: 1;
 }
 
 .study-stat-label {
-    font-size: 11px;
-    color: var(--text-tertiary);
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 /* Add custom book card */
@@ -221,7 +268,7 @@
     color: var(--text-tertiary);
     font-size: 12px;
     transition: all var(--transition-fast);
-    min-height: 90px;
+    min-height: 120px;
     text-align: center;
 }
 

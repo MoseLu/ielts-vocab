@@ -56,7 +56,7 @@ function VocabBookCard({ book, progress, onSelect, isInMyBooks }) {
       className="vb-card"
       onClick={() => onSelect(book)}
     >
-      {book.is_paid && <span className="vb-card-badge">付费</span>}
+      {book.is_paid && <span className="vb-card-badge">已购</span>}
       <h3 className="vb-card-title">{book.title}</h3>
       <div className="vb-card-meta">
         <span className="vb-card-count">{book.word_count} 词</span>

@@ -4,18 +4,36 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 function ChapterModal({ book, progress, onClose, onSelectChapter }) {
   const [chapters, setChapters] = useState([])
+  const [chapterProgress, setChapterProgress] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const currentIndex = progress?.current_index || 0
 
   useEffect(() => {
-    const fetchChapters = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`${API_BASE}/books/${book.id}/chapters`)
-        if (!res.ok) throw new Error('Failed to load chapters')
-        const data = await res.json()
-        setChapters(data.chapters || [])
+        // Fetch chapters
+        const chaptersRes = await fetch(`${API_BASE}/books/${book.id}/chapters`)
+        if (!chaptersRes.ok) throw new Error('Failed to load chapters')
+        const chaptersData = await chaptersRes.json()
+        setChapters(chaptersData.chapters || [])
+
+        // Fetch chapter progress (if user is logged in)
+        const token = localStorage.getItem('auth_token')
+        if (token) {
+          try {
+            const progressRes = await fetch(`${API_BASE}/books/${book.id}/chapters/progress`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (progressRes.ok) {
+              const progressData = await progressRes.json()
+              setChapterProgress(progressData.chapter_progress || {})
+            }
+          } catch (e) {
+            // Ignore progress fetch errors
+          }
+        }
       } catch (err) {
         setError(err.message)
       } finally {
@@ -23,7 +41,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }) {
       }
     }
 
-    fetchChapters()
+    fetchData()
   }, [book.id])
 
   // Calculate which chapter the user is currently on
@@ -94,14 +112,28 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }) {
             <div className="chapter-grid">
               {chapters.map(chapter => {
                 const isCurrent = chapter.id === currentChapterId
+                const chProgress = chapterProgress[chapter.id]
+                const isCompleted = chProgress?.is_completed
+                const accuracy = chProgress?.accuracy
+                const hasStarted = chProgress && chProgress.words_learned > 0
+
                 return (
                   <div
                     key={chapter.id}
-                    className={`chapter-card${isCurrent ? ' current' : ''}`}
+                    className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : ''}`}
                     onClick={() => handleSelectChapter(chapter)}
                   >
                     <div className="chapter-card-name">{chapter.title}</div>
                     <div className="chapter-card-count">{chapter.word_count} 词</div>
+                    <div className="chapter-card-status">
+                      {isCompleted ? (
+                        <span className="chapter-status-done">正确率: {accuracy}%</span>
+                      ) : hasStarted ? (
+                        <span className="chapter-status-progress">学习中 {accuracy}%</span>
+                      ) : (
+                        <span className="chapter-status-todo">未完成</span>
+                      )}
+                    </div>
                     {isCurrent && <div className="chapter-card-recent">当前</div>}
                   </div>
                 )

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVocabBooks, useAllBookProgress } from '../hooks/useVocabBooks'
 import PlanModal from './PlanModal'
+import ChapterModal from './ChapterModal'
 
 function HomePage({ user }) {
   const navigate = useNavigate()
   const [myBooks, setMyBooks] = useState([])
   const [selectedBook, setSelectedBook] = useState(null)
+  const [showChapterModal, setShowChapterModal] = useState(false)
 
   const { books, loading: booksLoading } = useVocabBooks()
   const { progressMap, loading: progressLoading } = useAllBookProgress()
@@ -39,6 +41,8 @@ function HomePage({ user }) {
 
   const handleSelectBook = (book) => {
     setSelectedBook(book)
+    // Paid books with chapters show ChapterModal, others show PlanModal
+    setShowChapterModal(!!book.is_paid)
   }
 
   const handleStartStudy = (plan) => {
@@ -47,6 +51,13 @@ function HomePage({ user }) {
     }
     localStorage.setItem('selected_book', JSON.stringify(selectedBook))
     navigate(`/practice?book=${selectedBook.id}`)
+  }
+
+  const handleSelectChapter = (chapter, startIndex) => {
+    localStorage.setItem('selected_book', JSON.stringify(selectedBook))
+    localStorage.setItem('selected_chapter', JSON.stringify({ id: chapter.id, title: chapter.title }))
+    localStorage.setItem('chapter_start_index', String(startIndex))
+    navigate(`/practice?book=${selectedBook.id}&chapter=${chapter.id}`)
   }
 
   const handleRemoveBook = (bookId, e) => {
@@ -187,8 +198,21 @@ function HomePage({ user }) {
 
       </div>
 
-      {/* Plan Modal */}
-      {selectedBook && (
+      {/* Chapter Modal for paid books */}
+      {selectedBook && showChapterModal && (
+        <ChapterModal
+          book={selectedBook}
+          progress={progressMap[selectedBook.id]}
+          onClose={() => {
+            setSelectedBook(null)
+            setShowChapterModal(false)
+          }}
+          onSelectChapter={handleSelectChapter}
+        />
+      )}
+
+      {/* Plan Modal for non-paid books */}
+      {selectedBook && !showChapterModal && (
         <PlanModal
           book={selectedBook}
           progress={progressMap[selectedBook.id]}

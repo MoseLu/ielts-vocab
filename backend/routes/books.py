@@ -1,7 +1,7 @@
 import os
 import json
 from flask import Blueprint, jsonify, request
-from models import db, UserBookProgress, User
+from models import db, UserBookProgress, UserChapterProgress, User
 import jwt
 from functools import wraps
 
@@ -38,60 +38,30 @@ def token_required(f):
 
 # Vocabulary books configuration
 VOCAB_BOOKS = [
+    # Premium vocabulary (已购词汇)
     {
-        'id': 'ielts_listening',
-        'title': '雅思听力核心词汇',
-        'description': '雅思听力考试高频词汇，覆盖教育、租房、旅游等常见场景',
-        'icon': 'headphones',
-        'color': '#3B82F6',
-        'category': 'listening',
-        'level': 'intermediate',
-        'word_count': 224,
-        'file': 'ielts_vocabulary_listening.json'
-    },
-    {
-        'id': 'ielts_reading',
-        'title': '雅思阅读核心词汇',
-        'description': '雅思阅读同义替换词汇，提升阅读理解能力',
+        'id': 'ielts_reading_premium',
+        'title': '雅思阅读高频词汇',
+        'description': '雅思阅读训练核心词汇，提升阅读理解能力',
         'icon': 'book-open',
-        'color': '#10B981',
+        'color': '#7C3AED',
         'category': 'reading',
         'level': 'intermediate',
-        'word_count': 120,
-        'file': 'ielts_vocabulary_reading.json'
+        'word_count': 3401,
+        'file': 'ielts_reading_premium.json',
+        'is_paid': True
     },
     {
-        'id': 'ielts_writing',
-        'title': '雅思写作核心词汇',
-        'description': '雅思写作高分词汇，学术表达必备',
-        'icon': 'edit',
-        'color': '#F59E0B',
-        'category': 'writing',
-        'level': 'advanced',
-        'word_count': 523,
-        'file': 'ielts_vocabulary_writing.json'
-    },
-    {
-        'id': 'ielts_speaking',
-        'title': '雅思口语核心词汇',
-        'description': '雅思口语话题词汇，提升口语表达能力',
-        'icon': 'mic',
-        'color': '#EF4444',
-        'category': 'speaking',
-        'level': 'beginner',
-        'word_count': 51,
-        'file': 'ielts_vocabulary_speaking.json'
-    },
-    {
-        'id': 'awl_academic',
-        'title': 'AWL学术词汇表',
-        'description': 'Academic Word List 570核心学术词汇，雅思学术类必备',
-        'icon': 'graduation-cap',
-        'color': '#8B5CF6',
-        'category': 'academic',
-        'level': 'advanced',
-        'word_count': 570,
-        'file': 'ielts_vocabulary_awl_extended.json'
+        'id': 'ielts_listening_premium',
+        'title': '雅思听力高频词汇',
+        'description': '雅思听力考试核心高频词汇，精选自听力真题',
+        'icon': 'headphones',
+        'color': '#2563EB',
+        'category': 'listening',
+        'level': 'intermediate',
+        'word_count': 3910,
+        'file': 'ielts_listening_premium.json',
+        'is_paid': True
     },
     {
         'id': 'ielts_comprehensive',
@@ -105,17 +75,6 @@ VOCAB_BOOKS = [
         'file': 'ielts_vocabulary_6260.csv'
     },
     {
-        'id': 'ielts_phrases',
-        'title': '雅思学术短语',
-        'description': '雅思常用学术短语和搭配',
-        'icon': 'link',
-        'color': '#06B6D4',
-        'category': 'phrases',
-        'level': 'intermediate',
-        'word_count': 30,
-        'file': 'ielts_vocabulary_phrases.json'
-    },
-    {
         'id': 'ielts_ultimate',
         'title': '雅思终极词汇库',
         'description': '精选2814个雅思高频词汇',
@@ -126,30 +85,16 @@ VOCAB_BOOKS = [
         'word_count': 2814,
         'file': 'ielts_vocabulary_ultimate.csv'
     },
-    # Premium vocabulary (付费词汇)
     {
-        'id': 'ielts_listening_premium',
-        'title': '雅思听力高频词汇',
-        'description': '雅思听力考试核心高频词汇，精选自听力真题',
-        'icon': 'headphones',
-        'color': '#2563EB',
-        'category': 'listening',
-        'level': 'intermediate',
-        'word_count': 3808,
-        'file': 'ielts_listening_premium.json',
-        'is_paid': True
-    },
-    {
-        'id': 'ielts_dictation_premium',
-        'title': '雅思听写高频词汇',
-        'description': '雅思听写训练核心词汇，提升拼写与听力能力',
-        'icon': 'pen-tool',
-        'color': '#7C3AED',
-        'category': 'listening',
-        'level': 'intermediate',
-        'word_count': 3268,
-        'file': 'ielts_dictation_premium.json',
-        'is_paid': True
+        'id': 'awl_academic',
+        'title': 'AWL学术词汇表',
+        'description': 'Academic Word List 570核心学术词汇，雅思学术类必备',
+        'icon': 'graduation-cap',
+        'color': '#8B5CF6',
+        'category': 'academic',
+        'level': 'advanced',
+        'word_count': 570,
+        'file': 'ielts_vocabulary_awl_extended.json'
     }
 ]
 
@@ -475,6 +420,51 @@ def save_progress(current_user):
 
     if 'current_index' in data:
         progress.current_index = data['current_index']
+    if 'correct_count' in data:
+        progress.correct_count = data['correct_count']
+    if 'wrong_count' in data:
+        progress.wrong_count = data['wrong_count']
+    if 'is_completed' in data:
+        progress.is_completed = data['is_completed']
+
+    db.session.commit()
+
+    return jsonify({'progress': progress.to_dict()}), 200
+
+
+@books_bp.route('/<book_id>/chapters/progress', methods=['GET'])
+@token_required
+def get_chapter_progress(current_user, book_id):
+    """Get user's progress for all chapters in a book"""
+    user_id = current_user.id
+    progress_records = UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
+
+    progress_dict = {}
+    for record in progress_records:
+        progress_dict[record.chapter_id] = record.to_dict()
+
+    return jsonify({'chapter_progress': progress_dict}), 200
+
+
+@books_bp.route('/<book_id>/chapters/<int:chapter_id>/progress', methods=['POST'])
+@token_required
+def save_chapter_progress(current_user, book_id, chapter_id):
+    """Save user's progress for a specific chapter"""
+    user_id = current_user.id
+    data = request.get_json()
+
+    progress = UserChapterProgress.query.filter_by(
+        user_id=user_id, book_id=book_id, chapter_id=chapter_id
+    ).first()
+
+    if not progress:
+        progress = UserChapterProgress(
+            user_id=user_id, book_id=book_id, chapter_id=chapter_id
+        )
+        db.session.add(progress)
+
+    if 'words_learned' in data:
+        progress.words_learned = data['words_learned']
     if 'correct_count' in data:
         progress.correct_count = data['correct_count']
     if 'wrong_count' in data:
