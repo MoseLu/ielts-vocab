@@ -106,6 +106,7 @@ export interface RadioModeProps {
   onRadioStop: () => void
   onNavigate: (path: string) => void
   onCloseSettings: () => void
+  onModeChange: (mode: string) => void
 }
 
 export interface DictationModeProps {

@@ -410,6 +410,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         onRadioStop={() => {}}
         onNavigate={navigate}
         onCloseSettings={() => setShowPracticeSettings(false)}
+        onModeChange={(m) => onModeChange?.(m as PracticeMode)}
       />
     )
   }

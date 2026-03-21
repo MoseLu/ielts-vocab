@@ -25,12 +25,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)
     const savedUser = localStorage.getItem(STORAGE_KEYS.AUTH_USER)
     if (token && savedUser) {
-      // Validate stored user with Zod
-      const parsed = safeParse(UserSchema, JSON.parse(savedUser))
-      if (parsed.success) {
-        setUser(parsed.data)
-      } else {
-        // Corrupted storage — clear it
+      try {
+        const parsed = safeParse(UserSchema, JSON.parse(savedUser))
+        if (parsed.success) {
+          setUser(parsed.data)
+        } else {
+          // Partial data — keep token, use what we can
+          const raw = JSON.parse(savedUser)
+          setUser({
+            id: raw.id ?? 0,
+            email: raw.email || '',
+            username: raw.username,
+            avatar_url: raw.avatar_url ?? null,
+            created_at: raw.created_at,
+          })
+        }
+      } catch {
+        // Storage unreadable — clear
         localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN)
         localStorage.removeItem(STORAGE_KEYS.AUTH_USER)
       }
