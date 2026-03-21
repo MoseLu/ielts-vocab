@@ -51,6 +51,7 @@ VOCAB_BOOKS = [
         'word_count': 3401,
         'file': 'ielts_reading_premium.json',
         'is_paid': True,
+        'study_type': 'ielts',
         'has_chapters': True
     },
     {
@@ -64,6 +65,7 @@ VOCAB_BOOKS = [
         'word_count': 3910,
         'file': 'ielts_listening_premium.json',
         'is_paid': True,
+        'study_type': 'ielts',
         'has_chapters': True
     },
     {
@@ -76,6 +78,7 @@ VOCAB_BOOKS = [
         'level': 'advanced',
         'word_count': 6260,
         'file': 'ielts_vocabulary_6260.csv',
+        'study_type': 'ielts',
         'has_chapters': True
     },
     {
@@ -88,6 +91,7 @@ VOCAB_BOOKS = [
         'level': 'advanced',
         'word_count': 1938,
         'file': 'ielts_vocabulary_ultimate.csv',
+        'study_type': 'ielts',
         'has_chapters': True
     },
     {
@@ -100,6 +104,7 @@ VOCAB_BOOKS = [
         'level': 'advanced',
         'word_count': 570,
         'file': 'ielts_vocabulary_awl_extended.json',
+        'study_type': 'ielts',
         'has_chapters': True
     }
 ]
