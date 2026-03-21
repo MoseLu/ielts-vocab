@@ -403,6 +403,32 @@
     scrollbar-color: var(--border) transparent;
 }
 
+/* ── Greeting skeleton ─────────────────────────────────────────────── */
+.ai-greeting-loading {
+    padding: 16px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ai-greeting-skeleton {
+    height: 14px;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    border-radius: var(--radius-sm);
+    animation: skeletonShimmer 1.4s infinite;
+    width: 100%;
+}
+
+.ai-greeting-skeleton--short {
+    width: 65%;
+}
+
+@keyframes skeletonShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 /* ── Mobile ───────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
     .ai-fab { bottom: 16px; right: 16px; }

@@ -84,6 +84,7 @@ function AIChatPanel() {
   const {
     messages,
     isLoading,
+    isGreeting,
     isOpen,
     contextLoaded,
     openPanel,
@@ -172,13 +173,19 @@ function AIChatPanel() {
         </button>
       </div>
 
-      {/* Quick actions */}
-      {!messages.length && (
+      {/* Greeting skeleton / quick actions */}
+      {isGreeting && (
+        <div className="ai-greeting-loading">
+          <div className="ai-greeting-skeleton" />
+          <div className="ai-greeting-skeleton ai-greeting-skeleton--short" />
+        </div>
+      )}
+      {!messages.length && !isGreeting && (
         <div className="ai-quick-actions">
           {[
-            '分析我的学习进度',
-            '制定复习计划',
-            '生成复习词书',
+            '分析我的学习数据',
+            '今日应该复习什么？',
+            '生成专属复习词书',
           ].map((q) => (
             <button
               key={q}

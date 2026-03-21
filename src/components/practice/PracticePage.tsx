@@ -6,6 +6,7 @@ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses, RadioQuickSettings } from './types'
 import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './utils'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
+import { recordModeAnswer, logSession } from '../../hooks/useAIChat'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
 import RadioMode from './RadioMode'
@@ -56,6 +57,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Refs
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
+  const sessionStartRef = useRef<number>(Date.now())
 
   // Reactive settings (so RadioMode picks up changes from the toolbar controls)
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -331,6 +333,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     if (!isCorrect && currentWord) saveWrongWord(currentWord)
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
+    recordModeAnswer(mode ?? 'smart', isCorrect)
     setTimeout(() => goNext(isCorrect), 1200)
   }
 
@@ -344,6 +347,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     if (!isCorrect) saveWrongWord(currentWord)
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
+    recordModeAnswer(mode ?? 'dictation', isCorrect)
     setTimeout(() => goNext(isCorrect), 1500)
   }
 
@@ -352,6 +356,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     saveWrongWord(currentWord)
     const nw = wrongCount + 1
     setWrongCount(nw); saveProgress(correctCount, nw)
+    recordModeAnswer(mode ?? 'smart', false)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: 'wrong' }))
     goNext(false)
   }
@@ -394,8 +399,20 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     return <div className="practice-loading"><div className="loading-spinner"></div><p>加载词汇中...</p></div>
   }
 
-  // Completed state
+  // Completed state — log session for AI analysis
   if (!currentWord) {
+    const durationSec = Math.round((Date.now() - sessionStartRef.current) / 1000)
+    // Fire-and-forget session log (non-blocking)
+    logSession({
+      mode: mode ?? 'smart',
+      bookId,
+      chapterId,
+      wordsStudied: correctCount + wrongCount,
+      correctCount,
+      wrongCount,
+      durationSeconds: durationSec,
+      startedAt: sessionStartRef.current,
+    })
     return (
       <div className="practice-complete">
         <div className="complete-emoji">🎉</div>

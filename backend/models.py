@@ -232,6 +232,59 @@ class UserWrongWord(db.Model):
         }
 
 
+# ── AI Conversation History ───────────────────────────────────────────────────
+
+class UserConversationHistory(db.Model):
+    """Persistent AI conversation history — enables cross-session memory."""
+    __tablename__ = 'user_conversation_history'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    role = db.Column(db.String(20), nullable=False)   # 'user' | 'assistant'
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'role': self.role,
+            'content': self.content,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# ── Study Session Log ─────────────────────────────────────────────────────────
+
+class UserStudySession(db.Model):
+    """Per-session practice log — used to analyse mode accuracy and study patterns."""
+    __tablename__ = 'user_study_sessions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    mode = db.Column(db.String(30))          # smart | listening | meaning | dictation | radio | quickmemory
+    book_id = db.Column(db.String(100))
+    chapter_id = db.Column(db.String(100))
+    words_studied = db.Column(db.Integer, default=0)
+    correct_count = db.Column(db.Integer, default=0)
+    wrong_count = db.Column(db.Integer, default=0)
+    duration_seconds = db.Column(db.Integer, default=0)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        total = self.correct_count + self.wrong_count
+        return {
+            'id': self.id,
+            'mode': self.mode,
+            'book_id': self.book_id,
+            'chapter_id': self.chapter_id,
+            'words_studied': self.words_studied,
+            'correct_count': self.correct_count,
+            'wrong_count': self.wrong_count,
+            'accuracy': round(self.correct_count / total * 100) if total > 0 else 0,
+            'duration_seconds': self.duration_seconds,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+        }
+
+
 class SearchCache(db.Model):
     """Cached web search results for word lookups"""
     __tablename__ = 'search_cache'
