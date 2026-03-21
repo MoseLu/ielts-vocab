@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import type { RadioModeProps, Word } from './types'
-import { syllabifyWord, playWord } from './utils'
+import { syllabifyWord, playWordAudio, stopAudio } from './utils'
 import SettingsPanel from '../SettingsPanel'
 
 export default function RadioMode({
@@ -43,18 +43,13 @@ export default function RadioMode({
     radioIndexRef.current = idx
     const word = vocab[q[idx]]
     if (!word) { radioPlayFrom(idx + 1); return }
-    speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(word.word)
-    u.rate = parseFloat(settings.playbackSpeed || '1.0')
-    u.volume = parseFloat(settings.volume || '100') / 100
-    u.onend = () => {
+    playWordAudio(word.word, settings, () => {
       if (!radioActiveRef.current) return
       radioTimerRef.current = setTimeout(() => {
         if (radioActiveRef.current) radioPlayFrom(radioIndexRef.current + 1)
       }, parseFloat(settings.interval || '2') * 1000)
-    }
-    speechSynthesis.speak(u)
-  }, [settings.playbackSpeed, settings.volume, settings.interval])
+    })
+  }, [settings])
 
   useEffect(() => {
     radioActiveRef.current = true
@@ -65,14 +60,14 @@ export default function RadioMode({
     return () => {
       radioActiveRef.current = false
       if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
-      speechSynthesis.cancel()
+      stopAudio()
     }
   }, [])
 
   const handleRadioPause = () => {
     radioActiveRef.current = false
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
-    speechSynthesis.cancel()
+    stopAudio()
     setRadioPaused(true)
     onRadioPause()
   }
@@ -87,7 +82,7 @@ export default function RadioMode({
   const handleRadioStop = () => {
     radioActiveRef.current = false
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
-    speechSynthesis.cancel()
+    stopAudio()
     setRadioStopped(true)
     setRadioPaused(false)
     onRadioStop()

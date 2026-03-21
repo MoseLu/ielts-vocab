@@ -101,3 +101,56 @@ export function playWord(word: string, settings: { playbackSpeed?: string; volum
   u.volume = parseFloat(settings.volume || '100') / 100
   speechSynthesis.speak(u)
 }
+
+// Singleton audio instance — stops previous playback when a new word starts.
+let _currentAudio: HTMLAudioElement | null = null
+
+/**
+ * Play word pronunciation via Youdao dictionary audio (US English).
+ * Falls back to speechSynthesis if the audio fails to load.
+ * @param onEnd  optional callback fired when playback finishes
+ */
+export function playWordAudio(
+  word: string,
+  settings: { playbackSpeed?: string; volume?: string },
+  onEnd?: () => void,
+): void {
+  // Stop anything currently playing
+  if (_currentAudio) {
+    _currentAudio.onended = null
+    _currentAudio.pause()
+    _currentAudio = null
+  }
+  speechSynthesis.cancel()
+
+  const volume = parseFloat(settings.volume || '100') / 100
+  const rate   = parseFloat(settings.playbackSpeed || '1.0')
+
+  const audio = new Audio(
+    `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`
+  )
+  audio.volume = Math.min(1, Math.max(0, volume))
+  audio.playbackRate = Math.min(4, Math.max(0.25, rate))
+  if (onEnd) audio.onended = onEnd
+  _currentAudio = audio
+
+  audio.play().catch(() => {
+    // Fallback: Web Speech API
+    _currentAudio = null
+    const u = new SpeechSynthesisUtterance(word)
+    u.rate   = rate
+    u.volume = volume
+    if (onEnd) u.onend = onEnd
+    speechSynthesis.speak(u)
+  })
+}
+
+/** Stop any in-progress audio (both Audio element and speechSynthesis). */
+export function stopAudio(): void {
+  if (_currentAudio) {
+    _currentAudio.onended = null
+    _currentAudio.pause()
+    _currentAudio = null
+  }
+  speechSynthesis.cancel()
+}

@@ -2,7 +2,6 @@
 
 import React, { useRef, useEffect } from 'react'
 import type { DictationModeProps, LastState } from './types'
-import { playWord } from './utils'
 
 interface PrevWordBlockProps {
   previousWord: LastState['prevWord']
