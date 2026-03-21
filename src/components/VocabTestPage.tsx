@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Word } from './practice/types'
-import { shuffleArray } from './practice/utils'
+import { shuffleArray, playWordAudio } from './practice/utils'
 
 const TEST_WORD_COUNT = 20
 const LISTENING_BOOK_ID = 'ielts_listening_premium'
@@ -25,12 +25,7 @@ interface TestResult {
 // ── Utils ───────────────────────────────────────────────────────────────────
 
 function playWord(word: string) {
-  if (!window.speechSynthesis) return
-  window.speechSynthesis.cancel()
-  const utter = new SpeechSynthesisUtterance(word)
-  utter.lang = 'en-US'
-  utter.rate = 0.9
-  window.speechSynthesis.speak(utter)
+  playWordAudio(word, {})
 }
 
 function generateTestOptions(correctWord: Word, allWords: Word[]): { text: string; correct: boolean }[] {

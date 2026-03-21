@@ -1,8 +1,8 @@
 // ── Radio Mode Component ────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import type { RadioModeProps, Word } from './types'
-import { syllabifyWord, playWord } from './utils'
+import type { RadioModeProps, PracticeMode, Word } from './types'
+import { syllabifyWord, playWordAudio, stopAudio } from './utils'
 import SettingsPanel from '../SettingsPanel'
 
 export default function RadioMode({
@@ -19,6 +19,7 @@ export default function RadioMode({
   onRadioStop,
   onNavigate,
   onCloseSettings,
+  onModeChange,
 }: RadioModeProps) {
   const [radioPaused, setRadioPaused] = useState(false)
   const [radioStopped, setRadioStopped] = useState(false)
@@ -43,18 +44,13 @@ export default function RadioMode({
     radioIndexRef.current = idx
     const word = vocab[q[idx]]
     if (!word) { radioPlayFrom(idx + 1); return }
-    speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(word.word)
-    u.rate = parseFloat(settings.playbackSpeed || '1.0')
-    u.volume = parseFloat(settings.volume || '100') / 100
-    u.onend = () => {
+    playWordAudio(word.word, settings, () => {
       if (!radioActiveRef.current) return
       radioTimerRef.current = setTimeout(() => {
         if (radioActiveRef.current) radioPlayFrom(radioIndexRef.current + 1)
       }, parseFloat(settings.interval || '2') * 1000)
-    }
-    speechSynthesis.speak(u)
-  }, [settings.playbackSpeed, settings.volume, settings.interval])
+    })
+  }, [settings])
 
   useEffect(() => {
     radioActiveRef.current = true
@@ -65,14 +61,14 @@ export default function RadioMode({
     return () => {
       radioActiveRef.current = false
       if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
-      speechSynthesis.cancel()
+      stopAudio()
     }
   }, [])
 
   const handleRadioPause = () => {
     radioActiveRef.current = false
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
-    speechSynthesis.cancel()
+    stopAudio()
     setRadioPaused(true)
     onRadioPause()
   }
@@ -87,7 +83,7 @@ export default function RadioMode({
   const handleRadioStop = () => {
     radioActiveRef.current = false
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
-    speechSynthesis.cancel()
+    stopAudio()
     setRadioStopped(true)
     setRadioPaused(false)
     onRadioStop()
@@ -184,6 +180,19 @@ export default function RadioMode({
       <div className="radio-bottom-btns">
         <button className="radio-stop-btn" onClick={handleRadioStop}>停止</button>
         <button className="radio-home-btn" onClick={() => { handleRadioStop(); onNavigate('/') }}>返回主页</button>
+      </div>
+
+      {/* Mode switcher */}
+      <div className="radio-mode-switcher">
+        {(['smart', 'listening', 'meaning', 'dictation'] as PracticeMode[]).map(m => (
+          <button
+            key={m}
+            className="radio-mode-btn"
+            onClick={() => onModeChange(m)}
+          >
+            {m === 'smart' ? '智能' : m === 'listening' ? '听力' : m === 'meaning' ? '看词选义' : '听写'}
+          </button>
+        ))}
       </div>
 
       {showSettings && (

@@ -113,7 +113,6 @@ function VocabBookPage() {
   const [activeStudyType, setActiveStudyType] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [activeLevel, setActiveLevel] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
   const [myBooks, setMyBooks] = useState<Book[]>([])
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showChapterModal, setShowChapterModal] = useState(false)
@@ -165,10 +164,6 @@ function VocabBookPage() {
     if (activeStudyType && book.study_type !== activeStudyType) return false
     if (activeCategory && book.category !== activeCategory) return false
     if (activeLevel && book.level !== activeLevel) return false
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      if (!book.title.toLowerCase().includes(q) && !(book.description || '').toLowerCase().includes(q)) return false
-    }
     return true
   })
 
@@ -215,21 +210,6 @@ function VocabBookPage() {
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Search */}
-        <div className="vb-search">
-          <input
-            type="text"
-            placeholder="搜索词书"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="vb-search-input"
-          />
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="vb-search-icon">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
         </div>
       </div>
 

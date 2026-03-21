@@ -204,6 +204,32 @@
     border-color: var(--border-hover);
 }
 
+/* Mode switcher inside radio mode */
+.radio-mode-switcher {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.radio-mode-btn {
+    padding: 6px 14px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.radio-mode-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: rgba(255, 126, 54, 0.3);
+}
+
 /* Mic button in dictation */
 .mic-btn {
     display: flex;
