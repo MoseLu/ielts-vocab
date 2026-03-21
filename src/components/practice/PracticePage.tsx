@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses } from './types'
-import { shuffleArray, generateOptions, playWordAudio as playWordUtil, stopAudio } from './utils'
+import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './utils'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
@@ -38,8 +38,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const [spellingInput, setSpellingInput] = useState('')
   const [spellingResult, setSpellingResult] = useState<'correct' | 'wrong' | null>(null)
 
-  // Radio mode state
-  const [radioIndex, setRadioIndex] = useState(0)
+  // Radio mode state (initial index only; RadioMode manages its own position)
+  const [radioIndex] = useState(0)
 
   // UI panel state
   const [showWordList, setShowWordList] = useState(false)
@@ -199,7 +199,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       setOptions(opts); setCorrectIndex(ci)
     }
     setSelectedAnswer(null); setShowResult(false); setSpellingInput(''); setSpellingResult(null)
-    if (['listening', 'dictation', 'radio'].includes(mode as string)) {
+    if (['listening', 'dictation'].includes(mode as string)) {
       setTimeout(() => playWordUtil(currentWord.word, settings), 300)
     }
   }, [queueIndex, currentWord?.word, mode])
@@ -396,22 +396,52 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Render different modes
   if (mode === 'radio') {
     return (
-      <RadioMode
-        vocabulary={vocabulary}
-        queue={queue}
-        radioIndex={radioIndex}
-        showSettings={showPracticeSettings}
-        settings={settings}
-        onRadioSkipPrev={() => setRadioIndex(Math.max(0, radioIndex - 1))}
-        onRadioSkipNext={() => setRadioIndex(Math.min(queue.length - 1, radioIndex + 1))}
-        onRadioPause={() => {}}
-        onRadioResume={() => {}}
-        onRadioRestart={() => setRadioIndex(0)}
-        onRadioStop={() => {}}
-        onNavigate={navigate}
-        onCloseSettings={() => setShowPracticeSettings(false)}
-        onModeChange={(m) => onModeChange?.(m as PracticeMode)}
-      />
+      <>
+        <PracticeControlBar
+          mode={mode}
+          currentDay={currentDay}
+          bookId={bookId}
+          chapterId={chapterId}
+          errorMode={errorMode}
+          vocabularyLength={vocabulary.length}
+          currentChapterTitle={currentChapterTitle}
+          bookChapters={bookChapters}
+          showWordList={showWordList}
+          showPracticeSettings={showPracticeSettings}
+          onWordListToggle={() => setShowWordList(v => !v)}
+          onSettingsToggle={() => setShowPracticeSettings(v => !v)}
+          onModeChange={(m) => onModeChange?.(m)}
+          onDayChange={(d) => onDayChange?.(d)}
+          onNavigate={navigate}
+        />
+        <WordListPanel
+          show={showWordList}
+          vocabulary={vocabulary}
+          queue={queue}
+          queueIndex={radioIndex}
+          wordStatuses={wordStatuses}
+          onClose={() => setShowWordList(false)}
+        />
+        {showPracticeSettings && (
+          <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
+        )}
+        <RadioMode
+          vocabulary={vocabulary}
+          queue={queue}
+          radioIndex={radioIndex}
+          showSettings={false}
+          settings={settings}
+          onRadioSkipPrev={() => {}}
+          onRadioSkipNext={() => {}}
+          onRadioPause={() => {}}
+          onRadioResume={() => {}}
+          onRadioRestart={() => {}}
+          onRadioStop={() => {}}
+          onNavigate={navigate}
+          onCloseSettings={() => setShowPracticeSettings(false)}
+          onModeChange={(m) => onModeChange?.(m as PracticeMode)}
+        />
+      </>
     )
   }
 
