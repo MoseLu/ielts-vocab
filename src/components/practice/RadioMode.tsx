@@ -1,47 +1,42 @@
 // ── Radio Mode Component ────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import type { RadioModeProps, PracticeMode, Word } from './types'
+import type { RadioModeProps, Word } from './types'
 import { syllabifyWord, playWordAudio, stopAudio } from './utils'
 import SettingsPanel from '../SettingsPanel'
 
 export default function RadioMode({
   vocabulary,
   queue,
-  radioIndex,
+  radioIndex: initialIndex,
   showSettings,
   settings,
-  onRadioSkipPrev,
-  onRadioSkipNext,
-  onRadioPause,
-  onRadioResume,
-  onRadioRestart,
-  onRadioStop,
   onNavigate,
   onCloseSettings,
   onModeChange,
 }: RadioModeProps) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [radioPaused, setRadioPaused] = useState(false)
   const [radioStopped, setRadioStopped] = useState(false)
   const [radioHovered, setRadioHovered] = useState(false)
   const radioActiveRef = useRef(true)
   const radioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const radioIndexRef = useRef(0)
+  const radioIndexRef = useRef(initialIndex)
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
 
-  // Initialize refs
+  // Keep refs in sync with latest props
   useEffect(() => {
     vocabRef.current = vocabulary
     queueRef.current = queue
-    radioIndexRef.current = radioIndex
-  }, [vocabulary, queue, radioIndex])
+  }, [vocabulary, queue])
 
   const radioPlayFrom = useCallback((idx: number) => {
     const q = queueRef.current
     const vocab = vocabRef.current
     if (idx >= q.length) { radioActiveRef.current = false; return }
     radioIndexRef.current = idx
+    setCurrentIndex(idx)
     const word = vocab[q[idx]]
     if (!word) { radioPlayFrom(idx + 1); return }
     playWordAudio(word.word, settings, () => {
@@ -52,12 +47,14 @@ export default function RadioMode({
     })
   }, [settings])
 
+  // Start playback on mount
   useEffect(() => {
     radioActiveRef.current = true
-    radioIndexRef.current = 0
+    radioIndexRef.current = initialIndex
+    setCurrentIndex(initialIndex)
     setRadioPaused(false)
     setRadioStopped(false)
-    radioPlayFrom(0)
+    radioPlayFrom(initialIndex)
     return () => {
       radioActiveRef.current = false
       if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -65,18 +62,40 @@ export default function RadioMode({
     }
   }, [])
 
+  const handleRadioSkipPrev = () => {
+    const newIdx = Math.max(0, radioIndexRef.current - 1)
+    if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
+    stopAudio()
+    radioIndexRef.current = newIdx
+    setCurrentIndex(newIdx)
+    if (!radioPaused && !radioStopped) {
+      radioActiveRef.current = true
+      radioPlayFrom(newIdx)
+    }
+  }
+
+  const handleRadioSkipNext = () => {
+    const newIdx = Math.min(queueRef.current.length - 1, radioIndexRef.current + 1)
+    if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
+    stopAudio()
+    radioIndexRef.current = newIdx
+    setCurrentIndex(newIdx)
+    if (!radioPaused && !radioStopped) {
+      radioActiveRef.current = true
+      radioPlayFrom(newIdx)
+    }
+  }
+
   const handleRadioPause = () => {
     radioActiveRef.current = false
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
     stopAudio()
     setRadioPaused(true)
-    onRadioPause()
   }
 
   const handleRadioResume = () => {
     radioActiveRef.current = true
     setRadioPaused(false)
-    onRadioResume()
     radioPlayFrom(radioIndexRef.current)
   }
 
@@ -86,19 +105,18 @@ export default function RadioMode({
     stopAudio()
     setRadioStopped(true)
     setRadioPaused(false)
-    onRadioStop()
   }
 
   const handleRadioRestart = () => {
     radioActiveRef.current = true
     radioIndexRef.current = 0
+    setCurrentIndex(0)
     setRadioPaused(false)
     setRadioStopped(false)
-    onRadioRestart()
     radioPlayFrom(0)
   }
 
-  const radioWord: Word | undefined = vocabulary[queue[radioIndex]]
+  const radioWord: Word | undefined = vocabulary[queue[currentIndex]]
   const syllables = radioWord ? syllabifyWord(radioWord.word, radioWord.phonetic) : []
 
   return (
@@ -138,7 +156,7 @@ export default function RadioMode({
       </div>
 
       <div className="radio-controls">
-        <button className="radio-ctrl-btn" onClick={onRadioSkipPrev} title="上一个">
+        <button className="radio-ctrl-btn" onClick={handleRadioSkipPrev} title="上一个">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polygon points="19 20 9 12 19 4 19 20"></polygon>
             <line x1="5" y1="19" x2="5" y2="5"></line>
@@ -158,7 +176,7 @@ export default function RadioMode({
           </button>
         )}
 
-        <button className="radio-ctrl-btn" onClick={onRadioSkipNext} title="下一个">
+        <button className="radio-ctrl-btn" onClick={handleRadioSkipNext} title="下一个">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polygon points="5 4 15 12 5 20 5 4"></polygon>
             <line x1="19" y1="5" x2="19" y2="19"></line>
@@ -173,27 +191,28 @@ export default function RadioMode({
       </div>
 
       <div className="radio-progress-bar">
-        <div className="radio-progress-fill" style={{ width: `${(radioIndex / Math.max(queue.length - 1, 1)) * 100}%` }} />
+        <div className="radio-progress-fill" style={{ width: `${(currentIndex / Math.max(queue.length - 1, 1)) * 100}%` }} />
       </div>
-      <div className="radio-progress-label">{radioIndex + 1} / {queue.length}</div>
+      <div className="radio-progress-label">{currentIndex + 1} / {queue.length}</div>
 
       <div className="radio-bottom-btns">
         <button className="radio-stop-btn" onClick={handleRadioStop}>停止</button>
         <button className="radio-home-btn" onClick={() => { handleRadioStop(); onNavigate('/') }}>返回主页</button>
       </div>
 
-      {/* Mode switcher */}
-      <div className="radio-mode-switcher">
-        {(['smart', 'listening', 'meaning', 'dictation'] as PracticeMode[]).map(m => (
-          <button
-            key={m}
-            className="radio-mode-btn"
-            onClick={() => onModeChange(m)}
-          >
-            {m === 'smart' ? '智能' : m === 'listening' ? '听力' : m === 'meaning' ? '看词选义' : '听写'}
-          </button>
-        ))}
-      </div>
+      {onModeChange && (
+        <div className="radio-mode-switcher">
+          {(['smart', 'listening', 'meaning', 'dictation'] as const).map(m => (
+            <button
+              key={m}
+              className="radio-mode-btn"
+              onClick={() => onModeChange(m)}
+            >
+              {m === 'smart' ? '智能' : m === 'listening' ? '听力' : m === 'meaning' ? '看词选义' : '听写'}
+            </button>
+          ))}
+        </div>
+      )}
 
       {showSettings && (
         <SettingsPanel showSettings={showSettings} onClose={onCloseSettings} />

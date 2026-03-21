@@ -7,7 +7,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: calc(100vh - 48px);
     gap: var(--space-xl);
 }
 
@@ -31,10 +31,11 @@
 
 /* Row 1 – word */
 .radio-row-word {
-    min-height: 56px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
 .radio-word-syllables {
@@ -73,18 +74,25 @@
 .radio-row-phonetic {
     font-size: 20px;
     color: var(--text-tertiary);
-    min-height: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Row 3 – definition */
 .radio-row-def {
     font-size: 16px;
     color: var(--text-secondary);
-    min-height: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     gap: var(--space-sm);
     justify-content: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 400px;
 }
 
 /* Controls row */
