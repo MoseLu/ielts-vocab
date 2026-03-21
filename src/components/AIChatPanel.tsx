@@ -95,6 +95,20 @@ function AIChatPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // Close on outside click
+  const panelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!isOpen) return
+    const handle = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (panelRef.current && !panelRef.current.contains(target)) {
+        closePanel()
+      }
+    }
+    document.addEventListener('pointerdown', handle)
+    return () => document.removeEventListener('pointerdown', handle)
+  }, [isOpen, closePanel])
+
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -135,7 +149,7 @@ function AIChatPanel() {
   }
 
   return (
-    <div className="ai-panel">
+    <div className="ai-panel" ref={panelRef}>
       {/* Header */}
       <div className="ai-panel-header">
         <div className="ai-panel-title">
