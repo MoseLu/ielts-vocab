@@ -4,7 +4,7 @@ import jwt
 from flask import Blueprint, jsonify, request
 from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord
 from functools import wraps
-from services.llm import chat, web_search
+from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
 ai_bp = Blueprint('ai', __name__)
 
