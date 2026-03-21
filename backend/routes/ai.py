@@ -38,12 +38,8 @@ def token_required(f):
 
 # ── GET /api/ai/context ───────────────────────────────────────────────────────
 
-@ai_bp.route('/context', methods=['GET'])
-@token_required
-def get_context(current_user: User):
-    """Return structured learning summary for AI context."""
-    user_id = current_user.id
-
+def _build_learning_context(user_id: int) -> dict:
+    """Build learning context dict for a given user. Used by both /ask and /context."""
     # Book progress
     book_progress = UserBookProgress.query.filter_by(user_id=user_id).all()
     chapter_progress = UserChapterProgress.query.filter_by(user_id=user_id).all()
@@ -52,7 +48,6 @@ def get_context(current_user: User):
     ).limit(50).all()
 
     # Aggregate per-book stats
-    books = []
     total_learned = 0
     total_correct = 0
     total_wrong = 0
@@ -63,7 +58,7 @@ def get_context(current_user: User):
         accuracy = round(bp.correct_count / total * 100) if total > 0 else 0
         book_map[bp.book_id] = {
             'id': bp.book_id,
-            'progress': round(bp.current_index / 100 * 100) if bp.current_index else 0,  # placeholder ratio
+            'progress': round(bp.current_index / 100 * 100) if bp.current_index else 0,
             'accuracy': accuracy,
             'wrongCount': bp.wrong_count,
             'correctCount': bp.correct_count,
@@ -98,7 +93,7 @@ def get_context(current_user: User):
         stats['wordCount'] = book_word_count_map.get(book_id, 0)
         stats['progress'] = round(stats['correctCount'] / (stats['correctCount'] + stats.get('wrongCount', 0)) * 100) if (stats['correctCount'] + stats.get('wrongCount', 0)) > 0 else 0
 
-    # Recent trend: check last 5 chapter sessions
+    # Recent trend
     recent = UserChapterProgress.query.filter_by(user_id=user_id).order_by(
         UserChapterProgress.updated_at.desc()
     ).limit(5).all()
@@ -109,7 +104,7 @@ def get_context(current_user: User):
     else:
         trend = "new"
 
-    return jsonify({
+    return {
         'totalBooks': len(book_map),
         'totalLearned': total_learned,
         'totalCorrect': total_correct,
@@ -127,7 +122,15 @@ def get_context(current_user: User):
             for w in wrong_words
         ],
         'recentTrend': trend
-    })
+    }
+
+
+@ai_bp.route('/context', methods=['GET'])
+@token_required
+def get_context(current_user: User):
+    """Return structured learning summary for AI context."""
+    ctx = _build_learning_context(current_user.id)
+    return jsonify(ctx)
 
 
 # ── POST /api/ai/ask ──────────────────────────────────────────────────────────
@@ -305,8 +308,7 @@ def ask(current_user: User):
 
     # Inject persistent user data (learning summary)
     try:
-        ctx_resp = get_context(current_user)
-        ctx_data = ctx_resp.get_json()
+        ctx_data = _build_learning_context(current_user.id)
         context_msg = (
             f"【用户学习数据摘要】\n"
             f"总学习词数：{ctx_data.get('totalLearned', 0)}\n"
@@ -417,8 +419,7 @@ def generate_book(current_user: User):
 
     # Build context
     try:
-        ctx_resp = get_context(current_user)
-        ctx = ctx_resp.get_json()
+        ctx = _build_learning_context(current_user.id)
         wrong_words = ctx.get('wrongWords', [])
         wrong_word_list = [w['word'] for w in wrong_words[:30]]
         all_exclude = list(set(exclude_words + wrong_word_list))
