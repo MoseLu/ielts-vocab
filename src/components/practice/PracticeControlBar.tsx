@@ -9,10 +9,11 @@ const modeNames: Record<PracticeMode, string> = {
   'listening': '听音选义',
   'meaning': '看词选义',
   'dictation': '听写模式',
-  'radio': '随身听'
+  'radio': '随身听',
+  'quickmemory': '快速记忆',
 }
 
-const modeList: PracticeMode[] = ['smart', 'listening', 'meaning', 'dictation', 'radio']
+const modeList: PracticeMode[] = ['smart', 'listening', 'meaning', 'dictation', 'radio', 'quickmemory']
 
 const SPEED_OPTIONS = ['0.6', '0.8', '1.0', '1.2'] as const
 const COUNT_OPTIONS = ['1', '2', '3'] as const

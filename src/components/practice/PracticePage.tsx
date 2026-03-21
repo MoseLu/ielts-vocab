@@ -7,11 +7,13 @@ import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, 
 import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './utils'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue } from '../../lib/smartMode'
+import { recordModeAnswer, logSession } from '../../hooks/useAIChat'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
 import RadioMode from './RadioMode'
 import DictationMode from './DictationMode'
 import OptionsMode from './OptionsMode'
+import QuickMemoryMode from './QuickMemoryMode'
 import SettingsPanel from '../SettingsPanel'
 
 // Re-export types for use by parent components
@@ -59,6 +61,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Refs
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
+  const sessionStartRef = useRef<number>(Date.now())
 
   // Reactive settings (so RadioMode picks up changes from the toolbar controls)
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -361,6 +364,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         : mode === 'listening' ? 'listening' : 'meaning'
       recordWordResult(currentWord.word, dim, isCorrect)
     }
+    recordModeAnswer(mode ?? 'smart', isCorrect)
     setTimeout(() => goNext(isCorrect), 1200)
   }
 
@@ -376,6 +380,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     // Record dictation stats for smart mode weighting
     recordWordResult(currentWord.word, 'dictation', isCorrect)
+    recordModeAnswer(mode ?? 'dictation', isCorrect)
     setTimeout(() => goNext(isCorrect), 1500)
   }
 
@@ -384,6 +389,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     saveWrongWord(currentWord)
     const nw = wrongCount + 1
     setWrongCount(nw); saveProgress(correctCount, nw)
+    recordModeAnswer(mode ?? 'smart', false)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: 'wrong' }))
     goNext(false)
   }
@@ -426,8 +432,20 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     return <div className="practice-loading"><div className="loading-spinner"></div><p>加载词汇中...</p></div>
   }
 
-  // Completed state
+  // Completed state — log session for AI analysis
   if (!currentWord) {
+    const durationSec = Math.round((Date.now() - sessionStartRef.current) / 1000)
+    // Fire-and-forget session log (non-blocking)
+    logSession({
+      mode: mode ?? 'smart',
+      bookId,
+      chapterId,
+      wordsStudied: correctCount + wrongCount,
+      correctCount,
+      wrongCount,
+      durationSeconds: durationSec,
+      startedAt: sessionStartRef.current,
+    })
     return (
       <div className="practice-complete">
         <div className="complete-emoji">🎉</div>
@@ -492,6 +510,42 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onNavigate={navigate}
           onCloseSettings={() => setShowPracticeSettings(false)}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
+        />
+      </>
+    )
+  }
+
+  if (mode === 'quickmemory') {
+    return (
+      <>
+        <PracticeControlBar
+          mode={mode}
+          currentDay={currentDay}
+          bookId={bookId}
+          chapterId={chapterId}
+          errorMode={errorMode}
+          vocabularyLength={vocabulary.length}
+          currentChapterTitle={currentChapterTitle}
+          bookChapters={bookChapters}
+          showWordList={showWordList}
+          showPracticeSettings={showPracticeSettings}
+          onWordListToggle={() => setShowWordList(v => !v)}
+          onSettingsToggle={() => setShowPracticeSettings(v => !v)}
+          onModeChange={(m) => onModeChange?.(m)}
+          onDayChange={(d) => onDayChange?.(d)}
+          onNavigate={navigate}
+        />
+        {showPracticeSettings && (
+          <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
+        )}
+        <QuickMemoryMode
+          vocabulary={vocabulary}
+          queue={queue}
+          settings={settings}
+          bookId={bookId}
+          chapterId={chapterId}
+          onModeChange={(m) => onModeChange?.(m as PracticeMode)}
+          onNavigate={navigate}
         />
       </>
     )
