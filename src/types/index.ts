@@ -62,6 +62,7 @@ export interface Book {
   color?: string
   is_paid?: boolean
   has_chapters?: boolean
+  study_type?: string
   file?: string
   [key: string]: unknown
 }

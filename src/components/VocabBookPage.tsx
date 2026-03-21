@@ -118,11 +118,7 @@ function VocabBookPage() {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showChapterModal, setShowChapterModal] = useState(false)
 
-  const { books, loading, error } = useVocabBooks({
-    category: activeCategory ?? undefined,
-    level: activeLevel ?? undefined,
-    studyType: activeStudyType ?? undefined,
-  })
+  const { books, loading, error } = useVocabBooks()
   const { progressMap } = useAllBookProgress()
 
   // Load my books
@@ -165,12 +161,16 @@ function VocabBookPage() {
     navigate(`/practice?book=${selectedBook?.id}&chapter=${chapter.id}`)
   }
 
-  const filteredBooks = searchQuery.trim()
-    ? books.filter(book =>
-        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (book.description || '').toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : books
+  const filteredBooks = books.filter(book => {
+    if (activeStudyType && book.study_type !== activeStudyType) return false
+    if (activeCategory && book.category !== activeCategory) return false
+    if (activeLevel && book.level !== activeLevel) return false
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      if (!book.title.toLowerCase().includes(q) && !(book.description || '').toLowerCase().includes(q)) return false
+    }
+    return true
+  })
 
   return (
     <div className="vocab-book-page">

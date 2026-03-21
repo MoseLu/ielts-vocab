@@ -65,6 +65,7 @@ export const BookSchema = z.object({
   color: z.string().optional(),
   is_paid: z.boolean().optional(),
   has_chapters: z.boolean().optional(),
+  study_type: z.string().optional(),
   file: z.string().optional(),
 })
 export type Book = z.infer<typeof BookSchema>

@@ -15,18 +15,12 @@ import {
 
 const API_BASE = '/api/books'
 
-export interface UseVocabBooksFilters {
-  category?: string
-  level?: string
-  studyType?: string
-}
-
 // Inferred types from Zod schemas (align with domain types)
 export type VocabBook = z.infer<typeof BookSchema>
 export type VocabWord = z.infer<typeof WordSchema>
 export type VocabBookProgress = z.infer<typeof BookProgressSchema>
 
-export function useVocabBooks(filters: UseVocabBooksFilters = {}) {
+export function useVocabBooks() {
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,12 +29,7 @@ export function useVocabBooks(filters: UseVocabBooksFilters = {}) {
     const fetchBooks = async () => {
       try {
         setLoading(true)
-        const params = new URLSearchParams()
-        if (filters.category) params.append('category', filters.category)
-        if (filters.level) params.append('level', filters.level)
-        if (filters.studyType) params.append('study_type', filters.studyType)
-
-        const response = await fetch(`${API_BASE}?${params.toString()}`)
+        const response = await fetch(API_BASE)
         if (!response.ok) throw new Error('Failed to fetch books')
 
         const raw = await response.json()
@@ -60,7 +49,7 @@ export function useVocabBooks(filters: UseVocabBooksFilters = {}) {
     }
 
     fetchBooks()
-  }, [filters.category, filters.level])
+  }, [])
 
   return { books, loading, error }
 }
