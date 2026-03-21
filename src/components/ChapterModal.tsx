@@ -29,6 +29,8 @@ interface ChapterModalProps {
   progress: Progress | null
   onClose: () => void
   onSelectChapter: (chapter: Chapter, startIndex: number) => void
+  /** Called when chapters API fails — parent can switch to PlanModal */
+  onFallback?: () => void
 }
 
 // ── Section grouping helpers ────────────────────────────────────────────────
@@ -70,7 +72,7 @@ function groupBySection(chapters: Chapter[]): SectionGroup[] {
 }
 // ───────────────────────────────────────────────────────────────────────────
 
-function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModalProps) {
+function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: ChapterModalProps) {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [chapterProgress, setChapterProgress] = useState<Record<string | number, ChapterProgress>>({})
   const [loading, setLoading] = useState(true)
@@ -102,12 +104,14 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModal
         }
       } catch (err) {
         setError((err as Error).message)
+        // Fallback to PlanModal if chapters fail to load
+        onFallback?.()
       } finally {
         setLoading(false)
       }
     }
     fetchData()
-  }, [book.id])
+  }, [book.id, onFallback])
 
   // Calculate which chapter the user is currently on based on total word index
   const currentChapterId = useMemo((): string | number | null => {

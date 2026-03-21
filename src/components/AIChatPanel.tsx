@@ -94,9 +94,9 @@ function AIChatPanel() {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   // Close on outside click
-  const panelRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!isOpen) return
     const handle = (e: MouseEvent) => {

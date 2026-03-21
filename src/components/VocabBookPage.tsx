@@ -145,9 +145,9 @@ function VocabBookPage() {
       localStorage.setItem('my_books', JSON.stringify(newBooks))
     }
 
-    // Books with chapters show ChapterModal; books without chapters show PlanModal
+    // Always show ChapterModal — backend returns chapters for all books
     setSelectedBook(book)
-    setShowChapterModal(book.has_chapters !== false)
+    setShowChapterModal(true)
   }
 
   const handleStartStudy = (plan: StudyPlan | null) => {
@@ -273,6 +273,7 @@ function VocabBookPage() {
             setShowChapterModal(false)
           }}
           onSelectChapter={handleSelectChapter}
+          onFallback={() => setShowChapterModal(false)}
         />
       )}
       {selectedBook && !showChapterModal && (
