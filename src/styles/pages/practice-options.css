@@ -1,5 +1,86 @@
 /* Page: Practice – options grid, answer states, prev-word, progress */
 
+/* ── Smart Mode Dimension Badge ─────────────────────────────────────── */
+.smart-dim-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: var(--space-md);
+    border: 1px solid transparent;
+}
+
+.smart-badge-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.smart-badge-label {
+    line-height: 1;
+}
+
+.smart-badge-listening {
+    background: #EEF2FF;
+    color: #4F46E5;
+    border-color: #C7D2FE;
+}
+
+.smart-badge-meaning {
+    background: #F0FDF4;
+    color: #16A34A;
+    border-color: #BBF7D0;
+}
+
+.smart-badge-dictation {
+    background: #FFF7ED;
+    color: #C2410C;
+    border-color: #FED7AA;
+}
+
+[data-theme="dark"] .smart-badge-listening {
+    background: rgba(79, 70, 229, 0.15);
+    color: #818CF8;
+    border-color: rgba(79, 70, 229, 0.3);
+}
+
+[data-theme="dark"] .smart-badge-meaning {
+    background: rgba(22, 163, 74, 0.15);
+    color: #4ADE80;
+    border-color: rgba(22, 163, 74, 0.3);
+}
+
+[data-theme="dark"] .smart-badge-dictation {
+    background: rgba(194, 65, 12, 0.15);
+    color: #FB923C;
+    border-color: rgba(194, 65, 12, 0.3);
+}
+
+/* ── Smart Mode Dictation Area ───────────────────────────────────────── */
+.smart-dictation-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-sm) 0;
+}
+
+.correct-answer {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.spelling-answer-def {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
 /* Options Grid - 2x2 Layout */
 
 @media (max-width: 600px) {

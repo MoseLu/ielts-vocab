@@ -2,6 +2,9 @@
 
 export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio'
 
+// Which dimension smart mode is testing for the current word
+export type SmartDimension = 'listening' | 'meaning' | 'dictation'
+
 export type ToastType = 'info' | 'success' | 'error'
 
 export interface Word {
@@ -144,6 +147,7 @@ export interface OptionsModeProps {
   previousWord: Word | null
   lastState: LastState | null
   mode: PracticeMode
+  smartDimension?: SmartDimension
   options: OptionItem[]
   selectedAnswer: number | null
   showResult: boolean

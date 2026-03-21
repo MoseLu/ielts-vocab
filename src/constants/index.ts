@@ -29,6 +29,7 @@ export const STORAGE_KEYS = {
   CHAPTER_PROGRESS: 'chapter_progress',
   WRONG_WORDS: 'wrong_words',
   WRONG_WORDS_PROGRESS: 'wrong_words_progress',
+  SMART_WORD_STATS: 'smart_word_stats',
 } as const
 
 // API endpoints

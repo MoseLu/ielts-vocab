@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
-import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses, RadioQuickSettings } from './types'
+import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses, RadioQuickSettings, SmartDimension } from './types'
 import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './utils'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
+import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue } from '../../lib/smartMode'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
 import RadioMode from './RadioMode'
@@ -51,6 +52,9 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Track word statuses
   const [wordStatuses, setWordStatuses] = useState<WordStatuses>({})
+
+  // Smart mode: current word's test dimension (音/意/形)
+  const [smartDimension, setSmartDimension] = useState<SmartDimension>('meaning')
 
   // Refs
   const vocabRef = useRef<Word[]>([])
@@ -149,6 +153,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       return
     }
 
+    // Helper: build queue based on mode (smart = sorted by weakness, others = shuffle)
+    const buildQueue = (words: Word[]) => {
+      const indices = Array.from({ length: words.length }, (_, i) => i)
+      if (mode === 'smart') return buildSmartQueue(words.map(w => w.word), loadSmartStats())
+      return settings.shuffle !== false ? shuffleArray(indices) : indices
+    }
+
     if (bookId) {
       if (chapterId) {
         fetch(`/api/books/${bookId}/chapters/${chapterId}`)
@@ -157,8 +168,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             const words = data.words || []
             setVocabulary(words)
             vocabRef.current = words
-            const indices = Array.from({ length: words.length }, (_, i) => i)
-            const q = settings.shuffle !== false ? shuffleArray(indices) : indices
+            const q = buildQueue(words)
             setQueue(q)
             queueRef.current = q
             const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
@@ -176,8 +186,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           const words = data.words || []
           setVocabulary(words)
           vocabRef.current = words
-          const indices = Array.from({ length: words.length }, (_, i) => i)
-          const q = settings.shuffle !== false ? shuffleArray(indices) : indices
+          const q = buildQueue(words)
           setQueue(q)
           queueRef.current = q
           const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('book_progress') || '{}')
@@ -195,8 +204,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         const words = data.vocabulary || data.words || []
         setVocabulary(words)
         vocabRef.current = words
-        const indices = Array.from({ length: words.length }, (_, i) => i)
-        const q = settings.shuffle !== false ? shuffleArray(indices) : indices
+        const q = buildQueue(words)
         setQueue(q)
         queueRef.current = q
         const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('day_progress') || '{}')
@@ -211,12 +219,29 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Update options when word changes
   useEffect(() => {
     if (!currentWord || !vocabulary.length) return
-    if (['listening', 'meaning', 'smart'].includes(mode as string)) {
+
+    // For smart mode: choose which dimension to test for this word
+    let subMode: SmartDimension = smartDimension
+    if (mode === 'smart') {
+      const stats = loadSmartStats()
+      subMode = chooseSmartDimension(currentWord.word, stats)
+      setSmartDimension(subMode)
+    }
+
+    // Generate options for multiple-choice modes (not needed for dictation sub-mode)
+    const needsOptions = mode === 'listening' || mode === 'meaning' ||
+      (mode === 'smart' && subMode !== 'dictation')
+    if (needsOptions) {
       const { options: opts, correctIndex: ci } = generateOptions(currentWord, vocabulary)
       setOptions(opts); setCorrectIndex(ci)
     }
+
     setSelectedAnswer(null); setShowResult(false); setSpellingInput(''); setSpellingResult(null)
-    if (['listening', 'dictation'].includes(mode as string)) {
+
+    // Auto-play audio for audio-first modes
+    const shouldAutoPlay = mode === 'listening' || mode === 'dictation' ||
+      (mode === 'smart' && (subMode === 'listening' || subMode === 'dictation'))
+    if (shouldAutoPlay) {
       setTimeout(() => playWordUtil(currentWord.word, settings), 300)
     }
   }, [queueIndex, currentWord?.word, mode])
@@ -330,6 +355,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     if (!isCorrect && currentWord) saveWrongWord(currentWord)
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
+    // Record per-dimension stats for smart mode weighting
+    if (currentWord) {
+      const dim: SmartDimension = mode === 'smart' ? smartDimension
+        : mode === 'listening' ? 'listening' : 'meaning'
+      recordWordResult(currentWord.word, dim, isCorrect)
+    }
     setTimeout(() => goNext(isCorrect), 1200)
   }
 
@@ -343,6 +374,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     if (!isCorrect) saveWrongWord(currentWord)
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
+    // Record dictation stats for smart mode weighting
+    recordWordResult(currentWord.word, 'dictation', isCorrect)
     setTimeout(() => goNext(isCorrect), 1500)
   }
 
@@ -554,6 +587,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         previousWord={previousWord}
         lastState={lastState}
         mode={mode as PracticeMode}
+        smartDimension={smartDimension}
         options={options}
         selectedAnswer={selectedAnswer}
         showResult={showResult}
