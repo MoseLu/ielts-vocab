@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
-import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses } from './types'
+import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses, RadioQuickSettings } from './types'
 import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './utils'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import PracticeControlBar from './PracticeControlBar'
@@ -55,9 +55,26 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Refs
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
-  const settings: AppSettings = (() => {
+
+  // Reactive settings (so RadioMode picks up changes from the toolbar controls)
+  const [settings, setSettings] = useState<AppSettings>(() => {
     try { return JSON.parse(localStorage.getItem('app_settings') || '{}') as AppSettings } catch { return {} }
-  })()
+  })
+
+  const handleRadioSettingChange = useCallback((key: keyof RadioQuickSettings, value: string | boolean) => {
+    setSettings(prev => {
+      const next = { ...prev, [key]: value }
+      localStorage.setItem('app_settings', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const radioQuickSettings: RadioQuickSettings = {
+    playbackSpeed: String(settings.playbackSpeed ?? '0.8'),
+    playbackCount: String(settings.playbackCount ?? '1'),
+    loopMode:      Boolean(settings.loopMode ?? false),
+    interval:      String(settings.interval ?? '2'),
+  }
 
   // Speech recognition hook
   const {
@@ -413,6 +430,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onModeChange={(m) => onModeChange?.(m)}
           onDayChange={(d) => onDayChange?.(d)}
           onNavigate={navigate}
+          radioQuickSettings={radioQuickSettings}
+          onRadioSettingChange={handleRadioSettingChange}
         />
         <WordListPanel
           show={showWordList}

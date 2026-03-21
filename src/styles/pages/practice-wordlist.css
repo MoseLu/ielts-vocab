@@ -248,6 +248,34 @@
     border-color: rgba(255, 126, 54, 0.25);
 }
 
+/* ── Radio mode quick control buttons ───────────────────────────────────── */
+.radio-quick-btn {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 9px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    height: 28px;
+}
+
+.radio-quick-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+}
+
+/* Compact popover for radio quick controls */
+.popover-radio-panel {
+    min-width: 90px;
+}
+
 /* Mode selector */
 .practice-mode-selector {
     position: relative;
