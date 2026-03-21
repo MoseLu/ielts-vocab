@@ -231,10 +231,25 @@ CSV_CHAPTER_GROUPS = {
     ],
 }
 
+# ── Flat-JSON chapter grouping rules ────────────────────────────────────────
+# Same structure as CSV_CHAPTER_GROUPS but applies to flat JSON list books.
+# Each entry: (chapter_label, filter_fn(word_dict) -> bool)
+JSON_CHAPTER_GROUPS = {
+    # ── AWL学术词汇表 ──────────────────────────────────────────────────────
+    'awl_academic': [
+        ('Sublist 1', lambda w: w.get('sublist') == 1),
+        ('Sublist 2', lambda w: w.get('sublist') == 2),
+        ('Sublist 3', lambda w: w.get('sublist') == 3),
+        ('其他词汇',  lambda w: True),
+    ],
+}
+
 # Cache for loaded vocabulary data
 _vocabulary_cache = {}
 # Cache for CSV chapter structures: {book_id: {'chapters': [...], 'row_data': [...]}}
 _csv_chapter_cache = {}
+# Cache for flat-JSON chapter structures: {book_id: {'chapters': [...], 'words': [...]}}
+_json_chapter_cache = {}
 
 
 def get_vocab_data_path():
@@ -323,6 +338,67 @@ def _build_csv_chapters(book_id):
           f"covering {sum(c['word_count'] for c in chapters)} words")
 
 
+def _build_json_chapters(book_id):
+    """
+    Read a flat-JSON file for book_id and build chapter dicts using JSON_CHAPTER_GROUPS.
+    Each chapter: {id, title, word_count, word_indices: [int, ...]}.
+    Results stored in _json_chapter_cache[book_id].
+    """
+    if book_id in _json_chapter_cache:
+        return
+
+    book = next((b for b in VOCAB_BOOKS if b['id'] == book_id), None)
+    if not book or not book['file'].endswith('.json'):
+        return
+
+    vocab_path = get_vocab_data_path()
+    file_path = os.path.join(vocab_path, book['file'])
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"Error reading JSON for chapters ({book_id}): {e}")
+        return
+
+    # Only handle flat list JSON here; structured JSON is handled inline
+    if not isinstance(data, list):
+        return
+
+    groups = JSON_CHAPTER_GROUPS.get(book_id)
+    chapters = []
+    next_id = 1
+
+    if groups:
+        assigned = set()
+        for (label, predicate) in groups:
+            matched = [(i, w) for i, w in enumerate(data) if i not in assigned and predicate(w)]
+            if not matched:
+                continue
+            new_chapters, next_id = _chunk_group(label, matched, CSV_CHAPTER_SIZE, next_id)
+            # Rename row_indices → word_indices for clarity
+            for ch in new_chapters:
+                ch['word_indices'] = ch.pop('row_indices')
+            chapters.extend(new_chapters)
+            for i, _ in matched:
+                assigned.add(i)
+        remaining = [(i, w) for i, w in enumerate(data) if i not in assigned]
+        if remaining:
+            extra, _ = _chunk_group('其他词汇', remaining, CSV_CHAPTER_SIZE, next_id)
+            for ch in extra:
+                ch['word_indices'] = ch.pop('row_indices')
+            chapters.extend(extra)
+    else:
+        indexed = list(enumerate(data))
+        chapters, _ = _chunk_group('Unit', indexed, CSV_CHAPTER_SIZE, 1)
+        for ch in chapters:
+            ch['word_indices'] = ch.pop('row_indices')
+
+    _json_chapter_cache[book_id] = {'chapters': chapters, 'words': data}
+    print(f"Built {len(chapters)} JSON chapters for '{book_id}' "
+          f"covering {sum(c['word_count'] for c in chapters)} words")
+
+
 def _normalize_csv_word(row):
     """Convert a CSV row dict to a normalized word dict."""
     return {
@@ -363,6 +439,25 @@ def load_book_vocabulary(book_id):
                                 'chapter_title': chapter.get('title')
                             })
                 elif isinstance(data, list):
+                    # Flat-list JSON: attach chapter metadata via _build_json_chapters
+                    _build_json_chapters(book_id)
+                    cached_json = _json_chapter_cache.get(book_id)
+                    if cached_json:
+                        words = []
+                        for ch in cached_json['chapters']:
+                            for idx in ch['word_indices']:
+                                w = data[idx]
+                                if w.get('word', '').strip():
+                                    words.append({
+                                        'word': w.get('word', ''),
+                                        'phonetic': w.get('phonetic', ''),
+                                        'pos': w.get('pos', 'n.'),
+                                        'definition': w.get('definition', '') or w.get('translation', ''),
+                                        'chapter_id': ch['id'],
+                                        'chapter_title': ch['title'],
+                                    })
+                        _vocabulary_cache[book_id] = words
+                        return words
                     raw_words = data
                 elif isinstance(data, dict) and 'vocabulary' in data:
                     raw_words = data['vocabulary']
@@ -464,24 +559,42 @@ def load_book_chapters(book_id):
     file_path = os.path.join(vocab_path, book['file'])
 
     try:
-        # ── JSON books (premium, AWL) ────────────────────────────────────────
+        # ── JSON books ───────────────────────────────────────────────────────
         if book['file'].endswith('.json'):
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                if isinstance(data, dict) and 'chapters' in data:
+
+            # Structured JSON (premium books): has top-level 'chapters' key
+            if isinstance(data, dict) and 'chapters' in data:
+                chapters = [
+                    {
+                        'id': ch.get('id'),
+                        'title': ch.get('title'),
+                        'word_count': ch.get('word_count'),
+                    }
+                    for ch in data['chapters']
+                ]
+                return {
+                    'total_chapters': data.get('total_chapters', len(chapters)),
+                    'total_words': data.get('total_words', 0),
+                    'chapters': chapters,
+                }
+
+            # Flat-list JSON (AWL etc.): build chapters via JSON_CHAPTER_GROUPS
+            if isinstance(data, list):
+                _build_json_chapters(book_id)
+                cached = _json_chapter_cache.get(book_id)
+                if cached:
                     chapters = [
-                        {
-                            'id': ch.get('id'),
-                            'title': ch.get('title'),
-                            'word_count': ch.get('word_count'),
-                        }
-                        for ch in data['chapters']
+                        {'id': c['id'], 'title': c['title'], 'word_count': c['word_count']}
+                        for c in cached['chapters']
                     ]
                     return {
-                        'total_chapters': data.get('total_chapters', len(chapters)),
-                        'total_words': data.get('total_words', 0),
+                        'total_chapters': len(chapters),
+                        'total_words': sum(c['word_count'] for c in cached['chapters']),
                         'chapters': chapters,
                     }
+
             return None
 
         # ── CSV books (comprehensive, ultimate) ─────────────────────────────
@@ -530,30 +643,62 @@ def get_chapter_words(book_id, chapter_id):
         if book['file'].endswith('.json'):
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                if isinstance(data, dict) and 'chapters' in data:
-                    chapter = next(
-                        (ch for ch in data['chapters'] if ch.get('id') == chapter_id), None
-                    )
-                    if not chapter:
-                        return jsonify({'error': 'Chapter not found'}), 404
 
-                    words = [
-                        {
-                            'word': w.get('word', ''),
-                            'phonetic': w.get('phonetic', ''),
-                            'pos': w.get('pos', 'n.'),
-                            'definition': w.get('definition', ''),
-                        }
-                        for w in chapter.get('words', [])
-                    ]
-                    return jsonify({
-                        'chapter': {
-                            'id': chapter.get('id'),
-                            'title': chapter.get('title'),
-                            'word_count': chapter.get('word_count'),
-                        },
-                        'words': words,
-                    }), 200
+            # Structured JSON (premium books)
+            if isinstance(data, dict) and 'chapters' in data:
+                chapter = next(
+                    (ch for ch in data['chapters'] if ch.get('id') == chapter_id), None
+                )
+                if not chapter:
+                    return jsonify({'error': 'Chapter not found'}), 404
+                words = [
+                    {
+                        'word': w.get('word', ''),
+                        'phonetic': w.get('phonetic', ''),
+                        'pos': w.get('pos', 'n.'),
+                        'definition': w.get('definition', ''),
+                    }
+                    for w in chapter.get('words', [])
+                ]
+                return jsonify({
+                    'chapter': {
+                        'id': chapter.get('id'),
+                        'title': chapter.get('title'),
+                        'word_count': chapter.get('word_count'),
+                    },
+                    'words': words,
+                }), 200
+
+            # Flat-list JSON (AWL etc.)
+            if isinstance(data, list):
+                _build_json_chapters(book_id)
+                cached = _json_chapter_cache.get(book_id)
+                if not cached:
+                    return jsonify({'error': 'Chapters not available for this book'}), 404
+                chapter_meta = next(
+                    (c for c in cached['chapters'] if c['id'] == chapter_id), None
+                )
+                if not chapter_meta:
+                    return jsonify({'error': 'Chapter not found'}), 404
+                all_words = cached['words']
+                words = [
+                    {
+                        'word': all_words[i].get('word', ''),
+                        'phonetic': all_words[i].get('phonetic', ''),
+                        'pos': all_words[i].get('pos', 'n.'),
+                        'definition': all_words[i].get('definition', '') or all_words[i].get('translation', ''),
+                    }
+                    for i in chapter_meta['word_indices']
+                    if all_words[i].get('word', '').strip()
+                ]
+                return jsonify({
+                    'chapter': {
+                        'id': chapter_meta['id'],
+                        'title': chapter_meta['title'],
+                        'word_count': chapter_meta['word_count'],
+                    },
+                    'words': words,
+                }), 200
 
             return jsonify({'error': 'No chapters in this book'}), 404
 
