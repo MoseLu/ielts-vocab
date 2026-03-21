@@ -145,14 +145,9 @@ function VocabBookPage() {
       localStorage.setItem('my_books', JSON.stringify(newBooks))
     }
 
-    // Paid books with chapters show ChapterModal, others show PlanModal
-    if (book.is_paid) {
-      setSelectedBook(book)
-      setShowChapterModal(true)
-    } else {
-      setSelectedBook(book)
-      setShowChapterModal(false)
-    }
+    // Books with chapters show ChapterModal; books without chapters show PlanModal
+    setSelectedBook(book)
+    setShowChapterModal(book.has_chapters !== false)
   }
 
   const handleStartStudy = (plan: StudyPlan | null) => {

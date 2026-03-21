@@ -105,10 +105,40 @@
     padding: 20px 24px;
 }
 
+/* ── Section grouping ── */
+.chapter-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.chapter-section-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.chapter-section-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.chapter-section-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+}
+
+/* ── Chapter grid ── */
 .chapter-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
+    gap: 10px;
 }
 
 @media (max-width: 700px) {
