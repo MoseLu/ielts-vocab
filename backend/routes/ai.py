@@ -368,6 +368,9 @@ def ask(current_user: User):
         # Strip [options] blocks from the visible reply text
         clean_reply = _strip_options(final_text)
 
+        import logging
+        logging.warning(f"[AI] response: text_len={len(clean_reply)} options={options}")
+
         return jsonify({
             'reply': clean_reply,
             'options': options,

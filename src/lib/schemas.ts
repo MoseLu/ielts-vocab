@@ -224,7 +224,7 @@ export const ChaptersListResponseSchema = z.object({
 
 export const AIAskResponseSchema = z.object({
   reply: z.string(),
-  options: z.array(z.string()).optional(),
+  options: z.array(z.string()).nullable().optional(),
 })
 
 // ── Form / UI ──────────────────────────────────────────────────────────────

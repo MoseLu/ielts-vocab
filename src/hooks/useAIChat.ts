@@ -111,6 +111,9 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
       // Validate API response with Zod
       const result = safeParse(AIAskResponseSchema, raw)
       if (!result.success) {
+        // Log actual response for debugging
+        console.error('[AI] Zod validation failed. Raw response:', JSON.stringify(raw, null, 2))
+        console.error('[AI] Zod errors:', result.error)
         throw new Error('AI响应格式错误')
       }
 
@@ -118,7 +121,7 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
         id: `asst_${Date.now()}`,
         role: 'assistant',
         content: result.data.reply,
-        options: result.data.options || undefined,
+        options: result.data.options ?? undefined,
         timestamp: Date.now()
       }
       setMessages(prev => [...prev, assistantMsg])
