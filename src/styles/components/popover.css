@@ -1,15 +1,11 @@
-/* ── Popover Dropdown (Element Plus style) ─────────────────────────────────────
+/* ── Popover Dropdown (Element Plus style) ──────────────────────────────────────
    Design goals:
    1. Auto-flip: flips to opposite side when space is insufficient (@floating-ui)
    2. Arrow aligns with trigger button center (auto-positioned by @floating-ui)
-   3. Seamless border: arrow outer border = panel border color, arrow inner
-      = panel background color → visually merges with panel border
-   4. Arrow positioned at panel corner using clip-path (not overflow:hidden)
-
-   Technical note on clip-path vs overflow:hidden:
-   - overflow:hidden clips content at the padding-box edge (including pseudo-elements)
-   - clip-path clips content but allows absolutely-positioned children to render
-     outside the clip boundary (they escape visually)
+   3. Seamless border: no dividing line between arrow and panel
+      → arrow is styled as a 1px border continuation of the panel border
+      → inner transparent area shows panel background color
+   4. Consistent corner radius handling for all placement directions
    ──────────────────────────────────────────────────────────────────────────── */
 
 /* ── Panel ── */
@@ -23,18 +19,11 @@
         0 0 0 1px rgba(0, 0, 0, 0.03);
     z-index: 9999;
     animation: popoverFadeIn 0.18s ease;
-    /* No overflow:hidden — use clip-path below for corner clipping */
 }
 
 @keyframes popoverFadeIn {
     from { opacity: 0; transform: translateY(-4px); }
     to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Clip-path: create rounded corners, slightly inset so the panel border
-   remains visible. The arrow container will render beyond this clip region. */
-.popover-panel[data-placement^="bottom"] {
-    clip-path: inset(0 0 0 0 round var(--radius-lg));
 }
 
 .popover-content {
@@ -43,153 +32,96 @@
     padding: var(--space-xs);
 }
 
-/* ── Arrow ───────────────────────────────────────────────────────────────────
-   Element Plus pattern: the arrow sits ABOVE the panel's top-left corner
-   (for bottom placement), with:
-   - outer border: panel border color (creates seamless continuation)
-   - inner background: panel background (covers panel border at junction)
+/* ── Arrow ─────────────────────────────────────────────────────────────────────
+   Element Plus technique (popper.scss):
+   - Arrow container: 10×10px, z-index: -1 (behind panel content)
+   - ::before: 10×10px square, rotated 45°, diagonal border cut
+   - Arrow container positioned INSIDE panel at -5px from the edge
+     → arrow tip aligns exactly with panel border corner
+     → transparent diagonal reveals panel background, creating seamless blend
+   - Floating UI sets arrow.x dynamically for horizontal centering
+   ──────────────────────────────────────────────────────────────────────────── */
 
-   Position math:
-   Panel top-left corner (before border radius) = (0, 0)
-   Panel rounded corner arc starts at x=8px for 8px radius
-   Arrow tip aligns with panel's inner edge at corner
-   Arrow top edge = -14px above panel top
-   ──────────────────────────────────────────────────────────────────────── */
 .popover-arrow {
     position: absolute;
-    width: 20px;
-    height: 20px;
-    overflow: visible; /* critical: allows child to escape panel clip */
-    z-index: 1;
+    width: 10px;
+    height: 10px;
+    z-index: -1;
 }
 
-/* The visible triangle: 10px borders = 20px square, triangle = 10×10px */
-.popover-arrow-inner {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    overflow: visible;
-}
-
-/* Outer triangle (visible border continuation) */
-.popover-arrow-inner::before {
+.popover-arrow::before {
     content: '';
     position: absolute;
-    width: 0;
-    height: 0;
+    width: 10px;
+    height: 10px;
+    z-index: -1;
+    transform: rotate(45deg);
+    background: var(--bg-color);
+    box-sizing: border-box;
 }
 
-/* Inner overlay (panel background color, covers junction line) */
-.popover-arrow-inner::after {
-    content: '';
-    position: absolute;
-}
-
-/* ── BOTTOM placement: arrow above panel, points down ── */
+/* ── BOTTOM: arrow above panel, tip points down ── */
 .popover-panel[data-placement^="bottom"] .popover-arrow {
-    /* Floating UI positions arrow.x at button center, we position Y */
-    top: -10px;
-    /* Horizontally: floating-ui sets left/right; center at arrow.x */
+    top: -5px; /* inside panel, 5px from panel top edge */
 }
 
-.popover-panel[data-placement^="bottom"] .popover-arrow-inner::before {
-    /* Bottom-left border = panel border color (continuation of panel top border) */
-    border-left: 10px solid transparent;
-    border-bottom: 10px solid var(--border);
-    /* Top and right borders = transparent (invisible) */
-    border-top: 10px solid transparent;
-    border-right: 10px solid transparent;
-    /* Triangle apex: bottom-left corner of the 20px container */
-    bottom: 0;
-    left: 0;
+.popover-panel[data-placement^="bottom"] .popover-arrow::before {
+    /* left + top borders transparent → creates downward-pointing triangle */
+    border-left: 5px solid transparent;
+    border-top: 5px solid transparent;
+    /* bottom + right borders = panel border color */
+    border-right: 5px solid var(--border);
+    border-bottom: 5px solid var(--border);
+    /* rounded outer corner for seamless panel corner blend */
+    border-top-left-radius: 2px;
 }
 
-.popover-panel[data-placement^="bottom"] .popover-arrow-inner::after {
-    /* Inner triangle in panel background, offset by 1px inward to
-       cover the panel's own top border at the junction */
-    width: 0;
-    height: 0;
-    border-left: 9px solid transparent;
-    border-bottom: 9px solid var(--bg-color);
-    border-top: 9px solid transparent;
-    border-right: 9px solid transparent;
-    bottom: 1px;  /* 1px inside the outer triangle */
-    left: 1px;
-}
-
-/* ── TOP placement: arrow below panel, points up ── */
+/* ── TOP: arrow below panel, tip points up ── */
 .popover-panel[data-placement^="top"] .popover-arrow {
-    bottom: -10px;
+    bottom: -5px; /* inside panel, 5px from panel bottom edge */
 }
 
-.popover-panel[data-placement^="top"] .popover-arrow-inner::before {
-    border-right: 10px solid transparent;
-    border-top: 10px solid var(--border);
-    border-left: 10px solid transparent;
-    border-bottom: 10px solid transparent;
-    top: 0;
-    right: 0;
+.popover-panel[data-placement^="top"] .popover-arrow::before {
+    /* right + bottom borders transparent → creates upward-pointing triangle */
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    /* top + left borders = panel border color */
+    border-top: 5px solid var(--border);
+    border-left: 5px solid var(--border);
+    /* rounded outer corner */
+    border-bottom-right-radius: 2px;
 }
 
-.popover-panel[data-placement^="top"] .popover-arrow-inner::after {
-    width: 0;
-    height: 0;
-    border-right: 9px solid transparent;
-    border-top: 9px solid var(--bg-color);
-    border-left: 9px solid transparent;
-    border-bottom: 9px solid transparent;
-    top: 1px;
-    right: 1px;
-}
-
-/* ── RIGHT placement: arrow left of panel, points right ── */
+/* ── RIGHT: arrow left of panel, tip points right ── */
 .popover-panel[data-placement^="right"] .popover-arrow {
-    left: -10px;
+    left: -5px; /* inside panel, 5px from panel left edge */
 }
 
-.popover-panel[data-placement^="right"] .popover-arrow-inner::before {
-    border-top: 10px solid transparent;
-    border-right: 10px solid var(--border);
-    border-bottom: 10px solid transparent;
-    border-left: 10px solid transparent;
-    top: 0;
-    right: 0;
+.popover-panel[data-placement^="right"] .popover-arrow::before {
+    /* top + left borders transparent → creates rightward-pointing triangle */
+    border-top: 5px solid transparent;
+    border-left: 5px solid transparent;
+    /* right + bottom borders = panel border color */
+    border-right: 5px solid var(--border);
+    border-bottom: 5px solid var(--border);
+    /* rounded outer corner */
+    border-top-left-radius: 2px;
 }
 
-.popover-panel[data-placement^="right"] .popover-arrow-inner::after {
-    width: 0;
-    height: 0;
-    border-top: 9px solid transparent;
-    border-right: 9px solid var(--bg-color);
-    border-bottom: 9px solid transparent;
-    border-left: 9px solid transparent;
-    top: 1px;
-    right: 1px;
-}
-
-/* ── LEFT placement: arrow right of panel, points left ── */
+/* ── LEFT: arrow right of panel, tip points left ── */
 .popover-panel[data-placement^="left"] .popover-arrow {
-    right: -10px;
+    right: -5px; /* inside panel, 5px from panel right edge */
 }
 
-.popover-panel[data-placement^="left"] .popover-arrow-inner::before {
-    border-bottom: 10px solid transparent;
-    border-left: 10px solid var(--border);
-    border-top: 10px solid transparent;
-    border-right: 10px solid transparent;
-    bottom: 0;
-    left: 0;
-}
-
-.popover-panel[data-placement^="left"] .popover-arrow-inner::after {
-    width: 0;
-    height: 0;
-    border-bottom: 9px solid transparent;
-    border-left: 9px solid var(--bg-color);
-    border-top: 9px solid transparent;
-    border-right: 9px solid transparent;
-    bottom: 1px;
-    left: 1px;
+.popover-panel[data-placement^="left"] .popover-arrow::before {
+    /* bottom + right borders transparent → creates leftward-pointing triangle */
+    border-bottom: 5px solid transparent;
+    border-right: 5px solid transparent;
+    /* left + top borders = panel border color */
+    border-left: 5px solid var(--border);
+    border-top: 5px solid var(--border);
+    /* rounded outer corner */
+    border-bottom-right-radius: 2px;
 }
 
 /* ── Option list content ─────────────────────────────────────────────────── */
