@@ -102,13 +102,56 @@ export function playWord(word: string, settings: { playbackSpeed?: string; volum
   speechSynthesis.speak(u)
 }
 
+// ── Voice selection ──────────────────────────────────────────────────────────
+
+// Priority list: neural/online voices (clearest, most natural stress)
+const PREFERRED_VOICES = [
+  'Google US English',
+  'Microsoft Aria Online (Natural)',
+  'Microsoft Christopher Online (Natural)',
+  'Microsoft Guy Online (Natural)',
+  'Microsoft Aria',
+  'Samantha',            // macOS
+  'Alex',                // macOS
+]
+
+let _bestVoice: SpeechSynthesisVoice | null | undefined = undefined
+
+function getBestEnglishVoice(): SpeechSynthesisVoice | null {
+  if (_bestVoice !== undefined) return _bestVoice
+  const voices = speechSynthesis.getVoices()
+  if (!voices.length) return null
+
+  for (const name of PREFERRED_VOICES) {
+    const v = voices.find(v => v.name === name)
+    if (v) { _bestVoice = v; return v }
+  }
+  // Any online (neural) en-US voice
+  const online = voices.find(v => !v.localService && v.lang === 'en-US')
+  if (online) { _bestVoice = online; return online }
+  // Any en-US
+  const enUs = voices.find(v => v.lang === 'en-US')
+  if (enUs) { _bestVoice = enUs; return enUs }
+  // Any English
+  _bestVoice = voices.find(v => v.lang.startsWith('en')) ?? null
+  return _bestVoice
+}
+
+// Reset voice cache whenever browser loads new voices
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.addEventListener('voiceschanged', () => { _bestVoice = undefined })
+}
+
+// ── Audio playback ───────────────────────────────────────────────────────────
+
 // Singleton audio instance — stops previous playback when a new word starts.
 let _currentAudio: HTMLAudioElement | null = null
 
 /**
- * Play word pronunciation via Youdao dictionary audio (US English).
- * Falls back to speechSynthesis if the audio fails to load.
- * @param onEnd  optional callback fired when playback finishes
+ * Play word pronunciation.
+ * Primary:  Web Speech API with the best available English voice
+ *           (Google/Microsoft neural TTS — clear, bright, natural stress).
+ * Fallback: Youdao dictionary audio if speechSynthesis is unavailable.
  */
 export function playWordAudio(
   word: string,
@@ -126,23 +169,44 @@ export function playWordAudio(
   const volume = parseFloat(settings.volume || '100') / 100
   const rate   = parseFloat(settings.playbackSpeed || '1.0')
 
-  const audio = new Audio(
-    `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`
-  )
-  audio.volume = Math.min(1, Math.max(0, volume))
-  audio.playbackRate = Math.min(4, Math.max(0.25, rate))
-  if (onEnd) audio.onended = onEnd
-  _currentAudio = audio
-
-  audio.play().catch(() => {
-    // Fallback: Web Speech API
-    _currentAudio = null
+  const speakWithSynthesis = () => {
     const u = new SpeechSynthesisUtterance(word)
+    u.lang   = 'en-US'
     u.rate   = rate
     u.volume = volume
+    const voice = getBestEnglishVoice()
+    if (voice) u.voice = voice
     if (onEnd) u.onend = onEnd
     speechSynthesis.speak(u)
-  })
+  }
+
+  const speakWithYoudao = () => {
+    const audio = new Audio(
+      `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`
+    )
+    audio.volume = Math.min(1, Math.max(0, volume))
+    audio.playbackRate = Math.min(4, Math.max(0.25, rate))
+    if (onEnd) audio.onended = onEnd
+    _currentAudio = audio
+    audio.play().catch(() => {
+      _currentAudio = null
+      if (onEnd) onEnd()
+    })
+  }
+
+  // Web Speech API is unavailable (rare) → fall back to Youdao
+  if (typeof speechSynthesis === 'undefined') {
+    speakWithYoudao()
+    return
+  }
+
+  // Voices may not be ready on first call — wait for them then speak
+  const voices = speechSynthesis.getVoices()
+  if (!voices.length) {
+    speechSynthesis.addEventListener('voiceschanged', speakWithSynthesis, { once: true })
+  } else {
+    speakWithSynthesis()
+  }
 }
 
 /** Stop any in-progress audio (both Audio element and speechSynthesis). */
