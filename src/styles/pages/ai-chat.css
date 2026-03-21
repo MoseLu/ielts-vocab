@@ -210,6 +210,8 @@
     background: var(--bg-secondary);
     color: var(--text-primary);
     border-bottom-left-radius: 4px;
+    /* Reserve space for the copy button (26px + 8px right offset + 6px gap) */
+    padding-right: 44px;
 }
 
 .ai-msg-bubble p {

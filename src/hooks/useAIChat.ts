@@ -96,6 +96,13 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
 
       if (!resp.ok) {
         const err = await resp.json()
+        // Token expired → clear token and redirect to login
+        if (resp.status === 401 && err.error === 'Token has expired') {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('user')
+          window.location.href = '/login?expired=1'
+          throw new Error('登录已过期，请重新登录')
+        }
         throw new Error(err.error || '请求失败')
       }
 
