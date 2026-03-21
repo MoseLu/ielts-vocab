@@ -167,7 +167,7 @@ export function playWordAudio(
   speechSynthesis.cancel()
 
   const volume = parseFloat(settings.volume || '100') / 100
-  const rate   = parseFloat(settings.playbackSpeed || '1.0')
+  const rate   = parseFloat(settings.playbackSpeed || '0.8')
 
   const speakWithSynthesis = () => {
     const u = new SpeechSynthesisUtterance(word)

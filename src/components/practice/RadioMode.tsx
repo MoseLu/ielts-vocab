@@ -25,27 +25,52 @@ export default function RadioMode({
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
 
-  // Keep refs in sync with latest props
+  // Keep refs in sync with latest props (including settings changes from toolbar)
+  const settingsRef = useRef(settings)
   useEffect(() => {
     vocabRef.current = vocabulary
     queueRef.current = queue
   }, [vocabulary, queue])
+  useEffect(() => { settingsRef.current = settings }, [settings])
 
-  const radioPlayFrom = useCallback((idx: number) => {
+  // Stable recursive callback — always reads latest values from refs
+  const radioPlayFrom = useCallback((idx: number, repeat: number = 0) => {
     const q = queueRef.current
     const vocab = vocabRef.current
-    if (idx >= q.length) { radioActiveRef.current = false; return }
+    const s = settingsRef.current
+    const maxRepeat = Math.max(0, parseInt(String(s.playbackCount ?? '1')) - 1)
+    const loopMode  = Boolean(s.loopMode)
+
+    if (idx >= q.length) {
+      if (loopMode) {
+        radioIndexRef.current = 0
+        setCurrentIndex(0)
+        if (radioActiveRef.current) radioPlayFrom(0, 0)
+      } else {
+        radioActiveRef.current = false
+      }
+      return
+    }
     radioIndexRef.current = idx
     setCurrentIndex(idx)
     const word = vocab[q[idx]]
-    if (!word) { radioPlayFrom(idx + 1); return }
-    playWordAudio(word.word, settings, () => {
+    if (!word) { radioPlayFrom(idx + 1, 0); return }
+
+    playWordAudio(word.word, s, () => {
       if (!radioActiveRef.current) return
-      radioTimerRef.current = setTimeout(() => {
-        if (radioActiveRef.current) radioPlayFrom(radioIndexRef.current + 1)
-      }, parseFloat(settings.interval || '2') * 1000)
+      if (repeat < maxRepeat) {
+        // Brief pause between repetitions of the same word
+        setTimeout(() => {
+          if (radioActiveRef.current) radioPlayFrom(idx, repeat + 1)
+        }, 500)
+      } else {
+        // Move to next word after interval
+        radioTimerRef.current = setTimeout(() => {
+          if (radioActiveRef.current) radioPlayFrom(radioIndexRef.current + 1, 0)
+        }, parseFloat(String(s.interval ?? '2')) * 1000)
+      }
     })
-  }, [settings])
+  }, []) // stable — all state accessed via refs
 
   // Start playback on mount
   useEffect(() => {

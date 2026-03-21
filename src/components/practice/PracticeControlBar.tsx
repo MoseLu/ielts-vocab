@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Popover from '../ui/Popover'
-import type { PracticeControlBarProps, PracticeMode } from './types'
+import type { PracticeControlBarProps, PracticeMode, RadioQuickSettings } from './types'
 
 const modeNames: Record<PracticeMode, string> = {
   'smart': '智能模式',
@@ -13,6 +13,44 @@ const modeNames: Record<PracticeMode, string> = {
 }
 
 const modeList: PracticeMode[] = ['smart', 'listening', 'meaning', 'dictation', 'radio']
+
+const SPEED_OPTIONS = ['0.6', '0.8', '1.0', '1.2'] as const
+const COUNT_OPTIONS = ['1', '2', '3'] as const
+const INTERVAL_OPTIONS = ['1', '2', '3', '5'] as const
+
+function RadioQuickControl<T extends string | boolean>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: { value: T; label: string }[]
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <Popover
+      placement="bottom"
+      offset={10}
+      panelClassName="popover-radio-panel"
+      trigger={
+        <button className="radio-quick-btn">{label}</button>
+      }
+    >
+      {options.map(opt => (
+        <button
+          key={String(opt.value)}
+          className={`popover-option ${value === opt.value ? 'active' : ''}`}
+          onClick={() => onChange(opt.value)}
+        >
+          <span className={`ctx-radio ${value === opt.value ? 'checked' : ''}`} />
+          {opt.label}
+        </button>
+      ))}
+    </Popover>
+  )
+}
 
 export default function PracticeControlBar({
   mode,
@@ -30,6 +68,8 @@ export default function PracticeControlBar({
   onModeChange,
   onDayChange,
   onNavigate,
+  radioQuickSettings,
+  onRadioSettingChange,
 }: PracticeControlBarProps) {
   return (
     <div className="practice-ctrl-bar">
@@ -89,6 +129,39 @@ export default function PracticeControlBar({
               )}
             </div>
           </Popover>
+        )}
+
+        {/* ── Radio mode quick controls ── */}
+        {mode === 'radio' && radioQuickSettings && onRadioSettingChange && (
+          <>
+            <RadioQuickControl<string>
+              label={`x${radioQuickSettings.playbackSpeed}倍`}
+              value={radioQuickSettings.playbackSpeed}
+              options={SPEED_OPTIONS.map(v => ({ value: v, label: `x${v}倍` }))}
+              onChange={v => onRadioSettingChange('playbackSpeed', v)}
+            />
+            <RadioQuickControl<string>
+              label={`${radioQuickSettings.playbackCount}遍`}
+              value={radioQuickSettings.playbackCount}
+              options={COUNT_OPTIONS.map(v => ({ value: v, label: `${v}遍` }))}
+              onChange={v => onRadioSettingChange('playbackCount', v)}
+            />
+            <RadioQuickControl<boolean>
+              label={radioQuickSettings.loopMode ? '连听' : '单次'}
+              value={radioQuickSettings.loopMode}
+              options={[
+                { value: true, label: '连听' },
+                { value: false, label: '单次' },
+              ]}
+              onChange={v => onRadioSettingChange('loopMode', v)}
+            />
+            <RadioQuickControl<string>
+              label={`${radioQuickSettings.interval}秒`}
+              value={radioQuickSettings.interval}
+              options={INTERVAL_OPTIONS.map(v => ({ value: v, label: `${v}秒` }))}
+              onChange={v => onRadioSettingChange('interval', v)}
+            />
+          </>
         )}
 
         {/* ── Mode switcher — Popover with auto-flip ── */}

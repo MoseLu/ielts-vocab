@@ -65,6 +65,13 @@ export interface PracticePageProps {
   onDayChange?: (day: number) => void
 }
 
+export interface RadioQuickSettings {
+  playbackSpeed: string
+  playbackCount: string
+  loopMode: boolean
+  interval: string
+}
+
 export interface PracticeControlBarProps {
   mode: PracticeMode | undefined
   currentDay: number | undefined
@@ -81,6 +88,9 @@ export interface PracticeControlBarProps {
   onModeChange: (mode: PracticeMode) => void
   onDayChange: (day: number) => void
   onNavigate: (path: string) => void
+  // Radio mode quick settings
+  radioQuickSettings?: RadioQuickSettings
+  onRadioSettingChange?: (key: keyof RadioQuickSettings, value: string | boolean) => void
 }
 
 export interface WordListPanelProps {

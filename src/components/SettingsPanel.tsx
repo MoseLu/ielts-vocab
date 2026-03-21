@@ -35,7 +35,7 @@ const defaultSettings: AppSettings = {
   errorBook: true,
   voice: 'default',
   playbackCount: '2',
-  playbackSpeed: '1.0',
+  playbackSpeed: '0.8',
   volume: '100',
   interval: '2',
   dictationMode: false,
@@ -217,10 +217,10 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                     <div className="settings-item-desc">发音播放的语速快慢</div>
                   </div>
                   <select className="settings-select" value={settings.playbackSpeed} onChange={(e) => updateSetting('playbackSpeed', e.target.value)}>
-                    <option value="0.7">慢速 0.7x</option>
-                    <option value="1.0">正常 1.0x</option>
-                    <option value="1.2">快速 1.2x</option>
-                    <option value="1.5">极速 1.5x</option>
+                    <option value="0.6">慢速 0.6x</option>
+                    <option value="0.8">正常 0.8x</option>
+                    <option value="1.0">快速 1.0x</option>
+                    <option value="1.2">极速 1.2x</option>
                   </select>
                 </div>
                 <div className="settings-item">
