@@ -12,6 +12,7 @@ from routes.vocabulary import vocabulary_bp
 from routes.speech import speech_bp
 from routes.books import books_bp
 from routes.speech_socketio import register_socketio_events
+from routes.ai import ai_bp
 
 
 def create_app(config_class=Config):
@@ -31,6 +32,7 @@ def create_app(config_class=Config):
     app.register_blueprint(vocabulary_bp, url_prefix='/api/vocabulary')
     app.register_blueprint(speech_bp, url_prefix='/api/speech')
     app.register_blueprint(books_bp, url_prefix='/api/books')
+    app.register_blueprint(ai_bp, url_prefix='/api/ai')
 
     # Create database tables
     with app.app_context():

@@ -141,7 +141,7 @@
 .user-btn {
     width: 40px; height: 40px;
     display: flex; align-items: center; justify-content: center;
-    background: var(--accent); color: white; border: none;
+    background: transparent; color: white; border: none;
     border-radius: var(--radius-full);
     font-size: 14px; font-weight: 600;
     cursor: pointer;

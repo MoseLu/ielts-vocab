@@ -1,70 +1,102 @@
 # IELTS Vocabulary App
 
-An IELTS vocabulary learning web application with 30-day structured learning plan (100 words/day = 3000 words total).
+An IELTS vocabulary learning web application.
+
+## Technology Stack
+
+- **Frontend**: React 19 + TypeScript + Vite
+- **Styling**: Tailwind CSS + CSS variables
+- **Validation**: Zod (runtime type validation)
+- **Backend**: Python Flask + SQLite
+- **Auth**: JWT Token + localStorage
 
 ## Project Structure
 
 ```
-ielts-vocab/
-├── index.html          # Main HTML structure
-├── css/style.css       # Styling
-├── js/main.js          # Application logic
-├── database.sql        # Supabase database schema
-└── assets/images/logo.png
+src/
+├── app/                    # App router entry
+├── components/
+│   ├── ui/                 # Base UI components (Button, Card, Input, Modal, Loading)
+│   ├── layout/             # Layout components (MainLayout, AuthLayout, PracticeLayout)
+│   └── practice/           # Practice feature components
+├── contexts/               # React context providers (Auth, Settings, Toast, AIChat)
+├── features/
+│   ├── vocabulary/hooks/   # useVocabBooks, useBookWords, useBookProgress, useAllBookProgress
+│   ├── ai-chat/            # AI chat feature
+│   └── speech/             # Speech recognition feature
+├── hooks/                  # Shared hooks (useSpeechRecognition, useAIChat)
+├── lib/                    # Utilities
+│   ├── index.ts            # Helpers (storage, API fetch, formatting)
+│   ├── schemas.ts           # Zod schemas for all data shapes
+│   ├── validation.ts       # safeParse, ValidationResult utilities
+│   └── useForm.ts          # Zod-powered form validation hook
+├── types/                  # Global TypeScript interfaces
+├── constants/              # App constants (practice modes, storage keys, defaults)
+└── styles/                # CSS entry point
 ```
 
-## Technology Stack
+## Zod Validation
 
-- **Frontend**: Vanilla HTML/CSS/JS
-- **Backend**: Python Flask + SQLite
-- **Authentication**: JWT Token
-- **Styling**: Custom CSS with CSS variables
-- **Typography**: Inter (Latin), Noto Sans SC (Chinese)
-- **Icons**: SVG inline
+All data shapes are validated at runtime with [Zod](https://zod.dev).
+
+**Schema location**: `src/lib/schemas.ts`
+
+Schemas cover:
+- Auth forms (`LoginSchema`, `RegisterSchema`)
+- API responses (`AuthResponseSchema`, `BooksListResponseSchema`, etc.)
+- Domain types (`UserSchema`, `BookSchema`, `ChapterSchema`, `WordSchema`, etc.)
+- App settings (`AppSettingsSchema`)
+- Practice types (`PracticeModeSchema`, `WordSchema`, etc.)
+
+**Validation utilities** (`src/lib/validation.ts`):
+- `safeParse(schema, data)` → `ValidationResult<T>` — never throws
+- `parseOrThrow(schema, data)` → throws on failure
+- `formatErrors(result)` / `firstError(result)` — human-readable error formatting
+
+**Form hook** (`src/lib/useForm.ts`):
+- `useForm({ schema })` — field-level validation, touch tracking, form-level submit
+
+All contexts use Zod validation:
+- `AuthContext` — validates login/register input + API responses
+- `SettingsContext` — validates persisted settings on load
+- `ToastContext` — validates toast payloads
+- `useAIChat` — validates AI API responses
+- `useVocabBooks` / `useBookWords` / `useBookProgress` — validates all API responses
 
 ## Key Features
 
-1. **Authentication**: Login/Register with JWT, localStorage fallback for offline use
-2. **Vocabulary Learning**: 30 days × 100 words = 3000 IELTS vocabulary words
-3. **Practice Modes**:
-   - Meaning Mode: Match English word to Chinese definition
-   - Listening Mode: Listen to pronunciation, then match definition
-4. **Progress Tracking**: Track correct/wrong answers, save progress to database
-5. **Responsive Design**: Mobile-friendly UI
+1. **Authentication**: Login/Register with Zod validation
+2. **Vocabulary Books**: Browse, filter, and study from vocabulary books
+3. **Practice Modes**: Smart, Listening, Meaning, Dictation, Radio
+4. **Progress Tracking**: Book/chapter-level progress with Zod-validated persistence
+5. **AI Chat Assistant**: Contextual learning help powered by AI
+6. **Responsive Design**: Mobile-friendly UI
 
 ## Backend API
 
 The backend is built with Flask and provides RESTful APIs:
 
-- **Auth API** (`/api/auth`): Register, login, logout, get current user
-- **Progress API** (`/api/progress`): Save and retrieve learning progress
-- **Vocabulary API** (`/api/vocabulary`): Get vocabulary data
-
-See `backend/` directory for implementation details.
+- **Auth API** (`/api/auth`): Register, login, logout, avatar
+- **Books API** (`/api/books`): List books, fetch words, chapter progress
+- **Progress API** (`/api/books/progress`): Save and retrieve learning progress
+- **AI API** (`/api/ai/ask`): AI chat assistant
 
 ## Development
 
-1. Install backend dependencies:
-   ```bash
-   cd backend
-   pip install flask flask-cors flask-sqlalchemy flask-jwt-extended
-   ```
+```bash
+# Frontend
+cd E:/app/ielts-vocab
+npm run dev        # Dev server
+npm run build      # Production build
 
-2. Start backend server:
-   ```bash
-   python app.py
-   ```
-   Server runs at: http://localhost:5000
+# Backend
+cd backend
+pip install flask flask-cors flask-sqlalchemy flask-jwt-extended
+python app.py      # Runs at http://localhost:5000
+```
 
-3. Open `index.html` in a browser
+## Browser APIs
 
-The backend uses SQLite database (`backend/database.sqlite`) which is automatically created on first run.
-
-## Browser APIs Used
-
-- `speechSynthesis`: For pronunciation in listening mode
-- `localStorage`: For offline fallback and session persistence
-
-## License
-
-MIT
+- `speechSynthesis`: Pronunciation in listening mode
+- `localStorage`: Auth token, user data, settings, progress
+- `WebSocket`: Real-time speech recognition (via Socket.IO)

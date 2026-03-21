@@ -142,18 +142,37 @@
 
 .user-dropdown {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + 10px);
     right: 0;
-    margin-top: 8px;
+    margin-top: 4px;
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: var(--space-sm);
-    min-width: 180px;
-    box-shadow: var(--shadow-lg);
+    padding: var(--space-xs);
+    min-width: 200px;
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(0, 0, 0, 0.03);
     display: none;
     z-index: 200;
-    animation: dropdownFadeIn 0.2s ease;
+    animation: dropdownFadeIn 0.18s ease;
+}
+
+/* Popover arrow for user dropdown */
+.user-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: 14px;
+    width: 12px;
+    height: 12px;
+    background: var(--bg-color);
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    transform: rotate(45deg);
+    border-radius: 2px;
+    z-index: 1;
 }
 
 .user-dropdown.show {
@@ -161,15 +180,38 @@
 }
 
 
-.dropdown-item:hover {
-    background: var(--bg-secondary);
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 9px var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: background var(--transition-fast), color var(--transition-fast);
 }
 
+.dropdown-item:hover {
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
 
-.dropdown-divider {
-    height: 1px;
-    background: var(--border);
-    margin: var(--space-sm) 0;
+.dropdown-item svg {
+    flex-shrink: 0;
+}
+
+.dropdown-item.logout-item {
+    color: var(--error);
+}
+
+.dropdown-item.logout-item:hover {
+    background: var(--error-light);
 }
 
 .day-dropdown-header {
@@ -230,16 +272,6 @@
     height: 1px;
     background: var(--border);
     margin: var(--space-xs) 0;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-}
-
-.dropdown-item svg {
-    flex-shrink: 0;
 }
 
 /* ── Dropdown positional overrides (canonical) ── */

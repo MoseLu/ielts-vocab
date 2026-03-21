@@ -189,8 +189,15 @@ def get_books():
     """Get all vocabulary books with optional filtering"""
     category = request.args.get('category')
     level = request.args.get('level')
+    study_type = request.args.get('study_type')
 
     books = VOCAB_BOOKS.copy()
+
+    # study_type filters by exam type (ielts/toefl/gre). All current books are IELTS.
+    # When study_type is 'ielts' or not provided, return all books.
+    # When a specific study_type is set, filter to books matching that type.
+    if study_type and study_type != 'ielts':
+        books = [b for b in books if b.get('study_type') == study_type]
 
     if category:
         books = [b for b in books if b['category'] == category]

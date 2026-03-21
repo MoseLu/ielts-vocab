@@ -18,6 +18,7 @@
 @import './components/complete.css';
 @import './components/settings.css';
 @import './components/avatar.css';
+@import './components/popover.css';
 
 /* ── Pages: Auth ── */
 @import './pages/auth.css';
@@ -54,6 +55,12 @@
 
 /* ── Pages: Profile ── */
 @import './pages/profile.css';
+
+/* ── Pages: AI Chat ── */
+@import './pages/ai-chat.css';
+
+/* ── Pages: Vocab Test ── */
+@import './pages/vocab-test.css';
 
 /* ── Utils ── */
 @import './utils/utilities.css';

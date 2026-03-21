@@ -1,3 +1,4 @@
+import json
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -122,4 +123,128 @@ class UserChapterProgress(db.Model):
             'accuracy': accuracy,
             'is_completed': self.is_completed,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+# ── Custom Books (AI-generated) ──────────────────────────────────────────────
+
+class CustomBook(db.Model):
+    """AI-generated custom vocabulary book"""
+    __tablename__ = 'custom_books'
+
+    id = db.Column(db.String(50), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    word_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    chapters = db.relationship('CustomBookChapter', backref='book', lazy=True,
+                                 cascade='all, delete-orphan', order_by='CustomBookChapter.sort_order')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'description': self.description,
+            'word_count': self.word_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'chapters': [c.to_dict() for c in self.chapters]
+        }
+
+
+class CustomBookChapter(db.Model):
+    """Chapter within an AI-generated custom book"""
+    __tablename__ = 'custom_book_chapters'
+
+    id = db.Column(db.String(50), primary_key=True)
+    book_id = db.Column(db.String(50), db.ForeignKey('custom_books.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    word_count = db.Column(db.Integer, default=0)
+    sort_order = db.Column(db.Integer, default=0)
+
+    words = db.relationship('CustomBookWord', backref='chapter', lazy=True,
+                             cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'book_id': self.book_id,
+            'title': self.title,
+            'word_count': self.word_count,
+            'sort_order': self.sort_order,
+            'words': [w.to_dict() for w in self.words]
+        }
+
+
+class CustomBookWord(db.Model):
+    """Word within a custom book chapter"""
+    __tablename__ = 'custom_book_words'
+
+    id = db.Column(db.Integer, primary_key=True)
+    chapter_id = db.Column(db.String(50), db.ForeignKey('custom_book_chapters.id'), nullable=False)
+    word = db.Column(db.String(100), nullable=False)
+    phonetic = db.Column(db.String(100), nullable=True)
+    pos = db.Column(db.String(50), nullable=True)
+    definition = db.Column(db.Text, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'chapter_id': self.chapter_id,
+            'word': self.word,
+            'phonetic': self.phonetic,
+            'pos': self.pos,
+            'definition': self.definition
+        }
+
+
+# ── User Wrong Words (synced from client) ────────────────────────────────────
+
+class UserWrongWord(db.Model):
+    """Wrong words synced from client localStorage for AI context"""
+    __tablename__ = 'user_wrong_words'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    word = db.Column(db.String(100), nullable=False)
+    phonetic = db.Column(db.String(100), nullable=True)
+    pos = db.Column(db.String(50), nullable=True)
+    definition = db.Column(db.Text, nullable=True)
+    wrong_count = db.Column(db.Integer, default=1)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'word', name='unique_user_wrong_word'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'word': self.word,
+            'phonetic': self.phonetic,
+            'pos': self.pos,
+            'definition': self.definition,
+            'wrong_count': self.wrong_count,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class SearchCache(db.Model):
+    """Cached web search results for word lookups"""
+    __tablename__ = 'search_cache'
+
+    id = db.Column(db.Integer, primary_key=True)
+    query = db.Column(db.String(500), nullable=False, unique=True)
+    result = db.Column(db.Text, nullable=False)  # JSON string
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'query': self.query,
+            'result': json.loads(self.result),
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
