@@ -61,6 +61,7 @@ export interface Book {
   icon?: string
   color?: string
   is_paid?: boolean
+  has_chapters?: boolean
   file?: string
   [key: string]: unknown
 }
