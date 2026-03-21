@@ -7,6 +7,7 @@ export const PRACTICE_MODES = {
   MEANING: 'meaning',
   DICTATION: 'dictation',
   RADIO: 'radio',
+  QUICK_MEMORY: 'quickmemory',
 } as const
 
 export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRACTICE_MODES], string> = {
@@ -15,6 +16,7 @@ export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRAC
   [PRACTICE_MODES.MEANING]: '看词选义',
   [PRACTICE_MODES.DICTATION]: '听写模式',
   [PRACTICE_MODES.RADIO]: '随身听',
+  [PRACTICE_MODES.QUICK_MEMORY]: '快速记忆',
 }
 
 // LocalStorage keys
@@ -29,6 +31,7 @@ export const STORAGE_KEYS = {
   CHAPTER_PROGRESS: 'chapter_progress',
   WRONG_WORDS: 'wrong_words',
   WRONG_WORDS_PROGRESS: 'wrong_words_progress',
+  QUICK_MEMORY_RECORDS: 'quick_memory_records',
 } as const
 
 // API endpoints

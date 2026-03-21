@@ -1,6 +1,27 @@
 // ── Types for Practice Components ────────────────────────────────────────────────
 
-export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio'
+export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'quickmemory'
+
+// ── Quick Memory — DHP + Ebbinghaus spaced repetition ──────────────────────
+export interface QuickMemoryRecord {
+  status: 'known' | 'unknown'
+  firstSeen: number       // epoch ms
+  lastSeen: number        // epoch ms
+  knownCount: number
+  unknownCount: number
+  nextReview: number      // epoch ms — Ebbinghaus-derived next review time
+}
+export type QuickMemoryRecords = Record<string, QuickMemoryRecord>  // key = word
+
+export interface QuickMemoryModeProps {
+  vocabulary: Word[]
+  queue: number[]
+  settings: AppSettings
+  bookId: string | null
+  chapterId: string | null
+  onModeChange: (mode: string) => void
+  onNavigate: (path: string) => void
+}
 
 export type ToastType = 'info' | 'success' | 'error'
 

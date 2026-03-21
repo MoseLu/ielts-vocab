@@ -11,6 +11,7 @@ import WordListPanel from './WordListPanel'
 import RadioMode from './RadioMode'
 import DictationMode from './DictationMode'
 import OptionsMode from './OptionsMode'
+import QuickMemoryMode from './QuickMemoryMode'
 import SettingsPanel from '../SettingsPanel'
 
 // Re-export types for use by parent components
@@ -459,6 +460,42 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onNavigate={navigate}
           onCloseSettings={() => setShowPracticeSettings(false)}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
+        />
+      </>
+    )
+  }
+
+  if (mode === 'quickmemory') {
+    return (
+      <>
+        <PracticeControlBar
+          mode={mode}
+          currentDay={currentDay}
+          bookId={bookId}
+          chapterId={chapterId}
+          errorMode={errorMode}
+          vocabularyLength={vocabulary.length}
+          currentChapterTitle={currentChapterTitle}
+          bookChapters={bookChapters}
+          showWordList={showWordList}
+          showPracticeSettings={showPracticeSettings}
+          onWordListToggle={() => setShowWordList(v => !v)}
+          onSettingsToggle={() => setShowPracticeSettings(v => !v)}
+          onModeChange={(m) => onModeChange?.(m)}
+          onDayChange={(d) => onDayChange?.(d)}
+          onNavigate={navigate}
+        />
+        {showPracticeSettings && (
+          <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
+        )}
+        <QuickMemoryMode
+          vocabulary={vocabulary}
+          queue={queue}
+          settings={settings}
+          bookId={bookId}
+          chapterId={chapterId}
+          onModeChange={(m) => onModeChange?.(m as PracticeMode)}
+          onNavigate={navigate}
         />
       </>
     )
