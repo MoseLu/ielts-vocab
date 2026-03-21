@@ -1,4 +1,4 @@
-/* Component: Chapter selection modal */
+/* ── Chapter selection modal ─────────────────────────────────────────────── */
 
 .chapter-modal-overlay {
     position: fixed;
@@ -14,7 +14,7 @@
 .chapter-modal {
     background: var(--bg-color);
     border-radius: 12px;
-    width: 900px;
+    width: 860px;
     max-width: 95vw;
     max-height: 85vh;
     display: flex;
@@ -26,11 +26,12 @@
 
 @keyframes modalFadeIn {
     from { opacity: 0; transform: scale(0.97); }
-    to { opacity: 1; transform: scale(1); }
+    to   { opacity: 1; transform: scale(1); }
 }
 
+/* ── Header ── */
 .chapter-modal-header {
-    padding: 20px 24px;
+    padding: 18px 24px 14px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: flex-start;
@@ -40,15 +41,16 @@
 }
 
 .chapter-modal-title {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--text-primary);
+    line-height: 1.4;
 }
 
 .chapter-modal-subtitle {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 3px;
 }
 
 .chapter-modal-actions {
@@ -59,7 +61,7 @@
 }
 
 .chapter-continue-btn {
-    padding: 8px 16px;
+    padding: 7px 14px;
     background: var(--accent);
     color: white;
     border: none;
@@ -70,14 +72,11 @@
     transition: background var(--transition-fast);
     white-space: nowrap;
 }
-
-.chapter-continue-btn:hover {
-    background: var(--accent-hover);
-}
+.chapter-continue-btn:hover { background: var(--accent-hover); }
 
 .chapter-modal-close {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -88,36 +87,33 @@
     cursor: pointer;
     transition: all var(--transition-fast);
 }
-
 .chapter-modal-close:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
 }
+.chapter-modal-close svg { width: 16px; height: 16px; }
 
-.chapter-modal-close svg {
-    width: 18px;
-    height: 18px;
-}
-
+/* ── Scrollable body ── */
 .chapter-modal-body {
     flex: 1;
     overflow-y: auto;
     padding: 20px 24px;
 }
 
-/* ── Section grouping ── */
-.chapter-sections {
+/* ── Units container: sections + flat grids ── */
+.chapter-units {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
 }
 
+/* ── Section block (multi-part chapters) ── */
 .chapter-section-label {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 12px;
-    padding-bottom: 8px;
+    gap: 8px;
+    padding-bottom: 7px;
     margin-bottom: 10px;
     border-bottom: 1px solid var(--border);
 }
@@ -134,29 +130,34 @@
     white-space: nowrap;
 }
 
-/* ── Chapter grid ── */
+/* ── Grid: 4 columns matching idictation.cn ── */
 .chapter-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
 }
 
-@media (max-width: 700px) {
-    .chapter-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 680px) {
+    .chapter-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* ── Chapter card ── */
 .chapter-card {
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 14px 12px;
+    padding: 11px 12px 10px;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), background var(--transition-fast);
     position: relative;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .chapter-card:hover {
-    border-color: #ccc;
-    background: var(--bg-secondary);
+    border-color: var(--accent);
+    background: var(--accent-subtle);
 }
 
 .chapter-card.current {
@@ -173,8 +174,20 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
-    line-height: 1.4;
-    margin-bottom: 4px;
+    line-height: 1.35;
+    /* Allow 2-line names, keep layout predictable */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.chapter-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
 }
 
 .chapter-card-count {
@@ -182,34 +195,35 @@
     color: var(--text-secondary);
 }
 
-.chapter-card-status {
-    font-size: 11px;
-    margin-top: 4px;
-}
-
 .chapter-status-done {
+    font-size: 11px;
     color: var(--success);
     font-weight: 500;
 }
 
 .chapter-status-progress {
+    font-size: 11px;
     color: var(--accent);
     font-weight: 500;
 }
 
 .chapter-status-todo {
+    font-size: 11px;
     color: var(--text-tertiary);
 }
 
-.chapter-card-recent {
+/* Small dot indicator for the chapter in progress */
+.chapter-card-current-dot {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    font-size: 10px;
-    color: var(--accent);
-    font-weight: 600;
+    top: 7px;
+    right: 7px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
 }
 
+/* ── States ── */
 .chapter-loading,
 .chapter-error {
     display: flex;
@@ -230,6 +244,4 @@
     animation: spin 0.8s linear infinite;
 }
 
-.chapter-error {
-    color: var(--error);
-}
+.chapter-error { color: var(--error); }

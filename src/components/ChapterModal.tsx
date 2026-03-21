@@ -5,6 +5,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 interface Book {
   id: string | number
   title: string
+  description?: string
   word_count: number
 }
 
@@ -31,22 +32,14 @@ interface ChapterModalProps {
   onSelectChapter: (chapter: Chapter, startIndex: number) => void
 }
 
-// ── Section grouping helpers ────────────────────────────────────────────────
-// Chapters may be named "AWL学术词汇 Sublist 1 · Part 1" — we group by the
-// label before " · Part " so they appear under a shared section header.
-
-function getSectionLabel(title: string): string {
-  const idx = title.indexOf(' · Part ')
-  return idx !== -1 ? title.slice(0, idx) : title
-}
-
-function getCardTitle(title: string): string {
-  const idx = title.indexOf(' · Part ')
-  return idx !== -1 ? title.slice(idx + 3) : title  // "Part N"
-}
+// ── Grouping helpers ────────────────────────────────────────────────────────
+// Chapters from the CSV layer are named "AWL学术词汇 Sublist 1 · Part 1".
+// We split on " · Part " to find the section label.
+// Chapters without " · Part " (like "150次及以上", "口语词汇") are standalone.
 
 interface SectionGroup {
-  label: string
+  label: string        // full label (or title for standalone)
+  isMultiPart: boolean // true when the group has >1 chapters
   wordCount: number
   chapters: Chapter[]
 }
@@ -56,9 +49,11 @@ function groupBySection(chapters: Chapter[]): SectionGroup[] {
   const map = new Map<string, SectionGroup>()
 
   for (const ch of chapters) {
-    const label = getSectionLabel(ch.title)
+    const sepIdx = ch.title.indexOf(' · Part ')
+    const label = sepIdx !== -1 ? ch.title.slice(0, sepIdx) : ch.title
+
     if (!map.has(label)) {
-      const g: SectionGroup = { label, wordCount: 0, chapters: [] }
+      const g: SectionGroup = { label, isMultiPart: false, wordCount: 0, chapters: [] }
       map.set(label, g)
       groups.push(g)
     }
@@ -66,7 +61,48 @@ function groupBySection(chapters: Chapter[]): SectionGroup[] {
     g.chapters.push(ch)
     g.wordCount += ch.word_count ?? 0
   }
+
+  // Mark multi-part groups
+  for (const g of groups) {
+    g.isMultiPart = g.chapters.length > 1
+  }
+
   return groups
+}
+
+// Render units: merge consecutive standalone chapters into a single flat grid;
+// multi-part groups keep their own section header + grid.
+type RenderUnit =
+  | { kind: 'flat'; chapters: Chapter[] }
+  | { kind: 'section'; label: string; wordCount: number; chapters: Chapter[] }
+
+function buildRenderUnits(groups: SectionGroup[]): RenderUnit[] {
+  const units: RenderUnit[] = []
+  let currentFlat: Chapter[] | null = null
+
+  for (const g of groups) {
+    if (!g.isMultiPart) {
+      // standalone chapter → merge into current flat unit
+      if (!currentFlat) {
+        currentFlat = []
+        units.push({ kind: 'flat', chapters: currentFlat })
+      }
+      currentFlat.push(g.chapters[0])
+    } else {
+      // multi-part section → own block, break any flat run
+      currentFlat = null
+      units.push({ kind: 'section', label: g.label, wordCount: g.wordCount, chapters: g.chapters })
+    }
+  }
+
+  return units
+}
+
+// Within a multi-part group card, show "Part N" only (section header provides context)
+function getCardLabel(chapter: Chapter, isInSection: boolean): string {
+  if (!isInSection) return chapter.title
+  const sepIdx = chapter.title.indexOf(' · Part ')
+  return sepIdx !== -1 ? chapter.title.slice(sepIdx + 3) : chapter.title
 }
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -81,24 +117,22 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModal
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const chaptersRes = await fetch(`${API_BASE}/books/${book.id}/chapters`)
-        if (!chaptersRes.ok) throw new Error('Failed to load chapters')
-        const chaptersData = await chaptersRes.json()
-        setChapters(chaptersData.chapters || [])
+        const res = await fetch(`${API_BASE}/books/${book.id}/chapters`)
+        if (!res.ok) throw new Error('加载章节失败')
+        const data = await res.json()
+        setChapters(data.chapters || [])
 
         const token = localStorage.getItem('auth_token')
         if (token) {
           try {
-            const progressRes = await fetch(`${API_BASE}/books/${book.id}/chapters/progress`, {
-              headers: { 'Authorization': `Bearer ${token}` }
+            const pRes = await fetch(`${API_BASE}/books/${book.id}/chapters/progress`, {
+              headers: { 'Authorization': `Bearer ${token}` },
             })
-            if (progressRes.ok) {
-              const progressData = await progressRes.json()
-              setChapterProgress(progressData.chapter_progress || {})
+            if (pRes.ok) {
+              const pData = await pRes.json()
+              setChapterProgress(pData.chapter_progress || {})
             }
-          } catch {
-            // Ignore progress fetch errors
-          }
+          } catch { /* ignore */ }
         }
       } catch (err) {
         setError((err as Error).message)
@@ -109,7 +143,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModal
     fetchData()
   }, [book.id])
 
-  // Calculate which chapter the user is currently on based on total word index
+  // Which chapter the user was last working on
   const currentChapterId = useMemo((): string | number | null => {
     if (!chapters.length || currentIndex === 0) return null
     let accumulated = 0
@@ -120,7 +154,10 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModal
     return chapters[chapters.length - 1]?.id ?? null
   }, [chapters, currentIndex])
 
-  const groups = useMemo(() => groupBySection(chapters), [chapters])
+  const renderUnits = useMemo(
+    () => buildRenderUnits(groupBySection(chapters)),
+    [chapters],
+  )
 
   const handleSelectChapter = (chapter: Chapter) => {
     let startIndex = 0
@@ -131,16 +168,41 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModal
     onSelectChapter(chapter, startIndex)
   }
 
-  // "继续学习" — navigate to the chapter the user was last on
   const handleContinue = () => {
     if (currentChapterId !== null) {
-      const chapter = chapters.find(ch => ch.id === currentChapterId)
-      if (chapter) {
-        handleSelectChapter(chapter)
-        return
-      }
+      const ch = chapters.find(c => c.id === currentChapterId)
+      if (ch) { handleSelectChapter(ch); return }
     }
     onClose()
+  }
+
+  const renderCard = (chapter: Chapter, isInSection: boolean) => {
+    const isCurrent  = chapter.id === currentChapterId
+    const prog       = chapterProgress[chapter.id]
+    const isCompleted = prog?.is_completed
+    const hasStarted  = prog && prog.words_learned > 0
+    const accuracy    = prog?.accuracy
+
+    return (
+      <div
+        key={chapter.id}
+        className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : ''}`}
+        onClick={() => handleSelectChapter(chapter)}
+      >
+        <div className="chapter-card-name">{getCardLabel(chapter, isInSection)}</div>
+        <div className="chapter-card-footer">
+          <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
+          {isCompleted ? (
+            <span className="chapter-status-done">✓ {accuracy}%</span>
+          ) : hasStarted ? (
+            <span className="chapter-status-progress">{accuracy}%</span>
+          ) : (
+            <span className="chapter-status-todo">未开始</span>
+          )}
+        </div>
+        {isCurrent && <div className="chapter-card-current-dot" />}
+      </div>
+    )
   }
 
   const totalWords = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
@@ -148,13 +210,12 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModal
   return (
     <div className="chapter-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="chapter-modal">
-        {/* Header */}
+
+        {/* ── Header ── */}
         <div className="chapter-modal-header">
           <div className="chapter-modal-info">
             <h2 className="chapter-modal-title">{book.title}</h2>
-            <p className="chapter-modal-subtitle">
-              {totalWords} 词 · {chapters.length} 章节
-            </p>
+            <p className="chapter-modal-subtitle">{chapters.length} 章节 · {totalWords} 词</p>
           </div>
           <div className="chapter-modal-actions">
             {currentIndex > 0 && (
@@ -171,7 +232,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModal
           </div>
         </div>
 
-        {/* Body */}
+        {/* ── Body ── */}
         <div className="chapter-modal-body">
           {loading ? (
             <div className="chapter-loading">
@@ -179,65 +240,30 @@ function ChapterModal({ book, progress, onClose, onSelectChapter }: ChapterModal
               <span>加载章节...</span>
             </div>
           ) : error ? (
-            <div className="chapter-error">
-              <p>加载失败: {error}</p>
-            </div>
+            <div className="chapter-error"><p>{error}</p></div>
           ) : (
-            <div className="chapter-sections">
-              {groups.map(group => {
-                const isMultiPart = group.chapters.length > 1
-
-                return (
-                  <div key={group.label} className="chapter-section">
-                    {/* Section header — only when there are multiple groups */}
-                    {groups.length > 1 && (
-                      <div className="chapter-section-label">
-                        <span className="chapter-section-name">{group.label}</span>
-                        <span className="chapter-section-meta">
-                          {isMultiPart ? `${group.chapters.length} 节 · ` : ''}
-                          {group.wordCount} 词
-                        </span>
-                      </div>
-                    )}
-
+            <div className="chapter-units">
+              {renderUnits.map((unit, i) =>
+                unit.kind === 'flat' ? (
+                  /* Standalone chapters — no header, all in one grid */
+                  <div key={`flat-${i}`} className="chapter-grid">
+                    {unit.chapters.map(ch => renderCard(ch, false))}
+                  </div>
+                ) : (
+                  /* Multi-part section — header + grid */
+                  <div key={unit.label} className="chapter-section">
+                    <div className="chapter-section-label">
+                      <span className="chapter-section-name">{unit.label}</span>
+                      <span className="chapter-section-meta">
+                        {unit.chapters.length} 节 · {unit.wordCount} 词
+                      </span>
+                    </div>
                     <div className="chapter-grid">
-                      {group.chapters.map(chapter => {
-                        const isCurrent = chapter.id === currentChapterId
-                        const chProgress = chapterProgress[chapter.id]
-                        const isCompleted = chProgress?.is_completed
-                        const accuracy = chProgress?.accuracy
-                        const hasStarted = chProgress && chProgress.words_learned > 0
-
-                        // In a multi-part group, abbreviate to "Part N" for conciseness
-                        const displayTitle = isMultiPart
-                          ? getCardTitle(chapter.title)
-                          : chapter.title
-
-                        return (
-                          <div
-                            key={chapter.id}
-                            className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : ''}`}
-                            onClick={() => handleSelectChapter(chapter)}
-                          >
-                            <div className="chapter-card-name">{displayTitle}</div>
-                            <div className="chapter-card-count">{chapter.word_count} 词</div>
-                            <div className="chapter-card-status">
-                              {isCompleted ? (
-                                <span className="chapter-status-done">✓ {accuracy}%</span>
-                              ) : hasStarted ? (
-                                <span className="chapter-status-progress">学习中 {accuracy}%</span>
-                              ) : (
-                                <span className="chapter-status-todo">未开始</span>
-                              )}
-                            </div>
-                            {isCurrent && <div className="chapter-card-recent">当前</div>}
-                          </div>
-                        )
-                      })}
+                      {unit.chapters.map(ch => renderCard(ch, true))}
                     </div>
                   </div>
                 )
-              })}
+              )}
             </div>
           )}
         </div>
