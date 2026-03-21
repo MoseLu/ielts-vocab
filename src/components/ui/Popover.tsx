@@ -1,8 +1,13 @@
 // ── Popover Dropdown Component ────────────────────────────────────────────────
-// Uses @floating-ui/react for auto-flip + arrow positioning
-// Arrow aligns with trigger button center, seamlessly blends with dropdown border
+// Matches Element Plus el-dropdown behavior:
+//   - Portal-rendered to body (avoids stacking context issues)
+//   - Open/close fade+slide animation (both directions)
+//   - Clicking any item inside automatically closes the dropdown
+//   - Arrow uses 1px border technique matching el-popper style
+//   - Auto-flip when space is insufficient (@floating-ui)
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import {
   useFloating,
   autoUpdate,
@@ -32,6 +37,8 @@ interface PopoverDropdownProps {
   onOpenChange?: (open: boolean) => void
 }
 
+const CLOSE_DURATION = 150 // ms — must match CSS animation duration
+
 const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
   trigger,
   children,
@@ -42,6 +49,11 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
   onOpenChange,
 }) => {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  // displayPanel: whether the DOM element should exist (includes closing animation)
+  const [displayPanel, setDisplayPanel] = useState(false)
+  // isClosing: whether the closing animation is playing
+  const [isClosing, setIsClosing] = useState(false)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const arrowRef = useRef<HTMLDivElement>(null)
 
   const isControlled = controlledOpen !== undefined
@@ -58,6 +70,23 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     [isControlled, onOpenChange],
   )
 
+  // Sync display state with open state (adds close animation delay)
+  useEffect(() => {
+    if (isOpen) {
+      clearTimeout(closeTimerRef.current)
+      setIsClosing(false)
+      setDisplayPanel(true)
+    } else if (displayPanel) {
+      setIsClosing(true)
+      closeTimerRef.current = setTimeout(() => {
+        setDisplayPanel(false)
+        setIsClosing(false)
+      }, CLOSE_DURATION)
+    }
+    return () => clearTimeout(closeTimerRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
+
   // Middleware stack
   const middleware: Middleware[] = [
     fuiOffset(offsetPx),
@@ -69,10 +98,8 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     fuiArrow({ element: arrowRef, padding: 8 }),
     size({
       apply({ rects, elements }) {
-        // Set min-width to match trigger width for bottom/top placements
-        const { width } = rects.reference
         Object.assign(elements.floating.style, {
-          minWidth: `${Math.round(width)}px`,
+          minWidth: `${Math.round(rects.reference.width)}px`,
         })
       },
     }),
@@ -80,7 +107,6 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
 
   const {
     refs,
-    floating,
     x,
     y,
     placement: resolvedPlacement,
@@ -89,12 +115,12 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     placement,
     middleware,
     whileElementsMounted: autoUpdate,
-    open: isOpen,
+    open: displayPanel,
   })
 
   // Close on outside click
   useEffect(() => {
-    if (!isOpen) return
+    if (!displayPanel) return
     const handle = (e: MouseEvent) => {
       const target = e.target as Node
       if (
@@ -108,19 +134,19 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     }
     document.addEventListener('pointerdown', handle)
     return () => document.removeEventListener('pointerdown', handle)
-  }, [isOpen, refs.reference, refs.floating, setOpen])
+  }, [displayPanel, refs.reference, refs.floating, setOpen])
 
   // Close on Escape
   useEffect(() => {
-    if (!isOpen) return
+    if (!displayPanel) return
     const handle = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
     document.addEventListener('keydown', handle)
     return () => document.removeEventListener('keydown', handle)
-  }, [isOpen, setOpen])
+  }, [displayPanel, setOpen])
 
-  // Derive arrow position from Floating UI's arrow data
+  // Arrow style: Floating UI sets horizontal (x) or vertical (y) position
   const arrowStyle: React.CSSProperties = arrowData
     ? {
         left: arrowData.x != null ? `${arrowData.x}px` : undefined,
@@ -128,11 +154,31 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
       }
     : {}
 
-  // Determine which side the arrow is on
-  const isBottom = resolvedPlacement === 'bottom' || resolvedPlacement === 'bottom-start' || resolvedPlacement === 'bottom-end'
-  const isTop = resolvedPlacement === 'top' || resolvedPlacement === 'top-start' || resolvedPlacement === 'top-end'
-  const isRight = resolvedPlacement === 'right' || resolvedPlacement === 'right-start' || resolvedPlacement === 'right-end'
-  const isLeft = resolvedPlacement === 'left' || resolvedPlacement === 'left-start' || resolvedPlacement === 'left-end'
+  const panel = displayPanel
+    ? createPortal(
+        <div
+          ref={refs.setFloating}
+          className={`popover-panel ${panelClassName} ${isClosing ? 'popover-closing' : ''}`}
+          style={{
+            position: 'fixed',
+            left: x ?? 0,
+            top: y ?? 0,
+          }}
+          data-placement={resolvedPlacement}
+          // Clicking anywhere inside the panel closes the dropdown.
+          // Individual items that should NOT auto-close can call e.stopPropagation().
+          onClick={() => setOpen(false)}
+        >
+          {/* Arrow — Element Plus single-element technique */}
+          <div ref={arrowRef} className="popover-arrow" style={arrowStyle} />
+
+          <div className="popover-content">
+            {children}
+          </div>
+        </div>,
+        document.body,
+      )
+    : null
 
   return (
     <>
@@ -143,26 +189,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
       >
         {trigger}
       </div>
-
-      {isOpen && (
-        <div
-          ref={refs.setFloating}
-          className={`popover-panel ${panelClassName}`}
-          style={{
-            position: 'fixed',
-            left: x ?? 0,
-            top: y ?? 0,
-          }}
-          data-placement={resolvedPlacement}
-        >
-          {/* Seamless arrow — positioned by Floating UI */}
-          <div ref={arrowRef} className="popover-arrow" style={arrowStyle}>
-            <div className="popover-arrow-inner" />
-          </div>
-
-          <div className="popover-content">{children}</div>
-        </div>
-      )}
+      {panel}
     </>
   )
 }
