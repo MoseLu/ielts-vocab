@@ -2,10 +2,14 @@
    Design goals:
    1. Auto-flip: flips to opposite side when space is insufficient (@floating-ui)
    2. Arrow aligns with trigger button center (auto-positioned by @floating-ui)
-   3. Seamless border: no dividing line between arrow and panel
-      → arrow is styled as a 1px-border continuation of the panel border
-      → inner pseudo-element covers the panel's own border at the arrow junction
-   4. Multi-layer shadow for the popover bubble depth
+   3. Seamless border: arrow outer border = panel border color, arrow inner
+      = panel background color → visually merges with panel border
+   4. Arrow positioned at panel corner using clip-path (not overflow:hidden)
+
+   Technical note on clip-path vs overflow:hidden:
+   - overflow:hidden clips content at the padding-box edge (including pseudo-elements)
+   - clip-path clips content but allows absolutely-positioned children to render
+     outside the clip boundary (they escape visually)
    ──────────────────────────────────────────────────────────────────────────── */
 
 /* ── Panel ── */
@@ -19,12 +23,18 @@
         0 0 0 1px rgba(0, 0, 0, 0.03);
     z-index: 9999;
     animation: popoverFadeIn 0.18s ease;
-    overflow: visible; /* allow arrow to render at border edge */
+    /* No overflow:hidden — use clip-path below for corner clipping */
 }
 
 @keyframes popoverFadeIn {
     from { opacity: 0; transform: translateY(-4px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Clip-path: create rounded corners, slightly inset so the panel border
+   remains visible. The arrow container will render beyond this clip region. */
+.popover-panel[data-placement^="bottom"] {
+    clip-path: inset(0 0 0 0 round var(--radius-lg));
 }
 
 .popover-content {
@@ -33,93 +43,153 @@
     padding: var(--space-xs);
 }
 
-/* ── Arrow ─────────────────────────────────────────────────────────────────── */
-/*
-   Arrow anatomy:
-   .popover-arrow       → outer container, absolutely positioned by @floating-ui
-                          size: 16×16px  (covers the panel border at the junction)
-   .popover-arrow-inner → CSS triangle, sits inside arrow container
-                          border: 8px transparent + colored outer border
-                          inner pseudo: covers the panel's own border at the junction
-*/
+/* ── Arrow ───────────────────────────────────────────────────────────────────
+   Element Plus pattern: the arrow sits ABOVE the panel's top-left corner
+   (for bottom placement), with:
+   - outer border: panel border color (creates seamless continuation)
+   - inner background: panel background (covers panel border at junction)
+
+   Position math:
+   Panel top-left corner (before border radius) = (0, 0)
+   Panel rounded corner arc starts at x=8px for 8px radius
+   Arrow tip aligns with panel's inner edge at corner
+   Arrow top edge = -14px above panel top
+   ──────────────────────────────────────────────────────────────────────── */
 .popover-arrow {
     position: absolute;
-    width: 16px;
-    height: 16px;
-    overflow: hidden;
+    width: 20px;
+    height: 20px;
+    overflow: visible; /* critical: allows child to escape panel clip */
     z-index: 1;
 }
 
+/* The visible triangle: 10px borders = 20px square, triangle = 10×10px */
 .popover-arrow-inner {
     position: absolute;
-    inset: 0;
-    width: 17px;
-    height: 17px;
+    width: 20px;
+    height: 20px;
+    overflow: visible;
 }
 
-.popover-arrow-inner,
+/* Outer triangle (visible border continuation) */
 .popover-arrow-inner::before {
     content: '';
     position: absolute;
-    border-radius: 2px;
+    width: 0;
+    height: 0;
 }
 
-/* The visible triangle */
-.popover-arrow-inner::before {
-    inset: 0;
-    background: var(--bg-color);
+/* Inner overlay (panel background color, covers junction line) */
+.popover-arrow-inner::after {
+    content: '';
+    position: absolute;
 }
 
-/* BOTTOM placement: arrow above panel, tip points down */
+/* ── BOTTOM placement: arrow above panel, points down ── */
 .popover-panel[data-placement^="bottom"] .popover-arrow {
-    top: -9px;
+    /* Floating UI positions arrow.x at button center, we position Y */
+    top: -10px;
+    /* Horizontally: floating-ui sets left/right; center at arrow.x */
 }
 
 .popover-panel[data-placement^="bottom"] .popover-arrow-inner::before {
-    border-bottom: 1px solid var(--border);
-    border-left: 1px solid var(--border);
-    transform: rotate(-135deg);
-    top: -1px;
-    left: -1px;
+    /* Bottom-left border = panel border color (continuation of panel top border) */
+    border-left: 10px solid transparent;
+    border-bottom: 10px solid var(--border);
+    /* Top and right borders = transparent (invisible) */
+    border-top: 10px solid transparent;
+    border-right: 10px solid transparent;
+    /* Triangle apex: bottom-left corner of the 20px container */
+    bottom: 0;
+    left: 0;
 }
 
-/* TOP placement: arrow below panel, tip points up */
+.popover-panel[data-placement^="bottom"] .popover-arrow-inner::after {
+    /* Inner triangle in panel background, offset by 1px inward to
+       cover the panel's own top border at the junction */
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-bottom: 9px solid var(--bg-color);
+    border-top: 9px solid transparent;
+    border-right: 9px solid transparent;
+    bottom: 1px;  /* 1px inside the outer triangle */
+    left: 1px;
+}
+
+/* ── TOP placement: arrow below panel, points up ── */
 .popover-panel[data-placement^="top"] .popover-arrow {
-    bottom: -9px;
+    bottom: -10px;
 }
 
 .popover-panel[data-placement^="top"] .popover-arrow-inner::before {
-    border-top: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    transform: rotate(-135deg);
-    bottom: -1px;
-    left: -1px;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--border);
+    border-left: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    top: 0;
+    right: 0;
 }
 
-/* RIGHT placement: arrow left of panel, tip points right */
+.popover-panel[data-placement^="top"] .popover-arrow-inner::after {
+    width: 0;
+    height: 0;
+    border-right: 9px solid transparent;
+    border-top: 9px solid var(--bg-color);
+    border-left: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    top: 1px;
+    right: 1px;
+}
+
+/* ── RIGHT placement: arrow left of panel, points right ── */
 .popover-panel[data-placement^="right"] .popover-arrow {
-    left: -9px;
+    left: -10px;
 }
 
 .popover-panel[data-placement^="right"] .popover-arrow-inner::before {
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    transform: rotate(-135deg);
-    top: -1px;
-    left: -1px;
+    border-top: 10px solid transparent;
+    border-right: 10px solid var(--border);
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid transparent;
+    top: 0;
+    right: 0;
 }
 
-/* LEFT placement: arrow right of panel, tip points left */
+.popover-panel[data-placement^="right"] .popover-arrow-inner::after {
+    width: 0;
+    height: 0;
+    border-top: 9px solid transparent;
+    border-right: 9px solid var(--bg-color);
+    border-bottom: 9px solid transparent;
+    border-left: 9px solid transparent;
+    top: 1px;
+    right: 1px;
+}
+
+/* ── LEFT placement: arrow right of panel, points left ── */
 .popover-panel[data-placement^="left"] .popover-arrow {
-    right: -9px;
+    right: -10px;
 }
 
 .popover-panel[data-placement^="left"] .popover-arrow-inner::before {
-    border-left: 1px solid var(--border);
-    border-top: 1px solid var(--border);
-    transform: rotate(-135deg);
-    bottom: -1px;
-    left: -1px;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid var(--border);
+    border-top: 10px solid transparent;
+    border-right: 10px solid transparent;
+    bottom: 0;
+    left: 0;
+}
+
+.popover-panel[data-placement^="left"] .popover-arrow-inner::after {
+    width: 0;
+    height: 0;
+    border-bottom: 9px solid transparent;
+    border-left: 9px solid var(--bg-color);
+    border-top: 9px solid transparent;
+    border-right: 9px solid transparent;
+    bottom: 1px;
+    left: 1px;
 }
 
 /* ── Option list content ─────────────────────────────────────────────────── */
@@ -218,9 +288,7 @@
     transition: filter 0.15s ease;
 }
 
-.popover-avatar-btn:hover {
-    filter: brightness(0.85);
-}
+.popover-avatar-btn:hover { filter: brightness(0.85); }
 
 .popover-avatar-btn .user-avatar-img {
     width: 100%;
@@ -267,11 +335,5 @@
     color: var(--accent);
 }
 
-.popover-item-danger {
-    color: var(--error);
-}
-
-.popover-item-danger:hover {
-    background: var(--error-light);
-    color: var(--error);
-}
+.popover-item-danger { color: var(--error); }
+.popover-item-danger:hover { background: var(--error-light); color: var(--error); }
