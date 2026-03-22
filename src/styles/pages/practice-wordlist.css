@@ -238,8 +238,8 @@
 }
 
 .practice-ctrl-icon-btn:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+    background: var(--accent-light);
+    color: var(--accent);
 }
 
 .practice-ctrl-icon-btn.active {

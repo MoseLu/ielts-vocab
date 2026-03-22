@@ -311,7 +311,7 @@ export default function QuickMemoryMode({
             <div className="qm-word">{currentWord.word}</div>
 
             {currentWord.phonetic && (
-              <div className="qm-phonetic">/{currentWord.phonetic}/</div>
+              <div className="qm-phonetic">{currentWord.phonetic}</div>
             )}
 
             {currentWord.pos && (
@@ -321,7 +321,14 @@ export default function QuickMemoryMode({
             <div className="qm-definition">{currentWord.definition}</div>
 
             <button className="qm-btn-next" onClick={handleNext}>
-              {index + 1 < queue.length ? '下一个 →' : '查看结果'}
+              {index + 1 < queue.length ? (
+                <span className="qm-btn-next-inner">
+                  下一个
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </span>
+              ) : '查看结果'}
             </button>
           </>
         )}

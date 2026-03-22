@@ -25,7 +25,7 @@ interface AppRoutesProps {
 }
 
 function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesProps) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { toast } = useToast()
   const location = useLocation()
   const isPractice = location.pathname === '/practice'
@@ -37,10 +37,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
           user={user}
           currentDay={currentDay}
           mode={mode as any}
-          onLogout={() => {
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('auth_user')
-          }}
+          onLogout={() => logout()}
           onModeChange={onModeChange}
           onDayChange={onDayChange}
           onUserUpdate={() => {}}

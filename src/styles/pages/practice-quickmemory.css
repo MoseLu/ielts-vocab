@@ -169,9 +169,6 @@
 .qm-phonetic {
     font-size: 16px;
     color: var(--text-secondary);
-    font-style: italic;
-    letter-spacing: 0.04em;
-    margin-top: -8px;
 }
 
 .qm-pos {
@@ -196,7 +193,7 @@
 
 .qm-btn-next {
     margin-top: 4px;
-    padding: 12px 40px;
+    padding: 12px 36px;
     background: var(--accent);
     color: #fff;
     border: none;
@@ -205,6 +202,17 @@
     font-weight: 700;
     cursor: pointer;
     transition: all var(--transition-fast);
+}
+
+.qm-btn-next-inner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.qm-btn-next-inner svg {
+    width: 18px;
+    height: 18px;
 }
 
 .qm-btn-next:hover {

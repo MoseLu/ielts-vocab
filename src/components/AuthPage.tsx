@@ -13,18 +13,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
 
   const loginForm = useForm({ schema: LoginSchema })
-  const registerForm = useForm({
-    schema: RegisterSchema,
-    initialValues: { username: '', email: 'test@example.com', password: 'test123', confirmPassword: 'test123' },
-  })
-
-  // Pre-fill test credentials on mount (login mode)
-  useEffect(() => {
-    if (isLogin) {
-      loginForm.setFieldValue('email' as any, 'test@example.com')
-      loginForm.setFieldValue('password' as any, 'test123')
-    }
-  }, [isLogin])
+  const registerForm = useForm({ schema: RegisterSchema })
 
   const handleLoginSubmit = loginForm.handleSubmit(async (values) => {
     await login(values.email, values.password)
@@ -49,7 +38,7 @@ export default function AuthPage() {
             <input
               type="email"
               className="auth-input"
-              placeholder="邮箱地址"
+              placeholder="邮箱地址*"
               value={loginForm.values.email ?? ''}
               onChange={(e) => loginForm.setFieldValue('email' as any, e.target.value)}
               onBlur={() => loginForm.setFieldTouched('email')}
@@ -62,7 +51,7 @@ export default function AuthPage() {
             <input
               type="password"
               className="auth-input"
-              placeholder="密码（至少6位）"
+              placeholder="密码（至少6位）*"
               value={loginForm.values.password ?? ''}
               onChange={(e) => loginForm.setFieldValue('password' as any, e.target.value)}
               onBlur={() => loginForm.setFieldTouched('password')}
@@ -84,7 +73,7 @@ export default function AuthPage() {
             <input
               type="text"
               className="auth-input"
-              placeholder="用户名（至少3个字符）"
+              placeholder="用户名（至少3个字符）*"
               value={registerForm.values.username ?? ''}
               onChange={(e) => registerForm.setFieldValue('username' as any, e.target.value)}
               onBlur={() => registerForm.setFieldTouched('username')}
@@ -101,7 +90,6 @@ export default function AuthPage() {
               value={registerForm.values.email ?? ''}
               onChange={(e) => registerForm.setFieldValue('email' as any, e.target.value)}
               onBlur={() => registerForm.setFieldTouched('email')}
-              required
             />
             {registerForm.getFieldError('email') && (
               <span className="field-error">{registerForm.getFieldError('email')}</span>
@@ -110,7 +98,7 @@ export default function AuthPage() {
             <input
               type="password"
               className="auth-input"
-              placeholder="密码（至少6位）"
+              placeholder="密码（至少6位）*"
               value={registerForm.values.password ?? ''}
               onChange={(e) => registerForm.setFieldValue('password' as any, e.target.value)}
               onBlur={() => registerForm.setFieldTouched('password')}
@@ -124,7 +112,7 @@ export default function AuthPage() {
             <input
               type="password"
               className="auth-input"
-              placeholder="确认密码"
+              placeholder="确认密码*"
               value={registerForm.values.confirmPassword ?? ''}
               onChange={(e) => registerForm.setFieldValue('confirmPassword' as any, e.target.value)}
               onBlur={() => registerForm.setFieldTouched('confirmPassword')}

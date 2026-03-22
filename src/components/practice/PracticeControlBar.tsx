@@ -13,7 +13,7 @@ const modeNames: Record<PracticeMode, string> = {
   'quickmemory': '快速记忆',
 }
 
-const modeList: PracticeMode[] = ['smart', 'listening', 'meaning', 'dictation', 'radio', 'quickmemory']
+const modeList: PracticeMode[] = ['smart', 'quickmemory', 'listening', 'meaning', 'dictation', 'radio']
 
 const SPEED_OPTIONS = ['0.6', '0.8', '1.0', '1.2'] as const
 const COUNT_OPTIONS = ['1', '2', '3'] as const
@@ -90,11 +90,10 @@ export default function PracticeControlBar({
             offset={10}
             panelClassName="popover-ctx-panel"
             trigger={
-              <button className="practice-ctx-btn">
-                <span className="practice-ctx-text">
+              <button className="practice-ctrl-icon-btn practice-mode-btn" title="切换章节">
+                <span className="practice-mode-label">
                   {bookId ? (currentChapterTitle || '选择章节') : `Day ${currentDay}`}
                 </span>
-                <span className="practice-ctrl-count">{vocabularyLength}词</span>
                 <svg className="practice-ctx-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
@@ -110,8 +109,7 @@ export default function PracticeControlBar({
                     onClick={() => onNavigate(`/practice?book=${bookId}&chapter=${ch.id}`)}
                   >
                     <span className={`ctx-radio ${String(chapterId) === String(ch.id) ? 'checked' : ''}`} />
-                    <span className="ctx-opt-label">{ch.title}</span>
-                    <span className="ctx-opt-count">{ch.word_count}词</span>
+                    {ch.title}
                   </button>
                 )) : (
                   <div className="popover-loading">加载章节...</div>
