@@ -121,8 +121,7 @@ function Header({
       {/* Right area: search + toolbar */}
       <div className="header-right">
         {/* Global Search */}
-        <div className="header-search">
-          <div className="header-search-box">
+        <div className="header-search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" />
               <path d="M21 21l-4.35-4.35" />
@@ -135,7 +134,6 @@ function Header({
               onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
             />
           </div>
-        </div>
 
         {/* Toolbar: settings, help, user */}
         <div className="header-toolbar">

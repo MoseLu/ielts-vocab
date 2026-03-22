@@ -23,14 +23,14 @@
 .left-sidebar-nav {
     display: flex;
     flex-direction: column;
-    padding: var(--space-sm) 0;
+    padding: 10px 0;
 }
 
 .left-sidebar-item {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 10px 14px;
+    padding: 10px;
     background: transparent;
     border: none;
     cursor: pointer;

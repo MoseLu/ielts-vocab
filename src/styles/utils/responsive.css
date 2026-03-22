@@ -49,10 +49,6 @@
         display: none;
     }
 
-    .header-search {
-        display: none;
-    }
-
     .header-logo-area {
         position: static;
         transform: none;
@@ -102,7 +98,7 @@
 /* Mobile (sm: 640px) */
 @media (max-width: 640px) {
     :root {
-        --header-height: 56px;
+        --header-height: 52px;
     }
     
     .header {
@@ -246,7 +242,7 @@
 /* ------ MOBILE (< 640px) ------ */
 @media (max-width: 639px) {
     :root {
-        --header-height: 52px;
+        --header-height: 48px;
         --space-xl: 16px;
         --space-2xl: 24px;
     }
@@ -257,10 +253,6 @@
     }
 
     .header-toolbar {
-        display: none;
-    }
-
-    .header-search {
         display: none;
     }
 
