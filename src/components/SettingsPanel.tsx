@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Scrollbar } from './ui/Scrollbar'
 
 type TabType = 'answer' | 'sound' | 'display' | 'review'
 
@@ -132,7 +133,7 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
           </div>
 
           {/* Settings Content Panels */}
-          <div className="settings-content">
+          <Scrollbar className="settings-content">
             {/* Answer Settings */}
             <div className={`settings-panel${activeTab === 'answer' ? ' active' : ''}`}>
                 <div className="settings-item">
@@ -329,6 +330,7 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                 </div>
               </div>
           </div>
+          </Scrollbar>
         </div>
       </div>
     </div>

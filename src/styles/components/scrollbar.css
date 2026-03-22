@@ -1,0 +1,61 @@
+/* ── Custom Scrollbar (Element Plus el-scrollbar style) ──────────────────────
+   Outer container hides overflow; inner wrap scrolls with native bar hidden.
+   A JS-positioned track + thumb overlays the right edge.                     */
+
+/* ── Outer container ── */
+.el-scrollbar {
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+}
+
+/* ── Inner scrollable wrap ── */
+.el-scrollbar__wrap {
+    height: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    /* Hide native scrollbar — Firefox */
+    scrollbar-width: none;
+    /* Hide native scrollbar — IE / Edge */
+    -ms-overflow-style: none;
+}
+
+/* Hide native scrollbar — WebKit */
+.el-scrollbar__wrap::-webkit-scrollbar {
+    display: none;
+}
+
+/* ── Vertical track (the rail) ── */
+.el-scrollbar__bar {
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    bottom: 2px;
+    width: 6px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+    cursor: default;
+    z-index: 1;
+    user-select: none;
+    touch-action: none;
+}
+
+.el-scrollbar__bar.is-show {
+    opacity: 1;
+}
+
+/* ── Thumb ── */
+.el-scrollbar__thumb {
+    position: relative;
+    display: block;
+    width: 100%;
+    cursor: pointer;
+    border-radius: inherit;
+    background-color: var(--scrollbar-thumb);
+    transition: background-color 200ms ease;
+}
+
+.el-scrollbar__thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+}

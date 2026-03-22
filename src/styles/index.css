@@ -13,6 +13,7 @@
 @import './layout/header-selectors.css';
 
 /* ── Components ── */
+@import './components/scrollbar.css';
 @import './components/dropdowns.css';
 @import './components/toast.css';
 @import './components/complete.css';

@@ -44,7 +44,7 @@
     border-bottom: 1px solid var(--border);
     margin-bottom: var(--space-sm);
 }
-.day-dropdown-scroll { max-height: 300px; overflow-y: auto; }
+.day-dropdown-scroll { /* overflow handled by Scrollbar component */ }
 
 .day-dropdown-item {
     display: flex; align-items: center; justify-content: space-between;
