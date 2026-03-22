@@ -99,148 +99,160 @@ function Header({
 
   return (
     <header className="header">
-      {/* Toolbar (left) */}
-      <div className="header-toolbar">
-
-        {user && (
-          <>
-            {/* Day Selector - hidden, moved to homepage */}
-            <div className="day-selector-wrapper" ref={dayDropdownRef} style={{ display: 'none' }}>
-              <div
-                className="day-selector"
-                onClick={() => setShowDayDropdown(!showDayDropdown)}
-              >
-                <span className="day-selector-current">
-                  {currentDay ? `Day ${currentDay}` : '选择单元'}
-                </span>
-                <svg
-                  className="day-selector-arrow"
-                  style={{ transform: showDayDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                >
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
-              {showDayDropdown && (
-                <div className="day-dropdown show">
-                  <div className="day-dropdown-header">选择学习单元</div>
-                  <div className="day-dropdown-scroll">
-                    {Array.from({ length: 30 }, (_, i) => (
-                      <div
-                        key={i + 1}
-                        className={`day-dropdown-item ${currentDay === i + 1 ? 'active' : ''}`}
-                        onClick={() => {
-                          onDayChange?.(i + 1)
-                          setShowDayDropdown(false)
-                          if (isPracticePage) {
-                            // reload practice
-                          }
-                        }}
-                      >
-                        <span>Day {i + 1}</span>
-                        {currentDay === i + 1 && (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Settings Button */}
-            <button className="header-btn icon-btn" title="设置" onClick={() => setShowSettings(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </button>
-          </>
-        )}
-
-        {/* Help Button */}
-        <button className="header-btn icon-btn" title="帮助" onClick={() => setShowHelp(true)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9.09 9a3 3 0 0 1 5.66 0 2.48 2.48 0 0 1-.6 1.85c-.55.6-1.26 1.08-1.9 1.63-.6.52-.96 1.25-.96 2.07V15"></path>
-            <circle cx="12" cy="18.5" r="0.8" fill="currentColor" stroke="none"></circle>
-          </svg>
-        </button>
-
-        {/* User Menu — Popover */}
-        {user && (
-          <Popover
-            placement="bottom-end"
-            offset={10}
-            panelClassName="popover-user-panel"
-            trigger={
-              <button className="user-btn" title={user.username || user.email}>
-                {user.avatar_url ? (
-                  <img src={user.avatar_url} alt="avatar" className="user-avatar-img" />
-                ) : (
-                  <img src="/assets/default-avatar.jpg" alt="avatar" className="user-avatar-img" />
-                )}
-              </button>
-            }
-          >
-            <div className="popover-user-header">
-              <button
-                className="popover-avatar-btn"
-                onClick={() => setShowAvatarUpload(true)}
-                title="点击更换头像"
-              >
-                {user.avatar_url ? (
-                  <img src={user.avatar_url} alt="avatar" className="user-avatar-img" />
-                ) : (
-                  <img src="/assets/default-avatar.jpg" alt="avatar" className="user-avatar-img" />
-                )}
-                <div className="avatar-edit-hint">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                    <circle cx="12" cy="13" r="4"/>
-                  </svg>
-                </div>
-              </button>
-              <div>
-                <div className="popover-user-name">{user.username || user.email}</div>
-                <div className="popover-user-email">{user.email}</div>
-              </div>
-            </div>
-            <div className="popover-divider" />
-            <button className="popover-item popover-item-danger" onClick={handleLogout}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-              退出登录
-            </button>
-          </Popover>
-        )}
-      </div>
-
-      {/* Logo (center) */}
+      {/* Logo - left, aligned with sidebar width */}
       <div className="header-logo-area" onClick={() => navigate('/')}>
         <img src="/images/logo.png" alt="Logo" className="header-logo-img" onError={(e) => { e.currentTarget.style.display = 'none' }} />
         <span className="header-logo-text">雅思冲刺</span>
       </div>
 
-      {/* Search (right) */}
-      <div className="header-search">
-        <div className="header-search-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="单词查询"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-          />
+      {/* Nav - inline after logo */}
+      <nav className="header-nav">
+        {mainNavItems.map(item => (
+          <button
+            key={item.key}
+            className={`header-nav-item ${location.pathname === item.path ? 'active' : ''}`}
+            onClick={() => navigate(item.path)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Right area: search + toolbar */}
+      <div className="header-right">
+        {/* Global Search */}
+        <div className="header-search">
+          <div className="header-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              placeholder="单词查询"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+            />
+          </div>
+        </div>
+
+        {/* Toolbar: settings, help, user */}
+        <div className="header-toolbar">
+          {user && (
+            <>
+              {/* Day Selector - hidden, moved to homepage */}
+              <div className="day-selector-wrapper" ref={dayDropdownRef} style={{ display: 'none' }}>
+                <div
+                  className="day-selector"
+                  onClick={() => setShowDayDropdown(!showDayDropdown)}
+                >
+                  <span className="day-selector-current">
+                    {currentDay ? `Day ${currentDay}` : '选择单元'}
+                  </span>
+                  <svg
+                    className="day-selector-arrow"
+                    style={{ transform: showDayDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+                {showDayDropdown && (
+                  <div className="day-dropdown show">
+                    <div className="day-dropdown-header">选择学习单元</div>
+                    <div className="day-dropdown-scroll">
+                      {Array.from({ length: 30 }, (_, i) => (
+                        <div
+                          key={i + 1}
+                          className={`day-dropdown-item ${currentDay === i + 1 ? 'active' : ''}`}
+                          onClick={() => {
+                            onDayChange?.(i + 1)
+                            setShowDayDropdown(false)
+                          }}
+                        >
+                          <span>Day {i + 1}</span>
+                          {currentDay === i + 1 && (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Settings Button */}
+              <button className="header-btn icon-btn" title="设置" onClick={() => setShowSettings(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </button>
+            </>
+          )}
+
+          {/* Help Button */}
+          <button className="header-btn icon-btn" title="帮助" onClick={() => setShowHelp(true)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.66 0 2.48 2.48 0 0 1-.6 1.85c-.55.6-1.26 1.08-1.9 1.63-.6.52-.96 1.25-.96 2.07V15"></path>
+              <circle cx="12" cy="18.5" r="0.8" fill="currentColor" stroke="none"></circle>
+            </svg>
+          </button>
+
+          {/* User Menu — Popover */}
+          {user && (
+            <Popover
+              placement="bottom-end"
+              offset={10}
+              panelClassName="popover-user-panel"
+              trigger={
+                <button className="user-btn" title={user.username || user.email}>
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt="avatar" className="user-avatar-img" />
+                  ) : (
+                    <img src="/assets/default-avatar.jpg" alt="avatar" className="user-avatar-img" />
+                  )}
+                </button>
+              }
+            >
+              <div className="popover-user-header">
+                <button
+                  className="popover-avatar-btn"
+                  onClick={() => setShowAvatarUpload(true)}
+                  title="点击更换头像"
+                >
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt="avatar" className="user-avatar-img" />
+                  ) : (
+                    <img src="/assets/default-avatar.jpg" alt="avatar" className="user-avatar-img" />
+                  )}
+                  <div className="avatar-edit-hint">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  </div>
+                </button>
+                <div>
+                  <div className="popover-user-name">{user.username || user.email}</div>
+                  <div className="popover-user-email">{user.email}</div>
+                </div>
+              </div>
+              <div className="popover-divider" />
+              <button className="popover-item popover-item-danger" onClick={handleLogout}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                退出登录
+              </button>
+            </Popover>
+          )}
         </div>
       </div>
 
