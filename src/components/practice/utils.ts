@@ -147,29 +147,92 @@ if (typeof speechSynthesis !== 'undefined') {
 // Singleton audio instance — stops previous playback when a new word starts.
 let _currentAudio: HTMLAudioElement | null = null
 
+// Generation counter — incremented on every stopAudio() so async fetches can
+// detect that playback was cancelled while they were waiting.
+let _audioGeneration = 0
+
+// Cache of word → audio URL from Free Dictionary API (null = no recording found)
+const _audioUrlCache = new Map<string, string | null>()
+
+/**
+ * Fetch a real pronunciation URL from dictionaryapi.dev (Wiktionary recordings).
+ * Results are cached so subsequent calls are instant.
+ */
+async function fetchAudioUrl(word: string): Promise<string | null> {
+  const key = word.toLowerCase()
+  if (_audioUrlCache.has(key)) return _audioUrlCache.get(key)!
+  try {
+    const controller = new AbortController()
+    const tid = setTimeout(() => controller.abort(), 3000)
+    const res = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+      { signal: controller.signal },
+    )
+    clearTimeout(tid)
+    if (!res.ok) { _audioUrlCache.set(key, null); return null }
+    const data = await res.json()
+    for (const entry of data) {
+      for (const p of (entry.phonetics || [])) {
+        if (p.audio) {
+          const url = (p.audio as string).startsWith('//')
+            ? 'https:' + p.audio
+            : p.audio as string
+          if (url.startsWith('https')) {
+            _audioUrlCache.set(key, url)
+            return url
+          }
+        }
+      }
+    }
+  } catch { /* network error or abort */ }
+  _audioUrlCache.set(key, null)
+  return null
+}
+
 /**
  * Play word pronunciation.
- * Primary:  Web Speech API with the best available English voice
- *           (Google/Microsoft neural TTS — clear, bright, natural stress).
- * Fallback: Youdao dictionary audio if speechSynthesis is unavailable.
+ * Primary:  Free Dictionary API (dictionaryapi.dev) — real Wiktionary recordings,
+ *           clear and complete. Results are cached after the first fetch.
+ * Fallback: Web Speech API with the best available English voice.
  */
-export function playWordAudio(
+export async function playWordAudio(
   word: string,
   settings: { playbackSpeed?: string; volume?: string },
   onEnd?: () => void,
-): void {
-  // Stop anything currently playing
-  if (_currentAudio) {
-    _currentAudio.onended = null
-    _currentAudio.pause()
-    _currentAudio = null
-  }
-  speechSynthesis.cancel()
+): Promise<void> {
+  // Stop anything currently playing and capture our generation
+  stopAudio()
+  const gen = _audioGeneration
 
   const volume = parseFloat(settings.volume || '100') / 100
   const rate   = parseFloat(settings.playbackSpeed || '0.8')
 
-  const speakWithSynthesis = () => {
+  // ── Try real audio recording first ──────────────────────────────────────
+  const audioUrl = await fetchAudioUrl(word)
+
+  // Check if stopAudio() was called while we were fetching
+  if (_audioGeneration !== gen) return
+
+  if (audioUrl) {
+    const audio = new Audio(audioUrl)
+    audio.volume = Math.min(1, Math.max(0, volume))
+    audio.playbackRate = Math.min(4, Math.max(0.25, rate))
+    if (onEnd) audio.onended = () => onEnd()
+    _currentAudio = audio
+    const ok = await audio.play().catch(() => false as const)
+    if (_audioGeneration !== gen) return   // stopped while play() was pending
+    if (ok !== false) return               // successfully playing
+    _currentAudio = null
+  }
+
+  // Check again before falling back
+  if (_audioGeneration !== gen) return
+
+  // ── Fallback: Web Speech API ─────────────────────────────────────────────
+  if (typeof speechSynthesis === 'undefined') return
+
+  const speak = () => {
+    if (_audioGeneration !== gen) return
     const u = new SpeechSynthesisUtterance(word)
     u.lang   = 'en-US'
     u.rate   = rate
@@ -180,41 +243,21 @@ export function playWordAudio(
     speechSynthesis.speak(u)
   }
 
-  const speakWithYoudao = () => {
-    const audio = new Audio(
-      `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`
-    )
-    audio.volume = Math.min(1, Math.max(0, volume))
-    audio.playbackRate = Math.min(4, Math.max(0.25, rate))
-    if (onEnd) audio.onended = onEnd
-    _currentAudio = audio
-    audio.play().catch(() => {
-      _currentAudio = null
-      if (onEnd) onEnd()
-    })
-  }
-
-  // Web Speech API is unavailable (rare) → fall back to Youdao
-  if (typeof speechSynthesis === 'undefined') {
-    speakWithYoudao()
-    return
-  }
-
-  // Voices may not be ready on first call — wait for them then speak
   const voices = speechSynthesis.getVoices()
   if (!voices.length) {
-    speechSynthesis.addEventListener('voiceschanged', speakWithSynthesis, { once: true })
+    speechSynthesis.addEventListener('voiceschanged', speak, { once: true })
   } else {
-    speakWithSynthesis()
+    speak()
   }
 }
 
 /** Stop any in-progress audio (both Audio element and speechSynthesis). */
 export function stopAudio(): void {
+  _audioGeneration++
   if (_currentAudio) {
     _currentAudio.onended = null
     _currentAudio.pause()
     _currentAudio = null
   }
-  speechSynthesis.cancel()
+  if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
 }
