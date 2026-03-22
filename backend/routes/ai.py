@@ -18,18 +18,18 @@ def token_required(f):
             token = auth_header.split(' ')[1]
 
         if not token:
-            return jsonify({'error': 'Token is missing'}), 401
+            return jsonify({'error': '请先登录'}), 401
 
         try:
             from config import Config
             data = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=['HS256'])
             current_user = User.query.get(data['user_id'])
             if not current_user:
-                return jsonify({'error': 'User not found'}), 401
+                return jsonify({'error': '用户不存在'}), 401
         except jwt.ExpiredSignatureError:
-            return jsonify({'error': 'Token has expired'}), 401
+            return jsonify({'error': '登录已过期，请重新登录'}), 401
         except jwt.InvalidTokenError:
-            return jsonify({'error': 'Invalid token'}), 401
+            return jsonify({'error': '登录凭证无效，请重新登录'}), 401
 
         return f(current_user, *args, **kwargs)
 
