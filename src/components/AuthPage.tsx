@@ -26,7 +26,8 @@ function FormField({ label, required, children, error }: {
         {required && <RequiredMark />}
       </label>
       {children}
-      {error && <span className="field-error">{error}</span>}
+      {/* Always rendered to prevent layout jump; text only visible when error exists */}
+      <span className="field-error">{error ?? '\u00a0'}</span>
     </div>
   )
 }
@@ -169,9 +170,7 @@ export default function AuthPage() {
               </button>
             </div>
 
-            {loginForm.errors.__form && (
-              <span className="field-error">{loginForm.errors.__form}</span>
-            )}
+            <span className="field-error">{loginForm.errors.__form ?? '\u00a0'}</span>
 
             <button type="submit" className="auth-btn">登录</button>
           </form>
@@ -234,9 +233,7 @@ export default function AuthPage() {
               <a href="#" className="agreement-link" onClick={(e) => e.preventDefault()}>《用户服务协议》</a>
             </label>
 
-            {registerForm.errors.__form && (
-              <span className="field-error">{registerForm.errors.__form}</span>
-            )}
+            <span className="field-error">{registerForm.errors.__form ?? '\u00a0'}</span>
 
             <button type="submit" className="auth-btn">注册</button>
           </form>
@@ -305,7 +302,7 @@ export default function AuthPage() {
               </>
             )}
 
-            {fpError && <span className="field-error">{fpError}</span>}
+            <span className="field-error">{fpError || '\u00a0'}</span>
 
             {fpEmailSent && (
               <button type="submit" className="auth-btn" disabled={fpSubmitting}>

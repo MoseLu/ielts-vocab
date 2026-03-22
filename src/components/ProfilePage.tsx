@@ -122,7 +122,7 @@ function BindEmailModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
-          {error && <p className="field-error">{error}</p>}
+          <p className="field-error">{error || '\u00a0'}</p>
 
           <div className="bind-email-actions">
             <button type="button" className="bind-email-cancel" onClick={onClose}>取消</button>

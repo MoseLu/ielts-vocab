@@ -108,4 +108,17 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Field validation error ───────────────────────────────────────────────────
+   Always rendered (to prevent layout jump); invisible when empty.           */
+.field-error {
+    display: block;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--error);
+    opacity: 0.85;
+    margin-top: 4px;
+    min-height: 17px;   /* reserves space so layout never shifts */
+    /* non-breaking space placeholder keeps the line without height = 0 */
+}
+
 
