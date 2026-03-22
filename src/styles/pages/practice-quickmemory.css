@@ -93,6 +93,23 @@
     margin: 0;
 }
 
+.qm-audio-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    animation: qm-audio-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes qm-audio-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
+    50%       { box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
 /* ── Choice buttons ───────────────────────────────────────────────────────── */
 .qm-choice-row {
     display: flex;

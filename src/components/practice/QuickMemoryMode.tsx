@@ -168,8 +168,9 @@ export default function QuickMemoryMode({
   const [results, setResults]     = useState<SessionResult[]>([])
   const [done, setDone]           = useState(false)
 
-  const timerRef  = useRef<ReturnType<typeof setInterval>>()
-  const chosenRef = useRef(false)   // guard against double-fire
+  const timerRef       = useRef<ReturnType<typeof setInterval>>()
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const chosenRef      = useRef(false)   // guard against double-fire
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
 
@@ -188,10 +189,17 @@ export default function QuickMemoryMode({
     setResults(prev => [...prev, { wordIdx: index, choice: picked }])
 
     // Auto-play pronunciation after brief delay
-    setTimeout(() => {
+    revealTimerRef.current = setTimeout(() => {
       if (currentWord) playWordAudio(currentWord.word, settings, () => {})
     }, 350)
   }, [currentWord, index, settings])
+
+  // ── Play audio when question phase starts ──────────────────────────────────
+  useEffect(() => {
+    if (phase !== 'question' || !currentWord) return
+    const t = setTimeout(() => playWordAudio(currentWord.word, settings, () => {}), 200)
+    return () => clearTimeout(t)
+  }, [phase, index]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Countdown tick ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -214,10 +222,15 @@ export default function QuickMemoryMode({
   }, [phase, index])   // re-run when word changes
 
   // ── Cleanup audio on unmount ───────────────────────────────────────────────
-  useEffect(() => () => { stopAudio(); clearInterval(timerRef.current) }, [])
+  useEffect(() => () => {
+    stopAudio()
+    clearInterval(timerRef.current)
+    clearTimeout(revealTimerRef.current)
+  }, [])
 
   // ── Advance to next word ───────────────────────────────────────────────────
   const handleNext = useCallback(() => {
+    clearTimeout(revealTimerRef.current)
     stopAudio()
     const next = index + 1
     if (next >= queue.length) {
@@ -277,9 +290,16 @@ export default function QuickMemoryMode({
               <CountdownRing seconds={countdown} total={TIMER_SECONDS} />
             </div>
 
-            <div className="qm-word">{currentWord.word}</div>
+            {/* Word is hidden — user identifies by listening only */}
+            <div className="qm-audio-prompt">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="48" height="48">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              </svg>
+            </div>
 
-            <p className="qm-hint">你认识这个单词吗？</p>
+            <p className="qm-hint">听音频，你认识这个单词吗？</p>
 
             <div className="qm-choice-row">
               <button
