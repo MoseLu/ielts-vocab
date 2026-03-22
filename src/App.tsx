@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AuthProvider, useAuth, useToast, ToastProvider } from './contexts'
+import { AuthProvider, useAuth, useToast, ToastProvider, AIChatProvider } from './contexts'
 import { SettingsProvider } from './contexts'
 import Header from './components/Header'
 import LeftSidebar from './components/LeftSidebar'
@@ -181,18 +181,20 @@ export default function App() {
 
   return (
     <Router>
-      <SettingsProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <AppRoutes
-              mode={mode}
-              currentDay={currentDay}
-              onModeChange={handleModeChange}
-              onDayChange={handleDayChange}
-            />
-          </ToastProvider>
-        </AuthProvider>
-      </SettingsProvider>
+      <AIChatProvider>
+        <SettingsProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <AppRoutes
+                mode={mode}
+                currentDay={currentDay}
+                onModeChange={handleModeChange}
+                onDayChange={handleDayChange}
+              />
+            </ToastProvider>
+          </AuthProvider>
+        </SettingsProvider>
+      </AIChatProvider>
     </Router>
   )
 }

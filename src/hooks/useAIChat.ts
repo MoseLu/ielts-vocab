@@ -5,7 +5,7 @@
 //   - Rich context: quick memory records, mode performance, study sessions
 //   - Session logging via logSession()
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { setGlobalLearningContext, getGlobalLearningContext } from '../contexts/AIChatContext'
 import type { AIMessage, LearningContext } from '../types'
 import { safeParse, AIAskResponseSchema } from '../lib'
@@ -129,18 +129,11 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
   const [error, setError] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [contextLoaded, setContextLoaded] = useState(false)
-  const [learningContext, setLearningContextState] = useState<LearningContext>({})
 
-  const contextRef = useRef<LearningContext>({})
-  const setLearningContext = useCallback((ctx: LearningContext) => {
-    setLearningContextState(ctx)
-    contextRef.current = ctx
-  }, [])
-
-  // Build the rich context object merged with global learning context
+  // Build the rich context object — merges global context (updated by PracticePage)
+  // with local quick-memory and mode-performance data from localStorage.
   const buildContext = useCallback(() => {
     return {
-      ...contextRef.current,
       ...getGlobalLearningContext(),
       quickMemorySummary: buildQuickMemorySummary(),
       modePerformance: buildModePerformance(),
@@ -279,8 +272,6 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
     error,
     isOpen,
     contextLoaded,
-    learningContext,
-    setLearningContext,
     openPanel,
     closePanel,
     sendMessage,

@@ -251,6 +251,7 @@ export default function HomePage() {
       {/* Chapter Modal for paid books */}
       {selectedBook && showChapterModal && (
         <ChapterModal
+          key={`chapter-${selectedBook.id}-${showChapterModal}`}
           book={selectedBook}
           progress={progressMap[selectedBook.id]}
           onClose={() => {

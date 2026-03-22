@@ -229,6 +229,7 @@ function VocabBookPage() {
       {/* Modal */}
       {selectedBook && showChapterModal && (
         <ChapterModal
+          key={`chapter-${selectedBook.id}-${showChapterModal}`}
           book={selectedBook}
           progress={progressMap[selectedBook.id]}
           onClose={() => {

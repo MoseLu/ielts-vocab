@@ -146,7 +146,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
       }
     }
     fetchData()
-  }, [book.id, onFallback])
+  }, [book.id])
 
   // Which chapter the user was last working on
   const currentChapterId = useMemo((): string | number | null => {
