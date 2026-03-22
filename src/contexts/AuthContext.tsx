@@ -9,10 +9,14 @@ interface AuthContextValue {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, username: string) => Promise<void>
+  login: (identifier: string, password: string) => Promise<void>
+  register: (username: string, password: string, email?: string) => Promise<void>
   logout: () => void
   updateUser: (user: User) => void
+  sendBindEmailCode: (email: string) => Promise<void>
+  bindEmail: (email: string, code: string) => Promise<void>
+  sendForgotPasswordCode: (email: string) => Promise<void>
+  resetPassword: (email: string, code: string, password: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -30,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (parsed.success) {
           setUser(parsed.data)
         } else {
-          // Partial data — keep token, use what we can
           const raw = JSON.parse(savedUser)
           setUser({
             id: raw.id ?? 0,
@@ -41,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           })
         }
       } catch {
-        // Storage unreadable — clear
         localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN)
         localStorage.removeItem(STORAGE_KEYS.AUTH_USER)
       }
@@ -49,51 +51,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
-    // Validate form input with Zod
-    const formResult = safeParse(LoginSchema, { email, password })
+  const login = useCallback(async (identifier: string, password: string) => {
+    const formResult = safeParse(LoginSchema, { identifier, password })
     if (!formResult.success) {
       throw new Error(formResult.errors.join('；'))
     }
 
     const raw = await apiFetch<unknown>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email: identifier, password }),
     })
 
-    // Validate API response with Zod
     const responseResult = safeParse(AuthResponseSchema, raw)
     if (!responseResult.success) {
       throw new Error('服务器响应格式错误')
     }
 
     const { user: validatedUser, token } = responseResult.data
-
     localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token)
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(validatedUser))
     setUser(validatedUser)
   }, [])
 
-  const register = useCallback(async (email: string, password: string, username: string) => {
-    // Validate form input with Zod
-    const formResult = safeParse(RegisterSchema, { email, password, username, confirmPassword: password })
+  const register = useCallback(async (username: string, password: string, email?: string) => {
+    const formResult = safeParse(RegisterSchema, { username, email: email || '', password, confirmPassword: password })
     if (!formResult.success) {
       throw new Error(formResult.errors.join('；'))
     }
 
     const raw = await apiFetch<unknown>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, username }),
+      body: JSON.stringify({ username, password, email: email || '' }),
     })
 
-    // Validate API response with Zod
     const responseResult = safeParse(AuthResponseSchema, raw)
     if (!responseResult.success) {
       throw new Error('服务器响应格式错误')
     }
 
     const { user: validatedUser, token } = responseResult.data
-
     localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token)
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(validatedUser))
     setUser(validatedUser)
@@ -110,6 +106,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(updatedUser))
   }, [])
 
+  const sendBindEmailCode = useCallback(async (email: string) => {
+    await apiFetch<unknown>('/api/auth/send-code', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+  }, [])
+
+  const bindEmail = useCallback(async (email: string, code: string) => {
+    const raw = await apiFetch<{ user: unknown }>('/api/auth/bind-email', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    })
+    const parsed = safeParse(UserSchema, raw.user)
+    if (parsed.success) {
+      setUser(parsed.data)
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(parsed.data))
+    }
+  }, [])
+
+  const sendForgotPasswordCode = useCallback(async (email: string) => {
+    await apiFetch<unknown>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+  }, [])
+
+  const resetPassword = useCallback(async (email: string, code: string, password: string) => {
+    await apiFetch<unknown>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, code, password }),
+    })
+  }, [])
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -119,6 +148,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       updateUser,
+      sendBindEmailCode,
+      bindEmail,
+      sendForgotPasswordCode,
+      resetPassword,
     }}>
       {children}
     </AuthContext.Provider>

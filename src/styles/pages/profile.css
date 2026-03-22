@@ -149,6 +149,141 @@
     background: var(--error-light);
 }
 
+/* Unbound email link */
+.profile-email-unbound {
+    color: var(--accent);
+    cursor: pointer;
+    font-style: italic;
+}
+
+.profile-email-unbound:hover {
+    text-decoration: underline;
+}
+
+/* ── Bind Email Modal ──────────────────────────────────────────────── */
+.bind-email-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+}
+
+.bind-email-modal {
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow-lg);
+}
+
+.bind-email-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+}
+
+.bind-email-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.bind-email-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+}
+
+.bind-email-close:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.bind-email-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.bind-email-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+    line-height: 1.5;
+}
+
+.bind-email-field {
+    margin-bottom: var(--space-md);
+}
+
+.bind-email-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.bind-email-row {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
+}
+
+.bind-email-row .auth-input {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.bind-email-field .auth-input {
+    margin-bottom: 0;
+}
+
+.bind-email-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+    justify-content: flex-end;
+}
+
+.bind-email-cancel {
+    height: 40px;
+    padding: 0 var(--space-lg);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.bind-email-cancel:hover {
+    background: var(--bg-tertiary);
+}
+
+.bind-email-submit {
+    width: auto;
+    height: 40px;
+    padding: 0 var(--space-xl);
+    font-size: 14px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .profile-page {

@@ -10,11 +10,141 @@ interface MenuItem {
   action: () => void
 }
 
+// ── Bind Email Modal ───────────────────────────────────────────────────────────
+function BindEmailModal({ onClose }: { onClose: () => void }) {
+  const { user, sendBindEmailCode, bindEmail } = useAuth()
+  const { showToast } = useToast()
+
+  const [email, setEmail] = useState(user?.email && !user.email.endsWith('@noemail.local') ? user.email : '')
+  const [code, setCode] = useState('')
+  const [codeSent, setCodeSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [countdown, setCountdown] = useState(0)
+
+  const startCountdown = () => {
+    setCountdown(60)
+    const timer = setInterval(() => {
+      setCountdown((n) => {
+        if (n <= 1) { clearInterval(timer); return 0 }
+        return n - 1
+      })
+    }, 1000)
+  }
+
+  const handleSendCode = async () => {
+    if (!email || !email.includes('@')) {
+      setError('请输入有效的邮箱地址')
+      return
+    }
+    setError('')
+    setSending(true)
+    try {
+      await sendBindEmailCode(email)
+      setCodeSent(true)
+      startCountdown()
+      showToast('验证码已发送，请查收邮件', 'success')
+    } catch (e: any) {
+      setError(e.message || '发送失败，请稍后重试')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!code || code.length !== 6) { setError('请输入6位验证码'); return }
+    setError('')
+    setSubmitting(true)
+    try {
+      await bindEmail(email, code)
+      showToast('邮箱绑定成功', 'success')
+      onClose()
+    } catch (e: any) {
+      setError(e.message || '绑定失败，请重试')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="bind-email-overlay" onClick={onClose}>
+      <div className="bind-email-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="bind-email-header">
+          <h3 className="bind-email-title">绑定邮箱</h3>
+          <button className="bind-email-close" onClick={onClose} type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <p className="bind-email-desc">绑定邮箱后可用于找回密码和账号安全验证</p>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="bind-email-field">
+            <label className="bind-email-label">邮箱地址 <span className="required-mark">*</span></label>
+            <div className="bind-email-row">
+              <input
+                type="email"
+                className="auth-input"
+                placeholder="请输入邮箱地址"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={codeSent}
+                autoComplete="email"
+              />
+              <button
+                type="button"
+                className="auth-send-code-btn"
+                onClick={handleSendCode}
+                disabled={sending || countdown > 0}
+              >
+                {sending ? '发送中…' : countdown > 0 ? `${countdown}s` : codeSent ? '重新发送' : '发送验证码'}
+              </button>
+            </div>
+          </div>
+
+          {codeSent && (
+            <div className="bind-email-field">
+              <label className="bind-email-label">验证码 <span className="required-mark">*</span></label>
+              <input
+                type="text"
+                className="auth-input"
+                placeholder="请输入6位验证码"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                maxLength={6}
+                autoComplete="one-time-code"
+              />
+            </div>
+          )}
+
+          {error && <p className="field-error">{error}</p>}
+
+          <div className="bind-email-actions">
+            <button type="button" className="bind-email-cancel" onClick={onClose}>取消</button>
+            {codeSent && (
+              <button type="submit" className="auth-btn bind-email-submit" disabled={submitting}>
+                {submitting ? '绑定中…' : '确认绑定'}
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ── Profile Page ───────────────────────────────────────────────────────────────
 export default function ProfilePage() {
   const { user, logout } = useAuth()
   const { showToast } = useToast()
   const navigate = useNavigate()
   const [showSettings, setShowSettings] = useState<boolean>(false)
+  const [showBindEmail, setShowBindEmail] = useState<boolean>(false)
 
   const handleLogout = () => {
     logout()
@@ -25,7 +155,19 @@ export default function ProfilePage() {
     showToast(`${label} — 敬请期待`, 'info')
   }
 
+  const hasEmail = user?.email && user.email.trim() !== ''
+
   const menuItems: MenuItem[] = [
+    {
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+          <polyline points="22,6 12,13 2,6" />
+        </svg>
+      ),
+      label: hasEmail ? `邮箱：${user!.email}` : '绑定邮箱',
+      action: () => setShowBindEmail(true),
+    },
     {
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -79,7 +221,13 @@ export default function ProfilePage() {
         </div>
         <div className="profile-user-info">
           <div className="profile-username">{user?.username || '用户'}</div>
-          <div className="profile-email">{user?.email || ''}</div>
+          <div className="profile-email">
+            {hasEmail ? user!.email : (
+              <span className="profile-email-unbound" onClick={() => setShowBindEmail(true)}>
+                未绑定邮箱 — 点击绑定
+              </span>
+            )}
+          </div>
         </div>
         <div className="profile-pro-badge">免费版</div>
       </div>
@@ -96,7 +244,7 @@ export default function ProfilePage() {
           </button>
         ))}
 
-        {/* Logout — separate, destructive style */}
+        {/* Logout */}
         <button className="profile-menu-item profile-logout-item" onClick={handleLogout}>
           <span className="profile-menu-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -115,7 +263,10 @@ export default function ProfilePage() {
       {showSettings && (
         <SettingsPanel showSettings={showSettings} onClose={() => setShowSettings(false)} />
       )}
+
+      {showBindEmail && (
+        <BindEmailModal onClose={() => setShowBindEmail(false)} />
+      )}
     </div>
   )
 }
-

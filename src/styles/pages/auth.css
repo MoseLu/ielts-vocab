@@ -156,3 +156,146 @@
 .auth-switch a:hover {
     text-decoration: underline;
 }
+
+/* ── Tabs ──────────────────────────────────────────────────────────── */
+.auth-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--space-xl);
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 12px 0;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: -1px;
+}
+
+.auth-tab:hover {
+    color: var(--text-primary);
+}
+
+.auth-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+}
+
+/* ── Form fields with labels ──────────────────────────────────────── */
+.auth-form-field {
+    margin-bottom: var(--space-md);
+}
+
+.auth-form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.auth-form-field .auth-input {
+    margin-bottom: 0;
+}
+
+.required-mark {
+    color: var(--error, #e53e3e);
+    margin-left: 2px;
+    font-size: 12px;
+}
+
+/* ── Forgot password row (link below password field) ──────────────── */
+.auth-forgot-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -8px;
+    margin-bottom: var(--space-md);
+}
+
+.auth-forgot-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.auth-forgot-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Forgot password back header ─────────────────────────────────── */
+.auth-back-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.auth-back-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.auth-back-btn:hover {
+    color: var(--text-primary);
+}
+
+.auth-forgot-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* ── Send code row (email + button side by side) ──────────────────── */
+.auth-code-row {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
+}
+
+.auth-code-row .auth-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.auth-send-code-btn {
+    flex-shrink: 0;
+    height: 48px;
+    padding: 0 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+
+.auth-send-code-btn:hover:not(:disabled) {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+}
+
+.auth-send-code-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
