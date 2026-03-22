@@ -225,8 +225,7 @@
 }
 
 .day-dropdown-scroll {
-    max-height: 320px;
-    overflow-y: auto;
+    /* max-height + overflow handled by Scrollbar component */
 }
 
 .day-dropdown-item.active {

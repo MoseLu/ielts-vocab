@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { Scrollbar } from './ui/Scrollbar'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
@@ -237,7 +238,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         </div>
 
         {/* ── Body ── */}
-        <div className="chapter-modal-body">
+        <Scrollbar className="chapter-modal-body">
           {loading ? (
             <div className="chapter-loading">
               <div className="loading-spinner" />
@@ -270,7 +271,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
               )}
             </div>
           )}
-        </div>
+        </Scrollbar>
       </div>
     </div>
   )

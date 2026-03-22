@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useAIChat, GeneratedBook } from '../hooks/useAIChat'
+import { Scrollbar } from './ui/Scrollbar'
 
 // Inline SVG icons
 const AIRobotSVG = () => (
@@ -199,7 +200,7 @@ function AIChatPanel() {
       )}
 
       {/* Messages */}
-      <div className="ai-messages">
+      <Scrollbar className="ai-messages">
         {messages.map((msg) => (
           <div key={msg.id} className={`ai-msg ai-msg-${msg.role}`}>
             {msg.role === 'assistant' && (
@@ -236,7 +237,7 @@ function AIChatPanel() {
           </div>
         )}
         <div ref={messagesEndRef} />
-      </div>
+      </Scrollbar>
 
       {/* Input */}
       <div className="ai-input-row">

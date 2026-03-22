@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Popover from '../ui/Popover'
+import { Scrollbar } from '../ui/Scrollbar'
 import type { PracticeControlBarProps, PracticeMode, RadioQuickSettings } from './types'
 
 const modeNames: Record<PracticeMode, string> = {
@@ -100,7 +101,7 @@ export default function PracticeControlBar({
               </button>
             }
           >
-            <div className="popover-ctx-scroll">
+            <Scrollbar className="popover-ctx-scroll" maxHeight={320}>
               {bookId ? (
                 bookChapters.length > 0 ? bookChapters.map(ch => (
                   <button
@@ -126,7 +127,7 @@ export default function PracticeControlBar({
                   </button>
                 ))
               )}
-            </div>
+            </Scrollbar>
           </Popover>
         )}
 

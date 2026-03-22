@@ -96,7 +96,11 @@
 /* ── Scrollable body ── */
 .chapter-modal-body {
     flex: 1;
-    overflow-y: auto;
+    /* overflow handled by Scrollbar component */
+    min-height: 0;
+}
+
+.chapter-modal-body .el-scrollbar__wrap {
     padding: 20px 24px;
 }
 

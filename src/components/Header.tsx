@@ -4,6 +4,7 @@ import { useAuth } from '../contexts'
 import SettingsPanel from './SettingsPanel'
 import AvatarUpload from './AvatarUpload'
 import Popover from './ui/Popover'
+import { Scrollbar } from './ui/Scrollbar'
 
 export interface User {
   username?: string
@@ -161,7 +162,7 @@ function Header({
                 {showDayDropdown && (
                   <div className="day-dropdown show">
                     <div className="day-dropdown-header">选择学习单元</div>
-                    <div className="day-dropdown-scroll">
+                    <Scrollbar className="day-dropdown-scroll" maxHeight={300}>
                       {Array.from({ length: 30 }, (_, i) => (
                         <div
                           key={i + 1}
@@ -179,7 +180,7 @@ function Header({
                           )}
                         </div>
                       ))}
-                    </div>
+                    </Scrollbar>
                   </div>
                 )}
               </div>
