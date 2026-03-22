@@ -9,14 +9,60 @@
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 var(--space-lg);
-    gap: var(--space-md);
     z-index: 100;
     box-shadow: var(--shadow-sm);
     overflow: visible;
 }
 
+/* ── Toolbar (left) ── */
+.header-toolbar {
+    position: absolute;
+    left: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+/* ── Logo (center) ── */
+.header-logo-area {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    cursor: pointer;
+}
+
+.header-logo-img {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+
+.header-logo-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+}
+
+/* ── Search (right) ── */
+.header-search {
+    position: absolute;
+    right: var(--space-lg);
+}
+
+/* ── Nav (legacy compat) ── */
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+/* ── Left / Right / Center (legacy compat) ── */
 .header-left {
     display: flex;
     align-items: center;
@@ -37,7 +83,7 @@
     flex-shrink: 0;
 }
 
-/* ── Logo ── */
+/* ── Logo (legacy compat) ── */
 .logo {
     display: flex;
     align-items: center;
@@ -97,11 +143,12 @@
 /* ── Search box ── */
 .header-search-box {
     display: flex; align-items: center; gap: 6px;
-    padding: 6px 12px;
+    padding: 6px 10px;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: var(--radius-full);
-    min-width: 220px;
+    min-width: 140px;
+    max-width: 160px;
     transition: border-color var(--transition-fast);
 }
 .header-search-box:focus-within { border-color: var(--accent); }
@@ -109,12 +156,12 @@
 .header-search-box input {
     flex: 1; border: none; background: transparent;
     outline: none; font-size: 13px; color: var(--text-primary);
+    min-width: 0;
 }
 .header-search-box input::placeholder { color: var(--text-tertiary); }
-.header-search-shortcut { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; flex-shrink: 0; }
 
-/* ── Main nav ── */
-.main-nav { display: flex; gap: var(--space-xs); margin-left: var(--space-xl); }
+/* ── Main nav (legacy compat) ── */
+.main-nav { display: flex; gap: var(--space-xs); }
 
 .main-nav-item {
     padding: 8px 16px;

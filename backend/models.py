@@ -240,6 +240,26 @@ class CustomBookWord(db.Model):
 
 # ── User Wrong Words (synced from client) ────────────────────────────────────
 
+class UserAddedBook(db.Model):
+    """Tracks which books a user has added to their personal list."""
+    __tablename__ = 'user_added_books'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    book_id = db.Column(db.String(50), nullable=False)
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'book_id', name='unique_user_added_book'),
+    )
+
+    def to_dict(self):
+        return {
+            'book_id': self.book_id,
+            'added_at': self.added_at.isoformat() if self.added_at else None
+        }
+
+
 class UserWrongWord(db.Model):
     """Wrong words synced from client localStorage for AI context"""
     __tablename__ = 'user_wrong_words'

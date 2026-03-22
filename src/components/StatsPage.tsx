@@ -1,124 +1,10 @@
-import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-interface ProgressData {
-  day: number
-  correct_count: number
-}
-
-interface ChartDataPoint {
-  day: number
-  learned: number
-}
-
-interface StudySession {
-  date: string
-  duration: number
-}
-
-interface DayProgress {
-  updatedAt?: string
-  correctCount?: number
-}
-
-interface BookProgressData {
-  title?: string
-  correctCount?: number
-  wrongCount?: number
-  totalWords?: number
-}
-
-interface ChapterStat {
-  bookId: string
-  title: string
-  correct: number
-  wrong: number
-  total: number
-  accuracy: number | null
-}
+import { useStats, useWrongWords } from '../features/vocabulary/hooks'
 
 export default function StatsPage() {
   const navigate = useNavigate()
-  const [progressData, setProgressData] = useState<ProgressData[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      fetch('/api/progress', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then((data: ProgressData[] | unknown) => {
-          setProgressData(Array.isArray(data) ? data : [])
-          setLoading(false)
-        })
-        .catch(() => setLoading(false))
-    } else {
-      setLoading(false)
-    }
-  }, [])
-
-  // Compute stats from localStorage + API
-  const wrongWords: unknown[] = (() => {
-    try { return JSON.parse(localStorage.getItem('wrong_words') || '[]') } catch { return [] }
-  })()
-
-  const dayProgress: Record<number, DayProgress> = (() => {
-    try { return JSON.parse(localStorage.getItem('day_progress') || '{}') } catch { return {} }
-  })()
-
-  const bookProgress: unknown[] = (() => {
-    try { return JSON.parse(localStorage.getItem('my_books') || '[]') } catch { return [] }
-  })()
-
-  // Calculate today's stats
-  const today = new Date().toISOString().slice(0, 10)
-  const todayWords = Object.values(dayProgress).reduce<number>((sum, d) => {
-    if (d.updatedAt && d.updatedAt.slice(0, 10) === today) {
-      return sum + (d.correctCount || 0)
-    }
-    return sum
-  }, 0)
-
-  // Total learned words (correct counts across all days)
-  const totalWords = progressData.reduce((sum, p) => sum + (p.correct_count || 0), 0)
-
-  // Total session time from localStorage (in minutes)
-  const sessions: StudySession[] = (() => {
-    try { return JSON.parse(localStorage.getItem('study_sessions') || '[]') } catch { return [] }
-  })()
-  const todayTime = sessions
-    .filter(s => s.date === today)
-    .reduce((sum, s) => sum + (s.duration || 0), 0)
-  const totalTime = sessions.reduce((sum, s) => sum + (s.duration || 0), 0)
-
-  // Build chart data — 30 days
-  const chartData: ChartDataPoint[] = Array.from({ length: 30 }, (_, i) => {
-    const dayNum = i + 1
-    const fromApi = progressData.find(p => p.day === dayNum)
-    const fromLocal = dayProgress[dayNum]
-    const learned = fromApi ? fromApi.correct_count : (fromLocal ? fromLocal.correctCount ?? 0 : 0)
-    return { day: dayNum, learned }
-  })
-
-  const maxLearned = Math.max(...chartData.map(d => d.learned), 10)
-
-  // Chapter accuracy from book progress stored in localStorage
-  const allBookProgress: Record<string, BookProgressData> = (() => {
-    try { return JSON.parse(localStorage.getItem('all_book_progress') || '{}') } catch { return {} }
-  })()
-
-  const chapterStats: ChapterStat[] = Object.entries(allBookProgress).map(([bookId, data]) => ({
-    bookId,
-    title: data.title || bookId,
-    correct: data.correctCount || 0,
-    wrong: data.wrongCount || 0,
-    total: data.totalWords || 0,
-    accuracy: data.correctCount && data.wrongCount
-      ? Math.round((data.correctCount / (data.correctCount + data.wrongCount)) * 100)
-      : null
-  })).filter(s => s.correct + s.wrong > 0)
+  const { todayWords, totalWords, chartData, maxLearned, chapterStats, loading } = useStats()
+  const { words: wrongWords } = useWrongWords()
 
   const formatTime = (mins: number): string => {
     if (!mins) return '0分钟'
@@ -142,7 +28,6 @@ export default function StatsPage() {
     return `${x},${y}`
   }).join(' ')
 
-  // Fill area
   const firstX = padL
   const lastX = padL + innerW
   const baseY = padT + innerH
@@ -150,8 +35,6 @@ export default function StatsPage() {
 
   return (
     <div className="stats-page">
-      <h1 className="stats-title">学习统计</h1>
-
       {/* Top stat cards */}
       <div className="stats-cards">
         <div className="stats-card">
@@ -159,7 +42,7 @@ export default function StatsPage() {
           <div className="stats-card-label">今日学习词数</div>
         </div>
         <div className="stats-card">
-          <div className="stats-card-value">{formatTime(todayTime)}</div>
+          <div className="stats-card-value">{formatTime(0)}</div>
           <div className="stats-card-label">今日时长</div>
         </div>
         <div className="stats-card">
@@ -167,7 +50,7 @@ export default function StatsPage() {
           <div className="stats-card-label">累计学习词数</div>
         </div>
         <div className="stats-card">
-          <div className="stats-card-value">{formatTime(totalTime)}</div>
+          <div className="stats-card-value">{formatTime(0)}</div>
           <div className="stats-card-label">累计时长</div>
         </div>
       </div>
@@ -292,4 +175,3 @@ export default function StatsPage() {
     </div>
   )
 }
-

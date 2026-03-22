@@ -525,6 +525,17 @@ def get_custom_book(current_user: User, book_id: str):
     return jsonify(book.to_dict())
 
 
+# ── GET /api/wrong-words ─────────────────────────────────────────────────────
+
+@ai_bp.route('/wrong-words', methods=['GET'])
+@token_required
+def get_wrong_words(current_user: User):
+    """Get all wrong words for the current user from the backend."""
+    words = UserWrongWord.query.filter_by(user_id=current_user.id)\
+        .order_by(UserWrongWord.wrong_count.desc()).all()
+    return jsonify({'words': [w.to_dict() for w in words]}), 200
+
+
 # ── POST /api/wrong-words/sync ──────────────────────────────────────────────
 
 @ai_bp.route('/wrong-words/sync', methods=['POST'])
@@ -564,3 +575,23 @@ def sync_wrong_words(current_user: User):
 
     db.session.commit()
     return jsonify({'updated': updated})
+
+
+@ai_bp.route('/wrong-words/<word>', methods=['DELETE'])
+@token_required
+def delete_wrong_word(current_user: User, word: str):
+    """Delete a wrong word by word string."""
+    record = UserWrongWord.query.filter_by(user_id=current_user.id, word=word).first()
+    if record:
+        db.session.delete(record)
+        db.session.commit()
+    return jsonify({'message': '已移除'}), 200
+
+
+@ai_bp.route('/wrong-words', methods=['DELETE'])
+@token_required
+def clear_wrong_words(current_user: User):
+    """Clear all wrong words for the current user."""
+    UserWrongWord.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    return jsonify({'message': '已清空'}), 200

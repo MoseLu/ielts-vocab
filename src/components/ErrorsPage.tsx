@@ -1,40 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-interface WrongWord {
-  word: string
-  phonetic: string
-  pos?: string
-  definition: string
-}
+import { useWrongWords } from '../features/vocabulary/hooks'
 
 type ActiveTab = 'words' | 'real'
 
 function ErrorsPage() {
   const navigate = useNavigate()
-  const [wrongWords, setWrongWords] = useState<WrongWord[]>([])
   const [activeTab, setActiveTab] = useState<ActiveTab>('words')
+  const { words, removeWord, clearAll } = useWrongWords()
 
-  useEffect(() => {
-    const saved = localStorage.getItem('wrong_words')
-    if (saved) {
-      try {
-        setWrongWords(JSON.parse(saved) as WrongWord[])
-      } catch {
-        setWrongWords([])
-      }
-    }
-  }, [])
-
-  const handleRemoveWord = (index: number) => {
-    const newList = wrongWords.filter((_, i) => i !== index)
-    setWrongWords(newList)
-    localStorage.setItem('wrong_words', JSON.stringify(newList))
+  const handleRemoveWord = (word: string) => {
+    removeWord(word)
   }
 
   const handleClearAll = () => {
-    setWrongWords([])
-    localStorage.setItem('wrong_words', JSON.stringify([]))
+    clearAll()
   }
 
   const handlePractice = () => {
@@ -43,19 +23,18 @@ function ErrorsPage() {
 
   return (
     <div className="errors-page">
-      <div className="errors-header">
-        <h1 className="errors-title">错词本</h1>
-        {wrongWords.length > 0 && (
+      {words.length > 0 && (
+        <div className="errors-header">
           <div className="errors-actions">
             <button className="errors-practice-btn" onClick={handlePractice}>
-              复习 ({wrongWords.length}词)
+              复习 ({words.length}词)
             </button>
             <button className="errors-clear-btn" onClick={handleClearAll}>
               清空
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Tab bar */}
       <div className="errors-tabs">
@@ -64,8 +43,8 @@ function ErrorsPage() {
           onClick={() => setActiveTab('words')}
         >
           错词
-          {wrongWords.length > 0 && (
-            <span className="errors-tab-badge">{wrongWords.length}</span>
+          {words.length > 0 && (
+            <span className="errors-tab-badge">{words.length}</span>
           )}
         </button>
         <button
@@ -85,7 +64,7 @@ function ErrorsPage() {
           <p>真题错题功能</p>
           <span>敬请期待</span>
         </div>
-      ) : wrongWords.length === 0 ? (
+      ) : words.length === 0 ? (
         <div className="errors-empty">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -100,11 +79,11 @@ function ErrorsPage() {
       ) : (
         <>
           <div className="errors-filter-bar">
-            <span className="errors-filter-label">共 {wrongWords.length} 个错词</span>
+            <span className="errors-filter-label">共 {words.length} 个错词</span>
           </div>
           <div className="errors-list">
-            {wrongWords.map((word, index) => (
-              <div key={index} className="errors-item">
+            {words.map((word) => (
+              <div key={word.word} className="errors-item">
                 <div className="errors-item-main">
                   <div className="errors-item-word">{word.word}</div>
                   <div className="errors-item-phonetic">{word.phonetic}</div>
@@ -115,7 +94,7 @@ function ErrorsPage() {
                 </div>
                 <button
                   className="errors-item-remove"
-                  onClick={() => handleRemoveWord(index)}
+                  onClick={() => handleRemoveWord(word.word)}
                   title="移除"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

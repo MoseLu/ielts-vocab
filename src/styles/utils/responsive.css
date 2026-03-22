@@ -41,31 +41,40 @@
 
 /* Tablet (md: 768px) */
 @media (max-width: 768px) {
-    .header {
-        padding: 0 var(--space-md);
+    .left-sidebar {
+        display: none;
     }
-    
+
+    .header-toolbar {
+        display: none;
+    }
+
+    .header-search {
+        display: none;
+    }
+
+    .header-logo-area {
+        position: static;
+        transform: none;
+    }
+
     .header-center {
         display: none;
     }
-    
+
     .current-mode {
         display: none;
     }
-    
-    .logo-text {
-        font-size: 18px;
-    }
-    
+
     .day-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: var(--space-md);
     }
-    
+
     .practice-container {
         padding: var(--space-md);
     }
-    
+
     .options-grid {
         gap: var(--space-md);
     }
@@ -242,10 +251,26 @@
         --space-2xl: 24px;
     }
 
-    /* Header */
-    .header-inner {
-        padding: 0 var(--space-md);
-        gap: var(--space-sm);
+    /* Sidebar hidden on mobile */
+    .left-sidebar {
+        display: none;
+    }
+
+    .header-toolbar {
+        display: none;
+    }
+
+    .header-search {
+        display: none;
+    }
+
+    .header-logo-area {
+        position: static;
+        transform: none;
+    }
+
+    .header-logo-text {
+        display: none;
     }
 
     .day-btn span,

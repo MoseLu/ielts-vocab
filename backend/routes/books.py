@@ -2,7 +2,7 @@ import os
 import json
 import csv as csv_module
 from flask import Blueprint, jsonify, request
-from models import db, UserBookProgress, UserChapterProgress, User
+from models import db, UserBookProgress, UserChapterProgress, UserAddedBook, User
 import jwt
 from functools import wraps
 
@@ -921,3 +921,43 @@ def save_chapter_progress(current_user, book_id, chapter_id):
     db.session.commit()
 
     return jsonify({'progress': progress.to_dict()}), 200
+
+
+# ── User's Added Books ──────────────────────────────────────────────────────────
+
+@books_bp.route('/my', methods=['GET'])
+@token_required
+def get_my_books(current_user):
+    """Get all books added by the user."""
+    records = UserAddedBook.query.filter_by(user_id=current_user.id).all()
+    return jsonify({'book_ids': [r.book_id for r in records]}), 200
+
+
+@books_bp.route('/my', methods=['POST'])
+@token_required
+def add_my_book(current_user):
+    """Add a book to the user's list."""
+    data = request.get_json()
+    book_id = data.get('book_id')
+    if not book_id:
+        return jsonify({'error': '缺少 book_id'}), 400
+
+    existing = UserAddedBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
+    if existing:
+        return jsonify({'message': '已在词书中'}), 200
+
+    record = UserAddedBook(user_id=current_user.id, book_id=book_id)
+    db.session.add(record)
+    db.session.commit()
+    return jsonify({'book_id': book_id}), 201
+
+
+@books_bp.route('/my/<book_id>', methods=['DELETE'])
+@token_required
+def remove_my_book(current_user, book_id):
+    """Remove a book from the user's list."""
+    record = UserAddedBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
+    if record:
+        db.session.delete(record)
+        db.session.commit()
+    return jsonify({'message': '已移除'}), 200

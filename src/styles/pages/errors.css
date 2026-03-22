@@ -1,29 +1,28 @@
 /* Page: Error Book (错词本) */
 
 .errors-page {
-    padding: var(--space-xl);
-    max-width: 800px;
-    margin: 0 auto;
+    padding: 10px 0;
+    max-width: 100%;
 }
 
 .errors-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--space-lg);
+    margin-bottom: 10px;
     flex-wrap: wrap;
-    gap: var(--space-md);
+    gap: 10px;
 }
 
 .errors-title {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--text-primary);
 }
 
 .errors-actions {
     display: flex;
-    gap: var(--space-sm);
+    gap: 8px;
     align-items: center;
 }
 
@@ -32,8 +31,8 @@
     color: white;
     border: none;
     border-radius: var(--radius-full);
-    padding: var(--space-sm) var(--space-lg);
-    font-size: 14px;
+    padding: 6px 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -48,8 +47,8 @@
     color: var(--text-secondary);
     border: 1px solid var(--border);
     border-radius: var(--radius-full);
-    padding: var(--space-sm) var(--space-md);
-    font-size: 14px;
+    padding: 6px 12px;
+    font-size: 13px;
     cursor: pointer;
     transition: all var(--transition-fast);
 }
@@ -65,23 +64,24 @@
     display: flex;
     gap: 0;
     border-bottom: 2px solid var(--border);
-    margin-bottom: var(--space-lg);
+    margin-bottom: 10px;
+    width: fit-content;
 }
 
 .errors-tab {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-lg);
+    gap: 4px;
+    padding: 8px 16px;
     background: none;
     border: none;
+    border-bottom: 2px solid transparent;
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
     cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
     transition: all var(--transition-fast);
+    transform: translateY(2px);
 }
 
 .errors-tab.active {
@@ -107,9 +107,9 @@
 .errors-filter-bar {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
-    padding: var(--space-xs) 0;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 4px 0;
 }
 
 .errors-filter-label {
@@ -120,30 +120,30 @@
 /* Empty state */
 .errors-empty {
     text-align: center;
-    padding: var(--space-2xl) var(--space-md);
+    padding: 24px 10px;
     color: var(--text-secondary);
 }
 
 .errors-empty svg {
     width: 48px;
     height: 48px;
-    margin: 0 auto var(--space-md);
+    margin: 0 auto 10px;
     color: var(--text-tertiary);
     display: block;
 }
 
 .errors-empty p {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: var(--space-sm);
+    margin-bottom: 6px;
 }
 
 .errors-empty span {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-secondary);
     display: block;
-    margin-bottom: var(--space-lg);
+    margin-bottom: 14px;
 }
 
 .errors-go-practice {
@@ -152,8 +152,8 @@
     color: white;
     border: none;
     border-radius: var(--radius-full);
-    padding: var(--space-sm) var(--space-xl);
-    font-size: 14px;
+    padding: 6px 18px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -177,8 +177,8 @@
 .errors-item {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
+    gap: 10px;
+    padding: 10px 14px;
     background: var(--bg-color);
     transition: background var(--transition-fast);
 }
@@ -239,7 +239,4 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .errors-page {
-        padding: var(--space-md);
-    }
 }

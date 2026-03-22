@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = useCallback(async (identifier: string, password: string) => {
+    localStorage.removeItem('my_books')
     const formResult = safeParse(LoginSchema, { identifier, password })
     if (!formResult.success) {
       throw new Error(formResult.errors.join('；'))
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const register = useCallback(async (username: string, password: string, email?: string) => {
+    localStorage.removeItem('my_books')
     const formResult = safeParse(RegisterSchema, { username, email: email || '', password, confirmPassword: password })
     if (!formResult.success) {
       throw new Error(formResult.errors.join('；'))
@@ -98,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN)
     localStorage.removeItem(STORAGE_KEYS.AUTH_USER)
+    localStorage.removeItem('my_books')
     setUser(null)
   }, [])
 

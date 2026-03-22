@@ -328,7 +328,19 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   const saveWrongWord = (word: Word) => {
     const existing: Word[] = JSON.parse(localStorage.getItem('wrong_words') || '[]')
-    if (!existing.find(w => w.word === word.word)) { existing.push(word); localStorage.setItem('wrong_words', JSON.stringify(existing)) }
+    if (!existing.find(w => w.word === word.word)) {
+      existing.push(word)
+      localStorage.setItem('wrong_words', JSON.stringify(existing))
+      // Sync to backend
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        fetch('/api/ai/wrong-words/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ words: [word] }),
+        }).catch(() => {})
+      }
+    }
   }
 
   const goNext = (wasCorrect: boolean) => {

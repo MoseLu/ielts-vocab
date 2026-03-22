@@ -6,7 +6,6 @@
 
 .vocab-book-page {
     min-height: calc(100vh - 60px);
-    background: var(--bg-secondary);
     display: flex;
     flex-direction: column;
 }
@@ -15,7 +14,6 @@
 .vocab-book-filters {
     background: var(--bg-color);
     border-bottom: 1px solid var(--border);
-    padding: var(--space-md) var(--space-xl);
 }
 
 .filter-header-row {
@@ -75,7 +73,6 @@
 /* Main Content */
 .vocab-book-main {
     flex: 1;
-    padding: var(--space-xl);
     overflow-y: auto;
 }
 

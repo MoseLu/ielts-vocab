@@ -69,7 +69,6 @@ function LeftSidebar() {
             key={item.key}
             className={`left-sidebar-item ${location.pathname === item.path ? 'active' : ''}`}
             onClick={() => navigate(item.path)}
-            title={item.label}
           >
             <span className="left-sidebar-icon">{item.icon}</span>
             <span className="left-sidebar-label">{item.label}</span>

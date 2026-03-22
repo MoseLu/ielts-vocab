@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useVocabBooks, useAllBookProgress } from '../features/vocabulary/hooks'
+import { useVocabBooks, useAllBookProgress, useMyBooks } from '../features/vocabulary/hooks'
 import type { Book, BookProgress } from '../types'
 import PlanModal from './PlanModal'
 import ChapterModal, { Chapter } from './ChapterModal'
@@ -113,34 +113,17 @@ function VocabBookPage() {
   const [activeStudyType, setActiveStudyType] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [activeLevel, setActiveLevel] = useState<string | null>(null)
-  const [myBooks, setMyBooks] = useState<Book[]>([])
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showChapterModal, setShowChapterModal] = useState(false)
 
   const { books, loading, error } = useVocabBooks()
   const { progressMap } = useAllBookProgress()
-
-  // Load my books
-  useEffect(() => {
-    const savedBooks = localStorage.getItem('my_books')
-    if (savedBooks) {
-      try {
-        setMyBooks(JSON.parse(savedBooks))
-      } catch (e) {
-        setMyBooks([])
-      }
-    }
-  }, [])
+  const { myBookIds, addBook } = useMyBooks()
 
   const handleSelectBook = (book: Book) => {
-    // Add to my books if not already added
-    if (!myBooks.find(b => b.id === book.id)) {
-      const newBooks = [...myBooks, book]
-      setMyBooks(newBooks)
-      localStorage.setItem('my_books', JSON.stringify(newBooks))
+    if (!myBookIds.has(book.id)) {
+      addBook(book.id)
     }
-
-    // Always show ChapterModal — backend returns chapters for all books
     setSelectedBook(book)
     setShowChapterModal(true)
   }
@@ -236,7 +219,7 @@ function VocabBookPage() {
                 book={book}
                 progress={progressMap[book.id]}
                 onSelect={handleSelectBook}
-                isInMyBooks={myBooks.some(b => b.id === book.id)}
+                isInMyBooks={myBookIds.has(book.id)}
               />
             ))}
           </div>

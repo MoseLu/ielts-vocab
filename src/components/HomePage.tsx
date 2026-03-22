@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useVocabBooks, useAllBookProgress } from '../features/vocabulary/hooks'
+import { useVocabBooks, useAllBookProgress, useMyBooks, useWrongWords } from '../features/vocabulary/hooks'
 import PlanModal from './PlanModal'
 import ChapterModal from './ChapterModal'
 import type { Chapter } from './ChapterModal'
@@ -25,49 +25,29 @@ interface StudyPlan {
   startIndex: number
 }
 
-interface WrongWord {
-  // Structure based on localStorage wrong_words usage
-  [key: string]: unknown
-}
-
 export default function HomePage() {
   const navigate = useNavigate()
-  const [myBooks, setMyBooks] = useState<Book[]>([])
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showChapterModal, setShowChapterModal] = useState(false)
 
   const { books, loading: booksLoading } = useVocabBooks()
-  const { progressMap, loading: progressLoading } = useAllBookProgress()
+  const { progressMap } = useAllBookProgress()
+  const { myBookIds, myBooks: myBooksRaw, resolveMyBooks, addBook, removeBook } = useMyBooks()
+  const { words: wrongWords } = useWrongWords()
+  const myBooks: Book[] = myBooksRaw as Book[]
 
-  const wrongWords: WrongWord[] = JSON.parse(localStorage.getItem('wrong_words') || '[]')
-
-  // Load user's selected books
+  // Resolve full book objects once books are loaded
   useEffect(() => {
-    const savedBooks = localStorage.getItem('my_books')
-    if (savedBooks) {
-      try {
-        setMyBooks(JSON.parse(savedBooks))
-      } catch (e) {
-        setMyBooks([])
-      }
+    if (!booksLoading && books.length > 0) {
+      resolveMyBooks(books as Book[])
     }
-  }, [])
-
-  // Sync with available books
-  useEffect(() => {
-    if (!booksLoading && books.length > 0 && myBooks.length > 0) {
-      const bookIds = new Set(books.map((b: Book) => b.id))
-      const validBooks = myBooks.filter((b: Book) => bookIds.has(b.id))
-      if (validBooks.length !== myBooks.length) {
-        setMyBooks(validBooks)
-        localStorage.setItem('my_books', JSON.stringify(validBooks))
-      }
-    }
-  }, [books, booksLoading, myBooks])
+  }, [books, booksLoading, resolveMyBooks])
 
   const handleSelectBook = (book: Book) => {
+    if (!myBookIds.has(book.id)) {
+      addBook(book.id)
+    }
     setSelectedBook(book)
-    // Paid books with chapters show ChapterModal, others show PlanModal
     setShowChapterModal(!!book.is_paid)
   }
 
@@ -88,9 +68,7 @@ export default function HomePage() {
 
   const handleRemoveBook = (bookId: string, e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
-    const newBooks = myBooks.filter((b: Book) => b.id !== bookId)
-    setMyBooks(newBooks)
-    localStorage.setItem('my_books', JSON.stringify(newBooks))
+    removeBook(bookId)
   }
 
   // Calculate total stats

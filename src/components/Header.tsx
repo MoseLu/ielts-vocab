@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts'
 import SettingsPanel from './SettingsPanel'
 import AvatarUpload from './AvatarUpload'
 import Popover from './ui/Popover'
@@ -31,6 +32,7 @@ function Header({
   onDayChange,
   onUserUpdate,
 }: HeaderProps) {
+  const { updateUser } = useAuth()
   const [showModeDropdown, setShowModeDropdown] = useState(false)
   const [showDayDropdown, setShowDayDropdown] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
@@ -97,42 +99,8 @@ function Header({
 
   return (
     <header className="header">
-      <div className="header-left">
-        <div className="logo" onClick={() => navigate('/')}>
-          <img src="/images/logo.png" alt="Logo" className="logo-img" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-          <span className="logo-text">雅思冲刺</span>
-        </div>
-
-        {/* Main Navigation */}
-        <nav className="main-nav">
-          {mainNavItems.map(item => (
-            <button
-              key={item.key}
-              className={`main-nav-item ${location.pathname === item.path ? 'active' : ''}`}
-              onClick={() => navigate(item.path)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="header-right">
-        {/* Search Box */}
-        <div className="header-search-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="单词查询"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-          />
-          <span className="header-search-shortcut">Shift+Q</span>
-        </div>
+      {/* Toolbar (left) */}
+      <div className="header-toolbar">
 
         {user && (
           <>
@@ -253,6 +221,29 @@ function Header({
         )}
       </div>
 
+      {/* Logo (center) */}
+      <div className="header-logo-area" onClick={() => navigate('/')}>
+        <img src="/images/logo.png" alt="Logo" className="header-logo-img" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+        <span className="header-logo-text">雅思冲刺</span>
+      </div>
+
+      {/* Search (right) */}
+      <div className="header-search">
+        <div className="header-search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            placeholder="单词查询"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+          />
+        </div>
+      </div>
+
       {/* Help Modal */}
       {showHelp && (
         <div className="settings-overlay show" onClick={(e) => e.target === e.currentTarget && setShowHelp(false)}>
@@ -300,7 +291,7 @@ function Header({
           user={user}
           onClose={() => setShowAvatarUpload(false)}
           onSave={(updatedUser) => {
-            onUserUpdate?.(updatedUser)
+            updateUser(updatedUser as any)
           }}
         />
       )}
