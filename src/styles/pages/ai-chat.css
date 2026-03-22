@@ -377,31 +377,6 @@
     cursor: not-allowed;
 }
 
-/* ── Scrollbar ─────────────────────────────────────────────────────── */
-.ai-messages::-webkit-scrollbar,
-.ai-input::-webkit-scrollbar {
-    width: 4px;
-}
-.ai-messages::-webkit-scrollbar-track,
-.ai-input::-webkit-scrollbar-track {
-    background: transparent;
-}
-.ai-messages::-webkit-scrollbar-thumb,
-.ai-input::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 4px;
-}
-.ai-messages::-webkit-scrollbar-thumb:hover,
-.ai-input::-webkit-scrollbar-thumb:hover {
-    background: var(--text-tertiary);
-}
-
-/* Firefox */
-.ai-messages,
-.ai-input {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-}
 
 /* ── Greeting skeleton ─────────────────────────────────────────────── */
 .ai-greeting-loading {

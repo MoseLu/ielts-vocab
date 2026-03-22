@@ -2,6 +2,12 @@
 
 
 :root {
+    /* Scrollbar (Element Plus style) */
+    --scrollbar-width: 6px;
+    --scrollbar-thumb: rgba(144, 147, 153, 0.3);
+    --scrollbar-thumb-hover: rgba(144, 147, 153, 0.5);
+    --scrollbar-track: transparent;
+
     /* Base Colors */
     --bg-color: #FFFFFF;
     --bg-secondary: #F8F9FA;
@@ -65,6 +71,8 @@
 
 /* Dark Mode Theme */
 [data-theme="dark"] {
+    --scrollbar-thumb: rgba(200, 200, 200, 0.2);
+    --scrollbar-thumb-hover: rgba(200, 200, 200, 0.4);
     --bg-color: #1A1A1A;
     --bg-secondary: #242424;
     --bg-tertiary: #2E2E2E;
@@ -106,6 +114,37 @@ body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar (Element Plus style) ──────────────────────────────────────────
+   6px thin scrollbar, transparent track, semi-transparent rounded thumb.    */
+
+::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+    height: var(--scrollbar-width);
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 /* ── Field validation error ───────────────────────────────────────────────────
