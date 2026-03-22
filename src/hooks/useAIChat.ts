@@ -125,6 +125,7 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
   const [messages, setMessages] = useState<AIMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isGreeting, setIsGreeting] = useState(false)   // greeting in progress
+  const [greetingDone, setGreetingDone] = useState(false) // greeting has completed (success or fail)
   const [error, setError] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [contextLoaded, setContextLoaded] = useState(false)
@@ -195,6 +196,7 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
       }])
     } finally {
       setIsGreeting(false)
+      setGreetingDone(true)
     }
   }, [buildContext])
 
@@ -273,6 +275,7 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
     messages,
     isLoading,
     isGreeting,
+    greetingDone,
     error,
     isOpen,
     contextLoaded,

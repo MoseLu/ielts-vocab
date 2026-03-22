@@ -2,7 +2,7 @@ import json
 import uuid
 import jwt
 from flask import Blueprint, jsonify, request
-from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord
+from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession
 from functools import wraps
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
@@ -595,3 +595,29 @@ def clear_wrong_words(current_user: User):
     UserWrongWord.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
     return jsonify({'message': '已清空'}), 200
+
+
+# ── POST /api/ai/log-session ─────────────────────────────────────────────────
+
+@ai_bp.route('/log-session', methods=['POST'])
+@token_required
+def log_session(current_user: User):
+    """Persist a study session record to the database."""
+    body = request.get_json() or {}
+    try:
+        session = UserStudySession(
+            user_id=current_user.id,
+            mode=body.get('mode'),
+            book_id=body.get('bookId'),
+            chapter_id=body.get('chapterId'),
+            words_studied=body.get('wordsStudied', 0),
+            correct_count=body.get('correctCount', 0),
+            wrong_count=body.get('wrongCount', 0),
+            duration_seconds=body.get('durationSeconds', 0),
+        )
+        db.session.add(session)
+        db.session.commit()
+        return jsonify({'id': session.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500

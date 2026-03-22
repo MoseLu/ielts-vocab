@@ -329,7 +329,6 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                   </select>
                 </div>
               </div>
-          </div>
           </Scrollbar>
         </div>
       </div>

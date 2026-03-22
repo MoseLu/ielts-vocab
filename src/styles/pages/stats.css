@@ -1,23 +1,22 @@
 /* Page: Statistics */
 
 .stats-page {
-    padding: 10px 0;
-    max-width: 100%;
+    /* padding managed by .page-content wrapper */
 }
 
 /* Stat Cards Row */
 .stats-cards {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .stats-card {
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: var(--space-md) var(--space-sm);
+    padding: 10px;
     text-align: center;
     box-shadow: var(--shadow-sm);
     transition: box-shadow var(--transition-fast);
@@ -45,8 +44,8 @@
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: var(--space-md);
-    margin-bottom: var(--space-md);
+    padding: 10px;
+    margin-bottom: 10px;
     box-shadow: var(--shadow-sm);
 }
 
@@ -54,7 +53,7 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: var(--space-sm);
+    margin-bottom: 10px;
 }
 
 /* Chart */
@@ -80,8 +79,8 @@
 .stats-chart-legend {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    margin-top: var(--space-sm);
+    gap: 10px;
+    margin-top: 10px;
     font-size: 12px;
     color: var(--text-secondary);
 }
@@ -121,14 +120,14 @@
 .stats-accuracy-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 10px;
 }
 
 .stats-accuracy-item {
     display: grid;
     grid-template-columns: 160px 1fr 48px 80px;
     align-items: center;
-    gap: var(--space-md);
+    gap: 10px;
 }
 
 .stats-accuracy-title {
@@ -205,7 +204,7 @@
     color: white;
     border: none;
     border-radius: var(--radius-full);
-    padding: var(--space-sm) var(--space-lg);
+    padding: 10px 16px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;

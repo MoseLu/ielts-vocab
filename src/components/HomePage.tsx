@@ -104,6 +104,7 @@ export default function HomePage() {
 
   return (
     <div className="study-center-page">
+      <div className="page-content">
       {/* Welcome banner */}
       <div className="study-banner">
         <div className="study-banner-left">
@@ -244,7 +245,7 @@ export default function HomePage() {
           </svg>
           <span>添加词书</span>
         </div>
-
+      </div>
       </div>
 
       {/* Chapter Modal for paid books */}

@@ -86,6 +86,7 @@ function AIChatPanel() {
     messages,
     isLoading,
     isGreeting,
+    greetingDone,
     isOpen,
     contextLoaded,
     openPanel,
@@ -181,7 +182,7 @@ function AIChatPanel() {
           <div className="ai-greeting-skeleton ai-greeting-skeleton--short" />
         </div>
       )}
-      {!messages.length && !isGreeting && (
+      {!messages.length && !isGreeting && greetingDone && (
         <div className="ai-quick-actions">
           {[
             '分析我的学习数据',

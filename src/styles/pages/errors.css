@@ -1,7 +1,7 @@
 /* Page: Error Book (错词本) */
 
 .errors-page {
-    padding: 10px 0;
+    /* padding managed by .page-content wrapper */
     max-width: 100%;
 }
 
@@ -178,7 +178,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+    padding: 10px;
     background: var(--bg-color);
     transition: background var(--transition-fast);
 }

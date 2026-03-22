@@ -1,8 +1,7 @@
 /* Page: Profile */
 
 .profile-page {
-    padding: 10px 0;
-    max-width: 100%;
+    /* padding managed by .page-content wrapper */
 }
 
 /* User card */
@@ -10,11 +9,11 @@
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: var(--space-xl);
+    padding: 10px;
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    margin-bottom: var(--space-xl);
+    gap: 10px;
+    margin-bottom: 10px;
     box-shadow: var(--shadow-sm);
 }
 
@@ -88,8 +87,8 @@
     width: 100%;
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
+    gap: 10px;
+    padding: 10px 10px;
     background: none;
     border: none;
     border-bottom: 1px solid var(--border);
@@ -283,9 +282,3 @@
     font-size: 14px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .profile-page {
-        padding: var(--space-md);
-    }
-}

@@ -23,6 +23,7 @@ function ErrorsPage() {
 
   return (
     <div className="errors-page">
+      <div className="page-content">
       {words.length > 0 && (
         <div className="errors-header">
           <div className="errors-actions">
@@ -107,6 +108,7 @@ function ErrorsPage() {
           </div>
         </>
       )}
+      </div>
     </div>
   )
 }

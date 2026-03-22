@@ -1,8 +1,7 @@
 /* Page: Study Center dashboard cards */
 
 .study-center-page {
-    padding: 10px 0;
-    min-height: calc(100vh - var(--header-height));
+    /* padding managed by .page-content wrapper */
     background: var(--bg-secondary);
 }
 
@@ -11,11 +10,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 10px;
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
-    padding: 14px 18px;
+    padding: 10px;
     margin-bottom: 10px;
     box-shadow: var(--shadow-sm);
     animation: slideUp 0.3s ease;
@@ -24,7 +23,7 @@
 .study-banner-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .study-banner-badge {
@@ -142,7 +141,7 @@
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 14px;
+    padding: 10px;
     cursor: pointer;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     position: relative;
@@ -223,7 +222,7 @@
 .study-book-header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex: 1;
     min-width: 0;
 }
@@ -280,7 +279,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
     background: linear-gradient(135deg, var(--accent) 0%, #FF6B1A 100%);
     border-color: transparent;
     color: white;
@@ -331,7 +330,7 @@
 .study-book-card-review {
     flex-direction: row;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     min-height: 110px;
 }
 
@@ -388,7 +387,7 @@
 .study-book-card-stats {
     cursor: default;
     min-height: 110px;
-    padding: 14px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -454,13 +453,13 @@
     background: var(--bg-color);
     border: 2px dashed var(--border);
     border-radius: var(--radius-lg);
-    padding: 14px;
+    padding: 10px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     color: var(--text-tertiary);
     font-size: 13px;
     font-weight: 500;

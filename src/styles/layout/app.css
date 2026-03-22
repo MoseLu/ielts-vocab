@@ -77,6 +77,12 @@
     min-height: calc(100vh - var(--header-height));
 }
 
+/* ── Shared Page Content Container ── */
+.page-content {
+    padding: 10px;
+    min-height: calc(100vh - var(--header-height));
+}
+
 /* Practice page: full-screen, no header/sidebar offset */
 .practice-fullscreen {
     display: flex;

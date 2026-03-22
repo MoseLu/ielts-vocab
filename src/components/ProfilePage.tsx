@@ -210,6 +210,7 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page">
+      <div className="page-content">
       {/* User card */}
       <div className="profile-user-card">
         <div className="profile-avatar">
@@ -258,6 +259,7 @@ export default function ProfilePage() {
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
+      </div>
       </div>
 
       {showSettings && (

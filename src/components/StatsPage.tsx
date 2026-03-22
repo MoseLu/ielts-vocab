@@ -35,6 +35,7 @@ export default function StatsPage() {
 
   return (
     <div className="stats-page">
+      <div className="page-content">
       {/* Top stat cards */}
       <div className="stats-cards">
         <div className="stats-card">
@@ -171,6 +172,7 @@ export default function StatsPage() {
             </button>
           )}
         </div>
+      </div>
       </div>
     </div>
   )
