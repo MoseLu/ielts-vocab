@@ -191,44 +191,64 @@ async function fetchAudioUrl(word: string): Promise<string | null> {
 
 /**
  * Play word pronunciation.
- * Primary:  Free Dictionary API (dictionaryapi.dev) — real Wiktionary recordings,
- *           clear and complete. Results are cached after the first fetch.
- * Fallback: Web Speech API with the best available English voice.
+ *
+ * Cache-first strategy to preserve the browser's autoplay gesture requirement:
+ *  - URL cached   → play real Wiktionary recording immediately (no async gap).
+ *  - URL unknown  → play Web Speech API immediately (stays in gesture context),
+ *                   then fetch & cache the URL in the background so the next
+ *                   play of the same word uses the real recording.
+ *
+ * This ensures audio works on production HTTPS where Chrome blocks audio that
+ * is triggered after an async operation (which loses the user-gesture context).
  */
-export async function playWordAudio(
+export function playWordAudio(
   word: string,
   settings: { playbackSpeed?: string; volume?: string },
   onEnd?: () => void,
-): Promise<void> {
-  // Stop anything currently playing and capture our generation
+): void {
   stopAudio()
   const gen = _audioGeneration
 
   const volume = parseFloat(settings.volume || '100') / 100
   const rate   = parseFloat(settings.playbackSpeed || '0.8')
 
-  // ── Try real audio recording first ──────────────────────────────────────
-  const audioUrl = await fetchAudioUrl(word)
+  const key = word.toLowerCase()
 
-  // Check if stopAudio() was called while we were fetching
-  if (_audioGeneration !== gen) return
-
-  if (audioUrl) {
-    const audio = new Audio(audioUrl)
-    audio.volume = Math.min(1, Math.max(0, volume))
-    audio.playbackRate = Math.min(4, Math.max(0.25, rate))
-    if (onEnd) audio.onended = () => onEnd()
-    _currentAudio = audio
-    const ok = await audio.play().catch(() => false as const)
-    if (_audioGeneration !== gen) return   // stopped while play() was pending
-    if (ok !== false) return               // successfully playing
-    _currentAudio = null
+  // ── URL already cached — play real recording immediately ─────────────────
+  if (_audioUrlCache.has(key)) {
+    const url = _audioUrlCache.get(key)
+    if (url) {
+      const audio = new Audio(url)
+      audio.volume = Math.min(1, Math.max(0, volume))
+      audio.playbackRate = Math.min(4, Math.max(0.25, rate))
+      if (onEnd) audio.onended = () => onEnd()
+      _currentAudio = audio
+      audio.play().catch(() => {
+        if (_audioGeneration !== gen) return
+        _currentAudio = null
+        // Real audio failed — fall through to speech synthesis
+        _speakWithSynthesis(word, rate, volume, gen, onEnd)
+      })
+      return
+    }
+    // cached null means no recording exists → use synthesis directly
+    _speakWithSynthesis(word, rate, volume, gen, onEnd)
+    return
   }
 
-  // Check again before falling back
-  if (_audioGeneration !== gen) return
+  // ── URL not yet cached — use speech synthesis immediately ─────────────────
+  // Fetch in background to populate cache for the next play.
+  _speakWithSynthesis(word, rate, volume, gen, onEnd)
+  fetchAudioUrl(word) // fire-and-forget; populates _audioUrlCache
+}
 
-  // ── Fallback: Web Speech API ─────────────────────────────────────────────
+function _speakWithSynthesis(
+  word: string,
+  rate: number,
+  volume: number,
+  gen: number,
+  onEnd?: () => void,
+): void {
   if (typeof speechSynthesis === 'undefined') return
 
   const speak = () => {
