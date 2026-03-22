@@ -207,7 +207,7 @@ export async function playWordAudio(
   const volume = parseFloat(settings.volume || '100') / 100
   const rate   = parseFloat(settings.playbackSpeed || '0.8')
 
-  // ── Try real audio recording first ──────────────────────────────────────
+  // ── Try real audio recording first (dictionaryapi.dev) ─────────────────────────
   const audioUrl = await fetchAudioUrl(word)
 
   // Check if stopAudio() was called while we were fetching
@@ -228,10 +228,27 @@ export async function playWordAudio(
   // Check again before falling back
   if (_audioGeneration !== gen) return
 
-  // ── Fallback: Web Speech API ─────────────────────────────────────────────
-  if (typeof speechSynthesis === 'undefined') return
+  // ── Fallback: Web Speech API → Youdao (final) ─────────────────────────────
+  const speakWithYoudao = () => {
+    const audio = new Audio(
+      `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`
+    )
+    audio.volume = Math.min(1, Math.max(0, volume))
+    audio.playbackRate = Math.min(4, Math.max(0.25, rate))
+    if (onEnd) audio.onended = onEnd
+    _currentAudio = audio
+    audio.play().catch(() => {
+      _currentAudio = null
+      if (onEnd) onEnd()
+    })
+  }
 
-  const speak = () => {
+  if (typeof speechSynthesis === 'undefined') {
+    speakWithYoudao()
+    return
+  }
+
+  const speakWithSynthesis = () => {
     if (_audioGeneration !== gen) return
     const u = new SpeechSynthesisUtterance(word)
     u.lang   = 'en-US'
@@ -240,14 +257,29 @@ export async function playWordAudio(
     const voice = getBestEnglishVoice()
     if (voice) u.voice = voice
     if (onEnd) u.onend = onEnd
+    u.onerror = () => {
+      speechSynthesis.cancel()
+      speakWithYoudao()
+    }
     speechSynthesis.speak(u)
   }
 
+  // Voices may not be ready on first call — wait for them then speak.
+  // Guard with a timeout in case voices never load (offline/restricted network).
   const voices = speechSynthesis.getVoices()
   if (!voices.length) {
-    speechSynthesis.addEventListener('voiceschanged', speak, { once: true })
+    let cleanup = false
+    const timer = setTimeout(() => {
+      cleanup = true
+      speakWithYoudao()
+    }, 3000)
+    speechSynthesis.addEventListener('voiceschanged', () => {
+      if (cleanup) return
+      clearTimeout(timer)
+      speakWithSynthesis()
+    }, { once: true })
   } else {
-    speak()
+    speakWithSynthesis()
   }
 }
 

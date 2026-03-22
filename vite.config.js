@@ -15,17 +15,15 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        timeout: 10000,
       },
       '/socket.io': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
         ws: true,
-        // 确保所有 socket.io 路径都被代理
-        rewrite: (path) => path
       },
-      // Socket.IO namespace /speech 的握手走 /socket.io 路径，无需单独代理
     }
   },
   build: {

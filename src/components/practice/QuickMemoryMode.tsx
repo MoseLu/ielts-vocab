@@ -171,8 +171,11 @@ export default function QuickMemoryMode({
   const timerRef       = useRef<ReturnType<typeof setInterval>>()
   const revealTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const chosenRef      = useRef(false)   // guard against double-fire
+  const wordRef        = useRef<Word>()  // always holds current word for setTimeout
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
+  // Keep ref in sync so setTimeout always uses the latest word
+  wordRef.current = currentWord
 
   // ── Reveal helper ──────────────────────────────────────────────────────────
   const reveal = useCallback((picked: 'known' | 'unknown') => {
@@ -188,11 +191,12 @@ export default function QuickMemoryMode({
     saveRecords(records)
     setResults(prev => [...prev, { wordIdx: index, choice: picked }])
 
-    // Auto-play pronunciation after brief delay
+    // Auto-play pronunciation after brief delay.
+    // Use wordRef so this always plays the CURRENT word (not the closure-captured one).
     revealTimerRef.current = setTimeout(() => {
-      if (currentWord) playWordAudio(currentWord.word, settings, () => {})
+      if (wordRef.current) playWordAudio(wordRef.current.word, settings, () => {})
     }, 350)
-  }, [currentWord, index, settings])
+  }, [index, settings])
 
   // ── Play audio when question phase starts ──────────────────────────────────
   useEffect(() => {

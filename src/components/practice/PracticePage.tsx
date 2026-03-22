@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses, RadioQuickSettings, SmartDimension } from './types'
 import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './utils'
+import { DEFAULT_SETTINGS } from '../../constants'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue } from '../../lib/smartMode'
 import { recordModeAnswer, logSession } from '../../hooks/useAIChat'
@@ -65,7 +66,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Reactive settings (so RadioMode picks up changes from the toolbar controls)
   const [settings, setSettings] = useState<AppSettings>(() => {
-    try { return JSON.parse(localStorage.getItem('app_settings') || '{}') as AppSettings } catch { return {} }
+    try {
+      const saved = localStorage.getItem('app_settings')
+      if (!saved) return DEFAULT_SETTINGS as AppSettings
+      return JSON.parse(saved) as AppSettings
+    } catch {
+      return DEFAULT_SETTINGS as AppSettings
+    }
   })
 
   const handleRadioSettingChange = useCallback((key: keyof RadioQuickSettings, value: string | boolean) => {
