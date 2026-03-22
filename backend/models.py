@@ -1,6 +1,8 @@
 import json
+import random
+import string
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -10,8 +12,8 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(255), unique=True, nullable=False)
-    username = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     avatar_url = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -27,11 +29,47 @@ class User(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'email': self.email,
+            'email': self.email or '',
             'username': self.username,
             'avatar_url': self.avatar_url,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+
+class EmailVerificationCode(db.Model):
+    """Temporary email verification codes for email binding and password reset."""
+    __tablename__ = 'email_verification_codes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), nullable=False, index=True)
+    code = db.Column(db.String(10), nullable=False)
+    purpose = db.Column(db.String(30), nullable=False)  # 'bind_email' | 'reset_password'
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+
+    @staticmethod
+    def generate_code():
+        return ''.join(random.choices(string.digits, k=6))
+
+    @staticmethod
+    def create_for(email, purpose, user_id=None, expires_minutes=10):
+        code = EmailVerificationCode.generate_code()
+        expires_at = datetime.utcnow() + timedelta(minutes=expires_minutes)
+        record = EmailVerificationCode(
+            email=email,
+            code=code,
+            purpose=purpose,
+            user_id=user_id,
+            expires_at=expires_at,
+        )
+        db.session.add(record)
+        db.session.commit()
+        return record
+
+    def is_valid(self):
+        return not self.used and datetime.utcnow() < self.expires_at
 
 
 class UserProgress(db.Model):

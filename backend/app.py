@@ -15,6 +15,37 @@ from routes.speech_socketio import register_socketio_events
 from routes.ai import ai_bp
 
 
+def _migrate_db(app):
+    """Apply incremental SQLite schema migrations."""
+    from sqlalchemy import text
+    with app.app_context():
+        with db.engine.connect() as conn:
+            # Migration 1: make users.email nullable and add unique username
+            pragma = conn.execute(text("PRAGMA table_info(users)")).fetchall()
+            col_names = [row[1] for row in pragma]
+            email_col = next((row for row in pragma if row[1] == 'email'), None)
+            has_username_unique = False
+
+            # Check if email is NOT NULL (notnull flag == 1)
+            if email_col and email_col[3] == 1:
+                print("[Migration] Making users.email nullable...")
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS users_migrated (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        email VARCHAR(255) UNIQUE,
+                        username VARCHAR(100) NOT NULL,
+                        password_hash VARCHAR(255) NOT NULL,
+                        avatar_url TEXT,
+                        created_at DATETIME
+                    )
+                """))
+                conn.execute(text("INSERT OR IGNORE INTO users_migrated SELECT id, NULLIF(email,''), username, password_hash, avatar_url, created_at FROM users"))
+                conn.execute(text("DROP TABLE users"))
+                conn.execute(text("ALTER TABLE users_migrated RENAME TO users"))
+                conn.commit()
+                print("[Migration] Done.")
+
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -34,9 +65,10 @@ def create_app(config_class=Config):
     app.register_blueprint(books_bp, url_prefix='/api/books')
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
 
-    # Create database tables
+    # Create database tables then apply migrations
     with app.app_context():
         db.create_all()
+    _migrate_db(app)
 
     return app
 

@@ -24,16 +24,16 @@ export type AIMessageRole = z.infer<typeof AIMessageRoleSchema>
 
 export const UserSchema = z.object({
   id: z.union([z.string(), z.number()]),
-  email: z.string().email(),
+  email: z.string().email().or(z.literal('')).optional(),
   username: z.string().optional(),
   avatar_url: z.string().nullable().optional(),
   created_at: z.string().optional(),
 })
 export type User = z.infer<typeof UserSchema>
 
-/** Email + password login */
+/** Email OR username + password login */
 export const LoginSchema = z.object({
-  email: z.string().email('请输入有效的邮箱地址'),
+  identifier: z.string().min(1, '请输入邮箱或用户名'),
   password: z.string().min(6, '密码至少6个字符'),
 })
 
@@ -50,6 +50,27 @@ export const RegisterSchema = z.object({
 }).refine((data) => data.password === data.confirmPassword, {
   message: '两次输入的密码不一致',
   path: ['confirmPassword'],
+})
+
+/** Forgot password — step 1: enter email */
+export const ForgotPasswordEmailSchema = z.object({
+  email: z.string().email('请输入有效的邮箱地址'),
+})
+
+/** Forgot password — step 2: enter code + new password */
+export const ResetPasswordSchema = z.object({
+  code: z.string().length(6, '请输入6位验证码'),
+  password: z.string().min(6, '密码至少6个字符'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: '两次输入的密码不一致',
+  path: ['confirmPassword'],
+})
+
+/** Bind email in profile */
+export const BindEmailSchema = z.object({
+  email: z.string().email('请输入有效的邮箱地址'),
+  code: z.string().length(6, '请输入6位验证码'),
 })
 
 // ── Book / Chapter / Progress ───────────────────────────────────────────────
