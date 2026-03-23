@@ -118,6 +118,12 @@ interface UserDetail {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function fmtChapterId(chapterId: string | null | undefined): string {
+  if (!chapterId) return '全部章节'
+  if (/^\d+$/.test(chapterId)) return `第${chapterId}章`
+  return chapterId
+}
+
 function fmtSeconds(s: number) {
   if (s < 60) return `${s}秒`
   if (s < 3600) return `${Math.floor(s / 60)}分钟`
@@ -574,13 +580,13 @@ export default function AdminDashboard() {
                   {(selectedUser.user.username || '?')[0].toUpperCase()}
                 </div>
               )}
-              <div>
-                <div className="admin-modal-username">
-                  {selectedUser.user.username}
-                  {selectedUser.user.is_admin && <span className="admin-badge">管理员</span>}
-                </div>
-                <div className="admin-modal-email">{selectedUser.user.email || '未绑定邮箱'}</div>
-                <div className="admin-modal-meta">注册于 {fmtDate(selectedUser.user.created_at)}</div>
+              <div className="admin-modal-user-meta-row">
+                <span className="admin-modal-username-hl">{selectedUser.user.username}</span>
+                {selectedUser.user.is_admin && <span className="admin-badge">管理员</span>}
+                <span className="admin-modal-meta-sep">·</span>
+                <span className="admin-modal-meta-item">{selectedUser.user.email || '未绑定邮箱'}</span>
+                <span className="admin-modal-meta-sep">·</span>
+                <span className="admin-modal-meta-item">注册于 {fmtDate(selectedUser.user.created_at)}</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -590,11 +596,15 @@ export default function AdminDashboard() {
                 title={isFullscreen ? '退出全屏' : '全屏显示'}
               >
                 {isFullscreen ? (
+                  /* Minimize2 — compress arrows pointing inward (exit fullscreen) */
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                    <polyline points="8 3 3 3 3 8"/><polyline points="21 8 21 3 16 3"/>
-                    <polyline points="3 16 3 21 8 21"/><polyline points="16 21 21 21 21 16"/>
+                    <polyline points="4 14 10 14 10 20"/>
+                    <polyline points="20 10 14 10 14 4"/>
+                    <line x1="10" y1="14" x2="3" y2="21"/>
+                    <line x1="21" y1="3" x2="14" y2="10"/>
                   </svg>
                 ) : (
+                  /* Maximize2 — expand arrows pointing outward (enter fullscreen) */
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                     <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
                     <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
@@ -800,7 +810,7 @@ export default function AdminDashboard() {
                             <tr key={i}>
                               <td className="admin-cell-muted">{r.day}</td>
                               <td style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.book_id}>{bookLabels[r.book_id] || r.book_id || '—'}</td>
-                              <td className="admin-cell-muted">{r.chapter_id || '—'}</td>
+                              <td className="admin-cell-muted">{fmtChapterId(r.chapter_id)}</td>
                               <td>{modeLabels[r.mode] || r.mode || '—'}</td>
                               <td>{r.sessions}</td><td>{r.words}</td>
                               <td style={{ color: '#10b981' }}>{r.correct}</td>
@@ -830,7 +840,7 @@ export default function AdminDashboard() {
                           <td className="admin-cell-muted">{fmtDateTime(s.started_at)}</td>
                           <td>{modeLabels[s.mode] || s.mode || '—'}</td>
                           <td className="admin-cell-muted">{bookLabels[s.book_id] || s.book_id || '—'}</td>
-                          <td className="admin-cell-muted">{s.chapter_id || '—'}</td>
+                          <td className="admin-cell-muted">{fmtChapterId(s.chapter_id)}</td>
                           <td>{s.words_studied}</td>
                           <td style={{ color: '#10b981' }}>{s.correct_count}</td>
                           <td style={{ color: '#ef4444' }}>{s.wrong_count}</td>
