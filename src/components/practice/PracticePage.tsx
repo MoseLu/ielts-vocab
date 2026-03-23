@@ -342,19 +342,18 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             body: JSON.stringify({ words_learned: correct + wrong, ...progressData })
           }).catch(() => {})
 
-          // Save per-mode accuracy so each practice mode has its own record
+          // Save per-mode accuracy to the backend — each mode is stored independently
           if (mode && correct + wrong > 0) {
-            const modeKey = `${bookId}_${chapterId}_${mode}`
-            const chapterModeProgress: Record<string, { correct_count: number; wrong_count: number; accuracy: number; is_completed: boolean; updatedAt: string }> =
-              JSON.parse(localStorage.getItem('chapter_mode_progress') || '{}')
-            chapterModeProgress[modeKey] = {
-              correct_count: correct,
-              wrong_count: wrong,
-              accuracy: Math.round(correct / (correct + wrong) * 100),
-              is_completed: progressData.is_completed ?? false,
-              updatedAt: new Date().toISOString(),
-            }
-            localStorage.setItem('chapter_mode_progress', JSON.stringify(chapterModeProgress))
+            fetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({
+                mode,
+                correct_count: correct,
+                wrong_count: wrong,
+                is_completed: progressData.is_completed ?? false,
+              }),
+            }).catch(() => {})
           }
         }
       }

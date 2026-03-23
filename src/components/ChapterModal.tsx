@@ -12,13 +12,6 @@ const MODE_META: Record<string, { label: string; title: string; color: string }>
   smart:       { label: '智',  title: '智能模式', color: '#10b981' },
 }
 
-interface ChapterModeRecord {
-  correct_count: number
-  wrong_count: number
-  accuracy: number
-  is_completed: boolean
-  updatedAt: string
-}
 
 interface Book {
   id: string | number
@@ -33,10 +26,19 @@ export interface Chapter {
   word_count?: number
 }
 
+interface ChapterModeData {
+  mode: string
+  correct_count: number
+  wrong_count: number
+  accuracy: number
+  is_completed: boolean
+}
+
 interface ChapterProgress {
   is_completed: boolean
   words_learned: number
   accuracy?: number
+  modes?: Record<string, ChapterModeData>
 }
 
 interface Progress {
@@ -129,7 +131,6 @@ function getCardLabel(chapter: Chapter, isInSection: boolean): string {
 function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: ChapterModalProps) {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [chapterProgress, setChapterProgress] = useState<Record<string | number, ChapterProgress>>({})
-  const [chapterModeProgress, setChapterModeProgress] = useState<Record<string, ChapterModeRecord>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -164,12 +165,6 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
       }
     }
     fetchData()
-
-    // Load per-mode accuracy from localStorage (client-side only, mode-specific)
-    try {
-      const stored = localStorage.getItem('chapter_mode_progress')
-      if (stored) setChapterModeProgress(JSON.parse(stored))
-    } catch { /* ignore */ }
   }, [book.id])
 
   // Which chapter the user was last working on
@@ -207,16 +202,16 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
 
   const renderCard = (chapter: Chapter, isInSection: boolean) => {
     const isCurrent   = chapter.id === currentChapterId
-    const prog        = chapterProgress[chapter.id]
+    const prog        = chapterProgress[chapter.id] ?? chapterProgress[String(chapter.id)]
     const hasStarted  = prog && prog.words_learned > 0
 
-    // Collect per-mode records for this chapter
+    // Collect per-mode records from the API response (prog.modes)
     const modeBadges = Object.entries(MODE_META)
       .map(([modeKey, meta]) => {
-        const record = chapterModeProgress[`${book.id}_${chapter.id}_${modeKey}`]
+        const record = prog?.modes?.[modeKey]
         return record ? { modeKey, meta, record } : null
       })
-      .filter(Boolean) as { modeKey: string; meta: typeof MODE_META[string]; record: ChapterModeRecord }[]
+      .filter(Boolean) as { modeKey: string; meta: typeof MODE_META[string]; record: ChapterModeData }[]
 
     const hasModeData   = modeBadges.length > 0
     const allCompleted  = hasModeData && modeBadges.every(b => b.record.is_completed)

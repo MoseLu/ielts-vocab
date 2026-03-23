@@ -2,7 +2,7 @@ import os
 import json
 import csv as csv_module
 from flask import Blueprint, jsonify, request
-from models import db, UserBookProgress, UserChapterProgress, UserAddedBook
+from models import db, UserBookProgress, UserChapterProgress, UserChapterModeProgress, UserAddedBook
 from routes.middleware import token_required
 
 books_bp = Blueprint('books', __name__)
@@ -855,13 +855,22 @@ def save_progress(current_user):
 @books_bp.route('/<book_id>/chapters/progress', methods=['GET'])
 @token_required
 def get_chapter_progress(current_user, book_id):
-    """Get user's progress for all chapters in a book"""
+    """Get user's progress for all chapters in a book, including per-mode breakdown."""
     user_id = current_user.id
     progress_records = UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
+    mode_records = UserChapterModeProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
 
     progress_dict = {}
     for record in progress_records:
-        progress_dict[record.chapter_id] = record.to_dict()
+        d = record.to_dict()
+        d['modes'] = {}
+        progress_dict[str(record.chapter_id)] = d
+
+    for record in mode_records:
+        key = str(record.chapter_id)
+        if key not in progress_dict:
+            progress_dict[key] = {'modes': {}}
+        progress_dict[key]['modes'][record.mode] = record.to_dict()
 
     return jsonify({'chapter_progress': progress_dict}), 200
 
@@ -895,6 +904,38 @@ def save_chapter_progress(current_user, book_id, chapter_id):
     db.session.commit()
 
     return jsonify({'progress': progress.to_dict()}), 200
+
+
+@books_bp.route('/<book_id>/chapters/<int:chapter_id>/mode-progress', methods=['POST'])
+@token_required
+def save_chapter_mode_progress(current_user, book_id, chapter_id):
+    """Save per-mode accuracy for a specific chapter. Each mode is stored independently."""
+    user_id = current_user.id
+    data = request.get_json()
+    mode = data.get('mode')
+
+    if not mode:
+        return jsonify({'error': '缺少 mode 参数'}), 400
+
+    record = UserChapterModeProgress.query.filter_by(
+        user_id=user_id, book_id=book_id, chapter_id=chapter_id, mode=mode
+    ).first()
+
+    if not record:
+        record = UserChapterModeProgress(
+            user_id=user_id, book_id=book_id, chapter_id=chapter_id, mode=mode
+        )
+        db.session.add(record)
+
+    if 'correct_count' in data:
+        record.correct_count = data['correct_count']
+    if 'wrong_count' in data:
+        record.wrong_count = data['wrong_count']
+    if 'is_completed' in data:
+        record.is_completed = data['is_completed']
+
+    db.session.commit()
+    return jsonify({'mode_progress': record.to_dict()}), 200
 
 
 # ── User's Added Books ──────────────────────────────────────────────────────────
