@@ -33,6 +33,7 @@ export const STORAGE_KEYS = {
   WRONG_WORDS_PROGRESS: 'wrong_words_progress',
   SMART_WORD_STATS: 'smart_word_stats',
   QUICK_MEMORY_RECORDS: 'quick_memory_records',
+  CHAPTER_MODE_PROGRESS: 'chapter_mode_progress',
 } as const
 
 // API endpoints
