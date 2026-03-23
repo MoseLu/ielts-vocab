@@ -185,26 +185,65 @@ C. 换个复习方向
 def _build_context_msg(ctx: dict) -> str:
     """Build a readable context string from learning context dict."""
     parts = []
-    if ctx.get('currentWord'):
-        parts.append(f"当前正在学习的单词：{ctx['currentWord']}")
+
+    # Book / chapter info
+    if ctx.get('currentChapterTitle'):
+        parts.append(f"当前章节：{ctx['currentChapterTitle']}")
+    elif ctx.get('currentChapter'):
+        parts.append(f"当前章节 ID：{ctx['currentChapter']}")
+    if ctx.get('currentBook'):
+        parts.append(f"当前词书 ID：{ctx['currentBook']}")
+
+    if ctx.get('practiceMode'):
+        parts.append(f"练习模式：{ctx['practiceMode']}")
+    if ctx.get('mode'):
+        parts.append(f"学习类型：{ctx['mode']}")
+
+    # Session progress
+    session_progress = ctx.get('sessionProgress')
+    total_words = ctx.get('totalWords')
+    words_completed = ctx.get('wordsCompleted')
+    session_completed = ctx.get('sessionCompleted')
+
+    if session_completed:
+        parts.append(f"本轮练习：已完成全部 {total_words} 个单词")
+        if words_completed is not None:
+            parts.append(f"本轮答题数：{words_completed} 个")
+    elif session_progress is not None:
+        if total_words:
+            parts.append(f"本次进度：{session_progress} / {total_words} 个词")
+        else:
+            parts.append(f"本次进度：{session_progress} 个词")
+        if words_completed is not None:
+            parts.append(f"本次已答题：{words_completed} 个")
+
+    if ctx.get('sessionAccuracy') is not None:
+        parts.append(f"本次准确率：{ctx['sessionAccuracy']}%")
+
+    # Current word being studied (only when mid-session)
+    if ctx.get('currentWord') and not session_completed:
+        parts.append(f"当前单词：{ctx['currentWord']}")
         if ctx.get('currentPhonetic'):
             parts.append(f"  音标：{ctx['currentPhonetic']}")
         if ctx.get('currentPos'):
             parts.append(f"  词性：{ctx['currentPos']}")
         if ctx.get('currentDefinition'):
             parts.append(f"  释义：{ctx['currentDefinition']}")
-    if ctx.get('currentBook'):
-        parts.append(f"当前词书：{ctx['currentBook']}")
-    if ctx.get('currentChapter'):
-        parts.append(f"当前章节：{ctx['currentChapter']}")
-    if ctx.get('practiceMode'):
-        parts.append(f"练习模式：{ctx['practiceMode']}")
-    if ctx.get('sessionProgress') is not None:
-        parts.append(f"本次进度：{ctx['sessionProgress']} 个词")
-    if ctx.get('sessionAccuracy') is not None:
-        parts.append(f"本次准确率：{ctx['sessionAccuracy']}%")
-    if ctx.get('mode'):
-        parts.append(f"学习模式：{ctx['mode']}")
+
+    # Local historical summary (from localStorage)
+    local = ctx.get('localHistory')
+    if local and isinstance(local, dict):
+        completed = local.get('chaptersCompleted', 0)
+        attempted = local.get('chaptersAttempted', 0)
+        accuracy = local.get('overallAccuracy', 0)
+        correct = local.get('totalCorrect', 0)
+        wrong = local.get('totalWrong', 0)
+        if attempted > 0:
+            parts.append(
+                f"历史记录（本地）：已尝试 {attempted} 个章节，完成 {completed} 个，"
+                f"累计答题 {correct + wrong} 次，准确率 {accuracy}%"
+            )
+
     return '\n'.join(parts) if parts else '暂无'
 
 

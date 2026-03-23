@@ -236,3 +236,131 @@
     font-weight: 600;
     font-size: 16px;
 }
+
+/* ── Pause Overlay ─────────────────────────────────────────────────────────── */
+
+.practice-pause-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.practice-pause-card {
+    background: var(--bg-card, var(--bg-color));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+    animation: scaleUp 0.15s ease;
+}
+
+@keyframes scaleUp {
+    from { opacity: 0; transform: scale(0.93); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.practice-pause-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.practice-pause-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.practice-pause-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.practice-pause-stat {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.practice-pause-sub {
+    font-size: 13px;
+    display: flex;
+    gap: 12px;
+}
+
+.practice-pause-correct { color: var(--success); }
+.practice-pause-wrong   { color: var(--error); }
+
+.practice-pause-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+    margin: 0;
+    max-width: 260px;
+}
+
+.practice-pause-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.practice-pause-resume {
+    padding: 10px 0;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    width: 100%;
+}
+
+.practice-pause-resume:hover {
+    background: var(--accent-hover);
+}
+
+.practice-pause-exit {
+    padding: 10px 0;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
+}
+
+.practice-pause-exit:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
