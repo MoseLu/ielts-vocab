@@ -34,6 +34,65 @@ function saveRecords(records: QuickMemoryRecords) {
   localStorage.setItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS, JSON.stringify(records))
 }
 
+/** Fetch records from backend and merge into localStorage (backend wins for newer lastSeen). */
+async function loadRecordsFromBackend(): Promise<void> {
+  const token = localStorage.getItem('auth_token')
+  if (!token) return
+  try {
+    const res = await fetch('/api/ai/quick-memory', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    const serverRecords: Array<{
+      word: string; status: string; firstSeen: number; lastSeen: number;
+      knownCount: number; unknownCount: number; nextReview: number
+    }> = data.records || []
+    if (!serverRecords.length) return
+    const local = loadRecords()
+    let changed = false
+    for (const r of serverRecords) {
+      const key = r.word.toLowerCase()
+      const existing = local[key]
+      if (!existing || (r.lastSeen ?? 0) > (existing.lastSeen ?? 0)) {
+        local[key] = {
+          status: r.status as 'known' | 'unknown',
+          firstSeen: r.firstSeen,
+          lastSeen: r.lastSeen,
+          knownCount: r.knownCount,
+          unknownCount: r.unknownCount,
+          nextReview: r.nextReview,
+        }
+        changed = true
+      }
+    }
+    if (changed) saveRecords(local)
+  } catch {
+    // Non-critical
+  }
+}
+
+/** Fire-and-forget: sync a single updated record to the backend. */
+function syncRecordToBackend(word: string, record: QuickMemoryRecords[string]): void {
+  const token = localStorage.getItem('auth_token')
+  if (!token) return
+  fetch('/api/ai/quick-memory/sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      records: [{
+        word: word.toLowerCase(),
+        status: record.status,
+        firstSeen: record.firstSeen,
+        lastSeen: record.lastSeen,
+        knownCount: record.knownCount,
+        unknownCount: record.unknownCount,
+        nextReview: record.nextReview,
+      }],
+    }),
+  }).catch(() => {})
+}
+
 function updateRecord(
   records: QuickMemoryRecords,
   word: string,
@@ -225,6 +284,8 @@ export default function QuickMemoryMode({
     // Update persistent records
     const records = updateRecord(loadRecords(), currentWord?.word ?? '', picked)
     saveRecords(records)
+    const wordKey = (currentWord?.word ?? '').toLowerCase()
+    if (wordKey && records[wordKey]) syncRecordToBackend(wordKey, records[wordKey])
     setResults(prev => [...prev, { wordIdx: index, choice: picked }])
 
     // Report wrong words to the error book
@@ -352,6 +413,9 @@ export default function QuickMemoryMode({
       }
     }
   }, [done, bookId, chapterId, index, results])
+
+  // ── Load records from backend on mount (merge into localStorage) ──────────
+  useEffect(() => { loadRecordsFromBackend() }, [])
 
   // ── Cleanup audio on unmount ───────────────────────────────────────────────
   useEffect(() => () => {

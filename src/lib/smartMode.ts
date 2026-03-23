@@ -116,6 +116,75 @@ export function buildSmartQueue(wordKeys: string[], stats: SmartWordStatsStore):
   })
 }
 
+// ── Backend sync helpers ──────────────────────────────────────────────────────
+
+/** Push all localStorage smart stats to the backend (fire-and-forget). */
+export function syncSmartStatsToBackend(): void {
+  const token = localStorage.getItem('auth_token')
+  if (!token) return
+  const stats = loadSmartStats()
+  const entries = Object.entries(stats)
+  if (!entries.length) return
+  fetch('/api/ai/smart-stats/sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      stats: entries.map(([word, ws]) => ({
+        word,
+        listening: ws.listening,
+        meaning: ws.meaning,
+        dictation: ws.dictation,
+      })),
+    }),
+  }).catch(() => {})
+}
+
+/** Fetch smart stats from backend and merge into localStorage (backend wins per-dim if higher total). */
+export async function loadSmartStatsFromBackend(): Promise<void> {
+  const token = localStorage.getItem('auth_token')
+  if (!token) return
+  try {
+    const res = await fetch('/api/ai/smart-stats', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    const serverStats: Array<{
+      word: string
+      listening: { correct: number; wrong: number }
+      meaning:   { correct: number; wrong: number }
+      dictation: { correct: number; wrong: number }
+    }> = data.stats || []
+    if (!serverStats.length) return
+    const local = loadSmartStats()
+    let changed = false
+    for (const s of serverStats) {
+      const key = s.word.toLowerCase()
+      const existing = local[key]
+      // Use server data if local has no entry, or if server has more total answers (more data)
+      const serverTotal = (s.listening.correct + s.listening.wrong +
+                          s.meaning.correct + s.meaning.wrong +
+                          s.dictation.correct + s.dictation.wrong)
+      const localTotal = existing
+        ? (existing.listening.correct + existing.listening.wrong +
+           existing.meaning.correct + existing.meaning.wrong +
+           existing.dictation.correct + existing.dictation.wrong)
+        : 0
+      if (!existing || serverTotal > localTotal) {
+        local[key] = {
+          listening: s.listening,
+          meaning:   s.meaning,
+          dictation: s.dictation,
+        }
+        changed = true
+      }
+    }
+    if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(local))
+  } catch {
+    // Non-critical
+  }
+}
+
 export interface MasteryInfo {
   label: string
   level: 0 | 1 | 2 | 3 // 0=未学 1=需加强 2=熟悉中 3=已掌握

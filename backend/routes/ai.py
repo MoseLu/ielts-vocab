@@ -1,7 +1,7 @@
 import json
 import uuid
 from flask import Blueprint, jsonify, request
-from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession
+from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat
 from routes.middleware import token_required
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
@@ -835,3 +835,121 @@ def log_session(current_user: User):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+# ── GET /api/ai/quick-memory ──────────────────────────────────────────────────
+
+@ai_bp.route('/quick-memory', methods=['GET'])
+@token_required
+def get_quick_memory(current_user: User):
+    """Return all quick-memory records for the current user."""
+    records = UserQuickMemoryRecord.query.filter_by(user_id=current_user.id).all()
+    return jsonify({'records': [r.to_dict() for r in records]}), 200
+
+
+# ── POST /api/ai/quick-memory/sync ───────────────────────────────────────────
+
+@ai_bp.route('/quick-memory/sync', methods=['POST'])
+@token_required
+def sync_quick_memory(current_user: User):
+    """Bulk upsert quick-memory records. Accepts {records: [{word, status, firstSeen, lastSeen, knownCount, unknownCount, nextReview}]}."""
+    body = request.get_json() or {}
+    records_in = body.get('records', [])
+    if not isinstance(records_in, list):
+        return jsonify({'error': 'records must be a list'}), 400
+
+    for r in records_in:
+        word = (r.get('word') or '').strip().lower()
+        if not word:
+            continue
+        existing = UserQuickMemoryRecord.query.filter_by(
+            user_id=current_user.id, word=word
+        ).first()
+        if existing:
+            # Only overwrite if client data is newer (lastSeen is epoch ms)
+            if (r.get('lastSeen') or 0) >= (existing.last_seen or 0):
+                existing.status        = r.get('status', existing.status)
+                existing.first_seen    = r.get('firstSeen', existing.first_seen)
+                existing.last_seen     = r.get('lastSeen', existing.last_seen)
+                existing.known_count   = r.get('knownCount', existing.known_count)
+                existing.unknown_count = r.get('unknownCount', existing.unknown_count)
+                existing.next_review   = r.get('nextReview', existing.next_review)
+        else:
+            new_rec = UserQuickMemoryRecord(
+                user_id=current_user.id,
+                word=word,
+                status=r.get('status', 'unknown'),
+                first_seen=r.get('firstSeen', 0),
+                last_seen=r.get('lastSeen', 0),
+                known_count=r.get('knownCount', 0),
+                unknown_count=r.get('unknownCount', 0),
+                next_review=r.get('nextReview', 0),
+            )
+            db.session.add(new_rec)
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    return jsonify({'ok': True}), 200
+
+
+# ── GET /api/ai/smart-stats ───────────────────────────────────────────────────
+
+@ai_bp.route('/smart-stats', methods=['GET'])
+@token_required
+def get_smart_stats(current_user: User):
+    """Return all smart-mode word stats for the current user."""
+    stats = UserSmartWordStat.query.filter_by(user_id=current_user.id).all()
+    return jsonify({'stats': [s.to_dict() for s in stats]}), 200
+
+
+# ── POST /api/ai/smart-stats/sync ─────────────────────────────────────────────
+
+@ai_bp.route('/smart-stats/sync', methods=['POST'])
+@token_required
+def sync_smart_stats(current_user: User):
+    """Bulk upsert smart-mode word stats. Accepts {stats: [{word, listening, meaning, dictation}]}."""
+    body = request.get_json() or {}
+    stats_in = body.get('stats', [])
+    if not isinstance(stats_in, list):
+        return jsonify({'error': 'stats must be a list'}), 400
+
+    for s in stats_in:
+        word = (s.get('word') or '').strip().lower()
+        if not word:
+            continue
+        listening = s.get('listening') or {}
+        meaning   = s.get('meaning')   or {}
+        dictation = s.get('dictation') or {}
+
+        existing = UserSmartWordStat.query.filter_by(
+            user_id=current_user.id, word=word
+        ).first()
+        if existing:
+            existing.listening_correct = listening.get('correct', existing.listening_correct)
+            existing.listening_wrong   = listening.get('wrong',   existing.listening_wrong)
+            existing.meaning_correct   = meaning.get('correct',   existing.meaning_correct)
+            existing.meaning_wrong     = meaning.get('wrong',     existing.meaning_wrong)
+            existing.dictation_correct = dictation.get('correct', existing.dictation_correct)
+            existing.dictation_wrong   = dictation.get('wrong',   existing.dictation_wrong)
+        else:
+            new_stat = UserSmartWordStat(
+                user_id=current_user.id,
+                word=word,
+                listening_correct=listening.get('correct', 0),
+                listening_wrong=listening.get('wrong', 0),
+                meaning_correct=meaning.get('correct', 0),
+                meaning_wrong=meaning.get('wrong', 0),
+                dictation_correct=dictation.get('correct', 0),
+                dictation_wrong=dictation.get('wrong', 0),
+            )
+            db.session.add(new_stat)
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    return jsonify({'ok': True}), 200
