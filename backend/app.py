@@ -13,6 +13,7 @@ from routes.speech import speech_bp
 from routes.books import books_bp, init_books
 from routes.speech_socketio import register_socketio_events
 from routes.ai import ai_bp
+from routes.admin import admin_bp, init_admin
 
 
 def _migrate_db(app):
@@ -36,14 +37,22 @@ def _migrate_db(app):
                         username VARCHAR(100) NOT NULL,
                         password_hash VARCHAR(255) NOT NULL,
                         avatar_url TEXT,
+                        is_admin BOOLEAN NOT NULL DEFAULT 0,
                         created_at DATETIME
                     )
                 """))
-                conn.execute(text("INSERT OR IGNORE INTO users_migrated SELECT id, NULLIF(email,''), username, password_hash, avatar_url, created_at FROM users"))
+                conn.execute(text("INSERT OR IGNORE INTO users_migrated SELECT id, NULLIF(email,''), username, password_hash, avatar_url, 0, created_at FROM users"))
                 conn.execute(text("DROP TABLE users"))
                 conn.execute(text("ALTER TABLE users_migrated RENAME TO users"))
                 conn.commit()
                 print("[Migration] Done.")
+
+            # Migration 2: add is_admin column if missing
+            if 'is_admin' not in col_names:
+                print("[Migration] Adding is_admin column to users...")
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0"))
+                conn.commit()
+                print("[Migration] is_admin column added.")
 
 
 def create_app(config_class=Config):
@@ -65,6 +74,8 @@ def create_app(config_class=Config):
     app.register_blueprint(books_bp, url_prefix='/api/books')
     init_books(app)
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    init_admin(app)
 
     # Create database tables then apply migrations
     with app.app_context():

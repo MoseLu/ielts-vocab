@@ -15,6 +15,7 @@ import StatsPage from './components/StatsPage'
 import ProfilePage from './components/ProfilePage'
 import AIChatPanel from './components/AIChatPanel'
 import VocabTestPage from './components/VocabTestPage'
+import AdminDashboard from './components/AdminDashboard'
 import Toast from './components/Toast'
 
 interface AppRoutesProps {
@@ -25,7 +26,7 @@ interface AppRoutesProps {
 }
 
 function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesProps) {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin } = useAuth()
   const { toast } = useToast()
   const location = useLocation()
   const isPractice = location.pathname === '/practice'
@@ -138,6 +139,17 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                   <VocabTestPage />
                 ) : (
                   <Navigate to="/login" replace />
+                )
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                isAdmin ? (
+                  <AdminDashboard />
+                ) : (
+                  <Navigate to={user ? "/" : "/login"} replace />
                 )
               }
             />

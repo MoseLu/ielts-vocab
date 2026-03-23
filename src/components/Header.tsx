@@ -33,7 +33,7 @@ function Header({
   onDayChange,
   onUserUpdate,
 }: HeaderProps) {
-  const { updateUser } = useAuth()
+  const { updateUser, isAdmin } = useAuth()
   const [showModeDropdown, setShowModeDropdown] = useState(false)
   const [showDayDropdown, setShowDayDropdown] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
@@ -69,6 +69,7 @@ function Header({
   const mainNavItems: Array<{ key: string; label: string; path: string }> = [
     { key: 'plan', label: '学习中心', path: '/plan' },
     { key: 'books', label: '词书', path: '/' },
+    ...(isAdmin ? [{ key: 'admin', label: '管理控制台', path: '/admin' }] : []),
   ]
 
   // Close dropdowns on outside click
