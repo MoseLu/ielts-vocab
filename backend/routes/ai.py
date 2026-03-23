@@ -770,6 +770,16 @@ def log_session(current_user: User):
     """Persist a study session record to the database."""
     body = request.get_json() or {}
     try:
+        # Use client-provided startedAt (epoch ms) if valid, else server time
+        started_at = None
+        client_start = body.get('startedAt')
+        if client_start:
+            try:
+                from datetime import timezone
+                started_at = datetime.fromtimestamp(int(client_start) / 1000, tz=timezone.utc).replace(tzinfo=None)
+            except Exception:
+                pass
+
         session = UserStudySession(
             user_id=current_user.id,
             mode=body.get('mode'),
@@ -780,6 +790,8 @@ def log_session(current_user: User):
             wrong_count=body.get('wrongCount', 0),
             duration_seconds=body.get('durationSeconds', 0),
         )
+        if started_at:
+            session.started_at = started_at
         db.session.add(session)
         db.session.commit()
         return jsonify({'id': session.id}), 201
