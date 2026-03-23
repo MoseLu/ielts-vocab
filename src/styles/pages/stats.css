@@ -56,33 +56,174 @@
     margin-bottom: 10px;
 }
 
-/* Chart */
-.stats-chart-wrap {
-    width: 100%;
-    overflow: hidden;
+/* Section header with title + tabs */
+.stats-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stats-section-header .stats-section-title {
+    margin-bottom: 0;
+}
+
+/* Range tabs */
+.lc-tabs {
+    display: flex;
+    gap: 4px;
+}
+
+.lc-tab {
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
     border-radius: var(--radius-sm);
+    padding: 3px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
 }
 
-.stats-chart-svg {
+.lc-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+/* Metric + filter bar */
+.lc-filters {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.lc-metric-tabs {
+    display: flex;
+    gap: 4px;
+}
+
+.lc-metric-tab {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    padding: 2px 8px 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.lc-metric-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+}
+
+.lc-selects {
+    display: flex;
+    gap: 6px;
+}
+
+.lc-select {
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    max-width: 120px;
+}
+
+/* Chart container */
+.lc-wrap {
+    position: relative;
     width: 100%;
-    height: 120px;
-    display: block;
 }
 
+.lc-svg {
+    width: 100%;
+    height: 160px;
+    display: block;
+    overflow: visible;
+}
+
+/* Tooltip */
+.lc-tooltip {
+    position: absolute;
+    transform: translate(-50%, -110%);
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 6px 10px;
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+    z-index: 10;
+    white-space: nowrap;
+    min-width: 80px;
+    text-align: center;
+}
+
+.lc-tooltip-date {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.lc-tooltip-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.lc-tooltip-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+}
+
+/* Legend + period summary row */
+.lc-legend-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.lc-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.lc-period-summary {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 8px;
+}
+
+.lc-period-summary strong {
+    color: var(--text-primary);
+}
+
+/* Loading */
 .stats-chart-loading {
     height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.stats-chart-legend {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--text-secondary);
 }
 
 .legend-dot {
