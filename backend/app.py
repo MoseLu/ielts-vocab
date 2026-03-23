@@ -14,6 +14,7 @@ from routes.books import books_bp, init_books
 from routes.speech_socketio import register_socketio_events
 from routes.ai import ai_bp
 from routes.admin import admin_bp, init_admin
+from routes.middleware import init_middleware
 
 
 def _ensure_admin_user():
@@ -80,10 +81,13 @@ def create_app(config_class=Config):
 
     # Initialize extensions
     db.init_app(app)
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app,
+         resources={r"/api/*": {"origins": app.config['CORS_ORIGINS']}},
+         supports_credentials=True)
 
-    # Initialize auth with app reference
+    # Initialize auth + shared middleware with app reference
     init_auth(app)
+    init_middleware(app)
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')

@@ -20,39 +20,76 @@ export function removeStorageItem(key: string): void {
   localStorage.removeItem(key)
 }
 
-// API fetch helper
-export async function apiFetch<T>(
-  url: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = localStorage.getItem('auth_token')
-  const existingHeaders: Record<string, string> =
+// ── Secure API fetch — HttpOnly cookie mode ───────────────────────────────────
+// • Always sends credentials (cookies) so the HttpOnly access_token is included
+// • On 401, attempts one silent token refresh via POST /api/auth/refresh
+// • If refresh succeeds, retries the original request once
+// • If refresh fails, fires 'auth:session-expired' so AuthContext can clear state
+
+let _refreshing: Promise<void> | null = null
+
+async function _attemptRefresh(): Promise<void> {
+  // Deduplicate: if a refresh is already in flight, wait for it
+  if (_refreshing) return _refreshing
+  _refreshing = fetch('/api/auth/refresh', {
+    method: 'POST',
+    credentials: 'include',
+  }).then(r => {
+    if (!r.ok) throw new Error('refresh_failed')
+  }).finally(() => {
+    _refreshing = null
+  })
+  return _refreshing
+}
+
+function _buildHeaders(options: RequestInit): Record<string, string> {
+  const existing: Record<string, string> =
     options.headers instanceof Headers
       ? Object.fromEntries(options.headers.entries())
       : Array.isArray(options.headers)
       ? Object.fromEntries(options.headers)
       : (options.headers as Record<string, string>) || {}
+  return { 'Content-Type': 'application/json', ...existing }
+}
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...existingHeaders,
+export async function apiFetch<T>(
+  url: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const headers = _buildHeaders(options)
+  const init: RequestInit = { ...options, headers, credentials: 'include' }
+
+  const response = await fetch(url, init)
+
+  // Silent token refresh on 401 (but not for auth endpoints themselves)
+  if (
+    response.status === 401 &&
+    !url.includes('/api/auth/login') &&
+    !url.includes('/api/auth/register') &&
+    !url.includes('/api/auth/refresh')
+  ) {
+    try {
+      await _attemptRefresh()
+      // Retry original request — cookies now carry the new access_token
+      const retry = await fetch(url, init)
+      if (!retry.ok) {
+        const err = await retry.json().catch(() => ({ error: '请求失败，请稍后重试' }))
+        throw new Error(err.error || '请求失败，请稍后重试')
+      }
+      return retry.json() as Promise<T>
+    } catch {
+      // Refresh failed — session truly expired
+      window.dispatchEvent(new CustomEvent('auth:session-expired'))
+      throw new Error('登录已过期，请重新登录')
+    }
   }
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  })
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: '请求失败，请稍后重试' }))
     throw new Error(error.error || '请求失败，请稍后重试')
   }
 
-  return response.json()
+  return response.json() as Promise<T>
 }
 
 // Date helpers

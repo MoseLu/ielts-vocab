@@ -4,49 +4,14 @@ from models import (
     UserWrongWord, UserStudySession, UserAddedBook
 )
 from sqlalchemy import func, desc
-import jwt
 from datetime import datetime, timedelta
-from functools import wraps
+from routes.middleware import admin_required
 
 admin_bp = Blueprint('admin', __name__)
 
-# Store app reference
-_app = None
-
 
 def init_admin(app_instance):
-    global _app
-    _app = app_instance
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            if auth_header.startswith('Bearer '):
-                token = auth_header.split(' ')[1]
-
-        if not token:
-            return jsonify({'error': '请先登录'}), 401
-
-        try:
-            data = jwt.decode(token, _app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
-            current_user = User.query.get(data['user_id'])
-            if not current_user:
-                return jsonify({'error': '用户不存在'}), 401
-        except jwt.ExpiredSignatureError:
-            return jsonify({'error': '登录已过期，请重新登录'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'error': '登录凭证无效，请重新登录'}), 401
-
-        if not current_user.is_admin:
-            return jsonify({'error': '权限不足'}), 403
-
-        return f(current_user, *args, **kwargs)
-
-    return decorated
+    pass  # kept for API compatibility
 
 
 def _user_summary(user):

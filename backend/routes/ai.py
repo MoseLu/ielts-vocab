@@ -1,39 +1,11 @@
 import json
 import uuid
-import jwt
 from flask import Blueprint, jsonify, request
-from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession
-from functools import wraps
+from models import db, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession
+from routes.middleware import token_required
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
 ai_bp = Blueprint('ai', __name__)
-
-
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        auth_header = request.headers.get('Authorization', '')
-        if auth_header.startswith('Bearer '):
-            token = auth_header.split(' ')[1]
-
-        if not token:
-            return jsonify({'error': '请先登录'}), 401
-
-        try:
-            from config import Config
-            data = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=['HS256'])
-            current_user = User.query.get(data['user_id'])
-            if not current_user:
-                return jsonify({'error': '用户不存在'}), 401
-        except jwt.ExpiredSignatureError:
-            return jsonify({'error': '登录已过期，请重新登录'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'error': '登录凭证无效，请重新登录'}), 401
-
-        return f(current_user, *args, **kwargs)
-
-    return decorated
 
 
 # ── GET /api/ai/context ───────────────────────────────────────────────────────
