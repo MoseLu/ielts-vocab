@@ -13,6 +13,96 @@ function RequiredMark() {
   return <span className="required-mark" aria-hidden="true">*</span>
 }
 
+// ── Input with suffix icons ──────────────────────────────────────────────────────
+function InputIconBtn({ onClick, children, title }: {
+  onClick: () => void
+  children: React.ReactNode
+  title?: string
+}) {
+  return (
+    <button
+      type="button"
+      className="auth-input-icon-btn"
+      onClick={onClick}
+      title={title}
+      tabIndex={-1}
+    >
+      {children}
+    </button>
+  )
+}
+
+// Text input with clear button
+function ClearableInput({ value, onChange, onBlur, placeholder, autoComplete, error, disabled }: {
+  value: string
+  onChange: (v: string) => void
+  onBlur?: () => void
+  placeholder?: string
+  autoComplete?: string
+  error?: string
+  disabled?: boolean
+}) {
+  return (
+    <div className="auth-input-wrapper">
+      <input
+        type="text"
+        className={`auth-input ${error ? 'auth-input-error' : ''}`}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        autoComplete={autoComplete}
+        disabled={disabled}
+      />
+      {value && !disabled && (
+        <InputIconBtn onClick={() => onChange('')} title="清空">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </InputIconBtn>
+      )}
+    </div>
+  )
+}
+
+// Password input with show/hide toggle
+function PasswordInput({ value, onChange, onBlur, placeholder, autoComplete, error }: {
+  value: string
+  onChange: (v: string) => void
+  onBlur?: () => void
+  placeholder?: string
+  autoComplete?: string
+  error?: string
+}) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <div className="auth-input-wrapper">
+      <input
+        type={visible ? 'text' : 'password'}
+        className={`auth-input ${error ? 'auth-input-error' : ''}`}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        autoComplete={autoComplete}
+      />
+      <InputIconBtn onClick={() => setVisible(v => !v)} title={visible ? '隐藏密码' : '显示密码'}>
+        {visible ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        )}
+      </InputIconBtn>
+    </div>
+  )
+}
+
 function FormField({ label, required, children, error }: {
   label: string
   required?: boolean
@@ -46,6 +136,8 @@ export default function AuthPage() {
   const [fpConfirm, setFpConfirm] = useState('')
   const [fpError, setFpError] = useState('')
   const [fpSubmitting, setFpSubmitting] = useState(false)
+  const [showFpPassword, setShowFpPassword] = useState(false)
+  const [showFpConfirm, setShowFpConfirm] = useState(false)
 
   const loginForm = useForm({ schema: LoginSchema })
   const registerForm = useForm({ schema: RegisterSchema })
@@ -84,8 +176,8 @@ export default function AuthPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setFpError('')
-    if (!fpCode || fpCode.length !== 6) { setFpError('请输入6位验证码'); return }
-    if (!fpPassword || fpPassword.length < 6) { setFpError('密码至少6个字符'); return }
+    if (!fpCode || fpCode.length !== 6) { setFpError('请输入 6 位验证码'); return }
+    if (!fpPassword || fpPassword.length < 6) { setFpError('密码至少 6 个字符'); return }
     if (fpPassword !== fpConfirm) { setFpError('两次输入的密码不一致'); return }
     setFpSubmitting(true)
     try {
@@ -137,26 +229,24 @@ export default function AuthPage() {
         {tab === 'login' && (
           <form onSubmit={handleLoginSubmit} noValidate>
             <FormField label="邮箱 / 用户名" required error={loginForm.getFieldError('identifier')}>
-              <input
-                type="text"
-                className="auth-input"
-                placeholder="请输入邮箱或用户名"
+              <ClearableInput
                 value={loginForm.values.identifier ?? ''}
-                onChange={(e) => loginForm.setFieldValue('identifier' as any, e.target.value)}
+                onChange={(v) => loginForm.setFieldValue('identifier' as any, v)}
                 onBlur={() => loginForm.setFieldTouched('identifier')}
+                placeholder="请输入邮箱或用户名"
                 autoComplete="username"
+                error={loginForm.getFieldError('identifier')}
               />
             </FormField>
 
             <FormField label="密码" required error={loginForm.getFieldError('password')}>
-              <input
-                type="password"
-                className="auth-input"
-                placeholder="请输入密码（至少6位）"
+              <PasswordInput
                 value={loginForm.values.password ?? ''}
-                onChange={(e) => loginForm.setFieldValue('password' as any, e.target.value)}
+                onChange={(v) => loginForm.setFieldValue('password' as any, v)}
                 onBlur={() => loginForm.setFieldTouched('password')}
+                placeholder="请输入密码（至少 6 位）"
                 autoComplete="current-password"
+                error={loginForm.getFieldError('password')}
               />
             </FormField>
 
@@ -180,50 +270,49 @@ export default function AuthPage() {
         {tab === 'register' && (
           <form onSubmit={handleRegisterSubmit} noValidate>
             <FormField label="用户名" required error={registerForm.getFieldError('username')}>
-              <input
-                type="text"
-                className="auth-input"
-                placeholder="请输入用户名（至少3个字符）"
+              <ClearableInput
                 value={registerForm.values.username ?? ''}
-                onChange={(e) => registerForm.setFieldValue('username' as any, e.target.value)}
+                onChange={(v) => registerForm.setFieldValue('username' as any, v)}
                 onBlur={() => registerForm.setFieldTouched('username')}
+                placeholder="请输入用户名（至少 3 个字符）"
                 autoComplete="username"
+                error={registerForm.getFieldError('username')}
               />
             </FormField>
 
             <FormField label="邮箱" error={registerForm.getFieldError('email')}>
-              <input
-                type="email"
-                className="auth-input"
-                placeholder="可选，用于绑定账号和找回密码"
-                value={registerForm.values.email ?? ''}
-                onChange={(e) => registerForm.setFieldValue('email' as any, e.target.value)}
-                onBlur={() => registerForm.setFieldTouched('email')}
-                autoComplete="email"
-              />
+              <div className="auth-input-wrapper">
+                <input
+                  type="email"
+                  className={`auth-input ${registerForm.getFieldError('email') ? 'auth-input-error' : ''}`}
+                  placeholder="可选，用于绑定账号和找回密码"
+                  value={registerForm.values.email ?? ''}
+                  onChange={(e) => registerForm.setFieldValue('email' as any, e.target.value)}
+                  onBlur={() => registerForm.setFieldTouched('email')}
+                  autoComplete="email"
+                />
+              </div>
             </FormField>
 
             <FormField label="密码" required error={registerForm.getFieldError('password')}>
-              <input
-                type="password"
-                className="auth-input"
-                placeholder="请输入密码（至少6位）"
+              <PasswordInput
                 value={registerForm.values.password ?? ''}
-                onChange={(e) => registerForm.setFieldValue('password' as any, e.target.value)}
+                onChange={(v) => registerForm.setFieldValue('password' as any, v)}
                 onBlur={() => registerForm.setFieldTouched('password')}
+                placeholder="请输入密码（至少 6 位）"
                 autoComplete="new-password"
+                error={registerForm.getFieldError('password')}
               />
             </FormField>
 
             <FormField label="确认密码" required error={registerForm.getFieldError('confirmPassword')}>
-              <input
-                type="password"
-                className="auth-input"
-                placeholder="再次输入密码"
+              <PasswordInput
                 value={registerForm.values.confirmPassword ?? ''}
-                onChange={(e) => registerForm.setFieldValue('confirmPassword' as any, e.target.value)}
+                onChange={(v) => registerForm.setFieldValue('confirmPassword' as any, v)}
                 onBlur={() => registerForm.setFieldTouched('confirmPassword')}
+                placeholder="再次输入密码"
                 autoComplete="new-password"
+                error={registerForm.getFieldError('confirmPassword')}
               />
             </FormField>
 
@@ -244,14 +333,12 @@ export default function AuthPage() {
           <form onSubmit={handleResetPassword} noValidate>
             <FormField label="注册邮箱" required>
               <div className="auth-code-row">
-                <input
-                  type="email"
-                  className="auth-input"
-                  placeholder="请输入注册时使用的邮箱"
+                <ClearableInput
                   value={fpEmail}
-                  onChange={(e) => setFpEmail(e.target.value)}
-                  disabled={fpEmailSent}
+                  onChange={setFpEmail}
+                  placeholder="请输入注册时使用的邮箱"
                   autoComplete="email"
+                  disabled={fpEmailSent}
                 />
                 <button
                   type="button"
@@ -267,37 +354,66 @@ export default function AuthPage() {
             {fpEmailSent && (
               <>
                 <FormField label="验证码" required>
-                  <input
-                    type="text"
-                    className="auth-input"
-                    placeholder="请输入6位验证码"
+                  <ClearableInput
                     value={fpCode}
-                    onChange={(e) => setFpCode(e.target.value)}
-                    maxLength={6}
-                    autoComplete="one-time-code"
+                    onChange={setFpCode}
+                    placeholder="请输入 6 位验证码"
+                    disabled={fpSubmitting}
                   />
                 </FormField>
 
                 <FormField label="新密码" required>
-                  <input
-                    type="password"
-                    className="auth-input"
-                    placeholder="请输入新密码（至少6位）"
-                    value={fpPassword}
-                    onChange={(e) => setFpPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
+                  <div className="auth-input-wrapper">
+                    <input
+                      type={showFpPassword ? 'text' : 'password'}
+                      className="auth-input"
+                      placeholder="请输入新密码（至少 6 位）"
+                      value={fpPassword}
+                      onChange={(e) => setFpPassword(e.target.value)}
+                      autoComplete="new-password"
+                      disabled={fpSubmitting}
+                    />
+                    <InputIconBtn onClick={() => setShowFpPassword(v => !v)} title={showFpPassword ? '隐藏密码' : '显示密码'}>
+                      {showFpPassword ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      )}
+                    </InputIconBtn>
+                  </div>
                 </FormField>
 
                 <FormField label="确认新密码" required>
-                  <input
-                    type="password"
-                    className="auth-input"
-                    placeholder="再次输入新密码"
-                    value={fpConfirm}
-                    onChange={(e) => setFpConfirm(e.target.value)}
-                    autoComplete="new-password"
-                  />
+                  <div className="auth-input-wrapper">
+                    <input
+                      type={showFpConfirm ? 'text' : 'password'}
+                      className="auth-input"
+                      placeholder="再次输入新密码"
+                      value={fpConfirm}
+                      onChange={(e) => setFpConfirm(e.target.value)}
+                      autoComplete="new-password"
+                      disabled={fpSubmitting}
+                    />
+                    <InputIconBtn onClick={() => setShowFpConfirm(v => !v)} title={showFpConfirm ? '隐藏密码' : '显示密码'}>
+                      {showFpConfirm ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      )}
+                    </InputIconBtn>
+                  </div>
                 </FormField>
               </>
             )}

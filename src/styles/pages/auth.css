@@ -299,3 +299,48 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ── Input with icons wrapper ──────────────────────────────────── */
+.auth-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.auth-input-wrapper .auth-input {
+    flex: 1;
+    padding-right: 44px;
+    margin-bottom: 0;
+}
+
+.auth-input-wrapper .auth-input.auth-input-error {
+    margin-bottom: 0;
+}
+
+/* Icon button inside input */
+.auth-input-icon-btn {
+    position: absolute;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+    z-index: 1;
+}
+
+.auth-input-icon-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+.auth-input-icon-btn:active {
+    transform: scale(0.95);
+}
