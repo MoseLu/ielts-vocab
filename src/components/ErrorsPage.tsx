@@ -1,25 +1,31 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWrongWords } from '../features/vocabulary/hooks'
+import { loadSmartStats } from '../lib/smartMode'
+import type { SmartDimension } from '../lib/smartMode'
 
 type ActiveTab = 'words' | 'real'
+
+const DIM_LABEL: Record<SmartDimension, string> = {
+  listening: '听音',
+  meaning: '看义',
+  dictation: '听写',
+}
 
 function ErrorsPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<ActiveTab>('words')
   const { words, removeWord, clearAll } = useWrongWords()
 
-  const handleRemoveWord = (word: string) => {
-    removeWord(word)
-  }
+  // Per-dimension stats stored locally by smartMode
+  const smartStats = loadSmartStats()
 
-  const handleClearAll = () => {
-    clearAll()
-  }
+  // Sort by wrong_count descending so the most-missed words come first
+  const sortedWords = [...words].sort((a, b) => (b.wrong_count ?? 0) - (a.wrong_count ?? 0))
 
-  const handlePractice = () => {
-    navigate('/practice?mode=errors')
-  }
+  const handleRemoveWord = (word: string) => removeWord(word)
+  const handleClearAll = () => clearAll()
+  const handlePractice = () => navigate('/practice?mode=errors')
 
   return (
     <div className="errors-page">
@@ -80,31 +86,70 @@ function ErrorsPage() {
       ) : (
         <>
           <div className="errors-filter-bar">
-            <span className="errors-filter-label">共 {words.length} 个错词</span>
+            <span className="errors-filter-label">共 {words.length} 个错词，按错误次数排序</span>
           </div>
           <div className="errors-list">
-            {words.map((word) => (
-              <div key={word.word} className="errors-item">
-                <div className="errors-item-main">
-                  <div className="errors-item-word">{word.word}</div>
-                  <div className="errors-item-phonetic">{word.phonetic}</div>
-                  <div className="errors-item-definition">
-                    {word.pos && <span className="word-pos-tag">{word.pos}</span>}
-                    {word.definition}
+            {sortedWords.map((word) => {
+              const wordStats = smartStats[word.word]
+              const dims = (['listening', 'meaning', 'dictation'] as SmartDimension[]).filter(dim => {
+                const s = wordStats?.[dim]
+                return s && (s.correct + s.wrong) > 0
+              })
+
+              return (
+                <div key={word.word} className="errors-item">
+                  <div className="errors-item-main">
+                    <div className="errors-item-word-row">
+                      <span className="errors-item-word">{word.word}</span>
+                      {(word.wrong_count ?? 0) > 0 && (
+                        <span className="errors-item-total-count">错 {word.wrong_count} 次</span>
+                      )}
+                    </div>
+                    {word.phonetic && (
+                      <div className="errors-item-phonetic">{word.phonetic}</div>
+                    )}
+                    <div className="errors-item-definition">
+                      {word.pos && <span className="word-pos-tag">{word.pos}</span>}
+                      {word.definition}
+                    </div>
+                    {dims.length > 0 && (
+                      <div className="errors-item-dims">
+                        {dims.map(dim => {
+                          const s = wordStats![dim]
+                          const variant = s.wrong === 0 ? 'ok' : s.correct === 0 ? 'error' : 'mixed'
+                          return (
+                            <span key={dim} className={`errors-dim-badge errors-dim-${variant}`}>
+                              {DIM_LABEL[dim]}
+                              {s.wrong > 0 && (
+                                <span className="errors-dim-wrong">×{s.wrong}</span>
+                              )}
+                              {s.correct > 0 && s.wrong > 0 && (
+                                <span className="errors-dim-correct"> ✓{s.correct}</span>
+                              )}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+                    {dims.length === 0 && (
+                      <div className="errors-item-dims">
+                        <span className="errors-dim-badge errors-dim-unknown">未记录维度</span>
+                      </div>
+                    )}
                   </div>
+                  <button
+                    className="errors-item-remove"
+                    onClick={() => handleRemoveWord(word.word)}
+                    title="移除"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  className="errors-item-remove"
-                  onClick={() => handleRemoveWord(word.word)}
-                  title="移除"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </>
       )}
