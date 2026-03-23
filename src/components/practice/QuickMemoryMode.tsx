@@ -263,6 +263,31 @@ export default function QuickMemoryMode({
     }
   }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Save partial chapter progress on unmount (if session not completed) ──────
+  useEffect(() => {
+    return () => {
+      if (done || !bookId || !chapterId || index === 0) return
+      const correct = results.filter(r => r.choice === 'known').length
+      const wrong   = results.filter(r => r.choice === 'unknown').length
+      const partialProgress = {
+        current_index: index,
+        correct_count: correct,
+        wrong_count:   wrong,
+        words_learned: index,
+        is_completed:  false,
+        updatedAt:     new Date().toISOString(),
+      }
+      const chapterProgress: Record<string, typeof partialProgress> =
+        JSON.parse(localStorage.getItem('chapter_progress') || '{}')
+      // Only overwrite if no completed record already exists
+      const existing = chapterProgress[`${bookId}_${chapterId}`]
+      if (!existing?.is_completed) {
+        chapterProgress[`${bookId}_${chapterId}`] = partialProgress
+        localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
+      }
+    }
+  }, [done, bookId, chapterId, index, results])
+
   // ── Cleanup audio on unmount ───────────────────────────────────────────────
   useEffect(() => () => {
     stopAudio()
