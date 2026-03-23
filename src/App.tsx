@@ -38,7 +38,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
           user={user}
           currentDay={currentDay}
           mode={mode as any}
-          onLogout={() => logout()}
+          onLogout={() => { logout() }}
           onModeChange={onModeChange}
           onDayChange={onDayChange}
           onUserUpdate={() => {}}

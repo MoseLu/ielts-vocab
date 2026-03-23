@@ -345,6 +345,34 @@ class UserStudySession(db.Model):
         }
 
 
+class RevokedToken(db.Model):
+    """Revoked JWT JTIs — checked on every authenticated request."""
+    __tablename__ = 'revoked_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    revoked_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)   # pruned after expiry
+
+    @classmethod
+    def revoke(cls, jti: str, expires_at):
+        record = cls(jti=jti, expires_at=expires_at)
+        db.session.add(record)
+        db.session.commit()
+
+    @classmethod
+    def is_revoked(cls, jti: str) -> bool:
+        return db.session.query(
+            cls.query.filter_by(jti=jti).exists()
+        ).scalar()
+
+    @classmethod
+    def prune_expired(cls):
+        """Delete revocation records whose tokens are already expired (safe to remove)."""
+        cls.query.filter(cls.expires_at < datetime.utcnow()).delete()
+        db.session.commit()
+
+
 class SearchCache(db.Model):
     """Cached web search results for word lookups"""
     __tablename__ = 'search_cache'
