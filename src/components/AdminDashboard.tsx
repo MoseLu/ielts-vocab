@@ -205,6 +205,7 @@ export default function AdminDashboard() {
   const [sort, setSort] = useState<string>('created_at')
   const [order, setOrder] = useState<'asc' | 'desc'>('desc')
   const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [detailTab, setDetailTab] = useState<'progress' | 'wrong_words' | 'sessions' | 'chart' | 'chapter_daily'>('progress')
   const [detailDateFrom, setDetailDateFrom] = useState('')
   const [detailDateTo, setDetailDateTo] = useState('')
@@ -562,374 +563,325 @@ export default function AdminDashboard() {
       )}
 
       {/* ── User Detail Modal ── */}
-      {selectedUser && (
-        <div className="admin-modal-overlay" onClick={e => e.target === e.currentTarget && setSelectedUser(null)}>
-          <div className="admin-modal">
-            <div className="admin-modal-header">
-              <div className="admin-modal-user-info">
-                {selectedUser.user.avatar_url ? (
-                  <img src={selectedUser.user.avatar_url} alt="" className="admin-modal-avatar" />
-                ) : (
-                  <div className="admin-avatar-placeholder large">
-                    {(selectedUser.user.username || '?')[0].toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <div className="admin-modal-username">
-                    {selectedUser.user.username}
-                    {selectedUser.user.is_admin && <span className="admin-badge">管理员</span>}
-                  </div>
-                  <div className="admin-modal-email">{selectedUser.user.email || '未绑定邮箱'}</div>
-                  <div className="admin-modal-meta">注册于 {fmtDate(selectedUser.user.created_at)}</div>
+      {selectedUser && (() => {
+        const modalHeader = (
+          <div className="admin-modal-header">
+            <div className="admin-modal-user-info">
+              {selectedUser.user.avatar_url ? (
+                <img src={selectedUser.user.avatar_url} alt="" className="admin-modal-avatar" />
+              ) : (
+                <div className="admin-avatar-placeholder large">
+                  {(selectedUser.user.username || '?')[0].toUpperCase()}
                 </div>
+              )}
+              <div>
+                <div className="admin-modal-username">
+                  {selectedUser.user.username}
+                  {selectedUser.user.is_admin && <span className="admin-badge">管理员</span>}
+                </div>
+                <div className="admin-modal-email">{selectedUser.user.email || '未绑定邮箱'}</div>
+                <div className="admin-modal-meta">注册于 {fmtDate(selectedUser.user.created_at)}</div>
               </div>
-              <button className="admin-modal-close" onClick={() => setSelectedUser(null)}>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <button
+                className="admin-modal-toggle-fs"
+                onClick={() => setIsFullscreen(f => !f)}
+                title={isFullscreen ? '退出全屏' : '全屏显示'}
+              >
+                {isFullscreen ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <polyline points="8 3 3 3 3 8"/><polyline points="21 8 21 3 16 3"/>
+                    <polyline points="3 16 3 21 8 21"/><polyline points="16 21 21 21 21 16"/>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                    <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                  </svg>
+                )}
+              </button>
+              <button className="admin-modal-close" onClick={() => { setSelectedUser(null); setIsFullscreen(false) }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
+          </div>
+        )
 
-            {/* User stat summary */}
-            <div className="admin-modal-stats">
-              <div className="admin-modal-stat">
-                <div className="admin-modal-stat-val">{fmtSeconds(selectedUser.user.stats.total_study_seconds)}</div>
-                <div className="admin-modal-stat-lbl">总学习时长</div>
-              </div>
-              <div className="admin-modal-stat">
-                <div className="admin-modal-stat-val">{selectedUser.user.stats.total_words_studied}</div>
-                <div className="admin-modal-stat-lbl">学习单词</div>
-              </div>
-              <div className="admin-modal-stat">
-                <div className="admin-modal-stat-val">{selectedUser.user.stats.accuracy > 0 ? `${selectedUser.user.stats.accuracy}%` : '—'}</div>
-                <div className="admin-modal-stat-lbl">准确率</div>
-              </div>
-              <div className="admin-modal-stat">
-                <div className="admin-modal-stat-val">{selectedUser.user.stats.wrong_words_count}</div>
-                <div className="admin-modal-stat-lbl">错词数</div>
-              </div>
-              <div className="admin-modal-stat">
-                <div className="admin-modal-stat-val">{selectedUser.user.stats.session_count}</div>
-                <div className="admin-modal-stat-lbl">练习次数</div>
-              </div>
-              <div className="admin-modal-stat">
-                <div className="admin-modal-stat-val">{selectedUser.user.stats.books_completed}</div>
-                <div className="admin-modal-stat-lbl">完成词书</div>
-              </div>
+        const modalStats = (
+          <div className="admin-modal-stats">
+            <div className="admin-modal-stat">
+              <div className="admin-modal-stat-val">{fmtSeconds(selectedUser.user.stats.total_study_seconds)}</div>
+              <div className="admin-modal-stat-lbl">总学习时长</div>
             </div>
+            <div className="admin-modal-stat">
+              <div className="admin-modal-stat-val">{selectedUser.user.stats.total_words_studied}</div>
+              <div className="admin-modal-stat-lbl">学习单词</div>
+            </div>
+            <div className="admin-modal-stat">
+              <div className="admin-modal-stat-val">{selectedUser.user.stats.accuracy > 0 ? `${selectedUser.user.stats.accuracy}%` : '—'}</div>
+              <div className="admin-modal-stat-lbl">准确率</div>
+            </div>
+            <div className="admin-modal-stat">
+              <div className="admin-modal-stat-val">{selectedUser.user.stats.wrong_words_count}</div>
+              <div className="admin-modal-stat-lbl">错词数</div>
+            </div>
+            <div className="admin-modal-stat">
+              <div className="admin-modal-stat-val">{selectedUser.user.stats.session_count}</div>
+              <div className="admin-modal-stat-lbl">练习次数</div>
+            </div>
+            <div className="admin-modal-stat">
+              <div className="admin-modal-stat-val">{selectedUser.user.stats.books_completed}</div>
+              <div className="admin-modal-stat-lbl">完成词书</div>
+            </div>
+          </div>
+        )
 
-            {/* Filter bar */}
-            <div className="admin-detail-filters">
-              <input
-                type="date"
-                className="admin-filter-date"
-                value={detailDateFrom}
-                onChange={e => setDetailDateFrom(e.target.value)}
-                title="开始日期"
-              />
-              <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>至</span>
-              <input
-                type="date"
-                className="admin-filter-date"
-                value={detailDateTo}
-                onChange={e => setDetailDateTo(e.target.value)}
-                title="结束日期"
-              />
-              <select
-                className="admin-filter-select"
-                value={detailMode}
-                onChange={e => setDetailMode(e.target.value)}
-              >
-                <option value="">全部模式</option>
-                {Object.entries(modeLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-              <button
-                className="admin-filter-apply"
-                onClick={() => selectedUserId && fetchUserDetail(selectedUserId, {
-                  dateFrom: detailDateFrom, dateTo: detailDateTo, mode: detailMode, bookId: detailBook
-                })}
-              >
-                查询
+        const modalFilters = (
+          <div className="admin-detail-filters">
+            <input type="date" className="admin-filter-date" value={detailDateFrom}
+              onChange={e => setDetailDateFrom(e.target.value)} title="开始日期" />
+            <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>至</span>
+            <input type="date" className="admin-filter-date" value={detailDateTo}
+              onChange={e => setDetailDateTo(e.target.value)} title="结束日期" />
+            <select className="admin-filter-select" value={detailMode} onChange={e => setDetailMode(e.target.value)}>
+              <option value="">全部模式</option>
+              {Object.entries(modeLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <button className="admin-filter-apply"
+              onClick={() => selectedUserId && fetchUserDetail(selectedUserId, {
+                dateFrom: detailDateFrom, dateTo: detailDateTo, mode: detailMode, bookId: detailBook
+              })}>查询</button>
+            <button className="admin-filter-reset" onClick={() => {
+              setDetailDateFrom(''); setDetailDateTo(''); setDetailMode(''); setDetailBook('')
+              if (selectedUserId) fetchUserDetail(selectedUserId)
+            }}>重置</button>
+          </div>
+        )
+
+        const modalTabs = (
+          <div className="admin-detail-tabs">
+            {(['chart', 'chapter_daily', 'sessions', 'progress', 'wrong_words'] as const).map(t => (
+              <button key={t} className={`admin-detail-tab ${detailTab === t ? 'active' : ''}`} onClick={() => setDetailTab(t)}>
+                {{ chart: '每日趋势', chapter_daily: '章节明细', sessions: '练习记录', progress: '词书进度', wrong_words: '错词本' }[t]}
               </button>
-              <button
-                className="admin-filter-reset"
-                onClick={() => {
-                  setDetailDateFrom(''); setDetailDateTo(''); setDetailMode(''); setDetailBook('')
-                  if (selectedUserId) fetchUserDetail(selectedUserId)
-                }}
-              >
-                重置
-              </button>
-            </div>
+            ))}
+          </div>
+        )
 
-            {/* Detail tabs */}
-            <div className="admin-detail-tabs">
-              {(['chart', 'chapter_daily', 'sessions', 'progress', 'wrong_words'] as const).map(t => (
-                <button
-                  key={t}
-                  className={`admin-detail-tab ${detailTab === t ? 'active' : ''}`}
-                  onClick={() => setDetailTab(t)}
-                >
-                  {{ chart: '每日趋势', chapter_daily: '章节明细', sessions: '练习记录', progress: '词书进度', wrong_words: '错词本' }[t]}
-                </button>
-              ))}
-            </div>
-
-            <div className="admin-modal-body">
-              {/* Chart tab */}
-              {detailTab === 'chart' && (
-                <div className="admin-detail-chart">
-                  {selectedUser.daily_study.length === 0 ? (
-                    <div className="admin-empty">暂无学习记录</div>
-                  ) : (
-                    <>
-                      <div className="admin-section-title" style={{ marginBottom: '8px' }}>近30天每日学习时长（分钟）</div>
-                      <MiniBarChart
-                        data={selectedUser.daily_study.map(d => ({ ...d, minutes: Math.round(d.seconds / 60) }))}
-                        valueKey="minutes"
-                        labelKey="day"
-                        color="#6366f1"
-                      />
-                      <div className="admin-chart-labels">
-                        {selectedUser.daily_study.map((d, i) => (
-                          <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>
-                        ))}
-                      </div>
-                      <div className="admin-section-title" style={{ marginTop: '20px', marginBottom: '8px' }}>近30天每日学习单词数</div>
-                      <MiniBarChart
-                        data={selectedUser.daily_study}
-                        valueKey="words"
-                        labelKey="day"
-                        color="#10b981"
-                      />
-                      <div className="admin-chart-labels">
-                        {selectedUser.daily_study.map((d, i) => (
-                          <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>
-                        ))}
-                      </div>
-                      <div className="admin-section-title" style={{ marginTop: '20px', marginBottom: '8px' }}>近30天每日准确情况</div>
-                      <div className="admin-accuracy-table">
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                          <thead>
-                            <tr style={{ color: 'var(--text-tertiary)' }}>
-                              <th style={{ textAlign: 'left', padding: '4px 8px' }}>日期</th>
-                              <th style={{ textAlign: 'right', padding: '4px 8px' }}>正确</th>
-                              <th style={{ textAlign: 'right', padding: '4px 8px' }}>错误</th>
-                              <th style={{ textAlign: 'right', padding: '4px 8px' }}>准确率</th>
-                              <th style={{ textAlign: 'right', padding: '4px 8px' }}>时长</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedUser.daily_study.map((d, i) => {
-                              const total = d.correct + d.wrong
-                              const acc = total > 0 ? Math.round(d.correct / total * 100) : 0
-                              return (
-                                <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
-                                  <td style={{ padding: '6px 8px' }}>{d.day}</td>
-                                  <td style={{ textAlign: 'right', padding: '6px 8px', color: '#10b981' }}>{d.correct}</td>
-                                  <td style={{ textAlign: 'right', padding: '6px 8px', color: '#ef4444' }}>{d.wrong}</td>
-                                  <td style={{ textAlign: 'right', padding: '6px 8px' }}>{total > 0 ? `${acc}%` : '—'}</td>
-                                  <td style={{ textAlign: 'right', padding: '6px 8px' }}>{fmtSeconds(d.seconds)}</td>
-                                </tr>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Book progress tab */}
-              {detailTab === 'progress' && (
-                <div>
-                  {selectedUser.book_progress.length === 0 ? (
-                    <div className="admin-empty">暂无学习进度</div>
-                  ) : (
-                    <table className="admin-detail-table">
+        const modalBodyContent = (
+          <>
+            {detailTab === 'chart' && (
+              <div className="admin-detail-chart">
+                {selectedUser.daily_study.length === 0 ? (
+                  <div className="admin-empty">暂无学习记录</div>
+                ) : (
+                  <>
+                    <div className="admin-section-title" style={{ marginBottom: '8px' }}>近30天每日学习时长（分钟）</div>
+                    <MiniBarChart
+                      data={selectedUser.daily_study.map(d => ({ ...d, minutes: Math.round(d.seconds / 60) }))}
+                      valueKey="minutes" labelKey="day" color="#6366f1"
+                    />
+                    <div className="admin-chart-labels">
+                      {selectedUser.daily_study.map((d, i) => <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>)}
+                    </div>
+                    <div className="admin-section-title" style={{ marginTop: '20px', marginBottom: '8px' }}>近30天每日学习单词数</div>
+                    <MiniBarChart data={selectedUser.daily_study} valueKey="words" labelKey="day" color="#10b981" />
+                    <div className="admin-chart-labels">
+                      {selectedUser.daily_study.map((d, i) => <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>)}
+                    </div>
+                    <div className="admin-section-title" style={{ marginTop: '20px', marginBottom: '8px' }}>近30天每日准确情况</div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                       <thead>
-                        <tr>
-                          <th>词书</th>
-                          <th>正确</th>
-                          <th>错误</th>
-                          <th>准确率</th>
-                          <th>状态</th>
-                          <th>更新时间</th>
+                        <tr style={{ color: 'var(--text-tertiary)' }}>
+                          <th style={{ textAlign: 'left', padding: '4px 8px' }}>日期</th>
+                          <th style={{ textAlign: 'right', padding: '4px 8px' }}>正确</th>
+                          <th style={{ textAlign: 'right', padding: '4px 8px' }}>错误</th>
+                          <th style={{ textAlign: 'right', padding: '4px 8px' }}>准确率</th>
+                          <th style={{ textAlign: 'right', padding: '4px 8px' }}>时长</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedUser.book_progress.map((b, i) => {
-                          const total = b.correct_count + b.wrong_count
-                          const acc = total > 0 ? Math.round(b.correct_count / total * 100) : 0
+                        {selectedUser.daily_study.map((d, i) => {
+                          const tot = d.correct + d.wrong
+                          const acc = tot > 0 ? Math.round(d.correct / tot * 100) : 0
                           return (
-                            <tr key={i}>
-                              <td>{bookLabels[b.book_id] || b.book_id}</td>
-                              <td style={{ color: '#10b981' }}>{b.correct_count}</td>
-                              <td style={{ color: '#ef4444' }}>{b.wrong_count}</td>
-                              <td>{total > 0 ? `${acc}%` : '—'}</td>
-                              <td>
-                                <span className={`admin-status-badge ${b.is_completed ? 'completed' : 'ongoing'}`}>
-                                  {b.is_completed ? '已完成' : '学习中'}
-                                </span>
-                              </td>
-                              <td className="admin-cell-muted">{fmtDate(b.updated_at)}</td>
+                            <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
+                              <td style={{ padding: '6px 8px' }}>{d.day}</td>
+                              <td style={{ textAlign: 'right', padding: '6px 8px', color: '#10b981' }}>{d.correct}</td>
+                              <td style={{ textAlign: 'right', padding: '6px 8px', color: '#ef4444' }}>{d.wrong}</td>
+                              <td style={{ textAlign: 'right', padding: '6px 8px' }}>{tot > 0 ? `${acc}%` : '—'}</td>
+                              <td style={{ textAlign: 'right', padding: '6px 8px' }}>{fmtSeconds(d.seconds)}</td>
                             </tr>
                           )
                         })}
                       </tbody>
                     </table>
-                  )}
-                </div>
-              )}
+                  </>
+                )}
+              </div>
+            )}
 
-              {/* Wrong words tab */}
-              {detailTab === 'wrong_words' && (
-                <div>
-                  {selectedUser.wrong_words.length === 0 ? (
-                    <div className="admin-empty">暂无错词</div>
-                  ) : (
-                    <>
-                      <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
-                        共 {selectedUser.user.stats.wrong_words_count} 个错词，显示前 {selectedUser.wrong_words.length} 个（按错误次数排序）
-                      </div>
-                      <table className="admin-detail-table">
-                        <thead>
-                          <tr>
-                            <th>单词</th>
-                            <th>音标</th>
-                            <th>词性</th>
-                            <th>释义</th>
-                            <th>错误次数</th>
-                            <th>最近错误</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedUser.wrong_words.map((w, i) => (
-                            <tr key={i}>
-                              <td><strong>{w.word}</strong></td>
-                              <td className="admin-cell-muted">{w.phonetic || '—'}</td>
-                              <td className="admin-cell-muted">{w.pos || '—'}</td>
-                              <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={w.definition}>{w.definition}</td>
-                              <td>
-                                <span className={`admin-wrong-count ${w.wrong_count >= 5 ? 'high' : w.wrong_count >= 3 ? 'mid' : ''}`}>
-                                  {w.wrong_count}次
-                                </span>
-                              </td>
-                              <td className="admin-cell-muted">{fmtDate(w.updated_at)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Chapter daily tab */}
-              {detailTab === 'chapter_daily' && (
-                <div>
-                  {!selectedUser.chapter_daily || selectedUser.chapter_daily.length === 0 ? (
-                    <div className="admin-empty">暂无章节学习记录</div>
-                  ) : (
-                    <>
-                      <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
-                        按用户 · 词书 · 章节 · 日期 · 模式 多维汇总，共 {selectedUser.chapter_daily.length} 条记录
-                      </div>
-                      <table className="admin-detail-table">
-                        <thead>
-                          <tr>
-                            <th>日期</th>
-                            <th>词书</th>
-                            <th>章节</th>
-                            <th>模式</th>
-                            <th>次数</th>
-                            <th>单词</th>
-                            <th>正确</th>
-                            <th>错误</th>
-                            <th>正确率</th>
-                            <th>时长</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedUser.chapter_daily.map((r, i) => {
-                            const total = r.correct + r.wrong
-                            const acc = total > 0 ? Math.round(r.correct / total * 100) : 0
-                            return (
-                              <tr key={i}>
-                                <td className="admin-cell-muted">{r.day}</td>
-                                <td style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.book_id}>
-                                  {bookLabels[r.book_id] || r.book_id || '—'}
-                                </td>
-                                <td className="admin-cell-muted">{r.chapter_id || '—'}</td>
-                                <td>{modeLabels[r.mode] || r.mode || '—'}</td>
-                                <td>{r.sessions}</td>
-                                <td>{r.words}</td>
-                                <td style={{ color: '#10b981' }}>{r.correct}</td>
-                                <td style={{ color: '#ef4444' }}>{r.wrong}</td>
-                                <td>
-                                  <span className={`admin-accuracy ${acc >= 80 ? 'good' : acc >= 60 ? 'mid' : acc > 0 ? 'low' : ''}`}>
-                                    {total > 0 ? `${acc}%` : '—'}
-                                  </span>
-                                </td>
-                                <td>{fmtSeconds(r.seconds)}</td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Sessions tab */}
-              {detailTab === 'sessions' && (
-                <div>
-                  {selectedUser.sessions.length === 0 ? (
-                    <div className="admin-empty">暂无练习记录</div>
-                  ) : (
-                    <table className="admin-detail-table">
-                      <thead>
-                        <tr>
-                          <th>时间</th>
-                          <th>模式</th>
-                          <th>词书</th>
-                          <th>章节</th>
-                          <th>单词数</th>
-                          <th>正确</th>
-                          <th>错误</th>
-                          <th>准确率</th>
-                          <th>时长</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedUser.sessions.map((s, i) => (
+            {detailTab === 'progress' && (
+              <div>
+                {selectedUser.book_progress.length === 0 ? (
+                  <div className="admin-empty">暂无学习进度</div>
+                ) : (
+                  <table className="admin-detail-table">
+                    <thead><tr><th>词书</th><th>正确</th><th>错误</th><th>准确率</th><th>状态</th><th>更新时间</th></tr></thead>
+                    <tbody>
+                      {selectedUser.book_progress.map((b, i) => {
+                        const tot = b.correct_count + b.wrong_count
+                        const acc = tot > 0 ? Math.round(b.correct_count / tot * 100) : 0
+                        return (
                           <tr key={i}>
-                            <td className="admin-cell-muted">{fmtDateTime(s.started_at)}</td>
-                            <td>{modeLabels[s.mode] || s.mode || '—'}</td>
-                            <td className="admin-cell-muted">{bookLabels[s.book_id] || s.book_id || '—'}</td>
-                            <td className="admin-cell-muted">{s.chapter_id || '—'}</td>
-                            <td>{s.words_studied}</td>
-                            <td style={{ color: '#10b981' }}>{s.correct_count}</td>
-                            <td style={{ color: '#ef4444' }}>{s.wrong_count}</td>
-                            <td>
-                              <span className={`admin-accuracy ${s.accuracy >= 80 ? 'good' : s.accuracy >= 60 ? 'mid' : s.accuracy > 0 ? 'low' : ''}`}>
-                                {s.accuracy > 0 ? `${s.accuracy}%` : '—'}
-                              </span>
-                            </td>
-                            <td>{fmtSeconds(s.duration_seconds)}</td>
+                            <td>{bookLabels[b.book_id] || b.book_id}</td>
+                            <td style={{ color: '#10b981' }}>{b.correct_count}</td>
+                            <td style={{ color: '#ef4444' }}>{b.wrong_count}</td>
+                            <td>{tot > 0 ? `${acc}%` : '—'}</td>
+                            <td><span className={`admin-status-badge ${b.is_completed ? 'completed' : 'ongoing'}`}>{b.is_completed ? '已完成' : '学习中'}</span></td>
+                            <td className="admin-cell-muted">{fmtDate(b.updated_at)}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {detailTab === 'wrong_words' && (
+              <div>
+                {selectedUser.wrong_words.length === 0 ? (
+                  <div className="admin-empty">暂无错词</div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
+                      共 {selectedUser.user.stats.wrong_words_count} 个错词，显示前 {selectedUser.wrong_words.length} 个（按错误次数排序）
+                    </div>
+                    <table className="admin-detail-table">
+                      <thead><tr><th>单词</th><th>音标</th><th>词性</th><th>释义</th><th>错误次数</th><th>最近错误</th></tr></thead>
+                      <tbody>
+                        {selectedUser.wrong_words.map((w, i) => (
+                          <tr key={i}>
+                            <td><strong>{w.word}</strong></td>
+                            <td className="admin-cell-muted">{w.phonetic || '—'}</td>
+                            <td className="admin-cell-muted">{w.pos || '—'}</td>
+                            <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={w.definition}>{w.definition}</td>
+                            <td><span className={`admin-wrong-count ${w.wrong_count >= 5 ? 'high' : w.wrong_count >= 3 ? 'mid' : ''}`}>{w.wrong_count}次</span></td>
+                            <td className="admin-cell-muted">{fmtDate(w.updated_at)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {detailTab === 'chapter_daily' && (
+              <div>
+                {!selectedUser.chapter_daily || selectedUser.chapter_daily.length === 0 ? (
+                  <div className="admin-empty">暂无章节学习记录</div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
+                      按用户 · 词书 · 章节 · 日期 · 模式 多维汇总，共 {selectedUser.chapter_daily.length} 条记录
+                    </div>
+                    <table className="admin-detail-table">
+                      <thead><tr><th>日期</th><th>词书</th><th>章节</th><th>模式</th><th>次数</th><th>单词</th><th>正确</th><th>错误</th><th>正确率</th><th>时长</th></tr></thead>
+                      <tbody>
+                        {selectedUser.chapter_daily.map((r, i) => {
+                          const tot = r.correct + r.wrong
+                          const acc = tot > 0 ? Math.round(r.correct / tot * 100) : 0
+                          return (
+                            <tr key={i}>
+                              <td className="admin-cell-muted">{r.day}</td>
+                              <td style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.book_id}>{bookLabels[r.book_id] || r.book_id || '—'}</td>
+                              <td className="admin-cell-muted">{r.chapter_id || '—'}</td>
+                              <td>{modeLabels[r.mode] || r.mode || '—'}</td>
+                              <td>{r.sessions}</td><td>{r.words}</td>
+                              <td style={{ color: '#10b981' }}>{r.correct}</td>
+                              <td style={{ color: '#ef4444' }}>{r.wrong}</td>
+                              <td><span className={`admin-accuracy ${acc >= 80 ? 'good' : acc >= 60 ? 'mid' : acc > 0 ? 'low' : ''}`}>{tot > 0 ? `${acc}%` : '—'}</span></td>
+                              <td>{fmtSeconds(r.seconds)}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </>
+                )}
+              </div>
+            )}
+
+            {detailTab === 'sessions' && (
+              <div>
+                {selectedUser.sessions.length === 0 ? (
+                  <div className="admin-empty">暂无练习记录</div>
+                ) : (
+                  <table className="admin-detail-table">
+                    <thead><tr><th>时间</th><th>模式</th><th>词书</th><th>章节</th><th>单词数</th><th>正确</th><th>错误</th><th>准确率</th><th>时长</th></tr></thead>
+                    <tbody>
+                      {selectedUser.sessions.map((s, i) => (
+                        <tr key={i}>
+                          <td className="admin-cell-muted">{fmtDateTime(s.started_at)}</td>
+                          <td>{modeLabels[s.mode] || s.mode || '—'}</td>
+                          <td className="admin-cell-muted">{bookLabels[s.book_id] || s.book_id || '—'}</td>
+                          <td className="admin-cell-muted">{s.chapter_id || '—'}</td>
+                          <td>{s.words_studied}</td>
+                          <td style={{ color: '#10b981' }}>{s.correct_count}</td>
+                          <td style={{ color: '#ef4444' }}>{s.wrong_count}</td>
+                          <td><span className={`admin-accuracy ${s.accuracy >= 80 ? 'good' : s.accuracy >= 60 ? 'mid' : s.accuracy > 0 ? 'low' : ''}`}>{s.accuracy > 0 ? `${s.accuracy}%` : '—'}</span></td>
+                          <td>{fmtSeconds(s.duration_seconds)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+          </>
+        )
+
+        return (
+        <div
+          className={`admin-modal-overlay${isFullscreen ? ' admin-modal-overlay-fs' : ''}`}
+          onClick={e => !isFullscreen && e.target === e.currentTarget && (setSelectedUser(null), setIsFullscreen(false))}
+        >
+          <div className={`admin-modal${isFullscreen ? ' admin-modal-fs' : ''}`}>
+            {modalHeader}
+
+            {isFullscreen ? (
+              <div className="admin-modal-fs-content">
+                <div className="admin-modal-fs-sidebar">
+                  {modalStats}
+                  {modalFilters}
+                  {modalTabs}
                 </div>
-              )}
-            </div>
+                <div className="admin-modal-fs-main">
+                  <div className="admin-modal-body">
+                    {modalBodyContent}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {modalStats}
+                {modalFilters}
+                {modalTabs}
+                <div className="admin-modal-body">
+                  {modalBodyContent}
+                </div>
+              </>
+            )}
           </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
+
