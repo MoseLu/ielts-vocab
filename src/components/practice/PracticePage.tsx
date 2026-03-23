@@ -403,19 +403,34 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   }, [bookId, chapterId, currentDay, errorMode, queueIndex, vocabulary.length])
 
   const saveWrongWord = (word: Word) => {
+    // Update localStorage list (for error-mode practice queue)
     const existing: Word[] = JSON.parse(localStorage.getItem('wrong_words') || '[]')
     if (!existing.find(w => w.word === word.word)) {
       existing.push(word)
       localStorage.setItem('wrong_words', JSON.stringify(existing))
-      // Sync to backend
-      const token = localStorage.getItem('auth_token')
-      if (token) {
-        fetch('/api/ai/wrong-words/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ words: [word] }),
-        }).catch(() => {})
-      }
+    }
+    // Sync to backend — always (backend upserts) — include dimension stats
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      const ws = loadSmartStats()[word.word]
+      fetch('/api/ai/wrong-words/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          words: [{
+            word: word.word,
+            phonetic: word.phonetic,
+            pos: word.pos,
+            definition: word.definition,
+            listeningCorrect: ws?.listening.correct ?? 0,
+            listeningWrong:   ws?.listening.wrong   ?? 0,
+            meaningCorrect:   ws?.meaning.correct   ?? 0,
+            meaningWrong:     ws?.meaning.wrong     ?? 0,
+            dictationCorrect: ws?.dictation.correct ?? 0,
+            dictationWrong:   ws?.dictation.wrong   ?? 0,
+          }]
+        }),
+      }).catch(() => {})
     }
   }
 
@@ -460,14 +475,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const nc = isCorrect ? correctCount + 1 : correctCount
     const nw = isCorrect ? wrongCount : wrongCount + 1
     setCorrectCount(nc); setWrongCount(nw)
-    if (!isCorrect && currentWord) saveWrongWord(currentWord)
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
-    // Record per-dimension stats for smart mode weighting
+    // Record per-dimension stats first, then sync wrong word (so dim stats are included)
     if (currentWord) {
       const dim: SmartDimension = mode === 'smart' ? smartDimension
         : mode === 'listening' ? 'listening' : 'meaning'
       recordWordResult(currentWord.word, dim, isCorrect)
+      if (!isCorrect) saveWrongWord(currentWord)
     }
     recordModeAnswer(mode ?? 'smart', isCorrect)
     setTimeout(() => goNext(isCorrect), 1200)
@@ -480,11 +495,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const nc = isCorrect ? correctCount + 1 : correctCount
     const nw = isCorrect ? wrongCount : wrongCount + 1
     setCorrectCount(nc); setWrongCount(nw)
-    if (!isCorrect) saveWrongWord(currentWord)
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
-    // Record dictation stats for smart mode weighting
+    // Record dictation stats first, then sync wrong word (so dim stats are included)
     recordWordResult(currentWord.word, 'dictation', isCorrect)
+    if (!isCorrect) saveWrongWord(currentWord)
     recordModeAnswer(mode ?? 'dictation', isCorrect)
     setTimeout(() => goNext(isCorrect), 1500)
   }

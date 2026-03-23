@@ -192,11 +192,25 @@
     min-width: 0;
 }
 
+/* Word row: word + total wrong count badge */
+.errors-item-word-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
 .errors-item-word {
     font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 2px;
+}
+
+.errors-item-total-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--error);
+    opacity: 0.85;
 }
 
 .errors-item-phonetic {
@@ -235,6 +249,58 @@
 .errors-item-remove svg {
     width: 16px;
     height: 16px;
+}
+
+/* Dimension error badges */
+.errors-item-dims {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.errors-dim-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    line-height: 1.5;
+}
+
+/* Full wrong — red */
+.errors-dim-error {
+    background: var(--error-light);
+    color: var(--error);
+}
+
+/* Mixed (some right, some wrong) — orange */
+.errors-dim-mixed {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+/* All correct — green */
+.errors-dim-ok {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+/* No dimension data — gray */
+.errors-dim-unknown {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}
+
+.errors-dim-wrong {
+    opacity: 0.9;
+}
+
+.errors-dim-correct {
+    opacity: 0.75;
+    font-weight: 500;
 }
 
 /* Responsive */

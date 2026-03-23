@@ -6,6 +6,13 @@ export interface WrongWord {
   pos?: string
   definition: string
   wrong_count?: number
+  // Per-dimension stats from backend
+  listening_correct?: number
+  listening_wrong?: number
+  meaning_correct?: number
+  meaning_wrong?: number
+  dictation_correct?: number
+  dictation_wrong?: number
 }
 
 export function useWrongWords() {
