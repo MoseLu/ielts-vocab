@@ -25,6 +25,9 @@ export interface LearningSummary {
 export interface LearningAlltime {
   total_words: number
   accuracy: number | null
+  duration_seconds: number
+  today_accuracy: number | null
+  today_duration_seconds: number
 }
 
 export type MetricKey = 'words' | 'accuracy' | 'duration'

@@ -267,17 +267,23 @@ export default function StatsPage() {
 
   const { daily, books, modes, summary, alltime, useFallback, loading: chartLoading } = useLearningStats(range, bookId, mode)
 
-  // Today summary: use today's row from the daily data
+  // Today's row from the daily chart data
   const todayStr = new Date().toISOString().slice(0, 10)
   const todayRow = daily.find(d => d.date === todayStr)
   const displayTodayWords = todayRow?.words_studied ?? todayWords
-  // Duration only reliable from real sessions (not chapter fallback)
-  const displayTodayDuration = (!useFallback && todayRow) ? fmtDuration(todayRow.duration_seconds) : '--'
-  // Total words: prefer alltime from book progress (always accurate), then period summary, then legacy
-  const displayTotalWords = alltime?.total_words ?? summary?.total_words ?? totalWords
-  // Duration only from sessions
-  const displayTotalDuration = (!useFallback && summary && summary.total_duration_seconds > 0)
-    ? fmtDuration(summary.total_duration_seconds) : '--'
+
+  // Accuracy: use alltime today_accuracy (from chapter progress, always accurate)
+  const displayTodayAccuracy = alltime?.today_accuracy != null ? `${alltime.today_accuracy}%` : '--'
+  const displayAlltimeAccuracy = alltime?.accuracy != null ? `${alltime.accuracy}%` : '--'
+
+  // Duration: only from real sessions
+  const displayTodayDuration = alltime && alltime.today_duration_seconds > 0
+    ? fmtDuration(alltime.today_duration_seconds) : null
+  const displayAlltimeDuration = alltime && alltime.duration_seconds > 0
+    ? fmtDuration(alltime.duration_seconds) : null
+
+  // Total words: from chapter progress (words_learned), always accurate
+  const displayTotalWords = alltime?.total_words ?? totalWords
 
   const hasChartData = daily.some(d => {
     if (metric === 'words') return d.words_studied > 0
@@ -296,16 +302,22 @@ export default function StatsPage() {
             <div className="stats-card-label">今日学习词数</div>
           </div>
           <div className="stats-card">
-            <div className="stats-card-value">{displayTodayDuration}</div>
-            <div className="stats-card-label">今日时长</div>
+            <div className="stats-card-value">{displayTodayAccuracy}</div>
+            <div className="stats-card-label">
+              今日正确率
+              {displayTodayDuration && <span className="stats-card-sub">{displayTodayDuration}</span>}
+            </div>
           </div>
           <div className="stats-card">
             <div className="stats-card-value">{displayTotalWords}</div>
             <div className="stats-card-label">累计学习词数</div>
           </div>
           <div className="stats-card">
-            <div className="stats-card-value">{displayTotalDuration}</div>
-            <div className="stats-card-label">累计时长</div>
+            <div className="stats-card-value">{displayAlltimeAccuracy}</div>
+            <div className="stats-card-label">
+              累计正确率
+              {displayAlltimeDuration && <span className="stats-card-sub">{displayAlltimeDuration}</span>}
+            </div>
           </div>
         </div>
 
