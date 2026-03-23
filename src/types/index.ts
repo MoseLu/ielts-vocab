@@ -112,12 +112,14 @@ export interface LearningContext {
   currentDefinition?: string
   currentBook?: string
   currentChapter?: string
+  currentChapterTitle?: string
   practiceMode?: string
   mode?: string
   sessionProgress?: number
   sessionAccuracy?: number
   wordsCompleted?: number
   totalWords?: number
+  sessionCompleted?: boolean
   [key: string]: unknown
 }
 

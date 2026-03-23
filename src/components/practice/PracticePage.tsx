@@ -261,10 +261,28 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Log learning context to AI chat whenever state changes
   useEffect(() => {
-    if (!currentWord) return
     const accuracy = correctCount + wrongCount > 0
       ? Math.round((correctCount / (correctCount + wrongCount)) * 100)
       : undefined
+    if (!currentWord) {
+      // Session just completed — record final state so AI sees the full round
+      if (vocabulary.length > 0) {
+        setGlobalLearningContext({
+          currentWord: undefined,
+          sessionCompleted: true,
+          sessionProgress: queue.length,
+          totalWords: vocabulary.length,
+          wordsCompleted: correctCount + wrongCount,
+          sessionAccuracy: accuracy,
+          practiceMode: mode as string,
+          mode: errorMode ? 'review' : 'learning',
+          currentBook: bookId ?? undefined,
+          currentChapter: chapterId ?? undefined,
+          currentChapterTitle: currentChapterTitle || undefined,
+        })
+      }
+      return
+    }
     setGlobalLearningContext({
       currentWord: currentWord.word,
       currentPhonetic: currentWord.phonetic,
@@ -276,6 +294,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       totalWords: vocabulary.length,
       wordsCompleted: correctCount + wrongCount,
       sessionAccuracy: accuracy,
+      sessionCompleted: false,
+      currentBook: bookId ?? undefined,
+      currentChapter: chapterId ?? undefined,
+      currentChapterTitle: currentChapterTitle || undefined,
     })
   }, [currentWord, mode, queueIndex, correctCount, wrongCount, errorMode])
 
