@@ -224,29 +224,33 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           .then(res => res.json())
           .then(async (data: { words?: Word[] }) => {
             const words = data.words || []
-            setVocabulary(words)
             vocabRef.current = words
             const q = buildQueue(words)
-            setQueue(q)
             queueRef.current = q
+            // Resolve progress before applying any state so vocabulary + progress
+            // flush in a single React render — prevents the auto-play effect from
+            // firing twice (once on vocab load, once on progress restore).
+            let progress: ProgressData | null = null
             const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
             const key = `${bookId}_${chapterId}`
             if (saved[key]) {
-              restoreProgress(saved[key])
+              progress = saved[key]
             } else if (token) {
-              // Fallback: load progress from backend when localStorage is empty
               try {
                 const res = await fetch(`/api/books/${bookId}/chapters/progress`, {
                   headers: { Authorization: `Bearer ${token}` },
                 })
                 if (res.ok) {
                   const pd = await res.json()
-                  const cp = pd.chapter_progress?.[String(chapterId)]
-                  if (cp) restoreProgress(cp)
-                  else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-                } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-              } catch { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-            } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+                  progress = pd.chapter_progress?.[String(chapterId)] ?? null
+                }
+              } catch { /* ignore */ }
+            }
+            // Apply all state in one block → single render
+            setVocabulary(words)
+            setQueue(q)
+            if (progress) restoreProgress(progress)
+            else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
           })
           .catch(() => showToast?.('加载章节词汇失败', 'error'))
         return
@@ -256,27 +260,28 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         .then(res => res.json())
         .then(async (data: { words?: Word[] }) => {
           const words = data.words || []
-          setVocabulary(words)
           vocabRef.current = words
           const q = buildQueue(words)
-          setQueue(q)
           queueRef.current = q
+          let progress: ProgressData | null = null
           const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('book_progress') || '{}')
           if (saved[bookId]) {
-            restoreProgress(saved[bookId])
+            progress = saved[bookId]
           } else if (token) {
-            // Fallback: load from backend
             try {
               const res = await fetch(`/api/books/progress/${bookId}`, {
                 headers: { Authorization: `Bearer ${token}` },
               })
               if (res.ok) {
                 const pd = await res.json()
-                if (pd.progress) restoreProgress(pd.progress)
-                else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-              } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-            } catch { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-          } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+                progress = pd.progress ?? null
+              }
+            } catch { /* ignore */ }
+          }
+          setVocabulary(words)
+          setQueue(q)
+          if (progress) restoreProgress(progress)
+          else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
         })
         .catch(() => showToast?.('加载词书失败', 'error'))
       return
@@ -287,16 +292,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       .then(res => res.json())
       .then(async (data: { vocabulary?: Word[]; words?: Word[] }) => {
         const words = data.vocabulary || data.words || []
-        setVocabulary(words)
         vocabRef.current = words
         const q = buildQueue(words)
-        setQueue(q)
         queueRef.current = q
+        let progress: ProgressData | null = null
         const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('day_progress') || '{}')
         if (saved[String(currentDay)]) {
-          restoreProgress(saved[String(currentDay)])
+          progress = saved[String(currentDay)]
         } else if (token) {
-          // Fallback: load from backend
           try {
             const res = await fetch(`/api/progress`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -305,11 +308,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
               const pd = await res.json()
               const entry = (pd.progress as Array<{ day: number; current_index: number; correct_count: number; wrong_count: number }>)
                 ?.find(p => p.day === currentDay)
-              if (entry) restoreProgress(entry)
-              else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-            } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-          } catch { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
-        } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+              progress = entry ?? null
+            }
+          } catch { /* ignore */ }
+        }
+        setVocabulary(words)
+        setQueue(q)
+        if (progress) restoreProgress(progress)
+        else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
   }, [currentDay, bookId, errorMode, chapterId])
