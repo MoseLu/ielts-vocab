@@ -16,6 +16,25 @@ from routes.ai import ai_bp
 from routes.admin import admin_bp, init_admin
 
 
+def _ensure_admin_user():
+    """Create a default admin user if not exists."""
+    from models import User
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(username='admin', email=None)
+        admin.set_password('admin123')
+        admin.is_admin = True
+        db.session.add(admin)
+        db.session.commit()
+        print("[Admin] Default admin user created (admin / admin123)")
+    else:
+        # Ensure is_admin is True
+        if not admin.is_admin:
+            admin.is_admin = True
+            db.session.commit()
+            print("[Admin] Existing admin user updated to admin flag")
+
+
 def _migrate_db(app):
     """Apply incremental SQLite schema migrations."""
     from sqlalchemy import text
@@ -77,10 +96,11 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     init_admin(app)
 
-    # Create database tables then apply migrations
+    # Create database tables then apply migrations and ensure admin user
     with app.app_context():
         db.create_all()
-    _migrate_db(app)
+        _migrate_db(app)
+        _ensure_admin_user()
 
     return app
 

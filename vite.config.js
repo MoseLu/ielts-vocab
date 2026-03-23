@@ -31,6 +31,12 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: true
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 3002,
+    strictPort: true,
+    allowedHosts: true,
+  },
   resolve: {
     alias: {
       '@': '/src',
