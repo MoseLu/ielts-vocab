@@ -9,8 +9,17 @@ from functools import wraps
 books_bp = Blueprint('books', __name__)
 
 
+# Store app reference for token_required decorator
+app = None
+
+
+def init_books(app_instance):
+    global app
+    app = app_instance
+
+
 def token_required(f):
-    """Custom JWT decorator - same as auth.py"""
+    """Custom JWT decorator - uses app.config['JWT_SECRET_KEY']"""
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
@@ -23,8 +32,7 @@ def token_required(f):
             return jsonify({'error': '请先登录'}), 401
 
         try:
-            from config import Config
-            data = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=['HS256'])
+            data = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
             current_user = User.query.get(data['user_id'])
             if not current_user:
                 return jsonify({'error': '用户不存在'}), 401

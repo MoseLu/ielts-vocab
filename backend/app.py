@@ -10,7 +10,7 @@ from routes.auth import auth_bp, init_auth
 from routes.progress import progress_bp
 from routes.vocabulary import vocabulary_bp
 from routes.speech import speech_bp
-from routes.books import books_bp
+from routes.books import books_bp, init_books
 from routes.speech_socketio import register_socketio_events
 from routes.ai import ai_bp
 
@@ -63,6 +63,7 @@ def create_app(config_class=Config):
     app.register_blueprint(vocabulary_bp, url_prefix='/api/vocabulary')
     app.register_blueprint(speech_bp, url_prefix='/api/speech')
     app.register_blueprint(books_bp, url_prefix='/api/books')
+    init_books(app)
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
 
     # Create database tables then apply migrations
