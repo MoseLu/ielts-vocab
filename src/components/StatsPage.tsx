@@ -265,15 +265,19 @@ export default function StatsPage() {
   const [bookId, setBookId] = useState('all')
   const [mode, setMode] = useState('all')
 
-  const { daily, books, modes, summary, loading: chartLoading } = useLearningStats(range, bookId, mode)
+  const { daily, books, modes, summary, alltime, useFallback, loading: chartLoading } = useLearningStats(range, bookId, mode)
 
-  // Today summary (from period summary or legacy hook)
+  // Today summary: use today's row from the daily data
   const todayStr = new Date().toISOString().slice(0, 10)
   const todayRow = daily.find(d => d.date === todayStr)
   const displayTodayWords = todayRow?.words_studied ?? todayWords
-  const displayTodayDuration = todayRow ? fmtDuration(todayRow.duration_seconds) : '0分钟'
-  const displayTotalWords = summary?.total_words ?? totalWords
-  const displayTotalDuration = summary ? fmtDuration(summary.total_duration_seconds) : '--'
+  // Duration only reliable from real sessions (not chapter fallback)
+  const displayTodayDuration = (!useFallback && todayRow) ? fmtDuration(todayRow.duration_seconds) : '--'
+  // Total words: prefer alltime from book progress (always accurate), then period summary, then legacy
+  const displayTotalWords = alltime?.total_words ?? summary?.total_words ?? totalWords
+  // Duration only from sessions
+  const displayTotalDuration = (!useFallback && summary && summary.total_duration_seconds > 0)
+    ? fmtDuration(summary.total_duration_seconds) : '--'
 
   const hasChartData = daily.some(d => {
     if (metric === 'words') return d.words_studied > 0
@@ -297,11 +301,11 @@ export default function StatsPage() {
           </div>
           <div className="stats-card">
             <div className="stats-card-value">{displayTotalWords}</div>
-            <div className="stats-card-label">{range}天学习词数</div>
+            <div className="stats-card-label">累计学习词数</div>
           </div>
           <div className="stats-card">
             <div className="stats-card-value">{displayTotalDuration}</div>
-            <div className="stats-card-label">{range}天时长</div>
+            <div className="stats-card-label">累计时长</div>
           </div>
         </div>
 
@@ -382,11 +386,14 @@ export default function StatsPage() {
               <div className="lc-legend">
                 <span className="legend-dot" style={{ background: 'var(--accent)' }} />
                 <span>{METRIC_OPTIONS.find(o => o.value === metric)?.label}</span>
+                {useFallback && (
+                  <span className="lc-fallback-note">（基于章节进度估算）</span>
+                )}
               </div>
               <div className="lc-period-summary">
                 <span>{range}天共 <strong>{summary.total_words}</strong> 词</span>
                 {summary.accuracy != null && <span>· 正确率 <strong>{summary.accuracy}%</strong></span>}
-                <span>· <strong>{summary.total_sessions}</strong> 次练习</span>
+                {!useFallback && <span>· <strong>{summary.total_sessions}</strong> 次练习</span>}
               </div>
             </div>
           )}

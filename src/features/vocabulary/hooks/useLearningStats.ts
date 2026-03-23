@@ -22,6 +22,11 @@ export interface LearningSummary {
   accuracy: number | null
 }
 
+export interface LearningAlltime {
+  total_words: number
+  accuracy: number | null
+}
+
 export type MetricKey = 'words' | 'accuracy' | 'duration'
 export type RangeKey = 7 | 14 | 30
 
@@ -30,6 +35,8 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
   const [books, setBooks] = useState<LearningBook[]>([])
   const [modes, setModes] = useState<string[]>([])
   const [summary, setSummary] = useState<LearningSummary | null>(null)
+  const [alltime, setAlltime] = useState<LearningAlltime | null>(null)
+  const [useFallback, setUseFallback] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const fetchStats = useCallback(async () => {
@@ -51,6 +58,8 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
         setBooks(d.books || [])
         setModes(d.modes || [])
         setSummary(d.summary || null)
+        setAlltime(d.alltime || null)
+        setUseFallback(d.use_fallback || false)
       }
     } catch {
       // ignore
@@ -61,5 +70,5 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
 
   useEffect(() => { fetchStats() }, [fetchStats])
 
-  return { daily, books, modes, summary, loading, refetch: fetchStats }
+  return { daily, books, modes, summary, alltime, useFallback, loading, refetch: fetchStats }
 }
