@@ -71,10 +71,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const wrongCountRef = useRef(0)
   // Prevents double-logging when goNext already logs before navigate
   const sessionLoggedRef = useRef(false)
+  // Tracks current mode (keeps cleanup up-to-date when mode prop changes)
+  const currentModeRef = useRef(mode)
 
   // Keep refs in sync with state so the unmount cleanup always has current values
   useEffect(() => { correctCountRef.current = correctCount }, [correctCount])
   useEffect(() => { wrongCountRef.current = wrongCount }, [wrongCount])
+  useEffect(() => { currentModeRef.current = mode }, [mode])
 
   // Log session on unmount — covers every exit path:
   // completed (goNext sets flag first), pause→exit, navigate away, browser close
@@ -82,22 +85,25 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     return () => {
       if (sessionLoggedRef.current) return          // already logged by goNext
       const words = correctCountRef.current + wrongCountRef.current
-      if (words === 0) return                        // nothing to log
+      const isRadio = currentModeRef.current === 'radio'
+      const durationSeconds = Math.round((Date.now() - sessionStartRef.current) / 1000)
+      // Radio mode has no answer tracking — log based on time if ≥10 s
+      if (words === 0 && (!isRadio || durationSeconds < 10)) return
       logSession({
-        mode: mode ?? 'smart',
+        mode: currentModeRef.current ?? 'smart',
         bookId,
         chapterId,
-        wordsStudied: words,
+        wordsStudied: isRadio ? vocabRef.current.length : words,
         correctCount: correctCountRef.current,
         wrongCount: wrongCountRef.current,
-        durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
+        durationSeconds,
         startedAt: sessionStartRef.current,
       })
       // Sync smart stats to backend on every exit
       syncSmartStatsToBackend()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // intentionally empty — captures bookId/chapterId/mode at mount (they never change mid-session)
+  }, []) // intentionally empty — refs provide current values without re-registering
 
   // Reactive settings (so RadioMode picks up changes from the toolbar controls)
   const [settings, setSettings] = useState<AppSettings>(() => {

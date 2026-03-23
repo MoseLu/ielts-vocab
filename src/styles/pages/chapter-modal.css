@@ -16,6 +16,9 @@
     border-radius: 12px;
     width: 860px;
     max-width: 95vw;
+    /* Use explicit height so children can resolve height:100% correctly.
+       height:85vh establishes a definite size; max-height acts as a safety cap. */
+    height: 85vh;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
@@ -96,12 +99,13 @@
 /* ── Scrollable body ── */
 .chapter-modal-body {
     flex: 1;
-    /* overflow handled by Scrollbar component */
     min-height: 0;
 }
 
 .chapter-modal-body .el-scrollbar__wrap {
     padding: 20px 24px;
+    /* Prevent scroll event from bubbling to the page when the wrap reaches its limits */
+    overscroll-behavior: contain;
 }
 
 /* ── Units container: sections + flat grids ── */

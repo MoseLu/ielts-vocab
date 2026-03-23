@@ -136,6 +136,13 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
 
   const currentIndex = progress?.current_index || 0
 
+  // Lock body scroll while modal is open to prevent page scrolling behind the overlay
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
   useEffect(() => {
     const fetchData = async () => {
       try {
