@@ -610,6 +610,90 @@ def clear_wrong_words(current_user: User):
 
 # ── POST /api/ai/log-session ─────────────────────────────────────────────────
 
+@ai_bp.route('/learning-stats', methods=['GET'])
+@token_required
+def get_learning_stats(current_user: User):
+    """Return daily aggregated learning stats from study sessions, with optional filters."""
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+
+    days = min(int(request.args.get('days', 30)), 90)
+    book_id_filter = request.args.get('book_id') or None
+    mode_filter = request.args.get('mode') or None
+
+    since = datetime.utcnow() - timedelta(days=days)
+
+    query = UserStudySession.query.filter(
+        UserStudySession.user_id == current_user.id,
+        UserStudySession.started_at >= since
+    )
+    if book_id_filter:
+        query = query.filter(UserStudySession.book_id == book_id_filter)
+    if mode_filter:
+        query = query.filter(UserStudySession.mode == mode_filter)
+
+    sessions = query.all()
+
+    # Aggregate by calendar date
+    daily = defaultdict(lambda: {
+        'words_studied': 0, 'correct_count': 0,
+        'wrong_count': 0, 'duration_seconds': 0, 'sessions': 0
+    })
+    for s in sessions:
+        date_key = s.started_at.strftime('%Y-%m-%d')
+        daily[date_key]['words_studied'] += s.words_studied or 0
+        daily[date_key]['correct_count'] += s.correct_count or 0
+        daily[date_key]['wrong_count'] += s.wrong_count or 0
+        daily[date_key]['duration_seconds'] += s.duration_seconds or 0
+        daily[date_key]['sessions'] += 1
+
+    # Build full date range (oldest → newest)
+    result = []
+    for i in range(days):
+        d = (datetime.utcnow() - timedelta(days=days - 1 - i)).strftime('%Y-%m-%d')
+        day_data = dict(daily.get(d, {
+            'words_studied': 0, 'correct_count': 0,
+            'wrong_count': 0, 'duration_seconds': 0, 'sessions': 0
+        }))
+        total = day_data['correct_count'] + day_data['wrong_count']
+        day_data['accuracy'] = round(day_data['correct_count'] / total * 100) if total > 0 else None
+        result.append({'date': d, **day_data})
+
+    # Books and modes the user has ever studied (for filter dropdowns)
+    all_sessions = UserStudySession.query.filter_by(user_id=current_user.id).all()
+    book_ids = list({s.book_id for s in all_sessions if s.book_id})
+    modes_used = sorted({s.mode for s in all_sessions if s.mode})
+
+    try:
+        from routes.books import VOCAB_BOOKS
+        book_title_map = {b['id']: b['title'] for b in VOCAB_BOOKS}
+    except Exception:
+        book_title_map = {}
+
+    books = [{'id': bid, 'title': book_title_map.get(bid, bid)} for bid in book_ids]
+
+    # Overall summary for the period
+    total_words = sum(d['words_studied'] for d in result)
+    total_duration = sum(d['duration_seconds'] for d in result)
+    total_correct = sum(d['correct_count'] for d in result)
+    total_wrong = sum(d['wrong_count'] for d in result)
+    total_sessions = sum(d['sessions'] for d in result)
+    total_attempted = total_correct + total_wrong
+    period_accuracy = round(total_correct / total_attempted * 100) if total_attempted > 0 else None
+
+    return jsonify({
+        'daily': result,
+        'books': books,
+        'modes': modes_used,
+        'summary': {
+            'total_words': total_words,
+            'total_duration_seconds': total_duration,
+            'total_sessions': total_sessions,
+            'accuracy': period_accuracy,
+        }
+    })
+
+
 @ai_bp.route('/log-session', methods=['POST'])
 @token_required
 def log_session(current_user: User):
