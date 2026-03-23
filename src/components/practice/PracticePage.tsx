@@ -9,7 +9,6 @@ import { DEFAULT_SETTINGS } from '../../constants'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue } from '../../lib/smartMode'
 import { recordModeAnswer, logSession } from '../../hooks/useAIChat'
-import { ConfirmDialog } from '../ui/Modal'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
 import RadioMode from './RadioMode'
@@ -46,14 +45,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Radio mode state (initial index only; RadioMode manages its own position)
   const [radioIndex] = useState(0)
 
-  // Exit confirmation dialog
-  const [showExitConfirm, setShowExitConfirm] = useState(false)
-
-  // Intercept home navigation — show confirmation instead of immediately leaving
-  const handleNavigate = useCallback((path: string) => {
-    if (path === '/') setShowExitConfirm(true)
-    else navigate(path)
-  }, [navigate])
+  // Pause state
+  const [isPaused, setIsPaused] = useState(false)
 
   // UI panel state
   const [showWordList, setShowWordList] = useState(false)
@@ -450,7 +443,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         if (e.key === '5') handleSkip()
         if (e.key === 'Tab') { e.preventDefault(); playWord(currentWord?.word ?? '') }
       }
-      if (e.key === 'Escape') setShowExitConfirm(true)
+      if (e.key === 'Escape') setIsPaused(p => !p)
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
@@ -490,24 +483,46 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   const progress = queueIndex / Math.max(vocabulary.length, 1)
 
-  // Exit confirmation dialog — shared across all render branches
-  const exitConfirmDialog = (
-    <ConfirmDialog
-      isOpen={showExitConfirm}
-      onClose={() => setShowExitConfirm(false)}
-      onConfirm={() => navigate('/')}
-      title="退出练习"
-      message={
-        mode === 'radio'
-          ? '确定退出随身听？'
-          : mode === 'quickmemory'
-          ? `已学习 ${queue.length} 个单词，单词记录已自动保存，退出后可随时继续。`
-          : `已练习 ${queueIndex} / ${queue.length} 个单词，进度已自动保存，退出后下次可从这里继续。`
-      }
-      confirmText="退出"
-      cancelText="继续练习"
-      variant="info"
-    />
+  // Pause overlay — shared across all render branches
+  const pauseOverlay = isPaused && (
+    <div className="practice-pause-overlay">
+      <div className="practice-pause-card">
+        <div className="practice-pause-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34">
+            <rect x="5" y="3" width="4" height="18" rx="1.5"/>
+            <rect x="15" y="3" width="4" height="18" rx="1.5"/>
+          </svg>
+        </div>
+        <h2 className="practice-pause-title">练习已暂停</h2>
+        {mode !== 'radio' && (
+          <div className="practice-pause-stats">
+            <span className="practice-pause-stat">
+              {mode === 'quickmemory'
+                ? <>共 <strong>{queue.length}</strong> 个单词</>
+                : <>第 <strong>{queueIndex}</strong> / {queue.length} 个单词</>
+              }
+            </span>
+            {mode !== 'quickmemory' && (correctCount > 0 || wrongCount > 0) && (
+              <span className="practice-pause-sub">
+                <span className="practice-pause-correct">✓ {correctCount}</span>
+                <span className="practice-pause-wrong">✗ {wrongCount}</span>
+              </span>
+            )}
+          </div>
+        )}
+        <p className="practice-pause-hint">
+          进度已自动保存 — 退出登录后再回到本章节，仍可从这里继续
+        </p>
+        <div className="practice-pause-actions">
+          <button className="practice-pause-resume" onClick={() => setIsPaused(false)}>
+            继续练习
+          </button>
+          <button className="practice-pause-exit" onClick={() => navigate('/')}>
+            退出到主页
+          </button>
+        </div>
+      </div>
+    </div>
   )
 
   // Render different modes
@@ -529,7 +544,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onSettingsToggle={() => setShowPracticeSettings(v => !v)}
           onModeChange={(m) => onModeChange?.(m)}
           onDayChange={(d) => onDayChange?.(d)}
-          onNavigate={handleNavigate}
+          onNavigate={navigate}
+          onPause={() => setIsPaused(true)}
           radioQuickSettings={radioQuickSettings}
           onRadioSettingChange={handleRadioSettingChange}
         />
@@ -556,11 +572,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onRadioResume={() => {}}
           onRadioRestart={() => {}}
           onRadioStop={() => {}}
-          onNavigate={handleNavigate}
+          onNavigate={navigate}
           onCloseSettings={() => setShowPracticeSettings(false)}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
         />
-        {exitConfirmDialog}
+        {pauseOverlay}
       </>
     )
   }
@@ -583,7 +599,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onSettingsToggle={() => setShowPracticeSettings(v => !v)}
           onModeChange={(m) => onModeChange?.(m)}
           onDayChange={(d) => onDayChange?.(d)}
-          onNavigate={handleNavigate}
+          onNavigate={navigate}
+          onPause={() => setIsPaused(true)}
         />
         {showPracticeSettings && (
           <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
@@ -595,9 +612,9 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           bookId={bookId}
           chapterId={chapterId}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
-          onNavigate={handleNavigate}
+          onNavigate={navigate}
         />
-        {exitConfirmDialog}
+        {pauseOverlay}
       </>
     )
   }
@@ -620,7 +637,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onSettingsToggle={() => setShowPracticeSettings(v => !v)}
           onModeChange={(m) => onModeChange?.(m)}
           onDayChange={(d) => onDayChange?.(d)}
-          onNavigate={handleNavigate}
+          onNavigate={navigate}
+          onPause={() => setIsPaused(true)}
         />
         <WordListPanel
           show={showWordList}
@@ -652,7 +670,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onStopRecording={stopRecording}
           onPlayWord={playWord}
         />
-        {exitConfirmDialog}
+        {pauseOverlay}
       </>
     )
   }
@@ -675,7 +693,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         onSettingsToggle={() => setShowPracticeSettings(v => !v)}
         onModeChange={(m) => onModeChange?.(m)}
         onDayChange={(d) => onDayChange?.(d)}
-        onNavigate={handleNavigate}
+        onNavigate={navigate}
+        onPause={() => setIsPaused(true)}
       />
       <WordListPanel
         show={showWordList}
@@ -715,7 +734,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         onStopRecording={stopRecording}
         onPlayWord={playWord}
       />
-      {exitConfirmDialog}
+      {pauseOverlay}
     </>
   )
 }

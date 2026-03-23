@@ -112,6 +112,7 @@ export interface PracticeControlBarProps {
   onModeChange: (mode: PracticeMode) => void
   onDayChange: (day: number) => void
   onNavigate: (path: string) => void
+  onPause?: () => void
   // Radio mode quick settings
   radioQuickSettings?: RadioQuickSettings
   onRadioSettingChange?: (key: keyof RadioQuickSettings, value: string | boolean) => void
