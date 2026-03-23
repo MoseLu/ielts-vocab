@@ -1,7 +1,7 @@
 import json
 import uuid
 from flask import Blueprint, jsonify, request
-from models import db, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession
+from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession
 from routes.middleware import token_required
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
