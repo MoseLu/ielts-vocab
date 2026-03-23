@@ -88,6 +88,7 @@ interface UserDetail {
     id: number
     mode: string
     book_id: string
+    chapter_id: string
     words_studied: number
     correct_count: number
     wrong_count: number
@@ -101,6 +102,17 @@ interface UserDetail {
     words: number
     correct: number
     wrong: number
+  }>
+  chapter_daily: Array<{
+    book_id: string
+    chapter_id: string
+    day: string
+    mode: string
+    sessions: number
+    words: number
+    correct: number
+    wrong: number
+    seconds: number
   }>
 }
 
@@ -193,7 +205,12 @@ export default function AdminDashboard() {
   const [sort, setSort] = useState<string>('created_at')
   const [order, setOrder] = useState<'asc' | 'desc'>('desc')
   const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null)
-  const [detailTab, setDetailTab] = useState<'progress' | 'wrong_words' | 'sessions' | 'chart'>('progress')
+  const [detailTab, setDetailTab] = useState<'progress' | 'wrong_words' | 'sessions' | 'chart' | 'chapter_daily'>('progress')
+  const [detailDateFrom, setDetailDateFrom] = useState('')
+  const [detailDateTo, setDetailDateTo] = useState('')
+  const [detailMode, setDetailMode] = useState('')
+  const [detailBook, setDetailBook] = useState('')
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [overviewLoading, setOverviewLoading] = useState(false)
   const [error, setError] = useState('')
@@ -232,9 +249,18 @@ export default function AdminDashboard() {
     }
   }, [page, search, sort, order])
 
-  const fetchUserDetail = useCallback(async (userId: number) => {
+  const fetchUserDetail = useCallback(async (
+    userId: number,
+    opts?: { dateFrom?: string; dateTo?: string; mode?: string; bookId?: string }
+  ) => {
     try {
-      const data = await apiFetch<UserDetail>(`/api/admin/users/${userId}`)
+      const params = new URLSearchParams()
+      if (opts?.dateFrom) params.set('date_from', opts.dateFrom)
+      if (opts?.dateTo)   params.set('date_to',   opts.dateTo)
+      if (opts?.mode)     params.set('mode',       opts.mode)
+      if (opts?.bookId)   params.set('book_id',    opts.bookId)
+      const qs = params.toString()
+      const data = await apiFetch<UserDetail>(`/api/admin/users/${userId}${qs ? `?${qs}` : ''}`)
       setSelectedUser(data)
     } catch (e: any) {
       setError(e.message || '加载失败')
@@ -478,6 +504,8 @@ export default function AdminDashboard() {
                   <tr><td colSpan={9} className="admin-empty-cell">暂无数据</td></tr>
                 ) : users.map(u => (
                   <tr key={u.id} className="admin-user-row" onClick={() => {
+                    setSelectedUserId(u.id)
+                    setDetailDateFrom(''); setDetailDateTo(''); setDetailMode(''); setDetailBook('')
                     fetchUserDetail(u.id)
                     setDetailTab('progress')
                   }}>
@@ -590,15 +618,59 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Filter bar */}
+            <div className="admin-detail-filters">
+              <input
+                type="date"
+                className="admin-filter-date"
+                value={detailDateFrom}
+                onChange={e => setDetailDateFrom(e.target.value)}
+                title="开始日期"
+              />
+              <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>至</span>
+              <input
+                type="date"
+                className="admin-filter-date"
+                value={detailDateTo}
+                onChange={e => setDetailDateTo(e.target.value)}
+                title="结束日期"
+              />
+              <select
+                className="admin-filter-select"
+                value={detailMode}
+                onChange={e => setDetailMode(e.target.value)}
+              >
+                <option value="">全部模式</option>
+                {Object.entries(modeLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+              <button
+                className="admin-filter-apply"
+                onClick={() => selectedUserId && fetchUserDetail(selectedUserId, {
+                  dateFrom: detailDateFrom, dateTo: detailDateTo, mode: detailMode, bookId: detailBook
+                })}
+              >
+                查询
+              </button>
+              <button
+                className="admin-filter-reset"
+                onClick={() => {
+                  setDetailDateFrom(''); setDetailDateTo(''); setDetailMode(''); setDetailBook('')
+                  if (selectedUserId) fetchUserDetail(selectedUserId)
+                }}
+              >
+                重置
+              </button>
+            </div>
+
             {/* Detail tabs */}
             <div className="admin-detail-tabs">
-              {(['chart', 'progress', 'wrong_words', 'sessions'] as const).map(t => (
+              {(['chart', 'chapter_daily', 'sessions', 'progress', 'wrong_words'] as const).map(t => (
                 <button
                   key={t}
                   className={`admin-detail-tab ${detailTab === t ? 'active' : ''}`}
                   onClick={() => setDetailTab(t)}
                 >
-                  {{ chart: '学习趋势', progress: '词书进度', wrong_words: '错词本', sessions: '练习记录' }[t]}
+                  {{ chart: '每日趋势', chapter_daily: '章节明细', sessions: '练习记录', progress: '词书进度', wrong_words: '错词本' }[t]}
                 </button>
               ))}
             </div>
@@ -754,6 +826,63 @@ export default function AdminDashboard() {
                 </div>
               )}
 
+              {/* Chapter daily tab */}
+              {detailTab === 'chapter_daily' && (
+                <div>
+                  {!selectedUser.chapter_daily || selectedUser.chapter_daily.length === 0 ? (
+                    <div className="admin-empty">暂无章节学习记录</div>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
+                        按用户 · 词书 · 章节 · 日期 · 模式 多维汇总，共 {selectedUser.chapter_daily.length} 条记录
+                      </div>
+                      <table className="admin-detail-table">
+                        <thead>
+                          <tr>
+                            <th>日期</th>
+                            <th>词书</th>
+                            <th>章节</th>
+                            <th>模式</th>
+                            <th>次数</th>
+                            <th>单词</th>
+                            <th>正确</th>
+                            <th>错误</th>
+                            <th>正确率</th>
+                            <th>时长</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedUser.chapter_daily.map((r, i) => {
+                            const total = r.correct + r.wrong
+                            const acc = total > 0 ? Math.round(r.correct / total * 100) : 0
+                            return (
+                              <tr key={i}>
+                                <td className="admin-cell-muted">{r.day}</td>
+                                <td style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.book_id}>
+                                  {bookLabels[r.book_id] || r.book_id || '—'}
+                                </td>
+                                <td className="admin-cell-muted">{r.chapter_id || '—'}</td>
+                                <td>{modeLabels[r.mode] || r.mode || '—'}</td>
+                                <td>{r.sessions}</td>
+                                <td>{r.words}</td>
+                                <td style={{ color: '#10b981' }}>{r.correct}</td>
+                                <td style={{ color: '#ef4444' }}>{r.wrong}</td>
+                                <td>
+                                  <span className={`admin-accuracy ${acc >= 80 ? 'good' : acc >= 60 ? 'mid' : acc > 0 ? 'low' : ''}`}>
+                                    {total > 0 ? `${acc}%` : '—'}
+                                  </span>
+                                </td>
+                                <td>{fmtSeconds(r.seconds)}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Sessions tab */}
               {detailTab === 'sessions' && (
                 <div>
@@ -766,6 +895,7 @@ export default function AdminDashboard() {
                           <th>时间</th>
                           <th>模式</th>
                           <th>词书</th>
+                          <th>章节</th>
                           <th>单词数</th>
                           <th>正确</th>
                           <th>错误</th>
@@ -779,6 +909,7 @@ export default function AdminDashboard() {
                             <td className="admin-cell-muted">{fmtDateTime(s.started_at)}</td>
                             <td>{modeLabels[s.mode] || s.mode || '—'}</td>
                             <td className="admin-cell-muted">{bookLabels[s.book_id] || s.book_id || '—'}</td>
+                            <td className="admin-cell-muted">{s.chapter_id || '—'}</td>
                             <td>{s.words_studied}</td>
                             <td style={{ color: '#10b981' }}>{s.correct_count}</td>
                             <td style={{ color: '#ef4444' }}>{s.wrong_count}</td>

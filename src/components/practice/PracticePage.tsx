@@ -647,6 +647,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           settings={settings}
           bookId={bookId}
           chapterId={chapterId}
+          bookChapters={bookChapters}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
           onNavigate={navigate}
           onWrongWord={saveWrongWord}

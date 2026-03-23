@@ -15,6 +15,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, QuickMemoryRecords, Word } from './types'
 import { STORAGE_KEYS } from '../../constants'
 import { playWordAudio, stopAudio } from './utils'
+import { logSession } from '../../hooks/useAIChat'
 
 // ── Ebbinghaus review intervals (days per consecutive knownCount) ──────────
 const REVIEW_INTERVALS_DAYS = [1, 1, 4, 7, 14, 30]
@@ -104,17 +105,32 @@ function SummaryScreen({
   results,
   vocabulary,
   queue,
+  bookId,
+  chapterId,
+  bookChapters,
   onRestart,
   onModeChange,
+  onNavigate,
 }: {
   results: SessionResult[]
   vocabulary: Word[]
   queue: number[]
+  bookId: string | null
+  chapterId: string | null
+  bookChapters: { id: number | string; title: string }[]
   onRestart: () => void
   onModeChange: (mode: string) => void
+  onNavigate: (path: string) => void
 }) {
   const known   = results.filter(r => r.choice === 'known')
   const unknown = results.filter(r => r.choice === 'unknown')
+
+  const currentIdx = bookChapters.findIndex(c => String(c.id) === String(chapterId))
+  const nextChapter = currentIdx >= 0 && currentIdx < bookChapters.length - 1
+    ? bookChapters[currentIdx + 1]
+    : null
+
+  const accuracy = results.length > 0 ? Math.round(known.length / results.length * 100) : 0
 
   return (
     <div className="qm-summary">
@@ -127,6 +143,10 @@ function SummaryScreen({
         <div className="qm-stat qm-stat-unknown">
           <span className="qm-stat-num">{unknown.length}</span>
           <span className="qm-stat-label">不认识</span>
+        </div>
+        <div className="qm-stat">
+          <span className="qm-stat-num">{accuracy}%</span>
+          <span className="qm-stat-label">正确率</span>
         </div>
       </div>
 
@@ -146,7 +166,19 @@ function SummaryScreen({
 
       <div className="qm-summary-actions">
         <button className="qm-btn-restart" onClick={onRestart}>再来一轮</button>
-        <button className="qm-btn-mode" onClick={() => onModeChange('smart')}>换个模式</button>
+        {nextChapter && bookId ? (
+          <button
+            className="qm-btn-next-chapter"
+            onClick={() => onNavigate(`/practice?book=${bookId}&chapter=${nextChapter.id}&mode=quickmemory`)}
+          >
+            下一章节
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        ) : (
+          <button className="qm-btn-mode" onClick={() => onModeChange('smart')}>换个模式</button>
+        )}
       </div>
     </div>
   )
@@ -159,7 +191,9 @@ export default function QuickMemoryMode({
   settings,
   bookId,
   chapterId,
+  bookChapters,
   onModeChange,
+  onNavigate,
   onWrongWord,
 }: QuickMemoryModeProps) {
   const [index, setIndex]         = useState(0)
@@ -169,10 +203,11 @@ export default function QuickMemoryMode({
   const [results, setResults]     = useState<SessionResult[]>([])
   const [done, setDone]           = useState(false)
 
-  const timerRef       = useRef<ReturnType<typeof setInterval>>()
-  const revealTimerRef = useRef<ReturnType<typeof setTimeout>>()
-  const chosenRef      = useRef(false)   // guard against double-fire
-  const wordRef        = useRef<Word>()  // always holds current word for setTimeout
+  const timerRef        = useRef<ReturnType<typeof setInterval>>()
+  const revealTimerRef  = useRef<ReturnType<typeof setTimeout>>()
+  const chosenRef       = useRef(false)   // guard against double-fire
+  const wordRef         = useRef<Word>()  // always holds current word for setTimeout
+  const sessionStartRef = useRef(Date.now())
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
   // Keep ref in sync so setTimeout always uses the latest word
@@ -279,6 +314,18 @@ export default function QuickMemoryMode({
         }),
       }).catch(() => {})
     }
+
+    // Log session for admin analytics
+    logSession({
+      mode: 'quickmemory',
+      bookId,
+      chapterId,
+      wordsStudied: queue.length,
+      correctCount: correct,
+      wrongCount: wrong,
+      durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
+      startedAt: sessionStartRef.current,
+    })
   }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Save partial chapter progress on unmount (if session not completed) ──────
@@ -349,8 +396,12 @@ export default function QuickMemoryMode({
         results={results}
         vocabulary={vocabulary}
         queue={queue}
+        bookId={bookId}
+        chapterId={chapterId}
+        bookChapters={bookChapters}
         onRestart={handleRestart}
         onModeChange={onModeChange}
+        onNavigate={onNavigate}
       />
     )
   }
