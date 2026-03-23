@@ -225,6 +225,44 @@ export default function QuickMemoryMode({
     return () => clearInterval(timerRef.current)
   }, [phase, index])   // re-run when word changes
 
+  // ── Save chapter progress when a round is done ────────────────────────────
+  useEffect(() => {
+    if (!done || !bookId || !chapterId) return
+    const correct = results.filter(r => r.choice === 'known').length
+    const wrong   = results.filter(r => r.choice === 'unknown').length
+    const token   = localStorage.getItem('auth_token')
+
+    const progressData = {
+      current_index: queue.length,
+      correct_count: correct,
+      wrong_count:   wrong,
+      words_learned: queue.length,
+      is_completed:  true,
+    }
+
+    // Persist locally
+    const chapterProgress: Record<string, typeof progressData & { updatedAt: string }> =
+      JSON.parse(localStorage.getItem('chapter_progress') || '{}')
+    chapterProgress[`${bookId}_${chapterId}`] = { ...progressData, updatedAt: new Date().toISOString() }
+    localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
+
+    if (token) {
+      // Save book-level progress
+      fetch('/api/books/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ book_id: bookId, ...progressData }),
+      }).catch(() => {})
+
+      // Save chapter-level progress
+      fetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(progressData),
+      }).catch(() => {})
+    }
+  }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Cleanup audio on unmount ───────────────────────────────────────────────
   useEffect(() => () => {
     stopAudio()
