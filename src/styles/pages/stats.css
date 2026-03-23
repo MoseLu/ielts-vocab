@@ -218,6 +218,12 @@
     color: var(--text-primary);
 }
 
+.lc-fallback-note {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-left: 2px;
+}
+
 /* Loading */
 .stats-chart-loading {
     height: 120px;

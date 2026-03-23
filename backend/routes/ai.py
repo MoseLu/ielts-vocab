@@ -659,9 +659,47 @@ def get_learning_stats(current_user: User):
         day_data['accuracy'] = round(day_data['correct_count'] / total * 100) if total > 0 else None
         result.append({'date': d, **day_data})
 
+    # ── Chapter-progress fallback (when UserStudySession is sparse/empty) ──────
+    # Group UserChapterProgress by updated_at date; use words_learned as proxy
+    # for words studied that day. Not perfect for multi-day chapters, but much
+    # better than showing zeros when the user has real learning history.
+    chapter_q = UserChapterProgress.query.filter(
+        UserChapterProgress.user_id == current_user.id,
+        UserChapterProgress.updated_at >= since,
+    )
+    if book_id_filter:
+        chapter_q = chapter_q.filter(UserChapterProgress.book_id == book_id_filter)
+    chapter_rows = chapter_q.all()
+
+    ch_daily: dict = defaultdict(lambda: {'words_studied': 0, 'correct_count': 0, 'wrong_count': 0})
+    for cp in chapter_rows:
+        dk = cp.updated_at.strftime('%Y-%m-%d')
+        ch_daily[dk]['words_studied'] += cp.words_learned or 0
+        ch_daily[dk]['correct_count'] += cp.correct_count or 0
+        ch_daily[dk]['wrong_count'] += cp.wrong_count or 0
+
+    fallback_result = []
+    for i in range(days):
+        d = (datetime.utcnow() - timedelta(days=days - 1 - i)).strftime('%Y-%m-%d')
+        fd = dict(ch_daily.get(d, {'words_studied': 0, 'correct_count': 0, 'wrong_count': 0}))
+        t = fd['correct_count'] + fd['wrong_count']
+        fd['accuracy'] = round(fd['correct_count'] / t * 100) if t > 0 else None
+        fd['duration_seconds'] = 0
+        fd['sessions'] = 0
+        fallback_result.append({'date': d, **fd})
+
+    # Decide which daily series to return (sessions preferred)
+    has_session_data = any(d['sessions'] > 0 for d in result)
+    active_daily = result if has_session_data else fallback_result
+    use_fallback = not has_session_data
+
     # Books and modes the user has ever studied (for filter dropdowns)
     all_sessions = UserStudySession.query.filter_by(user_id=current_user.id).all()
-    book_ids = list({s.book_id for s in all_sessions if s.book_id})
+    book_ids_from_sessions = {s.book_id for s in all_sessions if s.book_id}
+    # Also include books from chapter progress (covers users with no sessions yet)
+    all_chapters = UserChapterProgress.query.filter_by(user_id=current_user.id).all()
+    book_ids_from_chapters = {cp.book_id for cp in all_chapters if cp.book_id}
+    book_ids = list(book_ids_from_sessions | book_ids_from_chapters)
     modes_used = sorted({s.mode for s in all_sessions if s.mode})
 
     try:
@@ -672,24 +710,36 @@ def get_learning_stats(current_user: User):
 
     books = [{'id': bid, 'title': book_title_map.get(bid, bid)} for bid in book_ids]
 
-    # Overall summary for the period
-    total_words = sum(d['words_studied'] for d in result)
-    total_duration = sum(d['duration_seconds'] for d in result)
-    total_correct = sum(d['correct_count'] for d in result)
-    total_wrong = sum(d['wrong_count'] for d in result)
-    total_sessions = sum(d['sessions'] for d in result)
+    # Overall summary for the period (use fallback totals when no sessions)
+    total_words = sum(d['words_studied'] for d in active_daily)
+    total_duration = sum(d['duration_seconds'] for d in active_daily)
+    total_correct = sum(d['correct_count'] for d in active_daily)
+    total_wrong = sum(d['wrong_count'] for d in active_daily)
+    total_sessions = sum(d['sessions'] for d in active_daily)
     total_attempted = total_correct + total_wrong
     period_accuracy = round(total_correct / total_attempted * 100) if total_attempted > 0 else None
 
+    # All-time totals from book progress (reliable regardless of session logging)
+    all_book_progress = UserBookProgress.query.filter_by(user_id=current_user.id).all()
+    alltime_correct = sum(bp.correct_count or 0 for bp in all_book_progress)
+    alltime_wrong = sum(bp.wrong_count or 0 for bp in all_book_progress)
+    alltime_total = alltime_correct + alltime_wrong
+    alltime_accuracy = round(alltime_correct / alltime_total * 100) if alltime_total > 0 else None
+
     return jsonify({
-        'daily': result,
+        'daily': active_daily,
         'books': books,
         'modes': modes_used,
+        'use_fallback': use_fallback,
         'summary': {
             'total_words': total_words,
             'total_duration_seconds': total_duration,
             'total_sessions': total_sessions,
             'accuracy': period_accuracy,
+        },
+        'alltime': {
+            'total_words': alltime_total,
+            'accuracy': alltime_accuracy,
         }
     })
 

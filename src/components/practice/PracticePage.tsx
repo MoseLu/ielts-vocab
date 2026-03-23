@@ -381,8 +381,24 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     if (!wasCorrect && settings.repeatWrong !== false) {
       setQueue(prev => { const c = [...prev]; c.push(queue[queueIndex]); return c })
     }
-    if (queueIndex + 1 >= queue.length) navigate('/')
-    else setQueueIndex(prev => prev + 1)
+    if (queueIndex + 1 >= queue.length) {
+      // Session complete — log before navigating (logSession is fire-and-forget)
+      const finalCorrect = wasCorrect ? correctCount + 1 : correctCount
+      const finalWrong = wasCorrect ? wrongCount : wrongCount + 1
+      logSession({
+        mode: mode ?? 'smart',
+        bookId,
+        chapterId,
+        wordsStudied: finalCorrect + finalWrong,
+        correctCount: finalCorrect,
+        wrongCount: finalWrong,
+        durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
+        startedAt: sessionStartRef.current,
+      })
+      navigate('/')
+    } else {
+      setQueueIndex(prev => prev + 1)
+    }
   }
 
   const goBack = () => {
@@ -476,20 +492,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     return <div className="practice-loading"><div className="loading-spinner"></div><p>加载词汇中...</p></div>
   }
 
-  // Completed state — log session for AI analysis
+  // Completed state (fallback — normally goNext navigates away before this renders)
   if (!currentWord) {
-    const durationSec = Math.round((Date.now() - sessionStartRef.current) / 1000)
-    // Fire-and-forget session log (non-blocking)
-    logSession({
-      mode: mode ?? 'smart',
-      bookId,
-      chapterId,
-      wordsStudied: correctCount + wrongCount,
-      correctCount,
-      wrongCount,
-      durationSeconds: durationSec,
-      startedAt: sessionStartRef.current,
-    })
     return (
       <div className="practice-complete">
         <div className="complete-emoji">🎉</div>
