@@ -21,6 +21,8 @@ export interface QuickMemoryModeProps {
   chapterId: string | null
   onModeChange: (mode: string) => void
   onNavigate: (path: string) => void
+  /** Called with each word the user marks as "unknown" — adds it to the error book */
+  onWrongWord: (word: Word) => void
 }
 
 // Which dimension smart mode is testing for the current word

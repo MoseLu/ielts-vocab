@@ -649,6 +649,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           chapterId={chapterId}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
           onNavigate={navigate}
+          onWrongWord={saveWrongWord}
         />
         {pauseOverlay}
       </>

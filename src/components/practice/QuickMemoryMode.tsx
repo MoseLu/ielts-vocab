@@ -160,6 +160,7 @@ export default function QuickMemoryMode({
   bookId,
   chapterId,
   onModeChange,
+  onWrongWord,
 }: QuickMemoryModeProps) {
   const [index, setIndex]         = useState(0)
   const [phase, setPhase]         = useState<'question' | 'reveal'>('question')
@@ -190,6 +191,11 @@ export default function QuickMemoryMode({
     const records = updateRecord(loadRecords(), currentWord?.word ?? '', picked)
     saveRecords(records)
     setResults(prev => [...prev, { wordIdx: index, choice: picked }])
+
+    // Report wrong words to the error book
+    if (picked === 'unknown' && currentWord) {
+      onWrongWord(currentWord)
+    }
 
     // Auto-play pronunciation after brief delay.
     // Use wordRef so this always plays the CURRENT word (not the closure-captured one).
@@ -259,6 +265,18 @@ export default function QuickMemoryMode({
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(progressData),
+      }).catch(() => {})
+
+      // Save per-mode accuracy so it shows as an independent badge in ChapterModal
+      fetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          mode: 'quickmemory',
+          correct_count: correct,
+          wrong_count: wrong,
+          is_completed: true,
+        }),
       }).catch(() => {})
     }
   }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
