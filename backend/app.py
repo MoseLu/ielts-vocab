@@ -74,6 +74,20 @@ def _migrate_db(app):
                 conn.commit()
                 print("[Migration] is_admin column added.")
 
+            # Migration 3: add per-dimension stat columns to user_wrong_words
+            ww_pragma = conn.execute(text("PRAGMA table_info(user_wrong_words)")).fetchall()
+            ww_cols = [row[1] for row in ww_pragma]
+            dim_cols = [
+                'listening_correct', 'listening_wrong',
+                'meaning_correct',   'meaning_wrong',
+                'dictation_correct', 'dictation_wrong',
+            ]
+            for col in dim_cols:
+                if col not in ww_cols:
+                    print(f"[Migration] Adding {col} to user_wrong_words...")
+                    conn.execute(text(f"ALTER TABLE user_wrong_words ADD COLUMN {col} INTEGER NOT NULL DEFAULT 0"))
+            conn.commit()
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)

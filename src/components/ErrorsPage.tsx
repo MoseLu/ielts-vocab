@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWrongWords } from '../features/vocabulary/hooks'
-import { loadSmartStats } from '../lib/smartMode'
 import type { SmartDimension } from '../lib/smartMode'
 
 type ActiveTab = 'words' | 'real'
@@ -16,9 +15,6 @@ function ErrorsPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<ActiveTab>('words')
   const { words, removeWord, clearAll } = useWrongWords()
-
-  // Per-dimension stats stored locally by smartMode
-  const smartStats = loadSmartStats()
 
   // Sort by wrong_count descending so the most-missed words come first
   const sortedWords = [...words].sort((a, b) => (b.wrong_count ?? 0) - (a.wrong_count ?? 0))
@@ -90,10 +86,11 @@ function ErrorsPage() {
           </div>
           <div className="errors-list">
             {sortedWords.map((word) => {
-              const wordStats = smartStats[word.word]
+              // Dimension stats come from backend (stored in word object)
               const dims = (['listening', 'meaning', 'dictation'] as SmartDimension[]).filter(dim => {
-                const s = wordStats?.[dim]
-                return s && (s.correct + s.wrong) > 0
+                const c = word[`${dim}_correct` as keyof typeof word] as number ?? 0
+                const w = word[`${dim}_wrong` as keyof typeof word] as number ?? 0
+                return c + w > 0
               })
 
               return (
@@ -112,28 +109,26 @@ function ErrorsPage() {
                       {word.pos && <span className="word-pos-tag">{word.pos}</span>}
                       {word.definition}
                     </div>
-                    {dims.length > 0 && (
+                    {dims.length > 0 ? (
                       <div className="errors-item-dims">
                         {dims.map(dim => {
-                          const s = wordStats![dim]
-                          const variant = s.wrong === 0 ? 'ok' : s.correct === 0 ? 'error' : 'mixed'
+                          const correct = word[`${dim}_correct` as keyof typeof word] as number ?? 0
+                          const wrong   = word[`${dim}_wrong`   as keyof typeof word] as number ?? 0
+                          const variant = wrong === 0 ? 'ok' : correct === 0 ? 'error' : 'mixed'
                           return (
                             <span key={dim} className={`errors-dim-badge errors-dim-${variant}`}>
                               {DIM_LABEL[dim]}
-                              {s.wrong > 0 && (
-                                <span className="errors-dim-wrong">×{s.wrong}</span>
-                              )}
-                              {s.correct > 0 && s.wrong > 0 && (
-                                <span className="errors-dim-correct"> ✓{s.correct}</span>
+                              {wrong > 0 && <span className="errors-dim-wrong">×{wrong}</span>}
+                              {correct > 0 && wrong > 0 && (
+                                <span className="errors-dim-correct"> ✓{correct}</span>
                               )}
                             </span>
                           )
                         })}
                       </div>
-                    )}
-                    {dims.length === 0 && (
+                    ) : (
                       <div className="errors-item-dims">
-                        <span className="errors-dim-badge errors-dim-unknown">未记录维度</span>
+                        <span className="errors-dim-badge errors-dim-unknown">暂无维度数据</span>
                       </div>
                     )}
                   </div>

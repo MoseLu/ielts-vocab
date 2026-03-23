@@ -294,7 +294,7 @@ class UserAddedBook(db.Model):
 
 
 class UserWrongWord(db.Model):
-    """Wrong words synced from client localStorage for AI context"""
+    """Wrong words with per-dimension practice stats stored on backend."""
     __tablename__ = 'user_wrong_words'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -304,6 +304,13 @@ class UserWrongWord(db.Model):
     pos = db.Column(db.String(50), nullable=True)
     definition = db.Column(db.Text, nullable=True)
     wrong_count = db.Column(db.Integer, default=1)
+    # Per-dimension stats: 听音 / 看义 / 听写
+    listening_correct = db.Column(db.Integer, default=0)
+    listening_wrong   = db.Column(db.Integer, default=0)
+    meaning_correct   = db.Column(db.Integer, default=0)
+    meaning_wrong     = db.Column(db.Integer, default=0)
+    dictation_correct = db.Column(db.Integer, default=0)
+    dictation_wrong   = db.Column(db.Integer, default=0)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (
@@ -319,6 +326,12 @@ class UserWrongWord(db.Model):
             'pos': self.pos,
             'definition': self.definition,
             'wrong_count': self.wrong_count,
+            'listening_correct': self.listening_correct or 0,
+            'listening_wrong':   self.listening_wrong   or 0,
+            'meaning_correct':   self.meaning_correct   or 0,
+            'meaning_wrong':     self.meaning_wrong     or 0,
+            'dictation_correct': self.dictation_correct or 0,
+            'dictation_wrong':   self.dictation_wrong   or 0,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 

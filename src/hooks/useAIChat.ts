@@ -166,12 +166,26 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
   const _syncWrongWords = useCallback(async () => {
     try {
       const token = getAuthToken()
-      const wrongWords = JSON.parse(localStorage.getItem(STORAGE_KEYS.WRONG_WORDS) || '[]')
+      const wrongWords: Array<Record<string, unknown>> = JSON.parse(localStorage.getItem(STORAGE_KEYS.WRONG_WORDS) || '[]')
       if (wrongWords.length > 0 && token) {
+        const smartStats: Record<string, { listening: {correct:number;wrong:number}, meaning: {correct:number;wrong:number}, dictation: {correct:number;wrong:number} }> =
+          JSON.parse(localStorage.getItem(STORAGE_KEYS.SMART_WORD_STATS) || '{}')
+        const enriched = wrongWords.map(w => {
+          const ws = smartStats[w.word as string]
+          return {
+            ...w,
+            listeningCorrect: ws?.listening.correct ?? 0,
+            listeningWrong:   ws?.listening.wrong   ?? 0,
+            meaningCorrect:   ws?.meaning.correct   ?? 0,
+            meaningWrong:     ws?.meaning.wrong     ?? 0,
+            dictationCorrect: ws?.dictation.correct ?? 0,
+            dictationWrong:   ws?.dictation.wrong   ?? 0,
+          }
+        })
         await fetch('/api/ai/wrong-words/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ words: wrongWords }),
+          body: JSON.stringify({ words: enriched }),
         })
       }
     } catch {

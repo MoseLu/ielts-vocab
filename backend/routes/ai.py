@@ -572,6 +572,14 @@ def sync_wrong_words(current_user: User):
             existing.pos = w.get('pos') or existing.pos
             existing.definition = w.get('definition') or existing.definition
             existing.wrong_count = w.get('wrongCount', existing.wrong_count + 1)
+            # Overwrite dimension stats if provided (client sends latest snapshot)
+            if 'listeningCorrect' in w:
+                existing.listening_correct = w['listeningCorrect']
+                existing.listening_wrong   = w.get('listeningWrong', 0)
+                existing.meaning_correct   = w.get('meaningCorrect', 0)
+                existing.meaning_wrong     = w.get('meaningWrong', 0)
+                existing.dictation_correct = w.get('dictationCorrect', 0)
+                existing.dictation_wrong   = w.get('dictationWrong', 0)
         else:
             new_w = UserWrongWord(
                 user_id=current_user.id,
@@ -579,7 +587,13 @@ def sync_wrong_words(current_user: User):
                 phonetic=w.get('phonetic'),
                 pos=w.get('pos'),
                 definition=w.get('definition'),
-                wrong_count=w.get('wrongCount', 1)
+                wrong_count=w.get('wrongCount', 1),
+                listening_correct=w.get('listeningCorrect', 0),
+                listening_wrong=w.get('listeningWrong', 0),
+                meaning_correct=w.get('meaningCorrect', 0),
+                meaning_wrong=w.get('meaningWrong', 0),
+                dictation_correct=w.get('dictationCorrect', 0),
+                dictation_wrong=w.get('dictationWrong', 0),
             )
             db.session.add(new_w)
         updated += 1
