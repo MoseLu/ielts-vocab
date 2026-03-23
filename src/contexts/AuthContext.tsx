@@ -29,12 +29,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)
     const savedUser = localStorage.getItem(STORAGE_KEYS.AUTH_USER)
-    if (token && savedUser) {
-      try {
-        const parsed = safeParse(UserSchema, JSON.parse(savedUser))
+    if (!token) {
+      setIsLoading(false)
+      return
+    }
+    // Fetch latest user info from server (includes is_admin)
+    apiFetch<{ user: unknown }>('/api/auth/me')
+      .then(data => {
+        const parsed = safeParse(UserSchema, data.user)
         if (parsed.success) {
           setUser(parsed.data)
-        } else {
+          localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(parsed.data))
+        } else if (savedUser) {
+          // Fallback to localStorage if /me fails
           const raw = JSON.parse(savedUser)
           setUser({
             id: raw.id ?? 0,
@@ -45,12 +52,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             created_at: raw.created_at,
           })
         }
-      } catch {
-        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN)
-        localStorage.removeItem(STORAGE_KEYS.AUTH_USER)
-      }
-    }
-    setIsLoading(false)
+      })
+      .catch(() => {
+        // If /me fails, try localStorage fallback
+        if (savedUser) {
+          try {
+            const raw = JSON.parse(savedUser)
+            setUser({
+              id: raw.id ?? 0,
+              email: raw.email || '',
+              username: raw.username,
+              avatar_url: raw.avatar_url ?? null,
+              is_admin: raw.is_admin ?? false,
+              created_at: raw.created_at,
+            })
+          } catch {
+            localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN)
+            localStorage.removeItem(STORAGE_KEYS.AUTH_USER)
+          }
+        }
+      })
+      .finally(() => setIsLoading(false))
   }, [])
 
   const login = useCallback(async (identifier: string, password: string) => {
