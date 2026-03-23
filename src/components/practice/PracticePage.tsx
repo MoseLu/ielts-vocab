@@ -7,7 +7,7 @@ import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, 
 import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './utils'
 import { DEFAULT_SETTINGS } from '../../constants'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
-import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue } from '../../lib/smartMode'
+import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue, syncSmartStatsToBackend, loadSmartStatsFromBackend } from '../../lib/smartMode'
 import { recordModeAnswer, logSession } from '../../hooks/useAIChat'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
@@ -93,6 +93,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
         startedAt: sessionStartRef.current,
       })
+      // Sync smart stats to backend on every exit
+      syncSmartStatsToBackend()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // intentionally empty — captures bookId/chapterId/mode at mount (they never change mid-session)
@@ -180,6 +182,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Load vocabulary data
   useEffect(() => {
+    // Hydrate smart stats from backend if localStorage is empty (handles cleared storage)
+    if (Object.keys(loadSmartStats()).length === 0) {
+      loadSmartStatsFromBackend()
+    }
+
     if (errorMode) {
       try {
         const saved: Word[] = JSON.parse(localStorage.getItem('wrong_words') || '[]')
@@ -203,11 +210,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       return settings.shuffle !== false ? shuffleArray(indices) : indices
     }
 
+    const token = localStorage.getItem('auth_token')
+
     if (bookId) {
       if (chapterId) {
         fetch(`/api/books/${bookId}/chapters/${chapterId}`)
           .then(res => res.json())
-          .then((data: { words?: Word[] }) => {
+          .then(async (data: { words?: Word[] }) => {
             const words = data.words || []
             setVocabulary(words)
             vocabRef.current = words
@@ -216,8 +225,22 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             queueRef.current = q
             const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
             const key = `${bookId}_${chapterId}`
-            if (saved[key]) restoreProgress(saved[key])
-            else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+            if (saved[key]) {
+              restoreProgress(saved[key])
+            } else if (token) {
+              // Fallback: load progress from backend when localStorage is empty
+              try {
+                const res = await fetch(`/api/books/${bookId}/chapters/progress`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                })
+                if (res.ok) {
+                  const pd = await res.json()
+                  const cp = pd.chapter_progress?.[String(chapterId)]
+                  if (cp) restoreProgress(cp)
+                  else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+                } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+              } catch { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+            } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
           })
           .catch(() => showToast?.('加载章节词汇失败', 'error'))
         return
@@ -225,7 +248,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
       fetch(`/api/books/${bookId}/words?per_page=100`)
         .then(res => res.json())
-        .then((data: { words?: Word[] }) => {
+        .then(async (data: { words?: Word[] }) => {
           const words = data.words || []
           setVocabulary(words)
           vocabRef.current = words
@@ -233,8 +256,21 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           setQueue(q)
           queueRef.current = q
           const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('book_progress') || '{}')
-          if (saved[bookId]) restoreProgress(saved[bookId])
-          else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+          if (saved[bookId]) {
+            restoreProgress(saved[bookId])
+          } else if (token) {
+            // Fallback: load from backend
+            try {
+              const res = await fetch(`/api/books/progress/${bookId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              })
+              if (res.ok) {
+                const pd = await res.json()
+                if (pd.progress) restoreProgress(pd.progress)
+                else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+              } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+            } catch { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+          } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
         })
         .catch(() => showToast?.('加载词书失败', 'error'))
       return
@@ -243,7 +279,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     if (!currentDay) { navigate('/'); return }
     fetch(`/api/vocabulary/day/${currentDay}`)
       .then(res => res.json())
-      .then((data: { vocabulary?: Word[]; words?: Word[] }) => {
+      .then(async (data: { vocabulary?: Word[]; words?: Word[] }) => {
         const words = data.vocabulary || data.words || []
         setVocabulary(words)
         vocabRef.current = words
@@ -251,8 +287,23 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         setQueue(q)
         queueRef.current = q
         const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('day_progress') || '{}')
-        if (saved[String(currentDay)]) restoreProgress(saved[String(currentDay)])
-        else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+        if (saved[String(currentDay)]) {
+          restoreProgress(saved[String(currentDay)])
+        } else if (token) {
+          // Fallback: load from backend
+          try {
+            const res = await fetch(`/api/progress`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (res.ok) {
+              const pd = await res.json()
+              const entry = (pd.progress as Array<{ day: number; current_index: number; correct_count: number; wrong_count: number }>)
+                ?.find(p => p.day === currentDay)
+              if (entry) restoreProgress(entry)
+              else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+            } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+          } catch { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+        } else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
   }, [currentDay, bookId, errorMode, chapterId])
@@ -455,6 +506,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
         startedAt: sessionStartRef.current,
       })
+      // Sync smart stats to backend at session end
+      syncSmartStatsToBackend()
       navigate('/')
     } else {
       setQueueIndex(prev => prev + 1)

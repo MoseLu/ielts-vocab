@@ -417,6 +417,64 @@ class RevokedToken(db.Model):
         db.session.commit()
 
 
+class UserQuickMemoryRecord(db.Model):
+    """Ebbinghaus spaced-repetition state per word — synced from client."""
+    __tablename__ = 'user_quick_memory_records'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    word = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(10), nullable=False, default='unknown')  # 'known' | 'unknown'
+    first_seen = db.Column(db.BigInteger, default=0)
+    last_seen = db.Column(db.BigInteger, default=0)
+    known_count = db.Column(db.Integer, default=0)
+    unknown_count = db.Column(db.Integer, default=0)
+    next_review = db.Column(db.BigInteger, default=0)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'word', name='unique_user_qm_word'),
+    )
+
+    def to_dict(self):
+        return {
+            'word': self.word,
+            'status': self.status,
+            'firstSeen': self.first_seen,
+            'lastSeen': self.last_seen,
+            'knownCount': self.known_count,
+            'unknownCount': self.unknown_count,
+            'nextReview': self.next_review,
+        }
+
+
+class UserSmartWordStat(db.Model):
+    """Per-dimension practice stats for smart mode — synced from client."""
+    __tablename__ = 'user_smart_word_stats'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    word = db.Column(db.String(100), nullable=False)
+    listening_correct = db.Column(db.Integer, default=0)
+    listening_wrong   = db.Column(db.Integer, default=0)
+    meaning_correct   = db.Column(db.Integer, default=0)
+    meaning_wrong     = db.Column(db.Integer, default=0)
+    dictation_correct = db.Column(db.Integer, default=0)
+    dictation_wrong   = db.Column(db.Integer, default=0)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'word', name='unique_user_smart_word'),
+    )
+
+    def to_dict(self):
+        return {
+            'word': self.word,
+            'listening': {'correct': self.listening_correct or 0, 'wrong': self.listening_wrong or 0},
+            'meaning':   {'correct': self.meaning_correct   or 0, 'wrong': self.meaning_wrong   or 0},
+            'dictation': {'correct': self.dictation_correct or 0, 'wrong': self.dictation_wrong or 0},
+        }
+
+
 class SearchCache(db.Model):
     """Cached web search results for word lookups"""
     __tablename__ = 'search_cache'
