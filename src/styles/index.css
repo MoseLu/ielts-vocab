@@ -64,6 +64,9 @@
 /* ── Pages: Vocab Test ── */
 @import './pages/vocab-test.css';
 
+/* ── Pages: Admin Dashboard ── */
+@import './pages/admin.css';
+
 /* ── Utils ── */
 @import './utils/utilities.css';
 @import './utils/responsive.css';
