@@ -313,7 +313,11 @@ def get_user_detail(current_user, user_id):
         func.sum(UserStudySession.correct_count).label('correct'),
         func.sum(UserStudySession.wrong_count).label('wrong'),
         func.sum(UserStudySession.duration_seconds).label('seconds'),
-    ).filter(UserStudySession.user_id == user_id)
+    ).filter(
+        UserStudySession.user_id == user_id,
+        UserStudySession.chapter_id.isnot(None),
+        UserStudySession.chapter_id != '',
+    )
 
     chapter_daily_q = _apply_filters(chapter_daily_q)
     if not date_from:
