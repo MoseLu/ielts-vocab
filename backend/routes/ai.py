@@ -719,12 +719,51 @@ def get_learning_stats(current_user: User):
     total_attempted = total_correct + total_wrong
     period_accuracy = round(total_correct / total_attempted * 100) if total_attempted > 0 else None
 
-    # All-time totals from book progress (reliable regardless of session logging)
-    all_book_progress = UserBookProgress.query.filter_by(user_id=current_user.id).all()
-    alltime_correct = sum(bp.correct_count or 0 for bp in all_book_progress)
-    alltime_wrong = sum(bp.wrong_count or 0 for bp in all_book_progress)
-    alltime_total = alltime_correct + alltime_wrong
-    alltime_accuracy = round(alltime_correct / alltime_total * 100) if alltime_total > 0 else None
+    # All-time totals from chapter progress (words_learned is the correct "words studied" count)
+    all_chapter_progress = UserChapterProgress.query.filter_by(user_id=current_user.id).all()
+    alltime_words = sum(cp.words_learned or 0 for cp in all_chapter_progress)
+    alltime_correct = sum(cp.correct_count or 0 for cp in all_chapter_progress)
+    alltime_wrong = sum(cp.wrong_count or 0 for cp in all_chapter_progress)
+    alltime_attempted = alltime_correct + alltime_wrong
+    alltime_accuracy = round(alltime_correct / alltime_attempted * 100) if alltime_attempted > 0 else None
+
+    # Today's accuracy from chapter progress updated today
+    today_str = datetime.utcnow().strftime('%Y-%m-%d')
+    today_chapters = [cp for cp in all_chapter_progress
+                      if cp.updated_at and cp.updated_at.strftime('%Y-%m-%d') == today_str]
+    today_correct = sum(cp.correct_count or 0 for cp in today_chapters)
+    today_wrong = sum(cp.wrong_count or 0 for cp in today_chapters)
+    today_attempted = today_correct + today_wrong
+    today_accuracy = round(today_correct / today_attempted * 100) if today_attempted > 0 else None
+
+    # Session-based duration (only meaningful when sessions exist)
+    all_user_sessions = UserStudySession.query.filter_by(user_id=current_user.id).all()
+    alltime_duration = sum(s.duration_seconds or 0 for s in all_user_sessions)
+    today_sessions = [s for s in all_user_sessions
+                      if s.started_at and s.started_at.strftime('%Y-%m-%d') == today_str]
+    today_duration = sum(s.duration_seconds or 0 for s in today_sessions)
+
+    # ── Per-mode breakdown (all-time, from UserStudySession) ──────────────────
+    mode_stats: dict = {}
+    for s in all_user_sessions:
+        m = s.mode or 'unknown'
+        if m not in mode_stats:
+            mode_stats[m] = {
+                'mode': m,
+                'words_studied': 0, 'correct_count': 0,
+                'wrong_count': 0, 'duration_seconds': 0, 'sessions': 0,
+            }
+        mode_stats[m]['words_studied'] += s.words_studied or 0
+        mode_stats[m]['correct_count'] += s.correct_count or 0
+        mode_stats[m]['wrong_count'] += s.wrong_count or 0
+        mode_stats[m]['duration_seconds'] += s.duration_seconds or 0
+        mode_stats[m]['sessions'] += 1
+
+    for md in mode_stats.values():
+        attempted = md['correct_count'] + md['wrong_count']
+        md['accuracy'] = round(md['correct_count'] / attempted * 100) if attempted > 0 else None
+
+    mode_breakdown = sorted(mode_stats.values(), key=lambda x: x['words_studied'], reverse=True)
 
     return jsonify({
         'daily': active_daily,
@@ -738,9 +777,13 @@ def get_learning_stats(current_user: User):
             'accuracy': period_accuracy,
         },
         'alltime': {
-            'total_words': alltime_total,
+            'total_words': alltime_words,
             'accuracy': alltime_accuracy,
-        }
+            'duration_seconds': alltime_duration,
+            'today_accuracy': today_accuracy,
+            'today_duration_seconds': today_duration,
+        },
+        'mode_breakdown': mode_breakdown,
     })
 
 
@@ -750,6 +793,16 @@ def log_session(current_user: User):
     """Persist a study session record to the database."""
     body = request.get_json() or {}
     try:
+        # Use client-provided startedAt (epoch ms) if valid, else server time
+        started_at = None
+        client_start = body.get('startedAt')
+        if client_start:
+            try:
+                from datetime import timezone
+                started_at = datetime.fromtimestamp(int(client_start) / 1000, tz=timezone.utc).replace(tzinfo=None)
+            except Exception:
+                pass
+
         session = UserStudySession(
             user_id=current_user.id,
             mode=body.get('mode'),
@@ -760,6 +813,8 @@ def log_session(current_user: User):
             wrong_count=body.get('wrongCount', 0),
             duration_seconds=body.get('durationSeconds', 0),
         )
+        if started_at:
+            session.started_at = started_at
         db.session.add(session)
         db.session.commit()
         return jsonify({'id': session.id}), 201

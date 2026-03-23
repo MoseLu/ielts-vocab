@@ -1,7 +1,7 @@
 import { useState, useRef, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStats, useWrongWords, useLearningStats } from '../features/vocabulary/hooks'
-import type { MetricKey, RangeKey, DailyLearning } from '../features/vocabulary/hooks'
+import type { MetricKey, RangeKey, DailyLearning, ModeStat } from '../features/vocabulary/hooks'
 
 const MODE_LABELS: Record<string, string> = {
   smart: '智能模式',
@@ -253,6 +253,47 @@ function LearningChart({ data, metric, range }: ChartProps) {
   )
 }
 
+// ── Mode breakdown section ────────────────────────────────────────────────────
+
+function ModeBreakdownSection({ modeBreakdown, onNavigate }: {
+  modeBreakdown: ModeStat[]
+  onNavigate: () => void
+}) {
+  const maxWords = Math.max(...modeBreakdown.map(m => m.words_studied), 1)
+
+  return (
+    <div className="stats-section">
+      <h2 className="stats-section-title">各模式统计</h2>
+      {modeBreakdown.length === 0 ? (
+        <div className="stats-empty">
+          <p>完成一次练习后将统计各模式数据</p>
+          <a className="stats-go-practice" onClick={onNavigate}>去练习 →</a>
+        </div>
+      ) : (
+        <div className="mode-breakdown-list">
+          {modeBreakdown.map(m => (
+            <div key={m.mode} className="mode-breakdown-item">
+              <div className="mode-breakdown-name">{MODE_LABELS[m.mode] || m.mode}</div>
+              <div className="mode-breakdown-bar-wrap">
+                <div
+                  className="mode-breakdown-bar"
+                  style={{ width: `${Math.round((m.words_studied / maxWords) * 100)}%` }}
+                />
+              </div>
+              <div className="mode-breakdown-stats">
+                <span className="mbs-words">{m.words_studied} 词</span>
+                {m.accuracy != null && <span className="mbs-accuracy">{m.accuracy}%</span>}
+                {m.duration_seconds > 0 && <span className="mbs-duration">{fmtDuration(m.duration_seconds)}</span>}
+                <span className="mbs-sessions">{m.sessions} 次</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function StatsPage() {
@@ -265,19 +306,25 @@ export default function StatsPage() {
   const [bookId, setBookId] = useState('all')
   const [mode, setMode] = useState('all')
 
-  const { daily, books, modes, summary, alltime, useFallback, loading: chartLoading } = useLearningStats(range, bookId, mode)
+  const { daily, books, modes, summary, alltime, modeBreakdown, useFallback, loading: chartLoading } = useLearningStats(range, bookId, mode)
 
-  // Today summary: use today's row from the daily data
+  // Today's row from the daily chart data
   const todayStr = new Date().toISOString().slice(0, 10)
   const todayRow = daily.find(d => d.date === todayStr)
   const displayTodayWords = todayRow?.words_studied ?? todayWords
-  // Duration only reliable from real sessions (not chapter fallback)
-  const displayTodayDuration = (!useFallback && todayRow) ? fmtDuration(todayRow.duration_seconds) : '--'
-  // Total words: prefer alltime from book progress (always accurate), then period summary, then legacy
-  const displayTotalWords = alltime?.total_words ?? summary?.total_words ?? totalWords
-  // Duration only from sessions
-  const displayTotalDuration = (!useFallback && summary && summary.total_duration_seconds > 0)
-    ? fmtDuration(summary.total_duration_seconds) : '--'
+
+  // Accuracy: use alltime today_accuracy (from chapter progress, always accurate)
+  const displayTodayAccuracy = alltime?.today_accuracy != null ? `${alltime.today_accuracy}%` : '--'
+  const displayAlltimeAccuracy = alltime?.accuracy != null ? `${alltime.accuracy}%` : '--'
+
+  // Duration: only from real sessions
+  const displayTodayDuration = alltime && alltime.today_duration_seconds > 0
+    ? fmtDuration(alltime.today_duration_seconds) : null
+  const displayAlltimeDuration = alltime && alltime.duration_seconds > 0
+    ? fmtDuration(alltime.duration_seconds) : null
+
+  // Total words: from chapter progress (words_learned), always accurate
+  const displayTotalWords = alltime?.total_words ?? totalWords
 
   const hasChartData = daily.some(d => {
     if (metric === 'words') return d.words_studied > 0
@@ -296,16 +343,22 @@ export default function StatsPage() {
             <div className="stats-card-label">今日学习词数</div>
           </div>
           <div className="stats-card">
-            <div className="stats-card-value">{displayTodayDuration}</div>
-            <div className="stats-card-label">今日时长</div>
+            <div className="stats-card-value">{displayTodayAccuracy}</div>
+            <div className="stats-card-label">
+              今日正确率
+              {displayTodayDuration && <span className="stats-card-sub">{displayTodayDuration}</span>}
+            </div>
           </div>
           <div className="stats-card">
             <div className="stats-card-value">{displayTotalWords}</div>
             <div className="stats-card-label">累计学习词数</div>
           </div>
           <div className="stats-card">
-            <div className="stats-card-value">{displayTotalDuration}</div>
-            <div className="stats-card-label">累计时长</div>
+            <div className="stats-card-value">{displayAlltimeAccuracy}</div>
+            <div className="stats-card-label">
+              累计正确率
+              {displayAlltimeDuration && <span className="stats-card-sub">{displayAlltimeDuration}</span>}
+            </div>
           </div>
         </div>
 
@@ -398,6 +451,9 @@ export default function StatsPage() {
             </div>
           )}
         </div>
+
+        {/* Mode breakdown */}
+        <ModeBreakdownSection modeBreakdown={modeBreakdown} onNavigate={() => navigate('/')} />
 
         {/* Chapter accuracy */}
         <div className="stats-section">

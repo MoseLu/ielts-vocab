@@ -37,6 +37,15 @@
 .stats-card-label {
     font-size: 12px;
     color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.stats-card-sub {
+    font-size: 11px;
+    color: var(--text-tertiary);
 }
 
 /* Sections */
@@ -261,6 +270,91 @@
 
 .stats-go-practice:hover {
     text-decoration: underline;
+}
+
+/* Mode breakdown */
+.mode-breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mode-breakdown-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.mode-breakdown-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.mode-breakdown-bar-wrap {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.mode-breakdown-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #FF9A5C);
+    border-radius: var(--radius-full);
+    transition: width 0.5s ease;
+    min-width: 4px;
+}
+
+.mode-breakdown-stats {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.mbs-words {
+    color: var(--text-primary);
+    font-weight: 500;
+    min-width: 44px;
+    text-align: right;
+}
+
+.mbs-accuracy {
+    color: var(--success);
+    font-weight: 600;
+    min-width: 36px;
+    text-align: right;
+}
+
+.mbs-duration {
+    color: var(--text-secondary);
+    min-width: 48px;
+    text-align: right;
+}
+
+.mbs-sessions {
+    color: var(--text-tertiary);
+    min-width: 28px;
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    .mode-breakdown-item {
+        grid-template-columns: 70px 1fr;
+        grid-template-rows: auto auto;
+    }
+    .mode-breakdown-stats {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+    .mbs-words, .mbs-accuracy, .mbs-duration, .mbs-sessions {
+        text-align: left;
+        min-width: auto;
+    }
 }
 
 /* Chapter accuracy */

@@ -66,6 +66,36 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
   const sessionStartRef = useRef<number>(Date.now())
+  // Mirrors of correctCount/wrongCount for use in cleanup (avoids stale closure)
+  const correctCountRef = useRef(0)
+  const wrongCountRef = useRef(0)
+  // Prevents double-logging when goNext already logs before navigate
+  const sessionLoggedRef = useRef(false)
+
+  // Keep refs in sync with state so the unmount cleanup always has current values
+  useEffect(() => { correctCountRef.current = correctCount }, [correctCount])
+  useEffect(() => { wrongCountRef.current = wrongCount }, [wrongCount])
+
+  // Log session on unmount — covers every exit path:
+  // completed (goNext sets flag first), pause→exit, navigate away, browser close
+  useEffect(() => {
+    return () => {
+      if (sessionLoggedRef.current) return          // already logged by goNext
+      const words = correctCountRef.current + wrongCountRef.current
+      if (words === 0) return                        // nothing to log
+      logSession({
+        mode: mode ?? 'smart',
+        bookId,
+        chapterId,
+        wordsStudied: words,
+        correctCount: correctCountRef.current,
+        wrongCount: wrongCountRef.current,
+        durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
+        startedAt: sessionStartRef.current,
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally empty — captures bookId/chapterId/mode at mount (they never change mid-session)
 
   // Reactive settings (so RadioMode picks up changes from the toolbar controls)
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -396,9 +426,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       setQueue(prev => { const c = [...prev]; c.push(queue[queueIndex]); return c })
     }
     if (queueIndex + 1 >= queue.length) {
-      // Session complete — log before navigating (logSession is fire-and-forget)
+      // Session complete — log and mark so the unmount cleanup doesn't double-log
       const finalCorrect = wasCorrect ? correctCount + 1 : correctCount
       const finalWrong = wasCorrect ? wrongCount : wrongCount + 1
+      sessionLoggedRef.current = true
       logSession({
         mode: mode ?? 'smart',
         bookId,
