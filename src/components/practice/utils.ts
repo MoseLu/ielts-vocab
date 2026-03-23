@@ -251,7 +251,13 @@ export function playWordAudio(
       console.warn(`[playWordAudio] speechSynthesis error for "${word}", Youdao fallback`)
       speakWithYoudao()
     }
-    speechSynthesis.speak(u)
+    // Chrome bug: calling speak() immediately after cancel() can fire onend
+    // without actually playing audio (every other word is silent). A short
+    // delay lets the cancel settle before the next utterance starts.
+    setTimeout(() => {
+      if (_audioGeneration !== gen) return
+      speechSynthesis.speak(u)
+    }, 50)
   }
 
   // ── URL already cached — play real recording immediately ─────────────────
