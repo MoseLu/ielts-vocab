@@ -3,6 +3,16 @@ import { Scrollbar } from './ui/Scrollbar'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
+// Short labels and semantic colors for each practice mode
+const MODE_META: Record<string, { label: string; title: string; color: string }> = {
+  quickmemory: { label: '记',  title: '快速记忆', color: '#f59e0b' },
+  listening:   { label: '听',  title: '听音选义', color: '#3b82f6' },
+  meaning:     { label: '看',  title: '看词选义', color: '#8b5cf6' },
+  dictation:   { label: '写',  title: '听写模式', color: '#ec4899' },
+  smart:       { label: '智',  title: '智能模式', color: '#10b981' },
+}
+
+
 interface Book {
   id: string | number
   title: string
@@ -16,10 +26,19 @@ export interface Chapter {
   word_count?: number
 }
 
+interface ChapterModeData {
+  mode: string
+  correct_count: number
+  wrong_count: number
+  accuracy: number
+  is_completed: boolean
+}
+
 interface ChapterProgress {
   is_completed: boolean
   words_learned: number
   accuracy?: number
+  modes?: Record<string, ChapterModeData>
 }
 
 interface Progress {
@@ -182,11 +201,24 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   }
 
   const renderCard = (chapter: Chapter, isInSection: boolean) => {
-    const isCurrent  = chapter.id === currentChapterId
-    const prog       = chapterProgress[chapter.id]
-    const isCompleted = prog?.is_completed
+    const isCurrent   = chapter.id === currentChapterId
+    const prog        = chapterProgress[chapter.id] ?? chapterProgress[String(chapter.id)]
     const hasStarted  = prog && prog.words_learned > 0
-    const accuracy    = prog?.accuracy
+
+    // Collect per-mode records from the API response (prog.modes)
+    const modeBadges = Object.entries(MODE_META)
+      .map(([modeKey, meta]) => {
+        const record = prog?.modes?.[modeKey]
+        return record ? { modeKey, meta, record } : null
+      })
+      .filter(Boolean) as { modeKey: string; meta: typeof MODE_META[string]; record: ChapterModeData }[]
+
+    const hasModeData   = modeBadges.length > 0
+    const allCompleted  = hasModeData && modeBadges.every(b => b.record.is_completed)
+    const isCompleted   = allCompleted || (!hasModeData && prog?.is_completed)
+
+    const getAccuracyClass = (acc: number) =>
+      acc >= 80 ? 'mode-badge-high' : acc >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
 
     return (
       <div
@@ -195,16 +227,39 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         onClick={() => handleSelectChapter(chapter)}
       >
         <div className="chapter-card-name">{getCardLabel(chapter, isInSection)}</div>
-        <div className="chapter-card-footer">
-          <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
-          {isCompleted ? (
-            <span className="chapter-status-done">✓ {accuracy}%</span>
-          ) : hasStarted ? (
-            <span className="chapter-status-progress">{accuracy}%</span>
-          ) : (
-            <span className="chapter-status-todo">未开始</span>
-          )}
-        </div>
+
+        {hasModeData ? (
+          <div className="chapter-mode-badges">
+            {modeBadges.map(({ modeKey, meta, record }) => (
+              <span
+                key={modeKey}
+                className={`mode-badge ${getAccuracyClass(record.accuracy)}`}
+                title={`${meta.title}：${record.accuracy}%${record.is_completed ? ' ✓' : ''}`}
+                style={{ '--badge-color': meta.color } as React.CSSProperties}
+              >
+                {meta.label} {record.accuracy}%{record.is_completed ? ' ✓' : ''}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="chapter-card-footer">
+            <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
+            {isCompleted ? (
+              <span className="chapter-status-done">✓ {prog?.accuracy}%</span>
+            ) : hasStarted ? (
+              <span className="chapter-status-progress">{prog?.accuracy}%</span>
+            ) : (
+              <span className="chapter-status-todo">未开始</span>
+            )}
+          </div>
+        )}
+
+        {hasModeData && (
+          <div className="chapter-card-footer chapter-card-footer-slim">
+            <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
+          </div>
+        )}
+
         {isCurrent && <div className="chapter-card-current-dot" />}
       </div>
     )

@@ -455,7 +455,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 40px 20px;
@@ -558,6 +558,61 @@
   color: var(--text-tertiary);
   margin-top: 2px;
 }
+
+/* Filter bar inside user detail modal */
+.admin-detail-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.admin-filter-date {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.admin-filter-select {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.admin-filter-apply {
+  padding: 5px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.admin-filter-apply:hover { background: var(--accent-hover); }
+
+.admin-filter-reset {
+  padding: 5px 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.admin-filter-reset:hover { background: var(--bg-tertiary); }
 
 /* Detail tabs */
 .admin-detail-tabs {

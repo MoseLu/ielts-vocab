@@ -341,6 +341,20 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ words_learned: correct + wrong, ...progressData })
           }).catch(() => {})
+
+          // Save per-mode accuracy to the backend — each mode is stored independently
+          if (mode && correct + wrong > 0) {
+            fetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({
+                mode,
+                correct_count: correct,
+                wrong_count: wrong,
+                is_completed: progressData.is_completed ?? false,
+              }),
+            }).catch(() => {})
+          }
         }
       }
     } else {
@@ -633,8 +647,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           settings={settings}
           bookId={bookId}
           chapterId={chapterId}
+          bookChapters={bookChapters}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
           onNavigate={navigate}
+          onWrongWord={saveWrongWord}
         />
         {pauseOverlay}
       </>

@@ -347,6 +347,32 @@
     background: var(--accent-light);
 }
 
+.qm-btn-next-chapter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 28px;
+    border-radius: var(--radius-lg);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: var(--accent);
+    color: #fff;
+    border: 2px solid var(--accent);
+}
+.qm-btn-next-chapter:hover {
+    background: var(--accent-dark, #e5682a);
+    transform: translateY(-1px);
+}
+
+/* Accuracy stat in summary */
+.qm-stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+}
+
 /* ── Empty state ──────────────────────────────────────────────────────────── */
 .qm-empty {
     display: flex;

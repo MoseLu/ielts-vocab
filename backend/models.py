@@ -166,6 +166,37 @@ class UserChapterProgress(db.Model):
         }
 
 
+class UserChapterModeProgress(db.Model):
+    """Per-mode accuracy for a specific chapter — each practice mode is stored independently."""
+    __tablename__ = 'user_chapter_mode_progress'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    book_id = db.Column(db.String(50), nullable=False)
+    chapter_id = db.Column(db.Integer, nullable=False)
+    mode = db.Column(db.String(30), nullable=False)  # smart | listening | meaning | dictation | quickmemory
+    correct_count = db.Column(db.Integer, default=0)
+    wrong_count = db.Column(db.Integer, default=0)
+    is_completed = db.Column(db.Boolean, default=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'book_id', 'chapter_id', 'mode',
+                            name='unique_user_book_chapter_mode'),
+    )
+
+    def to_dict(self):
+        total = self.correct_count + self.wrong_count
+        return {
+            'mode': self.mode,
+            'correct_count': self.correct_count,
+            'wrong_count': self.wrong_count,
+            'accuracy': round(self.correct_count / total * 100) if total > 0 else 0,
+            'is_completed': self.is_completed,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 # ── Custom Books (AI-generated) ──────────────────────────────────────────────
 
 class CustomBook(db.Model):

@@ -217,8 +217,32 @@ def get_users(current_user):
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
 @admin_required
 def get_user_detail(current_user, user_id):
-    """Detailed stats for a specific user."""
+    """Detailed stats for a specific user.
+    Query params (all optional):
+      date_from  YYYY-MM-DD  filter sessions/daily from this date (inclusive)
+      date_to    YYYY-MM-DD  filter sessions/daily to this date (inclusive)
+      mode       practice mode filter (smart|listening|meaning|dictation|quickmemory|radio)
+      book_id    book filter
+    """
     user = User.query.get_or_404(user_id)
+
+    # Parse optional filters
+    date_from = request.args.get('date_from')   # YYYY-MM-DD string
+    date_to   = request.args.get('date_to')     # YYYY-MM-DD string
+    f_mode    = request.args.get('mode')
+    f_book    = request.args.get('book_id')
+
+    # ── Build filtered session query ──────────────────────────────────────────
+    def _apply_filters(q):
+        if date_from:
+            q = q.filter(UserStudySession.started_at >= date_from)
+        if date_to:
+            q = q.filter(UserStudySession.started_at <= date_to + ' 23:59:59')
+        if f_mode:
+            q = q.filter(UserStudySession.mode == f_mode)
+        if f_book:
+            q = q.filter(UserStudySession.book_id == f_book)
+        return q
 
     # Book progress
     book_progress = [r.to_dict() for r in UserBookProgress.query.filter_by(user_id=user_id).all()]
@@ -235,15 +259,20 @@ def get_user_detail(current_user, user_id):
         .order_by(desc(UserWrongWord.wrong_count)).limit(50).all()
     )]
 
-    # Study sessions (last 30)
-    sessions = [s.to_dict() for s in (
+    # Study sessions — filtered, latest 100
+    session_q = _apply_filters(
         UserStudySession.query.filter_by(user_id=user_id)
-        .order_by(desc(UserStudySession.started_at)).limit(30).all()
-    )]
+    )
+    raw_sessions = session_q.order_by(desc(UserStudySession.started_at)).limit(100).all()
+    sessions = []
+    for s in raw_sessions:
+        d = s.to_dict()
+        d['chapter_id'] = s.chapter_id   # expose chapter for frontend
+        sessions.append(d)
 
-    # Daily study time for last 30 days
-    thirty_days_ago = datetime.utcnow() - timedelta(days=29)
-    daily_rows = db.session.query(
+    # Daily aggregation — filtered, last 90 days by default unless date_from given
+    daily_base = date_from if date_from else (datetime.utcnow() - timedelta(days=89)).strftime('%Y-%m-%d')
+    daily_q = db.session.query(
         func.date(UserStudySession.started_at).label('day'),
         func.sum(UserStudySession.duration_seconds).label('seconds'),
         func.sum(UserStudySession.words_studied).label('words'),
@@ -251,8 +280,15 @@ def get_user_detail(current_user, user_id):
         func.sum(UserStudySession.wrong_count).label('wrong'),
     ).filter(
         UserStudySession.user_id == user_id,
-        UserStudySession.started_at >= thirty_days_ago
-    ).group_by(func.date(UserStudySession.started_at)).order_by('day').all()
+        UserStudySession.started_at >= daily_base,
+    )
+    if date_to:
+        daily_q = daily_q.filter(UserStudySession.started_at <= date_to + ' 23:59:59')
+    if f_mode:
+        daily_q = daily_q.filter(UserStudySession.mode == f_mode)
+    if f_book:
+        daily_q = daily_q.filter(UserStudySession.book_id == f_book)
+    daily_q = daily_q.group_by(func.date(UserStudySession.started_at)).order_by('day')
 
     daily_study = [
         {
@@ -262,7 +298,49 @@ def get_user_detail(current_user, user_id):
             'correct': int(row.correct or 0),
             'wrong': int(row.wrong or 0),
         }
-        for row in daily_rows
+        for row in daily_q.all()
+    ]
+
+    # Chapter×day×mode aggregation — multi-dimensional view
+    # Groups: book_id, chapter_id, date, mode → correct/wrong/words/seconds/sessions
+    chapter_daily_q = db.session.query(
+        UserStudySession.book_id,
+        UserStudySession.chapter_id,
+        func.date(UserStudySession.started_at).label('day'),
+        UserStudySession.mode,
+        func.count(UserStudySession.id).label('sessions'),
+        func.sum(UserStudySession.words_studied).label('words'),
+        func.sum(UserStudySession.correct_count).label('correct'),
+        func.sum(UserStudySession.wrong_count).label('wrong'),
+        func.sum(UserStudySession.duration_seconds).label('seconds'),
+    ).filter(UserStudySession.user_id == user_id)
+
+    chapter_daily_q = _apply_filters(chapter_daily_q)
+    if not date_from:
+        chapter_daily_q = chapter_daily_q.filter(
+            UserStudySession.started_at >= (datetime.utcnow() - timedelta(days=89)).strftime('%Y-%m-%d')
+        )
+
+    chapter_daily_q = chapter_daily_q.group_by(
+        UserStudySession.book_id,
+        UserStudySession.chapter_id,
+        func.date(UserStudySession.started_at),
+        UserStudySession.mode,
+    ).order_by(desc(func.date(UserStudySession.started_at)))
+
+    chapter_daily = [
+        {
+            'book_id': r.book_id or '',
+            'chapter_id': r.chapter_id or '',
+            'day': str(r.day),
+            'mode': r.mode or '',
+            'sessions': r.sessions,
+            'words': int(r.words or 0),
+            'correct': int(r.correct or 0),
+            'wrong': int(r.wrong or 0),
+            'seconds': int(r.seconds or 0),
+        }
+        for r in chapter_daily_q.limit(500).all()
     ]
 
     return jsonify({
@@ -272,6 +350,7 @@ def get_user_detail(current_user, user_id):
         'wrong_words': wrong_words,
         'sessions': sessions,
         'daily_study': daily_study,
+        'chapter_daily': chapter_daily,
     }), 200
 
 
