@@ -8,6 +8,7 @@ import { apiFetch, safeParse, LoginSchema, RegisterSchema, AuthResponseSchema, U
 interface AuthContextValue {
   user: User | null
   isAuthenticated: boolean
+  isAdmin: boolean
   isLoading: boolean
   login: (identifier: string, password: string) => Promise<void>
   register: (username: string, password: string, email?: string) => Promise<void>
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: raw.email || '',
             username: raw.username,
             avatar_url: raw.avatar_url ?? null,
+            is_admin: raw.is_admin ?? false,
             created_at: raw.created_at,
           })
         }
@@ -146,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user,
       isAuthenticated: !!user,
+      isAdmin: !!(user?.is_admin),
       isLoading,
       login,
       register,
