@@ -743,6 +743,28 @@ def get_learning_stats(current_user: User):
                       if s.started_at and s.started_at.strftime('%Y-%m-%d') == today_str]
     today_duration = sum(s.duration_seconds or 0 for s in today_sessions)
 
+    # ── Per-mode breakdown (all-time, from UserStudySession) ──────────────────
+    mode_stats: dict = {}
+    for s in all_user_sessions:
+        m = s.mode or 'unknown'
+        if m not in mode_stats:
+            mode_stats[m] = {
+                'mode': m,
+                'words_studied': 0, 'correct_count': 0,
+                'wrong_count': 0, 'duration_seconds': 0, 'sessions': 0,
+            }
+        mode_stats[m]['words_studied'] += s.words_studied or 0
+        mode_stats[m]['correct_count'] += s.correct_count or 0
+        mode_stats[m]['wrong_count'] += s.wrong_count or 0
+        mode_stats[m]['duration_seconds'] += s.duration_seconds or 0
+        mode_stats[m]['sessions'] += 1
+
+    for md in mode_stats.values():
+        attempted = md['correct_count'] + md['wrong_count']
+        md['accuracy'] = round(md['correct_count'] / attempted * 100) if attempted > 0 else None
+
+    mode_breakdown = sorted(mode_stats.values(), key=lambda x: x['words_studied'], reverse=True)
+
     return jsonify({
         'daily': active_daily,
         'books': books,
@@ -760,7 +782,8 @@ def get_learning_stats(current_user: User):
             'duration_seconds': alltime_duration,
             'today_accuracy': today_accuracy,
             'today_duration_seconds': today_duration,
-        }
+        },
+        'mode_breakdown': mode_breakdown,
     })
 
 
