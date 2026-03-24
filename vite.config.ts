@@ -41,6 +41,8 @@ export default defineConfig({
     port: 3002,
     strictPort: true,
     allowedHosts: true,
+    // Disable HMR overlay in preview mode
+    hmr: false,
     // preview 模式同样需要代理，否则 /api 请求打到 vite 自身会 404
     proxy: {
       '/api': {
