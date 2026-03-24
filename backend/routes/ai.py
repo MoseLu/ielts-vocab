@@ -1,7 +1,7 @@
 import json
 import uuid
 from flask import Blueprint, jsonify, request
-from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat
+from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory
 from routes.middleware import token_required
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
@@ -294,6 +294,133 @@ def _chat_with_tools(messages: list[dict], tools: list | None = None, max_iterat
     return {"type": "text", "text": "[对话轮次过多，已停止]"}
 
 
+GREET_SYSTEM_PROMPT = """你是一个 IELTS 英语词汇学习规划助手，名叫"雅思小助手"。请用中文回复用户。
+
+你的任务是生成一条个性化的问候语，让用户感到被关注和激励。
+
+## 问候规则
+- 如果用户有历史学习数据（totalLearned > 0），回顾他们的进度并鼓励继续
+- 如果用户正在学习中（有 [当前学习状态]），提及当前进度
+- 如果用户是新用户（totalLearned=0），热情欢迎，引导开始学习
+- 问候语要简洁（3-5句话），不要过长
+- 可以提供 2-3 个选项让用户快速选择接下来要做什么
+
+## 回复格式
+直接输出问候内容，可在末尾加选项：
+[options]
+A. 选项A
+B. 选项B
+[/options]
+"""
+
+
+def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
+    """Build a combined context message from server data + frontend state."""
+    parts = []
+
+    # Server-side learning summary
+    total_learned = ctx_data.get('totalLearned', 0)
+    total_correct = ctx_data.get('totalCorrect', 0)
+    total_wrong = ctx_data.get('totalWrong', 0)
+    accuracy = ctx_data.get('accuracyRate', 0)
+    trend = ctx_data.get('recentTrend', 'new')
+    books = ctx_data.get('books', [])
+    wrong_words = ctx_data.get('wrongWords', [])
+
+    parts.append(
+        f"【用户学习数据摘要】\n"
+        f"总学习词数：{total_learned}\n"
+        f"总正确数：{total_correct}  总错误数：{total_wrong}\n"
+        f"整体准确率：{accuracy}%\n"
+        f"学习趋势：{trend}\n"
+        f"正在学习的词书：{len(books)} 本"
+    )
+    for b in books:
+        parts.append(
+            f"  - {b.get('title', b.get('id'))} "
+            f"(准确率 {b.get('accuracy', 0)}%，错词数 {b.get('wrongCount', 0)})"
+        )
+    if wrong_words:
+        words_list = '、'.join([w['word'] for w in wrong_words[:20]])
+        parts.append(f"错词列表（最近50条）：{words_list}")
+    else:
+        parts.append("错词列表：暂无")
+
+    # Frontend session context
+    if frontend_context:
+        ctx_str = _build_context_msg(frontend_context)
+        if ctx_str and ctx_str != '暂无':
+            parts.append(f"\n[当前学习状态]\n{ctx_str}")
+
+    return '\n'.join(parts)
+
+
+@ai_bp.route('/greet', methods=['POST'])
+@token_required
+def greet(current_user: User):
+    """
+    Personalized greeting — called when user opens the AI chat panel.
+    Returns a greeting based on the user's real learning progress.
+    """
+    body = request.get_json() or {}
+    frontend_context = body.get('context', {})
+
+    messages = [{"role": "system", "content": GREET_SYSTEM_PROMPT}]
+
+    try:
+        ctx_resp = get_context(current_user)
+        ctx_data = ctx_resp.get_json()
+        context_msg = _build_learning_context_msg(ctx_data, frontend_context)
+        messages.append({"role": "user", "content": f"[学习数据]\n{context_msg}\n\n请根据以上数据，生成一条个性化的问候。"})
+    except Exception as e:
+        import logging
+        logging.warning(f"[AI] greet context load failed for user={current_user.id}: {e}")
+        messages.append({"role": "user", "content": "请生成一条欢迎问候语，用户可能刚开始学习。"})
+
+    try:
+        response = _chat_with_tools(messages, tools=None)
+        final_text = response.get("text", str(response))
+        options = _parse_options(final_text)
+        clean_reply = _strip_options(final_text)
+        return jsonify({'reply': clean_reply, 'options': options})
+    except Exception as e:
+        return jsonify({'error': f'AI service error: {str(e)}'}), 500
+
+
+# ── Conversation history helpers ──────────────────────────────────────────────
+
+_HISTORY_LIMIT = 20  # max past turns to include in context
+
+
+def _load_history(user_id: int) -> list[dict]:
+    """Load last N conversation turns from DB as LLM-ready message dicts."""
+    rows = (
+        UserConversationHistory.query
+        .filter_by(user_id=user_id)
+        .order_by(UserConversationHistory.created_at.desc())
+        .limit(_HISTORY_LIMIT)
+        .all()
+    )
+    # Reverse so oldest first
+    return [{"role": r.role, "content": r.content} for r in reversed(rows)]
+
+
+def _save_turn(user_id: int, user_message: str, assistant_reply: str):
+    """Persist a user+assistant turn to DB."""
+    try:
+        db.session.add(UserConversationHistory(
+            user_id=user_id, role='user', content=user_message
+        ))
+        db.session.add(UserConversationHistory(
+            user_id=user_id, role='assistant', content=assistant_reply
+        ))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        import logging
+        logging.warning(f"[AI] Failed to save conversation turn: {e}")
+
+
 @ai_bp.route('/ask', methods=['POST'])
 @token_required
 def ask(current_user: User):
@@ -318,36 +445,19 @@ def ask(current_user: User):
     try:
         ctx_resp = get_context(current_user)
         ctx_data = ctx_resp.get_json()
-        context_msg = (
-            f"【用户学习数据摘要】\n"
-            f"总学习词数：{ctx_data.get('totalLearned', 0)}\n"
-            f"总正确数：{ctx_data.get('totalCorrect', 0)}  总错误数：{ctx_data.get('totalWrong', 0)}\n"
-            f"整体准确率：{ctx_data.get('accuracyRate', 0)}%\n"
-            f"学习趋势：{ctx_data.get('recentTrend', 'new')}\n"
-            f"正在学习的词书：{len(ctx_data.get('books', []))} 本\n"
-        )
-        for b in ctx_data.get('books', []):
-            context_msg += (
-                f"  - {b.get('title', b.get('id'))} "
-                f"(准确率 {b.get('accuracy', 0)}%，错词数 {b.get('wrongCount', 0)})\n"
-            )
-        wrong_words = ctx_data.get('wrongWords', [])
-        if wrong_words:
-            words_list = '、'.join([w['word'] for w in wrong_words[:20]])
-            context_msg += f"错词列表（最近50条）：{words_list}\n"
-        else:
-            context_msg += "错词列表：暂无\n"
-
+        context_msg = _build_learning_context_msg(ctx_data, frontend_context)
         messages.append({"role": "user", "content": f"[学习数据]\n{context_msg}"})
     except Exception as e:
-        import logging
         logging.warning(f"[AI] Failed to fetch user context: {e}")
         messages.append({"role": "user", "content": "[学习数据]\n数据加载失败，请根据用户当前状态回复。"})
+        # Still inject frontend context if available
+        if frontend_context:
+            ctx_str = _build_context_msg(frontend_context)
+            messages.append({"role": "user", "content": f"[当前学习状态]\n{ctx_str}"})
 
-    # Inject frontend learning context (current word, mode, etc.)
-    if frontend_context:
-        ctx_str = _build_context_msg(frontend_context)
-        messages.append({"role": "user", "content": f"[当前学习状态]\n{ctx_str}"})
+    # Load and append conversation history so AI remembers past turns
+    history = _load_history(current_user.id)
+    messages.extend(history)
 
     # Proactive search: if user asks about examples/definitions, search first
     search_trigger_keywords = ['例句', '例 子', 'example', '怎么 用', '用法', '这个词', '这个词的', '这个单词']
@@ -376,6 +486,9 @@ def ask(current_user: User):
         options = _parse_options(final_text)
         # Strip [options] blocks from the visible reply text
         clean_reply = _strip_options(final_text)
+
+        # Persist this turn so future calls include it as history
+        _save_turn(current_user.id, user_message, clean_reply)
 
         return jsonify({
             'reply': clean_reply,
