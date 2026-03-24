@@ -18,6 +18,7 @@ import ProfilePage from './components/ProfilePage'
 import AIChatPanel from './components/AIChatPanel'
 import VocabTestPage from './components/VocabTestPage'
 import AdminDashboard from './components/AdminDashboard'
+import LearningJournalPage from './components/LearningJournalPage'
 import Toast from './components/Toast'
 
 // Reset scroll to top on every PUSH navigation (tab switches, link clicks)
@@ -172,6 +173,17 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                   <AdminDashboard />
                 ) : (
                   <Navigate to={user ? "/" : "/login"} replace />
+                )
+              }
+            />
+
+            <Route
+              path="/journal"
+              element={
+                user ? (
+                  <LearningJournalPage />
+                ) : (
+                  <Navigate to="/login" replace />
                 )
               }
             />

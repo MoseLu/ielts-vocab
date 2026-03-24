@@ -67,6 +67,9 @@
 /* ── Pages: Admin Dashboard ── */
 @import './pages/admin.css';
 
+/* ── Pages: Learning Journal ── */
+@import './pages/journal.css';
+
 /* ── Utils ── */
 @import './utils/utilities.css';
 @import './utils/responsive.css';
