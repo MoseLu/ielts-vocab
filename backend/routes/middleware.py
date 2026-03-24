@@ -9,6 +9,7 @@ Token lookup order:
   2. Authorization header  `Bearer <token>`   (kept for backward compat / tooling)
 """
 
+from datetime import datetime
 from functools import wraps
 from flask import request, jsonify
 from models import User, RevokedToken
@@ -61,7 +62,7 @@ def token_required(f):
         if payload.get('type') != 'access':
             return jsonify({'error': '登录凭证类型错误', 'code': 'WRONG_TOKEN_TYPE'}), 401
 
-        # Revocation check
+        # Revocation check (individual JTI)
         jti = payload.get('jti')
         if jti and RevokedToken.is_revoked(jti):
             return jsonify({'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}), 401
@@ -69,6 +70,12 @@ def token_required(f):
         current_user = User.query.get(payload['user_id'])
         if not current_user:
             return jsonify({'error': '用户不存在', 'code': 'USER_NOT_FOUND'}), 401
+
+        # Mass-revocation check: reject tokens issued before tokens_revoked_before
+        if current_user.tokens_revoked_before:
+            iat = payload.get('iat')
+            if iat and datetime.utcfromtimestamp(iat) < current_user.tokens_revoked_before:
+                return jsonify({'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}), 401
 
         return f(current_user, *args, **kwargs)
 
@@ -100,6 +107,11 @@ def admin_required(f):
         current_user = User.query.get(payload['user_id'])
         if not current_user:
             return jsonify({'error': '用户不存在', 'code': 'USER_NOT_FOUND'}), 401
+
+        if current_user.tokens_revoked_before:
+            iat = payload.get('iat')
+            if iat and datetime.utcfromtimestamp(iat) < current_user.tokens_revoked_before:
+                return jsonify({'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}), 401
 
         if not current_user.is_admin:
             return jsonify({'error': '权限不足', 'code': 'FORBIDDEN'}), 403

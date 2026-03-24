@@ -18,6 +18,9 @@ class User(db.Model):
     avatar_url = db.Column(db.Text, nullable=True)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # When set, any token issued (iat) before this timestamp is rejected.
+    # Used to mass-revoke all tokens on suspected theft.
+    tokens_revoked_before = db.Column(db.DateTime, nullable=True)
 
     progress = db.relationship('UserProgress', backref='user', lazy=True, cascade='all, delete-orphan')
 

@@ -110,6 +110,13 @@ def _migrate_db(app):
                 conn.commit()
                 print("[Migration] fuzzy_count column added.")
 
+            # Migration 5: add tokens_revoked_before to users (for mass token revocation on theft)
+            if 'tokens_revoked_before' not in col_names:
+                print("[Migration] Adding tokens_revoked_before to users...")
+                conn.execute(text("ALTER TABLE users ADD COLUMN tokens_revoked_before DATETIME"))
+                conn.commit()
+                print("[Migration] tokens_revoked_before column added.")
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)

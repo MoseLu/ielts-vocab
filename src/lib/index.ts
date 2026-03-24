@@ -40,6 +40,7 @@ async function _attemptRefresh(): Promise<void> {
         const r = await fetch('/api/auth/refresh', {
           method: 'POST',
           credentials: 'include',
+          signal: AbortSignal.timeout(10_000),
         })
         if (r.ok) return
         // A real 401 means the token is genuinely expired — don't retry
@@ -73,7 +74,12 @@ export async function apiFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const headers = _buildHeaders(options)
-  const init: RequestInit = { ...options, headers, credentials: 'include' }
+  // Merge caller's signal with a 30 s timeout so requests never hang forever
+  const timeoutSignal = AbortSignal.timeout(30_000)
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, timeoutSignal])
+    : timeoutSignal
+  const init: RequestInit = { ...options, headers, credentials: 'include', signal }
 
   const response = await fetch(url, init)
 
