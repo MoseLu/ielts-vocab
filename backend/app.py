@@ -1,6 +1,10 @@
 import eventlet
 eventlet.monkey_patch()
 
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
 from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
