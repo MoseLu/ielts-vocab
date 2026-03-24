@@ -7,6 +7,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import type { User } from '../types'
 import { STORAGE_KEYS } from '../constants'
 import { apiFetch, safeParse, LoginSchema, RegisterSchema, UserSchema } from '../lib'
+import { useToast } from './ToastContext'
 
 interface AuthContextValue {
   user: User | null
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const _refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { showToast } = useToast()
 
   /** Schedule a proactive token refresh 60 s before the access token expires. */
   const _scheduleRefresh = useCallback((expiresInSeconds: number) => {
@@ -66,17 +68,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // On mount: validate cookie with the server; fall back to cached user while loading
   useEffect(() => {
     const cached = localStorage.getItem(STORAGE_KEYS.AUTH_USER)
-    if (cached) {
-      try {
-        const raw = JSON.parse(cached)
-        const parsed = safeParse(UserSchema, raw)
-        setUser(parsed.success ? parsed.data : {
-          id: raw.id ?? 0, email: raw.email || '', username: raw.username,
-          avatar_url: raw.avatar_url ?? null, is_admin: raw.is_admin ?? false,
-          created_at: raw.created_at,
-        })
-      } catch { /* ignore */ }
+    if (!cached) {
+      // No cached user means not logged in — skip server round-trip to avoid
+      // a spurious 401 appearing in the browser console.
+      setIsLoading(false)
+      return
     }
+
+    try {
+      const raw = JSON.parse(cached)
+      const parsed = safeParse(UserSchema, raw)
+      setUser(parsed.success ? parsed.data : {
+        id: raw.id ?? 0, email: raw.email || '', username: raw.username,
+        avatar_url: raw.avatar_url ?? null, is_admin: raw.is_admin ?? false,
+        created_at: raw.created_at,
+      })
+    } catch { /* ignore */ }
 
     // Verify the cookie is still valid and pull fresh user data
     apiFetch<{ user: unknown; access_expires_in?: number }>('/api/auth/me')
@@ -99,14 +106,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .finally(() => setIsLoading(false))
-  }, [])
+  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for session-expired events fired by apiFetch after a failed refresh
   useEffect(() => {
-    const handler = () => _clearUser()
+    const handler = () => {
+      _clearUser()
+      showToast('登录已过期，请重新登录', 'error')
+    }
     window.addEventListener('auth:session-expired', handler)
     return () => window.removeEventListener('auth:session-expired', handler)
-  }, [])
+  }, [showToast])
 
   const login = useCallback(async (identifier: string, password: string) => {
     const formResult = safeParse(LoginSchema, { identifier, password })
