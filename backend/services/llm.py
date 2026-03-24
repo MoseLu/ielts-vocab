@@ -104,14 +104,26 @@ REMEMBER_TOOL_DEF = {
 TOOLS = [SEARCH_TOOL_DEF, REMEMBER_TOOL_DEF]
 
 
+_SEARCH_CACHE_TTL_DAYS = 7
+
+
 def web_search(query: str) -> str:
     """
     Perform a web search. Uses DuckDuckGo as primary (no API key needed).
-    Results are cached in the database.
+    Results are cached in the database for up to 7 days.
     """
+    from datetime import datetime, timedelta
     from models import db, SearchCache
 
-    # Check cache first
+    # Prune expired cache entries (opportunistic, non-blocking on failure)
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=_SEARCH_CACHE_TTL_DAYS)
+        SearchCache.query.filter(SearchCache.created_at < cutoff).delete(synchronize_session=False)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    # Check cache (only fresh entries remain after prune above)
     cached = SearchCache.query.filter_by(query=query).first()
     if cached:
         return f"[Cached]\n{cached.result}"

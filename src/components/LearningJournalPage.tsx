@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { apiFetch } from '../lib'
 import { safeParse } from '../lib/validation'
 import {
@@ -26,32 +28,14 @@ function formatDateTime(iso: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-// ── Markdown renderer (lightweight) ──────────────────────────────────────────
+// ── Safe Markdown renderer (marked + DOMPurify) ───────────────────────────────
 
 function renderMarkdown(md: string): string {
-  return md
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    // headings
-    .replace(/^#{3}\s+(.+)$/gm, '<h3>$1</h3>')
-    .replace(/^#{2}\s+(.+)$/gm, '<h2>$1</h2>')
-    .replace(/^#{1}\s+(.+)$/gm, '<h1>$1</h1>')
-    // bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // italic
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // horizontal rule
-    .replace(/^---$/gm, '<hr />')
-    // unordered list items
-    .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
-    // wrap consecutive <li> in <ul>
-    .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
-    // line breaks → paragraphs for double newlines
-    .replace(/\n{2,}/g, '</p><p>')
-    .replace(/^/, '<p>')
-    .replace(/$/, '</p>')
-    // clean up empty paragraphs around block elements
-    .replace(/<p>\s*(<h[123]>|<ul>|<hr)/g, '$1')
-    .replace(/(<\/h[123]>|<\/ul>|<hr \/>)\s*<\/p>/g, '$1')
+  const raw = marked.parse(md, { async: false }) as string
+  return DOMPurify.sanitize(raw, {
+    ALLOWED_TAGS: ['h1','h2','h3','h4','p','strong','em','ul','ol','li','hr','br','code','pre','blockquote'],
+    ALLOWED_ATTR: [],
+  })
 }
 
 // ── ExpandableText ────────────────────────────────────────────────────────────
@@ -115,12 +99,13 @@ export default function LearningJournalPage() {
   const [generatingDate, setGeneratingDate] = useState('')
   const [selectedSummary, setSelectedSummary] = useState<DailySummary | null>(null)
 
-  // notes state
+  // notes state — cursor-based pagination
   const [notes, setNotes] = useState<LearningNote[]>([])
   const [notesLoading, setNotesLoading] = useState(false)
   const [notesError, setNotesError] = useState('')
-  const [notesPage, setNotesPage] = useState(1)
   const [notesTotal, setNotesTotal] = useState(0)
+  const [cursorStack, setCursorStack] = useState<(number | null)[]>([null]) // stack of before_id values
+  const [hasMore, setHasMore] = useState(false)
   const NOTES_PER_PAGE = 20
 
   // export state
@@ -134,8 +119,7 @@ export default function LearningJournalPage() {
       const params = new URLSearchParams()
       if (startDate) params.set('start_date', startDate)
       if (endDate) params.set('end_date', endDate)
-      const res = await apiFetch(`/api/notes/summaries?${params}`)
-      const data = await res.json()
+      const data = await apiFetch<unknown>(`/api/notes/summaries?${params}`)
       const parsed = safeParse(SummariesListResponseSchema, data)
       if (parsed.success) {
         setSummaries(parsed.data.summaries)
@@ -149,21 +133,21 @@ export default function LearningJournalPage() {
     }
   }, [startDate, endDate])
 
-  // ── fetch notes ──────────────────────────────────────────────────────────────
-  const fetchNotes = useCallback(async (page = 1) => {
+  // ── fetch notes (cursor-based) ────────────────────────────────────────────────
+  const fetchNotes = useCallback(async (beforeId: number | null = null) => {
     setNotesLoading(true)
     setNotesError('')
     try {
-      const params = new URLSearchParams({ page: String(page), per_page: String(NOTES_PER_PAGE) })
+      const params = new URLSearchParams({ per_page: String(NOTES_PER_PAGE) })
+      if (beforeId != null) params.set('before_id', String(beforeId))
       if (startDate) params.set('start_date', startDate)
       if (endDate) params.set('end_date', endDate)
-      const res = await apiFetch(`/api/notes?${params}`)
-      const data = await res.json()
+      const data = await apiFetch<unknown>(`/api/notes?${params}`)
       const parsed = safeParse(NotesListResponseSchema, data)
       if (parsed.success) {
         setNotes(parsed.data.notes)
         setNotesTotal(parsed.data.total)
-        setNotesPage(page)
+        setHasMore(parsed.data.has_more)
       } else {
         setNotesError('数据格式错误')
       }
@@ -175,8 +159,9 @@ export default function LearningJournalPage() {
   }, [startDate, endDate])
 
   useEffect(() => {
+    setCursorStack([null])
     if (tab === 'summaries') fetchSummaries()
-    else fetchNotes(1)
+    else fetchNotes(null)
   }, [tab, fetchSummaries, fetchNotes])
 
   // ── generate summary ─────────────────────────────────────────────────────────
@@ -237,8 +222,6 @@ export default function LearningJournalPage() {
       setExporting(false)
     }
   }
-
-  const totalNotesPages = Math.ceil(notesTotal / NOTES_PER_PAGE)
 
   return (
     <div className="journal-page">
@@ -399,23 +382,31 @@ export default function LearningJournalPage() {
                 ))}
               </div>
 
-              {/* Pagination */}
-              {totalNotesPages > 1 && (
+              {/* Cursor pagination */}
+              {(cursorStack.length > 1 || hasMore) && (
                 <div className="journal-pagination">
                   <button
                     className="journal-page-btn"
-                    disabled={notesPage <= 1}
-                    onClick={() => fetchNotes(notesPage - 1)}
+                    disabled={cursorStack.length <= 1}
+                    onClick={() => {
+                      const prev = [...cursorStack]
+                      prev.pop()           // remove current
+                      const beforeId = prev[prev.length - 1] ?? null
+                      setCursorStack(prev)
+                      fetchNotes(beforeId)
+                    }}
                   >
                     上一页
                   </button>
-                  <span className="journal-page-info">
-                    {notesPage} / {totalNotesPages}
-                  </span>
+                  <span className="journal-page-info">第 {cursorStack.length} 页</span>
                   <button
                     className="journal-page-btn"
-                    disabled={notesPage >= totalNotesPages}
-                    onClick={() => fetchNotes(notesPage + 1)}
+                    disabled={!hasMore}
+                    onClick={() => {
+                      const lastId = notes[notes.length - 1]?.id ?? null
+                      setCursorStack(s => [...s, lastId])
+                      fetchNotes(lastId)
+                    }}
                   >
                     下一页
                   </button>

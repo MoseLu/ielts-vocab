@@ -1,13 +1,39 @@
+import re
 import json
 import logging
 from datetime import datetime, timedelta, date as date_type
 
 from flask import Blueprint, jsonify, request
-from models import db, UserLearningNote, UserDailySummary, UserStudySession, UserWrongWord, UserConversationHistory
+from models import db, UserLearningNote, UserDailySummary, UserStudySession, UserWrongWord
 from routes.middleware import token_required
 from services.llm import chat
 
 notes_bp = Blueprint('notes', __name__)
+
+# ── Parameter helpers ──────────────────────────────────────────────────────────
+
+def _parse_int_param(value: str | None, default: int, min_val: int, max_val: int) -> tuple[int, str | None]:
+    """Parse an integer query param with range clamp. Returns (value, error_msg)."""
+    if value is None:
+        return default, None
+    try:
+        n = int(value)
+    except (ValueError, TypeError):
+        return default, f"参数必须为整数，收到：{value!r}"
+    return max(min_val, min(max_val, n)), None
+
+
+def _parse_date_param(value: str | None, name: str) -> tuple[str | None, str | None]:
+    """Validate YYYY-MM-DD date string. Returns (value, error_msg)."""
+    if not value:
+        return None, None
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', value):
+        return None, f"{name} 格式错误，应为 YYYY-MM-DD"
+    try:
+        datetime.strptime(value, '%Y-%m-%d')
+    except ValueError:
+        return None, f"{name} 不是有效日期"
+    return value, None
 
 
 # ── GET /api/notes ─────────────────────────────────────────────────────────────
@@ -15,42 +41,60 @@ notes_bp = Blueprint('notes', __name__)
 @notes_bp.route('', methods=['GET'])
 @token_required
 def get_notes(current_user):
-    """List Q&A notes with optional date range filter and pagination."""
-    start_date = request.args.get('start_date')   # YYYY-MM-DD
-    end_date   = request.args.get('end_date')     # YYYY-MM-DD
-    page       = max(1, int(request.args.get('page', 1)))
-    per_page   = min(100, max(1, int(request.args.get('per_page', 20))))
+    """List Q&A notes with cursor-based pagination (before_id) and optional date filter.
+
+    Cursor pagination avoids OFFSET O(N) scans:
+      - first page: omit before_id
+      - next page:  before_id = id of the last item in previous response
+    """
+    per_page, err = _parse_int_param(request.args.get('per_page'), default=20, min_val=1, max_val=100)
+    if err:
+        return jsonify({'error': err}), 400
+
+    before_id_raw = request.args.get('before_id')
+    before_id: int | None = None
+    if before_id_raw is not None:
+        before_id, err = _parse_int_param(before_id_raw, default=0, min_val=1, max_val=2_147_483_647)
+        if err:
+            return jsonify({'error': f'before_id: {err}'}), 400
+
+    # Validate date params
+    start_date, err = _parse_date_param(request.args.get('start_date'), 'start_date')
+    if err:
+        return jsonify({'error': err}), 400
+    end_date, err = _parse_date_param(request.args.get('end_date'), 'end_date')
+    if err:
+        return jsonify({'error': err}), 400
+
+    if start_date and end_date and start_date > end_date:
+        return jsonify({'error': 'start_date 不能晚于 end_date'}), 400
 
     query = UserLearningNote.query.filter_by(user_id=current_user.id)
 
     if start_date:
-        try:
-            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-            query = query.filter(UserLearningNote.created_at >= start_dt)
-        except ValueError:
-            return jsonify({'error': 'Invalid start_date format, expected YYYY-MM-DD'}), 400
-
+        query = query.filter(UserLearningNote.created_at >= datetime.strptime(start_date, '%Y-%m-%d'))
     if end_date:
-        try:
-            end_dt = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-            query = query.filter(UserLearningNote.created_at < end_dt)
-        except ValueError:
-            return jsonify({'error': 'Invalid end_date format, expected YYYY-MM-DD'}), 400
+        query = query.filter(UserLearningNote.created_at < datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1))
+    if before_id:
+        query = query.filter(UserLearningNote.id < before_id)
 
     total = query.count()
     notes = (
         query
-        .order_by(UserLearningNote.created_at.desc())
-        .offset((page - 1) * per_page)
+        .order_by(UserLearningNote.id.desc())
         .limit(per_page)
         .all()
     )
 
+    has_more = len(notes) == per_page
+    next_cursor = notes[-1].id if has_more else None
+
     return jsonify({
         'notes': [n.to_dict() for n in notes],
         'total': total,
-        'page': page,
         'per_page': per_page,
+        'next_cursor': next_cursor,
+        'has_more': has_more,
     })
 
 
@@ -60,11 +104,17 @@ def get_notes(current_user):
 @token_required
 def get_summaries(current_user):
     """List daily summaries with optional date range filter."""
-    start_date = request.args.get('start_date')
-    end_date   = request.args.get('end_date')
+    start_date, err = _parse_date_param(request.args.get('start_date'), 'start_date')
+    if err:
+        return jsonify({'error': err}), 400
+    end_date, err = _parse_date_param(request.args.get('end_date'), 'end_date')
+    if err:
+        return jsonify({'error': err}), 400
+
+    if start_date and end_date and start_date > end_date:
+        return jsonify({'error': 'start_date 不能晚于 end_date'}), 400
 
     query = UserDailySummary.query.filter_by(user_id=current_user.id)
-
     if start_date:
         query = query.filter(UserDailySummary.date >= start_date)
     if end_date:
@@ -91,6 +141,9 @@ SUMMARY_SYSTEM_PROMPT = """你是一个 IELTS 英语词汇学习助手。请根�
 - 如果没有数据，说明当日无学习记录
 """
 
+# Rate limit: max 1 generation per date per user per hour
+_GENERATE_COOLDOWN_SECONDS = 3600
+
 
 @notes_bp.route('/summaries/generate', methods=['POST'])
 @token_required
@@ -100,14 +153,31 @@ def generate_summary(current_user):
     target_date = body.get('date', date_type.today().strftime('%Y-%m-%d'))
 
     # Validate date format
-    try:
-        start_dt = datetime.strptime(target_date, '%Y-%m-%d')
-    except ValueError:
-        return jsonify({'error': 'Invalid date format, expected YYYY-MM-DD'}), 400
+    target_date, err = _parse_date_param(target_date, 'date')
+    if err or not target_date:
+        return jsonify({'error': err or '日期格式错误'}), 400
 
+    # Reject future dates (no study data exists yet)
+    if target_date > date_type.today().strftime('%Y-%m-%d'):
+        return jsonify({'error': '不能为未来日期生成总结'}), 400
+
+    # Rate limiting: check last generated_at
+    existing = UserDailySummary.query.filter_by(
+        user_id=current_user.id, date=target_date
+    ).first()
+    if existing and existing.generated_at:
+        elapsed = (datetime.utcnow() - existing.generated_at).total_seconds()
+        if elapsed < _GENERATE_COOLDOWN_SECONDS:
+            wait_min = int((_GENERATE_COOLDOWN_SECONDS - elapsed) / 60) + 1
+            return jsonify({
+                'error': f'生成过于频繁，请 {wait_min} 分钟后再试',
+                'cooldown': True,
+            }), 429
+
+    start_dt = datetime.strptime(target_date, '%Y-%m-%d')
     end_dt = start_dt + timedelta(days=1)
 
-    # Fetch Q&A notes for the day
+    # Fetch data for this date
     notes = (
         UserLearningNote.query
         .filter_by(user_id=current_user.id)
@@ -115,8 +185,6 @@ def generate_summary(current_user):
         .order_by(UserLearningNote.created_at.asc())
         .all()
     )
-
-    # Fetch study sessions for the day
     sessions = (
         UserStudySession.query
         .filter_by(user_id=current_user.id)
@@ -124,16 +192,13 @@ def generate_summary(current_user):
         .order_by(UserStudySession.started_at.asc())
         .all()
     )
-
-    # Fetch wrong words (updated today)
     wrong_words = (
         UserWrongWord.query
         .filter_by(user_id=current_user.id)
-        .limit(50)
-        .all()
+        .limit(50).all()
     )
 
-    # Build prompt content
+    # Build prompt
     prompt_parts = [f"请为 {target_date} 生成学习总结。\n"]
 
     if sessions:
@@ -181,13 +246,9 @@ def generate_summary(current_user):
             summary_content = f"# {target_date} 学习总结\n\n暂无足够数据生成总结。"
     except Exception as e:
         logging.warning(f"[Notes] LLM summary generation failed for user={current_user.id}: {e}")
-        return jsonify({'error': f'AI 生成失败：{str(e)}'}), 500
+        return jsonify({'error': 'AI 生成失败，请稍后重试'}), 500
 
     # Save or update summary
-    existing = UserDailySummary.query.filter_by(
-        user_id=current_user.id, date=target_date
-    ).first()
-
     try:
         if existing:
             existing.content = summary_content
@@ -223,10 +284,23 @@ def export_notes(current_user):
       format      'md' | 'txt'  (default 'md')
       type        'summaries' | 'notes' | 'all'  (default 'all')
     """
-    start_date  = request.args.get('start_date')
-    end_date    = request.args.get('end_date')
-    fmt         = request.args.get('format', 'md')
+    start_date, err = _parse_date_param(request.args.get('start_date'), 'start_date')
+    if err:
+        return jsonify({'error': err}), 400
+    end_date, err = _parse_date_param(request.args.get('end_date'), 'end_date')
+    if err:
+        return jsonify({'error': err}), 400
+
+    if start_date and end_date and start_date > end_date:
+        return jsonify({'error': 'start_date 不能晚于 end_date'}), 400
+
+    fmt = request.args.get('format', 'md')
+    if fmt not in ('md', 'txt'):
+        fmt = 'md'
+
     export_type = request.args.get('type', 'all')
+    if export_type not in ('summaries', 'notes', 'all'):
+        export_type = 'all'
 
     sections = []
 
@@ -248,17 +322,9 @@ def export_notes(current_user):
     if export_type in ('notes', 'all'):
         q = UserLearningNote.query.filter_by(user_id=current_user.id)
         if start_date:
-            try:
-                start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-                q = q.filter(UserLearningNote.created_at >= start_dt)
-            except ValueError:
-                pass
+            q = q.filter(UserLearningNote.created_at >= datetime.strptime(start_date, '%Y-%m-%d'))
         if end_date:
-            try:
-                end_dt = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-                q = q.filter(UserLearningNote.created_at < end_dt)
-            except ValueError:
-                pass
+            q = q.filter(UserLearningNote.created_at < datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1))
         notes = q.order_by(UserLearningNote.created_at.asc()).all()
 
         if notes:
@@ -272,14 +338,10 @@ def export_notes(current_user):
                 word_info = f" *（{n.word_context}）*" if n.word_context else ""
                 sections.append(f"\n**问：** {n.question}{word_info}\n\n**答：** {n.answer}\n")
 
-    if not sections:
-        content = "暂无数据。"
-    else:
-        content = '\n'.join(sections)
+    content = '\n'.join(sections) if sections else "暂无数据。"
 
     # Strip markdown for plain text export
     if fmt == 'txt':
-        import re
         content = re.sub(r'#{1,6}\s*', '', content)
         content = re.sub(r'\*{1,2}(.+?)\*{1,2}', r'\1', content)
         content = re.sub(r'\n{3,}', '\n\n', content)

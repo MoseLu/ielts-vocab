@@ -118,7 +118,30 @@ def _migrate_db(app):
                 conn.commit()
                 print("[Migration] tokens_revoked_before column added.")
 
-            # Migration 6: create user_learning_notes table if missing
+            # Migration 6: add missing indexes on conversation history and study sessions
+            existing_indexes = {row[1] for row in conn.execute(text("SELECT name FROM sqlite_master WHERE type='index'")).fetchall()}
+
+            if 'ix_user_conversation_history_user_id' not in existing_indexes:
+                print("[Migration] Adding index on user_conversation_history.user_id...")
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_conversation_history_user_id ON user_conversation_history (user_id)"))
+                conn.commit()
+
+            if 'ix_user_conversation_history_created_at' not in existing_indexes:
+                print("[Migration] Adding index on user_conversation_history.created_at...")
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_conversation_history_created_at ON user_conversation_history (created_at)"))
+                conn.commit()
+
+            if 'ix_user_study_sessions_user_id' not in existing_indexes:
+                print("[Migration] Adding index on user_study_sessions.user_id...")
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_study_sessions_user_id ON user_study_sessions (user_id)"))
+                conn.commit()
+
+            if 'ix_user_study_sessions_started_at' not in existing_indexes:
+                print("[Migration] Adding index on user_study_sessions.started_at...")
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_study_sessions_started_at ON user_study_sessions (started_at)"))
+                conn.commit()
+
+            # Migration 8: create user_learning_notes table if missing
             tables = [row[0] for row in conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()]
             if 'user_learning_notes' not in tables:
                 print("[Migration] Creating user_learning_notes table...")
@@ -136,7 +159,7 @@ def _migrate_db(app):
                 conn.commit()
                 print("[Migration] user_learning_notes table created.")
 
-            # Migration 7: create user_daily_summaries table if missing
+            # Migration 9: create user_daily_summaries table if missing
             if 'user_daily_summaries' not in tables:
                 print("[Migration] Creating user_daily_summaries table...")
                 conn.execute(text("""

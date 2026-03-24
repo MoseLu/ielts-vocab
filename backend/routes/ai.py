@@ -485,6 +485,50 @@ def _parse_options(text: str) -> list[str] | None:
     return options if options else None
 
 
+# ── Tool input schemas (whitelist validation) ─────────────────────────────────
+# Maps tool_name → {param: (type, max_len_or_None)}
+_TOOL_INPUT_SCHEMA: dict[str, dict[str, tuple]] = {
+    "web_search": {
+        "query": (str, 500),
+    },
+    "remember_user_note": {
+        "note":     (str, 500),
+        "category": (str, 50),
+    },
+}
+
+_VALID_CATEGORIES = {'goal', 'habit', 'weakness', 'preference', 'achievement', 'other'}
+
+
+def _validate_tool_input(tool_name: str, tool_input: dict) -> dict | None:
+    """
+    Validate and sanitize tool inputs against the whitelist schema.
+    Returns a cleaned dict, or None if validation fails.
+    """
+    schema = _TOOL_INPUT_SCHEMA.get(tool_name)
+    if schema is None:
+        return None   # Unknown tool — reject
+
+    cleaned = {}
+    for param, (expected_type, max_len) in schema.items():
+        val = tool_input.get(param)
+        if val is None:
+            continue
+        if not isinstance(val, expected_type):
+            return None
+        if max_len and isinstance(val, str):
+            val = val[:max_len]
+        cleaned[param] = val
+
+    # Extra whitelist check for category
+    if tool_name == "remember_user_note":
+        cat = cleaned.get("category", "other")
+        if cat not in _VALID_CATEGORIES:
+            cleaned["category"] = "other"
+
+    return cleaned
+
+
 def _chat_with_tools(
     messages: list[dict],
     tools: list | None = None,
@@ -505,11 +549,14 @@ def _chat_with_tools(
 
         if response.get("type") == "tool_call":
             tool_name = response.get("tool")
-            tool_input = response.get("input", {})
+            raw_input = response.get("input", {})
             tool_call_id = response.get("tool_call_id", f"call_{i}")
             handler = handlers.get(tool_name)
 
-            if handler:
+            # Validate + sanitize tool inputs before execution
+            tool_input = _validate_tool_input(tool_name, raw_input) if isinstance(raw_input, dict) else None
+
+            if handler and tool_input is not None:
                 try:
                     result = handler(**tool_input)
                 except Exception as e:
@@ -533,6 +580,14 @@ def _chat_with_tools(
                         "tool_use_id": tool_call_id,
                         "content": result
                     }]
+                })
+            elif handler and tool_input is None:
+                # Tool input failed validation — log and continue
+                import logging as _log
+                _log.warning(f"[AI] Tool '{tool_name}' input validation failed: {raw_input!r}")
+                messages.append({
+                    "role": "assistant",
+                    "content": f"[Tool '{tool_name}' input validation failed]"
                 })
             else:
                 messages.append({
@@ -732,8 +787,13 @@ def _load_history(user_id: int) -> list[dict]:
     return [{"role": r.role, "content": r.content} for r in reversed(rows)]
 
 
+_HISTORY_PRUNE_DAYS = 90   # delete conversation records older than this
+
+
 def _save_turn(user_id: int, user_message: str, assistant_reply: str):
-    """Persist a user+assistant turn to DB."""
+    """Persist a user+assistant turn to DB, and prune records older than 90 days."""
+    from datetime import timedelta
+    import logging
     try:
         db.session.add(UserConversationHistory(
             user_id=user_id, role='user', content=user_message
@@ -741,22 +801,34 @@ def _save_turn(user_id: int, user_message: str, assistant_reply: str):
         db.session.add(UserConversationHistory(
             user_id=user_id, role='assistant', content=assistant_reply
         ))
+        # Prune old history rows (>90 days) to cap table growth
+        cutoff = datetime.utcnow() - timedelta(days=_HISTORY_PRUNE_DAYS)
+        UserConversationHistory.query.filter(
+            UserConversationHistory.user_id == user_id,
+            UserConversationHistory.created_at < cutoff,
+        ).delete(synchronize_session=False)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        import logging
         logging.warning(f"[AI] Failed to save conversation turn: {e}")
 
 
 # ── User memory helpers ───────────────────────────────────────────────────────
 
 def _get_or_create_memory(user_id: int) -> 'UserMemory':
-    """Return the UserMemory row for this user, creating it if absent."""
+    """Return the UserMemory row for this user, creating it if absent.
+    Uses INSERT OR IGNORE to avoid UNIQUE constraint races under concurrency."""
+    from sqlalchemy.exc import IntegrityError
     mem = UserMemory.query.filter_by(user_id=user_id).first()
     if not mem:
-        mem = UserMemory(user_id=user_id)
-        db.session.add(mem)
-        db.session.flush()   # assign id without full commit
+        try:
+            mem = UserMemory(user_id=user_id)
+            db.session.add(mem)
+            db.session.flush()
+        except IntegrityError:
+            # Another request created it concurrently — rollback and re-fetch
+            db.session.rollback()
+            mem = UserMemory.query.filter_by(user_id=user_id).first()
     return mem
 
 
@@ -918,9 +990,11 @@ def ask(current_user: User):
 
     extra_handlers = {'remember_user_note': _handle_remember}
 
-    # Run chat with tool calling support (includes web_search + remember_user_note)
+    # Run chat with tool calling support — capped at 90 s total to prevent hangs
     try:
-        response = _chat_with_tools(messages, tools=TOOLS, extra_handlers=extra_handlers)
+        import eventlet
+        with eventlet.Timeout(90, RuntimeError('LLM timeout')):
+            response = _chat_with_tools(messages, tools=TOOLS, extra_handlers=extra_handlers)
 
         final_text = response.get("text", str(response))
         options = _parse_options(final_text)
@@ -945,9 +1019,10 @@ def ask(current_user: User):
             db.session.rollback()
             logging.warning(f"[AI] Failed to save learning note: {note_err}")
 
-        # Trigger background summarization if history is getting long (non-blocking)
+        # Trigger background summarization asynchronously (non-blocking)
         try:
-            _maybe_summarize_history(current_user.id)
+            import eventlet
+            eventlet.spawn(_maybe_summarize_history, current_user.id)
         except Exception:
             pass
 
@@ -957,7 +1032,9 @@ def ask(current_user: User):
         })
 
     except Exception as e:
-        return jsonify({'error': f'AI service error: {str(e)}'}), 500
+        import logging as _log
+        _log.error(f"[AI] /ask error for user={current_user.id}: {e}", exc_info=True)
+        return jsonify({'error': 'AI 服务暂时不可用，请稍后重试'}), 500
 
 
 # ── POST /api/ai/generate-book ───────────────────────────────────────────────

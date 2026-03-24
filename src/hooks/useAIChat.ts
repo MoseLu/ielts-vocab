@@ -80,6 +80,38 @@ function buildModePerformance() {
   }
 }
 
+const ChapterProgressSchema = z.record(z.string(), z.object({
+  current_index: z.number().optional(),
+  correct_count: z.number().optional(),
+  wrong_count: z.number().optional(),
+  is_completed: z.boolean().optional(),
+  words_learned: z.number().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough())
+
+function buildChapterProgressSummary() {
+  try {
+    const cParsed = safeParse(ChapterProgressSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
+    const raw = cParsed.success ? cParsed.data : {}
+    const entries = Object.entries(raw)
+    if (!entries.length) return undefined
+    const completed = entries.filter(([, p]) => p.is_completed).length
+    const totalCorrect = entries.reduce((s, [, p]) => s + (p.correct_count ?? 0), 0)
+    const totalWrong = entries.reduce((s, [, p]) => s + (p.wrong_count ?? 0), 0)
+    const totalAnswered = totalCorrect + totalWrong
+    return {
+      chaptersAttempted: entries.length,
+      chaptersCompleted: completed,
+      totalCorrect,
+      totalWrong,
+      overallAccuracy: totalAnswered > 0 ? Math.round(totalCorrect / totalAnswered * 100) : 0,
+    }
+  } catch {
+    return undefined
+  }
+}
+}
+
 // ── Session timer ─────────────────────────────────────────────────────────────
 
 /**
@@ -156,44 +188,12 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
 
   // Build the rich context object — merges global context (updated by PracticePage)
   // with local quick-memory, mode-performance, and historical chapter progress.
-  const buildContext = useCallback(() => {
-    // Summarise locally-stored chapter progress so AI sees historical completion data
-    const chapterProgressSummary = (() => {
-      try {
-        const ChapterProgressSchema = z.record(z.string(), z.object({
-          current_index: z.number().optional(),
-          correct_count: z.number().optional(),
-          wrong_count: z.number().optional(),
-          is_completed: z.boolean().optional(),
-          words_learned: z.number().optional(),
-          updatedAt: z.string().optional(),
-        }).passthrough())
-        const cParsed = safeParse(ChapterProgressSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
-        const raw = cParsed.success ? cParsed.data : {}
-        type CP = typeof raw[string]
-        const _raw = raw as Record<string, CP>
-        const entries = Object.entries(_raw)
-        if (!entries.length) return undefined
-        const completed = entries.filter(([, p]) => p.is_completed).length
-        const totalCorrect = entries.reduce((s, [, p]) => s + (p.correct_count ?? 0), 0)
-        const totalWrong = entries.reduce((s, [, p]) => s + (p.wrong_count ?? 0), 0)
-        const totalAnswered = totalCorrect + totalWrong
-        return {
-          chaptersAttempted: entries.length,
-          chaptersCompleted: completed,
-          totalCorrect,
-          totalWrong,
-          overallAccuracy: totalAnswered > 0 ? Math.round(totalCorrect / totalAnswered * 100) : 0,
-        }
-      } catch { return undefined }
-    })()
-    return {
-      ...getGlobalLearningContext(),
-      quickMemorySummary: buildQuickMemorySummary(),
-      modePerformance: buildModePerformance(),
-      localHistory: chapterProgressSummary,
-    }
-  }, [])
+  const buildContext = useCallback(() => ({
+    ...getGlobalLearningContext(),
+    quickMemorySummary: buildQuickMemorySummary(),
+    modePerformance: buildModePerformance(),
+    localHistory: buildChapterProgressSummary(),
+  }), [])
 
   const _syncWrongWords = useCallback(async () => {
     try {
