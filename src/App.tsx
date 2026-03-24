@@ -8,6 +8,7 @@ import Header from './components/Header'
 import LeftSidebar from './components/LeftSidebar'
 import BottomNav from './components/BottomNav'
 import AuthPage from './components/AuthPage'
+import { Loading } from './components/ui/Loading'
 import HomePage from './components/HomePage'
 import PracticePage from './components/practice/PracticePage'
 import VocabBookPage from './components/VocabBookPage'
@@ -39,10 +40,17 @@ interface AppRoutesProps {
 }
 
 function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesProps) {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout, isAdmin, isLoading } = useAuth()
   const { toast } = useToast()
   const location = useLocation()
   const isPractice = location.pathname === '/practice'
+
+  // Wait for auth state to be determined before rendering routes.
+  // Without this, user=null on first render causes premature redirects to /login,
+  // then when cached user loads the /login route redirects to /, losing the original path.
+  if (isLoading) {
+    return <Loading fullScreen />
+  }
 
   return (
     <div className="app">
@@ -210,16 +218,16 @@ export default function App() {
     <Router>
       <AIChatProvider>
         <SettingsProvider>
-          <AuthProvider>
-            <ToastProvider>
+          <ToastProvider>
+            <AuthProvider>
               <AppRoutes
                 mode={mode}
                 currentDay={currentDay}
                 onModeChange={handleModeChange}
                 onDayChange={handleDayChange}
               />
-            </ToastProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </ToastProvider>
         </SettingsProvider>
       </AIChatProvider>
     </Router>
