@@ -41,6 +41,21 @@ export default defineConfig({
     port: 3002,
     strictPort: true,
     allowedHosts: true,
+    // preview 模式同样需要代理，否则 /api 请求打到 vite 自身会 404
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        timeout: 15000,
+      },
+      '/socket.io': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+    },
   },
   resolve: {
     alias: {
