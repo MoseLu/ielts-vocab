@@ -81,7 +81,8 @@ export default function DictationMode({
   onPlayWord,
 }: DictationModeProps) {
   const spellingRef = useRef<HTMLInputElement>(null)
-  const [dictationSubMode, setDictationSubMode] = useState<DictationSubMode>('word')
+  // Default to example mode — falls back to word mode when no examples available
+  const [dictationSubMode, setDictationSubMode] = useState<DictationSubMode>('example')
 
   // Determine if current word has examples for fill-in-blank mode
   const hasExamples = Boolean(currentWord.examples && currentWord.examples.length > 0)
@@ -93,9 +94,9 @@ export default function DictationMode({
     }
   }, [spellingResult, currentWord.word])
 
-  // Reset sub-mode when word changes
+  // Reset to example mode on each new word (if examples are available)
   useEffect(() => {
-    setDictationSubMode(hasExamples ? 'word' : 'word')
+    setDictationSubMode('example')
   }, [currentWord.word])
 
   const handlePlayWord = () => {
@@ -143,6 +144,9 @@ export default function DictationMode({
         )}
 
         <div className="dictation-play-area">
+          <h2 className="dictation-mode-title">
+            {isExampleMode ? '根据语境填写单词' : '根据发音写出单词'}
+          </h2>
           <button
             className="play-btn-large"
             onClick={isExampleMode ? handlePlayExample : handlePlayWord}
@@ -153,7 +157,7 @@ export default function DictationMode({
             </svg>
           </button>
           <p className="dictation-hint">
-            {isExampleMode ? '听句子，写出空缺的单词' : '听发音，拼写单词'}
+            {isExampleMode ? '听例句，写出空缺的单词' : '听发音，拼写单词'}
           </p>
         </div>
 

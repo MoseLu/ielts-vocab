@@ -1014,3 +1014,42 @@ def remove_my_book(current_user, book_id):
         db.session.delete(record)
         db.session.commit()
     return jsonify({'message': '已移除'}), 200
+
+
+# ── GET /api/books/examples ───────────────────────────────────────────────────
+
+@books_bp.route('/examples', methods=['GET'])
+def get_word_examples():
+    """Return example sentences for one or more words.
+
+    Query params:
+      word   — single word lookup, e.g. ?word=record
+      words  — comma-separated batch lookup, e.g. ?words=record,library,transport
+
+    Response:
+      { "examples": { "<word>": [{"en": "...", "zh": "..."}] } }
+    """
+    examples_map = _load_examples()
+
+    single = request.args.get('word', '').strip().lower()
+    batch_raw = request.args.get('words', '').strip()
+
+    if single:
+        # Single-word lookup
+        result = {}
+        hits = examples_map.get(single)
+        if hits:
+            result[single] = hits
+        return jsonify({'examples': result}), 200
+
+    if batch_raw:
+        # Batch lookup — comma-separated
+        words = [w.strip().lower() for w in batch_raw.split(',') if w.strip()]
+        result = {}
+        for w in words:
+            hits = examples_map.get(w)
+            if hits:
+                result[w] = hits
+        return jsonify({'examples': result}), 200
+
+    return jsonify({'error': 'Provide ?word=<word> or ?words=<word1,word2,...>'}), 400
