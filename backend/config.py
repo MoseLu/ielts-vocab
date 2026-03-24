@@ -8,9 +8,9 @@ class Config:
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'database.sqlite')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # JWT — short-lived access token + long-lived refresh token
+    # JWT — access token + long-lived refresh token
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'ielts-vocab-jwt-secret-2024'
-    JWT_ACCESS_TOKEN_EXPIRES = 60 * 15          # 15 minutes
+    JWT_ACCESS_TOKEN_EXPIRES = 60 * 120         # 2 hours (was 15 min — too short for study sessions)
     JWT_REFRESH_TOKEN_EXPIRES = 86400 * 7       # 7 days
 
     # Cookie security (set COOKIE_SECURE=true in production behind HTTPS)

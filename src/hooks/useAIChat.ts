@@ -8,7 +8,7 @@
 import { useState, useCallback } from 'react'
 import { setGlobalLearningContext, getGlobalLearningContext } from '../contexts/AIChatContext'
 import type { AIMessage, LearningContext } from '../types'
-import { safeParse, AIAskResponseSchema } from '../lib'
+import { safeParse, AIAskResponseSchema, apiFetch } from '../lib'
 import { STORAGE_KEYS } from '../constants'
 
 interface UseAIChatOptions {
@@ -64,10 +64,6 @@ function buildModePerformance() {
   }
 }
 
-function getAuthToken() {
-  return localStorage.getItem('auth_token')
-}
-
 // ── Session logger ────────────────────────────────────────────────────────────
 
 export async function logSession(data: {
@@ -80,26 +76,19 @@ export async function logSession(data: {
   durationSeconds: number
   startedAt: number   // epoch ms
 }) {
-  const token = getAuthToken()
-  if (!token) return
-  try {
-    await fetch('/api/ai/log-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        mode: data.mode,
-        bookId: data.bookId,
-        chapterId: data.chapterId,
-        wordsStudied: data.wordsStudied,
-        correctCount: data.correctCount,
-        wrongCount: data.wrongCount,
-        durationSeconds: data.durationSeconds,
-        startedAt: data.startedAt,
-      }),
-    })
-  } catch {
-    // Non-critical
-  }
+  apiFetch('/api/ai/log-session', {
+    method: 'POST',
+    body: JSON.stringify({
+      mode: data.mode,
+      bookId: data.bookId,
+      chapterId: data.chapterId,
+      wordsStudied: data.wordsStudied,
+      correctCount: data.correctCount,
+      wrongCount: data.wrongCount,
+      durationSeconds: data.durationSeconds,
+      startedAt: data.startedAt,
+    }),
+  }).catch(() => { /* non-critical */ })
 }
 
 // ── Mode performance tracker (client-side localStorage) ──────────────────────
@@ -165,46 +154,38 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
 
   const _syncWrongWords = useCallback(async () => {
     try {
-      const token = getAuthToken()
       const wrongWords: Array<Record<string, unknown>> = JSON.parse(localStorage.getItem(STORAGE_KEYS.WRONG_WORDS) || '[]')
-      if (wrongWords.length > 0 && token) {
-        const smartStats: Record<string, { listening: {correct:number;wrong:number}, meaning: {correct:number;wrong:number}, dictation: {correct:number;wrong:number} }> =
-          JSON.parse(localStorage.getItem(STORAGE_KEYS.SMART_WORD_STATS) || '{}')
-        const enriched = wrongWords.map(w => {
-          const ws = smartStats[w.word as string]
-          return {
-            ...w,
-            listeningCorrect: ws?.listening.correct ?? 0,
-            listeningWrong:   ws?.listening.wrong   ?? 0,
-            meaningCorrect:   ws?.meaning.correct   ?? 0,
-            meaningWrong:     ws?.meaning.wrong     ?? 0,
-            dictationCorrect: ws?.dictation.correct ?? 0,
-            dictationWrong:   ws?.dictation.wrong   ?? 0,
-          }
-        })
-        await fetch('/api/ai/wrong-words/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ words: enriched }),
-        })
-      }
+      if (!wrongWords.length) return
+      const smartStats: Record<string, { listening: {correct:number;wrong:number}, meaning: {correct:number;wrong:number}, dictation: {correct:number;wrong:number} }> =
+        JSON.parse(localStorage.getItem(STORAGE_KEYS.SMART_WORD_STATS) || '{}')
+      const enriched = wrongWords.map(w => {
+        const ws = smartStats[w.word as string]
+        return {
+          ...w,
+          listeningCorrect: ws?.listening.correct ?? 0,
+          listeningWrong:   ws?.listening.wrong   ?? 0,
+          meaningCorrect:   ws?.meaning.correct   ?? 0,
+          meaningWrong:     ws?.meaning.wrong     ?? 0,
+          dictationCorrect: ws?.dictation.correct ?? 0,
+          dictationWrong:   ws?.dictation.wrong   ?? 0,
+        }
+      })
+      await apiFetch('/api/ai/wrong-words/sync', {
+        method: 'POST',
+        body: JSON.stringify({ words: enriched }),
+      })
     } catch {
       // Non-critical
     }
   }, [])
 
   const _fetchGreeting = useCallback(async () => {
-    const token = getAuthToken()
-    if (!token) return
     setIsGreeting(true)
     try {
-      const resp = await fetch('/api/ai/greet', {
+      const raw = await apiFetch('/api/ai/greet', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ context: buildContext() }),
       })
-      if (!resp.ok) throw new Error('Greet failed')
-      const raw = await resp.json()
       const result = safeParse(AIAskResponseSchema, raw)
       const content = result.success
         ? result.data.reply
@@ -252,28 +233,13 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
     setError(null)
 
     try {
-      const token = getAuthToken()
-      const resp = await fetch('/api/ai/ask', {
+      const raw = await apiFetch('/api/ai/ask', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           message: text,
           context: buildContext(),
         }),
       })
-
-      if (!resp.ok) {
-        const err = await resp.json()
-        if (resp.status === 401 && err.error === 'Token has expired') {
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('user')
-          window.location.href = '/login?expired=1'
-          throw new Error('登录已过期，请重新登录')
-        }
-        throw new Error(err.error || '请求失败')
-      }
-
-      const raw = await resp.json()
       const result = safeParse(AIAskResponseSchema, raw)
       if (!result.success) {
         console.error('[AI] Zod validation failed:', JSON.stringify(raw, null, 2))

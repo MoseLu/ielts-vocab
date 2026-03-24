@@ -16,6 +16,8 @@ import type { QuickMemoryModeProps, QuickMemoryRecords, Word } from './types'
 import { STORAGE_KEYS } from '../../constants'
 import { playWordAudio, stopAudio } from './utils'
 import { logSession } from '../../hooks/useAIChat'
+import { apiFetch } from '../../lib'
+import { useToast } from '../../contexts/ToastContext'
 
 // ── Ebbinghaus review intervals (days per consecutive knownCount) ──────────
 const REVIEW_INTERVALS_DAYS = [1, 1, 4, 7, 14, 30]
@@ -36,18 +38,10 @@ function saveRecords(records: QuickMemoryRecords) {
 
 /** Fetch records from backend and merge into localStorage (backend wins for newer lastSeen). */
 async function loadRecordsFromBackend(): Promise<void> {
-  const token = localStorage.getItem('auth_token')
-  if (!token) return
   try {
-    const res = await fetch('/api/ai/quick-memory', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) return
-    const data = await res.json()
-    const serverRecords: Array<{
-      word: string; status: string; firstSeen: number; lastSeen: number;
-      knownCount: number; unknownCount: number; nextReview: number; fuzzyCount: number
-    }> = data.records || []
+    type QMRecord = { word: string; status: string; firstSeen: number; lastSeen: number; knownCount: number; unknownCount: number; nextReview: number; fuzzyCount: number }
+    const data = await apiFetch<{ records: QMRecord[] }>('/api/ai/quick-memory')
+    const serverRecords = data.records || []
     if (!serverRecords.length) return
     const local = loadRecords()
     let changed = false
@@ -75,11 +69,8 @@ async function loadRecordsFromBackend(): Promise<void> {
 
 /** Fire-and-forget: sync a single updated record to the backend. */
 function syncRecordToBackend(word: string, record: QuickMemoryRecords[string]): void {
-  const token = localStorage.getItem('auth_token')
-  if (!token) return
-  fetch('/api/ai/quick-memory/sync', {
+  apiFetch('/api/ai/quick-memory/sync', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({
       records: [{
         word: word.toLowerCase(),
@@ -282,6 +273,7 @@ export default function QuickMemoryMode({
   onNavigate,
   onWrongWord,
 }: QuickMemoryModeProps) {
+  const { showToast } = useToast()
   const [index, setIndex]         = useState(0)
   const [phase, setPhase]         = useState<'question' | 'reveal'>('question')
   const [countdown, setCountdown] = useState(TIMER_SECONDS)
@@ -372,7 +364,6 @@ export default function QuickMemoryMode({
     if (!done || !bookId || !chapterId) return
     const correct = results.filter(r => r.choice === 'known').length
     const wrong   = results.filter(r => r.choice === 'unknown').length
-    const token   = localStorage.getItem('auth_token')
 
     const progressData = {
       current_index: queue.length,
@@ -388,33 +379,28 @@ export default function QuickMemoryMode({
     chapterProgress[`${bookId}_${chapterId}`] = { ...progressData, updatedAt: new Date().toISOString() }
     localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
 
-    if (token) {
-      // Save book-level progress
-      fetch('/api/books/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ book_id: bookId, ...progressData }),
-      }).catch(() => {})
+    // Save book-level progress
+    apiFetch('/api/books/progress', {
+      method: 'POST',
+      body: JSON.stringify({ book_id: bookId, ...progressData }),
+    }).catch(() => {})
 
-      // Save chapter-level progress
-      fetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(progressData),
-      }).catch(() => {})
+    // Save chapter-level progress — toast on failure so user knows
+    apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
+      method: 'POST',
+      body: JSON.stringify(progressData),
+    }).catch(() => showToast('进度保存失败，请检查网络连接', 'error'))
 
-      // Save per-mode accuracy so it shows as an independent badge in ChapterModal
-      fetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          mode: 'quickmemory',
-          correct_count: correct,
-          wrong_count: wrong,
-          is_completed: true,
-        }),
-      }).catch(() => {})
-    }
+    // Save per-mode accuracy so it shows as an independent badge in ChapterModal
+    apiFetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'quickmemory',
+        correct_count: correct,
+        wrong_count: wrong,
+        is_completed: true,
+      }),
+    }).catch(() => {})
 
     // Log session for admin analytics
     logSession({

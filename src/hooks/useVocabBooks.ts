@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { apiFetch } from '../lib'
 
 const API_BASE = '/api/books'
 
@@ -134,24 +135,10 @@ export function useBookProgress(bookId: string | number | null) {
 
     const fetchProgress = async () => {
       try {
-        const token = localStorage.getItem('auth_token')
-        if (!token) {
-          setLoading(false)
-          return
-        }
-
-        const response = await fetch(`${API_BASE}/progress/${bookId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (response.ok) {
-          const data: { progress: BookProgress } = await response.json()
-          setProgress(data.progress)
-        }
-      } catch (err) {
-        console.error('Failed to fetch progress:', err)
+        const data = await apiFetch<{ progress: BookProgress }>(`${API_BASE}/progress/${bookId}`)
+        setProgress(data.progress)
+      } catch {
+        // Not logged in or network error — no progress to show
       } finally {
         setLoading(false)
       }
@@ -161,28 +148,17 @@ export function useBookProgress(bookId: string | number | null) {
   }, [bookId])
 
   const saveProgress = async (progressData: Partial<BookProgress>): Promise<BookProgress | null> => {
+    if (!bookId) return null
     try {
-      const token = localStorage.getItem('auth_token')
-      if (!token || !bookId) return null
-
-      const response = await fetch(`${API_BASE}/progress`, {
+      const data = await apiFetch<{ progress: BookProgress }>(`${API_BASE}/progress`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ book_id: bookId, ...progressData }),
       })
-
-      if (response.ok) {
-        const data: { progress: BookProgress } = await response.json()
-        setProgress(data.progress)
-        return data.progress
-      }
-    } catch (err) {
-      console.error('Failed to save progress:', err)
+      setProgress(data.progress)
+      return data.progress
+    } catch {
+      return null
     }
-    return null
   }
 
   return { progress, loading, saveProgress }
@@ -194,32 +170,10 @@ export function useAllBookProgress() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchProgress = async () => {
-      try {
-        const token = localStorage.getItem('auth_token')
-        if (!token) {
-          setLoading(false)
-          return
-        }
-
-        const response = await fetch(`${API_BASE}/progress`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (response.ok) {
-          const data: { progress: ProgressMap } = await response.json()
-          setProgressMap(data.progress)
-        }
-      } catch (err) {
-        console.error('Failed to fetch progress:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProgress()
+    apiFetch<{ progress: ProgressMap }>(`${API_BASE}/progress`)
+      .then(data => setProgressMap(data.progress))
+      .catch(() => { /* not logged in or network error */ })
+      .finally(() => setLoading(false))
   }, [])
 
   return { progressMap, loading }

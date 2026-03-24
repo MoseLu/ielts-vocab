@@ -9,6 +9,7 @@ import { DEFAULT_SETTINGS } from '../../constants'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue, syncSmartStatsToBackend, loadSmartStatsFromBackend } from '../../lib/smartMode'
 import { recordModeAnswer, logSession } from '../../hooks/useAIChat'
+import { apiFetch } from '../../lib'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
 import RadioMode from './RadioMode'
@@ -216,8 +217,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       return settings.shuffle !== false ? shuffleArray(indices) : indices
     }
 
-    const token = localStorage.getItem('auth_token')
-
     if (bookId) {
       if (chapterId) {
         fetch(`/api/books/${bookId}/chapters/${chapterId}`)
@@ -235,16 +234,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             const key = `${bookId}_${chapterId}`
             if (saved[key]) {
               progress = saved[key]
-            } else if (token) {
+            } else {
               try {
-                const res = await fetch(`/api/books/${bookId}/chapters/progress`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                })
-                if (res.ok) {
-                  const pd = await res.json()
-                  progress = pd.chapter_progress?.[String(chapterId)] ?? null
-                }
-              } catch { /* ignore */ }
+                const pd = await apiFetch<{ chapter_progress?: Record<string, ProgressData> }>(
+                  `/api/books/${bookId}/chapters/progress`
+                )
+                progress = pd.chapter_progress?.[String(chapterId)] ?? null
+              } catch { /* not logged in or network error — start fresh */ }
             }
             // Apply all state in one block → single render
             setVocabulary(words)
@@ -267,16 +263,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('book_progress') || '{}')
           if (saved[bookId]) {
             progress = saved[bookId]
-          } else if (token) {
+          } else {
             try {
-              const res = await fetch(`/api/books/progress/${bookId}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              })
-              if (res.ok) {
-                const pd = await res.json()
-                progress = pd.progress ?? null
-              }
-            } catch { /* ignore */ }
+              const pd = await apiFetch<{ progress?: ProgressData }>(`/api/books/progress/${bookId}`)
+              progress = pd.progress ?? null
+            } catch { /* not logged in or network error — start fresh */ }
           }
           setVocabulary(words)
           setQueue(q)
@@ -299,18 +290,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('day_progress') || '{}')
         if (saved[String(currentDay)]) {
           progress = saved[String(currentDay)]
-        } else if (token) {
+        } else {
           try {
-            const res = await fetch(`/api/progress`, {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            if (res.ok) {
-              const pd = await res.json()
-              const entry = (pd.progress as Array<{ day: number; current_index: number; correct_count: number; wrong_count: number }>)
-                ?.find(p => p.day === currentDay)
-              progress = entry ?? null
-            }
-          } catch { /* ignore */ }
+            const pd = await apiFetch<{ progress?: Array<{ day: number; current_index: number; correct_count: number; wrong_count: number }> }>('/api/progress')
+            const entry = pd.progress?.find(p => p.day === currentDay)
+            progress = entry ?? null
+          } catch { /* not logged in or network error — start fresh */ }
         }
         setVocabulary(words)
         setQueue(q)
@@ -347,15 +332,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       // For listening mode: replace with global-pool confusable distractors
       if (isListeningMode) {
         const word = currentWord
-        const token = localStorage.getItem('auth_token')
         const params = new URLSearchParams({ word: word.word, n: '10' })
         if (word.phonetic) params.set('phonetic', word.phonetic)
         if (word.pos)      params.set('pos', word.pos)
-        fetch(`/api/ai/similar-words?${params}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
-          .then(r => r.ok ? r.json() : null)
-          .then((data: { words: Word[] } | null) => {
+        apiFetch<{ words: Word[] }>(`/api/ai/similar-words?${params}`)
+          .then(data => {
             if (!data?.words?.length) return
             // Pool = similar words from global vocabulary (excluding the correct word)
             const pool = data.words.filter(w => w.definition !== word.definition)
@@ -421,8 +402,6 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Save progress
   const saveProgress = useCallback((correct: number, wrong: number) => {
-    const token = localStorage.getItem('auth_token')
-
     if (errorMode) {
       const wrongProgress: Record<string, { correctCount: number; wrongCount: number; updatedAt: string }> =
         JSON.parse(localStorage.getItem('wrong_words_progress') || '{}')
@@ -443,36 +422,31 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       bookProgress[bookId] = { ...progressData, updatedAt: new Date().toISOString() }
       localStorage.setItem('book_progress', JSON.stringify(bookProgress))
 
-      if (token) {
-        fetch('/api/books/progress', {
+      apiFetch('/api/books/progress', {
+        method: 'POST',
+        body: JSON.stringify({ book_id: bookId, ...progressData })
+      }).catch(() => showToast?.('进度保存失败，请检查网络连接', 'error'))
+
+      if (chapterId) {
+        const chapterProgress: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
+        chapterProgress[`${bookId}_${chapterId}`] = { words_learned: correct + wrong, ...progressData, updatedAt: new Date().toISOString() }
+        localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
+        apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ book_id: bookId, ...progressData })
+          body: JSON.stringify({ words_learned: correct + wrong, ...progressData })
         }).catch(() => {})
 
-        if (chapterId) {
-          const chapterProgress: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-          chapterProgress[`${bookId}_${chapterId}`] = { words_learned: correct + wrong, ...progressData, updatedAt: new Date().toISOString() }
-          localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
-          fetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
+        // Save per-mode accuracy to the backend — each mode is stored independently
+        if (mode && correct + wrong > 0) {
+          apiFetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ words_learned: correct + wrong, ...progressData })
+            body: JSON.stringify({
+              mode,
+              correct_count: correct,
+              wrong_count: wrong,
+              is_completed: progressData.is_completed ?? false,
+            }),
           }).catch(() => {})
-
-          // Save per-mode accuracy to the backend — each mode is stored independently
-          if (mode && correct + wrong > 0) {
-            fetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-              body: JSON.stringify({
-                mode,
-                correct_count: correct,
-                wrong_count: wrong,
-                is_completed: progressData.is_completed ?? false,
-              }),
-            }).catch(() => {})
-          }
         }
       }
     } else {
@@ -480,13 +454,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       dayProgress[String(currentDay)] = { ...progressData, is_completed: correct + wrong >= vocabulary.length, updatedAt: new Date().toISOString() }
       localStorage.setItem('day_progress', JSON.stringify(dayProgress))
 
-      if (token) {
-        fetch('/api/progress', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ day: currentDay, ...progressData })
-        }).catch(() => {})
-      }
+      apiFetch('/api/progress', {
+        method: 'POST',
+        body: JSON.stringify({ day: currentDay, ...progressData })
+      }).catch(() => {})
     }
   }, [bookId, chapterId, currentDay, errorMode, queueIndex, vocabulary.length])
 
@@ -498,28 +469,24 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       localStorage.setItem('wrong_words', JSON.stringify(existing))
     }
     // Sync to backend — always (backend upserts) — include dimension stats
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      const ws = loadSmartStats()[word.word]
-      fetch('/api/ai/wrong-words/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          words: [{
-            word: word.word,
-            phonetic: word.phonetic,
-            pos: word.pos,
-            definition: word.definition,
-            listeningCorrect: ws?.listening.correct ?? 0,
-            listeningWrong:   ws?.listening.wrong   ?? 0,
-            meaningCorrect:   ws?.meaning.correct   ?? 0,
-            meaningWrong:     ws?.meaning.wrong     ?? 0,
-            dictationCorrect: ws?.dictation.correct ?? 0,
-            dictationWrong:   ws?.dictation.wrong   ?? 0,
-          }]
+    const ws = loadSmartStats()[word.word]
+    apiFetch('/api/ai/wrong-words/sync', {
+      method: 'POST',
+      body: JSON.stringify({
+        words: [{
+          word: word.word,
+          phonetic: word.phonetic,
+          pos: word.pos,
+          definition: word.definition,
+          listeningCorrect: ws?.listening.correct ?? 0,
+          listeningWrong:   ws?.listening.wrong   ?? 0,
+          meaningCorrect:   ws?.meaning.correct   ?? 0,
+          meaningWrong:     ws?.meaning.wrong     ?? 0,
+          dictationCorrect: ws?.dictation.correct ?? 0,
+          dictationWrong:   ws?.dictation.wrong   ?? 0,
+        }]
         }),
       }).catch(() => {})
-    }
   }
 
   const goNext = (wasCorrect: boolean) => {
