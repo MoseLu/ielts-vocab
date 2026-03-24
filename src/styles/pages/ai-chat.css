@@ -408,13 +408,25 @@
 }
 
 /* ── Mobile ───────────────────────────────────────────────────────── */
+
+/* On mobile with bottom nav (56px), push FAB above it */
+@media (max-width: 768px) {
+    .ai-fab {
+        bottom: calc(56px + 12px);
+        right: 16px;
+    }
+}
+
 @media (max-width: 480px) {
-    .ai-fab { bottom: 16px; right: 16px; }
+    .ai-fab {
+        bottom: calc(56px + 12px);
+        right: 16px;
+    }
     .ai-panel {
-        bottom: 0;
+        bottom: 56px;   /* sit above bottom nav */
         right: 0;
         width: 100vw;
-        height: 80vh;
+        height: calc(80vh - 56px);
         border-radius: var(--radius-xl) var(--radius-xl) 0 0;
         border-bottom: none;
     }

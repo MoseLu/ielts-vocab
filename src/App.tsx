@@ -1,7 +1,7 @@
 // ── App Router ─────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom'
 import { AuthProvider, useAuth, useToast, ToastProvider, AIChatProvider } from './contexts'
 import { SettingsProvider } from './contexts'
 import Header from './components/Header'
@@ -19,6 +19,18 @@ import VocabTestPage from './components/VocabTestPage'
 import AdminDashboard from './components/AdminDashboard'
 import Toast from './components/Toast'
 
+// Reset scroll to top on every PUSH navigation (tab switches, link clicks)
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  const navType = useNavigationType()
+  useEffect(() => {
+    if (navType !== 'POP') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }
+  }, [pathname, navType])
+  return null
+}
+
 interface AppRoutesProps {
   mode: string
   currentDay: number | null
@@ -34,6 +46,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
 
   return (
     <div className="app">
+      <ScrollToTop />
       {!isPractice && (
         <Header
           user={user}

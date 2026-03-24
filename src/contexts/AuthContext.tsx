@@ -62,9 +62,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsed = safeParse(UserSchema, data.user)
         if (parsed.success) _saveUser(parsed.data)
       })
-      .catch(() => {
-        // Cookie invalid / expired — clear stale user
-        _clearUser()
+      .catch((err: Error) => {
+        // Only clear session on explicit auth failure (401 / token expired).
+        // The 'auth:session-expired' event from apiFetch already handles the
+        // 401 case, so this catch mainly guards transient network / server
+        // errors — for those we keep the cached user so the UI doesn't
+        // unexpectedly redirect to login when the backend restarts briefly.
+        const isAuthFailure =
+          err.message.includes('登录已过期') ||
+          err.message.includes('session-expired')
+        if (isAuthFailure) {
+          _clearUser()
+        }
       })
       .finally(() => setIsLoading(false))
   }, [])

@@ -11,6 +11,11 @@ export default defineConfig({
     strictPort: true, // 端口被占用时报错而非切换端口
     open: false,
     allowedHosts: true, // 允许所有域名访问
+    hmr: {
+      overlay: true,
+      // Prevent full-page reload on HMR WebSocket reconnection
+      timeout: 30000,
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

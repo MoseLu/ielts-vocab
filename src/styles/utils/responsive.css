@@ -87,17 +87,33 @@
         display: none;
     }
 
+    /* Compact logo area on mobile — no fixed width, no divider */
     .header-logo-area {
         position: static;
         transform: none;
+        width: auto;
+        min-width: unset;
+        border-right: none;
+        padding: 0 var(--space-sm);
     }
 
+    /* Show brand name on mobile */
     .header-logo-text {
-        display: none;
+        display: block;
+        font-size: 15px;
     }
 
     .header-right {
         gap: var(--space-xs);
+    }
+
+    /* Show toolbar on mobile but hide settings/help icon buttons */
+    .header-toolbar {
+        display: flex;
+    }
+
+    .header-toolbar .icon-btn {
+        display: none;
     }
 
     .logo-img {
