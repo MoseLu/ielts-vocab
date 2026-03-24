@@ -20,8 +20,8 @@ class Config:
             "JWT_SECRET_KEY must be set via environment variables. "
             "Example: export JWT_SECRET_KEY=your_jwt_secret"
         )
-    JWT_ACCESS_TOKEN_EXPIRES = 60 * 120         # 2 hours (was 15 min — too short for study sessions)
-    JWT_REFRESH_TOKEN_EXPIRES = 86400 * 7       # 7 days
+    JWT_ACCESS_TOKEN_EXPIRES = 60 * 60 * 8      # 8 hours — reduces silent-refresh frequency
+    JWT_REFRESH_TOKEN_EXPIRES = 86400 * 30      # 30 days
 
     # Cookie security (set COOKIE_SECURE=true in production behind HTTPS)
     COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'false').lower() == 'true'
