@@ -1,6 +1,34 @@
-/* Utils: Responsive Media Queries */
+/* ============================================================
+   Responsive Media Queries
+   Breakpoints: xs (375px), sm (480px), md (640px), lg (768px), xl (1024px)
+   ============================================================ */
 
+/* ── Extra Small Devices (375px) ── */
+@media (max-width: 375px) {
+    .logo-text {
+        display: none;
+    }
 
+    .user-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    .day-grid {
+        gap: 6px;
+    }
+
+    .day-number {
+        font-size: 13px;
+    }
+
+    .day-status {
+        font-size: 11px;
+    }
+}
+
+/* ── Small Devices / Large Phones (480px) ── */
 @media (max-width: 480px) {
     .header-left {
         gap: var(--space-sm);
@@ -39,212 +67,10 @@
     }
 }
 
-/* Tablet (md: 768px) */
+/* ── Mobile / Tablets (640px - 768px) ── */
 @media (max-width: 768px) {
-    .left-sidebar {
-        display: none;
-    }
-
-    .header-toolbar {
-        display: none;
-    }
-
-    .header-logo-area {
-        position: static;
-        transform: none;
-    }
-
-    .header-center {
-        display: none;
-    }
-
-    .current-mode {
-        display: none;
-    }
-
-    .day-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: var(--space-md);
-    }
-
-    .practice-container {
-        padding: var(--space-md);
-    }
-
-    .options-grid {
-        gap: var(--space-md);
-    }
-    
-    .play-btn-large {
-        width: 64px;
-        height: 64px;
-    }
-    
-    .settings-modal {
-        width: 95%;
-        max-height: 90vh;
-    }
-    
-    .settings-sidebar {
-        width: 60px;
-        min-width: 60px;
-    }
-    
-    .settings-sidebar-item span {
-        display: none;
-    }
-}
-
-/* Mobile (sm: 640px) */
-@media (max-width: 640px) {
     :root {
         --header-height: 52px;
-    }
-    
-    .header {
-        padding: 0 var(--space-sm);
-    }
-    
-    .logo-img {
-        width: 32px;
-        height: 32px;
-    }
-    
-    .logo-text {
-        font-size: 16px;
-    }
-    
-    .header-btn {
-        width: 36px;
-        height: 36px;
-    }
-    
-    .auth-card {
-        padding: var(--space-lg);
-        margin: var(--space-md);
-    }
-    
-    .auth-title {
-        font-size: 20px;
-    }
-    
-    .auth-input {
-        height: 44px;
-        font-size: 14px;
-    }
-    
-    .auth-btn {
-        height: 44px;
-    }
-    
-    .day-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-sm);
-    }
-    
-    .day-card {
-        padding: var(--space-md);
-    }
-    
-    .page-title {
-        font-size: 24px;
-    }
-    
-    .options-grid {
-        grid-template-columns: 1fr;
-        gap: var(--space-sm);
-    }
-    
-    .option-btn {
-        padding: var(--space-md);
-    }
-    
-    .previous-word {
-        display: none;
-    }
-    
-    .play-btn-large {
-        width: 56px;
-        height: 56px;
-    }
-    
-    .progress-bottom {
-        font-size: 12px;
-    }
-    
-    .settings-modal {
-        flex-direction: column;
-        height: 85vh;
-    }
-    
-    .settings-sidebar {
-        width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-    }
-    
-    .settings-sidebar-item {
-        padding: var(--space-sm) var(--space-md);
-        white-space: nowrap;
-    }
-    
-    .settings-sidebar-item span {
-        display: inline;
-    }
-    
-    .settings-sidebar-item.active {
-        border-bottom: 2px solid var(--accent);
-        border-right: none;
-    }
-    
-    .agreement-label {
-        font-size: 13px;
-        flex-wrap: wrap;
-    }
-}
-
-/* Extra Small (xs: 375px) */
-@media (max-width: 375px) {
-    .logo-text {
-        display: none;
-    }
-    
-    .user-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 12px;
-    }
-    
-    .day-grid {
-        gap: 6px;
-    }
-    
-    .day-number {
-        font-size: 13px;
-    }
-    
-    .day-status {
-        font-size: 11px;
-    }
-}
-
-/* Large screens (lg: 1024px) */
-
-/* Extra Large (xl: 1280px) */
-@media (min-width: 1280px) {
-    .day-grid {
-        grid-template-columns: repeat(10, 1fr);
-    }
-}
-
-/* ------ MOBILE (< 640px) ------ */
-@media (max-width: 639px) {
-    :root {
-        --header-height: 48px;
-        --space-xl: 16px;
-        --space-2xl: 24px;
     }
 
     /* Sidebar hidden on mobile */
@@ -252,7 +78,12 @@
         display: none;
     }
 
-    .header-toolbar {
+    /* Header adjustments */
+    .header {
+        padding: 0 var(--space-sm);
+    }
+
+    .header-nav {
         display: none;
     }
 
@@ -265,13 +96,22 @@
         display: none;
     }
 
-    .day-btn span,
-    .mode-btn span:first-child {
-        display: none; /* hide label text on small screens */
-    }
-
     .header-right {
         gap: var(--space-xs);
+    }
+
+    .logo-img {
+        width: 32px;
+        height: 32px;
+    }
+
+    .logo-text {
+        font-size: 16px;
+    }
+
+    .header-btn {
+        width: 36px;
+        height: 36px;
     }
 
     /* Day dropdown full-width on mobile */
@@ -295,7 +135,6 @@
         border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
     }
 
-    /* User dropdown */
     .user-dropdown {
         right: 0 !important;
         left: 0 !important;
@@ -306,7 +145,7 @@
 
     /* Home page mobile */
     .home-page {
-        padding: var(--space-md) var(--space-md) var(--space-xl);
+        padding: var(--space-md) var(--space-md) calc(var(--space-xl) + 56px);
         gap: var(--space-sm);
     }
 
@@ -362,12 +201,13 @@
 
     /* Practice page */
     .prev-word-inline {
-        display: none; /* hide on mobile - not enough space */
+        display: none;
     }
 
     .practice-main {
         padding: var(--space-md);
         gap: var(--space-md);
+        max-width: 100%;
     }
 
     .word-text {
@@ -407,6 +247,28 @@
         align-items: flex-end;
     }
 
+    .settings-sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .settings-sidebar-item {
+        padding: var(--space-sm) var(--space-md);
+        white-space: nowrap;
+    }
+
+    .settings-sidebar-item span {
+        display: inline;
+    }
+
+    .settings-sidebar-item.active {
+        border-bottom: 2px solid var(--accent);
+        border-right: none;
+    }
+
     /* Avatar modal */
     .avatar-modal {
         width: 100%;
@@ -424,9 +286,96 @@
     .radio-word {
         font-size: 28px;
     }
+
+    /* Auth page */
+    .auth-card {
+        padding: var(--space-lg);
+        margin: var(--space-md);
+    }
+
+    .auth-title {
+        font-size: 20px;
+    }
+
+    .auth-input {
+        height: 44px;
+        font-size: 14px;
+    }
+
+    .auth-btn {
+        height: 44px;
+    }
+
+    .agreement-label {
+        font-size: 13px;
+        flex-wrap: wrap;
+    }
+
+    /* Stats page */
+    .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mode-breakdown-item {
+        grid-template-columns: 70px 1fr;
+        grid-template-rows: auto auto;
+    }
+
+    .mode-breakdown-stats {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+
+    .mbs-words, .mbs-accuracy, .mbs-duration, .mbs-sessions {
+        text-align: left;
+        min-width: auto;
+    }
+
+    .stats-accuracy-item {
+        grid-template-columns: 1fr 80px;
+        grid-template-rows: auto auto;
+    }
+
+    .stats-accuracy-bar-wrap {
+        grid-column: 1 / -1;
+    }
+
+    .stats-accuracy-counts {
+        display: none;
+    }
+
+    /* AI Chat panel - already has mobile styles in ai-chat.css */
+
+    /* Errors page */
+    .errors-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Vocab book page */
+    .vb-filters {
+        padding: var(--space-sm);
+    }
+
+    .vb-filter-row {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        gap: var(--space-xs);
+        padding-bottom: var(--space-xs);
+    }
+
+    .vb-filter-btn {
+        flex-shrink: 0;
+    }
+
+    .vb-search {
+        min-width: 120px;
+        margin-top: 0;
+    }
 }
 
-/* ------ TABLET (640px – 1023px) ------ */
+/* ── Tablets (640px - 1023px) ── */
 @media (min-width: 640px) and (max-width: 1023px) {
     .day-grid {
         grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
@@ -437,16 +386,31 @@
     }
 }
 
-/* ------ DESKTOP (≥ 1024px) ------ */
+/* ── Desktop (≥ 1024px) ── */
 @media (min-width: 1024px) {
     .practice-main {
         max-width: 800px;
     }
+
+    .header-hamburger {
+        display: none;
+    }
 }
 
-/* ------ WIDE (≥ 1440px) ------ */
-@media (min-width: 1440px) {
+/* ── Wide Screens (≥ 1280px) ── */
+@media (min-width: 1280px) {
     .home-page {
         max-width: 1100px;
+    }
+
+    .day-grid {
+        grid-template-columns: repeat(10, 1fr);
+    }
+}
+
+/* ── Extra Wide (≥ 1440px) ── */
+@media (min-width: 1440px) {
+    .day-grid {
+        grid-template-columns: repeat(12, 1fr);
     }
 }

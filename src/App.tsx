@@ -6,6 +6,7 @@ import { AuthProvider, useAuth, useToast, ToastProvider, AIChatProvider } from '
 import { SettingsProvider } from './contexts'
 import Header from './components/Header'
 import LeftSidebar from './components/LeftSidebar'
+import BottomNav from './components/BottomNav'
 import AuthPage from './components/AuthPage'
 import HomePage from './components/HomePage'
 import PracticePage from './components/practice/PracticePage'
@@ -161,6 +162,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
 
       {toast && <Toast message={toast.message} type={toast.type} />}
 
+      {user && !isPractice && <BottomNav />}
       {user && <AIChatPanel />}
     </div>
   )

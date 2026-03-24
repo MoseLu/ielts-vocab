@@ -32,6 +32,7 @@ function Header({
   onModeChange,
   onDayChange,
   onUserUpdate,
+  onMenuToggle,
 }: HeaderProps) {
   const { updateUser, isAdmin } = useAuth()
   const [showModeDropdown, setShowModeDropdown] = useState(false)
@@ -39,6 +40,7 @@ function Header({
   const [showHelp, setShowHelp] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAvatarUpload, setShowAvatarUpload] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
@@ -81,6 +83,12 @@ function Header({
       if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
         setShowModeDropdown(false)
       }
+      // Close mobile menu on outside click
+      const mobileMenu = document.querySelector('.header-mobile-menu')
+      const hamburgerBtn = document.querySelector('.header-hamburger')
+      if (mobileMenu && hamburgerBtn && !mobileMenu.contains(e.target as Node) && !hamburgerBtn.contains(e.target as Node)) {
+        setShowMobileMenu(false)
+      }
     }
     document.addEventListener('pointerdown', handleClickOutside)
     return () => document.removeEventListener('pointerdown', handleClickOutside)
@@ -122,6 +130,26 @@ function Header({
 
       {/* Right area: search + toolbar */}
       <div className="header-right">
+        {/* Mobile hamburger menu button */}
+        {user && (
+          <button className="header-btn header-hamburger" onClick={() => setShowMobileMenu(!showMobileMenu)} title="菜单">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {showMobileMenu ? (
+                <>
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </>
+              ) : (
+                <>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <line x1="3" y1="12" x2="21" y2="12"/>
+                  <line x1="3" y1="18" x2="21" y2="18"/>
+                </>
+              )}
+            </svg>
+          </button>
+        )}
+
         {/* Global Search */}
         <div className="header-search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -255,6 +283,23 @@ function Header({
           )}
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {showMobileMenu && (
+        <div className="header-mobile-menu" onClick={() => setShowMobileMenu(false)}>
+          <div className="mobile-menu-items">
+            {mainNavItems.map(item => (
+              <button
+                key={item.key}
+                className={`mobile-menu-item ${location.pathname === item.path ? 'active' : ''}`}
+                onClick={() => { navigate(item.path); setShowMobileMenu(false) }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Help Modal */}
       {showHelp && (
