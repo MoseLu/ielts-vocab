@@ -32,6 +32,11 @@ export type SmartDimension = 'listening' | 'meaning' | 'dictation'
 
 export type ToastType = 'info' | 'success' | 'error'
 
+export interface WordExample {
+  en: string
+  zh: string
+}
+
 export interface Word {
   word: string
   phonetic: string
@@ -39,6 +44,7 @@ export interface Word {
   definition: string
   chapter_id?: number | string
   chapter_title?: string
+  examples?: WordExample[]
 }
 
 export interface ProgressData {

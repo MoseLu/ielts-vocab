@@ -229,6 +229,42 @@ _vocabulary_cache = {}
 _csv_chapter_cache = {}
 # Cache for flat-JSON chapter structures: {book_id: {'chapters': [...], 'words': [...]}}
 _json_chapter_cache = {}
+# Cache for vocabulary examples: {word_lower: [examples]}
+_examples_cache = None
+
+
+def _load_examples():
+    """Load example sentences from vocabulary_examples.json once."""
+    global _examples_cache
+    if _examples_cache is not None:
+        return _examples_cache
+
+    vocab_path = get_vocab_data_path()
+    file_path = os.path.join(vocab_path, 'vocabulary_examples.json')
+    _examples_cache = {}
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        examples_map = data.get('examples', {})
+        # Normalise: support both string keys and store lowercase keys for fast lookup
+        for word, ex_list in examples_map.items():
+            if ex_list:
+                _examples_cache[word.lower()] = ex_list
+    except Exception as e:
+        print(f"Warning: could not load vocabulary examples: {e}")
+        _examples_cache = {}
+    return _examples_cache
+
+
+def _merge_examples(word_entry):
+    """Add examples to a word entry if available. Returns a new dict (non-mutating)."""
+    word_text = word_entry.get('word', '').strip()
+    if not word_text:
+        return word_entry
+    examples = _load_examples().get(word_text.lower())
+    if examples:
+        return {**word_entry, 'examples': examples}
+    return word_entry
 
 
 def get_vocab_data_path():
@@ -487,6 +523,8 @@ def load_book_vocabulary(book_id):
         else:
             words = []
 
+        # Merge examples into all word entries before caching
+        words = [_merge_examples(w) for w in words]
         _vocabulary_cache[book_id] = words
         return words
     except FileNotFoundError:
@@ -631,12 +669,12 @@ def get_chapter_words(book_id, chapter_id):
                 if not chapter:
                     return jsonify({'error': 'Chapter not found'}), 404
                 words = [
-                    {
+                    _merge_examples({
                         'word': w.get('word', ''),
                         'phonetic': w.get('phonetic', ''),
                         'pos': w.get('pos', 'n.'),
                         'definition': w.get('definition', ''),
-                    }
+                    })
                     for w in chapter.get('words', [])
                 ]
                 return jsonify({
@@ -661,12 +699,12 @@ def get_chapter_words(book_id, chapter_id):
                     return jsonify({'error': 'Chapter not found'}), 404
                 all_words = cached['words']
                 words = [
-                    {
+                    _merge_examples({
                         'word': all_words[i].get('word', ''),
                         'phonetic': all_words[i].get('phonetic', ''),
                         'pos': all_words[i].get('pos', 'n.'),
                         'definition': all_words[i].get('definition', '') or all_words[i].get('translation', ''),
-                    }
+                    })
                     for i in chapter_meta['word_indices']
                     if all_words[i].get('word', '').strip()
                 ]
@@ -696,7 +734,7 @@ def get_chapter_words(book_id, chapter_id):
 
             raw_rows = cached['row_data']
             words = [
-                _normalize_csv_word(raw_rows[i])
+                _merge_examples(_normalize_csv_word(raw_rows[i]))
                 for i in chapter_meta['row_indices']
                 if raw_rows[i].get('word', '').strip()
             ]

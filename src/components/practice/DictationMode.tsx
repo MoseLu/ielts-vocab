@@ -1,7 +1,9 @@
 // ── Dictation Mode Component ───────────────────────────────────────────────────
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import type { DictationModeProps, LastState } from './types'
+
+type DictationSubMode = 'word' | 'example'
 
 interface PrevWordBlockProps {
   previousWord: LastState['prevWord']
@@ -42,6 +44,23 @@ function BottomBar({ progressValue, total, queueIndex }: BottomBarProps) {
   )
 }
 
+/** Build the sentence display with the target word replaced by blank underscores */
+function buildBlankSentence(sentence: string, targetWord: string): React.ReactNode {
+  // Case-insensitive replacement to find the word in context
+  const regex = new RegExp(`(${targetWord})`, 'gi')
+  const parts = sentence.split(regex)
+  return parts.map((part, i) => {
+    if (part.toLowerCase() === targetWord.toLowerCase()) {
+      return (
+        <span key={i} className="example-blank-word">
+          {targetWord.split('').map((_, j) => <span key={j} className="letter-hint-blank">_</span>)}
+        </span>
+      )
+    }
+    return <span key={i}>{part}</span>
+  })
+}
+
 export default function DictationMode({
   currentWord,
   spellingInput,
@@ -62,40 +81,113 @@ export default function DictationMode({
   onPlayWord,
 }: DictationModeProps) {
   const spellingRef = useRef<HTMLInputElement>(null)
+  const [dictationSubMode, setDictationSubMode] = useState<DictationSubMode>('word')
+
+  // Determine if current word has examples for fill-in-blank mode
+  const hasExamples = Boolean(currentWord.examples && currentWord.examples.length > 0)
+  const activeSubMode: DictationSubMode = hasExamples ? dictationSubMode : 'word'
 
   useEffect(() => {
     if (spellingResult === null) {
       setTimeout(() => spellingRef.current?.focus(), 400)
     }
-  }, [spellingResult])
+  }, [spellingResult, currentWord.word])
+
+  // Reset sub-mode when word changes
+  useEffect(() => {
+    setDictationSubMode(hasExamples ? 'word' : 'word')
+  }, [currentWord.word])
 
   const handlePlayWord = () => {
     onPlayWord(currentWord.word)
   }
+
+  const handlePlayExample = () => {
+    // Use speechSynthesis to read the full sentence aloud
+    if (!window.speechSynthesis) return
+    const example = currentWord.examples?.[0]
+    if (!example) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(example.en)
+    utterance.lang = 'en-US'
+    utterance.rate = parseFloat(String(settings.playbackSpeed ?? '0.8'))
+    utterance.pitch = 1
+    window.speechSynthesis.speak(utterance)
+  }
+
+  const isExampleMode = activeSubMode === 'example'
+  const currentExample = currentWord.examples?.[0]
+  const sentenceText = currentExample?.en ?? ''
 
   return (
     <div className="practice-page">
       <PrevWordBlock previousWord={previousWord} lastState={lastState} onGoBack={onGoBack} />
 
       <div className="dictation-container">
+        {/* Sub-mode toggle — only visible when examples are available */}
+        {hasExamples && !spellingResult && (
+          <div className="dictation-submode-toggle">
+            <button
+              className={`submode-btn ${activeSubMode === 'word' ? 'active' : ''}`}
+              onClick={() => setDictationSubMode('word')}
+            >
+              单词拼写
+            </button>
+            <button
+              className={`submode-btn ${activeSubMode === 'example' ? 'active' : ''}`}
+              onClick={() => setDictationSubMode('example')}
+            >
+              例句填空
+            </button>
+          </div>
+        )}
+
         <div className="dictation-play-area">
-          <button className="play-btn-large" onClick={handlePlayWord}>
+          <button
+            className="play-btn-large"
+            onClick={isExampleMode ? handlePlayExample : handlePlayWord}
+          >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
               <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
             </svg>
           </button>
-          <p className="dictation-hint">听发音，拼写单词</p>
+          <p className="dictation-hint">
+            {isExampleMode ? '听句子，写出空缺的单词' : '听发音，拼写单词'}
+          </p>
         </div>
 
-        <div className="dictation-letter-hint">
-          {currentWord.word.split('').map((ch, i) => (
-            ch === ' ' ? <span key={i} className="letter-hint-space" /> : <span key={i} className="letter-hint-blank">_</span>
-          ))}
-        </div>
+        {/* Word spelling mode — original letter hint */}
+        {!isExampleMode && (
+          <div className="dictation-letter-hint">
+            {currentWord.word.split('').map((ch, i) => (
+              ch === ' ' ? <span key={i} className="letter-hint-space" /> : <span key={i} className="letter-hint-blank">_</span>
+            ))}
+          </div>
+        )}
+
+        {/* Example fill-in-the-blank mode */}
+        {isExampleMode && sentenceText && (
+          <div className="dictation-example-area">
+            <div className="dictation-example-sentence">
+              {buildBlankSentence(sentenceText, currentWord.word)}
+            </div>
+            <div className="dictation-example-definition">
+              <span className="word-pos-tag">{currentWord.pos}</span>
+              {currentWord.definition}
+            </div>
+          </div>
+        )}
 
         {spellingResult === 'wrong' && (
-          <div className="spelling-answer">正确答案：<strong>{currentWord.word}</strong></div>
+          <div className="spelling-answer">
+            {isExampleMode
+              ? <>正确答案：<strong>{currentWord.word}</strong>
+                {currentExample && <span className="spelling-answer-sentence"> — {currentExample.zh}</span>}
+              </>
+              : <>正确答案：<strong>{currentWord.word}</strong></>
+            }
+          </div>
         )}
 
         <div className={`spelling-input-wrapper ${spellingResult || ''}`}>
@@ -106,7 +198,7 @@ export default function DictationMode({
             value={spellingInput}
             onChange={e => onSpellingInputChange(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') onSpellingSubmit() }}
-            placeholder="输入你听到的单词..."
+            placeholder={isExampleMode ? '输入空缺的单词...' : '输入你听到的单词...'}
             disabled={!!spellingResult}
             autoComplete="off"
             spellCheck={false}

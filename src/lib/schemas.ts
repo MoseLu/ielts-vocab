@@ -122,6 +122,10 @@ export const WordSchema = z.object({
   definition: z.string().min(1),
   chapter_id: z.union([z.string(), z.number()]).optional(),
   chapter_title: z.string().optional(),
+  examples: z.array(z.object({
+    en: z.string(),
+    zh: z.string(),
+  })).optional(),
 })
 export type Word = z.infer<typeof WordSchema>
 

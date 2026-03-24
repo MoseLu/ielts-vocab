@@ -337,32 +337,30 @@ export default function StatsPage() {
       <div className="page-content">
 
         {/* Top stat cards */}
-        <div className="stats-cards">
+        <div className="stats-cards stats-cards-6">
+          <div className="stats-card">
+            <div className="stats-card-value">{displayTodayWords}</div>
+            <div className="stats-card-label">今日学习词数</div>
+          </div>
           <div className="stats-card">
             <div className="stats-card-value">{displayTodayDuration ?? '--'}</div>
-            <div className="stats-card-label">
-              今日学习时长
-              {displayTodayAccuracy !== '--' && <span className="stats-card-sub">· {displayTodayAccuracy}</span>}
-            </div>
+            <div className="stats-card-label">今日学习时长</div>
           </div>
           <div className="stats-card">
             <div className="stats-card-value">{displayTodayAccuracy}</div>
-            <div className="stats-card-label">
-              今日正确率
-            </div>
+            <div className="stats-card-label">今日正确率</div>
+          </div>
+          <div className="stats-card">
+            <div className="stats-card-value">{displayTotalWords}</div>
+            <div className="stats-card-label">累计学习词数</div>
           </div>
           <div className="stats-card">
             <div className="stats-card-value">{displayAlltimeDuration ?? '--'}</div>
-            <div className="stats-card-label">
-              累计学习时长
-              {displayAlltimeAccuracy !== '--' && <span className="stats-card-sub">· {displayAlltimeAccuracy}</span>}
-            </div>
+            <div className="stats-card-label">累计学习时长</div>
           </div>
           <div className="stats-card">
             <div className="stats-card-value">{displayAlltimeAccuracy}</div>
-            <div className="stats-card-label">
-              累计正确率
-            </div>
+            <div className="stats-card-label">累计正确率</div>
           </div>
         </div>
 

@@ -117,10 +117,78 @@
     height: 20px;
 }
 
-.dictation-definition {
-    font-size: 14px;
+/* Sub-mode toggle buttons (单词拼写 / 例句填空) */
+.dictation-submode-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+}
+
+.submode-btn {
+    flex: 1;
+    padding: 6px 16px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.submode-btn.active {
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+}
+
+.submode-btn:hover:not(.active) {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Example fill-in-the-blank area */
+.dictation-example-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+}
+
+.dictation-example-sentence {
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--text-primary);
+    text-align: center;
+    max-width: 480px;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg) var(--space-xl);
+}
+
+.example-blank-word {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    margin: 0 2px;
+}
+
+.dictation-example-definition {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.spelling-answer-sentence {
+    font-size: 13px;
+    color: var(--text-tertiary);
 }

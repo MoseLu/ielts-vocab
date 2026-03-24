@@ -7,9 +7,13 @@
 /* Stat Cards Row */
 .stats-cards {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     margin-bottom: 10px;
+}
+
+.stats-cards.stats-cards-6 {
+    grid-template-columns: repeat(3, 1fr);
 }
 
 .stats-card {

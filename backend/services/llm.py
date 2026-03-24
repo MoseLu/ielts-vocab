@@ -18,11 +18,44 @@ def _load_env():
 
 _env = _load_env()
 
-BASE_URL = _env.get('ANTHROPIC_BASE_URL') or "https://api.minimaxi.com/anthropic"
-API_KEY = _env.get('ANTHROPIC_AUTH_TOKEN', '')
+# MiniMax API configuration
+BASE_URL = _env.get('MINIMAX_BASE_URL') or "https://api.minimaxi.com/v1"
+API_KEY = _env.get('MINIMAX_API_KEY', '')
+API_KEY_2 = _env.get('MINIMAX_API_KEY_2', '')
 
-# Use MiniMax-M2.7 for tool calling support (not highspeed)
-DEFAULT_MODEL = "MiniMax-M2.7"
+# Use MiniMax-M2.7-highspeed for primary key, M2.7 for secondary
+DEFAULT_MODEL = "MiniMax-M2.7-highspeed"
+
+# Track which key to use (simple round-robin for load balancing)
+_use_secondary_key = False
+# Track if primary key is rate-limited (429)
+_primary_rate_limited = False
+
+def get_api_key():
+    """Get API key with simple round-robin load balancing."""
+    global _use_secondary_key
+    if API_KEY_2 and _use_secondary_key:
+        _use_secondary_key = not _use_secondary_key
+        return API_KEY_2
+    elif API_KEY:
+        _use_secondary_key = not _use_secondary_key
+        return API_KEY
+    else:
+        return API_KEY_2  # Fallback to secondary if primary is empty
+
+
+def get_api_key_with_fallback(force_secondary=False):
+    """Get API key, automatically falling back to secondary if primary is rate-limited."""
+    if force_secondary and API_KEY_2:
+        return API_KEY_2, 'secondary'
+    elif _primary_rate_limited and API_KEY_2:
+        return API_KEY_2, 'secondary'
+    elif API_KEY:
+        return API_KEY, 'primary'
+    elif API_KEY_2:
+        return API_KEY_2, 'secondary'
+    else:
+        raise ValueError("No MiniMax API key available")
 
 
 # ── Web Search Tool ────────────────────────────────────────────────────────────
@@ -98,19 +131,24 @@ def chat(
     model: str = DEFAULT_MODEL,
     max_tokens: int = 4096,
     tools: list | None = None,
+    force_secondary: bool = False,
 ) -> dict:
     """
     Send a chat request to MiniMax with OpenAI-compatible tool calling.
+    Automatically falls back to secondary API key if primary returns 429.
 
     Returns:
         {"type": "text", "text": "...", "reasoning": "..."}
         {"type": "tool_call", "tool": "name", "input": {...}, "reasoning": "..."}
     """
-    if not API_KEY:
+    global _primary_rate_limited
+
+    current_key, key_type = get_api_key_with_fallback(force_secondary=force_secondary)
+    if not current_key:
         raise ValueError("MiniMax API key not found in .env file")
 
     headers = {
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {current_key}",
         "Content-Type": "application/json",
     }
 
@@ -129,30 +167,51 @@ def chat(
             "input_schema": f.get("parameters", {})
         } for f in tools]
 
-    resp = requests.post(
-        f"{BASE_URL}/v1/messages",
-        json=payload,
-        headers=headers,
-        timeout=60
-    )
-    resp.raise_for_status()
-    data = resp.json()
+    try:
+        resp = requests.post(
+            f"{BASE_URL}/v1/messages",
+            json=payload,
+            headers=headers,
+            timeout=60
+        )
 
-    # MiniMax uses Anthropic format: content is at top level, not in choices
-    content = data.get("content", [])
+        # Handle 429 rate limit error - automatically switch to secondary key
+        if resp.status_code == 429:
+            if key_type == 'primary' and API_KEY_2:
+                print("[LLM] Primary key rate limited (429), switching to secondary key...")
+                _primary_rate_limited = True
+                # Retry with secondary key
+                return chat(messages, model, max_tokens, tools, force_secondary=True)
+            else:
+                raise RuntimeError(f"Both API keys are rate limited. Please try again later.")
 
-    # Check content blocks for tool_use (MiniMax format)
-    if isinstance(content, list):
-        for block in content:
-            if block.get("type") == "tool_use":
-                return {
-                    "type": "tool_call",
-                    "tool": block.get("name", ""),
-                    "input": block.get("input", {}),
-                    "tool_call_id": block.get("id", ""),
-                    "reasoning": "",
-                }
+        resp.raise_for_status()
+        data = resp.json()
 
-        # Collect text blocks
-        text_parts = [b.get("text", "") for b in content if b.get("type") == "text"]
-        return {"type": "text", "text": "".join(text_parts), "reasoning": ""}
+        # MiniMax uses Anthropic format: content is at top level, not in choices
+        content = data.get("content", [])
+
+        # Check content blocks for tool_use (MiniMax format)
+        if isinstance(content, list):
+            for block in content:
+                if block.get("type") == "tool_use":
+                    return {
+                        "type": "tool_call",
+                        "tool": block.get("name", ""),
+                        "input": block.get("input", {}),
+                        "tool_call_id": block.get("id", ""),
+                        "reasoning": "",
+                    }
+
+            # Collect text blocks
+            text_parts = [b.get("text", "") for b in content if b.get("type") == "text"]
+            return {"type": "text", "text": "".join(text_parts), "reasoning": ""}
+
+    except requests.exceptions.RequestException as e:
+        # Check if it's a 429 error from response
+        if hasattr(e, 'response') and e.response is not None and e.response.status_code == 429:
+            if key_type == 'primary' and API_KEY_2:
+                print("[LLM] Primary key rate limited (429), switching to secondary key...")
+                _primary_rate_limited = True
+                return chat(messages, model, max_tokens, tools, force_secondary=True)
+        raise
