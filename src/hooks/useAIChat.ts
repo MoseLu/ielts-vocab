@@ -64,6 +64,22 @@ function buildModePerformance() {
   }
 }
 
+// ── Session timer ─────────────────────────────────────────────────────────────
+
+/**
+ * Notify the server that a practice session has started.
+ * Returns the server-assigned sessionId, or null on failure.
+ * The server records started_at using its own clock, avoiding any client drift.
+ */
+export async function startSession(): Promise<number | null> {
+  try {
+    const res = await apiFetch<{ sessionId: number }>('/api/ai/start-session', { method: 'POST' })
+    return res.sessionId ?? null
+  } catch {
+    return null
+  }
+}
+
 // ── Session logger ────────────────────────────────────────────────────────────
 
 export async function logSession(data: {
@@ -73,12 +89,17 @@ export async function logSession(data: {
   wordsStudied: number
   correctCount: number
   wrongCount: number
+  /** Used as fallback when sessionId is absent. */
   durationSeconds: number
-  startedAt: number   // epoch ms
+  /** Epoch ms — fallback startedAt when sessionId is absent. */
+  startedAt: number
+  /** Server session ID from startSession(). When present the server computes duration. */
+  sessionId?: number | null
 }) {
   apiFetch('/api/ai/log-session', {
     method: 'POST',
     body: JSON.stringify({
+      sessionId: data.sessionId,
       mode: data.mode,
       bookId: data.bookId,
       chapterId: data.chapterId,

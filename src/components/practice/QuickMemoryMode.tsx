@@ -15,7 +15,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, QuickMemoryRecords, Word } from './types'
 import { STORAGE_KEYS } from '../../constants'
 import { playWordAudio, stopAudio } from './utils'
-import { logSession } from '../../hooks/useAIChat'
+import { logSession, startSession } from '../../hooks/useAIChat'
 import { apiFetch } from '../../lib'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -288,6 +288,7 @@ export default function QuickMemoryMode({
   const chosenRef       = useRef(false)   // guard against double-fire
   const wordRef         = useRef<Word>()  // always holds current word for setTimeout
   const sessionStartRef = useRef(Date.now())
+  const sessionIdRef    = useRef<number | null>(null)
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
   // Keep ref in sync so setTimeout always uses the latest word
@@ -412,6 +413,7 @@ export default function QuickMemoryMode({
       wrongCount: wrong,
       durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
       startedAt: sessionStartRef.current,
+      sessionId: sessionIdRef.current,
     })
   }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -442,6 +444,12 @@ export default function QuickMemoryMode({
 
   // ── Load records from backend on mount (merge into localStorage) ──────────
   useEffect(() => { loadRecordsFromBackend() }, [])
+
+  // ── Start server-side session timer on mount ───────────────────────────────
+  useEffect(() => {
+    sessionStartRef.current = Date.now()
+    startSession().then(id => { sessionIdRef.current = id }).catch(() => {})
+  }, [])
 
   // ── Cleanup audio on unmount ───────────────────────────────────────────────
   useEffect(() => () => {

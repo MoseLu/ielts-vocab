@@ -8,7 +8,7 @@ import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './
 import { DEFAULT_SETTINGS } from '../../constants'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue, syncSmartStatsToBackend, loadSmartStatsFromBackend } from '../../lib/smartMode'
-import { recordModeAnswer, logSession } from '../../hooks/useAIChat'
+import { recordModeAnswer, logSession, startSession } from '../../hooks/useAIChat'
 import { apiFetch } from '../../lib'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
@@ -66,7 +66,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Refs
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
-  const sessionStartRef = useRef<number>(Date.now())
+  // sessionStartRef: set when vocabulary is first loaded (not at mount) to avoid counting
+  // page-load time or restored-progress counts from a previous session as part of this one.
+  const sessionStartRef = useRef<number>(0)
+  // Server-assigned session ID from /api/ai/start-session (enables server-side duration).
+  const sessionIdRef = useRef<number | null>(null)
+  // Session-specific correct/wrong counts — always start at 0, never include restored progress.
+  const sessionCorrectRef = useRef(0)
+  const sessionWrongRef = useRef(0)
   // Mirrors of correctCount/wrongCount for use in cleanup (avoids stale closure)
   const correctCountRef = useRef(0)
   const wrongCountRef = useRef(0)
@@ -85,20 +92,24 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   useEffect(() => {
     return () => {
       if (sessionLoggedRef.current) return          // already logged by goNext
-      const words = correctCountRef.current + wrongCountRef.current
+      const sessionWords = sessionCorrectRef.current + sessionWrongRef.current
       const isRadio = currentModeRef.current === 'radio'
-      const durationSeconds = Math.round((Date.now() - sessionStartRef.current) / 1000)
+      const sessionStart = sessionStartRef.current
+      const durationSeconds = sessionStart > 0
+        ? Math.round((Date.now() - sessionStart) / 1000)
+        : 0
       // Radio mode has no answer tracking — log based on time if ≥10 s
-      if (words === 0 && (!isRadio || durationSeconds < 10)) return
+      if (sessionWords === 0 && (!isRadio || durationSeconds < 10)) return
       logSession({
         mode: currentModeRef.current ?? 'smart',
         bookId,
         chapterId,
-        wordsStudied: isRadio ? vocabRef.current.length : words,
-        correctCount: correctCountRef.current,
-        wrongCount: wrongCountRef.current,
+        wordsStudied: isRadio ? vocabRef.current.length : sessionWords,
+        correctCount: sessionCorrectRef.current,
+        wrongCount: sessionWrongRef.current,
         durationSeconds,
-        startedAt: sessionStartRef.current,
+        startedAt: sessionStart,
+        sessionId: sessionIdRef.current,
       })
       // Sync smart stats to backend on every exit
       syncSmartStatsToBackend()
@@ -177,6 +188,16 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     if (current) setCurrentChapterTitle(current.title)
   }, [chapterId, bookChapters])
 
+  // Start server-side session timer — called once when vocabulary is actually ready.
+  // Resets client-side fallback timer and session-specific answer counters.
+  const beginSession = () => {
+    sessionStartRef.current = Date.now()
+    sessionCorrectRef.current = 0
+    sessionWrongRef.current = 0
+    sessionLoggedRef.current = false
+    startSession().then(id => { sessionIdRef.current = id }).catch(() => {})
+  }
+
   // Restore progress helper
   const restoreProgress = (data: ProgressData) => {
     setQueueIndex(data.current_index || 0)
@@ -204,6 +225,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         setQueue(q)
         queueRef.current = q
         setQueueIndex(0); setCorrectCount(0); setWrongCount(0)
+        beginSession()
       } catch {
         showToast?.('加载错词失败', 'error')
       }
@@ -247,6 +269,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             setQueue(q)
             if (progress) restoreProgress(progress)
             else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+            beginSession()
           })
           .catch(() => showToast?.('加载章节词汇失败', 'error'))
         return
@@ -273,6 +296,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           setQueue(q)
           if (progress) restoreProgress(progress)
           else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+          beginSession()
         })
         .catch(() => showToast?.('加载词书失败', 'error'))
       return
@@ -301,6 +325,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         setQueue(q)
         if (progress) restoreProgress(progress)
         else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+        beginSession()
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
   }, [currentDay, bookId, errorMode, chapterId])
@@ -497,18 +522,20 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     }
     if (queueIndex + 1 >= queue.length) {
       // Session complete — log and mark so the unmount cleanup doesn't double-log
-      const finalCorrect = wasCorrect ? correctCount + 1 : correctCount
-      const finalWrong = wasCorrect ? wrongCount : wrongCount + 1
+      const finalSessionCorrect = wasCorrect ? sessionCorrectRef.current + 1 : sessionCorrectRef.current
+      const finalSessionWrong = wasCorrect ? sessionWrongRef.current : sessionWrongRef.current + 1
+      const sessionStart = sessionStartRef.current
       sessionLoggedRef.current = true
       logSession({
         mode: mode ?? 'smart',
         bookId,
         chapterId,
-        wordsStudied: finalCorrect + finalWrong,
-        correctCount: finalCorrect,
-        wrongCount: finalWrong,
-        durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
-        startedAt: sessionStartRef.current,
+        wordsStudied: finalSessionCorrect + finalSessionWrong,
+        correctCount: finalSessionCorrect,
+        wrongCount: finalSessionWrong,
+        durationSeconds: sessionStart > 0 ? Math.round((Date.now() - sessionStart) / 1000) : 0,
+        startedAt: sessionStart,
+        sessionId: sessionIdRef.current,
       })
       // Sync smart stats to backend at session end
       syncSmartStatsToBackend()
@@ -532,6 +559,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const nc = isCorrect ? correctCount + 1 : correctCount
     const nw = isCorrect ? wrongCount : wrongCount + 1
     setCorrectCount(nc); setWrongCount(nw)
+    if (isCorrect) sessionCorrectRef.current++ else sessionWrongRef.current++
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     // Record per-dimension stats first, then sync wrong word (so dim stats are included)
@@ -552,6 +580,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const nc = isCorrect ? correctCount + 1 : correctCount
     const nw = isCorrect ? wrongCount : wrongCount + 1
     setCorrectCount(nc); setWrongCount(nw)
+    if (isCorrect) sessionCorrectRef.current++ else sessionWrongRef.current++
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     // Record dictation stats first, then sync wrong word (so dim stats are included)
@@ -566,6 +595,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     saveWrongWord(currentWord)
     const nw = wrongCount + 1
     setWrongCount(nw); saveProgress(correctCount, nw)
+    sessionWrongRef.current++
     recordModeAnswer(mode ?? 'smart', false)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: 'wrong' }))
     goNext(false)

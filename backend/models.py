@@ -372,6 +372,7 @@ class UserStudySession(db.Model):
     wrong_count = db.Column(db.Integer, default=0)
     duration_seconds = db.Column(db.Integer, default=0)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ended_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
         total = self.correct_count + self.wrong_count

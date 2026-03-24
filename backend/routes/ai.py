@@ -1049,13 +1049,50 @@ def get_learning_stats(current_user: User):
     })
 
 
+@ai_bp.route('/start-session', methods=['POST'])
+@token_required
+def start_session(current_user: User):
+    """Create a session record with server-side start time; returns sessionId for later completion."""
+    session = UserStudySession(
+        user_id=current_user.id,
+        started_at=datetime.utcnow(),
+    )
+    db.session.add(session)
+    db.session.commit()
+    return jsonify({'sessionId': session.id}), 201
+
+
 @ai_bp.route('/log-session', methods=['POST'])
 @token_required
 def log_session(current_user: User):
-    """Persist a study session record to the database."""
+    """Persist a study session record to the database.
+
+    If sessionId is provided the existing session row (created by /start-session) is
+    updated and duration_seconds is calculated server-side from started_at → now.
+    Otherwise a new row is inserted using the client-supplied durationSeconds.
+    """
     body = request.get_json() or {}
     try:
-        # Use client-provided startedAt (epoch ms) if valid, else server time
+        session_id = body.get('sessionId')
+        if session_id:
+            # Update the existing session row created by /start-session
+            session = UserStudySession.query.filter_by(
+                id=session_id, user_id=current_user.id
+            ).first()
+            if session:
+                ended_at = datetime.utcnow()
+                session.ended_at = ended_at
+                session.duration_seconds = max(0, int((ended_at - session.started_at).total_seconds()))
+                session.mode = body.get('mode', session.mode)
+                session.book_id = body.get('bookId', session.book_id)
+                session.chapter_id = body.get('chapterId', session.chapter_id)
+                session.words_studied = body.get('wordsStudied', 0)
+                session.correct_count = body.get('correctCount', 0)
+                session.wrong_count = body.get('wrongCount', 0)
+                db.session.commit()
+                return jsonify({'id': session.id}), 200
+
+        # Fallback: create a new row using client-supplied timestamps/duration
         started_at = None
         client_start = body.get('startedAt')
         if client_start:
