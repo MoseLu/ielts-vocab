@@ -121,12 +121,13 @@ export function useSpeechRecognition({
     console.log('[Speech] Connecting to:', speechUrl)
 
     const socket = io(`${speechUrl}/speech`, {
-      transports: ['polling', 'websocket'],
+      transports: ['websocket'],  // 优先 WebSocket，减少轮询开销
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
-      reconnectionDelayMax: 5000,
-      timeout: 20000,
+      reconnectionAttempts: 3,    // 减少重连次数
+      reconnectionDelay: 1000,    // 初始延迟 1s
+      reconnectionDelayMax: 3000, // 最大延迟 3s
+      timeout: 5000,             // 5秒超时
+      rememberUpgrade: true,      // 记住上次的传输方式
     })
 
     socket.on('connect', () => {
