@@ -75,7 +75,33 @@ SEARCH_TOOL_DEF = {
     }
 }
 
-TOOLS = [SEARCH_TOOL_DEF]
+REMEMBER_TOOL_DEF = {
+    "name": "remember_user_note",
+    "description": (
+        "Store an important, reusable observation about this user's learning goals, habits, "
+        "preferences, weaknesses, or achievements. Call this whenever the user reveals something "
+        "worth remembering for future sessions (e.g. 'my exam is in June', 'I struggle with "
+        "academic words', 'I prefer listening practice'). "
+        "The note will be injected into every future conversation."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "note": {
+                "type": "string",
+                "description": "A concise observation in Chinese, max 80 characters."
+            },
+            "category": {
+                "type": "string",
+                "enum": ["goal", "habit", "weakness", "preference", "achievement", "other"],
+                "description": "Category of the note."
+            }
+        },
+        "required": ["note", "category"]
+    }
+}
+
+TOOLS = [SEARCH_TOOL_DEF, REMEMBER_TOOL_DEF]
 
 
 def web_search(query: str) -> str:
