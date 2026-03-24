@@ -337,14 +337,34 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     // Generate options for multiple-choice modes (not needed for dictation sub-mode)
     const needsOptions = mode === 'listening' || mode === 'meaning' ||
       (mode === 'smart' && subMode !== 'dictation')
+    const isListeningMode = mode === 'listening' || (mode === 'smart' && subMode === 'listening')
+
     if (needsOptions) {
-      // For listening (and smart-listening sub-mode), pass 'listening' so
-      // generateOptions uses similarity-based confusable distractors.
-      const optMode = (mode === 'listening' || (mode === 'smart' && subMode === 'listening'))
-        ? 'listening'
-        : mode
-      const { options: opts, correctIndex: ci } = generateOptions(currentWord, vocabulary, optMode)
+      // Set immediate local options (user is still listening to audio)
+      const { options: opts, correctIndex: ci } = generateOptions(currentWord, vocabulary)
       setOptions(opts); setCorrectIndex(ci)
+
+      // For listening mode: replace with global-pool confusable distractors
+      if (isListeningMode) {
+        const word = currentWord
+        const token = localStorage.getItem('auth_token')
+        const params = new URLSearchParams({ word: word.word, n: '10' })
+        if (word.phonetic) params.set('phonetic', word.phonetic)
+        if (word.pos)      params.set('pos', word.pos)
+        fetch(`/api/ai/similar-words?${params}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+          .then(r => r.ok ? r.json() : null)
+          .then((data: { words: Word[] } | null) => {
+            if (!data?.words?.length) return
+            // Pool = similar words from global vocabulary (excluding the correct word)
+            const pool = data.words.filter(w => w.definition !== word.definition)
+            if (pool.length < 3) return  // not enough distractors, keep local ones
+            const { options: newOpts, correctIndex: newCi } = generateOptions(word, [word, ...pool])
+            setOptions(newOpts); setCorrectIndex(newCi)
+          })
+          .catch(() => { /* keep local options on network error */ })
+      }
     }
 
     setSelectedAnswer(null); setShowResult(false); setSpellingInput(''); setSpellingResult(null)

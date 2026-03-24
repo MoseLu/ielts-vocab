@@ -1,3 +1,4 @@
+import re
 import json
 import uuid
 from flask import Blueprint, jsonify, request
@@ -6,6 +7,140 @@ from routes.middleware import token_required
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
 ai_bp = Blueprint('ai', __name__)
+
+
+# ── Global vocabulary pool (all books, deduplicated) ─────────────────────────
+
+_global_vocab_pool: list | None = None
+
+
+def _get_global_vocab_pool() -> list:
+    """
+    Load every word from every book into one flat list.
+    Deduplicates by lowercase word string.  Cached after first call.
+    """
+    global _global_vocab_pool
+    if _global_vocab_pool is not None:
+        return _global_vocab_pool
+
+    from routes.books import VOCAB_BOOKS, load_book_vocabulary
+    seen: dict[str, dict] = {}
+    for book in VOCAB_BOOKS:
+        words = load_book_vocabulary(book['id']) or []
+        for w in words:
+            key = w.get('word', '').strip().lower()
+            if key and key not in seen:
+                seen[key] = {
+                    'word':       w.get('word', '').strip(),
+                    'phonetic':   w.get('phonetic', ''),
+                    'pos':        w.get('pos', ''),
+                    'definition': w.get('definition', ''),
+                }
+    _global_vocab_pool = list(seen.values())
+    return _global_vocab_pool
+
+
+# ── Similarity helpers ────────────────────────────────────────────────────────
+
+def _levenshtein(a: str, b: str) -> int:
+    m, n = len(a), len(b)
+    dp = list(range(n + 1))
+    for i in range(1, m + 1):
+        prev = dp[0]
+        dp[0] = i
+        for j in range(1, n + 1):
+            tmp = dp[j]
+            dp[j] = prev if a[i - 1] == b[j - 1] else 1 + min(prev, dp[j], dp[j - 1])
+            prev = tmp
+    return dp[n]
+
+
+_IPA_STRIP = re.compile(r'[/\[\]ˈˌ.: ]')
+
+
+def _confusability_score(
+    tw: str, tp: str, tpos: str,
+    cw: str, cp: str, cpos: str,
+) -> float:
+    """Score how confusable candidate (cw) is with target (tw) for listening mode."""
+    tw_l, cw_l = tw.lower(), cw.lower()
+    score = 0.0
+
+    # Same POS
+    if tpos and cpos and tpos == cpos:
+        score += 2.0
+
+    # Spelling similarity (normalised Levenshtein)
+    sd = _levenshtein(tw_l, cw_l)
+    mx = max(len(tw_l), len(cw_l))
+    if mx:
+        score += (1 - sd / mx) * 5
+
+    # Common prefix
+    pfx = 0
+    while pfx < len(tw_l) and pfx < len(cw_l) and tw_l[pfx] == cw_l[pfx]:
+        pfx += 1
+    score += min(pfx * 0.8, 3.0)
+
+    # Common suffix
+    sfx = 0
+    while sfx < len(tw_l) and sfx < len(cw_l) and tw_l[-(sfx + 1)] == cw_l[-(sfx + 1)]:
+        sfx += 1
+    score += min(sfx * 0.5, 1.5)
+
+    # Similar length ±2
+    if abs(len(tw_l) - len(cw_l)) <= 2:
+        score += 0.5
+
+    # Phonetic similarity
+    if tp and cp:
+        tp_s = _IPA_STRIP.sub('', tp).lower()
+        cp_s = _IPA_STRIP.sub('', cp).lower()
+        if tp_s and cp_s:
+            pd = _levenshtein(tp_s, cp_s)
+            mp = max(len(tp_s), len(cp_s))
+            if mp:
+                score += (1 - pd / mp) * 4
+
+    return score
+
+
+# ── GET /api/ai/similar-words ─────────────────────────────────────────────────
+
+@ai_bp.route('/similar-words', methods=['GET'])
+@token_required
+def get_similar_words(current_user: User):
+    """
+    Return the N most confusable words from the global vocabulary pool.
+    Query params:
+      word     – target word (required)
+      phonetic – IPA string (optional, improves phonetic scoring)
+      pos      – part of speech (optional)
+      n        – result count (default 10, max 20)
+    """
+    target_word = (request.args.get('word') or '').strip()
+    if not target_word:
+        return jsonify({'error': 'word is required'}), 400
+
+    target_phonetic = request.args.get('phonetic', '')
+    target_pos      = request.args.get('pos', '')
+    n               = min(int(request.args.get('n', 10)), 20)
+
+    pool = _get_global_vocab_pool()
+    tw_lower = target_word.lower()
+
+    scored: list[tuple[float, dict]] = []
+    for w in pool:
+        if w['word'].lower() == tw_lower:
+            continue
+        s = _confusability_score(
+            target_word, target_phonetic, target_pos,
+            w['word'], w.get('phonetic', ''), w.get('pos', ''),
+        )
+        scored.append((s, w))
+
+    scored.sort(key=lambda x: -x[0])
+    return jsonify({'words': [w for _, w in scored[:n]]})
 
 
 # ── GET /api/ai/context ───────────────────────────────────────────────────────
