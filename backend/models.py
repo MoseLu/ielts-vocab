@@ -390,6 +390,53 @@ class UserStudySession(db.Model):
         }
 
 
+class UserMemory(db.Model):
+    """Persistent AI memory about a user.
+
+    The AI can write to ai_notes via the remember_user_note tool call to store
+    observations across sessions (goals, habits, weaknesses, preferences).
+    conversation_summary holds a compressed version of older conversation turns
+    so the AI retains long-term context beyond the recent-turn window.
+    """
+    __tablename__ = 'user_memory'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+
+    # User goals — updated by AI when user states them
+    goals = db.Column(db.Text, nullable=True)  # JSON: {target_band, exam_date, daily_minutes, focus}
+
+    # AI-written observations: JSON array of {category, note, created_at}
+    # categories: goal | habit | weakness | preference | achievement | other
+    ai_notes = db.Column(db.Text, nullable=True)
+
+    # Compressed summary of conversation turns older than _HISTORY_LIMIT
+    conversation_summary = db.Column(db.Text, nullable=True)
+    # How many turns are already captured in conversation_summary
+    summary_turn_count = db.Column(db.Integer, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def get_goals(self) -> dict:
+        try:
+            return json.loads(self.goals) if self.goals else {}
+        except Exception:
+            return {}
+
+    def get_ai_notes(self) -> list:
+        try:
+            return json.loads(self.ai_notes) if self.ai_notes else []
+        except Exception:
+            return []
+
+    def set_ai_notes(self, notes: list):
+        self.ai_notes = json.dumps(notes, ensure_ascii=False)
+
+    def set_goals(self, goals: dict):
+        self.goals = json.dumps(goals, ensure_ascii=False)
+
+
 class RevokedToken(db.Model):
     """Revoked JWT JTIs — checked on every authenticated request."""
     __tablename__ = 'revoked_tokens'

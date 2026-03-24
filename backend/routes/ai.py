@@ -2,7 +2,7 @@ import re
 import json
 import uuid
 from flask import Blueprint, jsonify, request
-from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory
+from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory
 from routes.middleware import token_required
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
@@ -297,6 +297,9 @@ def get_context(current_user: User):
             'started_at': s.started_at.isoformat() if s.started_at else None,
         })
 
+    # Load persistent AI memory for this user
+    memory = _load_memory(user_id)
+
     return jsonify({
         'totalBooks': len(book_map),
         'totalLearned': total_learned,
@@ -318,6 +321,7 @@ def get_context(current_user: User):
         'recentSessions': recent_sessions_data,
         'chapterSessionStats': list(chapter_session_stats.values()),
         'totalSessions': len(recent_sessions),
+        'memory': memory,
     })
 
 
@@ -326,19 +330,39 @@ def get_context(current_user: User):
 SYSTEM_PROMPT = """你是一个 IELTS 英语词汇学习规划助手，名叫"雅思小助手"。请用中文回复用户。
 
 你具备以下能力：
-1. 分析用户的学习数据（进度、准确率、错词分布、当前学习状态）
+1. 分析用户的学习数据（进度、准确率、错词分布、当前学习状态、历史练习记录）
 2. 给出学习计划建议（每日学习量、复习节奏），提供可操作的选项让用户选择
-3. 激励用户保持学习习惯
+3. 激励用户保持学习习惯，结合用户目标和进步趋势给出针对性反馈
 4. 解释英文单词的用法，通过网络搜索获取权威例句
+5. 记住用户的目标、习惯、偏好，在未来对话中持续引用
+
+## 记忆工具：remember_user_note
+当对话中出现以下信息时，**主动调用 remember_user_note** 工具将其持久化：
+- 用户的考试目标（如"目标7分"、"6月考试"）
+- 每日学习计划（如"每天学30分钟"、"每天100词"）
+- 学习偏好（如"喜欢听力模式"、"不喜欢默写"）
+- 薄弱点（如"学术词汇较弱"、"听力场景词容易混淆"）
+- 重要成就（如"完成第5章，正确率95%"）
+
+调用示例：对用户说"好的，我记下来了"之后，立即调用 remember_user_note。
+不要每次都问用户是否要记住，直接记录即可。
+
+## 上下文优先级（从高到低）
+1. 【AI记忆】— 跨会话持久的用户目标和 AI 笔记（最重要，始终优先引用）
+2. 【历史对话摘要】— 压缩的旧会话上下文
+3. 【最近练习记录】— 实际练习行为数据
+4. 【当前学习状态】— 当前正在做什么
+5. 【用户学习数据摘要】— 整体统计数字
 
 ## 最重要的原则：优先使用用户的真实数据
-- 如果用户提供了当前学习状态（[当前学习状态]），回复必须基于这些真实数据
+- 引用【AI记忆】中的内容时，要自然融入回复（"我记得你说过目标是7分…"）
 - 如果用户问你记住了哪些单词，要明确说出具体单词名称，而不是泛泛而谈
 - 如果用户在学习过程中问你当前单词的例句，先用 web_search 搜索真实例句
 - 绝对不要在用户询问个人学习情况时给出通用词汇表
 
 ## 当用户没有历史数据时（totalLearned=0 或 [当前学习状态] 为空）
 - 说明用户刚开始，先询问他们的目标：每天多少时间、目标分数等
+- 获取到目标后立即用 remember_user_note 记录
 - 不要给通用词汇表，而是制定第一阶段学习计划，提供选项让用户选择
 
 ## 回复格式规范
@@ -461,12 +485,21 @@ def _parse_options(text: str) -> list[str] | None:
     return options if options else None
 
 
-def _chat_with_tools(messages: list[dict], tools: list | None = None, max_iterations: int = 5) -> dict:
+def _chat_with_tools(
+    messages: list[dict],
+    tools: list | None = None,
+    max_iterations: int = 5,
+    extra_handlers: dict | None = None,
+) -> dict:
     """
     Chat with MiniMax, automatically handling tool_use blocks.
     Appends assistant responses and tool results to messages in-place.
     Returns the final text response.
+
+    extra_handlers: optional dict of {tool_name: callable} that extends/overrides
+    TOOL_HANDLERS for this call (used to inject per-request handlers, e.g. memory writes).
     """
+    handlers = {**TOOL_HANDLERS, **(extra_handlers or {})}
     for i in range(max_iterations):
         response = chat(messages, tools=tools, max_tokens=4096)
 
@@ -474,7 +507,7 @@ def _chat_with_tools(messages: list[dict], tools: list | None = None, max_iterat
             tool_name = response.get("tool")
             tool_input = response.get("input", {})
             tool_call_id = response.get("tool_call_id", f"call_{i}")
-            handler = TOOL_HANDLERS.get(tool_name)
+            handler = handlers.get(tool_name)
 
             if handler:
                 try:
@@ -536,6 +569,34 @@ B. 选项B
 def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     """Build a combined context message from server data + frontend state."""
     parts = []
+
+    # ── Persistent AI memory (goals, notes, compressed history) ──────────────
+    memory = ctx_data.get('memory', {})
+    goals = memory.get('goals', {})
+    ai_notes = memory.get('ai_notes', [])
+    conv_summary = memory.get('conversation_summary', '')
+
+    if goals or ai_notes or conv_summary:
+        parts.append("【AI记忆（跨会话持久）】")
+        if goals:
+            goal_parts = []
+            if goals.get('target_band'):
+                goal_parts.append(f"目标分数：{goals['target_band']}")
+            if goals.get('exam_date'):
+                goal_parts.append(f"考试日期：{goals['exam_date']}")
+            if goals.get('daily_minutes'):
+                goal_parts.append(f"每日学习：{goals['daily_minutes']}分钟")
+            if goals.get('focus'):
+                goal_parts.append(f"重点方向：{goals['focus']}")
+            if goal_parts:
+                parts.append("  用户目标：" + "，".join(goal_parts))
+        if ai_notes:
+            cat_zh = {'goal': '目标', 'habit': '习惯', 'weakness': '薄弱', 'preference': '偏好', 'achievement': '成就', 'other': '其他'}
+            for n in ai_notes[-10:]:  # last 10 notes
+                cat = cat_zh.get(n.get('category', 'other'), n.get('category', ''))
+                parts.append(f"  [{cat}] {n.get('note', '')}（{n.get('created_at', '')}）")
+        if conv_summary:
+            parts.append(f"\n【历史对话摘要】\n{conv_summary}")
 
     # Server-side learning summary
     total_learned = ctx_data.get('totalLearned', 0)
@@ -646,6 +707,8 @@ def greet(current_user: User):
         final_text = response.get("text", str(response))
         options = _parse_options(final_text)
         clean_reply = _strip_options(final_text)
+        # Save greeting as the opening assistant turn so /ask can reference it
+        _save_turn(current_user.id, '[用户打开了AI助手]', clean_reply)
         return jsonify({'reply': clean_reply, 'options': options})
     except Exception as e:
         return jsonify({'error': f'AI service error: {str(e)}'}), 500
@@ -683,6 +746,113 @@ def _save_turn(user_id: int, user_message: str, assistant_reply: str):
         db.session.rollback()
         import logging
         logging.warning(f"[AI] Failed to save conversation turn: {e}")
+
+
+# ── User memory helpers ───────────────────────────────────────────────────────
+
+def _get_or_create_memory(user_id: int) -> 'UserMemory':
+    """Return the UserMemory row for this user, creating it if absent."""
+    mem = UserMemory.query.filter_by(user_id=user_id).first()
+    if not mem:
+        mem = UserMemory(user_id=user_id)
+        db.session.add(mem)
+        db.session.flush()   # assign id without full commit
+    return mem
+
+
+def _load_memory(user_id: int) -> dict:
+    """Return serialisable memory dict for context injection."""
+    mem = UserMemory.query.filter_by(user_id=user_id).first()
+    if not mem:
+        return {}
+    return {
+        'goals': mem.get_goals(),
+        'ai_notes': mem.get_ai_notes(),
+        'conversation_summary': mem.conversation_summary or '',
+    }
+
+
+def _add_memory_note(user_id: int, note: str, category: str) -> str:
+    """Append an AI-written note to UserMemory.ai_notes. Returns confirmation."""
+    from datetime import datetime as _dt
+    try:
+        mem = _get_or_create_memory(user_id)
+        notes = mem.get_ai_notes()
+        # Avoid exact duplicates
+        if not any(n.get('note') == note for n in notes):
+            notes.append({
+                'category': category,
+                'note': note,
+                'created_at': _dt.utcnow().strftime('%Y-%m-%d'),
+            })
+            # Keep last 30 notes to avoid unbounded growth
+            mem.set_ai_notes(notes[-30:])
+        db.session.commit()
+        return f"已记录：[{category}] {note}"
+    except Exception as e:
+        db.session.rollback()
+        import logging
+        logging.warning(f"[AI] Failed to save memory note: {e}")
+        return f"记录失败：{e}"
+
+
+# Threshold: when total turns exceed this, compress the oldest chunk
+_SUMMARIZE_THRESHOLD = 40   # total turns before triggering compression
+_SUMMARIZE_CHUNK = 20       # how many old turns to compress each time
+
+
+def _maybe_summarize_history(user_id: int):
+    """If conversation history is long, compress old turns into UserMemory.conversation_summary."""
+    total = UserConversationHistory.query.filter_by(user_id=user_id).count()
+    mem = UserMemory.query.filter_by(user_id=user_id).first()
+    already_summarized = mem.summary_turn_count if mem else 0
+
+    unsummarized = total - already_summarized
+    if unsummarized <= _SUMMARIZE_THRESHOLD:
+        return  # Not enough new turns yet
+
+    # Fetch the oldest un-summarized chunk
+    old_rows = (
+        UserConversationHistory.query
+        .filter_by(user_id=user_id)
+        .order_by(UserConversationHistory.created_at.asc())
+        .offset(already_summarized)
+        .limit(_SUMMARIZE_CHUNK)
+        .all()
+    )
+    if not old_rows:
+        return
+
+    # Build a conversation snippet for the LLM to summarize
+    snippet = '\n'.join(
+        f"{'用户' if r.role == 'user' else 'AI'}：{r.content[:300]}"
+        for r in old_rows
+    )
+    existing_summary = mem.conversation_summary if mem else ''
+
+    summary_prompt = [
+        {"role": "system", "content": (
+            "你是一个摘要助手，请将以下对话压缩为一段简洁的中文摘要（100-200字），"
+            "重点保留：用户的学习目标、偏好、困难、AI给出的重要建议和用户的关键反应。"
+            "不要编造内容，只提炼对话中已有的信息。"
+        )},
+        {"role": "user", "content": (
+            (f"【已有摘要】\n{existing_summary}\n\n" if existing_summary else '') +
+            f"【新增对话（{len(old_rows)}条）】\n{snippet}\n\n"
+            "请输出更新后的完整摘要："
+        )},
+    ]
+    try:
+        resp = chat(summary_prompt, max_tokens=400)
+        new_summary = resp.get('text', '').strip()
+        if new_summary:
+            mem = _get_or_create_memory(user_id)
+            mem.conversation_summary = new_summary
+            mem.summary_turn_count = already_summarized + len(old_rows)
+            db.session.commit()
+    except Exception as e:
+        import logging
+        logging.warning(f"[AI] Summarization failed for user={user_id}: {e}")
 
 
 @ai_bp.route('/ask', methods=['POST'])
@@ -742,9 +912,15 @@ def ask(current_user: User):
     else:
         messages.append({"role": "user", "content": user_message})
 
-    # Run chat with tool calling support
+    # Build per-request handler for remember_user_note so it has access to user_id
+    def _handle_remember(note: str, category: str = 'other') -> str:
+        return _add_memory_note(current_user.id, note, category)
+
+    extra_handlers = {'remember_user_note': _handle_remember}
+
+    # Run chat with tool calling support (includes web_search + remember_user_note)
     try:
-        response = _chat_with_tools(messages, tools=TOOLS)
+        response = _chat_with_tools(messages, tools=TOOLS, extra_handlers=extra_handlers)
 
         final_text = response.get("text", str(response))
         options = _parse_options(final_text)
@@ -753,6 +929,12 @@ def ask(current_user: User):
 
         # Persist this turn so future calls include it as history
         _save_turn(current_user.id, user_message, clean_reply)
+
+        # Trigger background summarization if history is getting long (non-blocking)
+        try:
+            _maybe_summarize_history(current_user.id)
+        except Exception:
+            pass
 
         return jsonify({
             'reply': clean_reply,
