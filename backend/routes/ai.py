@@ -2,7 +2,7 @@ import re
 import json
 import uuid
 from flask import Blueprint, jsonify, request
-from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory
+from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory, UserLearningNote
 from routes.middleware import token_required
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
@@ -929,6 +929,21 @@ def ask(current_user: User):
 
         # Persist this turn so future calls include it as history
         _save_turn(current_user.id, user_message, clean_reply)
+
+        # Auto-save Q&A as a learning note for the journal
+        try:
+            word_ctx = frontend_context.get('currentWord') if frontend_context else None
+            note = UserLearningNote(
+                user_id=current_user.id,
+                question=user_message,
+                answer=clean_reply,
+                word_context=word_ctx,
+            )
+            db.session.add(note)
+            db.session.commit()
+        except Exception as note_err:
+            db.session.rollback()
+            logging.warning(f"[AI] Failed to save learning note: {note_err}")
 
         # Trigger background summarization if history is getting long (non-blocking)
         try:

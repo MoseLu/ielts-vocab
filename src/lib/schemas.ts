@@ -255,6 +255,46 @@ export const AIAskResponseSchema = z.object({
   options: z.array(z.string()).nullable().optional(),
 })
 
+// ── Learning Journal ──────────────────────────────────────────────────────────
+
+export const LearningNoteSchema = z.object({
+  id: z.number().int(),
+  question: z.string(),
+  answer: z.string(),
+  word_context: z.string().nullable().optional(),
+  created_at: z.string(),
+})
+export type LearningNote = z.infer<typeof LearningNoteSchema>
+
+export const DailySummarySchema = z.object({
+  id: z.number().int(),
+  date: z.string(),
+  content: z.string(),
+  generated_at: z.string(),
+})
+export type DailySummary = z.infer<typeof DailySummarySchema>
+
+export const NotesListResponseSchema = z.object({
+  notes: z.array(LearningNoteSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  per_page: z.number().int(),
+})
+
+export const SummariesListResponseSchema = z.object({
+  summaries: z.array(DailySummarySchema),
+})
+
+export const GenerateSummaryResponseSchema = z.object({
+  summary: DailySummarySchema,
+})
+
+export const ExportResponseSchema = z.object({
+  content: z.string(),
+  filename: z.string(),
+  format: z.string(),
+})
+
 // ── Form / UI ──────────────────────────────────────────────────────────────
 
 export const ToastDataSchema = z.object({

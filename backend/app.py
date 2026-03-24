@@ -18,6 +18,7 @@ from routes.books import books_bp, init_books
 from routes.speech_socketio import register_socketio_events
 from routes.ai import ai_bp
 from routes.admin import admin_bp, init_admin
+from routes.notes import notes_bp
 from routes.middleware import init_middleware
 
 
@@ -117,6 +118,41 @@ def _migrate_db(app):
                 conn.commit()
                 print("[Migration] tokens_revoked_before column added.")
 
+            # Migration 6: create user_learning_notes table if missing
+            tables = [row[0] for row in conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()]
+            if 'user_learning_notes' not in tables:
+                print("[Migration] Creating user_learning_notes table...")
+                conn.execute(text("""
+                    CREATE TABLE user_learning_notes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL REFERENCES users(id),
+                        question TEXT NOT NULL,
+                        answer TEXT NOT NULL,
+                        word_context VARCHAR(200),
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.execute(text("CREATE INDEX ix_user_learning_notes_user_id ON user_learning_notes (user_id)"))
+                conn.commit()
+                print("[Migration] user_learning_notes table created.")
+
+            # Migration 7: create user_daily_summaries table if missing
+            if 'user_daily_summaries' not in tables:
+                print("[Migration] Creating user_daily_summaries table...")
+                conn.execute(text("""
+                    CREATE TABLE user_daily_summaries (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL REFERENCES users(id),
+                        date VARCHAR(10) NOT NULL,
+                        content TEXT NOT NULL,
+                        generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE (user_id, date)
+                    )
+                """))
+                conn.execute(text("CREATE INDEX ix_user_daily_summaries_user_id ON user_daily_summaries (user_id)"))
+                conn.commit()
+                print("[Migration] user_daily_summaries table created.")
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -140,6 +176,7 @@ def create_app(config_class=Config):
     app.register_blueprint(books_bp, url_prefix='/api/books')
     init_books(app)
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
+    app.register_blueprint(notes_bp, url_prefix='/api/notes')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     init_admin(app)
 
