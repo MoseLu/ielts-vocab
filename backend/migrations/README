@@ -1,0 +1,45 @@
+# Database Migrations (Flask-Migrate / Alembic)
+
+## Daily workflow
+
+```bash
+cd backend
+
+# After changing a model in models.py:
+flask db migrate -m "short description of change"   # auto-generate migration
+flask db upgrade                                     # apply to local DB
+```
+
+## First-time setup (existing database)
+
+If you already have a populated `database.sqlite` from before Flask-Migrate
+was introduced, run this **once** to register the current schema version:
+
+```bash
+flask db stamp head
+```
+
+After that, use the normal workflow above for all future schema changes.
+
+## Fresh install
+
+For a brand-new environment, `db.create_all()` in `app.py` will create all
+tables on first startup. Then stamp:
+
+```bash
+flask db stamp head
+```
+
+Or skip `db.create_all()` entirely and let Alembic create the schema:
+
+```bash
+flask db upgrade
+```
+
+## Environment variables required
+
+```bash
+export SECRET_KEY=...
+export JWT_SECRET_KEY=...
+export ADMIN_INITIAL_PASSWORD=...   # only needed on first run
+```
