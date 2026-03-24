@@ -10,6 +10,7 @@ export interface QuickMemoryRecord {
   knownCount: number
   unknownCount: number
   nextReview: number      // epoch ms — Ebbinghaus-derived next review time
+  fuzzyCount: number      // times user went back and re-answered (indicates uncertainty)
 }
 export type QuickMemoryRecords = Record<string, QuickMemoryRecord>  // key = word
 

@@ -430,6 +430,7 @@ class UserQuickMemoryRecord(db.Model):
     known_count = db.Column(db.Integer, default=0)
     unknown_count = db.Column(db.Integer, default=0)
     next_review = db.Column(db.BigInteger, default=0)
+    fuzzy_count = db.Column(db.Integer, default=0)  # times user went back and re-answered
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'word', name='unique_user_qm_word'),
@@ -444,6 +445,7 @@ class UserQuickMemoryRecord(db.Model):
             'knownCount': self.known_count,
             'unknownCount': self.unknown_count,
             'nextReview': self.next_review,
+            'fuzzyCount': self.fuzzy_count,
         }
 
 

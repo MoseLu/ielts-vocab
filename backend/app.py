@@ -88,6 +88,15 @@ def _migrate_db(app):
                     conn.execute(text(f"ALTER TABLE user_wrong_words ADD COLUMN {col} INTEGER NOT NULL DEFAULT 0"))
             conn.commit()
 
+            # Migration 4: add fuzzy_count to user_quick_memory_records
+            qm_pragma = conn.execute(text("PRAGMA table_info(user_quick_memory_records)")).fetchall()
+            qm_cols = [row[1] for row in qm_pragma]
+            if qm_cols and 'fuzzy_count' not in qm_cols:
+                print("[Migration] Adding fuzzy_count to user_quick_memory_records...")
+                conn.execute(text("ALTER TABLE user_quick_memory_records ADD COLUMN fuzzy_count INTEGER NOT NULL DEFAULT 0"))
+                conn.commit()
+                print("[Migration] fuzzy_count column added.")
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)

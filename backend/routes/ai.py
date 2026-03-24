@@ -1122,6 +1122,9 @@ def sync_quick_memory(current_user: User):
                 existing.known_count   = r.get('knownCount', existing.known_count)
                 existing.unknown_count = r.get('unknownCount', existing.unknown_count)
                 existing.next_review   = r.get('nextReview', existing.next_review)
+                # fuzzy_count: take the max so it never decreases
+                if r.get('fuzzyCount') is not None:
+                    existing.fuzzy_count = max(existing.fuzzy_count or 0, r['fuzzyCount'])
         else:
             new_rec = UserQuickMemoryRecord(
                 user_id=current_user.id,
@@ -1132,6 +1135,7 @@ def sync_quick_memory(current_user: User):
                 known_count=r.get('knownCount', 0),
                 unknown_count=r.get('unknownCount', 0),
                 next_review=r.get('nextReview', 0),
+                fuzzy_count=r.get('fuzzyCount', 0),
             )
             db.session.add(new_rec)
 
