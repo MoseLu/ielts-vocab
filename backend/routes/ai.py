@@ -158,6 +158,57 @@ def get_context(current_user: User):
         UserWrongWord.wrong_count.desc()
     ).limit(50).all()
 
+    # ── Recent study sessions (last 20) for AI context ────────────────────────
+    recent_sessions = (
+        UserStudySession.query
+        .filter_by(user_id=user_id)
+        .filter(UserStudySession.words_studied > 0)
+        .order_by(UserStudySession.started_at.desc())
+        .limit(20)
+        .all()
+    )
+
+    # Per-chapter session stats: session count + accuracy trend (last 5 sessions per chapter)
+    from collections import defaultdict
+    chapter_sessions: dict = defaultdict(list)
+    for s in UserStudySession.query.filter_by(user_id=user_id).filter(UserStudySession.words_studied > 0).order_by(UserStudySession.started_at.desc()).limit(200).all():
+        key = f"{s.book_id}__{s.chapter_id}"
+        chapter_sessions[key].append(s)
+
+    chapter_session_stats = {}
+    from routes.books import VOCAB_BOOKS
+    book_title_map = {b['id']: b['title'] for b in VOCAB_BOOKS}
+
+    for key, sessions in chapter_sessions.items():
+        book_id, chapter_id = key.split('__', 1)
+        # Accuracy per session (oldest → newest)
+        ordered = sorted(sessions, key=lambda s: s.started_at or 0)
+        accuracies = [
+            round(s.correct_count / s.words_studied * 100)
+            for s in ordered if s.words_studied > 0
+        ]
+        # Trend: compare average of first half vs last half
+        if len(accuracies) >= 2:
+            mid = max(1, len(accuracies) // 2)
+            early_avg = sum(accuracies[:mid]) / mid
+            late_avg = sum(accuracies[mid:]) / max(len(accuracies) - mid, 1)
+            trend = "↑进步" if late_avg - early_avg >= 5 else "↓下滑" if early_avg - late_avg >= 5 else "→稳定"
+        else:
+            trend = "—"
+        total_words = sum(s.words_studied for s in sessions)
+        avg_acc = round(sum(accuracies) / len(accuracies)) if accuracies else 0
+        chapter_session_stats[key] = {
+            'book_id': book_id,
+            'chapter_id': chapter_id,
+            'book_title': book_title_map.get(book_id, book_id),
+            'session_count': len(sessions),
+            'total_words': total_words,
+            'avg_accuracy': avg_acc,
+            'accuracies': accuracies,
+            'trend': trend,
+            'modes': list({s.mode for s in sessions if s.mode}),
+        }
+
     # Aggregate per-book stats
     books = []
     total_learned = 0
@@ -195,9 +246,6 @@ def get_context(current_user: User):
     total_attempted = total_correct + total_wrong
     accuracy_rate = round(total_correct / total_attempted * 100) if total_attempted > 0 else 0
 
-    # Book titles (static lookup)
-    from routes.books import VOCAB_BOOKS
-    book_title_map = {b['id']: b['title'] for b in VOCAB_BOOKS}
     book_word_count_map = {b['id']: b.get('word_count', 0) for b in VOCAB_BOOKS}
 
     for book_id, stats in book_map.items():
@@ -205,16 +253,49 @@ def get_context(current_user: User):
         stats['wordCount'] = book_word_count_map.get(book_id, 0)
         stats['progress'] = round(stats['correctCount'] / (stats['correctCount'] + stats.get('wrongCount', 0)) * 100) if (stats['correctCount'] + stats.get('wrongCount', 0)) > 0 else 0
 
-    # Recent trend: check last 5 chapter sessions
-    recent = UserChapterProgress.query.filter_by(user_id=user_id).order_by(
-        UserChapterProgress.updated_at.desc()
-    ).limit(5).all()
-    if len(recent) >= 2:
-        first_half = sum(r.correct_count / max(r.correct_count + r.wrong_count, 1) for r in recent[len(recent)//2:])
-        second_half = sum(r.correct_count / max(r.correct_count + r.wrong_count, 1) for r in recent[:len(recent)//2])
-        trend = "improving" if second_half > first_half else "declining" if second_half < first_half else "stable"
+    # Recent trend: use actual study sessions (more reliable than chapter progress timestamps)
+    if len(recent_sessions) >= 4:
+        mid = len(recent_sessions) // 2
+        # recent_sessions is newest-first; older sessions = second half
+        newer = recent_sessions[:mid]
+        older = recent_sessions[mid:]
+        def _avg_acc(sessions):
+            items = [s for s in sessions if s.words_studied > 0]
+            if not items:
+                return 0
+            return sum(s.correct_count / s.words_studied for s in items) / len(items)
+        trend = "improving" if _avg_acc(newer) > _avg_acc(older) + 0.05 else \
+                "declining" if _avg_acc(newer) < _avg_acc(older) - 0.05 else "stable"
+    elif recent_sessions:
+        trend = "stable"
     else:
-        trend = "new"
+        # Fall back to chapter progress trend
+        recent_cp = UserChapterProgress.query.filter_by(user_id=user_id).order_by(
+            UserChapterProgress.updated_at.desc()
+        ).limit(5).all()
+        if len(recent_cp) >= 2:
+            first_half = sum(r.correct_count / max(r.correct_count + r.wrong_count, 1) for r in recent_cp[len(recent_cp)//2:])
+            second_half = sum(r.correct_count / max(r.correct_count + r.wrong_count, 1) for r in recent_cp[:len(recent_cp)//2])
+            trend = "improving" if second_half > first_half else "declining" if second_half < first_half else "stable"
+        else:
+            trend = "new"
+
+    # Build serialisable recent-session list
+    recent_sessions_data = []
+    for s in recent_sessions[:10]:
+        acc = round(s.correct_count / s.words_studied * 100) if s.words_studied else 0
+        recent_sessions_data.append({
+            'mode': s.mode,
+            'book_id': s.book_id,
+            'chapter_id': s.chapter_id,
+            'book_title': book_title_map.get(s.book_id or '', s.book_id or ''),
+            'words_studied': s.words_studied,
+            'correct_count': s.correct_count,
+            'wrong_count': s.wrong_count,
+            'accuracy': acc,
+            'duration_seconds': s.duration_seconds,
+            'started_at': s.started_at.isoformat() if s.started_at else None,
+        })
 
     return jsonify({
         'totalBooks': len(book_map),
@@ -233,7 +314,10 @@ def get_context(current_user: User):
             }
             for w in wrong_words
         ],
-        'recentTrend': trend
+        'recentTrend': trend,
+        'recentSessions': recent_sessions_data,
+        'chapterSessionStats': list(chapter_session_stats.values()),
+        'totalSessions': len(recent_sessions),
     })
 
 
@@ -461,13 +545,17 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     trend = ctx_data.get('recentTrend', 'new')
     books = ctx_data.get('books', [])
     wrong_words = ctx_data.get('wrongWords', [])
+    recent_sessions = ctx_data.get('recentSessions', [])
+    chapter_stats = ctx_data.get('chapterSessionStats', [])
+
+    trend_zh = {'improving': '上升', 'declining': '下滑', 'stable': '平稳', 'new': '刚开始'}.get(trend, trend)
 
     parts.append(
         f"【用户学习数据摘要】\n"
         f"总学习词数：{total_learned}\n"
         f"总正确数：{total_correct}  总错误数：{total_wrong}\n"
         f"整体准确率：{accuracy}%\n"
-        f"学习趋势：{trend}\n"
+        f"近期趋势：{trend_zh}\n"
         f"正在学习的词书：{len(books)} 本"
     )
     for b in books:
@@ -475,11 +563,52 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
             f"  - {b.get('title', b.get('id'))} "
             f"(准确率 {b.get('accuracy', 0)}%，错词数 {b.get('wrongCount', 0)})"
         )
+
+    # ── Recent sessions (最近练习记录) ────────────────────────────────────────
+    if recent_sessions:
+        parts.append("\n【最近练习记录（最新10条）】")
+        mode_zh = {
+            'smart': '智能', 'listening': '听音选义', 'meaning': '看词选义',
+            'dictation': '听写', 'radio': '随身听', 'quickmemory': '速记',
+        }
+        for s in recent_sessions:
+            date_str = (s.get('started_at') or '')[:10]
+            mode_label = mode_zh.get(s.get('mode', ''), s.get('mode', '未知'))
+            chapter_label = f"第{s.get('chapter_id', '?')}章" if s.get('chapter_id') else '全书'
+            book_label = s.get('book_title') or s.get('book_id') or '?'
+            dur = s.get('duration_seconds', 0) or 0
+            dur_str = f"{dur // 60}分{dur % 60}秒" if dur >= 60 else f"{dur}秒"
+            parts.append(
+                f"  {date_str} | {book_label} {chapter_label} | {mode_label} | "
+                f"{s.get('words_studied', 0)}词 | 正确率{s.get('accuracy', 0)}% | 用时{dur_str}"
+            )
+    else:
+        parts.append("\n【最近练习记录】暂无")
+
+    # ── Per-chapter repeated practice stats ───────────────────────────────────
+    repeated = [c for c in chapter_stats if c.get('session_count', 0) >= 2]
+    if repeated:
+        # Sort by session count desc, show top 5
+        repeated.sort(key=lambda c: c.get('session_count', 0), reverse=True)
+        parts.append("\n【多次练习章节（练了2次以上的）】")
+        for c in repeated[:5]:
+            acc_list = c.get('accuracies', [])
+            acc_str = ' → '.join(f"{a}%" for a in acc_list[-5:])  # last 5 sessions
+            modes_str = '、'.join(c.get('modes', []))
+            parts.append(
+                f"  {c.get('book_title', c.get('book_id', '?'))} 第{c.get('chapter_id', '?')}章："
+                f"共练 {c.get('session_count')} 次，"
+                f"平均正确率 {c.get('avg_accuracy')}%，"
+                f"趋势 {c.get('trend', '—')}，"
+                f"各次正确率 [{acc_str}]，"
+                f"使用模式：{modes_str}"
+            )
+
     if wrong_words:
         words_list = '、'.join([w['word'] for w in wrong_words[:20]])
-        parts.append(f"错词列表（最近50条）：{words_list}")
+        parts.append(f"\n错词列表（最近50条）：{words_list}")
     else:
-        parts.append("错词列表：暂无")
+        parts.append("\n错词列表：暂无")
 
     # Frontend session context
     if frontend_context:
