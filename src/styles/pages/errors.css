@@ -103,18 +103,57 @@
     line-height: 1.4;
 }
 
-/* Filter bar */
-.errors-filter-bar {
+/* Dimension filter pills */
+.errors-dim-filter {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    gap: 6px;
+    flex-wrap: wrap;
     margin-bottom: 10px;
     padding: 4px 0;
 }
 
-.errors-filter-label {
+.errors-dim-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--border);
+    background: var(--bg-color);
     font-size: 13px;
-    color: var(--text-tertiary);
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.errors-dim-pill:hover:not(:disabled):not(.active) {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.errors-dim-pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.errors-dim-pill:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.errors-dim-pill-count {
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(0,0,0,0.12);
+    border-radius: var(--radius-full);
+    padding: 0 5px;
+    line-height: 1.5;
+}
+
+.errors-dim-pill.active .errors-dim-pill-count {
+    background: rgba(255,255,255,0.25);
 }
 
 /* Empty state */
@@ -301,6 +340,12 @@
 .errors-dim-correct {
     opacity: 0.75;
     font-weight: 500;
+}
+
+/* Highlight the active filter dimension's badge with a ring */
+.errors-dim-highlight {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
 }
 
 /* Responsive */
