@@ -46,5 +46,18 @@ build/
 *.tmp
 .cache/
 
-# Claude Code local settings (may contain secrets)
-.claude/settings.local.json
+# Claude Code
+.claude/
+
+# Backend scripts
+backend/generate_*.py
+
+# Test coverage and results
+coverage/
+test-results/
+
+# Vocabulary data (local generated)
+vocabulary_data/*.txt
+vocabulary_data/*.bak
+vocabulary_data/*.lock
+vocabulary_data/*.json.bak
