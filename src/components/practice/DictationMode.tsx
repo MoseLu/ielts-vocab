@@ -161,27 +161,28 @@ export default function DictationMode({
           </p>
         </div>
 
-        {/* Word spelling mode — original letter hint */}
-        {!isExampleMode && (
-          <div className="dictation-letter-hint">
+        {/* Content area — grid-stacked to prevent height jumping on mode switch */}
+        <div className="dictation-content-area">
+          {/* Word spelling mode — original letter hint */}
+          <div className={`dictation-letter-hint${isExampleMode ? ' dictation-item-hidden' : ''}`}>
             {currentWord.word.split('').map((ch, i) => (
               ch === ' ' ? <span key={i} className="letter-hint-space" /> : <span key={i} className="letter-hint-blank">_</span>
             ))}
           </div>
-        )}
 
-        {/* Example fill-in-the-blank mode */}
-        {isExampleMode && sentenceText && (
-          <div className="dictation-example-area">
-            <div className="dictation-example-sentence">
-              {buildBlankSentence(sentenceText, currentWord.word)}
+          {/* Example fill-in-the-blank mode */}
+          {sentenceText && (
+            <div className={`dictation-example-area${!isExampleMode ? ' dictation-item-hidden' : ''}`}>
+              <div className="dictation-example-sentence">
+                {buildBlankSentence(sentenceText, currentWord.word)}
+              </div>
+              <div className="dictation-example-definition">
+                <span className="word-pos-tag">{currentWord.pos}</span>
+                {currentWord.definition}
+              </div>
             </div>
-            <div className="dictation-example-definition">
-              <span className="word-pos-tag">{currentWord.pos}</span>
-              {currentWord.definition}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {spellingResult === 'wrong' && (
           <div className="spelling-answer">

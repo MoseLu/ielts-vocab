@@ -160,6 +160,26 @@
     color: var(--text-primary);
 }
 
+/* Content area wrapper — stacks letter-hint and example-area in the same grid cell
+   so switching modes never changes the container height (no layout jump) */
+.dictation-content-area {
+    display: grid;
+    width: 100%;
+    align-items: start;
+}
+
+.dictation-content-area > * {
+    grid-row: 1;
+    grid-column: 1;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.dictation-item-hidden {
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0;
+}
+
 /* Example fill-in-the-blank area */
 .dictation-example-area {
     display: flex;
