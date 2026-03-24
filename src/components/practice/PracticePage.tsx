@@ -200,6 +200,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Restore progress helper
   const restoreProgress = (data: ProgressData) => {
+    // If the chapter was already completed, restart from the beginning so the
+    // user can practice again rather than immediately seeing the "done" screen.
+    if (data.is_completed) {
+      setQueueIndex(0); setCorrectCount(0); setWrongCount(0)
+      setPreviousWord(null); setLastState(null); setWordStatuses({})
+      return
+    }
     setQueueIndex(data.current_index || 0)
     setCorrectCount(data.correct_count || 0)
     setWrongCount(data.wrong_count || 0)
