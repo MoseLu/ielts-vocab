@@ -338,7 +338,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const needsOptions = mode === 'listening' || mode === 'meaning' ||
       (mode === 'smart' && subMode !== 'dictation')
     if (needsOptions) {
-      const { options: opts, correctIndex: ci } = generateOptions(currentWord, vocabulary)
+      // For listening (and smart-listening sub-mode), pass 'listening' so
+      // generateOptions uses similarity-based confusable distractors.
+      const optMode = (mode === 'listening' || (mode === 'smart' && subMode === 'listening'))
+        ? 'listening'
+        : mode
+      const { options: opts, correctIndex: ci } = generateOptions(currentWord, vocabulary, optMode)
       setOptions(opts); setCorrectIndex(ci)
     }
 

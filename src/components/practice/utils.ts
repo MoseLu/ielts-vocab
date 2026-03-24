@@ -82,12 +82,97 @@ export function syllabifyWord(word: string, phonetic: string): string[] {
   return parts.filter(p => p.length > 0)
 }
 
-export function generateOptions(currentWord: Word, allWords: Word[]): { options: OptionItem[]; correctIndex: number } {
+// ── Levenshtein distance ─────────────────────────────────────────────────────
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length
+  const dp: number[] = Array.from({ length: n + 1 }, (_, j) => j)
+  for (let i = 1; i <= m; i++) {
+    let prev = dp[0]
+    dp[0] = i
+    for (let j = 1; j <= n; j++) {
+      const tmp = dp[j]
+      dp[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[j], dp[j - 1])
+      prev = tmp
+    }
+  }
+  return dp[n]
+}
+
+// Score how confusable `candidate` is with `target` for listening mode.
+// Higher score = more similar-looking/sounding = better distractor.
+function confusabilityScore(target: Word, candidate: Word): number {
+  const tw = target.word.toLowerCase()
+  const cw = candidate.word.toLowerCase()
+  let score = 0
+
+  // Same part of speech makes meaning harder to distinguish
+  if (target.pos === candidate.pos) score += 2
+
+  // Spelling similarity (edit distance, normalised)
+  const spellDist = levenshtein(tw, cw)
+  const maxSpell = Math.max(tw.length, cw.length)
+  score += (1 - spellDist / maxSpell) * 5
+
+  // Common prefix (test / tastes → t-a-s/e …)
+  let pfx = 0
+  while (pfx < tw.length && pfx < cw.length && tw[pfx] === cw[pfx]) pfx++
+  score += Math.min(pfx * 0.8, 3)
+
+  // Common suffix (-tion / -sion, -ing / -ed …)
+  let sfx = 0
+  while (sfx < tw.length && sfx < cw.length &&
+         tw[tw.length - 1 - sfx] === cw[cw.length - 1 - sfx]) sfx++
+  score += Math.min(sfx * 0.5, 1.5)
+
+  // Similar word length ± 2
+  if (Math.abs(tw.length - cw.length) <= 2) score += 0.5
+
+  // Phonetic similarity
+  if (target.phonetic && candidate.phonetic) {
+    const strip = (s: string) => s.replace(/[/[\]ˈˌ.: ]/g, '').toLowerCase()
+    const tp = strip(target.phonetic)
+    const cp = strip(candidate.phonetic)
+    if (tp && cp) {
+      const phonDist = levenshtein(tp, cp)
+      const maxPhon = Math.max(tp.length, cp.length)
+      score += (1 - phonDist / maxPhon) * 4
+    }
+  }
+
+  return score
+}
+
+export function generateOptions(
+  currentWord: Word,
+  allWords: Word[],
+  mode?: string,
+): { options: OptionItem[]; correctIndex: number } {
   const correctDef = currentWord.definition
-  const others = allWords
-    .filter(w => w.definition !== correctDef)
-    .map(w => ({ definition: w.definition, pos: w.pos }))
-  const distractors = shuffleArray(others).slice(0, 3)
+  const candidates = allWords.filter(w => w.definition !== correctDef)
+
+  let distractorWords: Word[]
+
+  if (mode === 'listening' && candidates.length >= 3) {
+    // Sort by confusability, then pick from the top portion with randomness
+    const scored = candidates
+      .map(w => ({ w, s: confusabilityScore(currentWord, w) }))
+      .sort((a, b) => b.s - a.s)
+    // Use top 40% (min 6) as the "confusable pool", shuffle and take 3
+    const topN = Math.max(6, Math.ceil(scored.length * 0.4))
+    const pool = scored.slice(0, topN).map(x => x.w)
+    distractorWords = shuffleArray(pool).slice(0, 3)
+    // Fill any gap (small vocab) with random from the rest
+    if (distractorWords.length < 3) {
+      const used = new Set(distractorWords.map(w => w.definition))
+      const rest = candidates.filter(w => !used.has(w.definition))
+      distractorWords.push(...shuffleArray(rest).slice(0, 3 - distractorWords.length))
+    }
+  } else {
+    distractorWords = shuffleArray(candidates).slice(0, 3)
+  }
+
+  const distractors = distractorWords.map(w => ({ definition: w.definition, pos: w.pos }))
   const correct = { definition: correctDef, pos: currentWord.pos }
   const allOpts = shuffleArray<OptionItem>([correct, ...distractors])
   const correctIndex = allOpts.findIndex(o => o.definition === correctDef)
