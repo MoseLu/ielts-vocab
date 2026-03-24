@@ -29,7 +29,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: true
+    sourcemap: false
   },
   preview: {
     host: '0.0.0.0',

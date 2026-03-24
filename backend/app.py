@@ -18,22 +18,31 @@ from routes.middleware import init_middleware
 
 
 def _ensure_admin_user():
-    """Create a default admin user if not exists."""
+    """Create an admin user if not exists. Credentials must be set via environment variables."""
+    import os
     from models import User
-    admin = User.query.filter_by(username='admin').first()
+
+    admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
+    admin_password = os.environ.get('ADMIN_INITIAL_PASSWORD')
+
+    admin = User.query.filter_by(username=admin_username).first()
     if not admin:
-        admin = User(username='admin', email=None)
-        admin.set_password('admin123')
+        if not admin_password:
+            raise ValueError(
+                f"ADMIN_INITIAL_PASSWORD env var must be set on first run to create admin user '{admin_username}'. "
+                "Example: export ADMIN_INITIAL_PASSWORD=your_secure_password"
+            )
+        admin = User(username=admin_username, email=None)
+        admin.set_password(admin_password)
         admin.is_admin = True
         db.session.add(admin)
         db.session.commit()
-        print("[Admin] Default admin user created (admin / admin123)")
+        print(f"[Admin] User '{admin_username}' created. Password set from ADMIN_INITIAL_PASSWORD env var.")
     else:
-        # Ensure is_admin is True
         if not admin.is_admin:
             admin.is_admin = True
             db.session.commit()
-            print("[Admin] Existing admin user updated to admin flag")
+            print(f"[Admin] Existing user '{admin_username}' updated to admin flag.")
 
 
 def _migrate_db(app):
@@ -136,7 +145,15 @@ def create_app(config_class=Config):
 app = create_app()
 
 # Initialize SocketIO with eventlet for better WebSocket support
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet', ping_timeout=60, ping_interval=25, logger=True, engineio_logger=True)
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=app.config['CORS_ORIGINS'],
+    async_mode='eventlet',
+    ping_timeout=60,
+    ping_interval=25,
+    logger=app.config.get('DEBUG', False),
+    engineio_logger=app.config.get('DEBUG', False),
+)
 
 # Register Socket.IO events for speech recognition
 register_socketio_events(socketio)
