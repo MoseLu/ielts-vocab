@@ -566,7 +566,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const nc = isCorrect ? correctCount + 1 : correctCount
     const nw = isCorrect ? wrongCount : wrongCount + 1
     setCorrectCount(nc); setWrongCount(nw)
-    if (isCorrect) sessionCorrectRef.current++ else sessionWrongRef.current++
+    if (isCorrect) { sessionCorrectRef.current++ } else { sessionWrongRef.current++ }
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     // Record per-dimension stats first, then sync wrong word (so dim stats are included)
@@ -587,7 +587,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const nc = isCorrect ? correctCount + 1 : correctCount
     const nw = isCorrect ? wrongCount : wrongCount + 1
     setCorrectCount(nc); setWrongCount(nw)
-    if (isCorrect) sessionCorrectRef.current++ else sessionWrongRef.current++
+    if (isCorrect) { sessionCorrectRef.current++ } else { sessionWrongRef.current++ }
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     // Record dictation stats first, then sync wrong word (so dim stats are included)
