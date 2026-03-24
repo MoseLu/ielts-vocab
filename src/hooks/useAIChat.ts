@@ -6,10 +6,30 @@
 //   - Session logging via logSession()
 
 import { useState, useCallback } from 'react'
+import { z } from 'zod'
 import { setGlobalLearningContext, getGlobalLearningContext } from '../contexts/AIChatContext'
 import type { AIMessage, LearningContext } from '../types'
 import { safeParse, AIAskResponseSchema, apiFetch } from '../lib'
 import { STORAGE_KEYS } from '../constants'
+
+// ── localStorage schemas (permissive — extra keys ignored) ───────────────────
+const QuickMemoryRecordSchema = z.record(
+  z.string(),
+  z.object({ status: z.enum(['known', 'unknown']), nextReview: z.number().optional() }).passthrough()
+)
+const ModePerformanceSchema = z.record(
+  z.string(),
+  z.object({ correct: z.number(), wrong: z.number() }).passthrough()
+)
+const WrongWordsSchema = z.array(z.record(z.string(), z.unknown()))
+const SmartWordStatsSchema = z.record(
+  z.string(),
+  z.object({
+    listening: z.object({ correct: z.number(), wrong: z.number() }),
+    meaning:   z.object({ correct: z.number(), wrong: z.number() }),
+    dictation: z.object({ correct: z.number(), wrong: z.number() }),
+  }).passthrough()
+)
 
 interface UseAIChatOptions {
   userId?: string
@@ -33,11 +53,9 @@ export interface GeneratedBook {
 
 function buildQuickMemorySummary() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS) || '{}'
-    const records = JSON.parse(raw) as Record<string, {
-      status: 'known' | 'unknown'
-      nextReview: number
-    }>
+    const parsed = safeParse(QuickMemoryRecordSchema, JSON.parse(localStorage.getItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS) || '{}'))
+    if (!parsed.success) return null
+    const records = parsed.data
     const now = Date.now()
     return Object.values(records).reduce(
       (acc, r) => {
@@ -55,10 +73,8 @@ function buildQuickMemorySummary() {
 
 function buildModePerformance() {
   try {
-    return JSON.parse(localStorage.getItem('mode_performance') || '{}') as Record<
-      string,
-      { correct: number; wrong: number }
-    >
+    const parsed = safeParse(ModePerformanceSchema, JSON.parse(localStorage.getItem('mode_performance') || '{}'))
+    return parsed.success ? parsed.data : {}
   } catch {
     return {}
   }
@@ -116,10 +132,8 @@ export async function logSession(data: {
 
 export function recordModeAnswer(mode: string, correct: boolean) {
   try {
-    const stored = JSON.parse(localStorage.getItem('mode_performance') || '{}') as Record<
-      string,
-      { correct: number; wrong: number }
-    >
+    const parsed = safeParse(ModePerformanceSchema, JSON.parse(localStorage.getItem('mode_performance') || '{}'))
+    const stored = parsed.success ? parsed.data : {}
     if (!stored[mode]) stored[mode] = { correct: 0, wrong: 0 }
     if (correct) stored[mode].correct++
     else stored[mode].wrong++
@@ -146,11 +160,19 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
     // Summarise locally-stored chapter progress so AI sees historical completion data
     const chapterProgressSummary = (() => {
       try {
-        const raw = JSON.parse(localStorage.getItem('chapter_progress') || '{}') as Record<
-          string,
-          { current_index?: number; correct_count?: number; wrong_count?: number; is_completed?: boolean; words_learned?: number; updatedAt?: string }
-        >
-        const entries = Object.entries(raw)
+        const ChapterProgressSchema = z.record(z.string(), z.object({
+          current_index: z.number().optional(),
+          correct_count: z.number().optional(),
+          wrong_count: z.number().optional(),
+          is_completed: z.boolean().optional(),
+          words_learned: z.number().optional(),
+          updatedAt: z.string().optional(),
+        }).passthrough())
+        const cParsed = safeParse(ChapterProgressSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
+        const raw = cParsed.success ? cParsed.data : {}
+        type CP = typeof raw[string]
+        const _raw = raw as Record<string, CP>
+        const entries = Object.entries(_raw)
         if (!entries.length) return undefined
         const completed = entries.filter(([, p]) => p.is_completed).length
         const totalCorrect = entries.reduce((s, [, p]) => s + (p.correct_count ?? 0), 0)
@@ -175,10 +197,11 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
 
   const _syncWrongWords = useCallback(async () => {
     try {
-      const wrongWords: Array<Record<string, unknown>> = JSON.parse(localStorage.getItem(STORAGE_KEYS.WRONG_WORDS) || '[]')
+      const wwParsed = safeParse(WrongWordsSchema, JSON.parse(localStorage.getItem(STORAGE_KEYS.WRONG_WORDS) || '[]'))
+      const wrongWords = wwParsed.success ? wwParsed.data : []
       if (!wrongWords.length) return
-      const smartStats: Record<string, { listening: {correct:number;wrong:number}, meaning: {correct:number;wrong:number}, dictation: {correct:number;wrong:number} }> =
-        JSON.parse(localStorage.getItem(STORAGE_KEYS.SMART_WORD_STATS) || '{}')
+      const ssParsed = safeParse(SmartWordStatsSchema, JSON.parse(localStorage.getItem(STORAGE_KEYS.SMART_WORD_STATS) || '{}'))
+      const smartStats = ssParsed.success ? ssParsed.data : {}
       const enriched = wrongWords.map(w => {
         const ws = smartStats[w.word as string]
         return {

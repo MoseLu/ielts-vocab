@@ -9,12 +9,16 @@ or refresh, preventing replay attacks.
 Login is rate-limited: 10 failures per IP → 15-min lockout.
 """
 
+import re
 import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 
 import jwt
 from flask import Blueprint, jsonify, make_response, request
+
+# RFC 5322-inspired email pattern — rejects obvious non-emails like "a@b"
+_EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$')
 
 from models import EmailVerificationCode, RevokedToken, User, db
 from routes.middleware import token_required
@@ -63,14 +67,20 @@ def _reset_rate_limit(ip: str):
     _rate_buckets.pop(ip, None)
 
 
+def _validate_email(email: str) -> bool:
+    """Return True if email passes basic RFC-style format check."""
+    return bool(_EMAIL_RE.match(email))
+
+
 # ── Token helpers ─────────────────────────────────────────────────────────────
 
 def _make_access_token(user_id: int) -> tuple[str, str, datetime]:
     """Return (encoded_jwt, jti, expires_at)."""
     jti = str(uuid.uuid4())
-    exp = datetime.utcnow() + timedelta(seconds=_app.config['JWT_ACCESS_TOKEN_EXPIRES'])
+    now = datetime.utcnow()
+    exp = now + timedelta(seconds=_app.config['JWT_ACCESS_TOKEN_EXPIRES'])
     token = jwt.encode(
-        {'user_id': user_id, 'type': 'access', 'jti': jti, 'exp': exp},
+        {'user_id': user_id, 'type': 'access', 'jti': jti, 'exp': exp, 'iat': now},
         _app.config['JWT_SECRET_KEY'],
         algorithm='HS256',
     )
@@ -80,9 +90,10 @@ def _make_access_token(user_id: int) -> tuple[str, str, datetime]:
 def _make_refresh_token(user_id: int) -> tuple[str, str, datetime]:
     """Return (encoded_jwt, jti, expires_at)."""
     jti = str(uuid.uuid4())
-    exp = datetime.utcnow() + timedelta(seconds=_app.config['JWT_REFRESH_TOKEN_EXPIRES'])
+    now = datetime.utcnow()
+    exp = now + timedelta(seconds=_app.config['JWT_REFRESH_TOKEN_EXPIRES'])
     token = jwt.encode(
-        {'user_id': user_id, 'type': 'refresh', 'jti': jti, 'exp': exp},
+        {'user_id': user_id, 'type': 'refresh', 'jti': jti, 'exp': exp, 'iat': now},
         _app.config['JWT_SECRET_KEY'],
         algorithm='HS256',
     )
@@ -119,6 +130,7 @@ def _set_auth_cookies(response, user_id: int) -> dict:
     return {
         'access_jti': access_jti, 'access_exp': access_exp,
         'refresh_jti': refresh_jti, 'refresh_exp': refresh_exp,
+        'access_expires_in': _app.config['JWT_ACCESS_TOKEN_EXPIRES'],
     }
 
 
@@ -152,7 +164,7 @@ def register():
     if User.query.filter_by(username=username).first():
         return jsonify({'error': '用户名已被使用'}), 400
     if email:
-        if '@' not in email:
+        if not _validate_email(email):
             return jsonify({'error': '邮箱格式不正确'}), 400
         if User.query.filter_by(email=email).first():
             return jsonify({'error': '该邮箱已被注册'}), 400
@@ -162,7 +174,8 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    resp = make_response(jsonify({'message': '注册成功', 'user': user.to_dict()}), 201)
+    resp = make_response(jsonify({'message': '注册成功', 'user': user.to_dict(),
+                                   'access_expires_in': _app.config['JWT_ACCESS_TOKEN_EXPIRES']}), 201)
     _set_auth_cookies(resp, user.id)
     return resp
 
@@ -196,7 +209,8 @@ def login():
 
     _reset_rate_limit(ip)
 
-    resp = make_response(jsonify({'message': '登录成功', 'user': user.to_dict()}), 200)
+    resp = make_response(jsonify({'message': '登录成功', 'user': user.to_dict(),
+                                   'access_expires_in': _app.config['JWT_ACCESS_TOKEN_EXPIRES']}), 200)
     _set_auth_cookies(resp, user.id)
     return resp
 
@@ -227,8 +241,16 @@ def refresh():
 
     old_jti = payload.get('jti')
     if old_jti and RevokedToken.is_revoked(old_jti):
-        # Possible token theft — revoke all user tokens would be ideal,
-        # but for simplicity we just reject and force re-login.
+        # Refresh token replay detected — possible theft.
+        # Mass-revoke ALL tokens for this user by setting tokens_revoked_before
+        # to right now. Any token with iat < this timestamp will be rejected.
+        try:
+            victim = User.query.get(payload['user_id'])
+            if victim:
+                victim.tokens_revoked_before = datetime.utcnow()
+                db.session.commit()
+        except Exception:
+            pass
         return jsonify({'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}), 401
 
     user = User.query.get(payload['user_id'])
@@ -240,7 +262,8 @@ def refresh():
         old_exp = datetime.utcfromtimestamp(payload['exp'])
         RevokedToken.revoke(old_jti, old_exp)
 
-    resp = make_response(jsonify({'message': 'ok', 'user': user.to_dict()}), 200)
+    resp = make_response(jsonify({'message': 'ok', 'user': user.to_dict(),
+                                   'access_expires_in': _app.config['JWT_ACCESS_TOKEN_EXPIRES']}), 200)
     _set_auth_cookies(resp, user.id)
     return resp
 
@@ -288,7 +311,16 @@ def logout(current_user):
 @auth_bp.route('/me', methods=['GET'])
 @token_required
 def get_current_user(current_user):
-    return jsonify({'user': current_user.to_dict()}), 200
+    # Include remaining token lifetime so the frontend can schedule proactive refresh
+    try:
+        import jwt as _jwt
+        token = request.cookies.get('access_token') or ''
+        payload = _jwt.decode(token, _app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        from datetime import timezone
+        expires_in = max(0, int(payload['exp'] - datetime.utcnow().timestamp()))
+    except Exception:
+        expires_in = _app.config['JWT_ACCESS_TOKEN_EXPIRES']
+    return jsonify({'user': current_user.to_dict(), 'access_expires_in': expires_in}), 200
 
 
 @auth_bp.route('/avatar', methods=['PUT'])
@@ -314,9 +346,14 @@ def _send_code_mock(email, code, purpose):
 @auth_bp.route('/send-code', methods=['POST'])
 @token_required
 def send_bind_email_code(current_user):
+    ip = request.remote_addr or '0.0.0.0'
+    allowed, wait = _check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'error': f'操作过于频繁，请 {wait} 秒后再试'}), 429
+
     data = request.get_json() or {}
     email = (data.get('email') or '').strip().lower()
-    if not email or '@' not in email:
+    if not email or not _validate_email(email):
         return jsonify({'error': '请输入有效的邮箱地址'}), 400
     existing = User.query.filter_by(email=email).first()
     if existing and existing.id != current_user.id:
@@ -356,9 +393,14 @@ def bind_email(current_user):
 
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
+    ip = request.remote_addr or '0.0.0.0'
+    allowed, wait = _check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'error': f'操作过于频繁，请 {wait} 秒后再试'}), 429
+
     data = request.get_json() or {}
     email = (data.get('email') or '').strip().lower()
-    if not email or '@' not in email:
+    if not email or not _validate_email(email):
         return jsonify({'error': '请输入有效的邮箱地址'}), 400
     user = User.query.filter_by(email=email).first()
     if not user:

@@ -3,7 +3,7 @@
 // Only the user object is kept in localStorage for fast UI hydration on reload.
 // On page load we call GET /api/auth/me to validate the cookie and get fresh data.
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import type { User } from '../types'
 import { STORAGE_KEYS } from '../constants'
 import { apiFetch, safeParse, LoginSchema, RegisterSchema, UserSchema } from '../lib'
@@ -28,6 +28,28 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const _refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /** Schedule a proactive token refresh 60 s before the access token expires. */
+  const _scheduleRefresh = useCallback((expiresInSeconds: number) => {
+    if (_refreshTimer.current) clearTimeout(_refreshTimer.current)
+    const delay = Math.max(0, (expiresInSeconds - 60) * 1000)
+    _refreshTimer.current = setTimeout(async () => {
+      try {
+        const data = await apiFetch<{ user: unknown; access_expires_in?: number }>(
+          '/api/auth/refresh', { method: 'POST' }
+        )
+        const parsed = safeParse(UserSchema, data.user)
+        if (parsed.success) {
+          setUser(parsed.data)
+          localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(parsed.data))
+        }
+        if (data.access_expires_in) _scheduleRefresh(data.access_expires_in)
+      } catch {
+        // Proactive refresh failed — reactive refresh (on next 401) will take over
+      }
+    }, delay)
+  }, [])
 
   // Persist only user data (not the token) for instant hydration
   const _saveUser = (u: User) => {
@@ -57,14 +79,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Verify the cookie is still valid and pull fresh user data
-    apiFetch<{ user: unknown }>('/api/auth/me')
+    apiFetch<{ user: unknown; access_expires_in?: number }>('/api/auth/me')
       .then(data => {
         const parsed = safeParse(UserSchema, data.user)
         if (parsed.success) _saveUser(parsed.data)
+        if (data.access_expires_in) _scheduleRefresh(data.access_expires_in)
       })
-      .catch(() => {
-        // Cookie invalid / expired — clear stale user
-        _clearUser()
+      .catch((err: Error) => {
+        // Only clear session on explicit auth failure (401 / token expired).
+        // The 'auth:session-expired' event from apiFetch already handles the
+        // 401 case, so this catch mainly guards transient network / server
+        // errors — for those we keep the cached user so the UI doesn't
+        // unexpectedly redirect to login when the backend restarts briefly.
+        const isAuthFailure =
+          err.message.includes('登录已过期') ||
+          err.message.includes('session-expired')
+        if (isAuthFailure) {
+          _clearUser()
+        }
       })
       .finally(() => setIsLoading(false))
   }, [])
@@ -80,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const formResult = safeParse(LoginSchema, { identifier, password })
     if (!formResult.success) throw new Error(formResult.errors.join('；'))
 
-    const raw = await apiFetch<{ user: unknown }>('/api/auth/login', {
+    const raw = await apiFetch<{ user: unknown; access_expires_in?: number }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email: identifier, password }),
     })
@@ -89,7 +121,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const parsed = safeParse(UserSchema, raw.user)
     if (!parsed.success) throw new Error('服务器响应格式错误')
     _saveUser(parsed.data)
-  }, [])
+    if (raw.access_expires_in) _scheduleRefresh(raw.access_expires_in)
+  }, [_scheduleRefresh])
 
   const register = useCallback(async (username: string, password: string, email?: string) => {
     const formResult = safeParse(RegisterSchema, {
@@ -97,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     if (!formResult.success) throw new Error(formResult.errors.join('；'))
 
-    const raw = await apiFetch<{ user: unknown }>('/api/auth/register', {
+    const raw = await apiFetch<{ user: unknown; access_expires_in?: number }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ username, password, email: email || '' }),
     })
@@ -105,9 +138,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const parsed = safeParse(UserSchema, raw.user)
     if (!parsed.success) throw new Error('服务器响应格式错误')
     _saveUser(parsed.data)
-  }, [])
+    if (raw.access_expires_in) _scheduleRefresh(raw.access_expires_in)
+  }, [_scheduleRefresh])
 
   const logout = useCallback(async () => {
+    if (_refreshTimer.current) clearTimeout(_refreshTimer.current)
     // Ask the server to revoke tokens and clear cookies
     await apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     _clearUser()

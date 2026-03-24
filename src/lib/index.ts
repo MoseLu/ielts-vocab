@@ -31,14 +31,31 @@ let _refreshing: Promise<void> | null = null
 async function _attemptRefresh(): Promise<void> {
   // Deduplicate: if a refresh is already in flight, wait for it
   if (_refreshing) return _refreshing
-  _refreshing = fetch('/api/auth/refresh', {
-    method: 'POST',
-    credentials: 'include',
-  }).then(r => {
-    if (!r.ok) throw new Error('refresh_failed')
-  }).finally(() => {
-    _refreshing = null
-  })
+
+  _refreshing = (async () => {
+    // Try up to 2 times to handle transient network drops (e.g. natapp tunnel
+    // blip) without immediately treating them as token expiry.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const r = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+          signal: AbortSignal.timeout(10_000),
+        })
+        if (r.ok) return
+        // A real 401 means the token is genuinely expired — don't retry
+        if (r.status === 401) throw new Error('auth_failed')
+        // Any other HTTP error: fall through to retry
+        throw new Error(`refresh_http_${r.status}`)
+      } catch (err) {
+        const isAuthFailure = err instanceof Error && err.message === 'auth_failed'
+        if (isAuthFailure || attempt === 1) throw err
+        // Wait 1.5 s then retry (covers brief tunnel reconnection)
+        await new Promise(res => setTimeout(res, 1500))
+      }
+    }
+  })().finally(() => { _refreshing = null })
+
   return _refreshing
 }
 
@@ -57,7 +74,12 @@ export async function apiFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const headers = _buildHeaders(options)
-  const init: RequestInit = { ...options, headers, credentials: 'include' }
+  // Merge caller's signal with a 30 s timeout so requests never hang forever
+  const timeoutSignal = AbortSignal.timeout(30_000)
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, timeoutSignal])
+    : timeoutSignal
+  const init: RequestInit = { ...options, headers, credentials: 'include', signal }
 
   const response = await fetch(url, init)
 
