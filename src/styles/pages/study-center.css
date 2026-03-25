@@ -262,7 +262,7 @@
 
 .study-book-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent) 0%, #FF9A5C 100%);
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-secondary) 100%);
     border-radius: var(--radius-full);
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -280,24 +280,24 @@
     flex-direction: row;
     align-items: center;
     gap: 10px;
-    background: linear-gradient(135deg, var(--accent) 0%, #FF6B1A 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
     border-color: transparent;
     color: white;
     min-height: 110px;
-    box-shadow: 0 4px 16px rgba(255, 126, 54, 0.35);
+    box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.35);
 }
 
 .study-book-card-cta:hover {
-    background: linear-gradient(135deg, var(--accent-hover) 0%, #E05F15 100%);
+    background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent-deep-hover) 100%);
     border-color: transparent;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 126, 54, 0.45);
+    box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.45);
 }
 
 .study-cta-icon {
     width: 48px;
     height: 48px;
-    background: rgba(255,255,255,0.2);
+    background: var(--white-overlay);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
@@ -319,7 +319,7 @@
 
 .study-cta-subtitle {
     font-size: 12px;
-    color: rgba(255,255,255,0.8);
+    color: var(--white-overlay-text);
     margin-top: 3px;
     overflow: hidden;
     text-overflow: ellipsis;

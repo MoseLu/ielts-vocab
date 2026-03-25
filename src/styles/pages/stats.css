@@ -103,7 +103,7 @@
 .lc-tab.active {
     background: var(--accent);
     border-color: var(--accent);
-    color: #fff;
+    color: white;
 }
 
 /* Metric + filter bar */
@@ -306,7 +306,7 @@
 
 .mode-breakdown-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), #FF9A5C);
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
     border-radius: var(--radius-full);
     transition: width 0.5s ease;
     min-width: 4px;
@@ -393,7 +393,7 @@
 
 .stats-accuracy-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), #FF9A5C);
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
     border-radius: var(--radius-full);
     transition: width 0.5s ease;
 }

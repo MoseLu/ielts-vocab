@@ -86,10 +86,7 @@
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow:
-        0 6px 16px rgba(0, 0, 0, 0.08),
-        0 3px 6px rgba(0, 0, 0, 0.04),
-        0 0 0 1px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-card-hover);
     z-index: 200;
     min-width: 200px;
     animation: dropdownFadeIn 0.18s ease;
@@ -245,7 +242,7 @@
 .practice-ctrl-icon-btn.active {
     background: var(--accent-light);
     color: var(--accent);
-    border-color: rgba(255, 126, 54, 0.25);
+    border-color: rgba(var(--accent-rgb), 0.25);
 }
 
 /* ── Radio mode quick control buttons ───────────────────────────────────── */
@@ -427,7 +424,7 @@
 
 .wl-dot-current {
     background: var(--accent);
-    box-shadow: 0 0 0 3px rgba(255, 126, 54, 0.2);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.2);
 }
 
 .wl-dot-pending {

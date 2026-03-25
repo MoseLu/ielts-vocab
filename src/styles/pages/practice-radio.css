@@ -148,7 +148,7 @@
 }
 
 .radio-star-btn:hover {
-    color: #f59e0b;
+    color: var(--warning);
 }
 
 /* Thin progress bar */
@@ -235,7 +235,7 @@
 .radio-mode-btn:hover {
     background: var(--accent-light);
     color: var(--accent);
-    border-color: rgba(255, 126, 54, 0.3);
+    border-color: rgba(var(--accent-rgb), 0.3);
 }
 
 /* Mic button in dictation */

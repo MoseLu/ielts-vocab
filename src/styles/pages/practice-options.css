@@ -24,39 +24,21 @@
 }
 
 .smart-badge-listening {
-    background: #EEF2FF;
-    color: #4F46E5;
-    border-color: #C7D2FE;
+    background: var(--mode-listening-bg);
+    color: var(--mode-listening-color);
+    border-color: var(--mode-listening-border);
 }
 
 .smart-badge-meaning {
-    background: #F0FDF4;
-    color: #16A34A;
-    border-color: #BBF7D0;
+    background: var(--mode-meaning-bg);
+    color: var(--mode-meaning-color);
+    border-color: var(--mode-meaning-border);
 }
 
 .smart-badge-dictation {
-    background: #FFF7ED;
-    color: #C2410C;
-    border-color: #FED7AA;
-}
-
-[data-theme="dark"] .smart-badge-listening {
-    background: rgba(79, 70, 229, 0.15);
-    color: #818CF8;
-    border-color: rgba(79, 70, 229, 0.3);
-}
-
-[data-theme="dark"] .smart-badge-meaning {
-    background: rgba(22, 163, 74, 0.15);
-    color: #4ADE80;
-    border-color: rgba(22, 163, 74, 0.3);
-}
-
-[data-theme="dark"] .smart-badge-dictation {
-    background: rgba(194, 65, 12, 0.15);
-    color: #FB923C;
-    border-color: rgba(194, 65, 12, 0.3);
+    background: var(--mode-dictation-bg);
+    color: var(--mode-dictation-color);
+    border-color: var(--mode-dictation-border);
 }
 
 /* ── Smart Mode Dictation Area ───────────────────────────────────────── */
@@ -267,7 +249,7 @@
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent) 0%, #FF9A5C 100%);
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-secondary) 100%);
     border-radius: var(--radius-full);
     transition: width 0.3s ease;
 }
@@ -429,17 +411,6 @@
 
 .toggle-switch input:checked + .toggle-slider:before {
     transform: translateX(22px);
-}
-
-/* Theme support */
-[data-theme="dark"] {
-    --bg-color: #1F2937;
-    --bg-secondary: #111827;
-    --bg-tertiary: #374151;
-    --text-primary: #F9FAFB;
-    --text-secondary: #D1D5DB;
-    --text-tertiary: #9CA3AF;
-    --border: #374151;
 }
 
 /* Font size support */
