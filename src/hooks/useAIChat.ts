@@ -157,22 +157,22 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
   // Build the rich context object — merges global context (updated by PracticePage)
   // with local quick-memory, mode-performance, and historical chapter progress.
   const buildContext = useCallback(() => {
-    // Summarise locally-stored chapter progress so AI sees historical completion data
+    // Parse chapter_progress (keyed as `{bookId}_{chapterId}` where chapterId is numeric)
+    // and aggregate both per-book AND overall summaries for the AI.
+    const ChapterProgressSchema = z.record(z.string(), z.object({
+      current_index: z.number().optional(),
+      correct_count: z.number().optional(),
+      wrong_count: z.number().optional(),
+      is_completed: z.boolean().optional(),
+      words_learned: z.number().optional(),
+      updatedAt: z.string().optional(),
+    }).passthrough())
+
     const chapterProgressSummary = (() => {
       try {
-        const ChapterProgressSchema = z.record(z.string(), z.object({
-          current_index: z.number().optional(),
-          correct_count: z.number().optional(),
-          wrong_count: z.number().optional(),
-          is_completed: z.boolean().optional(),
-          words_learned: z.number().optional(),
-          updatedAt: z.string().optional(),
-        }).passthrough())
         const cParsed = safeParse(ChapterProgressSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
         const raw = cParsed.success ? cParsed.data : {}
-        type CP = typeof raw[string]
-        const _raw = raw as Record<string, CP>
-        const entries = Object.entries(_raw)
+        const entries = Object.entries(raw)
         if (!entries.length) return undefined
         const completed = entries.filter(([, p]) => p.is_completed).length
         const totalCorrect = entries.reduce((s, [, p]) => s + (p.correct_count ?? 0), 0)
@@ -187,11 +187,58 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
         }
       } catch { return undefined }
     })()
+
+    // Per-book breakdown: group chapter_progress entries by bookId.
+    // Key format: {bookId}_{chapterId} where chapterId is always an integer suffix.
+    const localBookProgress = (() => {
+      try {
+        const cParsed = safeParse(ChapterProgressSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
+        const raw = cParsed.success ? cParsed.data : {}
+        const bookMap: Record<string, { chaptersCompleted: number; chaptersAttempted: number; correct: number; wrong: number; wordsLearned: number }> = {}
+
+        for (const [key, data] of Object.entries(raw)) {
+          // Split off trailing numeric chapterId: "ielts_listening_premium_3" → bookId="ielts_listening_premium"
+          const match = key.match(/^(.+)_(\d+)$/)
+          if (!match) continue
+          const bookId = match[1]
+          if (!bookMap[bookId]) bookMap[bookId] = { chaptersCompleted: 0, chaptersAttempted: 0, correct: 0, wrong: 0, wordsLearned: 0 }
+          bookMap[bookId].chaptersAttempted++
+          if (data.is_completed) bookMap[bookId].chaptersCompleted++
+          bookMap[bookId].correct += data.correct_count ?? 0
+          bookMap[bookId].wrong += data.wrong_count ?? 0
+          bookMap[bookId].wordsLearned += data.words_learned ?? 0
+        }
+
+        // Merge in book-level progress (correct/wrong totals at book scope)
+        try {
+          const BookProgressSchema = z.record(z.string(), z.object({
+            correct_count: z.number().optional(),
+            wrong_count: z.number().optional(),
+            is_completed: z.boolean().optional(),
+          }).passthrough())
+          const bParsed = safeParse(BookProgressSchema, JSON.parse(localStorage.getItem('book_progress') || '{}'))
+          if (bParsed.success) {
+            for (const [bookId, bp] of Object.entries(bParsed.data)) {
+              if (!bookMap[bookId]) bookMap[bookId] = { chaptersCompleted: 0, chaptersAttempted: 0, correct: 0, wrong: 0, wordsLearned: 0 }
+              // Only use book-level stats if chapter-level stats are absent
+              if (bookMap[bookId].chaptersAttempted === 0) {
+                bookMap[bookId].correct = bp.correct_count ?? 0
+                bookMap[bookId].wrong = bp.wrong_count ?? 0
+              }
+            }
+          }
+        } catch { /* ignore */ }
+
+        return Object.keys(bookMap).length > 0 ? bookMap : null
+      } catch { return null }
+    })()
+
     return {
       ...getGlobalLearningContext(),
       quickMemorySummary: buildQuickMemorySummary(),
       modePerformance: buildModePerformance(),
       localHistory: chapterProgressSummary,
+      localBookProgress,
     }
   }, [])
 
