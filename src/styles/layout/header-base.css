@@ -105,7 +105,7 @@
 
 .logo-icon {
     width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--accent) 0%, #FF9A5C 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
     border-radius: var(--radius-md);
     display: flex; align-items: center; justify-content: center;
     color: white; font-size: 18px;

@@ -142,14 +142,14 @@
 .qm-btn--unknown {
     color: var(--error);
     border-color: var(--error);
-    background: var(--error-light, #fff5f5);
+    background: var(--error-light);
 }
 
 .qm-btn--unknown:hover {
     background: var(--error);
-    color: #fff;
+    color: white;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(var(--error-rgb), 0.3);
 }
 
 .qm-btn--known {
@@ -160,9 +160,9 @@
 
 .qm-btn--known:hover {
     background: var(--accent);
-    color: #fff;
+    color: white;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 126, 54, 0.35);
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.35);
 }
 
 /* ── Reveal phase ─────────────────────────────────────────────────────────── */
@@ -179,7 +179,7 @@
 }
 
 .qm-badge--unknown {
-    background: var(--error-light, #fff5f5);
+    background: var(--error-light);
     color: var(--error);
 }
 
@@ -248,7 +248,7 @@
     flex: 1;
     padding: 12px 28px;
     background: var(--accent);
-    color: #fff;
+    color: white;
     border: none;
     border-radius: var(--radius-lg);
     font-size: 15px;
@@ -270,9 +270,9 @@
 }
 
 .qm-btn-next:hover {
-    background: var(--accent-dark, #e5682a);
+    background: var(--accent-dark);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(255, 126, 54, 0.4);
+    box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.4);
 }
 
 /* ── Keyboard shortcut hints ──────────────────────────────────────────────── */
@@ -317,7 +317,7 @@ kbd {
 .qm-badge-fuzzy-tag {
     font-size: 10px;
     font-weight: 700;
-    background: rgba(0,0,0,0.12);
+    background: var(--overlay-medium);
     border-radius: var(--radius-full);
     padding: 1px 6px;
     letter-spacing: 0.03em;
@@ -366,7 +366,7 @@ kbd {
 
 .qm-stat-known   .qm-stat-num { color: var(--accent); }
 .qm-stat-unknown .qm-stat-num { color: var(--error); }
-.qm-stat-fuzzy   .qm-stat-num { color: var(--warning, #f59e0b); }
+.qm-stat-fuzzy   .qm-stat-num { color: var(--warning); }
 
 .qm-summary-section {
     width: 100%;
@@ -399,9 +399,9 @@ kbd {
 }
 
 .qm-summary-word-fuzzy {
-    border-color: var(--warning, #f59e0b);
-    color: var(--warning, #f59e0b);
-    background: color-mix(in srgb, var(--warning, #f59e0b) 10%, transparent);
+    border-color: var(--warning);
+    color: var(--warning);
+    background: color-mix(in srgb, var(--warning) 10%, transparent);
 }
 
 .qm-summary-actions {
@@ -422,11 +422,11 @@ kbd {
 
 .qm-btn-restart {
     background: var(--accent);
-    color: #fff;
+    color: white;
 }
 
 .qm-btn-restart:hover {
-    background: var(--accent-dark, #e5682a);
+    background: var(--accent-dark);
     transform: translateY(-1px);
 }
 
@@ -450,11 +450,11 @@ kbd {
     cursor: pointer;
     transition: all var(--transition-fast);
     background: var(--accent);
-    color: #fff;
+    color: white;
     border: 2px solid var(--accent);
 }
 .qm-btn-next-chapter:hover {
-    background: var(--accent-dark, #e5682a);
+    background: var(--accent-dark);
     transform: translateY(-1px);
 }
 

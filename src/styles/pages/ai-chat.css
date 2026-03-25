@@ -9,21 +9,21 @@
     width: 44px;
     height: 44px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--accent) 0%, #FF6B1A 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
     color: white;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 10px rgba(255, 126, 54, 0.35);
+    box-shadow: 0 2px 10px rgba(var(--accent-rgb), 0.35);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     padding: 0;
 }
 
 .ai-fab:hover {
     transform: scale(1.08);
-    box-shadow: 0 4px 16px rgba(255, 126, 54, 0.5);
+    box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.5);
 }
 
 .ai-fab:active {
@@ -80,7 +80,7 @@
     width: 36px;
     height: 36px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--accent) 0%, #FF6B1A 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
     color: white;
     display: flex;
     align-items: center;
@@ -153,7 +153,7 @@
     padding: 9px 14px;
     background: var(--accent-light);
     color: var(--accent);
-    border: 1px solid rgba(255, 126, 54, 0.2);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
     border-radius: var(--radius-md);
     font-size: 13px;
     font-weight: 500;
@@ -249,7 +249,7 @@
 .ai-option-btn:hover:not(:disabled) {
     background: var(--accent-light);
     color: var(--accent);
-    border-color: rgba(255, 126, 54, 0.3);
+    border-color: rgba(var(--accent-rgb), 0.3);
 }
 
 .ai-option-btn:disabled {

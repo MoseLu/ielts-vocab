@@ -3,7 +3,7 @@
 .avatar-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-strong);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -250,7 +250,7 @@
 .avatar-edit-hint {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.45);
+    background: var(--overlay);
     color: white;
     font-size: 11px;
     font-weight: 600;
