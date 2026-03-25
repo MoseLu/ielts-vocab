@@ -231,15 +231,23 @@ def get_context(current_user: User):
         total_correct += bp.correct_count
         total_wrong += bp.wrong_count
 
-    # Enrich with chapter accuracy
+    # Enrich with chapter accuracy — also create book entries for books that
+    # only have chapter-level progress (no UserBookProgress record yet)
     for cp in chapter_progress:
-        if cp.book_id in book_map:
-            book_map[cp.book_id]['wrongCount'] = (
-                book_map[cp.book_id].get('wrongCount', 0) + cp.wrong_count
-            )
-            book_map[cp.book_id]['correctCount'] = (
-                book_map[cp.book_id].get('correctCount', 0) + cp.correct_count
-            )
+        if cp.book_id not in book_map:
+            book_map[cp.book_id] = {
+                'id': cp.book_id,
+                'progress': 0,
+                'accuracy': 0,
+                'wrongCount': 0,
+                'correctCount': 0,
+            }
+        book_map[cp.book_id]['wrongCount'] = (
+            book_map[cp.book_id].get('wrongCount', 0) + cp.wrong_count
+        )
+        book_map[cp.book_id]['correctCount'] = (
+            book_map[cp.book_id].get('correctCount', 0) + cp.correct_count
+        )
         total_learned += cp.words_learned
         total_correct += cp.correct_count
         total_wrong += cp.wrong_count
@@ -569,7 +577,19 @@ B. 选项B
 
 def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     """Build a combined context message from server data + frontend state."""
+    from datetime import datetime
     parts = []
+
+    # ── Current date (so AI can make accurate plans) ──────────────────────────
+    import calendar
+    weekday_zh = ['一', '二', '三', '四', '五', '六', '日']
+    now = datetime.now()
+    days_in_month = calendar.monthrange(now.year, now.month)[1]
+    days_left = days_in_month - now.day
+    parts.append(
+        f"【今日日期】{now.strftime('%Y年%m月%d日')}，"
+        f"星期{weekday_zh[now.weekday()]}，本月还剩{days_left}天"
+    )
 
     # ── Persistent AI memory (goals, notes, compressed history) ──────────────
     memory = ctx_data.get('memory', {})
@@ -621,9 +641,12 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
         f"正在学习的词书：{len(books)} 本"
     )
     for b in books:
+        word_count = b.get('wordCount', 0)
+        correct = b.get('correctCount', 0)
+        wc_str = f"共{word_count}词、" if word_count else ""
         parts.append(
             f"  - {b.get('title', b.get('id'))} "
-            f"(准确率 {b.get('accuracy', 0)}%，错词数 {b.get('wrongCount', 0)})"
+            f"({wc_str}已答对{correct}词、准确率{b.get('accuracy', 0)}%、错词数{b.get('wrongCount', 0)})"
         )
 
     # ── Recent sessions (最近练习记录) ────────────────────────────────────────
