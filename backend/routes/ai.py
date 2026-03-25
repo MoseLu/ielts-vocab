@@ -468,6 +468,29 @@ def _build_context_msg(ctx: dict) -> str:
                 f"累计答题 {correct + wrong} 次，准确率 {accuracy}%"
             )
 
+    # Per-book breakdown from localStorage (richer than aggregate localHistory)
+    local_book = ctx.get('localBookProgress')
+    if local_book and isinstance(local_book, dict):
+        from routes.books import VOCAB_BOOKS
+        book_title_map = {b['id']: b['title'] for b in VOCAB_BOOKS}
+        book_word_count_map = {b['id']: b.get('word_count', 0) for b in VOCAB_BOOKS}
+        parts.append("本地各词书进度：")
+        for book_id, stats in local_book.items():
+            title = book_title_map.get(book_id, book_id)
+            word_count = book_word_count_map.get(book_id, 0)
+            ch_done = stats.get('chaptersCompleted', 0)
+            ch_tried = stats.get('chaptersAttempted', 0)
+            correct = stats.get('correct', 0)
+            wrong = stats.get('wrong', 0)
+            words_learned = stats.get('wordsLearned', 0)
+            total = correct + wrong
+            acc = round(correct / total * 100) if total > 0 else 0
+            wc_str = f"（共{word_count}词）" if word_count else ""
+            parts.append(
+                f"  - {title}{wc_str}：已完成{ch_done}/{ch_tried}章，"
+                f"已答{words_learned}词，正确率{acc}%"
+            )
+
     return '\n'.join(parts) if parts else '暂无'
 
 
