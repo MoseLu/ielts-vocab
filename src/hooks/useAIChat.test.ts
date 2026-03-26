@@ -8,7 +8,6 @@ import {
 
 const QUICK_MEMORY_KEY = 'quick_memory_records'
 const MODE_PERF_KEY = 'mode_performance'
-const AUTH_TOKEN_KEY = 'auth_token'
 
 beforeEach(() => {
   localStorage.clear()
@@ -48,8 +47,10 @@ describe('recordModeAnswer', () => {
 // ── logSession ───────────────────────────────────────────────────────────────
 
 describe('logSession', () => {
-  it('does nothing when no auth token', async () => {
-    const mockFetch = vi.fn()
+  it('sends POST with cookie credentials (HttpOnly session)', async () => {
+    const mockFetch = vi.fn(() =>
+      Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })),
+    )
     vi.stubGlobal('fetch', mockFetch)
 
     await logSession({
@@ -63,13 +64,17 @@ describe('logSession', () => {
       startedAt: Date.now() - 300000,
     })
 
-    expect(mockFetch).not.toHaveBeenCalled()
+    expect(mockFetch).toHaveBeenCalled()
+    const [url, options] = mockFetch.mock.calls[0]
+    expect(url).toBe('/api/ai/log-session')
+    expect(options.credentials).toBe('include')
     vi.restoreAllMocks()
   })
 
-  it('sends POST request with session data when authenticated', async () => {
-    localStorage.setItem(AUTH_TOKEN_KEY, 'test-token')
-    const mockFetch = vi.fn(() => Promise.resolve(new Response()))
+  it('sends POST request with session data', async () => {
+    const mockFetch = vi.fn(() =>
+      Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })),
+    )
     vi.stubGlobal('fetch', mockFetch)
 
     const now = Date.now()
@@ -84,12 +89,13 @@ describe('logSession', () => {
       startedAt: now - 120000,
     })
 
-    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockFetch).toHaveBeenCalled()
     const [url, options] = mockFetch.mock.calls[0]
     expect(url).toBe('/api/ai/log-session')
     expect(options.method).toBe('POST')
-    expect(options.headers).toMatchObject({ 'Content-Type': 'application/json' })
-    expect(options.headers['Authorization']).toBe('Bearer test-token')
+    expect(options.credentials).toBe('include')
+    const headers = options.headers as Record<string, string>
+    expect(headers['Content-Type']).toContain('application/json')
     const body = JSON.parse(options.body as string)
     expect(body.mode).toBe('meaning')
     expect(body.wordsStudied).toBe(10)
@@ -99,7 +105,6 @@ describe('logSession', () => {
   })
 
   it('handles fetch errors gracefully (non-critical)', async () => {
-    localStorage.setItem(AUTH_TOKEN_KEY, 'test-token')
     const mockFetch = vi.fn(() => Promise.reject(new Error('network error')))
     vi.stubGlobal('fetch', mockFetch)
 

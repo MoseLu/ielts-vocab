@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useAuth } from '../contexts'
+import { apiFetch } from '../lib'
 import { Scrollbar } from './ui/Scrollbar'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
@@ -129,6 +131,7 @@ function getCardLabel(chapter: Chapter, isInSection: boolean): string {
 // ───────────────────────────────────────────────────────────────────────────
 
 function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: ChapterModalProps) {
+  const { user } = useAuth()
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [chapterProgress, setChapterProgress] = useState<Record<string | number, ChapterProgress>>({})
   const [loading, setLoading] = useState(true)
@@ -151,16 +154,12 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         const data = await res.json()
         setChapters(data.chapters || [])
 
-        const token = localStorage.getItem('auth_token')
-        if (token) {
+        if (user) {
           try {
-            const pRes = await fetch(`${API_BASE}/books/${book.id}/chapters/progress`, {
-              headers: { 'Authorization': `Bearer ${token}` },
-            })
-            if (pRes.ok) {
-              const pData = await pRes.json()
-              setChapterProgress(pData.chapter_progress || {})
-            }
+            const pData = await apiFetch<{ chapter_progress?: Record<string | number, ChapterProgress> }>(
+              `${API_BASE}/books/${book.id}/chapters/progress`,
+            )
+            setChapterProgress(pData.chapter_progress || {})
           } catch { /* ignore */ }
         }
       } catch (err) {
@@ -172,7 +171,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
       }
     }
     fetchData()
-  }, [book.id])
+  }, [book.id, user])
 
   // Which chapter the user was last working on
   const currentChapterId = useMemo((): string | number | null => {

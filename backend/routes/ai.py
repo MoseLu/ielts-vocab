@@ -146,12 +146,8 @@ def get_similar_words(current_user: User):
 
 # ── GET /api/ai/context ───────────────────────────────────────────────────────
 
-@ai_bp.route('/context', methods=['GET'])
-@token_required
-def get_context(current_user: User):
-    """Return structured learning summary for AI context."""
-    user_id = current_user.id
-
+def _get_context_data(user_id: int) -> dict:
+    """Return structured learning summary dict for a given user_id."""
     # Book progress
     book_progress = UserBookProgress.query.filter_by(user_id=user_id).all()
     chapter_progress = UserChapterProgress.query.filter_by(user_id=user_id).all()
@@ -309,7 +305,7 @@ def get_context(current_user: User):
     # Load persistent AI memory for this user
     memory = _load_memory(user_id)
 
-    return jsonify({
+    return {
         'totalBooks': len(book_map),
         'totalLearned': total_learned,
         'totalCorrect': total_correct,
@@ -331,7 +327,14 @@ def get_context(current_user: User):
         'chapterSessionStats': list(chapter_session_stats.values()),
         'totalSessions': len(recent_sessions),
         'memory': memory,
-    })
+    }
+
+
+@ai_bp.route('/context', methods=['GET'])
+@token_required
+def get_context(current_user: User):
+    """Return structured learning summary for AI context."""
+    return jsonify(_get_context_data(current_user.id))
 
 
 # ── POST /api/ai/ask ──────────────────────────────────────────────────────────
@@ -811,8 +814,7 @@ def greet(current_user: User):
     messages = [{"role": "system", "content": GREET_SYSTEM_PROMPT}]
 
     try:
-        ctx_resp = get_context(current_user)
-        ctx_data = ctx_resp.get_json()
+        ctx_data = _get_context_data(current_user.id)
         context_msg = _build_learning_context_msg(ctx_data, frontend_context)
         messages.append({"role": "user", "content": f"[学习数据]\n{context_msg}\n\n请根据以上数据，生成一条个性化的问候。"})
     except Exception as e:
@@ -1084,8 +1086,7 @@ def ask(current_user: User):
 
     # Inject persistent user data (learning summary)
     try:
-        ctx_resp = get_context(current_user)
-        ctx_data = ctx_resp.get_json()
+        ctx_data = _get_context_data(current_user.id)
         context_msg = _build_learning_context_msg(ctx_data, frontend_context)
         messages.append({"role": "user", "content": f"[学习数据]\n{context_msg}"})
     except Exception as e:
@@ -1219,8 +1220,7 @@ def generate_book(current_user: User):
 
     # Build context
     try:
-        ctx_resp = get_context(current_user)
-        ctx = ctx_resp.get_json()
+        ctx = _get_context_data(current_user.id)
         wrong_words = ctx.get('wrongWords', [])
         wrong_word_list = [w['word'] for w in wrong_words[:30]]
         all_exclude = list(set(exclude_words + wrong_word_list))

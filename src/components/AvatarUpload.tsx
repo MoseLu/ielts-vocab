@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { apiFetch } from '../lib'
 
 interface AvatarUploadProps {
   user: AuthUser | null
@@ -66,17 +67,11 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
     setSaving(true)
     setError('')
     try {
-      const token = localStorage.getItem('auth_token')
-      const res = await fetch('/api/auth/avatar', {
+      const data = await apiFetch<AvatarApiResponse>('/api/auth/avatar', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ avatar_url: preview })
+        body: JSON.stringify({ avatar_url: preview }),
       })
-      const data: AvatarApiResponse = await res.json()
-      if (!res.ok) {
+      if (data.error) {
         setError(data.error || '保存失败')
         return
       }

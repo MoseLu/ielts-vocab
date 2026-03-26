@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { z } from 'zod'
 import type { Book, BookProgress } from '../../../types'
 import {
+  apiFetch,
   safeParse,
   BooksListResponseSchema,
   WordsListResponseSchema,
@@ -12,6 +13,7 @@ import {
   BookProgressSchema,
   ProgressMapSchema,
 } from '../../../lib'
+import { useAuth } from '../../../contexts'
 
 const API_BASE = '/api/books'
 
@@ -93,28 +95,25 @@ export function useBookWords(bookId: string, page = 1, perPage = 100) {
 }
 
 export function useBookProgress(bookId: string) {
+  const { user } = useAuth()
   const [progress, setProgress] = useState<VocabBookProgress | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!bookId) return
+    if (!bookId || !user) {
+      setLoading(false)
+      return
+    }
 
     const fetchProgress = async () => {
       try {
-        const raw = await fetch(`${API_BASE}/progress/${bookId}`)
-          .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to fetch progress')))
-
-        // Try as single progress object first
-        const singleResult = safeParse(BookProgressSchema, raw)
-        if (singleResult.success) {
-          setProgress(singleResult.data)
-          return
-        }
-
-        // Try as wrapped { progress } response
-        const wrappedResult = safeParse(z.object({ progress: BookProgressSchema }), raw)
-        if (wrappedResult.success) {
-          setProgress(wrappedResult.data.progress)
+        const raw = await apiFetch<unknown>(`${API_BASE}/progress/${bookId}`)
+        const wrapped = safeParse(
+          z.object({ progress: BookProgressSchema.nullable() }),
+          raw,
+        )
+        if (wrapped.success && wrapped.data.progress) {
+          setProgress(wrapped.data.progress)
         }
       } catch {
         // Progress not found is ok
@@ -124,18 +123,15 @@ export function useBookProgress(bookId: string) {
     }
 
     fetchProgress()
-  }, [bookId])
+  }, [bookId, user])
 
   const saveProgress = useCallback(async (progressData: Partial<VocabBookProgress>) => {
+    if (!user) return null
     try {
-      const raw = await fetch(`${API_BASE}/progress`, {
+      const raw = await apiFetch<unknown>(`${API_BASE}/progress`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token') ?? ''}`,
-        },
         body: JSON.stringify({ book_id: bookId, ...progressData }),
-      }).then(r => r.json())
+      })
 
       const result = safeParse(z.object({ progress: BookProgressSchema }), raw)
       if (!result.success) {
@@ -149,27 +145,29 @@ export function useBookProgress(bookId: string) {
       console.error('Failed to save progress:', err)
       return null
     }
-  }, [bookId])
+  }, [bookId, user])
 
   return { progress, loading, saveProgress }
 }
 
 export function useAllBookProgress() {
+  const { user } = useAuth()
   const [progressMap, setProgressMap] = useState<Record<string, VocabBookProgress>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
     const fetchProgress = async () => {
       try {
-        const raw = await fetch(`${API_BASE}/progress`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token') ?? ''}`,
-          },
-        }).then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to fetch progress')))
+        const raw = await apiFetch<unknown>(`${API_BASE}/progress`)
 
-        const result = safeParse(ProgressMapSchema, raw)
+        const result = safeParse(z.object({ progress: ProgressMapSchema }), raw)
         if (result.success) {
-          setProgressMap(result.data)
+          setProgressMap(result.data.progress)
         }
       } catch {
         // No progress found
@@ -179,7 +177,7 @@ export function useAllBookProgress() {
     }
 
     fetchProgress()
-  }, [])
+  }, [user])
 
   return { progressMap, loading }
 }

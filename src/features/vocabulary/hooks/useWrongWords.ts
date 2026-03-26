@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '../../../contexts'
+import { apiFetch } from '../../../lib'
 
 export interface WrongWord {
   word: string
@@ -16,25 +18,24 @@ export interface WrongWord {
 }
 
 export function useWrongWords() {
+  const { user } = useAuth()
   const [words, setWords] = useState<WrongWord[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchWords = useCallback(async () => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
     try {
-      const token = localStorage.getItem('auth_token')
-      const res = await fetch('/api/ai/wrong-words', {
-        headers: { Authorization: `Bearer ${token ?? ''}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setWords(data.words || [])
-      }
+      const data = await apiFetch<{ words?: WrongWord[] }>('/api/ai/wrong-words')
+      setWords(data.words || [])
     } catch {
       // ignore
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     fetchWords()
@@ -46,35 +47,36 @@ export function useWrongWords() {
       if (prev.find(w => w.word === word.word)) return prev
       return [{ ...word, wrong_count: 1 }, ...prev]
     })
-    // Sync to backend
-    const token = localStorage.getItem('auth_token')
-    await fetch('/api/ai/wrong-words/sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token ?? ''}`,
-      },
-      body: JSON.stringify({ words: [word] }),
-    })
-  }, [])
+    if (!user) return
+    try {
+      await apiFetch('/api/ai/wrong-words/sync', {
+        method: 'POST',
+        body: JSON.stringify({ words: [word] }),
+      })
+    } catch {
+      // ignore
+    }
+  }, [user])
 
   const removeWord = useCallback(async (word: string) => {
     setWords(prev => prev.filter(w => w.word !== word))
-    const token = localStorage.getItem('auth_token')
-    await fetch(`/api/ai/wrong-words/${encodeURIComponent(word)}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token ?? ''}` },
-    })
-  }, [])
+    if (!user) return
+    try {
+      await apiFetch(`/api/ai/wrong-words/${encodeURIComponent(word)}`, { method: 'DELETE' })
+    } catch {
+      // ignore
+    }
+  }, [user])
 
   const clearAll = useCallback(async () => {
     setWords([])
-    const token = localStorage.getItem('auth_token')
-    await fetch('/api/ai/wrong-words', {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token ?? ''}` },
-    })
-  }, [])
+    if (!user) return
+    try {
+      await apiFetch('/api/ai/wrong-words', { method: 'DELETE' })
+    } catch {
+      // ignore
+    }
+  }, [user])
 
   return { words, loading, addWord, removeWord, clearAll, refetch: fetchWords }
 }

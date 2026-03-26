@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '../../../contexts'
+import { apiFetch } from '../../../lib'
 
 export interface DailyLearning {
   date: string           // 'YYYY-MM-DD'
@@ -44,6 +46,7 @@ export type MetricKey = 'words' | 'accuracy' | 'duration'
 export type RangeKey = 7 | 14 | 30
 
 export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
+  const { user } = useAuth()
   const [daily, setDaily] = useState<DailyLearning[]>([])
   const [books, setBooks] = useState<LearningBook[]>([])
   const [modes, setModes] = useState<string[]>([])
@@ -54,8 +57,10 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
   const [loading, setLoading] = useState(true)
 
   const fetchStats = useCallback(async () => {
-    const token = localStorage.getItem('auth_token')
-    if (!token) { setLoading(false); return }
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     try {
@@ -63,25 +68,28 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
       if (bookId && bookId !== 'all') params.set('book_id', bookId)
       if (mode && mode !== 'all') params.set('mode', mode)
 
-      const res = await fetch(`/api/ai/learning-stats?${params}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const d = await res.json()
-        setDaily(d.daily || [])
-        setBooks(d.books || [])
-        setModes(d.modes || [])
-        setSummary(d.summary || null)
-        setAlltime(d.alltime || null)
-        setModeBreakdown(d.mode_breakdown || [])
-        setUseFallback(d.use_fallback || false)
-      }
+      const d = await apiFetch<{
+        daily?: DailyLearning[]
+        books?: LearningBook[]
+        modes?: string[]
+        summary?: LearningSummary | null
+        alltime?: LearningAlltime | null
+        mode_breakdown?: ModeStat[]
+        use_fallback?: boolean
+      }>(`/api/ai/learning-stats?${params}`)
+      setDaily(d.daily || [])
+      setBooks(d.books || [])
+      setModes(d.modes || [])
+      setSummary(d.summary || null)
+      setAlltime(d.alltime || null)
+      setModeBreakdown(d.mode_breakdown || [])
+      setUseFallback(d.use_fallback || false)
     } catch {
       // ignore
     } finally {
       setLoading(false)
     }
-  }, [days, bookId, mode])
+  }, [days, bookId, mode, user])
 
   useEffect(() => { fetchStats() }, [fetchStats])
 

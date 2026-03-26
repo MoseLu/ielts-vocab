@@ -1,4 +1,7 @@
 // ── Smart Mode Adaptive Logic ─────────────────────────────────────────────────
+
+import { STORAGE_KEYS } from '../constants'
+import { apiFetch } from './index'
 // Tracks per-word proficiency across three dimensions:
 //   音 (listening)  - 听音选义
 //   意 (meaning)    - 看词选义
@@ -120,14 +123,12 @@ export function buildSmartQueue(wordKeys: string[], stats: SmartWordStatsStore):
 
 /** Push all localStorage smart stats to the backend (fire-and-forget). */
 export function syncSmartStatsToBackend(): void {
-  const token = localStorage.getItem('auth_token')
-  if (!token) return
+  if (!localStorage.getItem(STORAGE_KEYS.AUTH_USER)) return
   const stats = loadSmartStats()
   const entries = Object.entries(stats)
   if (!entries.length) return
-  fetch('/api/ai/smart-stats/sync', {
+  apiFetch('/api/ai/smart-stats/sync', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({
       stats: entries.map(([word, ws]) => ({
         word,
@@ -141,20 +142,15 @@ export function syncSmartStatsToBackend(): void {
 
 /** Fetch smart stats from backend and merge into localStorage (backend wins per-dim if higher total). */
 export async function loadSmartStatsFromBackend(): Promise<void> {
-  const token = localStorage.getItem('auth_token')
-  if (!token) return
+  if (!localStorage.getItem(STORAGE_KEYS.AUTH_USER)) return
   try {
-    const res = await fetch('/api/ai/smart-stats', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) return
-    const data = await res.json()
-    const serverStats: Array<{
+    const data = await apiFetch<{ stats?: Array<{
       word: string
       listening: { correct: number; wrong: number }
       meaning:   { correct: number; wrong: number }
       dictation: { correct: number; wrong: number }
-    }> = data.stats || []
+    }> }>('/api/ai/smart-stats')
+    const serverStats = data.stats || []
     if (!serverStats.length) return
     const local = loadSmartStats()
     let changed = false

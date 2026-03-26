@@ -36,6 +36,12 @@ const VALID_ONSET2 = new Set([
 const VALID_ONSET3 = new Set(['str','scr','spr','spl','squ','thr','chr'])
 
 export function syllabifyWord(word: string, phonetic: string): string[] {
+  // Detect if this is a phrase (multiple words separated by spaces)
+  // Phrases should NOT be syllabified - keep them as whole units
+  if (word.trim().includes(' ')) {
+    return [word.trim()]
+  }
+
   const n = countPhoneticSyllables(phonetic)
   if (n <= 1 || word.length <= 2) return [word]
 
@@ -246,6 +252,13 @@ const _audioUrlCache = new Map<string, string | null>()
 async function fetchAudioUrl(word: string): Promise<string | null> {
   const key = word.toLowerCase()
   if (_audioUrlCache.has(key)) return _audioUrlCache.get(key)!
+
+  // Skip dictionary API for phrases (contains spaces) - they're not supported
+  if (word.includes(' ')) {
+    _audioUrlCache.set(key, null)
+    return null
+  }
+
   try {
     const controller = new AbortController()
     const tid = setTimeout(() => controller.abort(), 3000)
@@ -292,6 +305,8 @@ export function playWordAudio(
   onEnd?: () => void,
 ): void {
   stopAudio()
+  // Increment generation AFTER stopAudio so the setTimeout check below
+  // (which captures this value) is consistent with what stopAudio set.
   const gen = _audioGeneration
 
   const volume = parseFloat(settings.volume || '100') / 100

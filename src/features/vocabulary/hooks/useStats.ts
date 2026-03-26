@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '../../../contexts'
+import { apiFetch } from '../../../lib'
 import { useVocabBooks } from './useVocabBooks'
 
 export interface ChapterStat {
@@ -16,6 +18,7 @@ export interface DayStat {
 }
 
 export function useStats() {
+  const { user } = useAuth()
   const { books } = useVocabBooks()
   const [progressData, setProgressData] = useState<{ day: number; correct_count: number }[]>([])
   const [bookProgress, setBookProgress] = useState<Record<string, {
@@ -24,29 +27,26 @@ export function useStats() {
   const [loading, setLoading] = useState(true)
 
   const fetchAll = useCallback(async () => {
-    const token = localStorage.getItem('auth_token')
-    if (!token) { setLoading(false); return }
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
     try {
-      const [progressRes, bookRes] = await Promise.all([
-        fetch('/api/progress', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/books/progress', { headers: { Authorization: `Bearer ${token}` } }),
+      const [d1, d2] = await Promise.all([
+        apiFetch<{ progress?: { day: number; correct_count: number }[] }>('/api/progress'),
+        apiFetch<{ progress?: Record<string, { correct_count: number; wrong_count: number; current_index: number }> }>(
+          '/api/books/progress',
+        ),
       ])
-
-      if (progressRes.ok) {
-        const d = await progressRes.json()
-        setProgressData(d.progress || [])
-      }
-      if (bookRes.ok) {
-        const d = await bookRes.json()
-        setBookProgress(d.progress || {})
-      }
+      setProgressData(d1.progress || [])
+      setBookProgress(d2.progress || {})
     } catch {
       // ignore
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [user])
 
   useEffect(() => { fetchAll() }, [fetchAll])
 

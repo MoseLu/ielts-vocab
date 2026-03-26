@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../../contexts'
+import { apiFetch } from '../../../lib'
 
 export interface MyBook {
   id: string
@@ -18,14 +19,8 @@ export function useMyBooks() {
   const fetchMyBooks = useCallback(async () => {
     if (!user) { setMyBookIds(new Set()); setLoading(false); return }
     try {
-      const token = localStorage.getItem('auth_token')
-      const res = await fetch('/api/books/my', {
-        headers: { Authorization: `Bearer ${token ?? ''}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setMyBookIds(new Set(data.book_ids || []))
-      }
+      const data = await apiFetch<{ book_ids?: string[] }>('/api/books/my')
+      setMyBookIds(new Set(data.book_ids || []))
     } catch {
       // ignore
     } finally {
@@ -42,32 +37,27 @@ export function useMyBooks() {
   }, [myBookIds])
 
   const addBook = useCallback(async (bookId: string) => {
-    const token = localStorage.getItem('auth_token')
-    const res = await fetch('/api/books/my', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token ?? ''}`,
-      },
-      body: JSON.stringify({ book_id: bookId }),
-    })
-    if (res.ok) {
+    try {
+      await apiFetch('/api/books/my', {
+        method: 'POST',
+        body: JSON.stringify({ book_id: bookId }),
+      })
       setMyBookIds(prev => new Set([...prev, bookId]))
+    } catch {
+      // ignore
     }
   }, [])
 
   const removeBook = useCallback(async (bookId: string) => {
-    const token = localStorage.getItem('auth_token')
-    const res = await fetch(`/api/books/my/${bookId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token ?? ''}` },
-    })
-    if (res.ok) {
+    try {
+      await apiFetch(`/api/books/my/${bookId}`, { method: 'DELETE' })
       setMyBookIds(prev => {
         const next = new Set(prev)
         next.delete(bookId)
         return next
       })
+    } catch {
+      // ignore
     }
   }, [])
 
