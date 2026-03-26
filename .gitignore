@@ -17,6 +17,9 @@ build/
 # Database
 *.sqlite
 *.db
+# SQLite WAL sidecars (local runtime)
+*.sqlite-shm
+*.sqlite-wal
 
 # IDE
 .vscode/
