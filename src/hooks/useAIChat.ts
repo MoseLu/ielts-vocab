@@ -80,6 +80,37 @@ function buildModePerformance() {
   }
 }
 
+const ChapterProgressSchema = z.record(z.string(), z.object({
+  current_index: z.number().optional(),
+  correct_count: z.number().optional(),
+  wrong_count: z.number().optional(),
+  is_completed: z.boolean().optional(),
+  words_learned: z.number().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough())
+
+function buildChapterProgressSummary() {
+  try {
+    const cParsed = safeParse(ChapterProgressSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
+    const raw = cParsed.success ? cParsed.data : {}
+    const entries = Object.entries(raw)
+    if (!entries.length) return undefined
+    const completed = entries.filter(([, p]) => p.is_completed).length
+    const totalCorrect = entries.reduce((s, [, p]) => s + (p.correct_count ?? 0), 0)
+    const totalWrong = entries.reduce((s, [, p]) => s + (p.wrong_count ?? 0), 0)
+    const totalAnswered = totalCorrect + totalWrong
+    return {
+      chaptersAttempted: entries.length,
+      chaptersCompleted: completed,
+      totalCorrect,
+      totalWrong,
+      overallAccuracy: totalAnswered > 0 ? Math.round(totalCorrect / totalAnswered * 100) : 0,
+    }
+  } catch {
+    return undefined
+  }
+}
+
 // ── Session timer ─────────────────────────────────────────────────────────────
 
 /**

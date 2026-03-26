@@ -277,8 +277,9 @@ export type DailySummary = z.infer<typeof DailySummarySchema>
 export const NotesListResponseSchema = z.object({
   notes: z.array(LearningNoteSchema),
   total: z.number().int(),
-  page: z.number().int(),
   per_page: z.number().int(),
+  next_cursor: z.number().int().nullable().optional(),
+  has_more: z.boolean(),
 })
 
 export const SummariesListResponseSchema = z.object({

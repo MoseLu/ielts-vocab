@@ -8,6 +8,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 
 
+def _iso_utc(dt: datetime | None) -> str | None:
+    """Return ISO-8601 string with explicit UTC suffix, or None."""
+    if dt is None:
+        return None
+    return dt.strftime('%Y-%m-%dT%H:%M:%S') + '+00:00'
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -346,16 +353,16 @@ class UserConversationHistory(db.Model):
     __tablename__ = 'user_conversation_history'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     role = db.Column(db.String(20), nullable=False)   # 'user' | 'assistant'
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     def to_dict(self):
         return {
             'role': self.role,
             'content': self.content,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'created_at': _iso_utc(self.created_at),
         }
 
 
@@ -366,7 +373,7 @@ class UserStudySession(db.Model):
     __tablename__ = 'user_study_sessions'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     mode = db.Column(db.String(30))          # smart | listening | meaning | dictation | radio | quickmemory
     book_id = db.Column(db.String(100))
     chapter_id = db.Column(db.String(100))
@@ -374,7 +381,7 @@ class UserStudySession(db.Model):
     correct_count = db.Column(db.Integer, default=0)
     wrong_count = db.Column(db.Integer, default=0)
     duration_seconds = db.Column(db.Integer, default=0)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     ended_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
@@ -389,7 +396,7 @@ class UserStudySession(db.Model):
             'wrong_count': self.wrong_count,
             'accuracy': round(self.correct_count / total * 100) if total > 0 else 0,
             'duration_seconds': self.duration_seconds,
-            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'started_at': _iso_utc(self.started_at),
         }
 
 
@@ -563,7 +570,7 @@ class UserLearningNote(db.Model):
             'question': self.question,
             'answer': self.answer,
             'word_context': self.word_context,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'created_at': _iso_utc(self.created_at),
         }
 
 
@@ -586,5 +593,5 @@ class UserDailySummary(db.Model):
             'id': self.id,
             'date': self.date,
             'content': self.content,
-            'generated_at': self.generated_at.isoformat() if self.generated_at else None,
+            'generated_at': _iso_utc(self.generated_at),
         }
