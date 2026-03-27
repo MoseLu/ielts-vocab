@@ -263,6 +263,34 @@
     margin-top: 4px;
 }
 
+.chapter-card-progress {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chapter-card-progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--bg-tertiary);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.chapter-card-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}
+
+.chapter-card-progress-text {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+}
+
 /* ── States ── */
 .chapter-loading,
 .chapter-error {

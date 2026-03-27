@@ -226,6 +226,11 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     const getAccuracyClass = (acc: number) =>
       acc >= 80 ? 'mode-badge-high' : acc >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
 
+    // Compute chapter-level progress bar
+    const chapterProgressPercent = hasModeData
+      ? (prog?.accuracy ?? 0)
+      : (chapter.word_count ? Math.round(((prog?.words_learned ?? 0) / chapter.word_count) * 100) : 0)
+
     return (
       <div
         key={chapter.id}
@@ -260,11 +265,15 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
           </div>
         )}
 
-        {hasModeData && (
-          <div className="chapter-card-footer chapter-card-footer-slim">
-            <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
+        <div className="chapter-card-progress">
+          <div className="chapter-card-progress-bar">
+            <div
+              className="chapter-card-progress-fill"
+              style={{ width: `${chapterProgressPercent}%` }}
+            />
           </div>
-        )}
+          <span className="chapter-card-progress-text">{chapterProgressPercent}%</span>
+        </div>
 
         {isCurrent && <div className="chapter-card-current-dot" />}
       </div>
