@@ -45,6 +45,16 @@ export interface LearningAlltime {
   qm_word_total: number
   /** 按复习轮次（对应 1/1/4/7/14/30 天间隔）的到期/达成统计 */
   ebbinghaus_stages?: EbbinghausStagePoint[]
+  /** 3天内待复习词数（含已到期未复习的） */
+  upcoming_reviews_3d?: number
+  /** 连续学习天数 */
+  streak_days?: number
+  /** 最弱模式（正确率最低的模式） */
+  weakest_mode?: string | null
+  /** 最弱模式正确率 */
+  weakest_mode_accuracy?: number | null
+  /** 趋势方向 */
+  trend_direction?: 'improving' | 'stable' | 'declining'
 }
 
 export interface EbbinghausStagePoint {
@@ -78,6 +88,9 @@ export interface WrongTopItem {
   wrong_count: number
   phonetic: string
   pos: string
+  listening_wrong?: number
+  meaning_wrong?: number
+  dictation_wrong?: number
 }
 
 export interface ChapterBreakdownRow {

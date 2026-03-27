@@ -32,6 +32,18 @@ const MODE_LABELS: Record<string, string> = {
 
 const PIE_COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#14b8a6', '#eab308', '#64748b']
 
+function inferErrorReason(w: WrongTopItem): string {
+  const lw = w.listening_wrong ?? 0
+  const mw = w.meaning_wrong ?? 0
+  const dw = w.dictation_wrong ?? 0
+  const total = lw + mw + dw
+  if (total === 0) return '—'
+  if (lw >= mw && lw >= dw) return '听力'
+  if (mw >= lw && mw >= dw) return '释义'
+  if (dw >= lw && dw >= mw) return '拼写'
+  return '—'
+}
+
 const RANGE_OPTIONS: { label: string; value: RangeKey }[] = [
   { label: '7天', value: 7 },
   { label: '14天', value: 14 },
@@ -642,6 +654,8 @@ export default function StatsPage() {
 
   const displayTodayAccuracy = fmtPct(alltime?.today_accuracy)
   const displayAlltimeAccuracy = fmtPct(alltime?.accuracy)
+  const displayStreak = alltime?.streak_days != null && alltime?.streak_days > 0
+    ? alltime.streak_days : '--'
 
   const hasChartData = daily.some(d => {
     if (metric === 'words') return d.words_studied > 0
@@ -728,7 +742,7 @@ export default function StatsPage() {
           「新词 / 复习」来自速记（艾宾浩斯）同步数据；「累计学习新词」为全书进度与去重逻辑综合结果。
         </p>
 
-        <div className="stats-cards stats-cards-8">
+        <div className="stats-cards stats-cards-9">
           <div className="stats-card">
             <div className="stats-card-value">{displayTodayNew}</div>
             <div className="stats-card-label">今日学习新词数</div>
@@ -764,10 +778,25 @@ export default function StatsPage() {
             <div className="stats-card-label">累计正确率</div>
             <div className="stats-card-sub">章节进度</div>
           </div>
+          <div className="stats-card">
+            <div className="stats-card-value">{displayStreak}</div>
+            <div className="stats-card-label">连续学习</div>
+            <div className="stats-card-sub">天</div>
+          </div>
         </div>
 
         <div className="stats-section stats-section--mode-strip">
-          <h2 className="stats-section-title">模式占比与各模式统计</h2>
+          <div className="stats-mode-strip-header">
+            <h2 className="stats-section-title">模式占比与各模式统计</h2>
+            {alltime?.weakest_mode && (
+              <span className="mode-recommendation">
+                建议加强：<strong>{MODE_LABELS[alltime.weakest_mode] || alltime.weakest_mode}</strong>
+                {alltime.weakest_mode_accuracy != null && (
+                  <span className="mode-recommendation-acc">（正确率 {alltime.weakest_mode_accuracy}%）</span>
+                )}
+              </span>
+            )}
+          </div>
           <p className="stats-section-hint">
             饼图与各模式「学习词数」：<strong>速记模式</strong>为速记词表去重词数（每词一行）；其余模式为练习会话累计（同一词多次练习会重复计）。各模式相加仍可能高于上方「累计学习新词数」——后者为全书章节进度与全局去重综合结果。
           </p>
@@ -821,6 +850,7 @@ export default function StatsPage() {
                                       <th>单词</th>
                                       <th>音标</th>
                                       <th>累计错次</th>
+                                      <th>错因</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -830,6 +860,7 @@ export default function StatsPage() {
                                         <td className="td-word">{w.word}</td>
                                         <td className="td-muted">{w.phonetic || '—'}</td>
                                         <td><span className="wrong-count-badge">{w.wrong_count}</span></td>
+                                        <td><span className="error-reason-tag">{inferErrorReason(w)}</span></td>
                                       </tr>
                                     ))}
                                   </tbody>
@@ -891,6 +922,18 @@ export default function StatsPage() {
                                 </span>
                               </div>
                             </div>
+                            {(alltime?.upcoming_reviews_3d ?? 0) > 0 && (
+                              <div className="ebb-upcoming-hint">
+                                <span>接下来3天待复习 <strong>{alltime?.upcoming_reviews_3d}</strong> 词</span>
+                                <button
+                                  type="button"
+                                  className="stats-review-btn stats-review-btn--ebb"
+                                  onClick={() => navigate('/')}
+                                >
+                                  去复习
+                                </button>
+                              </div>
+                            )}
                             <div className="stats-ebb-chart-wrap">
                               <EbbinghausDualChart stages={ebbStages} compact />
                             </div>
@@ -990,6 +1033,18 @@ export default function StatsPage() {
                             {summary.accuracy != null && <span>· 正确率 <strong>{summary.accuracy}%</strong></span>}
                             {!useFallback && <span>· <strong>{summary.total_sessions}</strong> 次练习</span>}
                           </div>
+                          {alltime?.trend_direction && alltime?.trend_direction !== 'stable' && (
+                            <div className="lc-trend-insight">
+                              <span className={`lc-trend-badge lc-trend-badge--${alltime.trend_direction}`}>
+                                {alltime.trend_direction === 'improving' ? '↑' : '↓'}
+                              </span>
+                              <span>
+                                {alltime.trend_direction === 'improving'
+                                  ? '学习效果在提升'
+                                  : '学习效果有下滑，建议加强复习'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </section>

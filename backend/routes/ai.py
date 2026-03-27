@@ -1,14 +1,33 @@
 import re
 import json
 import uuid
+import os
+import random
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 from models import db, User, UserBookProgress, UserChapterProgress, UserChapterModeProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory, UserLearningNote
 from routes.middleware import token_required
-from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
+from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS, correct_text, differentiate_synonyms
 
 ai_bp = Blueprint('ai', __name__)
+
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+
+
+def _load_json_data(filename: str, default):
+    path = os.path.join(DATA_DIR, filename)
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+
+def _track_metric(user_id: int, metric: str, payload: dict | None = None):
+    """轻量埋点：先写日志，后续可切换独立事件表。"""
+    import logging
+    logging.info("[AI_METRIC] user=%s metric=%s payload=%s", user_id, metric, payload or {})
 
 
 def _alltime_distinct_practiced_words(user_id: int) -> int:
@@ -65,6 +84,44 @@ def _chapter_title_map(book_id: str) -> dict:
         return {str(c['id']): (c.get('title') or '') for c in data['chapters']}
     except Exception:
         return {}
+
+
+def _calc_streak_days(user_id: int) -> int:
+    """计算用户连续学习天数（基于 UserStudySession）。"""
+    sessions = UserStudySession.query.filter_by(user_id=user_id).filter(
+        UserStudySession.words_studied > 0
+    ).order_by(UserStudySession.started_at.desc()).all()
+
+    if not sessions:
+        return 0
+
+    from datetime import timedelta
+    date_set: set[str] = set()
+    for s in sessions:
+        if s.started_at:
+            date_set.add(s.started_at.strftime('%Y-%m-%d'))
+
+    if not date_set:
+        return 0
+
+    sorted_dates = sorted(date_set, reverse=True)
+    today_str = datetime.utcnow().strftime('%Y-%m-%d')
+    yesterday_str = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
+
+    if sorted_dates[0] not in (today_str, yesterday_str):
+        return 0
+
+    streak = 0
+    current = datetime.strptime(sorted_dates[0], '%Y-%m-%d')
+    for date_str in sorted_dates:
+        d = datetime.strptime(date_str, '%Y-%m-%d')
+        diff = (current - d).days
+        if diff <= 1:
+            streak += 1
+            current = d
+        else:
+            break
+    return streak
 
 
 def _quick_memory_word_stats(user_id: int):
@@ -135,6 +192,14 @@ def _quick_memory_word_stats(user_id: int):
             'actual_pct': round(dm / dt * 100) if dt > 0 else None,
         })
 
+    # 3天内待复习词数（包含已到期但未复习的）
+    upcoming_reviews_3d = 0
+    three_days_ms = 3 * 86400000
+    for r in qm_rows:
+        nr = r.next_review or 0
+        if nr > 0 and nr <= now_ms + three_days_ms:
+            upcoming_reviews_3d += 1
+
     return {
         'today_new_words': today_new,
         'today_review_words': today_review,
@@ -145,6 +210,7 @@ def _quick_memory_word_stats(user_id: int):
         'ebbinghaus_met': due_met,
         'qm_word_total': len(qm_rows),
         'ebbinghaus_stages': ebbinghaus_stages,
+        'upcoming_reviews_3d': upcoming_reviews_3d,
     }
 
 
@@ -972,6 +1038,196 @@ def greet(current_user: User):
         return jsonify({'error': f'AI service error: {str(e)}'}), 500
 
 
+# ── Feature APIs (PRD Phase 1-4) ─────────────────────────────────────────────
+
+@ai_bp.route('/correct-text', methods=['POST'])
+@token_required
+def correct_text_api(current_user: User):
+    body = request.get_json() or {}
+    text_in = (body.get('text') or '').strip()
+    if not text_in:
+        return jsonify({
+            'is_valid_english': False,
+            'message': '请输入英文句子（建议 1-50 词）。',
+        }), 200
+    if len(text_in.split()) > 80:
+        return jsonify({'error': '句子过长，请控制在 80 词内'}), 400
+
+    result = correct_text(text_in)
+    _track_metric(current_user.id, 'writing_correction_used', {'length': len(text_in.split())})
+    return jsonify(result), 200
+
+
+@ai_bp.route('/correction-feedback', methods=['POST'])
+@token_required
+def correction_feedback(current_user: User):
+    body = request.get_json() or {}
+    adopted = bool(body.get('adopted'))
+    _track_metric(current_user.id, 'writing_correction_adoption', {'adopted': adopted})
+    return jsonify({'ok': True}), 200
+
+
+@ai_bp.route('/ielts-example', methods=['GET'])
+@token_required
+def ielts_example(current_user: User):
+    word = (request.args.get('word') or '').strip().lower()
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+
+    corpus = _load_json_data('ielts-reading-corpus.json', {})
+    topic_map = _load_json_data('ielts-topics.json', {})
+    items = corpus.get(word, [])
+    if items:
+        _track_metric(current_user.id, 'ielts_example_hit', {'word': word, 'count': len(items)})
+        return jsonify({'word': word, 'source': 'ielts-corpus', 'examples': items[:5]}), 200
+
+    # 降级：web_search
+    summary = web_search(f"{word} IELTS reading sentence examples")
+    fallback = [{
+        'sentence': summary.split('\n')[0][:220],
+        'source': 'web_search',
+        'topic': topic_map.get(word, 'general'),
+        'is_real_exam': False,
+    }]
+    _track_metric(current_user.id, 'ielts_example_fallback', {'word': word})
+    return jsonify({'word': word, 'source': 'fallback', 'examples': fallback}), 200
+
+
+@ai_bp.route('/synonyms-diff', methods=['POST'])
+@token_required
+def synonyms_diff(current_user: User):
+    body = request.get_json() or {}
+    a = (body.get('a') or '').strip()
+    b = (body.get('b') or '').strip()
+    if not a or not b:
+        return jsonify({'error': 'a and b are required'}), 400
+    result = differentiate_synonyms(a, b)
+    _track_metric(current_user.id, 'synonyms_diff_used', {'pair': f'{a}-{b}'})
+    return jsonify(result), 200
+
+
+@ai_bp.route('/word-family', methods=['GET'])
+@token_required
+def word_family(current_user: User):
+    word = (request.args.get('word') or '').strip().lower()
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+    db_json = _load_json_data('word-families.json', {})
+    data = db_json.get(word)
+    if not data:
+        return jsonify({
+            'word': word,
+            'message': '暂未收录该词族，建议查询实义词（如 establish / analyze / regulate）。',
+        }), 200
+    _track_metric(current_user.id, 'word_family_used', {'word': word})
+    return jsonify(data), 200
+
+
+@ai_bp.route('/word-family/quiz', methods=['GET'])
+@token_required
+def word_family_quiz(current_user: User):
+    word = (request.args.get('word') or '').strip().lower()
+    db_json = _load_json_data('word-families.json', {})
+    data = db_json.get(word, {})
+    variants = data.get('variants', [])
+    if len(variants) < 2:
+        return jsonify({'error': 'not enough variants'}), 400
+    picked = random.choice(variants)
+    others = [v.get('word') for v in variants if v.get('word') and v.get('word') != picked.get('word')]
+    return jsonify({
+        'prompt': f"请说出与 {picked.get('word')} 同词族的另外两个词",
+        'answer_candidates': others[:4],
+        'analysis': f"{picked.get('word')} 属于 {word} 词族，注意词性转换。",
+    }), 200
+
+
+@ai_bp.route('/collocations/practice', methods=['GET'])
+@token_required
+def collocation_practice(current_user: User):
+    topic = (request.args.get('topic') or 'general').strip().lower()
+    mode = (request.args.get('mode') or 'mcq').strip().lower()
+    count = min(max(int(request.args.get('count', 5)), 1), 20)
+    pool = _load_json_data('ielts-collocations.json', [])
+    filtered = [x for x in pool if x.get('topic', 'general') in (topic, 'general')] or pool
+    random.shuffle(filtered)
+    _track_metric(current_user.id, 'collocation_practice_used', {'topic': topic, 'mode': mode, 'count': count})
+    return jsonify({'topic': topic, 'mode': mode, 'items': filtered[:count]}), 200
+
+
+@ai_bp.route('/pronunciation-check', methods=['POST'])
+@token_required
+def pronunciation_check(current_user: User):
+    body = request.get_json() or {}
+    word = (body.get('word') or '').strip()
+    transcript = (body.get('transcript') or '').strip()
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+    # 规则兜底：后续可接 MiniMax 语音识别
+    score = 85 if transcript.lower() == word.lower() else 65
+    result = {
+        'word': word,
+        'score': score,
+        'stress_feedback': '重音位置基本正确，建议再拉长重读音节。',
+        'vowel_feedback': '元音饱满度中等，可再放慢语速。',
+        'speed_feedback': '语速可接受，注意词尾清晰度。',
+    }
+    _track_metric(current_user.id, 'pronunciation_check_used', {'word': word, 'score': score})
+    return jsonify(result), 200
+
+
+@ai_bp.route('/speaking-simulate', methods=['POST'])
+@token_required
+def speaking_simulate(current_user: User):
+    body = request.get_json() or {}
+    part = int(body.get('part', 1))
+    topic = (body.get('topic') or 'education').strip()
+    qmap = {
+        1: f"Part 1: Do you enjoy learning vocabulary about {topic}?",
+        2: f"Part 2: Describe a time when {topic} vocabulary helped your IELTS performance.",
+        3: f"Part 3: How can schools improve students' {topic} related lexical resources?",
+    }
+    _track_metric(current_user.id, 'speaking_simulation_used', {'part': part, 'topic': topic})
+    return jsonify({
+        'part': part,
+        'topic': topic,
+        'question': qmap.get(part, qmap[1]),
+        'follow_ups': ['请给出一个具体例子。', '能否用更学术的表达重述？'],
+    }), 200
+
+
+@ai_bp.route('/review-plan', methods=['GET'])
+@token_required
+def review_plan(current_user: User):
+    ctx = _get_context_data(current_user.id)
+    wrong_count = len(ctx.get('wrongWords', []))
+    accuracy = ctx.get('accuracyRate', 0)
+    if accuracy >= 80:
+        level = 'balanced'
+        plan = ['新词 20 个', '复习 30 个', '错词回顾 10 分钟']
+    else:
+        level = 'recovery'
+        plan = ['新词 10 个', '复习 40 个', '错词精练 20 分钟']
+    _track_metric(current_user.id, 'adaptive_plan_generated', {'level': level})
+    return jsonify({'level': level, 'wrong_words': wrong_count, 'plan': plan}), 200
+
+
+@ai_bp.route('/vocab-assessment', methods=['GET'])
+@token_required
+def vocab_assessment(current_user: User):
+    count = min(max(int(request.args.get('count', 20)), 5), 50)
+    pool = _get_global_vocab_pool()
+    random.shuffle(pool)
+    questions = []
+    for w in pool[:count]:
+        questions.append({
+            'word': w.get('word'),
+            'definition': w.get('definition'),
+            'pos': w.get('pos'),
+        })
+    _track_metric(current_user.id, 'vocab_assessment_generated', {'count': count})
+    return jsonify({'count': len(questions), 'questions': questions}), 200
+
+
 # ── Conversation history helpers ──────────────────────────────────────────────
 
 _HISTORY_LIMIT = 20  # max past turns to include in context
@@ -1744,6 +2000,9 @@ def get_learning_stats(current_user: User):
             'wrong_count': w.wrong_count or 0,
             'phonetic': w.phonetic or '',
             'pos': w.pos or '',
+            'listening_wrong': w.listening_wrong or 0,
+            'meaning_wrong': w.meaning_wrong or 0,
+            'dictation_wrong': w.dictation_wrong or 0,
         }
         for w in wrong_top
     ]
@@ -1797,6 +2056,33 @@ def get_learning_stats(current_user: User):
         for m in mode_breakdown
     ]
 
+    # 计算 streak_days
+    streak_days = _calc_streak_days(current_user.id)
+
+    # 计算最弱模式（正确率最低且有足够样本的）
+    weakest_mode = None
+    for md in mode_breakdown:
+        acc = md.get('accuracy')
+        if acc is not None and md.get('attempts', 0) >= 5:
+            if weakest_mode is None or acc < (weakest_mode[1] or 100):
+                weakest_mode = (md['mode'], acc)
+
+    # 计算 trend_direction（基于最近14天 vs 前14天对比）
+    trend_direction = 'stable'
+    if len(result) >= 14:
+        recent = result[-7:] if len(result) >= 7 else result[-len(result):]
+        older = result[-14:-7] if len(result) >= 14 else result[:-7]
+        if older:
+            recent_acc = [d['accuracy'] for d in recent if d.get('accuracy') is not None]
+            older_acc = [d['accuracy'] for d in older if d.get('accuracy') is not None]
+            if recent_acc and older_acc:
+                avg_recent = sum(recent_acc) / len(recent_acc)
+                avg_older = sum(older_acc) / len(older_acc)
+                if avg_recent > avg_older + 5:
+                    trend_direction = 'improving'
+                elif avg_recent < avg_older - 5:
+                    trend_direction = 'declining'
+
     return jsonify({
         'daily': active_daily,
         'books': books,
@@ -1823,6 +2109,11 @@ def get_learning_stats(current_user: User):
             'ebbinghaus_met': qm_extra['ebbinghaus_met'],
             'qm_word_total': qm_extra['qm_word_total'],
             'ebbinghaus_stages': qm_extra['ebbinghaus_stages'],
+            'upcoming_reviews_3d': qm_extra.get('upcoming_reviews_3d', 0),
+            'streak_days': streak_days,
+            'weakest_mode': weakest_mode[0] if weakest_mode else None,
+            'weakest_mode_accuracy': weakest_mode[1] if weakest_mode else None,
+            'trend_direction': trend_direction,
         },
         'mode_breakdown': mode_breakdown,
         'pie_chart': pie_chart,

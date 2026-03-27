@@ -35,8 +35,9 @@
     grid-template-columns: repeat(3, 1fr);
 }
 
-.stats-cards.stats-cards-8 {
-    grid-template-columns: repeat(4, 1fr);
+.stats-cards.stats-cards-8,
+.stats-cards.stats-cards-9 {
+    grid-template-columns: repeat(3, 1fr);
 }
 
 .stats-page-intro {
@@ -48,6 +49,35 @@
 /* ── 模式占比 + 各模式统计：左右各 50% ── */
 .stats-section--mode-strip .stats-section-title {
     margin-bottom: var(--space-stack);
+}
+
+.stats-mode-strip-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-stack);
+    margin-bottom: var(--space-stack);
+}
+
+.mode-recommendation {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(249, 115, 22, 0.08);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+}
+
+.mode-recommendation strong {
+    color: var(--accent);
+}
+
+.mode-recommendation-acc {
+    color: var(--text-tertiary);
+    margin-left: 4px;
+    font-size: 11px;
 }
 
 .stats-section--mode-strip .stats-section-hint {
@@ -659,6 +689,29 @@
     color: var(--text-tertiary);
 }
 
+.ebb-upcoming-hint {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-stack);
+    padding: 8px 12px;
+    background: rgba(249, 115, 22, 0.08);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-stack);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.ebb-upcoming-hint strong {
+    color: var(--accent);
+}
+
+.stats-review-btn--ebb {
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
 .ebb-meta-num {
     font-weight: 700;
     font-size: 14px;
@@ -776,8 +829,16 @@
         flex: 0 0 auto;
     }
 
-    .stats-cards.stats-cards-8 {
+    .stats-cards.stats-cards-8,
+    .stats-cards.stats-cards-9 {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-cards.stats-cards-8,
+    .stats-cards.stats-cards-9 {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1072,6 +1133,22 @@
     border-radius: var(--radius-sm);
 }
 
+.error-reason-tag {
+    display: inline-block;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+}
+
+[data-theme="dark"] .error-reason-tag {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
 .mode-breakdown-table-wrap {
     overflow-x: auto;
 }
@@ -1335,6 +1412,44 @@
 
 .lc-period-summary strong {
     color: var(--text-primary);
+}
+
+.lc-trend-insight {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.lc-trend-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.lc-trend-badge--improving {
+    background: var(--success);
+}
+
+.lc-trend-badge--declining {
+    background: var(--error);
+}
+
+[data-theme="dark"] .lc-trend-badge--improving {
+    background: #4ade80;
+}
+
+[data-theme="dark"] .lc-trend-badge--declining {
+    background: #f87171;
 }
 
 .lc-fallback-note {
