@@ -127,7 +127,7 @@ def get_overview(current_user):
     ).group_by(UserStudySession.mode).all()
 
     mode_stats = [
-        {'mode': row.mode or 'unknown', 'count': row.count, 'words': int(row.words or 0)}
+        {'mode': row.mode or '未标注', 'count': row.count, 'words': int(row.words or 0)}
         for row in mode_rows
     ]
 

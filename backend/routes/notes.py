@@ -211,9 +211,13 @@ def generate_summary(current_user):
             mode_label = mode_zh.get(s.mode or '', s.mode or '未知')
             dur = s.duration_seconds or 0
             dur_str = f"{dur // 60}分{dur % 60}秒" if dur >= 60 else f"{dur}秒"
+            cc = s.correct_count or 0
+            wc = s.wrong_count or 0
+            tot = cc + wc
+            acc_pct = round(cc / tot * 100) if tot > 0 else 0
             prompt_parts.append(
                 f"- {mode_label}模式：{s.words_studied or 0}词，"
-                f"准确率{s.accuracy or 0}%，用时{dur_str}"
+                f"准确率{acc_pct}%，用时{dur_str}"
             )
     else:
         prompt_parts.append("今日无练习记录。")
@@ -241,7 +245,7 @@ def generate_summary(current_user):
             {"role": "user", "content": user_content},
         ]
         response = chat(messages, max_tokens=2000)
-        summary_content = response.get('text', '').strip()
+        summary_content = (response or {}).get('text', '').strip()
         if not summary_content:
             summary_content = f"# {target_date} 学习总结\n\n暂无足够数据生成总结。"
     except Exception as e:

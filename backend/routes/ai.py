@@ -1,13 +1,151 @@
 import re
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
-from models import db, User, UserBookProgress, UserChapterProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory, UserLearningNote
+from sqlalchemy import text
+from models import db, User, UserBookProgress, UserChapterProgress, UserChapterModeProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory, UserLearningNote
 from routes.middleware import token_required
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS
 
 ai_bp = Blueprint('ai', __name__)
+
+
+def _alltime_distinct_practiced_words(user_id: int) -> int:
+    """全局去重词数：智能/速记/错词本等表里的 word 并集（跨书、跨章只计一次）。
+
+    user_chapter_progress.words_learned 按章相加会把跨章重复词算多次，也可能存过「答题次数」；
+    该值用于在明显虚高时收敛统计。
+    """
+    try:
+        r = db.session.execute(
+            text(
+                """
+                SELECT COUNT(*) FROM (
+                    SELECT LOWER(TRIM(word)) AS w FROM user_smart_word_stats
+                    WHERE user_id = :uid AND word IS NOT NULL AND TRIM(word) != ''
+                    UNION
+                    SELECT LOWER(TRIM(word)) FROM user_quick_memory_records
+                    WHERE user_id = :uid AND word IS NOT NULL AND TRIM(word) != ''
+                    UNION
+                    SELECT LOWER(TRIM(word)) FROM user_wrong_words
+                    WHERE user_id = :uid AND word IS NOT NULL AND TRIM(word) != ''
+                )
+                """
+            ),
+            {'uid': user_id},
+        ).scalar()
+        return int(r or 0)
+    except Exception:
+        return 0
+
+
+def _alltime_words_display(user_id: int, chapter_words_sum: int) -> int:
+    """累计「学习词数」：章节 words_learned 之和与全局去重并集取合理值。
+
+    章节按章相加会跨章重复计词；若明显高于去重表（>=120%）则采用去重结果。
+    使用 >= 避免恰为 1.2 倍时仍走 max 把虚高章节和再展示出去。
+    """
+    distinct = _alltime_distinct_practiced_words(user_id)
+    if distinct <= 0:
+        return int(chapter_words_sum or 0)
+    # 浮点边界：用整数比较 chapter*10 >= distinct*12
+    if chapter_words_sum * 10 >= distinct * 12:
+        return distinct
+    return max(int(chapter_words_sum or 0), distinct)
+
+
+def _chapter_title_map(book_id: str) -> dict:
+    """chapter_id(str) -> title"""
+    try:
+        from routes.books import load_book_chapters
+        data = load_book_chapters(book_id)
+        if not data or not data.get('chapters'):
+            return {}
+        return {str(c['id']): (c.get('title') or '') for c in data['chapters']}
+    except Exception:
+        return {}
+
+
+def _quick_memory_word_stats(user_id: int):
+    """速记(艾宾浩斯)表：今日新词/今日复习/累计复习词数、艾宾浩斯达成率等。"""
+    now_utc = datetime.utcnow()
+    today_start = datetime(now_utc.year, now_utc.month, now_utc.day)
+    today_start_ms = int(today_start.timestamp() * 1000)
+    tomorrow_ms = int((today_start + timedelta(days=1)).timestamp() * 1000)
+    now_ms = int(now_utc.timestamp() * 1000)
+
+    qm_rows = UserQuickMemoryRecord.query.filter_by(user_id=user_id).all()
+    today_new = 0
+    today_review = 0
+    alltime_review_words = 0  # 至少有过第 2 次作答的词（视为进入复习）
+    cumulative_review_events = 0
+
+    for r in qm_rows:
+        fs = r.first_seen or 0
+        ls = r.last_seen or 0
+        kc = r.known_count or 0
+        uc = r.unknown_count or 0
+        fz = r.fuzzy_count or 0
+        if today_start_ms <= fs < tomorrow_ms:
+            today_new += 1
+        if today_start_ms <= ls < tomorrow_ms and fs < today_start_ms:
+            today_review += 1
+        if kc + uc >= 2:
+            alltime_review_words += 1
+        cumulative_review_events += max(0, kc + uc - 1) + fz
+
+    # 艾宾浩斯：已到 next_review 时间点的词中，last_seen 已晚于或等于计划复习时间的占比
+    due_met = 0
+    due_total = 0
+    for r in qm_rows:
+        nr = r.next_review or 0
+        if nr <= 0:
+            continue
+        if nr <= now_ms:
+            due_total += 1
+            ls = r.last_seen or 0
+            if ls >= nr:
+                due_met += 1
+    ebbinghaus_rate = round(due_met / due_total * 100) if due_total > 0 else None
+
+    # 按 known_count 分桶（对应 1/1/4/7/14/30 天间隔轮次）：到期词中各轮「按时回顾」占比
+    review_intervals = (1, 1, 4, 7, 14, 30)
+    stage_due = [0] * 6
+    stage_met = [0] * 6
+    for r in qm_rows:
+        nr = r.next_review or 0
+        if nr <= 0 or nr > now_ms:
+            continue
+        kc = r.known_count or 0
+        stage = min(max(kc, 0), 5)
+        stage_due[stage] += 1
+        ls = r.last_seen or 0
+        if ls >= nr:
+            stage_met[stage] += 1
+    ebbinghaus_stages = []
+    for i in range(6):
+        dt = stage_due[i]
+        dm = stage_met[i]
+        ebbinghaus_stages.append({
+            'stage': i,
+            'interval_days': review_intervals[i],
+            'due_total': dt,
+            'due_met': dm,
+            'actual_pct': round(dm / dt * 100) if dt > 0 else None,
+        })
+
+    return {
+        'today_new_words': today_new,
+        'today_review_words': today_review,
+        'alltime_review_words': alltime_review_words,
+        'cumulative_review_events': cumulative_review_events,
+        'ebbinghaus_rate': ebbinghaus_rate,
+        'ebbinghaus_due_total': due_total,
+        'ebbinghaus_met': due_met,
+        'qm_word_total': len(qm_rows),
+        'ebbinghaus_stages': ebbinghaus_stages,
+    }
 
 
 # ── Global vocabulary pool (all books, deduplicated) ─────────────────────────
@@ -1524,9 +1662,10 @@ def get_learning_stats(current_user: User):
     total_attempted = total_correct + total_wrong
     period_accuracy = round(total_correct / total_attempted * 100) if total_attempted > 0 else None
 
-    # All-time totals from chapter progress (words_learned is the correct "words studied" count)
+    # All-time totals from chapter progress（words_learned 按章相加可能与「全局不重复词」不一致）
     all_chapter_progress = UserChapterProgress.query.filter_by(user_id=current_user.id).all()
-    alltime_words = sum(cp.words_learned or 0 for cp in all_chapter_progress)
+    chapter_words_sum = sum(cp.words_learned or 0 for cp in all_chapter_progress)
+    alltime_words = _alltime_words_display(current_user.id, chapter_words_sum)
     alltime_correct = sum(cp.correct_count or 0 for cp in all_chapter_progress)
     alltime_wrong = sum(cp.wrong_count or 0 for cp in all_chapter_progress)
     alltime_attempted = alltime_correct + alltime_wrong
@@ -1549,9 +1688,14 @@ def get_learning_stats(current_user: User):
     today_duration = sum(s.duration_seconds or 0 for s in today_sessions)
 
     # ── Per-mode breakdown (all-time, from UserStudySession) ──────────────────
+    # 默认 words_studied 按会话累加：同一词在不同模式练习会重复计入；各模式相加通常 > 全局「累计学习新词数」。
+    # 速记模式单独用 user_quick_memory_records 行数（每词一行）覆盖，与会话累加口径区分。
+    # 跳过 mode 为空的记录：start-session 创建时未写 mode，若 log-session 未带 mode 会一直是 NULL，不应显示为 unknown
     mode_stats: dict = {}
     for s in all_user_sessions:
-        m = s.mode or 'unknown'
+        m = (s.mode or '').strip()
+        if not m:
+            continue
         if m not in mode_stats:
             mode_stats[m] = {
                 'mode': m,
@@ -1566,9 +1710,92 @@ def get_learning_stats(current_user: User):
 
     for md in mode_stats.values():
         attempted = md['correct_count'] + md['wrong_count']
+        md['attempts'] = attempted
         md['accuracy'] = round(md['correct_count'] / attempted * 100) if attempted > 0 else None
+        sess = md['sessions'] or 0
+        md['avg_words_per_session'] = round(md['words_studied'] / sess, 1) if sess else 0.0
+
+    qm_extra = _quick_memory_word_stats(current_user.id)
+    qm_total = int(qm_extra.get('qm_word_total') or 0)
+    if qm_total > 0:
+        if 'quickmemory' not in mode_stats:
+            mode_stats['quickmemory'] = {
+                'mode': 'quickmemory',
+                'words_studied': 0,
+                'correct_count': 0,
+                'wrong_count': 0,
+                'duration_seconds': 0,
+                'sessions': 0,
+            }
+        mode_stats['quickmemory']['words_studied'] = qm_total
+        qm_sess = mode_stats['quickmemory']['sessions'] or 0
+        mode_stats['quickmemory']['avg_words_per_session'] = (
+            round(qm_total / qm_sess, 1) if qm_sess else 0.0
+        )
 
     mode_breakdown = sorted(mode_stats.values(), key=lambda x: x['words_studied'], reverse=True)
+
+    wrong_top = UserWrongWord.query.filter_by(user_id=current_user.id).order_by(
+        UserWrongWord.wrong_count.desc()
+    ).limit(10).all()
+    wrong_top10 = [
+        {
+            'word': w.word,
+            'wrong_count': w.wrong_count or 0,
+            'phonetic': w.phonetic or '',
+            'pos': w.pos or '',
+        }
+        for w in wrong_top
+    ]
+
+    chapter_title_cache: dict = {}
+    chapter_breakdown = []
+    for cp in all_chapter_progress:
+        if (cp.correct_count or 0) + (cp.wrong_count or 0) == 0 and (cp.words_learned or 0) == 0:
+            continue
+        bid = cp.book_id
+        if bid not in chapter_title_cache:
+            chapter_title_cache[bid] = _chapter_title_map(bid)
+        ch_titles = chapter_title_cache[bid]
+        ch_key = str(cp.chapter_id)
+        tot = (cp.correct_count or 0) + (cp.wrong_count or 0)
+        chapter_breakdown.append({
+            'book_id': bid,
+            'book_title': book_title_map.get(bid, bid),
+            'chapter_id': cp.chapter_id,
+            'chapter_title': ch_titles.get(ch_key, f'Chapter {cp.chapter_id}'),
+            'words_learned': cp.words_learned or 0,
+            'correct': cp.correct_count or 0,
+            'wrong': cp.wrong_count or 0,
+            'accuracy': round((cp.correct_count or 0) / tot * 100) if tot > 0 else None,
+        })
+    chapter_breakdown.sort(key=lambda x: (x['book_id'], x['chapter_id']))
+
+    chapter_mode_stats = []
+    for mp in UserChapterModeProgress.query.filter_by(user_id=current_user.id).all():
+        t = (mp.correct_count or 0) + (mp.wrong_count or 0)
+        if t == 0:
+            continue
+        mb = mp.book_id
+        if mb not in chapter_title_cache:
+            chapter_title_cache[mb] = _chapter_title_map(mb)
+        ch_tmap = chapter_title_cache[mb]
+        chapter_mode_stats.append({
+            'book_id': mb,
+            'book_title': book_title_map.get(mb, mb),
+            'chapter_id': mp.chapter_id,
+            'chapter_title': ch_tmap.get(str(mp.chapter_id), f'Chapter {mp.chapter_id}'),
+            'mode': mp.mode,
+            'correct': mp.correct_count or 0,
+            'wrong': mp.wrong_count or 0,
+            'accuracy': round((mp.correct_count or 0) / t * 100),
+        })
+    chapter_mode_stats.sort(key=lambda x: (x['book_id'], x['chapter_id'], x['mode']))
+
+    pie_chart = [
+        {'mode': m['mode'], 'value': m['words_studied'], 'sessions': m['sessions']}
+        for m in mode_breakdown
+    ]
 
     return jsonify({
         'daily': active_daily,
@@ -1587,17 +1814,47 @@ def get_learning_stats(current_user: User):
             'duration_seconds': alltime_duration,
             'today_accuracy': today_accuracy,
             'today_duration_seconds': today_duration,
+            'today_new_words': qm_extra['today_new_words'],
+            'today_review_words': qm_extra['today_review_words'],
+            'alltime_review_words': qm_extra['alltime_review_words'],
+            'cumulative_review_events': qm_extra['cumulative_review_events'],
+            'ebbinghaus_rate': qm_extra['ebbinghaus_rate'],
+            'ebbinghaus_due_total': qm_extra['ebbinghaus_due_total'],
+            'ebbinghaus_met': qm_extra['ebbinghaus_met'],
+            'qm_word_total': qm_extra['qm_word_total'],
+            'ebbinghaus_stages': qm_extra['ebbinghaus_stages'],
         },
         'mode_breakdown': mode_breakdown,
+        'pie_chart': pie_chart,
+        'wrong_top10': wrong_top10,
+        'chapter_breakdown': chapter_breakdown,
+        'chapter_mode_stats': chapter_mode_stats,
     })
 
 
 @ai_bp.route('/start-session', methods=['POST'])
 @token_required
 def start_session(current_user: User):
-    """Create a session record with server-side start time; returns sessionId for later completion."""
+    """Create a session record with server-side start time; returns sessionId for later completion.
+
+    Client should send mode + optional bookId/chapterId so rows are not left with NULL mode
+    (vocabulary source: book chapter API, whole book, 30-day plan, or wrong-words list — see PracticePage).
+    """
+    body = request.get_json() or {}
+    mode_raw = (body.get('mode') or 'smart')
+    if isinstance(mode_raw, str):
+        mode = mode_raw.strip()[:30] or 'smart'
+    else:
+        mode = 'smart'
+    book_id = body.get('bookId') or None
+    ch = body.get('chapterId')
+    chapter_id = str(ch) if ch is not None and str(ch).strip() != '' else None
+
     session = UserStudySession(
         user_id=current_user.id,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
         started_at=datetime.utcnow(),
     )
     db.session.add(session)
@@ -1626,7 +1883,8 @@ def log_session(current_user: User):
                 ended_at = datetime.utcnow()
                 session.ended_at = ended_at
                 session.duration_seconds = max(0, int((ended_at - session.started_at).total_seconds()))
-                session.mode = body.get('mode', session.mode)
+                if body.get('mode'):
+                    session.mode = body['mode']
                 session.book_id = body.get('bookId', session.book_id)
                 session.chapter_id = body.get('chapterId', session.chapter_id)
                 session.words_studied = body.get('wordsStudied', 0)
@@ -1647,7 +1905,7 @@ def log_session(current_user: User):
 
         session = UserStudySession(
             user_id=current_user.id,
-            mode=body.get('mode'),
+            mode=body.get('mode') or None,
             book_id=body.get('bookId'),
             chapter_id=body.get('chapterId'),
             words_studied=body.get('wordsStudied', 0),

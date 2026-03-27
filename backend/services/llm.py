@@ -1,3 +1,4 @@
+import logging
 import os
 import requests
 
@@ -311,6 +312,12 @@ def chat(
             # Collect text blocks
             text_parts = [b.get("text", "") for b in content if b.get("type") == "text"]
             return {"type": "text", "text": "".join(text_parts), "reasoning": ""}
+
+        logging.warning(
+            "[LLM] Unexpected messages response shape (content type=%s)",
+            type(content).__name__,
+        )
+        return {"type": "text", "text": "", "reasoning": ""}
 
     except requests.exceptions.RequestException as e:
         # Check if it's a 429 error from response

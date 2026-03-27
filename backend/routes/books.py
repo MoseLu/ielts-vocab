@@ -931,7 +931,9 @@ def save_chapter_progress(current_user, book_id, chapter_id):
         db.session.add(progress)
 
     if 'words_learned' in data:
-        progress.words_learned = data['words_learned']
+        incoming = int(data['words_learned'] or 0)
+        # 客户端可能因「新一轮练习」暂传较小值；取 max 避免已学词数被答题次数语义误伤后回退
+        progress.words_learned = max(progress.words_learned or 0, incoming)
     if 'correct_count' in data:
         progress.correct_count = data['correct_count']
     if 'wrong_count' in data:

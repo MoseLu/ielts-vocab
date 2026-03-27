@@ -374,7 +374,7 @@ class UserStudySession(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    mode = db.Column(db.String(30))          # smart | listening | meaning | dictation | radio | quickmemory
+    mode = db.Column(db.String(30))          # smart | listening | meaning | dictation | radio | quickmemory | errors | …
     book_id = db.Column(db.String(100))
     chapter_id = db.Column(db.String(100))
     words_studied = db.Column(db.Integer, default=0)
