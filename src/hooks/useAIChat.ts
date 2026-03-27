@@ -118,9 +118,21 @@ function buildChapterProgressSummary() {
  * Returns the server-assigned sessionId, or null on failure.
  * The server records started_at using its own clock, avoiding any client drift.
  */
-export async function startSession(): Promise<number | null> {
+/** 创建服务端会话行；请传入当前练习模式与词书上下文，避免仅 start-session 产生 mode 为空的记录 */
+export async function startSession(ctx?: {
+  mode?: string
+  bookId?: string | null
+  chapterId?: string | null
+}): Promise<number | null> {
   try {
-    const res = await apiFetch<{ sessionId: number }>('/api/ai/start-session', { method: 'POST' })
+    const res = await apiFetch<{ sessionId: number }>('/api/ai/start-session', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: ctx?.mode ?? 'smart',
+        bookId: ctx?.bookId ?? undefined,
+        chapterId: ctx?.chapterId != null && ctx.chapterId !== '' ? String(ctx.chapterId) : undefined,
+      }),
+    })
     return res.sessionId ?? null
   } catch {
     return null
@@ -147,7 +159,7 @@ export async function logSession(data: {
     method: 'POST',
     body: JSON.stringify({
       sessionId: data.sessionId,
-      mode: data.mode,
+      mode: data.mode ?? 'smart',
       bookId: data.bookId,
       chapterId: data.chapterId,
       wordsStudied: data.wordsStudied,

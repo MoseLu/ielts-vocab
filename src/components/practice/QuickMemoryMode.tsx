@@ -448,8 +448,12 @@ export default function QuickMemoryMode({
   // ── Start server-side session timer on mount ───────────────────────────────
   useEffect(() => {
     sessionStartRef.current = Date.now()
-    startSession().then(id => { sessionIdRef.current = id }).catch(() => {})
-  }, [])
+    startSession({
+      mode: 'quickmemory',
+      bookId,
+      chapterId,
+    }).then(id => { sessionIdRef.current = id }).catch(() => {})
+  }, [bookId, chapterId])
 
   // ── Cleanup audio on unmount ───────────────────────────────────────────────
   useEffect(() => () => {

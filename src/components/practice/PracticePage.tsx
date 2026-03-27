@@ -79,32 +79,42 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const wrongCountRef = useRef(0)
   // Prevents double-logging when goNext already logs before navigate
   const sessionLoggedRef = useRef(false)
+  // 本章「不重复」已答词（用于 words_learned）；baseline 为服务端/本地已保存的章节已学上限
+  const wordsLearnedBaselineRef = useRef(0)
+  const uniqueAnsweredRef = useRef<Set<string>>(new Set())
+  // 本会话内不重复词数（用于 log-session / 统计面板，避免同一词多次复习被重复计词）
+  const sessionUniqueWordsRef = useRef<Set<string>>(new Set())
   // Tracks current mode (keeps cleanup up-to-date when mode prop changes)
   const currentModeRef = useRef(mode)
+  /** 写入 log-session / start-session 的模式：错词本练习为 errors，与工具栏 mode 可能不一致 */
+  const effectiveSessionModeRef = useRef(errorMode ? 'errors' : (mode ?? 'smart'))
 
   // Keep refs in sync with state so the unmount cleanup always has current values
   useEffect(() => { correctCountRef.current = correctCount }, [correctCount])
   useEffect(() => { wrongCountRef.current = wrongCount }, [wrongCount])
   useEffect(() => { currentModeRef.current = mode }, [mode])
+  useEffect(() => {
+    effectiveSessionModeRef.current = errorMode ? 'errors' : (mode ?? 'smart')
+  }, [mode, errorMode])
 
   // Log session on unmount — covers every exit path:
   // completed (goNext sets flag first), pause→exit, navigate away, browser close
   useEffect(() => {
     return () => {
       if (sessionLoggedRef.current) return          // already logged by goNext
-      const sessionWords = sessionCorrectRef.current + sessionWrongRef.current
+      const sessionUnique = sessionUniqueWordsRef.current.size
       const isRadio = currentModeRef.current === 'radio'
       const sessionStart = sessionStartRef.current
       const durationSeconds = sessionStart > 0
         ? Math.round((Date.now() - sessionStart) / 1000)
         : 0
       // Radio mode has no answer tracking — log based on time if ≥10 s
-      if (sessionWords === 0 && (!isRadio || durationSeconds < 10)) return
+      if (sessionUnique === 0 && (!isRadio || durationSeconds < 10)) return
       logSession({
-        mode: currentModeRef.current ?? 'smart',
+        mode: effectiveSessionModeRef.current,
         bookId,
         chapterId,
-        wordsStudied: isRadio ? vocabRef.current.length : sessionWords,
+        wordsStudied: isRadio ? vocabRef.current.length : sessionUnique,
         correctCount: sessionCorrectRef.current,
         wrongCount: sessionWrongRef.current,
         durationSeconds,
@@ -194,17 +204,42 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     sessionStartRef.current = Date.now()
     sessionCorrectRef.current = 0
     sessionWrongRef.current = 0
+    sessionUniqueWordsRef.current = new Set()
     sessionLoggedRef.current = false
-    startSession().then(id => { sessionIdRef.current = id }).catch(() => {})
+    startSession({
+      mode: effectiveSessionModeRef.current,
+      bookId,
+      chapterId,
+    }).then(id => { sessionIdRef.current = id }).catch(() => {})
+  }
+
+  const computeChapterWordsLearned = (cap: number) => {
+    if (!chapterId || !cap) return wordsLearnedBaselineRef.current
+    return Math.min(cap, Math.max(wordsLearnedBaselineRef.current, uniqueAnsweredRef.current.size))
+  }
+
+  const registerAnsweredWord = (word: string) => {
+    const key = word.trim().toLowerCase()
+    if (!key) return
+    sessionUniqueWordsRef.current.add(key)
+    if (chapterId) uniqueAnsweredRef.current.add(key)
   }
 
   // Restore progress helper
-  const restoreProgress = (data: ProgressData) => {
+  const restoreProgress = (data: ProgressData, vocabLen: number) => {
+    const cap = vocabLen || 0
     // If the chapter was already completed, restart from the beginning so the
     // user can practice again rather than immediately seeing the "done" screen.
     if (data.is_completed) {
       setQueueIndex(0); setCorrectCount(0); setWrongCount(0)
       setPreviousWord(null); setLastState(null); setWordStatuses({})
+      if (chapterId) {
+        wordsLearnedBaselineRef.current = Math.min(data.words_learned ?? cap, cap)
+        uniqueAnsweredRef.current = new Set()
+      } else {
+        wordsLearnedBaselineRef.current = 0
+        uniqueAnsweredRef.current = new Set()
+      }
       return
     }
     setQueueIndex(data.current_index || 0)
@@ -213,6 +248,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     setPreviousWord(null)
     setLastState(null)
     setWordStatuses({})
+    if (chapterId) {
+      wordsLearnedBaselineRef.current = Math.min(data.words_learned ?? 0, cap)
+      uniqueAnsweredRef.current = new Set(data.answered_words ?? [])
+    } else {
+      wordsLearnedBaselineRef.current = 0
+      uniqueAnsweredRef.current = new Set()
+    }
   }
 
   // Load vocabulary data
@@ -274,8 +316,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             // Apply all state in one block → single render
             setVocabulary(words)
             setQueue(q)
-            if (progress) restoreProgress(progress)
-            else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+            if (progress) restoreProgress(progress, words.length)
+            else {
+              setQueueIndex(0); setCorrectCount(0); setWrongCount(0)
+              wordsLearnedBaselineRef.current = 0
+              uniqueAnsweredRef.current = new Set()
+            }
             beginSession()
           })
           .catch(() => showToast?.('加载章节词汇失败', 'error'))
@@ -301,8 +347,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           }
           setVocabulary(words)
           setQueue(q)
-          if (progress) restoreProgress(progress)
-          else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+          if (progress) restoreProgress(progress, words.length)
+          else {
+            setQueueIndex(0); setCorrectCount(0); setWrongCount(0)
+            wordsLearnedBaselineRef.current = 0
+            uniqueAnsweredRef.current = new Set()
+          }
           beginSession()
         })
         .catch(() => showToast?.('加载词书失败', 'error'))
@@ -330,8 +380,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         }
         setVocabulary(words)
         setQueue(q)
-        if (progress) restoreProgress(progress)
-        else { setQueueIndex(0); setCorrectCount(0); setWrongCount(0) }
+        if (progress) restoreProgress(progress, words.length)
+        else {
+          setQueueIndex(0); setCorrectCount(0); setWrongCount(0)
+          wordsLearnedBaselineRef.current = 0
+          uniqueAnsweredRef.current = new Set()
+        }
         beginSession()
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
@@ -442,11 +496,17 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       return
     }
 
+    const chapterDone = Boolean(
+      chapterId
+      && vocabulary.length > 0
+      && uniqueAnsweredRef.current.size >= vocabulary.length
+      && queueIndex + 1 >= queue.length,
+    )
     const progressData: ProgressData = {
       current_index: queueIndex,
       correct_count: correct,
       wrong_count: wrong,
-      is_completed: correct + wrong >= vocabulary.length
+      is_completed: chapterId ? chapterDone : (correct + wrong >= vocabulary.length),
     }
 
     if (bookId) {
@@ -460,12 +520,24 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       }).catch(() => showToast?.('进度保存失败，请检查网络连接', 'error'))
 
       if (chapterId) {
+        const cap = vocabulary.length
+        const wl = computeChapterWordsLearned(cap)
+        const answeredWords = Array.from(uniqueAnsweredRef.current)
         const chapterProgress: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-        chapterProgress[`${bookId}_${chapterId}`] = { words_learned: correct + wrong, ...progressData, updatedAt: new Date().toISOString() }
+        chapterProgress[`${bookId}_${chapterId}`] = {
+          ...progressData,
+          words_learned: wl,
+          answered_words: answeredWords,
+          updatedAt: new Date().toISOString(),
+        }
         localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
         apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
           method: 'POST',
-          body: JSON.stringify({ words_learned: correct + wrong, ...progressData })
+          body: JSON.stringify({
+            ...progressData,
+            words_learned: wl,
+            answered_words: answeredWords,
+          }),
         }).catch(() => {})
 
         // Save per-mode accuracy to the backend — each mode is stored independently
@@ -491,7 +563,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         body: JSON.stringify({ day: currentDay, ...progressData })
       }).catch(() => {})
     }
-  }, [bookId, chapterId, currentDay, errorMode, queueIndex, vocabulary.length])
+  }, [bookId, chapterId, currentDay, errorMode, queueIndex, queue.length, vocabulary.length, mode])
 
   const saveWrongWord = (word: Word) => {
     // Update localStorage list (for error-mode practice queue)
@@ -534,10 +606,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       const sessionStart = sessionStartRef.current
       sessionLoggedRef.current = true
       logSession({
-        mode: mode ?? 'smart',
+        mode: effectiveSessionModeRef.current,
         bookId,
         chapterId,
-        wordsStudied: finalSessionCorrect + finalSessionWrong,
+        wordsStudied: sessionUniqueWordsRef.current.size,
         correctCount: finalSessionCorrect,
         wrongCount: finalSessionWrong,
         durationSeconds: sessionStart > 0 ? Math.round((Date.now() - sessionStart) / 1000) : 0,
@@ -567,6 +639,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const nw = isCorrect ? wrongCount : wrongCount + 1
     setCorrectCount(nc); setWrongCount(nw)
     if (isCorrect) { sessionCorrectRef.current++ } else { sessionWrongRef.current++ }
+    if (currentWord) registerAnsweredWord(currentWord.word)
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     // Record per-dimension stats first, then sync wrong word (so dim stats are included)
@@ -588,6 +661,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const nw = isCorrect ? wrongCount : wrongCount + 1
     setCorrectCount(nc); setWrongCount(nw)
     if (isCorrect) { sessionCorrectRef.current++ } else { sessionWrongRef.current++ }
+    registerAnsweredWord(currentWord.word)
     saveProgress(nc, nw)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
     // Record dictation stats first, then sync wrong word (so dim stats are included)
@@ -600,6 +674,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const handleSkip = () => {
     if (!currentWord) return
     saveWrongWord(currentWord)
+    registerAnsweredWord(currentWord.word)
     const nw = wrongCount + 1
     setWrongCount(nw); saveProgress(correctCount, nw)
     sessionWrongRef.current++

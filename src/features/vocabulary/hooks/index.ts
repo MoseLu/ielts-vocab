@@ -17,4 +17,17 @@ export type { WrongWord } from './useWrongWords'
 export { useStats } from './useStats'
 export type { ChapterStat, DayStat } from './useStats'
 export { useLearningStats } from './useLearningStats'
-export type { DailyLearning, LearningBook, LearningSummary, LearningAlltime, ModeStat, MetricKey, RangeKey } from './useLearningStats'
+export type {
+  DailyLearning,
+  LearningBook,
+  LearningSummary,
+  LearningAlltime,
+  EbbinghausStagePoint,
+  ModeStat,
+  PieSegment,
+  WrongTopItem,
+  ChapterBreakdownRow,
+  ChapterModeStatRow,
+  MetricKey,
+  RangeKey,
+} from './useLearningStats'

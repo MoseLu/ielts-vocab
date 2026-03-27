@@ -37,6 +37,7 @@ export interface ProgressData {
   wrong_count: number
   is_completed: boolean
   words_learned?: number
+  answered_words?: string[]
   updatedAt?: string
 }
 

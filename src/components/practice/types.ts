@@ -52,7 +52,10 @@ export interface ProgressData {
   correct_count: number
   wrong_count: number
   is_completed: boolean
+  /** 本章已覆盖的不重复词汇数（≤章节词表长度），与 correct+wrong 答题次数分离 */
   words_learned?: number
+  /** 恢复进度用：本轮已答过的词（小写） */
+  answered_words?: string[]
   updatedAt?: string
 }
 

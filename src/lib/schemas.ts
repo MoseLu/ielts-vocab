@@ -135,6 +135,7 @@ export const ProgressDataSchema = z.object({
   wrong_count: z.number().int().nonnegative().optional(),
   is_completed: z.boolean().optional(),
   words_learned: z.number().int().nonnegative().optional(),
+  answered_words: z.array(z.string()).optional(),
   updatedAt: z.string().datetime().optional(),
 })
 export type ProgressData = z.infer<typeof ProgressDataSchema>
