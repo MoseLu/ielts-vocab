@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses, RadioQuickSettings, SmartDimension } from './types'
-import { shuffleArray, generateOptions, playWordAudio as playWordUtil } from './utils'
+import { shuffleArray, generateOptions, playWordAudio as playWordUtil, stopAudio as stopAudioUtil } from './utils'
 import { DEFAULT_SETTINGS } from '../../constants'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue, syncSmartStatsToBackend, loadSmartStatsFromBackend } from '../../lib/smartMode'
@@ -446,6 +446,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         // Dictation example mode: play the full example sentence (not just the word)
         setTimeout(() => {
           if (typeof speechSynthesis === 'undefined') return
+          stopAudioUtil()
           speechSynthesis.cancel()
           const u = new SpeechSynthesisUtterance(exampleSentence)
           u.lang = 'en-US'
