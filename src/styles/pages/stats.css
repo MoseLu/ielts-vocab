@@ -1,26 +1,1106 @@
-/* Page: Statistics */
+/* Page: Statistics
+   大区块纵向间距：var(--space-stack)。根容器用 flex + gap，避免相邻块 margin 折叠成 0。 */
 
 .stats-page {
     /* padding managed by .page-content wrapper */
 }
 
-/* Stat Cards Row */
+.stats-page .page-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-stack);
+    /* 与下方「错词 | 艾宾浩斯…」主布局同一竖线分割与槽宽 */
+    --stats-col-left-pct: 32%;
+    --stats-align-gutter: 10px;
+    box-sizing: border-box;
+}
+
+.stats-page .page-content > .stats-page-intro,
+.stats-page .page-content > .stats-cards,
+.stats-page .page-content > .stats-section--mode-strip,
+.stats-page .page-content > .stats-main-layout-wrap,
+.stats-page .page-content > .stats-section {
+    margin-bottom: 0;
+}
+
+/* Stat Cards Row：网格拉高单元格后，卡片内内容垂直居中（避免无副标题的卡偏上） */
 .stats-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: var(--space-stack);
+    align-items: stretch;
 }
 
 .stats-cards.stats-cards-6 {
     grid-template-columns: repeat(3, 1fr);
 }
 
+.stats-cards.stats-cards-8 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.stats-page-intro {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.45;
+}
+
+/* ── 模式占比 + 各模式统计：左右各 50% ── */
+.stats-section--mode-strip .stats-section-title {
+    margin-bottom: var(--space-stack);
+}
+
+.stats-section--mode-strip .stats-section-hint {
+    margin: 0 0 var(--space-stack) 0;
+}
+
+/* 与 .stats-main-layout 左列同宽，保证与下方错词列同一竖线 */
+.stats-section--mode-strip {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* 下方 grid 负 margin 拉满时避免横向滚动条 */
+    overflow-x: hidden;
+}
+
+/* 顶部两列标题同一行，下方再分栏。默认两列水平排布；仅窄屏再叠成单列（断点勿过大，否则分屏/平板仍被压成垂直） */
+.stats-mode-strip-grid {
+    display: grid;
+    width: 100%;
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, var(--stats-col-left-pct)) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+        "title-pie title-modes"
+        "content-pie content-modes";
+    gap: var(--stats-align-gutter);
+    align-items: start;
+}
+
+/* 抵消 .stats-section 左右 padding，使两列与 .page-content 同宽参考，与下方 stats-main-layout（无额外横向 padding）对齐 */
+.stats-section--mode-strip .stats-mode-strip-grid {
+    width: calc(100% + 2 * var(--space-stack));
+    margin-left: calc(-1 * var(--space-stack));
+    margin-right: calc(-1 * var(--space-stack));
+}
+
+.stats-mode-strip-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.stats-mode-strip-title--pie {
+    grid-area: title-pie;
+}
+
+.stats-mode-strip-title--modes {
+    grid-area: title-modes;
+    border-left: none;
+    padding-left: 0;
+}
+
+.stats-mode-strip-col {
+    min-width: 0;
+}
+
+.stats-mode-strip-col--pie {
+    grid-area: content-pie;
+}
+
+.stats-mode-strip-col--modes {
+    grid-area: content-modes;
+    border-left: none;
+    padding-left: 0;
+}
+
+.mode-breakdown-table-wrap--strip {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: min(320px, 55vh);
+}
+
+.stats-table--mode-strip {
+    font-size: 11px;
+}
+
+.stats-table--mode-strip th,
+.stats-table--mode-strip td {
+    padding: 5px 6px;
+    white-space: nowrap;
+}
+
+.stats-empty--mode-strip {
+    padding: 12px 8px;
+    font-size: 12px;
+}
+
+.stats-chart-loading--strip-table {
+    min-height: 72px;
+    height: 72px;
+}
+
+@media (max-width: 640px) {
+    .stats-mode-strip-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        grid-template-areas:
+            "title-pie"
+            "content-pie"
+            "title-modes"
+            "content-modes";
+    }
+
+    .stats-mode-strip-title--modes {
+        border-top: 1px solid var(--border);
+        padding-top: var(--stats-align-gutter, 10px);
+    }
+
+    .stats-mode-strip-col--modes {
+        padding-left: 0;
+    }
+}
+
+.stats-pie-wrap--strip {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-stack);
+}
+
+.stats-pie-svg--strip {
+    width: 88px;
+    height: 88px;
+    flex-shrink: 0;
+}
+
+/* 宽屏勿用多列 auto-fill 网格，否则每格高度不齐、同一行基线错位；改为单列 + 每行不换行 */
+.stats-pie-legend--strip {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    align-items: stretch;
+}
+
+.stats-pie-legend--strip li {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-stack);
+    margin-bottom: 0;
+    min-height: 1.35em;
+}
+
+.stats-pie-legend--strip .stats-pie-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stats-pie-legend--strip .stats-pie-val,
+.stats-pie-legend--strip .stats-pie-sub {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.stats-chart-loading--strip {
+    height: 72px;
+}
+
+/* ── 主布局高度：父级 .stats-main-layout 行内 align-items:stretch → 左列(错词 Top+概览)与右列同高，行高=max(左,右)。
+   右列 .stats-main-right overflow:hidden + 纵向 flex，统一约束艾宾浩斯/学习记录与下方表格；底行 flex:1 1 0% + min-height:0，表格区再 flex:1 + overflow:auto 吃满剩余并滚动。── */
+/* 与上方「模式占比」同宽：上方 grid 已用负 margin 与 .stats-section 同参考宽；此处不再加横向 padding，避免与卡片内边距重复缩窄整行 */
+.stats-main-layout-wrap {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-left: 0;
+    padding-right: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.stats-main-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    align-content: stretch;
+    gap: var(--stats-align-gutter, 10px);
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    box-sizing: border-box;
+}
+
+/* 宽屏：用 JS 将右列高度锁为左列 offsetHeight，避免右表撑高整行；父级需 flex-start，否则左列会被 stretch 到与右列同高 */
+.stats-main-layout--sync-left-height {
+    align-items: flex-start;
+}
+
+.stats-main-left {
+    flex: 0 0 var(--stats-col-left-pct, 32%);
+    max-width: var(--stats-col-left-pct, 32%);
+    min-width: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.stats-main-left .stats-left-stack {
+    gap: var(--stats-align-gutter, 10px);
+}
+
+.stats-main-right {
+    flex: 1 1 0%;
+    min-width: 0;
+    min-height: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: var(--stats-align-gutter, 10px);
+    /* 与左列对齐后的行高内分配子项，避免子项撑破统一高度 */
+    overflow: hidden;
+}
+
+/* 顶行：两卡同宽同高（align-items: stretch） */
+.stats-main-right-top {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--stats-align-gutter, 10px);
+    flex: 0 0 auto;
+    min-height: 0;
+}
+
+.stats-main-right-top > .stats-main-cell {
+    flex: 1 1 0%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 底行：在右列统一高度内占满剩余（顶行 flex:0），表格高度由此父级约束 */
+.stats-main-right-bottom {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--stats-align-gutter, 10px);
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.stats-main-right-bottom > .stats-main-cell {
+    flex: 1 1 0%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.stats-left-stack {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--stats-align-gutter, 10px);
+}
+
+/* 与 gap 统一间距，避免最后一卡多出 margin 导致整列底边与对不齐 */
+.stats-left-stack > .stats-section,
+.stats-main-layout .stats-section {
+    margin-bottom: 0;
+}
+
+.stats-card-wrong {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-card-wrong .stats-section-title {
+    margin-bottom: var(--space-stack);
+    flex-shrink: 0;
+}
+
+.stats-card-wrong .stats-section-hint {
+    margin: 0 0 var(--space-stack) 0;
+    flex-shrink: 0;
+}
+
+.stats-card-wrong-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.stats-card-wrong-body > .stats-chart-loading,
+.stats-card-wrong-body > .stats-empty {
+    flex: 1 1 auto;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stats-card-wrong-overview {
+    flex: 0 0 auto;
+}
+
+.stats-card-wrong-overview .stats-section-title {
+    margin-bottom: var(--space-stack);
+}
+
+.stats-main-cell--ebb .stats-card-ebbinghaus {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* 顶行与学习记录同高：卡内图表区 flex 占满 */
+.stats-main-cell--ebb .stats-ebb-inner {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.stats-main-cell--ebb .stats-ebb-chart-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stats-main-cell--ebb .ebb-chart-wrap--compact {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stats-main-cell--ebb .ebb-chart-wrap--compact .ebb-chart-svg {
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    flex: 1 1 auto;
+    min-height: 72px;
+    height: auto;
+    aspect-ratio: 560 / 128;
+    object-fit: contain;
+}
+
+.stats-main-cell--ebb .stats-card-ebbinghaus > .stats-section-title {
+    font-size: 14px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.stats-main-cell--ebb .stats-card-ebbinghaus > .stats-section-hint {
+    flex-shrink: 0;
+}
+
+/* 「学习记录」与同排艾宾浩斯同高，折线图随格内伸展 */
+.stats-main-cell--learning .stats-section--learning {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.stats-main-cell--learning .stats-section--learning .stats-learning-split-head,
+.stats-main-cell--learning .stats-section--learning .lc-filters--compact {
+    flex-shrink: 0;
+}
+
+.stats-main-cell--learning .stats-section--learning .lc-wrap--compact {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-main-cell--learning .stats-section--learning .lc-wrap--compact .lc-svg {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 118px;
+    max-height: none;
+    height: 100%;
+}
+
+.stats-main-cell--learning .stats-section--learning .stats-chart-loading--learn-split,
+.stats-main-cell--learning .stats-section--learning .stats-empty--compact {
+    flex: 1 1 auto;
+    min-height: 88px;
+}
+
+.stats-main-cell--learning .stats-section--learning .lc-legend-row--compact {
+    flex-shrink: 0;
+}
+
+/* 顶行内边距与区块间距统一 10px，避免学习记录区 margin 过大导致与艾宾浩斯视觉高度差 */
+.stats-main-right-top .stats-section--learning .stats-learning-split-head {
+    margin-bottom: 10px !important;
+}
+
+.stats-main-right-top .stats-section--learning .lc-filters--compact {
+    margin-bottom: 10px !important;
+}
+
+.stats-main-right-top .stats-card-ebbinghaus .stats-ebb-hint-compact {
+    margin: 0 0 10px 0 !important;
+}
+
+.stats-main-right-top .ebbinghaus-summary-row--compact {
+    margin-bottom: 10px;
+}
+
+/* 右下：章节卡在格内 flex:1 继承父级分配高度，表滚动区再继承剩余 */
+.stats-section--chapter-cell {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0%;
+    min-height: 0;
+    max-height: 100%;
+    height: 100%;
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+.stats-section--chapter-cell .stats-section-title {
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.stats-section--chapter-cell .stats-section-hint {
+    font-size: 11px;
+    margin-bottom: 10px;
+}
+
+.stats-section--chapter-cell .stats-chart-loading {
+    flex: 1 1 auto;
+    min-height: 72px;
+}
+
+.stats-empty--chapter-cell {
+    flex: 1 1 auto;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 主布局右下格：在 .stats-section--chapter-cell 内占满剩余高度（flex 继承链），再 overflow 滚动 */
+.mode-breakdown-table-wrap.stats-table-scroll--in-cell {
+    flex: 1 1 0%;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    max-height: 100%;
+    box-sizing: border-box;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mode-breakdown-table-wrap.stats-table-scroll--in-cell .stats-data-table {
+    width: 100%;
+}
+
+/* 默认（非主布局顶格）艾宾浩斯内层随内容；主布局顶格由 .stats-main-cell--ebb 覆盖 */
+.stats-ebb-inner {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+}
+
+.stats-ebb-inner > .stats-chart-loading {
+    flex: 0 0 auto;
+    min-height: 88px;
+}
+
+.stats-ebb-chart-wrap {
+    flex: 0 0 auto;
+    overflow: visible;
+}
+
+.stats-wrong-vertical {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-stack);
+    overflow: hidden;
+}
+
+.stats-wrong-pie-block {
+    flex: 0 0 auto;
+}
+
+.stats-wrong-pie-block .stats-pie-wrap--wrong-top {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.stats-wrong-pie-block .stats-pie-svg--lg {
+    width: 140px;
+    height: 140px;
+}
+
+.stats-wrong-table-block {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-wrong-table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+
+.stats-ebb-hint-compact {
+    margin: 0 0 var(--space-stack) 0 !important;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.ebbinghaus-summary-row--compact {
+    margin-bottom: var(--space-stack);
+    gap: var(--space-stack);
+}
+
+/* 百分比居左，到期 / 已按时 / 词库 整组贴右 */
+.ebbinghaus-summary-row--split {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.ebbinghaus-summary-row--split .ebbinghaus-big--compact {
+    flex-shrink: 0;
+}
+
+/* 总达成率分档提醒：<50 红；50–80 橙；>80 绿 */
+.ebbinghaus-big--compact.ebb-rate--na {
+    color: var(--text-tertiary);
+}
+
+.ebbinghaus-big--compact.ebb-rate--low {
+    color: var(--error);
+}
+
+.ebbinghaus-big--compact.ebb-rate--mid {
+    color: var(--accent);
+}
+
+.ebbinghaus-big--compact.ebb-rate--high {
+    color: var(--success);
+}
+
+[data-theme="dark"] .ebbinghaus-big--compact.ebb-rate--high {
+    color: #4ade80;
+}
+
+[data-theme="dark"] .ebbinghaus-big--compact.ebb-rate--low {
+    color: #f87171;
+}
+
+.ebbinghaus-meta--compact {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 10px 16px;
+    margin-left: auto;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text-secondary);
+    text-align: right;
+    min-width: 0;
+}
+
+.ebb-meta-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.ebb-meta-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.ebb-meta-num {
+    font-weight: 700;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-deep);
+}
+
+.ebbinghaus-big--compact {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.stats-chart-loading--ebb-split {
+    height: 88px;
+}
+
+/* 宽屏下列很宽时勿让 SVG 随宽度无限变高（≈128px 视口高度即可） */
+.ebb-chart-wrap--compact .ebb-chart-svg {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: 132px;
+    aspect-ratio: 560 / 128;
+    display: block;
+}
+
+.ebb-chart-wrap--compact .ebb-chart-legend {
+    margin-top: var(--space-stack);
+    gap: var(--space-stack);
+    font-size: 10px;
+}
+
+.ebb-chart-wrap--compact .ebb-chart-note {
+    margin-top: var(--space-stack);
+    font-size: 10px;
+}
+
+.stats-section--learning .stats-learning-split-head {
+    margin-bottom: var(--space-stack) !important;
+}
+
+.stats-section--learning .stats-learning-split-head .stats-section-title {
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.lc-filters--compact {
+    margin-bottom: var(--space-stack) !important;
+}
+
+.stats-chart-loading--learn-split {
+    height: 88px;
+}
+
+.stats-empty--compact {
+    padding: var(--space-stack) 0 !important;
+}
+
+.lc-legend-row--compact {
+    margin-top: var(--space-stack) !important;
+    font-size: 11px;
+}
+
+/* 默认 compact 折线图限高；主布局顶格「学习记录」由 .stats-main-cell--learning … 覆盖为可伸展 */
+.lc-wrap--compact .lc-svg {
+    min-height: 0;
+    max-height: 132px;
+}
+
+@media (max-width: 900px) {
+    .stats-main-layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .stats-main-left {
+        flex: 0 1 auto;
+        max-width: none;
+        width: 100%;
+    }
+
+    .stats-main-right {
+        overflow: visible;
+        flex: 0 1 auto;
+    }
+
+    .stats-main-right-bottom {
+        flex: 0 1 auto;
+        min-height: 200px;
+        overflow: visible;
+    }
+
+    .stats-main-right-bottom > .stats-main-cell {
+        overflow: visible;
+    }
+
+    .stats-section--chapter-cell {
+        overflow: visible;
+        height: auto;
+        max-height: none;
+    }
+
+    .stats-card-wrong {
+        flex: 0 1 auto;
+    }
+
+    .stats-main-cell--learning .stats-section--learning {
+        flex: 0 1 auto;
+    }
+
+    .stats-main-cell--learning .stats-section--learning .lc-wrap--compact .lc-svg {
+        max-height: 132px;
+        height: auto;
+        flex: 0 0 auto;
+    }
+
+    .stats-cards.stats-cards-8 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.stats-pie-wrap--mode {
+    gap: var(--space-stack);
+    align-items: center;
+}
+
+.stats-pie-svg--sm {
+    width: 104px;
+    height: 104px;
+    flex-shrink: 0;
+}
+
+.stats-pie-legend--compact {
+    font-size: 11px;
+}
+
+.stats-pie-legend--compact li {
+    margin-bottom: 4px;
+}
+
+.stats-pie-legend--compact .stats-pie-label {
+    min-width: 56px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stats-pie-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--space-stack);
+}
+
+.stats-pie-svg {
+    width: 160px;
+    height: 160px;
+    flex-shrink: 0;
+}
+
+.stats-pie-svg--lg {
+    width: 176px;
+    height: 176px;
+}
+
+.stats-pie-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.stats-pie-legend li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-stack);
+    margin-bottom: var(--space-stack);
+    flex-wrap: wrap;
+}
+
+.stats-pie-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.stats-pie-label {
+    color: var(--text-secondary);
+    flex: 1;
+    min-width: 72px;
+}
+
+.stats-pie-val {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.stats-pie-sub {
+    color: var(--text-tertiary);
+    font-size: 11px;
+}
+
+.stats-pie-empty {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    padding: 16px 0;
+}
+
+.ebbinghaus-panel {
+    padding: 8px 0;
+}
+
+.ebbinghaus-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-stack);
+    margin-bottom: var(--space-stack);
+}
+
+.ebbinghaus-big {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0;
+    line-height: 1;
+}
+
+.ebbinghaus-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Ebbinghaus dual-line chart */
+.ebb-chart-wrap {
+    position: relative;
+    width: 100%;
+    margin-top: var(--space-stack);
+}
+
+.ebb-chart-svg {
+    width: 100%;
+    height: auto;
+    min-height: 200px;
+    display: block;
+    overflow: visible;
+}
+
+.ebb-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-stack);
+    margin-top: var(--space-stack);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.ebb-chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-stack);
+}
+
+.ebb-legend-line {
+    display: inline-block;
+    width: 22px;
+    border-top: 2px dashed;
+    vertical-align: middle;
+}
+
+.ebb-legend-line.ebb-legend-solid {
+    border-top-style: solid;
+}
+
+.ebb-chart-note {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin: var(--space-stack) 0 0 0;
+    line-height: 1.45;
+}
+
+.ebb-chart-tooltip {
+    position: absolute;
+    top: 2px;
+    transform: translateX(-50%);
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+    z-index: 5;
+    min-width: 200px;
+    font-size: 12px;
+}
+
+/* 统计页紧凑图：避免在 overflow 容器内绝对定位撑出滚动条 */
+.ebb-chart-tooltip.ebb-chart-tooltip--fixed {
+    position: fixed;
+    top: auto;
+    left: auto;
+    z-index: 40;
+}
+
+.ebb-chart-tooltip-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.ebb-chart-tooltip-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    margin-top: 4px;
+    color: var(--text-secondary);
+}
+
+.ebb-chart-tooltip-row strong {
+    color: var(--text-primary);
+}
+
+.ebb-chart-tooltip-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+.ebb-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.stats-pie-wrap--wrong-top {
+    gap: var(--space-stack);
+    align-items: flex-start;
+}
+
+.stats-pie-legend--wrong {
+    font-size: 11px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.stats-pie-legend--wrong li {
+    margin-bottom: var(--space-stack);
+}
+
+.stats-pie-legend--wrong .stats-pie-label {
+    min-width: 0;
+    max-width: 140px;
+}
+
+.stats-subsection-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-stack) 0;
+}
+
+.stats-section-hint {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin: 0 0 var(--space-stack) 0;
+    line-height: 1.4;
+}
+
+.stats-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.stats-data-table th,
+.stats-data-table td {
+    border: 1px solid var(--border);
+    padding: 8px var(--space-stack);
+    text-align: center;
+}
+
+.stats-data-table th {
+    background: var(--bg-secondary);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.stats-data-table .td-word {
+    font-weight: 600;
+}
+
+.stats-data-table .td-muted {
+    color: var(--text-tertiary);
+}
+
+.wrong-count-badge {
+    display: inline-block;
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--error);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.mode-breakdown-table-wrap {
+    overflow-x: auto;
+}
+
+/* 独立区块用（当前统计页章节表已改用 stats-table-scroll--in-cell） */
+.stats-table-scroll {
+    max-height: 320px;
+    overflow: auto;
+}
+
+.stats-table--compact th,
+.stats-table--compact td {
+    padding: 6px 8px;
+    font-size: 11px;
+}
+
+.stats-cards .stats-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+}
+
 .stats-card {
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 10px;
+    padding: var(--space-stack);
     text-align: center;
     box-shadow: var(--shadow-sm);
     transition: box-shadow var(--transition-fast);
@@ -57,8 +1137,8 @@
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: var(--space-stack);
+    margin-bottom: var(--space-stack);
     box-shadow: var(--shadow-sm);
 }
 
@@ -66,7 +1146,7 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 10px;
+    margin-bottom: var(--space-stack);
 }
 
 /* Section header with title + tabs */
@@ -74,9 +1154,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: var(--space-stack);
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-stack);
 }
 
 .stats-section-header .stats-section-title {
@@ -94,7 +1174,7 @@
     background: var(--bg-secondary);
     color: var(--text-secondary);
     border-radius: var(--radius-sm);
-    padding: 3px 10px;
+    padding: 3px var(--space-stack);
     font-size: 12px;
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -112,8 +1192,8 @@
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: var(--space-stack);
+    margin-bottom: var(--space-stack);
 }
 
 .lc-metric-tabs {
@@ -140,7 +1220,7 @@
 
 .lc-selects {
     display: flex;
-    gap: 6px;
+    gap: var(--space-stack);
 }
 
 .lc-select {
@@ -175,7 +1255,7 @@
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 6px 10px;
+    padding: 6px var(--space-stack);
     box-shadow: var(--shadow-md);
     pointer-events: none;
     z-index: 10;
@@ -207,24 +1287,50 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 10px;
+    margin-top: var(--space-stack);
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--space-stack);
 }
 
 .lc-legend {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-stack);
     font-size: 12px;
     color: var(--text-secondary);
+    flex-wrap: wrap;
+    row-gap: var(--space-xs);
+}
+
+/* 与图表内橙色竖虚线（悬停指示）对应，避免「有线无说明」 */
+.lc-crosshair-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.lc-crosshair-icon {
+    display: inline-block;
+    width: 0;
+    height: 12px;
+    border-left: 2px dashed var(--accent);
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+.lc-legend-sep {
+    color: var(--text-tertiary);
+    user-select: none;
 }
 
 .lc-period-summary {
     font-size: 12px;
     color: var(--text-secondary);
     display: flex;
-    gap: 8px;
+    gap: var(--space-stack);
 }
 
 .lc-period-summary strong {
@@ -280,14 +1386,14 @@
 .mode-breakdown-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-stack);
 }
 
 .mode-breakdown-item {
     display: grid;
     grid-template-columns: 80px 1fr auto;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-stack);
 }
 
 .mode-breakdown-name {
@@ -314,7 +1420,7 @@
 
 .mode-breakdown-stats {
     display: flex;
-    gap: 8px;
+    gap: var(--space-stack);
     align-items: center;
     font-size: 12px;
     white-space: nowrap;
@@ -365,14 +1471,14 @@
 .stats-accuracy-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-stack);
 }
 
 .stats-accuracy-item {
     display: grid;
     grid-template-columns: 160px 1fr 48px 80px;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-stack);
 }
 
 .stats-accuracy-title {
@@ -449,7 +1555,7 @@
     color: white;
     border: none;
     border-radius: var(--radius-full);
-    padding: 10px 16px;
+    padding: var(--space-stack) var(--space-md);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
