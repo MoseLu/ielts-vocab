@@ -440,7 +440,22 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const shouldAutoPlay = mode === 'listening' || mode === 'dictation' ||
       (mode === 'smart' && (subMode === 'listening' || subMode === 'dictation'))
     if (shouldAutoPlay) {
-      setTimeout(() => playWordUtil(currentWord.word, settings), 300)
+      const isDictation = mode === 'dictation' || (mode === 'smart' && subMode === 'dictation')
+      const exampleSentence = isDictation ? currentWord.examples?.[0]?.en : undefined
+      if (exampleSentence) {
+        // Dictation example mode: play the full example sentence (not just the word)
+        setTimeout(() => {
+          if (typeof speechSynthesis === 'undefined') return
+          speechSynthesis.cancel()
+          const u = new SpeechSynthesisUtterance(exampleSentence)
+          u.lang = 'en-US'
+          u.rate = parseFloat(String(settings.playbackSpeed ?? '0.8'))
+          u.pitch = 1
+          speechSynthesis.speak(u)
+        }, 300)
+      } else {
+        setTimeout(() => playWordUtil(currentWord.word, settings), 300)
+      }
     }
   }, [queueIndex, currentWord?.word, mode])
 
