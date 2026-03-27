@@ -447,6 +447,75 @@ class UserMemory(db.Model):
         self.goals = json.dumps(goals, ensure_ascii=False)
 
 
+class RateLimitBucket(db.Model):
+    """Database-backed rate limiting state per IP address.
+
+    Replaces the in-memory dict in routes/auth.py to support multi-process
+    deployments (gunicorn/uwsgi workers). Each worker shares the same SQLite DB,
+    ensuring consistent rate limiting across all processes.
+    """
+    __tablename__ = 'rate_limit_buckets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(45), nullable=False, unique=True, index=True)  # IPv6 max 45 chars
+    count = db.Column(db.Integer, default=0, nullable=False)
+    reset_at = db.Column(db.DateTime, nullable=False)
+    # purpose: 'login' | 'send_code' | 'forgot_password' — separate limits per action
+    purpose = db.Column(db.String(30), default='login', nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('ip_address', 'purpose', name='unique_ip_purpose'),
+    )
+
+    @classmethod
+    def check_and_increment(cls, ip_address: str, purpose: str, max_attempts: int,
+                            window_minutes: int) -> tuple[bool, int]:
+        """
+        Atomically check if IP is within rate limit and increment if not.
+        Returns (allowed: bool, seconds_until_reset: int).
+        Uses SELECT ... FOR UPDATE pattern for safety, but SQLite serialization
+        provides sufficient safety for single-instance deployments.
+        For multi-instance (multiple app servers), use Redis instead.
+        """
+        now = datetime.utcnow()
+        bucket = cls.query.filter_by(ip_address=ip_address, purpose=purpose).with_for_update().first()
+
+        if bucket is None:
+            # No bucket exists — create one and allow
+            bucket = cls(
+                ip_address=ip_address,
+                purpose=purpose,
+                count=1,
+                reset_at=now + timedelta(minutes=window_minutes)
+            )
+            db.session.add(bucket)
+            db.session.commit()
+            return True, 0
+
+        if now >= bucket.reset_at:
+            # Window expired — reset and allow
+            bucket.count = 1
+            bucket.reset_at = now + timedelta(minutes=window_minutes)
+            db.session.commit()
+            return True, 0
+
+        if bucket.count >= max_attempts:
+            # Rate limited
+            wait = int((bucket.reset_at - now).total_seconds())
+            return False, max(wait, 0)
+
+        # Within window, increment count
+        bucket.count += 1
+        db.session.commit()
+        return True, 0
+
+    @classmethod
+    def reset(cls, ip_address: str, purpose: str):
+        """Clear rate limit bucket after successful action."""
+        cls.query.filter_by(ip_address=ip_address, purpose=purpose).delete()
+        db.session.commit()
+
+
 class RevokedToken(db.Model):
     """Revoked JWT JTIs — checked on every authenticated request."""
     __tablename__ = 'revoked_tokens'

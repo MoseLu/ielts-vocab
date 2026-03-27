@@ -225,6 +225,7 @@ export default function LearningJournalPage() {
 
   return (
     <div className="journal-page">
+      <div className="page-content">
       <div className="journal-header">
         <h1 className="journal-title">学习日志</h1>
         <p className="journal-subtitle">查看每日学习总结和 AI 问答记录</p>
@@ -424,6 +425,7 @@ export default function LearningJournalPage() {
           onClose={() => setSelectedSummary(null)}
         />
       )}
+      </div>
     </div>
   )
 }

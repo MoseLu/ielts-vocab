@@ -140,6 +140,17 @@ export const ProgressDataSchema = z.object({
 })
 export type ProgressData = z.infer<typeof ProgressDataSchema>
 
+// Map of chapter key (e.g. "bookId_chapterId") to progress data
+export const ChapterProgressMapSchema = z.record(z.string(), z.object({
+  current_index: z.number().optional(),
+  correct_count: z.number().optional(),
+  wrong_count: z.number().optional(),
+  is_completed: z.boolean().optional(),
+  words_learned: z.number().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough())
+export type ChapterProgressMap = z.infer<typeof ChapterProgressMapSchema>
+
 export const OptionItemSchema = z.object({
   definition: z.string().min(1),
   pos: z.string(),

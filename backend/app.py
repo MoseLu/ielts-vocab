@@ -6,6 +6,7 @@ import os
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 import sqlite3
+import secrets
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from flask import Flask
@@ -23,6 +24,7 @@ from routes.speech_socketio import register_socketio_events
 from routes.ai import ai_bp
 from routes.admin import admin_bp, init_admin
 from routes.notes import notes_bp
+from routes.tts import tts_bp
 from routes.middleware import init_middleware
 
 # ── SQLite WAL mode ───────────────────────────────────────────────────────────
@@ -50,17 +52,22 @@ def _ensure_admin_user():
 
     admin = User.query.filter_by(username=admin_username).first()
     if not admin:
+        # Generate a secure random password if none provided — app no longer blocks startup
         if not admin_password:
-            raise ValueError(
-                f"ADMIN_INITIAL_PASSWORD env var must be set on first run to create admin user '{admin_username}'. "
-                "Example: export ADMIN_INITIAL_PASSWORD=your_secure_password"
+            admin_password = secrets.token_urlsafe(24)
+            print(
+                f"[Admin] ADMIN_INITIAL_PASSWORD not set — generated random password.\n"
+                f"         Save this NOW: ADMIN_USERNAME={admin_username} ADMIN_INITIAL_PASSWORD={admin_password}\n"
+                f"         Or set env var and re-run: export ADMIN_INITIAL_PASSWORD=your_secure_password"
             )
+        else:
+            print(f"[Admin] Using password from ADMIN_INITIAL_PASSWORD env var.")
         admin = User(username=admin_username, email=None)
         admin.set_password(admin_password)
         admin.is_admin = True
         db.session.add(admin)
         db.session.commit()
-        print(f"[Admin] User '{admin_username}' created. Password set from ADMIN_INITIAL_PASSWORD env var.")
+        print(f"[Admin] User '{admin_username}' created.")
     else:
         if not admin.is_admin:
             admin.is_admin = True
@@ -92,6 +99,7 @@ def create_app(config_class=Config):
     init_books(app)
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
     app.register_blueprint(notes_bp, url_prefix='/api/notes')
+    app.register_blueprint(tts_bp, url_prefix='/api/tts')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     init_admin(app)
 

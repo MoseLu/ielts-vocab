@@ -3,6 +3,7 @@ import json
 import uuid
 import os
 import random
+import functools
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
@@ -216,18 +217,13 @@ def _quick_memory_word_stats(user_id: int):
 
 # ── Global vocabulary pool (all books, deduplicated) ─────────────────────────
 
-_global_vocab_pool: list | None = None
-
-
+@functools.lru_cache(maxsize=1)
 def _get_global_vocab_pool() -> list:
     """
     Load every word from every book into one flat list.
     Deduplicates by lowercase word string.  Cached after first call.
+    Uses lru_cache to prevent memory leaks in multi-worker deployments.
     """
-    global _global_vocab_pool
-    if _global_vocab_pool is not None:
-        return _global_vocab_pool
-
     from routes.books import VOCAB_BOOKS, load_book_vocabulary
     seen: dict[str, dict] = {}
     for book in VOCAB_BOOKS:
@@ -241,8 +237,7 @@ def _get_global_vocab_pool() -> list:
                     'pos':        w.get('pos', ''),
                     'definition': w.get('definition', ''),
                 }
-    _global_vocab_pool = list(seen.values())
-    return _global_vocab_pool
+    return list(seen.values())
 
 
 # ── Similarity helpers ────────────────────────────────────────────────────────

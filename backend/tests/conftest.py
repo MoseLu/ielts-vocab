@@ -17,8 +17,15 @@ class TestConfig:
     SECRET_KEY = 'test-secret'
     JWT_SECRET_KEY = 'test-jwt-secret'
     JWT_ACCESS_TOKEN_EXPIRES = 3600
+    JWT_REFRESH_TOKEN_EXPIRES = 86400 * 30
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    CORS_ORIGINS = ['http://localhost:3000']
+    COOKIE_SECURE = False
+    COOKIE_SAMESITE = 'Strict'
+    COOKIE_HTTPONLY = True
+    LOGIN_MAX_ATTEMPTS = 10
+    LOGIN_LOCKOUT_MINUTES = 15
 
 
 @pytest.fixture(scope='function')

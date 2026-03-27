@@ -11,7 +11,6 @@ Login is rate-limited: 10 failures per IP → 15-min lockout.
 
 import re
 import uuid
-from collections import defaultdict
 from datetime import datetime, timedelta
 
 import jwt
@@ -20,7 +19,7 @@ from flask import Blueprint, jsonify, make_response, request
 # RFC 5322-inspired email pattern — rejects obvious non-emails like "a@b"
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$')
 
-from models import EmailVerificationCode, RevokedToken, User, db
+from models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, db
 from routes.middleware import token_required
 
 auth_bp = Blueprint('auth', __name__)
@@ -35,36 +34,27 @@ def init_auth(app_instance):
     _app = app_instance
 
 
-# ── Rate limiter (in-memory, per IP) ─────────────────────────────────────────
-# {ip: {'count': int, 'reset_at': datetime}}
+# ── Rate limiter (database-backed, per IP) ─────────────────────────────────────
+# Uses database instead of in-memory dict to support multi-process deployments.
+# For multi-server deployments (multiple app servers), use Redis instead.
 
-_rate_buckets: dict = defaultdict(lambda: {'count': 0, 'reset_at': datetime.utcnow()})
-
-
-def _check_rate_limit(ip: str) -> tuple[bool, int]:
+def _check_rate_limit(ip: str, purpose: str = 'login') -> tuple[bool, int]:
     """
     Returns (allowed, seconds_until_reset).
-    Resets the bucket automatically when the window expires.
+    Uses database-backed rate limiting to work across gunicorn/uwsgi workers.
     """
-    now = datetime.utcnow()
-    bucket = _rate_buckets[ip]
-
-    if now >= bucket['reset_at']:
-        # Window expired — fresh start
-        bucket['count'] = 0
-        bucket['reset_at'] = now + timedelta(minutes=_app.config['LOGIN_LOCKOUT_MINUTES'])
-
-    if bucket['count'] >= _app.config['LOGIN_MAX_ATTEMPTS']:
-        wait = int((bucket['reset_at'] - now).total_seconds())
-        return False, wait
-
-    bucket['count'] += 1
-    return True, 0
+    allowed, wait = RateLimitBucket.check_and_increment(
+        ip_address=ip,
+        purpose=purpose,
+        max_attempts=_app.config['LOGIN_MAX_ATTEMPTS'],
+        window_minutes=_app.config['LOGIN_LOCKOUT_MINUTES']
+    )
+    return allowed, wait
 
 
-def _reset_rate_limit(ip: str):
-    """Clear failures after a successful login."""
-    _rate_buckets.pop(ip, None)
+def _reset_rate_limit(ip: str, purpose: str = 'login'):
+    """Clear rate limit bucket after a successful action."""
+    RateLimitBucket.reset(ip_address=ip, purpose=purpose)
 
 
 def _validate_email(email: str) -> bool:
@@ -347,7 +337,7 @@ def _send_code_mock(email, code, purpose):
 @token_required
 def send_bind_email_code(current_user):
     ip = request.remote_addr or '0.0.0.0'
-    allowed, wait = _check_rate_limit(ip)
+    allowed, wait = _check_rate_limit(ip, purpose='send_code')
     if not allowed:
         return jsonify({'error': f'操作过于频繁，请 {wait} 秒后再试'}), 429
 
@@ -394,7 +384,7 @@ def bind_email(current_user):
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
     ip = request.remote_addr or '0.0.0.0'
-    allowed, wait = _check_rate_limit(ip)
+    allowed, wait = _check_rate_limit(ip, purpose='forgot_password')
     if not allowed:
         return jsonify({'error': f'操作过于频繁，请 {wait} 秒后再试'}), 429
 

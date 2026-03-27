@@ -29,34 +29,56 @@ export function removeStorageItem(key: string): void {
 let _refreshing: Promise<void> | null = null
 
 async function _attemptRefresh(): Promise<void> {
-  // Deduplicate: if a refresh is already in flight, wait for it
+  // Deduplicate: if a refresh is already in flight, wait for it.
+  // The promise is stored BEFORE any await to prevent race conditions
+  // where two concurrent 401s could each start their own refresh.
   if (_refreshing) return _refreshing
 
-  _refreshing = (async () => {
-    // Try up to 2 times to handle transient network drops (e.g. natapp tunnel
-    // blip) without immediately treating them as token expiry.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const r = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          credentials: 'include',
-          signal: AbortSignal.timeout(10_000),
-        })
-        if (r.ok) return
-        // A real 401 means the token is genuinely expired — don't retry
-        if (r.status === 401) throw new Error('auth_failed')
-        // Any other HTTP error: fall through to retry
-        throw new Error(`refresh_http_${r.status}`)
-      } catch (err) {
-        const isAuthFailure = err instanceof Error && err.message === 'auth_failed'
-        if (isAuthFailure || attempt === 1) throw err
-        // Wait 1.5 s then retry (covers brief tunnel reconnection)
-        await new Promise(res => setTimeout(res, 1500))
-      }
-    }
-  })().finally(() => { _refreshing = null })
+  // Create promise first, store it synchronously, then execute.
+  // This ordering ensures any concurrent caller sees _refreshing already set.
+  let resolveRefreshing: () => void
+  const promise = new Promise<void>(resolve => {
+    resolveRefreshing = resolve
+  })
 
-  return _refreshing
+  _refreshing = promise
+
+  // Immediately capture resolveRefreshing (synchronous assignment above)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const resolve = resolveRefreshing!
+
+  // Run refresh logic, store the result, then resolve the outer promise.
+  // This allows all concurrent callers to wait on the same promise.
+  _doRefresh().finally(() => {
+    _refreshing = null
+    resolve()
+  })
+
+  return promise
+}
+
+async function _doRefresh(): Promise<void> {
+  // Try up to 2 times to handle transient network drops (e.g. natapp tunnel
+  // blip) without immediately treating them as token expiry.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+        signal: AbortSignal.timeout(10_000),
+      })
+      if (r.ok) return
+      // A real 401 means the token is genuinely expired — don't retry
+      if (r.status === 401) throw new Error('auth_failed')
+      // Any other HTTP error: fall through to retry
+      throw new Error(`refresh_http_${r.status}`)
+    } catch (err) {
+      const isAuthFailure = err instanceof Error && err.message === 'auth_failed'
+      if (isAuthFailure || attempt === 1) throw err
+      // Wait 1.5 s then retry (covers brief tunnel reconnection)
+      await new Promise(res => setTimeout(res, 1500))
+    }
+  }
 }
 
 function _buildHeaders(options: RequestInit): Record<string, string> {

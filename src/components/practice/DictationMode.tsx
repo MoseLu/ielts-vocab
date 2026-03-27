@@ -104,7 +104,6 @@ export default function DictationMode({
   }
 
   const handlePlayExample = () => {
-    // Use speechSynthesis to read the full sentence aloud
     if (!window.speechSynthesis) return
     const example = currentWord.examples?.[0]
     if (!example) return
@@ -247,7 +246,14 @@ export default function DictationMode({
         </div>
       </div>
 
-      <button className="skip-btn" onClick={onSkip}>不知道 <span className="shortcut-hint">(5)</span></button>
+      <button className="skip-btn" onClick={() => {
+        if (isExampleMode) {
+          handlePlayExample()
+          setTimeout(() => onSkip(), 800)
+        } else {
+          onSkip()
+        }
+      }}>不知道 <span className="shortcut-hint">(5)</span></button>
       <BottomBar progressValue={progressValue} total={total} queueIndex={0} />
     </div>
   )

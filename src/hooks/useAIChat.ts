@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { setGlobalLearningContext, getGlobalLearningContext } from '../contexts/AIChatContext'
 import type { AIMessage, LearningContext } from '../types'
 import { safeParse, AIAskResponseSchema, apiFetch } from '../lib'
+import { ChapterProgressMapSchema } from '../lib/schemas'
 import { STORAGE_KEYS } from '../constants'
 
 // ── localStorage schemas (permissive — extra keys ignored) ───────────────────
@@ -80,18 +81,9 @@ function buildModePerformance() {
   }
 }
 
-const ChapterProgressSchema = z.record(z.string(), z.object({
-  current_index: z.number().optional(),
-  correct_count: z.number().optional(),
-  wrong_count: z.number().optional(),
-  is_completed: z.boolean().optional(),
-  words_learned: z.number().optional(),
-  updatedAt: z.string().optional(),
-}).passthrough())
-
 function buildChapterProgressSummary() {
   try {
-    const cParsed = safeParse(ChapterProgressSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
+    const cParsed = safeParse(ChapterProgressMapSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
     const raw = cParsed.success ? cParsed.data : {}
     const entries = Object.entries(raw)
     if (!entries.length) return undefined
@@ -202,18 +194,9 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
   const buildContext = useCallback(() => {
     // Parse chapter_progress (keyed as `{bookId}_{chapterId}` where chapterId is numeric)
     // and aggregate both per-book AND overall summaries for the AI.
-    const ChapterProgressSchema = z.record(z.string(), z.object({
-      current_index: z.number().optional(),
-      correct_count: z.number().optional(),
-      wrong_count: z.number().optional(),
-      is_completed: z.boolean().optional(),
-      words_learned: z.number().optional(),
-      updatedAt: z.string().optional(),
-    }).passthrough())
-
     const chapterProgressSummary = (() => {
       try {
-        const cParsed = safeParse(ChapterProgressSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
+        const cParsed = safeParse(ChapterProgressMapSchema, JSON.parse(localStorage.getItem('chapter_progress') || '{}'))
         const raw = cParsed.success ? cParsed.data : {}
         const entries = Object.entries(raw)
         if (!entries.length) return undefined

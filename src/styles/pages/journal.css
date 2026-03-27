@@ -1,8 +1,8 @@
 /* ── Learning Journal Page ───────────────────────────────────────────────── */
 
 .journal-page {
-  max-width: 900px;
-  margin: 0 auto;
+  /* 由外层 .page-content 的 padding 控制水平边距 */
+  padding-top: var(--space-lg);
 }
 
 .journal-header {
