@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import type { DictationModeProps, LastState } from './types'
+import { stopAudio } from './utils'
 
 type DictationSubMode = 'word' | 'example'
 
@@ -103,16 +104,63 @@ export default function DictationMode({
     onPlayWord(currentWord.word)
   }
 
+  // Cache for TTS audio blob URLs (sentence text → blob URL)
+  const [ttsAudioCache, setTtsAudioCache] = useState<Record<string, string>>({})
+  // Track current TTS request to handle concurrent calls
+  const ttsAbortRef = useRef<AbortController | null>(null)
+
   const handlePlayExample = () => {
-    if (!window.speechSynthesis) return
     const example = currentWord.examples?.[0]
     if (!example) return
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(example.en)
-    utterance.lang = 'en-US'
-    utterance.rate = parseFloat(String(settings.playbackSpeed ?? '0.8'))
-    utterance.pitch = 1
-    window.speechSynthesis.speak(utterance)
+
+    // Stop any in-progress audio
+    stopAudio()
+
+    const sentence = example.en
+
+    // If we already have a cached blob URL, play it directly
+    if (ttsAudioCache[sentence]) {
+      const audio = new Audio(ttsAudioCache[sentence])
+      audio.play()
+      return
+    }
+
+    // Cancel any pending TTS request
+    if (ttsAbortRef.current) {
+      ttsAbortRef.current.abort()
+    }
+
+    const controller = new AbortController()
+    ttsAbortRef.current = controller
+
+    // Call MiniMax TTS API
+    fetch('/api/tts/example-audio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sentence, word: currentWord.word }),
+      signal: controller.signal,
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`TTS error ${res.status}`)
+        return res.blob()
+      })
+      .then(blob => {
+        const url = URL.createObjectURL(blob)
+        setTtsAudioCache(prev => ({ ...prev, [sentence]: url }))
+        const audio = new Audio(url)
+        audio.play()
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return
+        console.warn('[DictationMode] TTS failed, falling back to speechSynthesis:', err)
+        // Fallback: browser speechSynthesis
+        if (!window.speechSynthesis) return
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(sentence)
+        utterance.lang = 'en-US'
+        utterance.rate = parseFloat(String(settings.playbackSpeed ?? '0.8'))
+        window.speechSynthesis.speak(utterance)
+      })
   }
 
   const isExampleMode = activeSubMode === 'example'
