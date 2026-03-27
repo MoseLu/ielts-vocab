@@ -1,0 +1,28 @@
+{
+  "establish": {
+    "word": "establish",
+    "variants": [
+      {
+        "word": "establish",
+        "pos": "verb",
+        "example": "Governments should establish transparent policies.",
+        "collocation": "establish a policy",
+        "high_frequency": true
+      },
+      {
+        "word": "established",
+        "pos": "adjective",
+        "example": "An established framework improves consistency.",
+        "collocation": "well-established method",
+        "high_frequency": true
+      },
+      {
+        "word": "establishment",
+        "pos": "noun",
+        "example": "The establishment of libraries supports education.",
+        "collocation": "the establishment of",
+        "high_frequency": true
+      }
+    ]
+  }
+}

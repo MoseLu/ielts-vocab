@@ -186,8 +186,14 @@ function AIChatPanel() {
         <div className="ai-quick-actions">
           {[
             '分析我的学习数据',
-            '今日应该复习什么？',
-            '生成专属复习词书',
+            '/correct education is very important',
+            '/example significant',
+            '/synonyms affect vs effect',
+            '/family establish',
+            '/collocation',
+            '/plan',
+            '/assessment',
+            '/speaking',
           ].map((q) => (
             <button
               key={q}

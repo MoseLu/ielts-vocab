@@ -367,6 +367,90 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
     setError(null)
 
     try {
+      const normalized = text.trim()
+      if (normalized.startsWith('/correct ')) {
+        const sentence = normalized.replace('/correct ', '').trim()
+        const result = await apiFetch<Record<string, unknown>>('/api/ai/correct-text', {
+          method: 'POST',
+          body: JSON.stringify({ text: sentence }),
+        })
+        const upgrades = Array.isArray(result.upgrades) ? result.upgrades as Array<Record<string, string>> : []
+        const collocations = Array.isArray(result.collocations) ? result.collocations as Array<Record<string, string>> : []
+        const lines = [
+          '写作纠错结果：',
+          `- 语法：${result.grammar_ok ? '基本正确' : '建议优化'}`,
+          `- 修正句：${String(result.corrected_sentence || sentence)}`,
+        ]
+        if (upgrades.length) {
+          lines.push('- 词汇升级：')
+          upgrades.slice(0, 3).forEach((u) => lines.push(`  ${u.from} -> ${u.to}（${u.reason || '提升学术表达'}）`))
+        }
+        if (collocations.length) {
+          lines.push('- 搭配建议：')
+          collocations.slice(0, 3).forEach((c) => lines.push(`  ${c.wrong} -> ${c.right}`))
+        }
+        lines.push(String(result.encouragement || '继续保持，建议多练 Task 2 学术表达。'))
+        setMessages(prev => [...prev, {
+          id: `asst_${Date.now()}`,
+          role: 'assistant',
+          content: lines.join('\n'),
+          timestamp: Date.now(),
+        }])
+        return
+      }
+      if (normalized.startsWith('/example ')) {
+        const word = normalized.replace('/example ', '').trim()
+        const result = await apiFetch<{ examples: Array<{ sentence: string; source?: string }> }>(`/api/ai/ielts-example?word=${encodeURIComponent(word)}`)
+        const lines = ['真题语境例句：', ...result.examples.slice(0, 3).map((e, i) => `${i + 1}. ${e.sentence} (${e.source || 'unknown'})`)]
+        setMessages(prev => [...prev, { id: `asst_${Date.now()}`, role: 'assistant', content: lines.join('\n'), timestamp: Date.now() }])
+        return
+      }
+      if (normalized.startsWith('/synonyms ')) {
+        const pair = normalized.replace('/synonyms ', '').split(/\s+vs\s+|\s+/i)
+        const [a, b] = pair
+        const result = await apiFetch<{ summary: string; quiz?: { question?: string } }>('/api/ai/synonyms-diff', {
+          method: 'POST',
+          body: JSON.stringify({ a, b }),
+        })
+        setMessages(prev => [...prev, { id: `asst_${Date.now()}`, role: 'assistant', content: `${result.summary}\n${result.quiz?.question || ''}`.trim(), timestamp: Date.now() }])
+        return
+      }
+      if (normalized.startsWith('/family ')) {
+        const word = normalized.replace('/family ', '').trim()
+        const result = await apiFetch<Record<string, unknown>>(`/api/ai/word-family?word=${encodeURIComponent(word)}`)
+        const variants = (result.variants as Array<Record<string, string>> | undefined) || []
+        const textOut = variants.length
+          ? `词族树 ${word}：\n${variants.map(v => `- ${v.word} (${v.pos})`).join('\n')}`
+          : String(result.message || '暂无词族数据')
+        setMessages(prev => [...prev, { id: `asst_${Date.now()}`, role: 'assistant', content: textOut, timestamp: Date.now() }])
+        return
+      }
+      if (normalized.startsWith('/collocation')) {
+        const result = await apiFetch<{ items: Array<{ wrong: string; right: string; explanation: string }> }>('/api/ai/collocations/practice?count=5')
+        const textOut = `搭配训练：\n${result.items.map(i => `- ${i.wrong} -> ${i.right}（${i.explanation}）`).join('\n')}`
+        setMessages(prev => [...prev, { id: `asst_${Date.now()}`, role: 'assistant', content: textOut, timestamp: Date.now() }])
+        return
+      }
+      if (normalized.startsWith('/plan')) {
+        const result = await apiFetch<{ level: string; plan: string[] }>('/api/ai/review-plan')
+        setMessages(prev => [...prev, { id: `asst_${Date.now()}`, role: 'assistant', content: `今日自适应计划（${result.level}）：\n- ${result.plan.join('\n- ')}`, timestamp: Date.now() }])
+        return
+      }
+      if (normalized.startsWith('/assessment')) {
+        const result = await apiFetch<{ questions: Array<{ word: string; definition: string }> }>('/api/ai/vocab-assessment?count=10')
+        const preview = result.questions.slice(0, 5).map((q, idx) => `${idx + 1}. ${q.word}: ${q.definition}`).join('\n')
+        setMessages(prev => [...prev, { id: `asst_${Date.now()}`, role: 'assistant', content: `词汇量评估（预览）：\n${preview}`, timestamp: Date.now() }])
+        return
+      }
+      if (normalized.startsWith('/speaking')) {
+        const result = await apiFetch<{ question: string; follow_ups: string[] }>('/api/ai/speaking-simulate', {
+          method: 'POST',
+          body: JSON.stringify({ part: 1, topic: 'education' }),
+        })
+        setMessages(prev => [...prev, { id: `asst_${Date.now()}`, role: 'assistant', content: `${result.question}\n- ${result.follow_ups.join('\n- ')}`, timestamp: Date.now() }])
+        return
+      }
+
       const raw = await apiFetch('/api/ai/ask', {
         method: 'POST',
         body: JSON.stringify({

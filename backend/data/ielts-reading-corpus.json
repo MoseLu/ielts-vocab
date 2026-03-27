@@ -1,0 +1,27 @@
+{
+  "significant": [
+    {
+      "sentence": "There was a significant increase in urban population over the last decade.",
+      "source": "Cambridge 17 Test 3 Reading",
+      "topic": "society",
+      "role": "modifier",
+      "is_real_exam": true
+    },
+    {
+      "sentence": "The study found significant differences in student outcomes.",
+      "source": "Cambridge 16 Test 1 Reading",
+      "topic": "education",
+      "role": "modifier",
+      "is_real_exam": true
+    }
+  ],
+  "crucial": [
+    {
+      "sentence": "Parental support is crucial for early language development.",
+      "source": "Cambridge 15 Test 2 Reading",
+      "topic": "education",
+      "role": "predicative",
+      "is_real_exam": true
+    }
+  ]
+}

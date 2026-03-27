@@ -1,0 +1,14 @@
+[
+  {
+    "question": "Researchers should ____ research before making claims.",
+    "options": ["make", "conduct", "do", "build"],
+    "answer": "conduct",
+    "topic": "education"
+  },
+  {
+    "question": "Governments need to ____ action on climate change.",
+    "options": ["take", "do", "make", "build"],
+    "answer": "take",
+    "topic": "environment"
+  }
+]

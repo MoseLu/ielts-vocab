@@ -1,0 +1,18 @@
+[
+  {
+    "id": "col-1",
+    "topic": "education",
+    "wrong": "make research",
+    "right": "conduct research",
+    "explanation": "research 常与 conduct 搭配。",
+    "example": "Universities should conduct research on learning outcomes."
+  },
+  {
+    "id": "col-2",
+    "topic": "society",
+    "wrong": "do a decision",
+    "right": "make a decision",
+    "explanation": "decision 固定搭配 make。",
+    "example": "Citizens must make informed decisions."
+  }
+]
