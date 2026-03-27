@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Scrollbar } from './ui/Scrollbar'
+import React, { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 
 type TabType = 'answer' | 'sound' | 'display' | 'review'
 
@@ -61,15 +61,34 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
     document.documentElement.setAttribute('data-font-size', settings.fontSize || 'medium')
   }, [settings.darkMode, settings.fontSize])
 
-  // Apply saved settings on initial load
   useEffect(() => {
-    const saved = localStorage.getItem('app_settings')
-    if (saved) {
-      const s: AppSettings = JSON.parse(saved)
-      document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light')
-      document.documentElement.setAttribute('data-font-size', s.fontSize || 'medium')
+    if (!showSettings) return
+    const root = document.documentElement
+    const body = document.body
+    const prevBodyOverflow = body.style.overflow
+    const prevBodyPaddingRight = body.style.paddingRight
+    const prevRootOverflow = root.style.overflow
+    const prevRootPaddingRight = root.style.paddingRight
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    if (scrollbarWidth > 0) {
+      const compensation = `${scrollbarWidth}px`
+      body.style.paddingRight = compensation
+      root.style.paddingRight = compensation
     }
-  }, [])
+    body.style.overflow = 'hidden'
+    root.style.overflow = 'hidden'
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      body.style.overflow = prevBodyOverflow
+      body.style.paddingRight = prevBodyPaddingRight
+      root.style.overflow = prevRootOverflow
+      root.style.paddingRight = prevRootPaddingRight
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [showSettings, onClose])
 
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     const newSettings = { ...settings, [key]: value }
@@ -84,10 +103,17 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
     }
   }
 
+  const onOverlayClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) onClose()
+    },
+    [onClose],
+  )
+
   if (!showSettings) return null
 
-  return (
-    <div className="settings-overlay show" onClick={(e) => (e.target as HTMLElement).classList.contains('settings-overlay') && onClose()}>
+  return createPortal(
+    <div className="settings-overlay show" onClick={onOverlayClick}>
       <div className="settings-modal">
         <div className="settings-header">
           <h2 className="settings-title">设置</h2>
@@ -133,9 +159,10 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
           </div>
 
           {/* Settings Content Panels */}
-          <Scrollbar className="settings-content">
+          <div className="settings-content settings-content--native">
             {/* Answer Settings */}
-            <div className={`settings-panel${activeTab === 'answer' ? ' active' : ''}`}>
+            {activeTab === 'answer' && (
+            <div className="settings-panel active">
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">错词循环</div>
@@ -187,9 +214,11 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                   </label>
                 </div>
               </div>
+            )}
 
             {/* Sound Settings */}
-            <div className={`settings-panel${activeTab === 'sound' ? ' active' : ''}`}>
+            {activeTab === 'sound' && (
+            <div className="settings-panel active">
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">语音选择</div>
@@ -258,9 +287,11 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                   </label>
                 </div>
               </div>
+            )}
 
             {/* Display Settings */}
-            <div className={`settings-panel${activeTab === 'display' ? ' active' : ''}`}>
+            {activeTab === 'display' && (
+            <div className="settings-panel active">
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">深色模式</div>
@@ -303,9 +334,11 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                   </label>
                 </div>
               </div>
+            )}
 
             {/* Review Settings */}
-            <div className={`settings-panel${activeTab === 'review' ? ' active' : ''}`}>
+            {activeTab === 'review' && (
+            <div className="settings-panel active">
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">复习间隔</div>
@@ -329,10 +362,12 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                   </select>
                 </div>
               </div>
-          </Scrollbar>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

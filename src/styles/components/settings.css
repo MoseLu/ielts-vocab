@@ -356,6 +356,13 @@
 .settings-content {
     flex: 1;
     position: relative;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.settings-content--native {
+    padding: var(--space-xl);
 }
 
 .settings-panel {
