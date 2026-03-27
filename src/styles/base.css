@@ -57,6 +57,8 @@
     --space-lg: 24px;
     --space-xl: 32px;
     --space-2xl: 48px;
+    /** 统计页等：纵向堆叠区块/卡片之间的统一间距（与卡片内边距同节奏） */
+    --space-stack: 10px;
     
     /* Border Radius */
     --radius-sm: 6px;
@@ -156,35 +158,23 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbar (Element Plus style) ──────────────────────────────────────────
-   6px thin scrollbar, transparent track, semi-transparent rounded thumb.    */
-
-::-webkit-scrollbar {
-    width: var(--scrollbar-width);
-    height: var(--scrollbar-width);
-}
-
-::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover);
-}
-
-::-webkit-scrollbar-corner {
-    background: var(--scrollbar-track);
-}
+/* ── Global Scrollbar Strategy ───────────────────────────────────────────────
+   全局禁用浏览器原生滚动条；可视滚动条统一由 JS 组件（el-scrollbar 风格）渲染。 */
 
 /* Firefox */
+html,
+body,
 * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: none;
+}
+
+/* WebKit / Chromium */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
 }
 
 /* ── Field validation error ───────────────────────────────────────────────────

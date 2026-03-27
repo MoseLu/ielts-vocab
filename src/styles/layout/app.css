@@ -3,7 +3,9 @@
 /* App body */
 .app-body {
     display: flex;
-    min-height: calc(100vh - var(--header-height));
+    height: 100vh;
+    min-height: 100vh;
+    box-sizing: border-box;
     padding-top: var(--header-height);
 }
 
@@ -27,9 +29,7 @@
 }
 
 .left-sidebar-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
+    display: block;
     padding: 10px;
     background: transparent;
     border: none;
@@ -39,7 +39,22 @@
     text-decoration: none;
     border-radius: 0;
     width: 100%;
-    text-align: left;
+    box-sizing: border-box;
+}
+
+/*
+ * 「图标+文案」视为一体：行内仅 4px 间距；整体用等宽内层 + margin:auto 在侧栏水平居中；
+ * 固定首列宽，多行图标同一竖线；align-items:center 保证行内垂直居中。
+ */
+.left-sidebar-item-inner {
+    display: grid;
+    grid-template-columns: 20px auto;
+    align-items: center;
+    column-gap: 4px;
+    /* 参考 el/ant menu：给内容一个稳定槽宽，保证各行图标竖向对齐 */
+    width: 78px;
+    margin-inline: auto;
+    min-width: 0;
 }
 
 .left-sidebar-item:hover {
@@ -70,11 +85,28 @@
 .left-sidebar-label {
     font-size: 14px;
     font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    align-self: center;
+    justify-self: start;
+    width: fit-content;
 }
 
 .main {
     flex: 1;
-    min-height: calc(100vh - var(--header-height));
+    min-height: 0;
+    height: calc(100vh - var(--header-height));
+    overflow: hidden;
+}
+
+/* 全局主滚动容器：统一使用自定义 el-scrollbar */
+.app-main-scroll {
+    height: 100%;
+}
+
+.app-main-scroll-wrap {
+    height: 100%;
+    min-height: 0;
 }
 
 /* ── Shared Page Content Container ── */
@@ -86,12 +118,18 @@
 /* Practice page: full-screen, no header/sidebar offset */
 .practice-fullscreen {
     display: flex;
+    flex-direction: column;
+    height: 100vh;
     min-height: 100vh;
 }
 
 .practice-fullscreen-main {
     flex: 1;
-    min-height: 100vh;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ── Bottom Navigation (Mobile) ── */

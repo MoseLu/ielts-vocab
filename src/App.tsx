@@ -7,6 +7,7 @@ import { SettingsProvider } from './contexts'
 import Header from './components/Header'
 import LeftSidebar from './components/LeftSidebar'
 import BottomNav from './components/BottomNav'
+import { Scrollbar } from './components/ui/Scrollbar'
 import AuthPage from './components/AuthPage'
 import { Loading } from './components/ui/Loading'
 import HomePage from './components/HomePage'
@@ -27,7 +28,12 @@ function ScrollToTop() {
   const navType = useNavigationType()
   useEffect(() => {
     if (navType !== 'POP') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      const wrap = document.querySelector<HTMLElement>('.app-main-scroll-wrap')
+      if (wrap) {
+        wrap.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      } else {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      }
     }
   }, [pathname, navType])
   return null
@@ -71,125 +77,127 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
       <div className={isPractice ? 'practice-fullscreen' : 'app-body'}>
         {user && !isPractice && <LeftSidebar />}
         <main className={isPractice ? 'practice-fullscreen-main' : 'main'}>
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                user ? (
-                  <Navigate to="/" replace />
-                ) : (
-                  <AuthPage />
-                )
-              }
-            />
+          <Scrollbar className="app-main-scroll" wrapClassName="app-main-scroll-wrap">
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  user ? (
+                    <Navigate to="/" replace />
+                  ) : (
+                    <AuthPage />
+                  )
+                }
+              />
 
-            <Route
-              path="/"
-              element={
-                user ? (
-                  <VocabBookPage />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              <Route
+                path="/"
+                element={
+                  user ? (
+                    <VocabBookPage />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
 
-            <Route
-              path="/plan"
-              element={
-                user ? (
-                  <HomePage />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              <Route
+                path="/plan"
+                element={
+                  user ? (
+                    <HomePage />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
 
-            <Route
-              path="/practice"
-              element={
-                user ? (
-                  <PracticePage
-                    currentDay={currentDay ?? undefined}
-                    mode={mode as any}
-                    onModeChange={onModeChange}
-                    onDayChange={onDayChange}
-                    showToast={() => {}}
-                  />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              <Route
+                path="/practice"
+                element={
+                  user ? (
+                    <PracticePage
+                      currentDay={currentDay ?? undefined}
+                      mode={mode as any}
+                      onModeChange={onModeChange}
+                      onDayChange={onDayChange}
+                      showToast={() => {}}
+                    />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
 
-            <Route
-              path="/errors"
-              element={
-                user ? (
-                  <ErrorsPage />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              <Route
+                path="/errors"
+                element={
+                  user ? (
+                    <ErrorsPage />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
 
-            <Route
-              path="/stats"
-              element={
-                user ? (
-                  <StatsPage />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              <Route
+                path="/stats"
+                element={
+                  user ? (
+                    <StatsPage />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
 
-            <Route
-              path="/profile"
-              element={
-                user ? (
-                  <ProfilePage />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              <Route
+                path="/profile"
+                element={
+                  user ? (
+                    <ProfilePage />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
 
-            <Route
-              path="/vocab-test"
-              element={
-                user ? (
-                  <VocabTestPage />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              <Route
+                path="/vocab-test"
+                element={
+                  user ? (
+                    <VocabTestPage />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
 
-            <Route
-              path="/admin"
-              element={
-                isAdmin ? (
-                  <AdminDashboard />
-                ) : (
-                  <Navigate to={user ? "/" : "/login"} replace />
-                )
-              }
-            />
+              <Route
+                path="/admin"
+                element={
+                  isAdmin ? (
+                    <AdminDashboard />
+                  ) : (
+                    <Navigate to={user ? "/" : "/login"} replace />
+                  )
+                }
+              />
 
-            <Route
-              path="/journal"
-              element={
-                user ? (
-                  <LearningJournalPage />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              <Route
+                path="/journal"
+                element={
+                  user ? (
+                    <LearningJournalPage />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
 
-            <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
-          </Routes>
+              <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
+            </Routes>
+          </Scrollbar>
         </main>
       </div>
 
