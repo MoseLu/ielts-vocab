@@ -250,10 +250,52 @@ let _audioGeneration = 0
 // the audio is silently discarded (e.g. "attention" sounds like "tention").
 let _htmlAudioWarmed = false
 
-// Pre-warm the browser's audio engine on module load so the first real play is
-// not truncated. speechSynthesis is used because it exercises the audio stack
-// without needing a valid audio file URL.
-;(function warmUpAudioEngine() {
+// Promise that resolves once a silent HTMLAudioElement has successfully played
+// through, proving the audio hardware is initialised.  Created on the first
+// playWordAudio() call (requires prior user interaction for autoplay to work).
+let _htmlAudioWarmupPromise: Promise<void> | null = null
+
+/**
+ * Play a 100 ms silent WAV through HTMLAudioElement to initialise the browser's
+ * audio hardware pipeline.  Subsequent calls return the same cached Promise so
+ * the warmup only ever runs once per session.
+ */
+function _warmupHtmlAudio(): Promise<void> {
+  if (_htmlAudioWarmupPromise) return _htmlAudioWarmupPromise
+  _htmlAudioWarmupPromise = new Promise<void>((resolve) => {
+    try {
+      // Build a minimal valid WAV in memory: 44-byte header + 100 ms silence.
+      const sampleRate = 22050
+      const numSamples = (sampleRate * 0.1) | 0
+      const buf = new ArrayBuffer(44 + numSamples * 2)
+      const v = new DataView(buf)
+      const ws = (o: number, s: string) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)) }
+      ws(0, 'RIFF');  v.setUint32(4, 36 + numSamples * 2, true)
+      ws(8, 'WAVE');  ws(12, 'fmt ')
+      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true)
+      v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true)
+      v.setUint16(32, 2, true);  v.setUint16(34, 16, true)
+      ws(36, 'data'); v.setUint32(40, numSamples * 2, true)
+      const blob = new Blob([buf], { type: 'audio/wav' })
+      const url  = URL.createObjectURL(blob)
+      const wa   = new Audio(url)
+      wa.volume  = 0
+      const done = () => { try { URL.revokeObjectURL(url) } catch { /**/ } _htmlAudioWarmed = true; resolve() }
+      wa.onended = done
+      wa.onerror = done
+      setTimeout(done, 500) // fallback in case events don't fire
+      wa.play().catch(done)
+    } catch {
+      _htmlAudioWarmed = true
+      resolve()
+    }
+  })
+  return _htmlAudioWarmupPromise
+}
+
+// Pre-warm the browser's speechSynthesis engine on module load so the first
+// TTS play is not truncated.
+;(function warmUpSpeechSynthesis() {
   if (typeof speechSynthesis === 'undefined') return
   const u = new SpeechSynthesisUtterance('')
   u.volume = 0
@@ -348,22 +390,17 @@ export function playWordAudio(
       _currentAudio = audio
       const doPlay = () => {
         if (_audioGeneration !== gen) return
-        _htmlAudioWarmed = true
         audio.play().catch(() => {
           if (_audioGeneration !== gen) return
           _currentAudio = null
           _playYoudao(gen, word, key, volume, rate, onEnd)
         })
       }
+      // Wait for hardware warmup before playing (warmup runs concurrently with
+      // the audio element loading, so it adds no extra perceived delay).
       const start = () => {
         if (_audioGeneration !== gen) return
-        // First HTMLAudioElement play this session: delay so audio hardware can
-        // finish initialising, otherwise the first ~100 ms of audio is cut off.
-        if (!_htmlAudioWarmed) {
-          setTimeout(doPlay, 150)
-        } else {
-          doPlay()
-        }
+        _warmupHtmlAudio().then(doPlay)
       }
 
       // Check synchronously first — readyState may already be >= 2 for cached URLs
@@ -418,49 +455,47 @@ function _playYoudao(
     // after load(). If not yet ready, wait for the event.
     const doPlay = () => {
       if (_audioGeneration !== gen) return
-      _htmlAudioWarmed = true
       audio.play().catch(() => {
         if (_audioGeneration !== gen) return
         _currentAudio = null
         if (onEnd) onEnd()
       })
     }
-    const start = () => {
-      if (_audioGeneration !== gen) return
-      // First HTMLAudioElement play this session: delay so audio hardware can
-      // finish initialising, otherwise the first ~100 ms of audio is cut off.
-      if (!_htmlAudioWarmed) {
-        setTimeout(doPlay, 150)
-      } else {
-        doPlay()
-      }
-    }
-
+    // Hardware is guaranteed warm by the time loadAndPlay is called (caller
+    // always awaits _warmupHtmlAudio before invoking loadAndPlay).
     if (audio.readyState >= 2) {
-      start()
+      doPlay()
     } else {
-      audio.addEventListener('canplaythrough', start, { once: true })
+      audio.addEventListener('canplaythrough', doPlay, { once: true })
       audio.load()
     }
   }
 
-  // Already cached → play immediately from buffer
+  // Already cached → warmup (no-op if done) then play
   if (_youdaoBufferCache.has(key)) {
-    loadAndPlay(_youdaoBufferCache.get(key)!)
+    _warmupHtmlAudio().then(() => {
+      if (_audioGeneration !== gen) return
+      loadAndPlay(_youdaoBufferCache.get(key)!)
+    })
     return
   }
 
-  // Not cached → fetch and wait (no streaming)
+  // Not cached → start warmup AND network fetch concurrently so the hardware
+  // is ready by the time the buffer arrives (no extra perceived delay).
+  const warmup = _warmupHtmlAudio()
   ;(async () => {
     try {
       const res = await fetch(
         `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(key)}&type=2`,
       )
+      await warmup  // ensure hardware is ready before decoding/playing
+      if (_audioGeneration !== gen) return
       if (!res.ok) { loadAndPlay(null); return }
       const buf = await res.arrayBuffer()
       _youdaoBufferCache.set(key, buf)
       loadAndPlay(buf)
     } catch {
+      await warmup
       if (_audioGeneration !== gen) return
       loadAndPlay(null)
     }
