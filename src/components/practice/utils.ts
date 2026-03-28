@@ -344,7 +344,7 @@ export function playWordAudio(
     u.volume = volume
     const voice = getBestEnglishVoice()
     if (voice) u.voice = voice
-    if (onEnd) u.onend = () => { clearTimeout(overallTimer); onEnd() }
+    u.onend = () => { clearTimeout(overallTimer); if (onEnd) onEnd() }
     u.onerror = () => {
       clearTimeout(overallTimer)
       speechSynthesis.cancel()
