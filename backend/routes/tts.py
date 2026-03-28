@@ -429,7 +429,7 @@ def _call_tts_api(sentence: str, voice_id: str, save_path: Path):
 
 @tts_bp.route('/books-summary', methods=['GET'])
 @admin_required
-def admin_books_summary():
+def admin_books_summary(current_user):
     """所有词书 TTS 进度摘要."""
     from routes.books import VOCAB_BOOKS
     result = []
@@ -448,7 +448,7 @@ def admin_books_summary():
 
 @tts_bp.route('/generate/<book_id>', methods=['POST'])
 @admin_required
-def admin_generate_book(book_id):
+def admin_generate_book(current_user, book_id):
     """触发后台生成任务."""
     from routes.books import VOCAB_BOOKS
     if not any(b['id'] == book_id for b in VOCAB_BOOKS):
@@ -466,7 +466,7 @@ def admin_generate_book(book_id):
 
 @tts_bp.route('/status/<book_id>', methods=['GET'])
 @admin_required
-def admin_tts_status(book_id):
+def admin_tts_status(current_user, book_id):
     """查询单个词书进度."""
     examples = _get_book_examples(book_id)
     total = len(examples)
