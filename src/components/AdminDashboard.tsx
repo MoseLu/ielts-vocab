@@ -287,7 +287,7 @@ export default function AdminDashboard() {
   const fetchTtsBooks = useCallback(async () => {
     setTtsBooksLoading(true)
     try {
-      const data = await apiFetch<{ books: TtsBook[] }>('/api/admin/tts/books-summary')
+      const data = await apiFetch<{ books: TtsBook[] }>('/api/tts/books-summary')
       setTtsBooks(data.books || [])
     } catch (e) {
       console.error('Failed to fetch TTS books:', e)
@@ -298,11 +298,11 @@ export default function AdminDashboard() {
 
   const handleGenerate = useCallback(async (bookId: string) => {
     try {
-      await apiFetch(`/api/admin/tts/generate/${bookId}`, { method: 'POST' })
+      await apiFetch(`/api/tts/generate/${bookId}`, { method: 'POST' })
       // Start polling
       const interval = setInterval(async () => {
         try {
-          const data = await apiFetch<{ book_id: string; total: number; cached: number; generating: boolean }>(`/api/admin/tts/status/${bookId}`)
+          const data = await apiFetch<{ book_id: string; total: number; cached: number; generating: boolean }>(`/api/tts/status/${bookId}`)
           setTtsBooks(prev =>
             prev.map(b => b.book_id === bookId ? { ...b, ...data } : b)
           )

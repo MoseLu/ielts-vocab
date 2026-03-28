@@ -427,7 +427,7 @@ def _call_tts_api(sentence: str, voice_id: str, save_path: Path):
         f.write(audio_bytes)
 
 
-@tts_bp.route('/admin/books-summary', methods=['GET'])
+@tts_bp.route('/books-summary', methods=['GET'])
 @admin_required
 def admin_books_summary():
     """所有词书 TTS 进度摘要."""
@@ -446,7 +446,7 @@ def admin_books_summary():
     return jsonify({'books': result}), 200
 
 
-@tts_bp.route('/admin/generate/<book_id>', methods=['POST'])
+@tts_bp.route('/generate/<book_id>', methods=['POST'])
 @admin_required
 def admin_generate_book(book_id):
     """触发后台生成任务."""
@@ -464,7 +464,7 @@ def admin_generate_book(book_id):
     return jsonify({'message': 'Generation started', 'total': total}), 202
 
 
-@tts_bp.route('/admin/status/<book_id>', methods=['GET'])
+@tts_bp.route('/status/<book_id>', methods=['GET'])
 @admin_required
 def admin_tts_status(book_id):
     """查询单个词书进度."""
