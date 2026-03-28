@@ -625,6 +625,10 @@ export default function AdminDashboard() {
           <p className="admin-section-desc">为词书预生成例句音频，用户听写时直接命中本地缓存。</p>
           {ttsBooksLoading ? (
             <div className="loading-spinner" />
+          ) : ttsBooks.length === 0 ? (
+            <div style={{ color: '#ef4444', padding: '16px' }}>
+              加载失败，请刷新重试或检查管理员登录状态
+            </div>
           ) : (
             <div className="tts-books-grid">
               {ttsBooks.map(book => (
