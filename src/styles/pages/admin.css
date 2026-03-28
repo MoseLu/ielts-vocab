@@ -945,3 +945,16 @@
 .tts-generate-btn.loading {
   background: var(--text-tertiary);
 }
+
+.tts-book-card.interrupted {
+  border-color: #f59e0b;
+  border-left-color: #f59e0b;
+}
+
+.tts-generate-btn.interrupted {
+  background: #f59e0b;
+}
+
+.tts-generate-btn.interrupted:hover:not(:disabled) {
+  background: #d97706;
+}

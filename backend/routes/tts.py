@@ -370,12 +370,51 @@ def _count_cached(book_id: str, examples: list) -> int:
     return cached
 
 
+# ── Progress persistence ──────────────────────────────────────────────────────
+
+def _progress_file(book_id: str) -> Path:
+    return _cache_dir() / f'progress_{book_id}.json'
+
+
+def _read_progress(book_id: str) -> dict | None:
+    p = _progress_file(book_id)
+    if not p.exists():
+        return None
+    try:
+        import json
+        return json.loads(p.read_text())
+    except Exception:
+        return None
+
+
+def _write_progress(book_id: str, total: int, completed: int, status: str):
+    import json
+    from datetime import datetime
+    _progress_file(book_id).write_text(json.dumps({
+        'total': total,
+        'completed': completed,
+        'status': status,
+        'updated_at': datetime.utcnow().isoformat(),
+    }))
+
+
 def _generate_for_book(book_id: str, examples: list):
-    """后台批量生成任务（eventlet spawn）."""
+    """后台批量生成任务（eventlet spawn）。
+    - 遇到 429 时通过 _call_tts_api 自动退避重试
+    - 每处理一条句子更新磁盘进度文件，重启后可继续查看进度
+    """
     global _generating_books
+    total = len(examples)
+    completed = _count_cached(book_id, examples)
+    _write_progress(book_id, total, completed, 'running')
+
     try:
         for ex in examples:
             sentence = ex['sentence']
+            already_cached = any(_cache_file_path(sentence, v).exists() for v in _ALTERNATING_VOICES)
+            if already_cached:
+                continue
+
             for voice_id in _ALTERNATING_VOICES:
                 cache_path = _cache_file_path(sentence, voice_id)
                 if cache_path.exists():
@@ -383,17 +422,29 @@ def _generate_for_book(book_id: str, examples: list):
                 try:
                     _call_tts_api(sentence, voice_id, cache_path)
                 except Exception as e:
-                    print(f'[TTS Gen Error] {sentence[:30]}: {e}')
-                eventlet.sleep(0.2)
+                    print(f'[TTS Gen Error] {sentence[:40]}: {e}')
+                # 每次 API 调用后等待 1.5s，避免触发限速
+                eventlet.sleep(1.5)
+
+            completed += 1
+            # 每 5 条或最后一条时写入进度
+            if completed % 5 == 0 or completed == total:
+                _write_progress(book_id, total, completed, 'running')
+
+        _write_progress(book_id, total, total, 'done')
+    except Exception as e:
+        print(f'[TTS Gen Fatal] book={book_id}: {e}')
+        _write_progress(book_id, total, completed, 'error')
+        raise
     finally:
         _generating_books.discard(book_id)
 
 
 def _call_tts_api(sentence: str, voice_id: str, save_path: Path):
-    """调用 MiniMax TTS 并保存到 save_path."""
+    """调用 MiniMax TTS 并保存到 save_path。
+    遇到 429 先切换 API key，再指数退避重试（最多 3 次）。
+    """
     import requests
-    api_key = _get_api_key()
-    url = f"{MINIMAX_BASE_URL}/v1/t2a_v2"
     sentence_with_pauses = add_pause_tags(sentence, pause_seconds=0.4)
     payload = {
         "model": "speech-2.8-hd",
@@ -413,20 +464,51 @@ def _call_tts_api(sentence: str, voice_id: str, save_path: Path):
             "channel": 1
         }
     }
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
-    }
-    resp = requests.post(url, headers=headers, json=payload, timeout=30)
-    if resp.status_code != 200:
-        raise Exception(f"TTS API error: {resp.status_code}")
-    resp_data = resp.json()
-    audio_hex = resp_data.get('data', {}).get('audio')
-    if not audio_hex:
-        raise Exception("No audio in response")
-    audio_bytes = bytes.fromhex(audio_hex)
-    with open(save_path, 'wb') as f:
-        f.write(audio_bytes)
+    url = f"{MINIMAX_BASE_URL}/v1/t2a_v2"
+
+    # 遇到 429 时的退避时长（秒）
+    backoff_delays = [30, 60, 120]
+
+    for attempt in range(len(backoff_delays) + 1):
+        api_key = _get_api_key()
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+        resp = requests.post(url, headers=headers, json=payload, timeout=30)
+
+        if resp.status_code == 200:
+            resp_data = resp.json()
+            audio_hex = resp_data.get('data', {}).get('audio')
+            if not audio_hex:
+                raise Exception("No audio in response")
+            audio_bytes = bytes.fromhex(audio_hex)
+            with open(save_path, 'wb') as f:
+                f.write(audio_bytes)
+            return
+
+        if resp.status_code == 429:
+            if attempt < len(backoff_delays):
+                delay = backoff_delays[attempt]
+                print(f'[TTS 429] 退避 {delay}s (第{attempt + 1}次重试, voice={voice_id})')
+                eventlet.sleep(delay)
+                continue
+            raise Exception(f"TTS 429: quota exceeded after {attempt + 1} attempts")
+
+        raise Exception(f"TTS API error: {resp.status_code} {resp.text[:200]}")
+
+
+def _book_status(book_id: str, generating: bool) -> str:
+    """根据内存标志与进度文件推导当前状态字符串."""
+    if generating:
+        return 'running'
+    progress = _read_progress(book_id)
+    if progress is None:
+        return 'idle'
+    if progress['status'] == 'running':
+        # 进度文件标记运行中但内存里不存在 → 服务重启导致中断
+        return 'interrupted'
+    return progress['status']  # 'done' | 'error' | 'idle'
 
 
 @tts_bp.route('/books-summary', methods=['GET'])
@@ -439,13 +521,15 @@ def admin_books_summary(current_user):
         examples = _get_book_examples(book['id'])
         total = len(examples)
         cached = _count_cached(book['id'], examples)
+        generating = book['id'] in _generating_books
         result.append({
             'book_id': book['id'],
             'title': book['title'],
             'color': book.get('color', '#3b82f6'),
             'total': total,
             'cached': cached,
-            'generating': book['id'] in _generating_books,
+            'generating': generating,
+            'status': _book_status(book['id'], generating),
         })
     return jsonify({'books': result}), 200
 
@@ -453,7 +537,7 @@ def admin_books_summary(current_user):
 @tts_bp.route('/generate/<book_id>', methods=['POST'])
 @admin_required
 def admin_generate_book(current_user, book_id):
-    """触发后台生成任务."""
+    """触发后台生成任务（interrupted/error 状态可重新触发）."""
     from routes.books import VOCAB_BOOKS
     if not any(b['id'] == book_id for b in VOCAB_BOOKS):
         return jsonify({'error': 'Book not found'}), 404
@@ -481,4 +565,5 @@ def admin_tts_status(current_user, book_id):
         'total': total,
         'cached': cached,
         'generating': generating,
+        'status': _book_status(book_id, generating),
     }), 200
