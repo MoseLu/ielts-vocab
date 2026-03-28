@@ -52,6 +52,7 @@ interface TtsBook {
   total: number
   cached: number
   generating?: boolean
+  status?: 'idle' | 'running' | 'done' | 'error' | 'interrupted'
 }
 
 interface TopBook {
@@ -300,7 +301,7 @@ export default function AdminDashboard() {
   const startPolling = useCallback((bookId: string) => {
     const interval = setInterval(async () => {
       try {
-        const data = await apiFetch<{ book_id: string; total: number; cached: number; generating: boolean }>(`/api/tts/status/${bookId}`)
+        const data = await apiFetch<{ book_id: string; total: number; cached: number; generating: boolean; status: TtsBook['status'] }>(`/api/tts/status/${bookId}`)
         setTtsBooks(prev =>
           prev.map(b => b.book_id === bookId ? { ...b, ...data } : b)
         )
@@ -335,7 +336,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (tab !== 'tts' || ttsBooks.length === 0) return
     ttsBooks.forEach(book => {
-      if (book.generating) startPolling(book.book_id)
+      if (book.generating || book.status === 'running') startPolling(book.book_id)
     })
   }, [ttsBooks, tab])
 
@@ -625,33 +626,44 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <div className="tts-books-grid">
-              {ttsBooks.map(book => (
-                <div
-                  key={book.book_id}
-                  className={`tts-book-card ${book.cached === book.total && book.total > 0 ? 'done' : ''}`}
-                  style={{ '--book-color': book.color } as React.CSSProperties}
-                >
-                  <div className="tts-book-title">{book.title}</div>
-                  <div className="tts-book-progress">
-                    <div className="tts-progress-bar">
-                      <div
-                        className="tts-progress-fill"
-                        style={{ width: `${book.total > 0 ? (book.cached / book.total) * 100 : 0}%` }}
-                      />
-                    </div>
-                    <span className="tts-progress-text">
-                      {book.cached} / {book.total} 条
-                    </span>
-                  </div>
-                  <button
-                    className={`tts-generate-btn ${book.generating ? 'loading' : ''} ${book.cached === book.total && book.total > 0 ? 'done' : ''}`}
-                    onClick={() => handleGenerate(book.book_id)}
-                    disabled={book.generating || (book.cached === book.total && book.total > 0)}
+              {ttsBooks.map(book => {
+                const isDone = book.status === 'done' || (book.cached === book.total && book.total > 0)
+                const isRunning = book.generating || book.status === 'running'
+                const isInterrupted = book.status === 'interrupted'
+                const isError = book.status === 'error'
+                const cardClass = `tts-book-card ${isDone ? 'done' : ''} ${isInterrupted || isError ? 'interrupted' : ''}`
+                const btnLabel = isRunning ? '生成中...' : isDone ? '已完成' : isInterrupted ? '续传' : isError ? '重试' : '生成'
+                const btnClass = `tts-generate-btn ${isRunning ? 'loading' : ''} ${isDone ? 'done' : ''} ${isInterrupted || isError ? 'interrupted' : ''}`
+                return (
+                  <div
+                    key={book.book_id}
+                    className={cardClass}
+                    style={{ '--book-color': book.color } as React.CSSProperties}
                   >
-                    {book.generating ? '生成中...' : book.cached === book.total && book.total > 0 ? '已完成' : '生成'}
-                  </button>
-                </div>
-              ))}
+                    <div className="tts-book-title">{book.title}</div>
+                    <div className="tts-book-progress">
+                      <div className="tts-progress-bar">
+                        <div
+                          className="tts-progress-fill"
+                          style={{ width: `${book.total > 0 ? (book.cached / book.total) * 100 : 0}%` }}
+                        />
+                      </div>
+                      <span className="tts-progress-text">
+                        {book.cached} / {book.total} 条
+                        {isInterrupted && <span style={{ color: '#f59e0b', marginLeft: '6px' }}>已中断</span>}
+                        {isError && <span style={{ color: '#ef4444', marginLeft: '6px' }}>出错</span>}
+                      </span>
+                    </div>
+                    <button
+                      className={btnClass}
+                      onClick={() => handleGenerate(book.book_id)}
+                      disabled={isRunning || isDone}
+                    >
+                      {btnLabel}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
