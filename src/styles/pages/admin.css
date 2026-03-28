@@ -847,7 +847,7 @@
 
 /* ── TTS Batch Generate Tab ─────────────────────────────────────────────── */
 
-.admin-tts-panel {}
+.admin-tts-panel { position: relative; }
 
 .admin-section-title {
   font-size: 18px;

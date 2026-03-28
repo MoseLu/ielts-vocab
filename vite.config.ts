@@ -7,7 +7,7 @@ export default defineConfig({
   publicDir: 'assets',
   server: {
     host: '0.0.0.0', // 允许所有端口访问
-    port: 5173,
+    port: 3002,
     strictPort: true, // 端口被占用时报错而非切换端口
     open: false,
     allowedHosts: true, // 允许所有域名访问

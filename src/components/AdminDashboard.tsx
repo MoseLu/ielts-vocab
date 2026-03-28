@@ -229,7 +229,7 @@ export default function AdminDashboard() {
   const [detailBook, setDetailBook] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [ttsBooks, setTtsBooks] = useState<TtsBook[]>([])
-  const [ttsBooksLoading, setTtsBooksLoading] = useState(false)
+  const [ttsBooksLoading, setTtsBooksLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [overviewLoading, setOverviewLoading] = useState(false)
   const [error, setError] = useState('')
@@ -617,7 +617,7 @@ export default function AdminDashboard() {
       {tab === 'tts' && (
         <div className="admin-tts-panel">
           {ttsBooksLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}>
               <div className="loading-spinner" />
             </div>
           ) : ttsBooks.length === 0 ? (

@@ -59,6 +59,9 @@ backend/generate_*.py
 coverage/
 test-results/
 
+# TTS audio cache
+backend/tts_cache/
+
 # Vocabulary data (local generated)
 vocabulary_data/*.txt
 vocabulary_data/*.bak

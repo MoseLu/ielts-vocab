@@ -211,7 +211,7 @@ let _bestVoice: SpeechSynthesisVoice | null | undefined = undefined
 function getBestEnglishVoice(): SpeechSynthesisVoice | null {
   if (_bestVoice !== undefined) return _bestVoice
   const voices = speechSynthesis.getVoices()
-  if (!voices.length) return null
+  if (!voices.length) return null  // voices not loaded yet — do NOT cache, let next call retry
 
   for (const name of PREFERRED_VOICES) {
     const v = voices.find(v => v.name === name)
@@ -230,7 +230,9 @@ function getBestEnglishVoice(): SpeechSynthesisVoice | null {
 
 // Reset voice cache whenever browser loads new voices
 if (typeof speechSynthesis !== 'undefined') {
-  speechSynthesis.addEventListener('voiceschanged', () => { _bestVoice = undefined })
+  speechSynthesis.addEventListener('voiceschanged', () => {
+    _bestVoice = undefined  // force re-selection with fresh voice list
+  })
 }
 
 // ── Audio playback ───────────────────────────────────────────────────────────
@@ -242,8 +244,24 @@ let _currentAudio: HTMLAudioElement | null = null
 // detect that playback was cancelled while they were waiting.
 let _audioGeneration = 0
 
+// Pre-warm the browser's audio engine on module load so the first real play is
+// not truncated. speechSynthesis is used because it exercises the audio stack
+// without needing a valid audio file URL.
+;(function warmUpAudioEngine() {
+  if (typeof speechSynthesis === 'undefined') return
+  const u = new SpeechSynthesisUtterance('')
+  u.volume = 0
+  u.rate = 1
+  speechSynthesis.speak(u)
+  speechSynthesis.cancel()
+})()
+
 // Cache of word → audio URL from Free Dictionary API (null = no recording found)
 const _audioUrlCache = new Map<string, string | null>()
+
+// Preloaded Youdao audio cache: word → fully-loaded ArrayBuffer
+// Ensures the first play is always complete (no partial audio).
+const _youdaoBufferCache = new Map<string, ArrayBuffer>()
 
 /**
  * Fetch a real pronunciation URL from dictionaryapi.dev (Wiktionary recordings).
@@ -290,14 +308,15 @@ async function fetchAudioUrl(word: string): Promise<string | null> {
 /**
  * Play word pronunciation.
  *
- * Cache-first strategy to preserve the browser's autoplay gesture requirement:
- *  - URL cached   → play real Wiktionary recording immediately (no async gap).
- *  - URL unknown  → play Web Speech API immediately (stays in gesture context),
- *                   then fetch & cache the URL in the background so the next
- *                   play of the same word uses the real recording.
+ * Priority:
+ *  1. Wiktionary URL (cached)  → play immediately (complete file URL)
+ *  2. Youdao buffer (cached)   → wait for load, then play (always complete)
+ *  3. Youdao buffer (pending)  → abort pending, fetch new word's buffer, play
+ *  4. Speech synthesis         → always complete
  *
- * This ensures audio works on production HTTPS where Chrome blocks audio that
- * is triggered after an async operation (which loses the user-gesture context).
+ * Audio is NEVER streamed and played before full download. First Youdao play
+ * of a new word may be slightly delayed while the buffer loads — this is
+ * intentional to guarantee complete audio.
  */
 export function playWordAudio(
   word: string,
@@ -305,87 +324,152 @@ export function playWordAudio(
   onEnd?: () => void,
 ): void {
   stopAudio()
-  // Increment generation AFTER stopAudio so the setTimeout check below
-  // (which captures this value) is consistent with what stopAudio set.
   const gen = _audioGeneration
 
   const volume = parseFloat(settings.volume || '100') / 100
-  const rate   = parseFloat(settings.playbackSpeed || '0.8')
+  const rate   = Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '0.8')))
 
   const key = word.toLowerCase()
 
-  // ── Final fallback: Youdao ──────────────────────────────────────────────
-  const speakWithYoudao = () => {
-    const audio = new Audio(
-      `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`
-    )
-    audio.volume = Math.min(1, Math.max(0, volume))
-    audio.playbackRate = Math.min(4, Math.max(0.25, rate))
-    if (onEnd) audio.onended = onEnd
-    _currentAudio = audio
-    audio.play().catch(() => {
-      _currentAudio = null
-      if (onEnd) onEnd()
-    })
-  }
-
-  // ── Speech synthesis (used when no real recording is cached) ────────────
-  const speakWithSynthesis = () => {
-    if (typeof speechSynthesis === 'undefined') { speakWithYoudao(); return }
-    // Hard cap: force Youdao if speech hasn't started in 5s
-    const overallTimer = setTimeout(() => {
-      if (_audioGeneration !== gen) return
-      console.warn(`[playWordAudio] speech timeout for "${word}", Youdao fallback`)
-      speakWithYoudao()
-    }, 5000)
-    const u = new SpeechSynthesisUtterance(word)
-    u.lang   = 'en-US'
-    u.rate   = rate
-    u.volume = volume
-    const voice = getBestEnglishVoice()
-    if (voice) u.voice = voice
-    u.onend = () => { clearTimeout(overallTimer); if (onEnd) onEnd() }
-    u.onerror = () => {
-      clearTimeout(overallTimer)
-      speechSynthesis.cancel()
-      console.warn(`[playWordAudio] speechSynthesis error for "${word}", Youdao fallback`)
-      speakWithYoudao()
-    }
-    // Chrome bug: calling speak() immediately after cancel() can fire onend
-    // without actually playing audio (every other word is silent). A short
-    // delay lets the cancel settle before the next utterance starts.
-    setTimeout(() => {
-      if (_audioGeneration !== gen) return
-      speechSynthesis.speak(u)
-    }, 50)
-  }
-
-  // ── URL already cached — play real recording immediately ─────────────────
+  // ── Wiktionary URL: already a complete file URL, play immediately ────────────
   if (_audioUrlCache.has(key)) {
     const url = _audioUrlCache.get(key)
     if (url) {
       const audio = new Audio(url)
-      audio.volume = Math.min(1, Math.max(0, volume))
-      audio.playbackRate = Math.min(4, Math.max(0.25, rate))
+      audio.volume = volume
+      audio.playbackRate = rate
       if (onEnd) audio.onended = () => onEnd()
       _currentAudio = audio
+      const start = () => {
+        if (_audioGeneration !== gen) return
+        audio.play().catch(() => {
+          if (_audioGeneration !== gen) return
+          _currentAudio = null
+          _playYoudao(gen, word, key, volume, rate, onEnd)
+        })
+      }
+
+      // Check synchronously first — readyState may already be >= 2 for cached URLs
+      if (audio.readyState >= 2) {
+        start()
+      } else {
+        audio.addEventListener('canplaythrough', start, { once: true })
+        audio.load()
+      }
+      return
+    }
+    // Cached null → no Wiktionary recording. Skip to Youdao.
+  }
+
+  // ── Youdao: always wait for full buffer before playing ───────────────────
+  _playYoudao(gen, word, key, volume, rate, onEnd)
+
+  // ── Background: prefetch Wiktionary URL for next time ────────────────────
+  fetchAudioUrl(word)
+}
+
+/**
+ * Play Youdao audio only after the buffer is fully loaded.
+ * If the buffer is already cached → immediate play.
+ * If fetching → waits for completion before playing.
+ * Clears any pending fetch for a different word.
+ */
+function _playYoudao(
+  gen: number,
+  word: string,
+  key: string,
+  volume: number,
+  rate: number,
+  onEnd?: () => void,
+): void {
+  // Discard result if a newer playWordAudio call has since started
+  const loadAndPlay = (buf: ArrayBuffer | null) => {
+    if (_audioGeneration !== gen) return
+    if (!buf) {
+      _speakWithSynthesis(gen, word, volume, rate, onEnd)
+      return
+    }
+    const blob = new Blob([buf], { type: 'audio/mp3' })
+    const blobUrl = URL.createObjectURL(blob)
+    const audio = new Audio(blobUrl)
+    audio.volume = volume
+    audio.playbackRate = rate
+    if (onEnd) audio.onended = () => onEnd()
+    _currentAudio = audio
+
+    // Blob data is already in memory — readyState may be >= 2 synchronously
+    // after load(). If not yet ready, wait for the event.
+    const start = () => {
+      if (_audioGeneration !== gen) return
       audio.play().catch(() => {
         if (_audioGeneration !== gen) return
         _currentAudio = null
-        // Real audio failed — fall through to speech synthesis
-        speakWithSynthesis()
+        if (onEnd) onEnd()
       })
-      return
     }
-    // cached null means no recording exists → use synthesis directly
-    speakWithSynthesis()
+
+    if (audio.readyState >= 2) {
+      start()
+    } else {
+      audio.addEventListener('canplaythrough', start, { once: true })
+      audio.load()
+    }
+  }
+
+  // Already cached → play immediately from buffer
+  if (_youdaoBufferCache.has(key)) {
+    loadAndPlay(_youdaoBufferCache.get(key)!)
     return
   }
 
-  // ── URL not yet cached — use speech synthesis immediately ─────────────────
-  // Fetch in background to populate cache for the next play.
-  speakWithSynthesis()
-  fetchAudioUrl(word) // fire-and-forget; populates _audioUrlCache
+  // Not cached → fetch and wait (no streaming)
+  ;(async () => {
+    try {
+      const res = await fetch(
+        `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(key)}&type=2`,
+      )
+      if (!res.ok) { loadAndPlay(null); return }
+      const buf = await res.arrayBuffer()
+      _youdaoBufferCache.set(key, buf)
+      loadAndPlay(buf)
+    } catch {
+      if (_audioGeneration !== gen) return
+      loadAndPlay(null)
+    }
+  })()
+}
+
+/**
+ * Speech synthesis — always complete (no partial audio risk).
+ */
+function _speakWithSynthesis(
+  gen: number,
+  word: string | undefined,
+  volume: number,
+  rate: number,
+  onEnd?: () => void,
+): void {
+  if (typeof speechSynthesis === 'undefined') return
+  const overallTimer = setTimeout(() => {
+    if (_audioGeneration !== gen) return
+    console.warn('[playWordAudio] speech timeout, no audio played')
+  }, 5000)
+  const u = new SpeechSynthesisUtterance(word ?? '')
+  u.lang   = 'en-US'
+  u.rate   = rate
+  u.volume = volume
+  const voice = getBestEnglishVoice()
+  if (voice) u.voice = voice
+  u.onend = () => { clearTimeout(overallTimer); if (onEnd) onEnd() }
+  u.onerror = () => {
+    clearTimeout(overallTimer)
+    speechSynthesis.cancel()
+    console.warn('[playWordAudio] speechSynthesis error, no audio played')
+  }
+  setTimeout(() => {
+    if (_audioGeneration !== gen) return
+    speechSynthesis.speak(u)
+  }, 50)
 }
 
 /** Stop any in-progress audio (both Audio element and speechSynthesis). */

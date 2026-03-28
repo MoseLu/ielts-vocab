@@ -21,7 +21,9 @@ export default function RadioMode({
   const [radioHovered, setRadioHovered] = useState(false)
   const radioActiveRef = useRef(true)
   const radioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const radioRepeatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const radioIndexRef = useRef(initialIndex)
+  const radioGenRef = useRef(0)
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
 
@@ -56,17 +58,26 @@ export default function RadioMode({
     const word = vocab[q[idx]]
     if (!word) { radioPlayFrom(idx + 1, 0); return }
 
+    const nextIdx = idx + 1
+    // Capture the current generation — any callbacks from a previous word that
+    // fire after this point must not execute (user may have skipped ahead).
+    const gen = radioGenRef.current
     playWordAudio(word.word, s, () => {
       if (!radioActiveRef.current) return
+      if (radioGenRef.current !== gen) return // stale — word was skipped
       if (repeat < maxRepeat) {
         // Brief pause between repetitions of the same word
-        setTimeout(() => {
-          if (radioActiveRef.current) radioPlayFrom(idx, repeat + 1)
+        radioRepeatTimerRef.current = setTimeout(() => {
+          if (!radioActiveRef.current) return
+          if (radioGenRef.current !== gen) return // stale
+          radioPlayFrom(idx, repeat + 1)
         }, 500)
       } else {
         // Move to next word after interval
         radioTimerRef.current = setTimeout(() => {
-          if (radioActiveRef.current) radioPlayFrom(radioIndexRef.current + 1, 0)
+          if (!radioActiveRef.current) return
+          if (radioGenRef.current !== gen) return // stale
+          radioPlayFrom(nextIdx, 0)
         }, parseFloat(String(s.interval ?? '2')) * 1000)
       }
     })
@@ -83,13 +94,16 @@ export default function RadioMode({
     return () => {
       radioActiveRef.current = false
       if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
+      if (radioRepeatTimerRef.current) clearTimeout(radioRepeatTimerRef.current)
       stopAudio()
     }
   }, [])
 
   const handleRadioSkipPrev = () => {
     const newIdx = Math.max(0, radioIndexRef.current - 1)
+    radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
+    if (radioRepeatTimerRef.current) clearTimeout(radioRepeatTimerRef.current)
     stopAudio()
     radioIndexRef.current = newIdx
     setCurrentIndex(newIdx)
@@ -101,7 +115,9 @@ export default function RadioMode({
 
   const handleRadioSkipNext = () => {
     const newIdx = Math.min(queueRef.current.length - 1, radioIndexRef.current + 1)
+    radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
+    if (radioRepeatTimerRef.current) clearTimeout(radioRepeatTimerRef.current)
     stopAudio()
     radioIndexRef.current = newIdx
     setCurrentIndex(newIdx)
@@ -113,7 +129,9 @@ export default function RadioMode({
 
   const handleRadioPause = () => {
     radioActiveRef.current = false
+    radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
+    if (radioRepeatTimerRef.current) clearTimeout(radioRepeatTimerRef.current)
     stopAudio()
     setRadioPaused(true)
   }
@@ -126,7 +144,9 @@ export default function RadioMode({
 
   const handleRadioStop = () => {
     radioActiveRef.current = false
+    radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
+    if (radioRepeatTimerRef.current) clearTimeout(radioRepeatTimerRef.current)
     stopAudio()
     setRadioStopped(true)
     setRadioPaused(false)
