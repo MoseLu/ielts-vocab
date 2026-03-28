@@ -244,6 +244,12 @@ let _currentAudio: HTMLAudioElement | null = null
 // detect that playback was cancelled while they were waiting.
 let _audioGeneration = 0
 
+// Whether HTMLAudioElement has been played at least once this session.
+// The browser's audio hardware needs ~50-200 ms to initialise on the first
+// HTMLAudioElement.play() call; without a warm-up delay the very beginning of
+// the audio is silently discarded (e.g. "attention" sounds like "tention").
+let _htmlAudioWarmed = false
+
 // Pre-warm the browser's audio engine on module load so the first real play is
 // not truncated. speechSynthesis is used because it exercises the audio stack
 // without needing a valid audio file URL.
@@ -340,13 +346,24 @@ export function playWordAudio(
       audio.playbackRate = rate
       if (onEnd) audio.onended = () => onEnd()
       _currentAudio = audio
-      const start = () => {
+      const doPlay = () => {
         if (_audioGeneration !== gen) return
+        _htmlAudioWarmed = true
         audio.play().catch(() => {
           if (_audioGeneration !== gen) return
           _currentAudio = null
           _playYoudao(gen, word, key, volume, rate, onEnd)
         })
+      }
+      const start = () => {
+        if (_audioGeneration !== gen) return
+        // First HTMLAudioElement play this session: delay so audio hardware can
+        // finish initialising, otherwise the first ~100 ms of audio is cut off.
+        if (!_htmlAudioWarmed) {
+          setTimeout(doPlay, 150)
+        } else {
+          doPlay()
+        }
       }
 
       // Check synchronously first — readyState may already be >= 2 for cached URLs
@@ -399,13 +416,24 @@ function _playYoudao(
 
     // Blob data is already in memory — readyState may be >= 2 synchronously
     // after load(). If not yet ready, wait for the event.
-    const start = () => {
+    const doPlay = () => {
       if (_audioGeneration !== gen) return
+      _htmlAudioWarmed = true
       audio.play().catch(() => {
         if (_audioGeneration !== gen) return
         _currentAudio = null
         if (onEnd) onEnd()
       })
+    }
+    const start = () => {
+      if (_audioGeneration !== gen) return
+      // First HTMLAudioElement play this session: delay so audio hardware can
+      // finish initialising, otherwise the first ~100 ms of audio is cut off.
+      if (!_htmlAudioWarmed) {
+        setTimeout(doPlay, 150)
+      } else {
+        doPlay()
+      }
     }
 
     if (audio.readyState >= 2) {
