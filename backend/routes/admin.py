@@ -6,12 +6,13 @@ from models import (
 from sqlalchemy import func, desc
 from datetime import datetime, timedelta
 from routes.middleware import admin_required
+from routes.tts import tts_bp
 
 admin_bp = Blueprint('admin', __name__)
 
 
 def init_admin(app_instance):
-    pass  # kept for API compatibility
+    app_instance.register_blueprint(tts_bp, url_prefix='/api/admin/tts')
 
 
 def _user_summary(user):
