@@ -7,6 +7,8 @@ MiniMax TTS (Text-to-Speech) 路由
 import os
 import io
 import hashlib
+import eventlet
+import requests
 from pathlib import Path
 from flask import Blueprint, request, jsonify, send_file, current_app
 from dotenv import load_dotenv
