@@ -605,7 +605,9 @@ export default function AdminDashboard() {
       {tab === 'tts' && (
         <div className="admin-tts-panel">
           {ttsBooksLoading ? (
-            <div className="loading-spinner" />
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+              <div className="loading-spinner" />
+            </div>
           ) : ttsBooks.length === 0 ? (
             <div style={{ color: '#ef4444', padding: '16px' }}>
               加载失败，请刷新重试或检查管理员登录状态
