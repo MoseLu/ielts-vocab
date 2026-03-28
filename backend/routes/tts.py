@@ -10,6 +10,7 @@ import hashlib
 from pathlib import Path
 from flask import Blueprint, request, jsonify, send_file, current_app
 from dotenv import load_dotenv
+from routes.middleware import admin_required
 
 # Load .env from backend directory
 env_path = Path(__file__).parent.parent / '.env'
@@ -329,3 +330,151 @@ def generate_example_audio():
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'TTS error: {str(e)}'}), 500
+
+
+# ── Batch generation (admin) ────────────────────────────────────────────────────
+
+_generating_books: set = set()  # 正在生成的 book_id 集合
+
+
+def _get_book_examples(book_id):
+    """返回词书中所有有例句的单词及例句."""
+    from routes.books import load_book_vocabulary
+    words = load_book_vocabulary(book_id)
+    result = []
+    for w in words:
+        examples = w.get('examples', [])
+        if examples:
+            result.append({'word': w['word'], 'sentence': examples[0]['en']})
+    return result
+
+
+def _cache_file_path(sentence: str, voice_id: str) -> Path:
+    """Return cache file path for (sentence, voice_id)."""
+    import hashlib
+    key = hashlib.md5(f"ex:{sentence}:{voice_id}".encode()).hexdigest()[:16]
+    return _cache_dir() / f'{key}.mp3'
+
+
+def _count_cached(book_id: str, examples: list) -> int:
+    """返回已缓存的句子数（两个 voice 任一存在即算已缓存）."""
+    cached = 0
+    for ex in examples:
+        sentence = ex['sentence']
+        for vid in _ALTERNATING_VOICES:
+            if _cache_file_path(sentence, vid).exists():
+                cached += 1
+                break
+    return cached
+
+
+def _generate_for_book(book_id: str, examples: list):
+    """后台批量生成任务（eventlet spawn）."""
+    global _generating_books
+    try:
+        for ex in examples:
+            sentence = ex['sentence']
+            for voice_id in _ALTERNATING_VOICES:
+                cache_path = _cache_file_path(sentence, voice_id)
+                if cache_path.exists():
+                    continue
+                try:
+                    _call_tts_api(sentence, voice_id, cache_path)
+                except Exception as e:
+                    print(f'[TTS Gen Error] {sentence[:30]}: {e}')
+                eventlet.sleep(0.2)
+    finally:
+        _generating_books.discard(book_id)
+
+
+def _call_tts_api(sentence: str, voice_id: str, save_path: Path):
+    """调用 MiniMax TTS 并保存到 save_path."""
+    import requests
+    api_key = _get_api_key()
+    url = f"{MINIMAX_BASE_URL}/v1/t2a_v2"
+    sentence_with_pauses = add_pause_tags(sentence, pause_seconds=0.4)
+    payload = {
+        "model": "speech-2.8-hd",
+        "text": sentence_with_pauses,
+        "stream": False,
+        "voice_setting": {
+            "voice_id": voice_id,
+            "speed": 0.9,
+            "vol": 1.0,
+            "pitch": 0,
+            "emotion": "neutral"
+        },
+        "audio_setting": {
+            "sample_rate": 32000,
+            "bitrate": 128000,
+            "format": "mp3",
+            "channel": 1
+        }
+    }
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json'
+    }
+    resp = requests.post(url, headers=headers, json=payload, timeout=30)
+    if resp.status_code != 200:
+        raise Exception(f"TTS API error: {resp.status_code}")
+    resp_data = resp.json()
+    audio_hex = resp_data.get('data', {}).get('audio')
+    if not audio_hex:
+        raise Exception("No audio in response")
+    audio_bytes = bytes.fromhex(audio_hex)
+    with open(save_path, 'wb') as f:
+        f.write(audio_bytes)
+
+
+@tts_bp.route('/admin/books-summary', methods=['GET'])
+@admin_required
+def admin_books_summary():
+    """所有词书 TTS 进度摘要."""
+    from routes.books import VOCAB_BOOKS
+    result = []
+    for book in VOCAB_BOOKS:
+        examples = _get_book_examples(book['id'])
+        total = len(examples)
+        cached = _count_cached(book['id'], examples)
+        result.append({
+            'book_id': book['id'],
+            'title': book['title'],
+            'total': total,
+            'cached': cached,
+        })
+    return jsonify({'books': result}), 200
+
+
+@tts_bp.route('/admin/generate/<book_id>', methods=['POST'])
+@admin_required
+def admin_generate_book(book_id):
+    """触发后台生成任务."""
+    from routes.books import VOCAB_BOOKS
+    if not any(b['id'] == book_id for b in VOCAB_BOOKS):
+        return jsonify({'error': 'Book not found'}), 404
+    examples = _get_book_examples(book_id)
+    if not examples:
+        return jsonify({'error': 'No examples found'}), 400
+    if book_id in _generating_books:
+        return jsonify({'error': 'Already generating', 'total': len(examples)}), 409
+    _generating_books.add(book_id)
+    total = len(examples)
+    eventlet.spawn(_generate_for_book, book_id, examples)
+    return jsonify({'message': 'Generation started', 'total': total}), 202
+
+
+@tts_bp.route('/admin/status/<book_id>', methods=['GET'])
+@admin_required
+def admin_tts_status(book_id):
+    """查询单个词书进度."""
+    examples = _get_book_examples(book_id)
+    total = len(examples)
+    cached = _count_cached(book_id, examples)
+    generating = book_id in _generating_books
+    return jsonify({
+        'book_id': book_id,
+        'total': total,
+        'cached': cached,
+        'generating': generating,
+    }), 200
