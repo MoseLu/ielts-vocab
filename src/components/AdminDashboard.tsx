@@ -604,8 +604,6 @@ export default function AdminDashboard() {
       {/* ── TTS Tab ── */}
       {tab === 'tts' && (
         <div className="admin-tts-panel">
-          <h2 className="admin-section-title">词书 TTS 音频</h2>
-          <p className="admin-section-desc">为词书预生成例句音频，用户听写时直接命中本地缓存。</p>
           {ttsBooksLoading ? (
             <div className="loading-spinner" />
           ) : ttsBooks.length === 0 ? (
