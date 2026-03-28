@@ -45,6 +45,14 @@ interface ModeStats {
   words: number
 }
 
+interface TtsBook {
+  book_id: string
+  title: string
+  total: number
+  cached: number
+  generating?: boolean
+}
+
 interface TopBook {
   book_id: string
   sessions: number
@@ -201,7 +209,7 @@ function StatCard({ label, value, sub, color = '#6366f1' }: {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState<'overview' | 'users'>('overview')
+  const [tab, setTab] = useState<'overview' | 'users' | 'tts'>('overview')
   const [overview, setOverview] = useState<Overview | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
@@ -218,6 +226,8 @@ export default function AdminDashboard() {
   const [detailMode, setDetailMode] = useState('')
   const [detailBook, setDetailBook] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
+  const [ttsBooks, setTtsBooks] = useState<TtsBook[]>([])
+  const [ttsBooksLoading, setTtsBooksLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [overviewLoading, setOverviewLoading] = useState(false)
   const [error, setError] = useState('')
@@ -274,11 +284,48 @@ export default function AdminDashboard() {
     }
   }, [])
 
+  const fetchTtsBooks = useCallback(async () => {
+    setTtsBooksLoading(true)
+    try {
+      const data = await apiFetch<{ books: TtsBook[] }>('/api/admin/tts/books-summary')
+      setTtsBooks(data.books || [])
+    } catch (e) {
+      console.error('Failed to fetch TTS books:', e)
+    } finally {
+      setTtsBooksLoading(false)
+    }
+  }, [])
+
+  const handleGenerate = useCallback(async (bookId: string) => {
+    try {
+      await apiFetch(`/api/admin/tts/generate/${bookId}`, { method: 'POST' })
+      // Start polling
+      const interval = setInterval(async () => {
+        try {
+          const data = await apiFetch<{ book_id: string; total: number; cached: number; generating: boolean }>(`/api/admin/tts/status/${bookId}`)
+          setTtsBooks(prev =>
+            prev.map(b => b.book_id === bookId ? { ...b, ...data } : b)
+          )
+          if (!data.generating) clearInterval(interval)
+        } catch { /* ignore */ }
+      }, 2000)
+    } catch (e) {
+      console.error('Failed to start generation:', e)
+    }
+  }, [])
+
   // Initial load
   useEffect(() => {
     fetchOverview()
     fetchUsers(1, '', 'created_at', 'desc')
   }, [])
+
+  // Load TTS books when TTS tab is opened
+  useEffect(() => {
+    if (tab === 'tts' && ttsBooks.length === 0) {
+      fetchTtsBooks()
+    }
+  }, [tab, ttsBooks.length, fetchTtsBooks])
 
   // Auto-refresh every 30s
   useEffect(() => {
@@ -349,6 +396,9 @@ export default function AdminDashboard() {
         <button className={`admin-tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
           用户管理
           <span className="admin-tab-badge">{total}</span>
+        </button>
+        <button className={`admin-tab ${tab === 'tts' ? 'active' : ''}`} onClick={() => setTab('tts')}>
+          词书音频
         </button>
       </div>
 
@@ -563,6 +613,43 @@ export default function AdminDashboard() {
                 </button>
               ))}
               <button disabled={page >= pages} onClick={() => handlePageChange(page + 1)}>下一页</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── TTS Tab ── */}
+      {tab === 'tts' && (
+        <div className="admin-tts-panel">
+          <h2 className="admin-section-title">词书 TTS 音频</h2>
+          <p className="admin-section-desc">为词书预生成例句音频，用户听写时直接命中本地缓存。</p>
+          {ttsBooksLoading ? (
+            <div className="loading-spinner" />
+          ) : (
+            <div className="tts-books-grid">
+              {ttsBooks.map(book => (
+                <div key={book.book_id} className={`tts-book-card ${book.cached === book.total && book.total > 0 ? 'done' : ''}`}>
+                  <div className="tts-book-title">{book.title}</div>
+                  <div className="tts-book-progress">
+                    <div className="tts-progress-bar">
+                      <div
+                        className="tts-progress-fill"
+                        style={{ width: `${book.total > 0 ? (book.cached / book.total) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <span className="tts-progress-text">
+                      {book.cached} / {book.total} 条
+                    </span>
+                  </div>
+                  <button
+                    className={`tts-generate-btn ${book.generating ? 'loading' : ''} ${book.cached === book.total && book.total > 0 ? 'done' : ''}`}
+                    onClick={() => handleGenerate(book.book_id)}
+                    disabled={book.generating || (book.cached === book.total && book.total > 0)}
+                  >
+                    {book.generating ? '生成中...' : book.cached === book.total && book.total > 0 ? '已完成' : '生成'}
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
