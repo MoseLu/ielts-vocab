@@ -244,27 +244,38 @@ let _currentAudio: HTMLAudioElement | null = null
 // detect that playback was cancelled while they were waiting.
 let _audioGeneration = 0
 
-// Whether HTMLAudioElement has been played at least once this session.
-// The browser's audio hardware needs ~50-200 ms to initialise on the first
-// HTMLAudioElement.play() call; without a warm-up delay the very beginning of
-// the audio is silently discarded (e.g. "attention" sounds like "tention").
-let _htmlAudioWarmed = false
+// ── Web Audio API path (Youdao blob) ─────────────────────────────────────────
+// AudioContext + AudioBufferSourceNode guarantees the first sample plays at the
+// exact scheduled time — no OS audio hardware "cold-start" truncation.
 
-// Promise that resolves once a silent HTMLAudioElement has successfully played
-// through, proving the audio hardware is initialised.  Created on the first
-// playWordAudio() call (requires prior user interaction for autoplay to work).
+let _audioCtx: AudioContext | null = null
+let _currentSource: AudioBufferSourceNode | null = null
+// Cache decoded AudioBuffers so the same word isn't decoded twice.
+const _decodedCache = new Map<string, AudioBuffer>()
+
+function _getOrCreateAudioCtx(): AudioContext | null {
+  try {
+    if (_audioCtx && _audioCtx.state !== 'closed') return _audioCtx
+    const Ctor = (window as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext })
+      .AudioContext ?? (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!Ctor) return null
+    _audioCtx = new Ctor()
+    return _audioCtx
+  } catch { return null }
+}
+
+// ── HTMLAudioElement warmup (used only for the Wiktionary URL path) ──────────
+// The Wiktionary path is only taken after Youdao has already played (hardware
+// is warm), so this warmup is rarely needed — it is kept as a safety net.
+
 let _htmlAudioWarmupPromise: Promise<void> | null = null
 
-/**
- * Play a 100 ms silent WAV through HTMLAudioElement to initialise the browser's
- * audio hardware pipeline.  Subsequent calls return the same cached Promise so
- * the warmup only ever runs once per session.
- */
 function _warmupHtmlAudio(): Promise<void> {
   if (_htmlAudioWarmupPromise) return _htmlAudioWarmupPromise
   _htmlAudioWarmupPromise = new Promise<void>((resolve) => {
     try {
-      // Build a minimal valid WAV in memory: 44-byte header + 100 ms silence.
+      // A 100 ms WAV with one non-zero sample so the browser cannot skip
+      // hardware initialisation by detecting pure silence.
       const sampleRate = 22050
       const numSamples = (sampleRate * 0.1) | 0
       const buf = new ArrayBuffer(44 + numSamples * 2)
@@ -276,19 +287,17 @@ function _warmupHtmlAudio(): Promise<void> {
       v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true)
       v.setUint16(32, 2, true);  v.setUint16(34, 16, true)
       ws(36, 'data'); v.setUint32(40, numSamples * 2, true)
+      v.setInt16(44, 1, true)  // single non-zero sample — forces hardware init
       const blob = new Blob([buf], { type: 'audio/wav' })
       const url  = URL.createObjectURL(blob)
       const wa   = new Audio(url)
-      wa.volume  = 0
-      const done = () => { try { URL.revokeObjectURL(url) } catch { /**/ } _htmlAudioWarmed = true; resolve() }
+      wa.volume  = 0.001  // non-zero so browser doesn't optimise away hardware init
+      const done = () => { try { URL.revokeObjectURL(url) } catch { /**/ } resolve() }
       wa.onended = done
       wa.onerror = done
-      setTimeout(done, 500) // fallback in case events don't fire
+      setTimeout(done, 500)
       wa.play().catch(done)
-    } catch {
-      _htmlAudioWarmed = true
-      resolve()
-    }
+    } catch { resolve() }
   })
   return _htmlAudioWarmupPromise
 }
@@ -436,70 +445,118 @@ function _playYoudao(
   rate: number,
   onEnd?: () => void,
 ): void {
-  // Discard result if a newer playWordAudio call has since started
+  // ── Inner: play a raw MP3 ArrayBuffer ──────────────────────────────────────
   const loadAndPlay = (buf: ArrayBuffer | null) => {
     if (_audioGeneration !== gen) return
-    if (!buf) {
-      _speakWithSynthesis(gen, word, volume, rate, onEnd)
+    if (!buf) { _speakWithSynthesis(gen, word, volume, rate, onEnd); return }
+
+    // Primary path: Web Audio API.
+    // AudioBufferSourceNode.start() plays at the exact scheduled AudioContext
+    // time — no OS audio hardware cold-start, no first-sample truncation.
+    const ctx = _getOrCreateAudioCtx()
+    if (ctx) {
+      ;(async () => {
+        // Resume suspended context (can happen on iOS after backgrounding).
+        if (ctx.state === 'suspended') {
+          try { await ctx.resume() } catch { /* fall through to HTML fallback */ }
+        }
+        if (_audioGeneration !== gen) return
+
+        let decoded = _decodedCache.get(key)
+        if (!decoded) {
+          try {
+            decoded = await ctx.decodeAudioData(buf.slice(0))
+            _decodedCache.set(key, decoded)
+          } catch {
+            // MP3 decode error → fall back to HTMLAudioElement
+            if (_audioGeneration === gen) _playBlobViaHtmlAudio(gen, buf, volume, rate, onEnd)
+            return
+          }
+        }
+        if (_audioGeneration !== gen) return
+
+        // Stop any previously playing source node.
+        if (_currentSource) { try { _currentSource.stop() } catch { /**/ } _currentSource = null }
+
+        const gain = ctx.createGain()
+        gain.gain.value = volume
+        gain.connect(ctx.destination)
+
+        const source = ctx.createBufferSource()
+        source.buffer = decoded
+        source.playbackRate.value = rate
+        source.connect(gain)
+        source.onended = () => {
+          gain.disconnect()
+          if (_audioGeneration === gen && onEnd) onEnd()
+        }
+        _currentSource = source
+        source.start(ctx.currentTime)  // exact start — zero cold-start latency
+      })()
       return
     }
-    const blob = new Blob([buf], { type: 'audio/mp3' })
-    const blobUrl = URL.createObjectURL(blob)
-    const audio = new Audio(blobUrl)
-    audio.volume = volume
-    audio.playbackRate = rate
-    if (onEnd) audio.onended = () => onEnd()
-    _currentAudio = audio
 
-    // Blob data is already in memory — readyState may be >= 2 synchronously
-    // after load(). If not yet ready, wait for the event.
-    const doPlay = () => {
-      if (_audioGeneration !== gen) return
-      audio.play().catch(() => {
-        if (_audioGeneration !== gen) return
-        _currentAudio = null
-        if (onEnd) onEnd()
-      })
-    }
-    // Hardware is guaranteed warm by the time loadAndPlay is called (caller
-    // always awaits _warmupHtmlAudio before invoking loadAndPlay).
-    if (audio.readyState >= 2) {
-      doPlay()
-    } else {
-      audio.addEventListener('canplaythrough', doPlay, { once: true })
-      audio.load()
-    }
+    // Fallback: no AudioContext support → HTMLAudioElement.
+    _playBlobViaHtmlAudio(gen, buf, volume, rate, onEnd)
   }
 
-  // Already cached → warmup (no-op if done) then play
+  // Already cached → play immediately.
   if (_youdaoBufferCache.has(key)) {
-    _warmupHtmlAudio().then(() => {
-      if (_audioGeneration !== gen) return
-      loadAndPlay(_youdaoBufferCache.get(key)!)
-    })
+    loadAndPlay(_youdaoBufferCache.get(key)!)
     return
   }
 
-  // Not cached → start warmup AND network fetch concurrently so the hardware
-  // is ready by the time the buffer arrives (no extra perceived delay).
-  const warmup = _warmupHtmlAudio()
+  // Not cached → fetch then play.
   ;(async () => {
     try {
       const res = await fetch(
         `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(key)}&type=2`,
       )
-      await warmup  // ensure hardware is ready before decoding/playing
       if (_audioGeneration !== gen) return
       if (!res.ok) { loadAndPlay(null); return }
       const buf = await res.arrayBuffer()
       _youdaoBufferCache.set(key, buf)
       loadAndPlay(buf)
     } catch {
-      await warmup
       if (_audioGeneration !== gen) return
       loadAndPlay(null)
     }
   })()
+}
+
+/**
+ * HTMLAudioElement fallback for blob MP3 data.
+ * Used when AudioContext is unavailable or decodeAudioData fails.
+ */
+function _playBlobViaHtmlAudio(
+  gen: number,
+  buf: ArrayBuffer,
+  volume: number,
+  rate: number,
+  onEnd?: () => void,
+): void {
+  const blob   = new Blob([buf], { type: 'audio/mp3' })
+  const blobUrl = URL.createObjectURL(blob)
+  const audio  = new Audio(blobUrl)
+  audio.volume = volume
+  audio.playbackRate = rate
+  if (onEnd) audio.onended = () => onEnd()
+  _currentAudio = audio
+
+  const doPlay = () => {
+    if (_audioGeneration !== gen) return
+    audio.play().catch(() => {
+      if (_audioGeneration !== gen) return
+      _currentAudio = null
+      if (onEnd) onEnd()
+    })
+  }
+  // Use warmup to mitigate cold-start on platforms without AudioContext.
+  _warmupHtmlAudio().then(() => {
+    if (_audioGeneration !== gen) return
+    if (audio.readyState >= 2) { doPlay() }
+    else { audio.addEventListener('canplaythrough', doPlay, { once: true }); audio.load() }
+  })
 }
 
 /**
@@ -535,9 +592,13 @@ function _speakWithSynthesis(
   }, 50)
 }
 
-/** Stop any in-progress audio (both Audio element and speechSynthesis). */
+/** Stop any in-progress audio (AudioContext source, HTMLAudioElement, speechSynthesis). */
 export function stopAudio(): void {
   _audioGeneration++
+  if (_currentSource) {
+    try { _currentSource.stop() } catch { /**/ }
+    _currentSource = null
+  }
   if (_currentAudio) {
     _currentAudio.onended = null
     _currentAudio.pause()
