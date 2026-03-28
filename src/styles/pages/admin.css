@@ -58,7 +58,7 @@
   display: flex;
   gap: 4px;
   border-bottom: 2px solid var(--border);
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .admin-tab {
@@ -97,7 +97,14 @@
 }
 
 /* Loading / empty */
-.admin-loading { text-align: center; color: var(--text-tertiary); padding: 40px; font-size: 14px; }
+.admin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
 .admin-empty { text-align: center; color: var(--text-tertiary); padding: 32px; font-size: 14px; }
 
 /* ── Overview ── */
@@ -840,9 +847,7 @@
 
 /* ── TTS Batch Generate Tab ─────────────────────────────────────────────── */
 
-.admin-tts-panel {
-  padding: 10px;
-}
+.admin-tts-panel {}
 
 .admin-section-title {
   font-size: 18px;

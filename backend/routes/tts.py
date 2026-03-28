@@ -445,6 +445,7 @@ def admin_books_summary(current_user):
             'color': book.get('color', '#3b82f6'),
             'total': total,
             'cached': cached,
+            'generating': book['id'] in _generating_books,
         })
     return jsonify({'books': result}), 200
 

@@ -297,23 +297,26 @@ export default function AdminDashboard() {
     }
   }, [])
 
+  const startPolling = useCallback((bookId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const data = await apiFetch<{ book_id: string; total: number; cached: number; generating: boolean }>(`/api/tts/status/${bookId}`)
+        setTtsBooks(prev =>
+          prev.map(b => b.book_id === bookId ? { ...b, ...data } : b)
+        )
+        if (!data.generating) clearInterval(interval)
+      } catch { /* ignore */ }
+    }, 2000)
+  }, [])
+
   const handleGenerate = useCallback(async (bookId: string) => {
     try {
       await apiFetch(`/api/tts/generate/${bookId}`, { method: 'POST' })
-      // Start polling
-      const interval = setInterval(async () => {
-        try {
-          const data = await apiFetch<{ book_id: string; total: number; cached: number; generating: boolean }>(`/api/tts/status/${bookId}`)
-          setTtsBooks(prev =>
-            prev.map(b => b.book_id === bookId ? { ...b, ...data } : b)
-          )
-          if (!data.generating) clearInterval(interval)
-        } catch { /* ignore */ }
-      }, 2000)
+      startPolling(bookId)
     } catch (e) {
       console.error('Failed to start generation:', e)
     }
-  }, [])
+  }, [startPolling])
 
   // Initial load
   useEffect(() => {
@@ -327,6 +330,14 @@ export default function AdminDashboard() {
       fetchTtsBooks()
     }
   }, [tab, ttsBooks.length, fetchTtsBooks])
+
+  // Auto-restore polling for any book still marked as generating after data loads
+  useEffect(() => {
+    if (tab !== 'tts' || ttsBooks.length === 0) return
+    ttsBooks.forEach(book => {
+      if (book.generating) startPolling(book.book_id)
+    })
+  }, [ttsBooks, tab])
 
   // Auto-refresh every 30s
   useEffect(() => {
