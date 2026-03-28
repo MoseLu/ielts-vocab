@@ -48,6 +48,7 @@ interface ModeStats {
 interface TtsBook {
   book_id: string
   title: string
+  color: string
   total: number
   cached: number
   generating?: boolean
@@ -632,7 +633,11 @@ export default function AdminDashboard() {
           ) : (
             <div className="tts-books-grid">
               {ttsBooks.map(book => (
-                <div key={book.book_id} className={`tts-book-card ${book.cached === book.total && book.total > 0 ? 'done' : ''}`}>
+                <div
+                  key={book.book_id}
+                  className={`tts-book-card ${book.cached === book.total && book.total > 0 ? 'done' : ''}`}
+                  style={{ '--book-color': book.color } as React.CSSProperties}
+                >
                   <div className="tts-book-title">{book.title}</div>
                   <div className="tts-book-progress">
                     <div className="tts-progress-bar">

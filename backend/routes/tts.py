@@ -440,6 +440,7 @@ def admin_books_summary(current_user):
         result.append({
             'book_id': book['id'],
             'title': book['title'],
+            'color': book.get('color', '#3b82f6'),
             'total': total,
             'cached': cached,
         })
