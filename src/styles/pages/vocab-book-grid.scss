@@ -1,10 +1,23 @@
 /* Page: Vocab book grid and filter surface */
 
 .vocab-book-page {
-    @include page-stack(var(--page-section-gap));
+    gap: 10px;
+    padding: var(--page-gutter);
+    box-sizing: border-box;
+}
+
+.vb-page-header {
+    min-height: auto;
+    width: 100%;
+    align-items: stretch;
+}
+
+.vb-page-body {
+    min-height: 0;
 }
 
 .vb-filters {
+    width: 100%;
     padding: 10px;
     background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
     border: 1px solid var(--surface-border-strong);
@@ -17,6 +30,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
 }
 
 .vb-filter-row {
@@ -24,10 +38,16 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
+    width: 100%;
 }
 
 .vb-filter-btn {
     @include control-button(36px, 8px 14px, 999px, 1px solid transparent, rgba(255, 255, 255, 0.72), var(--text-secondary), 14px, 600);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
     transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
     white-space: nowrap;
 }
@@ -51,7 +71,7 @@
     flex: 1;
     padding: 0;
     background: transparent;
-    min-height: calc(100vh - 220px);
+    min-height: 0;
 }
 
 .vb-grid {

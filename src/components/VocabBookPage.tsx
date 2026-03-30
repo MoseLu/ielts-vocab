@@ -5,6 +5,7 @@ import type { Book, BookProgress } from '../types'
 import PlanModal from './PlanModal'
 import ChapterModal, { Chapter } from './ChapterModal'
 import { Loading } from './ui/Loading'
+import { Page, PageContent, PageHeader, PageScroll } from './layout'
 
 // Data types — compatible with ChapterModal / PlanModal
 
@@ -152,12 +153,10 @@ function VocabBookPage() {
   })
 
   return (
-    <div className="vocab-book-page">
-      <div className="page-content">
-        {/* Filter Header */}
+    <Page className="vocab-book-page">
+      <PageHeader className="vb-page-header">
         <div className="vb-filters">
           <div className="vb-filter-left">
-            {/* Row 1: Study type */}
             <div className="vb-filter-row">
               {STUDY_TYPES.map(t => (
                 <button
@@ -170,7 +169,6 @@ function VocabBookPage() {
               ))}
             </div>
 
-            {/* Row 2: Skill/Category */}
             <div className="vb-filter-row">
               {SKILL_TYPES.map(t => (
                 <button
@@ -183,7 +181,6 @@ function VocabBookPage() {
               ))}
             </div>
 
-            {/* Row 3: Level */}
             <div className="vb-filter-row">
               {LEVEL_TYPES.map(t => (
                 <button
@@ -197,9 +194,10 @@ function VocabBookPage() {
             </div>
           </div>
         </div>
+      </PageHeader>
 
-        {/* Book Grid */}
-        <div className="vb-main">
+      <PageContent className="vb-page-body">
+        <PageScroll className="vb-main">
           {loading ? (
             <Loading text="Loading books..." page />
           ) : error ? (
@@ -223,8 +221,8 @@ function VocabBookPage() {
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </PageScroll>
+      </PageContent>
 
       {/* Modal */}
       {selectedBook && showChapterModal && (
@@ -248,7 +246,7 @@ function VocabBookPage() {
           onStart={handleStartStudy}
         />
       )}
-    </div>
+    </Page>
   )
 }
 

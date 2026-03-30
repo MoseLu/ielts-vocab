@@ -80,6 +80,19 @@ VOCAB_BOOKS = [
         'file': 'ielts_vocabulary_awl_extended.json',
         'study_type': 'ielts',
         'has_chapters': True
+    },
+    {
+        'id': 'ielts_9400_extended',
+        'title': '雅思9400扩展词书',
+        'description': '基于9400词表整理的扩展词库，已过滤明显缩写、专名与异常词条',
+        'icon': 'library',
+        'color': '#F97316',
+        'category': 'comprehensive',
+        'level': 'advanced',
+        'word_count': 9248,
+        'file': 'ielts_9400_extended.json',
+        'study_type': 'ielts',
+        'has_chapters': True
     }
 ]
 

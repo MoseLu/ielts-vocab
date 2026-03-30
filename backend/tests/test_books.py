@@ -5,6 +5,7 @@ import jwt
 import json
 import tempfile
 import os
+import re
 from datetime import datetime, timedelta
 
 
@@ -55,6 +56,15 @@ class TestGetBooks:
         assert res.status_code == 200
         books = res.get_json()['books']
         assert all(b['study_type'] == 'ielts' for b in books)
+
+    def test_extended_9400_book_is_listed(self, client):
+        res = client.get('/api/books')
+        assert res.status_code == 200
+        books = res.get_json()['books']
+        book = next((b for b in books if b['id'] == 'ielts_9400_extended'), None)
+        assert book is not None
+        assert book['has_chapters'] is True
+        assert book['word_count'] > 9000
 
 
 # ── /books/<book_id> (GET) ────────────────────────────────────────────────────
@@ -200,6 +210,25 @@ class TestBookChapters:
         res = client.get('/api/books/ielts_reading_premium/chapters')
         # File likely not present in test env → 404
         assert res.status_code in (200, 404)
+
+    def test_get_9400_extended_chapters(self, client):
+        res = client.get('/api/books/ielts_9400_extended/chapters')
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['total_words'] > 9200
+        assert data['total_chapters'] > 50
+        assert len(data['chapters']) == data['total_chapters']
+        assert data['chapters'][0]['word_count'] > 0
+
+    def test_get_9400_extended_chapter_words(self, client):
+        res = client.get('/api/books/ielts_9400_extended/chapters/1')
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['chapter']['id'] == 1
+        assert len(data['words']) > 0
+        assert 'word' in data['words'][0]
+        assert 'definition' in data['words'][0]
+        assert all(re.fullmatch(r"[a-z]+(?:[-'][a-z]+)*", word['word']) for word in data['words'])
 
 
 # ── /books/my (GET/POST/DELETE) ───────────────────────────────────────────────

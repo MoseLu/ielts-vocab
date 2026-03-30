@@ -1,4 +1,5 @@
 from models import UserStudySession
+from routes import ai as ai_routes
 
 
 def register_and_login(client, username='session-user', password='password123'):
@@ -58,3 +59,20 @@ def test_cancel_session_rejects_session_with_learning_data(client, app):
         assert session is not None
         assert session.words_studied == 1
 
+
+def test_greet_returns_fallback_when_ai_service_fails(client, monkeypatch):
+    register_and_login(client, username='greet-user')
+
+    def raise_ai_error(*args, **kwargs):
+        raise RuntimeError('simulated ai failure')
+
+    monkeypatch.setattr(ai_routes, '_chat_with_tools', raise_ai_error)
+
+    res = client.post('/api/ai/greet', json={'context': {}})
+
+    assert res.status_code == 200
+    data = res.get_json()
+    assert isinstance(data, dict)
+    assert data.get('reply')
+    assert '雅思小助手' in data['reply']
+    assert data.get('options') == []

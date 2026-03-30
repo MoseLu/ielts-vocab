@@ -65,47 +65,8 @@
 
 /* Tabs */
 .admin-tabs {
-  @include toolbar-surface($justify: flex-start, $wrap: nowrap);
   margin-bottom: 10px;
   width: fit-content;
-}
-
-.admin-tab {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: none;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-.admin-tab:hover { color: var(--text-primary); }
-.admin-tab.active {
-  color: white;
-  font-weight: 600;
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: none;
-  border-radius: 10px;
-}
-
-.admin-tab-badge {
-  background: var(--surface-muted);
-  color: var(--text-tertiary);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 10px;
-}
-.admin-tab.active .admin-tab-badge {
-  background: var(--accent-light);
-  color: var(--accent);
 }
 
 /* Loading / empty */

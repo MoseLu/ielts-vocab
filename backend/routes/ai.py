@@ -1000,6 +1000,44 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     return '\n'.join(parts)
 
 
+def _build_greet_fallback(current_user: User, ctx_data: dict | None = None) -> str:
+    """Return a stable local greeting when the AI provider is unavailable."""
+    name = (getattr(current_user, 'username', None) or '同学').strip() or '同学'
+    ctx_data = ctx_data or {}
+
+    total_learned = int(ctx_data.get('totalLearned') or 0)
+    accuracy_rate = ctx_data.get('accuracyRate')
+    wrong_words = ctx_data.get('wrongWords') or []
+    recent_sessions = ctx_data.get('recentSessions') or []
+
+    if total_learned <= 0 and not recent_sessions:
+        return f"你好，{name}！我是雅思小助手。你可以告诉我今天想学哪本词书，或者直接开始一章练习。"
+
+    parts = [f"你好，{name}！我是雅思小助手。"]
+
+    if total_learned > 0:
+        summary = f"你已经累计学习了 {total_learned} 个词"
+        if isinstance(accuracy_rate, (int, float)):
+            summary += f"，整体正确率约 {int(accuracy_rate)}%"
+        parts.append(summary + "。")
+
+    if wrong_words:
+        focus_words = '、'.join(w.get('word', '') for w in wrong_words[:3] if w.get('word'))
+        if focus_words:
+            parts.append(f"近期可以优先复习：{focus_words}。")
+
+    if recent_sessions:
+        latest = recent_sessions[0]
+        book_title = latest.get('book_title') or latest.get('book_id') or '当前词书'
+        chapter_id = latest.get('chapter_id')
+        chapter_label = f"第{chapter_id}章" if chapter_id else '当前章节'
+        parts.append(f"如果你愿意，我可以继续围绕 {book_title} {chapter_label} 帮你安排复习。")
+    else:
+        parts.append("如果你愿意，我可以根据你最近的学习情况帮你安排下一步复习。")
+
+    return ''.join(parts)
+
+
 @ai_bp.route('/greet', methods=['POST'])
 @token_required
 def greet(current_user: User):
@@ -1012,6 +1050,7 @@ def greet(current_user: User):
 
     messages = [{"role": "system", "content": GREET_SYSTEM_PROMPT}]
 
+    ctx_data = {}
     try:
         ctx_data = _get_context_data(current_user.id)
         context_msg = _build_learning_context_msg(ctx_data, frontend_context)
@@ -1030,7 +1069,11 @@ def greet(current_user: User):
         _save_turn(current_user.id, '[用户打开了AI助手]', clean_reply)
         return jsonify({'reply': clean_reply, 'options': options})
     except Exception as e:
-        return jsonify({'error': f'AI service error: {str(e)}'}), 500
+        import logging
+        logging.warning(f"[AI] greet failed for user={current_user.id}: {e}")
+        fallback_reply = _build_greet_fallback(current_user, ctx_data)
+        _save_turn(current_user.id, '[用户打开了AI助手]', fallback_reply)
+        return jsonify({'reply': fallback_reply, 'options': []}), 200
 
 
 # ── Feature APIs (PRD Phase 1-4) ─────────────────────────────────────────────

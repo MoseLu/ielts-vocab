@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { apiFetch } from '../lib'
+import { SegmentedControl } from './ui'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -397,18 +398,17 @@ export default function AdminDashboard() {
       )}
 
       {/* Tabs */}
-      <div className="admin-tabs">
-        <button className={`admin-tab ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
-          平台概览
-        </button>
-        <button className={`admin-tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
-          用户管理
-          <span className="admin-tab-badge">{total}</span>
-        </button>
-        <button className={`admin-tab ${tab === 'tts' ? 'active' : ''}`} onClick={() => setTab('tts')}>
-          词书音频
-        </button>
-      </div>
+      <SegmentedControl
+        className="admin-tabs"
+        ariaLabel="管理台导航"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'overview', label: '平台概览' },
+          { value: 'users', label: '用户管理', badge: total },
+          { value: 'tts', label: '词书音频' },
+        ]}
+      />
 
       {/* ── Overview Tab ── */}
       {tab === 'overview' && (

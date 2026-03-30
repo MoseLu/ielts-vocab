@@ -2,7 +2,16 @@
    大区块纵向间距：var(--space-stack)。根容器用 flex + gap，避免相邻块 margin 折叠成 0。 */
 
 .stats-page {
-    /* padding managed by .page-content wrapper */
+    display: block;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
+}
+
+.stats-page > * + * {
+    margin-top: 10px;
 }
 
 .stats-pie-dot--0 { background: #f97316; }
@@ -30,19 +39,18 @@
 
 .legend-dot--accent { background: var(--accent); }
 
-.stats-page .page-content {
-    @include page-content-fill();
+.stats-page {
     /* 与下方「错词 | 艾宾浩斯…」主布局同一竖线分割与槽宽 */
     --stats-col-left-pct: 32%;
     --stats-align-gutter: 10px;
     box-sizing: border-box;
 }
 
-.stats-page .page-content > .stats-page-intro,
-.stats-page .page-content > .stats-cards,
-.stats-page .page-content > .stats-section--mode-strip,
-.stats-page .page-content > .stats-main-layout-wrap,
-.stats-page .page-content > .stats-section {
+.stats-page > .stats-page-intro,
+.stats-page > .stats-cards,
+.stats-page > .stats-section--mode-strip,
+.stats-page > .stats-main-layout-wrap,
+.stats-page > .stats-section {
     margin-bottom: 0;
 }
 
@@ -64,9 +72,12 @@
 }
 
 .stats-page-intro {
+    width: 100%;
+    margin: 0;
+    padding: 0;
     font-size: 12px;
     color: var(--text-tertiary);
-    line-height: 1.45;
+    line-height: 1.6;
 }
 
 /* ── 模式占比 + 各模式统计：左右各 50% ── */
@@ -112,8 +123,7 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    /* 下方 grid 负 margin 拉满时避免横向滚动条 */
-    overflow-x: hidden;
+    overflow: visible;
 }
 
 /* 顶部两列标题同一行，下方再分栏。默认两列水平排布；仅窄屏再叠成单列（断点勿过大，否则分屏/平板仍被压成垂直） */
@@ -130,11 +140,11 @@
     align-items: start;
 }
 
-/* 抵消 .stats-section 左右 padding，使两列与 .page-content 同宽参考，与下方 stats-main-layout（无额外横向 padding）对齐 */
+/* 保持区块按正常内容宽度展开，避免负 margin 导致内容被父层裁切 */
 .stats-section--mode-strip .stats-mode-strip-grid {
-    width: calc(100% + 2 * var(--space-stack));
-    margin-left: calc(-1 * var(--space-stack));
-    margin-right: calc(-1 * var(--space-stack));
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .stats-mode-strip-title {
@@ -171,8 +181,8 @@
 
 .mode-breakdown-table-wrap--strip {
     overflow-x: auto;
-    overflow-y: auto;
-    max-height: min(320px, 55vh);
+    overflow-y: visible;
+    max-height: none;
 }
 
 .stats-table--mode-strip {
@@ -214,43 +224,6 @@
     .stats-mode-strip-col--modes {
         padding-left: 0;
     }
-}
-
-/* 2026-03 refresh: analytics cockpit treatment */
-.stats-page {
-    position: relative;
-}
-
-.stats-page::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background: var(--bg-color);
-    z-index: -1;
-}
-
-.stats-page .page-content {
-}
-
-.stats-page-intro {
-    @include panel-surface(var(--surface-base), 1px solid rgba(var(--accent-rgb), 0.16), 10px, var(--shadow-soft));
-    position: relative;
-    padding: 10px;
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--text-secondary);
-}
-
-.stats-page-intro::before {
-    content: 'Analytics Overview';
-    display: block;
-    margin-bottom: 10px;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
 }
 
 .stats-cards,
@@ -337,10 +310,10 @@
 .stats-pie-wrap,
 .stats-pie-wrap--strip,
 .stats-pie-wrap--wrong-top {
-    padding: 10px;
-    border-radius: 10px;
-    background: var(--surface-muted);
-    border: 1px solid var(--border-subtle);
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: 0;
 }
 
 .stats-pie-svg {
@@ -400,7 +373,7 @@
 
 .stats-chart-loading,
 .stats-empty {
-    border-radius: 20px;
+    border-radius: 10px;
     background: var(--surface-muted);
 }
 
@@ -428,8 +401,8 @@
     .stats-section,
     .stats-main-layout .stats-section,
     .stats-left-stack > .stats-section {
-        padding: 18px;
-        border-radius: 22px;
+        padding: 10px;
+        border-radius: 10px;
     }
 }
 
@@ -492,34 +465,26 @@
     box-sizing: border-box;
     padding-left: 0;
     padding-right: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
 }
 
 .stats-main-layout {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    align-content: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, var(--stats-col-left-pct, 32%)) minmax(0, 1fr);
+    align-items: flex-start;
     gap: var(--stats-align-gutter, 10px);
     width: 100%;
     min-width: 0;
-    min-height: 0;
+    min-height: auto;
     box-sizing: border-box;
 }
 
-/* 宽屏：用 JS 将右列高度锁为左列 offsetHeight，避免右表撑高整行；父级需 flex-start，否则左列会被 stretch 到与右列同高 */
-.stats-main-layout--sync-left-height {
-    align-items: flex-start;
+.stats-main-layout--balanced {
+    align-items: stretch;
 }
 
 .stats-main-left {
-    flex: 0 0 var(--stats-col-left-pct, 32%);
-    max-width: var(--stats-col-left-pct, 32%);
     min-width: 0;
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
     box-sizing: border-box;
 }
 
@@ -528,59 +493,51 @@
 }
 
 .stats-main-right {
-    flex: 1 1 0%;
     min-width: 0;
-    min-height: 0;
-    align-self: stretch;
+    min-height: auto;
     display: flex;
     flex-direction: column;
     gap: var(--stats-align-gutter, 10px);
-    /* 与左列对齐后的行高内分配子项，避免子项撑破统一高度 */
-    overflow: hidden;
+    overflow: visible;
 }
 
-.stats-main-right--synced {
-    height: var(--stats-right-height);
-    max-height: var(--stats-right-height);
-    min-height: 0;
-}
-
-/* 顶行：两卡同宽同高（align-items: stretch） */
 .stats-main-right-top {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--stats-align-gutter, 10px);
-    flex: 0 0 auto;
-    min-height: 0;
+    min-height: auto;
 }
 
 .stats-main-right-top > .stats-main-cell {
-    flex: 1 1 0%;
     min-width: 0;
-    min-height: 0;
+    min-height: auto;
     display: flex;
     flex-direction: column;
 }
 
-/* 底行：在右列统一高度内占满剩余（顶行 flex:0），表格高度由此父级约束 */
 .stats-main-right-bottom {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--stats-align-gutter, 10px);
-    flex: 1 1 0%;
-    min-height: 0;
-    overflow: hidden;
+    min-height: auto;
+    overflow: visible;
 }
 
 .stats-main-right-bottom > .stats-main-cell {
-    flex: 1 1 0%;
     min-width: 0;
+    min-height: auto;
+    overflow: visible;
+}
+
+.stats-main-layout--balanced .stats-main-right-bottom {
+    height: var(--stats-right-bottom-height);
+    min-height: var(--stats-right-bottom-height);
+}
+
+.stats-main-layout--balanced .stats-main-right-bottom > .stats-main-cell {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 .stats-left-stack {
@@ -598,10 +555,7 @@
 }
 
 .stats-card-wrong {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    min-height: auto;
 }
 
 .stats-card-wrong .stats-section-title {
@@ -615,16 +569,13 @@
 }
 
 .stats-card-wrong-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    min-height: auto;
+    display: block;
+    overflow: visible;
 }
 
 .stats-card-wrong-body > .stats-chart-loading,
 .stats-card-wrong-body > .stats-empty {
-    flex: 1 1 auto;
     min-height: 120px;
     display: flex;
     align-items: center;
@@ -640,36 +591,28 @@
 }
 
 .stats-main-cell--ebb .stats-card-ebbinghaus {
-    flex: 1 1 auto;
     min-height: 0;
+    overflow: visible;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    height: 100%;
 }
 
-/* 顶行与学习记录同高：卡内图表区 flex 占满 */
 .stats-main-cell--ebb .stats-ebb-inner {
-    flex: 1 1 auto;
     min-height: 0;
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .stats-main-cell--ebb .stats-ebb-chart-wrap {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    min-height: auto;
     justify-content: center;
 }
 
 .stats-main-cell--ebb .ebb-chart-wrap--compact {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    min-height: auto;
     justify-content: center;
 }
 
@@ -677,7 +620,6 @@
     width: 100%;
     max-width: 100%;
     max-height: none;
-    flex: 1 1 auto;
     min-height: 72px;
     height: auto;
     aspect-ratio: 560 / 128;
@@ -694,13 +636,11 @@
     flex-shrink: 0;
 }
 
-/* 「学习记录」与同排艾宾浩斯同高，折线图随格内伸展 */
 .stats-main-cell--learning .stats-section--learning {
-    flex: 1 1 auto;
     min-height: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    height: 100%;
 }
 
 .stats-main-cell--learning .stats-section--learning .stats-learning-split-head,
@@ -709,23 +649,21 @@
 }
 
 .stats-main-cell--learning .stats-section--learning .lc-wrap--compact {
-    flex: 1 1 auto;
     min-height: 0;
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
 }
 
 .stats-main-cell--learning .stats-section--learning .lc-wrap--compact .lc-svg {
-    flex: 1 1 auto;
     width: 100%;
     min-height: 118px;
     max-height: none;
-    height: 100%;
+    height: auto;
 }
 
 .stats-main-cell--learning .stats-section--learning .stats-chart-loading--learn-split,
 .stats-main-cell--learning .stats-section--learning .stats-empty--compact {
-    flex: 1 1 auto;
     min-height: 88px;
 }
 
@@ -752,14 +690,19 @@
 
 /* 右下：章节卡在格内 flex:1 继承父级分配高度，表滚动区再继承剩余 */
 .stats-section--chapter-cell {
+    display: block;
+    min-height: auto;
+    max-height: none;
+    height: auto;
+    padding-bottom: 0;
+    overflow: visible;
+}
+
+.stats-main-layout--balanced .stats-section--chapter-cell {
     display: flex;
     flex-direction: column;
-    flex: 1 1 0%;
     min-height: 0;
-    max-height: 100%;
     height: 100%;
-    padding-bottom: 0;
-    overflow: hidden;
 }
 
 .stats-section--chapter-cell .stats-section-title {
@@ -788,14 +731,20 @@
 
 /* 主布局右下格：在 .stats-section--chapter-cell 内占满剩余高度（flex 继承链），再 overflow 滚动 */
 .mode-breakdown-table-wrap.stats-table-scroll--in-cell {
-    flex: 1 1 0%;
-    min-height: 0;
+    min-height: auto;
     min-width: 0;
     width: 100%;
-    max-height: 100%;
+    max-height: none;
     box-sizing: border-box;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.stats-main-layout--balanced .mode-breakdown-table-wrap.stats-table-scroll--in-cell {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .mode-breakdown-table-wrap.stats-table-scroll--in-cell .stats-data-table {
@@ -804,14 +753,11 @@
 
 /* 默认（非主布局顶格）艾宾浩斯内层随内容；主布局顶格由 .stats-main-cell--ebb 覆盖 */
 .stats-ebb-inner {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
+    display: block;
     overflow: visible;
 }
 
 .stats-ebb-inner > .stats-chart-loading {
-    flex: 0 0 auto;
     min-height: 88px;
 }
 
@@ -821,12 +767,11 @@
 }
 
 .stats-wrong-vertical {
-    flex: 1 1 auto;
-    min-height: 0;
+    min-height: auto;
     display: flex;
     flex-direction: column;
     gap: var(--space-stack);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .stats-wrong-pie-block {
@@ -845,16 +790,14 @@
 }
 
 .stats-wrong-table-block {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    min-height: auto;
+    display: block;
 }
 
 .stats-wrong-table-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
+    min-height: auto;
+    overflow-x: auto;
+    overflow-y: visible;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
 }
@@ -1025,54 +968,43 @@
 /* 默认 compact 折线图限高；主布局顶格「学习记录」由 .stats-main-cell--learning … 覆盖为可伸展 */
 .lc-wrap--compact .lc-svg {
     min-height: 0;
-    max-height: 132px;
+    max-height: none;
 }
 
 @media (max-width: 900px) {
     .stats-main-layout {
-        flex-direction: column;
-        align-items: stretch;
+        grid-template-columns: 1fr;
+    }
+
+    .stats-main-layout--balanced {
+        align-items: flex-start;
     }
 
     .stats-main-left {
-        flex: 0 1 auto;
-        max-width: none;
         width: 100%;
     }
 
-    .stats-main-right {
-        overflow: visible;
-        flex: 0 1 auto;
-    }
-
     .stats-main-right-bottom {
-        flex: 0 1 auto;
-        min-height: 200px;
-        overflow: visible;
+        grid-template-columns: 1fr;
+        min-height: auto;
     }
 
-    .stats-main-right-bottom > .stats-main-cell {
-        overflow: visible;
+    .stats-main-right-top {
+        grid-template-columns: 1fr;
     }
 
-    .stats-section--chapter-cell {
-        overflow: visible;
+    .stats-main-layout--balanced .stats-main-right-bottom {
         height: auto;
-        max-height: none;
+        min-height: auto;
     }
 
-    .stats-card-wrong {
-        flex: 0 1 auto;
-    }
-
-    .stats-main-cell--learning .stats-section--learning {
-        flex: 0 1 auto;
-    }
-
-    .stats-main-cell--learning .stats-section--learning .lc-wrap--compact .lc-svg {
-        max-height: 132px;
+    .stats-main-layout--balanced .stats-main-right-bottom > .stats-main-cell,
+    .stats-main-layout--balanced .stats-section--chapter-cell,
+    .stats-main-layout--balanced .mode-breakdown-table-wrap.stats-table-scroll--in-cell {
+        display: block;
         height: auto;
-        flex: 0 0 auto;
+        min-height: auto;
+        overflow-y: visible;
     }
 
     .stats-cards.stats-cards-8,
@@ -1542,19 +1474,7 @@
 
 /* Range tabs */
 .lc-tabs {
-    display: flex;
-    gap: 4px;
-}
-
-.lc-tab {
-    @include control-button(28px, 3px var(--space-stack), var(--radius-sm), 1px solid var(--border), var(--bg-secondary), var(--text-secondary), 12px, 400);
-    transition: all var(--transition-fast);
-}
-
-.lc-tab.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
+    flex-shrink: 0;
 }
 
 /* Metric + filter bar */
@@ -1564,25 +1484,7 @@
 }
 
 .lc-metric-tabs {
-    display: flex;
-    gap: 4px;
-}
-
-.lc-metric-tab {
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    border-bottom: 2px solid transparent;
-    padding: 2px 8px 4px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.lc-metric-tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-    font-weight: 600;
+    flex-shrink: 0;
 }
 
 .lc-selects {

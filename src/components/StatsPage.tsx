@@ -1,13 +1,13 @@
 ﻿import {
   useState,
   useRef,
-  useLayoutEffect,
-  useCallback,
   useEffect,
+  useLayoutEffect,
   type MouseEvent,
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { SegmentedControl, UnderlineTabs } from './ui'
 import { useWrongWords, useLearningStats } from '../features/vocabulary/hooks'
 import type {
   MetricKey,
@@ -685,119 +685,104 @@ export default function StatsPage() {
       ? alltime.ebbinghaus_stages
       : defaultEbbStages
 
-  const statsMainLeftRef = useRef<HTMLDivElement>(null)
-  const statsMainRightRef = useRef<HTMLDivElement>(null)
-  const [statsWideLayout, setStatsWideLayout] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 901px)').matches,
-  )
-  const [statsRightHeightPx, setStatsRightHeightPx] = useState<number | undefined>(undefined)
+  const statsMainLayoutRef = useRef<HTMLDivElement>(null)
+  const statsLeftStackRef = useRef<HTMLDivElement>(null)
+  const statsRightTopRef = useRef<HTMLDivElement>(null)
+  const statsRightBottomRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 901px)')
-    const onChange = () => setStatsWideLayout(mq.matches)
-    mq.addEventListener('change', onChange)
-    setStatsWideLayout(mq.matches)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
+  useLayoutEffect(() => {
+    const layoutEl = statsMainLayoutRef.current
+    const leftEl = statsLeftStackRef.current
+    const topEl = statsRightTopRef.current
+    const bottomEl = statsRightBottomRef.current
+    if (!layoutEl || !leftEl || !topEl || !bottomEl) return
 
-  const measureStatsLeftHeight = useCallback(() => {
-    if (!statsWideLayout) {
-      setStatsRightHeightPx(undefined)
-      return
+    const media = window.matchMedia('(min-width: 901px)')
+    const gapPx = 10
+
+    const syncBottomHeight = () => {
+      if (!media.matches) {
+        layoutEl.classList.remove('stats-main-layout--balanced')
+        bottomEl.style.removeProperty('--stats-right-bottom-height')
+        return
+      }
+
+      const leftHeight = Math.round(leftEl.getBoundingClientRect().height)
+      const topHeight = Math.round(topEl.getBoundingClientRect().height)
+      const availableHeight = Math.max(leftHeight - topHeight - gapPx, 320)
+
+      layoutEl.classList.add('stats-main-layout--balanced')
+      bottomEl.style.setProperty('--stats-right-bottom-height', `${availableHeight}px`)
     }
-    const el = statsMainLeftRef.current
-    if (!el) return
-    const h = Math.round(el.getBoundingClientRect().height)
-    if (h > 0) setStatsRightHeightPx(h)
-  }, [statsWideLayout])
 
-  useLayoutEffect(() => {
-    measureStatsLeftHeight()
-  }, [
-    measureStatsLeftHeight,
-    chartLoading,
-    wrongWords.length,
-    wrongTop10.length,
-    chapterBreakdown.length,
-    chapterModeStats.length,
-    hasChartData,
-    range,
-    metric,
-  ])
+    syncBottomHeight()
 
-  useLayoutEffect(() => {
-    if (!statsWideLayout) return
-    const el = statsMainLeftRef.current
-    if (!el) return
-    const ro = new ResizeObserver(() => {
-      measureStatsLeftHeight()
+    const resizeObserver = new ResizeObserver(() => {
+      syncBottomHeight()
     })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [statsWideLayout, measureStatsLeftHeight])
+    resizeObserver.observe(leftEl)
+    resizeObserver.observe(topEl)
 
-  useEffect(() => {
-    const rightEl = statsMainRightRef.current
-    if (!rightEl) return
-    if (statsWideLayout && statsRightHeightPx != null) {
-      rightEl.style.setProperty('--stats-right-height', `${statsRightHeightPx}px`)
-      rightEl.classList.add('stats-main-right--synced')
-    } else {
-      rightEl.style.removeProperty('--stats-right-height')
-      rightEl.classList.remove('stats-main-right--synced')
+    const onMediaChange = () => syncBottomHeight()
+    const onWindowResize = () => syncBottomHeight()
+    media.addEventListener('change', onMediaChange)
+    window.addEventListener('resize', onWindowResize)
+
+    return () => {
+      resizeObserver.disconnect()
+      media.removeEventListener('change', onMediaChange)
+      window.removeEventListener('resize', onWindowResize)
     }
-  }, [statsWideLayout, statsRightHeightPx])
+  }, [chartLoading, wrongTop10.length, chapterBreakdown.length, chapterModeStats.length, range, metric, alltime?.ebbinghaus_rate])
 
   return (
-    <div className="stats-page">
-      <div className="page-content">
+    <div className="page-content stats-page">
+      <p className="stats-page-intro">
+        「新词 / 复习」来自速记（艾宾浩斯）同步数据；「累计学习新词」为全书进度与去重逻辑综合结果。
+      </p>
 
-        <p className="stats-page-intro">
-          「新词 / 复习」来自速记（艾宾浩斯）同步数据；「累计学习新词」为全书进度与去重逻辑综合结果。
-        </p>
-
-        <div className="stats-cards stats-cards-9">
-          <div className="stats-card">
-            <div className="stats-card-value">{displayTodayNew}</div>
-            <div className="stats-card-label">今日学习新词数</div>
-          </div>
-          <div className="stats-card">
-            <div className="stats-card-value">{displayTotalNew}</div>
-            <div className="stats-card-label">累计学习新词数</div>
-          </div>
-          <div className="stats-card">
-            <div className="stats-card-value">{displayTodayReview}</div>
-            <div className="stats-card-label">今日复习旧词数</div>
-          </div>
-          <div className="stats-card">
-            <div className="stats-card-value">{displayAlltimeReview}</div>
-            <div className="stats-card-label">累计复习旧词数</div>
-            <div className="stats-card-sub">至少 2 轮作答的词</div>
-          </div>
-          <div className="stats-card">
-            <div className="stats-card-value">{displayTodayDuration}</div>
-            <div className="stats-card-label">今日学习时长</div>
-          </div>
-          <div className="stats-card">
-            <div className="stats-card-value">{displayAlltimeDuration}</div>
-            <div className="stats-card-label">累计学习时长</div>
-          </div>
-          <div className="stats-card">
-            <div className="stats-card-value">{displayTodayAccuracy}</div>
-            <div className="stats-card-label">今日正确率</div>
-            <div className="stats-card-sub">章节进度</div>
-          </div>
-          <div className="stats-card">
-            <div className="stats-card-value">{displayAlltimeAccuracy}</div>
-            <div className="stats-card-label">累计正确率</div>
-            <div className="stats-card-sub">章节进度</div>
-          </div>
-          <div className="stats-card">
-            <div className="stats-card-value">{displayStreak}</div>
-            <div className="stats-card-label">连续学习</div>
-            <div className="stats-card-sub">天</div>
-          </div>
+      <div className="stats-cards stats-cards-9">
+        <div className="stats-card">
+          <div className="stats-card-value">{displayTodayNew}</div>
+          <div className="stats-card-label">今日学习新词数</div>
         </div>
+        <div className="stats-card">
+          <div className="stats-card-value">{displayTotalNew}</div>
+          <div className="stats-card-label">累计学习新词数</div>
+        </div>
+        <div className="stats-card">
+          <div className="stats-card-value">{displayTodayReview}</div>
+          <div className="stats-card-label">今日复习旧词数</div>
+        </div>
+        <div className="stats-card">
+          <div className="stats-card-value">{displayAlltimeReview}</div>
+          <div className="stats-card-label">累计复习旧词数</div>
+          <div className="stats-card-sub">至少 2 轮作答的词</div>
+        </div>
+        <div className="stats-card">
+          <div className="stats-card-value">{displayTodayDuration}</div>
+          <div className="stats-card-label">今日学习时长</div>
+        </div>
+        <div className="stats-card">
+          <div className="stats-card-value">{displayAlltimeDuration}</div>
+          <div className="stats-card-label">累计学习时长</div>
+        </div>
+        <div className="stats-card">
+          <div className="stats-card-value">{displayTodayAccuracy}</div>
+          <div className="stats-card-label">今日正确率</div>
+          <div className="stats-card-sub">章节进度</div>
+        </div>
+        <div className="stats-card">
+          <div className="stats-card-value">{displayAlltimeAccuracy}</div>
+          <div className="stats-card-label">累计正确率</div>
+          <div className="stats-card-sub">章节进度</div>
+        </div>
+        <div className="stats-card">
+          <div className="stats-card-value">{displayStreak}</div>
+          <div className="stats-card-label">连续学习</div>
+          <div className="stats-card-sub">天</div>
+        </div>
+      </div>
 
         <div className="stats-section stats-section--mode-strip">
           <div className="stats-mode-strip-header">
@@ -828,18 +813,16 @@ export default function StatsPage() {
               {chartLoading ? (
                 <div className="stats-chart-loading stats-chart-loading--strip-table"><div className="loading-spinner" /></div>
               ) : (
-                <ModeBreakdownTableBody modeBreakdown={modeBreakdown} onNavigate={() => navigate('/')} />
+                <ModeBreakdownTableBody modeBreakdown={modeBreakdown} onNavigate={() => navigate('/plan')} />
               )}
             </div>
           </div>
         </div>
 
-        <div className="stats-main-layout-wrap">
-          <div
-            className={`stats-main-layout${statsWideLayout && statsRightHeightPx != null ? ' stats-main-layout--sync-left-height' : ''}`}
-          >
-            <div className="stats-main-left" ref={statsMainLeftRef}>
-              <div className="stats-left-stack">
+      <div className="stats-main-layout-wrap">
+        <div className="stats-main-layout" ref={statsMainLayoutRef}>
+          <div className="stats-main-left">
+              <div className="stats-left-stack" ref={statsLeftStackRef}>
                     <section className="stats-section stats-card-wrong" aria-labelledby="stats-wrong-title">
                       <h2 id="stats-wrong-title" className="stats-section-title">重复出错 Top 10</h2>
                       <p className="stats-section-hint">错词本中累计错误次数最高的词汇（上图为错次占比，下表为明细）</p>
@@ -902,8 +885,8 @@ export default function StatsPage() {
                     </section>
               </div>
             </div>
-            <div className="stats-main-right" ref={statsMainRightRef}>
-              <div className="stats-main-right-top">
+          <div className="stats-main-right">
+              <div className="stats-main-right-top" ref={statsRightTopRef}>
                 <div className="stats-main-cell stats-main-cell--ebb">
                     <section className="stats-section stats-card-ebbinghaus" aria-labelledby="stats-ebb-title">
                       <h2 id="stats-ebb-title" className="stats-section-title">艾宾浩斯复习达成</h2>
@@ -942,7 +925,7 @@ export default function StatsPage() {
                                 <button
                                   type="button"
                                   className="stats-review-btn stats-review-btn--ebb"
-                                  onClick={() => navigate('/')}
+                                  onClick={() => navigate('/plan')}
                                 >
                                   去复习
                                 </button>
@@ -960,33 +943,29 @@ export default function StatsPage() {
                     <section className="stats-section stats-section--learning" aria-labelledby="stats-learning-title">
                       <div className="stats-section-header stats-learning-split-head">
                         <h2 id="stats-learning-title" className="stats-section-title">学习记录</h2>
-                        <div className="lc-tabs">
-                          {RANGE_OPTIONS.map(o => (
-                            <button
-                              key={o.value}
-                              type="button"
-                              className={`lc-tab${range === o.value ? ' active' : ''}`}
-                              onClick={() => setRange(o.value)}
-                            >
-                              {o.label}
-                            </button>
-                          ))}
-                        </div>
+                        <SegmentedControl
+                          className="lc-tabs"
+                          ariaLabel="学习记录时间范围"
+                          value={range}
+                          onChange={setRange}
+                          options={RANGE_OPTIONS.map(o => ({
+                            value: o.value,
+                            label: o.label,
+                          }))}
+                        />
                       </div>
 
                       <div className="lc-filters lc-filters--compact">
-                        <div className="lc-metric-tabs">
-                          {METRIC_OPTIONS.map(o => (
-                            <button
-                              key={o.value}
-                              type="button"
-                              className={`lc-metric-tab${metric === o.value ? ' active' : ''}`}
-                              onClick={() => setMetric(o.value)}
-                            >
-                              {o.label}
-                            </button>
-                          ))}
-                        </div>
+                        <UnderlineTabs
+                          className="lc-metric-tabs"
+                          ariaLabel="学习记录指标"
+                          value={metric}
+                          onChange={setMetric}
+                          options={METRIC_OPTIONS.map(o => ({
+                            value: o.value,
+                            label: o.label,
+                          }))}
+                        />
                         <div className="lc-selects">
                           {books.length > 0 && (
                             <select
@@ -1020,7 +999,7 @@ export default function StatsPage() {
                       ) : !hasChartData ? (
                         <div className="stats-empty stats-empty--compact">
                           <p>该时间段暂无学习记录</p>
-                          <a className="stats-go-practice" onClick={() => navigate('/')}>去练习 →</a>
+                          <a className="stats-go-practice" onClick={() => navigate('/plan')}>去练习 →</a>
                         </div>
                       ) : (
                         <LearningChart data={daily} metric={metric} range={range} compact />
@@ -1064,7 +1043,7 @@ export default function StatsPage() {
                     </section>
                 </div>
               </div>
-              <div className="stats-main-right-bottom">
+              <div className="stats-main-right-bottom" ref={statsRightBottomRef}>
                 <div className="stats-main-cell stats-main-cell--chapter">
                     <section className="stats-section stats-section--chapter-cell" aria-labelledby="stats-chapter-detail-title">
                       <h2 id="stats-chapter-detail-title" className="stats-section-title">章节正确率（细项）</h2>
@@ -1074,7 +1053,7 @@ export default function StatsPage() {
                       ) : chapterBreakdown.length === 0 ? (
                         <div className="stats-empty stats-empty--chapter-cell">
                           <p>暂无章节数据</p>
-                          <a className="stats-go-practice" onClick={() => navigate('/')}>去练习 →</a>
+                          <a className="stats-go-practice" onClick={() => navigate('/plan')}>去练习 →</a>
                         </div>
                       ) : (
                         <div className="mode-breakdown-table-wrap stats-table-scroll--in-cell">
@@ -1145,11 +1124,9 @@ export default function StatsPage() {
                     </section>
                 </div>
               </div>
+              </div>
             </div>
           </div>
-        </div>
-
-      </div>
     </div>
   )
 }
