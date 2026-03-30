@@ -133,6 +133,18 @@ export async function startSession(ctx?: {
 
 // ── Session logger ────────────────────────────────────────────────────────────
 
+export async function cancelSession(sessionId?: number | null): Promise<void> {
+  if (!sessionId) return
+  try {
+    await apiFetch('/api/ai/cancel-session', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId }),
+    })
+  } catch {
+    // Non-critical
+  }
+}
+
 export async function logSession(data: {
   mode: string
   bookId?: string | null

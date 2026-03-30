@@ -2148,6 +2148,36 @@ def start_session(current_user: User):
     return jsonify({'sessionId': session.id}), 201
 
 
+@ai_bp.route('/cancel-session', methods=['POST'])
+@token_required
+def cancel_session(current_user: User):
+    """Delete a started session when no meaningful learning interaction happened."""
+    body = request.get_json() or {}
+    session_id = body.get('sessionId')
+    if not session_id:
+        return jsonify({'error': 'sessionId is required'}), 400
+
+    session = UserStudySession.query.filter_by(
+        id=session_id,
+        user_id=current_user.id,
+    ).first()
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    has_meaningful_data = any([
+        (session.words_studied or 0) > 0,
+        (session.correct_count or 0) > 0,
+        (session.wrong_count or 0) > 0,
+        (session.duration_seconds or 0) > 0,
+    ])
+    if has_meaningful_data:
+        return jsonify({'error': 'Session already contains learning data'}), 409
+
+    db.session.delete(session)
+    db.session.commit()
+    return jsonify({'deleted': True}), 200
+
+
 @ai_bp.route('/log-session', methods=['POST'])
 @token_required
 def log_session(current_user: User):
@@ -2168,7 +2198,7 @@ def log_session(current_user: User):
             if session:
                 ended_at = datetime.utcnow()
                 session.ended_at = ended_at
-                session.duration_seconds = max(0, int((ended_at - session.started_at).total_seconds()))
+                computed_duration = max(0, int((ended_at - session.started_at).total_seconds()))
                 if body.get('mode'):
                     session.mode = body['mode']
                 session.book_id = body.get('bookId', session.book_id)
@@ -2176,6 +2206,16 @@ def log_session(current_user: User):
                 session.words_studied = body.get('wordsStudied', 0)
                 session.correct_count = body.get('correctCount', 0)
                 session.wrong_count = body.get('wrongCount', 0)
+                # Sessions that already contain meaningful study activity should not
+                # end up recorded as 0s just because start/end landed in the same second.
+                if computed_duration == 0 and (
+                    (session.words_studied or 0) > 0 or
+                    (session.correct_count or 0) > 0 or
+                    (session.wrong_count or 0) > 0
+                ):
+                    session.duration_seconds = 1
+                else:
+                    session.duration_seconds = computed_duration
                 db.session.commit()
                 return jsonify({'id': session.id}), 200
 
@@ -2189,15 +2229,22 @@ def log_session(current_user: User):
             except Exception:
                 pass
 
+        duration_seconds = body.get('durationSeconds', 0) or 0
+        words_studied = body.get('wordsStudied', 0) or 0
+        correct_count = body.get('correctCount', 0) or 0
+        wrong_count = body.get('wrongCount', 0) or 0
+        if duration_seconds == 0 and (words_studied > 0 or correct_count > 0 or wrong_count > 0):
+            duration_seconds = 1
+
         session = UserStudySession(
             user_id=current_user.id,
             mode=body.get('mode') or None,
             book_id=body.get('bookId'),
             chapter_id=body.get('chapterId'),
-            words_studied=body.get('wordsStudied', 0),
-            correct_count=body.get('correctCount', 0),
-            wrong_count=body.get('wrongCount', 0),
-            duration_seconds=body.get('durationSeconds', 0),
+            words_studied=words_studied,
+            correct_count=correct_count,
+            wrong_count=wrong_count,
+            duration_seconds=duration_seconds,
         )
         if started_at:
             session.started_at = started_at
