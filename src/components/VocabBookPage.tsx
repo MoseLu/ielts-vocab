@@ -92,7 +92,7 @@ function VocabBookCard({ book, progress, onSelect, isInMyBooks }: VocabBookCardP
       {progress && (
         <div className="vb-card-progress">
           <div className="vb-card-progress-bar">
-            <div className="vb-card-progress-fill" style={{ width: `${progressPercent}%` }} />
+            <progress className="vb-card-progress-fill" max="100" value={progressPercent} />
           </div>
           <span className="vb-card-progress-text">{currentIndex}/{book.word_count}</span>
         </div>

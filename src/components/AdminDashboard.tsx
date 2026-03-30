@@ -173,36 +173,49 @@ const bookLabels: Record<string, string> = {
 
 // ── Mini bar chart ────────────────────────────────────────────────────────────
 
-function MiniBarChart({ data, valueKey, labelKey, color = '#6366f1' }: {
+function MiniBarChart({ data, valueKey, labelKey, tone = 'indigo' }: {
   data: Record<string, any>[]
   valueKey: string
   labelKey: string
-  color?: string
+  tone?: 'indigo' | 'green'
 }) {
   const max = Math.max(...data.map(d => d[valueKey] || 0), 1)
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '60px' }}>
+    <div className="admin-mini-bar-chart">
+      <svg className={`admin-mini-bar-chart-svg admin-mini-bar-chart-svg--${tone}`} viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
       {data.map((d, i) => {
         const h = Math.max(2, Math.round((d[valueKey] / max) * 56))
+        const width = 100 / data.length
+        const barWidth = Math.max(width - 1.5, 1)
         return (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '2px' }} title={`${d[labelKey]}: ${d[valueKey]}`}>
-            <div style={{ width: '100%', height: `${h}px`, background: color, borderRadius: '2px 2px 0 0', opacity: 0.85 }} />
-          </div>
+          <rect
+            key={i}
+            className="admin-mini-bar-chart-bar"
+            x={i * width}
+            y={60 - h}
+            width={barWidth}
+            height={h}
+            rx="1.5"
+            ry="1.5"
+          >
+            <title>{`${d[labelKey]}: ${d[valueKey]}`}</title>
+          </rect>
         )
       })}
+      </svg>
     </div>
   )
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub, color = '#6366f1' }: {
-  label: string; value: string | number; sub?: string; color?: string
+function StatCard({ label, value, sub, tone = 'indigo' }: {
+  label: string; value: string | number; sub?: string; tone?: 'indigo' | 'green' | 'amber' | 'blue'
 }) {
   return (
     <div className="admin-stat-card">
       <div className="admin-stat-label">{label}</div>
-      <div className="admin-stat-value" style={{ color }}>{value}</div>
+      <div className={`admin-stat-value admin-stat-value--${tone}`}>{value}</div>
       {sub && <div className="admin-stat-sub">{sub}</div>}
     </div>
   )
@@ -370,7 +383,7 @@ export default function AdminDashboard() {
   }
 
   const SortIcon = ({ col }: { col: string }) => (
-    <span style={{ marginLeft: '4px', opacity: sort === col ? 1 : 0.3, fontSize: '10px' }}>
+    <span className={`admin-sort-icon ${sort === col ? 'is-active' : ''}`}>
       {sort === col ? (order === 'desc' ? '▼' : '▲') : '⇅'}
     </span>
   )
@@ -379,7 +392,7 @@ export default function AdminDashboard() {
     <div className="admin-dashboard">
       {error && (
         <div className="admin-error" onClick={() => setError('')}>
-          {error} <span style={{ opacity: 0.6, fontSize: '12px' }}>（点击关闭）</span>
+          {error} <span className="admin-error-dismiss">（点击关闭）</span>
         </div>
       )}
 
@@ -407,10 +420,10 @@ export default function AdminDashboard() {
             <>
               {/* Key metrics */}
               <div className="admin-stat-grid">
-                <StatCard label="总用户数" value={overview.total_users} sub={`今日新增 ${overview.new_users_today}`} color="#6366f1" />
-                <StatCard label="今日活跃" value={overview.active_users_today} sub={`7日活跃 ${overview.active_users_7d}`} color="#10b981" />
-                <StatCard label="总学习时长" value={fmtSeconds(overview.total_study_seconds)} sub={`共 ${overview.total_sessions} 次练习`} color="#f59e0b" />
-                <StatCard label="总学习单词" value={overview.total_words_studied.toLocaleString()} sub={`平均准确率 ${overview.avg_accuracy}%`} color="#3b82f6" />
+                <StatCard label="总用户数" value={overview.total_users} sub={`今日新增 ${overview.new_users_today}`} tone="indigo" />
+                <StatCard label="今日活跃" value={overview.active_users_today} sub={`7日活跃 ${overview.active_users_7d}`} tone="green" />
+                <StatCard label="总学习时长" value={fmtSeconds(overview.total_study_seconds)} sub={`共 ${overview.total_sessions} 次练习`} tone="amber" />
+                <StatCard label="总学习单词" value={overview.total_words_studied.toLocaleString()} sub={`平均准确率 ${overview.avg_accuracy}%`} tone="blue" />
               </div>
 
               {/* Daily activity chart */}
@@ -420,28 +433,28 @@ export default function AdminDashboard() {
                   <div className="admin-empty">暂无数据</div>
                 ) : (
                   <div className="admin-chart-wrapper">
-                    <div style={{ marginBottom: '8px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>练习次数</span>
+                    <div className="admin-summary-heading admin-summary-heading--compact">
+                      <span className="admin-summary-heading-text">练习次数</span>
                     </div>
                     <MiniBarChart
                       data={overview.daily_activity}
                       valueKey="sessions"
                       labelKey="day"
-                      color="#6366f1"
+                      tone="indigo"
                     />
                     <div className="admin-chart-labels">
                       {overview.daily_activity.map((d, i) => (
                         <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>
                       ))}
                     </div>
-                    <div style={{ marginTop: '16px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>学习单词数</span>
+                    <div className="admin-summary-heading">
+                      <span className="admin-summary-heading-text">学习单词数</span>
                     </div>
                     <MiniBarChart
                       data={overview.daily_activity}
                       valueKey="words"
                       labelKey="day"
-                      color="#10b981"
+                      tone="green"
                     />
                     <div className="admin-chart-labels">
                       {overview.daily_activity.map((d, i) => (
@@ -467,7 +480,7 @@ export default function AdminDashboard() {
                           <div key={i} className="admin-mode-row">
                             <div className="admin-mode-name">{modeLabels[m.mode] || m.mode}</div>
                             <div className="admin-mode-bar-wrap">
-                              <div className="admin-mode-bar" style={{ width: `${pct}%` }} />
+                              <progress className="admin-mode-bar" max={100} value={pct} />
                             </div>
                             <div className="admin-mode-count">{m.count}次 ({pct}%)</div>
                           </div>
@@ -617,11 +630,11 @@ export default function AdminDashboard() {
       {tab === 'tts' && (
         <div className="admin-tts-panel">
           {ttsBooksLoading ? (
-            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}>
+            <div className="admin-tts-loading">
               <div className="loading-spinner" />
             </div>
           ) : ttsBooks.length === 0 ? (
-            <div style={{ color: '#ef4444', padding: '16px' }}>
+            <div className="admin-tts-error">
               加载失败，请刷新重试或检查管理员登录状态
             </div>
           ) : (
@@ -635,23 +648,14 @@ export default function AdminDashboard() {
                 const btnLabel = isRunning ? '生成中...' : isDone ? '已完成' : isInterrupted ? '续传' : isError ? '重试' : '生成'
                 const btnClass = `tts-generate-btn ${isRunning ? 'loading' : ''} ${isDone ? 'done' : ''} ${isInterrupted || isError ? 'interrupted' : ''}`
                 return (
-                  <div
-                    key={book.book_id}
-                    className={cardClass}
-                    style={{ '--book-color': book.color } as React.CSSProperties}
-                  >
+                  <div key={book.book_id} className={cardClass}>
                     <div className="tts-book-title">{book.title}</div>
                     <div className="tts-book-progress">
-                      <div className="tts-progress-bar">
-                        <div
-                          className="tts-progress-fill"
-                          style={{ width: `${book.total > 0 ? (book.cached / book.total) * 100 : 0}%` }}
-                        />
-                      </div>
+                      <progress className="tts-progress-bar" max={book.total || 1} value={book.cached} />
                       <span className="tts-progress-text">
                         {book.cached} / {book.total} 条
-                        {isInterrupted && <span style={{ color: '#f59e0b', marginLeft: '6px' }}>已中断</span>}
-                        {isError && <span style={{ color: '#ef4444', marginLeft: '6px' }}>出错</span>}
+                        {isInterrupted && <span className="tts-progress-flag tts-progress-flag--warning">已中断</span>}
+                        {isError && <span className="tts-progress-flag tts-progress-flag--error">出错</span>}
                       </span>
                     </div>
                     <button
@@ -690,7 +694,7 @@ export default function AdminDashboard() {
                 <span className="admin-modal-meta-item">注册于 {fmtDate(selectedUser.user.created_at)}</span>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="admin-modal-actions">
               <button
                 className="admin-modal-toggle-fs"
                 onClick={() => setIsFullscreen(f => !f)}
@@ -754,7 +758,7 @@ export default function AdminDashboard() {
           <div className="admin-detail-filters">
             <input type="date" className="admin-filter-date" value={detailDateFrom}
               onChange={e => setDetailDateFrom(e.target.value)} title="开始日期" />
-            <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>至</span>
+            <span className="admin-filter-separator">至</span>
             <input type="date" className="admin-filter-date" value={detailDateTo}
               onChange={e => setDetailDateTo(e.target.value)} title="结束日期" />
             <select className="admin-filter-select" value={detailMode} onChange={e => setDetailMode(e.target.value)}>
@@ -790,28 +794,28 @@ export default function AdminDashboard() {
                   <div className="admin-empty">暂无学习记录</div>
                 ) : (
                   <>
-                    <div className="admin-section-title" style={{ marginBottom: '8px' }}>近30天每日学习时长（分钟）</div>
+                    <div className="admin-section-title admin-section-title--tight">近30天每日学习时长（分钟）</div>
                     <MiniBarChart
                       data={selectedUser.daily_study.map(d => ({ ...d, minutes: Math.round(d.seconds / 60) }))}
-                      valueKey="minutes" labelKey="day" color="#6366f1"
+                      valueKey="minutes" labelKey="day" tone="indigo"
                     />
                     <div className="admin-chart-labels">
                       {selectedUser.daily_study.map((d, i) => <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>)}
                     </div>
-                    <div className="admin-section-title" style={{ marginTop: '20px', marginBottom: '8px' }}>近30天每日学习单词数</div>
-                    <MiniBarChart data={selectedUser.daily_study} valueKey="words" labelKey="day" color="#10b981" />
+                    <div className="admin-section-title admin-section-title--stacked">近30天每日学习单词数</div>
+                    <MiniBarChart data={selectedUser.daily_study} valueKey="words" labelKey="day" tone="green" />
                     <div className="admin-chart-labels">
                       {selectedUser.daily_study.map((d, i) => <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>)}
                     </div>
-                    <div className="admin-section-title" style={{ marginTop: '20px', marginBottom: '8px' }}>近30天每日准确情况</div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <div className="admin-section-title admin-section-title--stacked">近30天每日准确情况</div>
+                    <table className="admin-inline-table">
                       <thead>
-                        <tr style={{ color: 'var(--text-tertiary)' }}>
-                          <th style={{ textAlign: 'left', padding: '4px 8px' }}>日期</th>
-                          <th style={{ textAlign: 'right', padding: '4px 8px' }}>正确</th>
-                          <th style={{ textAlign: 'right', padding: '4px 8px' }}>错误</th>
-                          <th style={{ textAlign: 'right', padding: '4px 8px' }}>准确率</th>
-                          <th style={{ textAlign: 'right', padding: '4px 8px' }}>时长</th>
+                        <tr className="admin-inline-table-head">
+                          <th className="admin-inline-table-cell admin-inline-table-cell--left">日期</th>
+                          <th className="admin-inline-table-cell admin-inline-table-cell--right">正确</th>
+                          <th className="admin-inline-table-cell admin-inline-table-cell--right">错误</th>
+                          <th className="admin-inline-table-cell admin-inline-table-cell--right">准确率</th>
+                          <th className="admin-inline-table-cell admin-inline-table-cell--right">时长</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -819,12 +823,12 @@ export default function AdminDashboard() {
                           const tot = d.correct + d.wrong
                           const acc = tot > 0 ? Math.round(d.correct / tot * 100) : 0
                           return (
-                            <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
-                              <td style={{ padding: '6px 8px' }}>{d.day}</td>
-                              <td style={{ textAlign: 'right', padding: '6px 8px', color: '#10b981' }}>{d.correct}</td>
-                              <td style={{ textAlign: 'right', padding: '6px 8px', color: '#ef4444' }}>{d.wrong}</td>
-                              <td style={{ textAlign: 'right', padding: '6px 8px' }}>{tot > 0 ? `${acc}%` : '—'}</td>
-                              <td style={{ textAlign: 'right', padding: '6px 8px' }}>{fmtSeconds(d.seconds)}</td>
+                            <tr key={i} className="admin-inline-table-row">
+                              <td className="admin-inline-table-cell">{d.day}</td>
+                              <td className="admin-inline-table-cell admin-inline-table-cell--right admin-cell-positive">{d.correct}</td>
+                              <td className="admin-inline-table-cell admin-inline-table-cell--right admin-cell-negative">{d.wrong}</td>
+                              <td className="admin-inline-table-cell admin-inline-table-cell--right">{tot > 0 ? `${acc}%` : '—'}</td>
+                              <td className="admin-inline-table-cell admin-inline-table-cell--right">{fmtSeconds(d.seconds)}</td>
                             </tr>
                           )
                         })}
@@ -849,8 +853,8 @@ export default function AdminDashboard() {
                         return (
                           <tr key={i}>
                             <td>{bookLabels[b.book_id] || b.book_id}</td>
-                            <td style={{ color: '#10b981' }}>{b.correct_count}</td>
-                            <td style={{ color: '#ef4444' }}>{b.wrong_count}</td>
+                            <td className="admin-cell-positive">{b.correct_count}</td>
+                            <td className="admin-cell-negative">{b.wrong_count}</td>
                             <td>{tot > 0 ? `${acc}%` : '—'}</td>
                             <td><span className={`admin-status-badge ${b.is_completed ? 'completed' : 'ongoing'}`}>{b.is_completed ? '已完成' : '学习中'}</span></td>
                             <td className="admin-cell-muted">{fmtDate(b.updated_at)}</td>
@@ -869,7 +873,7 @@ export default function AdminDashboard() {
                   <div className="admin-empty">暂无错词</div>
                 ) : (
                   <>
-                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
+                    <div className="admin-detail-summary">
                       共 {selectedUser.user.stats.wrong_words_count} 个错词，显示前 {selectedUser.wrong_words.length} 个（按错误次数排序）
                     </div>
                     <table className="admin-detail-table">
@@ -880,7 +884,7 @@ export default function AdminDashboard() {
                             <td><strong>{w.word}</strong></td>
                             <td className="admin-cell-muted">{w.phonetic || '—'}</td>
                             <td className="admin-cell-muted">{w.pos || '—'}</td>
-                            <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={w.definition}>{w.definition}</td>
+                            <td className="admin-cell-ellipsis admin-cell-ellipsis--wide" title={w.definition}>{w.definition}</td>
                             <td><span className={`admin-wrong-count ${w.wrong_count >= 5 ? 'high' : w.wrong_count >= 3 ? 'mid' : ''}`}>{w.wrong_count}次</span></td>
                             <td className="admin-cell-muted">{fmtDate(w.updated_at)}</td>
                           </tr>
@@ -898,7 +902,7 @@ export default function AdminDashboard() {
                   <div className="admin-empty">暂无章节学习记录</div>
                 ) : (
                   <>
-                    <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '12px' }}>
+                    <div className="admin-detail-summary">
                       按用户 · 词书 · 章节 · 日期 · 模式 多维汇总，共 {selectedUser.chapter_daily.length} 条记录
                     </div>
                     <table className="admin-detail-table">
@@ -910,12 +914,12 @@ export default function AdminDashboard() {
                           return (
                             <tr key={i}>
                               <td className="admin-cell-muted">{r.day}</td>
-                              <td style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.book_id}>{bookLabels[r.book_id] || r.book_id || '—'}</td>
+                              <td className="admin-cell-ellipsis" title={r.book_id}>{bookLabels[r.book_id] || r.book_id || '—'}</td>
                               <td className="admin-cell-muted">{fmtChapterId(r.chapter_id)}</td>
                               <td>{modeLabels[r.mode] || r.mode || '—'}</td>
                               <td>{r.sessions}</td><td>{r.words}</td>
-                              <td style={{ color: '#10b981' }}>{r.correct}</td>
-                              <td style={{ color: '#ef4444' }}>{r.wrong}</td>
+                              <td className="admin-cell-positive">{r.correct}</td>
+                              <td className="admin-cell-negative">{r.wrong}</td>
                               <td><span className={`admin-accuracy ${acc >= 80 ? 'good' : acc >= 60 ? 'mid' : acc > 0 ? 'low' : ''}`}>{tot > 0 ? `${acc}%` : '—'}</span></td>
                               <td>{fmtSeconds(r.seconds)}</td>
                             </tr>
@@ -943,8 +947,8 @@ export default function AdminDashboard() {
                           <td className="admin-cell-muted">{bookLabels[s.book_id] || s.book_id || '—'}</td>
                           <td className="admin-cell-muted">{fmtChapterId(s.chapter_id)}</td>
                           <td>{s.words_studied}</td>
-                          <td style={{ color: '#10b981' }}>{s.correct_count}</td>
-                          <td style={{ color: '#ef4444' }}>{s.wrong_count}</td>
+                          <td className="admin-cell-positive">{s.correct_count}</td>
+                          <td className="admin-cell-negative">{s.wrong_count}</td>
                           <td><span className={`admin-accuracy ${s.accuracy >= 80 ? 'good' : s.accuracy >= 60 ? 'mid' : s.accuracy > 0 ? 'low' : ''}`}>{s.accuracy > 0 ? `${s.accuracy}%` : '—'}</span></td>
                           <td>{fmtSeconds(s.duration_seconds)}</td>
                         </tr>

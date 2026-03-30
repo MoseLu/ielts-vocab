@@ -82,9 +82,7 @@
 
 /* ── Banner ── */
 .home-banner {
-    background: linear-gradient(135deg,
-        color-mix(in srgb, var(--accent) 10%, var(--bg-color)) 0%,
-        color-mix(in srgb, var(--accent) 4%, var(--bg-color)) 100%);
+    background: var(--surface-base);
     border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
     border-radius: var(--radius-xl);
     padding: var(--space-xl) var(--space-2xl);

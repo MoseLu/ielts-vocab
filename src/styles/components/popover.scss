@@ -11,8 +11,12 @@
 
 /* ── Panel ── */
 .popover-panel {
-    background: var(--bg-color);
-    border: 1px solid var(--border);
+    position: fixed;
+    left: var(--popover-left, 0);
+    top: var(--popover-top, 0);
+    min-width: var(--popover-min-width, auto);
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
     box-shadow:
         0 6px 16px rgba(0, 0, 0, 0.08),
@@ -20,6 +24,11 @@
         0 0 0 1px rgba(0, 0, 0, 0.03);
     z-index: 9999;
     animation: popoverFadeIn 0.18s ease forwards;
+}
+
+.popover-trigger {
+    display: inline-block;
+    cursor: pointer;
 }
 
 /* Close animation — added via JS when closing */
@@ -90,8 +99,8 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--bg-color);
-    border: 1px solid var(--border);
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
     transform: rotate(45deg);
     box-sizing: border-box;
 }
@@ -168,7 +177,7 @@
 }
 
 .popover-option:hover {
-    background: var(--accent-subtle);
+    background: var(--surface-hover);
     color: var(--accent);
 }
 
@@ -195,7 +204,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    border: 2px solid var(--border);
+    border: 2px solid var(--border-subtle);
     flex-shrink: 0;
     transition: all var(--transition-fast);
 }
@@ -203,7 +212,7 @@
 .ctx-radio.checked {
     border-color: var(--accent);
     background: var(--accent);
-    box-shadow: inset 0 0 0 2.5px var(--bg-color);
+    box-shadow: inset 0 0 0 2.5px var(--surface-floating);
 }
 
 .popover-loading {
@@ -261,7 +270,7 @@
 
 .popover-divider {
     height: 1px;
-    background: var(--border);
+    background: var(--border-subtle);
     margin: var(--space-xs) 0;
 }
 
@@ -283,7 +292,7 @@
 }
 
 .popover-item:hover {
-    background: var(--accent-subtle);
+    background: var(--surface-hover);
     color: var(--accent);
 }
 

@@ -85,7 +85,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--surface-overlay);
     backdrop-filter: blur(4px);
     z-index: var(--layer-global-loading);
 }
@@ -99,9 +99,9 @@
     text-align: center;
     min-width: 120px;
     padding: 10px;
-    border: 1px solid var(--surface-border-strong);
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
-    background: var(--surface-elevated);
+    background: var(--surface-floating);
     box-shadow: var(--shadow-soft);
 }
 
@@ -125,7 +125,7 @@
 
 .ui-surface {
     background: var(--surface-base);
-    border: 1px solid var(--surface-border-strong);
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
     box-shadow: var(--shadow-soft);
     backdrop-filter: none;
@@ -134,7 +134,7 @@
 
 .ui-panel {
     background: var(--surface-elevated);
-    border: 1px solid var(--surface-border-strong);
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
     box-shadow: var(--shadow-soft);
     backdrop-filter: none;

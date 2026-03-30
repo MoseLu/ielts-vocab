@@ -239,7 +239,7 @@
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-secondary) 100%);
+  background: var(--accent);
     border-radius: var(--radius-full);
     transition: width 0.3s ease;
 }

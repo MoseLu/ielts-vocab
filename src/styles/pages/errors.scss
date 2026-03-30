@@ -2,17 +2,11 @@
 
 .errors-page {
     /* padding managed by .page-content wrapper */
-    max-width: 100%;
-    min-height: calc(100vh - var(--header-height) - 20px);
-    display: flex;
-    flex-direction: column;
+    @include page-shell-fill();
 }
 
 .errors-page > .page-content {
-    flex: 1;
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
+    @include page-content-fill();
 }
 
 .errors-header {

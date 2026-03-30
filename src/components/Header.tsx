@@ -315,7 +315,7 @@ function Header({
             </div>
             <div className="settings-content settings-content--help">
               <div className="help-modal-section">
-                <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>键盘快捷键</h3>
+                <h3 className="help-modal-title">键盘快捷键</h3>
                 <div className="help-modal-list">
                   {([['1 - 4', '选择答案选项'], ['5', '不知道（跳过）'], ['空格', '重新播放发音'], ['Esc', '退出练习']] as [string, string][]).map(([key, desc]) => (
                     <div key={key} className="help-modal-row">
@@ -326,11 +326,11 @@ function Header({
                 </div>
               </div>
               <div>
-                <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>学习模式说明</h3>
+                <h3 className="help-modal-title">学习模式说明</h3>
                 <div className="help-modal-list">
                   {(Object.entries(modeNames) as [PracticeMode, string][]).map(([key, name]) => (
                     <div key={key} className="help-modal-mode">
-                      <strong style={{ color: 'var(--text-primary)' }}>{name}</strong> — {modeDescriptions[key]}
+                      <strong className="help-modal-mode-name">{name}</strong> — {modeDescriptions[key]}
                     </div>
                   ))}
                 </div>

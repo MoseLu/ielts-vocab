@@ -10,8 +10,8 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
+    background: var(--surface-muted);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: 500;
@@ -21,12 +21,13 @@
 }
 
 .mode-selector-btn:hover {
-    border-color: var(--accent);
+    border-color: rgba(var(--accent-rgb), 0.42);
+    box-shadow: var(--focus-ring);
 }
 
 .mode-selector-btn.active {
-    border-color: var(--accent);
-    background: var(--accent-subtle);
+    border-color: rgba(var(--accent-rgb), 0.42);
+    background: var(--surface-hover);
 }
 
 .mode-selector-btn svg {
@@ -40,8 +41,8 @@
     top: calc(100% + 8px);
     right: 0;
     width: 300px;
-    background: var(--bg-color);
-    border: 1px solid var(--border);
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
     padding: var(--space-sm);
@@ -65,18 +66,18 @@
 }
 
 .mode-option:hover {
-    background: var(--bg-secondary);
+    background: var(--surface-hover);
 }
 
 .mode-option.selected {
-    background: var(--accent-subtle);
+    background: var(--surface-active);
 }
 
 /* Radio button style */
 .mode-option-radio {
     width: 18px;
     height: 18px;
-    border: 2px solid var(--border);
+    border: 2px solid var(--border-subtle);
     border-radius: var(--radius-full);
     display: flex;
     align-items: center;
@@ -101,7 +102,7 @@
 .mode-option-icon {
     width: 36px;
     height: 36px;
-    background: var(--bg-tertiary);
+    background: var(--surface-muted);
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
@@ -145,8 +146,8 @@
     top: calc(100% + 10px);
     right: 0;
     margin-top: 4px;
-    background: var(--bg-color);
-    border: 1px solid var(--border);
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
     padding: var(--space-xs);
     min-width: 200px;
@@ -167,9 +168,9 @@
     right: 14px;
     width: 12px;
     height: 12px;
-    background: var(--bg-color);
-    border-top: 1px solid var(--border);
-    border-left: 1px solid var(--border);
+    background: var(--surface-floating);
+    border-top: 1px solid var(--border-strong);
+    border-left: 1px solid var(--border-strong);
     transform: rotate(45deg);
     border-radius: 2px;
     z-index: 1;
@@ -198,7 +199,7 @@
 }
 
 .dropdown-item:hover {
-    background: var(--accent-subtle);
+    background: var(--surface-hover);
     color: var(--accent);
 }
 
@@ -221,7 +222,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .day-dropdown-scroll {
@@ -269,7 +270,7 @@
 
 .user-dropdown-divider {
     height: 1px;
-    background: var(--border);
+    background: var(--border-subtle);
     margin: var(--space-xs) 0;
 }
 
@@ -282,8 +283,8 @@
     transform: none !important;
     min-width: 220px;
     max-width: 400px;
-    background: var(--bg-color);
-    border: 1px solid var(--border);
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
     padding: 0;
@@ -309,8 +310,8 @@
     left: auto !important;
     transform: none !important;
     width: 240px;
-    background: var(--bg-color);
-    border: 1px solid var(--border);
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
     padding: var(--space-xs);

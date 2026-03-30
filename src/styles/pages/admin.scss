@@ -35,8 +35,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   font-size: 13px;
   color: var(--text-secondary);
@@ -44,7 +44,7 @@
   transition: background 0.15s;
   flex-shrink: 0;
 }
-.admin-refresh-btn:hover { background: var(--bg-tertiary); }
+.admin-refresh-btn:hover { background: var(--surface-hover); }
 
 /* Error banner */
 .admin-error {
@@ -65,14 +65,8 @@
 
 /* Tabs */
 .admin-tabs {
-  display: flex;
-  gap: 10px;
+  @include toolbar-surface($justify: flex-start, $wrap: nowrap);
   margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-base);
-  box-shadow: var(--shadow-soft);
   width: fit-content;
 }
 
@@ -102,7 +96,7 @@
 }
 
 .admin-tab-badge {
-  background: var(--bg-tertiary);
+  background: var(--surface-muted);
   color: var(--text-tertiary);
   font-size: 11px;
   font-weight: 600;
@@ -134,11 +128,7 @@
 }
 
 .admin-stat-card {
-  background: var(--surface-base);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: var(--shadow-soft);
+  @include metric-card();
 }
 
 .admin-stat-label {
@@ -169,12 +159,9 @@
 
 /* Chart section */
 .admin-chart-section {
-  background: var(--surface-base);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  @include panel-surface();
   padding: 10px;
   margin-bottom: 10px;
-  box-shadow: var(--shadow-soft);
 }
 
 .admin-section-title {
@@ -249,11 +236,8 @@
 }
 
 .admin-card {
-  background: var(--surface-base);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  @include panel-surface();
   padding: 10px;
-  box-shadow: var(--shadow-soft);
 }
 
 /* Mode stats */
@@ -269,7 +253,7 @@
 .admin-mode-name { font-size: 13px; color: var(--text-secondary); }
 
 .admin-mode-bar-wrap {
-  background: var(--bg-tertiary);
+  background: var(--surface-inset);
   border-radius: 4px;
   height: 8px;
   overflow: hidden;
@@ -293,9 +277,9 @@
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: var(--bg-color);
+  background: var(--surface-muted);
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
 }
 
 .admin-book-rank {
@@ -332,15 +316,15 @@
   min-width: 200px;
   max-width: 340px;
   padding: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   font-size: 14px;
-  background: var(--surface-base);
+  background: var(--surface-muted);
   color: var(--text-primary);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.admin-search-input:focus { border-color: var(--accent); }
+.admin-search-input:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
 
 .admin-search-btn {
   padding: 10px;
@@ -357,14 +341,14 @@
 
 .admin-search-clear {
   padding: 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
 }
-.admin-search-clear:hover { background: var(--bg-tertiary); }
+.admin-search-clear:hover { background: var(--surface-hover); }
 
 .admin-total-hint {
   font-size: 13px;
@@ -374,11 +358,7 @@
 
 /* Table */
 .admin-table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-base);
-  box-shadow: var(--shadow-soft);
+  @include table-shell();
 }
 
 .admin-mode-progress {
@@ -413,7 +393,7 @@
 }
 
 .admin-table thead tr {
-  background: rgba(248, 250, 252, 0.92);
+  background: var(--surface-muted);
 }
 
 .admin-table th {
@@ -444,13 +424,13 @@
   border-bottom: 1px solid var(--border);
   color: var(--text-primary);
   vertical-align: middle;
-  background: var(--bg-color);
+  background: transparent;
 }
 
 .admin-table tbody tr:last-child td { border-bottom: none; }
 
 .admin-user-row { cursor: pointer; }
-.admin-user-row:hover td { background: var(--bg-secondary) !important; }
+.admin-user-row:hover td { background: var(--surface-hover) !important; }
 
 @media (max-width: 880px) {
   .admin-dashboard {
@@ -874,13 +854,8 @@
 
 /* Filter bar inside user detail modal */
 .admin-detail-filters {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--bg-secondary);
+  @include toolbar-surface($justify: flex-start, $padding: 10px, $gap: 8px, $background: var(--bg-secondary), $border: none, $radius: 0, $shadow: none);
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
 }
 
 .admin-filter-separator {
@@ -889,45 +864,22 @@
 }
 
 .admin-filter-date {
-  padding: 5px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 12px;
-  background: var(--bg-color);
-  color: var(--text-primary);
+  @include input-control(32px, 5px 8px, 6px, 1px solid var(--border), var(--bg-color), var(--text-primary), 12px);
 }
 
 .admin-filter-select {
-  padding: 5px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 12px;
-  background: var(--bg-color);
-  color: var(--text-primary);
+  @include input-control(32px, 5px 8px, 6px, 1px solid var(--border), var(--bg-color), var(--text-primary), 12px);
   cursor: pointer;
 }
 
 .admin-filter-apply {
-  padding: 5px 14px;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  @include accent-button(32px, 5px 14px, 6px, var(--accent), #fff, none, 12px, 600);
   transition: background 0.12s;
 }
 .admin-filter-apply:hover { background: var(--accent-hover); }
 
 .admin-filter-reset {
-  padding: 5px 12px;
-  background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
+  @include control-button(32px, 5px 12px, 6px, 1px solid var(--border), transparent, var(--text-secondary), 12px, 400);
   transition: background 0.12s;
 }
 .admin-filter-reset:hover { background: var(--bg-tertiary); }
@@ -983,28 +935,18 @@
 
 /* Detail table */
 .admin-detail-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
+  @include data-table-base();
 }
 
 .admin-detail-table th {
-  padding: 7px 10px;
+  @include data-table-head-cell(7px 10px, var(--bg-secondary), 11px, 600, var(--text-tertiary), 1px solid var(--border));
   text-align: left;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  border-bottom: 1px solid var(--border);
   white-space: nowrap;
-  background: var(--bg-secondary);
 }
 
 .admin-detail-table td {
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-primary);
+  @include data-table-body-cell(9px 10px);
   vertical-align: middle;
-  background: var(--bg-color);
 }
 
 .admin-detail-table tbody tr:last-child td { border-bottom: none; }
@@ -1012,10 +954,7 @@
 
 /* Status badges */
 .admin-status-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
+  @include pill-badge(20px, 2px 8px, 10px, transparent, var(--text-secondary), 11px, 600);
 }
 .admin-status-badge.completed {
   background: var(--success-bg);
@@ -1044,9 +983,7 @@
 }
 
 .admin-chart-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
+  @include data-table-base();
 }
 
 .admin-chart-table__row {
@@ -1113,13 +1050,8 @@
 }
 
 .tts-book-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  @include metric-card(10px, var(--bg-secondary));
+  @include page-stack(10px);
   border-left: 4px solid var(--book-color, var(--accent));
 }
 
@@ -1175,6 +1107,100 @@
   color: var(--text-secondary);
 }
 
+.admin-tts-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.admin-tts-error {
+  color: var(--error);
+  padding: 16px;
+}
+
+.tts-progress-flag {
+  margin-left: 6px;
+}
+
+.tts-progress-flag--warning {
+  color: var(--warning);
+}
+
+.tts-progress-flag--error {
+  color: var(--error);
+}
+
+.admin-modal-actions {
+  display: flex;
+  align-items: center;
+}
+
+.admin-filter-separator {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.admin-section-title--tight {
+  margin-bottom: 8px;
+}
+
+.admin-section-title--stacked {
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.admin-inline-table {
+  @include data-table-base();
+}
+
+.admin-inline-table-head {
+  color: var(--text-tertiary);
+}
+
+.admin-inline-table-row {
+  border-top: 1px solid var(--border);
+}
+
+.admin-inline-table-cell {
+  padding: 6px 8px;
+}
+
+.admin-inline-table-cell--left {
+  text-align: left;
+  padding: 4px 8px;
+}
+
+.admin-inline-table-cell--right {
+  text-align: right;
+  padding: 4px 8px;
+}
+
+.admin-cell-positive {
+  color: var(--success);
+}
+
+.admin-cell-negative {
+  color: var(--error);
+}
+
+.admin-detail-summary {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+
+.admin-cell-ellipsis {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-cell-ellipsis--wide {
+  max-width: 200px;
+}
+
 .tts-progress-status {
   margin-left: 6px;
 }
@@ -1188,13 +1214,7 @@
 }
 
 .tts-generate-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
+  @include accent-button(40px, 8px 16px, 8px, var(--accent), #fff, none, 14px, 600);
   transition: background 0.2s;
 }
 

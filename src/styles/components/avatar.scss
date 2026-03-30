@@ -14,9 +14,10 @@
 .avatar-modal {
     width: 90%;
     max-width: 400px;
-    background: var(--bg-color);
+    background: var(--surface-floating);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -27,7 +28,7 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-lg) var(--space-xl);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .avatar-modal-header h3 {
@@ -50,7 +51,7 @@
 }
 
 .avatar-modal-close:hover {
-    background: var(--bg-secondary);
+    background: var(--surface-hover);
     color: var(--text-primary);
 }
 
@@ -72,8 +73,8 @@
     height: 120px;
     border-radius: var(--radius-full);
     overflow: hidden;
-    border: 3px solid var(--border);
-    background: var(--bg-secondary);
+    border: 3px solid var(--border-subtle);
+    background: var(--surface-muted);
 }
 
 .avatar-preview-img {
@@ -91,12 +92,16 @@
     font-size: 40px;
     font-weight: 700;
     color: var(--text-tertiary);
-    background: var(--bg-tertiary);
+    background: var(--surface-inset);
 }
 
 .avatar-actions {
     display: flex;
     gap: var(--space-sm);
+}
+
+.avatar-file-input {
+    display: none;
 }
 
 .avatar-upload-btn {
@@ -159,7 +164,7 @@
     display: flex;
     gap: var(--space-sm);
     padding: var(--space-lg) var(--space-xl);
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-subtle);
     justify-content: flex-end;
 }
 
@@ -167,7 +172,7 @@
     padding: var(--space-sm) var(--space-xl);
     background: none;
     color: var(--text-secondary);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     font-size: 14px;
     cursor: pointer;
@@ -175,7 +180,7 @@
 }
 
 .avatar-cancel-btn:hover {
-    background: var(--bg-secondary);
+    background: var(--surface-hover);
 }
 
 .avatar-save-btn {

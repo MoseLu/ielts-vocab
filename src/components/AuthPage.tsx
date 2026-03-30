@@ -1,12 +1,12 @@
 // ── Auth Page ─────────────────────────────────────────────────────────────────────
 
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts'
 import { useToast } from '../contexts'
 import { useForm, RegisterSchema, LoginSchema } from '../lib'
 
-type Tab = 'login' | 'register' | 'forgot'
+type AuthRouteMode = 'login' | 'register' | 'forgot'
 
 // Required asterisk helper
 function RequiredMark() {
@@ -124,9 +124,14 @@ function FormField({ label, required, children, error }: {
 
 export default function AuthPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, register, sendForgotPasswordCode, resetPassword } = useAuth()
   const { showToast } = useToast()
-  const [tab, setTab] = useState<Tab>('login')
+  const mode = useMemo<AuthRouteMode>(() => {
+    if (location.pathname === '/register') return 'register'
+    if (location.pathname === '/forgot-password') return 'forgot'
+    return 'login'
+  }, [location.pathname])
   // forgot password state
   const [fpEmail, setFpEmail] = useState('')
   const [fpEmailSent, setFpEmailSent] = useState(false)
@@ -138,6 +143,13 @@ export default function AuthPage() {
   const [fpSubmitting, setFpSubmitting] = useState(false)
   const [showFpPassword, setShowFpPassword] = useState(false)
   const [showFpConfirm, setShowFpConfirm] = useState(false)
+
+  useEffect(() => {
+    if (mode !== 'forgot') {
+      setFpError('')
+      setFpEmailSent(false)
+    }
+  }, [mode])
 
   const loginForm = useForm({ schema: LoginSchema })
   const registerForm = useForm({ schema: RegisterSchema })
@@ -183,7 +195,7 @@ export default function AuthPage() {
     try {
       await resetPassword(fpEmail, fpCode, fpPassword)
       showToast('密码重置成功，请登录', 'success')
-      setTab('login')
+      navigate('/login')
       setFpEmail(''); setFpCode(''); setFpPassword(''); setFpConfirm('')
       setFpEmailSent(false)
     } catch (e: any) {
@@ -194,21 +206,28 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="auth-page">
+    <div className="auth-page special-page">
+      <div className="special-page-brand">
+        <img src="/images/logo.png" alt="IELTS Vocab" className="special-page-brand-logo" />
+        <div className="special-page-brand-text">
+          <span className="special-page-brand-title">雅思冲刺</span>
+          <span className="special-page-brand-subtitle">IELTS Vocabulary</span>
+        </div>
+      </div>
       <div className="auth-card">
         {/* Tabs */}
-        {tab !== 'forgot' && (
+        {mode !== 'forgot' && (
           <div className="auth-tabs">
             <button
-              className={`auth-tab ${tab === 'login' ? 'active' : ''}`}
-              onClick={() => setTab('login')}
+              className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+              onClick={() => navigate('/login')}
               type="button"
             >
               登录
             </button>
             <button
-              className={`auth-tab ${tab === 'register' ? 'active' : ''}`}
-              onClick={() => setTab('register')}
+              className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
+              onClick={() => navigate('/register')}
               type="button"
             >
               注册
@@ -216,9 +235,9 @@ export default function AuthPage() {
           </div>
         )}
 
-        {tab === 'forgot' && (
+        {mode === 'forgot' && (
           <div className="auth-back-header">
-            <button className="auth-back-btn" onClick={() => { setTab('login'); setFpError(''); setFpEmailSent(false) }} type="button">
+            <button className="auth-back-btn" onClick={() => { navigate('/login'); setFpError(''); setFpEmailSent(false) }} type="button">
               ← 返回登录
             </button>
             <h2 className="auth-forgot-title">找回密码</h2>
@@ -226,7 +245,7 @@ export default function AuthPage() {
         )}
 
         {/* Login form */}
-        {tab === 'login' && (
+        {mode === 'login' && (
           <form onSubmit={handleLoginSubmit} noValidate>
             <FormField label="邮箱 / 用户名" required error={loginForm.getFieldError('identifier')}>
               <ClearableInput
@@ -254,7 +273,7 @@ export default function AuthPage() {
               <button
                 type="button"
                 className="auth-forgot-link"
-                onClick={() => { setTab('forgot'); setFpError('') }}
+                onClick={() => { navigate('/forgot-password'); setFpError('') }}
               >
                 忘记密码？
               </button>
@@ -267,7 +286,7 @@ export default function AuthPage() {
         )}
 
         {/* Register form */}
-        {tab === 'register' && (
+        {mode === 'register' && (
           <form onSubmit={handleRegisterSubmit} noValidate>
             <FormField label="用户名" required error={registerForm.getFieldError('username')}>
               <ClearableInput
@@ -319,7 +338,7 @@ export default function AuthPage() {
             <label className="agreement-label">
               <input type="checkbox" className="agreement-checkbox" defaultChecked={true} />
               <span className="agreement-text">我已阅读并同意</span>
-              <a href="#" className="agreement-link" onClick={(e) => e.preventDefault()}>《用户服务协议》</a>
+              <Link to="/terms" className="agreement-link" target="_blank" rel="noreferrer">《用户服务协议》</Link>
             </label>
 
             <span className="field-error">{registerForm.errors.__form ?? '\u00a0'}</span>
@@ -329,7 +348,7 @@ export default function AuthPage() {
         )}
 
         {/* Forgot password flow */}
-        {tab === 'forgot' && (
+        {mode === 'forgot' && (
           <form onSubmit={handleResetPassword} noValidate>
             <FormField label="注册邮箱" required>
               <div className="auth-code-row">

@@ -1,0 +1,246 @@
+@mixin page-stack($gap: null) {
+  display: flex;
+  flex-direction: column;
+
+  @if $gap != null {
+    gap: $gap;
+  }
+}
+
+@mixin page-shell-fill($min-height: calc(100vh - var(--header-height) - 20px)) {
+  max-width: 100%;
+  min-height: $min-height;
+  @include page-stack();
+}
+
+@mixin page-content-fill($gap: null) {
+  flex: 1;
+  min-height: 100%;
+  @include page-stack($gap);
+}
+
+@mixin panel-surface(
+  $background: var(--surface-base),
+  $border: 1px solid var(--border-subtle),
+  $radius: 10px,
+  $shadow: var(--shadow-soft)
+) {
+  background: $background;
+  border: $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+}
+
+@mixin toolbar-surface(
+  $justify: flex-start,
+  $wrap: wrap,
+  $padding: 10px,
+  $gap: 10px,
+  $background: var(--surface-base),
+  $border: 1px solid var(--border-subtle),
+  $radius: 10px,
+  $shadow: var(--shadow-soft)
+) {
+  display: flex;
+  align-items: center;
+  justify-content: $justify;
+  flex-wrap: $wrap;
+  gap: $gap;
+  padding: $padding;
+  @include panel-surface($background, $border, $radius, $shadow);
+}
+
+@mixin table-shell(
+  $background: var(--surface-base),
+  $border: 1px solid var(--border-subtle),
+  $radius: 10px,
+  $shadow: var(--shadow-soft),
+  $overflow-x: auto,
+  $overflow-y: visible
+) {
+  overflow-x: $overflow-x;
+  overflow-y: $overflow-y;
+  @include panel-surface($background, $border, $radius, $shadow);
+}
+
+@mixin metric-card(
+  $padding: 10px,
+  $background: var(--surface-base),
+  $border: 1px solid var(--border-subtle),
+  $radius: 10px,
+  $shadow: var(--shadow-soft)
+) {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  padding: $padding;
+  @include panel-surface($background, $border, $radius, $shadow);
+}
+
+@mixin data-table-base($font-size: 13px, $collapse: collapse) {
+  width: 100%;
+  border-collapse: $collapse;
+  font-size: $font-size;
+}
+
+@mixin data-table-head-cell(
+  $padding: 10px,
+  $background: var(--surface-muted),
+  $font-size: 12px,
+  $font-weight: 600,
+  $color: var(--text-tertiary),
+  $border-bottom: 1px solid var(--border-subtle)
+) {
+  padding: $padding;
+  background: $background;
+  font-size: $font-size;
+  font-weight: $font-weight;
+  color: $color;
+  border-bottom: $border-bottom;
+}
+
+@mixin data-table-body-cell(
+  $padding: 10px,
+  $background: transparent,
+  $color: var(--text-primary),
+  $border-bottom: 1px solid var(--border-subtle)
+) {
+  padding: $padding;
+  background: $background;
+  color: $color;
+  border-bottom: $border-bottom;
+}
+
+@mixin control-button(
+  $min-height: 40px,
+  $padding: 0 10px,
+  $radius: 10px,
+  $border: 1px solid var(--border-subtle),
+  $background: var(--surface-muted),
+  $color: var(--text-secondary),
+  $font-size: 14px,
+  $font-weight: 600
+) {
+  min-height: $min-height;
+  padding: $padding;
+  border: $border;
+  border-radius: $radius;
+  background: $background;
+  color: $color;
+  font-size: $font-size;
+  font-weight: $font-weight;
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
+
+  &:focus-visible {
+    outline: none;
+    border-color: rgba(var(--accent-rgb), 0.42);
+    box-shadow: var(--focus-ring);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+@mixin accent-button(
+  $min-height: 40px,
+  $padding: 0 10px,
+  $radius: 10px,
+  $background: var(--accent),
+  $color: white,
+  $border: 1px solid transparent,
+  $font-size: 14px,
+  $font-weight: 700,
+  $shadow: none
+) {
+  @include control-button($min-height, $padding, $radius, $border, $background, $color, $font-size, $font-weight);
+  box-shadow: $shadow;
+}
+
+@mixin input-control(
+  $min-height: 40px,
+  $padding: 0 10px,
+  $radius: 10px,
+  $border: 1px solid var(--border-subtle),
+  $background: var(--surface-muted),
+  $color: var(--text-primary),
+  $font-size: 14px
+) {
+  min-height: $min-height;
+  padding: $padding;
+  border: $border;
+  border-radius: $radius;
+  background: $background;
+  color: $color;
+  font-size: $font-size;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+
+  &:focus,
+  &:focus-visible {
+    border-color: rgba(var(--accent-rgb), 0.42);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+@mixin pill-badge(
+  $min-height: 28px,
+  $padding: 0 10px,
+  $radius: 999px,
+  $background: var(--accent-light),
+  $color: var(--accent),
+  $font-size: 12px,
+  $font-weight: 700
+) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: $min-height;
+  padding: $padding;
+  border-radius: $radius;
+  background: $background;
+  color: $color;
+  font-size: $font-size;
+  font-weight: $font-weight;
+}
+
+@mixin native-progress($fill: var(--accent), $radius: 999px) {
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  border-radius: $radius;
+  overflow: hidden;
+
+  &::-webkit-progress-bar {
+    background: transparent;
+  }
+
+  &::-webkit-progress-value {
+    background: $fill;
+    border-radius: $radius;
+  }
+
+  &::-moz-progress-bar {
+    background: $fill;
+    border-radius: $radius;
+  }
+}
+
+@mixin flex-center-column($gap: 10px) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $gap;
+}

@@ -138,7 +138,7 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
             ref={fileRef}
             type="file"
             accept="image/*"
-            style={{ display: 'none' }}
+            className="avatar-file-input"
             onChange={handleFileChange}
           />
 

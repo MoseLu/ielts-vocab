@@ -5,9 +5,33 @@
     /* padding managed by .page-content wrapper */
 }
 
+.stats-pie-dot--0 { background: #f97316; }
+.stats-pie-dot--1 { background: #3b82f6; }
+.stats-pie-dot--2 { background: #10b981; }
+.stats-pie-dot--3 { background: #8b5cf6; }
+.stats-pie-dot--4 { background: #ec4899; }
+.stats-pie-dot--5 { background: #14b8a6; }
+.stats-pie-dot--6 { background: #eab308; }
+.stats-pie-dot--7 { background: #64748b; }
+
+.stats-pie-dot--wrong-0 { background: #dc2626; }
+.stats-pie-dot--wrong-1 { background: #ea580c; }
+.stats-pie-dot--wrong-2 { background: #f59e0b; }
+.stats-pie-dot--wrong-3 { background: #eab308; }
+.stats-pie-dot--wrong-4 { background: #84cc16; }
+.stats-pie-dot--wrong-5 { background: #22c55e; }
+.stats-pie-dot--wrong-6 { background: #14b8a6; }
+.stats-pie-dot--wrong-7 { background: #0ea5e9; }
+.stats-pie-dot--wrong-8 { background: #6366f1; }
+.stats-pie-dot--wrong-9 { background: #a855f7; }
+
+.ebb-dot--target { background: #0ea5e9; }
+.ebb-dot--actual { background: #ea580c; }
+
+.legend-dot--accent { background: var(--accent); }
+
 .stats-page .page-content {
-    display: flex;
-    flex-direction: column;
+    @include page-content-fill();
     /* 与下方「错词 | 艾宾浩斯…」主布局同一竖线分割与槽宽 */
     --stats-col-left-pct: 32%;
     --stats-align-gutter: 10px;
@@ -62,8 +86,8 @@
 .mode-recommendation {
     font-size: 12px;
     color: var(--text-secondary);
-    background: rgba(249, 115, 22, 0.08);
-    border: 1px solid rgba(249, 115, 22, 0.2);
+    background: var(--accent-light);
+    border: 1px solid rgba(var(--accent-rgb), 0.22);
     padding: 4px 10px;
     border-radius: var(--radius-full);
     white-space: nowrap;
@@ -210,12 +234,9 @@
 }
 
 .stats-page-intro {
+    @include panel-surface(var(--surface-base), 1px solid rgba(var(--accent-rgb), 0.16), 10px, var(--shadow-soft));
     position: relative;
     padding: 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(var(--accent-rgb), 0.16);
-    background: var(--surface-base);
-    box-shadow: var(--shadow-soft);
     font-size: 12px;
     line-height: 1.6;
     color: var(--text-secondary);
@@ -241,14 +262,7 @@
 }
 
 .stats-card {
-    position: relative;
-    overflow: hidden;
-    min-height: 0;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(226, 232, 240, 0.96);
-    background: var(--surface-base);
-    box-shadow: var(--shadow-soft);
+    @include metric-card(10px, var(--surface-base), 1px solid rgba(226, 232, 240, 0.96), 10px, var(--shadow-soft));
 }
 
 .stats-card::before {
@@ -280,10 +294,7 @@
 .stats-section,
 .stats-main-layout .stats-section,
 .stats-left-stack > .stats-section {
-    border: 1px solid rgba(226, 232, 240, 0.96);
-    border-radius: 10px;
-    background: var(--surface-base);
-    box-shadow: var(--shadow-soft);
+    @include panel-surface(var(--surface-base), 1px solid rgba(226, 232, 240, 0.96), 10px, var(--shadow-soft));
     padding: 10px;
 }
 
@@ -328,8 +339,8 @@
 .stats-pie-wrap--wrong-top {
     padding: 10px;
     border-radius: 10px;
-    background: var(--surface-base);
-    border: 1px solid rgba(226, 232, 240, 0.88);
+    background: var(--surface-muted);
+    border: 1px solid var(--border-subtle);
 }
 
 .stats-pie-svg {
@@ -338,21 +349,17 @@
 
 .stats-data-table,
 .stats-table {
-    width: 100%;
-    border-collapse: separate;
+    @include data-table-base(13px, separate);
     border-spacing: 0;
     overflow: hidden;
 }
 
 .stats-data-table thead th,
 .stats-table thead th {
+    @include data-table-head-cell(10px, var(--bg-secondary), 11px, 800, var(--text-secondary), none);
     position: sticky;
     top: 0;
     z-index: 1;
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    font-size: 11px;
-    font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -361,13 +368,13 @@
 .stats-data-table td,
 .stats-table th,
 .stats-table td {
-    padding: 10px;
+    @include data-table-body-cell(10px, transparent, var(--text-primary), 1px solid rgba(226, 232, 240, 0.82));
     border-bottom: 1px solid rgba(226, 232, 240, 0.82);
 }
 
 .stats-data-table tbody tr:hover,
 .stats-table tbody tr:hover {
-    background: rgba(var(--accent-rgb), 0.04);
+    background: var(--surface-hover);
 }
 
 .wrong-count-badge,
@@ -394,7 +401,7 @@
 .stats-chart-loading,
 .stats-empty {
     border-radius: 20px;
-    background: rgba(248, 250, 252, 0.74);
+    background: var(--surface-muted);
 }
 
 @media (max-width: 1100px) {
@@ -533,6 +540,8 @@
 }
 
 .stats-main-right--synced {
+    height: var(--stats-right-height);
+    max-height: var(--stats-right-height);
     min-height: 0;
 }
 
@@ -1314,8 +1323,9 @@
 /* 统计页紧凑图：避免在 overflow 容器内绝对定位撑出滚动条 */
 .ebb-chart-tooltip.ebb-chart-tooltip--fixed {
     position: fixed;
-    top: auto;
-    left: auto;
+    top: var(--ebb-tooltip-top, auto);
+    left: var(--ebb-tooltip-left, auto);
+    transform: translateX(-50%);
     z-index: 40;
 }
 
@@ -1471,12 +1481,8 @@
 }
 
 .stats-card {
-    background: var(--bg-color);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-stack);
+    @include metric-card(var(--space-stack), var(--bg-color), 1px solid var(--border), var(--radius-lg), var(--shadow-sm));
     text-align: center;
-    box-shadow: var(--shadow-sm);
     transition: box-shadow var(--transition-fast);
 }
 
@@ -1508,12 +1514,9 @@
 
 /* Sections */
 .stats-section {
-    background: var(--bg-color);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    @include panel-surface(var(--bg-color), 1px solid var(--border), var(--radius-lg), var(--shadow-sm));
     padding: var(--space-stack);
     margin-bottom: var(--space-stack);
-    box-shadow: var(--shadow-sm);
 }
 
 .stats-section-title {
@@ -1544,13 +1547,7 @@
 }
 
 .lc-tab {
-    border: 1px solid var(--border);
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    border-radius: var(--radius-sm);
-    padding: 3px var(--space-stack);
-    font-size: 12px;
-    cursor: pointer;
+    @include control-button(28px, 3px var(--space-stack), var(--radius-sm), 1px solid var(--border), var(--bg-secondary), var(--text-secondary), 12px, 400);
     transition: all var(--transition-fast);
 }
 
@@ -1562,11 +1559,7 @@
 
 /* Metric + filter bar */
 .lc-filters {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--space-stack);
+    @include toolbar-surface($justify: space-between, $padding: 0, $gap: var(--space-stack), $background: transparent, $border: none, $radius: 0, $shadow: none);
     margin-bottom: var(--space-stack);
 }
 
@@ -1598,14 +1591,8 @@
 }
 
 .lc-select {
-    border: 1px solid var(--border);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border-radius: var(--radius-sm);
-    padding: 3px 8px;
-    font-size: 12px;
+    @include input-control(28px, 3px 8px, var(--radius-sm), 1px solid var(--border), var(--bg-secondary), var(--text-primary), 12px);
     cursor: pointer;
-    outline: none;
     max-width: 120px;
 }
 
@@ -1625,6 +1612,8 @@
 /* Tooltip */
 .lc-tooltip {
     position: absolute;
+    left: var(--lc-tooltip-left, 0);
+    top: var(--lc-tooltip-top, 0);
     transform: translate(-50%, -110%);
     background: var(--bg-color);
     border: 1px solid var(--border);

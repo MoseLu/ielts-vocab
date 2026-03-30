@@ -163,7 +163,7 @@ export default function HomePage() {
                 </svg>
               </button>
               <div className="study-book-icon-row">
-                <div className="study-book-icon" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                <div className="study-book-icon study-book-icon--accent">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
@@ -178,14 +178,15 @@ export default function HomePage() {
                 {currentIndex} / {book.word_count} 词
               </div>
               <div className="study-book-progress-bar">
-                <div
+                <progress
                   className="study-book-progress-fill"
-                  style={{ width: `${progressPercent}%` }}
+                  max="100"
+                  value={progressPercent}
                 />
               </div>
               <div className="study-book-stats">
                 <span>{progressPercent}% 完成</span>
-                {progressPercent === 100 && <span style={{ color: 'var(--success)' }}>全部完成</span>}
+                {progressPercent === 100 && <span className="study-book-status-complete">全部完成</span>}
               </div>
             </div>
           )

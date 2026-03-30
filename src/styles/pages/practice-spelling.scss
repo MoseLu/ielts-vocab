@@ -4,9 +4,7 @@
     display: flex;
     flex-direction: column;
     min-height: calc(100vh - var(--header-height));
-    background:
-        radial-gradient(circle at top, rgba(var(--accent-rgb), 0.08), transparent 32%),
-        linear-gradient(180deg, var(--surface-subtle), var(--bg-color));
+  background: var(--bg-color);
 }
 
 .practice-progress-bar {
@@ -70,7 +68,7 @@
     width: 86px;
     height: 86px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  background: var(--accent);
     border: none;
     cursor: pointer;
     display: flex;

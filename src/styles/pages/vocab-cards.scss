@@ -8,12 +8,9 @@
 }
 
 .vocab-book-card {
-    display: flex;
-    flex-direction: column;
+    @include page-stack();
     padding: var(--space-lg);
-    background: var(--bg-color);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    @include panel-surface(var(--bg-color), 1px solid var(--border), var(--radius-lg), none);
     cursor: pointer;
     transition: all var(--transition-fast);
     width: 260px;

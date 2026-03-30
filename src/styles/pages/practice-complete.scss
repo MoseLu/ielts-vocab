@@ -2,13 +2,9 @@
 
 /* Loading */
 .practice-loading {
-    display: flex;
+    @include flex-center-column(var(--space-md));
     flex: 1;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     min-height: 100%;
-    gap: var(--space-md);
     color: var(--text-secondary);
 }
 
@@ -27,12 +23,8 @@
 
 /* Complete Screen */
 .practice-complete {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    @include flex-center-column(var(--space-lg));
     min-height: 70vh;
-    gap: var(--space-lg);
     text-align: center;
     padding: var(--space-2xl);
 }
@@ -202,7 +194,7 @@
 
 .bottom-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+  background: var(--accent);
     border-radius: var(--radius-full);
     transition: width 0.4s ease;
     position: relative;

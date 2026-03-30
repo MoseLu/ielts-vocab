@@ -6,7 +6,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-strong);
     backdrop-filter: blur(4px);
     display: none;
     align-items: center;
@@ -27,7 +27,8 @@
     width: 90%;
     max-width: 640px;
     max-height: 85vh;
-    background: var(--bg-color);
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
     display: flex;
@@ -46,7 +47,7 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-lg);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
 }
 
@@ -71,7 +72,7 @@
 }
 
 .settings-close:hover {
-    background: var(--bg-secondary);
+    background: var(--surface-hover);
     color: var(--text-primary);
 }
 
@@ -89,9 +90,9 @@
 /* Settings Sidebar - Left */
 .settings-sidebar {
     width: 160px;
-    background: var(--bg-secondary);
+    background: var(--surface-muted);
     padding: var(--space-md);
-    border-right: 1px solid var(--border);
+    border-right: 1px solid var(--border-subtle);
     flex-shrink: 0;
 }
 
@@ -100,7 +101,7 @@
         width: 100%;
         display: flex;
         border-right: none;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid var(--border-subtle);
         padding: var(--space-sm);
         overflow-x: auto;
     }
@@ -129,7 +130,7 @@
 }
 
 .settings-tab:hover {
-    background: var(--bg-tertiary);
+    background: var(--surface-hover);
     color: var(--text-primary);
 }
 
@@ -193,7 +194,7 @@
     letter-spacing: 0.5px;
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-sm);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .settings-item {
@@ -201,7 +202,7 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-md) 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .settings-item:last-child {
@@ -248,7 +249,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--bg-tertiary);
+    background: var(--surface-inset);
     border-radius: var(--radius-full);
     transition: all var(--transition-fast);
 }
@@ -275,14 +276,14 @@
 }
 
 .switch input:focus + .switch-slider {
-    box-shadow: 0 0 0 3px rgba(255, 126, 54, 0.2);
+    box-shadow: var(--focus-ring);
 }
 
 /* Select Dropdown - Rounded */
 .settings-select {
     appearance: none;
-    background: var(--bg-color);
-    border: 1px solid var(--border);
+    background: var(--surface-muted);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: var(--space-sm) var(--space-xl) var(--space-sm) var(--space-md);
     font-size: 14px;
@@ -302,7 +303,7 @@
 .settings-select:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(255, 126, 54, 0.1);
+    box-shadow: var(--focus-ring);
 }
 
 /* Range Slider */
@@ -310,7 +311,7 @@
     appearance: none;
     width: 120px;
     height: 6px;
-    background: var(--border);
+    background: var(--surface-inset);
     border-radius: 3px;
     outline: none;
     cursor: pointer;
@@ -337,9 +338,10 @@
     max-width: 640px;
     height: 520px;
     max-height: 90vh;
-    background: var(--bg-color);
+    background: var(--surface-floating);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
     display: flex;
     flex-direction: column;
     overflow: hidden;

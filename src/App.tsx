@@ -20,6 +20,8 @@ import AIChatPanel from './components/AIChatPanel'
 import VocabTestPage from './components/VocabTestPage'
 import AdminDashboard from './components/AdminDashboard'
 import LearningJournalPage from './components/LearningJournalPage'
+import NotFoundPage from './components/NotFoundPage'
+import TermsPage from './components/TermsPage'
 import Toast from './components/Toast'
 
 // Reset scroll to top on every PUSH navigation (tab switches, link clicks)
@@ -51,6 +53,8 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
   const { toast } = useToast()
   const location = useLocation()
   const isPractice = location.pathname === '/practice'
+  const specialPages = ['/login', '/register', '/forgot-password', '/terms', '/404']
+  const isSpecialPage = specialPages.includes(location.pathname)
 
   // Wait for auth state to be determined before rendering routes.
   // Without this, user=null on first render causes premature redirects to /login,
@@ -62,7 +66,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
   return (
     <div className="app">
       <ScrollToTop />
-      {!isPractice && (
+      {!isPractice && !isSpecialPage && (
         <Header
           user={user}
           currentDay={currentDay}
@@ -74,9 +78,9 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
         />
       )}
 
-      <div className={isPractice ? 'practice-fullscreen' : 'app-body'}>
-        {user && !isPractice && <LeftSidebar />}
-        <main className={isPractice ? 'practice-fullscreen-main' : 'main'}>
+      <div className={isPractice || isSpecialPage ? 'practice-fullscreen' : 'app-body'}>
+        {user && !isPractice && !isSpecialPage && <LeftSidebar />}
+        <main className={isPractice || isSpecialPage ? 'practice-fullscreen-main' : 'main'}>
           <Scrollbar className="app-main-scroll" wrapClassName="app-main-scroll-wrap">
             <Routes>
               <Route
@@ -89,6 +93,32 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                   )
                 }
               />
+
+              <Route
+                path="/register"
+                element={
+                  user ? (
+                    <Navigate to="/" replace />
+                  ) : (
+                    <AuthPage />
+                  )
+                }
+              />
+
+              <Route
+                path="/forgot-password"
+                element={
+                  user ? (
+                    <Navigate to="/" replace />
+                  ) : (
+                    <AuthPage />
+                  )
+                }
+              />
+
+              <Route path="/terms" element={<TermsPage />} />
+
+              <Route path="/404" element={<NotFoundPage />} />
 
               <Route
                 path="/"
@@ -195,7 +225,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                 }
               />
 
-              <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
           </Scrollbar>
         </main>
@@ -203,8 +233,8 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
 
       {toast && <Toast message={toast.message} type={toast.type} />}
 
-      {user && !isPractice && <BottomNav />}
-      {user && <AIChatPanel />}
+      {user && !isPractice && !isSpecialPage && <BottomNav />}
+      {user && !isSpecialPage && <AIChatPanel />}
     </div>
   )
 }

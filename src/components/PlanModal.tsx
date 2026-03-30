@@ -74,7 +74,7 @@ function PlanModal({ book, progress, onClose, onStart }: PlanModalProps) {
               <span>{currentIndex} / {book.word_count}</span>
             </div>
             <div className="plan-progress-bar">
-              <div className="plan-progress-fill" style={{ width: `${progressPercent}%` }} />
+              <progress className="plan-progress-fill" max="100" value={progressPercent} />
             </div>
             <button className="plan-continue-btn" onClick={handleContinue}>
               继续学习

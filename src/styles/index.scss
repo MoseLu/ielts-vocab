@@ -1,76 +1,77 @@
 /* ============================================================
    IELTS Vocab App - Master SCSS Entry Point
    Import order: base -> layout -> components -> pages -> utils
-   This file is the transitional root for the CSS-to-SCSS migration.
    ============================================================ */
 
 /* Base */
-@import './base.css';
+@import './base.scss';
+@import './utils/mixins';
 
 /* Layout */
-@import './layout/app.css';
+@import './layout/app.scss';
 @import './layout/header-base.scss';
 @import './layout/header-selectors.scss';
 
 /* Components */
 @import './components/scrollbar.scss';
-@import './components/dropdowns.css';
-@import './components/toast.css';
-@import './components/complete.css';
-@import './components/settings.css';
-@import './components/avatar.css';
-@import './components/empty-state.css';
+@import './components/dropdowns.scss';
+@import './components/toast.scss';
+@import './components/complete.scss';
+@import './components/settings.scss';
+@import './components/avatar.scss';
+@import './components/empty-state.scss';
 @import './components/popover.scss';
 
 /* Pages: Auth */
-@import './pages/auth.css';
+@import './pages/auth.scss';
+@import './pages/special-pages.scss';
 
 /* Pages: Home / Study Center */
-@import './pages/home-banner.css';
-@import './pages/home-sections.css';
-@import './pages/study-center.css';
-@import './pages/chapter-modal.css';
-@import './pages/plan-modal.css';
-@import './pages/day-card.css';
+@import './pages/home-banner.scss';
+@import './pages/home-sections.scss';
+@import './pages/study-center.scss';
+@import './pages/chapter-modal.scss';
+@import './pages/plan-modal.scss';
+@import './pages/day-card.scss';
 
 /* Pages: Practice */
-@import './pages/practice-layout.css';
-@import './pages/practice-options.css';
-@import './pages/practice-spelling.css';
-@import './pages/practice-dictation.css';
-@import './pages/practice-radio.css';
-@import './pages/practice-quickmemory.css';
-@import './pages/practice-complete.css';
+@import './pages/practice-layout.scss';
+@import './pages/practice-options.scss';
+@import './pages/practice-spelling.scss';
+@import './pages/practice-dictation.scss';
+@import './pages/practice-radio.scss';
+@import './pages/practice-quickmemory.scss';
+@import './pages/practice-complete.scss';
 
 /* Pages: Vocab Book */
-@import './pages/vocab-filters.css';
-@import './pages/vocab-cards.css';
-@import './pages/vocab-book-grid.css';
+@import './pages/vocab-filters.scss';
+@import './pages/vocab-cards.scss';
+@import './pages/vocab-book-grid.scss';
 
 /* Pages: Practice Word List + Control Bar */
-@import './pages/practice-wordlist.css';
+@import './pages/practice-wordlist.scss';
 
 /* Pages: Errors */
-@import './pages/errors.css';
+@import './pages/errors.scss';
 
 /* Pages: Stats */
 @import './pages/stats.scss';
 
 /* Pages: Profile */
-@import './pages/profile.css';
+@import './pages/profile.scss';
 
 /* Pages: AI Chat */
 @import './pages/ai-chat.scss';
 
 /* Pages: Vocab Test */
-@import './pages/vocab-test.css';
+@import './pages/vocab-test.scss';
 
 /* Pages: Admin Dashboard */
 @import './pages/admin.scss';
 
 /* Pages: Learning Journal */
-@import './pages/journal.css';
+@import './pages/journal.scss';
 
 /* Utils */
-@import './utils/utilities.css';
-@import './utils/responsive.css';
+@import './utils/utilities.scss';
+@import './utils/responsive.scss';
