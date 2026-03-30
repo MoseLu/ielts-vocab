@@ -200,33 +200,7 @@
 
 /* ── Tabs ──────────────────────────────────────────────────────────── */
 .auth-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border);
     margin-bottom: var(--space-xl);
-}
-
-.auth-tab {
-    flex: 1;
-    padding: 12px 0;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    margin-bottom: -1px;
-}
-
-.auth-tab:hover {
-    color: var(--text-primary);
-}
-
-.auth-tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-    font-weight: 600;
 }
 
 /* ── Form fields with labels ──────────────────────────────────────── */

@@ -48,7 +48,7 @@ function Header({
   const modeDropdownRef = useRef<HTMLDivElement>(null)
 
   const isPracticePage = location.pathname === '/practice'
-  const isHomePage = location.pathname === '/'
+  const isHomePage = location.pathname === '/plan'
   const isPlanPage = location.pathname === '/plan'
 
   const modeNames: Record<PracticeMode, string> = {
@@ -70,7 +70,7 @@ function Header({
   // Main navigation items
   const mainNavItems: Array<{ key: string; label: string; path: string }> = [
     { key: 'plan', label: '学习中心', path: '/plan' },
-    { key: 'books', label: '词书', path: '/' },
+    { key: 'books', label: '词书', path: '/books' },
     ...(isAdmin ? [{ key: 'admin', label: '管理控制台', path: '/admin' }] : []),
   ]
 
@@ -110,7 +110,7 @@ function Header({
   return (
     <header className="header">
       {/* Logo - left, aligned with sidebar width */}
-      <div className="header-logo-area" onClick={() => navigate('/')}>
+      <div className="header-logo-area" onClick={() => navigate('/plan')}>
         <img src="/images/logo.png" alt="Logo" className="header-logo-img" onError={(e) => { e.currentTarget.style.display = 'none' }} />
         <span className="header-logo-text">雅思冲刺</span>
       </div>

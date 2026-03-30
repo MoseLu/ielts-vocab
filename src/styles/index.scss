@@ -21,6 +21,9 @@
 @import './components/avatar.scss';
 @import './components/empty-state.scss';
 @import './components/popover.scss';
+@import './components/navigation.scss';
+@import './components/page.scss';
+@import './components/page-shell.scss';
 
 /* Pages: Auth */
 @import './pages/auth.scss';
@@ -71,6 +74,7 @@
 
 /* Pages: Learning Journal */
 @import './pages/journal.scss';
+@import './pages/journal-markdown.scss';
 
 /* Utils */
 @import './utils/utilities.scss';

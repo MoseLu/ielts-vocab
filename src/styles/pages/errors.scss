@@ -1,12 +1,28 @@
 /* Page: Error Book (错词本) */
 
 .errors-page {
-    /* padding managed by .page-content wrapper */
-    @include page-shell-fill();
+    gap: 10px;
+    padding: var(--page-gutter);
+    box-sizing: border-box;
 }
 
-.errors-page > .page-content {
-    @include page-content-fill();
+.errors-page-toolbar {
+    gap: 10px;
+}
+
+.errors-page-body {
+    flex: 1;
+    min-height: 0;
+}
+
+.errors-content-scroll {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    padding-right: 2px;
 }
 
 .errors-header {
@@ -28,6 +44,14 @@
     display: flex;
     gap: 8px;
     align-items: center;
+}
+
+.errors-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
 }
 
 .errors-practice-btn {
@@ -65,99 +89,14 @@
 
 /* Tab bar */
 .errors-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 2px solid var(--border);
-    margin-bottom: 10px;
     width: fit-content;
-}
-
-.errors-tab {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 16px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    transform: translateY(2px);
-}
-
-.errors-tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-}
-
-.errors-tab:hover:not(.active) {
-    color: var(--text-primary);
-}
-
-.errors-tab-badge {
-    background: var(--accent);
-    color: white;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: var(--radius-full);
-    line-height: 1.4;
 }
 
 /* Dimension filter pills */
 .errors-dim-filter {
-    display: flex;
-    gap: 6px;
     flex-wrap: wrap;
     margin-bottom: 10px;
-    padding: 4px 0;
-}
-
-.errors-dim-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: var(--radius-full);
-    border: 1.5px solid var(--border);
-    background: var(--bg-color);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.errors-dim-pill:hover:not(:disabled):not(.active) {
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
-.errors-dim-pill.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-.errors-dim-pill:disabled {
-    opacity: 0.35;
-    cursor: default;
-}
-
-.errors-dim-pill-count {
-    font-size: 11px;
-    font-weight: 600;
-    background: rgba(0,0,0,0.12);
-    border-radius: var(--radius-full);
-    padding: 0 5px;
-    line-height: 1.5;
-}
-
-.errors-dim-pill.active .errors-dim-pill-count {
-    background: rgba(255,255,255,0.25);
+    max-width: 100%;
 }
 
 /* Empty state */
@@ -196,6 +135,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .errors-item {

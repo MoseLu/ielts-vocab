@@ -7,7 +7,6 @@ import { SettingsProvider } from './contexts'
 import Header from './components/Header'
 import LeftSidebar from './components/LeftSidebar'
 import BottomNav from './components/BottomNav'
-import { Scrollbar } from './components/ui/Scrollbar'
 import AuthPage from './components/AuthPage'
 import { Loading } from './components/ui/Loading'
 import HomePage from './components/HomePage'
@@ -30,9 +29,11 @@ function ScrollToTop() {
   const navType = useNavigationType()
   useEffect(() => {
     if (navType !== 'POP') {
-      const wrap = document.querySelector<HTMLElement>('.app-main-scroll-wrap')
-      if (wrap) {
-        wrap.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      const scrollTargets = document.querySelectorAll<HTMLElement>(
+        '.page__scroll, .page-content, .page-shell-body, .stats-page-scroll, .errors-content-scroll, .journal-doc-list, .journal-doc-body, .journal-doc-main-scroll',
+      )
+      if (scrollTargets.length > 0) {
+        scrollTargets.forEach(target => target.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
       } else {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
       }
@@ -81,13 +82,13 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
       <div className={isPractice || isSpecialPage ? 'practice-fullscreen' : 'app-body'}>
         {user && !isPractice && !isSpecialPage && <LeftSidebar />}
         <main className={isPractice || isSpecialPage ? 'practice-fullscreen-main' : 'main'}>
-          <Scrollbar className="app-main-scroll" wrapClassName="app-main-scroll-wrap">
+          <div className="main-view">
             <Routes>
               <Route
                 path="/login"
                 element={
                   user ? (
-                    <Navigate to="/" replace />
+                    <Navigate to="/plan" replace />
                   ) : (
                     <AuthPage />
                   )
@@ -98,7 +99,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                 path="/register"
                 element={
                   user ? (
-                    <Navigate to="/" replace />
+                    <Navigate to="/plan" replace />
                   ) : (
                     <AuthPage />
                   )
@@ -109,7 +110,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                 path="/forgot-password"
                 element={
                   user ? (
-                    <Navigate to="/" replace />
+                    <Navigate to="/plan" replace />
                   ) : (
                     <AuthPage />
                   )
@@ -124,7 +125,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                 path="/"
                 element={
                   user ? (
-                    <VocabBookPage />
+                    <Navigate to="/plan" replace />
                   ) : (
                     <Navigate to="/login" replace />
                   )
@@ -136,6 +137,17 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                 element={
                   user ? (
                     <HomePage />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
+
+              <Route
+                path="/books"
+                element={
+                  user ? (
+                    <VocabBookPage />
                   ) : (
                     <Navigate to="/login" replace />
                   )
@@ -209,7 +221,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                   isAdmin ? (
                     <AdminDashboard />
                   ) : (
-                    <Navigate to={user ? "/" : "/login"} replace />
+                    <Navigate to={user ? "/plan" : "/login"} replace />
                   )
                 }
               />
@@ -227,7 +239,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
 
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
-          </Scrollbar>
+          </div>
         </main>
       </div>
 

@@ -38,6 +38,11 @@ export function buildApiUrl(path: string): string {
 // • If refresh fails, fires 'auth:session-expired' so AuthContext can clear state
 
 let _refreshing: Promise<void> | null = null
+let _authSessionActive = false
+
+export function setAuthSessionActive(active: boolean): void {
+  _authSessionActive = active
+}
 
 async function _attemptRefresh(): Promise<void> {
   // Deduplicate: if a refresh is already in flight, wait for it.
@@ -48,8 +53,10 @@ async function _attemptRefresh(): Promise<void> {
   // Create promise first, store it synchronously, then execute.
   // This ordering ensures any concurrent caller sees _refreshing already set.
   let resolveRefreshing: () => void
-  const promise = new Promise<void>(resolve => {
+  let rejectRefreshing: (reason?: unknown) => void
+  const promise = new Promise<void>((resolve, reject) => {
     resolveRefreshing = resolve
+    rejectRefreshing = reject
   })
 
   _refreshing = promise
@@ -57,13 +64,21 @@ async function _attemptRefresh(): Promise<void> {
   // Immediately capture resolveRefreshing (synchronous assignment above)
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const resolve = resolveRefreshing!
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const reject = rejectRefreshing!
 
   // Run refresh logic, store the result, then resolve the outer promise.
   // This allows all concurrent callers to wait on the same promise.
-  _doRefresh().finally(() => {
-    _refreshing = null
-    resolve()
-  })
+  _doRefresh()
+    .then(() => {
+      resolve()
+    })
+    .catch(error => {
+      reject(error)
+    })
+    .finally(() => {
+      _refreshing = null
+    })
 
   return promise
 }
@@ -118,10 +133,12 @@ export async function apiFetch<T>(
 
   // Silent token refresh on 401 (but not for auth endpoints themselves)
   if (
+    _authSessionActive &&
     response.status === 401 &&
     !url.includes('/api/auth/login') &&
     !url.includes('/api/auth/register') &&
-    !url.includes('/api/auth/refresh')
+    !url.includes('/api/auth/refresh') &&
+    !url.includes('/api/auth/logout')
   ) {
     try {
       await _attemptRefresh()
@@ -134,7 +151,9 @@ export async function apiFetch<T>(
       return retry.json() as Promise<T>
     } catch {
       // Refresh failed — session truly expired
-      window.dispatchEvent(new CustomEvent('auth:session-expired'))
+      if (_authSessionActive) {
+        window.dispatchEvent(new CustomEvent('auth:session-expired'))
+      }
       throw new Error('登录已过期，请重新登录')
     }
   }

@@ -182,17 +182,6 @@
         font-size: 22px;
     }
 
-    .home-tabs {
-        overflow-x: auto;
-        gap: 2px;
-    }
-
-    .home-tab {
-        font-size: 12px;
-        padding: var(--space-xs) var(--space-sm);
-        flex: none;
-    }
-
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }

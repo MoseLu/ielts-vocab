@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts'
 import { useToast } from '../contexts'
 import { useForm, RegisterSchema, LoginSchema } from '../lib'
+import { UnderlineTabs } from './ui'
 
 type AuthRouteMode = 'login' | 'register' | 'forgot'
 
@@ -132,6 +133,7 @@ export default function AuthPage() {
     if (location.pathname === '/forgot-password') return 'forgot'
     return 'login'
   }, [location.pathname])
+  const authTabValue = mode === 'register' ? 'register' : 'login'
   // forgot password state
   const [fpEmail, setFpEmail] = useState('')
   const [fpEmailSent, setFpEmailSent] = useState(false)
@@ -157,13 +159,13 @@ export default function AuthPage() {
   const handleLoginSubmit = loginForm.handleSubmit(async (values) => {
     await login(values.identifier, values.password)
     showToast('登录成功', 'success')
-    navigate('/')
+    navigate('/plan')
   })
 
   const handleRegisterSubmit = registerForm.handleSubmit(async (values) => {
     await register(values.username, values.password, values.email || '')
     showToast('注册成功', 'success')
-    navigate('/')
+    navigate('/plan')
   })
 
   // ── Forgot password handlers ──────────────────────────────────────
@@ -217,22 +219,17 @@ export default function AuthPage() {
       <div className="auth-card">
         {/* Tabs */}
         {mode !== 'forgot' && (
-          <div className="auth-tabs">
-            <button
-              className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
-              onClick={() => navigate('/login')}
-              type="button"
-            >
-              登录
-            </button>
-            <button
-              className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
-              onClick={() => navigate('/register')}
-              type="button"
-            >
-              注册
-            </button>
-          </div>
+          <UnderlineTabs
+            className="auth-tabs"
+            stretch
+            ariaLabel="认证页面导航"
+            value={authTabValue}
+            onChange={value => navigate(value === 'login' ? '/login' : '/register')}
+            options={[
+              { value: 'login', label: '登录' },
+              { value: 'register', label: '注册' },
+            ]}
+          />
         )}
 
         {mode === 'forgot' && (

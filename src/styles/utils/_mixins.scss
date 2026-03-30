@@ -213,6 +213,77 @@
   font-weight: $font-weight;
 }
 
+@mixin segmented-control-shell(
+  $gap: 4px,
+  $padding: 4px,
+  $background: color-mix(in srgb, var(--surface-base) 92%, var(--surface-muted)),
+  $border: 1px solid var(--border-subtle),
+  $radius: 999px
+) {
+  display: inline-flex;
+  align-items: center;
+  gap: $gap;
+  padding: $padding;
+  @include panel-surface($background, $border, $radius, none);
+}
+
+@mixin segmented-control-item(
+  $min-height: 34px,
+  $padding: 0 12px,
+  $radius: 999px,
+  $font-size: 13px,
+  $font-weight: 600
+) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  @include control-button(
+    $min-height,
+    $padding,
+    $radius,
+    1px solid transparent,
+    transparent,
+    var(--text-secondary),
+    $font-size,
+    $font-weight
+  );
+}
+
+@mixin underline-tabs-shell($gap: 12px) {
+  display: inline-flex;
+  align-items: center;
+  gap: $gap;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+@mixin underline-tab-item(
+  $font-size: 14px,
+  $font-weight: 700,
+  $padding-bottom: 10px
+) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  @include control-button(
+    0,
+    0,
+    0,
+    none,
+    transparent,
+    var(--text-secondary),
+    $font-size,
+    $font-weight
+  );
+  min-height: auto;
+  padding: 0 0 $padding-bottom;
+  border-radius: 0;
+}
+
 @mixin native-progress($fill: var(--accent), $radius: 999px) {
   width: 100%;
   height: 100%;

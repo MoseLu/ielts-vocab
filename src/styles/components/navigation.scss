@@ -1,0 +1,155 @@
+.segmented-control {
+  @include segmented-control-shell();
+}
+
+.segmented-control--stretch {
+  display: flex;
+  width: 100%;
+}
+
+.segmented-control__item {
+  @include segmented-control-item();
+  flex-shrink: 0;
+}
+
+.segmented-control__item--stretch {
+  flex: 1 1 0;
+}
+
+.segmented-control__item:hover:not(:disabled):not(.is-active) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  transform: none;
+}
+
+.segmented-control__item.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.segmented-control__label {
+  line-height: 1.2;
+}
+
+.segmented-control__badge {
+  @include pill-badge(
+    20px,
+    0 6px,
+    999px,
+    color-mix(in srgb, rgba(15, 23, 42, 0.12) 100%, transparent),
+    inherit,
+    11px,
+    700
+  );
+  line-height: 1;
+}
+
+.segmented-control__item.is-active .segmented-control__badge {
+  background: rgba(255, 255, 255, 0.22);
+  color: inherit;
+}
+
+.underline-tabs {
+  @include underline-tabs-shell();
+}
+
+.underline-tabs--small {
+  gap: 10px;
+}
+
+.underline-tabs--middle {
+  gap: 16px;
+}
+
+.underline-tabs--large {
+  gap: 18px;
+}
+
+.underline-tabs--stretch {
+  display: flex;
+  width: 100%;
+}
+
+.underline-tabs__item {
+  @include underline-tab-item();
+  flex-shrink: 0;
+}
+
+.underline-tabs__item--small {
+  min-height: 32px;
+  padding-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.underline-tabs__item--middle {
+  min-height: 38px;
+  padding-bottom: 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.underline-tabs__item--large {
+  min-height: 42px;
+  padding-bottom: 14px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.underline-tabs__item--stretch {
+  flex: 1 1 0;
+}
+
+.underline-tabs__item:hover:not(:disabled):not(.is-active) {
+  background: transparent;
+  color: var(--text-primary);
+  transform: none;
+}
+
+.underline-tabs__item.is-active {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.underline-tabs__item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition:
+    transform 220ms ease,
+    opacity 180ms ease;
+  will-change: transform;
+}
+
+.underline-tabs__item.is-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.underline-tabs__badge {
+  @include pill-badge(18px, 0 6px, 999px, var(--surface-muted), var(--text-tertiary), 10px, 700);
+}
+
+.underline-tabs__item--middle .underline-tabs__badge {
+  min-height: 20px;
+  font-size: 11px;
+}
+
+.underline-tabs__item--large .underline-tabs__badge {
+  min-height: 22px;
+  font-size: 12px;
+}
+
+.underline-tabs__item.is-active .underline-tabs__badge {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}

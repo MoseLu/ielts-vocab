@@ -1,13 +1,28 @@
 /* Layout: App Shell, Sidebar, Main Content */
 
+html,
+body,
+#root {
+    height: 100%;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
 /* App body */
 .app-body {
     display: flex;
-    height: 100vh;
-    min-height: 100vh;
+    flex: 1;
+    min-height: 0;
     box-sizing: border-box;
     padding-top: var(--header-height);
     background: transparent;
+    overflow: hidden;
 }
 
 /* Sidebar */
@@ -102,30 +117,41 @@
     flex: 1;
     min-height: 0;
     height: calc(100vh - var(--header-height));
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     background: transparent;
 }
 
-/* 全局主滚动容器：统一使用自定义 el-scrollbar */
-.app-main-scroll {
-    height: 100%;
-}
-
-.app-main-scroll-wrap {
-    height: 100%;
+.main > * {
+    flex: 1;
     min-height: 0;
 }
 
+.main-view {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.main-view > * {
+    flex: 1;
+    min-height: 0;
+}
+
+/* 全局主滚动容器：统一使用自定义 el-scrollbar */
 /* ── Shared Page Content Container ── */
 .page-content {
     width: 100%;
     padding: var(--page-gutter);
-    min-height: calc(100vh - var(--header-height));
+    height: 100%;
+    min-height: 0;
     margin: 0 auto;
-}
-
-.page-content > * + * {
-    margin-top: var(--page-section-gap);
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
 }
 
 /* Practice page: full-screen, no header/sidebar offset */

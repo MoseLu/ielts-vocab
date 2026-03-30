@@ -18,7 +18,7 @@ export default function NotFoundPage() {
         <h1 className="not-found-title">页面不存在</h1>
         <p className="not-found-description">你访问的页面不存在，或者链接已经失效。</p>
         <div className="not-found-actions">
-          <button type="button" className="not-found-btn not-found-btn--primary" onClick={() => navigate('/')}>
+          <button type="button" className="not-found-btn not-found-btn--primary" onClick={() => navigate('/plan')}>
             返回首页
           </button>
           <button type="button" className="not-found-btn" onClick={() => navigate('/login')}>

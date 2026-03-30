@@ -39,7 +39,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { key: 'home', label: '\u8bcd\u4e66', path: '/', icon: HomeIcon },
+  { key: 'home', label: '\u9996\u9875', path: '/plan', icon: HomeIcon },
   { key: 'errors', label: '\u9519\u8bcd', path: '/errors', icon: ErrorsIcon },
   { key: 'stats', label: '\u7edf\u8ba1', path: '/stats', icon: StatsIcon },
   { key: 'profile', label: '\u6211\u7684', path: '/profile', icon: ProfileIcon },

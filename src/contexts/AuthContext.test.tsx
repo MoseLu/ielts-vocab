@@ -35,6 +35,7 @@ describe('useAuth', () => {
     localStorage.clear()
     apiFetchMock.mockReset()
     showToastMock.mockReset()
+    vi.mocked(global.fetch).mockReset()
   })
 
   it('throws when used outside AuthProvider', () => {
@@ -51,6 +52,7 @@ describe('AuthProvider', () => {
     localStorage.clear()
     apiFetchMock.mockReset()
     showToastMock.mockReset()
+    vi.mocked(global.fetch).mockReset()
   })
 
   it('starts unauthenticated without a cached user', async () => {
@@ -150,7 +152,7 @@ describe('AuthProvider', () => {
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
     localStorage.setItem('my_books', JSON.stringify(['book-1']))
     apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
-    apiFetchMock.mockResolvedValueOnce({})
+    vi.mocked(global.fetch).mockResolvedValueOnce(new Response(null, { status: 204 }))
 
     const { result } = renderHook(() => useAuth(), { wrapper })
 
@@ -162,11 +164,46 @@ describe('AuthProvider', () => {
       await result.current.logout()
     })
 
-    expect(apiFetchMock).toHaveBeenLastCalledWith('/api/auth/logout', { method: 'POST' })
+    expect(vi.mocked(global.fetch)).toHaveBeenLastCalledWith('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
     expect(result.current.isAuthenticated).toBe(false)
     expect(result.current.user).toBeNull()
     expect(localStorage.getItem(STORAGE_KEYS.AUTH_USER)).toBeNull()
     expect(localStorage.getItem('my_books')).toBeNull()
+  })
+
+  it('clears local auth state before the logout request resolves', async () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
+
+    let resolveLogout: (() => void) | null = null
+    apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
+    vi.mocked(global.fetch).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveLogout = () => resolve(new Response(null, { status: 204 }))
+        }),
+    )
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true)
+    })
+
+    act(() => {
+      void result.current.logout()
+    })
+
+    expect(result.current.isAuthenticated).toBe(false)
+    expect(result.current.user).toBeNull()
+    expect(localStorage.getItem(STORAGE_KEYS.AUTH_USER)).toBeNull()
+
+    await act(async () => {
+      resolveLogout?.()
+    })
   })
 
   it('updates the cached user when updateUser is called', async () => {
