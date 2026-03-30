@@ -1,31 +1,31 @@
 /* ============================================================
-   IELTS Vocab App — Master CSS Entry Point
-   Import order: base → layout → components → pages → utils
-   Max 500 lines per module; each file = one feature/section.
+   IELTS Vocab App - Master SCSS Entry Point
+   Import order: base -> layout -> components -> pages -> utils
+   This file is the transitional root for the CSS-to-SCSS migration.
    ============================================================ */
 
-/* ── Base ── */
+/* Base */
 @import './base.css';
 
-/* ── Layout ── */
+/* Layout */
 @import './layout/app.css';
-@import './layout/header-base.css';
-@import './layout/header-selectors.css';
+@import './layout/header-base.scss';
+@import './layout/header-selectors.scss';
 
-/* ── Components ── */
-@import './components/scrollbar.css';
+/* Components */
+@import './components/scrollbar.scss';
 @import './components/dropdowns.css';
 @import './components/toast.css';
 @import './components/complete.css';
 @import './components/settings.css';
 @import './components/avatar.css';
 @import './components/empty-state.css';
-@import './components/popover.css';
+@import './components/popover.scss';
 
-/* ── Pages: Auth ── */
+/* Pages: Auth */
 @import './pages/auth.css';
 
-/* ── Pages: Home / Study Center ── */
+/* Pages: Home / Study Center */
 @import './pages/home-banner.css';
 @import './pages/home-sections.css';
 @import './pages/study-center.css';
@@ -33,7 +33,7 @@
 @import './pages/plan-modal.css';
 @import './pages/day-card.css';
 
-/* ── Pages: Practice ── */
+/* Pages: Practice */
 @import './pages/practice-layout.css';
 @import './pages/practice-options.css';
 @import './pages/practice-spelling.css';
@@ -42,35 +42,35 @@
 @import './pages/practice-quickmemory.css';
 @import './pages/practice-complete.css';
 
-/* ── Pages: Vocab Book ── */
+/* Pages: Vocab Book */
 @import './pages/vocab-filters.css';
 @import './pages/vocab-cards.css';
 @import './pages/vocab-book-grid.css';
 
-/* ── Pages: Practice Word List + Control Bar ── */
+/* Pages: Practice Word List + Control Bar */
 @import './pages/practice-wordlist.css';
 
-/* ── Pages: Errors ── */
+/* Pages: Errors */
 @import './pages/errors.css';
 
-/* ── Pages: Stats ── */
-@import './pages/stats.css';
+/* Pages: Stats */
+@import './pages/stats.scss';
 
-/* ── Pages: Profile ── */
+/* Pages: Profile */
 @import './pages/profile.css';
 
-/* ── Pages: AI Chat ── */
-@import './pages/ai-chat.css';
+/* Pages: AI Chat */
+@import './pages/ai-chat.scss';
 
-/* ── Pages: Vocab Test ── */
+/* Pages: Vocab Test */
 @import './pages/vocab-test.css';
 
-/* ── Pages: Admin Dashboard ── */
-@import './pages/admin.css';
+/* Pages: Admin Dashboard */
+@import './pages/admin.scss';
 
-/* ── Pages: Learning Journal ── */
+/* Pages: Learning Journal */
 @import './pages/journal.css';
 
-/* ── Utils ── */
+/* Utils */
 @import './utils/utilities.css';
 @import './utils/responsive.css';
