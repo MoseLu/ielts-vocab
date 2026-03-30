@@ -1,4 +1,4 @@
-// ── Utility Functions for Practice Components ─────────────────────────────────────
+﻿// ── Utility Functions for Practice Components ─────────────────────────────────────
 
 import type { Word, OptionItem } from './types'
 
@@ -243,6 +243,10 @@ let _currentAudio: HTMLAudioElement | null = null
 // Generation counter — incremented on every stopAudio() so async fetches can
 // detect that playback was cancelled while they were waiting.
 let _audioGeneration = 0
+
+// Whether the current audio was explicitly stopped (not naturally finished).
+// Allows onended to distinguish "cancelled" from "played to end".
+let _audioStopped = false
 
 // Whether HTMLAudioElement has been played at least once this session.
 // The browser's audio hardware needs ~50-200 ms to initialise on the first
@@ -537,6 +541,7 @@ function _speakWithSynthesis(
 
 /** Stop any in-progress audio (both Audio element and speechSynthesis). */
 export function stopAudio(): void {
+  _audioStopped = true
   _audioGeneration++
   if (_currentAudio) {
     _currentAudio.onended = null
@@ -544,4 +549,81 @@ export function stopAudio(): void {
     _currentAudio = null
   }
   if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
+}
+
+// ── Example Audio ────────────────────────────────────────────────────────────────
+
+// In-memory cache for example audio blobs: sentence → ArrayBuffer
+const _exampleAudioCache = new Map<string, ArrayBuffer>()
+
+/**
+ * Play example sentence audio from MiniMax TTS (backend /api/tts/example-audio).
+ * Falls back to speechSynthesis on network error.
+ */
+export function playExampleAudio(
+  sentence: string,
+  _word: string,
+  settings: { playbackSpeed?: string; volume?: string },
+  onEnd?: () => void,
+): void {
+  stopAudio()
+  _audioStopped = false
+  const gen = _audioGeneration
+
+  const volume = parseFloat(settings.volume || '100') / 100
+  const rate = parseFloat(settings.playbackSpeed || '1')
+  const key = sentence
+
+  const loadAndPlay = (buf: ArrayBuffer | null) => {
+    if (!buf) {
+      _speakWithSynthesis(gen, sentence, volume, rate, onEnd)
+      return
+    }
+    const blob = new Blob([buf], { type: 'audio/mpeg' })
+    const blobUrl = URL.createObjectURL(blob)
+    const audio = new Audio(blobUrl)
+    audio.volume = volume
+    audio.playbackRate = rate
+    audio.onended = () => { if (!_audioStopped && onEnd) onEnd() }
+    _currentAudio = audio
+    const doPlay = () => {
+      if (_audioGeneration !== gen) return
+      audio.play().catch(() => {
+        if (_audioGeneration !== gen) return
+        _currentAudio = null
+        if (onEnd) onEnd()
+      })
+    }
+    if (audio.readyState >= 2) {
+      doPlay()
+    } else {
+      audio.addEventListener('canplaythrough', () => doPlay(), { once: true })
+      audio.load()
+    }
+  }
+
+  if (_exampleAudioCache.has(key)) {
+    _warmupHtmlAudio().then(() => loadAndPlay(_exampleAudioCache.get(key)!))
+    return
+  }
+
+  const warmup = _warmupHtmlAudio()
+  ;(async () => {
+    try {
+      const res = await fetch('/api/tts/example-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sentence, word: _word }),
+      })
+      await warmup
+      if (_audioGeneration !== gen) return
+      if (!res.ok) { loadAndPlay(null); return }
+      const buf = await res.arrayBuffer()
+      _exampleAudioCache.set(key, buf)
+      loadAndPlay(buf)
+    } catch {
+      await warmup
+      loadAndPlay(null)
+    }
+  })()
 }

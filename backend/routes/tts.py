@@ -6,13 +6,22 @@ MiniMax TTS (Text-to-Speech) 路由
 
 import os
 import io
+import json
 import hashlib
 import eventlet
 import requests
+from datetime import datetime
 from pathlib import Path
 from flask import Blueprint, request, jsonify, send_file, current_app
 from dotenv import load_dotenv
 from routes.middleware import admin_required
+from services.word_tts import (
+    default_cache_identity,
+    is_probably_valid_mp3_bytes,
+    is_probably_valid_mp3_file,
+    remove_invalid_cached_audio,
+    write_bytes_atomically,
+)
 
 # Load .env from backend directory
 env_path = Path(__file__).parent.parent / '.env'
@@ -51,9 +60,9 @@ MINIMAX_BASE_URL = os.environ.get('MINIMAX_TTS_BASE_URL', 'https://api.minimaxi.
 # Track which key to use (round-robin)
 _use_secondary_key = False
 
-# Alternating voice IDs for example audio (Trustworthy Man + Serene Woman)
+# Example audio voice pool. Selection is deterministic per sentence so
+# repeated requests stay stable under retries and concurrency.
 _ALTERNATING_VOICES = ['English_Trustworthy_Man', 'Serene_Woman']
-_alternating_voice_index = 0
 
 
 def _get_api_key():
@@ -67,6 +76,11 @@ def _get_api_key():
         return MINIMAX_API_KEY
     else:
         return MINIMAX_API_KEY_2 or ''
+
+
+def _select_voice_for_sentence(sentence: str) -> str:
+    digest = hashlib.md5(sentence.encode('utf-8')).digest()
+    return _ALTERNATING_VOICES[digest[0] % len(_ALTERNATING_VOICES)]
 
 
 # 可用的英文语音列表 (雅思场景适合的清晰、自然语音)
@@ -151,9 +165,10 @@ def generate_speech():
 
     # 尝试本地缓存
     cached = _cache_path(text + f":{speed}:{emotion}:{model}", voice_id)
-    if cached.exists():
+    if cached.exists() and is_probably_valid_mp3_file(cached):
         return send_file(cached, mimetype='audio/mpeg', as_attachment=False,
                         download_name=f'tts_{cache_key}.mp3')
+    remove_invalid_cached_audio(cached)
 
     try:
         import requests
@@ -194,8 +209,15 @@ def generate_speech():
         resp = requests.post(url, headers=headers, json=payload, timeout=30)
 
         if resp.status_code == 200:
-            # 返回 MP3 音频
-            audio_data = io.BytesIO(resp.content)
+            resp_data = resp.json()
+            audio_hex = resp_data.get('data', {}).get('audio')
+            if not audio_hex:
+                return jsonify({'error': 'No audio in response', 'response': resp_data}), 500
+            audio_bytes = bytes.fromhex(audio_hex)
+            if not is_probably_valid_mp3_bytes(audio_bytes):
+                return jsonify({'error': 'Invalid MP3 payload returned by TTS provider'}), 502
+            write_bytes_atomically(cached, audio_bytes)
+            audio_data = io.BytesIO(audio_bytes)
             audio_data.seek(0)
             return send_file(
                 audio_data,
@@ -248,19 +270,18 @@ def generate_example_audio():
     sentence_with_pauses = add_pause_tags(sentence, pause_seconds=0.4)
 
     # 交替使用两种语音
-    global _alternating_voice_index
-    voice_id = _ALTERNATING_VOICES[_alternating_voice_index]
-    _alternating_voice_index = (_alternating_voice_index + 1) % len(_ALTERNATING_VOICES)
+    voice_id = _select_voice_for_sentence(sentence)
 
     # 缓存路径：sentence + voice_id 作为 key
     cache_key = hashlib.md5(f"ex:{sentence}:{voice_id}".encode()).hexdigest()[:16]
     cached_file = _cache_dir() / f'{cache_key}.mp3'
 
     # 命中缓存 → 直接返回本地文件
-    if cached_file.exists():
+    if cached_file.exists() and is_probably_valid_mp3_file(cached_file):
         print(f"[TTS Cache HIT] {cached_file.name} (voice={voice_id})")
         return send_file(cached_file, mimetype='audio/mpeg', as_attachment=False,
                         download_name=f'example_{cache_key}.mp3')
+    remove_invalid_cached_audio(cached_file)
 
     print(f"[TTS Cache MISS] voice={voice_id}, sentence={sentence[:60]}...")
 
@@ -303,10 +324,9 @@ def generate_example_audio():
 
             # 解码 hex 音频数据
             audio_bytes = bytes.fromhex(audio_hex)
-
-            # 保存到本地缓存
-            with open(cached_file, 'wb') as f:
-                f.write(audio_bytes)
+            if not is_probably_valid_mp3_bytes(audio_bytes):
+                return jsonify({'error': 'Invalid MP3 payload returned by TTS provider'}), 502
+            write_bytes_atomically(cached_file, audio_bytes)
             print(f"[TTS Cache SAVED] {cached_file.name} ({len(audio_bytes)} bytes)")
 
             # 返回音频
@@ -483,8 +503,9 @@ def _call_tts_api(sentence: str, voice_id: str, save_path: Path):
             if not audio_hex:
                 raise Exception("No audio in response")
             audio_bytes = bytes.fromhex(audio_hex)
-            with open(save_path, 'wb') as f:
-                f.write(audio_bytes)
+            if not is_probably_valid_mp3_bytes(audio_bytes):
+                raise Exception('Invalid MP3 payload returned by TTS provider')
+            write_bytes_atomically(save_path, audio_bytes)
             return
 
         if resp.status_code == 429:
@@ -566,4 +587,177 @@ def admin_tts_status(current_user, book_id):
         'cached': cached,
         'generating': generating,
         'status': _book_status(book_id, generating),
+    }), 200
+
+
+# ── DashScope (百炼) 单词离线 TTS ───────────────────────────────────────────────
+
+_generating_words: bool = False
+
+
+def _word_tts_dir() -> Path:
+    d = Path(__file__).parent.parent / 'word_tts_cache'
+    d.mkdir(exist_ok=True)
+    return d
+
+
+def _word_progress_file() -> Path:
+    return _word_tts_dir() / 'progress_all_words.json'
+
+
+def _read_word_progress() -> dict | None:
+    p = _word_progress_file()
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text(encoding='utf-8'))
+    except Exception:
+        return None
+
+
+def _write_word_progress(
+    total: int,
+    completed: int,
+    status: str,
+    *,
+    current_word: str | None = None,
+):
+    payload = {
+        'total': total,
+        'completed': completed,
+        'status': status,
+        'updated_at': datetime.utcnow().isoformat(),
+    }
+    if current_word is not None:
+        payload['current_word'] = current_word
+    _word_progress_file().write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding='utf-8',
+    )
+
+
+def _generate_words_worker(book_ids: list[str] | None):
+    """eventlet: 批量生成单词 MP3（百炼 CosyVoice）."""
+    global _generating_words
+    from services.word_tts import run_batch_generate_missing
+
+    cache_dir = _word_tts_dir()
+
+    try:
+        run_batch_generate_missing(
+            book_ids,
+            cache_dir=cache_dir,
+            sleep_fn=eventlet.sleep,
+        )
+    except Exception as e:
+        print(f'[Word TTS Fatal] {e}')
+        prog = _read_word_progress()
+        if prog:
+            _write_word_progress(
+                prog.get('total', 0),
+                prog.get('completed', 0),
+                'error',
+                current_word=None,
+            )
+    finally:
+        _generating_words = False
+
+
+@tts_bp.route('/word-audio', methods=['GET'])
+def get_word_audio():
+    """
+    返回已预生成的单词读音 MP3。未生成则 404，前端回退到 speechSynthesis。
+    Query: w — 单词文本（最长 160 字符）
+    """
+    from services.word_tts import (
+        word_tts_cache_path,
+        normalize_word_key,
+    )
+
+    raw = (request.args.get('w') or '').strip()
+    if not raw or len(raw) > 160:
+        return jsonify({'error': 'invalid w'}), 400
+
+    key = normalize_word_key(raw)
+    model, voice = default_cache_identity()
+    path = word_tts_cache_path(_word_tts_dir(), key, model, voice)
+    if path.exists() and not is_probably_valid_mp3_file(path):
+        remove_invalid_cached_audio(path)
+    if not path.exists():
+        return jsonify({'error': 'not generated'}), 404
+
+    return send_file(
+        path,
+        mimetype='audio/mpeg',
+        as_attachment=False,
+        download_name=f'{key}.mp3',
+    )
+
+
+@tts_bp.route('/admin/generate-words', methods=['POST'])
+@admin_required
+def admin_generate_words(current_user):
+    """
+    后台批量生成所有词书单词的百炼 TTS（去重）。
+    Body 可选: { "book_id": "ielts_ultimate" } 限制单本书；省略则全词书。
+    """
+    global _generating_words
+    from routes.books import VOCAB_BOOKS
+
+    data = request.get_json() or {}
+    book_id = (data.get('book_id') or '').strip() or None
+
+    if book_id:
+        if not any(b['id'] == book_id for b in VOCAB_BOOKS):
+            return jsonify({'error': 'Book not found'}), 404
+        book_ids = [book_id]
+    else:
+        book_ids = None
+
+    if _generating_words:
+        return jsonify({'error': 'Already generating'}), 409
+
+    from services.word_tts import collect_unique_words
+
+    words = collect_unique_words(book_ids)
+    if not words:
+        return jsonify({'error': 'No words found'}), 400
+
+    _generating_words = True
+    eventlet.spawn(_generate_words_worker, book_ids)
+    return jsonify({
+        'message': 'Word TTS generation started',
+        'total': len(words),
+    }), 202
+
+
+@tts_bp.route('/admin/word-audio-status', methods=['GET'])
+@admin_required
+def admin_word_audio_status(current_user):
+    """单词离线 TTS 批量进度。"""
+    from services.word_tts import (
+        collect_unique_words,
+        count_cached_words,
+    )
+
+    prog = _read_word_progress()
+    words = collect_unique_words(None)
+    total = len(words)
+    model, voice = default_cache_identity()
+    cached = count_cached_words(words, _word_tts_dir(), model, voice)
+
+    status = 'idle'
+    if _generating_words:
+        status = 'running'
+    elif prog:
+        status = prog.get('status', 'idle')
+        if status == 'running' and not _generating_words:
+            status = 'interrupted'
+
+    return jsonify({
+        'total': total,
+        'cached': cached,
+        'generating': _generating_words,
+        'status': status,
+        'progress': prog,
     }), 200
