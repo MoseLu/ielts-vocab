@@ -61,6 +61,10 @@ test-results/
 
 # TTS audio cache
 backend/tts_cache/
+backend/word_tts_cache/
+
+# Temporary generated directories
+录音文件生成记录/
 
 # Vocabulary data (local generated)
 vocabulary_data/*.txt
