@@ -2,6 +2,17 @@
 
 
 :root {
+    /* ==========================================================================
+       Design Tokens
+       ==========================================================================
+       Token naming follows a professional system similar to Tailwind / design
+       system scales:
+       - color-* for semantic color roles
+       - space-* for spacing scale
+       - radius-* for shape scale
+       - shadow-* for elevation
+       - layer-* for z-index hierarchy
+       ========================================================================== */
     /* Scrollbar (Element Plus style) */
     --scrollbar-width: 6px;
     --scrollbar-thumb: rgba(144, 147, 153, 0.3);
@@ -20,9 +31,9 @@
     --accent: #FF7E36;
     --accent-hover: #E56F2A;
     --accent-dark: #E56F2A;         /* pressed / active state */
-    --accent-secondary: #FF9A5C;    /* lighter gradient end (progress bars) */
-    --accent-deep: #FF6B1A;         /* deeper gradient end (FABs, CTA cards) */
-    --accent-deep-hover: #E05F15;   /* deeper gradient end on hover */
+    --accent-secondary: #FF7E36;
+    --accent-deep: #FF7E36;
+    --accent-deep-hover: #E56F2A;
     --accent-light: #FFF4ED;
     --accent-subtle: #FFF8F3;
 
@@ -51,20 +62,20 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     
     /* Spacing */
-    --space-xs: 4px;
-    --space-sm: 8px;
-    --space-md: 16px;
-    --space-lg: 24px;
-    --space-xl: 32px;
-    --space-2xl: 48px;
+    --space-xs: 10px;
+    --space-sm: 10px;
+    --space-md: 10px;
+    --space-lg: 10px;
+    --space-xl: 10px;
+    --space-2xl: 10px;
     /** 统计页等：纵向堆叠区块/卡片之间的统一间距（与卡片内边距同节奏） */
     --space-stack: 10px;
     
     /* Border Radius */
-    --radius-sm: 6px;
+    --radius-sm: 10px;
     --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 20px;
+    --radius-lg: 10px;
+    --radius-xl: 10px;
     --radius-full: 9999px;
     
     /* Transitions */
@@ -91,14 +102,60 @@
     --mode-dictation-border: #FED7AA;
 
     /* Shadow Variants */
-    --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 6px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03);
+    --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-soft: 0 4px 12px rgba(15, 23, 42, 0.06);
+    --shadow-panel: 0 6px 16px rgba(15, 23, 42, 0.08);
 
+    /* Surface System */
+    --surface-base: rgba(255, 255, 255, 0.94);
+    --surface-elevated: rgba(255, 255, 255, 0.98);
+    --surface-subtle: #FFFDFB;
+    --surface-border-strong: rgba(226, 232, 240, 0.92);
+    --surface-accent: #FFF4ED;
+    
     /* Typography */
     --font-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Segoe UI', 'Inter', 'PingFang SC', 'Noto Sans SC', sans-serif;
     
     /* Layout */
     --header-height: 52px;
     --sidebar-width: 280px;
+    --page-max-width: 1280px;
+    --page-gutter: 10px;
+    --page-section-gap: 10px;
+
+    /* Professional token aliases */
+    --color-brand-primary: var(--accent);
+    --color-brand-primary-hover: var(--accent-hover);
+    --color-brand-primary-subtle: var(--accent-light);
+    --color-surface-base: var(--surface-base);
+    --color-surface-elevated: var(--surface-elevated);
+    --color-surface-subtle: var(--surface-subtle);
+    --color-border-default: var(--border);
+    --color-border-strong: var(--surface-border-strong);
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-text-tertiary: var(--text-tertiary);
+    --space-0: 0px;
+    --space-100: 10px;
+    --space-200: 10px;
+    --space-300: 10px;
+    --space-400: 10px;
+    --space-500: 10px;
+    --space-600: 10px;
+    --radius-100: 10px;
+    --radius-200: 10px;
+    --radius-300: 10px;
+    --radius-pill: 9999px;
+    --shadow-100: var(--shadow-sm);
+    --shadow-200: var(--shadow-soft);
+    --shadow-300: var(--shadow-panel);
+    --layer-base: 1;
+    --layer-dropdown: 20;
+    --layer-page-loading: 40;
+    --layer-global-loading: 60;
+    --layer-modal: 80;
+    --layer-header: 100;
 }
 
 /* Dark Mode Theme */
@@ -138,6 +195,12 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.28);
+    --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.34);
+    --surface-base: rgba(36, 36, 36, 0.94);
+    --surface-elevated: rgba(42, 42, 42, 0.98);
+    --surface-subtle: rgba(30, 30, 30, 0.92);
+    --surface-border-strong: rgba(74, 74, 74, 0.92);
 }
 
 /* Theme Transition - use fast timing for natural feel */
@@ -156,6 +219,39 @@ body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+}
+
+h1 {
+    font-size: 30px;
+}
+
+h2 {
+    font-size: 20px;
+}
+
+h3 {
+    font-size: 16px;
+}
+
+p {
+    color: var(--text-secondary);
+}
+
+a {
+    color: inherit;
 }
 
 /* ── Global Scrollbar Strategy ───────────────────────────────────────────────

@@ -1,5 +1,3 @@
-// ── Loading Components ─────────────────────────────────────────────────────────
-
 import React from 'react'
 
 interface SpinnerProps {
@@ -20,17 +18,17 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
       style={{ color: 'var(--accent)' }}
     >
       <circle
-        style={{ opacity: 0.25 }}
+        style={{ opacity: 0.22 }}
         cx="12"
         cy="12"
         r="10"
         stroke="currentColor"
-        strokeWidth="4"
+        strokeWidth="3.5"
       />
       <path
-        style={{ opacity: 0.75 }}
+        style={{ opacity: 0.92 }}
         fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        d="M12 2a10 10 0 0 1 10 10h-3.5A6.5 6.5 0 0 0 12 5.5V2Z"
       />
     </svg>
   )
@@ -39,25 +37,30 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
 interface LoadingProps {
   text?: string
   fullScreen?: boolean
+  page?: boolean
+  level?: 'component' | 'page' | 'global'
 }
 
-export function Loading({ text = '加载中...', fullScreen = false }: LoadingProps) {
+export function Loading({ text = 'Loading...', fullScreen = false, page = false, level }: LoadingProps) {
+  const resolvedLevel = level ?? (fullScreen ? 'global' : page ? 'page' : 'component')
   const content = (
-    <div className="loading-content">
-      <Spinner size="lg" />
-      {text && <p style={{ color: 'var(--text-secondary)' }}>{text}</p>}
+    <div className="loading-content" role="status" aria-live="polite">
+      <div className="loading-spinner-shell">
+        <Spinner size="lg" />
+      </div>
+      {text && <p className="loading-text">{text}</p>}
     </div>
   )
 
   if (fullScreen) {
     return (
-      <div className="loading-fullscreen">
+      <div className="loading-fullscreen loading-state loading-state--global">
         {content}
       </div>
     )
   }
 
-  return <div style={{ padding: '32px 0' }}>{content}</div>
+  return <div className={`loading-state loading-state--${resolvedLevel}`}>{content}</div>
 }
 
 interface SkeletonProps {

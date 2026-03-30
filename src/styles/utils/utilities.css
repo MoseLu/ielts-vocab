@@ -53,15 +53,41 @@
     animation: spin 1s linear infinite;
 }
 
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.loading-state--global {
+    min-height: 100vh;
+    padding: 0;
+}
+
+.loading-state--page {
+    min-height: calc(100vh - var(--header-height, 0px) - 20px);
+    padding: 0;
+}
+
+.loading-state--component {
+    min-height: 120px;
+    padding: 10px;
+}
+
 .loading-fullscreen {
     position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: color-mix(in srgb, var(--bg-color) 80%, transparent);
+    background: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(4px);
-    z-index: 50;
+    z-index: var(--layer-global-loading);
 }
 
 .loading-content {
@@ -69,7 +95,50 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
+    text-align: center;
+    min-width: 120px;
+    padding: 10px;
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 10px;
+    background: var(--surface-elevated);
+    box-shadow: var(--shadow-soft);
+}
+
+.loading-spinner-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+}
+
+.loading-text {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--text-secondary);
+}
+
+.ui-surface {
+    background: var(--surface-base);
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 10px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.ui-panel {
+    background: var(--surface-elevated);
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 10px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 /* Disable transitions on SVG to prevent flicker */
