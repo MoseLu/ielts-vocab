@@ -7,7 +7,7 @@
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SegmentedControl, UnderlineTabs } from './ui'
+import { PageSkeleton, SegmentedControl, Skeleton, UnderlineTabs } from './ui'
 import { useWrongWords, useLearningStats } from '../features/vocabulary/hooks'
 import type {
   MetricKey,
@@ -17,6 +17,7 @@ import type {
   PieSegment,
   EbbinghausStagePoint,
   WrongTopItem,
+  LearnerProfile,
 } from '../features/vocabulary/hooks'
 
 const MODE_LABELS: Record<string, string> = {
@@ -72,6 +73,116 @@ function fmtDate(dateStr: string, range: RangeKey): string {
 function fmtPct(n: number | null | undefined): string {
   if (n == null) return '--'
   return `${n}%`
+}
+
+function trendDirectionLabel(value: LearnerProfile['summary']['trend_direction'] | undefined): string {
+  if (value === 'improving') return '学习趋势在提升'
+  if (value === 'declining') return '学习趋势有下滑'
+  if (value === 'new') return '刚开始积累画像'
+  return '学习趋势相对稳定'
+}
+
+function startEbbinghausReview(navigate: ReturnType<typeof useNavigate>) {
+  window.dispatchEvent(new CustomEvent('practice-mode-request', {
+    detail: { mode: 'quickmemory' },
+  }))
+  navigate('/practice?review=due')
+}
+
+function LearnerProfileCard({
+  learnerProfile,
+  loading,
+}: {
+  learnerProfile: LearnerProfile | null
+  loading: boolean
+}) {
+  if (loading) {
+    return <StatsSectionSkeleton variant="panel" />
+  }
+
+  if (!learnerProfile) {
+    return (
+      <div className="stats-empty">
+        <p>暂无学习画像数据</p>
+      </div>
+    )
+  }
+
+  const { summary, dimensions, focus_words: focusWords, repeated_topics: repeatedTopics, next_actions: nextActions } = learnerProfile
+
+  return (
+    <div className="stats-profile-card">
+      <div className="stats-profile-summary">
+        <div className="stats-profile-pill">
+          <span className="stats-profile-pill__label">最弱模式</span>
+          <strong>{summary.weakest_mode_label || '待判定'}</strong>
+        </div>
+        <div className="stats-profile-pill">
+          <span className="stats-profile-pill__label">连续学习</span>
+          <strong>{summary.streak_days || 0} 天</strong>
+        </div>
+        <div className="stats-profile-pill">
+          <span className="stats-profile-pill__label">速记待复习</span>
+          <strong>{summary.due_reviews || 0} 词</strong>
+        </div>
+      </div>
+
+      <div className="stats-profile-block">
+        <h3 className="stats-subsection-title">薄弱维度</h3>
+        <div className="stats-profile-chip-list">
+          {dimensions.slice(0, 3).map(item => (
+            <div key={item.dimension} className="stats-profile-chip">
+              <span>{item.label}</span>
+              <strong>{fmtPct(item.accuracy)}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="stats-profile-block">
+        <h3 className="stats-subsection-title">重点突破词</h3>
+        {focusWords.length > 0 ? (
+          <ul className="stats-profile-list">
+            {focusWords.slice(0, 4).map(item => (
+              <li key={item.word}>
+                <strong>{item.word}</strong>
+                <span>{item.dominant_dimension_label}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="stats-profile-muted">暂无重点突破词</p>
+        )}
+      </div>
+
+      <div className="stats-profile-block">
+        <h3 className="stats-subsection-title">重复困惑主题</h3>
+        {repeatedTopics.length > 0 ? (
+          <ul className="stats-profile-list stats-profile-list--topics">
+            {repeatedTopics.slice(0, 3).map(topic => (
+              <li key={`${topic.word_context}-${topic.title}`}>
+                <strong>{topic.word_context || '主题'}</strong>
+                <span>{topic.count} 次</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="stats-profile-muted">近期没有重复追问主题</p>
+        )}
+      </div>
+
+      <div className="stats-profile-block">
+        <h3 className="stats-subsection-title">下一步动作</h3>
+        <ul className="stats-profile-actions">
+          {nextActions.slice(0, 3).map(action => (
+            <li key={action}>{action}</li>
+          ))}
+        </ul>
+      </div>
+
+      <p className="stats-profile-trend">{trendDirectionLabel(summary.trend_direction)}</p>
+    </div>
+  )
 }
 
 /** 总达成率：<50 红；50–80 橙；>80 绿；无数据中性灰 */
@@ -648,6 +759,7 @@ export default function StatsPage() {
     wrongTop10,
     chapterBreakdown,
     chapterModeStats,
+    learnerProfile,
     useFallback,
     loading: chartLoading,
   } = useLearningStats(range, bookId, mode)
@@ -684,6 +796,19 @@ export default function StatsPage() {
     alltime?.ebbinghaus_stages && alltime.ebbinghaus_stages.length > 0
       ? alltime.ebbinghaus_stages
       : defaultEbbStages
+  const isInitialLoading =
+    chartLoading &&
+    !summary &&
+    !alltime &&
+    daily.length === 0 &&
+    books.length === 0 &&
+    modes.length === 0 &&
+    modeBreakdown.length === 0 &&
+    pieChart.length === 0 &&
+    wrongTop10.length === 0 &&
+    chapterBreakdown.length === 0 &&
+    chapterModeStats.length === 0 &&
+    !learnerProfile
 
   const statsMainLayoutRef = useRef<HTMLDivElement>(null)
   const statsLeftStackRef = useRef<HTMLDivElement>(null)
@@ -734,6 +859,10 @@ export default function StatsPage() {
       window.removeEventListener('resize', onWindowResize)
     }
   }, [chartLoading, wrongTop10.length, chapterBreakdown.length, chapterModeStats.length, range, metric, alltime?.ebbinghaus_rate])
+
+  if (isInitialLoading) {
+    return <PageSkeleton variant="stats" metricCount={9} />
+  }
 
   return (
     <div className="page-content stats-page">
@@ -804,14 +933,14 @@ export default function StatsPage() {
             <h3 className="stats-mode-strip-title stats-mode-strip-title--modes">各模式统计</h3>
             <div className="stats-mode-strip-col stats-mode-strip-col--pie">
               {chartLoading ? (
-                <div className="stats-chart-loading stats-chart-loading--strip"><div className="loading-spinner" /></div>
+                <StatsSectionSkeleton variant="donut" />
               ) : (
                 <ModePieChart segments={pieChart} variant="strip" />
               )}
             </div>
             <div className="stats-mode-strip-col stats-mode-strip-col--modes">
               {chartLoading ? (
-                <div className="stats-chart-loading stats-chart-loading--strip-table"><div className="loading-spinner" /></div>
+                <StatsSectionSkeleton variant="table" />
               ) : (
                 <ModeBreakdownTableBody modeBreakdown={modeBreakdown} onNavigate={() => navigate('/plan')} />
               )}
@@ -823,12 +952,17 @@ export default function StatsPage() {
         <div className="stats-main-layout" ref={statsMainLayoutRef}>
           <div className="stats-main-left">
               <div className="stats-left-stack" ref={statsLeftStackRef}>
+                    <section className="stats-section stats-card-profile" aria-labelledby="stats-profile-title">
+                      <h2 id="stats-profile-title" className="stats-section-title">统一学习画像</h2>
+                      <p className="stats-section-hint">把薄弱模式、易错维度、重复困惑主题和下一步动作放在同一视图里。</p>
+                      <LearnerProfileCard learnerProfile={learnerProfile} loading={chartLoading} />
+                    </section>
                     <section className="stats-section stats-card-wrong" aria-labelledby="stats-wrong-title">
                       <h2 id="stats-wrong-title" className="stats-section-title">重复出错 Top 10</h2>
                       <p className="stats-section-hint">错词本中累计错误次数最高的词汇（上图为错次占比，下表为明细）</p>
                       <div className="stats-card-wrong-body">
                         {chartLoading ? (
-                          <div className="stats-chart-loading"><div className="loading-spinner" /></div>
+                          <StatsSectionSkeleton variant="donut" />
                         ) : wrongTop10.length === 0 ? (
                           <div className="stats-empty"><p>暂无错词数据</p></div>
                         ) : (
@@ -895,7 +1029,7 @@ export default function StatsPage() {
                       </p>
                       <div className="stats-ebb-inner">
                         {chartLoading ? (
-                          <div className="stats-chart-loading stats-chart-loading--ebb-split"><div className="loading-spinner" /></div>
+                          <StatsSectionSkeleton variant="split" />
                         ) : (
                           <>
                             <div className="ebbinghaus-summary-row ebbinghaus-summary-row--compact ebbinghaus-summary-row--split">
@@ -925,7 +1059,7 @@ export default function StatsPage() {
                                 <button
                                   type="button"
                                   className="stats-review-btn stats-review-btn--ebb"
-                                  onClick={() => navigate('/plan')}
+                                  onClick={() => startEbbinghausReview(navigate)}
                                 >
                                   去复习
                                 </button>
@@ -995,7 +1129,7 @@ export default function StatsPage() {
                       </div>
 
                       {chartLoading ? (
-                        <div className="stats-chart-loading stats-chart-loading--learn-split"><div className="loading-spinner" /></div>
+                        <StatsSectionSkeleton variant="chart" />
                       ) : !hasChartData ? (
                         <div className="stats-empty stats-empty--compact">
                           <p>该时间段暂无学习记录</p>
@@ -1049,7 +1183,7 @@ export default function StatsPage() {
                       <h2 id="stats-chapter-detail-title" className="stats-section-title">章节正确率（细项）</h2>
                       <p className="stats-section-hint">按章节汇总的答题与词数</p>
                       {chartLoading ? (
-                        <div className="stats-chart-loading"><div className="loading-spinner" /></div>
+                        <StatsSectionSkeleton variant="table" />
                       ) : chapterBreakdown.length === 0 ? (
                         <div className="stats-empty stats-empty--chapter-cell">
                           <p>暂无章节数据</p>
@@ -1090,7 +1224,7 @@ export default function StatsPage() {
                       <h2 id="stats-chapter-mode-title" className="stats-section-title">章节 × 模式 正确率</h2>
                       <p className="stats-section-hint">同一章节在不同练习模式下的正确率（独立统计）</p>
                       {chartLoading ? (
-                        <div className="stats-chart-loading"><div className="loading-spinner" /></div>
+                        <StatsSectionSkeleton variant="table" />
                       ) : chapterModeStats.length === 0 ? (
                         <div className="stats-empty stats-empty--chapter-cell"><p>暂无分模式章节数据</p></div>
                       ) : (
@@ -1130,3 +1264,61 @@ export default function StatsPage() {
     </div>
   )
 }
+
+function StatsSectionSkeleton({
+  variant = 'panel',
+}: {
+  variant?: 'panel' | 'table' | 'chart' | 'donut' | 'split'
+}) {
+  if (variant === 'table') {
+    return (
+      <div className="stats-skeleton stats-skeleton--table" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, index) => (
+          <Skeleton key={index} width="100%" height={16} />
+        ))}
+      </div>
+    )
+  }
+
+  if (variant === 'donut') {
+    return (
+      <div className="stats-skeleton stats-skeleton--donut" aria-hidden="true">
+        <div className="stats-skeleton-donut" />
+        <div className="stats-skeleton-legend">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="stats-skeleton-legend-row">
+              <Skeleton width="54%" height={12} />
+              <Skeleton width="18%" height={12} />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (variant === 'split') {
+    return (
+      <div className="stats-skeleton stats-skeleton--split" aria-hidden="true">
+        <div className="stats-skeleton-split-head">
+          <Skeleton width="24%" height={40} />
+          <div className="stats-skeleton-split-meta">
+            <Skeleton width="100%" height={12} />
+            <Skeleton width="72%" height={12} />
+            <Skeleton width="86%" height={12} />
+          </div>
+        </div>
+        <div className="stats-skeleton-chart" />
+      </div>
+    )
+  }
+
+  return (
+    <div className={`stats-skeleton stats-skeleton--${variant}`} aria-hidden="true">
+      <Skeleton width="34%" height={16} />
+      <Skeleton width="58%" height={12} />
+      <div className="stats-skeleton-chart" />
+    </div>
+  )
+}
+
+

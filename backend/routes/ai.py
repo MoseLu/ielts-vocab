@@ -4,11 +4,14 @@ import uuid
 import os
 import random
 import functools
+import time
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 from models import db, User, UserBookProgress, UserChapterProgress, UserChapterModeProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory, UserLearningNote
 from routes.middleware import token_required
+from services.learner_profile import build_learner_profile
+from services.memory_topics import build_memory_topics
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS, correct_text, differentiate_synonyms
 
 ai_bp = Blueprint('ai', __name__)
@@ -525,6 +528,7 @@ def _get_context_data(user_id: int) -> dict:
         'recentSessions': recent_sessions_data,
         'chapterSessionStats': list(chapter_session_stats.values()),
         'totalSessions': len(recent_sessions),
+        'learnerProfile': build_learner_profile(user_id),
         'memory': memory,
     }
 
@@ -534,6 +538,17 @@ def _get_context_data(user_id: int) -> dict:
 def get_context(current_user: User):
     """Return structured learning summary for AI context."""
     return jsonify(_get_context_data(current_user.id))
+
+
+@ai_bp.route('/learner-profile', methods=['GET'])
+@token_required
+def get_learner_profile(current_user: User):
+    target_date = request.args.get('date') or None
+    try:
+        profile = build_learner_profile(current_user.id, target_date)
+    except ValueError:
+        return jsonify({'error': 'date must be YYYY-MM-DD'}), 400
+    return jsonify(profile)
 
 
 # ── POST /api/ai/ask ──────────────────────────────────────────────────────────
@@ -617,6 +632,7 @@ C. 换个复习方向
 - 回复选项时选项要有实际意义，每个选项要有明确的差异化
 
 ## 重要原则
+- 如果看到【相关历史问答】，说明用户在同一主题反复卡住。要明确承认这一点，换一种解释方式，并主动追问是否需要更深入辨析、例句或小测。
 - 不要编造例句，尽量通过网络搜索获取真实、地道的例句
 - 建议要具体可执行（具体词数、时间安排）
 - 语言要友好鼓励，不要过于严肃
@@ -627,6 +643,11 @@ C. 换个复习方向
 def _build_context_msg(ctx: dict) -> str:
     """Build a readable context string from learning context dict."""
     parts = []
+    dimension_labels = {
+        'listening': '听音辨义',
+        'meaning': '词义辨析',
+        'dictation': '拼写默写',
+    }
 
     # Book / chapter info
     if ctx.get('currentChapterTitle'):
@@ -671,6 +692,39 @@ def _build_context_msg(ctx: dict) -> str:
             parts.append(f"  词性：{ctx['currentPos']}")
         if ctx.get('currentDefinition'):
             parts.append(f"  释义：{ctx['currentDefinition']}")
+
+    current_focus_dimension = ctx.get('currentFocusDimension')
+    if current_focus_dimension:
+        parts.append(
+            f"当前训练焦点：{dimension_labels.get(current_focus_dimension, current_focus_dimension)}"
+        )
+
+    weak_dimension_order = ctx.get('weakDimensionOrder')
+    if isinstance(weak_dimension_order, list) and weak_dimension_order:
+        labels = [
+            dimension_labels.get(str(item), str(item))
+            for item in weak_dimension_order[:3]
+            if item
+        ]
+        if labels:
+            parts.append(f"当前薄弱维度：{'、'.join(labels)}")
+    elif ctx.get('weakestDimension'):
+        weakest_dimension = ctx.get('weakestDimension')
+        parts.append(
+            f"当前最弱维度：{dimension_labels.get(weakest_dimension, weakest_dimension)}"
+        )
+
+    weak_focus_words = ctx.get('weakFocusWords')
+    if isinstance(weak_focus_words, list) and weak_focus_words:
+        parts.append(f"当前重点薄弱词：{'、'.join(str(item) for item in weak_focus_words[:5])}")
+
+    recent_wrong_words = ctx.get('recentWrongWords')
+    if isinstance(recent_wrong_words, list) and recent_wrong_words:
+        parts.append(f"近期易错词：{'、'.join(str(item) for item in recent_wrong_words[:5])}")
+
+    trap_strategy = ctx.get('trapStrategy')
+    if trap_strategy:
+        parts.append(f"当前出题策略：{trap_strategy}")
 
     # Local historical summary (from localStorage)
     local = ctx.get('localHistory')
@@ -733,6 +787,174 @@ def _parse_options(text: str) -> list[str] | None:
             if line and re.match(r'^[A-Z]\.', line):
                 options.append(line)
     return options if options else None
+
+
+_QUERY_STOPWORDS = {
+    'the', 'and', 'for', 'with', 'that', 'this', 'have', 'what', 'when', 'where',
+    'which', 'from', 'into', 'your', 'about', 'please', 'could', 'would', 'should',
+    'kind',  # kept via currentWord / phrase overlap when relevant
+}
+
+
+def _extract_query_tokens(text: str) -> set[str]:
+    english = {
+        token.lower()
+        for token in re.findall(r"[A-Za-z][A-Za-z'-]{1,}", text or '')
+        if token.lower() not in _QUERY_STOPWORDS
+    }
+    chinese = {
+        chunk
+        for chunk in re.findall(r'[\u4e00-\u9fff]{2,}', text or '')
+        if len(chunk.strip()) >= 2
+    }
+    return english | chinese
+
+
+def _normalize_question_signature(text: str) -> str:
+    lowered = (text or '').lower()
+    lowered = re.sub(r'[^a-z0-9\u4e00-\u9fff]+', ' ', lowered)
+    return re.sub(r'\s+', ' ', lowered).strip()
+
+
+def _collect_related_learning_notes(
+    user_id: int,
+    user_message: str,
+    frontend_context: dict | None = None,
+    limit: int = 3,
+) -> dict | None:
+    query_tokens = _extract_query_tokens(user_message)
+    normalized_message = _normalize_question_signature(user_message)
+    current_word = ((frontend_context or {}).get('currentWord') or '').strip().lower()
+
+    recent_notes = (
+        UserLearningNote.query
+        .filter_by(user_id=user_id)
+        .order_by(UserLearningNote.created_at.desc())
+        .limit(80)
+        .all()
+    )
+    if not recent_notes:
+        return None
+
+    topic_matches: list[dict] = []
+    memory_topics = build_memory_topics(
+        recent_notes,
+        limit=12,
+        include_singletons=True,
+        related_note_limit=max(limit + 2, 4),
+    )
+    for topic in memory_topics:
+        related_notes = topic.get('related_notes') or []
+        topic_text = ' '.join([
+            str(topic.get('title') or ''),
+            ' '.join(str(item.get('question') or '') for item in related_notes),
+        ]).strip()
+        topic_signature = _normalize_question_signature(topic_text)
+        topic_tokens = _extract_query_tokens(topic_text)
+        overlap = query_tokens & topic_tokens
+        topic_word = str(topic.get('word_context') or '').strip().lower()
+
+        score = len(overlap) * 2
+        if current_word and topic_word == current_word:
+            score += 4
+        if topic_signature and normalized_message and (
+            topic_signature in normalized_message or normalized_message in topic_signature
+        ):
+            score += 4
+        if current_word and current_word in topic_signature:
+            score += 1
+
+        if score < 3:
+            continue
+
+        items: list[dict] = []
+        for item in related_notes[:limit]:
+            created_at = item.get('created_at')
+            created_at_dt = None
+            if isinstance(created_at, datetime):
+                created_at_dt = created_at
+            elif isinstance(created_at, str) and created_at:
+                try:
+                    created_at_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                except ValueError:
+                    created_at_dt = None
+
+            items.append({
+                'question': item.get('question') or '',
+                'answer': item.get('answer') or '',
+                'word_context': item.get('word_context') or '',
+                'created_at': created_at_dt or created_at,
+            })
+
+        latest_at = topic.get('latest_at')
+        latest_at_dt = None
+        if isinstance(latest_at, datetime):
+            latest_at_dt = latest_at
+        elif isinstance(latest_at, str) and latest_at:
+            try:
+                latest_at_dt = datetime.fromisoformat(latest_at.replace('Z', '+00:00'))
+            except ValueError:
+                latest_at_dt = None
+
+        topic_matches.append({
+            'score': score,
+            'repeat_count': int(topic.get('count') or len(items)),
+            'items': items,
+            'follow_up_hint': topic.get('follow_up_hint') or '',
+            'latest_at': latest_at_dt or datetime.min,
+        })
+
+    if not topic_matches:
+        return None
+
+    topic_matches.sort(
+        key=lambda item: (item['score'], item['repeat_count'], item['latest_at']),
+        reverse=True,
+    )
+    best = topic_matches[0]
+    return {
+        'repeat_count': best['repeat_count'],
+        'items': best['items'][:limit],
+        'follow_up_hint': best['follow_up_hint'],
+    }
+
+
+def _build_related_notes_msg(related_notes: dict | None) -> str | None:
+    if not related_notes:
+        return None
+
+    repeat_count = int(related_notes.get('repeat_count') or 0)
+    items = related_notes.get('items') or []
+    follow_up_hint = str(related_notes.get('follow_up_hint') or '').strip()
+    if not items:
+        return None
+
+    lines = ['[相关历史问答]']
+    if repeat_count >= 2:
+        lines.append(f"这个主题用户已重复询问 {repeat_count} 次，说明这里可能还没有真正吃透。")
+    else:
+        lines.append("下面是和当前问题最相关的历史问答，请优先利用。")
+
+    for index, item in enumerate(items, start=1):
+        created_at = item.get('created_at')
+        date_text = created_at.strftime('%Y-%m-%d') if isinstance(created_at, datetime) else '最近'
+        question = str(item.get('question') or '').strip()[:180]
+        answer = str(item.get('answer') or '').strip().replace('\n', ' ')[:220]
+        word_context = str(item.get('word_context') or '').strip()
+        suffix = f"（关联单词：{word_context}）" if word_context else ''
+        lines.append(f"{index}. {date_text} | 问：{question}{suffix}")
+        lines.append(f"   答：{answer}")
+
+    if repeat_count >= 2:
+        lines.append("回答要求：先承认用户之前问过这个点，换一种解释角度，并主动询问是否需要进一步辨析、例句或小测。")
+
+    if False and follow_up_hint:
+        lines.append(f"琛ュ厖鎻愮ず锛?{follow_up_hint}")
+
+    if follow_up_hint:
+        lines.append(f"[Follow-up hint] {follow_up_hint}")
+
+    return '\n'.join(lines)
 
 
 # ── Tool input schemas (whitelist validation) ─────────────────────────────────
@@ -925,6 +1147,7 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     wrong_words = ctx_data.get('wrongWords', [])
     recent_sessions = ctx_data.get('recentSessions', [])
     chapter_stats = ctx_data.get('chapterSessionStats', [])
+    learner_profile = ctx_data.get('learnerProfile', {})
 
     trend_zh = {'improving': '上升', 'declining': '下滑', 'stable': '平稳', 'new': '刚开始'}.get(trend, trend)
 
@@ -990,6 +1213,38 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
         parts.append(f"\n错词列表（最近50条）：{words_list}")
     else:
         parts.append("\n错词列表：暂无")
+
+    if learner_profile and isinstance(learner_profile, dict):
+        summary = learner_profile.get('summary') or {}
+        dimensions = learner_profile.get('dimensions') or []
+        focus_words = learner_profile.get('focus_words') or []
+        repeated_topics = learner_profile.get('repeated_topics') or []
+        next_actions = learner_profile.get('next_actions') or []
+
+        parts.append("\n[统一学习画像]")
+        weakest_mode_label = summary.get('weakest_mode_label') or summary.get('weakest_mode')
+        weakest_mode_accuracy = summary.get('weakest_mode_accuracy')
+        if weakest_mode_label:
+            suffix = f"（准确率 {weakest_mode_accuracy}%）" if weakest_mode_accuracy is not None else ''
+            parts.append(f"当前最弱模式：{weakest_mode_label}{suffix}")
+        if dimensions:
+            dimension_text = '、'.join(
+                f"{item.get('label', item.get('dimension'))} {item.get('accuracy')}%"
+                for item in dimensions[:3]
+            )
+            parts.append(f"薄弱维度排序：{dimension_text}")
+        if focus_words:
+            focus_text = '、'.join(item.get('word', '') for item in focus_words[:5] if item.get('word'))
+            if focus_text:
+                parts.append(f"重点突破词：{focus_text}")
+        if repeated_topics:
+            parts.append("重复困惑主题：")
+            for topic in repeated_topics[:3]:
+                parts.append(f"  - {topic.get('title', '')}（重复 {topic.get('count', 0)} 次）")
+        if next_actions:
+            parts.append("建议动作：")
+            for action in next_actions[:3]:
+                parts.append(f"  - {action}")
 
     # Frontend session context
     if frontend_context:
@@ -1532,6 +1787,12 @@ def ask(current_user: User):
     # Load and append conversation history so AI remembers past turns
     history = _load_history(current_user.id)
     messages.extend(history)
+
+    related_notes_msg = _build_related_notes_msg(
+        _collect_related_learning_notes(current_user.id, user_message, frontend_context)
+    )
+    if related_notes_msg:
+        messages.append({"role": "user", "content": related_notes_msg})
 
     # Proactive search: if user asks about examples/definitions, search first
     search_trigger_keywords = ['例句', '例 子', 'example', '怎么 用', '用法', '这个词', '这个词的', '这个单词']
@@ -2307,6 +2568,85 @@ def get_quick_memory(current_user: User):
     """Return all quick-memory records for the current user."""
     records = UserQuickMemoryRecord.query.filter_by(user_id=current_user.id).all()
     return jsonify({'records': [r.to_dict() for r in records]}), 200
+
+
+# ── GET /api/ai/quick-memory/review-queue ────────────────────────────────────
+
+@ai_bp.route('/quick-memory/review-queue', methods=['GET'])
+@token_required
+def get_quick_memory_review_queue(current_user: User):
+    """Return the user's due/upcoming Ebbinghaus review queue with full word metadata."""
+    try:
+        limit = max(1, min(int(request.args.get('limit', 20)), 100))
+    except (TypeError, ValueError):
+        limit = 20
+
+    try:
+        within_days = max(1, min(int(request.args.get('within_days', 1)), 30))
+    except (TypeError, ValueError):
+        within_days = 1
+
+    now_ms = int(time.time() * 1000)
+    window_end_ms = now_ms + within_days * 86400000
+
+    pool = _get_global_vocab_pool()
+    pool_by_word = {
+        (item.get('word') or '').strip().lower(): item
+        for item in pool
+        if (item.get('word') or '').strip()
+    }
+
+    due_words = []
+    upcoming_words = []
+
+    rows = (
+        UserQuickMemoryRecord.query
+        .filter_by(user_id=current_user.id)
+        .filter(UserQuickMemoryRecord.next_review > 0)
+        .order_by(UserQuickMemoryRecord.next_review.asc())
+        .all()
+    )
+
+    for row in rows:
+        word_key = (row.word or '').strip().lower()
+        vocab_item = pool_by_word.get(word_key)
+        if not vocab_item:
+            continue
+
+        next_review = row.next_review or 0
+        if next_review <= now_ms:
+            due_state = 'due'
+        elif next_review <= window_end_ms:
+            due_state = 'upcoming'
+        else:
+            continue
+
+        item = {
+            **vocab_item,
+            'status': row.status,
+            'knownCount': row.known_count or 0,
+            'unknownCount': row.unknown_count or 0,
+            'nextReview': next_review,
+            'dueState': due_state,
+        }
+        if due_state == 'due':
+            due_words.append(item)
+        else:
+            upcoming_words.append(item)
+
+    selected = due_words[:limit]
+    if len(selected) < limit:
+        selected.extend(upcoming_words[:limit - len(selected)])
+
+    return jsonify({
+        'words': selected,
+        'summary': {
+            'due_count': len(due_words),
+            'upcoming_count': len(upcoming_words),
+            'returned_count': len(selected),
+            'review_window_days': within_days,
+        },
+    }), 200
 
 
 # ── POST /api/ai/quick-memory/sync ───────────────────────────────────────────

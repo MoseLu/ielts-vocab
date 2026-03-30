@@ -28,6 +28,11 @@ export type {
   WrongTopItem,
   ChapterBreakdownRow,
   ChapterModeStatRow,
+  LearnerProfile,
+  LearnerProfileSummary,
+  LearnerProfileDimension,
+  LearnerProfileFocusWord,
+  LearnerProfileTopic,
   MetricKey,
   RangeKey,
 } from './useLearningStats'

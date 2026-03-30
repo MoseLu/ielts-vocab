@@ -1,6 +1,8 @@
 /* Page: Statistics
    大区块纵向间距：var(--space-stack)。根容器用 flex + gap，避免相邻块 margin 折叠成 0。 */
 
+@use '../utils/mixins' as *;
+
 .stats-page {
     display: block;
     box-sizing: border-box;
@@ -588,6 +590,99 @@
 
 .stats-card-wrong-overview .stats-section-title {
     margin-bottom: var(--space-stack);
+}
+
+.stats-card-profile {
+    min-height: auto;
+}
+
+.stats-profile-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stats-profile-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.stats-profile-pill {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.98) 0%, rgba(255, 237, 213, 0.9) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.24);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stats-profile-pill__label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.stats-profile-pill strong {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.stats-profile-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stats-profile-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stats-profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(241, 245, 249, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.stats-profile-chip strong {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.stats-profile-list,
+.stats-profile-actions {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--text-secondary);
+}
+
+.stats-profile-list li,
+.stats-profile-actions li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.stats-profile-list--topics li {
+    justify-content: space-between;
+}
+
+.stats-profile-muted,
+.stats-profile-trend {
+    margin: 0;
+    color: var(--text-tertiary);
+    font-size: 12px;
 }
 
 .stats-main-cell--ebb .stats-card-ebbinghaus {
@@ -1654,6 +1749,71 @@
     justify-content: center;
 }
 
+.stats-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    min-height: 120px;
+    padding: 10px 0;
+}
+
+.stats-skeleton-chart {
+    min-height: 120px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 96%, transparent), color-mix(in srgb, var(--surface-base) 94%, transparent));
+}
+
+.stats-skeleton--table {
+    min-height: 120px;
+    justify-content: center;
+}
+
+.stats-skeleton--donut {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+}
+
+.stats-skeleton-donut {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 18px solid color-mix(in srgb, var(--surface-elevated) 90%, var(--text-primary) 10%);
+    border-right-color: color-mix(in srgb, var(--surface-elevated) 98%, white 2%);
+    border-bottom-color: color-mix(in srgb, var(--surface-elevated) 94%, var(--text-primary) 6%);
+}
+
+.stats-skeleton-legend {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stats-skeleton-legend-row,
+.stats-skeleton-split-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.stats-skeleton--split {
+    min-height: 180px;
+}
+
+.stats-skeleton-split-meta {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .legend-dot {
     width: 8px;
     height: 8px;
@@ -1877,6 +2037,17 @@
 @media (max-width: 768px) {
     .stats-cards {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-profile-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-profile-list li,
+    .stats-profile-actions li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
 
     .stats-accuracy-item {

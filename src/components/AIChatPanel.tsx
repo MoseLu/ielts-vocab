@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { useAIChat, GeneratedBook } from '../hooks/useAIChat'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useAIChat } from '../hooks/useAIChat'
+import { renderJournalMarkdown } from '../lib/journalMarkdown'
+import { MicroLoading } from './ui'
 import { Scrollbar } from './ui/Scrollbar'
 
-// Inline SVG icons
 const AIRobotSVG = () => (
   <svg viewBox="0 0 1024 1024" width="22" height="22" fill="currentColor" className="ai-robot-icon">
     <path d="M512 32c91.818667 0 166.272 214.912 166.272 480l-0.085333 15.829333C675.285333 785.621333 602.026667 992 512 992c-90.88 0-164.778667-210.645333-166.272-472.064V512C345.728 246.912 420.181333 32 512 32z m0 112.213333l-1.066667 1.706667c-8.618667 14.506667-17.493333 34.133333-25.813333 58.112-27.221333 78.592-43.392 189.013333-43.392 307.968 0 118.912 16.213333 229.376 43.392 307.968 8.277333 23.936 17.194667 43.562667 25.813333 58.069333l1.066667 1.706667 1.066667-1.706667c7.893333-13.312 16.042667-30.890667 23.722666-52.181333l2.090667-5.888c27.221333-78.592 43.392-189.013333 43.392-307.968 0-118.912-16.213333-229.376-43.392-307.968a322.346667 322.346667 0 0 0-25.813333-58.069333L512 144.213333z" />
@@ -13,38 +14,46 @@ const AIRobotSVG = () => (
 
 const SendIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="22" y1="2" x2="11" y2="13"/>
-    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
   </svg>
 )
 
 const CloseIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="18" y1="6" x2="6" y2="18"/>
-    <line x1="6" y1="6" x2="18" y2="18"/>
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
-)
-
-const LoadingDots = () => (
-  <div className="ai-typing-dots">
-    <span/><span/><span/>
-  </div>
 )
 
 const CopyIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 )
 
 const CheckIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-    <polyline points="20 6 9 17 4 12"/>
+    <polyline points="20 6 9 17 4 12" />
   </svg>
 )
 
-interface CopyButtonProps { text: string }
+const FullscreenIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 1024 1024" fill="currentColor" aria-hidden="true">
+    <path d="M896 478.72C878.336 478.72 864 464.384 864 446.72L864 200.192 594.624 469.504C582.656 481.472 563.264 481.472 551.296 469.504 539.328 457.536 539.328 438.144 551.296 426.176L818.752 158.72 576 158.72C558.336 158.72 544 144.384 544 126.72 544 109.056 558.336 94.72 576 94.72L893.056 94.72C897.728 94.016 901.568 95.232 906.112 96.768 907.584 97.28 908.992 97.792 910.336 98.496 913.152 99.904 916.48 99.648 918.784 102.016 920.448 103.68 920.064 106.112 921.28 108.032 924.288 112.064 926.208 116.736 927.04 121.856 927.104 122.752 927.552 123.456 927.488 124.288 927.552 125.12 928 125.888 928 126.72L928 446.72C928 464.384 913.664 478.72 896 478.72ZM205.248 862.72 448 862.72C465.664 862.72 480 877.056 480 894.72 480 912.384 465.664 926.72 448 926.72L130.944 926.72C126.272 927.424 122.432 926.208 117.888 924.672 116.416 924.16 115.008 923.648 113.664 922.944 110.848 921.536 107.52 921.792 105.216 919.424 103.552 917.76 103.936 915.328 102.72 913.408 99.712 909.376 97.792 904.704 96.96 899.584 96.896 898.688 96.448 897.984 96.512 897.152 96.448 896.32 96 895.552 96 894.72L96 574.72C96 557.056 110.336 542.72 128 542.72 145.664 542.72 160 557.056 160 574.72L160 821.248 429.376 551.936C441.344 539.968 460.736 539.968 472.704 551.936 484.672 563.904 484.672 583.296 472.704 595.264L205.248 862.72Z" />
+  </svg>
+)
+
+const RestoreIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 1024 1024" fill="currentColor" aria-hidden="true">
+    <path d="M108.8 561.52v101.39h181.56L64 889.26 134.74 960 361.1 733.64V915.2h101.39V561.52H108.8zM889.26 64L662.91 290.36V108.8H561.52v353.68H915.2V361.09H733.64L960 134.74 889.26 64z" />
+  </svg>
+)
+
+interface CopyButtonProps {
+  text: string
+}
 
 function CopyButton({ text }: CopyButtonProps) {
   const [copied, setCopied] = React.useState(false)
@@ -55,7 +64,6 @@ function CopyButton({ text }: CopyButtonProps) {
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)
     } catch {
-      // Fallback for older browsers
       const ta = document.createElement('textarea')
       ta.value = text
       ta.style.position = 'fixed'
@@ -71,13 +79,33 @@ function CopyButton({ text }: CopyButtonProps) {
 
   return (
     <button
-      className="ai-copy-btn"
+      className={`ai-copy-btn ${copied ? 'copied' : ''}`}
       onClick={handleCopy}
       title={copied ? '已复制' : '复制内容'}
       aria-label={copied ? '已复制' : '复制内容'}
+      type="button"
     >
       {copied ? <CheckIcon /> : <CopyIcon />}
     </button>
+  )
+}
+
+function PlainTextBubble({ content }: { content: string }) {
+  return (
+    <div className="ai-msg-bubble">
+      {content.split('\n').map((line, index) => (
+        <p key={`${index}-${line.slice(0, 12)}`}>{line || <br />}</p>
+      ))}
+    </div>
+  )
+}
+
+function MarkdownBubble({ content }: { content: string }) {
+  return (
+    <div
+      className="ai-msg-bubble ai-markdown-content markdown-content"
+      dangerouslySetInnerHTML={{ __html: renderJournalMarkdown(content) }}
+    />
   )
 }
 
@@ -95,15 +123,15 @@ function AIChatPanel() {
   } = useAIChat()
 
   const [input, setInput] = useState('')
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  // Close on outside click
   useEffect(() => {
     if (!isOpen) return
-    const handle = (e: MouseEvent) => {
-      const target = e.target as Node
+    const handle = (event: MouseEvent) => {
+      const target = event.target as Node
       if (panelRef.current && !panelRef.current.contains(target)) {
         closePanel()
       }
@@ -112,7 +140,11 @@ function AIChatPanel() {
     return () => document.removeEventListener('pointerdown', handle)
   }, [isOpen, closePanel])
 
-  // Auto-scroll to bottom
+  useEffect(() => {
+    if (!isOpen) return
+    inputRef.current?.focus()
+  }, [isOpen])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
@@ -121,21 +153,23 @@ function AIChatPanel() {
     const text = input.trim()
     if (!text || isLoading) return
     setInput('')
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto'
+    }
     sendMessage(text)
   }, [input, isLoading, sendMessage])
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
       handleSend()
     }
   }
 
-  // Auto-resize textarea
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value)
-    e.target.style.height = 'auto'
-    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
+  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(event.target.value)
+    event.target.style.height = 'auto'
+    event.target.style.height = `${Math.min(event.target.scrollHeight, 120)}px`
   }
 
   if (!isOpen) {
@@ -143,8 +177,9 @@ function AIChatPanel() {
       <button
         className="ai-fab"
         onClick={openPanel}
-        title="雅思小助手"
+        title="雅思 AI 助手"
         aria-label="打开 AI 助手"
+        type="button"
       >
         <AIRobotSVG />
       </button>
@@ -152,36 +187,50 @@ function AIChatPanel() {
   }
 
   return (
-    <div className="ai-panel" ref={panelRef}>
-      {/* Header */}
+    <div className={`ai-panel ${isFullscreen ? 'ai-panel--fullscreen' : ''}`} ref={panelRef}>
       <div className="ai-panel-header">
         <div className="ai-panel-title">
           <div className="ai-panel-avatar">
             <AIRobotSVG />
           </div>
           <div>
-            <div className="ai-panel-name">雅思小助手</div>
+            <div className="ai-panel-name">雅思 AI 助手</div>
             <div className="ai-panel-status">
               {contextLoaded ? (
-                <><span className="ai-status-dot online"/>在线</>
+                <>
+                  <span className="ai-status-dot online" />
+                  在线
+                </>
               ) : (
-                <><span className="ai-status-dot"/>加载中</>
+                <MicroLoading text="上下文加载中..." />
               )}
             </div>
           </div>
         </div>
-        <button className="ai-panel-close" onClick={closePanel} aria-label="关闭">
-          <CloseIcon />
-        </button>
+
+        <div className="ai-panel-actions">
+          <button
+            className="ai-panel-icon-btn"
+            onClick={() => setIsFullscreen((value) => !value)}
+            aria-label={isFullscreen ? '还原窗口' : '全屏显示'}
+            title={isFullscreen ? '还原窗口' : '全屏显示'}
+            type="button"
+          >
+            {isFullscreen ? <RestoreIcon /> : <FullscreenIcon />}
+          </button>
+          <button className="ai-panel-close" onClick={closePanel} aria-label="关闭" title="关闭" type="button">
+            <CloseIcon />
+          </button>
+        </div>
       </div>
 
-      {/* Greeting skeleton / quick actions */}
       {isGreeting && (
         <div className="ai-greeting-loading">
           <div className="ai-greeting-skeleton" />
           <div className="ai-greeting-skeleton ai-greeting-skeleton--short" />
         </div>
       )}
+
       {!messages.length && !isGreeting && greetingDone && (
         <div className="ai-quick-actions">
           {[
@@ -194,59 +243,60 @@ function AIChatPanel() {
             '/plan',
             '/assessment',
             '/speaking',
-          ].map((q) => (
+          ].map((question) => (
             <button
-              key={q}
+              key={question}
               className="ai-quick-btn"
-              onClick={() => { setInput(q); sendMessage(q) }}
+              onClick={() => {
+                setInput(question)
+                sendMessage(question)
+              }}
+              type="button"
             >
-              {q}
+              {question}
             </button>
           ))}
         </div>
       )}
 
-      {/* Messages */}
       <Scrollbar className="ai-messages">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`ai-msg ai-msg-${msg.role}`}>
-            {msg.role === 'assistant' && (
-              <CopyButton text={msg.content} />
-            )}
-            <div className="ai-msg-bubble">
-              {msg.content.split('\n').map((line, i) => (
-                <p key={i}>{line || <br/>}</p>
-              ))}
-            </div>
-            {msg.options && msg.options.length > 0 && (
+        {messages.map((message) => (
+          <div key={message.id} className={`ai-msg ai-msg-${message.role}`}>
+            {message.role === 'assistant' && <CopyButton text={message.content} />}
+            {message.role === 'assistant'
+              ? <MarkdownBubble content={message.content} />
+              : <PlainTextBubble content={message.content} />}
+            {message.options && message.options.length > 0 && (
               <div className="ai-msg-options">
-                {msg.options.map((opt) => (
+                {message.options.map((option) => (
                   <button
-                    key={opt}
+                    key={option}
                     className="ai-option-btn"
                     onClick={() => {
-                      if (!isLoading) sendMessage(opt)
+                      if (!isLoading) sendMessage(option)
                     }}
                     disabled={isLoading}
+                    type="button"
                   >
-                    {opt}
+                    {option}
                   </button>
                 ))}
               </div>
             )}
           </div>
         ))}
+
         {isLoading && (
           <div className="ai-msg ai-msg-assistant">
             <div className="ai-msg-bubble">
-              <LoadingDots />
+              <MicroLoading text="AI 正在思考..." className="ai-bubble-loading" tone="accent" />
             </div>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </Scrollbar>
 
-      {/* Input */}
       <div className="ai-input-row">
         <textarea
           ref={inputRef}
@@ -262,7 +312,8 @@ function AIChatPanel() {
           className="ai-send-btn"
           onClick={handleSend}
           disabled={!input.trim() || isLoading}
-          aria-label="发送"
+          aria-label="发送消息"
+          type="button"
         >
           <SendIcon />
         </button>

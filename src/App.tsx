@@ -276,6 +276,20 @@ export default function App() {
     localStorage.setItem('current_day', day.toString())
   }
 
+  useEffect(() => {
+    const handlePracticeModeRequest = (event: Event) => {
+      const requestedMode = (event as CustomEvent<{ mode?: string }>).detail?.mode
+      if (requestedMode) {
+        handleModeChange(requestedMode)
+      }
+    }
+
+    window.addEventListener('practice-mode-request', handlePracticeModeRequest)
+    return () => {
+      window.removeEventListener('practice-mode-request', handlePracticeModeRequest)
+    }
+  }, [])
+
   return (
     <Router>
       <AIChatProvider>

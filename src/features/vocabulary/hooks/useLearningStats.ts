@@ -115,6 +115,58 @@ export interface ChapterModeStatRow {
   accuracy: number
 }
 
+export interface LearnerProfileSummary {
+  date: string
+  today_words: number
+  today_accuracy: number
+  today_duration_seconds: number
+  today_sessions: number
+  streak_days: number
+  weakest_mode: string | null
+  weakest_mode_label: string | null
+  weakest_mode_accuracy: number | null
+  due_reviews: number
+  trend_direction: 'improving' | 'stable' | 'declining' | 'new'
+}
+
+export interface LearnerProfileDimension {
+  dimension: string
+  label: string
+  correct: number
+  wrong: number
+  attempts: number
+  accuracy: number | null
+  weakness: number
+}
+
+export interface LearnerProfileFocusWord {
+  word: string
+  definition: string
+  wrong_count: number
+  dominant_dimension: string
+  dominant_dimension_label: string
+  dominant_wrong: number
+  focus_score: number
+}
+
+export interface LearnerProfileTopic {
+  title: string
+  count: number
+  word_context: string
+  latest_answer: string
+  latest_at: string | null
+}
+
+export interface LearnerProfile {
+  date: string
+  summary: LearnerProfileSummary
+  dimensions: LearnerProfileDimension[]
+  focus_words: LearnerProfileFocusWord[]
+  repeated_topics: LearnerProfileTopic[]
+  next_actions: string[]
+  mode_breakdown: ModeStat[]
+}
+
 export type MetricKey = 'words' | 'accuracy' | 'duration'
 export type RangeKey = 7 | 14 | 30
 
@@ -130,6 +182,7 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
   const [wrongTop10, setWrongTop10] = useState<WrongTopItem[]>([])
   const [chapterBreakdown, setChapterBreakdown] = useState<ChapterBreakdownRow[]>([])
   const [chapterModeStats, setChapterModeStats] = useState<ChapterModeStatRow[]>([])
+  const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
   const [useFallback, setUseFallback] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -145,19 +198,22 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
       if (bookId && bookId !== 'all') params.set('book_id', bookId)
       if (mode && mode !== 'all') params.set('mode', mode)
 
-      const d = await apiFetch<{
-        daily?: DailyLearning[]
-        books?: LearningBook[]
-        modes?: string[]
-        summary?: LearningSummary | null
-        alltime?: LearningAlltime | null
-        mode_breakdown?: ModeStat[]
-        pie_chart?: PieSegment[]
-        wrong_top10?: WrongTopItem[]
-        chapter_breakdown?: ChapterBreakdownRow[]
-        chapter_mode_stats?: ChapterModeStatRow[]
-        use_fallback?: boolean
-      }>(`/api/ai/learning-stats?${params}`)
+      const [d, profile] = await Promise.all([
+        apiFetch<{
+          daily?: DailyLearning[]
+          books?: LearningBook[]
+          modes?: string[]
+          summary?: LearningSummary | null
+          alltime?: LearningAlltime | null
+          mode_breakdown?: ModeStat[]
+          pie_chart?: PieSegment[]
+          wrong_top10?: WrongTopItem[]
+          chapter_breakdown?: ChapterBreakdownRow[]
+          chapter_mode_stats?: ChapterModeStatRow[]
+          use_fallback?: boolean
+        }>(`/api/ai/learning-stats?${params}`),
+        apiFetch<LearnerProfile>('/api/ai/learner-profile').catch(() => null),
+      ])
       setDaily(d.daily || [])
       setBooks(d.books || [])
       setModes(d.modes || [])
@@ -168,6 +224,7 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
       setWrongTop10(d.wrong_top10 || [])
       setChapterBreakdown(d.chapter_breakdown || [])
       setChapterModeStats(d.chapter_mode_stats || [])
+      setLearnerProfile(profile || null)
       setUseFallback(d.use_fallback || false)
     } catch {
       // ignore
@@ -189,6 +246,7 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
     wrongTop10,
     chapterBreakdown,
     chapterModeStats,
+    learnerProfile,
     useFallback,
     loading,
     refetch: fetchStats,

@@ -182,6 +182,8 @@ export const AppSettingsSchema = z.object({
   playbackSpeed: z.string().optional(),
   volume: z.string().optional(),
   interval: z.string().optional(),
+  reviewInterval: z.string().optional(),
+  reviewLimit: z.string().optional(),
   darkMode: z.boolean().optional(),
   fontSize: fontSizeValues.optional(),
 })
@@ -267,6 +269,75 @@ export const AIAskResponseSchema = z.object({
   options: z.array(z.string()).nullable().optional(),
 })
 
+export const LearnerProfileSummarySchema = z.object({
+  date: z.string(),
+  today_words: z.number().int(),
+  today_accuracy: z.number(),
+  today_duration_seconds: z.number().int(),
+  today_sessions: z.number().int(),
+  streak_days: z.number().int(),
+  weakest_mode: z.string().nullable(),
+  weakest_mode_label: z.string().nullable(),
+  weakest_mode_accuracy: z.number().nullable(),
+  due_reviews: z.number().int(),
+  trend_direction: z.enum(['improving', 'stable', 'declining', 'new']),
+})
+export type LearnerProfileSummary = z.infer<typeof LearnerProfileSummarySchema>
+
+export const LearnerProfileDimensionSchema = z.object({
+  dimension: z.string(),
+  label: z.string(),
+  correct: z.number().int(),
+  wrong: z.number().int(),
+  attempts: z.number().int(),
+  accuracy: z.number().nullable(),
+  weakness: z.number(),
+})
+export type LearnerProfileDimension = z.infer<typeof LearnerProfileDimensionSchema>
+
+export const LearnerProfileFocusWordSchema = z.object({
+  word: z.string(),
+  definition: z.string(),
+  wrong_count: z.number().int(),
+  dominant_dimension: z.string(),
+  dominant_dimension_label: z.string(),
+  dominant_wrong: z.number().int(),
+  focus_score: z.number(),
+})
+export type LearnerProfileFocusWord = z.infer<typeof LearnerProfileFocusWordSchema>
+
+export const LearnerProfileTopicSchema = z.object({
+  title: z.string(),
+  count: z.number().int(),
+  word_context: z.string(),
+  latest_answer: z.string(),
+  latest_at: z.string().nullable(),
+})
+export type LearnerProfileTopic = z.infer<typeof LearnerProfileTopicSchema>
+
+export const LearnerProfileModeSchema = z.object({
+  mode: z.string(),
+  label: z.string(),
+  correct: z.number().int(),
+  wrong: z.number().int(),
+  words: z.number().int(),
+  sessions: z.number().int(),
+  attempts: z.number().int(),
+  accuracy: z.number().nullable(),
+})
+export type LearnerProfileMode = z.infer<typeof LearnerProfileModeSchema>
+
+export const LearnerProfileSchema = z.object({
+  date: z.string(),
+  summary: LearnerProfileSummarySchema,
+  dimensions: z.array(LearnerProfileDimensionSchema),
+  focus_words: z.array(LearnerProfileFocusWordSchema),
+  repeated_topics: z.array(LearnerProfileTopicSchema),
+  next_actions: z.array(z.string()),
+  mode_breakdown: z.array(LearnerProfileModeSchema),
+})
+export type LearnerProfile = z.infer<typeof LearnerProfileSchema>
+
 // ── Learning Journal ──────────────────────────────────────────────────────────
 
 export const LearningNoteSchema = z.object({
@@ -278,6 +349,29 @@ export const LearningNoteSchema = z.object({
 })
 export type LearningNote = z.infer<typeof LearningNoteSchema>
 
+export const NoteMemoryTopicRelatedNoteSchema = z.object({
+  id: z.number().int(),
+  question: z.string(),
+  answer: z.string(),
+  word_context: z.string().nullable().optional(),
+  created_at: z.string().nullable(),
+})
+export type NoteMemoryTopicRelatedNote = z.infer<typeof NoteMemoryTopicRelatedNoteSchema>
+
+export const NoteMemoryTopicSchema = z.object({
+  key: z.string(),
+  title: z.string(),
+  count: z.number().int(),
+  word_context: z.string(),
+  latest_answer: z.string(),
+  latest_at: z.string().nullable(),
+  note_ids: z.array(z.number().int()),
+  related_notes: z.array(NoteMemoryTopicRelatedNoteSchema),
+  follow_up_hint: z.string().nullable().optional(),
+  is_repeated: z.boolean().optional(),
+})
+export type NoteMemoryTopic = z.infer<typeof NoteMemoryTopicSchema>
+
 export const DailySummarySchema = z.object({
   id: z.number().int(),
   date: z.string(),
@@ -288,6 +382,7 @@ export type DailySummary = z.infer<typeof DailySummarySchema>
 
 export const NotesListResponseSchema = z.object({
   notes: z.array(LearningNoteSchema),
+  memory_topics: z.array(NoteMemoryTopicSchema).optional(),
   total: z.number().int(),
   per_page: z.number().int(),
   next_cursor: z.number().int().nullable().optional(),
@@ -301,6 +396,22 @@ export const SummariesListResponseSchema = z.object({
 export const GenerateSummaryResponseSchema = z.object({
   summary: DailySummarySchema,
 })
+
+export const SummaryGenerationStatusSchema = z.enum(['queued', 'running', 'completed', 'failed'])
+export type SummaryGenerationStatus = z.infer<typeof SummaryGenerationStatusSchema>
+
+export const SummaryGenerationJobSchema = z.object({
+  job_id: z.string().min(1),
+  date: z.string(),
+  status: SummaryGenerationStatusSchema,
+  progress: z.number().int().min(0).max(100),
+  message: z.string(),
+  estimated_chars: z.number().int().min(0),
+  generated_chars: z.number().int().min(0),
+  summary: DailySummarySchema.nullable().optional(),
+  error: z.string().nullable().optional(),
+})
+export type SummaryGenerationJob = z.infer<typeof SummaryGenerationJobSchema>
 
 export const ExportResponseSchema = z.object({
   content: z.string(),

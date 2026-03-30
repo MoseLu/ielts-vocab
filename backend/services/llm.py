@@ -21,17 +21,116 @@ def _load_env():
 _env = _load_env()
 
 # MiniMax API configuration
-BASE_URL = _env.get('MINIMAX_BASE_URL') or "https://api.minimaxi.com/v1"
+BASE_URL = _env.get('ANTHROPIC_BASE_URL') or _env.get('MINIMAX_BASE_URL') or "https://api.minimaxi.com/anthropic"
 API_KEY = _env.get('MINIMAX_API_KEY', '')
 API_KEY_2 = _env.get('MINIMAX_API_KEY_2', '')
 
 # Use MiniMax-M2.7-highspeed for primary key, M2.7 for secondary
 DEFAULT_MODEL = "MiniMax-M2.7-highspeed"
+FALLBACK_MODEL = "MiniMax-M2.5"
 
 # Track which key to use (simple round-robin for load balancing)
 _use_secondary_key = False
 # Track if primary key is rate-limited (429)
 _primary_rate_limited = False
+
+
+def _build_messages_url(base_url: str) -> str:
+    normalized = base_url.rstrip('/')
+    if normalized.endswith('/anthropic/v1'):
+        return f"{normalized}/messages"
+    if normalized.endswith('/anthropic'):
+        return f"{normalized}/v1/messages"
+    if normalized.endswith('/v1') and 'minimaxi.com' in normalized:
+        legacy_root = normalized[:-3]
+        return f"{legacy_root}/anthropic/v1/messages"
+    return f"{normalized}/v1/messages"
+
+
+def _build_headers(api_key: str, stream: bool = False) -> dict[str, str]:
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    if stream:
+        headers["Accept"] = "text/event-stream"
+    return headers
+
+
+def _extract_error_message(resp: requests.Response) -> str:
+    try:
+        data = resp.json()
+    except Exception:
+        return resp.text
+    error = data.get('error')
+    if isinstance(error, dict):
+        return str(error.get('message', ''))
+    return str(error or data)
+
+
+def _post_messages_request(
+    payload: dict,
+    *,
+    force_secondary: bool = False,
+    allow_model_fallback: bool = True,
+    stream: bool = False,
+):
+    global _primary_rate_limited
+
+    current_key, key_type = get_api_key_with_fallback(force_secondary=force_secondary)
+    if not current_key:
+        raise ValueError("MiniMax API key not found in .env file")
+
+    resp = requests.post(
+        _build_messages_url(BASE_URL),
+        json=payload,
+        headers=_build_headers(current_key, stream=stream),
+        timeout=60,
+        stream=stream,
+    )
+
+    if resp.status_code == 429:
+        if key_type == 'primary' and API_KEY_2:
+            print("[LLM] Primary key rate limited (429), switching to secondary key...")
+            _primary_rate_limited = True
+            return _post_messages_request(
+                payload,
+                force_secondary=True,
+                allow_model_fallback=allow_model_fallback,
+                stream=stream,
+            )
+        raise RuntimeError("Both API keys are rate limited. Please try again later.")
+
+    if resp.status_code >= 500 and allow_model_fallback:
+        error_message = _extract_error_message(resp).lower()
+        if 'not support model' in error_message and payload.get('model') != FALLBACK_MODEL:
+            if key_type == 'primary' and API_KEY_2 and not force_secondary:
+                logging.warning(
+                    "[LLM] Model %s unsupported on primary key, retrying with secondary key",
+                    payload.get('model'),
+                )
+                return _post_messages_request(
+                    payload,
+                    force_secondary=True,
+                    allow_model_fallback=allow_model_fallback,
+                    stream=stream,
+                )
+            logging.warning(
+                "[LLM] Model %s unsupported for current token plan, falling back to %s",
+                payload.get('model'),
+                FALLBACK_MODEL,
+            )
+            fallback_payload = dict(payload)
+            fallback_payload['model'] = FALLBACK_MODEL
+            return _post_messages_request(
+                fallback_payload,
+                force_secondary=force_secondary,
+                allow_model_fallback=False,
+                stream=stream,
+            )
+
+    resp.raise_for_status()
+    return resp
 
 def get_api_key():
     """Get API key with simple round-robin load balancing."""
@@ -305,6 +404,7 @@ def chat(
     max_tokens: int = 4096,
     tools: list | None = None,
     force_secondary: bool = False,
+    allow_model_fallback: bool = True,
 ) -> dict:
     """
     Send a chat request to MiniMax with OpenAI-compatible tool calling.
@@ -319,11 +419,6 @@ def chat(
     current_key, key_type = get_api_key_with_fallback(force_secondary=force_secondary)
     if not current_key:
         raise ValueError("MiniMax API key not found in .env file")
-
-    headers = {
-        "Authorization": f"Bearer {current_key}",
-        "Content-Type": "application/json",
-    }
 
     payload = {
         "model": model,
@@ -341,24 +436,12 @@ def chat(
         } for f in tools]
 
     try:
-        resp = requests.post(
-            f"{BASE_URL}/v1/messages",
-            json=payload,
-            headers=headers,
-            timeout=60
+        resp = _post_messages_request(
+            payload,
+            force_secondary=force_secondary,
+            allow_model_fallback=allow_model_fallback,
+            stream=False,
         )
-
-        # Handle 429 rate limit error - automatically switch to secondary key
-        if resp.status_code == 429:
-            if key_type == 'primary' and API_KEY_2:
-                print("[LLM] Primary key rate limited (429), switching to secondary key...")
-                _primary_rate_limited = True
-                # Retry with secondary key
-                return chat(messages, model, max_tokens, tools, force_secondary=True)
-            else:
-                raise RuntimeError(f"Both API keys are rate limited. Please try again later.")
-
-        resp.raise_for_status()
         data = resp.json()
 
         # MiniMax uses Anthropic format: content is at top level, not in choices
@@ -387,10 +470,50 @@ def chat(
         return {"type": "text", "text": "", "reasoning": ""}
 
     except requests.exceptions.RequestException as e:
-        # Check if it's a 429 error from response
-        if hasattr(e, 'response') and e.response is not None and e.response.status_code == 429:
-            if key_type == 'primary' and API_KEY_2:
-                print("[LLM] Primary key rate limited (429), switching to secondary key...")
-                _primary_rate_limited = True
-                return chat(messages, model, max_tokens, tools, force_secondary=True)
         raise
+
+
+def stream_text(
+    messages: list[dict],
+    *,
+    system: str | None = None,
+    model: str = DEFAULT_MODEL,
+    max_tokens: int = 4096,
+    force_secondary: bool = False,
+    allow_model_fallback: bool = True,
+):
+    payload: dict = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "stream": True,
+    }
+    if system:
+        payload["system"] = system
+
+    resp = _post_messages_request(
+        payload,
+        force_secondary=force_secondary,
+        allow_model_fallback=allow_model_fallback,
+        stream=True,
+    )
+
+    for raw_line in resp.iter_lines(decode_unicode=True):
+        if not raw_line or not raw_line.startswith('data: '):
+            continue
+
+        data = _safe_json_parse(raw_line[6:])
+        if not data:
+            continue
+
+        if data.get('type') == 'content_block_delta':
+            delta = data.get('delta', {})
+            if delta.get('type') == 'text_delta':
+                text = delta.get('text', '')
+                if text:
+                    yield text
+        elif data.get('type') == 'error':
+            message = str(data.get('error', {}).get('message', 'Streaming generation failed'))
+            raise RuntimeError(message)
+        elif data.get('type') == 'message_stop':
+            break
