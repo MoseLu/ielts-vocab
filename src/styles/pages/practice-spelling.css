@@ -4,6 +4,9 @@
     display: flex;
     flex-direction: column;
     min-height: calc(100vh - var(--header-height));
+    background:
+        radial-gradient(circle at top, rgba(var(--accent-rgb), 0.08), transparent 32%),
+        linear-gradient(180deg, var(--surface-subtle), var(--bg-color));
 }
 
 .practice-progress-bar {
@@ -43,9 +46,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--space-xl);
-    gap: var(--space-xl);
-    max-width: 800px;
+    padding: clamp(24px, 4vw, 40px);
+    gap: 26px;
+    max-width: 920px;
     margin: 0 auto;
     width: 100%;
 }
@@ -54,29 +57,33 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-lg);
+    gap: 18px;
+    width: min(100%, 760px);
+    padding: 28px 26px;
+    border-radius: 30px;
+    background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
+    border: 1px solid var(--surface-border-strong);
+    box-shadow: var(--shadow-panel);
 }
 
 .play-btn-large {
-    width: 80px;
-    height: 80px;
+    width: 86px;
+    height: 86px;
     border-radius: var(--radius-full);
-    background: var(--bg-secondary);
-    border: 2px solid var(--border);
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-normal);
-    color: var(--text-secondary);
+    color: white;
+    box-shadow: 0 18px 36px rgba(var(--accent-rgb), 0.28);
 }
 
 .play-btn-large:hover {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-    transform: scale(1.05);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 22px 42px rgba(var(--accent-rgb), 0.32);
 }
 
 .play-btn-large svg {
@@ -86,18 +93,21 @@
 
 .word-display {
     text-align: center;
+    width: 100%;
 }
 
 .word-text {
-    font-size: 32px;
-    font-weight: 700;
+    font-size: clamp(2.25rem, 5vw, 3.6rem);
+    font-weight: 800;
     color: var(--text-primary);
     margin-bottom: var(--space-xs);
+    letter-spacing: -0.04em;
 }
 
 .word-phonetic {
-    font-size: 16px;
-    color: var(--text-tertiary);
+    font-size: 17px;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .word-phonetic-row {
@@ -112,11 +122,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: var(--radius-full);
     border: 1.5px solid var(--border);
-    background: var(--bg-secondary);
+    background: rgba(var(--accent-rgb), 0.06);
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -124,9 +134,9 @@
 }
 
 .play-btn-mini:hover {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent);
+    border-color: rgba(var(--accent-rgb), 0.2);
 }
 
 .play-btn-mini svg {
@@ -170,16 +180,16 @@
 .options-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
+    gap: 16px;
     width: 100%;
-    max-width: 680px;
+    max-width: 760px;
 }
 
 .option-btn {
-    padding: var(--space-md) var(--space-lg);
-    background: var(--bg-color);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-lg);
+    padding: 18px 18px 16px;
+    background: color-mix(in srgb, var(--surface-elevated) 97%, transparent);
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 24px;
     cursor: pointer;
     text-align: left;
     font-size: 15px;
@@ -189,15 +199,16 @@
     gap: var(--space-xs);
     transition: all var(--transition-fast);
     line-height: 1.5;
-    min-height: 80px;
+    min-height: 120px;
     justify-content: flex-start;
+    box-shadow: var(--shadow-soft);
 }
 
 .option-btn:hover:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent-light);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
+    border-color: rgba(var(--accent-rgb), 0.22);
+    background: rgba(var(--accent-rgb), 0.05);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-panel);
 }
 
 .option-btn.correct {
@@ -205,7 +216,6 @@
     border-color: var(--success);
 }
 
-.option-btn.correct .option-pos,
 .option-btn.correct .option-text {
     color: var(--success);
 }
@@ -215,14 +225,14 @@
     border-color: var(--error);
 }
 
-.option-btn.wrong .option-pos,
 .option-btn.wrong .option-text {
     color: var(--error);
 }
 
 .option-btn.selected {
     border-color: var(--accent);
-    background: var(--accent-light);
+    background: rgba(var(--accent-rgb), 0.08);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.08);
 }
 
 /* Top row: pos on left, shortcut hint on right */
@@ -237,6 +247,7 @@
     font-size: 12px;
     color: var(--text-tertiary);
     font-style: italic;
+    font-weight: 600;
 }
 
 .option-key {
@@ -248,7 +259,7 @@
 }
 
 .option-text {
-    font-size: 15px;
+    font-size: 16px;
     color: var(--text-primary);
     line-height: 1.4;
 }
@@ -259,24 +270,27 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    max-width: 680px;
+    max-width: 760px;
     margin-top: var(--space-xs);
 }
 
 .skip-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: var(--space-sm) var(--space-lg);
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 16px;
+    padding: 11px 16px;
     font-size: 13px;
+    font-weight: 700;
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
 }
 
 .skip-btn:hover {
-    background: var(--bg-secondary);
-    border-color: var(--border-hover);
+    background: rgba(var(--accent-rgb), 0.08);
+    border-color: rgba(var(--accent-rgb), 0.18);
+    color: var(--accent);
 }
 
 .shortcut-hint {

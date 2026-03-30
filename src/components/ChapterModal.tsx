@@ -1,19 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts'
-import { apiFetch } from '../lib'
+import { apiFetch, buildApiUrl } from '../lib'
 import { Scrollbar } from './ui/Scrollbar'
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
-
-// Short labels and semantic colors for each practice mode
-const MODE_META: Record<string, { label: string; title: string; color: string }> = {
-  quickmemory: { label: '记',  title: '快速记忆', color: '#f59e0b' },
-  listening:   { label: '听',  title: '听音选义', color: '#3b82f6' },
-  meaning:     { label: '看',  title: '看词选义', color: '#8b5cf6' },
-  dictation:   { label: '写',  title: '听写模式', color: '#ec4899' },
-  smart:       { label: '智',  title: '智能模式', color: '#10b981' },
+const MODE_META: Record<string, { label: string; title: string }> = {
+  quickmemory: { label: '记', title: '快速记忆' },
+  listening: { label: '听', title: '听音选义' },
+  meaning: { label: '看', title: '看词选义' },
+  dictation: { label: '默', title: '听写模式' },
+  smart: { label: '智', title: '智能模式' },
 }
-
 
 interface Book {
   id: string | number
@@ -52,18 +48,12 @@ interface ChapterModalProps {
   progress: Progress | null
   onClose: () => void
   onSelectChapter: (chapter: Chapter, startIndex: number) => void
-  /** Called when chapters API fails — parent can switch to PlanModal */
   onFallback?: () => void
 }
 
-// ── Grouping helpers ────────────────────────────────────────────────────────
-// Chapters from the CSV layer are named "AWL学术词汇 Sublist 1 · Part 1".
-// We split on " · Part " to find the section label.
-// Chapters without " · Part " (like "150次及以上", "口语词汇") are standalone.
-
 interface SectionGroup {
-  label: string        // full label (or title for standalone)
-  isMultiPart: boolean // true when the group has >1 chapters
+  label: string
+  isMultiPart: boolean
   wordCount: number
   chapters: Chapter[]
 }
@@ -72,30 +62,28 @@ function groupBySection(chapters: Chapter[]): SectionGroup[] {
   const groups: SectionGroup[] = []
   const map = new Map<string, SectionGroup>()
 
-  for (const ch of chapters) {
-    const sepIdx = ch.title.indexOf(' · Part ')
-    const label = sepIdx !== -1 ? ch.title.slice(0, sepIdx) : ch.title
+  for (const chapter of chapters) {
+    const separatorIndex = chapter.title.indexOf(' 路 Part ')
+    const label = separatorIndex !== -1 ? chapter.title.slice(0, separatorIndex) : chapter.title
 
     if (!map.has(label)) {
-      const g: SectionGroup = { label, isMultiPart: false, wordCount: 0, chapters: [] }
-      map.set(label, g)
-      groups.push(g)
+      const group: SectionGroup = { label, isMultiPart: false, wordCount: 0, chapters: [] }
+      map.set(label, group)
+      groups.push(group)
     }
-    const g = map.get(label)!
-    g.chapters.push(ch)
-    g.wordCount += ch.word_count ?? 0
+
+    const group = map.get(label)!
+    group.chapters.push(chapter)
+    group.wordCount += chapter.word_count ?? 0
   }
 
-  // Mark multi-part groups
-  for (const g of groups) {
-    g.isMultiPart = g.chapters.length > 1
+  for (const group of groups) {
+    group.isMultiPart = group.chapters.length > 1
   }
 
   return groups
 }
 
-// Render units: merge consecutive standalone chapters into a single flat grid;
-// multi-part groups keep their own section header + grid.
 type RenderUnit =
   | { kind: 'flat'; chapters: Chapter[] }
   | { kind: 'section'; label: string; wordCount: number; chapters: Chapter[] }
@@ -104,31 +92,33 @@ function buildRenderUnits(groups: SectionGroup[]): RenderUnit[] {
   const units: RenderUnit[] = []
   let currentFlat: Chapter[] | null = null
 
-  for (const g of groups) {
-    if (!g.isMultiPart) {
-      // standalone chapter → merge into current flat unit
+  for (const group of groups) {
+    if (!group.isMultiPart) {
       if (!currentFlat) {
         currentFlat = []
         units.push({ kind: 'flat', chapters: currentFlat })
       }
-      currentFlat.push(g.chapters[0])
-    } else {
-      // multi-part section → own block, break any flat run
-      currentFlat = null
-      units.push({ kind: 'section', label: g.label, wordCount: g.wordCount, chapters: g.chapters })
+      currentFlat.push(group.chapters[0])
+      continue
     }
+
+    currentFlat = null
+    units.push({
+      kind: 'section',
+      label: group.label,
+      wordCount: group.wordCount,
+      chapters: group.chapters,
+    })
   }
 
   return units
 }
 
-// Within a multi-part group card, show "Part N" only (section header provides context)
 function getCardLabel(chapter: Chapter, isInSection: boolean): string {
   if (!isInSection) return chapter.title
-  const sepIdx = chapter.title.indexOf(' · Part ')
-  return sepIdx !== -1 ? chapter.title.slice(sepIdx + 3) : chapter.title
+  const separatorIndex = chapter.title.indexOf(' 路 Part ')
+  return separatorIndex !== -1 ? chapter.title.slice(separatorIndex + 3) : chapter.title
 }
-// ───────────────────────────────────────────────────────────────────────────
 
 function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: ChapterModalProps) {
   const { user } = useAuth()
@@ -139,97 +129,105 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
 
   const currentIndex = progress?.current_index || 0
 
-  // Lock body scroll while modal is open to prevent page scrolling behind the overlay
   useEffect(() => {
-    const prev = document.body.style.overflow
+    const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
   }, [])
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`${API_BASE}/books/${book.id}/chapters`)
-        if (!res.ok) throw new Error('加载章节失败')
-        const data = await res.json()
+        const response = await fetch(buildApiUrl(`/api/books/${book.id}/chapters`))
+        if (!response.ok) throw new Error('加载章节失败')
+
+        const data = await response.json()
         setChapters(data.chapters || [])
 
         if (user) {
           try {
-            const pData = await apiFetch<{ chapter_progress?: Record<string | number, ChapterProgress> }>(
-              `${API_BASE}/books/${book.id}/chapters/progress`,
+            const progressData = await apiFetch<{ chapter_progress?: Record<string | number, ChapterProgress> }>(
+              buildApiUrl(`/api/books/${book.id}/chapters/progress`),
             )
-            setChapterProgress(pData.chapter_progress || {})
-          } catch { /* ignore */ }
+            setChapterProgress(progressData.chapter_progress || {})
+          } catch {
+            // Ignore progress fetch failure and keep the chapter list usable.
+          }
         }
       } catch (err) {
         setError((err as Error).message)
-        // Fallback to PlanModal if chapters fail to load
         onFallback?.()
       } finally {
         setLoading(false)
       }
     }
-    fetchData()
-  }, [book.id, user])
 
-  // Which chapter the user was last working on
+    fetchData()
+  }, [book.id, onFallback, user])
+
   const currentChapterId = useMemo((): string | number | null => {
     if (!chapters.length || currentIndex === 0) return null
+
     let accumulated = 0
-    for (const ch of chapters) {
-      accumulated += ch.word_count ?? 0
-      if (accumulated > currentIndex) return ch.id
+    for (const chapter of chapters) {
+      accumulated += chapter.word_count ?? 0
+      if (accumulated > currentIndex) return chapter.id
     }
+
     return chapters[chapters.length - 1]?.id ?? null
   }, [chapters, currentIndex])
 
-  const renderUnits = useMemo(
-    () => buildRenderUnits(groupBySection(chapters)),
-    [chapters],
-  )
+  const renderUnits = useMemo(() => buildRenderUnits(groupBySection(chapters)), [chapters])
 
   const handleSelectChapter = (chapter: Chapter) => {
     let startIndex = 0
-    for (const ch of chapters) {
-      if (ch.id === chapter.id) break
-      startIndex += ch.word_count ?? 0
+    for (const currentChapter of chapters) {
+      if (currentChapter.id === chapter.id) break
+      startIndex += currentChapter.word_count ?? 0
     }
+
     onSelectChapter(chapter, startIndex)
   }
 
   const handleContinue = () => {
     if (currentChapterId !== null) {
-      const ch = chapters.find(c => c.id === currentChapterId)
-      if (ch) { handleSelectChapter(ch); return }
+      const chapter = chapters.find(item => item.id === currentChapterId)
+      if (chapter) {
+        handleSelectChapter(chapter)
+        return
+      }
     }
+
     onClose()
   }
 
   const renderCard = (chapter: Chapter, isInSection: boolean) => {
-    const isCurrent   = chapter.id === currentChapterId
-    const prog        = chapterProgress[chapter.id] ?? chapterProgress[String(chapter.id)]
-    const hasStarted  = prog && prog.words_learned > 0
+    const isCurrent = chapter.id === currentChapterId
+    const progressRecord = chapterProgress[chapter.id] ?? chapterProgress[String(chapter.id)]
+    const hasStarted = !!progressRecord && progressRecord.words_learned > 0
 
-    // Collect per-mode records from the API response (prog.modes)
     const modeBadges = Object.entries(MODE_META)
       .map(([modeKey, meta]) => {
-        const record = prog?.modes?.[modeKey]
+        const record = progressRecord?.modes?.[modeKey]
         return record ? { modeKey, meta, record } : null
       })
       .filter(Boolean) as { modeKey: string; meta: typeof MODE_META[string]; record: ChapterModeData }[]
 
-    const hasModeData   = modeBadges.length > 0
-    const allCompleted  = hasModeData && modeBadges.every(b => b.record.is_completed)
-    const isCompleted   = allCompleted || (!hasModeData && prog?.is_completed)
+    const hasModeData = modeBadges.length > 0
+    const allCompleted = hasModeData && modeBadges.every(item => item.record.is_completed)
+    const isCompleted = allCompleted || (!hasModeData && !!progressRecord?.is_completed)
 
-    const getAccuracyClass = (acc: number) =>
-      acc >= 80 ? 'mode-badge-high' : acc >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
+    const getAccuracyClass = (accuracy: number) =>
+      accuracy >= 80 ? 'mode-badge-high' : accuracy >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
 
-    // Compute chapter-level progress bar
     const chapterProgressPercent = hasModeData
-      ? (prog?.accuracy ?? 0)
-      : (chapter.word_count ? Math.round(((prog?.words_learned ?? 0) / chapter.word_count) * 100) : 0)
+      ? (progressRecord?.accuracy ?? 0)
+      : (chapter.word_count
+        ? Math.round(((progressRecord?.words_learned ?? 0) / chapter.word_count) * 100)
+        : 0)
 
     return (
       <div
@@ -239,39 +237,33 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
       >
         <div className="chapter-card-name">{getCardLabel(chapter, isInSection)}</div>
 
-        {hasModeData ? (
+        {hasModeData && (
           <div className="chapter-mode-badges">
             {modeBadges.map(({ modeKey, meta, record }) => (
               <span
                 key={modeKey}
-                className={`mode-badge ${getAccuracyClass(record.accuracy)}`}
-                title={`${meta.title}：${record.accuracy}%${record.is_completed ? ' ✓' : ''}`}
-                style={{ '--badge-color': meta.color } as React.CSSProperties}
+                className={`mode-badge mode-badge--${modeKey} ${getAccuracyClass(record.accuracy)}`}
+                title={`${meta.title}：${record.accuracy}%${record.is_completed ? ' 已完成' : ''}`}
               >
-                {meta.label} {record.accuracy}%{record.is_completed ? ' ✓' : ''}
+                {meta.label} {record.accuracy}%{record.is_completed ? ' 已完成' : ''}
               </span>
             ))}
           </div>
-        ) : (
-          <div className="chapter-card-footer">
-            <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
-            {isCompleted ? (
-              <span className="chapter-status-done">✓ {prog?.accuracy}%</span>
-            ) : hasStarted ? (
-              <span className="chapter-status-progress">{prog?.accuracy}%</span>
-            ) : (
-              <span className="chapter-status-todo">未开始</span>
-            )}
-          </div>
         )}
 
+        <div className="chapter-card-footer">
+          <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
+          {isCompleted ? (
+            <span className="chapter-status-done">已完成 {progressRecord?.accuracy}%</span>
+          ) : hasStarted ? (
+            <span className="chapter-status-progress">{progressRecord?.accuracy}%</span>
+          ) : (
+            <span className="chapter-status-todo">未开始</span>
+          )}
+        </div>
+
         <div className="chapter-card-progress">
-          <div className="chapter-card-progress-bar">
-            <div
-              className="chapter-card-progress-fill"
-              style={{ width: `${chapterProgressPercent}%` }}
-            />
-          </div>
+          <progress className="chapter-card-progress-bar" value={chapterProgressPercent} max={100} />
           <span className="chapter-card-progress-text">{chapterProgressPercent}%</span>
         </div>
 
@@ -280,13 +272,11 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     )
   }
 
-  const totalWords = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
+  const totalWords = chapters.reduce((sum, chapter) => sum + (chapter.word_count ?? 0), 0)
 
   return (
-    <div className="chapter-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="chapter-modal-overlay" onClick={(event) => event.target === event.currentTarget && onClose()}>
       <div className="chapter-modal">
-
-        {/* ── Header ── */}
         <div className="chapter-modal-header">
           <div className="chapter-modal-info">
             <h2 className="chapter-modal-title">{book.title}</h2>
@@ -307,10 +297,9 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
           </div>
         </div>
 
-        {/* ── Body ── */}
         <Scrollbar className="chapter-modal-body">
           {loading ? (
-            <div className="chapter-loading">
+            <div className="chapter-loading loading-state">
               <div className="loading-spinner" />
               <span>加载章节...</span>
             </div>
@@ -318,14 +307,12 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
             <div className="chapter-error"><p>{error}</p></div>
           ) : (
             <div className="chapter-units">
-              {renderUnits.map((unit, i) =>
+              {renderUnits.map((unit, index) =>
                 unit.kind === 'flat' ? (
-                  /* Standalone chapters — no header, all in one grid */
-                  <div key={`flat-${i}`} className="chapter-grid">
-                    {unit.chapters.map(ch => renderCard(ch, false))}
+                  <div key={`flat-${index}`} className="chapter-grid">
+                    {unit.chapters.map(chapter => renderCard(chapter, false))}
                   </div>
                 ) : (
-                  /* Multi-part section — header + grid */
                   <div key={unit.label} className="chapter-section">
                     <div className="chapter-section-label">
                       <span className="chapter-section-name">{unit.label}</span>
@@ -334,10 +321,10 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
                       </span>
                     </div>
                     <div className="chapter-grid">
-                      {unit.chapters.map(ch => renderCard(ch, true))}
+                      {unit.chapters.map(chapter => renderCard(chapter, true))}
                     </div>
                   </div>
-                )
+                ),
               )}
             </div>
           )}

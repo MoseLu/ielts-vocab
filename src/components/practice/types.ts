@@ -155,6 +155,8 @@ export interface RadioModeProps {
   onNavigate: (path: string) => void
   onCloseSettings: () => void
   onModeChange: (mode: string) => void
+  onSessionInteraction?: () => void
+  onProgressChange?: (wordsStudied: number) => void
 }
 
 export interface DictationModeProps {

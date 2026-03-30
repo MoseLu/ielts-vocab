@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWrongWords } from '../features/vocabulary/hooks'
 import type { SmartDimension } from '../lib/smartMode'
+import { EmptyState } from './ui'
 
 type ActiveTab = 'words' | 'real'
 type DimFilter = 'all' | SmartDimension
@@ -83,26 +84,34 @@ function ErrorsPage() {
       </div>
 
       {activeTab === 'real' ? (
-        <div className="errors-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M9 9h6M9 13h6M9 17h4" />
-          </svg>
-          <p>真题错题功能</p>
-          <span>敬请期待</span>
-        </div>
+        <EmptyState
+          page
+          className="errors-empty"
+          icon={(
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 9h6M9 13h6M9 17h4" />
+            </svg>
+          )}
+          title="真题错题功能"
+          description="敬请期待"
+        />
       ) : words.length === 0 ? (
-        <div className="errors-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="9" y1="13" x2="15" y2="13" />
-            <line x1="9" y1="17" x2="15" y2="17" />
-          </svg>
-          <p>暂无错词</p>
-          <span>学习过程中标记为"不知道"的单词会出现在这里</span>
-          <button className="errors-go-practice" onClick={() => navigate('/')}>去练习 →</button>
-        </div>
+        <EmptyState
+          page
+          className="errors-empty"
+          icon={(
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="9" y1="13" x2="15" y2="13" />
+              <line x1="9" y1="17" x2="15" y2="17" />
+            </svg>
+          )}
+          title="暂无错词"
+          description='学习过程中标记为"不知道"的单词会出现在这里'
+          action={<button className="errors-go-practice" onClick={() => navigate('/')}>去练习 →</button>}
+        />
       ) : (
         <>
           {/* Dimension filter */}
@@ -130,10 +139,12 @@ function ErrorsPage() {
           </div>
 
           {filteredWords.length === 0 ? (
-            <div className="errors-empty">
-              <p>该模式暂无错词</p>
-              <span>继续练习，错词会自动收录</span>
-            </div>
+            <EmptyState
+              page
+              className="errors-empty"
+              title="该模式暂无错词"
+              description="继续练习，错词会自动收录"
+            />
           ) : (
             <div className="errors-list">
               {filteredWords.map((word) => {

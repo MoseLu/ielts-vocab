@@ -1,4 +1,4 @@
-// ── Admin Dashboard ─────────────────────────────────────────────────────────────
+﻿// ── Admin Dashboard ─────────────────────────────────────────────────────────────
 // Real-time admin panel: overview stats, user list with search/filter/sort,
 // and per-user detail (progress, wrong words, study sessions).
 

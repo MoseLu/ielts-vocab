@@ -8,8 +8,8 @@ import { shuffleArray, generateOptions, playWordAudio as playWordUtil, stopAudio
 import { DEFAULT_SETTINGS } from '../../constants'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue, syncSmartStatsToBackend, loadSmartStatsFromBackend } from '../../lib/smartMode'
-import { recordModeAnswer, logSession, startSession } from '../../hooks/useAIChat'
-import { apiFetch } from '../../lib'
+import { recordModeAnswer, logSession, startSession, cancelSession } from '../../hooks/useAIChat'
+import { apiFetch, buildApiUrl } from '../../lib'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
 import RadioMode from './RadioMode'
@@ -17,6 +17,7 @@ import DictationMode from './DictationMode'
 import OptionsMode from './OptionsMode'
 import QuickMemoryMode from './QuickMemoryMode'
 import SettingsPanel from '../SettingsPanel'
+import { Loading } from '../ui/Loading'
 
 // Re-export types for use by parent components
 export type { PracticeMode, Word, ProgressData, AppSettings, Chapter }
@@ -71,6 +72,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const sessionStartRef = useRef<number>(0)
   // Server-assigned session ID from /api/ai/start-session (enables server-side duration).
   const sessionIdRef = useRef<number | null>(null)
+  const pendingSessionCancelRef = useRef(false)
   // Session-specific correct/wrong counts — always start at 0, never include restored progress.
   const sessionCorrectRef = useRef(0)
   const sessionWrongRef = useRef(0)
@@ -79,6 +81,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const wrongCountRef = useRef(0)
   // Prevents double-logging when goNext already logs before navigate
   const sessionLoggedRef = useRef(false)
+  const radioInteractionRef = useRef(false)
+  const radioWordsStudiedRef = useRef(0)
   // 本章「不重复」已答词（用于 words_learned）；baseline 为服务端/本地已保存的章节已学上限
   const wordsLearnedBaselineRef = useRef(0)
   const uniqueAnsweredRef = useRef<Set<string>>(new Set())
@@ -109,12 +113,19 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         ? Math.round((Date.now() - sessionStart) / 1000)
         : 0
       // Radio mode has no answer tracking — log based on time if ≥10 s
-      if (sessionUnique === 0 && (!isRadio || durationSeconds < 10)) return
+      const hasMeaningfulInteraction = isRadio
+        ? radioInteractionRef.current && radioWordsStudiedRef.current > 0
+        : sessionUnique > 0
+      if (!hasMeaningfulInteraction) {
+        pendingSessionCancelRef.current = true
+        cancelSession(sessionIdRef.current)
+        return
+      }
       logSession({
         mode: effectiveSessionModeRef.current,
         bookId,
         chapterId,
-        wordsStudied: isRadio ? vocabRef.current.length : sessionUnique,
+        wordsStudied: isRadio ? radioWordsStudiedRef.current : sessionUnique,
         correctCount: sessionCorrectRef.current,
         wrongCount: sessionWrongRef.current,
         durationSeconds,
@@ -180,7 +191,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Fetch book chapters
   useEffect(() => {
     if (!bookId) return
-    fetch(`/api/books/${bookId}/chapters`)
+    fetch(buildApiUrl(`/api/books/${bookId}/chapters`))
       .then(r => r.json())
       .then((d: { chapters?: Chapter[] }) => {
         const chs = d.chapters || []
@@ -206,11 +217,19 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     sessionWrongRef.current = 0
     sessionUniqueWordsRef.current = new Set()
     sessionLoggedRef.current = false
+    radioInteractionRef.current = false
+    radioWordsStudiedRef.current = 0
+    pendingSessionCancelRef.current = false
     startSession({
       mode: effectiveSessionModeRef.current,
       bookId,
       chapterId,
-    }).then(id => { sessionIdRef.current = id }).catch(() => {})
+    }).then(id => {
+      sessionIdRef.current = id
+      if (pendingSessionCancelRef.current && id) {
+        cancelSession(id)
+      }
+    }).catch(() => {})
   }
 
   const computeChapterWordsLearned = (cap: number) => {
@@ -224,6 +243,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     sessionUniqueWordsRef.current.add(key)
     if (chapterId) uniqueAnsweredRef.current.add(key)
   }
+
+  const markRadioSessionInteraction = useCallback(() => {
+    radioInteractionRef.current = true
+  }, [])
+
+  const handleRadioProgressChange = useCallback((wordsStudied: number) => {
+    radioWordsStudiedRef.current = Math.max(radioWordsStudiedRef.current, wordsStudied)
+  }, [])
 
   // Restore progress helper
   const restoreProgress = (data: ProgressData, vocabLen: number) => {
@@ -290,7 +317,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
     if (bookId) {
       if (chapterId) {
-        fetch(`/api/books/${bookId}/chapters/${chapterId}`)
+        fetch(buildApiUrl(`/api/books/${bookId}/chapters/${chapterId}`))
           .then(res => res.json())
           .then(async (data: { words?: Word[] }) => {
             const words = data.words || []
@@ -328,7 +355,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         return
       }
 
-      fetch(`/api/books/${bookId}/words?per_page=100`)
+      fetch(buildApiUrl(`/api/books/${bookId}/words?per_page=100`))
         .then(res => res.json())
         .then(async (data: { words?: Word[] }) => {
           const words = data.words || []
@@ -360,7 +387,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     }
 
     if (!currentDay) { navigate('/'); return }
-    fetch(`/api/vocabulary/day/${currentDay}`)
+    fetch(buildApiUrl(`/api/vocabulary/day/${currentDay}`))
       .then(res => res.json())
       .then(async (data: { vocabulary?: Word[]; words?: Word[] }) => {
         const words = data.vocabulary || data.words || []
@@ -439,26 +466,21 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     // Auto-play audio for audio-first modes
     const shouldAutoPlay = mode === 'listening' || mode === 'dictation' ||
       (mode === 'smart' && (subMode === 'listening' || subMode === 'dictation'))
-    if (shouldAutoPlay) {
-      const isDictation = mode === 'dictation' || (mode === 'smart' && subMode === 'dictation')
-      const exampleSentence = isDictation ? currentWord.examples?.[0]?.en : undefined
-      if (exampleSentence) {
-        // Dictation example mode: play the full example sentence (not just the word)
-        setTimeout(() => {
-          if (typeof speechSynthesis === 'undefined') return
-          stopAudioUtil()
-          speechSynthesis.cancel()
-          const u = new SpeechSynthesisUtterance(exampleSentence)
-          u.lang = 'en-US'
-          u.rate = parseFloat(String(settings.playbackSpeed ?? '0.8'))
-          u.pitch = 1
-          speechSynthesis.speak(u)
-        }, 300)
-      } else {
-        setTimeout(() => playWordUtil(currentWord.word, settings), 300)
-      }
+    if (!shouldAutoPlay) return
+
+    const isDictation = mode === 'dictation' || (mode === 'smart' && subMode === 'dictation')
+    const exampleSentence = isDictation ? currentWord.examples?.[0]?.en : undefined
+    if (exampleSentence) return
+
+    const timerId = window.setTimeout(() => {
+      playWordUtil(currentWord.word, settings)
+    }, 280)
+
+    return () => {
+      window.clearTimeout(timerId)
+      stopAudioUtil()
     }
-  }, [queueIndex, currentWord?.word, mode])
+  }, [queueIndex, currentWord?.word, mode, smartDimension, settings.playbackSpeed, settings.volume])
 
   // Log learning context to AI chat whenever state changes
   useEffect(() => {
@@ -734,7 +756,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Loading state
   if (!vocabulary.length) {
-    return <div className="practice-loading"><div className="loading-spinner"></div><p>加载词汇中...</p></div>
+    return <Loading text="Loading vocabulary..." page />
   }
 
   // Completed state (fallback — normally goNext navigates away before this renders)
@@ -846,6 +868,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onNavigate={navigate}
           onCloseSettings={() => setShowPracticeSettings(false)}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
+          onSessionInteraction={markRadioSessionInteraction}
+          onProgressChange={handleRadioProgressChange}
         />
         {pauseOverlay}
       </>
@@ -877,6 +901,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
         )}
         <QuickMemoryMode
+          key={`quickmemory-${bookId ?? 'day'}-${chapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}`}
           vocabulary={vocabulary}
           queue={queue}
           settings={settings}

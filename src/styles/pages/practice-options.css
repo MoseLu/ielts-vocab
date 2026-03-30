@@ -127,11 +127,6 @@
     color: white;
 }
 
-.option-btn.correct .option-pos {
-    background: var(--success);
-    color: white;
-}
-
 /* Wrong State */
 
 @keyframes wrongShake {
@@ -145,11 +140,6 @@
 }
 
 .option-btn.wrong .hotkey {
-    background: var(--error);
-    color: white;
-}
-
-.option-btn.wrong .option-pos {
     background: var(--error);
     color: white;
 }

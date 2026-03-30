@@ -39,10 +39,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { key: 'home', label: '首页', path: '/', icon: HomeIcon },
-  { key: 'errors', label: '错词本', path: '/errors', icon: ErrorsIcon },
-  { key: 'stats', label: '统计', path: '/stats', icon: StatsIcon },
-  { key: 'profile', label: '我的', path: '/profile', icon: ProfileIcon },
+  { key: 'home', label: '\u8bcd\u4e66', path: '/', icon: HomeIcon },
+  { key: 'errors', label: '\u9519\u8bcd', path: '/errors', icon: ErrorsIcon },
+  { key: 'stats', label: '\u7edf\u8ba1', path: '/stats', icon: StatsIcon },
+  { key: 'profile', label: '\u6211\u7684', path: '/profile', icon: ProfileIcon },
 ]
 
 function BottomNav() {

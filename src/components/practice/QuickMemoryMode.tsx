@@ -1,4 +1,4 @@
-// ── Quick Memory Mode ─────────────────────────────────────────────────────────
+﻿// ── Quick Memory Mode ─────────────────────────────────────────────────────────
 // DHP (Dynamic Hierarchical Progress) + SSP (Spaced-repetition + Ebbinghaus)
 //
 // Flow per word:
@@ -15,7 +15,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, QuickMemoryRecords, Word } from './types'
 import { STORAGE_KEYS } from '../../constants'
 import { playWordAudio, stopAudio } from './utils'
-import { logSession, startSession } from '../../hooks/useAIChat'
+import { logSession, startSession, cancelSession } from '../../hooks/useAIChat'
 import { apiFetch } from '../../lib'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -289,10 +289,28 @@ export default function QuickMemoryMode({
   const wordRef         = useRef<Word>()  // always holds current word for setTimeout
   const sessionStartRef = useRef(Date.now())
   const sessionIdRef    = useRef<number | null>(null)
+  const sessionLoggedRef = useRef(false)
+  const pendingSessionCancelRef = useRef(false)
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
   // Keep ref in sync so setTimeout always uses the latest word
   wordRef.current = currentWord
+
+  // Reset session-scoped state when practice context changes.
+  useEffect(() => {
+    stopAudio()
+    clearInterval(timerRef.current)
+    clearTimeout(revealTimerRef.current)
+    setIndex(0)
+    setPhase('question')
+    setCountdown(TIMER_SECONDS)
+    setChoice(null)
+    setResults([])
+    setDone(false)
+    setRevisitedSet(new Set())
+    sessionLoggedRef.current = false
+    pendingSessionCancelRef.current = false
+  }, [bookId, chapterId, queue.length])
 
   // ── Reveal helper ──────────────────────────────────────────────────────────
   const reveal = useCallback((picked: 'known' | 'unknown') => {
@@ -404,6 +422,7 @@ export default function QuickMemoryMode({
     }).catch(() => {})
 
     // Log session for admin analytics
+    sessionLoggedRef.current = true
     logSession({
       mode: 'quickmemory',
       bookId,
@@ -448,19 +467,47 @@ export default function QuickMemoryMode({
   // ── Start server-side session timer on mount ───────────────────────────────
   useEffect(() => {
     sessionStartRef.current = Date.now()
+    sessionLoggedRef.current = false
+    pendingSessionCancelRef.current = false
     startSession({
       mode: 'quickmemory',
       bookId,
       chapterId,
-    }).then(id => { sessionIdRef.current = id }).catch(() => {})
+    }).then(id => {
+      sessionIdRef.current = id
+      if (pendingSessionCancelRef.current && id) {
+        cancelSession(id)
+      }
+    }).catch(() => {})
   }, [bookId, chapterId])
 
-  // ── Cleanup audio on unmount ───────────────────────────────────────────────
+  // ── Cleanup audio + session lifecycle on unmount ──────────────────────────
   useEffect(() => () => {
     stopAudio()
     clearInterval(timerRef.current)
     clearTimeout(revealTimerRef.current)
-  }, [])
+
+    if (sessionLoggedRef.current) return
+
+    if (results.length <= 0) {
+      pendingSessionCancelRef.current = true
+      cancelSession(sessionIdRef.current)
+      return
+    }
+
+    sessionLoggedRef.current = true
+    logSession({
+      mode: 'quickmemory',
+      bookId,
+      chapterId,
+      wordsStudied: results.length,
+      correctCount: results.filter(r => r.choice === 'known').length,
+      wrongCount: results.filter(r => r.choice === 'unknown').length,
+      durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
+      startedAt: sessionStartRef.current,
+      sessionId: sessionIdRef.current,
+    })
+  }, [bookId, chapterId, results])
 
   // ── Advance to next word ───────────────────────────────────────────────────
   const handleNext = useCallback(() => {

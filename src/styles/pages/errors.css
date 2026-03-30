@@ -3,6 +3,16 @@
 .errors-page {
     /* padding managed by .page-content wrapper */
     max-width: 100%;
+    min-height: calc(100vh - var(--header-height) - 20px);
+    display: flex;
+    flex-direction: column;
+}
+
+.errors-page > .page-content {
+    flex: 1;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .errors-header {
@@ -158,31 +168,12 @@
 
 /* Empty state */
 .errors-empty {
-    text-align: center;
-    padding: 24px 10px;
-    color: var(--text-secondary);
+    flex: 1;
+    min-height: 0;
 }
 
 .errors-empty svg {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 10px;
-    color: var(--text-tertiary);
     display: block;
-}
-
-.errors-empty p {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 6px;
-}
-
-.errors-empty span {
-    font-size: 13px;
-    color: var(--text-secondary);
-    display: block;
-    margin-bottom: 14px;
 }
 
 .errors-go-practice {

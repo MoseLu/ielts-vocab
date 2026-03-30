@@ -4,6 +4,7 @@ import { useVocabBooks, useAllBookProgress, useMyBooks } from '../features/vocab
 import type { Book, BookProgress } from '../types'
 import PlanModal from './PlanModal'
 import ChapterModal, { Chapter } from './ChapterModal'
+import { Loading } from './ui/Loading'
 
 // Data types — compatible with ChapterModal / PlanModal
 
@@ -152,78 +153,77 @@ function VocabBookPage() {
 
   return (
     <div className="vocab-book-page">
-      {/* Filter Header */}
-      <div className="vb-filters">
-        <div className="vb-filter-left">
-          {/* Row 1: Study type */}
-          <div className="vb-filter-row">
-            {STUDY_TYPES.map(t => (
-              <button
-                key={String(t.key)}
-                className={`vb-filter-btn${activeStudyType === t.key ? ' active' : ''}`}
-                onClick={() => setActiveStudyType(t.key)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+      <div className="page-content">
+        {/* Filter Header */}
+        <div className="vb-filters">
+          <div className="vb-filter-left">
+            {/* Row 1: Study type */}
+            <div className="vb-filter-row">
+              {STUDY_TYPES.map(t => (
+                <button
+                  key={String(t.key)}
+                  className={`vb-filter-btn${activeStudyType === t.key ? ' active' : ''}`}
+                  onClick={() => setActiveStudyType(t.key)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Row 2: Skill/Category */}
-          <div className="vb-filter-row">
-            {SKILL_TYPES.map(t => (
-              <button
-                key={String(t.key)}
-                className={`vb-filter-btn${activeCategory === t.key ? ' active' : ''}`}
-                onClick={() => setActiveCategory(t.key)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+            {/* Row 2: Skill/Category */}
+            <div className="vb-filter-row">
+              {SKILL_TYPES.map(t => (
+                <button
+                  key={String(t.key)}
+                  className={`vb-filter-btn${activeCategory === t.key ? ' active' : ''}`}
+                  onClick={() => setActiveCategory(t.key)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Row 3: Level */}
-          <div className="vb-filter-row">
-            {LEVEL_TYPES.map(t => (
-              <button
-                key={String(t.key)}
-                className={`vb-filter-btn${activeLevel === t.key ? ' active' : ''}`}
-                onClick={() => setActiveLevel(t.key)}
-              >
-                {t.label}
-              </button>
-            ))}
+            {/* Row 3: Level */}
+            <div className="vb-filter-row">
+              {LEVEL_TYPES.map(t => (
+                <button
+                  key={String(t.key)}
+                  className={`vb-filter-btn${activeLevel === t.key ? ' active' : ''}`}
+                  onClick={() => setActiveLevel(t.key)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Book Grid */}
-      <div className="vb-main">
-        {loading ? (
-          <div className="vocab-book-loading">
-            <div className="loading-spinner" />
-            <span>加载中...</span>
-          </div>
-        ) : error ? (
-          <div className="vocab-book-error">
-            <p>加载失败: {error}</p>
-          </div>
-        ) : filteredBooks.length === 0 ? (
-          <div className="vocab-book-empty">
-            <p>没有找到符合条件的词书</p>
-          </div>
-        ) : (
-          <div className="vb-grid">
-            {filteredBooks.map(book => (
-              <VocabBookCard
-                key={book.id}
-                book={book}
-                progress={progressMap[book.id]}
-                onSelect={handleSelectBook}
-                isInMyBooks={myBookIds.has(book.id)}
-              />
-            ))}
-          </div>
-        )}
+        {/* Book Grid */}
+        <div className="vb-main">
+          {loading ? (
+            <Loading text="Loading books..." page />
+          ) : error ? (
+            <div className="vocab-book-error">
+              <p>加载失败: {error}</p>
+            </div>
+          ) : filteredBooks.length === 0 ? (
+            <div className="vocab-book-empty">
+              <p>没有找到符合条件的词书</p>
+            </div>
+          ) : (
+            <div className="vb-grid">
+              {filteredBooks.map(book => (
+                <VocabBookCard
+                  key={book.id}
+                  book={book}
+                  progress={progressMap[book.id]}
+                  onSelect={handleSelectBook}
+                  isInMyBooks={myBookIds.has(book.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal */}

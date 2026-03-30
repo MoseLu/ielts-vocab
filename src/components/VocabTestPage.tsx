@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Word } from './practice/types'
 import { shuffleArray, playWordAudio } from './practice/utils'
+import { Loading } from './ui/Loading'
 
 const TEST_WORD_COUNT = 20
 const LISTENING_BOOK_ID = 'ielts_listening_premium'
@@ -46,7 +47,7 @@ function generateTestOptions(correctWord: Word, allWords: Word[]): { text: strin
 
 function ResultScreen({ result, onRestart, onBack }: { result: TestResult; onRestart: () => void; onBack: () => void }) {
   const pct = result.accuracy
-  const ringColor = pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--accent)' : 'var(--error)'
+  const ringToneClass = pct >= 80 ? 'result-ring-progress--success' : pct >= 50 ? 'result-ring-progress--accent' : 'result-ring-progress--error'
   const circumference = 2 * Math.PI * 52
   const dashOffset = circumference * (1 - pct / 100)
 
@@ -57,12 +58,11 @@ function ResultScreen({ result, onRestart, onBack }: { result: TestResult; onRes
           <circle cx="65" cy="65" r="52" fill="none" stroke="var(--border)" strokeWidth="10"/>
           <circle
             cx="65" cy="65" r="52" fill="none"
-            stroke={ringColor} strokeWidth="10"
+            className={ringToneClass} strokeWidth="10"
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
             strokeLinecap="round"
             transform="rotate(-90 65 65)"
-            style={{ transition: 'stroke-dashoffset 1s ease' }}
           />
         </svg>
         <div className="result-ring-label">
@@ -192,10 +192,7 @@ export default function VocabTestPage() {
   if (loading) {
     return (
       <div className="vocab-test">
-        <div className="vocab-test-loading">
-          <div className="loading-spinner" />
-          <p>正在加载词汇...</p>
-        </div>
+        <Loading text="Loading vocabulary..." page />
       </div>
     )
   }
@@ -253,13 +250,11 @@ export default function VocabTestPage() {
       </div>
 
       {/* Progress bar */}
-      <div className="vocab-test-progress">
-        <div className="vocab-test-progress-fill" style={{ width: `${progress * 100}%` }} />
-      </div>
+      <progress className="vocab-test-progress" value={progress * 100} max={100} />
 
       {/* Score badge */}
       <div className="vocab-test-badge">
-        <div className="vocab-test-badge-num" style={{ color: 'var(--accent)' }}>{qIndex + 1}</div>
+        <div className="vocab-test-badge-num">{qIndex + 1}</div>
         <div className="vocab-test-badge-label">/{questions.length} 题</div>
       </div>
 

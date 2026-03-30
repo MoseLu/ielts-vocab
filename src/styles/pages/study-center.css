@@ -1,79 +1,83 @@
-/* Page: Study Center dashboard cards */
+/* Page: Study center dashboard */
 
 .study-center-page {
-    /* padding managed by .page-content wrapper */
-    background: var(--bg-secondary);
+    background: transparent;
 }
 
-/* ── Welcome Banner ──────────────────────────────────────────────────────── */
+.study-center-page > .page-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--page-section-gap);
+}
+
 .study-banner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    background: var(--bg-color);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: 10px;
-    margin-bottom: 10px;
-    box-shadow: var(--shadow-sm);
-    animation: slideUp 0.3s ease;
+    gap: 20px;
+    padding: 28px 30px;
+    border-radius: 30px;
+    border: 1px solid rgba(var(--accent-rgb), 0.14);
+    background:
+        radial-gradient(circle at top right, rgba(var(--accent-rgb), 0.16), transparent 34%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 248, 243, 0.98));
+    box-shadow: var(--shadow-panel);
 }
 
 .study-banner-left {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 0;
 }
 
 .study-banner-badge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: var(--accent-light);
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.1);
     color: var(--accent);
     font-size: 12px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
-    white-space: nowrap;
+    font-weight: 700;
+    letter-spacing: 0.04em;
 }
 
 .study-banner-badge svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 }
 
 .study-banner-text h2 {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.3;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    margin: 0;
 }
 
 .study-banner-text p {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-top: 2px;
+    font-size: 15px;
+    line-height: 1.65;
+    margin-top: 8px;
+    max-width: 640px;
 }
 
-/* Progress ring */
 .study-progress-ring-wrap {
     position: relative;
-    width: 64px;
-    height: 64px;
+    width: 112px;
+    height: 112px;
     flex-shrink: 0;
 }
 
 .study-progress-ring-wrap svg {
-    width: 64px;
-    height: 64px;
+    width: 112px;
+    height: 112px;
     transform: rotate(-90deg);
 }
 
 .study-progress-ring-bg {
     fill: none;
-    stroke: var(--border);
+    stroke: rgba(15, 23, 42, 0.08);
     stroke-width: 5;
 }
 
@@ -92,81 +96,79 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0;
 }
 
 .study-progress-ring-pct {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 26px;
+    font-weight: 800;
     color: var(--text-primary);
     line-height: 1;
 }
 
 .study-progress-ring-sub {
-    font-size: 9px;
-    color: var(--text-tertiary);
-    font-weight: 500;
-    margin-top: 1px;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
-/* ── Grid ─────────────────────────────────────────────────────────────── */
 .study-center-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto;
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
 }
 
-@media (max-width: 900px) {
-    .study-center-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .study-book-card-stats {
-        grid-column: 1 / -1;
-    }
+.study-book-card,
+.study-add-card {
+    border-radius: 26px;
+    border: 1px solid var(--surface-border-strong);
+    background: color-mix(in srgb, var(--surface-elevated) 97%, transparent);
+    box-shadow: var(--shadow-soft);
 }
 
-@media (max-width: 640px) {
-    .study-banner { flex-direction: column; align-items: flex-start; }
-    .study-center-grid {
-        grid-template-columns: 1fr;
-    }
-    .study-book-card-stats {
-        grid-column: auto;
-    }
-}
-
-/* ── Base book card ───────────────────────────────────────────────────── */
 .study-book-card {
-    background: var(--bg-color);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 10px;
+    padding: 20px;
     cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: 110px;
-    box-shadow: var(--shadow-sm);
+    min-height: 210px;
+    overflow: hidden;
 }
 
 .study-book-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--border-hover);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-panel);
+    border-color: rgba(var(--accent-rgb), 0.2);
+}
+
+.study-book-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.study-book-card:hover::before {
+    opacity: 1;
 }
 
 .study-book-remove {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 28px;
-    height: 28px;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
     padding: 0;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 12px;
     color: var(--text-tertiary);
     cursor: pointer;
     display: flex;
@@ -184,30 +186,28 @@
 .study-book-remove:hover {
     background: var(--error-light);
     color: var(--error);
-    border-color: var(--error);
+    border-color: rgba(239, 68, 68, 0.25);
 }
 
 .study-book-remove svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 }
 
-/* Main plan card */
 .study-book-card-main {
-    gap: 10px;
+    gap: 16px;
 }
 
 .study-book-icon-row {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 4px;
+    align-items: flex-start;
+    gap: 14px;
 }
 
 .study-book-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-md);
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -215,90 +215,89 @@
 }
 
 .study-book-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
 }
 
 .study-book-header {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 1;
+    flex-wrap: wrap;
     min-width: 0;
 }
 
 .study-book-title {
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.4;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.35;
 }
 
 .study-book-badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: var(--radius-full);
-    background: var(--accent-light);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.12);
     color: var(--accent);
-    white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .study-book-progress-text {
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 600;
     color: var(--text-secondary);
 }
 
 .study-book-progress-bar {
-    height: 5px;
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-full);
+    height: 8px;
+    background: rgba(15, 23, 42, 0.08);
+    border-radius: 999px;
     overflow: hidden;
 }
 
 .study-book-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-secondary) 100%);
-    border-radius: var(--radius-full);
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    border-radius: 999px;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .study-book-stats {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
-    color: var(--text-tertiary);
+    gap: 12px;
+    margin-top: auto;
+    font-size: 13px;
+    color: var(--text-secondary);
 }
 
-/* Quick-start CTA card */
 .study-book-card-cta {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: 16px;
+    justify-content: flex-start;
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
     border-color: transparent;
     color: white;
-    min-height: 110px;
-    box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.35);
+    min-height: 210px;
+    box-shadow: 0 18px 40px rgba(var(--accent-rgb), 0.28);
 }
 
 .study-book-card-cta:hover {
     background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent-deep-hover) 100%);
     border-color: transparent;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.45);
+}
+
+.study-book-card-cta::before {
+    display: none;
 }
 
 .study-cta-icon {
-    width: 48px;
-    height: 48px;
-    background: var(--white-overlay);
-    border-radius: var(--radius-md);
+    width: 58px;
+    height: 58px;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -306,39 +305,35 @@
 }
 
 .study-cta-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
     color: white;
 }
 
 .study-cta-title {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     color: white;
 }
 
 .study-cta-subtitle {
-    font-size: 12px;
-    color: var(--white-overlay-text);
-    margin-top: 3px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.82);
+    margin-top: 6px;
 }
 
-/* Wrong words review card */
 .study-book-card-review {
     flex-direction: row;
     align-items: center;
-    gap: 10px;
-    min-height: 110px;
+    gap: 16px;
+    min-height: 210px;
 }
 
 .study-review-icon {
-    width: 48px;
-    height: 48px;
-    background: var(--error-light);
-    border-radius: var(--radius-md);
+    width: 58px;
+    height: 58px;
+    background: color-mix(in srgb, var(--error) 10%, white);
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -347,8 +342,8 @@
 }
 
 .study-review-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
 }
 
 .study-review-info {
@@ -357,141 +352,100 @@
 }
 
 .study-review-title {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 4px;
 }
 
 .study-review-count {
-    font-size: 13px;
+    margin-top: 6px;
+    font-size: 14px;
     color: var(--text-secondary);
 }
 
 .study-review-count.has-errors {
     color: var(--error);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .study-review-arrow {
-    color: var(--text-tertiary);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 
 .study-review-arrow svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
-/* Stats card */
-.study-book-card-stats {
-    cursor: default;
-    min-height: 110px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.study-stats-header {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
-}
-
-.study-stats-row {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    width: 100%;
-}
-
-.study-stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    padding: 8px 4px;
-    border-radius: var(--radius-md);
-    transition: background var(--transition-fast);
-}
-
-.study-stat-item:hover {
-    background: var(--bg-secondary);
-}
-
-.study-stat-num {
-    font-size: 26px;
-    font-weight: 800;
-    color: var(--text-primary);
-    line-height: 1;
-    letter-spacing: -0.5px;
-}
-
-.study-stat-num.accent { color: var(--accent); }
-.study-stat-num.success { color: var(--success); }
-.study-stat-num.error   { color: var(--error); }
-
-.study-stat-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-}
-
-.study-stat-divider {
-    width: 1px;
-    height: 32px;
-    background: var(--border);
-}
-
-/* Add custom book card */
 .study-add-card {
-    background: var(--bg-color);
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-lg);
-    padding: 10px;
-    cursor: pointer;
+    min-height: 210px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    color: var(--text-tertiary);
-    font-size: 13px;
-    font-weight: 500;
-    transition: all var(--transition-fast);
-    min-height: 110px;
-    text-align: center;
+    gap: 12px;
+    padding: 20px;
+    cursor: pointer;
+    color: var(--accent);
+    border-style: dashed;
+    transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .study-add-card:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-light);
+    transform: translateY(-3px);
+    background: rgba(var(--accent-rgb), 0.05);
+    border-color: rgba(var(--accent-rgb), 0.24);
+    box-shadow: var(--shadow-soft);
 }
 
 .study-add-card svg {
-    width: 24px;
-    height: 24px;
+    width: 34px;
+    height: 34px;
 }
 
-/* Animations */
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+.study-add-card span {
+    font-size: 15px;
+    font-weight: 700;
 }
 
-.study-book-card,
-.study-add-card {
-    animation: slideUp 0.3s ease;
+@media (max-width: 900px) {
+    .study-banner {
+        padding: 22px;
+    }
 }
 
-.study-book-card:nth-child(1) { animation-delay: 0ms; }
-.study-book-card:nth-child(2) { animation-delay: 60ms; }
-.study-book-card:nth-child(3) { animation-delay: 120ms; }
-.study-book-card:nth-child(4) { animation-delay: 180ms; }
-.study-book-card:nth-child(5) { animation-delay: 240ms; }
+@media (max-width: 700px) {
+    .study-banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .study-progress-ring-wrap {
+        width: 96px;
+        height: 96px;
+    }
+
+    .study-progress-ring-wrap svg {
+        width: 96px;
+        height: 96px;
+    }
+}
+
+@media (max-width: 640px) {
+    .study-center-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .study-book-card,
+    .study-add-card {
+        min-height: 180px;
+    }
+}

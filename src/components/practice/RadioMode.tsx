@@ -14,6 +14,8 @@ export default function RadioMode({
   onNavigate,
   onCloseSettings,
   onModeChange,
+  onSessionInteraction,
+  onProgressChange,
 }: RadioModeProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [radioPaused, setRadioPaused] = useState(false)
@@ -34,6 +36,9 @@ export default function RadioMode({
     queueRef.current = queue
   }, [vocabulary, queue])
   useEffect(() => { settingsRef.current = settings }, [settings])
+  useEffect(() => {
+    onProgressChange?.(Math.min(queue.length, currentIndex + 1))
+  }, [currentIndex, queue.length, onProgressChange])
 
   // Stable recursive callback — always reads latest values from refs
   const radioPlayFrom = useCallback((idx: number, repeat: number = 0) => {
@@ -100,6 +105,7 @@ export default function RadioMode({
   }, [])
 
   const handleRadioSkipPrev = () => {
+    onSessionInteraction?.()
     const newIdx = Math.max(0, radioIndexRef.current - 1)
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -114,6 +120,7 @@ export default function RadioMode({
   }
 
   const handleRadioSkipNext = () => {
+    onSessionInteraction?.()
     const newIdx = Math.min(queueRef.current.length - 1, radioIndexRef.current + 1)
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -128,6 +135,7 @@ export default function RadioMode({
   }
 
   const handleRadioPause = () => {
+    onSessionInteraction?.()
     radioActiveRef.current = false
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -137,12 +145,14 @@ export default function RadioMode({
   }
 
   const handleRadioResume = () => {
+    onSessionInteraction?.()
     radioActiveRef.current = true
     setRadioPaused(false)
     radioPlayFrom(radioIndexRef.current)
   }
 
   const handleRadioStop = () => {
+    onSessionInteraction?.()
     radioActiveRef.current = false
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -153,6 +163,7 @@ export default function RadioMode({
   }
 
   const handleRadioRestart = () => {
+    onSessionInteraction?.()
     radioActiveRef.current = true
     radioIndexRef.current = 0
     setCurrentIndex(0)
