@@ -36,7 +36,7 @@ class TestRegister:
         })
         assert res.status_code == 201
         data = res.get_json()
-        assert 'token' in data
+        assert 'access_expires_in' in data
         assert data['user']['username'] == 'alice'
         assert data['user']['email'] == 'alice@example.com'
 
@@ -109,7 +109,7 @@ class TestLogin:
         })
         assert res.status_code == 200
         data = res.get_json()
-        assert 'token' in data
+        assert 'access_expires_in' in data
         assert data['user']['username'] == 'alice'
 
     def test_login_by_username(self, client):
@@ -149,11 +149,10 @@ class TestLogin:
 
 class TestLogout:
     def test_logout_success(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.post('/api/auth/logout', headers=auth_header(token))
+        res = client.post('/api/auth/logout')
         assert res.status_code == 200
 
     def test_logout_no_token(self, client):
@@ -173,11 +172,10 @@ class TestLogout:
 
 class TestMe:
     def test_get_me_authenticated(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.get('/api/auth/me', headers=auth_header(token))
+        res = client.get('/api/auth/me')
         assert res.status_code == 200
         assert res.get_json()['user']['username'] == 'alice'
 
@@ -194,19 +192,17 @@ class TestSendCode:
         assert res.status_code == 401
 
     def test_send_code_invalid_email(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.post('/api/auth/send-code', headers=auth_header(token), json={'email': 'not-email'})
+        res = client.post('/api/auth/send-code', json={'email': 'not-email'})
         assert res.status_code == 400
 
     def test_send_code_success(self, client, app, db):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.post('/api/auth/send-code', headers=auth_header(token), json={
+        res = client.post('/api/auth/send-code', json={
             'email': 'newemail@example.com'
         })
         assert res.status_code == 200
@@ -222,18 +218,16 @@ class TestBindEmail:
         assert res.status_code == 401
 
     def test_bind_email_missing_fields(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.post('/api/auth/bind-email', headers=auth_header(token), json={})
+        res = client.post('/api/auth/bind-email', json={})
         assert res.status_code == 400
 
     def test_bind_email_wrong_code(self, client, app, db):
         reg = client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
         user_id = reg.get_json()['user']['id']
         # Manually create a valid code
         from models import EmailVerificationCode
@@ -241,7 +235,7 @@ class TestBindEmail:
             EmailVerificationCode.create_for('test@b.com', 'bind_email', user_id=user_id)
             code = EmailVerificationCode.query.first().code
         # Try with wrong code
-        res = client.post('/api/auth/bind-email', headers=auth_header(token), json={
+        res = client.post('/api/auth/bind-email', json={
             'email': 'test@b.com', 'code': '000000'
         })
         assert res.status_code == 400

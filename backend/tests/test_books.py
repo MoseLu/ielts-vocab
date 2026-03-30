@@ -121,15 +121,12 @@ class TestBookProgress:
 
     def test_save_and_get_progress(self, client, app):
         # Register + login
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        user_id = reg.get_json()['user']['id']
 
         # Save progress
         save = client.post('/api/books/progress',
-            headers=auth_header(token),
             json={'book_id': 'ielts_reading_premium', 'current_index': 50, 'correct_count': 40, 'wrong_count': 10}
         )
         assert save.status_code == 200
@@ -137,31 +134,29 @@ class TestBookProgress:
         assert saved['current_index'] == 50
 
         # Get all progress
-        get = client.get('/api/books/progress', headers=auth_header(token))
+        get = client.get('/api/books/progress')
         assert get.status_code == 200
         progress = get.get_json()['progress']
         assert 'ielts_reading_premium' in progress
         assert progress['ielts_reading_premium']['current_index'] == 50
 
     def test_save_progress_missing_book_id(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.post('/api/books/progress', headers=auth_header(token), json={})
+        res = client.post('/api/books/progress', json={})
         assert res.status_code == 400
 
     def test_update_existing_progress(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
 
-        client.post('/api/books/progress', headers=auth_header(token), json={
+        client.post('/api/books/progress', json={
             'book_id': 'ielts_reading_premium', 'current_index': 10
         })
         # Update
-        res = client.post('/api/books/progress', headers=auth_header(token), json={
+        res = client.post('/api/books/progress', json={
             'book_id': 'ielts_reading_premium', 'current_index': 30
         })
         assert res.status_code == 200
@@ -172,23 +167,21 @@ class TestBookProgress:
 
 class TestGetBookProgress:
     def test_get_nonexistent_progress(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.get('/api/books/progress/ielts_reading_premium', headers=auth_header(token))
+        res = client.get('/api/books/progress/ielts_reading_premium')
         assert res.status_code == 200
         assert res.get_json()['progress'] is None
 
     def test_get_existing_progress(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        client.post('/api/books/progress', headers=auth_header(token), json={
+        client.post('/api/books/progress', json={
             'book_id': 'ielts_reading_premium', 'current_index': 25
         })
-        res = client.get('/api/books/progress/ielts_reading_premium', headers=auth_header(token))
+        res = client.get('/api/books/progress/ielts_reading_premium')
         assert res.status_code == 200
         assert res.get_json()['progress']['current_index'] == 25
 
@@ -217,65 +210,60 @@ class TestMyBooks:
         assert client.post('/api/books/my', json={'book_id': 'a'}).status_code == 401
 
     def test_add_book(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.post('/api/books/my', headers=auth_header(token), json={
+        res = client.post('/api/books/my', json={
             'book_id': 'ielts_reading_premium'
         })
         assert res.status_code == 201
         assert res.get_json()['book_id'] == 'ielts_reading_premium'
 
     def test_add_duplicate_book(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        client.post('/api/books/my', headers=auth_header(token), json={
+        client.post('/api/books/my', json={
             'book_id': 'ielts_reading_premium'
         })
-        res = client.post('/api/books/my', headers=auth_header(token), json={
+        res = client.post('/api/books/my', json={
             'book_id': 'ielts_reading_premium'
         })
         assert res.status_code == 200
         assert '已在词书中' in res.get_json()['message']
 
     def test_add_book_missing_id(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        res = client.post('/api/books/my', headers=auth_header(token), json={})
+        res = client.post('/api/books/my', json={})
         assert res.status_code == 400
 
     def test_get_my_books(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        client.post('/api/books/my', headers=auth_header(token), json={
+        client.post('/api/books/my', json={
             'book_id': 'ielts_reading_premium'
         })
-        client.post('/api/books/my', headers=auth_header(token), json={
+        client.post('/api/books/my', json={
             'book_id': 'awl_academic'
         })
-        res = client.get('/api/books/my', headers=auth_header(token))
+        res = client.get('/api/books/my')
         assert res.status_code == 200
         book_ids = res.get_json()['book_ids']
         assert 'ielts_reading_premium' in book_ids
         assert 'awl_academic' in book_ids
 
     def test_remove_book(self, client, app):
-        reg = client.post('/api/auth/register', json={
+        client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123'
         })
-        token = reg.get_json()['token']
-        client.post('/api/books/my', headers=auth_header(token), json={
+        client.post('/api/books/my', json={
             'book_id': 'ielts_reading_premium'
         })
-        res = client.delete('/api/books/my/ielts_reading_premium', headers=auth_header(token))
+        res = client.delete('/api/books/my/ielts_reading_premium')
         assert res.status_code == 200
         # Verify removed
-        get = client.get('/api/books/my', headers=auth_header(token))
+        get = client.get('/api/books/my')
         assert 'ielts_reading_premium' not in get.get_json()['book_ids']
