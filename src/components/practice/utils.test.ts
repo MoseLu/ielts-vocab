@@ -160,6 +160,25 @@ describe('generateOptions', () => {
     const defs = options.map(o => o.definition)
     expect(new Set(defs).size).toBe(defs.length)
   })
+
+  it('prioritizes learner weak words as distractors when a profile is provided', () => {
+    const words = [
+      { id: 1, word: 'affect', phonetic: '/əˈfekt/', definition: 'to influence', pos: 'v.', chapterId: 1 },
+      { id: 2, word: 'apply', phonetic: '/əˈplaɪ/', definition: 'to use', pos: 'v.', chapterId: 1 },
+      { id: 3, word: 'effect', phonetic: '/ɪˈfekt/', definition: 'a result', pos: 'n.', chapterId: 1 },
+      { id: 4, word: 'effort', phonetic: '/ˈefət/', definition: 'hard work', pos: 'n.', chapterId: 1 },
+      { id: 5, word: 'improve', phonetic: '/ɪmˈpruːv/', definition: 'to get better', pos: 'v.', chapterId: 1 },
+    ]
+
+    const { options } = generateOptions(words[0], words, {
+      mode: 'meaning',
+      priorityWords: [words[2], words[3]],
+    })
+
+    const defs = options.map(option => option.definition)
+    expect(defs).toContain('a result')
+    expect(defs).toContain('hard work')
+  })
 })
 
 describe('playWordAudio', () => {

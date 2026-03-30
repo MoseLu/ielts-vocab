@@ -1,26 +1,101 @@
-// ── Practice Page (Main Container) ──────────────────────────────────────────────
+// Practice Page (Main Container)
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import type { PracticePageProps, PracticeMode, Word, ProgressData, AppSettings, Chapter, LastState, WordStatuses, RadioQuickSettings, SmartDimension } from './types'
 import { shuffleArray, generateOptions, playWordAudio as playWordUtil, stopAudio as stopAudioUtil } from './utils'
-import { DEFAULT_SETTINGS } from '../../constants'
+import { DEFAULT_SETTINGS, STORAGE_KEYS } from '../../constants'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue, syncSmartStatsToBackend, loadSmartStatsFromBackend } from '../../lib/smartMode'
 import { recordModeAnswer, logSession, startSession, cancelSession } from '../../hooks/useAIChat'
 import { apiFetch, buildApiUrl } from '../../lib'
+import { addWrongWordToList, loadWrongWords, readWrongWordsFromStorage, writeWrongWordsToStorage } from '../../features/vocabulary/wrongWordsStore'
+import { LearnerProfileSchema, type LearnerProfile as BackendLearnerProfile } from '../../lib/schemas'
+import { safeParse } from '../../lib/validation'
 import PracticeControlBar from './PracticeControlBar'
 import WordListPanel from './WordListPanel'
 import RadioMode from './RadioMode'
 import DictationMode from './DictationMode'
 import OptionsMode from './OptionsMode'
 import QuickMemoryMode from './QuickMemoryMode'
+import { buildLearnerProfile, mergeLearnerProfileWithBackend } from './learnerProfile'
 import SettingsPanel from '../SettingsPanel'
-import { Loading } from '../ui/Loading'
+import { PageSkeleton } from '../ui'
 
 // Re-export types for use by parent components
 export type { PracticeMode, Word, ProgressData, AppSettings, Chapter }
+
+interface WrongWordsProgressData {
+  current_index: number
+  correct_count: number
+  wrong_count: number
+  is_completed: boolean
+  queue_words?: string[]
+  mode?: PracticeMode
+  updatedAt?: string
+}
+
+function readWrongWordsProgress(currentMode?: PracticeMode): WrongWordsProgressData | null {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.WRONG_WORDS_PROGRESS) || '{}') as {
+      _last?: WrongWordsProgressData
+    }
+    const snapshot = stored._last
+    if (!snapshot) return null
+    if (snapshot.mode && currentMode && snapshot.mode !== currentMode) return null
+
+    return {
+      current_index: Math.max(0, Number(snapshot.current_index) || 0),
+      correct_count: Math.max(0, Number(snapshot.correct_count) || 0),
+      wrong_count: Math.max(0, Number(snapshot.wrong_count) || 0),
+      is_completed: Boolean(snapshot.is_completed),
+      queue_words: Array.isArray(snapshot.queue_words) ? snapshot.queue_words : undefined,
+      mode: snapshot.mode,
+      updatedAt: snapshot.updatedAt,
+    }
+  } catch {
+    return null
+  }
+}
+
+function buildWrongWordsQueue(words: Word[], queueWords?: string[]): number[] | null {
+  if (!queueWords?.length) return null
+
+  const indexByWord = new Map<string, number>()
+  words.forEach((word, index) => {
+    indexByWord.set(word.word.trim().toLowerCase(), index)
+  })
+
+  const restoredQueue: number[] = []
+  const seen = new Set<number>()
+
+  for (const queuedWord of queueWords) {
+    const index = indexByWord.get(queuedWord.trim().toLowerCase())
+    if (index == null || seen.has(index)) continue
+    restoredQueue.push(index)
+    seen.add(index)
+  }
+
+  words.forEach((word, index) => {
+    if (seen.has(index)) return
+    restoredQueue.push(index)
+  })
+
+  return restoredQueue.length ? restoredQueue : null
+}
+
+function persistWrongWordsProgress(snapshot: WrongWordsProgressData) {
+  localStorage.setItem(
+    STORAGE_KEYS.WRONG_WORDS_PROGRESS,
+    JSON.stringify({
+      _last: {
+        ...snapshot,
+        updatedAt: new Date().toISOString(),
+      },
+    }),
+  )
+}
 
 function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayChange }: PracticePageProps) {
   const navigate = useNavigate()
@@ -28,6 +103,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const bookId = searchParams.get('book')
   const chapterId = searchParams.get('chapter')
   const errorMode = searchParams.get('mode') === 'errors'
+  const reviewMode = searchParams.get('review') === 'due'
 
   // Core state
   const [vocabulary, setVocabulary] = useState<Word[]>([])
@@ -60,8 +136,9 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Track word statuses
   const [wordStatuses, setWordStatuses] = useState<WordStatuses>({})
+  const [backendLearnerProfile, setBackendLearnerProfile] = useState<BackendLearnerProfile | null>(null)
 
-  // Smart mode: current word's test dimension (音/意/形)
+  // Smart mode: current word's test dimension (闊?鎰?褰?
   const [smartDimension, setSmartDimension] = useState<SmartDimension>('meaning')
 
   // Refs
@@ -73,7 +150,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Server-assigned session ID from /api/ai/start-session (enables server-side duration).
   const sessionIdRef = useRef<number | null>(null)
   const pendingSessionCancelRef = useRef(false)
-  // Session-specific correct/wrong counts — always start at 0, never include restored progress.
+  // Session-specific correct/wrong counts always start at 0 and never include restored progress.
   const sessionCorrectRef = useRef(0)
   const sessionWrongRef = useRef(0)
   // Mirrors of correctCount/wrongCount for use in cleanup (avoids stale closure)
@@ -83,15 +160,16 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const sessionLoggedRef = useRef(false)
   const radioInteractionRef = useRef(false)
   const radioWordsStudiedRef = useRef(0)
-  // 本章「不重复」已答词（用于 words_learned）；baseline 为服务端/本地已保存的章节已学上限
+  // Chapter-level unique answered words, used to compute words_learned against the saved baseline.
   const wordsLearnedBaselineRef = useRef(0)
   const uniqueAnsweredRef = useRef<Set<string>>(new Set())
-  // 本会话内不重复词数（用于 log-session / 统计面板，避免同一词多次复习被重复计词）
+  // Unique words answered in the current session, used by session logging and stats.
   const sessionUniqueWordsRef = useRef<Set<string>>(new Set())
   // Tracks current mode (keeps cleanup up-to-date when mode prop changes)
   const currentModeRef = useRef(mode)
-  /** 写入 log-session / start-session 的模式：错词本练习为 errors，与工具栏 mode 可能不一致 */
+  /** Mode persisted into log-session and start-session. Error practice uses `errors`. */
   const effectiveSessionModeRef = useRef(errorMode ? 'errors' : (mode ?? 'smart'))
+  const errorProgressHydratedRef = useRef(false)
 
   // Keep refs in sync with state so the unmount cleanup always has current values
   useEffect(() => { correctCountRef.current = correctCount }, [correctCount])
@@ -101,8 +179,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     effectiveSessionModeRef.current = errorMode ? 'errors' : (mode ?? 'smart')
   }, [mode, errorMode])
 
-  // Log session on unmount — covers every exit path:
-  // completed (goNext sets flag first), pause→exit, navigate away, browser close
+  // Log the session on unmount. This covers complete, pause->exit, navigate away, and browser close.
   useEffect(() => {
     return () => {
       if (sessionLoggedRef.current) return          // already logged by goNext
@@ -112,7 +189,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       const durationSeconds = sessionStart > 0
         ? Math.round((Date.now() - sessionStart) / 1000)
         : 0
-      // Radio mode has no answer tracking — log based on time if ≥10 s
+      // Radio mode has no answer tracking, so rely on elapsed time and studied words.
       const hasMeaningfulInteraction = isRadio
         ? radioInteractionRef.current && radioWordsStudiedRef.current > 0
         : sessionUnique > 0
@@ -136,7 +213,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       syncSmartStatsToBackend()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // intentionally empty — refs provide current values without re-registering
+  }, []) // intentionally empty; refs provide current values without re-registering
 
   // Reactive settings (so RadioMode picks up changes from the toolbar controls)
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -177,14 +254,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     onResult: (text: string) => {
       const cleanText = text.replace(/[.,!?;:'" ]+$/, '')
       setSpellingInput(cleanText.toLowerCase())
-      showToast?.('识别成功！', 'success')
+      showToast?.('识别成功', 'success')
     },
     onPartial: (text: string) => {
       const cleanText = text.replace(/[.,!?;:'" ]+$/, '')
       setSpellingInput(cleanText.toLowerCase())
     },
     onError: (error: string) => {
-      showToast?.('识别失败: ' + error, 'error')
+      showToast?.(`识别失败: ${error}`, 'error')
     },
   })
 
@@ -209,7 +286,30 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     if (current) setCurrentChapterTitle(current.title)
   }, [chapterId, bookChapters])
 
-  // Start server-side session timer — called once when vocabulary is actually ready.
+  useEffect(() => {
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const data = await apiFetch<unknown>('/api/ai/learner-profile')
+        const parsed = safeParse(LearnerProfileSchema, data)
+
+        if (!cancelled) {
+          setBackendLearnerProfile(parsed.success ? parsed.data : null)
+        }
+      } catch {
+        if (!cancelled) {
+          setBackendLearnerProfile(null)
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id, currentDay])
+
+  // Start the server-side session timer once vocabulary is actually ready.
   // Resets client-side fallback timer and session-specific answer counters.
   const beginSession = () => {
     sessionStartRef.current = Date.now()
@@ -286,26 +386,92 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Load vocabulary data
   useEffect(() => {
+    let cancelled = false
+    errorProgressHydratedRef.current = false
+
     // Hydrate smart stats from backend if localStorage is empty (handles cleared storage)
     if (Object.keys(loadSmartStats()).length === 0) {
       loadSmartStatsFromBackend()
     }
 
-    if (errorMode) {
-      try {
-        const saved: Word[] = JSON.parse(localStorage.getItem('wrong_words') || '[]')
-        setVocabulary(saved)
-        vocabRef.current = saved
-        const indices = Array.from({ length: saved.length }, (_, i) => i)
-        const q = settings.shuffle !== false ? shuffleArray(indices) : indices
-        setQueue(q)
-        queueRef.current = q
-        setQueueIndex(0); setCorrectCount(0); setWrongCount(0)
-        beginSession()
-      } catch {
-        showToast?.('加载错词失败', 'error')
+    if (reviewMode && mode === 'quickmemory') {
+      void (async () => {
+        try {
+          const reviewWindowDays = Math.max(1, parseInt(String(settings.reviewInterval ?? '1'), 10) || 1)
+          const reviewLimit = Math.max(1, parseInt(String(settings.reviewLimit ?? '20'), 10) || 20)
+          const data = await apiFetch<{ words?: Word[] }>(
+            `/api/ai/quick-memory/review-queue?limit=${reviewLimit}&within_days=${reviewWindowDays}`,
+          )
+          if (cancelled) return
+
+          const words = data.words || []
+          const q = Array.from({ length: words.length }, (_, i) => i)
+
+          setVocabulary(words)
+          vocabRef.current = words
+          setQueue(q)
+          queueRef.current = q
+          setQueueIndex(0)
+          setCorrectCount(0)
+          setWrongCount(0)
+          setPreviousWord(null)
+          setLastState(null)
+          setWordStatuses({})
+          setCurrentChapterTitle('艾宾浩斯复习')
+          beginSession()
+        } catch {
+          if (!cancelled) showToast?.('加载复习队列失败', 'error')
+        }
+      })()
+
+      return () => {
+        cancelled = true
       }
-      return
+    }
+
+    if (errorMode) {
+      void (async () => {
+        try {
+          const wrongWords = await loadWrongWords({
+            user,
+            fetchRemote: () => apiFetch<{ words?: Word[] }>('/api/ai/wrong-words'),
+          })
+          if (cancelled) return
+
+          const saved: Word[] = wrongWords.map(word => ({
+            word: word.word,
+            phonetic: word.phonetic,
+            pos: word.pos,
+            definition: word.definition,
+          }))
+          setVocabulary(saved)
+          vocabRef.current = saved
+          const indices = Array.from({ length: saved.length }, (_, i) => i)
+          const fallbackQueue = settings.shuffle !== false ? shuffleArray(indices) : indices
+          const savedProgress = readWrongWordsProgress(mode)
+          const q = savedProgress?.is_completed
+            ? fallbackQueue
+            : buildWrongWordsQueue(saved, savedProgress?.queue_words) ?? fallbackQueue
+          const maxIndex = Math.max(q.length - 1, 0)
+
+          setQueue(q)
+          queueRef.current = q
+          setQueueIndex(savedProgress?.is_completed ? 0 : Math.min(savedProgress?.current_index ?? 0, maxIndex))
+          setCorrectCount(savedProgress?.is_completed ? 0 : (savedProgress?.correct_count ?? 0))
+          setWrongCount(savedProgress?.is_completed ? 0 : (savedProgress?.wrong_count ?? 0))
+          setPreviousWord(null)
+          setLastState(null)
+          setWordStatuses({})
+          errorProgressHydratedRef.current = true
+          beginSession()
+        } catch {
+          if (!cancelled) showToast?.('加载错词失败', 'error')
+        }
+      })()
+
+      return () => {
+        cancelled = true
+      }
     }
 
     // Helper: build queue based on mode (smart = sorted by weakness, others = shuffle)
@@ -325,8 +491,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             const q = buildQueue(words)
             queueRef.current = q
             // Resolve progress before applying any state so vocabulary + progress
-            // flush in a single React render — prevents the auto-play effect from
-            // firing twice (once on vocab load, once on progress restore).
+            // flush in a single React render and avoid double auto-play.
             let progress: ProgressData | null = null
             const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
             const key = `${bookId}_${chapterId}`
@@ -338,9 +503,9 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
                   `/api/books/${bookId}/chapters/progress`
                 )
                 progress = pd.chapter_progress?.[String(chapterId)] ?? null
-              } catch { /* not logged in or network error — start fresh */ }
+              } catch { /* not logged in or network error; start fresh */ }
             }
-            // Apply all state in one block → single render
+            // Apply all state in one block for a single render.
             setVocabulary(words)
             setQueue(q)
             if (progress) restoreProgress(progress, words.length)
@@ -370,7 +535,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             try {
               const pd = await apiFetch<{ progress?: ProgressData }>(`/api/books/progress/${bookId}`)
               progress = pd.progress ?? null
-            } catch { /* not logged in or network error — start fresh */ }
+            } catch { /* not logged in or network error; start fresh */ }
           }
           setVocabulary(words)
           setQueue(q)
@@ -403,7 +568,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             const pd = await apiFetch<{ progress?: Array<{ day: number; current_index: number; correct_count: number; wrong_count: number }> }>('/api/progress')
             const entry = pd.progress?.find(p => p.day === currentDay)
             progress = entry ?? null
-          } catch { /* not logged in or network error — start fresh */ }
+          } catch { /* not logged in or network error; start fresh */ }
         }
         setVocabulary(words)
         setQueue(q)
@@ -416,7 +581,27 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         beginSession()
       })
       .catch(() => showToast?.('加载词汇失败', 'error'))
-  }, [currentDay, bookId, errorMode, chapterId])
+    return () => {
+      cancelled = true
+    }
+  }, [bookId, chapterId, currentDay, errorMode, mode, reviewMode, settings.reviewInterval, settings.reviewLimit, user])
+
+  useEffect(() => {
+    if (!errorMode || !errorProgressHydratedRef.current || !vocabulary.length) return
+
+    const queueWords = queue
+      .map(index => vocabulary[index]?.word)
+      .filter((word): word is string => Boolean(word))
+
+    persistWrongWordsProgress({
+      current_index: Math.min(queueIndex, Math.max(queue.length - 1, 0)),
+      correct_count: correctCount,
+      wrong_count: wrongCount,
+      is_completed: queue.length > 0 && queueIndex >= queue.length,
+      queue_words: queueWords,
+      mode,
+    })
+  }, [correctCount, errorMode, mode, queue, queueIndex, vocabulary, wrongCount])
 
   const currentWord: Word | undefined = vocabulary[queue[queueIndex]]
 
@@ -424,13 +609,29 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   useEffect(() => {
     if (!currentWord || !vocabulary.length) return
 
+    const smartStats = loadSmartStats()
     // For smart mode: choose which dimension to test for this word
     let subMode: SmartDimension = smartDimension
     if (mode === 'smart') {
-      const stats = loadSmartStats()
-      subMode = chooseSmartDimension(currentWord.word, stats)
+      subMode = chooseSmartDimension(currentWord.word, smartStats)
       setSmartDimension(subMode)
     }
+
+    const wrongWords = readWrongWordsFromStorage()
+    const localLearnerProfile = buildLearnerProfile({
+      vocabulary,
+      currentWord,
+      mode,
+      smartDimension: subMode,
+      smartStats,
+      wrongWords,
+    })
+    const learnerProfile = mergeLearnerProfileWithBackend({
+      localProfile: localLearnerProfile,
+      backendProfile: backendLearnerProfile,
+      vocabulary,
+      wrongWords,
+    })
 
     // Generate options for multiple-choice modes (not needed for dictation sub-mode)
     const needsOptions = mode === 'listening' || mode === 'meaning' ||
@@ -438,8 +639,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const isListeningMode = mode === 'listening' || (mode === 'smart' && subMode === 'listening')
 
     if (needsOptions) {
+      const localPool = [currentWord, ...vocabulary, ...learnerProfile.priorityWords]
       // Set immediate local options (user is still listening to audio)
-      const { options: opts, correctIndex: ci } = generateOptions(currentWord, vocabulary)
+      const { options: opts, correctIndex: ci } = generateOptions(currentWord, localPool, {
+        mode: isListeningMode ? 'listening' : subMode,
+        priorityWords: learnerProfile.priorityWords,
+      })
       setOptions(opts); setCorrectIndex(ci)
 
       // For listening mode: replace with global-pool confusable distractors
@@ -454,7 +659,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             // Pool = similar words from global vocabulary (excluding the correct word)
             const pool = data.words.filter(w => w.definition !== word.definition)
             if (pool.length < 3) return  // not enough distractors, keep local ones
-            const { options: newOpts, correctIndex: newCi } = generateOptions(word, [word, ...pool])
+            const { options: newOpts, correctIndex: newCi } = generateOptions(
+              word,
+              [word, ...pool, ...learnerProfile.priorityWords],
+              {
+                mode: 'listening',
+                priorityWords: learnerProfile.priorityWords,
+              },
+            )
             setOptions(newOpts); setCorrectIndex(newCi)
           })
           .catch(() => { /* keep local options on network error */ })
@@ -480,15 +692,30 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       window.clearTimeout(timerId)
       stopAudioUtil()
     }
-  }, [queueIndex, currentWord?.word, mode, smartDimension, settings.playbackSpeed, settings.volume])
+  }, [queueIndex, currentWord?.word, mode, smartDimension, settings.playbackSpeed, settings.volume, backendLearnerProfile, vocabulary])
 
   // Log learning context to AI chat whenever state changes
   useEffect(() => {
     const accuracy = correctCount + wrongCount > 0
       ? Math.round((correctCount / (correctCount + wrongCount)) * 100)
       : undefined
+    const wrongWords = readWrongWordsFromStorage()
+    const localLearnerProfile = buildLearnerProfile({
+      vocabulary,
+      currentWord,
+      mode,
+      smartDimension,
+      smartStats: loadSmartStats(),
+      wrongWords,
+    })
+    const learnerProfile = mergeLearnerProfileWithBackend({
+      localProfile: localLearnerProfile,
+      backendProfile: backendLearnerProfile,
+      vocabulary,
+      wrongWords,
+    })
     if (!currentWord) {
-      // Session just completed — record final state so AI sees the full round
+      // Session just completed; record final state so AI sees the full round.
       if (vocabulary.length > 0) {
         setGlobalLearningContext({
           currentWord: undefined,
@@ -502,6 +729,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           currentBook: bookId ?? undefined,
           currentChapter: chapterId ?? undefined,
           currentChapterTitle: currentChapterTitle || undefined,
+          currentFocusDimension: learnerProfile.activeDimension,
+          weakestDimension: learnerProfile.weakestDimension,
+          weakDimensionOrder: learnerProfile.weakDimensionOrder,
+          weakFocusWords: learnerProfile.weakFocusWords,
+          recentWrongWords: learnerProfile.recentWrongWords,
+          trapStrategy: learnerProfile.trapStrategy,
+          priorityDistractorWords: learnerProfile.priorityWords.map(word => word.word),
         })
       }
       return
@@ -521,16 +755,30 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       currentBook: bookId ?? undefined,
       currentChapter: chapterId ?? undefined,
       currentChapterTitle: currentChapterTitle || undefined,
+      currentFocusDimension: learnerProfile.activeDimension,
+      weakestDimension: learnerProfile.weakestDimension,
+      weakDimensionOrder: learnerProfile.weakDimensionOrder,
+      weakFocusWords: learnerProfile.weakFocusWords,
+      recentWrongWords: learnerProfile.recentWrongWords,
+      trapStrategy: learnerProfile.trapStrategy,
+      priorityDistractorWords: learnerProfile.priorityWords.map(word => word.word),
     })
-  }, [currentWord, mode, queueIndex, correctCount, wrongCount, errorMode])
+  }, [currentWord, mode, queueIndex, correctCount, wrongCount, errorMode, vocabulary, smartDimension, bookId, chapterId, currentChapterTitle, backendLearnerProfile])
 
   // Save progress
   const saveProgress = useCallback((correct: number, wrong: number) => {
     if (errorMode) {
-      const wrongProgress: Record<string, { correctCount: number; wrongCount: number; updatedAt: string }> =
-        JSON.parse(localStorage.getItem('wrong_words_progress') || '{}')
-      wrongProgress['_last'] = { correctCount: correct, wrongCount: wrong, updatedAt: new Date().toISOString() }
-      localStorage.setItem('wrong_words_progress', JSON.stringify(wrongProgress))
+      const queueWords = queue
+        .map(index => vocabulary[index]?.word)
+        .filter((word): word is string => Boolean(word))
+      persistWrongWordsProgress({
+        current_index: Math.min(queueIndex + 1, Math.max(queue.length - 1, 0)),
+        correct_count: correct,
+        wrong_count: wrong,
+        is_completed: queue.length > 0 && queueIndex + 1 >= queue.length,
+        queue_words: queueWords,
+        mode,
+      })
       return
     }
 
@@ -578,7 +826,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           }),
         }).catch(() => {})
 
-        // Save per-mode accuracy to the backend — each mode is stored independently
+        // Save per-mode accuracy to the backend. Each mode is stored independently.
         if (mode && correct + wrong > 0) {
           apiFetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
             method: 'POST',
@@ -601,16 +849,16 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         body: JSON.stringify({ day: currentDay, ...progressData })
       }).catch(() => {})
     }
-  }, [bookId, chapterId, currentDay, errorMode, queueIndex, queue.length, vocabulary.length, mode])
+  }, [bookId, chapterId, currentDay, errorMode, mode, queue, queue.length, queueIndex, vocabulary])
 
   const saveWrongWord = (word: Word) => {
     // Update localStorage list (for error-mode practice queue)
-    const existing: Word[] = JSON.parse(localStorage.getItem('wrong_words') || '[]')
-    if (!existing.find(w => w.word === word.word)) {
-      existing.push(word)
-      localStorage.setItem('wrong_words', JSON.stringify(existing))
-    }
-    // Sync to backend — always (backend upserts) — include dimension stats
+    const existing = addWrongWordToList(
+      JSON.parse(localStorage.getItem('wrong_words') || '[]'),
+      word,
+    )
+    writeWrongWordsToStorage(existing)
+    // Always sync wrong words to the backend and include dimension stats.
     const ws = loadSmartStats()[word.word]
     apiFetch('/api/ai/wrong-words/sync', {
       method: 'POST',
@@ -638,7 +886,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       setQueue(prev => { const c = [...prev]; c.push(queue[queueIndex]); return c })
     }
     if (queueIndex + 1 >= queue.length) {
-      // Session complete — log and mark so the unmount cleanup doesn't double-log
+      // Session complete; mark it so the unmount cleanup does not double-log.
       const finalSessionCorrect = wasCorrect ? sessionCorrectRef.current + 1 : sessionCorrectRef.current
       const finalSessionWrong = wasCorrect ? sessionWrongRef.current : sessionWrongRef.current + 1
       const sessionStart = sessionStartRef.current
@@ -758,21 +1006,21 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   if (!vocabulary.length) {
     return (
       <div className="practice-session-layout">
-        <Loading text="Loading vocabulary..." page />
+        <PageSkeleton variant="practice" />
       </div>
     )
   }
 
-  // Completed state (fallback — normally goNext navigates away before this renders)
+  // Completed state fallback. Normally goNext navigates away before this renders.
   if (!currentWord) {
     return (
       <div className="practice-session-layout">
         <div className="practice-complete">
-        <div className="complete-emoji">🎉</div>
-        <h2>{errorMode ? '错词复习完成！' : bookId ? '本章完成！' : `Day ${currentDay} 完成！`}</h2>
+        <div className="complete-emoji" aria-hidden="true">Completed</div>
+        <h2>{errorMode ? '错词复习完成' : bookId ? '本章完成' : `Day ${currentDay} 完成`}</h2>
         <div className="complete-stats-row">
-          <span className="stat-correct">✓ 正确 {correctCount}</span>
-          <span className="stat-wrong">✗ 错误 {wrongCount}</span>
+          <span className="stat-correct">正确 {correctCount}</span>
+          <span className="stat-wrong">错误 {wrongCount}</span>
         </div>
         <button className="complete-btn" onClick={() => navigate('/plan')}>返回主页</button>
         </div>
@@ -782,7 +1030,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   const progress = queueIndex / Math.max(vocabulary.length, 1)
 
-  // Pause overlay — shared across all render branches
+  // Pause overlay shared across all render branches.
   const pauseOverlay = isPaused && (
     <div className="practice-pause-overlay">
       <div className="practice-pause-card">
@@ -803,14 +1051,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
             </span>
             {mode !== 'quickmemory' && (correctCount > 0 || wrongCount > 0) && (
               <span className="practice-pause-sub">
-                <span className="practice-pause-correct">✓ {correctCount}</span>
-                <span className="practice-pause-wrong">✗ {wrongCount}</span>
+                <span className="practice-pause-correct">正确 {correctCount}</span>
+                <span className="practice-pause-wrong">错误 {wrongCount}</span>
               </span>
             )}
           </div>
         )}
         <p className="practice-pause-hint">
-          进度已自动保存 — 退出登录后再回到本章节，仍可从这里继续
+          进度已自动保存。退出后再次回到本章节，仍可从这里继续。
         </p>
         <div className="practice-pause-actions">
           <button className="practice-pause-resume" onClick={() => setIsPaused(false)}>
@@ -1044,3 +1292,4 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 }
 
 export default PracticePage
+

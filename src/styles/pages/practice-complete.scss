@@ -1,5 +1,7 @@
 /* Page: Practice – loading state, complete screen, bottom stats bar */
 
+@use '../utils/mixins' as *;
+
 /* Loading */
 .practice-loading {
     @include flex-center-column(var(--space-md));

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
@@ -18,7 +18,7 @@ describe('PracticePage layout', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders a single layout root in loading state', () => {
+  it('renders a single layout root with a page skeleton while loading', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(
       () => new Promise(() => {}) as Promise<Response>,
     )
@@ -35,6 +35,7 @@ describe('PracticePage layout', () => {
     )
 
     expect(container.firstElementChild).toHaveClass('practice-session-layout')
-    expect(container.querySelector('.loading-state')).not.toBeNull()
+    expect(container.querySelector('.page-skeleton--practice')).not.toBeNull()
+    expect(container.querySelector('.loading-state')).toBeNull()
   })
 })

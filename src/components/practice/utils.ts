@@ -2,6 +2,11 @@
 
 import type { Word, OptionItem } from './types'
 
+export interface GenerateOptionsConfig {
+  mode?: string
+  priorityWords?: Word[]
+}
+
 export function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -152,10 +157,29 @@ function confusabilityScore(target: Word, candidate: Word): number {
 export function generateOptions(
   currentWord: Word,
   allWords: Word[],
-  mode?: string,
+  modeOrConfig?: string | GenerateOptionsConfig,
 ): { options: OptionItem[]; correctIndex: number } {
+  const config: GenerateOptionsConfig = typeof modeOrConfig === 'string'
+    ? { mode: modeOrConfig }
+    : (modeOrConfig ?? {})
+  const mode = config.mode
   const correctDef = currentWord.definition
-  const candidates = allWords.filter(w => w.definition !== correctDef)
+  const seenWords = new Set<string>()
+  const seenDefinitions = new Set<string>()
+  const candidates = allWords.filter((word) => {
+    if (word.definition === correctDef) return false
+    const wordKey = word.word.trim().toLowerCase()
+    const defKey = word.definition.trim().toLowerCase()
+    if (!wordKey || !defKey) return false
+    if (wordKey === currentWord.word.trim().toLowerCase()) return false
+    if (seenWords.has(wordKey) || seenDefinitions.has(defKey)) return false
+    seenWords.add(wordKey)
+    seenDefinitions.add(defKey)
+    return true
+  })
+  const priorityWordMap = new Map(
+    (config.priorityWords ?? []).map((word, index) => [word.word.trim().toLowerCase(), index] as const),
+  )
 
   let distractorWords: Word[]
 
@@ -173,6 +197,32 @@ export function generateOptions(
       const used = new Set(distractorWords.map(w => w.definition))
       const rest = candidates.filter(w => !used.has(w.definition))
       distractorWords.push(...shuffleArray(rest).slice(0, 3 - distractorWords.length))
+    }
+  } else if (priorityWordMap.size > 0 && candidates.length >= 3) {
+    const prioritized = candidates
+      .map((word) => {
+        const priorityIndex = priorityWordMap.get(word.word.trim().toLowerCase())
+        const priorityBonus = priorityIndex == null ? 0 : 12 - Math.min(priorityIndex, 10)
+        return {
+          word,
+          score: confusabilityScore(currentWord, word) + priorityBonus,
+          priorityIndex: priorityIndex ?? Number.POSITIVE_INFINITY,
+        }
+      })
+      .sort((a, b) => {
+        if (a.priorityIndex !== b.priorityIndex) return a.priorityIndex - b.priorityIndex
+        return b.score - a.score
+      })
+
+    distractorWords = prioritized.slice(0, 3).map(item => item.word)
+    if (distractorWords.length < 3) {
+      const used = new Set(distractorWords.map(word => word.definition))
+      distractorWords.push(
+        ...prioritized
+          .map(item => item.word)
+          .filter(word => !used.has(word.definition))
+          .slice(0, 3 - distractorWords.length),
+      )
     }
   } else {
     distractorWords = shuffleArray(candidates).slice(0, 3)

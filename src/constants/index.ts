@@ -52,6 +52,8 @@ export const DEFAULT_SETTINGS = {
   playbackSpeed: '1.0',
   volume: '100',
   interval: '2',
+  reviewInterval: '1',
+  reviewLimit: '20',
   darkMode: false,
   fontSize: 'medium',
 } as const

@@ -47,6 +47,8 @@ export interface AppSettings {
   playbackSpeed?: string
   volume?: string
   interval?: string
+  reviewInterval?: string
+  reviewLimit?: string
   darkMode?: boolean
   fontSize?: string
   [key: string]: unknown

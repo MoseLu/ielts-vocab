@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../../contexts'
 import { apiFetch } from '../../../lib'
+import {
+  addWrongWordToList,
+  loadWrongWords,
+  removeWrongWordFromList,
+  writeWrongWordsToStorage,
+} from '../wrongWordsStore'
 
 export interface WrongWord {
   word: string
@@ -23,13 +29,12 @@ export function useWrongWords() {
   const [loading, setLoading] = useState(true)
 
   const fetchWords = useCallback(async () => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
     try {
-      const data = await apiFetch<{ words?: WrongWord[] }>('/api/ai/wrong-words')
-      setWords(data.words || [])
+      const nextWords = await loadWrongWords({
+        user,
+        fetchRemote: () => apiFetch<{ words?: WrongWord[] }>('/api/ai/wrong-words'),
+      })
+      setWords(nextWords)
     } catch {
       // ignore
     } finally {
@@ -44,8 +49,9 @@ export function useWrongWords() {
   const addWord = useCallback(async (word: WrongWord) => {
     // Optimistic update
     setWords(prev => {
-      if (prev.find(w => w.word === word.word)) return prev
-      return [{ ...word, wrong_count: 1 }, ...prev]
+      const nextWords = addWrongWordToList(prev, { ...word, wrong_count: word.wrong_count ?? 1 })
+      writeWrongWordsToStorage(nextWords)
+      return nextWords
     })
     if (!user) return
     try {
@@ -59,7 +65,11 @@ export function useWrongWords() {
   }, [user])
 
   const removeWord = useCallback(async (word: string) => {
-    setWords(prev => prev.filter(w => w.word !== word))
+    setWords(prev => {
+      const nextWords = removeWrongWordFromList(prev, word)
+      writeWrongWordsToStorage(nextWords)
+      return nextWords
+    })
     if (!user) return
     try {
       await apiFetch(`/api/ai/wrong-words/${encodeURIComponent(word)}`, { method: 'DELETE' })
@@ -70,6 +80,7 @@ export function useWrongWords() {
 
   const clearAll = useCallback(async () => {
     setWords([])
+    writeWrongWordsToStorage([])
     if (!user) return
     try {
       await apiFetch('/api/ai/wrong-words', { method: 'DELETE' })
