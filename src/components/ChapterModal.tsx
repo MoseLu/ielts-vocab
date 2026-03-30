@@ -63,7 +63,7 @@ function groupBySection(chapters: Chapter[]): SectionGroup[] {
   const map = new Map<string, SectionGroup>()
 
   for (const chapter of chapters) {
-    const separatorIndex = chapter.title.indexOf(' 路 Part ')
+    const separatorIndex = chapter.title.indexOf('  Â· Part ')
     const label = separatorIndex !== -1 ? chapter.title.slice(0, separatorIndex) : chapter.title
 
     if (!map.has(label)) {
@@ -116,7 +116,7 @@ function buildRenderUnits(groups: SectionGroup[]): RenderUnit[] {
 
 function getCardLabel(chapter: Chapter, isInSection: boolean): string {
   if (!isInSection) return chapter.title
-  const separatorIndex = chapter.title.indexOf(' 路 Part ')
+  const separatorIndex = chapter.title.indexOf('  Â· Part ')
   return separatorIndex !== -1 ? chapter.title.slice(separatorIndex + 3) : chapter.title
 }
 
