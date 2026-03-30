@@ -55,6 +55,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
   const [isClosing, setIsClosing] = useState(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const arrowRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : uncontrolledOpen
@@ -97,10 +98,8 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     shift({ padding: 8 }),
     fuiArrow({ element: arrowRef, padding: 8 }),
     size({
-      apply({ rects, elements }) {
-        Object.assign(elements.floating.style, {
-          minWidth: `${Math.round(rects.reference.width)}px`,
-        })
+      apply({ rects }) {
+        panelRef.current?.style.setProperty('--popover-min-width', `${Math.round(rects.reference.width)}px`)
       },
     }),
   ]
@@ -147,30 +146,37 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
   }, [displayPanel, setOpen])
 
   // Arrow style: Floating UI sets horizontal (x) or vertical (y) position
-  const arrowStyle: React.CSSProperties = arrowData
-    ? {
-        left: arrowData.x != null ? `${arrowData.x}px` : undefined,
-        top: arrowData.y != null ? `${arrowData.y}px` : undefined,
-      }
-    : {}
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    panel.style.setProperty('--popover-left', `${x ?? 0}px`)
+    panel.style.setProperty('--popover-top', `${y ?? 0}px`)
+  }, [x, y])
+
+  useEffect(() => {
+    const arrow = arrowRef.current
+    if (!arrow) return
+    if (arrowData?.x != null) arrow.style.left = `${arrowData.x}px`
+    else arrow.style.removeProperty('left')
+    if (arrowData?.y != null) arrow.style.top = `${arrowData.y}px`
+    else arrow.style.removeProperty('top')
+  }, [arrowData])
 
   const panel = displayPanel
     ? createPortal(
         <div
-          ref={refs.setFloating}
-          className={`popover-panel ${panelClassName} ${isClosing ? 'popover-closing' : ''}`}
-          style={{
-            position: 'fixed',
-            left: x ?? 0,
-            top: y ?? 0,
+          ref={(node) => {
+            refs.setFloating(node)
+            panelRef.current = node
           }}
+          className={`popover-panel ${panelClassName} ${isClosing ? 'popover-closing' : ''}`}
           data-placement={resolvedPlacement}
           // Clicking anywhere inside the panel closes the dropdown.
           // Individual items that should NOT auto-close can call e.stopPropagation().
           onClick={() => setOpen(false)}
         >
           {/* Arrow — Element Plus single-element technique */}
-          <div ref={arrowRef} className="popover-arrow" style={arrowStyle} />
+          <div ref={arrowRef} className="popover-arrow" />
 
           <div className="popover-content">
             {children}
@@ -185,7 +191,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
       <div
         ref={refs.setReference}
         onClick={() => setOpen(!isOpen)}
-        style={{ display: 'inline-block', cursor: 'pointer' }}
+        className="popover-trigger"
       >
         {trigger}
       </div>

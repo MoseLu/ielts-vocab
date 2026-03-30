@@ -4,7 +4,6 @@
   useLayoutEffect,
   useCallback,
   useEffect,
-  type CSSProperties,
   type MouseEvent,
   type ReactNode,
 } from 'react'
@@ -31,6 +30,7 @@ const MODE_LABELS: Record<string, string> = {
 }
 
 const PIE_COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#14b8a6', '#eab308', '#64748b']
+const PIE_COLOR_CLASSES = ['stats-pie-dot--0', 'stats-pie-dot--1', 'stats-pie-dot--2', 'stats-pie-dot--3', 'stats-pie-dot--4', 'stats-pie-dot--5', 'stats-pie-dot--6', 'stats-pie-dot--7']
 
 function inferErrorReason(w: WrongTopItem): string {
   const lw = w.listening_wrong ?? 0
@@ -130,7 +130,7 @@ function ModePieChart({ segments, variant = 'card' }: { segments: PieSegment[]; 
       <ul className={legClass}>
         {segments.map((seg, i) => (
           <li key={seg.mode}>
-            <span className="stats-pie-dot" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+            <span className={`stats-pie-dot ${PIE_COLOR_CLASSES[i % PIE_COLOR_CLASSES.length]}`} />
             <span className="stats-pie-label">{MODE_LABELS[seg.mode] || seg.mode}</span>
             <span className="stats-pie-val">{Math.round((seg.value / total) * 100)}%</span>
             <span className="stats-pie-sub">{seg.value} 词</span>
@@ -143,6 +143,7 @@ function ModePieChart({ segments, variant = 'card' }: { segments: PieSegment[]; 
 
 /** Top10 错词：按错次占比的扇形图 */
 const WRONG_PIE_COLORS = ['#dc2626', '#ea580c', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#a855f7']
+const WRONG_PIE_COLOR_CLASSES = ['stats-pie-dot--wrong-0', 'stats-pie-dot--wrong-1', 'stats-pie-dot--wrong-2', 'stats-pie-dot--wrong-3', 'stats-pie-dot--wrong-4', 'stats-pie-dot--wrong-5', 'stats-pie-dot--wrong-6', 'stats-pie-dot--wrong-7', 'stats-pie-dot--wrong-8', 'stats-pie-dot--wrong-9']
 
 function WrongTopPieChart({ items }: { items: WrongTopItem[] }) {
   const total = items.reduce((s, x) => s + x.wrong_count, 0)
@@ -181,7 +182,7 @@ function WrongTopPieChart({ items }: { items: WrongTopItem[] }) {
       <ul className="stats-pie-legend stats-pie-legend--wrong">
         {items.map((seg, i) => (
           <li key={`${seg.word}-${i}`}>
-            <span className="stats-pie-dot" style={{ background: WRONG_PIE_COLORS[i % WRONG_PIE_COLORS.length] }} />
+            <span className={`stats-pie-dot ${WRONG_PIE_COLOR_CLASSES[i % WRONG_PIE_COLOR_CLASSES.length]}`} />
             <span className="stats-pie-label" title={seg.word}>
               {seg.word.length > 14 ? `${seg.word.slice(0, 13)}…` : seg.word}
             </span>
@@ -219,6 +220,7 @@ const EBB_TIP_HALF_W = 112
 
 function EbbinghausDualChart({ stages, compact }: { stages: EbbinghausStagePoint[]; compact?: boolean }) {
   const svgRef = useRef<SVGSVGElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
   const [tipPos, setTipPos] = useState<{ x: number; y: number } | null>(null)
 
@@ -278,6 +280,13 @@ function EbbinghausDualChart({ stages, compact }: { stages: EbbinghausStagePoint
 
   const hi = hoverIdx != null ? stages[hoverIdx] : null
 
+  useEffect(() => {
+    const tooltipEl = tooltipRef.current
+    if (!tooltipEl || !tipPos) return
+    tooltipEl.style.setProperty('--ebb-tooltip-left', `${tipPos.x}px`)
+    tooltipEl.style.setProperty('--ebb-tooltip-top', `${tipPos.y}px`)
+  }, [tipPos])
+
   return (
     <div
       className={`ebb-chart-wrap${compact ? ' ebb-chart-wrap--compact' : ''}`}
@@ -334,22 +343,18 @@ function EbbinghausDualChart({ stages, compact }: { stages: EbbinghausStagePoint
       </svg>
       {hi && hoverIdx != null && tipPos != null && (
         <div
+          ref={tooltipRef}
           className="ebb-chart-tooltip ebb-chart-tooltip--fixed"
-          style={{
-            left: tipPos.x,
-            top: tipPos.y,
-            transform: 'translateX(-50%)',
-          }}
         >
           <div className="ebb-chart-tooltip-title">
             第 {hoverIdx + 1} 轮复习 · 间隔 {hi.interval_days} 天
           </div>
           <div className="ebb-chart-tooltip-row">
-            <span className="ebb-dot" style={{ background: EBB_TARGET }} />
+            <span className="ebb-dot ebb-dot--target" />
             标准遗忘参考（该轮）<strong>{Math.round(refForgettingPct(hoverIdx, n))}%</strong>
           </div>
           <div className="ebb-chart-tooltip-row">
-            <span className="ebb-dot" style={{ background: EBB_ACTUAL }} />
+            <span className="ebb-dot ebb-dot--actual" />
             {hi.due_total > 0 ? (
               <>
                 实际按时完成 <strong>{hi.actual_pct ?? 0}%</strong>
@@ -379,6 +384,7 @@ interface ChartProps {
 
 function LearningChart({ data, metric, range, compact }: ChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<{ idx: number; x: number; y: number } | null>(null)
 
   const W = 560
@@ -470,6 +476,13 @@ function LearningChart({ data, metric, range, compact }: ChartProps) {
     : metric === 'duration' ? fmtDuration((tooltipData?.duration_seconds ?? 0))
     : `${tooltipVal} 词`
 
+  useEffect(() => {
+    const tooltipEl = tooltipRef.current
+    if (!tooltipEl || !tooltip) return
+    tooltipEl.style.setProperty('--lc-tooltip-left', `${(tooltip.x / W) * 100}%`)
+    tooltipEl.style.setProperty('--lc-tooltip-top', `${((tooltip.y - padT) / (H - padT - padB)) * 100}%`)
+  }, [tooltip, W, H, padT, padB])
+
   return (
     <div className={`lc-wrap${compact ? ' lc-wrap--compact' : ''}`} onMouseLeave={() => setTooltip(null)}>
       <svg
@@ -551,11 +564,8 @@ function LearningChart({ data, metric, range, compact }: ChartProps) {
 
       {tooltip && tooltipData && (
         <div
+          ref={tooltipRef}
           className="lc-tooltip"
-          style={{
-            left: `${(tooltip.x / W) * 100}%`,
-            top: `${((tooltip.y - padT) / (H - padT - padB)) * 100}%`,
-          }}
         >
           <div className="lc-tooltip-date">{tooltipData.date}</div>
           <div className="lc-tooltip-val">{tooltipLabel}</div>
@@ -676,6 +686,7 @@ export default function StatsPage() {
       : defaultEbbStages
 
   const statsMainLeftRef = useRef<HTMLDivElement>(null)
+  const statsMainRightRef = useRef<HTMLDivElement>(null)
   const [statsWideLayout, setStatsWideLayout] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(min-width: 901px)').matches,
   )
@@ -725,14 +736,17 @@ export default function StatsPage() {
     return () => ro.disconnect()
   }, [statsWideLayout, measureStatsLeftHeight])
 
-  const statsRightColumnStyle: CSSProperties | undefined =
-    statsWideLayout && statsRightHeightPx != null
-      ? {
-          height: statsRightHeightPx,
-          maxHeight: statsRightHeightPx,
-          minHeight: 0,
-        }
-      : undefined
+  useEffect(() => {
+    const rightEl = statsMainRightRef.current
+    if (!rightEl) return
+    if (statsWideLayout && statsRightHeightPx != null) {
+      rightEl.style.setProperty('--stats-right-height', `${statsRightHeightPx}px`)
+      rightEl.classList.add('stats-main-right--synced')
+    } else {
+      rightEl.style.removeProperty('--stats-right-height')
+      rightEl.classList.remove('stats-main-right--synced')
+    }
+  }, [statsWideLayout, statsRightHeightPx])
 
   return (
     <div className="stats-page">
@@ -888,7 +902,7 @@ export default function StatsPage() {
                     </section>
               </div>
             </div>
-            <div className="stats-main-right" style={statsRightColumnStyle}>
+            <div className="stats-main-right" ref={statsMainRightRef}>
               <div className="stats-main-right-top">
                 <div className="stats-main-cell stats-main-cell--ebb">
                     <section className="stats-section stats-card-ebbinghaus" aria-labelledby="stats-ebb-title">
@@ -1022,7 +1036,7 @@ export default function StatsPage() {
                             <span className="lc-legend-sep" aria-hidden>
                               ·
                             </span>
-                            <span className="legend-dot" style={{ background: 'var(--accent)' }} />
+                            <span className="legend-dot legend-dot--accent" />
                             <span>{METRIC_OPTIONS.find(o => o.value === metric)?.label}</span>
                             {useFallback && (
                               <span className="lc-fallback-note">（基于章节进度估算）</span>

@@ -72,3 +72,4 @@ vocabulary_data/*.bak
 vocabulary_data/*.lock
 vocabulary_data/*.json.bak
 vocabulary_data/vocabulary_examples.json
+录音文件生成记录/
