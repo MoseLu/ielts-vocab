@@ -1,5 +1,7 @@
 /* ── Admin Dashboard ───────────────────────────────────────────────────────── */
 
+@use '../utils/mixins' as *;
+
 .admin-dashboard {
   position: relative;
   padding: 10px;
@@ -79,6 +81,34 @@
   font-size: 14px;
 }
 .admin-empty { text-align: center; color: var(--text-tertiary); padding: 32px; font-size: 14px; }
+
+.admin-table-skeleton {
+  @include panel-surface();
+  padding: 12px;
+}
+
+.admin-table-skeleton-head,
+.admin-table-skeleton-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.5fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-table-skeleton-head {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-table-skeleton-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-table-skeleton-row {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
 
 /* ── Overview ── */
 .admin-stat-grid {
@@ -992,6 +1022,12 @@
 
 .admin-tts-panel { position: relative; }
 
+.admin-tts-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
 .admin-section-title {
   font-size: 18px;
   font-weight: 600;
@@ -1014,6 +1050,10 @@
   @include metric-card(10px, var(--bg-secondary));
   @include page-stack(10px);
   border-left: 4px solid var(--book-color, var(--accent));
+}
+
+.tts-book-card--skeleton {
+  border-left-color: var(--border);
 }
 
 .tts-book-card.done {
@@ -1066,13 +1106,6 @@
 .tts-progress-text {
   font-size: 13px;
   color: var(--text-secondary);
-}
-
-.admin-tts-loading {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 }
 
 .admin-tts-error {
@@ -1207,13 +1240,6 @@
 
 .tts-generate-btn.interrupted:hover:not(:disabled) {
   background: #d97706;
-}
-
-.admin-tts-loading {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 }
 
 .admin-tts-error {

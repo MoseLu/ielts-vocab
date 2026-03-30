@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { apiFetch } from '../lib'
+import { MicroLoading } from './ui'
 
 interface AvatarUploadProps {
   user: AuthUser | null
@@ -33,13 +34,12 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
       return
     }
     if (file.size > 2 * 1024 * 1024) {
-      setError('图片大小不能超过2MB')
+      setError('图片大小不能超过 2MB')
       return
     }
     setError('')
     const reader = new FileReader()
     reader.onload = (ev) => {
-      // Resize to max 200x200 via canvas
       const img = new Image()
       img.onload = () => {
         const canvas = document.createElement('canvas')
@@ -47,10 +47,8 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
         canvas.width = size
         canvas.height = size
         const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-        // Fill white background
         ctx.fillStyle = '#fff'
         ctx.fillRect(0, 0, size, size)
-        // Center crop
         const min = Math.min(img.width, img.height)
         const sx = (img.width - min) / 2
         const sy = (img.height - min) / 2
@@ -75,7 +73,6 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
         setError(data.error || '保存失败')
         return
       }
-      // Update localStorage
       localStorage.setItem('auth_user', JSON.stringify(data.user))
       onSave(data.user as AuthUser)
       onClose()
@@ -96,16 +93,15 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
       <div className="avatar-modal">
         <div className="avatar-modal-header">
           <h3>更换头像</h3>
-          <button className="avatar-modal-close" onClick={onClose}>
+          <button className="avatar-modal-close" onClick={onClose} aria-label="关闭头像弹窗">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
         <div className="avatar-modal-body">
-          {/* Preview */}
           <div className="avatar-preview-area">
             {preview ? (
               <img src={preview} alt="头像预览" className="avatar-preview-img" />
@@ -114,16 +110,15 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
             )}
           </div>
 
-          {/* Actions */}
           <div className="avatar-actions">
             <button
               className="avatar-upload-btn"
               onClick={() => fileRef.current?.click()}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
               选择图片
             </button>
@@ -156,7 +151,7 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
             onClick={handleSave}
             disabled={saving || !preview}
           >
-            {saving ? '保存中...' : '保存头像'}
+            {saving ? <MicroLoading text="保存中..." /> : '保存头像'}
           </button>
         </div>
       </div>

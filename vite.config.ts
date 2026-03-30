@@ -5,6 +5,13 @@ export default defineConfig({
   plugins: [react()],
   root: '.',
   publicDir: 'assets',
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler',
+      },
+    },
+  },
   server: {
     host: '0.0.0.0', // 允许所有端口访问
     port: 3002,
@@ -21,7 +28,7 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
-        timeout: 10000,
+        timeout: 180000,
       },
       '/socket.io': {
         target: 'http://localhost:5000',
@@ -50,7 +57,7 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
-        timeout: 15000,
+        timeout: 180000,
       },
       '/socket.io': {
         target: 'http://localhost:5000',

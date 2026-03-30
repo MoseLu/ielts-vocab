@@ -359,14 +359,14 @@
 
     /* Vocab book page */
     .vb-filters {
-        padding: var(--space-sm);
+        padding: 0;
     }
 
     .vb-filter-row {
         overflow-x: auto;
         flex-wrap: nowrap;
         -webkit-overflow-scrolling: touch;
-        gap: var(--space-xs);
+        gap: 12px;
         padding-bottom: var(--space-xs);
     }
 

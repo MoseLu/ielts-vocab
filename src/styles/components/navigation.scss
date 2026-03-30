@@ -1,3 +1,5 @@
+@use '../utils/mixins' as *;
+
 .segmented-control {
   @include segmented-control-shell();
 }

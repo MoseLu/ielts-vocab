@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { apiFetch } from '../lib'
-import { SegmentedControl } from './ui'
+import { PageSkeleton, SegmentedControl, Skeleton } from './ui'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -222,6 +222,50 @@ function StatCard({ label, value, sub, tone = 'indigo' }: {
   )
 }
 
+function AdminTableSkeleton() {
+  return (
+    <div className="admin-table-skeleton" aria-hidden="true">
+      <div className="admin-table-skeleton-head">
+        {Array.from({ length: 9 }, (_, index) => (
+          <Skeleton key={index} width="100%" height={14} />
+        ))}
+      </div>
+      <div className="admin-table-skeleton-body">
+        {Array.from({ length: 6 }, (_, rowIndex) => (
+          <div key={rowIndex} className="admin-table-skeleton-row">
+            <Skeleton width="80%" height={16} />
+            <Skeleton width="92%" height={16} />
+            <Skeleton width="68%" height={16} />
+            <Skeleton width="60%" height={16} />
+            <Skeleton width="52%" height={16} />
+            <Skeleton width="48%" height={16} />
+            <Skeleton width="54%" height={16} />
+            <Skeleton width="72%" height={16} />
+            <Skeleton width="76%" height={16} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TtsBooksSkeleton() {
+  return (
+    <div className="admin-tts-skeleton" aria-hidden="true">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div key={index} className="tts-book-card tts-book-card--skeleton">
+          <Skeleton width="58%" height={18} />
+          <div className="tts-book-progress">
+            <Skeleton width="100%" height={8} />
+            <Skeleton width="46%" height={14} />
+          </div>
+          <Skeleton variant="rectangular" width="40%" height={38} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
@@ -414,7 +458,7 @@ export default function AdminDashboard() {
       {tab === 'overview' && (
         <div className="admin-overview">
           {overviewLoading && !overview && (
-            <div className="admin-loading">加载中...</div>
+            <PageSkeleton variant="admin" />
           )}
           {overview && (
             <>
@@ -536,75 +580,77 @@ export default function AdminDashboard() {
 
           {/* Table */}
           <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th onClick={() => handleSort('username')} className="sortable">
-                    用户名 <SortIcon col="username" />
-                  </th>
-                  <th>邮箱</th>
-                  <th onClick={() => handleSort('study_time')} className="sortable">
-                    学习时长 <SortIcon col="study_time" />
-                  </th>
-                  <th onClick={() => handleSort('words_studied')} className="sortable">
-                    学习单词 <SortIcon col="words_studied" />
-                  </th>
-                  <th onClick={() => handleSort('accuracy')} className="sortable">
-                    准确率 <SortIcon col="accuracy" />
-                  </th>
-                  <th>错词数</th>
-                  <th>7日练习</th>
-                  <th onClick={() => handleSort('last_active')} className="sortable">
-                    最近活跃 <SortIcon col="last_active" />
-                  </th>
-                  <th onClick={() => handleSort('created_at')} className="sortable">
-                    注册时间 <SortIcon col="created_at" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={9} className="admin-loading-cell">加载中...</td></tr>
-                ) : users.length === 0 ? (
-                  <tr><td colSpan={9} className="admin-empty-cell">暂无数据</td></tr>
-                ) : users.map(u => (
-                  <tr key={u.id} className="admin-user-row" onClick={() => {
-                    setSelectedUserId(u.id)
-                    setDetailDateFrom(''); setDetailDateTo(''); setDetailMode(''); setDetailBook('')
-                    fetchUserDetail(u.id)
-                    setDetailTab('progress')
-                  }}>
-                    <td>
-                      <div className="admin-user-name-cell">
-                        {u.avatar_url ? (
-                          <img src={u.avatar_url} alt="" className="admin-avatar" />
-                        ) : (
-                          <div className="admin-avatar-placeholder">{(u.username || '?')[0].toUpperCase()}</div>
-                        )}
-                        <span>{u.username}</span>
-                        {u.is_admin && <span className="admin-badge">管理员</span>}
-                      </div>
-                    </td>
-                    <td className="admin-cell-muted">{u.email || '—'}</td>
-                    <td>{fmtSeconds(u.stats.total_study_seconds)}</td>
-                    <td>{u.stats.total_words_studied.toLocaleString()}</td>
-                    <td>
-                      <span className={`admin-accuracy ${u.stats.accuracy >= 80 ? 'good' : u.stats.accuracy >= 60 ? 'mid' : u.stats.accuracy > 0 ? 'low' : ''}`}>
-                        {u.stats.accuracy > 0 ? `${u.stats.accuracy}%` : '—'}
-                      </span>
-                    </td>
-                    <td>{u.stats.wrong_words_count > 0 ? u.stats.wrong_words_count : '—'}</td>
-                    <td>
-                      <span className={`admin-sessions-badge ${u.stats.recent_sessions_7d > 0 ? 'active' : ''}`}>
-                        {u.stats.recent_sessions_7d > 0 ? `${u.stats.recent_sessions_7d}次` : '—'}
-                      </span>
-                    </td>
-                    <td className="admin-cell-muted">{fmtDate(u.stats.last_active)}</td>
-                    <td className="admin-cell-muted">{fmtDate(u.created_at)}</td>
+            {loading ? (
+              <AdminTableSkeleton />
+            ) : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('username')} className="sortable">
+                      用户名 <SortIcon col="username" />
+                    </th>
+                    <th>邮箱</th>
+                    <th onClick={() => handleSort('study_time')} className="sortable">
+                      学习时长 <SortIcon col="study_time" />
+                    </th>
+                    <th onClick={() => handleSort('words_studied')} className="sortable">
+                      学习单词 <SortIcon col="words_studied" />
+                    </th>
+                    <th onClick={() => handleSort('accuracy')} className="sortable">
+                      准确率 <SortIcon col="accuracy" />
+                    </th>
+                    <th>错词数</th>
+                    <th>7日练习</th>
+                    <th onClick={() => handleSort('last_active')} className="sortable">
+                      最近活跃 <SortIcon col="last_active" />
+                    </th>
+                    <th onClick={() => handleSort('created_at')} className="sortable">
+                      注册时间 <SortIcon col="created_at" />
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {users.length === 0 ? (
+                    <tr><td colSpan={9} className="admin-empty-cell">暂无数据</td></tr>
+                  ) : users.map(u => (
+                    <tr key={u.id} className="admin-user-row" onClick={() => {
+                      setSelectedUserId(u.id)
+                      setDetailDateFrom(''); setDetailDateTo(''); setDetailMode(''); setDetailBook('')
+                      fetchUserDetail(u.id)
+                      setDetailTab('progress')
+                    }}>
+                      <td>
+                        <div className="admin-user-name-cell">
+                          {u.avatar_url ? (
+                            <img src={u.avatar_url} alt="" className="admin-avatar" />
+                          ) : (
+                            <div className="admin-avatar-placeholder">{(u.username || '?')[0].toUpperCase()}</div>
+                          )}
+                          <span>{u.username}</span>
+                          {u.is_admin && <span className="admin-badge">管理员</span>}
+                        </div>
+                      </td>
+                      <td className="admin-cell-muted">{u.email || '—'}</td>
+                      <td>{fmtSeconds(u.stats.total_study_seconds)}</td>
+                      <td>{u.stats.total_words_studied.toLocaleString()}</td>
+                      <td>
+                        <span className={`admin-accuracy ${u.stats.accuracy >= 80 ? 'good' : u.stats.accuracy >= 60 ? 'mid' : u.stats.accuracy > 0 ? 'low' : ''}`}>
+                          {u.stats.accuracy > 0 ? `${u.stats.accuracy}%` : '—'}
+                        </span>
+                      </td>
+                      <td>{u.stats.wrong_words_count > 0 ? u.stats.wrong_words_count : '—'}</td>
+                      <td>
+                        <span className={`admin-sessions-badge ${u.stats.recent_sessions_7d > 0 ? 'active' : ''}`}>
+                          {u.stats.recent_sessions_7d > 0 ? `${u.stats.recent_sessions_7d}次` : '—'}
+                        </span>
+                      </td>
+                      <td className="admin-cell-muted">{fmtDate(u.stats.last_active)}</td>
+                      <td className="admin-cell-muted">{fmtDate(u.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* Pagination */}
@@ -630,9 +676,7 @@ export default function AdminDashboard() {
       {tab === 'tts' && (
         <div className="admin-tts-panel">
           {ttsBooksLoading ? (
-            <div className="admin-tts-loading">
-              <div className="loading-spinner" />
-            </div>
+            <TtsBooksSkeleton />
           ) : ttsBooks.length === 0 ? (
             <div className="admin-tts-error">
               加载失败，请刷新重试或检查管理员登录状态

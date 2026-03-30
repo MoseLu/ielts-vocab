@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts'
+import { useResponsiveChapterSkeletonCount } from '../hooks/useResponsiveSkeletonCount'
 import { apiFetch, buildApiUrl } from '../lib'
+import { Skeleton } from './ui'
 import { Scrollbar } from './ui/Scrollbar'
 
 const MODE_META: Record<string, { label: string; title: string }> = {
-  quickmemory: { label: '记', title: '快速记忆' },
+  quickmemory: { label: '记', title: '速记模式' },
   listening: { label: '听', title: '听音选义' },
-  meaning: { label: '看', title: '看词选义' },
+  meaning: { label: '释', title: '看词选义' },
   dictation: { label: '默', title: '听写模式' },
   smart: { label: '智', title: '智能模式' },
 }
@@ -58,13 +60,27 @@ interface SectionGroup {
   chapters: Chapter[]
 }
 
+interface ChapterModalSkeletonProps {
+  itemCount: number
+}
+
+type RenderUnit =
+  | { kind: 'flat'; chapters: Chapter[] }
+  | { kind: 'section'; label: string; wordCount: number; chapters: Chapter[] }
+
+function findPartSeparatorIndex(title: string): number {
+  const match = title.match(/\s+[·•]\s+Part\s+/i)
+  if (!match || match.index == null) return -1
+  return match.index
+}
+
 function groupBySection(chapters: Chapter[]): SectionGroup[] {
   const groups: SectionGroup[] = []
   const map = new Map<string, SectionGroup>()
 
   for (const chapter of chapters) {
-    const separatorIndex = chapter.title.indexOf('  Â· Part ')
-    const label = separatorIndex !== -1 ? chapter.title.slice(0, separatorIndex) : chapter.title
+    const separatorIndex = findPartSeparatorIndex(chapter.title)
+    const label = separatorIndex !== -1 ? chapter.title.slice(0, separatorIndex).trim() : chapter.title
 
     if (!map.has(label)) {
       const group: SectionGroup = { label, isMultiPart: false, wordCount: 0, chapters: [] }
@@ -83,10 +99,6 @@ function groupBySection(chapters: Chapter[]): SectionGroup[] {
 
   return groups
 }
-
-type RenderUnit =
-  | { kind: 'flat'; chapters: Chapter[] }
-  | { kind: 'section'; label: string; wordCount: number; chapters: Chapter[] }
 
 function buildRenderUnits(groups: SectionGroup[]): RenderUnit[] {
   const units: RenderUnit[] = []
@@ -116,8 +128,31 @@ function buildRenderUnits(groups: SectionGroup[]): RenderUnit[] {
 
 function getCardLabel(chapter: Chapter, isInSection: boolean): string {
   if (!isInSection) return chapter.title
-  const separatorIndex = chapter.title.indexOf('  Â· Part ')
-  return separatorIndex !== -1 ? chapter.title.slice(separatorIndex + 3) : chapter.title
+  const separatorMatch = chapter.title.match(/Part\s+.+$/i)
+  return separatorMatch ? separatorMatch[0] : chapter.title
+}
+
+function ChapterModalSkeleton({ itemCount }: ChapterModalSkeletonProps) {
+  return (
+    <div className="chapter-skeleton chapter-loading--centered" aria-hidden="true">
+      <div className="chapter-skeleton-grid">
+        {Array.from({ length: itemCount }, (_, index) => (
+          <div key={index} className="chapter-skeleton-card">
+            <Skeleton width="58%" height={18} />
+            <div className="chapter-skeleton-tags">
+              <Skeleton width="28%" height={12} />
+              <Skeleton width="24%" height={12} />
+            </div>
+            <div className="chapter-skeleton-footer">
+              <Skeleton width="32%" height={12} />
+              <Skeleton width="18%" height={12} />
+            </div>
+            <Skeleton variant="rectangular" width="100%" height={8} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: ChapterModalProps) {
@@ -126,6 +161,11 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   const [chapterProgress, setChapterProgress] = useState<Record<string | number, ChapterProgress>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { bodyRef, count: skeletonCount } = useResponsiveChapterSkeletonCount({
+    rowMinHeight: 156,
+    gap: 10,
+    maxRows: 3,
+  })
 
   const currentIndex = progress?.current_index || 0
 
@@ -182,7 +222,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
 
   const renderUnits = useMemo(() => buildRenderUnits(groupBySection(chapters)), [chapters])
 
-  const handleSelectChapter = (chapter: Chapter) => {
+  const handleSelect = (chapter: Chapter) => {
     let startIndex = 0
     for (const currentChapter of chapters) {
       if (currentChapter.id === chapter.id) break
@@ -196,7 +236,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     if (currentChapterId !== null) {
       const chapter = chapters.find(item => item.id === currentChapterId)
       if (chapter) {
-        handleSelectChapter(chapter)
+        handleSelect(chapter)
         return
       }
     }
@@ -219,21 +259,21 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     const hasModeData = modeBadges.length > 0
     const allCompleted = hasModeData && modeBadges.every(item => item.record.is_completed)
     const isCompleted = allCompleted || (!hasModeData && !!progressRecord?.is_completed)
-
-    const getAccuracyClass = (accuracy: number) =>
-      accuracy >= 80 ? 'mode-badge-high' : accuracy >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
-
     const chapterProgressPercent = hasModeData
-      ? (progressRecord?.accuracy ?? 0)
-      : (chapter.word_count
+      ? progressRecord?.accuracy ?? 0
+      : chapter.word_count
         ? Math.round(((progressRecord?.words_learned ?? 0) / chapter.word_count) * 100)
-        : 0)
+        : 0
+
+    const getAccuracyClass = (accuracy: number) => (
+      accuracy >= 80 ? 'mode-badge-high' : accuracy >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
+    )
 
     return (
       <div
         key={chapter.id}
         className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : ''}`}
-        onClick={() => handleSelectChapter(chapter)}
+        onClick={() => handleSelect(chapter)}
       >
         <div className="chapter-card-name">{getCardLabel(chapter, isInSection)}</div>
 
@@ -254,9 +294,9 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         <div className="chapter-card-footer">
           <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
           {isCompleted ? (
-            <span className="chapter-status-done">已完成 {progressRecord?.accuracy}%</span>
+            <span className="chapter-status-done">已完成 {progressRecord?.accuracy ?? 0}%</span>
           ) : hasStarted ? (
-            <span className="chapter-status-progress">{progressRecord?.accuracy}%</span>
+            <span className="chapter-status-progress">{progressRecord?.accuracy ?? 0}%</span>
           ) : (
             <span className="chapter-status-todo">未开始</span>
           )}
@@ -297,38 +337,37 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
           </div>
         </div>
 
-        <Scrollbar className="chapter-modal-body">
-          {loading ? (
-            <div className="chapter-loading loading-state">
-              <div className="loading-spinner" />
-              <span>加载章节...</span>
-            </div>
-          ) : error ? (
-            <div className="chapter-error"><p>{error}</p></div>
-          ) : (
-            <div className="chapter-units">
-              {renderUnits.map((unit, index) =>
-                unit.kind === 'flat' ? (
-                  <div key={`flat-${index}`} className="chapter-grid">
-                    {unit.chapters.map(chapter => renderCard(chapter, false))}
-                  </div>
-                ) : (
-                  <div key={unit.label} className="chapter-section">
-                    <div className="chapter-section-label">
-                      <span className="chapter-section-name">{unit.label}</span>
-                      <span className="chapter-section-meta">
-                        {unit.chapters.length} 节 · {unit.wordCount} 词
-                      </span>
+        <div className="chapter-modal-body" ref={bodyRef}>
+          <Scrollbar wrapClassName="chapter-modal-scroll-wrap">
+            {loading ? (
+              <ChapterModalSkeleton itemCount={skeletonCount} />
+            ) : error ? (
+              <div className="chapter-error chapter-loading--centered"><p>{error}</p></div>
+            ) : (
+              <div className="chapter-units">
+                {renderUnits.map((unit, index) =>
+                  unit.kind === 'flat' ? (
+                    <div key={`flat-${index}`} className="chapter-grid">
+                      {unit.chapters.map(chapter => renderCard(chapter, false))}
                     </div>
-                    <div className="chapter-grid">
-                      {unit.chapters.map(chapter => renderCard(chapter, true))}
+                  ) : (
+                    <div key={unit.label} className="chapter-section">
+                      <div className="chapter-section-label">
+                        <span className="chapter-section-name">{unit.label}</span>
+                        <span className="chapter-section-meta">
+                          {unit.chapters.length} 节 · {unit.wordCount} 词
+                        </span>
+                      </div>
+                      <div className="chapter-grid">
+                        {unit.chapters.map(chapter => renderCard(chapter, true))}
+                      </div>
                     </div>
-                  </div>
-                ),
-              )}
-            </div>
-          )}
-        </Scrollbar>
+                  ),
+                )}
+              </div>
+            )}
+          </Scrollbar>
+        </div>
       </div>
     </div>
   )

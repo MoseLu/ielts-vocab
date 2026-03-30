@@ -1,81 +1,80 @@
 /* ============================================================
    IELTS Vocab App - Master SCSS Entry Point
-   Import order: base -> layout -> components -> pages -> utils
+   Load order: base -> layout -> components -> pages -> utils
    ============================================================ */
 
 /* Base */
-@import './base.scss';
-@import './utils/mixins';
+@use './base.scss';
 
 /* Layout */
-@import './layout/app.scss';
-@import './layout/header-base.scss';
-@import './layout/header-selectors.scss';
+@use './layout/app.scss';
+@use './layout/header-base.scss';
+@use './layout/header-selectors.scss';
 
 /* Components */
-@import './components/scrollbar.scss';
-@import './components/dropdowns.scss';
-@import './components/toast.scss';
-@import './components/complete.scss';
-@import './components/settings.scss';
-@import './components/avatar.scss';
-@import './components/empty-state.scss';
-@import './components/popover.scss';
-@import './components/navigation.scss';
-@import './components/page.scss';
-@import './components/page-shell.scss';
+@use './components/scrollbar.scss';
+@use './components/dropdowns.scss';
+@use './components/toast.scss';
+@use './components/complete.scss';
+@use './components/settings.scss';
+@use './components/avatar.scss';
+@use './components/empty-state.scss';
+@use './components/popover.scss';
+@use './components/navigation.scss';
+@use './components/page.scss';
+@use './components/page-shell.scss';
 
 /* Pages: Auth */
-@import './pages/auth.scss';
-@import './pages/special-pages.scss';
+@use './pages/auth.scss';
+@use './pages/special-pages.scss';
 
 /* Pages: Home / Study Center */
-@import './pages/home-banner.scss';
-@import './pages/home-sections.scss';
-@import './pages/study-center.scss';
-@import './pages/chapter-modal.scss';
-@import './pages/plan-modal.scss';
-@import './pages/day-card.scss';
+@use './pages/home-banner.scss';
+@use './pages/home-sections.scss';
+@use './pages/study-center.scss';
+@use './pages/chapter-modal.scss';
+@use './pages/plan-modal.scss';
+@use './pages/day-card.scss';
 
 /* Pages: Practice */
-@import './pages/practice-layout.scss';
-@import './pages/practice-options.scss';
-@import './pages/practice-spelling.scss';
-@import './pages/practice-dictation.scss';
-@import './pages/practice-radio.scss';
-@import './pages/practice-quickmemory.scss';
-@import './pages/practice-complete.scss';
+@use './pages/practice-layout.scss';
+@use './pages/practice-options.scss';
+@use './pages/practice-spelling.scss';
+@use './pages/practice-dictation.scss';
+@use './pages/practice-radio.scss';
+@use './pages/practice-quickmemory.scss';
+@use './pages/practice-complete.scss';
 
 /* Pages: Vocab Book */
-@import './pages/vocab-filters.scss';
-@import './pages/vocab-cards.scss';
-@import './pages/vocab-book-grid.scss';
+@use './pages/vocab-filters.scss';
+@use './pages/vocab-cards.scss';
+@use './pages/vocab-book-grid.scss';
 
 /* Pages: Practice Word List + Control Bar */
-@import './pages/practice-wordlist.scss';
+@use './pages/practice-wordlist.scss';
 
 /* Pages: Errors */
-@import './pages/errors.scss';
+@use './pages/errors.scss';
 
 /* Pages: Stats */
-@import './pages/stats.scss';
+@use './pages/stats.scss';
 
 /* Pages: Profile */
-@import './pages/profile.scss';
+@use './pages/profile.scss';
 
 /* Pages: AI Chat */
-@import './pages/ai-chat.scss';
+@use './pages/ai-chat.scss';
 
 /* Pages: Vocab Test */
-@import './pages/vocab-test.scss';
+@use './pages/vocab-test.scss';
 
 /* Pages: Admin Dashboard */
-@import './pages/admin.scss';
+@use './pages/admin.scss';
 
 /* Pages: Learning Journal */
-@import './pages/journal.scss';
-@import './pages/journal-markdown.scss';
+@use './pages/journal.scss';
+@use './pages/journal-markdown.scss';
 
 /* Utils */
-@import './utils/utilities.scss';
-@import './utils/responsive.scss';
+@use './utils/utilities.scss';
+@use './utils/responsive.scss';

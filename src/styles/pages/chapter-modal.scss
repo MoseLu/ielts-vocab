@@ -108,6 +108,12 @@
     min-height: 0;
 }
 
+.chapter-modal-scroll-wrap {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
 .chapter-modal-body .el-scrollbar__wrap {
     padding: 10px;
     overscroll-behavior: contain;
@@ -321,8 +327,45 @@
     gap: 10px;
 }
 
+.chapter-loading--centered {
+    flex: 1;
+    min-height: 100%;
+    padding-block: 20px;
+}
+
 .chapter-error {
     color: var(--error);
+}
+
+.chapter-skeleton {
+    width: 100%;
+}
+
+.chapter-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    width: 100%;
+}
+
+.chapter-skeleton-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 156px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-elevated);
+    box-shadow: var(--shadow-soft);
+}
+
+.chapter-skeleton-tags,
+.chapter-skeleton-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 @media (max-width: 900px) {

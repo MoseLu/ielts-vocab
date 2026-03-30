@@ -1,15 +1,11 @@
-// ── Vocabulary Test Page ───────────────────────────────────────────────────────
-
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Word } from './practice/types'
 import { shuffleArray, playWordAudio } from './practice/utils'
-import { Loading } from './ui/Loading'
+import { PageSkeleton } from './ui'
 
 const TEST_WORD_COUNT = 20
 const LISTENING_BOOK_ID = 'ielts_listening_premium'
-
-// ── Types ────────────────────────────────────────────────────────────────────
 
 interface TestQuestion {
   word: Word
@@ -23,27 +19,22 @@ interface TestResult {
   wrongWords: Word[]
 }
 
-// ── Utils ───────────────────────────────────────────────────────────────────
-
 function playWord(word: string) {
   playWordAudio(word, {})
 }
 
 function generateTestOptions(correctWord: Word, allWords: Word[]): { text: string; correct: boolean }[] {
-  // Shuffle all words and pick 3 wrong ones
   const others = allWords.filter(w => w.word !== correctWord.word)
   const shuffled = shuffleArray(others).slice(0, 3)
   const wrongOptions = shuffled.map(w => w.definition)
 
-  // Build options array
   const options = [
     { text: correctWord.definition, correct: true },
-    ...wrongOptions.map(text => ({ text, correct: false }))
+    ...wrongOptions.map(text => ({ text, correct: false })),
   ]
+
   return shuffleArray(options)
 }
-
-// ── Result Screen ─────────────────────────────────────────────────────────────
 
 function ResultScreen({ result, onRestart, onBack }: { result: TestResult; onRestart: () => void; onBack: () => void }) {
   const pct = result.accuracy
@@ -55,10 +46,14 @@ function ResultScreen({ result, onRestart, onBack }: { result: TestResult; onRes
     <div className="vocab-test-result">
       <div className="result-ring-wrap">
         <svg width="130" height="130" viewBox="0 0 130 130">
-          <circle cx="65" cy="65" r="52" fill="none" stroke="var(--border)" strokeWidth="10"/>
+          <circle cx="65" cy="65" r="52" fill="none" stroke="var(--border)" strokeWidth="10" />
           <circle
-            cx="65" cy="65" r="52" fill="none"
-            className={ringToneClass} strokeWidth="10"
+            cx="65"
+            cy="65"
+            r="52"
+            fill="none"
+            className={ringToneClass}
+            strokeWidth="10"
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
             strokeLinecap="round"
@@ -72,10 +67,10 @@ function ResultScreen({ result, onRestart, onBack }: { result: TestResult; onRes
       </div>
 
       <div className="result-msg">
-        {pct >= 90 ? '🎉 太棒了！词汇量惊人！' :
-         pct >= 70 ? '👍 很不错，继续保持！' :
-         pct >= 50 ? '💪 还需努力，加油！' :
-         '📚 建议多听多读，积累词汇'}
+        {pct >= 90 ? '太棒了，词汇量很稳。' :
+         pct >= 70 ? '表现不错，继续保持。' :
+         pct >= 50 ? '还需要加强，继续练习。' :
+         '建议多听多读，继续积累词汇。'}
       </div>
 
       {result.wrongWords.length > 0 && (
@@ -98,8 +93,6 @@ function ResultScreen({ result, onRestart, onBack }: { result: TestResult; onRes
   )
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
-
 export default function VocabTestPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
@@ -113,7 +106,6 @@ export default function VocabTestPage() {
 
   const currentQ = questions[qIndex]
 
-  // Load words and generate test
   useEffect(() => {
     fetch(`/api/books/${LISTENING_BOOK_ID}/words?per_page=200`)
       .then(r => r.json())
@@ -121,16 +113,16 @@ export default function VocabTestPage() {
         const words: Word[] = data.words || []
         if (words.length < 4) {
           setError('词汇量不足，无法生成测试')
+          setLoading(false)
           return
         }
         const picked = shuffleArray(words).slice(0, TEST_WORD_COUNT)
         const testQs: TestQuestion[] = picked.map(w => ({
           word: w,
-          options: generateTestOptions(w, words)
+          options: generateTestOptions(w, words),
         }))
         setQuestions(testQs)
         setLoading(false)
-        // Auto-play first word after short delay
         setTimeout(() => playWord(testQs[0].word.word), 600)
       })
       .catch(() => {
@@ -139,15 +131,14 @@ export default function VocabTestPage() {
       })
   }, [])
 
-  // Auto-play word when question changes
   useEffect(() => {
     if (currentQ && !showResult) {
       setTimeout(() => playWord(currentQ.word.word), 300)
     }
-  }, [qIndex, showResult])
+  }, [qIndex, showResult, currentQ])
 
   const handleOptionSelect = useCallback((optIdx: number) => {
-    if (selected !== null) return // already answered
+    if (selected !== null) return
     setSelected(optIdx)
     const correct = currentQ.options[optIdx].correct
     if (correct) {
@@ -173,7 +164,7 @@ export default function VocabTestPage() {
     setWrongWords([])
     setShowResult(false)
     setLoading(true)
-    // Re-generate
+
     fetch(`/api/books/${LISTENING_BOOK_ID}/words?per_page=200`)
       .then(r => r.json())
       .then((data: { words?: Word[] }) => {
@@ -181,7 +172,7 @@ export default function VocabTestPage() {
         const picked = shuffleArray(words).slice(0, TEST_WORD_COUNT)
         const testQs: TestQuestion[] = picked.map(w => ({
           word: w,
-          options: generateTestOptions(w, words)
+          options: generateTestOptions(w, words),
         }))
         setQuestions(testQs)
         setLoading(false)
@@ -192,7 +183,7 @@ export default function VocabTestPage() {
   if (loading) {
     return (
       <div className="vocab-test">
-        <Loading text="Loading vocabulary..." page />
+        <PageSkeleton variant="quiz" />
       </div>
     )
   }
@@ -215,13 +206,17 @@ export default function VocabTestPage() {
         <div className="vocab-test-header">
           <button className="vocab-test-back" onClick={() => navigate(-1)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="15 18 9 12 15 6"/>
+              <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <span className="vocab-test-title">词汇量测试</span>
         </div>
         <ResultScreen
-          result={{ correct: correctCount, total: questions.length, accuracy, wrongWords }}
+          result={{
+            correct: correctCount,
+            total: questions.length,
+            accuracy,
+            wrongWords,
+          }}
           onRestart={handleRestart}
           onBack={() => navigate(-1)}
         />
@@ -229,81 +224,67 @@ export default function VocabTestPage() {
     )
   }
 
-  const progress = (qIndex + 1) / questions.length
-  const isCorrect = selected !== null ? currentQ.options[selected].correct : null
-
   return (
     <div className="vocab-test">
-      {/* Header */}
       <div className="vocab-test-header">
         <button className="vocab-test-back" onClick={() => navigate(-1)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="15 18 9 12 15 6"/>
+            <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <span className="vocab-test-title">词汇量测试</span>
-        <div className="vocab-test-score">
-          <span className="score-correct">{correctCount}</span>
-          <span className="score-sep">/</span>
-          <span className="score-total">{qIndex}</span>
+        <div className="vocab-test-progress">
+          {qIndex + 1} / {questions.length}
         </div>
       </div>
 
-      {/* Progress bar */}
-      <progress className="vocab-test-progress" value={progress * 100} max={100} />
-
-      {/* Score badge */}
-      <div className="vocab-test-badge">
-        <div className="vocab-test-badge-num">{qIndex + 1}</div>
-        <div className="vocab-test-badge-label">/{questions.length} 题</div>
-      </div>
-
-      {/* Play button */}
-      <div className="vocab-test-play-area">
-        <button className="vocab-test-play-btn" onClick={() => playWord(currentQ.word.word)}>
-          <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
-            <polygon points="5 3 19 12 5 21 5 3"/>
+      <div className="vocab-test-card">
+        <button className="vocab-test-audio" onClick={() => playWord(currentQ.word.word)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
           </svg>
         </button>
-        <div className="vocab-test-hint">点击播放发音</div>
-      </div>
 
-      {/* Options */}
-      <div className="vocab-test-options">
-        {currentQ.options.map((opt, idx) => {
-          let cls = 'vocab-test-opt'
-          if (selected !== null) {
-            if (idx === currentQ.options.findIndex(o => o.correct)) cls += ' correct'
-            else if (idx === selected) cls += ' wrong'
-          }
-          return (
-            <button
-              key={idx}
-              className={cls}
-              onClick={() => handleOptionSelect(idx)}
-              disabled={selected !== null}
-            >
-              <span className="opt-indicator">{String.fromCharCode(65 + idx)}</span>
-              <span className="opt-text">{opt.text}</span>
-            </button>
-          )
-        })}
-      </div>
+        <div className="vocab-test-options">
+          {currentQ.options.map((option, index) => {
+            const isSelected = selected === index
+            const isCorrect = option.correct
+            const statusClass = selected === null
+              ? ''
+              : isCorrect
+                ? ' correct'
+                : isSelected
+                  ? ' wrong'
+                  : ''
 
-      {/* Feedback + Next */}
-      {selected !== null && (
-        <div className="vocab-test-feedback">
-          <div className={`feedback-text ${isCorrect ? 'correct' : 'wrong'}`}>
-            {isCorrect ? '✓ 正确！' : `✗ 正确答案是：${currentQ.options.find(o => o.correct)?.text}`}
-          </div>
-          <button className="vocab-test-next-btn" onClick={handleNext}>
+            return (
+              <button
+                key={`${currentQ.word.word}-${option.text}`}
+                className={`vocab-test-option${statusClass}`}
+                onClick={() => handleOptionSelect(index)}
+                disabled={selected !== null}
+              >
+                <span className="vocab-test-option-index">{index + 1}</span>
+                <span>{option.text}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="vocab-test-actions">
+          <button className="vocab-test-secondary" onClick={() => playWord(currentQ.word.word)}>
+            再听一遍
+          </button>
+          <button
+            className="vocab-test-primary"
+            onClick={handleNext}
+            disabled={selected === null}
+          >
             {qIndex + 1 >= questions.length ? '查看结果' : '下一题'}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
           </button>
         </div>
-      )}
+      </div>
     </div>
   )
 }

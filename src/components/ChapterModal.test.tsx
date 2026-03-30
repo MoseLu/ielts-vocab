@@ -18,13 +18,34 @@ vi.mock('../lib', async () => {
 })
 
 vi.mock('./ui/Scrollbar', () => ({
-  Scrollbar: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-    <div className={className}>{children}</div>
+  Scrollbar: ({
+    children,
+    className,
+    wrapClassName,
+  }: {
+    children: React.ReactNode
+    className?: string
+    wrapClassName?: string
+  }) => (
+    <div className={className}>
+      <div className={wrapClassName}>{children}</div>
+    </div>
   ),
 }))
 
 describe('ChapterModal', () => {
   beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1440,
+    })
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      writable: true,
+      value: 900,
+    })
+
     apiFetchMock.mockReset()
     vi.mocked(global.fetch).mockReset()
   })
@@ -68,5 +89,24 @@ describe('ChapterModal', () => {
     await waitFor(() => {
       expect(container.querySelector('.chapter-card-count')?.textContent).toContain('30')
     })
+  })
+
+  it('uses a full-height skeleton inside the modal body while chapters are loading', () => {
+    vi.mocked(global.fetch).mockImplementation(() => new Promise(() => {}))
+
+    const { container } = render(
+      <ChapterModal
+        book={{ id: 'book-1', title: 'Test Book', word_count: 30 }}
+        progress={{ current_index: 12 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    expect(container.querySelector('.chapter-modal-scroll-wrap')).not.toBeNull()
+    expect(container.querySelector('.chapter-skeleton')).not.toBeNull()
+    expect(container.querySelector('.chapter-loading--centered')).not.toBeNull()
+    expect(container.querySelectorAll('.chapter-skeleton-card')).toHaveLength(12)
+    expect(container.querySelector('.loading-spinner')).toBeNull()
   })
 })

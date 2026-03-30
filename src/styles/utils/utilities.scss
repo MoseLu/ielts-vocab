@@ -1,4 +1,4 @@
-/* Utils: Loading Spinner, Utility Classes, Animations */
+﻿/* Utils: Loading Spinner, Utility Classes, Animations */
 
 /* Loading */
 .loading {
@@ -29,6 +29,11 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+@keyframes skeletonShimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: -100% 50%; }
 }
 
 /* Utility classes */
@@ -123,6 +128,238 @@
     color: var(--text-secondary);
 }
 
+.micro-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: var(--text-secondary);
+}
+
+.micro-loading--accent {
+    color: var(--accent);
+}
+
+.micro-loading__spinner {
+    flex-shrink: 0;
+}
+
+.micro-loading__text {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.ui-skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--surface-elevated) 92%, var(--text-primary) 8%) 0%,
+        color-mix(in srgb, var(--surface-elevated) 98%, white 2%) 50%,
+        color-mix(in srgb, var(--surface-elevated) 92%, var(--text-primary) 8%) 100%
+    );
+    background-size: 220% 100%;
+    animation: skeletonShimmer 1.35s ease-in-out infinite;
+}
+
+.ui-skeleton--text {
+    height: 14px;
+    border-radius: 999px;
+}
+
+.ui-skeleton--circular {
+    border-radius: 999px;
+}
+
+.ui-skeleton--rectangular {
+    border-radius: 12px;
+}
+
+.page-skeleton {
+    width: 100%;
+    min-height: calc(100vh - var(--header-height, 0px) - 20px);
+    padding: 0;
+}
+
+.page-skeleton-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    min-height: 100%;
+}
+
+.page-skeleton-intro {
+    display: flex;
+    align-items: center;
+}
+
+.page-skeleton-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.page-skeleton-grid--books {
+    grid-template-columns: repeat(auto-fit, minmax(var(--page-skeleton-book-min-width, 260px), 1fr));
+}
+
+.page-skeleton-grid--metrics {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.page-skeleton-grid--stats-panels {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: stretch;
+}
+
+.page-skeleton-grid--admin-panels {
+    grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 0.8fr));
+    align-items: stretch;
+}
+
+.page-skeleton-grid--journal {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    align-items: stretch;
+}
+
+.page-skeleton-grid--practice-options,
+.page-skeleton-grid--quiz-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page-skeleton-card,
+.page-skeleton-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-elevated);
+    box-shadow: var(--shadow-soft);
+}
+
+.page-skeleton-card--book {
+    min-height: 210px;
+}
+
+.page-skeleton-card--metric {
+    min-height: 112px;
+    justify-content: center;
+}
+
+.page-skeleton-card--option {
+    min-height: 120px;
+}
+
+.page-skeleton-panel--wide {
+    min-height: 340px;
+}
+
+.page-skeleton-panel--sidebar {
+    min-height: 560px;
+}
+
+.page-skeleton-panel--document {
+    min-height: 560px;
+}
+
+.page-skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-skeleton-row--spread {
+    justify-content: space-between;
+}
+
+.page-skeleton-row--book-head {
+    align-items: flex-start;
+}
+
+.page-skeleton-row--journal-topbar {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.page-skeleton-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.page-skeleton-stack--book-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.page-skeleton-tabs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-skeleton-chart {
+    min-height: 220px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 96%, transparent), color-mix(in srgb, var(--surface-base) 94%, transparent));
+}
+
+.page-skeleton-chart--donut {
+    min-height: 260px;
+}
+
+.page-skeleton-table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.page-skeleton-practice,
+.page-skeleton-quiz {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.page-skeleton-practice-head,
+.page-skeleton-practice-stage,
+.page-skeleton-quiz-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-elevated);
+    box-shadow: var(--shadow-soft);
+}
+
+.page-skeleton-practice-stage {
+    min-height: 220px;
+    justify-content: center;
+}
+
+.page-skeleton-quiz-card {
+    min-height: 180px;
+    justify-content: center;
+}
+
+.page-skeleton-sidebar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
+    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+}
+
 .ui-surface {
     background: var(--surface-base);
     border: 1px solid var(--border-strong);
@@ -152,4 +389,33 @@ svg, svg * {
 .day-card,
 .settings-tab {
     transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+@media (max-width: 900px) {
+    .page-skeleton-grid--stats-panels,
+    .page-skeleton-grid--admin-panels,
+    .page-skeleton-grid--journal {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-skeleton-grid--books,
+    .page-skeleton-grid--metrics,
+    .page-skeleton-grid--practice-options,
+    .page-skeleton-grid--quiz-options {
+        grid-template-columns: 1fr;
+    }
+
+    .page-skeleton-row--journal-topbar {
+        align-items: stretch;
+    }
+
+    .page-skeleton-tabs {
+        width: 100%;
+    }
+
+    .page-skeleton-tabs > .ui-skeleton {
+        flex: 1;
+    }
 }

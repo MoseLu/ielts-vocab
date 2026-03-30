@@ -1,5 +1,7 @@
 /* Page: Vocab book grid and filter surface */
 
+@use '../utils/mixins' as *;
+
 .vocab-book-page {
     gap: 10px;
     padding: var(--page-gutter);
@@ -18,18 +20,18 @@
 
 .vb-filters {
     width: 100%;
-    padding: 10px;
-    background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
-    border: 1px solid var(--surface-border-strong);
-    border-radius: 26px;
-    box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(14px);
+    padding: 2px 0 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 .vb-filter-left {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
 }
 
@@ -37,34 +39,60 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 14px 24px;
     width: 100%;
 }
 
 .vb-filter-btn {
-    @include control-button(36px, 8px 14px, 999px, 1px solid transparent, rgba(255, 255, 255, 0.72), var(--text-secondary), 14px, 600);
+    position: relative;
+    @include control-button(0, 0, 0, none, transparent, var(--text-secondary), 15px, 500);
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    flex: 1 1 0;
-    min-width: 0;
-    transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+    justify-content: flex-start;
+    min-height: auto;
+    padding: 0 0 10px;
+    border-radius: 0;
+    transition: color var(--transition-fast), opacity var(--transition-fast);
     white-space: nowrap;
+}
+
+.vb-filter-row--compact {
+    justify-content: flex-start;
+}
+
+.vb-filter-btn--compact {
+    flex: 0 0 auto;
+    min-width: max-content;
+}
+
+.vb-filter-btn::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 20px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--accent);
+    opacity: 0;
+    transform: scaleX(0.2);
+    transform-origin: left center;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
 .vb-filter-btn:hover {
     color: var(--accent);
-    background: rgba(var(--accent-rgb), 0.08);
-    border-color: rgba(var(--accent-rgb), 0.14);
-    transform: translateY(-1px);
+    opacity: 1;
 }
 
 .vb-filter-btn.active {
     color: var(--accent);
     font-weight: 700;
-    background: color-mix(in srgb, var(--accent) 12%, white);
-    border-color: rgba(var(--accent-rgb), 0.18);
-    box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.08);
+}
+
+.vb-filter-btn.active::after {
+    opacity: 1;
+    transform: scaleX(1);
 }
 
 .vb-main {
@@ -221,7 +249,7 @@
 
 @media (max-width: 900px) {
     .vb-filters {
-        padding: 10px;
+        padding: 2px 0 0;
     }
 }
 

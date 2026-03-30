@@ -1,4 +1,6 @@
-/* Page: Study center dashboard */
+﻿/* Page: Study center dashboard */
+
+@use '../utils/mixins' as *;
 
 .study-center-page {
     background: transparent;
@@ -6,98 +8,6 @@
 
 .study-center-page > .page-content {
     @include page-content-fill(var(--page-section-gap));
-}
-
-.study-banner {
-    @include panel-surface(var(--surface-base), 1px solid rgba(var(--accent-rgb), 0.14), 10px, var(--shadow-soft));
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 10px;
-}
-
-.study-banner-left {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    min-width: 0;
-}
-
-.study-banner-badge {
-    @include pill-badge(30px, 7px 12px, 999px, rgba(var(--accent-rgb), 0.1), var(--accent), 12px, 700);
-    gap: 8px;
-    letter-spacing: 0.04em;
-}
-
-.study-banner-badge svg {
-    width: 14px;
-    height: 14px;
-}
-
-.study-banner-text h2 {
-    font-size: clamp(1.75rem, 3vw, 2.5rem);
-    margin: 0;
-}
-
-.study-banner-text p {
-    font-size: 15px;
-    line-height: 1.65;
-    margin-top: 8px;
-    max-width: 640px;
-}
-
-.study-progress-ring-wrap {
-    position: relative;
-    width: 112px;
-    height: 112px;
-    flex-shrink: 0;
-}
-
-.study-progress-ring-wrap svg {
-    width: 112px;
-    height: 112px;
-    transform: rotate(-90deg);
-}
-
-.study-progress-ring-bg {
-    fill: none;
-    stroke: var(--chart-grid);
-    stroke-width: 5;
-}
-
-.study-progress-ring-fill {
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: 5;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 0.6s ease;
-}
-
-.study-progress-ring-label {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.study-progress-ring-pct {
-    font-size: 26px;
-    font-weight: 800;
-    color: var(--text-primary);
-    line-height: 1;
-}
-
-.study-progress-ring-sub {
-    margin-top: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
 }
 
 .study-center-grid {
@@ -215,6 +125,20 @@
     @include pill-badge(24px, 4px 8px, 999px, rgba(var(--accent-rgb), 0.12), var(--accent), 11px, 700);
 }
 
+.study-book-state {
+    @include pill-badge(24px, 4px 8px, 999px, rgba(15, 23, 42, 0.08), var(--text-secondary), 11px, 700);
+}
+
+.study-book-state--active {
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent);
+}
+
+.study-book-state--complete {
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--success);
+}
+
 .study-book-progress-text {
     font-size: 13px;
     font-weight: 600;
@@ -264,57 +188,6 @@
 
 .study-book-status-complete {
     color: var(--success);
-}
-
-.study-book-card-cta {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    justify-content: flex-start;
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-    min-height: 210px;
-    box-shadow: var(--glow-accent);
-}
-
-.study-book-card-cta:hover {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
-}
-
-.study-book-card-cta::before {
-    display: none;
-}
-
-.study-cta-icon {
-    width: 58px;
-    height: 58px;
-    background: rgba(255, 255, 255, 0.16);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.study-cta-icon svg {
-    width: 26px;
-    height: 26px;
-    color: white;
-}
-
-.study-cta-title {
-    font-size: 18px;
-    font-weight: 800;
-    color: white;
-}
-
-.study-cta-subtitle {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.82);
-    margin-top: 6px;
 }
 
 .study-book-card-review {
@@ -409,29 +282,6 @@
 .study-add-card span {
     font-size: 15px;
     font-weight: 700;
-}
-
-@media (max-width: 900px) {
-    .study-banner {
-        padding: 22px;
-    }
-}
-
-@media (max-width: 700px) {
-    .study-banner {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .study-progress-ring-wrap {
-        width: 96px;
-        height: 96px;
-    }
-
-    .study-progress-ring-wrap svg {
-        width: 96px;
-        height: 96px;
-    }
 }
 
 @media (max-width: 640px) {
