@@ -6,6 +6,8 @@ import {
   countPhoneticSyllables,
   syllabifyWord,
   generateOptions,
+  playWordAudio,
+  stopAudio,
 } from './utils'
 
 // ── shuffleArray ─────────────────────────────────────────────────────────────
@@ -157,5 +159,55 @@ describe('generateOptions', () => {
     const { options } = generateOptions(words[0], words)
     const defs = options.map(o => o.definition)
     expect(new Set(defs).size).toBe(defs.length)
+  })
+})
+
+describe('playWordAudio', () => {
+  it('falls back to direct audio URLs without hitting missing cache endpoints or blob URLs', () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('api.dictionaryapi.dev')) {
+        return Promise.resolve(
+          new Response(JSON.stringify([]), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+      return Promise.resolve(new Response('', { status: 404 }))
+    })
+    const createdAudioSources: string[] = []
+
+    class TestAudio {
+      src = ''
+      volume = 1
+      playbackRate = 1
+      currentTime = 0
+      duration = 0
+      readyState = 4
+      onended: (() => void) | null = null
+      onerror: (() => void) | null = null
+      load = vi.fn()
+      pause = vi.fn()
+      addEventListener = vi.fn()
+      canPlayType = vi.fn(() => '')
+      play = vi.fn().mockResolvedValue(undefined)
+
+      constructor(src = '') {
+        this.src = src
+        createdAudioSources.push(src)
+      }
+    }
+
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
+    Object.defineProperty(globalThis, 'Audio', { value: TestAudio as unknown as typeof Audio, writable: true })
+
+    playWordAudio('global', { playbackSpeed: '1', volume: '100' })
+
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('dict.youdao.com'))).toBe(false)
+    expect(createdAudioSources.some(src => src.includes('/api/tts/word-audio'))).toBe(false)
+    expect(createdAudioSources.some(src => src.startsWith('blob:'))).toBe(false)
+
+    stopAudio()
   })
 })

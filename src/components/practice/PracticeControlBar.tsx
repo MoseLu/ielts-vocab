@@ -1,17 +1,15 @@
-// ── Practice Control Bar Component ──────────────────────────────────────────────
-
 import React from 'react'
 import Popover from '../ui/Popover'
 import { Scrollbar } from '../ui/Scrollbar'
-import type { PracticeControlBarProps, PracticeMode, RadioQuickSettings } from './types'
+import type { PracticeControlBarProps, PracticeMode } from './types'
 
 const modeNames: Record<PracticeMode, string> = {
-  'smart': '智能模式',
-  'listening': '听音选义',
-  'meaning': '看词选义',
-  'dictation': '听写模式',
-  'radio': '随身听',
-  'quickmemory': '快速记忆',
+  smart: '智能模式',
+  listening: '听音选义',
+  meaning: '看词选义',
+  dictation: '听写模式',
+  radio: '随身听',
+  quickmemory: '快速记忆',
 }
 
 const modeList: PracticeMode[] = ['smart', 'quickmemory', 'listening', 'meaning', 'dictation', 'radio']
@@ -36,9 +34,7 @@ function RadioQuickControl<T extends string | boolean>({
       placement="bottom"
       offset={10}
       panelClassName="popover-radio-panel"
-      trigger={
-        <button className="radio-quick-btn">{label}</button>
-      }
+      trigger={<button className="radio-quick-btn">{label}</button>}
     >
       {options.map(opt => (
         <button
@@ -76,16 +72,29 @@ export default function PracticeControlBar({
 }: PracticeControlBarProps) {
   return (
     <div className="practice-ctrl-bar">
-      {/* Context label for error mode */}
-      {errorMode ? (
-        <div className="practice-ctx-label">
-          错词复习
-          <span className="practice-ctrl-count">{vocabularyLength}词</span>
-        </div>
-      ) : null}
+      <button
+        type="button"
+        className="practice-ctrl-brand"
+        onClick={() => onNavigate('/plan')}
+        title="返回学习中心"
+      >
+        <img
+          src="/images/logo.png"
+          alt="Logo"
+          className="practice-ctrl-brand-logo"
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+        />
+        <span className="practice-ctrl-brand-text">雅思冲刺</span>
+      </button>
 
       <div className="practice-ctrl-right">
-        {/* ── Chapter/day selector — Popover with auto-flip ── */}
+        {errorMode ? (
+          <div className="practice-ctx-label">
+            错词复习
+            <span className="practice-ctrl-count">{vocabularyLength}词</span>
+          </div>
+        ) : null}
+
         {!errorMode && (
           <Popover
             placement="bottom"
@@ -132,7 +141,6 @@ export default function PracticeControlBar({
           </Popover>
         )}
 
-        {/* ── Radio mode quick controls ── */}
         {mode === 'radio' && radioQuickSettings && onRadioSettingChange && (
           <>
             <RadioQuickControl<string>
@@ -148,10 +156,10 @@ export default function PracticeControlBar({
               onChange={v => onRadioSettingChange('playbackCount', v)}
             />
             <RadioQuickControl<boolean>
-              label={radioQuickSettings.loopMode ? '连听' : '单次'}
+              label={radioQuickSettings.loopMode ? '循环' : '单次'}
               value={radioQuickSettings.loopMode}
               options={[
-                { value: true, label: '连听' },
+                { value: true, label: '循环' },
                 { value: false, label: '单次' },
               ]}
               onChange={v => onRadioSettingChange('loopMode', v)}
@@ -165,7 +173,6 @@ export default function PracticeControlBar({
           </>
         )}
 
-        {/* ── Mode switcher — Popover with auto-flip ── */}
         <Popover
           placement="bottom-end"
           offset={10}
@@ -191,7 +198,6 @@ export default function PracticeControlBar({
           ))}
         </Popover>
 
-        {/* ── Word list toggle ── */}
         <button
           className={`practice-ctrl-icon-btn ${showWordList ? 'active' : ''}`}
           onClick={onWordListToggle}
@@ -204,7 +210,6 @@ export default function PracticeControlBar({
           </svg>
         </button>
 
-        {/* ── Settings ── */}
         <button
           className={`practice-ctrl-icon-btn ${showPracticeSettings ? 'active' : ''}`}
           onClick={onSettingsToggle}
@@ -216,15 +221,14 @@ export default function PracticeControlBar({
           </svg>
         </button>
 
-        {/* ── Pause ── */}
         <button
           className="practice-ctrl-icon-btn"
           onClick={() => onPause?.()}
           title="暂停"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-            <rect x="5" y="3" width="4" height="18" rx="1.5"/>
-            <rect x="15" y="3" width="4" height="18" rx="1.5"/>
+            <rect x="5" y="3" width="4" height="18" rx="1.5" />
+            <rect x="15" y="3" width="4" height="18" rx="1.5" />
           </svg>
         </button>
       </div>

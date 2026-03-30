@@ -9,6 +9,15 @@
     display: block;
 }
 
+.practice-session-layout {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+}
+
 /* Practice Container */
 .practice-container {
     max-width: 680px;
@@ -77,11 +86,6 @@
   background: var(--accent);
     border-radius: var(--radius-full);
     transition: width 0.3s ease;
-}
-
-/* Mode Tabs (hidden, replaced by dropdown) */
-.mode-tabs {
-    display: none;
 }
 
 /* Stats Row */

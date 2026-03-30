@@ -386,7 +386,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       return
     }
 
-    if (!currentDay) { navigate('/'); return }
+    if (!currentDay) { navigate('/plan'); return }
     fetch(buildApiUrl(`/api/vocabulary/day/${currentDay}`))
       .then(res => res.json())
       .then(async (data: { vocabulary?: Word[]; words?: Word[] }) => {
@@ -656,7 +656,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       })
       // Sync smart stats to backend at session end
       syncSmartStatsToBackend()
-      navigate('/')
+      navigate('/plan')
     } else {
       setQueueIndex(prev => prev + 1)
     }
@@ -756,20 +756,26 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Loading state
   if (!vocabulary.length) {
-    return <Loading text="Loading vocabulary..." page />
+    return (
+      <div className="practice-session-layout">
+        <Loading text="Loading vocabulary..." page />
+      </div>
+    )
   }
 
   // Completed state (fallback — normally goNext navigates away before this renders)
   if (!currentWord) {
     return (
-      <div className="practice-complete">
+      <div className="practice-session-layout">
+        <div className="practice-complete">
         <div className="complete-emoji">🎉</div>
         <h2>{errorMode ? '错词复习完成！' : bookId ? '本章完成！' : `Day ${currentDay} 完成！`}</h2>
         <div className="complete-stats-row">
           <span className="stat-correct">✓ 正确 {correctCount}</span>
           <span className="stat-wrong">✗ 错误 {wrongCount}</span>
         </div>
-        <button className="complete-btn" onClick={() => navigate('/')}>返回主页</button>
+        <button className="complete-btn" onClick={() => navigate('/plan')}>返回主页</button>
+        </div>
       </div>
     )
   }
@@ -810,7 +816,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           <button className="practice-pause-resume" onClick={() => setIsPaused(false)}>
             继续练习
           </button>
-          <button className="practice-pause-exit" onClick={() => navigate('/')}>
+          <button className="practice-pause-exit" onClick={() => navigate('/plan')}>
             退出到主页
           </button>
         </div>
@@ -821,7 +827,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Render different modes
   if (mode === 'radio') {
     return (
-      <>
+      <div className="practice-session-layout">
         <PracticeControlBar
           mode={mode}
           currentDay={currentDay}
@@ -872,13 +878,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onProgressChange={handleRadioProgressChange}
         />
         {pauseOverlay}
-      </>
+      </div>
     )
   }
 
   if (mode === 'quickmemory') {
     return (
-      <>
+      <div className="practice-session-layout">
         <PracticeControlBar
           mode={mode}
           currentDay={currentDay}
@@ -913,13 +919,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onWrongWord={saveWrongWord}
         />
         {pauseOverlay}
-      </>
+      </div>
     )
   }
 
   if (mode === 'dictation') {
     return (
-      <>
+      <div className="practice-session-layout">
         <PracticeControlBar
           mode={mode}
           currentDay={currentDay}
@@ -969,13 +975,13 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onPlayWord={playWord}
         />
         {pauseOverlay}
-      </>
+      </div>
     )
   }
 
   // Listening / Meaning / Smart modes
   return (
-    <>
+    <div className="practice-session-layout">
       <PracticeControlBar
         mode={mode}
         currentDay={currentDay}
@@ -1033,7 +1039,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         onPlayWord={playWord}
       />
       {pauseOverlay}
-    </>
+    </div>
   )
 }
 

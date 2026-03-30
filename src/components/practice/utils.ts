@@ -258,6 +258,8 @@ let _htmlAudioWarmed = false
 // through, proving the audio hardware is initialised.  Created on the first
 // playWordAudio() call (requires prior user interaction for autoplay to work).
 let _htmlAudioWarmupPromise: Promise<void> | null = null
+const SILENT_WAV_DATA_URI =
+  'data:audio/wav;base64,UklGRlYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YTIAAACA'
 
 /**
  * Play a 100 ms silent WAV through HTMLAudioElement to initialise the browser's
@@ -268,26 +270,18 @@ function _warmupHtmlAudio(): Promise<void> {
   if (_htmlAudioWarmupPromise) return _htmlAudioWarmupPromise
   _htmlAudioWarmupPromise = new Promise<void>((resolve) => {
     try {
-      // Build a minimal valid WAV in memory: 44-byte header + 100 ms silence.
-      const sampleRate = 22050
-      const numSamples = (sampleRate * 0.1) | 0
-      const buf = new ArrayBuffer(44 + numSamples * 2)
-      const v = new DataView(buf)
-      const ws = (o: number, s: string) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)) }
-      ws(0, 'RIFF');  v.setUint32(4, 36 + numSamples * 2, true)
-      ws(8, 'WAVE');  ws(12, 'fmt ')
-      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true)
-      v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true)
-      v.setUint16(32, 2, true);  v.setUint16(34, 16, true)
-      ws(36, 'data'); v.setUint32(40, numSamples * 2, true)
-      const blob = new Blob([buf], { type: 'audio/wav' })
-      const url  = URL.createObjectURL(blob)
-      const wa   = new Audio(url)
+      const wa = new Audio(SILENT_WAV_DATA_URI)
       wa.volume  = 0
-      const done = () => { try { URL.revokeObjectURL(url) } catch { /**/ } _htmlAudioWarmed = true; resolve() }
+      let settled = false
+      const done = () => {
+        if (settled) return
+        settled = true
+        _htmlAudioWarmed = true
+        resolve()
+      }
       wa.onended = done
       wa.onerror = done
-      setTimeout(done, 500) // fallback in case events don't fire
+      setTimeout(done, 1200)
       wa.play().catch(done)
     } catch {
       _htmlAudioWarmed = true
@@ -310,10 +304,6 @@ function _warmupHtmlAudio(): Promise<void> {
 
 // Cache of word → audio URL from Free Dictionary API (null = no recording found)
 const _audioUrlCache = new Map<string, string | null>()
-
-// Preloaded Youdao audio cache: word → fully-loaded ArrayBuffer
-// Ensures the first play is always complete (no partial audio).
-const _youdaoBufferCache = new Map<string, ArrayBuffer>()
 
 /**
  * Fetch a real pronunciation URL from dictionaryapi.dev (Wiktionary recordings).
@@ -361,14 +351,9 @@ async function fetchAudioUrl(word: string): Promise<string | null> {
  * Play word pronunciation.
  *
  * Priority:
- *  1. Wiktionary URL (cached)  → play immediately (complete file URL)
- *  2. Youdao buffer (cached)   → wait for load, then play (always complete)
- *  3. Youdao buffer (pending)  → abort pending, fetch new word's buffer, play
- *  4. Speech synthesis         → always complete
- *
- * Audio is NEVER streamed and played before full download. First Youdao play
- * of a new word may be slightly delayed while the buffer loads — this is
- * intentional to guarantee complete audio.
+ *  1. Wiktionary URL (cached)               → direct audio playback
+ *  2. Youdao direct audio URL              → direct audio playback
+ *  3. Speech synthesis                     → always available
  */
 export function playWordAudio(
   word: string,
@@ -407,7 +392,6 @@ export function playWordAudio(
         _warmupHtmlAudio().then(doPlay)
       }
 
-      // Check synchronously first — readyState may already be >= 2 for cached URLs
       if (audio.readyState >= 2) {
         start()
       } else {
@@ -419,20 +403,70 @@ export function playWordAudio(
     // Cached null → no Wiktionary recording. Skip to Youdao.
   }
 
-  // ── Youdao: always wait for full buffer before playing ───────────────────
-  _playYoudao(gen, word, key, volume, rate, onEnd)
+  // ── Same-origin cache, then Youdao direct URL, then TTS ──────────────────
+  _playFallbackAudio(gen, word, key, volume, rate, onEnd)
 
   // ── Background: prefetch Wiktionary URL for next time ────────────────────
   fetchAudioUrl(word)
 }
 
 /**
- * Play Youdao audio only after the buffer is fully loaded.
- * If the buffer is already cached → immediate play.
- * If fetching → waits for completion before playing.
- * Clears any pending fetch for a different word.
+ * Play a direct audio URL through HTMLAudioElement.
+ * Uses browser media loading instead of fetch so cross-origin audio can play
+ * without requiring the remote server to expose CORS headers.
  */
-function _playYoudao(
+function _playAudioUrl(
+  gen: number,
+  url: string,
+  volume: number,
+  rate: number,
+  onFailure: () => void,
+  onEnd?: () => void,
+): void {
+  const audio = new Audio(url)
+  audio.volume = volume
+  audio.playbackRate = rate
+  _currentAudio = audio
+
+  let settled = false
+
+  const fail = () => {
+    if (settled || _audioGeneration !== gen) return
+    settled = true
+    if (_currentAudio === audio) _currentAudio = null
+    onFailure()
+  }
+
+  audio.onerror = fail
+  audio.onended = () => {
+    if (settled || _audioGeneration !== gen) return
+    settled = true
+    if (onEnd) onEnd()
+  }
+
+  const start = () => {
+    if (settled || _audioGeneration !== gen) return
+    _warmupHtmlAudio().then(() => {
+      if (settled || _audioGeneration !== gen) return
+      audio.play().catch(fail)
+    })
+  }
+
+  if (audio.readyState >= 2) {
+    start()
+    return
+  }
+
+  if (typeof audio.addEventListener === 'function') {
+    audio.addEventListener('canplaythrough', start, { once: true })
+    audio.load()
+    return
+  }
+
+  start()
+}
+
+function _playFallbackAudio(
   gen: number,
   word: string,
   key: string,
@@ -440,70 +474,16 @@ function _playYoudao(
   rate: number,
   onEnd?: () => void,
 ): void {
-  // Discard result if a newer playWordAudio call has since started
-  const loadAndPlay = (buf: ArrayBuffer | null) => {
-    if (_audioGeneration !== gen) return
-    if (!buf) {
-      _speakWithSynthesis(gen, word, volume, rate, onEnd)
-      return
-    }
-    const blob = new Blob([buf], { type: 'audio/mp3' })
-    const blobUrl = URL.createObjectURL(blob)
-    const audio = new Audio(blobUrl)
-    audio.volume = volume
-    audio.playbackRate = rate
-    if (onEnd) audio.onended = () => onEnd()
-    _currentAudio = audio
+  const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(key)}&type=2`
 
-    // Blob data is already in memory — readyState may be >= 2 synchronously
-    // after load(). If not yet ready, wait for the event.
-    const doPlay = () => {
-      if (_audioGeneration !== gen) return
-      audio.play().catch(() => {
-        if (_audioGeneration !== gen) return
-        _currentAudio = null
-        if (onEnd) onEnd()
-      })
-    }
-    // Hardware is guaranteed warm by the time loadAndPlay is called (caller
-    // always awaits _warmupHtmlAudio before invoking loadAndPlay).
-    if (audio.readyState >= 2) {
-      doPlay()
-    } else {
-      audio.addEventListener('canplaythrough', doPlay, { once: true })
-      audio.load()
-    }
-  }
-
-  // Already cached → warmup (no-op if done) then play
-  if (_youdaoBufferCache.has(key)) {
-    _warmupHtmlAudio().then(() => {
-      if (_audioGeneration !== gen) return
-      loadAndPlay(_youdaoBufferCache.get(key)!)
-    })
-    return
-  }
-
-  // Not cached → start warmup AND network fetch concurrently so the hardware
-  // is ready by the time the buffer arrives (no extra perceived delay).
-  const warmup = _warmupHtmlAudio()
-  ;(async () => {
-    try {
-      const res = await fetch(
-        `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(key)}&type=2`,
-      )
-      await warmup  // ensure hardware is ready before decoding/playing
-      if (_audioGeneration !== gen) return
-      if (!res.ok) { loadAndPlay(null); return }
-      const buf = await res.arrayBuffer()
-      _youdaoBufferCache.set(key, buf)
-      loadAndPlay(buf)
-    } catch {
-      await warmup
-      if (_audioGeneration !== gen) return
-      loadAndPlay(null)
-    }
-  })()
+  _playAudioUrl(
+    gen,
+    youdaoUrl,
+    volume,
+    rate,
+    () => _speakWithSynthesis(gen, word, volume, rate, onEnd),
+    onEnd,
+  )
 }
 
 /**

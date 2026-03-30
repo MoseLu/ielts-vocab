@@ -16,6 +16,31 @@
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
 }
 
+.practice-ctrl-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 4px 6px 0;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.practice-ctrl-brand-logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.practice-ctrl-brand-text {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
 .practice-ctx-label {
     display: flex;
     align-items: center;
@@ -50,9 +75,10 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-shrink: 0;
+    flex-shrink: 1;
     flex-wrap: wrap;
     justify-content: flex-end;
+    margin-left: auto;
 }
 
 .practice-ctrl-icon-btn,
@@ -362,12 +388,20 @@
         padding: 10px 12px;
     }
 
+    .practice-ctrl-brand-text {
+        font-size: 14px;
+    }
+
     .practice-mode-label {
         display: none;
     }
 }
 
 @media (max-width: 480px) {
+    .practice-ctrl-brand-text {
+        display: none;
+    }
+
     .wordlist-panel {
         width: calc(100vw - 16px);
         right: 8px;

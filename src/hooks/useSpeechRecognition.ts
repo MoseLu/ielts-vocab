@@ -111,14 +111,12 @@ export function useSpeechRecognition({
     if (mountedRef.current) return
     mountedRef.current = true
 
-    console.log('[Speech] Initializing socket...')
 
     // Use relative path via Vite proxy; supports remote access (NAT traversal)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.host
     const speechUrl = `${protocol}//${host}`
 
-    console.log('[Speech] Connecting to:', speechUrl)
 
     const socket = io(`${speechUrl}/speech`, {
       transports: ['websocket'],  // 优先 WebSocket，减少轮询开销
@@ -131,34 +129,24 @@ export function useSpeechRecognition({
     })
 
     socket.on('connect', () => {
-      console.log('[Speech] Connected to server')
-      console.log('[Speech] Socket ID:', socket.id)
       setIsConnected(true)
     })
 
-    socket.on('disconnect', (reason: string) => {
-      console.log('[Speech] Disconnected:', reason)
+    socket.on('disconnect', (_reason: string) => {
       setIsConnected(false)
       setIsReady(false)
     })
 
     socket.on('connected', (data: ConnectedPayload) => {
-      console.log('[Speech] Server confirmed:', data)
       if (!data.api_configured) {
         callbacksRef.current.onError?.('API密钥未配置')
       }
     })
 
-    socket.on('recognition_started', (data: RecognitionStartedPayload) => {
-      console.log('[Speech] Recognition started:', data)
-      console.log('[Speech] Socket connected:', socketRef.current?.connected)
+    socket.on('recognition_started', (_data: RecognitionStartedPayload) => {
       setIsReady(true)
     })
 
-    // Catch all events for debugging
-    socket.onAny((eventName: string, ...args: unknown[]) => {
-      console.log('[Speech] Event received:', eventName, args)
-    })
 
     socket.on('partial_result', (data: PartialResultPayload) => {
       if (data.text) {
@@ -167,13 +155,11 @@ export function useSpeechRecognition({
     })
 
     socket.on('final_result', (data: FinalResultPayload) => {
-      console.log('[Speech] Final result received:', data)
       if (data.text) {
         callbacksRef.current.onResult?.(data.text)
       }
       // Auto-stop after final result if enabled
       if (autoStopRef.current && isRecordingRef.current) {
-        console.log('[Speech] Auto-stopping after final result')
         // Clear any existing timeout
         if (autoStopTimeoutRef.current) {
           clearTimeout(autoStopTimeoutRef.current)
@@ -188,7 +174,6 @@ export function useSpeechRecognition({
     })
 
     socket.on('speech_started', () => {
-      console.log('[Speech] VAD: Speech started')
       // Cancel any pending auto-stop if user starts speaking again
       if (autoStopTimeoutRef.current) {
         clearTimeout(autoStopTimeoutRef.current)
@@ -197,7 +182,6 @@ export function useSpeechRecognition({
     })
 
     socket.on('recognition_complete', () => {
-      console.log('[Speech] Recognition complete')
       setIsRecording(false)
       setIsReady(false)
       isRecordingRef.current = false
@@ -211,7 +195,6 @@ export function useSpeechRecognition({
     })
 
     socket.on('recognition_stopped', () => {
-      console.log('[Speech] Recognition stopped')
       setIsRecording(false)
       setIsReady(false)
       isRecordingRef.current = false
@@ -221,7 +204,6 @@ export function useSpeechRecognition({
 
     // Cleanup on unmount
     return () => {
-      console.log('[Speech] Cleaning up...')
       // Clear auto-stop timeout
       if (autoStopTimeoutRef.current) {
         clearTimeout(autoStopTimeoutRef.current)
@@ -312,7 +294,6 @@ export function useSpeechRecognition({
           }
           // Send as Uint8Array for proper binary transfer
           const uint8Data = new Uint8Array(pcmData.buffer)
-          console.log('[Speech] Sending audio chunk:', uint8Data.byteLength, 'bytes')
           socketRef.current.emit('audio_data', uint8Data)
         }
       }
@@ -322,7 +303,6 @@ export function useSpeechRecognition({
 
       setIsRecording(true)
       isRecordingRef.current = true
-      console.log('[Speech] Started recording')
     } catch (error: unknown) {
       console.error('[Speech] Error:', error)
       const err = error as Error & { name?: string }
@@ -366,7 +346,6 @@ export function useSpeechRecognition({
     }
 
     setIsRecording(false)
-    console.log('[Speech] Stopped recording')
   }, [])
 
   return {

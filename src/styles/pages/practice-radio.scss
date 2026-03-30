@@ -1,123 +1,80 @@
-/* Page: Practice – radio/listening mode */
+/* Page: Practice - radio/listening mode */
 
-/* ── Radio Mode ─────────────────────────────────────────── */
+/* Radio mode */
 .radio-mode {
     background: var(--bg-secondary);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: calc(100vh - 48px);
-    gap: var(--space-xl);
+    min-height: calc(100vh - 56px);
+    padding: clamp(28px, 6vh, 64px) 16px 24px;
+    gap: 18px;
 }
 
-/* Central card that reveals on hover */
-.radio-card {
+.radio-stage {
+    width: min(100%, 760px);
+    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    padding: var(--space-2xl) var(--space-2xl);
-    min-width: 340px;
-    text-align: center;
-    cursor: default;
-    user-select: none;
+    gap: 16px;
 }
 
-/* Each row transitions from placeholder to real content */
-.radio-row {
-    transition: opacity 0.2s ease;
-}
-
-/* Row 1 – word */
-.radio-row-word {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.radio-word-syllables {
-    font-size: 44px;
+.radio-stage-word {
+    margin: 0;
+    font-size: clamp(2.2rem, 7vw, 4.4rem);
+    line-height: 1.05;
     font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: 0.01em;
-    display: flex;
-    align-items: baseline;
-    gap: 0;
+    letter-spacing: -0.02em;
+    color: #24354a;
 }
 
-.radio-syl-dot {
-    font-size: 28px;
-    color: var(--text-tertiary);
-    padding: 0 4px;
-    font-weight: 400;
+.radio-stage-phonetic {
+    margin: 0;
+    font-size: clamp(1.15rem, 3vw, 1.7rem);
+    font-weight: 500;
+    color: #7e8ea6;
 }
 
-/* Blank line placeholder for word */
-.radio-word-blank {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.radio-stage-definition {
+    margin: 10px 0 0;
+    max-width: 720px;
+    font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+    line-height: 1.7;
+    color: #23374c;
 }
 
-.radio-blank-line {
-    display: inline-block;
-    height: 3px;
-    border-radius: 2px;
-    background: var(--text-primary);
-    opacity: 0.85;
+.radio-stage-definition .word-pos-tag {
+    margin-right: 10px;
 }
 
-/* Row 2 – phonetic */
-.radio-row-phonetic {
-    font-size: 20px;
-    color: var(--text-tertiary);
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Row 3 – definition */
-.radio-row-def {
-    font-size: 16px;
-    color: var(--text-secondary);
-    height: 24px;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    justify-content: center;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    max-width: 400px;
-}
-
-/* Controls row */
 .radio-controls {
     display: flex;
     align-items: center;
-    gap: var(--space-xl);
+    justify-content: center;
+    gap: clamp(8px, 2.2vw, 20px);
+    margin-top: 14px;
 }
 
 .radio-ctrl-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-full);
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
     border: none;
-    background: none;
-    color: var(--text-tertiary);
+    background: transparent;
+    color: #8a97a9;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: transform var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
 }
 
 .radio-ctrl-btn:hover {
-    color: var(--text-primary);
+    color: #2c3c53;
+    background: rgba(255, 255, 255, 0.45);
+    transform: translateY(-1px);
 }
 
 .radio-ctrl-btn svg {
@@ -126,116 +83,79 @@
 }
 
 .radio-play-btn {
-    width: 52px;
-    height: 52px;
-    background: var(--text-primary);
-    border-radius: var(--radius-full);
-    color: var(--bg-color);
+    width: 58px;
+    height: 58px;
+    background: #1f2c3f;
+    color: #f8fbff;
+    box-shadow: 0 12px 28px rgba(23, 36, 54, 0.24);
 }
 
 .radio-play-btn:hover {
-    opacity: 0.8;
-    color: var(--bg-color);
+    background: #24354a;
+    color: #fff;
 }
 
-.radio-play-btn svg {
-    width: 22px;
-    height: 22px;
-}
-
-.radio-star-btn {
-    color: var(--text-tertiary);
-}
-
-.radio-star-btn:hover {
-    color: var(--warning);
-}
-
-/* Thin progress bar */
-.radio-progress-bar {
-    width: 260px;
-    height: 2px;
-    background: var(--border);
-    border-radius: 1px;
+.radio-progress-track {
+    width: min(72vw, 640px);
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(58, 73, 93, 0.14);
     overflow: hidden;
+    margin-top: 8px;
 }
 
 .radio-progress-fill {
     height: 100%;
-    background: var(--text-tertiary);
-    border-radius: 1px;
-    transition: width 0.4s ease;
+    background: linear-gradient(90deg, #ff925e 0%, #ff7c3b 100%);
+    border-radius: inherit;
+    transition: width 0.35s ease;
 }
 
 .radio-progress-label {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-top: -4px;
+    font-size: 14px;
+    color: #8b97a8;
 }
 
-/* Bottom action buttons */
 .radio-bottom-btns {
     display: flex;
-    gap: var(--space-md);
-    margin-top: var(--space-sm);
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
 }
 
-.radio-stop-btn {
-    padding: var(--space-xs) var(--space-lg);
-    background: none;
-    color: var(--text-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.radio-stop-btn:hover {
-    color: var(--error);
-    border-color: var(--error);
-}
-
+.radio-stop-btn,
 .radio-home-btn {
-    padding: var(--space-xs) var(--space-lg);
-    background: none;
-    color: var(--text-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    padding: 8px 14px;
+    border-radius: 12px;
     font-size: 13px;
+    font-weight: 600;
+    border: 1px solid rgba(63, 79, 99, 0.18);
+    background: rgba(255, 255, 255, 0.55);
+    color: #6f7d90;
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
+.radio-stop-btn:hover,
 .radio-home-btn:hover {
-    color: var(--text-primary);
-    border-color: var(--border-hover);
+    border-color: rgba(35, 55, 77, 0.35);
+    color: #24354a;
+    background: rgba(255, 255, 255, 0.82);
 }
 
-/* Mode switcher inside radio mode */
-.radio-mode-switcher {
-    display: flex;
-    gap: var(--space-sm);
-    margin-top: var(--space-lg);
-    flex-wrap: wrap;
-    justify-content: center;
-}
+@media (max-width: 768px) {
+    .radio-mode {
+        padding: 24px 14px calc(80px + env(safe-area-inset-bottom));
+        gap: 14px;
+    }
 
-.radio-mode-btn {
-    padding: 6px 14px;
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
+    .radio-stage-definition {
+        line-height: 1.58;
+    }
 
-.radio-mode-btn:hover {
-    background: var(--accent-light);
-    color: var(--accent);
-    border-color: rgba(var(--accent-rgb), 0.3);
+    .radio-progress-track {
+        width: min(84vw, 560px);
+    }
 }
 
 /* Mic button in dictation */
@@ -274,7 +194,8 @@
 }
 
 @keyframes micPulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
         transform: scale(1);
     }
@@ -294,6 +215,10 @@
 }
 
 @keyframes spinAnim {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
