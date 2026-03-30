@@ -1,238 +1,188 @@
-// ── Tests for src/contexts/AuthContext.tsx ────────────────────────────────────
+import React from 'react'
+import { act, renderHook, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { STORAGE_KEYS } from '../constants'
+import { AuthProvider, useAuth } from './AuthContext'
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
-import { useAuth } from './AuthContext'
+const apiFetchMock = vi.fn()
+const showToastMock = vi.fn()
 
-// Minimal AuthProvider wrapper
-import { AuthProvider } from './AuthContext'
-import { render } from '@testing-library/react'
-
-// Re-mock fetch for these tests (test-specific overrides)
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
-
-beforeEach(() => {
-  localStorage.clear()
-  mockFetch.mockReset()
-  mockFetch.mockResolvedValue(new Response())
+vi.mock('../lib', async () => {
+  const actual = await vi.importActual<typeof import('../lib')>('../lib')
+  return {
+    ...actual,
+    apiFetch: (...args: unknown[]) => apiFetchMock(...args),
+  }
 })
 
-// ── useAuth error path ────────────────────────────────────────────────────────
+vi.mock('./ToastContext', () => ({
+  useToast: () => ({ showToast: showToastMock }),
+}))
+
+const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{children}</AuthProvider>
+
+const mockUser = {
+  id: 1,
+  username: 'alice',
+  email: 'alice@example.com',
+  avatar_url: null,
+  is_admin: false,
+  created_at: '2024-01-01T00:00:00Z',
+}
 
 describe('useAuth', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    apiFetchMock.mockReset()
+    showToastMock.mockReset()
+  })
+
   it('throws when used outside AuthProvider', () => {
-    // Suppress console.error for this test
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    expect(() => renderHook(() => useAuth())).toThrow(
-      'useAuth must be used within AuthProvider'
-    )
+
+    expect(() => renderHook(() => useAuth())).toThrow('useAuth must be used within AuthProvider')
+
     consoleSpy.mockRestore()
   })
 })
 
-// ── AuthProvider initialization ─────────────────────────────────────────────────
-
 describe('AuthProvider', () => {
-  it('starts with isLoading true, then resolves to false', async () => {
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
-    })
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false)
-    })
-    expect(result.current.isAuthenticated).toBe(false)
+  beforeEach(() => {
+    localStorage.clear()
+    apiFetchMock.mockReset()
+    showToastMock.mockReset()
   })
 
-  it('starts unauthenticated when no token in storage', async () => {
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
-    })
+  it('starts unauthenticated without a cached user', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
     })
+
+    expect(apiFetchMock).not.toHaveBeenCalled()
     expect(result.current.isAuthenticated).toBe(false)
     expect(result.current.user).toBeNull()
   })
 
-  it('loads user from localStorage when token exists', async () => {
-    const storedUser = {
-      id: 42,
-      username: 'testuser',
-      email: 'test@example.com',
-      avatar_url: null,
-      created_at: '2024-01-01T00:00:00Z',
-    }
-    localStorage.setItem('auth_token', 'valid-token')
-    localStorage.setItem('auth_user', JSON.stringify(storedUser))
+  it('hydrates from cache and refreshes the user from /api/auth/me', async () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
+    apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    expect(result.current.user?.username).toBe('alice')
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/auth/me')
     })
+
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
     })
+
     expect(result.current.isAuthenticated).toBe(true)
-    expect(result.current.user?.id).toBe(42)
-    expect(result.current.user?.username).toBe('testuser')
+    expect(result.current.user).toMatchObject(mockUser)
   })
 
-  it('clears corrupted user data and logs out', async () => {
-    localStorage.setItem('auth_token', 'valid-token')
-    localStorage.setItem('auth_user', 'not valid json')
+  it('clears the session when the refresh event is fired', async () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
+    apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
-    })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false)
+      expect(result.current.isAuthenticated).toBe(true)
     })
-    expect(result.current.isAuthenticated).toBe(false)
-    expect(localStorage.getItem('auth_token')).toBeNull()
-  })
 
-  it('loads user with legacy raw shape (no Zod schema)', async () => {
-    const rawUser = {
-      id: 99,
-      username: 'legacyuser',
-      email: 'legacy@example.com',
-      created_at: '2024-06-01T00:00:00Z',
-    }
-    localStorage.setItem('auth_token', 'legacy-token')
-    localStorage.setItem('auth_user', JSON.stringify(rawUser))
-
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
+    act(() => {
+      window.dispatchEvent(new CustomEvent('auth:session-expired'))
     })
+
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false)
+      expect(result.current.isAuthenticated).toBe(false)
     })
-    expect(result.current.isAuthenticated).toBe(true)
-    expect(result.current.user?.id).toBe(99)
-    expect(result.current.user?.username).toBe('legacyuser')
+
+    expect(localStorage.getItem(STORAGE_KEYS.AUTH_USER)).toBeNull()
+    expect(showToastMock).toHaveBeenCalledTimes(1)
   })
-})
 
-// ── login ─────────────────────────────────────────────────────────────────────
+  it('logs in and persists the returned user only', async () => {
+    apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
 
-describe('login', () => {
-  it('calls /api/auth/login and stores token/user on success', async () => {
-    const mockUser = { id: 1, username: 'alice', email: 'a@b.com', avatar_url: null, created_at: '2024-01-01' }
-    const mockToken = 'jwt-token-abc'
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ user: mockUser, token: mockToken }),
-    })
+    const { result } = renderHook(() => useAuth(), { wrapper })
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
-    })
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
     })
 
     await act(async () => {
-      await result.current.login('a@b.com', 'password123')
+      await result.current.login('alice@example.com', 'password123')
     })
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({
+    expect(apiFetchMock).toHaveBeenLastCalledWith('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email: 'a@b.com', password: 'password123' }),
-    }))
-    expect(localStorage.getItem('auth_token')).toBe(mockToken)
+      body: JSON.stringify({ email: 'alice@example.com', password: 'password123' }),
+    })
     expect(result.current.isAuthenticated).toBe(true)
+    expect(result.current.user).toMatchObject(mockUser)
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH_USER) ?? 'null')).toMatchObject(mockUser)
+    expect(localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)).toBeNull()
   })
 
-  it('throws with formatted error on API error response', async () => {
-    // Use valid password so Zod validation passes, then API returns 401
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 401,
-      json: () => Promise.resolve({ error: 'Invalid credentials' }),
-    })
+  it('rejects invalid login responses', async () => {
+    apiFetchMock.mockResolvedValueOnce({ user: { bad: 'shape' } })
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
-    })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
     })
 
     await expect(
       act(async () => {
-        await result.current.login('a@b.com', 'password123')
-      })
-    ).rejects.toBeDefined()
+        await result.current.login('alice@example.com', 'password123')
+      }),
+    ).rejects.toThrow()
   })
 
-  it('throws when Zod validation of response fails', async () => {
-    // Response doesn't match AuthResponseSchema
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ notUser: 'no' }),
-    })
+  it('logs out through the API and clears persisted user state', async () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
+    localStorage.setItem('my_books', JSON.stringify(['book-1']))
+    apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
+    apiFetchMock.mockResolvedValueOnce({})
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
-    })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false)
+      expect(result.current.isAuthenticated).toBe(true)
     })
 
-    await expect(
-      act(async () => {
-        await result.current.login('a@b.com', 'password123')
-      })
-    ).rejects.toThrow('服务器响应格式错误')
-  })
-})
-
-// ── logout ────────────────────────────────────────────────────────────────────
-
-describe('logout', () => {
-  it('clears token and user and sets isAuthenticated to false', async () => {
-    const mockUser = { id: 1, username: 'alice', email: 'a@b.com', avatar_url: null, created_at: '2024-01-01' }
-    localStorage.setItem('auth_token', 'my-token')
-    localStorage.setItem('auth_user', JSON.stringify(mockUser))
-    localStorage.setItem('my_books', JSON.stringify(['book1']))
-
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
-    })
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false)
-    })
-    expect(result.current.isAuthenticated).toBe(true)
-
-    act(() => {
-      result.current.logout()
+    await act(async () => {
+      await result.current.logout()
     })
 
-    expect(localStorage.getItem('auth_token')).toBeNull()
-    expect(localStorage.getItem('auth_user')).toBeNull()
-    expect(localStorage.getItem('my_books')).toBeNull()
+    expect(apiFetchMock).toHaveBeenLastCalledWith('/api/auth/logout', { method: 'POST' })
     expect(result.current.isAuthenticated).toBe(false)
     expect(result.current.user).toBeNull()
+    expect(localStorage.getItem(STORAGE_KEYS.AUTH_USER)).toBeNull()
+    expect(localStorage.getItem('my_books')).toBeNull()
   })
-})
 
-// ── updateUser ────────────────────────────────────────────────────────────────
+  it('updates the cached user when updateUser is called', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper })
 
-describe('updateUser', () => {
-  it('updates user state and localStorage', async () => {
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
-    })
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
     })
 
-    const updatedUser = { id: 1, username: 'alice', email: 'new@b.com', avatar_url: 'http://avatar.png', created_at: '2024-01-01' }
+    const updatedUser = { ...mockUser, email: 'new@example.com', avatar_url: 'https://example.com/avatar.png' }
+
     act(() => {
       result.current.updateUser(updatedUser)
     })
 
-    expect(result.current.user).toEqual(updatedUser)
-    expect(JSON.parse(localStorage.getItem('auth_user')!)).toEqual(updatedUser)
+    expect(result.current.user).toMatchObject(updatedUser)
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH_USER) ?? 'null')).toMatchObject(updatedUser)
   })
 })
