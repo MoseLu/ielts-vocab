@@ -2,6 +2,9 @@
 
 import type { z } from 'zod'
 
+const RAW_API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim() ?? ''
+const NORMALIZED_API_BASE = RAW_API_BASE.replace(/\/+$/, '')
+
 // LocalStorage helpers with type safety
 export function getStorageItem<T>(key: string, defaultValue: T): T {
   try {
@@ -18,6 +21,14 @@ export function setStorageItem<T>(key: string, value: T): void {
 
 export function removeStorageItem(key: string): void {
   localStorage.removeItem(key)
+}
+
+export function buildApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  if (!NORMALIZED_API_BASE) return normalizedPath
+  if (normalizedPath.startsWith('/api/')) return `${NORMALIZED_API_BASE}${normalizedPath}`
+  return `${NORMALIZED_API_BASE}${normalizedPath}`
 }
 
 // ── Secure API fetch — HttpOnly cookie mode ───────────────────────────────────

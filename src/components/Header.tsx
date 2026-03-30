@@ -170,7 +170,7 @@ function Header({
           {user && (
             <>
               {/* Day Selector - hidden, moved to homepage */}
-              <div className="day-selector-wrapper" ref={dayDropdownRef} style={{ display: 'none' }}>
+              <div className="day-selector-wrapper day-selector-wrapper--hidden" ref={dayDropdownRef}>
                 <div
                   className="day-selector"
                   onClick={() => setShowDayDropdown(!showDayDropdown)}
@@ -179,8 +179,7 @@ function Header({
                     {currentDay ? `Day ${currentDay}` : '选择单元'}
                   </span>
                   <svg
-                    className="day-selector-arrow"
-                    style={{ transform: showDayDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                    className={`day-selector-arrow${showDayDropdown ? ' is-open' : ''}`}
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                   >
                     <polyline points="6 9 12 15 18 9"></polyline>
@@ -304,7 +303,7 @@ function Header({
       {/* Help Modal */}
       {showHelp && (
         <div className="settings-overlay show" onClick={(e) => e.target === e.currentTarget && setShowHelp(false)}>
-          <div className="settings-modal" style={{ maxWidth: '480px' }}>
+          <div className="settings-modal settings-modal--help">
             <div className="settings-header">
               <h2 className="settings-title">帮助</h2>
               <button className="settings-close" onClick={() => setShowHelp(false)}>
@@ -314,23 +313,23 @@ function Header({
                 </svg>
               </button>
             </div>
-            <div className="settings-content" style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '24px' }}>
+            <div className="settings-content settings-content--help">
+              <div className="help-modal-section">
                 <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>键盘快捷键</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="help-modal-list">
                   {([['1 - 4', '选择答案选项'], ['5', '不知道（跳过）'], ['空格', '重新播放发音'], ['Esc', '退出练习']] as [string, string][]).map(([key, desc]) => (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <kbd style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', minWidth: '52px', textAlign: 'center' }}>{key}</kbd>
-                      <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{desc}</span>
+                    <div key={key} className="help-modal-row">
+                      <kbd className="help-modal-kbd">{key}</kbd>
+                      <span className="help-modal-text">{desc}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
                 <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>学习模式说明</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="help-modal-list">
                   {(Object.entries(modeNames) as [PracticeMode, string][]).map(([key, name]) => (
-                    <div key={key} style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                    <div key={key} className="help-modal-mode">
                       <strong style={{ color: 'var(--text-primary)' }}>{name}</strong> — {modeDescriptions[key]}
                     </div>
                   ))}
