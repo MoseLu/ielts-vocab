@@ -457,6 +457,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       }
     }
 
+    // reviewMode is set from the URL; mode='quickmemory' is applied via a
+    // custom event in App.tsx and may not yet be reflected on the first render.
+    // Guard here so we don't fall through to day/chapter loading and
+    // potentially navigate('/plan') while the mode update is in flight.
+    if (reviewMode) return
+
     if (errorMode) {
       void (async () => {
         try {
@@ -1069,8 +1075,24 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     setReviewOffset(nextOffset)
   }, [reviewSummary])
 
-  // Loading state
+  // Loading state — but if we're in review mode and the session has started
+  // (beginSession sets sessionStartRef) with an empty result, show "no due
+  // words" instead of an infinite skeleton.
   if (!vocabulary.length) {
+    if (reviewMode && mode === 'quickmemory' && sessionStartRef.current > 0) {
+      return (
+        <div className="practice-session-layout">
+          <div className="practice-complete">
+            <div className="complete-emoji" aria-hidden="true">✓</div>
+            <h2>暂无待复习的单词</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+              目前没有到期需要复习的单词，继续学习新词后再来！
+            </p>
+            <button className="complete-btn" onClick={() => navigate('/plan')}>返回主页</button>
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="practice-session-layout">
         <PageSkeleton variant="practice" />
@@ -1080,15 +1102,28 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Completed state fallback. Normally goNext navigates away before this renders.
   if (!currentWord) {
+    const reviewRemaining = reviewSummary?.has_more
+      ? (reviewSummary.total_count - reviewSummary.offset - reviewSummary.returned_count)
+      : 0
     return (
       <div className="practice-session-layout">
         <div className="practice-complete">
         <div className="complete-emoji" aria-hidden="true">Completed</div>
-        <h2>{errorMode ? '错词复习完成' : bookId ? '本章完成' : `Day ${currentDay} 完成`}</h2>
+        <h2>
+          {errorMode ? '错词复习完成'
+            : reviewMode ? '本批复习完成'
+            : bookId ? '本章完成'
+            : `Day ${currentDay} 完成`}
+        </h2>
         <div className="complete-stats-row">
           <span className="stat-correct">正确 {correctCount}</span>
           <span className="stat-wrong">错误 {wrongCount}</span>
         </div>
+        {reviewMode && reviewSummary?.has_more && (
+          <button className="complete-btn" onClick={handleContinueReview}>
+            继续复习{reviewRemaining > 0 ? `（还有 ${reviewRemaining} 个）` : ''}
+          </button>
+        )}
         <button className="complete-btn" onClick={() => navigate('/plan')}>返回主页</button>
         </div>
       </div>
