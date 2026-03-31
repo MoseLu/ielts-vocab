@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import PracticePage from './PracticePage'
@@ -191,13 +191,18 @@ vi.mock('./OptionsMode', () => ({
     currentWord,
     total,
     progressValue,
+    onOptionSelect,
+    correctIndex,
   }: {
     currentWord: { word: string }
     total: number
     progressValue: number
+    onOptionSelect: (idx: number) => void
+    correctIndex: number
   }) => (
     <div data-testid="options-mode">
       current:{currentWord.word};total:{total};progress:{progressValue}
+      <button data-testid="answer-correct" onClick={() => onOptionSelect(correctIndex)}>correct</button>
     </div>
   ),
 }))
@@ -343,6 +348,51 @@ describe('PracticePage error mode', () => {
         recentWrongWords: expect.arrayContaining(['alpha', 'beta']),
         trapStrategy: expect.stringContaining('错词'),
       }))
+    })
+  })
+})
+
+describe('PracticePage error mode – progress persistence regression', () => {
+  beforeEach(() => {
+    apiFetchMock.mockReset()
+    startSessionMock.mockClear()
+    localStorage.clear()
+  })
+
+  it('preserves is_completed:true after answering the last wrong word', async () => {
+    // A single-word error list means the first word is also the last.
+    // After answering correctly, saveProgress() writes is_completed:true.
+    // The bug was that a useEffect triggered by the correctCount state change
+    // would overwrite it with is_completed:false before goNext() navigated.
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
+    localStorage.setItem('wrong_words', JSON.stringify([
+      { word: 'only', phonetic: '/o/', pos: 'n.', definition: 'only definition' },
+    ]))
+
+    apiFetchMock.mockResolvedValue({ words: [] })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?mode=errors']}>
+        <PracticePage
+          user={{ id: 1 }}
+          mode="meaning"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:only')
+    })
+
+    // Answer the (only) word correctly.
+    fireEvent.click(screen.getByTestId('answer-correct'))
+
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem('wrong_words_progress') || '{}')
+      expect(stored._last?.is_completed).toBe(true)
     })
   })
 })
