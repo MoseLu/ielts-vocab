@@ -13,11 +13,11 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0', // 允许所有端口访问
+    host: '0.0.0.0', // Allow access from any local interface
     port: 3002,
-    strictPort: true, // 端口被占用时报错而非切换端口
+    strictPort: true, // Fail instead of switching ports when 3002 is occupied
     open: false,
-    allowedHosts: true, // 允许所有域名访问
+    allowedHosts: true, // Accept requests from any host in local proxy setups
     hmr: {
       overlay: true,
       // Prevent full-page reload on HMR WebSocket reconnection
@@ -51,7 +51,7 @@ export default defineConfig({
     allowedHosts: true,
     // Disable HMR overlay in preview mode
     hmr: false,
-    // preview 模式同样需要代理，否则 /api 请求打到 vite 自身会 404
+    // Preview mode needs the same proxy rules, or /api requests hit Vite directly and 404.
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

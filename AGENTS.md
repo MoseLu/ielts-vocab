@@ -23,6 +23,18 @@ An IELTS vocabulary learning web application.
 ### Auto-Activation Rule
 **BEFORE any response or action, check if any Superpowers skill applies.**
 
+## Encoding & Patch Strategy
+
+When editing this repo, treat text encoding and patch targeting as first-class concerns.
+
+- Assume repo text files are UTF-8 unless the file itself proves otherwise.
+- Before using `apply_patch`, read the exact target lines with line numbers and anchor on nearby clean ASCII or stable code structure.
+- Prefer patching whole logical blocks over matching a single suspicious line when a file shows any text corruption.
+- If `apply_patch` fails to match twice on the same area, stop matching the mojibake literally. Re-anchor on clean surrounding code, or rewrite the full function/component/doc block instead.
+- Do not keep stacking partial edits onto a file that shows encoding corruption. Restore or re-read a clean base first, then replay the intended change.
+- After any encoding-related fix, inspect the diff and confirm the file did not pick up unrelated text corruption.
+- Keep the text-integrity regression green: `pytest backend/tests/test_source_text_integrity.py -q`.
+
 ## Technology Stack
 
 - **Frontend**: React 19 + TypeScript + Vite
@@ -35,25 +47,25 @@ An IELTS vocabulary learning web application.
 
 ```
 src/
-├── app/                    # App router entry
-├── components/
-│   ├── ui/                 # Base UI components (Button, Card, Input, Modal, Loading)
-│   ├── layout/             # Layout components (MainLayout, AuthLayout, PracticeLayout)
-│   └── practice/           # Practice feature components
-├── contexts/               # React context providers (Auth, Settings, Toast, AIChat)
-├── features/
-│   ├── vocabulary/hooks/   # useVocabBooks, useBookWords, useBookProgress, useAllBookProgress
-│   ├── ai-chat/            # AI chat feature
-│   └── speech/             # Speech recognition feature
-├── hooks/                  # Shared hooks (useSpeechRecognition, useAIChat)
-├── lib/                    # Utilities
-│   ├── index.ts            # Helpers (storage, API fetch, formatting)
-│   ├── schemas.ts           # Zod schemas for all data shapes
-│   ├── validation.ts       # safeParse, ValidationResult utilities
-│   └── useForm.ts          # Zod-powered form validation hook
-├── types/                  # Global TypeScript interfaces
-├── constants/              # App constants (practice modes, storage keys, defaults)
-└── styles/                # CSS entry point
+- app/                      # App router entry
+- components/
+  - ui/                    # Base UI components (Button, Card, Input, Modal, Loading)
+  - layout/                # Layout components (MainLayout, AuthLayout, PracticeLayout)
+  - practice/              # Practice feature components
+- contexts/                # React context providers (Auth, Settings, Toast, AIChat)
+- features/
+  - vocabulary/hooks/      # useVocabBooks, useBookWords, useBookProgress, useAllBookProgress
+  - ai-chat/               # AI chat feature
+  - speech/                # Speech recognition feature
+- hooks/                   # Shared hooks (useSpeechRecognition, useAIChat)
+- lib/                     # Utilities
+  - index.ts               # Helpers (storage, API fetch, formatting)
+  - schemas.ts             # Zod schemas for all data shapes
+  - validation.ts          # safeParse, ValidationResult utilities
+  - useForm.ts             # Zod-powered form validation hook
+- types/                   # Global TypeScript interfaces
+- constants/               # App constants (practice modes, storage keys, defaults)
+- styles/                  # CSS entry point
 ```
 
 ## Zod Validation
@@ -70,19 +82,19 @@ Schemas cover:
 - Practice types (`PracticeModeSchema`, `WordSchema`, etc.)
 
 **Validation utilities** (`src/lib/validation.ts`):
-- `safeParse(schema, data)` → `ValidationResult<T>` — never throws
-- `parseOrThrow(schema, data)` → throws on failure
+- `safeParse(schema, data)` -> `ValidationResult<T>` — never throws
+- `parseOrThrow(schema, data)` -> throws on failure
 - `formatErrors(result)` / `firstError(result)` — human-readable error formatting
 
 **Form hook** (`src/lib/useForm.ts`):
-- `useForm({ schema })` — field-level validation, touch tracking, form-level submit
+- `useForm({ schema })` -> field-level validation, touch tracking, form-level submit
 
 All contexts use Zod validation:
-- `AuthContext` — validates login/register input + API responses
-- `SettingsContext` — validates persisted settings on load
-- `ToastContext` — validates toast payloads
-- `useAIChat` — validates AI API responses
-- `useVocabBooks` / `useBookWords` / `useBookProgress` — validates all API responses
+- `AuthContext` -> validates login/register input + API responses
+- `SettingsContext` -> validates persisted settings on load
+- `ToastContext` -> validates toast payloads
+- `useAIChat` -> validates AI API responses
+- `useVocabBooks` / `useBookWords` / `useBookProgress` -> validates all API responses
 
 ## Key Features
 

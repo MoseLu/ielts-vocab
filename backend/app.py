@@ -27,7 +27,7 @@ from routes.notes import notes_bp
 from routes.tts import tts_bp
 from routes.middleware import init_middleware
 
-# ── SQLite WAL mode ───────────────────────────────────────────────────────────
+# SQLite WAL mode
 # Runs once per new connection. WAL allows concurrent reads during writes,
 # which removes the read-write lock contention on a multi-user server.
 # synchronous=NORMAL is safe with WAL and significantly faster than FULL.
@@ -52,11 +52,11 @@ def _ensure_admin_user():
 
     admin = User.query.filter_by(username=admin_username).first()
     if not admin:
-        # Generate a secure random password if none provided — app no longer blocks startup
+        # Generate a secure random password if none was provided. Startup is no longer blocked.
         if not admin_password:
             admin_password = secrets.token_urlsafe(24)
             print(
-                f"[Admin] ADMIN_INITIAL_PASSWORD not set — generated random password.\n"
+                f"[Admin] ADMIN_INITIAL_PASSWORD not set - generated random password.\n"
                 f"         Save this NOW: ADMIN_USERNAME={admin_username} ADMIN_INITIAL_PASSWORD={admin_password}\n"
                 f"         Or set env var and re-run: export ADMIN_INITIAL_PASSWORD=your_secure_password"
             )
@@ -104,7 +104,7 @@ def create_app(config_class=Config):
     init_admin(app)
 
     # Create database tables and ensure admin user.
-    # db.create_all() is idempotent — safe to call on every startup.
+    # db.create_all() is idempotent and safe to call on every startup.
     # For schema changes going forward, use Flask-Migrate:
     #   flask db migrate -m "description"
     #   flask db upgrade

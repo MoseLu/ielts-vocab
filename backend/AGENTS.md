@@ -1,5 +1,14 @@
 # Backend Development Guide
 
+## Editing Notes
+
+Backend files in this repo are frequent targets for text-heavy edits, prompts, and localized strings.
+
+- Read exact target lines before patching and anchor on stable Python syntax, decorators, function names, or ASCII comments.
+- If a route or prompt block contains suspicious encoding, rewrite the full block instead of trying to patch the corrupted fragment in place.
+- After any backend text fix, review `git diff` for unrelated string corruption before moving on.
+- Keep `pytest backend/tests/test_source_text_integrity.py -q` green after backend text edits.
+
 ## Build & Deployment Process
 
 ### 1. SQLite WAL Mode (Enabled by Default)
