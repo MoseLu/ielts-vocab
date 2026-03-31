@@ -74,5 +74,109 @@ def test_greet_returns_fallback_when_ai_service_fails(client, monkeypatch):
     data = res.get_json()
     assert isinstance(data, dict)
     assert data.get('reply')
-    assert '雅思小助手' in data['reply']
     assert data.get('options') == []
+
+
+def test_greet_fallback_uses_learner_profile_clues(client, monkeypatch):
+    register_and_login(client, username='greet-fallback-user')
+
+    def fake_context_data(_user_id):
+        return {
+            'totalLearned': 128,
+            'totalCorrect': 96,
+            'totalWrong': 32,
+            'accuracyRate': 75,
+            'recentTrend': 'stable',
+            'books': [],
+            'wrongWords': [{'word': 'kind'}],
+            'recentSessions': [],
+            'chapterSessionStats': [],
+            'learnerProfile': {
+                'summary': {
+                    'weakest_mode_label': '听音选义',
+                    'weakest_mode_accuracy': 61,
+                },
+                'dimensions': [
+                    {'dimension': 'meaning', 'label': '词义辨析', 'accuracy': 54},
+                ],
+                'focus_words': [
+                    {'word': 'kind'},
+                ],
+                'repeated_topics': [
+                    {'title': 'kind of 和 a kind of', 'count': 3},
+                ],
+                'next_actions': ['先把 kind 相关辨析讲透'],
+            },
+            'memory': {},
+        }
+
+    def raise_ai_error(*args, **kwargs):
+        raise RuntimeError('simulated ai failure')
+
+    monkeypatch.setattr(ai_routes, '_get_context_data', fake_context_data)
+    monkeypatch.setattr(ai_routes, '_chat_with_tools', raise_ai_error)
+
+    res = client.post('/api/ai/greet', json={'context': {}})
+
+    assert res.status_code == 200
+    data = res.get_json()
+    assert 'kind of 和 a kind of' in data['reply']
+    assert '词义辨析' in data['reply']
+    assert data.get('options') == []
+
+
+def test_greet_allows_profile_aware_freeform_reply_without_options(client, monkeypatch):
+    register_and_login(client, username='greet-profile-user')
+
+    captured = {}
+
+    def fake_context_data(_user_id):
+        return {
+            'totalLearned': 128,
+            'totalCorrect': 96,
+            'totalWrong': 32,
+            'accuracyRate': 75,
+            'recentTrend': 'stable',
+            'books': [],
+            'wrongWords': [{'word': 'kind'}],
+            'recentSessions': [],
+            'chapterSessionStats': [],
+            'learnerProfile': {
+                'summary': {
+                    'weakest_mode_label': '听音选义',
+                    'weakest_mode_accuracy': 61,
+                },
+                'dimensions': [
+                    {'dimension': 'meaning', 'label': '词义辨析', 'accuracy': 54},
+                ],
+                'focus_words': [
+                    {'word': 'kind'},
+                ],
+                'repeated_topics': [
+                    {'title': 'kind of 和 a kind of', 'count': 3},
+                ],
+                'next_actions': ['先把 kind 相关辨析讲透'],
+            },
+            'memory': {},
+        }
+
+    def fake_chat_with_tools(messages, **kwargs):
+        captured['messages'] = messages
+        return {
+            'text': '晚上好，今天你在 kind 这类辨析上已经反复卡住了。我可以直接换一种讲法，把这个点一次讲透。'
+        }
+
+    monkeypatch.setattr(ai_routes, '_get_context_data', fake_context_data)
+    monkeypatch.setattr(ai_routes, '_chat_with_tools', fake_chat_with_tools)
+
+    res = client.post('/api/ai/greet', json={'context': {}})
+
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['reply'].startswith('晚上好')
+    assert data.get('options') == []
+
+    serialized = '\n'.join(str(message.get('content')) for message in captured['messages'])
+    assert '不要默认输出选项' in serialized
+    assert '重复困惑主题' in serialized
+    assert 'kind of 和 a kind of' in serialized

@@ -100,12 +100,21 @@ function PlainTextBubble({ content }: { content: string }) {
   )
 }
 
-function MarkdownBubble({ content }: { content: string }) {
+function MarkdownBubble({ content, className = '' }: { content: string; className?: string }) {
   return (
     <div
-      className="ai-msg-bubble ai-markdown-content markdown-content"
+      className={`ai-msg-bubble ai-markdown-content markdown-content ${className}`.trim()}
       dangerouslySetInnerHTML={{ __html: renderJournalMarkdown(content) }}
     />
+  )
+}
+
+function AssistantBubble({ content }: { content: string }) {
+  return (
+    <div className="ai-assistant-bubble">
+      <MarkdownBubble content={content} className="ai-assistant-bubble__content" />
+      <CopyButton text={content} />
+    </div>
   )
 }
 
@@ -261,10 +270,12 @@ function AIChatPanel() {
 
       <Scrollbar className="ai-messages">
         {messages.map((message) => (
-          <div key={message.id} className={`ai-msg ai-msg-${message.role}`}>
-            {message.role === 'assistant' && <CopyButton text={message.content} />}
+          <div
+            key={message.id}
+            className={`ai-msg ai-msg-${message.role} ${message.role === 'assistant' ? 'ai-msg--assistant-wide' : ''}`}
+          >
             {message.role === 'assistant'
-              ? <MarkdownBubble content={message.content} />
+              ? <AssistantBubble content={message.content} />
               : <PlainTextBubble content={message.content} />}
             {message.options && message.options.length > 0 && (
               <div className="ai-msg-options">
@@ -287,7 +298,7 @@ function AIChatPanel() {
         ))}
 
         {isLoading && (
-          <div className="ai-msg ai-msg-assistant">
+          <div className="ai-msg ai-msg-assistant ai-msg--assistant-wide">
             <div className="ai-msg-bubble">
               <MicroLoading text="AI 正在思考..." className="ai-bubble-loading" tone="accent" />
             </div>

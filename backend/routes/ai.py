@@ -948,9 +948,6 @@ def _build_related_notes_msg(related_notes: dict | None) -> str | None:
     if repeat_count >= 2:
         lines.append("回答要求：先承认用户之前问过这个点，换一种解释角度，并主动询问是否需要进一步辨析、例句或小测。")
 
-    if False and follow_up_hint:
-        lines.append(f"琛ュ厖鎻愮ず锛?{follow_up_hint}")
-
     if follow_up_hint:
         lines.append(f"[Follow-up hint] {follow_up_hint}")
 
@@ -1092,6 +1089,29 @@ B. 选项B
 [/options]
 """
 
+
+GREET_SYSTEM_PROMPT_V2 = """你是一个 IELTS 英语词汇学习规划助手，名叫“雅思小助手”。请用中文回复用户。
+
+你的任务是生成一条个性化的开场问候，让用户一打开就感到“这个助手记得我、理解我现在卡在哪”。
+
+## 问候目标
+- 优先利用学习画像、重复困惑主题、薄弱模式、重点突破词来组织问候。
+- 如果用户近期反复卡在某个辨析点，要主动点出来，并说明你可以换一种讲法继续讲透。
+- 如果用户今天有明确的训练焦点或弱项，要顺着这个焦点自然开场，不要只说泛泛的“继续加油”。
+- 如果是新用户或几乎没有学习数据，再使用简单欢迎语。
+
+## 输出规则
+- 问候语保持 3-5 句，简洁、自然、像真人老师开场，不要写成模板化播报。
+- 默认输出自然问候，不要默认输出选项，也不要把问候强行写成选择题。
+- 只有当用户下一步动作非常明确时，才在末尾附 1-2 个简短选项。
+- 如果提供选项，选项必须紧扣用户画像，而不是通用话术。
+
+## 允许的选项格式
+[options]
+A. 选项A
+B. 选项B
+[/options]
+"""
 
 def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     """Build a combined context message from server data + frontend state."""
@@ -1264,11 +1284,28 @@ def _build_greet_fallback(current_user: User, ctx_data: dict | None = None) -> s
     accuracy_rate = ctx_data.get('accuracyRate')
     wrong_words = ctx_data.get('wrongWords') or []
     recent_sessions = ctx_data.get('recentSessions') or []
+    learner_profile = ctx_data.get('learnerProfile') or {}
+    dimensions = learner_profile.get('dimensions') or []
+    focus_words = learner_profile.get('focus_words') or []
+    repeated_topics = learner_profile.get('repeated_topics') or []
+    next_actions = learner_profile.get('next_actions') or []
 
-    if total_learned <= 0 and not recent_sessions:
+    if total_learned <= 0 and not recent_sessions and not repeated_topics and not focus_words and not dimensions:
         return f"你好，{name}！我是雅思小助手。你可以告诉我今天想学哪本词书，或者直接开始一章练习。"
 
     parts = [f"你好，{name}！我是雅思小助手。"]
+
+    if repeated_topics:
+        topic = repeated_topics[0] or {}
+        topic_title = str(topic.get('title') or '').strip()
+        topic_count = int(topic.get('count') or 0)
+        if topic_title:
+            repeat_text = f"这个点你已经反复问过 {topic_count} 次" if topic_count > 1 else "这个点你最近又问到了"
+            parts.append(f"我注意到你最近在“{topic_title}”上有些卡住，{repeat_text}，这次我可以换个更容易抓住差别的讲法。")
+    elif focus_words:
+        focus_text = '、'.join(item.get('word', '') for item in focus_words[:3] if item.get('word'))
+        if focus_text:
+            parts.append(f"你这阶段的重点突破词主要集中在 {focus_text}，我可以顺着这些词继续帮你拆开辨析。")
 
     if total_learned > 0:
         summary = f"你已经累计学习了 {total_learned} 个词"
@@ -1276,12 +1313,23 @@ def _build_greet_fallback(current_user: User, ctx_data: dict | None = None) -> s
             summary += f"，整体正确率约 {int(accuracy_rate)}%"
         parts.append(summary + "。")
 
-    if wrong_words:
-        focus_words = '、'.join(w.get('word', '') for w in wrong_words[:3] if w.get('word'))
-        if focus_words:
-            parts.append(f"近期可以优先复习：{focus_words}。")
+    if dimensions:
+        dimension = dimensions[0] or {}
+        label = str(dimension.get('label') or dimension.get('dimension') or '').strip()
+        accuracy = dimension.get('accuracy')
+        if label:
+            accuracy_suffix = f"，目前准确率大约 {int(accuracy)}%" if isinstance(accuracy, (int, float)) else ''
+            parts.append(f"当前最值得优先补的是“{label}”{accuracy_suffix}。")
+    elif wrong_words:
+        focus_text = '、'.join(w.get('word', '') for w in wrong_words[:3] if w.get('word'))
+        if focus_text:
+            parts.append(f"近期可以优先复习：{focus_text}。")
 
-    if recent_sessions:
+    if next_actions:
+        first_action = str(next_actions[0]).strip()
+        if first_action:
+            parts.append(f"如果你愿意，我们可以先从“{first_action}”开始。")
+    elif recent_sessions:
         latest = recent_sessions[0]
         book_title = latest.get('book_title') or latest.get('book_id') or '当前词书'
         chapter_id = latest.get('chapter_id')
@@ -1300,26 +1348,37 @@ def greet(current_user: User):
     Personalized greeting — called when user opens the AI chat panel.
     Returns a greeting based on the user's real learning progress.
     """
-    body = request.get_json() or {}
-    frontend_context = body.get('context', {})
+    body = request.get_json(silent=True) or {}
+    frontend_context = body.get('context') or {}
 
-    messages = [{"role": "system", "content": GREET_SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": GREET_SYSTEM_PROMPT_V2}]
 
     ctx_data = {}
     try:
         ctx_data = _get_context_data(current_user.id)
         context_msg = _build_learning_context_msg(ctx_data, frontend_context)
+        messages.append({
+            "role": "user",
+            "content": (
+                "补充要求：如果画像已经显示明显弱点、重复困惑主题或重点突破词，优先围绕这些点自然开场。"
+                "不要默认输出选项；只有当下一步动作非常明确时，才补 1-2 个简短选项。"
+            ),
+        })
         messages.append({"role": "user", "content": f"[学习数据]\n{context_msg}\n\n请根据以上数据，生成一条个性化的问候。"})
     except Exception as e:
         import logging
         logging.warning(f"[AI] greet context load failed for user={current_user.id}: {e}")
+        messages.append({
+            "role": "user",
+            "content": "补充要求：默认自然开场，不要默认输出选项。",
+        })
         messages.append({"role": "user", "content": "请生成一条欢迎问候语，用户可能刚开始学习。"})
 
     try:
         response = _chat_with_tools(messages, tools=None)
         final_text = response.get("text", str(response))
-        options = _parse_options(final_text)
-        clean_reply = _strip_options(final_text)
+        options = _parse_options(final_text) or []
+        clean_reply = _strip_options(final_text).strip()
         # Save greeting as the opening assistant turn so /ask can reference it
         _save_turn(current_user.id, '[用户打开了AI助手]', clean_reply)
         return jsonify({'reply': clean_reply, 'options': options})

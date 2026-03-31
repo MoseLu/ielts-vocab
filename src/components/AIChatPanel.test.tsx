@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AIChatPanel from './AIChatPanel'
@@ -51,17 +51,26 @@ describe('AIChatPanel', () => {
     })
   })
 
-  it('renders assistant messages as markdown and supports fullscreen toggle', async () => {
-    const user = userEvent.setup()
+  it('renders assistant markdown and marks assistant bubbles as full width', () => {
     const { container } = render(<AIChatPanel />)
 
     expect(container.querySelector('.ai-markdown-content h1')?.textContent).toBe('Study Plan')
     expect(container.querySelectorAll('.ai-markdown-content li')).toHaveLength(2)
+    expect(container.querySelector('.ai-msg-assistant.ai-msg--assistant-wide')).not.toBeNull()
+    expect(container.querySelector('.ai-assistant-bubble')).not.toBeNull()
+  })
 
-    await user.click(screen.getByRole('button', { name: '全屏显示' }))
+  it('supports fullscreen toggle', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<AIChatPanel />)
+
+    const toggleButton = container.querySelector('.ai-panel-icon-btn') as HTMLButtonElement
+    expect(toggleButton).not.toBeNull()
+
+    await user.click(toggleButton)
     expect(container.querySelector('.ai-panel.ai-panel--fullscreen')).not.toBeNull()
 
-    await user.click(screen.getByRole('button', { name: '还原窗口' }))
+    await user.click(toggleButton)
     expect(container.querySelector('.ai-panel.ai-panel--fullscreen')).toBeNull()
   })
 })
