@@ -58,6 +58,8 @@ export interface ProgressData {
   words_learned?: number
   /** 恢复进度用：本轮已答过的词（小写） */
   answered_words?: string[]
+  /** 恢复进度用：保存练习队列顺序，防止重新洗牌后进度失效 */
+  queue_words?: string[]
   updatedAt?: string
 }
 
