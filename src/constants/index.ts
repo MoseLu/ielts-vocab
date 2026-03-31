@@ -53,7 +53,7 @@ export const DEFAULT_SETTINGS = {
   volume: '100',
   interval: '2',
   reviewInterval: '1',
-  reviewLimit: '20',
+  reviewLimit: '100',
   darkMode: false,
   fontSize: 'medium',
 } as const
