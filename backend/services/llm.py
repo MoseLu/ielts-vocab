@@ -216,10 +216,6 @@ GET_WRONG_WORDS_TOOL_DEF = {
             "limit": {
                 "type": "integer",
                 "description": "Maximum number of wrong words to return (default 100, max 300)."
-            },
-            "book_id": {
-                "type": "string",
-                "description": "Optional. Filter to wrong words from a specific book."
             }
         },
         "required": []
