@@ -2653,6 +2653,11 @@ def get_quick_memory_review_queue(current_user: User):
         limit = 20
 
     try:
+        offset = max(0, int(request.args.get('offset', 0)))
+    except (TypeError, ValueError):
+        offset = 0
+
+    try:
         within_days = max(1, min(int(request.args.get('within_days', 1)), 30))
     except (TypeError, ValueError):
         within_days = 1
@@ -2705,9 +2710,11 @@ def get_quick_memory_review_queue(current_user: User):
         else:
             upcoming_words.append(item)
 
-    selected = due_words[:limit]
-    if len(selected) < limit:
-        selected.extend(upcoming_words[:limit - len(selected)])
+    combined_words = due_words + upcoming_words
+    selected = combined_words[offset:offset + limit]
+    total_count = len(combined_words)
+    next_offset = offset + len(selected)
+    has_more = next_offset < total_count
 
     return jsonify({
         'words': selected,
@@ -2716,6 +2723,11 @@ def get_quick_memory_review_queue(current_user: User):
             'upcoming_count': len(upcoming_words),
             'returned_count': len(selected),
             'review_window_days': within_days,
+            'offset': offset,
+            'limit': limit,
+            'total_count': total_count,
+            'has_more': has_more,
+            'next_offset': next_offset if has_more else None,
         },
     }), 200
 

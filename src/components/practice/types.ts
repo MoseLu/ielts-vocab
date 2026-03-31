@@ -21,6 +21,8 @@ export interface QuickMemoryModeProps {
   bookId: string | null
   chapterId: string | null
   bookChapters: Chapter[]
+  reviewHasMore?: boolean
+  onContinueReview?: () => void
   onModeChange: (mode: string) => void
   onNavigate: (path: string) => void
   /** Called with each word the user marks as "unknown" — adds it to the error book */

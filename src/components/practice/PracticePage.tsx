@@ -36,6 +36,18 @@ interface WrongWordsProgressData {
   updatedAt?: string
 }
 
+interface ReviewQueueSummary {
+  due_count: number
+  upcoming_count: number
+  returned_count: number
+  review_window_days: number
+  offset: number
+  limit: number
+  total_count: number
+  has_more: boolean
+  next_offset: number | null
+}
+
 function readWrongWordsProgress(currentMode?: PracticeMode): WrongWordsProgressData | null {
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.WRONG_WORDS_PROGRESS) || '{}') as {
@@ -137,6 +149,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   // Track word statuses
   const [wordStatuses, setWordStatuses] = useState<WordStatuses>({})
   const [backendLearnerProfile, setBackendLearnerProfile] = useState<BackendLearnerProfile | null>(null)
+  const [reviewOffset, setReviewOffset] = useState(0)
+  const [reviewSummary, setReviewSummary] = useState<ReviewQueueSummary | null>(null)
 
   // Smart mode: current word's test dimension (闊?鎰?褰?
   const [smartDimension, setSmartDimension] = useState<SmartDimension>('meaning')
@@ -287,6 +301,16 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   }, [chapterId, bookChapters])
 
   useEffect(() => {
+    if (!reviewMode || mode !== 'quickmemory') {
+      setReviewOffset(0)
+      setReviewSummary(null)
+      return
+    }
+
+    setReviewOffset(0)
+  }, [mode, reviewMode, settings.reviewInterval, settings.reviewLimit])
+
+  useEffect(() => {
     let cancelled = false
 
     void (async () => {
@@ -399,8 +423,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         try {
           const reviewWindowDays = Math.max(1, parseInt(String(settings.reviewInterval ?? '1'), 10) || 1)
           const reviewLimit = Math.max(1, parseInt(String(settings.reviewLimit ?? '20'), 10) || 20)
-          const data = await apiFetch<{ words?: Word[] }>(
-            `/api/ai/quick-memory/review-queue?limit=${reviewLimit}&within_days=${reviewWindowDays}`,
+          const data = await apiFetch<{ words?: Word[]; summary?: ReviewQueueSummary }>(
+            `/api/ai/quick-memory/review-queue?limit=${reviewLimit}&within_days=${reviewWindowDays}&offset=${reviewOffset}`,
           )
           if (cancelled) return
 
@@ -417,6 +441,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           setPreviousWord(null)
           setLastState(null)
           setWordStatuses({})
+          setReviewSummary(data.summary ?? null)
           setCurrentChapterTitle('艾宾浩斯复习')
           beginSession()
         } catch {
@@ -584,7 +609,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     return () => {
       cancelled = true
     }
-  }, [bookId, chapterId, currentDay, errorMode, mode, reviewMode, settings.reviewInterval, settings.reviewLimit, user])
+  }, [bookId, chapterId, currentDay, errorMode, mode, reviewMode, reviewOffset, settings.reviewInterval, settings.reviewLimit, user])
 
   useEffect(() => {
     if (!errorMode || !errorProgressHydratedRef.current || !vocabulary.length) return
@@ -1002,6 +1027,23 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     return () => document.removeEventListener('keydown', handleKey)
   }, [showResult, spellingResult, options, mode, queueIndex])
 
+  const handleContinueReview = useCallback(() => {
+    const nextOffset = reviewSummary?.next_offset
+    if (!reviewSummary?.has_more || nextOffset == null) return
+
+    setVocabulary([])
+    vocabRef.current = []
+    setQueue([])
+    queueRef.current = []
+    setQueueIndex(0)
+    setCorrectCount(0)
+    setWrongCount(0)
+    setPreviousWord(null)
+    setLastState(null)
+    setWordStatuses({})
+    setReviewOffset(nextOffset)
+  }, [reviewSummary])
+
   // Loading state
   if (!vocabulary.length) {
     return (
@@ -1155,13 +1197,15 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
         )}
         <QuickMemoryMode
-          key={`quickmemory-${bookId ?? 'day'}-${chapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}`}
+          key={`quickmemory-${bookId ?? 'day'}-${chapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}-${reviewMode ? `review-${reviewOffset}` : 'default'}`}
           vocabulary={vocabulary}
           queue={queue}
           settings={settings}
           bookId={bookId}
           chapterId={chapterId}
           bookChapters={bookChapters}
+          reviewHasMore={reviewMode ? Boolean(reviewSummary?.has_more) : false}
+          onContinueReview={reviewMode ? handleContinueReview : undefined}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
           onNavigate={navigate}
           onWrongWord={saveWrongWord}

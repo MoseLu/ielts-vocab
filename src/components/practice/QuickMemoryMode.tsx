@@ -164,6 +164,8 @@ function SummaryScreen({
   bookId,
   chapterId,
   bookChapters,
+  reviewHasMore,
+  onContinueReview,
   onRestart,
   onModeChange,
   onNavigate,
@@ -174,6 +176,8 @@ function SummaryScreen({
   bookId: string | null
   chapterId: string | null
   bookChapters: { id: number | string; title: string }[]
+  reviewHasMore?: boolean
+  onContinueReview?: () => void
   onRestart: () => void
   onModeChange: (mode: string) => void
   onNavigate: (path: string) => void
@@ -243,7 +247,17 @@ function SummaryScreen({
 
       <div className="qm-summary-actions">
         <button className="qm-btn-restart" onClick={onRestart}>再来一轮</button>
-        {nextChapter && bookId ? (
+        {reviewHasMore && onContinueReview ? (
+          <button
+            className="qm-btn-next-chapter"
+            onClick={onContinueReview}
+          >
+            下一组复习
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        ) : nextChapter && bookId ? (
           <button
             className="qm-btn-next-chapter"
             onClick={() => onNavigate(`/practice?book=${bookId}&chapter=${nextChapter.id}&mode=quickmemory`)}
@@ -269,6 +283,8 @@ export default function QuickMemoryMode({
   bookId,
   chapterId,
   bookChapters,
+  reviewHasMore,
+  onContinueReview,
   onModeChange,
   onNavigate,
   onWrongWord,
@@ -581,6 +597,8 @@ export default function QuickMemoryMode({
         bookId={bookId}
         chapterId={chapterId}
         bookChapters={bookChapters}
+        reviewHasMore={reviewHasMore}
+        onContinueReview={onContinueReview}
         onRestart={handleRestart}
         onModeChange={onModeChange}
         onNavigate={onNavigate}
