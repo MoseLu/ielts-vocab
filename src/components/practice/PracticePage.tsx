@@ -1269,6 +1269,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
           onNavigate={navigate}
           onWrongWord={saveWrongWord}
+          initialIndex={errorMode ? queueIndex : undefined}
+          onIndexChange={errorMode ? (i) => setQueueIndex(i) : undefined}
         />
         {pauseOverlay}
       </div>

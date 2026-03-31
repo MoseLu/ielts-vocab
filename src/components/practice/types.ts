@@ -27,6 +27,10 @@ export interface QuickMemoryModeProps {
   onNavigate: (path: string) => void
   /** Called with each word the user marks as "unknown" — adds it to the error book */
   onWrongWord: (word: Word) => void
+  /** Saved queue position to resume from (e.g. after pause+exit in error mode) */
+  initialIndex?: number
+  /** Called whenever the user advances or goes back, so the parent can persist position */
+  onIndexChange?: (index: number) => void
 }
 
 // Which dimension smart mode is testing for the current word
