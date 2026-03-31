@@ -14,6 +14,7 @@ from models import db as _db
 
 class TestConfig:
     """In-memory SQLite config for tests — no file pollution."""
+    TESTING = True
     SECRET_KEY = 'test-secret'
     JWT_SECRET_KEY = 'test-jwt-secret'
     JWT_ACCESS_TOKEN_EXPIRES = 3600
@@ -26,6 +27,9 @@ class TestConfig:
     COOKIE_HTTPONLY = True
     LOGIN_MAX_ATTEMPTS = 10
     LOGIN_LOCKOUT_MINUTES = 15
+    TRUST_PROXY_HEADERS = True
+    PROXY_FIX_X_FOR = 2
+    PROXY_FIX_X_PROTO = 1
 
 
 @pytest.fixture(scope='function')

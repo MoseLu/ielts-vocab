@@ -18,6 +18,11 @@ from flask import Blueprint, jsonify, make_response, request
 
 # RFC 5322-inspired email pattern — rejects obvious non-emails like "a@b"
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$')
+_AVATAR_DATA_URL_RE = re.compile(
+    r'^data:image/(?:jpeg|jpg|png|webp|gif);base64,[A-Za-z0-9+/=\s]+$',
+    re.IGNORECASE,
+)
+_AVATAR_HTTP_URL_RE = re.compile(r'^https?://', re.IGNORECASE)
 
 from models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, db
 from routes.middleware import token_required
@@ -60,6 +65,30 @@ def _reset_rate_limit(ip: str, purpose: str = 'login'):
 def _validate_email(email: str) -> bool:
     """Return True if email passes basic RFC-style format check."""
     return bool(_EMAIL_RE.match(email))
+
+
+def _is_mock_email_delivery() -> bool:
+    return (_app.config.get('EMAIL_CODE_DELIVERY_MODE') or 'mock') == 'mock'
+
+
+def _verification_code_message(*, generic: bool) -> str:
+    if _is_mock_email_delivery():
+        prefix = '如果该邮箱已注册，验证码已生成' if generic else '验证码已生成'
+        return f'{prefix}，开发环境请查看后端日志（有效期10分钟）'
+    prefix = '如果该邮箱已注册，验证码已发送' if generic else '验证码已发送'
+    return f'{prefix}，请查收邮件（有效期10分钟）'
+
+
+def _validate_avatar_value(avatar_url: str) -> str | None:
+    if not avatar_url:
+        return None
+    if len(avatar_url) > 700_000:
+        return '头像图片过大，请选择小于500KB的图片'
+    if _AVATAR_HTTP_URL_RE.match(avatar_url):
+        return None
+    if _AVATAR_DATA_URL_RE.match(avatar_url):
+        return None
+    return '头像格式不受支持，请上传 JPG、PNG、WEBP 或 GIF 图片'
 
 
 # ── Token helpers ─────────────────────────────────────────────────────────────
@@ -318,8 +347,9 @@ def get_current_user(current_user):
 def update_avatar(current_user):
     data = request.get_json() or {}
     avatar_url = data.get('avatar_url', '')
-    if len(avatar_url) > 700_000:
-        return jsonify({'error': '头像图片过大，请选择小于500KB的图片'}), 400
+    error = _validate_avatar_value(avatar_url)
+    if error:
+        return jsonify({'error': error}), 400
     current_user.avatar_url = avatar_url
     db.session.commit()
     return jsonify({'message': '头像已更新', 'user': current_user.to_dict()}), 200
@@ -354,7 +384,10 @@ def send_bind_email_code(current_user):
     db.session.commit()
     record = EmailVerificationCode.create_for(email, 'bind_email', user_id=current_user.id)
     _send_code_mock(email, record.code, 'bind_email')
-    return jsonify({'message': '验证码已发送，请查收邮件（有效期10分钟）', 'dev_code': record.code}), 200
+    return jsonify({
+        'message': _verification_code_message(generic=False),
+        'delivery_mode': _app.config.get('EMAIL_CODE_DELIVERY_MODE', 'mock'),
+    }), 200
 
 
 @auth_bp.route('/bind-email', methods=['POST'])
@@ -394,14 +427,20 @@ def forgot_password():
         return jsonify({'error': '请输入有效的邮箱地址'}), 400
     user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({'message': '如果该邮箱已注册，验证码已发送，请查收邮件'}), 200
+        return jsonify({
+            'message': _verification_code_message(generic=True),
+            'delivery_mode': _app.config.get('EMAIL_CODE_DELIVERY_MODE', 'mock'),
+        }), 200
     EmailVerificationCode.query.filter_by(
         email=email, purpose='reset_password', used=False
     ).update({'used': True})
     db.session.commit()
     record = EmailVerificationCode.create_for(email, 'reset_password', user_id=user.id)
     _send_code_mock(email, record.code, 'reset_password')
-    return jsonify({'message': '如果该邮箱已注册，验证码已发送，请查收邮件', 'dev_code': record.code}), 200
+    return jsonify({
+        'message': _verification_code_message(generic=True),
+        'delivery_mode': _app.config.get('EMAIL_CODE_DELIVERY_MODE', 'mock'),
+    }), 200
 
 
 @auth_bp.route('/reset-password', methods=['POST'])

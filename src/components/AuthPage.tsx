@@ -179,7 +179,7 @@ export default function AuthPage() {
     try {
       await sendForgotPasswordCode(fpEmail)
       setFpEmailSent(true)
-      showToast('验证码已发送', 'success')
+      showToast('开发环境：验证码已写入后端日志', 'success')
     } catch (e: any) {
       setFpError(e.message || '发送失败，请稍后重试')
     } finally {
@@ -301,7 +301,7 @@ export default function AuthPage() {
                 <input
                   type="email"
                   className={`auth-input ${registerForm.getFieldError('email') ? 'auth-input-error' : ''}`}
-                  placeholder="可选，用于绑定账号和找回密码"
+                  placeholder="可选，开发环境下验证码会写入后端日志"
                   value={registerForm.values.email ?? ''}
                   onChange={(e) => registerForm.setFieldValue('email' as any, e.target.value)}
                   onBlur={() => registerForm.setFieldTouched('email')}

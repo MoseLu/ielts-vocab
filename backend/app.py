@@ -13,6 +13,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from flask_migrate import Migrate
+from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
 from models import db
 from routes.auth import auth_bp, init_auth
@@ -78,6 +79,13 @@ def _ensure_admin_user():
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    if app.config.get('TRUST_PROXY_HEADERS'):
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_for=app.config.get('PROXY_FIX_X_FOR', 1),
+            x_proto=app.config.get('PROXY_FIX_X_PROTO', 1),
+        )
 
     # Initialize extensions
     db.init_app(app)

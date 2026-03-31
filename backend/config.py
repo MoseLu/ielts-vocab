@@ -33,6 +33,15 @@ class Config:
         'CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://localhost:4173'
     ).split(',')]
 
+    # Reverse-proxy handling for the documented natapp -> nginx -> Flask chain.
+    TRUST_PROXY_HEADERS = os.environ.get('TRUST_PROXY_HEADERS', 'true').lower() == 'true'
+    PROXY_FIX_X_FOR = int(os.environ.get('PROXY_FIX_X_FOR', '2'))
+    PROXY_FIX_X_PROTO = int(os.environ.get('PROXY_FIX_X_PROTO', '1'))
+
+    # Current email verification delivery mode. Until a real mailer is wired up,
+    # codes are only written to backend logs and must never be echoed in API responses.
+    EMAIL_CODE_DELIVERY_MODE = os.environ.get('EMAIL_CODE_DELIVERY_MODE', 'mock').strip().lower()
+
     # Login rate-limiting: max N failures per IP before 15-min lockout
     LOGIN_MAX_ATTEMPTS = 10
     LOGIN_LOCKOUT_MINUTES = 15

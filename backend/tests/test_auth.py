@@ -206,8 +206,7 @@ class TestSendCode:
             'email': 'newemail@example.com'
         })
         assert res.status_code == 200
-        # dev_code should be returned (mock email)
-        assert 'dev_code' in res.get_json()
+        assert 'dev_code' not in res.get_json()
 
 
 # ── /bind-email ────────────────────────────────────────────────────────────────
@@ -260,7 +259,7 @@ class TestForgotPassword:
         })
         res = client.post('/api/auth/forgot-password', json={'email': 'alice@example.com'})
         assert res.status_code == 200
-        assert 'dev_code' in res.get_json()
+        assert 'dev_code' not in res.get_json()
 
 
 # ── /reset-password ────────────────────────────────────────────────────────────
@@ -381,3 +380,26 @@ class TestLoginRateLimiting:
         })
         # If IPs are same, bob would also be blocked - this is expected
         assert res.status_code in (401, 429)
+
+    def test_rate_limit_uses_forwarded_client_ip_in_proxy_mode(self, client):
+        client.post('/api/auth/register', json={
+            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com'
+        })
+
+        def failed_login(forwarded_for: str):
+            return client.post(
+                '/api/auth/login',
+                json={'email': 'alice@example.com', 'password': 'wrongpassword'},
+                headers={'X-Forwarded-For': forwarded_for},
+                environ_overrides={'REMOTE_ADDR': '127.0.0.1'},
+            )
+
+        for _ in range(10):
+            res = failed_login('198.51.100.10, 10.0.0.1')
+            assert res.status_code == 401
+
+        blocked = failed_login('198.51.100.10, 10.0.0.1')
+        assert blocked.status_code == 429
+
+        other_ip = failed_login('198.51.100.11, 10.0.0.1')
+        assert other_ip.status_code == 401

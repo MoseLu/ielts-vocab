@@ -44,7 +44,7 @@ function BindEmailModal({ onClose }: { onClose: () => void }) {
       await sendBindEmailCode(email)
       setCodeSent(true)
       startCountdown()
-      showToast('验证码已发送，请查收邮件', 'success')
+      showToast('开发环境：验证码已写入后端日志', 'success')
     } catch (e: any) {
       setError(e.message || '发送失败，请稍后重试')
     } finally {
@@ -81,7 +81,7 @@ function BindEmailModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <p className="bind-email-desc">绑定邮箱后可用于找回密码和账号安全验证</p>
+        <p className="bind-email-desc">当前开发环境验证码会写入后端日志。绑定邮箱后可用于后续找回密码和账号安全验证。</p>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="bind-email-field">
