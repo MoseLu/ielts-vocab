@@ -611,6 +611,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     }
   }, [bookId, chapterId, currentDay, errorMode, mode, reviewMode, reviewOffset, settings.reviewInterval, settings.reviewLimit, user])
 
+  // Persist wrong-words progress when the queue position or word list changes.
+  // Deliberately excludes correctCount/wrongCount from deps: those are saved by
+  // saveProgress() on every answer (with the correct queueIndex+1 offset).
+  // Including them here would re-run with the stale queueIndex right after an
+  // answer, overwriting is_completed:true with is_completed:false for the last
+  // word before goNext() has a chance to navigate away.
   useEffect(() => {
     if (!errorMode || !errorProgressHydratedRef.current || !vocabulary.length) return
 
@@ -620,13 +626,14 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
     persistWrongWordsProgress({
       current_index: Math.min(queueIndex, Math.max(queue.length - 1, 0)),
-      correct_count: correctCount,
-      wrong_count: wrongCount,
+      correct_count: correctCountRef.current,
+      wrong_count: wrongCountRef.current,
       is_completed: queue.length > 0 && queueIndex >= queue.length,
       queue_words: queueWords,
       mode,
     })
-  }, [correctCount, errorMode, mode, queue, queueIndex, vocabulary, wrongCount])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [errorMode, mode, queue, queueIndex, vocabulary])
 
   const currentWord: Word | undefined = vocabulary[queue[queueIndex]]
 
