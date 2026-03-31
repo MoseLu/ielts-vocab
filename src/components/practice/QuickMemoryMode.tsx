@@ -288,9 +288,13 @@ export default function QuickMemoryMode({
   onModeChange,
   onNavigate,
   onWrongWord,
+  initialIndex,
+  onIndexChange,
 }: QuickMemoryModeProps) {
   const { showToast } = useToast()
   const [index, setIndex]         = useState(0)
+  // Tracks whether we've applied initialIndex once (only on first vocabulary load)
+  const hasRestoredIndexRef = useRef(false)
   const [phase, setPhase]         = useState<'question' | 'reveal'>('question')
   const [countdown, setCountdown] = useState(TIMER_SECONDS)
   const [choice, setChoice]       = useState<'known' | 'unknown' | null>(null)
@@ -313,11 +317,19 @@ export default function QuickMemoryMode({
   wordRef.current = currentWord
 
   // Reset session-scoped state when practice context changes.
+  // On the very first load (queue going from empty to populated), restore
+  // the saved position from initialIndex instead of resetting to 0.
   useEffect(() => {
+    if (queue.length === 0) return  // vocabulary not loaded yet; nothing to reset
     stopAudio()
     clearInterval(timerRef.current)
     clearTimeout(revealTimerRef.current)
-    setIndex(0)
+    const startIndex =
+      !hasRestoredIndexRef.current && initialIndex != null && initialIndex > 0 && initialIndex < queue.length
+        ? initialIndex
+        : 0
+    hasRestoredIndexRef.current = true
+    setIndex(startIndex)
     setPhase('question')
     setCountdown(TIMER_SECONDS)
     setChoice(null)
@@ -326,7 +338,7 @@ export default function QuickMemoryMode({
     setRevisitedSet(new Set())
     sessionLoggedRef.current = false
     pendingSessionCancelRef.current = false
-  }, [bookId, chapterId, queue.length])
+  }, [bookId, chapterId, queue.length])  // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reveal helper ──────────────────────────────────────────────────────────
   const reveal = useCallback((picked: 'known' | 'unknown') => {
@@ -535,9 +547,10 @@ export default function QuickMemoryMode({
       return
     }
     setIndex(next)
+    onIndexChange?.(next)
     setPhase('question')
     setChoice(null)
-  }, [index, queue.length])
+  }, [index, queue.length, onIndexChange])
 
   // ── Go back to previous word ───────────────────────────────────────────────
   const handlePrev = useCallback(() => {
@@ -548,9 +561,10 @@ export default function QuickMemoryMode({
     // Mark the previous word as revisited — re-answering it counts as fuzzy
     setRevisitedSet(s => { const n = new Set(s); n.add(prev); return n })
     setIndex(prev)
+    onIndexChange?.(prev)
     setPhase('question')
     setChoice(null)
-  }, [index])
+  }, [index, onIndexChange])
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   useEffect(() => {
