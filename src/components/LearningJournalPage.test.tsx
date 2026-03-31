@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 import LearningJournalPage from './LearningJournalPage'
 
 const apiFetchMock = vi.fn()
+const todayString = () => new Date().toISOString().slice(0, 10)
 
 vi.mock('../lib', async () => {
   const actual = await vi.importActual<typeof import('../lib')>('../lib')
@@ -186,6 +187,7 @@ describe('LearningJournalPage markdown rendering', () => {
 
   it('renders summary generation progress from the dedicated job api', async () => {
     const user = userEvent.setup()
+    const jobDate = todayString()
 
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/notes/summaries') {
@@ -194,7 +196,7 @@ describe('LearningJournalPage markdown rendering', () => {
       if (url === '/api/notes/summaries/generate-jobs') {
         return Promise.resolve({
           job_id: 'job-1',
-          date: '2026-03-30',
+          date: jobDate,
           status: 'queued',
           progress: 4,
           message: 'Preparing summary...',
@@ -207,7 +209,7 @@ describe('LearningJournalPage markdown rendering', () => {
       if (url === '/api/notes/summaries/generate-jobs/job-1') {
         return Promise.resolve({
           job_id: 'job-1',
-          date: '2026-03-30',
+          date: jobDate,
           status: 'running',
           progress: 42,
           message: 'Generating body...',
@@ -242,6 +244,7 @@ describe('LearningJournalPage markdown rendering', () => {
 
   it('applies completed summaries returned by the job api', async () => {
     const user = userEvent.setup()
+    const jobDate = todayString()
 
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/notes/summaries') {
@@ -250,7 +253,7 @@ describe('LearningJournalPage markdown rendering', () => {
       if (url === '/api/notes/summaries/generate-jobs') {
         return Promise.resolve({
           job_id: 'job-complete',
-          date: '2026-03-30',
+          date: jobDate,
           status: 'queued',
           progress: 5,
           message: 'Preparing summary...',
@@ -263,7 +266,7 @@ describe('LearningJournalPage markdown rendering', () => {
       if (url === '/api/notes/summaries/generate-jobs/job-complete') {
         return Promise.resolve({
           job_id: 'job-complete',
-          date: '2026-03-30',
+          date: jobDate,
           status: 'completed',
           progress: 100,
           message: 'Completed',
@@ -271,7 +274,7 @@ describe('LearningJournalPage markdown rendering', () => {
           generated_chars: 812,
           summary: {
             id: 5,
-            date: '2026-03-30',
+            date: jobDate,
             content: '# Summary',
             generated_at: '2026-03-30T12:30:00',
           },
@@ -291,13 +294,14 @@ describe('LearningJournalPage markdown rendering', () => {
     await user.click(generateButton!)
 
     await waitFor(() => {
-      expect(container.querySelector('.journal-doc-title')?.textContent).toContain('2026-03-30')
+      expect(container.querySelector('.journal-doc-title')?.textContent).toContain(jobDate)
     })
   })
 
   it('surfaces job polling errors in the page instead of using alert', async () => {
     const user = userEvent.setup()
     const alertSpy = vi.spyOn(window, 'alert')
+    const jobDate = todayString()
 
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/notes/summaries') {
@@ -306,7 +310,7 @@ describe('LearningJournalPage markdown rendering', () => {
       if (url === '/api/notes/summaries/generate-jobs') {
         return Promise.resolve({
           job_id: 'job-2',
-          date: '2026-03-30',
+          date: jobDate,
           status: 'queued',
           progress: 3,
           message: 'Preparing summary...',
@@ -319,7 +323,7 @@ describe('LearningJournalPage markdown rendering', () => {
       if (url === '/api/notes/summaries/generate-jobs/job-2') {
         return Promise.resolve({
           job_id: 'job-2',
-          date: '2026-03-30',
+          date: jobDate,
           status: 'failed',
           progress: 45,
           message: 'Generation failed.',
