@@ -67,8 +67,18 @@ function VocabBookCard({ book, progress, onSelect, isInMyBooks }: VocabBookCardP
       </div>
       {progress && (
         <div className="vb-card-progress">
-          <div className="vb-card-progress-bar">
-            <progress className="vb-card-progress-fill" max="100" value={progressPercent} />
+          <div
+            className="vb-card-progress-bar"
+            role="progressbar"
+            aria-label={`${book.title} 学习进度`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPercent}
+          >
+            <div
+              className="vb-card-progress-fill"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
           <span className="vb-card-progress-text">{currentIndex}/{book.word_count}</span>
         </div>

@@ -109,9 +109,11 @@
 
 .study-book-header {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -119,6 +121,15 @@
     font-size: 18px;
     font-weight: 700;
     line-height: 1.35;
+    margin: 0;
+}
+
+.study-book-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 24px;
 }
 
 .study-book-badge {
@@ -153,28 +164,11 @@
 }
 
 .study-book-progress-fill {
-    width: 100%;
     height: 100%;
-    appearance: none;
-    border: none;
-    background: transparent;
-    border-radius: 999px;
-    overflow: hidden;
-}
-
-.study-book-progress-fill::-webkit-progress-bar {
-    background: transparent;
-}
-
-.study-book-progress-fill::-webkit-progress-value {
+    display: block;
     background: var(--accent);
     border-radius: 999px;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.study-book-progress-fill::-moz-progress-bar {
-    background: var(--accent);
-    border-radius: 999px;
 }
 
 .study-book-stats {

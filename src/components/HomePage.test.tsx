@@ -104,6 +104,7 @@ describe('HomePage', () => {
     expect(container.querySelector('.study-book-card-cta')).toBeNull()
     expect(container.querySelector('.study-book-state--active')).not.toBeNull()
     expect(screen.getAllByText('测试词书').length).toBeGreaterThan(0)
+    expect(container.querySelector('.study-book-progress-fill')).toHaveStyle({ width: '20%' })
   })
 })
 

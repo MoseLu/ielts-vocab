@@ -115,19 +115,27 @@ export default function HomePage() {
                     </div>
                     <div className="study-book-header">
                       <h3 className="study-book-title">{book.title}</h3>
-                      {book.is_paid && <span className="study-book-badge">付费</span>}
-                      {isActive && <span className="study-book-state study-book-state--active">进行中</span>}
-                      {isComplete && <span className="study-book-state study-book-state--complete">已完成</span>}
+                      <div className="study-book-badges">
+                        {book.is_paid && <span className="study-book-badge">付费</span>}
+                        {isActive && <span className="study-book-state study-book-state--active">进行中</span>}
+                        {isComplete && <span className="study-book-state study-book-state--complete">已完成</span>}
+                      </div>
                     </div>
                   </div>
                   <div className="study-book-progress-text">
                     {currentIndex} / {book.word_count} 词
                   </div>
-                  <div className="study-book-progress-bar">
-                    <progress
+                  <div
+                    className="study-book-progress-bar"
+                    role="progressbar"
+                    aria-label={`${book.title} 学习进度`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progressPercent}
+                  >
+                    <div
                       className="study-book-progress-fill"
-                      max="100"
-                      value={progressPercent}
+                      style={{ width: `${progressPercent}%` }}
                     />
                   </div>
                   <div className="study-book-stats">

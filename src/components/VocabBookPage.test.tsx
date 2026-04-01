@@ -92,13 +92,14 @@ describe('VocabBookPage', () => {
   })
 
   it('renders the book grid after data resolves', () => {
-    render(
+    const { container } = render(
       <MemoryRouter>
         <VocabBookPage />
       </MemoryRouter>,
     )
 
     expect(screen.getByText('词书 A')).toBeInTheDocument()
+    expect(container.querySelector('.vb-card-progress-fill')).toHaveStyle({ width: '20%' })
   })
 
   it('renders compact filter tabs instead of stretched buttons', () => {
