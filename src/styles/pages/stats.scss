@@ -909,7 +909,7 @@
     gap: var(--space-stack);
 }
 
-/* 百分比居左，到期 / 已按时 / 词库 整组贴右 */
+/* 百分比居左，右侧三项用更直白的说明词 */
 .ebbinghaus-summary-row--split {
     display: flex;
     flex-wrap: wrap;
@@ -920,6 +920,12 @@
 
 .ebbinghaus-summary-row--split .ebbinghaus-big--compact {
     flex-shrink: 0;
+}
+
+.ebbinghaus-rate-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 /* 总达成率分档提醒：<50 红；50–80 橙；>80 绿 */
@@ -951,7 +957,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    align-items: baseline;
+    align-items: stretch;
     gap: 10px 16px;
     margin-left: auto;
     font-size: 13px;
@@ -963,14 +969,25 @@
 
 .ebb-meta-item {
     display: inline-flex;
-    align-items: baseline;
-    gap: 5px;
-    white-space: nowrap;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    min-width: 78px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.04);
+    white-space: normal;
+}
+
+[data-theme="dark"] .ebb-meta-item {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .ebb-meta-label {
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 1.35;
     color: var(--text-tertiary);
+    text-align: right;
 }
 
 .ebb-upcoming-hint {
@@ -998,7 +1015,7 @@
 
 .ebb-meta-num {
     font-weight: 700;
-    font-size: 14px;
+    font-size: 15px;
     font-variant-numeric: tabular-nums;
     color: var(--accent-deep);
 }
@@ -1006,6 +1023,19 @@
 .ebbinghaus-big--compact {
     font-size: 18px;
     font-weight: 700;
+}
+
+.ebb-rate-caption {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-secondary);
+}
+
+.ebb-meta-help {
+    margin: 0 0 var(--space-stack);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-secondary);
 }
 
 .stats-chart-loading--ebb-split {

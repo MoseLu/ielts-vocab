@@ -11,6 +11,7 @@ from sqlalchemy import text
 from models import db, User, UserBookProgress, UserChapterProgress, UserChapterModeProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory, UserLearningNote
 from routes.middleware import token_required
 from services.learner_profile import build_learner_profile
+from services.learning_events import record_learning_event
 from services.memory_topics import build_memory_topics
 from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS, correct_text, differentiate_synonyms
 
@@ -660,6 +661,7 @@ def _get_context_data(user_id: int) -> dict:
 
     # Load persistent AI memory for this user
     memory = _load_memory(user_id)
+    learner_profile = build_learner_profile(user_id)
 
     return {
         'totalBooks': len(book_map),
@@ -682,7 +684,12 @@ def _get_context_data(user_id: int) -> dict:
         'recentSessions': recent_sessions_data,
         'chapterSessionStats': list(chapter_session_stats.values()),
         'totalSessions': len(recent_sessions),
-        'learnerProfile': build_learner_profile(user_id),
+        'learnerProfile': learner_profile,
+        'activityTimeline': {
+            'summary': learner_profile.get('activity_summary') or {},
+            'source_breakdown': learner_profile.get('activity_source_breakdown') or [],
+            'recent_events': learner_profile.get('recent_activity') or [],
+        },
         'memory': memory,
     }
 
@@ -1404,6 +1411,9 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
         focus_words = learner_profile.get('focus_words') or []
         repeated_topics = learner_profile.get('repeated_topics') or []
         next_actions = learner_profile.get('next_actions') or []
+        activity_summary = learner_profile.get('activity_summary') or {}
+        activity_sources = learner_profile.get('activity_source_breakdown') or []
+        recent_activity = learner_profile.get('recent_activity') or []
 
         parts.append("\n[统一学习画像]")
         weakest_mode_label = summary.get('weakest_mode_label') or summary.get('weakest_mode')
@@ -1429,6 +1439,31 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
             parts.append("建议动作：")
             for action in next_actions[:3]:
                 parts.append(f"  - {action}")
+        if activity_summary.get('total_events'):
+            parts.append("今日行为时间线：")
+            parts.append(
+                "  - "
+                f"已记录 {activity_summary.get('total_events', 0)} 个行为，"
+                f"涉及 {activity_summary.get('books_touched', 0)} 本词书、"
+                f"{activity_summary.get('chapters_touched', 0)} 个章节、"
+                f"{activity_summary.get('words_touched', 0)} 个单词"
+            )
+            if activity_sources:
+                source_text = '、'.join(
+                    f"{item.get('label', item.get('source'))} {item.get('count', 0)} 次"
+                    for item in activity_sources[:4]
+                )
+                if source_text:
+                    parts.append(f"  - 来源分布：{source_text}")
+            if recent_activity:
+                parts.append("  - 最近关键动作：")
+                for item in recent_activity[:6]:
+                    stamp = str(item.get('occurred_at') or '')[11:16]
+                    title = item.get('title') or item.get('label') or '学习行为'
+                    if stamp:
+                        parts.append(f"    {stamp} {title}")
+                    else:
+                        parts.append(f"    {title}")
 
     # Frontend session context
     if frontend_context:
@@ -2080,6 +2115,17 @@ def ask(current_user: User):
                 word_context=word_ctx,
             )
             db.session.add(note)
+            record_learning_event(
+                user_id=current_user.id,
+                event_type='assistant_question',
+                source='assistant',
+                mode=(frontend_context.get('practiceMode') if isinstance(frontend_context, dict) else None),
+                word=word_ctx,
+                payload={
+                    'question': user_message[:500],
+                    'answer_excerpt': clean_reply[:500],
+                },
+            )
             db.session.commit()
         except Exception as note_err:
             db.session.rollback()
@@ -2272,6 +2318,10 @@ def sync_wrong_words(current_user: User):
     """Sync wrong words from client localStorage to backend DB."""
     body = request.get_json() or {}
     words = body.get('words', [])
+    source_mode_raw = body.get('sourceMode')
+    source_mode = source_mode_raw.strip()[:30] if isinstance(source_mode_raw, str) and source_mode_raw.strip() else None
+    book_id = body.get('bookId') or None
+    chapter_id = _normalize_chapter_id(body.get('chapterId'))
 
     if not isinstance(words, list):
         return jsonify({'error': 'words must be an array'}), 400
@@ -2284,6 +2334,7 @@ def sync_wrong_words(current_user: User):
             user_id=current_user.id,
             word=w['word']
         ).first()
+        previous_wrong_count = existing.wrong_count if existing else 0
         if existing:
             existing.phonetic = w.get('phonetic') or existing.phonetic
             existing.pos = w.get('pos') or existing.pos
@@ -2313,6 +2364,26 @@ def sync_wrong_words(current_user: User):
                 dictation_wrong=w.get('dictationWrong', 0),
             )
             db.session.add(new_w)
+            existing = new_w
+
+        current_wrong_count = existing.wrong_count or 0
+        wrong_delta = max(0, current_wrong_count - (previous_wrong_count or 0))
+        if source_mode and wrong_delta > 0:
+            record_learning_event(
+                user_id=current_user.id,
+                event_type='wrong_word_recorded',
+                source='wrong_words',
+                mode=source_mode,
+                book_id=book_id,
+                chapter_id=chapter_id,
+                word=existing.word,
+                item_count=1,
+                wrong_count=wrong_delta,
+                payload={
+                    'wrong_count': current_wrong_count,
+                    'definition': existing.definition or '',
+                },
+            )
         updated += 1
 
     db.session.commit()
@@ -2476,7 +2547,9 @@ def get_learning_stats(current_user: User):
         )
     )
 
-    # Today's accuracy from chapter progress updated today
+    # Today's accuracy prefers real session data. Chapter progress can lag behind
+    # or reflect only one completed chapter, which can incorrectly pin the day
+    # at 100% while same-day practice sessions include mistakes.
     today_str = datetime.utcnow().strftime('%Y-%m-%d')
     today_chapters = [cp for cp in all_chapter_progress
                       if cp.updated_at and cp.updated_at.strftime('%Y-%m-%d') == today_str]
@@ -2489,11 +2562,11 @@ def get_learning_stats(current_user: User):
     session_today_wrong = sum(s.wrong_count or 0 for s in today_sessions)
     session_today_attempted = session_today_correct + session_today_wrong
     today_accuracy = (
-        round(today_correct / today_attempted * 100)
-        if today_attempted > 0
+        round(session_today_correct / session_today_attempted * 100)
+        if session_today_attempted > 0
         else (
-            round(session_today_correct / session_today_attempted * 100)
-            if session_today_attempted > 0 else None
+            round(today_correct / today_attempted * 100)
+            if today_attempted > 0 else None
         )
     )
 
@@ -2796,6 +2869,24 @@ def log_session(current_user: User):
                     session.duration_seconds = 1
                 else:
                     session.duration_seconds = computed_duration
+                record_learning_event(
+                    user_id=current_user.id,
+                    event_type='study_session',
+                    source='practice',
+                    mode=session.mode,
+                    book_id=session.book_id,
+                    chapter_id=session.chapter_id,
+                    item_count=session.words_studied or 0,
+                    correct_count=session.correct_count or 0,
+                    wrong_count=session.wrong_count or 0,
+                    duration_seconds=session.duration_seconds or 0,
+                    occurred_at=session.ended_at or ended_at,
+                    payload={
+                        'session_id': session.id,
+                        'started_at': session.started_at.isoformat() if session.started_at else None,
+                        'ended_at': session.ended_at.isoformat() if session.ended_at else None,
+                    },
+                )
                 db.session.commit()
                 return jsonify({'id': session.id}), 200
 
@@ -2838,6 +2929,24 @@ def log_session(current_user: User):
             pending.duration_seconds = max(duration_seconds, computed_duration)
             if pending.duration_seconds == 0 and pending.has_activity():
                 pending.duration_seconds = 1
+            record_learning_event(
+                user_id=current_user.id,
+                event_type='study_session',
+                source='practice',
+                mode=pending.mode,
+                book_id=pending.book_id,
+                chapter_id=pending.chapter_id,
+                item_count=pending.words_studied or 0,
+                correct_count=pending.correct_count or 0,
+                wrong_count=pending.wrong_count or 0,
+                duration_seconds=pending.duration_seconds or 0,
+                occurred_at=pending.ended_at,
+                payload={
+                    'session_id': pending.id,
+                    'started_at': pending.started_at.isoformat() if pending.started_at else None,
+                    'ended_at': pending.ended_at.isoformat() if pending.ended_at else None,
+                },
+            )
             db.session.commit()
             return jsonify({'id': pending.id}), 200
 
@@ -2856,6 +2965,25 @@ def log_session(current_user: User):
         if duration_seconds > 0:
             session.ended_at = datetime.utcnow()
         db.session.add(session)
+        db.session.flush()
+        record_learning_event(
+            user_id=current_user.id,
+            event_type='study_session',
+            source='practice',
+            mode=session.mode,
+            book_id=session.book_id,
+            chapter_id=session.chapter_id,
+            item_count=session.words_studied or 0,
+            correct_count=session.correct_count or 0,
+            wrong_count=session.wrong_count or 0,
+            duration_seconds=session.duration_seconds or 0,
+            occurred_at=session.ended_at or session.started_at,
+            payload={
+                'session_id': session.id,
+                'started_at': session.started_at.isoformat() if session.started_at else None,
+                'ended_at': session.ended_at.isoformat() if session.ended_at else None,
+            },
+        )
         db.session.commit()
         return jsonify({'id': session.id}), 201
     except Exception as e:
@@ -3043,6 +3171,8 @@ def sync_quick_memory(current_user: User):
     """Bulk upsert quick-memory records. Accepts {records: [{word, status, firstSeen, lastSeen, knownCount, unknownCount, nextReview}]}."""
     body = request.get_json() or {}
     records_in = body.get('records', [])
+    source_raw = body.get('source')
+    source = source_raw.strip()[:50] if isinstance(source_raw, str) and source_raw.strip() else None
     if not isinstance(records_in, list):
         return jsonify({'error': 'records must be a list'}), 400
 
@@ -3055,6 +3185,18 @@ def sync_quick_memory(current_user: User):
         existing = UserQuickMemoryRecord.query.filter_by(
             user_id=current_user.id, word=word
         ).first()
+        previous_snapshot = None
+        if existing:
+            previous_snapshot = {
+                'status': existing.status,
+                'book_id': existing.book_id,
+                'chapter_id': _normalize_chapter_id(existing.chapter_id),
+                'last_seen': existing.last_seen or 0,
+                'known_count': existing.known_count or 0,
+                'unknown_count': existing.unknown_count or 0,
+                'next_review': existing.next_review or 0,
+                'fuzzy_count': existing.fuzzy_count or 0,
+            }
         if existing:
             # Only overwrite if client data is newer (lastSeen is epoch ms)
             if (r.get('lastSeen') or 0) >= (existing.last_seen or 0):
@@ -3086,6 +3228,40 @@ def sync_quick_memory(current_user: User):
                 fuzzy_count=r.get('fuzzyCount', 0),
             )
             db.session.add(new_rec)
+            existing = new_rec
+
+        if source:
+            current_snapshot = {
+                'status': existing.status,
+                'book_id': existing.book_id,
+                'chapter_id': _normalize_chapter_id(existing.chapter_id),
+                'last_seen': existing.last_seen or 0,
+                'known_count': existing.known_count or 0,
+                'unknown_count': existing.unknown_count or 0,
+                'next_review': existing.next_review or 0,
+                'fuzzy_count': existing.fuzzy_count or 0,
+            }
+            if previous_snapshot != current_snapshot:
+                status = current_snapshot['status']
+                record_learning_event(
+                    user_id=current_user.id,
+                    event_type='quick_memory_review',
+                    source=source,
+                    mode='quickmemory',
+                    book_id=current_snapshot['book_id'],
+                    chapter_id=current_snapshot['chapter_id'],
+                    word=word,
+                    item_count=1,
+                    correct_count=1 if status == 'known' else 0,
+                    wrong_count=1 if status == 'unknown' else 0,
+                    payload={
+                        'status': status,
+                        'known_count': current_snapshot['known_count'],
+                        'unknown_count': current_snapshot['unknown_count'],
+                        'next_review': current_snapshot['next_review'],
+                        'fuzzy_count': current_snapshot['fuzzy_count'],
+                    },
+                )
 
     try:
         db.session.commit()

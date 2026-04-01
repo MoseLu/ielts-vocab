@@ -13,6 +13,7 @@ import type {
   MetricKey,
   RangeKey,
   DailyLearning,
+  LearningAlltime,
   ModeStat,
   PieSegment,
   EbbinghausStagePoint,
@@ -87,6 +88,30 @@ function startEbbinghausReview(navigate: ReturnType<typeof useNavigate>) {
     detail: { mode: 'quickmemory' },
   }))
   navigate('/practice?review=due')
+}
+
+function ebbinghausRateCaption(alltime: LearningAlltime | null | undefined): string {
+  const dueTotal = alltime?.ebbinghaus_due_total ?? 0
+  const poolTotal = alltime?.qm_word_total ?? 0
+
+  if (poolTotal === 0) return '还没有进入复习库的词'
+  if (dueTotal === 0) return '当前暂无到点词'
+  return '按时复习率'
+}
+
+function ebbinghausSummaryHelp(alltime: LearningAlltime | null | undefined): string {
+  const dueTotal = alltime?.ebbinghaus_due_total ?? 0
+  const poolTotal = alltime?.qm_word_total ?? 0
+
+  if (poolTotal === 0) {
+    return '复习库词数 = 已进入艾宾浩斯安排的词。开始速记后，这里会逐步累计。'
+  }
+
+  if (dueTotal === 0) {
+    return '已到复习点 = 现在该复习的词；按时完成 = 这些词里已及时复习的数量。当前没有词到达复习点，所以前两项会显示 0。'
+  }
+
+  return '已到复习点 = 现在该复习的词；按时完成 = 这些词里已及时复习的数量；复习库词数 = 已进入艾宾浩斯安排的总词数。'
 }
 
 function LearnerProfileCard({
@@ -778,6 +803,8 @@ export default function StatsPage() {
   const displayAlltimeAccuracy = fmtPct(alltime?.accuracy)
   const displayStreak = alltime?.streak_days != null && alltime?.streak_days > 0
     ? alltime.streak_days : '--'
+  const ebbRateCaption = ebbinghausRateCaption(alltime)
+  const ebbSummaryHelp = ebbinghausSummaryHelp(alltime)
 
   const hasChartData = daily.some(d => {
     if (metric === 'words') return d.words_studied > 0
@@ -1033,26 +1060,30 @@ export default function StatsPage() {
                         ) : (
                           <>
                             <div className="ebbinghaus-summary-row ebbinghaus-summary-row--compact ebbinghaus-summary-row--split">
-                              <div
-                                className={`ebbinghaus-big ebbinghaus-big--compact ${ebbRateToneClass(alltime?.ebbinghaus_rate)}`}
-                              >
-                                {fmtPct(alltime?.ebbinghaus_rate)}
+                              <div className="ebbinghaus-rate-block">
+                                <div
+                                  className={`ebbinghaus-big ebbinghaus-big--compact ${ebbRateToneClass(alltime?.ebbinghaus_rate)}`}
+                                >
+                                  {fmtPct(alltime?.ebbinghaus_rate)}
+                                </div>
+                                <div className="ebb-rate-caption">{ebbRateCaption}</div>
                               </div>
                               <div className="ebbinghaus-meta ebbinghaus-meta--compact">
                                 <span className="ebb-meta-item">
-                                  <span className="ebb-meta-label">到期</span>
+                                  <span className="ebb-meta-label">已到复习点</span>
                                   <span className="ebb-meta-num">{alltime?.ebbinghaus_due_total ?? 0}</span>
                                 </span>
                                 <span className="ebb-meta-item">
-                                  <span className="ebb-meta-label">已按时</span>
+                                  <span className="ebb-meta-label">按时完成</span>
                                   <span className="ebb-meta-num">{alltime?.ebbinghaus_met ?? 0}</span>
                                 </span>
                                 <span className="ebb-meta-item">
-                                  <span className="ebb-meta-label">词库</span>
+                                  <span className="ebb-meta-label">复习库词数</span>
                                   <span className="ebb-meta-num">{alltime?.qm_word_total ?? 0}</span>
                                 </span>
                               </div>
                             </div>
+                            <p className="ebb-meta-help">{ebbSummaryHelp}</p>
                             {(alltime?.upcoming_reviews_3d ?? 0) > 0 && (
                               <div className="ebb-upcoming-hint">
                                 <span>接下来3天待复习 <strong>{alltime?.upcoming_reviews_3d}</strong> 词</span>

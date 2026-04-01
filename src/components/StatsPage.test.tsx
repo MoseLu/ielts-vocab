@@ -155,7 +155,50 @@ describe('StatsPage', () => {
     expect(screen.getByText('今日学习新词数')).toBeInTheDocument()
     expect(screen.getByText('累计学习新词数')).toBeInTheDocument()
     expect(screen.getByText('统一学习画像')).toBeInTheDocument()
+    expect(screen.getByText('按时复习率')).toBeInTheDocument()
+    expect(screen.getByText('已到复习点')).toBeInTheDocument()
+    expect(screen.getByText('复习库词数')).toBeInTheDocument()
     expect(screen.getAllByText('kind').length).toBeGreaterThan(0)
+  })
+
+  it('explains zero due counts when no word has reached its review time yet', () => {
+    hooksState.learningStats.alltime = {
+      total_words: 120,
+      accuracy: 88,
+      duration_seconds: 7200,
+      today_accuracy: 92,
+      today_duration_seconds: 900,
+      today_new_words: 15,
+      today_review_words: 10,
+      alltime_review_words: 48,
+      cumulative_review_events: 60,
+      ebbinghaus_rate: null,
+      ebbinghaus_due_total: 0,
+      ebbinghaus_met: 0,
+      qm_word_total: 1798,
+      ebbinghaus_stages: [],
+      upcoming_reviews_3d: 0,
+      streak_days: 6,
+      weakest_mode: 'listening',
+      weakest_mode_accuracy: 70,
+      trend_direction: 'improving',
+    }
+    hooksState.learningStats.summary = {
+      total_words: 40,
+      total_duration_seconds: 1200,
+      total_sessions: 3,
+      accuracy: 90,
+    }
+    hooksState.learningStats.loading = false
+
+    render(
+      <MemoryRouter>
+        <StatsPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('当前暂无到点词')).toBeInTheDocument()
+    expect(screen.getByText(/当前没有词到达复习点，所以前两项会显示 0/)).toBeInTheDocument()
   })
 
   it('shows section skeletons during in-place stats refreshes', () => {

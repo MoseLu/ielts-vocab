@@ -624,11 +624,35 @@
   padding: 12px;
 }
 
+.journal-summary-profile__card--wide {
+  grid-column: 1 / -1;
+}
+
 .journal-summary-profile__card h3 {
   margin: 0;
   font-size: 0.86rem;
   font-weight: 800;
   color: var(--text-primary);
+}
+
+.journal-summary-profile__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.journal-summary-profile__section-meta {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+
+.journal-summary-profile__description {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
 }
 
 .journal-summary-profile__chips {
@@ -697,6 +721,54 @@
   height: 6px;
   border-radius: 999px;
   background: var(--accent);
+}
+
+.journal-summary-profile__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journal-summary-profile__timeline-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.journal-summary-profile__timeline-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.journal-summary-profile__timeline-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.journal-summary-profile__timeline-title {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.journal-summary-profile__timeline-meta,
+.journal-summary-profile__timeline-detail {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-tertiary);
+}
+
+.journal-summary-profile__timeline-detail {
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .journal-note-detail-grid {
@@ -1028,8 +1100,18 @@
     flex-direction: column;
   }
 
-  .journal-summary-profile__list li {
+  .journal-summary-profile__list li,
+  .journal-summary-profile__timeline-item {
     flex-direction: column;
+  }
+
+  .journal-summary-profile__section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .journal-summary-profile__timeline-detail {
+    text-align: left;
   }
 
   .journal-note-memory-list li {

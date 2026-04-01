@@ -323,6 +323,9 @@ def _build_summary_prompt(
         focus_words = learner_profile.get('focus_words') or []
         repeated_topics = learner_profile.get('repeated_topics') or []
         next_actions = learner_profile.get('next_actions') or []
+        activity_summary = learner_profile.get('activity_summary') or {}
+        activity_sources = learner_profile.get('activity_source_breakdown') or []
+        recent_activity = learner_profile.get('recent_activity') or []
 
         weakest_mode_label = profile_summary.get('weakest_mode_label') or profile_summary.get('weakest_mode')
         weakest_mode_accuracy = profile_summary.get('weakest_mode_accuracy')
@@ -349,6 +352,27 @@ def _build_summary_prompt(
             prompt_parts.append("- 建议动作：")
             for action in next_actions[:4]:
                 prompt_parts.append(f"  - {action}")
+        if activity_summary.get('total_events'):
+            prompt_parts.append(
+                "- 今日统一行为流："
+                f"记录了 {activity_summary.get('total_events', 0)} 个事件，"
+                f"涉及 {activity_summary.get('books_touched', 0)} 本词书、"
+                f"{activity_summary.get('chapters_touched', 0)} 个章节、"
+                f"{activity_summary.get('words_touched', 0)} 个单词"
+            )
+            if activity_sources:
+                source_text = '；'.join(
+                    f"{item.get('label', item.get('source'))} {item.get('count', 0)} 次"
+                    for item in activity_sources[:5]
+                )
+                if source_text:
+                    prompt_parts.append(f"- 行为来源分布：{source_text}")
+            if recent_activity:
+                prompt_parts.append("- 近期关键动作：")
+                for item in recent_activity[:8]:
+                    stamp = str(item.get('occurred_at') or '')[11:16]
+                    title = item.get('title') or item.get('label') or '学习行为'
+                    prompt_parts.append(f"  - {stamp} {title}".strip())
 
     return '\n'.join(prompt_parts)
 

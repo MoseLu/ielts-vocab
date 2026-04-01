@@ -2,6 +2,7 @@ from datetime import date as date_type
 from datetime import datetime, timedelta
 
 from models import UserLearningNote, UserQuickMemoryRecord, UserSmartWordStat, UserStudySession, UserWrongWord
+from services.learning_events import build_learning_activity_timeline
 from services.memory_topics import build_memory_topics
 
 MODE_LABELS = {
@@ -273,6 +274,7 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         focus_words=focus_words,
         due_reviews=due_reviews,
     )
+    activity_timeline = build_learning_activity_timeline(user_id, date_str)
 
     summary = {
         'date': date_str,
@@ -296,4 +298,7 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         'repeated_topics': repeated_topics,
         'next_actions': next_actions,
         'mode_breakdown': modes,
+        'activity_summary': activity_timeline.get('summary') or {},
+        'activity_source_breakdown': activity_timeline.get('source_breakdown') or [],
+        'recent_activity': activity_timeline.get('recent_events') or [],
     }

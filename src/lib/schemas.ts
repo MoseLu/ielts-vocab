@@ -327,6 +327,50 @@ export const LearnerProfileModeSchema = z.object({
 })
 export type LearnerProfileMode = z.infer<typeof LearnerProfileModeSchema>
 
+export const LearnerProfileActivitySummarySchema = z.object({
+  total_events: z.number().int(),
+  study_sessions: z.number().int(),
+  quick_memory_reviews: z.number().int(),
+  wrong_word_records: z.number().int(),
+  assistant_questions: z.number().int(),
+  chapter_updates: z.number().int(),
+  books_touched: z.number().int(),
+  chapters_touched: z.number().int(),
+  words_touched: z.number().int(),
+  total_duration_seconds: z.number().int(),
+  correct_count: z.number().int(),
+  wrong_count: z.number().int(),
+})
+export type LearnerProfileActivitySummary = z.infer<typeof LearnerProfileActivitySummarySchema>
+
+export const LearnerProfileActivitySourceSchema = z.object({
+  source: z.string(),
+  label: z.string(),
+  count: z.number().int(),
+})
+export type LearnerProfileActivitySource = z.infer<typeof LearnerProfileActivitySourceSchema>
+
+export const LearnerProfileActivityEventSchema = z.object({
+  id: z.number().int(),
+  event_type: z.string(),
+  label: z.string(),
+  source: z.string(),
+  source_label: z.string(),
+  mode: z.string().nullable(),
+  mode_label: z.string(),
+  book_id: z.string().nullable(),
+  chapter_id: z.string().nullable(),
+  word: z.string().nullable(),
+  item_count: z.number().int(),
+  correct_count: z.number().int(),
+  wrong_count: z.number().int(),
+  duration_seconds: z.number().int(),
+  occurred_at: z.string().nullable(),
+  title: z.string(),
+  payload: z.record(z.string(), z.unknown()),
+})
+export type LearnerProfileActivityEvent = z.infer<typeof LearnerProfileActivityEventSchema>
+
 export const LearnerProfileSchema = z.object({
   date: z.string(),
   summary: LearnerProfileSummarySchema,
@@ -335,6 +379,9 @@ export const LearnerProfileSchema = z.object({
   repeated_topics: z.array(LearnerProfileTopicSchema),
   next_actions: z.array(z.string()),
   mode_breakdown: z.array(LearnerProfileModeSchema),
+  activity_summary: LearnerProfileActivitySummarySchema,
+  activity_source_breakdown: z.array(LearnerProfileActivitySourceSchema),
+  recent_activity: z.array(LearnerProfileActivityEventSchema),
 })
 export type LearnerProfile = z.infer<typeof LearnerProfileSchema>
 

@@ -55,11 +55,54 @@ function formatDuration(seconds: number): string {
   return `${Math.floor(minutes / 60)}小时${minutes % 60 ? `${minutes % 60}分钟` : ''}`
 }
 
+function formatDurationCompact(seconds: number): string {
+  if (!seconds) return ''
+  if (seconds < 60) return `${seconds}秒`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}分钟`
+  return `${Math.floor(minutes / 60)}小时${minutes % 60 ? `${minutes % 60}分钟` : ''}`
+}
+
 function trendLabel(value: LearnerProfile['summary']['trend_direction']): string {
   if (value === 'improving') return '学习趋势在提升'
   if (value === 'declining') return '学习趋势有下滑'
   if (value === 'new') return '画像刚开始积累'
   return '学习趋势相对稳定'
+}
+
+function formatEventTime(iso: string | null): string {
+  if (!iso) return '时间未知'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '时间未知'
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+function buildActivityDetail(event: LearnerProfile['recent_activity'][number]): string {
+  const parts: string[] = []
+
+  if (event.mode_label) {
+    parts.push(event.mode_label)
+  }
+
+  if (event.word) {
+    parts.push(event.word)
+  }
+
+  if (event.item_count > 0) {
+    parts.push(`${event.item_count}项`)
+  }
+
+  const attempts = event.correct_count + event.wrong_count
+  if (attempts > 0) {
+    parts.push(`${event.correct_count}/${attempts}`)
+  }
+
+  const durationText = formatDurationCompact(event.duration_seconds)
+  if (durationText) {
+    parts.push(durationText)
+  }
+
+  return parts.join(' · ')
 }
 
 function SummaryProfileSkeleton() {
@@ -111,10 +154,26 @@ function SummaryProfilePanel({
     return null
   }
 
-  const { summary, dimensions, focus_words: focusWords, repeated_topics: repeatedTopics, next_actions: nextActions } = learnerProfile
+  const {
+    summary,
+    dimensions,
+    focus_words: focusWords,
+    repeated_topics: repeatedTopics,
+    next_actions: nextActions,
+    activity_summary: activitySummary,
+    activity_source_breakdown: activitySourceBreakdown,
+    recent_activity: recentActivity,
+  } = learnerProfile
   const weakestModeText = summary.weakest_mode_label
     ? `${summary.weakest_mode_label}${summary.weakest_mode_accuracy != null ? ` · ${summary.weakest_mode_accuracy}%` : ''}`
     : '待继续积累样本'
+  const activityAttempts = activitySummary.correct_count + activitySummary.wrong_count
+  const activityAccuracy = activityAttempts > 0
+    ? Math.round((activitySummary.correct_count / activityAttempts) * 100)
+    : null
+  const activityOverview = activitySummary.total_events > 0
+    ? `今日共追踪 ${activitySummary.total_events} 条学习动作，覆盖 ${activitySummary.books_touched} 本词书、${activitySummary.chapters_touched} 个章节、${activitySummary.words_touched} 个单词${activitySummary.total_duration_seconds > 0 ? `，累计 ${formatDuration(activitySummary.total_duration_seconds)}` : ''}${activityAccuracy != null ? `，动作口径答题正确率 ${activityAccuracy}%` : ''}。`
+    : ''
 
   return (
     <section className="journal-summary-profile" aria-labelledby="journal-summary-profile-title">
@@ -151,6 +210,48 @@ function SummaryProfilePanel({
       </div>
 
       <div className="journal-summary-profile__grid">
+        <section className="journal-summary-profile__card journal-summary-profile__card--wide">
+          <div className="journal-summary-profile__section-head">
+            <h3>今日行为流</h3>
+            <span className="journal-summary-profile__section-meta">{activitySummary.total_events} 条事件</span>
+          </div>
+          {activitySummary.total_events > 0 ? (
+            <>
+              <p className="journal-summary-profile__description">{activityOverview}</p>
+              {activitySourceBreakdown.length > 0 ? (
+                <div className="journal-summary-profile__chips">
+                  {activitySourceBreakdown.map(item => (
+                    <span key={item.source} className="journal-summary-profile__chip">
+                      {item.label} {item.count}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              <ol className="journal-summary-profile__timeline">
+                {recentActivity.slice(0, 6).map(event => {
+                  const detail = buildActivityDetail(event)
+
+                  return (
+                    <li key={event.id} className="journal-summary-profile__timeline-item">
+                      <div className="journal-summary-profile__timeline-main">
+                        <strong className="journal-summary-profile__timeline-title">{event.title}</strong>
+                        <span className="journal-summary-profile__timeline-meta">
+                          {formatEventTime(event.occurred_at)} · {event.source_label}
+                        </span>
+                      </div>
+                      {detail ? (
+                        <span className="journal-summary-profile__timeline-detail">{detail}</span>
+                      ) : null}
+                    </li>
+                  )
+                })}
+              </ol>
+            </>
+          ) : (
+            <p className="journal-summary-profile__empty">今天还没有沉淀到统一行为流的学习动作</p>
+          )}
+        </section>
+
         <section className="journal-summary-profile__card">
           <h3>薄弱维度</h3>
           {dimensions.length > 0 ? (

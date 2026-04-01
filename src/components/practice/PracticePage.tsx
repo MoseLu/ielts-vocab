@@ -1026,8 +1026,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         apiFetch('/api/ai/quick-memory/sync', {
           method: 'POST',
           body: JSON.stringify({
+            source: 'practice_reset',
             records: [{
               word: word.word.toLowerCase(),
+              bookId: bookId ?? undefined,
+              chapterId: chapterId ?? undefined,
               status: record.status,
               firstSeen: record.firstSeen,
               lastSeen: record.lastSeen,
@@ -1046,6 +1049,9 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     apiFetch('/api/ai/wrong-words/sync', {
       method: 'POST',
       body: JSON.stringify({
+        sourceMode: mode,
+        bookId: bookId ?? undefined,
+        chapterId: chapterId ?? undefined,
         words: [{
           word: word.word,
           phonetic: word.phonetic,
@@ -1641,4 +1647,3 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 }
 
 export default PracticePage
-

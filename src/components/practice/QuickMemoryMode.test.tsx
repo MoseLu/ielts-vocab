@@ -153,6 +153,48 @@ describe('QuickMemoryMode', () => {
     })
   })
 
+  it('logs a completed review session before unmounting', async () => {
+    const user = userEvent.setup()
+    const { container, unmount } = render(
+      <QuickMemoryMode
+        vocabulary={[
+          { word: 'apple', phonetic: '/apple/', pos: 'n.', definition: 'fruit' },
+          { word: 'banana', phonetic: '/banana/', pos: 'n.', definition: 'fruit' },
+        ]}
+        queue={[0, 1]}
+        settings={settings}
+        bookId={null}
+        chapterId={null}
+        bookChapters={[]}
+        reviewMode
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+
+    await waitFor(() => {
+      expect(container.querySelector('.qm-summary')).not.toBeNull()
+      expect(logSessionMock).toHaveBeenCalledWith(expect.objectContaining({
+        mode: 'quickmemory',
+        bookId: null,
+        chapterId: null,
+        wordsStudied: 2,
+        correctCount: 2,
+        wrongCount: 0,
+        sessionId: 1,
+      }))
+    })
+
+    unmount()
+    expect(logSessionMock).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps review-mode context for sync without overwriting full chapter progress', async () => {
     const user = userEvent.setup()
     const { container } = render(
@@ -180,6 +222,7 @@ describe('QuickMemoryMode', () => {
     const syncCall = apiFetchMock.mock.calls.find(([url]) => url === '/api/ai/quick-memory/sync')
     expect(syncCall).toBeTruthy()
     const syncBody = JSON.parse(String((syncCall?.[1] as { body?: string })?.body ?? '{}'))
+    expect(syncBody.source).toBe('quickmemory')
     expect(syncBody.records[0]).toMatchObject({
       word: 'apple',
       bookId: 'book-1',

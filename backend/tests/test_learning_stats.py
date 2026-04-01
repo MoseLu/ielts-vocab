@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from models import User, UserStudySession, db
+from models import User, UserChapterProgress, UserStudySession, db
 
 
 def register_and_login(client, username='stats-user', password='password123'):
@@ -172,3 +172,47 @@ def test_learning_stats_uses_review_sessions_for_accuracy_when_no_chapter_progre
     data = response.get_json()
     assert data['alltime']['today_accuracy'] == 78
     assert data['alltime']['accuracy'] == 78
+
+
+def test_learning_stats_prefers_today_sessions_for_today_accuracy_when_chapter_progress_is_perfect(client, app):
+    register_and_login(client, username='mixed-today-accuracy-user')
+
+    now = datetime.utcnow().replace(microsecond=0)
+
+    with app.app_context():
+        user = User.query.filter_by(username='mixed-today-accuracy-user').first()
+        assert user is not None
+
+        db.session.add(
+            UserChapterProgress(
+                user_id=user.id,
+                book_id='ielts_reading_premium',
+                chapter_id=1,
+                words_learned=50,
+                correct_count=50,
+                wrong_count=0,
+                is_completed=True,
+                updated_at=now,
+            )
+        )
+        db.session.add(
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                book_id='ielts_reading_premium',
+                chapter_id='1',
+                words_studied=10,
+                correct_count=8,
+                wrong_count=2,
+                duration_seconds=300,
+                started_at=now,
+                ended_at=now,
+            )
+        )
+        db.session.commit()
+
+    response = client.get('/api/ai/learning-stats?days=7')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['alltime']['today_accuracy'] == 80

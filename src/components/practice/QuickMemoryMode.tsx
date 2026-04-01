@@ -49,6 +49,7 @@ function syncRecordToBackend(word: string, record: QuickMemoryRecordState): void
   apiFetch('/api/ai/quick-memory/sync', {
     method: 'POST',
     body: JSON.stringify({
+      source: 'quickmemory',
       records: [{
         word: word.toLowerCase(),
         bookId: record.bookId,
@@ -264,12 +265,15 @@ export default function QuickMemoryMode({
   const [done, setDone]           = useState(false)
   // Set of queue indices the user navigated back to (= uncertain/fuzzy about)
   const [revisitedSet, setRevisitedSet] = useState<Set<number>>(new Set())
+  const resultsRef = useRef<SessionResult[]>([])
 
   const timerRef        = useRef<ReturnType<typeof setInterval>>()
   const revealTimerRef  = useRef<ReturnType<typeof setTimeout>>()
   const chosenRef       = useRef(false)   // guard against double-fire
   const wordRef         = useRef<Word>()  // always holds current word for setTimeout
   const sessionStartRef = useRef(Date.now())
+  const bookIdRef       = useRef<string | null>(bookId)
+  const chapterIdRef    = useRef<string | null>(chapterId)
   const sessionIdRef    = useRef<number | null>(null)
   const sessionLoggedRef = useRef(false)
   const pendingSessionCancelRef = useRef(false)
@@ -277,6 +281,14 @@ export default function QuickMemoryMode({
   const currentWord: Word | undefined = vocabulary[queue[index]]
   // Keep ref in sync so setTimeout always uses the latest word
   wordRef.current = currentWord
+
+  useEffect(() => {
+    bookIdRef.current = bookId
+  }, [bookId])
+
+  useEffect(() => {
+    chapterIdRef.current = chapterId
+  }, [chapterId])
 
   // Reset session-scoped state when practice context changes.
   // On the very first load (queue going from empty to populated), restore
@@ -296,6 +308,7 @@ export default function QuickMemoryMode({
     setCountdown(TIMER_SECONDS)
     setChoice(null)
     setResults([])
+    resultsRef.current = []
     setDone(false)
     setRevisitedSet(new Set())
     sessionLoggedRef.current = false
@@ -333,15 +346,17 @@ export default function QuickMemoryMode({
       onQuickMemoryRecordChange?.(currentWord, record)
     }
 
-    // Replace existing result if user went back and re-answered; else append
-    setResults(prev => {
-      const existing = prev.findIndex(r => r.wordIdx === index)
-      const entry: SessionResult = { wordIdx: index, choice: picked, wasFuzzy: isFuzzy }
-      if (existing >= 0) {
-        const next = [...prev]; next[existing] = entry; return next
-      }
-      return [...prev, entry]
-    })
+    // Replace existing result if user went back and re-answered; else append.
+    // Keep the ref in sync immediately so a fast "查看结果" click does not miss
+    // the last answered word while React state is still committing.
+    const prevResults = resultsRef.current
+    const existing = prevResults.findIndex(r => r.wordIdx === index)
+    const entry: SessionResult = { wordIdx: index, choice: picked, wasFuzzy: isFuzzy }
+    const nextResults = existing >= 0
+      ? prevResults.map((result, resultIndex) => (resultIndex === existing ? entry : result))
+      : [...prevResults, entry]
+    resultsRef.current = nextResults
+    setResults(nextResults)
 
     // Report wrong words to the error book
     if (picked === 'unknown' && currentWord) {
@@ -432,8 +447,16 @@ export default function QuickMemoryMode({
         is_completed: true,
       }),
     }).catch(() => {})
+  }, [bookId, chapterId, done, queue, results, reviewMode, showToast, vocabulary])
 
-    // Log session for admin analytics
+  // ── Log completed sessions immediately, including review/global sessions ──
+  useEffect(() => {
+    if (!done || sessionLoggedRef.current || results.length < queue.length) return
+    const finalResults = resultsRef.current
+    if (finalResults.length < queue.length) return
+    const correct = finalResults.filter(r => r.choice === 'known').length
+    const wrong   = finalResults.filter(r => r.choice === 'unknown').length
+
     sessionLoggedRef.current = true
     logSession({
       mode: 'quickmemory',
@@ -446,7 +469,7 @@ export default function QuickMemoryMode({
       startedAt: sessionStartRef.current,
       sessionId: sessionIdRef.current,
     })
-  }, [done, reviewMode]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [bookId, chapterId, done, queue.length, results])
 
   // ── Save partial chapter progress on unmount (if session not completed) ──────
   useEffect(() => {
@@ -501,7 +524,8 @@ export default function QuickMemoryMode({
 
     if (sessionLoggedRef.current) return
 
-    if (results.length <= 0) {
+    const finalResults = resultsRef.current
+    if (finalResults.length <= 0) {
       pendingSessionCancelRef.current = true
       cancelSession(sessionIdRef.current)
       return
@@ -510,16 +534,16 @@ export default function QuickMemoryMode({
     sessionLoggedRef.current = true
     logSession({
       mode: 'quickmemory',
-      bookId,
-      chapterId,
-      wordsStudied: results.length,
-      correctCount: results.filter(r => r.choice === 'known').length,
-      wrongCount: results.filter(r => r.choice === 'unknown').length,
+      bookId: bookIdRef.current,
+      chapterId: chapterIdRef.current,
+      wordsStudied: finalResults.length,
+      correctCount: finalResults.filter(r => r.choice === 'known').length,
+      wrongCount: finalResults.filter(r => r.choice === 'unknown').length,
       durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
       startedAt: sessionStartRef.current,
       sessionId: sessionIdRef.current,
     })
-  }, [bookId, chapterId, results])
+  }, [])
 
   // ── Advance to next word ───────────────────────────────────────────────────
   const handleNext = useCallback(() => {
@@ -576,6 +600,7 @@ export default function QuickMemoryMode({
     setPhase('question')
     setChoice(null)
     setResults([])
+    resultsRef.current = []
     setRevisitedSet(new Set())
     setDone(false)
   }, [])

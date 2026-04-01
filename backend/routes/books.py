@@ -6,6 +6,7 @@ from collections import defaultdict
 from flask import Blueprint, jsonify, request
 from models import db, UserBookProgress, UserChapterProgress, UserChapterModeProgress, UserAddedBook
 from routes.middleware import token_required
+from services.learning_events import record_learning_event
 
 books_bp = Blueprint('books', __name__)
 
@@ -1032,6 +1033,13 @@ def save_chapter_progress(current_user, book_id, chapter_id):
         )
         db.session.add(progress)
 
+    before_snapshot = {
+        'words_learned': progress.words_learned or 0,
+        'correct_count': progress.correct_count or 0,
+        'wrong_count': progress.wrong_count or 0,
+        'is_completed': bool(progress.is_completed),
+    }
+
     if 'words_learned' in data:
         incoming = int(data['words_learned'] or 0)
         # 客户端可能因「新一轮练习」暂传较小值；取 max 避免已学词数被答题次数语义误伤后回退
@@ -1042,6 +1050,27 @@ def save_chapter_progress(current_user, book_id, chapter_id):
         progress.wrong_count = data['wrong_count']
     if 'is_completed' in data:
         progress.is_completed = data['is_completed']
+
+    after_snapshot = {
+        'words_learned': progress.words_learned or 0,
+        'correct_count': progress.correct_count or 0,
+        'wrong_count': progress.wrong_count or 0,
+        'is_completed': bool(progress.is_completed),
+    }
+    if after_snapshot != before_snapshot:
+        record_learning_event(
+            user_id=user_id,
+            event_type='chapter_progress_updated',
+            source='chapter_progress',
+            book_id=book_id,
+            chapter_id=str(chapter_id),
+            item_count=after_snapshot['words_learned'],
+            correct_count=after_snapshot['correct_count'],
+            wrong_count=after_snapshot['wrong_count'],
+            payload={
+                'is_completed': after_snapshot['is_completed'],
+            },
+        )
 
     db.session.commit()
 
@@ -1069,12 +1098,38 @@ def save_chapter_mode_progress(current_user, book_id, chapter_id):
         )
         db.session.add(record)
 
+    before_snapshot = {
+        'correct_count': record.correct_count or 0,
+        'wrong_count': record.wrong_count or 0,
+        'is_completed': bool(record.is_completed),
+    }
+
     if 'correct_count' in data:
         record.correct_count = data['correct_count']
     if 'wrong_count' in data:
         record.wrong_count = data['wrong_count']
     if 'is_completed' in data:
         record.is_completed = data['is_completed']
+
+    after_snapshot = {
+        'correct_count': record.correct_count or 0,
+        'wrong_count': record.wrong_count or 0,
+        'is_completed': bool(record.is_completed),
+    }
+    if after_snapshot != before_snapshot:
+        record_learning_event(
+            user_id=user_id,
+            event_type='chapter_mode_progress_updated',
+            source='chapter_mode_progress',
+            mode=mode,
+            book_id=book_id,
+            chapter_id=str(chapter_id),
+            correct_count=after_snapshot['correct_count'],
+            wrong_count=after_snapshot['wrong_count'],
+            payload={
+                'is_completed': after_snapshot['is_completed'],
+            },
+        )
 
     db.session.commit()
     return jsonify({'mode_progress': record.to_dict()}), 200

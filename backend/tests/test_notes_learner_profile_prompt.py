@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import jwt
 
-from models import User, UserLearningNote, UserStudySession, UserWrongWord, db
+from models import User, UserLearningEvent, UserLearningNote, UserStudySession, UserWrongWord, db
 
 
 def _make_user_and_token(app, username: str):
@@ -72,6 +72,27 @@ def test_generate_summary_prompt_includes_unified_learner_profile(client, app, m
             meaning_wrong=3,
             definition='type; friendly',
         ),
+        UserLearningEvent(
+            user_id=user_id,
+            event_type='quick_memory_review',
+            source='quickmemory',
+            mode='quickmemory',
+            book_id='ielts_reading_premium',
+            chapter_id='3',
+            word='kind',
+            item_count=1,
+            correct_count=1,
+            wrong_count=0,
+            occurred_at=datetime(2026, 3, 30, 15, 30, 0),
+        ),
+        UserLearningEvent(
+            user_id=user_id,
+            event_type='assistant_question',
+            source='assistant',
+            word='kind',
+            payload='{"question":"What is the difference between kind of and a kind of?"}',
+            occurred_at=datetime(2026, 3, 30, 16, 0, 0),
+        ),
     ])
     db.session.commit()
 
@@ -93,4 +114,6 @@ def test_generate_summary_prompt_includes_unified_learner_profile(client, app, m
     prompt = captured['messages'][1]['content']
     assert '统一学习画像' in prompt
     assert '薄弱维度' in prompt
+    assert '今日统一行为流' in prompt
+    assert '近期关键动作' in prompt
     assert 'kind of and a kind of' in prompt

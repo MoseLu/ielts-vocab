@@ -437,6 +437,50 @@ class UserStudySession(db.Model):
         }
 
 
+class UserLearningEvent(db.Model):
+    """Normalized user activity stream for AI context, stats and journal generation."""
+    __tablename__ = 'user_learning_events'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    event_type = db.Column(db.String(50), nullable=False, index=True)
+    source = db.Column(db.String(50), nullable=False, index=True)
+    mode = db.Column(db.String(30), nullable=True)
+    book_id = db.Column(db.String(100), nullable=True, index=True)
+    chapter_id = db.Column(db.String(100), nullable=True, index=True)
+    word = db.Column(db.String(100), nullable=True, index=True)
+    item_count = db.Column(db.Integer, default=0)
+    correct_count = db.Column(db.Integer, default=0)
+    wrong_count = db.Column(db.Integer, default=0)
+    duration_seconds = db.Column(db.Integer, default=0)
+    payload = db.Column(db.Text, nullable=True)
+    occurred_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def payload_dict(self) -> dict:
+        try:
+            return json.loads(self.payload) if self.payload else {}
+        except Exception:
+            return {}
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'event_type': self.event_type,
+            'source': self.source,
+            'mode': self.mode,
+            'book_id': self.book_id,
+            'chapter_id': self.chapter_id,
+            'word': self.word,
+            'item_count': self.item_count or 0,
+            'correct_count': self.correct_count or 0,
+            'wrong_count': self.wrong_count or 0,
+            'duration_seconds': self.duration_seconds or 0,
+            'payload': self.payload_dict(),
+            'occurred_at': _iso_utc(self.occurred_at),
+        }
+
+
 class UserMemory(db.Model):
     """Persistent AI memory about a user.
 
