@@ -1,6 +1,8 @@
 import os
 import json
 import csv as csv_module
+import re
+from collections import defaultdict
 from flask import Blueprint, jsonify, request
 from models import db, UserBookProgress, UserChapterProgress, UserChapterModeProgress, UserAddedBook
 from routes.middleware import token_required
@@ -244,6 +246,7 @@ _csv_chapter_cache = {}
 _json_chapter_cache = {}
 # Cache for vocabulary examples: {word_lower: [examples]}
 _examples_cache = None
+_CORRUPTED_CHAPTER_TITLE_RE = re.compile(r'^[?？\uFFFD]\s*(\d+)\s*[?？\uFFFD]\s+(\d{4}-\d{4})$')
 
 
 def _load_examples():
@@ -283,6 +286,20 @@ def _merge_examples(word_entry):
 def get_vocab_data_path():
     """Get the path to vocabulary_data directory"""
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'vocabulary_data')
+
+
+def _normalize_chapter_title(title, chapter_id=None):
+    """Repair known mojibake placeholders in chapter titles before returning them to clients."""
+    if title is None:
+        return f'第{chapter_id}章' if chapter_id is not None else ''
+
+    normalized = ' '.join(str(title).split())
+    match = _CORRUPTED_CHAPTER_TITLE_RE.fullmatch(normalized)
+    if match:
+        chapter_number, word_range = match.groups()
+        return f'第{chapter_number}章 {word_range}'
+
+    return normalized
 
 
 def _chunk_group(label, rows_with_indices, chunk_size, starting_id):
@@ -457,6 +474,7 @@ def load_book_vocabulary(book_id):
                 if isinstance(data, dict) and 'chapters' in data:
                     raw_words = []
                     for chapter in data['chapters']:
+                        chapter_title = _normalize_chapter_title(chapter.get('title'), chapter.get('id'))
                         for w in chapter.get('words', []):
                             raw_words.append({
                                 'word': w.get('word', ''),
@@ -464,7 +482,7 @@ def load_book_vocabulary(book_id):
                                 'pos': w.get('pos', 'n.'),
                                 'definition': w.get('definition', ''),
                                 'chapter_id': chapter.get('id'),
-                                'chapter_title': chapter.get('title')
+                                'chapter_title': chapter_title
                             })
                 elif isinstance(data, list):
                     # Flat-list JSON: attach chapter metadata via _build_json_chapters
@@ -599,7 +617,7 @@ def load_book_chapters(book_id):
                 chapters = [
                     {
                         'id': ch.get('id'),
-                        'title': ch.get('title'),
+                        'title': _normalize_chapter_title(ch.get('title'), ch.get('id')),
                         'word_count': ch.get('word_count'),
                     }
                     for ch in data['chapters']
@@ -648,6 +666,51 @@ def load_book_chapters(book_id):
         return None
 
 
+def _get_book_word_count(book_id):
+    book = next((b for b in VOCAB_BOOKS if b['id'] == book_id), None)
+    return int(book.get('word_count') or 0) if book else 0
+
+
+def _serialize_effective_book_progress(book_id, progress_record=None, chapter_records=None):
+    chapter_records = chapter_records or []
+    if not progress_record and not chapter_records:
+        return None
+
+    base_current_index = int(progress_record.current_index or 0) if progress_record else 0
+    base_correct_count = int(progress_record.correct_count or 0) if progress_record else 0
+    base_wrong_count = int(progress_record.wrong_count or 0) if progress_record else 0
+
+    chapter_words_learned = sum(max(int(record.words_learned or 0), 0) for record in chapter_records)
+    chapter_correct_count = sum(max(int(record.correct_count or 0), 0) for record in chapter_records)
+    chapter_wrong_count = sum(max(int(record.wrong_count or 0), 0) for record in chapter_records)
+
+    total_words = _get_book_word_count(book_id)
+    all_chapters_completed = bool(chapter_records) and all(bool(record.is_completed) for record in chapter_records)
+
+    effective_current_index = max(base_current_index, chapter_words_learned)
+    if total_words > 0:
+        effective_current_index = total_words if all_chapters_completed else min(effective_current_index, total_words)
+
+    updated_candidates = []
+    if progress_record and progress_record.updated_at:
+        updated_candidates.append(progress_record.updated_at)
+    updated_candidates.extend(
+        record.updated_at for record in chapter_records if getattr(record, 'updated_at', None)
+    )
+    latest_updated_at = max(updated_candidates) if updated_candidates else None
+
+    return {
+        'book_id': book_id,
+        'current_index': effective_current_index,
+        'correct_count': max(base_correct_count, chapter_correct_count),
+        'wrong_count': max(base_wrong_count, chapter_wrong_count),
+        'is_completed': (
+            bool(progress_record.is_completed) if progress_record else False
+        ) or all_chapters_completed or (total_words > 0 and effective_current_index >= total_words),
+        'updated_at': latest_updated_at.isoformat() if latest_updated_at else None,
+    }
+
+
 @books_bp.route('/<book_id>/chapters', methods=['GET'])
 def get_book_chapters(book_id):
     """Get chapters structure for a book"""
@@ -681,6 +744,7 @@ def get_chapter_words(book_id, chapter_id):
                 )
                 if not chapter:
                     return jsonify({'error': 'Chapter not found'}), 404
+                chapter_title = _normalize_chapter_title(chapter.get('title'), chapter.get('id'))
                 words = [
                     _merge_examples({
                         'word': w.get('word', ''),
@@ -693,7 +757,7 @@ def get_chapter_words(book_id, chapter_id):
                 return jsonify({
                     'chapter': {
                         'id': chapter.get('id'),
-                        'title': chapter.get('title'),
+                        'title': chapter_title,
                         'word_count': chapter.get('word_count'),
                     },
                     'words': words,
@@ -851,10 +915,22 @@ def get_user_progress(current_user):
     """Get user's progress for all books"""
     user_id = current_user.id
     progress_records = UserBookProgress.query.filter_by(user_id=user_id).all()
+    chapter_records = UserChapterProgress.query.filter_by(user_id=user_id).all()
+
+    progress_by_book = {record.book_id: record for record in progress_records}
+    chapters_by_book = defaultdict(list)
+    for record in chapter_records:
+        chapters_by_book[record.book_id].append(record)
 
     progress_dict = {}
-    for record in progress_records:
-        progress_dict[record.book_id] = record.to_dict()
+    for book_id in sorted(set(progress_by_book) | set(chapters_by_book)):
+        effective_progress = _serialize_effective_book_progress(
+            book_id,
+            progress_record=progress_by_book.get(book_id),
+            chapter_records=chapters_by_book.get(book_id, []),
+        )
+        if effective_progress:
+            progress_dict[book_id] = effective_progress
 
     return jsonify({'progress': progress_dict}), 200
 
@@ -865,11 +941,17 @@ def get_book_progress(current_user, book_id):
     """Get user's progress for a specific book"""
     user_id = current_user.id
     progress = UserBookProgress.query.filter_by(user_id=user_id, book_id=book_id).first()
+    chapter_records = UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
 
-    if not progress:
+    effective_progress = _serialize_effective_book_progress(
+        book_id,
+        progress_record=progress,
+        chapter_records=chapter_records,
+    )
+    if not effective_progress:
         return jsonify({'progress': None}), 200
 
-    return jsonify({'progress': progress.to_dict()}), 200
+    return jsonify({'progress': effective_progress}), 200
 
 
 @books_bp.route('/progress', methods=['POST'])
@@ -890,7 +972,7 @@ def save_progress(current_user):
         db.session.add(progress)
 
     if 'current_index' in data:
-        progress.current_index = data['current_index']
+        progress.current_index = max(progress.current_index or 0, int(data['current_index'] or 0))
     if 'correct_count' in data:
         progress.correct_count = data['correct_count']
     if 'wrong_count' in data:
@@ -900,7 +982,14 @@ def save_progress(current_user):
 
     db.session.commit()
 
-    return jsonify({'progress': progress.to_dict()}), 200
+    chapter_records = UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
+    effective_progress = _serialize_effective_book_progress(
+        book_id,
+        progress_record=progress,
+        chapter_records=chapter_records,
+    )
+
+    return jsonify({'progress': effective_progress}), 200
 
 
 @books_bp.route('/<book_id>/chapters/progress', methods=['GET'])

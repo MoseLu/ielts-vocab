@@ -1,4 +1,6 @@
-from models import UserStudySession
+from datetime import datetime, timedelta
+
+from models import UserStudySession, db
 from routes import ai as ai_routes
 
 
@@ -58,6 +60,66 @@ def test_cancel_session_rejects_session_with_learning_data(client, app):
         session = UserStudySession.query.get(session_id)
         assert session is not None
         assert session.words_studied == 1
+
+
+def test_start_session_reuses_recent_empty_session_for_same_context(client, app):
+    register_and_login(client, username='session-user-3')
+
+    payload = {
+        'mode': 'radio',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '2',
+    }
+    first = client.post('/api/ai/start-session', json=payload)
+    second = client.post('/api/ai/start-session', json=payload)
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert second.get_json()['sessionId'] == first.get_json()['sessionId']
+
+    with app.app_context():
+        assert UserStudySession.query.count() == 1
+
+
+def test_log_session_without_session_id_updates_matching_started_session(client, app):
+    register_and_login(client, username='session-user-4')
+
+    start_res = client.post('/api/ai/start-session', json={
+        'mode': 'radio',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '2',
+    })
+    assert start_res.status_code == 201
+    session_id = start_res.get_json()['sessionId']
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        session.started_at = datetime.utcnow() - timedelta(seconds=145)
+        db.session.commit()
+
+    log_res = client.post('/api/ai/log-session', json={
+        'mode': 'radio',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '2',
+        'wordsStudied': 43,
+        'correctCount': 0,
+        'wrongCount': 0,
+        'durationSeconds': 145,
+        'startedAt': int((datetime.utcnow() - timedelta(seconds=145)).timestamp() * 1000),
+    })
+
+    assert log_res.status_code == 200
+    assert log_res.get_json()['id'] == session_id
+
+    with app.app_context():
+        rows = UserStudySession.query.all()
+        assert len(rows) == 1
+        session = rows[0]
+        assert session.id == session_id
+        assert session.words_studied == 43
+        assert session.duration_seconds >= 145
+        assert session.ended_at is not None
 
 
 def test_greet_returns_fallback_when_ai_service_fails(client, monkeypatch):

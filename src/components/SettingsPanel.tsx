@@ -45,7 +45,7 @@ const defaultSettings: AppSettings = {
   showPhonetic: true,
   showPos: true,
   reviewInterval: '1',
-  reviewLimit: '20'
+  reviewLimit: 'unlimited'
 }
 
 function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
@@ -359,6 +359,8 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                     <option value="10">10个</option>
                     <option value="20">20个</option>
                     <option value="50">50个</option>
+                    <option value="100">100个</option>
+                    <option value="unlimited">不设上限</option>
                   </select>
                 </div>
               </div>

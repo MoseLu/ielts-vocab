@@ -10,70 +10,49 @@
 // Records are persisted to localStorage (STORAGE_KEYS.QUICK_MEMORY_RECORDS).
 // Each word carries: firstSeen, lastSeen, knownCount, unknownCount, nextReview.
 // nextReview uses Ebbinghaus intervals: 1 / 1 / 4 / 7 / 14 / 30 days.
+// After the full streak completes, nextReview becomes 0 and the word leaves the due queue.
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import type { QuickMemoryModeProps, QuickMemoryRecords, Word } from './types'
-import { STORAGE_KEYS } from '../../constants'
+import type { QuickMemoryModeProps, Word } from './types'
 import { playWordAudio, stopAudio } from './utils'
 import { logSession, startSession, cancelSession } from '../../hooks/useAIChat'
 import { apiFetch } from '../../lib'
 import { useToast } from '../../contexts/ToastContext'
-
-// ── Ebbinghaus review intervals (days per consecutive knownCount) ──────────
-const REVIEW_INTERVALS_DAYS = [1, 1, 4, 7, 14, 30]
-
-function nextReviewTimestamp(knownCount: number): number {
-  const days = REVIEW_INTERVALS_DAYS[Math.min(knownCount, REVIEW_INTERVALS_DAYS.length - 1)]
-  return Date.now() + days * 86_400_000
-}
-
-function loadRecords(): QuickMemoryRecords {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS) || '{}') }
-  catch { return {} }
-}
-
-function saveRecords(records: QuickMemoryRecords) {
-  localStorage.setItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS, JSON.stringify(records))
-}
+import { persistBookProgressSnapshot, readStoredChapterStartIndex } from './progressStorage'
+import {
+  mergeQuickMemoryRecordsByLastSeen,
+  readQuickMemoryRecordsFromStorage,
+  updateQuickMemoryRecord,
+  writeQuickMemoryRecordsToStorage,
+  type QuickMemoryRecordInput,
+  type QuickMemoryRecordState,
+} from '../../lib/quickMemory'
 
 /** Fetch records from backend and merge into localStorage (backend wins for newer lastSeen). */
 async function loadRecordsFromBackend(): Promise<void> {
   try {
-    type QMRecord = { word: string; status: string; firstSeen: number; lastSeen: number; knownCount: number; unknownCount: number; nextReview: number; fuzzyCount: number }
-    const data = await apiFetch<{ records: QMRecord[] }>('/api/ai/quick-memory')
-    const serverRecords = data.records || []
+    const data = await apiFetch<{ records: QuickMemoryRecordInput[] }>('/api/ai/quick-memory')
+    const serverRecords = Array.isArray(data.records) ? data.records : []
     if (!serverRecords.length) return
-    const local = loadRecords()
-    let changed = false
-    for (const r of serverRecords) {
-      const key = r.word.toLowerCase()
-      const existing = local[key]
-      if (!existing || (r.lastSeen ?? 0) > (existing.lastSeen ?? 0)) {
-        local[key] = {
-          status: r.status as 'known' | 'unknown',
-          firstSeen: r.firstSeen,
-          lastSeen: r.lastSeen,
-          knownCount: r.knownCount,
-          unknownCount: r.unknownCount,
-          nextReview: r.nextReview,
-          fuzzyCount: r.fuzzyCount ?? 0,
-        }
-        changed = true
-      }
-    }
-    if (changed) saveRecords(local)
+    const merged = mergeQuickMemoryRecordsByLastSeen(
+      readQuickMemoryRecordsFromStorage(),
+      serverRecords,
+    )
+    writeQuickMemoryRecordsToStorage(merged)
   } catch {
     // Non-critical
   }
 }
 
 /** Fire-and-forget: sync a single updated record to the backend. */
-function syncRecordToBackend(word: string, record: QuickMemoryRecords[string]): void {
+function syncRecordToBackend(word: string, record: QuickMemoryRecordState): void {
   apiFetch('/api/ai/quick-memory/sync', {
     method: 'POST',
     body: JSON.stringify({
       records: [{
         word: word.toLowerCase(),
+        bookId: record.bookId,
+        chapterId: record.chapterId,
         status: record.status,
         firstSeen: record.firstSeen,
         lastSeen: record.lastSeen,
@@ -84,32 +63,6 @@ function syncRecordToBackend(word: string, record: QuickMemoryRecords[string]): 
       }],
     }),
   }).catch(() => {})
-}
-
-function updateRecord(
-  records: QuickMemoryRecords,
-  word: string,
-  choice: 'known' | 'unknown',
-  isFuzzy: boolean,
-): QuickMemoryRecords {
-  const key = word.toLowerCase()
-  const existing = records[key]
-  const now = Date.now()
-  const knownCount   = (existing?.knownCount   ?? 0) + (choice === 'known'   ? 1 : 0)
-  const unknownCount = (existing?.unknownCount  ?? 0) + (choice === 'unknown' ? 1 : 0)
-  const fuzzyCount   = (existing?.fuzzyCount    ?? 0) + (isFuzzy ? 1 : 0)
-  return {
-    ...records,
-    [key]: {
-      status:     choice,
-      firstSeen:  existing?.firstSeen ?? now,
-      lastSeen:   now,
-      knownCount,
-      unknownCount,
-      fuzzyCount,
-      nextReview: nextReviewTimestamp(knownCount),
-    },
-  }
 }
 
 // ── Circular countdown SVG ────────────────────────────────────────────────────
@@ -164,8 +117,10 @@ function SummaryScreen({
   bookId,
   chapterId,
   bookChapters,
+  reviewMode,
   reviewHasMore,
   onContinueReview,
+  buildChapterPath,
   onRestart,
   onModeChange,
   onNavigate,
@@ -176,8 +131,10 @@ function SummaryScreen({
   bookId: string | null
   chapterId: string | null
   bookChapters: { id: number | string; title: string }[]
+  reviewMode?: boolean
   reviewHasMore?: boolean
   onContinueReview?: () => void
+  buildChapterPath?: (chapterId: string | number) => string
   onRestart: () => void
   onModeChange: (mode: string) => void
   onNavigate: (path: string) => void
@@ -260,9 +217,11 @@ function SummaryScreen({
         ) : nextChapter && bookId ? (
           <button
             className="qm-btn-next-chapter"
-            onClick={() => onNavigate(`/practice?book=${bookId}&chapter=${nextChapter.id}&mode=quickmemory`)}
+            onClick={() => onNavigate(
+              buildChapterPath?.(nextChapter.id) ?? `/practice?book=${bookId}&chapter=${nextChapter.id}&mode=quickmemory`,
+            )}
           >
-            下一章节
+            {reviewMode ? '下一章节复习' : '下一章节'}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
               <path d="M9 18l6-6-6-6"/>
             </svg>
@@ -283,11 +242,14 @@ export default function QuickMemoryMode({
   bookId,
   chapterId,
   bookChapters,
+  reviewMode,
   reviewHasMore,
   onContinueReview,
+  buildChapterPath,
   onModeChange,
   onNavigate,
   onWrongWord,
+  onQuickMemoryRecordChange,
   initialIndex,
   onIndexChange,
 }: QuickMemoryModeProps) {
@@ -352,10 +314,24 @@ export default function QuickMemoryMode({
     setPhase('reveal')
 
     // Update persistent records
-    const records = updateRecord(loadRecords(), currentWord?.word ?? '', picked, isFuzzy)
-    saveRecords(records)
+    const { records, record } = updateQuickMemoryRecord(
+      readQuickMemoryRecordsFromStorage(),
+      currentWord?.word ?? '',
+      picked,
+      isFuzzy,
+      {
+        bookId: bookId ?? undefined,
+        chapterId: chapterId ?? (currentWord?.chapter_id != null ? String(currentWord.chapter_id) : undefined),
+      },
+    )
+    writeQuickMemoryRecordsToStorage(records)
     const wordKey = (currentWord?.word ?? '').toLowerCase()
-    if (wordKey && records[wordKey]) syncRecordToBackend(wordKey, records[wordKey])
+    if (wordKey && record) {
+      syncRecordToBackend(wordKey, record)
+    }
+    if (currentWord && record) {
+      onQuickMemoryRecordChange?.(currentWord, record)
+    }
 
     // Replace existing result if user went back and re-answered; else append
     setResults(prev => {
@@ -377,18 +353,18 @@ export default function QuickMemoryMode({
     revealTimerRef.current = setTimeout(() => {
       if (wordRef.current) playWordAudio(wordRef.current.word, settings, () => {})
     }, 350)
-  }, [index, settings, revisitedSet])
+  }, [currentWord, index, onQuickMemoryRecordChange, onWrongWord, revisitedSet, settings])
 
   // ── Play audio when question phase starts ──────────────────────────────────
   useEffect(() => {
     if (phase !== 'question' || !currentWord) return
     const t = setTimeout(() => playWordAudio(currentWord.word, settings, () => {}), 200)
     return () => clearTimeout(t)
-  }, [phase, index]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentWord?.word, phase, index]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Countdown tick ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (phase !== 'question') return
+    if (phase !== 'question' || !currentWord) return
     chosenRef.current = false
     setCountdown(TIMER_SECONDS)
 
@@ -404,13 +380,16 @@ export default function QuickMemoryMode({
     }, 1000)
 
     return () => clearInterval(timerRef.current)
-  }, [phase, index])   // re-run when word changes
+  }, [currentWord?.word, phase, index, reveal])   // re-run when word changes
 
   // ── Save chapter progress when a round is done ────────────────────────────
   useEffect(() => {
-    if (!done || !bookId || !chapterId) return
+    if (reviewMode || !done || !bookId || !chapterId) return
     const correct = results.filter(r => r.choice === 'known').length
     const wrong   = results.filter(r => r.choice === 'unknown').length
+    const queueWords = queue
+      .map(wordIndex => vocabulary[wordIndex]?.word)
+      .filter((word): word is string => Boolean(word))
 
     const progressData = {
       current_index: queue.length,
@@ -419,17 +398,22 @@ export default function QuickMemoryMode({
       words_learned: queue.length,
       is_completed:  true,
     }
+    const bookProgressData = {
+      ...progressData,
+      current_index: readStoredChapterStartIndex(bookId, chapterId) + queue.length,
+    }
 
     // Persist locally
     const chapterProgress: Record<string, typeof progressData & { updatedAt: string }> =
       JSON.parse(localStorage.getItem('chapter_progress') || '{}')
     chapterProgress[`${bookId}_${chapterId}`] = { ...progressData, updatedAt: new Date().toISOString() }
     localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
+    persistBookProgressSnapshot(bookId, bookProgressData, queueWords)
 
     // Save book-level progress
     apiFetch('/api/books/progress', {
       method: 'POST',
-      body: JSON.stringify({ book_id: bookId, ...progressData }),
+      body: JSON.stringify({ book_id: bookId, ...bookProgressData }),
     }).catch(() => {})
 
     // Save chapter-level progress — toast on failure so user knows
@@ -462,12 +446,12 @@ export default function QuickMemoryMode({
       startedAt: sessionStartRef.current,
       sessionId: sessionIdRef.current,
     })
-  }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [done, reviewMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Save partial chapter progress on unmount (if session not completed) ──────
   useEffect(() => {
     return () => {
-      if (done || !bookId || !chapterId || index === 0) return
+      if (reviewMode || done || !bookId || !chapterId || index === 0) return
       const correct = results.filter(r => r.choice === 'known').length
       const wrong   = results.filter(r => r.choice === 'unknown').length
       const partialProgress = {
@@ -487,7 +471,7 @@ export default function QuickMemoryMode({
         localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
       }
     }
-  }, [done, bookId, chapterId, index, results])
+  }, [done, reviewMode, bookId, chapterId, index, results])
 
   // ── Load records from backend on mount (merge into localStorage) ──────────
   useEffect(() => { loadRecordsFromBackend() }, [])
@@ -611,8 +595,10 @@ export default function QuickMemoryMode({
         bookId={bookId}
         chapterId={chapterId}
         bookChapters={bookChapters}
+        reviewMode={reviewMode}
         reviewHasMore={reviewHasMore}
         onContinueReview={onContinueReview}
+        buildChapterPath={buildChapterPath}
         onRestart={handleRestart}
         onModeChange={onModeChange}
         onNavigate={onNavigate}

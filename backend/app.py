@@ -7,7 +7,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 import sqlite3
 import secrets
-from sqlalchemy import event
+from sqlalchemy import event, inspect, text
 from sqlalchemy.engine import Engine
 from flask import Flask
 from flask_cors import CORS
@@ -41,6 +41,37 @@ def _set_sqlite_pragmas(dbapi_conn, _record):
         cur.close()
 
 migrate = Migrate()
+
+
+def _ensure_quick_memory_context_columns():
+    """Backfill newly added quick-memory context columns on existing SQLite files."""
+    inspector = inspect(db.engine)
+    try:
+        columns = {column['name'] for column in inspector.get_columns('user_quick_memory_records')}
+    except Exception:
+        return
+
+    statements: list[str] = []
+    if 'book_id' not in columns:
+        statements.append('ALTER TABLE user_quick_memory_records ADD COLUMN book_id VARCHAR(100)')
+    if 'chapter_id' not in columns:
+        statements.append('ALTER TABLE user_quick_memory_records ADD COLUMN chapter_id VARCHAR(100)')
+
+    if not statements:
+        return
+
+    for statement in statements:
+        db.session.execute(text(statement))
+
+    db.session.execute(text(
+        'CREATE INDEX IF NOT EXISTS ix_user_quick_memory_records_book_id '
+        'ON user_quick_memory_records (book_id)'
+    ))
+    db.session.execute(text(
+        'CREATE INDEX IF NOT EXISTS ix_user_quick_memory_records_chapter_id '
+        'ON user_quick_memory_records (chapter_id)'
+    ))
+    db.session.commit()
 
 
 def _ensure_admin_user():
@@ -118,6 +149,7 @@ def create_app(config_class=Config):
     #   flask db upgrade
     with app.app_context():
         db.create_all()
+        _ensure_quick_memory_context_columns()
         _ensure_admin_user()
 
     return app

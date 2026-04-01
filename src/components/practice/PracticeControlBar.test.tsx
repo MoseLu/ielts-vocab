@@ -29,4 +29,30 @@ describe('PracticeControlBar layout', () => {
     expect(container.querySelector('.practice-ctrl-brand')).not.toBeNull()
     expect(container.querySelector('.practice-ctrl-right .practice-ctx-label')).not.toBeNull()
   })
+
+  it('shows the Ebbinghaus review label instead of Day undefined when no day is selected', () => {
+    render(
+      <PracticeControlBar
+        mode="quickmemory"
+        currentDay={undefined}
+        bookId={null}
+        chapterId={null}
+        errorMode={false}
+        vocabularyLength={12}
+        currentChapterTitle="艾宾浩斯复习"
+        bookChapters={[]}
+        showWordList={false}
+        showPracticeSettings={false}
+        onWordListToggle={() => {}}
+        onSettingsToggle={() => {}}
+        onModeChange={() => {}}
+        onDayChange={() => {}}
+        onNavigate={() => {}}
+        onPause={() => {}}
+      />,
+    )
+
+    expect(screen.getByText('艾宾浩斯复习')).toBeInTheDocument()
+    expect(screen.queryByText('Day undefined')).not.toBeInTheDocument()
+  })
 })

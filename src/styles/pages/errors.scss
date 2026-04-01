@@ -25,6 +25,15 @@
     padding-right: 2px;
 }
 
+.errors-review-rule {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+}
+
 .errors-header {
     display: flex;
     align-items: center;
@@ -70,6 +79,12 @@
     background: var(--accent-hover);
 }
 
+.errors-practice-btn:disabled {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+}
+
 .errors-clear-btn {
     background: none;
     color: var(--text-secondary);
@@ -90,6 +105,74 @@
 /* Tab bar */
 .errors-tabs {
     width: fit-content;
+}
+
+.errors-filter-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+}
+
+.errors-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.errors-filter-field--compact {
+    max-width: 220px;
+}
+
+.errors-filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.errors-filter-input,
+.errors-filter-select {
+    min-height: 38px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-color);
+    color: var(--text-primary);
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.errors-filter-input:focus,
+.errors-filter-select:focus {
+    outline: 2px solid color-mix(in srgb, var(--accent) 24%, transparent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+}
+
+.errors-filter-reset {
+    align-self: end;
+    min-height: 38px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 0 12px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.errors-filter-reset:disabled {
+    cursor: not-allowed;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+}
+
+.errors-filter-summary {
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 
 /* Dimension filter pills */
@@ -180,7 +263,19 @@
 .errors-item-phonetic {
     font-size: 12px;
     color: var(--text-tertiary);
+}
+
+.errors-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
     margin-bottom: 3px;
+}
+
+.errors-item-date {
+    font-size: 12px;
+    color: var(--text-tertiary);
 }
 
 .errors-item-definition {
@@ -256,6 +351,11 @@
 .errors-dim-unknown {
     background: var(--bg-tertiary);
     color: var(--text-tertiary);
+}
+
+.errors-dim-progress {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
 }
 
 .errors-dim-wrong {

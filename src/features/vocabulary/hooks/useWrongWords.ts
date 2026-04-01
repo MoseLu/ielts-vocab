@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../../contexts'
 import { apiFetch } from '../../../lib'
 import {
+  getQuickMemoryReviewProgress,
+  isQuickMemoryRecordMastered,
+  readQuickMemoryRecordsFromStorage,
+} from '../../../lib/quickMemory'
+import {
   addWrongWordToList,
   loadWrongWords,
   removeWrongWordFromList,
@@ -14,6 +19,9 @@ export interface WrongWord {
   pos?: string
   definition: string
   wrong_count?: number
+  review_streak?: number
+  first_wrong_at?: string
+  updated_at?: string
   // Per-dimension stats from backend
   listening_correct?: number
   listening_wrong?: number
@@ -21,6 +29,37 @@ export interface WrongWord {
   meaning_wrong?: number
   dictation_correct?: number
   dictation_wrong?: number
+  ebbinghaus_streak?: number
+  ebbinghaus_target?: number
+  ebbinghaus_remaining?: number
+  ebbinghaus_completed?: boolean
+}
+
+function decorateWrongWords(words: WrongWord[]): WrongWord[] {
+  const records = readQuickMemoryRecordsFromStorage()
+
+  return words.map(word => {
+    const key = word.word.trim().toLowerCase()
+    const quickMemoryRecord = key ? records[key] : undefined
+    const quickMemoryProgress = quickMemoryRecord
+      ? getQuickMemoryReviewProgress(quickMemoryRecord)
+      : {
+          streak: word.ebbinghaus_streak ?? 0,
+          target: word.ebbinghaus_target ?? 0,
+          remaining: word.ebbinghaus_remaining ?? 0,
+          completed: Boolean(word.ebbinghaus_completed),
+        }
+
+    return {
+      ...word,
+      ebbinghaus_streak: quickMemoryProgress.streak,
+      ebbinghaus_target: quickMemoryProgress.target,
+      ebbinghaus_remaining: quickMemoryProgress.remaining,
+      ebbinghaus_completed: quickMemoryRecord
+        ? isQuickMemoryRecordMastered(quickMemoryRecord)
+        : Boolean(word.ebbinghaus_completed),
+    }
+  })
 }
 
 export function useWrongWords() {
@@ -34,7 +73,7 @@ export function useWrongWords() {
         user,
         fetchRemote: () => apiFetch<{ words?: WrongWord[] }>('/api/ai/wrong-words'),
       })
-      setWords(nextWords)
+      setWords(decorateWrongWords(nextWords))
     } catch {
       // ignore
     } finally {
@@ -51,7 +90,7 @@ export function useWrongWords() {
     setWords(prev => {
       const nextWords = addWrongWordToList(prev, { ...word, wrong_count: word.wrong_count ?? 1 })
       writeWrongWordsToStorage(nextWords)
-      return nextWords
+      return decorateWrongWords(nextWords)
     })
     if (!user) return
     try {
@@ -68,7 +107,7 @@ export function useWrongWords() {
     setWords(prev => {
       const nextWords = removeWrongWordFromList(prev, word)
       writeWrongWordsToStorage(nextWords)
-      return nextWords
+      return decorateWrongWords(nextWords)
     })
     if (!user) return
     try {

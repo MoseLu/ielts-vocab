@@ -30,7 +30,7 @@ class Config:
 
     # Allowed frontend origins for CORS (comma-separated)
     CORS_ORIGINS = [o.strip() for o in os.environ.get(
-        'CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://localhost:4173'
+        'CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://localhost:3002,http://localhost:4173'
     ).split(',')]
 
     # Reverse-proxy handling for the documented natapp -> nginx -> Flask chain.

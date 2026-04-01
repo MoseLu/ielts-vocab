@@ -152,4 +152,43 @@ describe('QuickMemoryMode', () => {
       }))
     })
   })
+
+  it('keeps review-mode context for sync without overwriting full chapter progress', async () => {
+    const user = userEvent.setup()
+    const { container } = render(
+      <QuickMemoryMode
+        vocabulary={vocabulary}
+        queue={[0]}
+        settings={settings}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        reviewMode
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+
+    await waitFor(() => {
+      expect(container.querySelector('.qm-summary')).not.toBeNull()
+    })
+
+    const syncCall = apiFetchMock.mock.calls.find(([url]) => url === '/api/ai/quick-memory/sync')
+    expect(syncCall).toBeTruthy()
+    const syncBody = JSON.parse(String((syncCall?.[1] as { body?: string })?.body ?? '{}'))
+    expect(syncBody.records[0]).toMatchObject({
+      word: 'apple',
+      bookId: 'book-1',
+      chapterId: '1',
+    })
+
+    const urls = apiFetchMock.mock.calls.map(([url]) => url)
+    expect(urls).not.toContain('/api/books/progress')
+    expect(urls).not.toContain('/api/books/book-1/chapters/1/progress')
+    expect(urls).not.toContain('/api/books/book-1/chapters/1/mode-progress')
+  })
 })

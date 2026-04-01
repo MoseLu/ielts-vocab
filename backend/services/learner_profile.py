@@ -215,14 +215,21 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
     day_sessions = (
         UserStudySession.query
         .filter_by(user_id=user_id)
-        .filter(UserStudySession.started_at >= start_dt, UserStudySession.started_at < end_dt)
+        .filter(
+            UserStudySession.started_at >= start_dt,
+            UserStudySession.started_at < end_dt,
+            UserStudySession.analytics_clause(),
+        )
         .order_by(UserStudySession.started_at.asc())
         .all()
     )
     all_sessions = (
         UserStudySession.query
         .filter_by(user_id=user_id)
-        .filter(UserStudySession.started_at < end_dt)
+        .filter(
+            UserStudySession.started_at < end_dt,
+            UserStudySession.analytics_clause(),
+        )
         .order_by(UserStudySession.started_at.asc())
         .all()
     )

@@ -66,10 +66,20 @@ export default function PracticeControlBar({
   onModeChange,
   onDayChange,
   onNavigate,
+  buildChapterPath,
   onPause,
   radioQuickSettings,
   onRadioSettingChange,
 }: PracticeControlBarProps) {
+  const hasStaticContextLabel = !bookId && currentDay == null && Boolean(currentChapterTitle)
+  const contextLabel = bookId
+    ? (currentChapterTitle || '选择章节')
+    : hasStaticContextLabel
+      ? currentChapterTitle
+      : currentDay != null
+        ? `Day ${currentDay}`
+        : '选择单元'
+
   return (
     <div className="practice-ctrl-bar">
       <button
@@ -96,49 +106,60 @@ export default function PracticeControlBar({
         ) : null}
 
         {!errorMode && (
-          <Popover
-            placement="bottom"
-            offset={10}
-            panelClassName="popover-ctx-panel"
-            trigger={
-              <button className="practice-ctrl-icon-btn practice-mode-btn" title="切换章节">
-                <span className="practice-mode-label">
-                  {bookId ? (currentChapterTitle || '选择章节') : `Day ${currentDay}`}
-                </span>
-                <svg className="practice-ctx-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-            }
-          >
-            <Scrollbar className="popover-ctx-scroll" maxHeight={320}>
-              {bookId ? (
-                bookChapters.length > 0 ? bookChapters.map(ch => (
-                  <button
-                    key={ch.id}
-                    className={`popover-option ${String(chapterId) === String(ch.id) ? 'active' : ''}`}
-                    onClick={() => onNavigate(`/practice?book=${bookId}&chapter=${ch.id}`)}
-                  >
-                    <span className={`ctx-radio ${String(chapterId) === String(ch.id) ? 'checked' : ''}`} />
-                    {ch.title}
-                  </button>
-                )) : (
-                  <div className="popover-loading">加载章节...</div>
-                )
-              ) : (
-                Array.from({ length: 30 }, (_, i) => (
-                  <button
-                    key={i + 1}
-                    className={`popover-option ${currentDay === i + 1 ? 'active' : ''}`}
-                    onClick={() => onDayChange(i + 1)}
-                  >
-                    <span className={`ctx-radio ${currentDay === i + 1 ? 'checked' : ''}`} />
-                    <span className="ctx-opt-label">Day {i + 1}</span>
-                  </button>
-                ))
-              )}
-            </Scrollbar>
-          </Popover>
+          hasStaticContextLabel ? (
+            <button
+              type="button"
+              className="practice-ctrl-icon-btn practice-mode-btn"
+              title={contextLabel}
+              disabled
+            >
+              <span className="practice-mode-label">{contextLabel}</span>
+            </button>
+          ) : (
+            <Popover
+              placement="bottom"
+              offset={10}
+              panelClassName="popover-ctx-panel"
+              trigger={
+                <button className="practice-ctrl-icon-btn practice-mode-btn" title="切换章节">
+                  <span className="practice-mode-label">{contextLabel}</span>
+                  <svg className="practice-ctx-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+              }
+            >
+              <Scrollbar className="popover-ctx-scroll" maxHeight={320}>
+                {bookId ? (
+                  bookChapters.length > 0 ? bookChapters.map(ch => (
+                    <button
+                      key={ch.id}
+                      className={`popover-option ${String(chapterId) === String(ch.id) ? 'active' : ''}`}
+                      onClick={() => onNavigate(
+                        buildChapterPath?.(ch.id) ?? `/practice?book=${bookId}&chapter=${ch.id}`,
+                      )}
+                    >
+                      <span className={`ctx-radio ${String(chapterId) === String(ch.id) ? 'checked' : ''}`} />
+                      {ch.title}
+                    </button>
+                  )) : (
+                    <div className="popover-loading">加载章节...</div>
+                  )
+                ) : (
+                  Array.from({ length: 30 }, (_, i) => (
+                    <button
+                      key={i + 1}
+                      className={`popover-option ${currentDay === i + 1 ? 'active' : ''}`}
+                      onClick={() => onDayChange(i + 1)}
+                    >
+                      <span className={`ctx-radio ${currentDay === i + 1 ? 'checked' : ''}`} />
+                      <span className="ctx-opt-label">Day {i + 1}</span>
+                    </button>
+                  ))
+                )}
+              </Scrollbar>
+            </Popover>
+          )
         )}
 
         {mode === 'radio' && radioQuickSettings && onRadioSettingChange && (

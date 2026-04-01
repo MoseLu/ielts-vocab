@@ -23,7 +23,9 @@ def _user_summary(user):
     books_completed = sum(1 for r in book_rows if r.is_completed)
 
     # Study sessions
-    sessions = UserStudySession.query.filter_by(user_id=user.id).all()
+    sessions = UserStudySession.query.filter_by(user_id=user.id).filter(
+        UserStudySession.analytics_clause()
+    ).all()
     total_study_seconds = sum(s.duration_seconds or 0 for s in sessions)
     total_words_studied = sum(s.words_studied or 0 for s in sessions)
 
@@ -32,6 +34,7 @@ def _user_summary(user):
 
     # Last active (latest session or progress update)
     last_session = (UserStudySession.query.filter_by(user_id=user.id)
+                    .filter(UserStudySession.analytics_clause())
                     .order_by(desc(UserStudySession.started_at)).first())
     last_active = None
     if last_session and last_session.started_at:
@@ -41,7 +44,8 @@ def _user_summary(user):
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     recent_sessions = UserStudySession.query.filter(
         UserStudySession.user_id == user.id,
-        UserStudySession.started_at >= seven_days_ago
+        UserStudySession.started_at >= seven_days_ago,
+        UserStudySession.analytics_clause(),
     ).count()
 
     total = total_correct + total_wrong
@@ -75,20 +79,30 @@ def get_overview(current_user):
 
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     active_users_7d = db.session.query(func.count(func.distinct(UserStudySession.user_id))).filter(
-        UserStudySession.started_at >= seven_days_ago
+        UserStudySession.started_at >= seven_days_ago,
+        UserStudySession.analytics_clause(),
     ).scalar() or 0
 
     today = datetime.utcnow().date()
     active_users_today = db.session.query(func.count(func.distinct(UserStudySession.user_id))).filter(
-        func.date(UserStudySession.started_at) == today
+        func.date(UserStudySession.started_at) == today,
+        UserStudySession.analytics_clause(),
     ).scalar() or 0
 
-    total_sessions = UserStudySession.query.count()
-    total_study_seconds = db.session.query(func.sum(UserStudySession.duration_seconds)).scalar() or 0
-    total_words_studied = db.session.query(func.sum(UserStudySession.words_studied)).scalar() or 0
+    total_sessions = UserStudySession.query.filter(UserStudySession.analytics_clause()).count()
+    total_study_seconds = db.session.query(func.sum(UserStudySession.duration_seconds)).filter(
+        UserStudySession.analytics_clause()
+    ).scalar() or 0
+    total_words_studied = db.session.query(func.sum(UserStudySession.words_studied)).filter(
+        UserStudySession.analytics_clause()
+    ).scalar() or 0
 
-    total_correct = db.session.query(func.sum(UserStudySession.correct_count)).scalar() or 0
-    total_wrong = db.session.query(func.sum(UserStudySession.wrong_count)).scalar() or 0
+    total_correct = db.session.query(func.sum(UserStudySession.correct_count)).filter(
+        UserStudySession.analytics_clause()
+    ).scalar() or 0
+    total_wrong = db.session.query(func.sum(UserStudySession.wrong_count)).filter(
+        UserStudySession.analytics_clause()
+    ).scalar() or 0
     total_answered = total_correct + total_wrong
     avg_accuracy = round(total_correct / total_answered * 100) if total_answered > 0 else 0
 
@@ -105,7 +119,8 @@ def get_overview(current_user):
         func.sum(UserStudySession.duration_seconds).label('study_seconds'),
         func.sum(UserStudySession.words_studied).label('words')
     ).filter(
-        UserStudySession.started_at >= fourteen_days_ago
+        UserStudySession.started_at >= fourteen_days_ago,
+        UserStudySession.analytics_clause(),
     ).group_by(func.date(UserStudySession.started_at)).order_by('day').all()
 
     daily_activity = [
@@ -124,7 +139,7 @@ def get_overview(current_user):
         UserStudySession.mode,
         func.count(UserStudySession.id).label('count'),
         func.sum(UserStudySession.words_studied).label('words')
-    ).group_by(UserStudySession.mode).all()
+    ).filter(UserStudySession.analytics_clause()).group_by(UserStudySession.mode).all()
 
     mode_stats = [
         {'mode': row.mode or '未标注', 'count': row.count, 'words': int(row.words or 0)}
@@ -136,7 +151,10 @@ def get_overview(current_user):
         UserStudySession.book_id,
         func.count(UserStudySession.id).label('sessions'),
         func.count(func.distinct(UserStudySession.user_id)).label('users')
-    ).filter(UserStudySession.book_id.isnot(None)).group_by(
+    ).filter(
+        UserStudySession.book_id.isnot(None),
+        UserStudySession.analytics_clause(),
+    ).group_by(
         UserStudySession.book_id
     ).order_by(desc('sessions')).limit(5).all()
 
@@ -261,7 +279,7 @@ def get_user_detail(current_user, user_id):
 
     # Study sessions — filtered, latest 100
     session_q = _apply_filters(
-        UserStudySession.query.filter_by(user_id=user_id)
+        UserStudySession.query.filter_by(user_id=user_id).filter(UserStudySession.analytics_clause())
     )
     raw_sessions = session_q.order_by(desc(UserStudySession.started_at)).limit(100).all()
     sessions = []
@@ -281,6 +299,7 @@ def get_user_detail(current_user, user_id):
     ).filter(
         UserStudySession.user_id == user_id,
         UserStudySession.started_at >= daily_base,
+        UserStudySession.analytics_clause(),
     )
     if date_to:
         daily_q = daily_q.filter(UserStudySession.started_at <= date_to + ' 23:59:59')
@@ -317,6 +336,7 @@ def get_user_detail(current_user, user_id):
         UserStudySession.user_id == user_id,
         UserStudySession.chapter_id.isnot(None),
         UserStudySession.chapter_id != '',
+        UserStudySession.analytics_clause(),
     )
 
     chapter_daily_q = _apply_filters(chapter_daily_q)

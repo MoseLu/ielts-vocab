@@ -220,11 +220,21 @@ class TestBookChapters:
         assert len(data['chapters']) == data['total_chapters']
         assert data['chapters'][0]['word_count'] > 0
 
+    def test_get_9400_extended_chapter_titles_are_normalized(self, client):
+        res = client.get('/api/books/ielts_9400_extended/chapters')
+        assert res.status_code == 200
+        chapters = res.get_json()['chapters']
+
+        assert chapters[0]['title'] == '第1章 0001-0100'
+        assert chapters[-1]['title'] == '第93章 9201-9248'
+        assert all(not re.fullmatch(r"\?\d+\?\s+\d{4}-\d{4}", chapter['title']) for chapter in chapters)
+
     def test_get_9400_extended_chapter_words(self, client):
         res = client.get('/api/books/ielts_9400_extended/chapters/1')
         assert res.status_code == 200
         data = res.get_json()
         assert data['chapter']['id'] == 1
+        assert data['chapter']['title'] == '第1章 0001-0100'
         assert len(data['words']) > 0
         assert 'word' in data['words'][0]
         assert 'definition' in data['words'][0]

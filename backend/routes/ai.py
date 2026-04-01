@@ -17,6 +17,100 @@ from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS, correct_text, d
 ai_bp = Blueprint('ai', __name__)
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+_PENDING_SESSION_REUSE_WINDOW_SECONDS = 5
+_PENDING_SESSION_MATCH_WINDOW_SECONDS = 15
+_QUICK_MEMORY_MASTERY_TARGET = 6
+
+
+def _normalize_chapter_id(value) -> str | None:
+    if value is None:
+        return None
+    text_value = str(value).strip()
+    return text_value or None
+
+
+def _normalize_word_key(value: str | None) -> str:
+    return (value or '').strip().lower()
+
+
+def _decorate_wrong_words_with_quick_memory_progress(
+    user_id: int,
+    words: list[UserWrongWord],
+) -> list[dict]:
+    if not words:
+        return []
+
+    word_keys = [_normalize_word_key(word.word) for word in words if _normalize_word_key(word.word)]
+    qm_rows = []
+    if word_keys:
+        qm_rows = (
+            UserQuickMemoryRecord.query
+            .filter_by(user_id=user_id)
+            .filter(UserQuickMemoryRecord.word.in_(word_keys))
+            .all()
+        )
+
+    qm_by_word = {
+        _normalize_word_key(row.word): row
+        for row in qm_rows
+    }
+
+    decorated: list[dict] = []
+    for word in words:
+        item = word.to_dict()
+        qm_row = qm_by_word.get(_normalize_word_key(word.word))
+        streak = min((qm_row.known_count or 0) if qm_row else 0, _QUICK_MEMORY_MASTERY_TARGET)
+        item.update({
+            'ebbinghaus_streak': streak,
+            'ebbinghaus_target': _QUICK_MEMORY_MASTERY_TARGET,
+            'ebbinghaus_remaining': max(0, _QUICK_MEMORY_MASTERY_TARGET - streak),
+            'ebbinghaus_completed': streak >= _QUICK_MEMORY_MASTERY_TARGET,
+        })
+        decorated.append(item)
+
+    return decorated
+
+
+def _find_pending_session(
+    *,
+    user_id: int,
+    mode: str | None,
+    book_id: str | None,
+    chapter_id: str | None,
+    started_at: datetime | None = None,
+    window_seconds: int = _PENDING_SESSION_MATCH_WINDOW_SECONDS,
+):
+    base_query = UserStudySession.query.filter_by(
+        user_id=user_id,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+    ).filter(
+        UserStudySession.ended_at.is_(None),
+        UserStudySession.words_studied == 0,
+        UserStudySession.correct_count == 0,
+        UserStudySession.wrong_count == 0,
+        UserStudySession.duration_seconds == 0,
+    )
+
+    if started_at is not None:
+        query = base_query.filter(
+            UserStudySession.started_at >= started_at - timedelta(seconds=window_seconds),
+            UserStudySession.started_at <= started_at + timedelta(seconds=window_seconds),
+        )
+    else:
+        query = base_query.filter(
+            UserStudySession.started_at >= datetime.utcnow() - timedelta(seconds=window_seconds),
+        )
+    session = query.order_by(UserStudySession.started_at.desc()).first()
+    if session or started_at is None:
+        return session
+
+    # Fallback for slow or out-of-order responses: reuse the latest matching
+    # empty session instead of inserting a duplicate analytics row.
+    return base_query.filter(
+        UserStudySession.started_at >= datetime.utcnow() - timedelta(minutes=30),
+    ).order_by(UserStudySession.started_at.desc()).first()
 
 
 def _load_json_data(filename: str, default):
@@ -241,6 +335,66 @@ def _get_global_vocab_pool() -> list:
                     'definition': w.get('definition', ''),
                 }
     return list(seen.values())
+
+
+@functools.lru_cache(maxsize=1)
+def _get_quick_memory_vocab_lookup() -> dict[str, list[dict]]:
+    """word(lower) -> all known book/chapter variants for quick-memory review."""
+    from routes.books import VOCAB_BOOKS, load_book_vocabulary
+
+    lookup: dict[str, list[dict]] = {}
+    for book in VOCAB_BOOKS:
+        book_id = book['id']
+        book_title = book.get('title') or book_id
+        words = load_book_vocabulary(book_id) or []
+        for word in words:
+            text = (word.get('word') or '').strip()
+            if not text:
+                continue
+
+            chapter_id = _normalize_chapter_id(word.get('chapter_id'))
+            chapter_title = word.get('chapter_title') or (
+                f"第{chapter_id}章" if chapter_id is not None else ''
+            )
+            lookup.setdefault(text.lower(), []).append({
+                'word': text,
+                'phonetic': word.get('phonetic', ''),
+                'pos': word.get('pos', ''),
+                'definition': word.get('definition', ''),
+                'book_id': book_id,
+                'book_title': book_title,
+                'chapter_id': chapter_id,
+                'chapter_title': chapter_title,
+            })
+    return lookup
+
+
+def _resolve_quick_memory_vocab_entry(
+    word_key: str,
+    *,
+    book_id: str | None = None,
+    chapter_id: str | None = None,
+) -> dict | None:
+    entries = _get_quick_memory_vocab_lookup().get(word_key) or []
+    if not entries:
+        return None
+
+    if book_id is not None and chapter_id is not None:
+        for entry in entries:
+            if entry.get('book_id') == book_id and _normalize_chapter_id(entry.get('chapter_id')) == chapter_id:
+                return dict(entry)
+
+    if book_id is not None:
+        for entry in entries:
+            if entry.get('book_id') == book_id:
+                return dict(entry)
+
+    if chapter_id is not None:
+        for entry in entries:
+            if _normalize_chapter_id(entry.get('chapter_id')) == chapter_id:
+                return dict(entry)
+
+    return dict(entries[0])
 
 
 # ── Similarity helpers ────────────────────────────────────────────────────────
@@ -1757,10 +1911,18 @@ def _make_get_wrong_words(user_id: int):
         words = q.order_by(UserWrongWord.wrong_count.desc()).limit(limit).all()
         if not words:
             return "暂无错词记录。"
+        decorated = _decorate_wrong_words_with_quick_memory_progress(user_id, words)
         prefix = ''
         if book_id:
             prefix = "当前错词记录暂不支持按词书过滤，以下返回全部错词。\n"
-        lines = [f"{w.word}（{w.phonetic or ''}，{w.pos or ''}）{w.definition or ''}  错误{w.wrong_count}次" for w in words]
+        lines = [
+            (
+                f"{w['word']}（{w.get('phonetic') or ''}，{w.get('pos') or ''}）"
+                f"{w.get('definition') or ''}  错误{w.get('wrong_count', 0)}次"
+                f"  艾宾浩斯{w.get('ebbinghaus_streak', 0)}/{w.get('ebbinghaus_target', _QUICK_MEMORY_MASTERY_TARGET)}"
+            )
+            for w in decorated
+        ]
         return prefix + f"共{len(lines)}个错词：\n" + "\n".join(lines)
     return handler
 
@@ -2099,7 +2261,7 @@ def get_wrong_words(current_user: User):
     """Get all wrong words for the current user from the backend."""
     words = UserWrongWord.query.filter_by(user_id=current_user.id)\
         .order_by(UserWrongWord.wrong_count.desc()).all()
-    return jsonify({'words': [w.to_dict() for w in words]}), 200
+    return jsonify({'words': _decorate_wrong_words_with_quick_memory_progress(current_user.id, words)}), 200
 
 
 # ── POST /api/wrong-words/sync ──────────────────────────────────────────────
@@ -2194,7 +2356,8 @@ def get_learning_stats(current_user: User):
 
     query = UserStudySession.query.filter(
         UserStudySession.user_id == current_user.id,
-        UserStudySession.started_at >= since
+        UserStudySession.started_at >= since,
+        UserStudySession.analytics_clause(),
     )
     if book_id_filter:
         query = query.filter(UserStudySession.book_id == book_id_filter)
@@ -2263,7 +2426,9 @@ def get_learning_stats(current_user: User):
     use_fallback = not has_session_data
 
     # Books and modes the user has ever studied (for filter dropdowns)
-    all_sessions = UserStudySession.query.filter_by(user_id=current_user.id).all()
+    all_sessions = UserStudySession.query.filter_by(user_id=current_user.id).filter(
+        UserStudySession.analytics_clause()
+    ).all()
     book_ids_from_sessions = {s.book_id for s in all_sessions if s.book_id}
     # Also include books from chapter progress (covers users with no sessions yet)
     all_chapters = UserChapterProgress.query.filter_by(user_id=current_user.id).all()
@@ -2295,7 +2460,21 @@ def get_learning_stats(current_user: User):
     alltime_correct = sum(cp.correct_count or 0 for cp in all_chapter_progress)
     alltime_wrong = sum(cp.wrong_count or 0 for cp in all_chapter_progress)
     alltime_attempted = alltime_correct + alltime_wrong
-    alltime_accuracy = round(alltime_correct / alltime_attempted * 100) if alltime_attempted > 0 else None
+    # Session-based duration (only meaningful when sessions exist)
+    all_user_sessions = UserStudySession.query.filter_by(user_id=current_user.id).filter(
+        UserStudySession.analytics_clause()
+    ).all()
+    session_alltime_correct = sum(s.correct_count or 0 for s in all_user_sessions)
+    session_alltime_wrong = sum(s.wrong_count or 0 for s in all_user_sessions)
+    session_alltime_attempted = session_alltime_correct + session_alltime_wrong
+    alltime_accuracy = (
+        round(alltime_correct / alltime_attempted * 100)
+        if alltime_attempted > 0
+        else (
+            round(session_alltime_correct / session_alltime_attempted * 100)
+            if session_alltime_attempted > 0 else None
+        )
+    )
 
     # Today's accuracy from chapter progress updated today
     today_str = datetime.utcnow().strftime('%Y-%m-%d')
@@ -2304,13 +2483,21 @@ def get_learning_stats(current_user: User):
     today_correct = sum(cp.correct_count or 0 for cp in today_chapters)
     today_wrong = sum(cp.wrong_count or 0 for cp in today_chapters)
     today_attempted = today_correct + today_wrong
-    today_accuracy = round(today_correct / today_attempted * 100) if today_attempted > 0 else None
-
-    # Session-based duration (only meaningful when sessions exist)
-    all_user_sessions = UserStudySession.query.filter_by(user_id=current_user.id).all()
-    alltime_duration = sum(s.duration_seconds or 0 for s in all_user_sessions)
     today_sessions = [s for s in all_user_sessions
                       if s.started_at and s.started_at.strftime('%Y-%m-%d') == today_str]
+    session_today_correct = sum(s.correct_count or 0 for s in today_sessions)
+    session_today_wrong = sum(s.wrong_count or 0 for s in today_sessions)
+    session_today_attempted = session_today_correct + session_today_wrong
+    today_accuracy = (
+        round(today_correct / today_attempted * 100)
+        if today_attempted > 0
+        else (
+            round(session_today_correct / session_today_attempted * 100)
+            if session_today_attempted > 0 else None
+        )
+    )
+
+    alltime_duration = sum(s.duration_seconds or 0 for s in all_user_sessions)
     today_duration = sum(s.duration_seconds or 0 for s in today_sessions)
 
     # ── Per-mode breakdown (all-time, from UserStudySession) ──────────────────
@@ -2508,8 +2695,17 @@ def start_session(current_user: User):
     else:
         mode = 'smart'
     book_id = body.get('bookId') or None
-    ch = body.get('chapterId')
-    chapter_id = str(ch) if ch is not None and str(ch).strip() != '' else None
+    chapter_id = _normalize_chapter_id(body.get('chapterId'))
+
+    existing = _find_pending_session(
+        user_id=current_user.id,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+        window_seconds=_PENDING_SESSION_REUSE_WINDOW_SECONDS,
+    )
+    if existing:
+        return jsonify({'sessionId': existing.id}), 201
 
     session = UserStudySession(
         user_id=current_user.id,
@@ -2564,6 +2760,13 @@ def log_session(current_user: User):
     """
     body = request.get_json() or {}
     try:
+        mode_raw = body.get('mode')
+        if isinstance(mode_raw, str):
+            mode = mode_raw.strip()[:30] or None
+        else:
+            mode = None
+        book_id = body.get('bookId') or None
+        chapter_id = _normalize_chapter_id(body.get('chapterId'))
         session_id = body.get('sessionId')
         if session_id:
             # Update the existing session row created by /start-session
@@ -2574,10 +2777,12 @@ def log_session(current_user: User):
                 ended_at = datetime.utcnow()
                 session.ended_at = ended_at
                 computed_duration = max(0, int((ended_at - session.started_at).total_seconds()))
-                if body.get('mode'):
-                    session.mode = body['mode']
-                session.book_id = body.get('bookId', session.book_id)
-                session.chapter_id = body.get('chapterId', session.chapter_id)
+                if mode:
+                    session.mode = mode
+                if book_id is not None:
+                    session.book_id = book_id
+                if chapter_id is not None:
+                    session.chapter_id = chapter_id
                 session.words_studied = body.get('wordsStudied', 0)
                 session.correct_count = body.get('correctCount', 0)
                 session.wrong_count = body.get('wrongCount', 0)
@@ -2611,11 +2816,36 @@ def log_session(current_user: User):
         if duration_seconds == 0 and (words_studied > 0 or correct_count > 0 or wrong_count > 0):
             duration_seconds = 1
 
+        pending = _find_pending_session(
+            user_id=current_user.id,
+            mode=mode,
+            book_id=book_id,
+            chapter_id=chapter_id,
+            started_at=started_at,
+        )
+        if pending:
+            pending.ended_at = datetime.utcnow()
+            if mode:
+                pending.mode = mode
+            if book_id is not None:
+                pending.book_id = book_id
+            if chapter_id is not None:
+                pending.chapter_id = chapter_id
+            pending.words_studied = words_studied
+            pending.correct_count = correct_count
+            pending.wrong_count = wrong_count
+            computed_duration = max(0, int((pending.ended_at - pending.started_at).total_seconds()))
+            pending.duration_seconds = max(duration_seconds, computed_duration)
+            if pending.duration_seconds == 0 and pending.has_activity():
+                pending.duration_seconds = 1
+            db.session.commit()
+            return jsonify({'id': pending.id}), 200
+
         session = UserStudySession(
             user_id=current_user.id,
-            mode=body.get('mode') or None,
-            book_id=body.get('bookId'),
-            chapter_id=body.get('chapterId'),
+            mode=mode,
+            book_id=book_id,
+            chapter_id=chapter_id,
             words_studied=words_studied,
             correct_count=correct_count,
             wrong_count=wrong_count,
@@ -2623,6 +2853,8 @@ def log_session(current_user: User):
         )
         if started_at:
             session.started_at = started_at
+        if duration_seconds > 0:
+            session.ended_at = datetime.utcnow()
         db.session.add(session)
         db.session.commit()
         return jsonify({'id': session.id}), 201
@@ -2648,9 +2880,11 @@ def get_quick_memory(current_user: User):
 def get_quick_memory_review_queue(current_user: User):
     """Return the user's due/upcoming Ebbinghaus review queue with full word metadata."""
     try:
-        limit = max(1, min(int(request.args.get('limit', 20)), 100))
+        raw_limit = int(request.args.get('limit', 20))
     except (TypeError, ValueError):
-        limit = 20
+        raw_limit = 20
+    # 0 means no cap — return everything after offset
+    limit = raw_limit if raw_limit != 0 else None
 
     try:
         offset = max(0, int(request.args.get('offset', 0)))
@@ -2661,6 +2895,9 @@ def get_quick_memory_review_queue(current_user: User):
         within_days = max(1, min(int(request.args.get('within_days', 1)), 30))
     except (TypeError, ValueError):
         within_days = 1
+
+    book_id_filter = (request.args.get('book_id') or '').strip() or None
+    chapter_id_filter = _normalize_chapter_id(request.args.get('chapter_id'))
 
     now_ms = int(time.time() * 1000)
     window_end_ms = now_ms + within_days * 86400000
@@ -2674,6 +2911,7 @@ def get_quick_memory_review_queue(current_user: User):
 
     due_words = []
     upcoming_words = []
+    context_map: dict[tuple[str, str], dict] = {}
 
     rows = (
         UserQuickMemoryRecord.query
@@ -2685,8 +2923,23 @@ def get_quick_memory_review_queue(current_user: User):
 
     for row in rows:
         word_key = (row.word or '').strip().lower()
-        vocab_item = pool_by_word.get(word_key)
-        if not vocab_item:
+        stored_book_id = (row.book_id or '').strip() or None
+        stored_chapter_id = _normalize_chapter_id(row.chapter_id)
+        vocab_item = _resolve_quick_memory_vocab_entry(
+            word_key,
+            book_id=stored_book_id,
+            chapter_id=stored_chapter_id,
+        )
+        fallback_item = pool_by_word.get(word_key)
+        if not vocab_item and not fallback_item:
+            continue
+
+        effective_book_id = stored_book_id or (vocab_item or {}).get('book_id')
+        effective_chapter_id = stored_chapter_id or _normalize_chapter_id((vocab_item or {}).get('chapter_id'))
+
+        if book_id_filter and effective_book_id != book_id_filter:
+            continue
+        if chapter_id_filter and effective_chapter_id != chapter_id_filter:
             continue
 
         next_review = row.next_review or 0
@@ -2697,24 +2950,72 @@ def get_quick_memory_review_queue(current_user: User):
         else:
             continue
 
+        book_title = (vocab_item or {}).get('book_title') or effective_book_id or ''
+        chapter_title = (vocab_item or {}).get('chapter_title') or (
+            f"第{effective_chapter_id}章" if effective_chapter_id is not None else ''
+        )
         item = {
-            **vocab_item,
+            **(fallback_item or {}),
+            **(vocab_item or {}),
             'status': row.status,
             'knownCount': row.known_count or 0,
             'unknownCount': row.unknown_count or 0,
             'nextReview': next_review,
             'dueState': due_state,
+            'book_id': effective_book_id,
+            'book_title': book_title,
+            'chapter_id': effective_chapter_id,
+            'chapter_title': chapter_title,
         }
         if due_state == 'due':
             due_words.append(item)
         else:
             upcoming_words.append(item)
 
+        if effective_book_id and effective_chapter_id is not None:
+            context_key = (effective_book_id, effective_chapter_id)
+            context = context_map.get(context_key)
+            if context is None:
+                context = {
+                    'book_id': effective_book_id,
+                    'book_title': book_title,
+                    'chapter_id': effective_chapter_id,
+                    'chapter_title': chapter_title,
+                    'due_count': 0,
+                    'upcoming_count': 0,
+                    'total_count': 0,
+                    'next_review': next_review,
+                }
+                context_map[context_key] = context
+
+            context['total_count'] += 1
+            context['next_review'] = min(context['next_review'], next_review)
+            if due_state == 'due':
+                context['due_count'] += 1
+            else:
+                context['upcoming_count'] += 1
+
     combined_words = due_words + upcoming_words
-    selected = combined_words[offset:offset + limit]
+    selected = combined_words[offset:offset + limit] if limit is not None else combined_words[offset:]
     total_count = len(combined_words)
     next_offset = offset + len(selected)
     has_more = next_offset < total_count
+    contexts = sorted(
+        context_map.values(),
+        key=lambda context: (
+            0 if context['due_count'] > 0 else 1,
+            context['next_review'],
+            context['book_title'],
+            context['chapter_title'],
+        ),
+    )
+    selected_context = None
+    if book_id_filter and chapter_id_filter is not None:
+        selected_context = context_map.get((book_id_filter, chapter_id_filter))
+    elif book_id_filter:
+        selected_context = next((context for context in contexts if context['book_id'] == book_id_filter), None)
+    elif contexts:
+        selected_context = contexts[0]
 
     return jsonify({
         'words': selected,
@@ -2728,6 +3029,8 @@ def get_quick_memory_review_queue(current_user: User):
             'total_count': total_count,
             'has_more': has_more,
             'next_offset': next_offset if has_more else None,
+            'contexts': contexts,
+            'selected_context': selected_context,
         },
     }), 200
 
@@ -2747,12 +3050,18 @@ def sync_quick_memory(current_user: User):
         word = (r.get('word') or '').strip().lower()
         if not word:
             continue
+        record_book_id = (r.get('bookId') or r.get('book_id') or '').strip() or None
+        record_chapter_id = _normalize_chapter_id(r.get('chapterId', r.get('chapter_id')))
         existing = UserQuickMemoryRecord.query.filter_by(
             user_id=current_user.id, word=word
         ).first()
         if existing:
             # Only overwrite if client data is newer (lastSeen is epoch ms)
             if (r.get('lastSeen') or 0) >= (existing.last_seen or 0):
+                if record_book_id is not None:
+                    existing.book_id = record_book_id
+                if record_chapter_id is not None:
+                    existing.chapter_id = record_chapter_id
                 existing.status        = r.get('status', existing.status)
                 existing.first_seen    = r.get('firstSeen', existing.first_seen)
                 existing.last_seen     = r.get('lastSeen', existing.last_seen)
@@ -2766,6 +3075,8 @@ def sync_quick_memory(current_user: User):
             new_rec = UserQuickMemoryRecord(
                 user_id=current_user.id,
                 word=word,
+                book_id=record_book_id,
+                chapter_id=record_chapter_id,
                 status=r.get('status', 'unknown'),
                 first_seen=r.get('firstSeen', 0),
                 last_seen=r.get('lastSeen', 0),

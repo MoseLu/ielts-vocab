@@ -2,27 +2,6 @@
 
 An IELTS vocabulary learning web application.
 
-## Superpowers Skills (Auto-Trigger)
-
-**Superpowers TDD and skills are the primary workflow for this project.**
-
-### TDD Priority
-- **Use `/superpowers:test-driven-development`** for all new features, bug fixes, refactoring
-- **Iron Law**: NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
-- RED-GREEN-REFACTOR cycle strictly followed
-
-### Skill Triggers
-| Trigger | Skill | When |
-|---------|-------|------|
-| Building something new | `superpowers:brainstorming` | Before any creative work |
-| Bug/issue | `superpowers:systematic-debugging` | Before proposing fixes |
-| Feature implementation | `superpowers:test-driven-development` | Before writing code |
-| Code review ready | `superpowers:requesting-code-review` | After completing tasks |
-| Verify completion | `superpowers:verification-before-completion` | Before claiming done |
-
-### Auto-Activation Rule
-**BEFORE any response or action, check if any Superpowers skill applies.**
-
 ## Encoding & Patch Strategy
 
 When editing this repo, treat text encoding and patch targeting as first-class concerns.

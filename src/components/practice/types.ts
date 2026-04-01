@@ -1,3 +1,5 @@
+import type { QuickMemoryRecordState } from '../../lib/quickMemory'
+
 // ── Types for Practice Components ────────────────────────────────────────────────
 
 export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'quickmemory'
@@ -11,6 +13,8 @@ export interface QuickMemoryRecord {
   unknownCount: number
   nextReview: number      // epoch ms — Ebbinghaus-derived next review time
   fuzzyCount: number      // times user went back and re-answered (indicates uncertainty)
+  bookId?: string
+  chapterId?: string
 }
 export type QuickMemoryRecords = Record<string, QuickMemoryRecord>  // key = word
 
@@ -21,12 +25,16 @@ export interface QuickMemoryModeProps {
   bookId: string | null
   chapterId: string | null
   bookChapters: Chapter[]
+  reviewMode?: boolean
   reviewHasMore?: boolean
   onContinueReview?: () => void
+  buildChapterPath?: (chapterId: string | number) => string
   onModeChange: (mode: string) => void
   onNavigate: (path: string) => void
   /** Called with each word the user marks as "unknown" — adds it to the error book */
   onWrongWord: (word: Word) => void
+  /** Called after each quick-memory answer so the parent can react to mastery changes */
+  onQuickMemoryRecordChange?: (word: Word, record: QuickMemoryRecordState) => void
   /** Saved queue position to resume from (e.g. after pause+exit in error mode) */
   initialIndex?: number
   /** Called whenever the user advances or goes back, so the parent can persist position */
@@ -48,8 +56,12 @@ export interface Word {
   phonetic: string
   pos: string
   definition: string
+  book_id?: string
+  book_title?: string
   chapter_id?: number | string
   chapter_title?: string
+  dueState?: 'due' | 'upcoming'
+  nextReview?: number
   examples?: WordExample[]
 }
 
@@ -135,6 +147,7 @@ export interface PracticeControlBarProps {
   onModeChange: (mode: PracticeMode) => void
   onDayChange: (day: number) => void
   onNavigate: (path: string) => void
+  buildChapterPath?: (chapterId: string | number) => string
   onPause?: () => void
   // Radio mode quick settings
   radioQuickSettings?: RadioQuickSettings

@@ -1,6 +1,6 @@
 import json
 
-from models import UserWrongWord, db
+from models import UserQuickMemoryRecord, UserWrongWord, db
 from routes import ai as ai_routes
 
 
@@ -100,6 +100,62 @@ def test_ask_executes_get_wrong_words_tool_call(client, app, monkeypatch):
     assert 'tool_result' in second_call_dump
     assert 'alpha' in second_call_dump
     assert 'input validation failed' not in second_call_dump
+
+
+def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app):
+    register_and_login(client, username='wrong-words-progress-user')
+
+    with app.app_context():
+        from models import User
+
+        user = User.query.filter_by(username='wrong-words-progress-user').first()
+        db.session.add(UserWrongWord(
+            user_id=user.id,
+            word='alpha',
+            phonetic='/a/',
+            pos='n.',
+            definition='测试词',
+            wrong_count=3,
+        ))
+        db.session.add(UserQuickMemoryRecord(
+            user_id=user.id,
+            word='alpha',
+            status='known',
+            first_seen=1000,
+            last_seen=2000,
+            known_count=4,
+            unknown_count=1,
+            next_review=3000,
+            fuzzy_count=0,
+        ))
+        db.session.commit()
+
+    res = client.get('/api/ai/wrong-words')
+
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['words'] == [
+        {
+            'id': data['words'][0]['id'],
+            'user_id': data['words'][0]['user_id'],
+            'word': 'alpha',
+            'phonetic': '/a/',
+            'pos': 'n.',
+            'definition': '测试词',
+            'wrong_count': 3,
+            'listening_correct': 0,
+            'listening_wrong': 0,
+            'meaning_correct': 0,
+            'meaning_wrong': 0,
+            'dictation_correct': 0,
+            'dictation_wrong': 0,
+            'updated_at': data['words'][0]['updated_at'],
+            'ebbinghaus_streak': 4,
+            'ebbinghaus_target': 6,
+            'ebbinghaus_remaining': 2,
+            'ebbinghaus_completed': False,
+        }
+    ]
 
 
 def test_generate_book_accepts_text_response_payload(client, monkeypatch):

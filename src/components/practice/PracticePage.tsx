@@ -10,7 +10,25 @@ import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats, recordWordResult, chooseSmartDimension, buildSmartQueue, syncSmartStatsToBackend, loadSmartStatsFromBackend } from '../../lib/smartMode'
 import { recordModeAnswer, logSession, startSession, cancelSession } from '../../hooks/useAIChat'
 import { apiFetch, buildApiUrl } from '../../lib'
-import { addWrongWordToList, loadWrongWords, readWrongWordsFromStorage, writeWrongWordsToStorage } from '../../features/vocabulary/wrongWordsStore'
+import {
+  addWrongWordToList,
+  applyWrongWordReviewResult,
+  loadWrongWords,
+  readWrongWordsFromStorage,
+  removeWrongWordFromList,
+  writeWrongWordsToStorage,
+} from '../../features/vocabulary/wrongWordsStore'
+import {
+  filterWrongWords,
+  parseWrongWordsFiltersFromSearchParams,
+} from '../../features/vocabulary/wrongWordsFilters'
+import {
+  isQuickMemoryRecordMastered,
+  readQuickMemoryRecordsFromStorage,
+  resetQuickMemoryRecord,
+  writeQuickMemoryRecordsToStorage,
+  type QuickMemoryRecordState,
+} from '../../lib/quickMemory'
 import { LearnerProfileSchema, type LearnerProfile as BackendLearnerProfile } from '../../lib/schemas'
 import { safeParse } from '../../lib/validation'
 import PracticeControlBar from './PracticeControlBar'
@@ -20,6 +38,12 @@ import DictationMode from './DictationMode'
 import OptionsMode from './OptionsMode'
 import QuickMemoryMode from './QuickMemoryMode'
 import { buildLearnerProfile, mergeLearnerProfileWithBackend } from './learnerProfile'
+import { persistBookProgressSnapshot, readStoredChapterStartIndex } from './progressStorage'
+import {
+  buildNextErrorReviewWords,
+  updateErrorReviewRoundResults,
+  type ErrorReviewRoundResults,
+} from './errorReviewSession'
 import SettingsPanel from '../SettingsPanel'
 import { PageSkeleton } from '../ui'
 
@@ -31,9 +55,21 @@ interface WrongWordsProgressData {
   correct_count: number
   wrong_count: number
   is_completed: boolean
+  round?: number
   queue_words?: string[]
   mode?: PracticeMode
   updatedAt?: string
+}
+
+interface ReviewQueueContext {
+  book_id: string
+  book_title: string
+  chapter_id: string
+  chapter_title: string
+  due_count: number
+  upcoming_count: number
+  total_count: number
+  next_review: number
 }
 
 interface ReviewQueueSummary {
@@ -42,10 +78,12 @@ interface ReviewQueueSummary {
   returned_count: number
   review_window_days: number
   offset: number
-  limit: number
+  limit: number | null
   total_count: number
   has_more: boolean
   next_offset: number | null
+  contexts?: ReviewQueueContext[]
+  selected_context?: ReviewQueueContext | null
 }
 
 function readWrongWordsProgress(currentMode?: PracticeMode): WrongWordsProgressData | null {
@@ -62,6 +100,7 @@ function readWrongWordsProgress(currentMode?: PracticeMode): WrongWordsProgressD
       correct_count: Math.max(0, Number(snapshot.correct_count) || 0),
       wrong_count: Math.max(0, Number(snapshot.wrong_count) || 0),
       is_completed: Boolean(snapshot.is_completed),
+      round: Math.max(1, Number(snapshot.round) || 1),
       queue_words: Array.isArray(snapshot.queue_words) ? snapshot.queue_words : undefined,
       mode: snapshot.mode,
       updatedAt: snapshot.updatedAt,
@@ -151,6 +190,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const [backendLearnerProfile, setBackendLearnerProfile] = useState<BackendLearnerProfile | null>(null)
   const [reviewOffset, setReviewOffset] = useState(0)
   const [reviewSummary, setReviewSummary] = useState<ReviewQueueSummary | null>(null)
+  const [reviewContext, setReviewContext] = useState<ReviewQueueContext | null>(null)
+  const [errorReviewRound, setErrorReviewRound] = useState(1)
+
+  const practiceBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId
+  const practiceChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
 
   // Smart mode: current word's test dimension (闊?鎰?褰?
   const [smartDimension, setSmartDimension] = useState<SmartDimension>('meaning')
@@ -179,16 +223,21 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const uniqueAnsweredRef = useRef<Set<string>>(new Set())
   // Unique words answered in the current session, used by session logging and stats.
   const sessionUniqueWordsRef = useRef<Set<string>>(new Set())
+  const sessionBookIdRef = useRef<string | null>(practiceBookId)
+  const sessionChapterIdRef = useRef<string | null>(practiceChapterId)
   // Tracks current mode (keeps cleanup up-to-date when mode prop changes)
   const currentModeRef = useRef(mode)
   /** Mode persisted into log-session and start-session. Error practice uses `errors`. */
   const effectiveSessionModeRef = useRef(errorMode ? 'errors' : (mode ?? 'smart'))
   const errorProgressHydratedRef = useRef(false)
+  const errorRoundResultsRef = useRef<ErrorReviewRoundResults>({})
 
   // Keep refs in sync with state so the unmount cleanup always has current values
   useEffect(() => { correctCountRef.current = correctCount }, [correctCount])
   useEffect(() => { wrongCountRef.current = wrongCount }, [wrongCount])
   useEffect(() => { currentModeRef.current = mode }, [mode])
+  useEffect(() => { sessionBookIdRef.current = practiceBookId }, [practiceBookId])
+  useEffect(() => { sessionChapterIdRef.current = practiceChapterId }, [practiceChapterId])
   useEffect(() => {
     effectiveSessionModeRef.current = errorMode ? 'errors' : (mode ?? 'smart')
   }, [mode, errorMode])
@@ -214,8 +263,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       }
       logSession({
         mode: effectiveSessionModeRef.current,
-        bookId,
-        chapterId,
+        bookId: sessionBookIdRef.current,
+        chapterId: sessionChapterIdRef.current,
         wordsStudied: isRadio ? radioWordsStudiedRef.current : sessionUnique,
         correctCount: sessionCorrectRef.current,
         wrongCount: sessionWrongRef.current,
@@ -281,34 +330,35 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Fetch book chapters
   useEffect(() => {
-    if (!bookId) return
-    fetch(buildApiUrl(`/api/books/${bookId}/chapters`))
+    if (!practiceBookId) return
+    fetch(buildApiUrl(`/api/books/${practiceBookId}/chapters`))
       .then(r => r.json())
       .then((d: { chapters?: Chapter[] }) => {
         const chs = d.chapters || []
         setBookChapters(chs)
-        const current = chs.find(c => String(c.id) === String(chapterId)) || chs[0]
+        const current = chs.find(c => String(c.id) === String(practiceChapterId)) || chs[0]
         if (current) setCurrentChapterTitle(current.title)
       })
       .catch(() => {})
-  }, [bookId])
+  }, [practiceBookId, practiceChapterId])
 
   // Update chapter title
   useEffect(() => {
-    if (!bookId || !bookChapters.length) return
-    const current = bookChapters.find(c => String(c.id) === String(chapterId)) || bookChapters[0]
+    if (!practiceBookId || !bookChapters.length) return
+    const current = bookChapters.find(c => String(c.id) === String(practiceChapterId)) || bookChapters[0]
     if (current) setCurrentChapterTitle(current.title)
-  }, [chapterId, bookChapters])
+  }, [practiceBookId, practiceChapterId, bookChapters])
 
   useEffect(() => {
     if (!reviewMode || mode !== 'quickmemory') {
       setReviewOffset(0)
       setReviewSummary(null)
+      setReviewContext(null)
       return
     }
 
     setReviewOffset(0)
-  }, [mode, reviewMode, settings.reviewInterval, settings.reviewLimit])
+  }, [bookId, chapterId, mode, reviewMode, settings.reviewInterval, settings.reviewLimit])
 
   useEffect(() => {
     let cancelled = false
@@ -335,7 +385,11 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
   // Start the server-side session timer once vocabulary is actually ready.
   // Resets client-side fallback timer and session-specific answer counters.
-  const beginSession = () => {
+  const beginSession = (context?: { bookId?: string | null; chapterId?: string | null }) => {
+    const sessionBookId = context?.bookId ?? sessionBookIdRef.current
+    const sessionChapterId = context?.chapterId ?? sessionChapterIdRef.current
+    sessionBookIdRef.current = sessionBookId
+    sessionChapterIdRef.current = sessionChapterId
     sessionStartRef.current = Date.now()
     sessionCorrectRef.current = 0
     sessionWrongRef.current = 0
@@ -346,8 +400,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     pendingSessionCancelRef.current = false
     startSession({
       mode: effectiveSessionModeRef.current,
-      bookId,
-      chapterId,
+      bookId: sessionBookId,
+      chapterId: sessionChapterId,
     }).then(id => {
       sessionIdRef.current = id
       if (pendingSessionCancelRef.current && id) {
@@ -425,14 +479,38 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       void (async () => {
         try {
           const reviewWindowDays = Math.max(1, parseInt(String(settings.reviewInterval ?? '1'), 10) || 1)
-          const reviewLimit = Math.max(1, parseInt(String(settings.reviewLimit ?? '20'), 10) || 20)
+          // 'unlimited' → 0 (backend treats 0 as no cap and returns everything)
+          const rawLimit = settings.reviewLimit === 'unlimited' ? 0 : (parseInt(String(settings.reviewLimit ?? '20'), 10) || 20)
+          const reviewLimit = Math.max(1, rawLimit)
+          const params = new URLSearchParams({
+            limit: String(reviewLimit),
+            within_days: String(reviewWindowDays),
+            offset: String(reviewOffset),
+          })
+          if (bookId) params.set('book_id', bookId)
+          if (chapterId) params.set('chapter_id', chapterId)
           const data = await apiFetch<{ words?: Word[]; summary?: ReviewQueueSummary }>(
-            `/api/ai/quick-memory/review-queue?limit=${reviewLimit}&within_days=${reviewWindowDays}&offset=${reviewOffset}`,
+            `/api/ai/quick-memory/review-queue?${params.toString()}`,
           )
           if (cancelled) return
 
           const words = data.words || []
           const q = Array.from({ length: words.length }, (_, i) => i)
+          const selectedContext = data.summary?.selected_context ?? null
+          const fallbackContext = selectedContext ?? (
+            words[0]?.book_id && words[0]?.chapter_id && words[0]?.chapter_title
+              ? {
+                  book_id: String(words[0].book_id),
+                  book_title: String(words[0].book_title ?? words[0].book_id),
+                  chapter_id: String(words[0].chapter_id),
+                  chapter_title: String(words[0].chapter_title),
+                  due_count: data.summary?.due_count ?? 0,
+                  upcoming_count: data.summary?.upcoming_count ?? 0,
+                  total_count: data.summary?.total_count ?? words.length,
+                  next_review: Number(words[0].nextReview ?? 0),
+                }
+              : null
+          )
 
           setVocabulary(words)
           vocabRef.current = words
@@ -445,8 +523,16 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           setLastState(null)
           setWordStatuses({})
           setReviewSummary(data.summary ?? null)
-          setCurrentChapterTitle('艾宾浩斯复习')
-          beginSession()
+          setReviewContext(fallbackContext)
+          if (fallbackContext?.chapter_title) {
+            setCurrentChapterTitle(fallbackContext.chapter_title)
+          } else if (!bookId && !chapterId) {
+            setCurrentChapterTitle('艾宾浩斯复习')
+          }
+          beginSession({
+            bookId: fallbackContext?.book_id ?? bookId ?? null,
+            chapterId: fallbackContext?.chapter_id ?? chapterId ?? null,
+          })
         } catch {
           if (!cancelled) showToast?.('加载复习队列失败', 'error')
         }
@@ -472,7 +558,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           })
           if (cancelled) return
 
-          const saved: Word[] = wrongWords.map(word => ({
+          const filteredWrongWords = filterWrongWords(
+            wrongWords,
+            parseWrongWordsFiltersFromSearchParams(searchParams),
+          )
+
+          const saved: Word[] = filteredWrongWords.map(word => ({
             word: word.word,
             phonetic: word.phonetic,
             pos: word.pos,
@@ -490,6 +581,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
 
           setQueue(q)
           queueRef.current = q
+          setErrorReviewRound(savedProgress?.is_completed ? 1 : (savedProgress?.round ?? 1))
+          errorRoundResultsRef.current = {}
           setQueueIndex(savedProgress?.is_completed ? 0 : Math.min(savedProgress?.current_index ?? 0, maxIndex))
           setCorrectCount(savedProgress?.is_completed ? 0 : (savedProgress?.correct_count ?? 0))
           setWrongCount(savedProgress?.is_completed ? 0 : (savedProgress?.wrong_count ?? 0))
@@ -619,7 +712,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     return () => {
       cancelled = true
     }
-  }, [bookId, chapterId, currentDay, errorMode, mode, reviewMode, reviewOffset, settings.reviewInterval, settings.reviewLimit, user])
+  }, [bookId, chapterId, currentDay, errorMode, mode, reviewMode, reviewOffset, searchParams, settings.reviewInterval, settings.reviewLimit, user])
 
   // Persist wrong-words progress when the queue position or word list changes.
   // Deliberately excludes correctCount/wrongCount from deps: those are saved by
@@ -639,11 +732,12 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       correct_count: correctCountRef.current,
       wrong_count: wrongCountRef.current,
       is_completed: queue.length > 0 && queueIndex >= queue.length,
+      round: errorReviewRound,
       queue_words: queueWords,
       mode,
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [errorMode, mode, queue, queueIndex, vocabulary])
+  }, [errorMode, errorReviewRound, mode, queue, queueIndex, vocabulary])
 
   const currentWord: Word | undefined = vocabulary[queue[queueIndex]]
 
@@ -818,6 +912,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         correct_count: correct,
         wrong_count: wrong,
         is_completed: queue.length > 0 && queueIndex + 1 >= queue.length,
+        round: errorReviewRound,
         queue_words: queueWords,
         mode,
       })
@@ -833,11 +928,20 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     // Save the next word to answer (queueIndex + 1) so that on resume the user
     // picks up exactly where they left off rather than re-answering the last word.
     const nextIndex = queueIndex + 1
-    const progressData: ProgressData = {
+    const chapterProgressData: ProgressData = {
       current_index: nextIndex,
       correct_count: correct,
       wrong_count: wrong,
       is_completed: chapterId ? chapterDone : (correct + wrong >= vocabulary.length),
+    }
+    const cap = vocabulary.length
+    const wordsLearned = chapterId ? computeChapterWordsLearned(cap) : 0
+    const chapterStartIndex = bookId && chapterId
+      ? readStoredChapterStartIndex(bookId, chapterId)
+      : 0
+    const bookProgressData: ProgressData = {
+      ...chapterProgressData,
+      current_index: chapterId ? chapterStartIndex + wordsLearned : nextIndex,
     }
     // Queue order persisted locally so a shuffle reload doesn't scramble the position.
     const queueWords = queue
@@ -845,24 +949,20 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       .filter((w): w is string => Boolean(w))
 
     if (bookId) {
-      const bookProgress: Record<string, ProgressData> = JSON.parse(localStorage.getItem('book_progress') || '{}')
-      bookProgress[bookId] = { ...progressData, queue_words: queueWords, updatedAt: new Date().toISOString() }
-      localStorage.setItem('book_progress', JSON.stringify(bookProgress))
+      persistBookProgressSnapshot(bookId, bookProgressData, queueWords)
 
       // queue_words is local-only; strip it before sending to the backend.
       apiFetch('/api/books/progress', {
         method: 'POST',
-        body: JSON.stringify({ book_id: bookId, ...progressData })
+        body: JSON.stringify({ book_id: bookId, ...bookProgressData })
       }).catch(() => showToast?.('进度保存失败，请检查网络连接', 'error'))
 
       if (chapterId) {
-        const cap = vocabulary.length
-        const wl = computeChapterWordsLearned(cap)
         const answeredWords = Array.from(uniqueAnsweredRef.current)
         const chapterProgress: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
         chapterProgress[`${bookId}_${chapterId}`] = {
-          ...progressData,
-          words_learned: wl,
+          ...chapterProgressData,
+          words_learned: wordsLearned,
           answered_words: answeredWords,
           queue_words: queueWords,
           updatedAt: new Date().toISOString(),
@@ -871,8 +971,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
           method: 'POST',
           body: JSON.stringify({
-            ...progressData,
-            words_learned: wl,
+            ...chapterProgressData,
+            words_learned: wordsLearned,
             answered_words: answeredWords,
           }),
         }).catch(() => {})
@@ -885,7 +985,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
               mode,
               correct_count: correct,
               wrong_count: wrong,
-              is_completed: progressData.is_completed ?? false,
+              is_completed: chapterProgressData.is_completed ?? false,
             }),
           }).catch(() => {})
         }
@@ -905,15 +1005,42 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         body: JSON.stringify({ day: currentDay, ...progressData })
       }).catch(() => {})
     }
-  }, [bookId, chapterId, currentDay, errorMode, mode, queue, queue.length, queueIndex, vocabulary])
+  }, [bookId, chapterId, currentDay, errorMode, errorReviewRound, mode, queue, queue.length, queueIndex, vocabulary])
 
   const saveWrongWord = (word: Word) => {
     // Update localStorage list (for error-mode practice queue)
     const existing = addWrongWordToList(
-      JSON.parse(localStorage.getItem('wrong_words') || '[]'),
+      readWrongWordsFromStorage(),
       word,
     )
     writeWrongWordsToStorage(existing)
+
+    if (mode !== 'quickmemory') {
+      const { records, record } = resetQuickMemoryRecord(
+        readQuickMemoryRecordsFromStorage(),
+        word.word,
+      )
+      writeQuickMemoryRecordsToStorage(records)
+
+      if (user && record) {
+        apiFetch('/api/ai/quick-memory/sync', {
+          method: 'POST',
+          body: JSON.stringify({
+            records: [{
+              word: word.word.toLowerCase(),
+              status: record.status,
+              firstSeen: record.firstSeen,
+              lastSeen: record.lastSeen,
+              knownCount: record.knownCount,
+              unknownCount: record.unknownCount,
+              nextReview: record.nextReview,
+              fuzzyCount: record.fuzzyCount,
+            }],
+          }),
+        }).catch(() => {})
+      }
+    }
+
     // Always sync wrong words to the backend and include dimension stats.
     const ws = loadSmartStats()[word.word]
     apiFetch('/api/ai/wrong-words/sync', {
@@ -935,9 +1062,51 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       }).catch(() => {})
   }
 
+  const handleQuickMemoryRecordChange = useCallback((word: Word, record: QuickMemoryRecordState) => {
+    if (!isQuickMemoryRecordMastered(record)) return
+
+    const currentWrongWords = readWrongWordsFromStorage()
+    const existsInWrongWords = currentWrongWords.some(
+      item => item.word.trim().toLowerCase() === word.word.trim().toLowerCase(),
+    )
+    if (!existsInWrongWords) return
+
+    const nextWrongWords = removeWrongWordFromList(currentWrongWords, word.word)
+    writeWrongWordsToStorage(nextWrongWords)
+
+    if (user) {
+      apiFetch(`/api/ai/wrong-words/${encodeURIComponent(word.word)}`, {
+        method: 'DELETE',
+      }).catch(() => {})
+    }
+
+    showToast?.(`${word.word} 已完成艾宾浩斯巩固，已移出错词本`, 'success')
+  }, [showToast, user])
+
+  const recordErrorReviewOutcome = useCallback((word: Word, wasCorrect: boolean) => {
+    if (!errorMode) return
+
+    errorRoundResultsRef.current = updateErrorReviewRoundResults(
+      errorRoundResultsRef.current,
+      word.word,
+      wasCorrect,
+    )
+
+    const result = applyWrongWordReviewResult(
+      readWrongWordsFromStorage(),
+      word.word,
+      wasCorrect,
+    )
+    writeWrongWordsToStorage(result.words)
+  }, [errorMode])
+
   const goNext = (wasCorrect: boolean) => {
     setLastState({ qi: queueIndex, cc: correctCount, wc: wrongCount, prevWord: previousWord })
     setPreviousWord(currentWord ?? null)
+    setSelectedAnswer(null)
+    setShowResult(false)
+    setSpellingInput('')
+    setSpellingResult(null)
     if (!wasCorrect && settings.repeatWrong !== false) {
       setQueue(prev => { const c = [...prev]; c.push(queue[queueIndex]); return c })
     }
@@ -949,8 +1118,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       sessionLoggedRef.current = true
       logSession({
         mode: effectiveSessionModeRef.current,
-        bookId,
-        chapterId,
+        bookId: sessionBookIdRef.current,
+        chapterId: sessionChapterIdRef.current,
         wordsStudied: sessionUniqueWordsRef.current.size,
         correctCount: finalSessionCorrect,
         wrongCount: finalSessionWrong,
@@ -960,6 +1129,10 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       })
       // Sync smart stats to backend at session end
       syncSmartStatsToBackend()
+      if (errorMode) {
+        setQueueIndex(queue.length)
+        return
+      }
       navigate('/plan')
     } else {
       setQueueIndex(prev => prev + 1)
@@ -990,6 +1163,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         : mode === 'listening' ? 'listening' : 'meaning'
       recordWordResult(currentWord.word, dim, isCorrect)
       if (!isCorrect) saveWrongWord(currentWord)
+      recordErrorReviewOutcome(currentWord, isCorrect)
     }
     recordModeAnswer(mode ?? 'smart', isCorrect)
     setTimeout(() => goNext(isCorrect), 1200)
@@ -1009,6 +1183,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     // Record dictation stats first, then sync wrong word (so dim stats are included)
     recordWordResult(currentWord.word, 'dictation', isCorrect)
     if (!isCorrect) saveWrongWord(currentWord)
+    recordErrorReviewOutcome(currentWord, isCorrect)
     recordModeAnswer(mode ?? 'dictation', isCorrect)
     setTimeout(() => goNext(isCorrect), 1500)
   }
@@ -1016,6 +1191,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
   const handleSkip = () => {
     if (!currentWord) return
     saveWrongWord(currentWord)
+    recordErrorReviewOutcome(currentWord, false)
     registerAnsweredWord(currentWord.word)
     const nw = wrongCount + 1
     setWrongCount(nw); saveProgress(correctCount, nw)
@@ -1075,6 +1251,53 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     setReviewOffset(nextOffset)
   }, [reviewSummary])
 
+  const buildChapterPath = useCallback((nextChapterId: string | number) => {
+    if (!practiceBookId) return '/practice'
+
+    const encodedBookId = encodeURIComponent(practiceBookId)
+    const encodedChapterId = encodeURIComponent(String(nextChapterId))
+
+    if (reviewMode) {
+      return `/practice?review=due&book=${encodedBookId}&chapter=${encodedChapterId}`
+    }
+
+    return `/practice?book=${encodedBookId}&chapter=${encodedChapterId}`
+  }, [practiceBookId, reviewMode])
+
+  const handleContinueErrorReview = useCallback(() => {
+    const nextRoundWords = buildNextErrorReviewWords(vocabulary, errorRoundResultsRef.current)
+    if (!nextRoundWords.length) return
+
+    const nextRound = errorReviewRound + 1
+    const nextQueue = Array.from({ length: nextRoundWords.length }, (_, index) => index)
+
+    setVocabulary(nextRoundWords)
+    vocabRef.current = nextRoundWords
+    setQueue(nextQueue)
+    queueRef.current = nextQueue
+    setQueueIndex(0)
+    setCorrectCount(0)
+    setWrongCount(0)
+    setPreviousWord(null)
+    setLastState(null)
+    setWordStatuses({})
+    setErrorReviewRound(nextRound)
+    errorRoundResultsRef.current = {}
+    errorProgressHydratedRef.current = true
+
+    persistWrongWordsProgress({
+      current_index: 0,
+      correct_count: 0,
+      wrong_count: 0,
+      is_completed: false,
+      round: nextRound,
+      queue_words: nextRoundWords.map(word => word.word),
+      mode,
+    })
+
+    beginSession()
+  }, [errorReviewRound, mode, vocabulary])
+
   // Loading state — but if we're in review mode and the session has started
   // (beginSession sets sessionStartRef) with an empty result, show "no due
   // words" instead of an infinite skeleton.
@@ -1105,6 +1328,9 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
     const reviewRemaining = reviewSummary?.has_more
       ? (reviewSummary.total_count - reviewSummary.offset - reviewSummary.returned_count)
       : 0
+    const nextErrorRoundWords = errorMode
+      ? buildNextErrorReviewWords(vocabulary, errorRoundResultsRef.current)
+      : []
     return (
       <div className="practice-session-layout">
         <div className="practice-complete">
@@ -1119,6 +1345,16 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           <span className="stat-correct">正确 {correctCount}</span>
           <span className="stat-wrong">错误 {wrongCount}</span>
         </div>
+        {errorMode && (
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+            第 {errorReviewRound} 轮已完成，剩余 {nextErrorRoundWords.length} 个单词需要继续巩固。
+          </p>
+        )}
+        {errorMode && nextErrorRoundWords.length > 0 && (
+          <button className="complete-btn" onClick={handleContinueErrorReview}>
+            继续第{errorReviewRound + 1}轮（{nextErrorRoundWords.length}词）
+          </button>
+        )}
         {reviewMode && reviewSummary?.has_more && (
           <button className="complete-btn" onClick={handleContinueReview}>
             继续复习{reviewRemaining > 0 ? `（还有 ${reviewRemaining} 个）` : ''}
@@ -1181,8 +1417,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         <PracticeControlBar
           mode={mode}
           currentDay={currentDay}
-          bookId={bookId}
-          chapterId={chapterId}
+          bookId={practiceBookId}
+          chapterId={practiceChapterId}
           errorMode={errorMode}
           vocabularyLength={vocabulary.length}
           currentChapterTitle={currentChapterTitle}
@@ -1194,6 +1430,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onModeChange={(m) => onModeChange?.(m)}
           onDayChange={(d) => onDayChange?.(d)}
           onNavigate={navigate}
+          buildChapterPath={practiceBookId ? buildChapterPath : undefined}
           onPause={() => setIsPaused(true)}
           radioQuickSettings={radioQuickSettings}
           onRadioSettingChange={handleRadioSettingChange}
@@ -1238,8 +1475,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         <PracticeControlBar
           mode={mode}
           currentDay={currentDay}
-          bookId={bookId}
-          chapterId={chapterId}
+          bookId={practiceBookId}
+          chapterId={practiceChapterId}
           errorMode={errorMode}
           vocabularyLength={vocabulary.length}
           currentChapterTitle={currentChapterTitle}
@@ -1251,24 +1488,28 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onModeChange={(m) => onModeChange?.(m)}
           onDayChange={(d) => onDayChange?.(d)}
           onNavigate={navigate}
+          buildChapterPath={practiceBookId ? buildChapterPath : undefined}
           onPause={() => setIsPaused(true)}
         />
         {showPracticeSettings && (
           <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(false)} />
         )}
         <QuickMemoryMode
-          key={`quickmemory-${bookId ?? 'day'}-${chapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}-${reviewMode ? `review-${reviewOffset}` : 'default'}`}
+          key={`quickmemory-${practiceBookId ?? 'day'}-${practiceChapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}-${reviewMode ? `review-${reviewOffset}` : 'default'}`}
           vocabulary={vocabulary}
           queue={queue}
           settings={settings}
-          bookId={bookId}
-          chapterId={chapterId}
+          bookId={practiceBookId}
+          chapterId={practiceChapterId}
           bookChapters={bookChapters}
+          reviewMode={reviewMode}
           reviewHasMore={reviewMode ? Boolean(reviewSummary?.has_more) : false}
           onContinueReview={reviewMode ? handleContinueReview : undefined}
+          buildChapterPath={practiceBookId ? buildChapterPath : undefined}
           onModeChange={(m) => onModeChange?.(m as PracticeMode)}
           onNavigate={navigate}
           onWrongWord={saveWrongWord}
+          onQuickMemoryRecordChange={handleQuickMemoryRecordChange}
           initialIndex={errorMode ? queueIndex : undefined}
           onIndexChange={errorMode ? (i) => setQueueIndex(i) : undefined}
         />
@@ -1283,8 +1524,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         <PracticeControlBar
           mode={mode}
           currentDay={currentDay}
-          bookId={bookId}
-          chapterId={chapterId}
+          bookId={practiceBookId}
+          chapterId={practiceChapterId}
           errorMode={errorMode}
           vocabularyLength={vocabulary.length}
           currentChapterTitle={currentChapterTitle}
@@ -1296,6 +1537,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
           onModeChange={(m) => onModeChange?.(m)}
           onDayChange={(d) => onDayChange?.(d)}
           onNavigate={navigate}
+          buildChapterPath={practiceBookId ? buildChapterPath : undefined}
           onPause={() => setIsPaused(true)}
         />
         <WordListPanel
@@ -1339,8 +1581,8 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
       <PracticeControlBar
         mode={mode}
         currentDay={currentDay}
-        bookId={bookId}
-        chapterId={chapterId}
+        bookId={practiceBookId}
+        chapterId={practiceChapterId}
         errorMode={errorMode}
         vocabularyLength={vocabulary.length}
         currentChapterTitle={currentChapterTitle}
@@ -1352,6 +1594,7 @@ function PracticePage({ user, currentDay, mode, showToast, onModeChange, onDayCh
         onModeChange={(m) => onModeChange?.(m)}
         onDayChange={(d) => onDayChange?.(d)}
         onNavigate={navigate}
+        buildChapterPath={practiceBookId ? buildChapterPath : undefined}
         onPause={() => setIsPaused(true)}
       />
       <WordListPanel

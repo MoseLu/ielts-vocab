@@ -3,6 +3,7 @@ import random
 import string
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
+from sqlalchemy import and_, not_, or_
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -384,6 +385,42 @@ class UserStudySession(db.Model):
     started_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     ended_at = db.Column(db.DateTime, nullable=True)
 
+    @classmethod
+    def meaningful_clause(cls):
+        """Rows that carry actual study activity and should count in analytics."""
+        return or_(
+            cls.words_studied > 0,
+            cls.correct_count > 0,
+            cls.wrong_count > 0,
+            cls.duration_seconds > 0,
+        )
+
+    @classmethod
+    def implausible_legacy_clause(cls):
+        """Legacy fallback rows that recorded impossible throughput and no end time."""
+        return and_(
+            cls.ended_at.is_(None),
+            cls.words_studied >= 20,
+            cls.duration_seconds > 0,
+            cls.duration_seconds <= 10,
+        )
+
+    @classmethod
+    def analytics_clause(cls):
+        """Study rows that are both meaningful and plausible enough for reporting."""
+        return and_(
+            cls.meaningful_clause(),
+            not_(cls.implausible_legacy_clause()),
+        )
+
+    def has_activity(self) -> bool:
+        return any([
+            (self.words_studied or 0) > 0,
+            (self.correct_count or 0) > 0,
+            (self.wrong_count or 0) > 0,
+            (self.duration_seconds or 0) > 0,
+        ])
+
     def to_dict(self):
         total = self.correct_count + self.wrong_count
         return {
@@ -551,6 +588,8 @@ class UserQuickMemoryRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     word = db.Column(db.String(100), nullable=False)
+    book_id = db.Column(db.String(100), nullable=True, index=True)
+    chapter_id = db.Column(db.String(100), nullable=True, index=True)
     status = db.Column(db.String(10), nullable=False, default='unknown')  # 'known' | 'unknown'
     first_seen = db.Column(db.BigInteger, default=0)
     last_seen = db.Column(db.BigInteger, default=0)
@@ -566,6 +605,8 @@ class UserQuickMemoryRecord(db.Model):
     def to_dict(self):
         return {
             'word': self.word,
+            'bookId': self.book_id,
+            'chapterId': self.chapter_id,
             'status': self.status,
             'firstSeen': self.first_seen,
             'lastSeen': self.last_seen,
