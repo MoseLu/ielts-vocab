@@ -6,6 +6,8 @@ import { playExampleAudio, stopAudio } from './utils'
 
 type DictationSubMode = 'word' | 'example'
 
+const ANSWER_REVEAL_PLAY_COUNT = 3
+
 interface PrevWordBlockProps {
   previousWord: LastState['prevWord']
   lastState: LastState | null
@@ -75,17 +77,15 @@ export default function DictationMode({
   lastState,
   onSpellingInputChange,
   onSpellingSubmit,
-  onSkip,
   onGoBack,
   onStartRecording,
   onStopRecording,
   onPlayWord,
 }: DictationModeProps) {
   const spellingRef = useRef<HTMLInputElement>(null)
-  // Default to example mode — falls back to word mode when no examples available
   const [dictationSubMode, setDictationSubMode] = useState<DictationSubMode>('example')
+  const [manualReplayCount, setManualReplayCount] = useState(0)
 
-  // Determine if current word has examples for fill-in-blank mode
   const hasExamples = Boolean(currentWord.examples && currentWord.examples.length > 0)
   const activeSubMode: DictationSubMode = hasExamples ? dictationSubMode : 'word'
 
@@ -95,14 +95,14 @@ export default function DictationMode({
     }
   }, [spellingResult, currentWord.word])
 
-  // Reset to example mode on each new word (if examples are available)
   useEffect(() => {
     setDictationSubMode('example')
+    setManualReplayCount(0)
   }, [currentWord.word])
 
-  const handlePlayWord = () => {
+  const handlePlayWord = useCallback(() => {
     onPlayWord(currentWord.word)
-  }
+  }, [onPlayWord, currentWord.word])
 
   const handlePlayExample = useCallback(() => {
     const example = currentWord.examples?.[0]
@@ -113,6 +113,18 @@ export default function DictationMode({
   const isExampleMode = activeSubMode === 'example'
   const currentExample = currentWord.examples?.[0]
   const sentenceText = currentExample?.en ?? ''
+  const shouldRevealAnswer = manualReplayCount >= ANSWER_REVEAL_PLAY_COUNT
+  const remainingReplayCount = Math.max(ANSWER_REVEAL_PLAY_COUNT - manualReplayCount, 0)
+
+  const handleReplayClick = useCallback(() => {
+    if (isExampleMode) {
+      handlePlayExample()
+    } else {
+      handlePlayWord()
+    }
+
+    setManualReplayCount(count => Math.min(count + 1, ANSWER_REVEAL_PLAY_COUNT))
+  }, [handlePlayExample, handlePlayWord, isExampleMode])
 
   useEffect(() => {
     if (!isExampleMode || !sentenceText) return
@@ -125,12 +137,23 @@ export default function DictationMode({
     }
   }, [currentWord.word, isExampleMode, sentenceText, handlePlayExample])
 
+  useEffect(() => {
+    if (spellingResult !== 'wrong') return
+    const timerId = window.setTimeout(() => {
+      if (isExampleMode && sentenceText) {
+        handlePlayExample()
+        return
+      }
+      handlePlayWord()
+    }, 320)
+    return () => window.clearTimeout(timerId)
+  }, [spellingResult, isExampleMode, sentenceText, handlePlayExample, handlePlayWord])
+
   return (
     <div className="practice-page">
       <PrevWordBlock previousWord={previousWord} lastState={lastState} onGoBack={onGoBack} />
 
       <div className="dictation-container">
-        {/* Sub-mode toggle — only visible when examples are available */}
         {hasExamples && !spellingResult && (
           <div className="dictation-submode-toggle">
             <button
@@ -154,7 +177,7 @@ export default function DictationMode({
           </h2>
           <button
             className="play-btn-large"
-            onClick={isExampleMode ? handlePlayExample : handlePlayWord}
+            onClick={handleReplayClick}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -164,18 +187,22 @@ export default function DictationMode({
           <p className="dictation-hint">
             {isExampleMode ? '听例句，写出空缺的单词' : '听发音，拼写单词'}
           </p>
+          <p className={`dictation-replay-hint${shouldRevealAnswer ? ' revealed' : ''}`}>
+            {shouldRevealAnswer
+              ? '已显示答案，可直接输入后提交'
+              : manualReplayCount === 0
+                ? `可重复播放，手动播放 ${ANSWER_REVEAL_PLAY_COUNT} 次后显示答案`
+                : `已手动播放 ${manualReplayCount}/${ANSWER_REVEAL_PLAY_COUNT} 次，再点 ${remainingReplayCount} 次显示答案`}
+          </p>
         </div>
 
-        {/* Content area — grid-stacked to prevent height jumping on mode switch */}
         <div className="dictation-content-area">
-          {/* Word spelling mode — original letter hint */}
           <div className={`dictation-letter-hint${isExampleMode ? ' dictation-item-hidden' : ''}`}>
             {currentWord.word.split('').map((ch, i) => (
               ch === ' ' ? <span key={i} className="letter-hint-space" /> : <span key={i} className="letter-hint-blank">_</span>
             ))}
           </div>
 
-          {/* Example fill-in-the-blank mode */}
           {sentenceText && (
             <div className={`dictation-example-area${!isExampleMode ? ' dictation-item-hidden' : ''}`}>
               <div className="dictation-example-sentence">
@@ -189,14 +216,11 @@ export default function DictationMode({
           )}
         </div>
 
-        {spellingResult === 'wrong' && (
+        {shouldRevealAnswer && !spellingResult && (
           <div className="spelling-answer">
             {isExampleMode
-              ? <>正确答案：<strong>{currentWord.word}</strong>
-                {currentExample && <span className="spelling-answer-sentence"> — {currentExample.zh}</span>}
-              </>
-              : <>正确答案：<strong>{currentWord.word}</strong></>
-            }
+              ? <>正确答案：<strong>{currentWord.word}</strong>{currentExample?.zh ? <span className="spelling-answer-sentence"> — {currentExample.zh}</span> : null}</>
+              : <>正确答案：<strong>{currentWord.word}</strong></>}
           </div>
         )}
 
@@ -252,14 +276,6 @@ export default function DictationMode({
         </div>
       </div>
 
-      <button className="skip-btn" onClick={() => {
-        if (isExampleMode) {
-          handlePlayExample()
-          setTimeout(() => onSkip(), 800)
-        } else {
-          onSkip()
-        }
-      }}>不知道 <span className="shortcut-hint">(5)</span></button>
       <BottomBar progressValue={progressValue} total={total} queueIndex={0} />
     </div>
   )

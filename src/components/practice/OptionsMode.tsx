@@ -1,8 +1,7 @@
 // ── Options Mode Component (Listening / Meaning / Smart) ───────────────────────
 
-import React, { useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import type { OptionsModeProps, OptionItem, LastState, SmartDimension } from './types'
-import { syllabifyWord } from './utils'
 
 interface PrevWordBlockProps {
   previousWord: LastState['prevWord']
@@ -66,7 +65,14 @@ function OptionsGrid({ options, selectedAnswer, showResult, correctIndex, onOpti
               <span className="option-pos">{option.pos}</span>
               <span className="option-key">快捷键: {idx + 1}</span>
             </div>
-            <span className="option-text">{option.definition}</span>
+            {option.display_mode === 'word' && option.word ? (
+              <div className="option-text-wrap">
+                <span className="option-text option-text--word">{option.word}</span>
+                {option.phonetic && <span className="option-subtext">{option.phonetic}</span>}
+              </div>
+            ) : (
+              <span className="option-text">{option.definition}</span>
+            )}
           </button>
         )
       })}
@@ -75,21 +81,15 @@ function OptionsGrid({ options, selectedAnswer, showResult, correctIndex, onOpti
 }
 
 interface WordDisplayProps {
-  currentWord: { word: string; phonetic: string; pos: string }
-  mode: string
-  showWord: boolean
-  showAudio: boolean
+  currentWord: { word: string; phonetic: string; pos: string; definition: string }
+  displayMode: 'audio' | 'definition'
   onPlayWord: (word: string) => void
 }
 
-function WordDisplay({ currentWord, mode, showWord, showAudio, onPlayWord }: WordDisplayProps) {
-  const wordDisplay = showWord
-    ? syllabifyWord(currentWord.word, currentWord.phonetic).join(' ')
-    : currentWord.word
-
+function WordDisplay({ currentWord, displayMode, onPlayWord }: WordDisplayProps) {
   return (
     <div className="word-display-area">
-      {showAudio && (
+      {displayMode === 'audio' && (
         <button className="play-btn-large" onClick={() => onPlayWord(currentWord.word)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -97,19 +97,12 @@ function WordDisplay({ currentWord, mode, showWord, showAudio, onPlayWord }: Wor
           </svg>
         </button>
       )}
-      {showWord && (
-        <div className="word-display">
-          <div className="word-text">{wordDisplay}</div>
-          <div className="word-phonetic-row">
-            <span className="word-phonetic">{currentWord.phonetic}</span>
-            {(mode === 'meaning' || (mode === 'smart')) && (
-              <button className="play-btn-mini" onClick={() => onPlayWord(currentWord.word)} title="播放发音">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                </svg>
-              </button>
-            )}
+      {displayMode === 'definition' && (
+        <div className="meaning-prompt-card">
+          <div className="meaning-prompt-label">根据中文回想并输入对应英文</div>
+          <div className="meaning-prompt-definition">
+            <span className="word-pos-tag">{currentWord.pos}</span>
+            {currentWord.definition}
           </div>
         </div>
       )}
@@ -120,7 +113,7 @@ function WordDisplay({ currentWord, mode, showWord, showAudio, onPlayWord }: Wor
 // Smart mode dimension badge
 const SMART_DIM_CONFIG: Record<SmartDimension, { label: string; icon: string; cls: string }> = {
   listening: { label: '听力', icon: '🔊', cls: 'smart-badge-listening' },
-  meaning:   { label: '词义', icon: '📖', cls: 'smart-badge-meaning' },
+  meaning:   { label: '会想', icon: '🧠', cls: 'smart-badge-meaning' },
   dictation: { label: '拼写', icon: '✍️', cls: 'smart-badge-dictation' },
 }
 
@@ -148,7 +141,7 @@ interface SmartDictationProps {
   onSpellingSubmit: () => void
   onStartRecording: () => void
   onStopRecording: () => void
-  onSkip: () => void
+  onPlayWord: (word: string) => void
 }
 
 function SmartDictation({
@@ -161,7 +154,7 @@ function SmartDictation({
   onSpellingSubmit,
   onStartRecording,
   onStopRecording,
-  onSkip,
+  onPlayWord,
 }: SmartDictationProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -170,6 +163,14 @@ function SmartDictation({
       setTimeout(() => inputRef.current?.focus(), 400)
     }
   }, [spellingResult])
+
+  useEffect(() => {
+    if (spellingResult !== 'wrong') return
+    const timerId = window.setTimeout(() => {
+      onPlayWord(currentWord.word)
+    }, 320)
+    return () => window.clearTimeout(timerId)
+  }, [spellingResult, onPlayWord, currentWord.word])
 
   return (
     <div className="smart-dictation-area">
@@ -181,14 +182,6 @@ function SmartDictation({
         )}
       </div>
 
-      {spellingResult === 'wrong' && (
-        <div className="spelling-answer">
-          正确答案：<strong>{currentWord.word}</strong>
-          <div className="spelling-answer-def">
-            <span className="word-pos-tag">{currentWord.pos}</span>{currentWord.definition}
-          </div>
-        </div>
-      )}
       {spellingResult === 'correct' && (
         <div className="spelling-answer correct-answer">正确！</div>
       )}
@@ -243,11 +236,115 @@ function SmartDictation({
           </button>
         )}
       </div>
+    </div>
+  )
+}
+
+interface MeaningRecallInputProps {
+  currentWord: { word: string; definition: string; pos: string; phonetic: string }
+  spellingInput: string
+  spellingResult: 'correct' | 'wrong' | null
+  speechConnected: boolean
+  speechRecording: boolean
+  onSpellingInputChange: (v: string) => void
+  onSpellingSubmit: () => void
+  onStartRecording: () => void
+  onStopRecording: () => void
+  onSkip: () => void
+}
+
+function MeaningRecallInput({
+  currentWord,
+  spellingInput,
+  spellingResult,
+  speechConnected,
+  speechRecording,
+  onSpellingInputChange,
+  onSpellingSubmit,
+  onStartRecording,
+  onStopRecording,
+  onSkip,
+}: MeaningRecallInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (spellingResult === null) {
+      window.setTimeout(() => inputRef.current?.focus(), 250)
+    }
+  }, [spellingResult, currentWord.word])
+
+  return (
+    <div className="meaning-recall-area">
+      <p className="meaning-recall-hint">不看选项，直接回想并输入对应英文。</p>
+
+      {spellingResult === 'correct' && (
+        <div className="spelling-answer correct-answer">正确！</div>
+      )}
+
+      {spellingResult === 'wrong' && (
+        <div className="meaning-recall-answer">
+          <div className="spelling-answer">正确答案：{currentWord.word}</div>
+          {currentWord.phonetic && (
+            <div className="meaning-recall-phonetic">{currentWord.phonetic}</div>
+          )}
+        </div>
+      )}
+
+      <div className={`spelling-input-wrapper ${spellingResult || ''}`}>
+        <input
+          ref={inputRef}
+          type="text"
+          className="spelling-input"
+          value={spellingInput}
+          onChange={e => onSpellingInputChange(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') onSpellingSubmit() }}
+          placeholder="输入对应英文..."
+          disabled={!!spellingResult}
+          autoComplete="off"
+          spellCheck={false}
+        />
+        {!spellingResult && (
+          <button
+            className={`mic-btn ${speechRecording ? 'recording' : ''} ${!speechConnected ? 'disconnected' : ''}`}
+            onClick={speechRecording ? onStopRecording : onStartRecording}
+            disabled={!speechConnected}
+            title={speechRecording ? '停止录音' : speechConnected ? '语音输入' : '语音服务未连接'}
+          >
+            {!speechConnected ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+                <line x1="4" y1="4" x2="20" y2="20" stroke="red" strokeWidth="2"></line>
+              </svg>
+            ) : speechRecording ? (
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+            )}
+          </button>
+        )}
+        {!spellingResult && (
+          <button className="spelling-submit-btn" onClick={onSpellingSubmit} title="确认">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        )}
+      </div>
 
       {!spellingResult && (
-        <button className="skip-btn" onClick={onSkip}>
-          不知道 <span className="shortcut-hint">快捷键: 5</span>
-        </button>
+        <div className="meaning-recall-footer">
+          <button className="skip-btn" onClick={onSkip}>不知道</button>
+        </div>
       )}
     </div>
   )
@@ -283,20 +380,11 @@ export default function OptionsMode({
   onStopRecording,
   onPlayWord,
 }: OptionsModePropsExtended) {
-  // Effective display flags
-  // For smart mode, determined by current dimension
-  let showWord: boolean
-  let showAudio: boolean
-
-  if (mode === 'smart') {
-    showWord = smartDimension === 'meaning'
-    showAudio = smartDimension === 'listening' || smartDimension === 'dictation'
-  } else {
-    showWord = mode === 'meaning'
-    showAudio = mode === 'listening'
-  }
-
+  const displayMode: 'audio' | 'definition' = mode === 'smart'
+    ? (smartDimension === 'meaning' ? 'definition' : 'audio')
+    : (mode === 'meaning' ? 'definition' : 'audio')
   const isSmartDictation = mode === 'smart' && smartDimension === 'dictation'
+  const isMeaningRecall = mode === 'meaning' || (mode === 'smart' && smartDimension === 'meaning')
 
   return (
     <div className="practice-page">
@@ -307,14 +395,25 @@ export default function OptionsMode({
 
         <WordDisplay
           currentWord={currentWord}
-          mode={mode}
-          showWord={showWord}
-          showAudio={showAudio}
+          displayMode={displayMode}
           onPlayWord={onPlayWord}
         />
 
         {isSmartDictation ? (
           <SmartDictation
+            currentWord={currentWord}
+            spellingInput={spellingInput}
+            spellingResult={spellingResult}
+            speechConnected={speechConnected}
+            speechRecording={speechRecording}
+            onSpellingInputChange={onSpellingInputChange}
+            onSpellingSubmit={onSpellingSubmit}
+            onStartRecording={onStartRecording}
+            onStopRecording={onStopRecording}
+            onPlayWord={onPlayWord}
+          />
+        ) : isMeaningRecall ? (
+          <MeaningRecallInput
             currentWord={currentWord}
             spellingInput={spellingInput}
             spellingResult={spellingResult}
