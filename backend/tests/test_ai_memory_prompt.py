@@ -59,3 +59,64 @@ def test_ask_injects_related_note_memory_for_repeated_questions(client, app, mon
     assert '[相关历史问答]' in serialized
     assert '已重复询问 2 次' in serialized
     assert 'kind of 和 a kind of' in serialized
+
+
+def test_ask_injects_behavior_breakdown_into_learning_data_prompt(client, monkeypatch):
+    register_and_login(client, username='behavior-prompt-user')
+
+    start_res = client.post('/api/ai/start-session', json={
+        'mode': 'listening',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '3',
+    })
+    assert start_res.status_code == 201
+    session_id = start_res.get_json()['sessionId']
+
+    log_res = client.post('/api/ai/log-session', json={
+        'sessionId': session_id,
+        'mode': 'listening',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '3',
+        'wordsStudied': 8,
+        'correctCount': 6,
+        'wrongCount': 2,
+        'durationSeconds': 90,
+        'startedAt': int(datetime.utcnow().timestamp() * 1000),
+    })
+    assert log_res.status_code == 200
+
+    monkeypatch.setattr(ai_routes, 'correct_text', lambda text: {
+        'is_valid_english': True,
+        'original_text': text,
+        'corrected_text': text,
+        'explanation': 'ok',
+    })
+    correction_res = client.post('/api/ai/correct-text', json={'text': 'This is a sample sentence.'})
+    assert correction_res.status_code == 200
+
+    feedback_res = client.post('/api/ai/correction-feedback', json={'adopted': True})
+    assert feedback_res.status_code == 200
+
+    captured = {}
+
+    def fake_chat_with_tools(messages, **kwargs):
+        captured['messages'] = messages
+        return {'text': '可以先复习今天的薄弱点。'}
+
+    monkeypatch.setattr(ai_routes, '_chat_with_tools', fake_chat_with_tools)
+
+    ask_res = client.post('/api/ai/ask', json={
+        'message': '今天怎么复习更合适？',
+        'context': {
+            'currentWord': 'kind',
+            'practiceMode': 'listening',
+        },
+    })
+    assert ask_res.status_code == 200
+
+    serialized = '\n'.join(str(message.get('content')) for message in captured['messages'])
+    assert '[学习数据]' in serialized
+    assert '模式投入分布：' in serialized
+    assert 'AI 工具动作：2 次' in serialized
+    assert '行为类型：' in serialized
+    assert '写作纠错' in serialized

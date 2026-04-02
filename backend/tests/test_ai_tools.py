@@ -134,28 +134,85 @@ def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app):
 
     assert res.status_code == 200
     data = res.get_json()
-    assert data['words'] == [
-        {
-            'id': data['words'][0]['id'],
-            'user_id': data['words'][0]['user_id'],
+    assert len(data['words']) == 1
+    word = data['words'][0]
+    assert word['word'] == 'alpha'
+    assert word['phonetic'] == '/a/'
+    assert word['pos'] == 'n.'
+    assert word['definition'] == '测试词'
+    assert word['wrong_count'] == 3
+    assert word['pending_wrong_count'] == 3
+    assert word['history_dimension_count'] == 1
+    assert word['pending_dimension_count'] == 1
+    assert word['recognition_wrong'] == 3
+    assert word['recognition_pending'] is True
+    assert word['recognition_pass_streak'] == 0
+    assert word['listening_wrong'] == 0
+    assert word['meaning_wrong'] == 0
+    assert word['dictation_wrong'] == 0
+    assert word['ebbinghaus_streak'] == 4
+    assert word['ebbinghaus_target'] == 6
+    assert word['ebbinghaus_remaining'] == 2
+    assert word['ebbinghaus_completed'] is False
+
+
+def test_wrong_words_sync_preserves_history_but_allows_pending_clear(client, app):
+    register_and_login(client, username='wrong-words-sync-user')
+
+    first_sync = client.post('/api/ai/wrong-words/sync', json={
+        'sourceMode': 'meaning',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '2',
+        'words': [{
             'word': 'alpha',
             'phonetic': '/a/',
             'pos': 'n.',
             'definition': '测试词',
-            'wrong_count': 3,
-            'listening_correct': 0,
-            'listening_wrong': 0,
-            'meaning_correct': 0,
-            'meaning_wrong': 0,
-            'dictation_correct': 0,
-            'dictation_wrong': 0,
-            'updated_at': data['words'][0]['updated_at'],
-            'ebbinghaus_streak': 4,
-            'ebbinghaus_target': 6,
-            'ebbinghaus_remaining': 2,
-            'ebbinghaus_completed': False,
-        }
-    ]
+            'wrong_count': 2,
+            'meaning_wrong': 2,
+            'dimension_states': {
+                'meaning': {
+                    'history_wrong': 2,
+                    'pass_streak': 0,
+                    'last_wrong_at': '2026-04-02T08:00:00+00:00',
+                },
+            },
+        }],
+    })
+    assert first_sync.status_code == 200
+
+    second_sync = client.post('/api/ai/wrong-words/sync', json={
+        'sourceMode': 'meaning',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '2',
+        'words': [{
+            'word': 'alpha',
+            'wrong_count': 2,
+            'meaning_wrong': 2,
+            'dimension_states': {
+                'meaning': {
+                    'history_wrong': 2,
+                    'pass_streak': 4,
+                    'last_pass_at': '2026-04-02T09:00:00+00:00',
+                },
+            },
+        }],
+    })
+    assert second_sync.status_code == 200
+
+    res = client.get('/api/ai/wrong-words')
+    assert res.status_code == 200
+    data = res.get_json()
+    assert len(data['words']) == 1
+    word = data['words'][0]
+    assert word['word'] == 'alpha'
+    assert word['wrong_count'] == 2
+    assert word['pending_wrong_count'] == 0
+    assert word['history_dimension_count'] == 1
+    assert word['pending_dimension_count'] == 0
+    assert word['meaning_wrong'] == 2
+    assert word['meaning_pending'] is False
+    assert word['meaning_pass_streak'] == 4
 
 
 def test_generate_book_accepts_text_response_payload(client, monkeypatch):

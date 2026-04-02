@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from models import UserStudySession, db
+from models import UserLearningEvent, UserStudySession, db
 from routes import ai as ai_routes
 
 
@@ -122,6 +122,100 @@ def test_log_session_without_session_id_updates_matching_started_session(client,
         assert session.ended_at is not None
 
 
+def test_log_session_accepts_client_ended_at_for_recovered_session(client, app):
+    register_and_login(client, username='session-user-5')
+
+    base_now_utc = datetime.now(timezone.utc).replace(microsecond=0)
+    recovered_start_utc = base_now_utc - timedelta(minutes=40)
+    recovered_end_utc = base_now_utc - timedelta(minutes=12)
+
+    start_res = client.post('/api/ai/start-session', json={
+        'mode': 'quickmemory',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '3',
+    })
+    assert start_res.status_code == 201
+    session_id = start_res.get_json()['sessionId']
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        session.started_at = recovered_start_utc.replace(tzinfo=None)
+        db.session.commit()
+
+    log_res = client.post('/api/ai/log-session', json={
+        'sessionId': session_id,
+        'mode': 'quickmemory',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '3',
+        'wordsStudied': 0,
+        'correctCount': 0,
+        'wrongCount': 0,
+        'durationSeconds': 0,
+        'startedAt': int(recovered_start_utc.timestamp() * 1000),
+        'endedAt': int(recovered_end_utc.timestamp() * 1000),
+    })
+
+    assert log_res.status_code == 200
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        assert session.ended_at is not None
+        assert session.duration_seconds >= 28 * 60
+        assert session.duration_seconds < 28 * 60 + 20
+
+
+def test_log_session_is_idempotent_for_completed_session(client, app):
+    register_and_login(client, username='session-user-6')
+
+    start_res = client.post('/api/ai/start-session', json={'mode': 'smart'})
+    session_id = start_res.get_json()['sessionId']
+
+    first = client.post('/api/ai/log-session', json={
+        'sessionId': session_id,
+        'mode': 'smart',
+        'wordsStudied': 3,
+        'correctCount': 2,
+        'wrongCount': 1,
+        'durationSeconds': 0,
+        'startedAt': 0,
+    })
+    assert first.status_code == 200
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        first_duration = session.duration_seconds
+        first_ended_at = session.ended_at
+        event_count = UserLearningEvent.query.filter_by(
+            user_id=session.user_id,
+            event_type='study_session',
+        ).count()
+
+    second = client.post('/api/ai/log-session', json={
+        'sessionId': session_id,
+        'mode': 'smart',
+        'wordsStudied': 9,
+        'correctCount': 9,
+        'wrongCount': 0,
+        'durationSeconds': 999,
+        'startedAt': 0,
+        'endedAt': int(datetime.utcnow().timestamp() * 1000),
+    })
+    assert second.status_code == 200
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        assert session.duration_seconds == first_duration
+        assert session.ended_at == first_ended_at
+        assert UserLearningEvent.query.filter_by(
+            user_id=session.user_id,
+            event_type='study_session',
+        ).count() == event_count
+
+
 def test_greet_returns_fallback_when_ai_service_fails(client, monkeypatch):
     register_and_login(client, username='greet-user')
 
@@ -159,7 +253,7 @@ def test_greet_fallback_uses_learner_profile_clues(client, monkeypatch):
                     'weakest_mode_accuracy': 61,
                 },
                 'dimensions': [
-                    {'dimension': 'meaning', 'label': '词义辨析', 'accuracy': 54},
+                    {'dimension': 'meaning', 'label': '汉译英（会想）', 'accuracy': 54},
                 ],
                 'focus_words': [
                     {'word': 'kind'},
@@ -167,6 +261,31 @@ def test_greet_fallback_uses_learner_profile_clues(client, monkeypatch):
                 'repeated_topics': [
                     {'title': 'kind of 和 a kind of', 'count': 3},
                 ],
+                'memory_system': {
+                    'priority_dimension': 'recognition',
+                    'priority_dimension_label': '认读',
+                    'priority_reason': '有 4 个到期复习节点',
+                    'dimensions': [
+                        {
+                            'key': 'recognition',
+                            'label': '认读',
+                            'status': 'due',
+                            'status_label': '有到期复习',
+                            'schedule_label': '第1/3/7/30天',
+                            'focus_words': ['kind'],
+                            'next_action': '先按认读的 1/3/7/30 天节奏复习到期词。',
+                        },
+                        {
+                            'key': 'speaking',
+                            'label': '口语',
+                            'status': 'needs_setup',
+                            'status_label': '证据不足',
+                            'schedule_label': '第1/3/7/15/30天',
+                            'focus_words': ['kind'],
+                            'next_action': '补一轮跟读和造句。',
+                        },
+                    ],
+                },
                 'next_actions': ['先把 kind 相关辨析讲透'],
             },
             'memory': {},
@@ -183,7 +302,7 @@ def test_greet_fallback_uses_learner_profile_clues(client, monkeypatch):
     assert res.status_code == 200
     data = res.get_json()
     assert 'kind of 和 a kind of' in data['reply']
-    assert '词义辨析' in data['reply']
+    assert '认读' in data['reply']
     assert data.get('options') == []
 
 
@@ -209,7 +328,7 @@ def test_greet_allows_profile_aware_freeform_reply_without_options(client, monke
                     'weakest_mode_accuracy': 61,
                 },
                 'dimensions': [
-                    {'dimension': 'meaning', 'label': '词义辨析', 'accuracy': 54},
+                    {'dimension': 'meaning', 'label': '汉译英（会想）', 'accuracy': 54},
                 ],
                 'focus_words': [
                     {'word': 'kind'},
@@ -217,6 +336,31 @@ def test_greet_allows_profile_aware_freeform_reply_without_options(client, monke
                 'repeated_topics': [
                     {'title': 'kind of 和 a kind of', 'count': 3},
                 ],
+                'memory_system': {
+                    'priority_dimension': 'recognition',
+                    'priority_dimension_label': '认读',
+                    'priority_reason': '有 4 个到期复习节点',
+                    'dimensions': [
+                        {
+                            'key': 'recognition',
+                            'label': '认读',
+                            'status': 'due',
+                            'status_label': '有到期复习',
+                            'schedule_label': '第1/3/7/30天',
+                            'focus_words': ['kind'],
+                            'next_action': '先按认读的 1/3/7/30 天节奏复习到期词。',
+                        },
+                        {
+                            'key': 'speaking',
+                            'label': '口语',
+                            'status': 'needs_setup',
+                            'status_label': '证据不足',
+                            'schedule_label': '第1/3/7/15/30天',
+                            'focus_words': ['kind'],
+                            'next_action': '补一轮跟读和造句。',
+                        },
+                    ],
+                },
                 'next_actions': ['先把 kind 相关辨析讲透'],
             },
             'memory': {},
@@ -242,3 +386,53 @@ def test_greet_allows_profile_aware_freeform_reply_without_options(client, monke
     assert '不要默认输出选项' in serialized
     assert '重复困惑主题' in serialized
     assert 'kind of 和 a kind of' in serialized
+    assert '四维记忆系统' in serialized
+    assert '当前优先维度：认读' in serialized
+
+
+def test_review_plan_returns_four_dimension_actions(client, monkeypatch):
+    register_and_login(client, username='review-plan-user')
+
+    def fake_profile(_user_id, _target_date=None):
+        return {
+            'next_actions': [
+                '先按认读的 1/3/7/30 天节奏复习 12 个到期词，要求 1 秒内说出中文义。',
+                '口语维度当前还没有持久化记录，先拿 kind、effect 做跟读 + 造句，补齐发音与输出证据。',
+            ],
+            'memory_system': {
+                'mastery_rule': '认读、听力、口语、书写四个维度全部达标，才算一个单词完全掌握。',
+                'priority_dimension': 'recognition',
+                'priority_dimension_label': '认读',
+                'priority_reason': '有 12 个到期复习节点',
+                'dimensions': [
+                    {
+                        'key': 'recognition',
+                        'label': '认读',
+                        'status': 'due',
+                        'status_label': '有到期复习',
+                        'schedule_label': '第1/3/7/30天',
+                        'next_action': '先按认读的 1/3/7/30 天节奏复习 12 个到期词，要求 1 秒内说出中文义。',
+                    },
+                    {
+                        'key': 'speaking',
+                        'label': '口语',
+                        'status': 'needs_setup',
+                        'status_label': '证据不足',
+                        'schedule_label': '第1/3/7/15/30天',
+                        'next_action': '口语维度当前还没有持久化记录，先拿 kind、effect 做跟读 + 造句，补齐发音与输出证据。',
+                    },
+                ],
+            },
+        }
+
+    monkeypatch.setattr(ai_routes, 'build_learner_profile', fake_profile)
+
+    res = client.get('/api/ai/review-plan')
+
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['level'] == 'four-dimensional'
+    assert data['priority_dimension'] == '认读'
+    assert '四个维度全部达标' in data['mastery_rule']
+    assert any('认读的 1/3/7/30 天节奏' in item for item in data['plan'])
+    assert any(item['label'] == '口语' and item['status_label'] == '证据不足' for item in data['dimensions'])

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from models import User, UserChapterProgress, UserStudySession, db
 
@@ -216,3 +216,61 @@ def test_learning_stats_prefers_today_sessions_for_today_accuracy_when_chapter_p
     assert response.status_code == 200
     data = response.get_json()
     assert data['alltime']['today_accuracy'] == 80
+
+
+def test_learning_stats_includes_recent_live_pending_session_duration(client, app):
+    register_and_login(client, username='live-duration-stats-user')
+
+    now = datetime.utcnow().replace(microsecond=0)
+    completed_duration = 120
+    live_duration_floor = 45 * 60
+
+    with app.app_context():
+        user = User.query.filter_by(username='live-duration-stats-user').first()
+        assert user is not None
+
+        db.session.add_all([
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                book_id='ielts_reading_premium',
+                chapter_id='8',
+                started_at=now - timedelta(hours=2),
+            ),
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                book_id='ielts_reading_premium',
+                chapter_id='9',
+                words_studied=10,
+                correct_count=8,
+                wrong_count=2,
+                duration_seconds=completed_duration,
+                started_at=now - timedelta(hours=1, minutes=30),
+                ended_at=now - timedelta(hours=1, minutes=28),
+            ),
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                book_id='ielts_reading_premium',
+                chapter_id='10',
+                started_at=now - timedelta(minutes=45),
+            ),
+        ])
+        db.session.commit()
+
+    response = client.get('/api/ai/learning-stats?days=7')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    today_key = now.strftime('%Y-%m-%d')
+    today_row = next(item for item in data['daily'] if item['date'] == today_key)
+    expected_floor = completed_duration + live_duration_floor
+    assert data['use_fallback'] is False
+    assert today_row['duration_seconds'] >= expected_floor
+    assert today_row['duration_seconds'] < expected_floor + 20
+    assert data['alltime']['today_duration_seconds'] >= expected_floor
+    assert data['alltime']['today_duration_seconds'] < expected_floor + 20
+    quickmemory = next(item for item in data['mode_breakdown'] if item['mode'] == 'quickmemory')
+    assert quickmemory['duration_seconds'] >= expected_floor
+    assert quickmemory['duration_seconds'] < expected_floor + 20
