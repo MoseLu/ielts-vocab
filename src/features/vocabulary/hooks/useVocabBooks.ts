@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { z } from 'zod'
-import type { Book, BookProgress } from '../../../types'
+import type { Book } from '../../../types'
 import {
   apiFetch,
   safeParse,

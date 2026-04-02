@@ -5,7 +5,6 @@ export {
   useAllBookProgress,
 } from './useVocabBooks'
 export type {
-  UseVocabBooksFilters,
   VocabBook,
   VocabWord,
   VocabBookProgress,

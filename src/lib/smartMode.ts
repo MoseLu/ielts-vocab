@@ -4,7 +4,7 @@ import { STORAGE_KEYS } from '../constants'
 import { apiFetch } from './index'
 // Tracks per-word proficiency across three dimensions:
 //   音 (listening)  - 听音选义
-//   意 (meaning)    - 看词选义
+//   意 (meaning)    - 汉译英
 //   形 (dictation)  - 听写拼写
 // Smart mode uses these stats to auto-weight which dimension to test next.
 
@@ -130,6 +130,12 @@ interface PendingSync {
   failedAt: string  // ISO timestamp
 }
 
+interface SmartStatsSyncContext {
+  bookId?: string | null
+  chapterId?: string | null
+  mode?: string | null
+}
+
 function _loadPendingSync(): PendingSync[] {
   try {
     return JSON.parse(localStorage.getItem(PENDING_SYNC_KEY) || '[]')
@@ -176,7 +182,7 @@ function _mergePendingIntoStats(pending: PendingSync[], stats: SmartWordStatsSto
 
 /** Push all localStorage smart stats to the backend with retry queue.
  * Failed syncs are stored locally and retried on next sync attempt. */
-export function syncSmartStatsToBackend(): void {
+export function syncSmartStatsToBackend(context?: SmartStatsSyncContext): void {
   if (!localStorage.getItem(STORAGE_KEYS.AUTH_USER)) return
 
   // Merge pending stats with current stats before syncing
@@ -195,7 +201,14 @@ export function syncSmartStatsToBackend(): void {
 
   apiFetch('/api/ai/smart-stats/sync', {
     method: 'POST',
-    body: JSON.stringify({ stats: payload }),
+    body: JSON.stringify({
+      stats: payload,
+      context: {
+        bookId: context?.bookId ?? undefined,
+        chapterId: context?.chapterId ?? undefined,
+        mode: context?.mode ?? undefined,
+      },
+    }),
   }).then(() => {
     // On success, clear pending queue since all data is now on server
     if (pending.length > 0) {

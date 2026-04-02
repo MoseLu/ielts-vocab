@@ -59,7 +59,7 @@ describe('ErrorsPage', () => {
     navigateMock.mockReset()
   })
 
-  it('explains that graduation depends on the full Ebbinghaus cycle', () => {
+  it('explains that pending wrong words clear after four consecutive passes in the same dimension', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
@@ -67,11 +67,11 @@ describe('ErrorsPage', () => {
     )
 
     expect(
-      screen.getByText(/还需要在艾宾浩斯复习里连续通过 6 轮且不中断/)
+      screen.getByText(/同一维度连续答对 4 次后，从未过错词移出/)
     ).toBeInTheDocument()
   })
 
-  it('builds a targeted review route from the selected date and wrong-count filters', () => {
+  it('builds a targeted review route from the selected date and wrong-count range', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
@@ -84,8 +84,8 @@ describe('ErrorsPage', () => {
     fireEvent.change(screen.getByLabelText('结束日期'), {
       target: { value: '2026-03-31' },
     })
-    fireEvent.change(screen.getByLabelText('最少错次'), {
-      target: { value: '5' },
+    fireEvent.change(screen.getByLabelText('错次区间'), {
+      target: { value: '6-10' },
     })
 
     const reviewButton = screen.getByRole('button', { name: '复习（1词）' })
@@ -94,7 +94,7 @@ describe('ErrorsPage', () => {
     fireEvent.click(reviewButton)
 
     expect(navigateMock).toHaveBeenCalledWith(
-      '/practice?mode=errors&startDate=2026-03-31&endDate=2026-03-31&minWrong=5',
+      '/practice?mode=errors&scope=pending&startDate=2026-03-31&endDate=2026-03-31&minWrong=6&maxWrong=10',
     )
   })
 })

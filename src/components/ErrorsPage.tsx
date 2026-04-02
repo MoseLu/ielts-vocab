@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWrongWords } from '../features/vocabulary/hooks'
 import {
@@ -7,67 +7,135 @@ import {
   formatWrongWordOccurrenceDate,
 } from '../features/vocabulary/wrongWordsFilters'
 import {
-  getWrongWordReviewProgress,
-  WRONG_WORD_ERROR_REVIEW_TARGET,
+  type WrongWordCollectionScope,
+  type WrongWordDimension,
+  WRONG_WORD_DIMENSIONS,
+  WRONG_WORD_DIMENSION_LABELS,
+  WRONG_WORD_PENDING_REVIEW_TARGET,
+  getWrongWordActiveCount,
+  getWrongWordDimensionHistoryWrong,
+  getWrongWordDimensionProgress,
+  hasWrongWordHistory,
+  hasWrongWordPending,
+  isWrongWordPendingInDimension,
 } from '../features/vocabulary/wrongWordsStore'
-import { QUICK_MEMORY_MASTERY_TARGET } from '../lib/quickMemory'
-import type { SmartDimension } from '../lib/smartMode'
 import { Page, PageContent, PageHeader } from './layout'
 import { EmptyState, SegmentedControl, UnderlineTabs } from './ui'
 
 type ActiveTab = 'words' | 'real'
-type DimFilter = 'all' | SmartDimension
+type DimFilter = 'all' | WrongWordDimension
+type WrongCountRange = 'all' | '0-5' | '6-10' | '11-20' | '20+'
 
-const DIM_LABEL: Record<SmartDimension, string> = {
-  listening: '听音',
-  meaning: '释义',
-  dictation: '听写',
+const DIM_SHORT_LABEL: Record<WrongWordDimension, string> = {
+  recognition: '认识',
+  meaning: '会想',
+  listening: '听得到',
+  dictation: '会拼写',
 }
 
-const DIMS: SmartDimension[] = ['listening', 'meaning', 'dictation']
-const MIN_WRONG_COUNT_OPTIONS = [
-  { value: 0, label: '全部' },
-  { value: 2, label: '2 次及以上' },
-  { value: 3, label: '3 次及以上' },
-  { value: 5, label: '5 次及以上' },
-  { value: 10, label: '10 次及以上' },
+const SCOPE_LABELS: Record<WrongWordCollectionScope, string> = {
+  pending: '未过错词',
+  history: '历史错词',
+}
+
+const WRONG_COUNT_RANGE_OPTIONS: { value: WrongCountRange; label: string }[] = [
+  { value: 'all', label: '全部' },
+  { value: '0-5', label: '0~5 次' },
+  { value: '6-10', label: '6~10 次' },
+  { value: '11-20', label: '11~20 次' },
+  { value: '20+', label: '20 次以上' },
 ]
+
+function getWrongCountBounds(range: WrongCountRange): { minWrongCount?: number; maxWrongCount?: number } {
+  switch (range) {
+    case '0-5':
+      return { maxWrongCount: 5 }
+    case '6-10':
+      return { minWrongCount: 6, maxWrongCount: 10 }
+    case '11-20':
+      return { minWrongCount: 11, maxWrongCount: 20 }
+    case '20+':
+      return { minWrongCount: 21 }
+    default:
+      return {}
+  }
+}
+
+function requestPracticeMode(dimFilter: DimFilter) {
+  const requestedMode = dimFilter === 'recognition'
+    ? 'quickmemory'
+    : dimFilter === 'listening'
+      ? 'listening'
+      : dimFilter === 'dictation'
+        ? 'dictation'
+        : dimFilter === 'meaning'
+          ? 'meaning'
+          : null
+
+  if (!requestedMode) return
+  window.dispatchEvent(new CustomEvent('practice-mode-request', {
+    detail: { mode: requestedMode },
+  }))
+}
 
 export default function ErrorsPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<ActiveTab>('words')
+  const [scope, setScope] = useState<WrongWordCollectionScope>('pending')
   const [dimFilter, setDimFilter] = useState<DimFilter>('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [minWrongCount, setMinWrongCount] = useState(0)
+  const [wrongCountRange, setWrongCountRange] = useState<WrongCountRange>('all')
   const { words, removeWord, clearAll } = useWrongWords()
+  const { minWrongCount, maxWrongCount } = getWrongCountBounds(wrongCountRange)
 
-  const dimCounts: Record<SmartDimension, number> = {
-    listening: words.filter(w => (w.listening_wrong ?? 0) > 0).length,
-    meaning: words.filter(w => (w.meaning_wrong ?? 0) > 0).length,
-    dictation: words.filter(w => (w.dictation_wrong ?? 0) > 0).length,
-  }
+  const historyWords = useMemo(() => words.filter(word => hasWrongWordHistory(word)), [words])
+  const pendingWords = useMemo(() => words.filter(word => hasWrongWordPending(word)), [words])
+  const scopeWords = scope === 'pending' ? pendingWords : historyWords
 
-  const filteredWords = [...filterWrongWords(words, {
-    dimFilter,
-    startDate,
-    endDate,
-    minWrongCount,
-  })].sort((a, b) => {
-    if (dimFilter !== 'all') {
-      const aw = ((a[`${dimFilter}_wrong` as keyof typeof a] as number) ?? 0)
-      const bw = ((b[`${dimFilter}_wrong` as keyof typeof b] as number) ?? 0)
-      if (bw !== aw) return bw - aw
-    }
-    return (b.wrong_count ?? 0) - (a.wrong_count ?? 0)
-  })
+  const dimCounts = useMemo(() => {
+    return WRONG_WORD_DIMENSIONS.reduce((result, dimension) => {
+      result[dimension] = scopeWords.filter(word => {
+        if (scope === 'history') {
+          return getWrongWordDimensionHistoryWrong(word, dimension) > 0
+        }
+        return isWrongWordPendingInDimension(word, dimension)
+      }).length
+      return result
+    }, {} as Record<WrongWordDimension, number>)
+  }, [scope, scopeWords])
 
-  const hasActiveFilters = dimFilter !== 'all' || Boolean(startDate) || Boolean(endDate) || minWrongCount > 0
+  const filteredWords = useMemo(() => {
+    return [...filterWrongWords(words, {
+      scope,
+      dimFilter,
+      startDate,
+      endDate,
+      minWrongCount,
+      maxWrongCount,
+    })].sort((a, b) => {
+      if (dimFilter !== 'all') {
+        const aDimCount = scope === 'history'
+          ? getWrongWordDimensionHistoryWrong(a, dimFilter)
+          : (isWrongWordPendingInDimension(a, dimFilter) ? getWrongWordDimensionHistoryWrong(a, dimFilter) : 0)
+        const bDimCount = scope === 'history'
+          ? getWrongWordDimensionHistoryWrong(b, dimFilter)
+          : (isWrongWordPendingInDimension(b, dimFilter) ? getWrongWordDimensionHistoryWrong(b, dimFilter) : 0)
+        if (bDimCount !== aDimCount) return bDimCount - aDimCount
+      }
+
+      return getWrongWordActiveCount(b, scope) - getWrongWordActiveCount(a, scope)
+    })
+  }, [dimFilter, endDate, maxWrongCount, minWrongCount, scope, startDate, words])
+
+  const hasActiveFilters = dimFilter !== 'all' || Boolean(startDate) || Boolean(endDate) || wrongCountRange !== 'all'
   const practiceQuery = buildWrongWordsPracticeQuery({
+    scope,
     dimFilter,
     startDate,
     endDate,
     minWrongCount,
+    maxWrongCount,
   })
 
   const toolbar = (
@@ -83,18 +151,23 @@ export default function ErrorsPage() {
         ]}
       />
 
-      {words.length > 0 && activeTab === 'words' && (
+      {activeTab === 'words' && scopeWords.length > 0 && (
         <div className="errors-actions">
           <button
             className="errors-practice-btn"
             disabled={filteredWords.length === 0}
-            onClick={() => navigate(practiceQuery ? `/practice?mode=errors&${practiceQuery}` : '/practice?mode=errors')}
+            onClick={() => {
+              requestPracticeMode(dimFilter)
+              navigate(practiceQuery ? `/practice?mode=errors&${practiceQuery}` : '/practice?mode=errors')
+            }}
           >
             复习（{filteredWords.length}词）
           </button>
-          <button className="errors-clear-btn" onClick={clearAll}>
-            清空
-          </button>
+          {scope === 'pending' && pendingWords.length > 0 && (
+            <button className="errors-clear-btn" onClick={clearAll}>
+              清空未过
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -130,14 +203,25 @@ export default function ErrorsPage() {
               </svg>
             )}
             title="暂无错词"
-            description='学习过程中标记为"不知道"的单词会出现在这里'
+            description='答错后的单词会同时进入历史错词和未过错词，后续通过才会从未过错词移出'
             action={<button className="errors-go-practice" onClick={() => navigate('/plan')}>去练习 →</button>}
           />
         ) : (
           <div className="errors-content-scroll">
             <div className="errors-review-rule">
-              错词在专项复习中连续答对 {WRONG_WORD_ERROR_REVIEW_TARGET} 次后，只算完成纠正；还需要在艾宾浩斯复习里连续通过 {QUICK_MEMORY_MASTERY_TARGET} 轮且不中断，才会自动移出错词本。
+              历史错词只增不减；未过错词会按维度定向移除。当前规则是同一维度连续答对 {WRONG_WORD_PENDING_REVIEW_TARGET} 次后，从未过错词移出，但仍保留在历史错词里。
             </div>
+
+            <SegmentedControl
+              className="errors-dim-filter"
+              ariaLabel="错词集合筛选"
+              value={scope}
+              onChange={value => setScope(value as WrongWordCollectionScope)}
+              options={[
+                { value: 'pending', label: SCOPE_LABELS.pending, badge: pendingWords.length > 0 ? pendingWords.length : undefined },
+                { value: 'history', label: SCOPE_LABELS.history, badge: historyWords.length > 0 ? historyWords.length : undefined },
+              ]}
+            />
 
             <div className="errors-filter-panel">
               <label className="errors-filter-field">
@@ -163,14 +247,14 @@ export default function ErrorsPage() {
               </label>
 
               <label className="errors-filter-field errors-filter-field--compact">
-                <span className="errors-filter-label">最少错次</span>
+                <span className="errors-filter-label">{scope === 'pending' ? '未过权重' : '历史错次'}</span>
                 <select
-                  aria-label="最少错次"
+                  aria-label="错次区间"
                   className="errors-filter-select"
-                  value={String(minWrongCount)}
-                  onChange={event => setMinWrongCount(Number(event.target.value))}
+                  value={wrongCountRange}
+                  onChange={event => setWrongCountRange(event.target.value as WrongCountRange)}
                 >
-                  {MIN_WRONG_COUNT_OPTIONS.map(option => (
+                  {WRONG_COUNT_RANGE_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -186,7 +270,7 @@ export default function ErrorsPage() {
                   setDimFilter('all')
                   setStartDate('')
                   setEndDate('')
-                  setMinWrongCount(0)
+                  setWrongCountRange('all')
                 }}
               >
                 重置筛选
@@ -195,7 +279,7 @@ export default function ErrorsPage() {
 
             {hasActiveFilters && (
               <div className="errors-filter-summary">
-                当前筛选命中 {filteredWords.length} 个错词
+                当前筛选命中 {filteredWords.length} 个{scope === 'pending' ? '未过错词' : '历史错词'}
               </div>
             )}
 
@@ -203,14 +287,14 @@ export default function ErrorsPage() {
               className="errors-dim-filter"
               ariaLabel="错词维度筛选"
               value={dimFilter}
-              onChange={setDimFilter}
+              onChange={value => setDimFilter(value as DimFilter)}
               options={[
-                { value: 'all', label: '全部', badge: words.length },
-                ...DIMS.map(dim => ({
-                  value: dim,
-                  label: DIM_LABEL[dim],
-                  badge: dimCounts[dim] > 0 ? dimCounts[dim] : undefined,
-                  disabled: dimCounts[dim] === 0,
+                { value: 'all', label: '全部', badge: scopeWords.length },
+                ...WRONG_WORD_DIMENSIONS.map(dimension => ({
+                  value: dimension,
+                  label: DIM_SHORT_LABEL[dimension],
+                  badge: dimCounts[dimension] > 0 ? dimCounts[dimension] : undefined,
+                  disabled: dimCounts[dimension] === 0,
                 })),
               ]}
             />
@@ -219,31 +303,26 @@ export default function ErrorsPage() {
               <EmptyState
                 page
                 className="errors-empty"
-                title={hasActiveFilters ? '当前筛选暂无错词' : '该模式暂无错词'}
-                description={hasActiveFilters ? '调整日期、错次或维度后再试' : '继续练习，错词会自动收录'}
+                title={hasActiveFilters ? '当前筛选暂无错词' : `${SCOPE_LABELS[scope]}为空`}
+                description={hasActiveFilters ? '调整日期、错次或维度后再试' : (scope === 'pending' ? '当前没有待继续攻克的错词' : '继续练习，历史错词会自动累计')}
               />
             ) : (
               <div className="errors-list">
                 {filteredWords.map(word => {
-                  const reviewProgress = getWrongWordReviewProgress(word)
-                  const ebbinghausStreak = word.ebbinghaus_streak ?? 0
-                  const ebbinghausTarget = word.ebbinghaus_target ?? QUICK_MEMORY_MASTERY_TARGET
-                  const ebbinghausCompleted = Boolean(word.ebbinghaus_completed)
                   const collectedOn = formatWrongWordOccurrenceDate(word)
-                  const dims = DIMS.filter(dim => {
-                    const correct = ((word[`${dim}_correct` as keyof typeof word] as number) ?? 0)
-                    const wrong = ((word[`${dim}_wrong` as keyof typeof word] as number) ?? 0)
-                    return correct + wrong > 0
-                  })
+                  const historyDims = WRONG_WORD_DIMENSIONS.filter(dimension => getWrongWordDimensionHistoryWrong(word, dimension) > 0)
+                  const pendingDimensionCount = WRONG_WORD_DIMENSIONS.filter(dimension => isWrongWordPendingInDimension(word, dimension)).length
 
                   return (
                     <div key={word.word} className="errors-item">
                       <div className="errors-item-main">
                         <div className="errors-item-word-row">
                           <span className="errors-item-word">{word.word}</span>
-                          {(word.wrong_count ?? 0) > 0 && (
-                            <span className="errors-item-total-count">错 {word.wrong_count} 次</span>
-                          )}
+                          <span className="errors-item-total-count">
+                            {scope === 'pending'
+                              ? `未过×${getWrongWordActiveCount(word, 'pending')}`
+                              : `历史×${getWrongWordActiveCount(word, 'history')}`}
+                          </span>
                         </div>
                         {(word.phonetic || collectedOn) && (
                           <div className="errors-item-meta">
@@ -255,53 +334,48 @@ export default function ErrorsPage() {
                           {word.pos && <span className="word-pos-tag">{word.pos}</span>}
                           {word.definition}
                         </div>
-                        {dims.length > 0 ? (
-                          <div className="errors-item-dims">
-                            <span className="errors-dim-badge errors-dim-progress">
-                              专项纠正 {reviewProgress.streak}/{reviewProgress.target}
-                            </span>
-                            <span className={`errors-dim-badge ${ebbinghausCompleted ? 'errors-dim-ok' : 'errors-dim-progress'}`}>
-                              艾宾浩斯 {ebbinghausStreak}/{ebbinghausTarget}
-                            </span>
-                            {dims.map(dim => {
-                              const correct = ((word[`${dim}_correct` as keyof typeof word] as number) ?? 0)
-                              const wrong = ((word[`${dim}_wrong` as keyof typeof word] as number) ?? 0)
-                              const variant = wrong === 0 ? 'ok' : correct === 0 ? 'error' : 'mixed'
-                              const highlighted = dimFilter === dim
-                              return (
-                                <span
-                                  key={dim}
-                                  className={`errors-dim-badge errors-dim-${variant}${highlighted ? ' errors-dim-highlight' : ''}`}
-                                >
-                                  {DIM_LABEL[dim]}
-                                  {wrong > 0 && <span className="errors-dim-wrong">×{wrong}</span>}
-                                  {correct > 0 && wrong > 0 && <span className="errors-dim-correct"> ✓{correct}</span>}
-                                </span>
-                              )
-                            })}
-                          </div>
-                        ) : (
-                          <div className="errors-item-dims">
-                            <span className="errors-dim-badge errors-dim-progress">
-                              专项纠正 {reviewProgress.streak}/{reviewProgress.target}
-                            </span>
-                            <span className={`errors-dim-badge ${ebbinghausCompleted ? 'errors-dim-ok' : 'errors-dim-progress'}`}>
-                              艾宾浩斯 {ebbinghausStreak}/{ebbinghausTarget}
-                            </span>
-                            <span className="errors-dim-badge errors-dim-unknown">暂无维度数据</span>
-                          </div>
-                        )}
+                        <div className="errors-item-dims">
+                          <span className="errors-dim-badge errors-dim-progress">
+                            历史 {historyDims.length} 维
+                          </span>
+                          <span className={`errors-dim-badge ${pendingDimensionCount > 0 ? 'errors-dim-progress' : 'errors-dim-ok'}`}>
+                            未过 {pendingDimensionCount} 维
+                          </span>
+                          {historyDims.map(dimension => {
+                            const historyWrong = getWrongWordDimensionHistoryWrong(word, dimension)
+                            const progress = getWrongWordDimensionProgress(word, dimension)
+                            const highlighted = dimFilter === dimension
+
+                            return (
+                              <span
+                                key={dimension}
+                                title={WRONG_WORD_DIMENSION_LABELS[dimension]}
+                                className={`errors-dim-badge ${progress.pending ? 'errors-dim-progress' : 'errors-dim-ok'}${highlighted ? ' errors-dim-highlight' : ''}`}
+                              >
+                                {DIM_SHORT_LABEL[dimension]}
+                                <span className="errors-dim-wrong"> 历史×{historyWrong}</span>
+                                {progress.pending ? (
+                                  <span className="errors-dim-correct"> 待过 {progress.streak}/{progress.target}</span>
+                                ) : (
+                                  <span className="errors-dim-correct"> 已过</span>
+                                )}
+                              </span>
+                            )
+                          })}
+                        </div>
                       </div>
-                      <button
-                        className="errors-item-remove"
-                        onClick={() => removeWord(word.word)}
-                        title="移除"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      </button>
+                      {scope === 'pending' && hasWrongWordPending(word) && (
+                        <button
+                          className="errors-item-remove"
+                          onClick={() => removeWord(word.word)}
+                          title="移出未过错词"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   )
                 })}

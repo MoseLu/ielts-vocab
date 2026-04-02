@@ -132,10 +132,10 @@ describe('StatsPage', () => {
         trend_direction: 'improving',
       },
       dimensions: [
-        { dimension: 'meaning', label: '词义辨析', correct: 12, wrong: 8, attempts: 20, accuracy: 60, weakness: 0.4 },
+        { dimension: 'meaning', label: '汉译英（会想）', correct: 12, wrong: 8, attempts: 20, accuracy: 60, weakness: 0.4 },
       ],
       focus_words: [
-        { word: 'kind', definition: 'type', wrong_count: 4, dominant_dimension: 'meaning', dominant_dimension_label: '词义辨析', dominant_wrong: 3, focus_score: 11 },
+        { word: 'kind', definition: 'type', wrong_count: 4, dominant_dimension: 'meaning', dominant_dimension_label: '汉译英（会想）', dominant_wrong: 3, focus_score: 11 },
       ],
       repeated_topics: [
         { title: 'kind of vs a kind of', count: 2, word_context: 'kind', latest_answer: '...', latest_at: null },

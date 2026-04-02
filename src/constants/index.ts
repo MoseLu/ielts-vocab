@@ -13,7 +13,7 @@ export const PRACTICE_MODES = {
 export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRACTICE_MODES], string> = {
   [PRACTICE_MODES.SMART]: '智能模式',
   [PRACTICE_MODES.LISTENING]: '听音选义',
-  [PRACTICE_MODES.MEANING]: '看词选义',
+  [PRACTICE_MODES.MEANING]: '汉译英',
   [PRACTICE_MODES.DICTATION]: '听写模式',
   [PRACTICE_MODES.RADIO]: '随身听',
   [PRACTICE_MODES.QUICK_MEMORY]: '快速记忆',
@@ -34,6 +34,7 @@ export const STORAGE_KEYS = {
   SMART_WORD_STATS: 'smart_word_stats',
   QUICK_MEMORY_RECORDS: 'quick_memory_records',
   CHAPTER_MODE_PROGRESS: 'chapter_mode_progress',
+  ACTIVE_STUDY_SESSION: 'active_study_session',
 } as const
 
 // API endpoints

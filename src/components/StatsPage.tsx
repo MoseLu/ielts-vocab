@@ -3,12 +3,24 @@
   useRef,
   useEffect,
   useLayoutEffect,
+  useMemo,
   type MouseEvent,
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageSkeleton, SegmentedControl, Skeleton, UnderlineTabs } from './ui'
 import { useWrongWords, useLearningStats } from '../features/vocabulary/hooks'
+import {
+  type WrongWordCollectionScope,
+  type WrongWordDimension,
+  type WrongWordRecord,
+  WRONG_WORD_DIMENSIONS,
+  getWrongWordActiveCount,
+  getWrongWordDimensionHistoryWrong,
+  hasWrongWordHistory,
+  hasWrongWordPending,
+  isWrongWordPendingInDimension,
+} from '../features/vocabulary/wrongWordsStore'
 import type {
   MetricKey,
   RangeKey,
@@ -17,14 +29,13 @@ import type {
   ModeStat,
   PieSegment,
   EbbinghausStagePoint,
-  WrongTopItem,
   LearnerProfile,
 } from '../features/vocabulary/hooks'
 
 const MODE_LABELS: Record<string, string> = {
   smart: '智能模式',
   listening: '听力模式',
-  meaning: '释义模式',
+  meaning: '汉译英模式',
   dictation: '默写模式',
   radio: '选择模式',
   quickmemory: '速记模式',
@@ -34,16 +45,73 @@ const MODE_LABELS: Record<string, string> = {
 const PIE_COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#14b8a6', '#eab308', '#64748b']
 const PIE_COLOR_CLASSES = ['stats-pie-dot--0', 'stats-pie-dot--1', 'stats-pie-dot--2', 'stats-pie-dot--3', 'stats-pie-dot--4', 'stats-pie-dot--5', 'stats-pie-dot--6', 'stats-pie-dot--7']
 
-function inferErrorReason(w: WrongTopItem): string {
-  const lw = w.listening_wrong ?? 0
-  const mw = w.meaning_wrong ?? 0
-  const dw = w.dictation_wrong ?? 0
-  const total = lw + mw + dw
+interface WrongTopDisplayItem {
+  word: string
+  wrong_count: number
+  phonetic: string
+  pos: string
+  recognition_wrong?: number
+  listening_wrong?: number
+  meaning_wrong?: number
+  dictation_wrong?: number
+}
+
+const WRONG_REASON_LABELS: Record<WrongWordDimension, string> = {
+  recognition: '认识',
+  meaning: '会想',
+  listening: '听得到',
+  dictation: '会拼写',
+}
+
+function getScopedDimensionCount(
+  word: Partial<WrongWordRecord>,
+  dimension: WrongWordDimension,
+  scope: WrongWordCollectionScope,
+): number {
+  if (scope === 'history') {
+    return getWrongWordDimensionHistoryWrong(word, dimension)
+  }
+
+  return isWrongWordPendingInDimension(word, dimension)
+    ? getWrongWordDimensionHistoryWrong(word, dimension)
+    : 0
+}
+
+function inferErrorReason(
+  word: Partial<WrongWordRecord>,
+  scope: WrongWordCollectionScope,
+): string {
+  const total = WRONG_WORD_DIMENSIONS.reduce(
+    (sum, dimension) => sum + getScopedDimensionCount(word, dimension, scope),
+    0,
+  )
   if (total === 0) return '—'
-  if (lw >= mw && lw >= dw) return '听力'
-  if (mw >= lw && mw >= dw) return '释义'
-  if (dw >= lw && dw >= mw) return '拼写'
-  return '—'
+
+  const [topDimension] = [...WRONG_WORD_DIMENSIONS].sort((left, right) => {
+    return getScopedDimensionCount(word, right, scope) - getScopedDimensionCount(word, left, scope)
+  })
+
+  return WRONG_REASON_LABELS[topDimension] || '—'
+}
+
+function buildWrongTopItems(
+  words: WrongWordRecord[],
+  scope: WrongWordCollectionScope,
+): WrongTopDisplayItem[] {
+  return words
+    .filter(word => getWrongWordActiveCount(word, scope) > 0)
+    .map(word => ({
+      word: word.word,
+      wrong_count: getWrongWordActiveCount(word, scope),
+      phonetic: word.phonetic,
+      pos: word.pos,
+      recognition_wrong: getScopedDimensionCount(word, 'recognition', scope),
+      meaning_wrong: getScopedDimensionCount(word, 'meaning', scope),
+      listening_wrong: getScopedDimensionCount(word, 'listening', scope),
+      dictation_wrong: getScopedDimensionCount(word, 'dictation', scope),
+    }))
+    .sort((a, b) => b.wrong_count - a.wrong_count || a.word.localeCompare(b.word))
+    .slice(0, 10)
 }
 
 const RANGE_OPTIONS: { label: string; value: RangeKey }[] = [
@@ -281,7 +349,7 @@ function ModePieChart({ segments, variant = 'card' }: { segments: PieSegment[]; 
 const WRONG_PIE_COLORS = ['#dc2626', '#ea580c', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#a855f7']
 const WRONG_PIE_COLOR_CLASSES = ['stats-pie-dot--wrong-0', 'stats-pie-dot--wrong-1', 'stats-pie-dot--wrong-2', 'stats-pie-dot--wrong-3', 'stats-pie-dot--wrong-4', 'stats-pie-dot--wrong-5', 'stats-pie-dot--wrong-6', 'stats-pie-dot--wrong-7', 'stats-pie-dot--wrong-8', 'stats-pie-dot--wrong-9']
 
-function WrongTopPieChart({ items }: { items: WrongTopItem[] }) {
+function WrongTopPieChart({ items }: { items: WrongTopDisplayItem[] }) {
   const total = items.reduce((s, x) => s + x.wrong_count, 0)
   if (total <= 0) {
     return <div className="stats-pie-empty">暂无错词分布</div>
@@ -781,13 +849,29 @@ export default function StatsPage() {
     alltime,
     modeBreakdown,
     pieChart,
-    wrongTop10,
     chapterBreakdown,
     chapterModeStats,
     learnerProfile,
     useFallback,
     loading: chartLoading,
   } = useLearningStats(range, bookId, mode)
+
+  const historyWrongWords = useMemo(
+    () => wrongWords.filter(word => hasWrongWordHistory(word)),
+    [wrongWords],
+  )
+  const pendingWrongWords = useMemo(
+    () => wrongWords.filter(word => hasWrongWordPending(word)),
+    [wrongWords],
+  )
+  const historyWrongTop10 = useMemo(
+    () => buildWrongTopItems(historyWrongWords, 'history'),
+    [historyWrongWords],
+  )
+  const pendingWrongTop10 = useMemo(
+    () => buildWrongTopItems(pendingWrongWords, 'pending'),
+    [pendingWrongWords],
+  )
 
   const displayTodayDuration = alltime && alltime.today_duration_seconds > 0
     ? fmtDuration(alltime.today_duration_seconds) : '--'
@@ -832,7 +916,8 @@ export default function StatsPage() {
     modes.length === 0 &&
     modeBreakdown.length === 0 &&
     pieChart.length === 0 &&
-    wrongTop10.length === 0 &&
+    historyWrongTop10.length === 0 &&
+    pendingWrongTop10.length === 0 &&
     chapterBreakdown.length === 0 &&
     chapterModeStats.length === 0 &&
     !learnerProfile
@@ -885,7 +970,7 @@ export default function StatsPage() {
       media.removeEventListener('change', onMediaChange)
       window.removeEventListener('resize', onWindowResize)
     }
-  }, [chartLoading, wrongTop10.length, chapterBreakdown.length, chapterModeStats.length, range, metric, alltime?.ebbinghaus_rate])
+  }, [chartLoading, historyWrongTop10.length, pendingWrongTop10.length, chapterBreakdown.length, chapterModeStats.length, range, metric, alltime?.ebbinghaus_rate])
 
   if (isInitialLoading) {
     return <PageSkeleton variant="stats" metricCount={9} />
@@ -985,46 +1070,25 @@ export default function StatsPage() {
                       <LearnerProfileCard learnerProfile={learnerProfile} loading={chartLoading} />
                     </section>
                     <section className="stats-section stats-card-wrong" aria-labelledby="stats-wrong-title">
-                      <h2 id="stats-wrong-title" className="stats-section-title">重复出错 Top 10</h2>
-                      <p className="stats-section-hint">错词本中累计错误次数最高的词汇（上图为错次占比，下表为明细）</p>
+                      <h2 id="stats-wrong-title" className="stats-section-title">错词分层 Top 10</h2>
+                      <p className="stats-section-hint">历史错词负责留痕，未过错词负责当前攻克，两类统计口径分开显示。</p>
                       <div className="stats-card-wrong-body">
                         {chartLoading ? (
                           <StatsSectionSkeleton variant="donut" />
-                        ) : wrongTop10.length === 0 ? (
+                        ) : historyWrongTop10.length === 0 && pendingWrongTop10.length === 0 ? (
                           <div className="stats-empty"><p>暂无错词数据</p></div>
                         ) : (
                           <div className="stats-wrong-vertical">
-                            <div className="stats-wrong-pie-block">
-                              <h3 className="stats-subsection-title">错次占比（扇形图）</h3>
-                              <WrongTopPieChart items={wrongTop10} />
-                            </div>
-                            <div className="stats-wrong-table-block">
-                              <h3 className="stats-subsection-title">明细表</h3>
-                              <div className="stats-wrong-table-scroll">
-                                <table className="stats-data-table">
-                                  <thead>
-                                    <tr>
-                                      <th>序号</th>
-                                      <th>单词</th>
-                                      <th>音标</th>
-                                      <th>累计错次</th>
-                                      <th>错因</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {wrongTop10.map((w, i) => (
-                                      <tr key={w.word + i}>
-                                        <td>{i + 1}</td>
-                                        <td className="td-word">{w.word}</td>
-                                        <td className="td-muted">{w.phonetic || '—'}</td>
-                                        <td><span className="wrong-count-badge">{w.wrong_count}</span></td>
-                                        <td><span className="error-reason-tag">{inferErrorReason(w)}</span></td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
+                            <WrongTopBlock
+                              title="历史错词 Top 10"
+                              scope="history"
+                              items={historyWrongTop10}
+                            />
+                            <WrongTopBlock
+                              title="未过错词 Top 10"
+                              scope="pending"
+                              items={pendingWrongTop10}
+                            />
                           </div>
                         )}
                       </div>
@@ -1034,8 +1098,12 @@ export default function StatsPage() {
                       <h2 id="stats-wrong-overview-title" className="stats-section-title">错词本概览</h2>
                       <div className="stats-wrong-summary">
                         <div className="stats-wrong-count">
-                          <span className="wrong-num">{wrongWords.length}</span>
-                          <span className="wrong-label">个错词</span>
+                          <span className="wrong-num">{historyWrongWords.length}</span>
+                          <span className="wrong-label">个历史错词</span>
+                        </div>
+                        <div className="stats-wrong-count">
+                          <span className="wrong-num">{pendingWrongWords.length}</span>
+                          <span className="wrong-label">个未过错词</span>
                         </div>
                         {wrongWords.length > 0 && (
                           <button type="button" className="stats-review-btn" onClick={() => navigate('/errors')}>
@@ -1292,6 +1360,61 @@ export default function StatsPage() {
               </div>
             </div>
           </div>
+    </div>
+  )
+}
+
+function WrongTopBlock({
+  title,
+  scope,
+  items,
+}: {
+  title: string
+  scope: WrongWordCollectionScope
+  items: WrongTopDisplayItem[]
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="stats-wrong-vertical">
+        <h3 className="stats-subsection-title">{title}</h3>
+        <div className="stats-empty"><p>暂无数据</p></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="stats-wrong-vertical">
+      <div className="stats-wrong-pie-block">
+        <h3 className="stats-subsection-title">{title}占比（扇形图）</h3>
+        <WrongTopPieChart items={items} />
+      </div>
+      <div className="stats-wrong-table-block">
+        <h3 className="stats-subsection-title">{title}明细</h3>
+        <div className="stats-wrong-table-scroll">
+          <table className="stats-data-table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>单词</th>
+                <th>音标</th>
+                <th>{scope === 'pending' ? '未过权重' : '历史错次'}</th>
+                <th>主错因</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={`${item.word}-${index}`}>
+                  <td>{index + 1}</td>
+                  <td className="td-word">{item.word}</td>
+                  <td className="td-muted">{item.phonetic || '—'}</td>
+                  <td><span className="wrong-count-badge">{item.wrong_count}</span></td>
+                  <td><span className="error-reason-tag">{inferErrorReason(item, scope)}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }
