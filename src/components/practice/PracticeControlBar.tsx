@@ -1,4 +1,3 @@
-import React from 'react'
 import Popover from '../ui/Popover'
 import { Scrollbar } from '../ui/Scrollbar'
 import type { PracticeControlBarProps, PracticeMode } from './types'
@@ -6,7 +5,7 @@ import type { PracticeControlBarProps, PracticeMode } from './types'
 const modeNames: Record<PracticeMode, string> = {
   smart: '智能模式',
   listening: '听音选义',
-  meaning: '看词选义',
+  meaning: '汉译英',
   dictation: '听写模式',
   radio: '随身听',
   quickmemory: '快速记忆',

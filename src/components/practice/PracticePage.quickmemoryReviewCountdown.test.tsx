@@ -35,10 +35,14 @@ vi.mock('../../lib/smartMode', () => ({
 }))
 
 vi.mock('../../hooks/useAIChat', () => ({
+  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   recordModeAnswer: vi.fn(),
   logSession: (...args: unknown[]) => logSessionMock(...args),
   startSession: (...args: unknown[]) => startSessionMock(...args),
   cancelSession: (...args: unknown[]) => cancelSessionMock(...args),
+  flushStudySessionOnPageHide: vi.fn(),
+  touchStudySessionActivity: vi.fn(),
+  updateStudySessionSnapshot: vi.fn(),
 }))
 
 vi.mock('../../lib', async () => {

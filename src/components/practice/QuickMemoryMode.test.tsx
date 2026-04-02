@@ -10,6 +10,9 @@ const showToastMock = vi.fn()
 const logSessionMock = vi.fn()
 const startSessionMock = vi.fn(() => Promise.resolve(1))
 const cancelSessionMock = vi.fn(() => Promise.resolve())
+const flushStudySessionOnPageHideMock = vi.fn()
+const touchStudySessionActivityMock = vi.fn()
+const updateStudySessionSnapshotMock = vi.fn()
 
 vi.mock('./utils', () => ({
   playWordAudio: vi.fn(),
@@ -17,9 +20,13 @@ vi.mock('./utils', () => ({
 }))
 
 vi.mock('../../hooks/useAIChat', () => ({
+  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   logSession: (...args: unknown[]) => logSessionMock(...args),
   startSession: (...args: unknown[]) => startSessionMock(...args),
   cancelSession: (...args: unknown[]) => cancelSessionMock(...args),
+  flushStudySessionOnPageHide: (...args: unknown[]) => flushStudySessionOnPageHideMock(...args),
+  touchStudySessionActivity: (...args: unknown[]) => touchStudySessionActivityMock(...args),
+  updateStudySessionSnapshot: (...args: unknown[]) => updateStudySessionSnapshotMock(...args),
 }))
 
 vi.mock('../../lib', () => ({
@@ -42,6 +49,9 @@ describe('QuickMemoryMode', () => {
     logSessionMock.mockClear()
     startSessionMock.mockClear()
     cancelSessionMock.mockClear()
+    flushStudySessionOnPageHideMock.mockClear()
+    touchStudySessionActivityMock.mockClear()
+    updateStudySessionSnapshotMock.mockClear()
     localStorage.clear()
   })
 
@@ -233,5 +243,43 @@ describe('QuickMemoryMode', () => {
     expect(urls).not.toContain('/api/books/progress')
     expect(urls).not.toContain('/api/books/book-1/chapters/1/progress')
     expect(urls).not.toContain('/api/books/book-1/chapters/1/mode-progress')
+  })
+
+  it('stores chapter completion without writing book-level completion for chapter sessions', async () => {
+    const user = userEvent.setup()
+    const { container } = render(
+      <QuickMemoryMode
+        vocabulary={vocabulary}
+        queue={[0]}
+        settings={settings}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+
+    await waitFor(() => {
+      expect(container.querySelector('.qm-summary')).not.toBeNull()
+    })
+
+    const urls = apiFetchMock.mock.calls.map(([url]) => url)
+    expect(urls).not.toContain('/api/books/progress')
+    expect(urls).toContain('/api/books/book-1/chapters/1/progress')
+    expect(urls).toContain('/api/books/book-1/chapters/1/mode-progress')
+
+    const storedProgress = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
+    expect(storedProgress['book-1_1']).toMatchObject({
+      current_index: 1,
+      correct_count: 1,
+      wrong_count: 0,
+      words_learned: 1,
+      is_completed: true,
+    })
   })
 })

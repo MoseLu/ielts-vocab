@@ -93,6 +93,9 @@ export interface AppSettings {
 export interface OptionItem {
   definition: string
   pos: string
+  word?: string
+  phonetic?: string
+  display_mode?: 'definition' | 'word'
 }
 
 export interface LastState {

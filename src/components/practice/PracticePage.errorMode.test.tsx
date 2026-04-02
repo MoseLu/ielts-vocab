@@ -32,10 +32,14 @@ vi.mock('../../lib/smartMode', () => ({
 }))
 
 vi.mock('../../hooks/useAIChat', () => ({
+  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   recordModeAnswer: vi.fn(),
   logSession: vi.fn(),
   startSession: (...args: unknown[]) => startSessionMock(...args),
   cancelSession: vi.fn(),
+  flushStudySessionOnPageHide: vi.fn(),
+  touchStudySessionActivity: vi.fn(),
+  updateStudySessionSnapshot: vi.fn(),
 }))
 
 vi.mock('../../lib', async () => {
@@ -85,17 +89,32 @@ vi.mock('./OptionsMode', () => ({
     progressValue,
     onOptionSelect,
     correctIndex,
+    spellingInput,
+    spellingResult,
+    onSpellingInputChange,
+    onSpellingSubmit,
   }: {
     currentWord: { word: string }
     total: number
     progressValue: number
     onOptionSelect: (idx: number) => void
     correctIndex: number
+    spellingInput: string
+    spellingResult: 'correct' | 'wrong' | null
+    onSpellingInputChange: (value: string) => void
+    onSpellingSubmit: () => void
   }) => (
     <div data-testid="options-mode">
       current:{currentWord.word};total:{total};progress:{progressValue}
       <button data-testid="answer-correct" onClick={() => onOptionSelect(correctIndex)}>correct</button>
       <button data-testid="answer-wrong" onClick={() => onOptionSelect(correctIndex === 0 ? 1 : 0)}>wrong</button>
+      <input
+        data-testid="meaning-input"
+        value={spellingInput}
+        onChange={(event) => onSpellingInputChange(event.target.value)}
+      />
+      <button data-testid="submit-recall" onClick={() => onSpellingSubmit()}>submit</button>
+      <span data-testid="meaning-result">{spellingResult ?? 'idle'}</span>
     </div>
   ),
 }))
@@ -116,13 +135,13 @@ describe('PracticePage error mode', () => {
 
   it('merges backend wrong words into the review queue instead of using stale local cache only', async () => {
     localStorage.setItem('wrong_words', JSON.stringify([
-      { word: 'local-only', phonetic: '/l/', pos: 'n.', definition: 'from local cache' },
+      { word: 'local-only', phonetic: '/l/', pos: 'n.', definition: 'from local cache', wrong_count: 1 },
     ]))
 
     apiFetchMock.mockResolvedValue({
       words: [
-        { word: 'remote-1', phonetic: '/r1/', pos: 'n.', definition: 'remote word 1' },
-        { word: 'remote-2', phonetic: '/r2/', pos: 'v.', definition: 'remote word 2' },
+        { word: 'remote-1', phonetic: '/r1/', pos: 'n.', definition: 'remote word 1', wrong_count: 1 },
+        { word: 'remote-2', phonetic: '/r2/', pos: 'v.', definition: 'remote word 2', wrong_count: 1 },
       ],
     })
 
@@ -194,9 +213,9 @@ describe('PracticePage error mode', () => {
   it('restores saved wrong-word review progress instead of restarting from the first word', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: true }))
     localStorage.setItem('wrong_words', JSON.stringify([
-      { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition' },
-      { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition' },
-      { word: 'gamma', phonetic: '/g/', pos: 'n.', definition: 'gamma definition' },
+      { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 1 },
+      { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 1 },
+      { word: 'gamma', phonetic: '/g/', pos: 'n.', definition: 'gamma definition', wrong_count: 1 },
     ]))
     localStorage.setItem('wrong_words_progress', JSON.stringify({
       _last: {
@@ -229,6 +248,39 @@ describe('PracticePage error mode', () => {
 
     expect(screen.getByTestId('options-mode')).toHaveTextContent('total:3')
     expect(screen.getByTestId('options-mode')).toHaveTextContent('progress:0.3333333333333333')
+  })
+
+  it('accepts typed english recall answers in meaning mode and advances on correct submit', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
+    localStorage.setItem('wrong_words', JSON.stringify([
+      { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 1 },
+      { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 1 },
+    ]))
+
+    apiFetchMock.mockResolvedValue({ words: [] })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?mode=errors']}>
+        <PracticePage
+          user={{ id: 42 }}
+          mode="meaning"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:alpha')
+    })
+
+    fireEvent.change(screen.getByTestId('meaning-input'), { target: { value: 'ALPHA' } })
+    fireEvent.click(screen.getByTestId('submit-recall'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:beta')
+    }, { timeout: 2500 })
   })
 
   it('pushes weak words and trap strategy into the AI context during error review', async () => {
@@ -342,7 +394,7 @@ describe('PracticePage error mode – learner profile merge', () => {
             },
             {
               dimension: 'meaning',
-              label: '词义辨析',
+              label: '汉译英（会想）',
               correct: 6,
               wrong: 3,
               attempts: 9,
@@ -381,6 +433,22 @@ describe('PracticePage error mode – learner profile merge', () => {
           ],
           next_actions: ['先做听音辨义错词回顾'],
           mode_breakdown: [],
+          activity_summary: {
+            total_events: 0,
+            study_sessions: 0,
+            quick_memory_reviews: 0,
+            wrong_word_records: 0,
+            assistant_questions: 0,
+            chapter_updates: 0,
+            books_touched: 0,
+            chapters_touched: 0,
+            words_touched: 0,
+            total_duration_seconds: 0,
+            correct_count: 0,
+            wrong_count: 0,
+          },
+          activity_source_breakdown: [],
+          recent_activity: [],
         })
       }
 
@@ -428,7 +496,7 @@ describe('PracticePage error mode – progress persistence regression', () => {
     // would overwrite it with is_completed:false before goNext() navigated.
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
     localStorage.setItem('wrong_words', JSON.stringify([
-      { word: 'only', phonetic: '/o/', pos: 'n.', definition: 'only definition' },
+      { word: 'only', phonetic: '/o/', pos: 'n.', definition: 'only definition', wrong_count: 1 },
     ]))
 
     apiFetchMock.mockResolvedValue({ words: [] })

@@ -190,7 +190,7 @@ export function resetQuickMemoryRecord(
 
 export function getQuickMemoryReviewProgress(
   record?: QuickMemoryRecordState | null,
-  target = QUICK_MEMORY_MASTERY_TARGET,
+  target: number = QUICK_MEMORY_MASTERY_TARGET,
 ): {
   streak: number
   target: number

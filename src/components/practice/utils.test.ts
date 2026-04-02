@@ -6,6 +6,7 @@ import {
   countPhoneticSyllables,
   syllabifyWord,
   generateOptions,
+  normalizeWordAnswer,
   playWordAudio,
   stopAudio,
 } from './utils'
@@ -175,9 +176,37 @@ describe('generateOptions', () => {
       priorityWords: [words[2], words[3]],
     })
 
-    const defs = options.map(option => option.definition)
-    expect(defs).toContain('a result')
-    expect(defs).toContain('hard work')
+    const optionWords = options.map(option => option.word)
+    expect(optionWords).toContain('effect')
+    expect(optionWords).toContain('effort')
+    expect(options.every(option => option.display_mode === 'word')).toBe(true)
+  })
+
+  it('returns english-word options for meaning mode and tracks the correct word', () => {
+    const words = [
+      makeWord(1, 'correct def'),
+      makeWord(2, 'wrong 1'),
+      makeWord(3, 'wrong 2'),
+      makeWord(4, 'wrong 3'),
+    ]
+
+    const { options, correctIndex } = generateOptions(words[0], words, 'meaning')
+
+    expect(options).toHaveLength(4)
+    expect(options.every(option => option.display_mode === 'word')).toBe(true)
+    expect(options.map(option => option.word)).toContain('word1')
+    expect(options[correctIndex].word).toBe('word1')
+  })
+})
+
+describe('normalizeWordAnswer', () => {
+  it('normalizes case, whitespace, and surrounding punctuation', () => {
+    expect(normalizeWordAnswer('  "Take Off!"  ')).toBe('take off')
+  })
+
+  it('normalizes curly apostrophes and dash variants', () => {
+    expect(normalizeWordAnswer('rock’n’roll')).toBe("rock'n'roll")
+    expect(normalizeWordAnswer('part–time')).toBe('part-time')
   })
 })
 

@@ -12,13 +12,20 @@
 // nextReview uses Ebbinghaus intervals: 1 / 1 / 4 / 7 / 14 / 30 days.
 // After the full streak completes, nextReview becomes 0 and the word leaves the due queue.
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
 import { playWordAudio, stopAudio } from './utils'
-import { logSession, startSession, cancelSession } from '../../hooks/useAIChat'
+import {
+  PASSIVE_STUDY_SESSION_MIN_SECONDS,
+  cancelSession,
+  flushStudySessionOnPageHide,
+  logSession,
+  startSession,
+  touchStudySessionActivity,
+  updateStudySessionSnapshot,
+} from '../../hooks/useAIChat'
 import { apiFetch } from '../../lib'
 import { useToast } from '../../contexts/ToastContext'
-import { persistBookProgressSnapshot, readStoredChapterStartIndex } from './progressStorage'
 import {
   mergeQuickMemoryRecordsByLastSeen,
   readQuickMemoryRecordsFromStorage,
@@ -267,10 +274,10 @@ export default function QuickMemoryMode({
   const [revisitedSet, setRevisitedSet] = useState<Set<number>>(new Set())
   const resultsRef = useRef<SessionResult[]>([])
 
-  const timerRef        = useRef<ReturnType<typeof setInterval>>()
-  const revealTimerRef  = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef        = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
+  const revealTimerRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const chosenRef       = useRef(false)   // guard against double-fire
-  const wordRef         = useRef<Word>()  // always holds current word for setTimeout
+  const wordRef         = useRef<Word | undefined>(undefined)  // always holds current word for setTimeout
   const sessionStartRef = useRef(Date.now())
   const bookIdRef       = useRef<string | null>(bookId)
   const chapterIdRef    = useRef<string | null>(chapterId)
@@ -289,6 +296,64 @@ export default function QuickMemoryMode({
   useEffect(() => {
     chapterIdRef.current = chapterId
   }, [chapterId])
+
+  const syncSessionSnapshot = useCallback((patch: {
+    activeAt?: number
+    wordsStudied?: number
+    correctCount?: number
+    wrongCount?: number
+  } = {}) => {
+    updateStudySessionSnapshot({
+      sessionId: sessionIdRef.current,
+      mode: 'quickmemory',
+      bookId: bookIdRef.current,
+      chapterId: chapterIdRef.current,
+      startedAt: sessionStartRef.current,
+      activeAt: patch.activeAt ?? Date.now(),
+      wordsStudied: patch.wordsStudied,
+      correctCount: patch.correctCount,
+      wrongCount: patch.wrongCount,
+    })
+  }, [])
+
+  useEffect(() => {
+    const touch = () => {
+      if (sessionStartRef.current <= 0) return
+      touchStudySessionActivity(sessionIdRef.current)
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') touch()
+    }
+    window.addEventListener('pointerdown', touch, true)
+    window.addEventListener('keydown', touch, true)
+    window.addEventListener('focus', touch)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('pointerdown', touch, true)
+      window.removeEventListener('keydown', touch, true)
+      window.removeEventListener('focus', touch)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handlePageHide = () => {
+      if (sessionLoggedRef.current || sessionStartRef.current <= 0) return
+      const finalResults = resultsRef.current
+      flushStudySessionOnPageHide({
+        mode: 'quickmemory',
+        bookId: bookIdRef.current,
+        chapterId: chapterIdRef.current,
+        wordsStudied: finalResults.length,
+        correctCount: finalResults.filter(r => r.choice === 'known').length,
+        wrongCount: finalResults.filter(r => r.choice === 'unknown').length,
+        startedAt: sessionStartRef.current,
+        sessionId: sessionIdRef.current,
+      })
+    }
+    window.addEventListener('pagehide', handlePageHide)
+    return () => window.removeEventListener('pagehide', handlePageHide)
+  }, [])
 
   // Reset session-scoped state when practice context changes.
   // On the very first load (queue going from empty to populated), restore
@@ -357,6 +422,12 @@ export default function QuickMemoryMode({
       : [...prevResults, entry]
     resultsRef.current = nextResults
     setResults(nextResults)
+    syncSessionSnapshot({
+      activeAt: Date.now(),
+      wordsStudied: nextResults.length,
+      correctCount: nextResults.filter(result => result.choice === 'known').length,
+      wrongCount: nextResults.filter(result => result.choice === 'unknown').length,
+    })
 
     // Report wrong words to the error book
     if (picked === 'unknown' && currentWord) {
@@ -402,9 +473,6 @@ export default function QuickMemoryMode({
     if (reviewMode || !done || !bookId || !chapterId) return
     const correct = results.filter(r => r.choice === 'known').length
     const wrong   = results.filter(r => r.choice === 'unknown').length
-    const queueWords = queue
-      .map(wordIndex => vocabulary[wordIndex]?.word)
-      .filter((word): word is string => Boolean(word))
 
     const progressData = {
       current_index: queue.length,
@@ -413,23 +481,12 @@ export default function QuickMemoryMode({
       words_learned: queue.length,
       is_completed:  true,
     }
-    const bookProgressData = {
-      ...progressData,
-      current_index: readStoredChapterStartIndex(bookId, chapterId) + queue.length,
-    }
 
     // Persist locally
     const chapterProgress: Record<string, typeof progressData & { updatedAt: string }> =
       JSON.parse(localStorage.getItem('chapter_progress') || '{}')
     chapterProgress[`${bookId}_${chapterId}`] = { ...progressData, updatedAt: new Date().toISOString() }
     localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
-    persistBookProgressSnapshot(bookId, bookProgressData, queueWords)
-
-    // Save book-level progress
-    apiFetch('/api/books/progress', {
-      method: 'POST',
-      body: JSON.stringify({ book_id: bookId, ...bookProgressData }),
-    }).catch(() => {})
 
     // Save chapter-level progress — toast on failure so user knows
     apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
@@ -458,6 +515,12 @@ export default function QuickMemoryMode({
     const wrong   = finalResults.filter(r => r.choice === 'unknown').length
 
     sessionLoggedRef.current = true
+    syncSessionSnapshot({
+      activeAt: Date.now(),
+      wordsStudied: queue.length,
+      correctCount: correct,
+      wrongCount: wrong,
+    })
     logSession({
       mode: 'quickmemory',
       bookId,
@@ -525,13 +588,20 @@ export default function QuickMemoryMode({
     if (sessionLoggedRef.current) return
 
     const finalResults = resultsRef.current
-    if (finalResults.length <= 0) {
+    const durationSeconds = Math.round((Date.now() - sessionStartRef.current) / 1000)
+    if (finalResults.length <= 0 && durationSeconds < PASSIVE_STUDY_SESSION_MIN_SECONDS) {
       pendingSessionCancelRef.current = true
       cancelSession(sessionIdRef.current)
       return
     }
 
     sessionLoggedRef.current = true
+    syncSessionSnapshot({
+      activeAt: Date.now(),
+      wordsStudied: finalResults.length,
+      correctCount: finalResults.filter(r => r.choice === 'known').length,
+      wrongCount: finalResults.filter(r => r.choice === 'unknown').length,
+    })
     logSession({
       mode: 'quickmemory',
       bookId: bookIdRef.current,
@@ -539,7 +609,7 @@ export default function QuickMemoryMode({
       wordsStudied: finalResults.length,
       correctCount: finalResults.filter(r => r.choice === 'known').length,
       wrongCount: finalResults.filter(r => r.choice === 'unknown').length,
-      durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
+      durationSeconds,
       startedAt: sessionStartRef.current,
       sessionId: sessionIdRef.current,
     })

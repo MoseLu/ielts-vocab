@@ -64,6 +64,28 @@
     box-shadow: var(--shadow-panel);
 }
 
+.meaning-prompt-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.meaning-prompt-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    letter-spacing: 0.04em;
+}
+
+.meaning-prompt-definition {
+    font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
 .play-btn-large {
     width: 86px;
     height: 86px;
@@ -259,6 +281,24 @@
 .option-text {
     font-size: 16px;
     color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.option-text-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.option-text--word {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.option-subtext {
+    font-size: 13px;
+    color: var(--text-secondary);
     line-height: 1.4;
 }
 

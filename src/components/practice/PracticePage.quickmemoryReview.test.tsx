@@ -36,10 +36,14 @@ vi.mock('../../lib/smartMode', () => ({
 }))
 
 vi.mock('../../hooks/useAIChat', () => ({
+  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   recordModeAnswer: vi.fn(),
   logSession: vi.fn(),
   startSession: (...args: unknown[]) => startSessionMock(...args),
   cancelSession: vi.fn(),
+  flushStudySessionOnPageHide: vi.fn(),
+  touchStudySessionActivity: vi.fn(),
+  updateStudySessionSnapshot: vi.fn(),
 }))
 
 vi.mock('../../lib', async () => {
@@ -362,7 +366,7 @@ describe('PracticePage quick-memory review mode', () => {
     expect(lastToolbarProps.currentChapterTitle).toBe('Chapter 2')
   })
 
-  it('removes mastered wrong words only after quick-memory completion', async () => {
+  it('keeps history but clears recognition pending after quick-memory completion', async () => {
     const user = userEvent.setup()
 
     localStorage.setItem('app_settings', JSON.stringify({
@@ -394,8 +398,8 @@ describe('PracticePage quick-memory review mode', () => {
         })
       }
 
-      if (url === '/api/ai/wrong-words/alpha' && options?.method === 'DELETE') {
-        return Promise.resolve({ message: '已移除' })
+      if (url === '/api/ai/wrong-words/sync' && options?.method === 'POST') {
+        return Promise.resolve({ updated: 1 })
       }
 
       return Promise.reject(new Error(`Unexpected url: ${url}`))
@@ -420,7 +424,18 @@ describe('PracticePage quick-memory review mode', () => {
 
     await user.click(screen.getByRole('button', { name: 'finish-ebbinghaus' }))
 
-    expect(JSON.parse(localStorage.getItem('wrong_words') || '[]')).toEqual([])
-    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/wrong-words/alpha', { method: 'DELETE' })
+    expect(JSON.parse(localStorage.getItem('wrong_words') || '[]')).toEqual([
+      expect.objectContaining({
+        word: 'alpha',
+        wrong_count: 2,
+        pending_wrong_count: 0,
+        recognition_pending: false,
+        recognition_pass_streak: 4,
+      }),
+    ])
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/wrong-words/sync', expect.objectContaining({
+      method: 'POST',
+      body: expect.stringContaining('"recognition_pending":false'),
+    }))
   })
 })

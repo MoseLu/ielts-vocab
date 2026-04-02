@@ -1,6 +1,6 @@
 // ── Word List Panel Component ───────────────────────────────────────────────────
 
-import React, { useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import type { WordListPanelProps } from './types'
 
 export default function WordListPanel({

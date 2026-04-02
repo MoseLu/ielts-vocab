@@ -32,10 +32,14 @@ vi.mock('../../lib/smartMode', () => ({
 }))
 
 vi.mock('../../hooks/useAIChat', () => ({
+  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   recordModeAnswer: vi.fn(),
   logSession: vi.fn(),
   startSession: (...args: unknown[]) => startSessionMock(...args),
   cancelSession: vi.fn(),
+  flushStudySessionOnPageHide: vi.fn(),
+  touchStudySessionActivity: vi.fn(),
+  updateStudySessionSnapshot: vi.fn(),
 }))
 
 vi.mock('../../lib', async () => {
@@ -147,7 +151,7 @@ describe('PracticePage error mode filters', () => {
     apiFetchMock.mockResolvedValue({ words: [] })
 
     render(
-      <MemoryRouter initialEntries={['/practice?mode=errors&dim=meaning&startDate=2026-03-31&endDate=2026-03-31&minWrong=5']}>
+      <MemoryRouter initialEntries={['/practice?mode=errors&dim=meaning&startDate=2026-03-31&endDate=2026-03-31&minWrong=6&maxWrong=10']}>
         <PracticePage
           user={{ id: 42 }}
           mode="meaning"

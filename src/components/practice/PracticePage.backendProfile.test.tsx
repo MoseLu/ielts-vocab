@@ -32,10 +32,14 @@ vi.mock('../../lib/smartMode', () => ({
 }))
 
 vi.mock('../../hooks/useAIChat', () => ({
+  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   recordModeAnswer: vi.fn(),
   logSession: vi.fn(),
   startSession: (...args: unknown[]) => startSessionMock(...args),
   cancelSession: vi.fn(),
+  flushStudySessionOnPageHide: vi.fn(),
+  touchStudySessionActivity: vi.fn(),
+  updateStudySessionSnapshot: vi.fn(),
 }))
 
 vi.mock('../../lib', async () => {
@@ -142,7 +146,7 @@ describe('PracticePage backend learner profile', () => {
             },
             {
               dimension: 'meaning',
-              label: '词义辨析',
+              label: '汉译英（会想）',
               correct: 6,
               wrong: 3,
               attempts: 9,
@@ -181,6 +185,22 @@ describe('PracticePage backend learner profile', () => {
           ],
           next_actions: ['先做听音辨义错词回顾'],
           mode_breakdown: [],
+          activity_summary: {
+            total_events: 0,
+            study_sessions: 0,
+            quick_memory_reviews: 0,
+            wrong_word_records: 0,
+            assistant_questions: 0,
+            chapter_updates: 0,
+            books_touched: 0,
+            chapters_touched: 0,
+            words_touched: 0,
+            total_duration_seconds: 0,
+            correct_count: 0,
+            wrong_count: 0,
+          },
+          activity_source_breakdown: [],
+          recent_activity: [],
         })
       }
 

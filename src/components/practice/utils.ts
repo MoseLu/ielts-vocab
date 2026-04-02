@@ -16,6 +16,17 @@ export function shuffleArray<T>(arr: T[]): T[] {
   return a
 }
 
+export function normalizeWordAnswer(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[’‘`]/g, "'")
+    .replace(/[‐‑‒–—―]/g, '-')
+    .replace(/^[\s"'“”‘’.,!?;:()[\]{}]+/, '')
+    .replace(/[\s"'“”‘’.,!?;:()[\]{}]+$/, '')
+    .replace(/\s+/g, ' ')
+}
+
 // ── Syllabification helpers ─────────────────────────────────────────────────────
 
 const IPA_VOWELS = 'aeiouəɪʊʌæɒɔɑɛɜɐøœɨɯɵ'
@@ -163,16 +174,25 @@ export function generateOptions(
     ? { mode: modeOrConfig }
     : (modeOrConfig ?? {})
   const mode = config.mode
-  const correctDef = currentWord.definition
+  const isMeaningMode = mode === 'meaning'
+  const getCandidateKey = (word: Word): string => (
+    isMeaningMode
+      ? word.word.trim().toLowerCase()
+      : word.definition.trim().toLowerCase()
+  )
   const seenWords = new Set<string>()
   const seenDefinitions = new Set<string>()
   const candidates = allWords.filter((word) => {
-    if (word.definition === correctDef) return false
     const wordKey = word.word.trim().toLowerCase()
     const defKey = word.definition.trim().toLowerCase()
     if (!wordKey || !defKey) return false
     if (wordKey === currentWord.word.trim().toLowerCase()) return false
-    if (seenWords.has(wordKey) || seenDefinitions.has(defKey)) return false
+    if (isMeaningMode) {
+      if (seenWords.has(wordKey)) return false
+    } else {
+      if (word.definition === currentWord.definition) return false
+      if (seenWords.has(wordKey) || seenDefinitions.has(defKey)) return false
+    }
     seenWords.add(wordKey)
     seenDefinitions.add(defKey)
     return true
@@ -194,8 +214,8 @@ export function generateOptions(
     distractorWords = shuffleArray(pool).slice(0, 3)
     // Fill any gap (small vocab) with random from the rest
     if (distractorWords.length < 3) {
-      const used = new Set(distractorWords.map(w => w.definition))
-      const rest = candidates.filter(w => !used.has(w.definition))
+      const used = new Set(distractorWords.map(getCandidateKey))
+      const rest = candidates.filter(w => !used.has(getCandidateKey(w)))
       distractorWords.push(...shuffleArray(rest).slice(0, 3 - distractorWords.length))
     }
   } else if (priorityWordMap.size > 0 && candidates.length >= 3) {
@@ -216,11 +236,11 @@ export function generateOptions(
 
     distractorWords = prioritized.slice(0, 3).map(item => item.word)
     if (distractorWords.length < 3) {
-      const used = new Set(distractorWords.map(word => word.definition))
+      const used = new Set(distractorWords.map(getCandidateKey))
       distractorWords.push(
         ...prioritized
           .map(item => item.word)
-          .filter(word => !used.has(word.definition))
+          .filter(word => !used.has(getCandidateKey(word)))
           .slice(0, 3 - distractorWords.length),
       )
     }
@@ -228,10 +248,40 @@ export function generateOptions(
     distractorWords = shuffleArray(candidates).slice(0, 3)
   }
 
-  const distractors = distractorWords.map(w => ({ definition: w.definition, pos: w.pos }))
-  const correct = { definition: correctDef, pos: currentWord.pos }
+  const distractors = distractorWords.map<OptionItem>(word => (
+    isMeaningMode
+      ? {
+          word: word.word,
+          phonetic: word.phonetic,
+          definition: word.definition,
+          pos: word.pos,
+          display_mode: 'word',
+        }
+      : {
+          definition: word.definition,
+          pos: word.pos,
+          display_mode: 'definition',
+        }
+  ))
+  const correct: OptionItem = isMeaningMode
+    ? {
+        word: currentWord.word,
+        phonetic: currentWord.phonetic,
+        definition: currentWord.definition,
+        pos: currentWord.pos,
+        display_mode: 'word',
+      }
+    : {
+        definition: currentWord.definition,
+        pos: currentWord.pos,
+        display_mode: 'definition',
+      }
   const allOpts = shuffleArray<OptionItem>([correct, ...distractors])
-  const correctIndex = allOpts.findIndex(o => o.definition === correctDef)
+  const correctIndex = allOpts.findIndex(option => (
+    isMeaningMode
+      ? option.word?.trim().toLowerCase() === currentWord.word.trim().toLowerCase()
+      : option.definition === currentWord.definition
+  ))
   return { options: allOpts, correctIndex }
 }
 
@@ -298,12 +348,6 @@ let _audioGeneration = 0
 // Allows onended to distinguish "cancelled" from "played to end".
 let _audioStopped = false
 
-// Whether HTMLAudioElement has been played at least once this session.
-// The browser's audio hardware needs ~50-200 ms to initialise on the first
-// HTMLAudioElement.play() call; without a warm-up delay the very beginning of
-// the audio is silently discarded (e.g. "attention" sounds like "tention").
-let _htmlAudioWarmed = false
-
 // Promise that resolves once a silent HTMLAudioElement has successfully played
 // through, proving the audio hardware is initialised.  Created on the first
 // playWordAudio() call (requires prior user interaction for autoplay to work).
@@ -326,7 +370,6 @@ function _warmupHtmlAudio(): Promise<void> {
       const done = () => {
         if (settled) return
         settled = true
-        _htmlAudioWarmed = true
         resolve()
       }
       wa.onended = done
@@ -334,7 +377,6 @@ function _warmupHtmlAudio(): Promise<void> {
       setTimeout(done, 1200)
       wa.play().catch(done)
     } catch {
-      _htmlAudioWarmed = true
       resolve()
     }
   })
@@ -432,7 +474,7 @@ export function playWordAudio(
         audio.play().catch(() => {
           if (_audioGeneration !== gen) return
           _currentAudio = null
-          _playYoudao(gen, word, key, volume, rate, onEnd)
+          _playFallbackAudio(gen, word, key, volume, rate, onEnd)
         })
       }
       // Wait for hardware warmup before playing (warmup runs concurrently with

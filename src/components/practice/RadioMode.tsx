@@ -1,6 +1,6 @@
 // ── Radio Mode Component ────────────────────────────────────────────────────────
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { RadioModeProps, Word } from './types'
 import { playWordAudio, stopAudio } from './utils'
 import SettingsPanel from '../SettingsPanel'
