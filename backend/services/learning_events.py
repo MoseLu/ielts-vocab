@@ -8,8 +8,9 @@ from models import UserLearningEvent
 MODE_LABELS = {
     'smart': '智能练习',
     'listening': '听音选义',
-    'meaning': '看词选义',
+    'meaning': '汉译英',
     'dictation': '听写',
+    'speaking': '口语',
     'radio': '随身听',
     'quickmemory': '速记',
     'errors': '错词强化',
@@ -20,6 +21,7 @@ SOURCE_LABELS = {
     'quickmemory': '速记/艾宾浩斯',
     'practice_reset': '练习后重置复习状态',
     'assistant': 'AI 助手',
+    'assistant_tool': 'AI 工具',
     'wrong_words': '错词记录',
     'chapter_progress': '章节进度',
     'chapter_mode_progress': '章节模式进度',
@@ -28,10 +30,39 @@ SOURCE_LABELS = {
 EVENT_LABELS = {
     'study_session': '练习会话',
     'quick_memory_review': '速记复习',
+    'listening_review': '听力检查',
+    'writing_review': '书写检查',
     'wrong_word_recorded': '新增错词',
     'assistant_question': '助手问答',
+    'pronunciation_check': '发音检查',
+    'speaking_simulation': '口语模拟',
     'chapter_progress_updated': '章节进度更新',
     'chapter_mode_progress_updated': '章节模式进度更新',
+    'writing_correction_used': '写作纠错',
+    'writing_correction_adoption': '纠错采纳反馈',
+    'ielts_example_hit': 'IELTS 例句查询',
+    'ielts_example_fallback': '例句查询兜底',
+    'synonyms_diff_used': '近义词辨析',
+    'word_family_used': '词族查询',
+    'collocation_practice_used': '搭配训练',
+    'pronunciation_check_used': '发音检测',
+    'speaking_simulation_used': '口语模拟发起',
+    'adaptive_plan_generated': '复习计划生成',
+    'vocab_assessment_generated': '词汇测评生成',
+}
+
+AI_TOOL_EVENT_TYPES = {
+    'writing_correction_used',
+    'writing_correction_adoption',
+    'ielts_example_hit',
+    'ielts_example_fallback',
+    'synonyms_diff_used',
+    'word_family_used',
+    'collocation_practice_used',
+    'pronunciation_check_used',
+    'speaking_simulation_used',
+    'adaptive_plan_generated',
+    'vocab_assessment_generated',
 }
 
 
@@ -115,6 +146,74 @@ def _format_event_title(event: UserLearningEvent, payload: dict) -> str:
     if event.event_type == 'assistant_question':
         question = str(payload.get('question') or '').strip()
         return f"向助手提问：{question[:24]}" if question else event_label
+    if event.event_type == 'writing_correction_used':
+        length = int(payload.get('length') or 0)
+        return f"写作纠错（{length} 词）" if length > 0 else event_label
+    if event.event_type == 'writing_correction_adoption':
+        adopted = bool(payload.get('adopted'))
+        return '写作纠错建议已采纳' if adopted else '写作纠错建议未采纳'
+    if event.event_type in {'ielts_example_hit', 'ielts_example_fallback'}:
+        target_word = event.word or str(payload.get('word') or '').strip()
+        return f"查询 {target_word} 的例句" if target_word else event_label
+    if event.event_type == 'synonyms_diff_used':
+        pair = str(payload.get('pair') or '').strip()
+        return f"辨析近义词：{pair}" if pair else event_label
+    if event.event_type == 'word_family_used':
+        target_word = event.word or str(payload.get('word') or '').strip()
+        return f"查询 {target_word} 的词族" if target_word else event_label
+    if event.event_type == 'collocation_practice_used':
+        topic = str(payload.get('topic') or '').strip()
+        count = int(payload.get('count') or 0)
+        if topic and count > 0:
+            return f"搭配训练：{topic}（{count} 题）"
+        if topic:
+            return f"搭配训练：{topic}"
+        return event_label
+    if event.event_type == 'pronunciation_check_used':
+        target_word = event.word or str(payload.get('word') or '').strip()
+        score = payload.get('score')
+        if target_word and isinstance(score, (int, float)):
+            return f"发音检测：{target_word}（{int(score)} 分）"
+        if target_word:
+            return f"发音检测：{target_word}"
+        return event_label
+    if event.event_type == 'speaking_simulation_used':
+        part = payload.get('part')
+        topic = str(payload.get('topic') or '').strip()
+        bits = ['口语模拟']
+        if part is not None:
+            bits.append(f"Part {part}")
+        if topic:
+            bits.append(topic)
+        return ' '.join(bits)
+    if event.event_type == 'adaptive_plan_generated':
+        level = str(payload.get('level') or '').strip()
+        return f"生成 {level} 复习计划" if level else event_label
+    if event.event_type == 'vocab_assessment_generated':
+        count = int(payload.get('count') or 0)
+        return f"生成词汇测评（{count} 题）" if count > 0 else event_label
+    if event.event_type in {'listening_review', 'writing_review'}:
+        verdict = '通过' if payload.get('passed') or (event.correct_count or 0) > (event.wrong_count or 0) else '待强化'
+        prefix = '听力检查' if event.event_type == 'listening_review' else '书写检查'
+        if event.word:
+            return f"{prefix} {event.word} {verdict}"
+        return f"{prefix} {verdict}"
+    if event.event_type == 'pronunciation_check':
+        verdict = '通过' if payload.get('passed') or (event.correct_count or 0) > 0 else '待强化'
+        if event.word:
+            return f"发音检查 {event.word} {verdict}"
+        return f"发音检查 {verdict}"
+    if event.event_type == 'speaking_simulation':
+        part = payload.get('part')
+        topic = str(payload.get('topic') or '').strip()
+        suffix = '已作答' if str(payload.get('response_text') or '').strip() else '已生成'
+        bits = ['口语模拟']
+        if part:
+            bits.append(f"Part {part}")
+        if topic:
+            bits.append(topic)
+        bits.append(suffix)
+        return ' '.join(bits)
     if event.event_type == 'chapter_progress_updated':
         return f"{chapter_label} 学习进度更新".strip()
     if event.event_type == 'chapter_mode_progress_updated':
@@ -185,8 +284,17 @@ def build_learning_activity_timeline(user_id: int, target_date: str | None = Non
             'total_events': len(rows),
             'study_sessions': event_counts.get('study_session', 0),
             'quick_memory_reviews': event_counts.get('quick_memory_review', 0),
+            'listening_reviews': event_counts.get('listening_review', 0),
+            'writing_reviews': event_counts.get('writing_review', 0),
             'wrong_word_records': event_counts.get('wrong_word_recorded', 0),
             'assistant_questions': event_counts.get('assistant_question', 0),
+            'assistant_tool_uses': sum(
+                count
+                for event_type, count in event_counts.items()
+                if event_type in AI_TOOL_EVENT_TYPES
+            ),
+            'pronunciation_checks': event_counts.get('pronunciation_check', 0),
+            'speaking_simulations': event_counts.get('speaking_simulation', 0),
             'chapter_updates': (
                 event_counts.get('chapter_progress_updated', 0)
                 + event_counts.get('chapter_mode_progress_updated', 0)
@@ -205,6 +313,14 @@ def build_learning_activity_timeline(user_id: int, target_date: str | None = Non
                 'count': count,
             }
             for source, count in source_counts.most_common()
+        ],
+        'event_breakdown': [
+            {
+                'event_type': event_type,
+                'label': EVENT_LABELS.get(event_type, event_type),
+                'count': count,
+            }
+            for event_type, count in event_counts.most_common()
         ],
         'recent_events': [_serialize_event(row) for row in reversed(recent_rows)],
     }
