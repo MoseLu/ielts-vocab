@@ -73,4 +73,34 @@ describe('AIChatPanel', () => {
     await user.click(toggleButton)
     expect(container.querySelector('.ai-panel.ai-panel--fullscreen')).toBeNull()
   })
+
+  it('uses semantic quick actions instead of exposing templates', async () => {
+    const user = userEvent.setup()
+    const sendMessage = vi.fn()
+    useAIChatMock.mockReturnValue({
+      messages: [
+        {
+          id: 'assistant-1',
+          role: 'assistant',
+          content: '你可以直接开始口语训练。',
+          timestamp: Date.now(),
+        },
+      ],
+      isLoading: false,
+      isGreeting: false,
+      greetingDone: true,
+      isOpen: true,
+      contextLoaded: true,
+      openPanel: vi.fn(),
+      closePanel: vi.fn(),
+      sendMessage,
+    })
+
+    const { getByRole, queryByRole } = render(<AIChatPanel />)
+    await user.click(getByRole('button', { name: '发音训练' }))
+
+    expect(sendMessage).toHaveBeenCalledWith('开始发音训练')
+    expect(queryByRole('button', { name: '口语回答模板' })).toBeNull()
+    expect(queryByRole('button', { name: '发音记录模板' })).toBeNull()
+  })
 })

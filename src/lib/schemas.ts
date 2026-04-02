@@ -7,8 +7,16 @@ import { z } from 'zod'
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
-/** Matches 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' */
-export const PracticeModeSchema = z.enum(['smart', 'listening', 'meaning', 'dictation', 'radio'])
+/** Matches supported practice routes and analytics modes */
+export const PracticeModeSchema = z.enum([
+  'smart',
+  'listening',
+  'meaning',
+  'dictation',
+  'radio',
+  'quickmemory',
+  'errors',
+])
 export type PracticeMode = z.infer<typeof PracticeModeSchema>
 
 export const ToastTypeSchema = z.enum(['info', 'success', 'error'])
@@ -154,6 +162,9 @@ export type ChapterProgressMap = z.infer<typeof ChapterProgressMapSchema>
 export const OptionItemSchema = z.object({
   definition: z.string().min(1),
   pos: z.string(),
+  word: z.string().min(1).optional(),
+  phonetic: z.string().optional(),
+  display_mode: z.enum(['definition', 'word']).optional(),
 })
 export type OptionItem = z.infer<typeof OptionItemSchema>
 
@@ -200,6 +211,33 @@ export const AIMessageSchema = z.object({
 })
 export type AIMessage = z.infer<typeof AIMessageSchema>
 
+const QuickMemorySummarySchema = z.object({
+  known: z.number().int().nonnegative().optional(),
+  unknown: z.number().int().nonnegative().optional(),
+  dueToday: z.number().int().nonnegative().optional(),
+}).passthrough()
+
+const ModePerformanceEntrySchema = z.object({
+  correct: z.number().int().nonnegative().optional(),
+  wrong: z.number().int().nonnegative().optional(),
+}).passthrough()
+
+const LocalHistorySchema = z.object({
+  chaptersCompleted: z.number().int().nonnegative().optional(),
+  chaptersAttempted: z.number().int().nonnegative().optional(),
+  totalCorrect: z.number().int().nonnegative().optional(),
+  totalWrong: z.number().int().nonnegative().optional(),
+  overallAccuracy: z.number().optional(),
+}).passthrough()
+
+const LocalBookProgressEntrySchema = z.object({
+  chaptersCompleted: z.number().int().nonnegative().optional(),
+  chaptersAttempted: z.number().int().nonnegative().optional(),
+  correct: z.number().int().nonnegative().optional(),
+  wrong: z.number().int().nonnegative().optional(),
+  wordsLearned: z.number().int().nonnegative().optional(),
+}).passthrough()
+
 export const LearningContextSchema = z.object({
   currentWord: z.string().optional(),
   currentPhonetic: z.string().optional(),
@@ -207,13 +245,26 @@ export const LearningContextSchema = z.object({
   currentDefinition: z.string().optional(),
   currentBook: z.string().optional(),
   currentChapter: z.string().optional(),
+  currentChapterTitle: z.string().optional(),
   practiceMode: PracticeModeSchema.optional(),
   mode: z.string().optional(),
+  sessionCompleted: z.boolean().optional(),
   sessionProgress: z.number().optional(),
   sessionAccuracy: z.number().optional(),
   wordsCompleted: z.number().int().nonnegative().optional(),
   totalWords: z.number().int().nonnegative().optional(),
-})
+  currentFocusDimension: z.string().optional(),
+  weakestDimension: z.string().optional(),
+  weakDimensionOrder: z.array(z.string()).optional(),
+  weakFocusWords: z.array(z.string()).optional(),
+  recentWrongWords: z.array(z.string()).optional(),
+  trapStrategy: z.string().optional(),
+  priorityDistractorWords: z.array(z.string()).optional(),
+  quickMemorySummary: QuickMemorySummarySchema.optional(),
+  modePerformance: z.record(z.string(), ModePerformanceEntrySchema).optional(),
+  localHistory: LocalHistorySchema.optional(),
+  localBookProgress: z.record(z.string(), LocalBookProgressEntrySchema).optional(),
+}).passthrough()
 export type LearningContext = z.infer<typeof LearningContextSchema>
 
 const GeneratedChapterWordSchema = z.object({
@@ -268,6 +319,41 @@ export const AIAskResponseSchema = z.object({
   reply: z.string(),
   options: z.array(z.string()).nullable().optional(),
 })
+
+export const AIPronunciationCheckResponseSchema = z.object({
+  word: z.string(),
+  score: z.number(),
+  passed: z.boolean(),
+  stress_feedback: z.string(),
+  vowel_feedback: z.string(),
+  speed_feedback: z.string(),
+})
+export type AIPronunciationCheckResponse = z.infer<typeof AIPronunciationCheckResponseSchema>
+
+export const AISpeakingSimulationResponseSchema = z.object({
+  part: z.number().int(),
+  topic: z.string(),
+  question: z.string(),
+  follow_ups: z.array(z.string()),
+})
+export type AISpeakingSimulationResponse = z.infer<typeof AISpeakingSimulationResponseSchema>
+
+export const AIReviewPlanResponseSchema = z.object({
+  level: z.string(),
+  mastery_rule: z.string().optional(),
+  priority_dimension: z.string().optional(),
+  priority_reason: z.string().optional(),
+  plan: z.array(z.string()),
+  dimensions: z.array(z.object({
+    key: z.string().optional(),
+    label: z.string().optional(),
+    status: z.string().optional(),
+    status_label: z.string().optional(),
+    schedule_label: z.string().optional(),
+    next_action: z.string().optional(),
+  })).optional(),
+})
+export type AIReviewPlanResponse = z.infer<typeof AIReviewPlanResponseSchema>
 
 export const LearnerProfileSummarySchema = z.object({
   date: z.string(),
@@ -331,8 +417,13 @@ export const LearnerProfileActivitySummarySchema = z.object({
   total_events: z.number().int(),
   study_sessions: z.number().int(),
   quick_memory_reviews: z.number().int(),
+  listening_reviews: z.number().int().default(0),
+  writing_reviews: z.number().int().default(0),
   wrong_word_records: z.number().int(),
   assistant_questions: z.number().int(),
+  assistant_tool_uses: z.number().int().default(0),
+  pronunciation_checks: z.number().int().default(0),
+  speaking_simulations: z.number().int().default(0),
   chapter_updates: z.number().int(),
   books_touched: z.number().int(),
   chapters_touched: z.number().int(),
@@ -349,6 +440,13 @@ export const LearnerProfileActivitySourceSchema = z.object({
   count: z.number().int(),
 })
 export type LearnerProfileActivitySource = z.infer<typeof LearnerProfileActivitySourceSchema>
+
+export const LearnerProfileActivityBreakdownSchema = z.object({
+  event_type: z.string(),
+  label: z.string(),
+  count: z.number().int(),
+})
+export type LearnerProfileActivityBreakdown = z.infer<typeof LearnerProfileActivityBreakdownSchema>
 
 export const LearnerProfileActivityEventSchema = z.object({
   id: z.number().int(),
@@ -371,16 +469,21 @@ export const LearnerProfileActivityEventSchema = z.object({
 })
 export type LearnerProfileActivityEvent = z.infer<typeof LearnerProfileActivityEventSchema>
 
+export const LearnerProfileMemorySystemSchema = z.object({}).passthrough().default({})
+export type LearnerProfileMemorySystem = z.infer<typeof LearnerProfileMemorySystemSchema>
+
 export const LearnerProfileSchema = z.object({
   date: z.string(),
   summary: LearnerProfileSummarySchema,
   dimensions: z.array(LearnerProfileDimensionSchema),
   focus_words: z.array(LearnerProfileFocusWordSchema),
+  memory_system: LearnerProfileMemorySystemSchema.optional().default({}),
   repeated_topics: z.array(LearnerProfileTopicSchema),
   next_actions: z.array(z.string()),
   mode_breakdown: z.array(LearnerProfileModeSchema),
   activity_summary: LearnerProfileActivitySummarySchema,
   activity_source_breakdown: z.array(LearnerProfileActivitySourceSchema),
+  activity_event_breakdown: z.array(LearnerProfileActivityBreakdownSchema).optional().default([]),
   recent_activity: z.array(LearnerProfileActivityEventSchema),
 })
 export type LearnerProfile = z.infer<typeof LearnerProfileSchema>

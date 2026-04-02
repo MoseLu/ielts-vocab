@@ -70,7 +70,7 @@ describe('LearningJournalPage markdown rendering', () => {
             today_sessions: 2,
             streak_days: 5,
             weakest_mode: 'meaning',
-            weakest_mode_label: '词义辨析',
+            weakest_mode_label: '汉译英',
             weakest_mode_accuracy: 68,
             due_reviews: 3,
             trend_direction: 'improving',
@@ -78,7 +78,7 @@ describe('LearningJournalPage markdown rendering', () => {
           dimensions: [
             {
               dimension: 'meaning',
-              label: '词义辨析',
+              label: '汉译英（会想）',
               correct: 8,
               wrong: 4,
               attempts: 12,
@@ -92,7 +92,7 @@ describe('LearningJournalPage markdown rendering', () => {
               definition: 'type',
               wrong_count: 3,
               dominant_dimension: 'meaning',
-              dominant_dimension_label: '词义辨析',
+              dominant_dimension_label: '汉译英（会想）',
               dominant_wrong: 2,
               focus_score: 8,
             },
@@ -107,7 +107,24 @@ describe('LearningJournalPage markdown rendering', () => {
             },
           ],
           next_actions: ['优先复习 3 个已到期的速记单词。'],
+          memory_system: {},
           mode_breakdown: [],
+          activity_summary: {
+            total_events: 0,
+            study_sessions: 0,
+            quick_memory_reviews: 0,
+            wrong_word_records: 0,
+            assistant_questions: 0,
+            chapter_updates: 0,
+            books_touched: 0,
+            chapters_touched: 0,
+            words_touched: 0,
+            total_duration_seconds: 0,
+            correct_count: 0,
+            wrong_count: 0,
+          },
+          activity_source_breakdown: [],
+          recent_activity: [],
         })
       }
       return Promise.reject(new Error(`Unexpected url: ${url}`))

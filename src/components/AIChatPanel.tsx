@@ -118,6 +118,19 @@ function AssistantBubble({ content }: { content: string }) {
   )
 }
 
+const QUICK_ACTIONS: Array<{ label: string; value: string; autoSend: boolean }> = [
+  { label: '分析我的学习数据', value: '分析我的学习数据', autoSend: true },
+  { label: '写作纠错', value: '帮我纠正这句话：education is very important', autoSend: true },
+  { label: '真题例句', value: '给我 significant 的真题例句', autoSend: true },
+  { label: '近义词辨析', value: '辨析 affect 和 effect', autoSend: true },
+  { label: '词族树', value: '查看 establish 的词族', autoSend: true },
+  { label: '搭配训练', value: '开始搭配训练', autoSend: true },
+  { label: '四维计划', value: '生成四维复习计划', autoSend: true },
+  { label: '词汇评估', value: '开始词汇量评估', autoSend: true },
+  { label: '口语任务', value: '开始口语训练', autoSend: true },
+  { label: '发音训练', value: '开始发音训练', autoSend: true },
+]
+
 function AIChatPanel() {
   const {
     messages,
@@ -158,6 +171,8 @@ function AIChatPanel() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
+  const showQuickActions = !isGreeting && greetingDone && messages.every(message => message.role !== 'user')
+
   const handleSend = useCallback(() => {
     const text = input.trim()
     if (!text || isLoading) return
@@ -180,6 +195,19 @@ function AIChatPanel() {
     event.target.style.height = 'auto'
     event.target.style.height = `${Math.min(event.target.scrollHeight, 120)}px`
   }
+
+  const handleQuickAction = useCallback((value: string, autoSend: boolean) => {
+    if (autoSend) {
+      setInput('')
+      if (inputRef.current) {
+        inputRef.current.style.height = 'auto'
+      }
+      sendMessage(value)
+      return
+    }
+    setInput(value)
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }, [sendMessage])
 
   if (!isOpen) {
     return (
@@ -240,29 +268,20 @@ function AIChatPanel() {
         </div>
       )}
 
-      {!messages.length && !isGreeting && greetingDone && (
+      {showQuickActions && (
         <div className="ai-quick-actions">
-          {[
-            '分析我的学习数据',
-            '/correct education is very important',
-            '/example significant',
-            '/synonyms affect vs effect',
-            '/family establish',
-            '/collocation',
-            '/plan',
-            '/assessment',
-            '/speaking',
-          ].map((question) => (
+          {QUICK_ACTIONS.map((action) => (
             <button
-              key={question}
+              key={action.label}
               className="ai-quick-btn"
               onClick={() => {
-                setInput(question)
-                sendMessage(question)
+                if (!isLoading) {
+                  handleQuickAction(action.value, action.autoSend)
+                }
               }}
               type="button"
             >
-              {question}
+              {action.label}
             </button>
           ))}
         </div>
@@ -315,7 +334,7 @@ function AIChatPanel() {
           value={input}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder="输入你的问题..."
+          placeholder="输入问题，或直接说“生成复习计划”“开始口语训练”“开始发音训练”"
           rows={1}
           disabled={isLoading}
         />
