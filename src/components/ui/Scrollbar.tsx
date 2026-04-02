@@ -32,7 +32,7 @@ export function Scrollbar({
   const [barVisible, setBarVisible] = useState(false)
   const [dragging, setDragging] = useState(false)
 
-  const hideTimer = useRef<ReturnType<typeof setTimeout>>()
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const dragState = useRef({ startY: 0, startScrollTop: 0 })
 
   // ── Recalculate thumb size + position ────────────────────────────────────

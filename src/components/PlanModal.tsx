@@ -1,5 +1,3 @@
-import React from 'react'
-
 // Type definitions
 interface Book {
   id: string

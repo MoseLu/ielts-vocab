@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts'
 import SettingsPanel from './SettingsPanel'
@@ -27,15 +27,11 @@ export interface HeaderProps {
 function Header({
   user,
   currentDay,
-  mode,
   onLogout,
-  onModeChange,
   onDayChange,
   onUserUpdate,
-  onMenuToggle,
 }: HeaderProps) {
   const { updateUser, isAdmin } = useAuth()
-  const [showModeDropdown, setShowModeDropdown] = useState(false)
   const [showDayDropdown, setShowDayDropdown] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -45,16 +41,11 @@ function Header({
   const navigate = useNavigate()
   const location = useLocation()
   const dayDropdownRef = useRef<HTMLDivElement>(null)
-  const modeDropdownRef = useRef<HTMLDivElement>(null)
-
-  const isPracticePage = location.pathname === '/practice'
-  const isHomePage = location.pathname === '/plan'
-  const isPlanPage = location.pathname === '/plan'
 
   const modeNames: Record<PracticeMode, string> = {
     'smart': '智能模式',
     'listening': '听音选义',
-    'meaning': '看词选义',
+    'meaning': '汉译英',
     'dictation': '听写模式',
     'radio': '随身听',
   }
@@ -62,7 +53,7 @@ function Header({
   const modeDescriptions: Record<PracticeMode, string> = {
     'smart': '根据水平自动调整',
     'listening': '听发音选中文释义',
-    'meaning': '看英文选中文释义',
+    'meaning': '看中文回想并输入英文',
     'dictation': '听发音拼写单词',
     'radio': '连续播放音频',
   }
@@ -80,9 +71,6 @@ function Header({
       if (dayDropdownRef.current && !dayDropdownRef.current.contains(e.target as Node)) {
         setShowDayDropdown(false)
       }
-      if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
-        setShowModeDropdown(false)
-      }
       // Close mobile menu on outside click
       const mobileMenu = document.querySelector('.header-mobile-menu')
       const hamburgerBtn = document.querySelector('.header-hamburger')
@@ -99,7 +87,7 @@ function Header({
     navigate('/login')
   }
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       // TODO: Implement search
@@ -348,6 +336,7 @@ function Header({
           onClose={() => setShowAvatarUpload(false)}
           onSave={(updatedUser) => {
             updateUser(updatedUser as any)
+            onUserUpdate?.(updatedUser)
           }}
         />
       )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts'
 import { useResponsiveChapterSkeletonCount } from '../hooks/useResponsiveSkeletonCount'
 import { apiFetch, buildApiUrl } from '../lib'
@@ -8,7 +8,7 @@ import { Scrollbar } from './ui/Scrollbar'
 const MODE_META: Record<string, { label: string; title: string }> = {
   quickmemory: { label: '记', title: '速记模式' },
   listening: { label: '听', title: '听音选义' },
-  meaning: { label: '释', title: '看词选义' },
+  meaning: { label: '想', title: '汉译英' },
   dictation: { label: '默', title: '听写模式' },
   smart: { label: '智', title: '智能模式' },
 }

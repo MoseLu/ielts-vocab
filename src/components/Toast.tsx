@@ -1,5 +1,3 @@
-import React from 'react'
-
 type ToastType = 'info' | 'success' | 'error'
 
 interface ToastProps {

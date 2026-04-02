@@ -1,4 +1,4 @@
-import React from 'react'
+import type { ComponentType } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 // Icons for bottom navigation
@@ -35,7 +35,7 @@ interface NavItem {
   key: string
   label: string
   path: string
-  icon: (props: { active: boolean }) => JSX.Element
+  icon: ComponentType<{ active: boolean }>
 }
 
 const navItems: NavItem[] = [

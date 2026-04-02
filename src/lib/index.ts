@@ -1,7 +1,5 @@
 // ── Utility Functions ────────────────────────────────────────────────────────────
 
-import type { z } from 'zod'
-
 const RAW_API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim() ?? ''
 const NORMALIZED_API_BASE = RAW_API_BASE.replace(/\/+$/, '')
 

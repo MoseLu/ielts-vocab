@@ -53,7 +53,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
   const [displayPanel, setDisplayPanel] = useState(false)
   // isClosing: whether the closing animation is playing
   const [isClosing, setIsClosing] = useState(false)
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const arrowRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
 
@@ -108,6 +108,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     refs,
     x,
     y,
+    strategy,
     placement: resolvedPlacement,
     middlewareData: { arrow: arrowData },
   } = useFloating({
@@ -115,6 +116,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     middleware,
     whileElementsMounted: autoUpdate,
     open: displayPanel,
+    strategy: 'fixed',
   })
 
   // Close on outside click
@@ -122,11 +124,14 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     if (!displayPanel) return
     const handle = (e: MouseEvent) => {
       const target = e.target as Node
+      const reference = refs.reference.current
+      const floating = refs.floating.current
+      const targetWithinReference = reference instanceof Element && reference.contains(target)
       if (
-        refs.reference.current &&
-        refs.floating.current &&
-        !refs.reference.current.contains(target) &&
-        !refs.floating.current.contains(target)
+        reference &&
+        floating &&
+        !targetWithinReference &&
+        !floating.contains(target)
       ) {
         setOpen(false)
       }
@@ -145,14 +150,6 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     return () => document.removeEventListener('keydown', handle)
   }, [displayPanel, setOpen])
 
-  // Arrow style: Floating UI sets horizontal (x) or vertical (y) position
-  useEffect(() => {
-    const panel = panelRef.current
-    if (!panel) return
-    panel.style.setProperty('--popover-left', `${x ?? 0}px`)
-    panel.style.setProperty('--popover-top', `${y ?? 0}px`)
-  }, [x, y])
-
   useEffect(() => {
     const arrow = arrowRef.current
     if (!arrow) return
@@ -161,6 +158,11 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     if (arrowData?.y != null) arrow.style.top = `${arrowData.y}px`
     else arrow.style.removeProperty('top')
   }, [arrowData])
+
+  const floatingStyle =
+    x != null && y != null
+      ? { position: strategy, left: x, top: y }
+      : { position: strategy, visibility: 'hidden' as const }
 
   const panel = displayPanel
     ? createPortal(
@@ -171,6 +173,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
           }}
           className={`popover-panel ${panelClassName} ${isClosing ? 'popover-closing' : ''}`}
           data-placement={resolvedPlacement}
+          style={floatingStyle}
           // Clicking anywhere inside the panel closes the dropdown.
           // Individual items that should NOT auto-close can call e.stopPropagation().
           onClick={() => setOpen(false)}

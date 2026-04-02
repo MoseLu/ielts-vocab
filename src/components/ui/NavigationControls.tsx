@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export interface NavigationOption<T extends string = string> {
+export interface NavigationOption<T extends string | number = string> {
   value: T
   label: ReactNode
   badge?: ReactNode
@@ -10,7 +10,7 @@ export interface NavigationOption<T extends string = string> {
 
 type NavigationSize = 'small' | 'middle' | 'large'
 
-interface NavigationControlProps<T extends string> {
+interface NavigationControlProps<T extends string | number> {
   value: T
   options: NavigationOption<T>[]
   onChange: (value: T) => void
@@ -19,7 +19,7 @@ interface NavigationControlProps<T extends string> {
   ariaLabel?: string
 }
 
-interface UnderlineTabsProps<T extends string> extends NavigationControlProps<T> {
+interface UnderlineTabsProps<T extends string | number> extends NavigationControlProps<T> {
   size?: NavigationSize
 }
 
@@ -27,7 +27,7 @@ function withClassNames(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
 
-export function SegmentedControl<T extends string>({
+export function SegmentedControl<T extends string | number>({
   value,
   options,
   onChange,
@@ -69,7 +69,7 @@ export function SegmentedControl<T extends string>({
   )
 }
 
-export function UnderlineTabs<T extends string>({
+export function UnderlineTabs<T extends string | number>({
   value,
   options,
   onChange,
