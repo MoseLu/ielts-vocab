@@ -32,6 +32,18 @@
     color: var(--text-secondary);
 }
 
+.dictation-replay-hint {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+.dictation-replay-hint.revealed {
+    color: var(--accent);
+    font-weight: 600;
+}
+
 .spelling-answer {
     font-size: 14px;
     color: var(--error);

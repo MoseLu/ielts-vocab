@@ -68,4 +68,34 @@ describe('DictationMode', () => {
 
     expect(onPlayWord).toHaveBeenCalledWith('attention')
   })
+
+  it('reveals the answer after three manual replays', async () => {
+    const user = userEvent.setup()
+    const onPlayWord = vi.fn()
+    const { container } = render(
+      <DictationMode {...baseProps} onPlayWord={onPlayWord} />,
+    )
+
+    const wordModeButton = container.querySelector('.submode-btn') as HTMLButtonElement
+    await user.click(wordModeButton)
+
+    const playButton = container.querySelector('.play-btn-large') as HTMLButtonElement
+
+    expect(container.textContent).toContain('可重复播放，手动播放 3 次后显示答案')
+    expect(container.textContent).not.toContain('正确答案：attention')
+
+    await user.click(playButton)
+    expect(container.textContent).toContain('已手动播放 1/3 次，再点 2 次显示答案')
+    expect(container.textContent).not.toContain('正确答案：attention')
+
+    await user.click(playButton)
+    expect(container.textContent).toContain('已手动播放 2/3 次，再点 1 次显示答案')
+    expect(container.textContent).not.toContain('正确答案：attention')
+
+    await user.click(playButton)
+
+    expect(onPlayWord).toHaveBeenCalledTimes(3)
+    expect(container.textContent).toContain('已显示答案，可直接输入后提交')
+    expect(container.textContent).toContain('正确答案：attention')
+  })
 })
