@@ -106,6 +106,9 @@ interface UserDetail {
     accuracy: number
     duration_seconds: number
     started_at: string
+    ended_at: string | null
+    studied_words: string[]
+    studied_words_total: number
   }>
   daily_study: Array<{
     day: string
@@ -149,16 +152,54 @@ function fmtDate(iso: string | null) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function fmtDateTime(iso: string | null) {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  return `${fmtDate(iso)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+function parseDateValue(iso: string | null) {
+  if (!iso) return null
+  const value = new Date(iso)
+  return Number.isNaN(value.getTime()) ? null : value
+}
+
+function fmtTime(iso: string | null) {
+  const d = parseDateValue(iso)
+  if (!d) return '—'
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function resolveSessionEnd(startedAt: string | null, endedAt: string | null, durationSeconds: number) {
+  const explicitEnd = parseDateValue(endedAt)
+  if (explicitEnd) return explicitEnd
+
+  const start = parseDateValue(startedAt)
+  if (!start || durationSeconds <= 0) return null
+  return new Date(start.getTime() + durationSeconds * 1000)
+}
+
+function fmtSessionTimeRange(startedAt: string | null, endedAt: string | null, durationSeconds: number) {
+  const start = parseDateValue(startedAt)
+  if (!start) return '—'
+
+  const end = resolveSessionEnd(startedAt, endedAt, durationSeconds)
+  if (!end) return fmtTime(startedAt)
+  return `${fmtTime(startedAt)} - ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+}
+
+function buildSessionContent(session: UserDetail['sessions'][number]) {
+  const parts = [
+    bookLabels[session.book_id] || session.book_id || '',
+    fmtChapterId(session.chapter_id),
+    modeLabels[session.mode] || session.mode || '',
+  ].filter(Boolean)
+  return parts.join(' · ') || '未记录学习内容'
+}
+
+function buildSessionWordSample(words: string[], total: number) {
+  if (!words.length || total <= 0) return '未记录到词样本'
+  return total > words.length ? `${words.join('、')} 等${total}个词` : words.join('、')
 }
 
 const modeLabels: Record<string, string> = {
   smart: '智能模式',
   listening: '听音选义',
-  meaning: '看词选义',
+  meaning: '汉译英',
   dictation: '听写模式',
   radio: '随身听',
   quickmemory: '速记模式',
@@ -824,7 +865,7 @@ export default function AdminDashboard() {
           <div className="admin-detail-tabs">
             {(['chart', 'chapter_daily', 'sessions', 'progress', 'wrong_words'] as const).map(t => (
               <button key={t} className={`admin-detail-tab ${detailTab === t ? 'active' : ''}`} onClick={() => setDetailTab(t)}>
-                {{ chart: '每日趋势', chapter_daily: '章节明细', sessions: '练习记录', progress: '词书进度', wrong_words: '错词本' }[t]}
+                {{ chart: '每日趋势', chapter_daily: '章节明细', sessions: '学习明细', progress: '词书进度', wrong_words: '错词本' }[t]}
               </button>
             ))}
           </div>
@@ -981,24 +1022,40 @@ export default function AdminDashboard() {
                 {selectedUser.sessions.length === 0 ? (
                   <div className="admin-empty">暂无练习记录</div>
                 ) : (
-                  <table className="admin-detail-table">
-                    <thead><tr><th>时间</th><th>模式</th><th>词书</th><th>章节</th><th>单词数</th><th>正确</th><th>错误</th><th>准确率</th><th>时长</th></tr></thead>
-                    <tbody>
-                      {selectedUser.sessions.map((s, i) => (
-                        <tr key={i}>
-                          <td className="admin-cell-muted">{fmtDateTime(s.started_at)}</td>
-                          <td>{modeLabels[s.mode] || s.mode || '—'}</td>
-                          <td className="admin-cell-muted">{bookLabels[s.book_id] || s.book_id || '—'}</td>
-                          <td className="admin-cell-muted">{fmtChapterId(s.chapter_id)}</td>
-                          <td>{s.words_studied}</td>
-                          <td className="admin-cell-positive">{s.correct_count}</td>
-                          <td className="admin-cell-negative">{s.wrong_count}</td>
-                          <td><span className={`admin-accuracy ${s.accuracy >= 80 ? 'good' : s.accuracy >= 60 ? 'mid' : s.accuracy > 0 ? 'low' : ''}`}>{s.accuracy > 0 ? `${s.accuracy}%` : '—'}</span></td>
-                          <td>{fmtSeconds(s.duration_seconds)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <>
+                    <div className="admin-detail-summary">
+                      以下按单次学习会话展示开始到结束时间、学习内容和总时长；单词列为该次会话记录到的词样本。
+                    </div>
+                    <table className="admin-detail-table">
+                      <thead><tr><th>学习时间</th><th>学了什么</th><th>词样本</th><th>总时长</th></tr></thead>
+                      <tbody>
+                        {selectedUser.sessions.map((s, i) => {
+                          const sessionContent = buildSessionContent(s)
+                          const sessionWords = buildSessionWordSample(s.studied_words, s.studied_words_total)
+                          return (
+                            <tr key={i}>
+                              <td>
+                                <div>{fmtDate(s.started_at)}</div>
+                                <div className="admin-cell-muted">{fmtSessionTimeRange(s.started_at, s.ended_at, s.duration_seconds)}</div>
+                              </td>
+                              <td>
+                                <div className="admin-cell-ellipsis admin-cell-ellipsis--wide" title={sessionContent}>
+                                  <strong>{sessionContent}</strong>
+                                </div>
+                                <div className="admin-cell-muted">
+                                  {s.words_studied > 0 ? `共练习 ${s.words_studied} 词` : '未记录练习词数'}
+                                </div>
+                              </td>
+                              <td className="admin-cell-muted">
+                                <div className="admin-cell-ellipsis admin-cell-ellipsis--wide" title={sessionWords}>{sessionWords}</div>
+                              </td>
+                              <td>{fmtSeconds(s.duration_seconds)}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </>
                 )}
               </div>
             )}

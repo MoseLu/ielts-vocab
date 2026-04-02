@@ -1,11 +1,12 @@
 from flask import Blueprint, request, jsonify
 from models import (
     db, User, UserProgress, UserBookProgress, UserChapterProgress,
-    UserWrongWord, UserStudySession, UserAddedBook
+    UserWrongWord, UserStudySession, UserAddedBook, UserLearningEvent
 )
 from sqlalchemy import func, desc
 from datetime import datetime, timedelta
 from routes.middleware import admin_required
+from routes.books import _serialize_effective_book_progress
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -14,13 +15,119 @@ def init_admin(app_instance):
     pass
 
 
+def _get_effective_book_progress(user_id):
+    book_rows = UserBookProgress.query.filter_by(user_id=user_id).all()
+    chapter_rows = UserChapterProgress.query.filter_by(user_id=user_id).all()
+
+    progress_by_book = {row.book_id: row for row in book_rows}
+    chapters_by_book = {}
+    for row in chapter_rows:
+        chapters_by_book.setdefault(row.book_id, []).append(row)
+
+    book_ids = set(progress_by_book) | set(chapters_by_book)
+    effective_rows = []
+    for book_id in book_ids:
+        progress = _serialize_effective_book_progress(
+            book_id,
+            progress_record=progress_by_book.get(book_id),
+            chapter_records=chapters_by_book.get(book_id, []),
+        )
+        if progress:
+            effective_rows.append(progress)
+
+    effective_rows.sort(key=lambda row: row.get('updated_at') or '', reverse=True)
+    return effective_rows
+
+
+def _iso_utc(dt):
+    if dt is None:
+        return None
+    return dt.strftime('%Y-%m-%dT%H:%M:%S') + '+00:00'
+
+
+def _resolve_session_end(session):
+    if session.ended_at:
+        return session.ended_at
+    if session.started_at and (session.duration_seconds or 0) > 0:
+        return session.started_at + timedelta(seconds=int(session.duration_seconds or 0))
+    return session.started_at
+
+
+def _collect_session_word_samples(user_id, sessions, sample_limit=6):
+    session_windows = []
+    lower_bound = None
+    upper_bound = None
+
+    for session in sessions:
+        start = session.started_at
+        end = _resolve_session_end(session)
+        if not start or not end:
+            continue
+        session_windows.append({
+            'id': session.id,
+            'start': start,
+            'end': end,
+            'seen': set(),
+            'words': [],
+            'total': 0,
+        })
+        lower_bound = start if lower_bound is None else min(lower_bound, start)
+        upper_bound = end if upper_bound is None else max(upper_bound, end)
+
+    if not session_windows or lower_bound is None or upper_bound is None:
+        return {}
+
+    events = (
+        UserLearningEvent.query
+        .filter(
+            UserLearningEvent.user_id == user_id,
+            UserLearningEvent.word.isnot(None),
+            UserLearningEvent.event_type.in_(('quick_memory_review', 'wrong_word_recorded')),
+            UserLearningEvent.occurred_at >= lower_bound - timedelta(seconds=5),
+            UserLearningEvent.occurred_at <= upper_bound + timedelta(seconds=5),
+        )
+        .order_by(UserLearningEvent.occurred_at.asc(), UserLearningEvent.id.asc())
+        .all()
+    )
+
+    sorted_windows = sorted(
+        session_windows,
+        key=lambda item: (item['start'], item['end'], item['id']),
+        reverse=True,
+    )
+
+    for event in events:
+        event_time = event.occurred_at
+        word = (event.word or '').strip()
+        if not event_time or not word:
+            continue
+
+        word_key = word.lower()
+        for window in sorted_windows:
+            if window['start'] <= event_time <= window['end']:
+                if word_key not in window['seen']:
+                    window['seen'].add(word_key)
+                    window['total'] += 1
+                    if len(window['words']) < sample_limit:
+                        window['words'].append(word)
+                break
+
+    return {
+        window['id']: {
+            'studied_words': window['words'],
+            'studied_words_total': window['total'],
+        }
+        for window in session_windows
+    }
+
+
 def _user_summary(user):
     """Build a summary dict for a user with aggregated stats."""
     # Book progress totals
-    book_rows = UserBookProgress.query.filter_by(user_id=user.id).all()
-    total_correct = sum(r.correct_count for r in book_rows)
-    total_wrong = sum(r.wrong_count for r in book_rows)
-    books_completed = sum(1 for r in book_rows if r.is_completed)
+    book_rows = _get_effective_book_progress(user.id)
+    total_correct = sum(int(r.get('correct_count') or 0) for r in book_rows)
+    total_wrong = sum(int(r.get('wrong_count') or 0) for r in book_rows)
+    books_completed = sum(1 for r in book_rows if r.get('is_completed'))
 
     # Study sessions
     sessions = UserStudySession.query.filter_by(user_id=user.id).filter(
@@ -263,7 +370,7 @@ def get_user_detail(current_user, user_id):
         return q
 
     # Book progress
-    book_progress = [r.to_dict() for r in UserBookProgress.query.filter_by(user_id=user_id).all()]
+    book_progress = _get_effective_book_progress(user_id)
 
     # Chapter progress (latest 50)
     chapter_progress = [r.to_dict() for r in (
@@ -282,10 +389,17 @@ def get_user_detail(current_user, user_id):
         UserStudySession.query.filter_by(user_id=user_id).filter(UserStudySession.analytics_clause())
     )
     raw_sessions = session_q.order_by(desc(UserStudySession.started_at)).limit(100).all()
+    session_word_samples = _collect_session_word_samples(user_id, raw_sessions)
     sessions = []
     for s in raw_sessions:
         d = s.to_dict()
+        derived_end = _resolve_session_end(s)
         d['chapter_id'] = s.chapter_id   # expose chapter for frontend
+        d['ended_at'] = _iso_utc(derived_end) if derived_end and derived_end != s.started_at else None
+        d.update(session_word_samples.get(s.id, {
+            'studied_words': [],
+            'studied_words_total': 0,
+        }))
         sessions.append(d)
 
     # Daily aggregation — filtered, last 90 days by default unless date_from given

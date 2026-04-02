@@ -86,6 +86,101 @@ def test_get_book_progress_can_be_synthesized_from_chapter_progress_only(client,
     assert progress['is_completed'] is False
 
 
+def test_get_book_progress_does_not_treat_completed_subset_of_chapters_as_full_book(client, app):
+    register_user(client)
+    user_id = get_user_id(app)
+
+    with app.app_context():
+        db.session.add(UserBookProgress(
+            user_id=user_id,
+            book_id='ielts_reading_premium',
+            current_index=159,
+            correct_count=51,
+            wrong_count=5,
+            is_completed=True,
+        ))
+        db.session.add(UserChapterProgress(
+            user_id=user_id,
+            book_id='ielts_reading_premium',
+            chapter_id=1,
+            words_learned=50,
+            correct_count=50,
+            wrong_count=0,
+            is_completed=True,
+        ))
+        db.session.add(UserChapterProgress(
+            user_id=user_id,
+            book_id='ielts_reading_premium',
+            chapter_id=2,
+            words_learned=53,
+            correct_count=50,
+            wrong_count=3,
+            is_completed=True,
+        ))
+        db.session.add(UserChapterProgress(
+            user_id=user_id,
+            book_id='ielts_reading_premium',
+            chapter_id=3,
+            words_learned=56,
+            correct_count=51,
+            wrong_count=5,
+            is_completed=True,
+        ))
+        db.session.commit()
+
+    response = client.get('/api/books/progress/ielts_reading_premium')
+    assert response.status_code == 200
+
+    progress = response.get_json()['progress']
+    assert progress['current_index'] == 159
+    assert progress['correct_count'] == 151
+    assert progress['wrong_count'] == 8
+    assert progress['is_completed'] is False
+
+
+def test_get_book_progress_ignores_book_end_offset_from_partial_chapter_study(client, app):
+    register_user(client)
+    user_id = get_user_id(app)
+
+    with app.app_context():
+        db.session.add(UserBookProgress(
+            user_id=user_id,
+            book_id='ielts_listening_premium',
+            current_index=3916,
+            correct_count=40,
+            wrong_count=22,
+            is_completed=True,
+        ))
+        db.session.add(UserChapterProgress(
+            user_id=user_id,
+            book_id='ielts_listening_premium',
+            chapter_id=1,
+            words_learned=50,
+            correct_count=40,
+            wrong_count=10,
+            is_completed=True,
+        ))
+        db.session.add(UserChapterProgress(
+            user_id=user_id,
+            book_id='ielts_listening_premium',
+            chapter_id=3,
+            words_learned=70,
+            correct_count=55,
+            wrong_count=15,
+            is_completed=True,
+        ))
+        db.session.commit()
+
+    response = client.get('/api/books/progress/ielts_listening_premium')
+    assert response.status_code == 200
+
+    progress = response.get_json()['progress']
+    assert progress['current_index'] == 120
+    assert progress['correct_count'] == 95
+    assert progress['wrong_count'] == 25
+    assert progress['is_completed'] is False
+
+
 def test_save_progress_does_not_move_book_progress_backwards(client):
     register_user(client)
 

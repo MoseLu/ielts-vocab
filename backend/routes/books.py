@@ -672,6 +672,11 @@ def _get_book_word_count(book_id):
     return int(book.get('word_count') or 0) if book else 0
 
 
+def _get_book_chapter_count(book_id):
+    chapters_data = load_book_chapters(book_id)
+    return int(chapters_data.get('total_chapters') or 0) if chapters_data else 0
+
+
 def _serialize_effective_book_progress(book_id, progress_record=None, chapter_records=None):
     chapter_records = chapter_records or []
     if not progress_record and not chapter_records:
@@ -686,11 +691,32 @@ def _serialize_effective_book_progress(book_id, progress_record=None, chapter_re
     chapter_wrong_count = sum(max(int(record.wrong_count or 0), 0) for record in chapter_records)
 
     total_words = _get_book_word_count(book_id)
-    all_chapters_completed = bool(chapter_records) and all(bool(record.is_completed) for record in chapter_records)
+    total_chapters = _get_book_chapter_count(book_id) if chapter_records else 0
+    completed_chapter_count = sum(1 for record in chapter_records if bool(record.is_completed))
+    all_chapters_completed = total_chapters > 0 and completed_chapter_count >= total_chapters
 
-    effective_current_index = max(base_current_index, chapter_words_learned)
+    # Chapter sessions are aggregated by learned-word totals, not by the absolute
+    # offset of the last chapter touched. Offsets can hit the end of the book
+    # even when many earlier chapters are still untouched.
+    effective_current_index = chapter_words_learned if chapter_records else base_current_index
     if total_words > 0:
-        effective_current_index = total_words if all_chapters_completed else min(effective_current_index, total_words)
+        if all_chapters_completed or (
+            not chapter_records and progress_record and bool(progress_record.is_completed)
+        ):
+            effective_current_index = total_words
+        else:
+            effective_current_index = min(effective_current_index, total_words)
+
+    effective_is_completed = (
+        all_chapters_completed
+        or (
+            not chapter_records and (
+                (bool(progress_record.is_completed) if progress_record else False)
+                or (total_words > 0 and effective_current_index >= total_words)
+            )
+        )
+        or (bool(chapter_records) and total_words > 0 and chapter_words_learned >= total_words)
+    )
 
     updated_candidates = []
     if progress_record and progress_record.updated_at:
@@ -705,9 +731,7 @@ def _serialize_effective_book_progress(book_id, progress_record=None, chapter_re
         'current_index': effective_current_index,
         'correct_count': max(base_correct_count, chapter_correct_count),
         'wrong_count': max(base_wrong_count, chapter_wrong_count),
-        'is_completed': (
-            bool(progress_record.is_completed) if progress_record else False
-        ) or all_chapters_completed or (total_words > 0 and effective_current_index >= total_words),
+        'is_completed': effective_is_completed,
         'updated_at': latest_updated_at.isoformat() if latest_updated_at else None,
     }
 
