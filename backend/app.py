@@ -74,6 +74,21 @@ def _ensure_quick_memory_context_columns():
     db.session.commit()
 
 
+def _ensure_wrong_word_dimension_state_column():
+    """Backfill wrong-word per-dimension state column on existing SQLite files."""
+    inspector = inspect(db.engine)
+    try:
+        columns = {column['name'] for column in inspector.get_columns('user_wrong_words')}
+    except Exception:
+        return
+
+    if 'dimension_state' in columns:
+        return
+
+    db.session.execute(text('ALTER TABLE user_wrong_words ADD COLUMN dimension_state TEXT'))
+    db.session.commit()
+
+
 def _ensure_admin_user():
     """Create an admin user if not exists. Credentials must be set via environment variables."""
     import os
@@ -150,6 +165,7 @@ def create_app(config_class=Config):
     with app.app_context():
         db.create_all()
         _ensure_quick_memory_context_columns()
+        _ensure_wrong_word_dimension_state_column()
         _ensure_admin_user()
 
     return app

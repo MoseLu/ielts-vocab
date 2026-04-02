@@ -1,11 +1,21 @@
-import type { SmartDimension } from '../../lib/smartMode'
-import type { WrongWordRecord } from './wrongWordsStore'
+import type {
+  WrongWordCollectionScope,
+  WrongWordDimension,
+  WrongWordRecord,
+} from './wrongWordsStore'
+import {
+  getWrongWordActiveCount,
+  getWrongWordDimensionHistoryWrong,
+  isWrongWordPendingInDimension,
+} from './wrongWordsStore'
 
-export type WrongWordDimensionFilter = 'all' | SmartDimension
+export type WrongWordDimensionFilter = 'all' | WrongWordDimension
 
 export interface WrongWordFilters {
+  scope?: WrongWordCollectionScope
   dimFilter?: WrongWordDimensionFilter
   minWrongCount?: number
+  maxWrongCount?: number
   startDate?: string
   endDate?: string
 }
@@ -18,6 +28,11 @@ function normalizeDateInput(value?: string): string | undefined {
 
 function normalizeMinWrongCount(value?: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0
+  return Math.max(0, Math.floor(value))
+}
+
+function normalizeMaxWrongCount(value?: number): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
   return Math.max(0, Math.floor(value))
 }
 
@@ -35,7 +50,13 @@ function buildBoundaryTimestamp(value: string | undefined, endOfDay: boolean): n
 }
 
 function normalizeDimensionFilter(value?: WrongWordDimensionFilter): WrongWordDimensionFilter {
-  return value === 'listening' || value === 'meaning' || value === 'dictation' ? value : 'all'
+  return value === 'recognition' || value === 'listening' || value === 'meaning' || value === 'dictation'
+    ? value
+    : 'all'
+}
+
+function normalizeScope(value?: WrongWordCollectionScope): WrongWordCollectionScope {
+  return value === 'history' ? 'history' : 'pending'
 }
 
 export function getWrongWordOccurrenceAt(word: Partial<WrongWordRecord>): string | null {
@@ -79,19 +100,24 @@ export function filterWrongWords<T extends Partial<WrongWordRecord>>(
   words: T[],
   filters: WrongWordFilters,
 ): T[] {
+  const scope = normalizeScope(filters.scope)
   const dimFilter = normalizeDimensionFilter(filters.dimFilter)
   const minWrongCount = normalizeMinWrongCount(filters.minWrongCount)
+  const maxWrongCount = normalizeMaxWrongCount(filters.maxWrongCount)
   const startTimestamp = buildBoundaryTimestamp(filters.startDate, false)
   const endTimestamp = buildBoundaryTimestamp(filters.endDate, true)
 
   return words.filter(word => {
-    const rawWord = word as Partial<WrongWordRecord> & Record<string, unknown>
-    const totalWrongCount = typeof word.wrong_count === 'number' ? word.wrong_count : 0
-    if (totalWrongCount < minWrongCount) return false
+    const activeWrongCount = getWrongWordActiveCount(word, scope)
+    if (activeWrongCount < minWrongCount) return false
+    if (maxWrongCount != null && activeWrongCount > maxWrongCount) return false
 
     if (dimFilter !== 'all') {
-      const dimWrongCount = rawWord[`${dimFilter}_wrong`] as number | undefined
-      if ((dimWrongCount ?? 0) <= 0) return false
+      if (scope === 'history') {
+        if (getWrongWordDimensionHistoryWrong(word, dimFilter) <= 0) return false
+      } else if (!isWrongWordPendingInDimension(word, dimFilter)) {
+        return false
+      }
     }
 
     if (startTimestamp != null || endTimestamp != null) {
@@ -104,20 +130,24 @@ export function filterWrongWords<T extends Partial<WrongWordRecord>>(
       if (endTimestamp != null && occurrenceTimestamp > endTimestamp) return false
     }
 
-    return true
+    return activeWrongCount > 0
   })
 }
 
 export function buildWrongWordsPracticeQuery(filters: WrongWordFilters): string {
   const params = new URLSearchParams()
+  const scope = normalizeScope(filters.scope)
   const startDate = normalizeDateInput(filters.startDate)
   const endDate = normalizeDateInput(filters.endDate)
   const minWrongCount = normalizeMinWrongCount(filters.minWrongCount)
+  const maxWrongCount = normalizeMaxWrongCount(filters.maxWrongCount)
   const dimFilter = normalizeDimensionFilter(filters.dimFilter)
 
+  params.set('scope', scope)
   if (startDate) params.set('startDate', startDate)
   if (endDate) params.set('endDate', endDate)
   if (minWrongCount > 0) params.set('minWrong', String(minWrongCount))
+  if (maxWrongCount != null) params.set('maxWrong', String(maxWrongCount))
   if (dimFilter !== 'all') params.set('dim', dimFilter)
 
   return params.toString()
@@ -125,13 +155,18 @@ export function buildWrongWordsPracticeQuery(filters: WrongWordFilters): string 
 
 export function parseWrongWordsFiltersFromSearchParams(searchParams: URLSearchParams): WrongWordFilters {
   const minWrongRaw = searchParams.get('minWrong')
+  const maxWrongRaw = searchParams.get('maxWrong')
   const minWrongCount = minWrongRaw ? Number.parseInt(minWrongRaw, 10) : 0
+  const maxWrongCount = maxWrongRaw ? Number.parseInt(maxWrongRaw, 10) : Number.NaN
   const dimFilter = searchParams.get('dim')
+  const scope = searchParams.get('scope')
 
   return {
+    scope: normalizeScope(scope as WrongWordCollectionScope | undefined),
     dimFilter: normalizeDimensionFilter(dimFilter as WrongWordDimensionFilter | undefined),
     startDate: searchParams.get('startDate') ?? undefined,
     endDate: searchParams.get('endDate') ?? undefined,
     minWrongCount: Number.isFinite(minWrongCount) ? minWrongCount : 0,
+    maxWrongCount: Number.isFinite(maxWrongCount) ? maxWrongCount : undefined,
   }
 }

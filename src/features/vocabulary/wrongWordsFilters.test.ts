@@ -1,7 +1,7 @@
 import { filterWrongWords } from './wrongWordsFilters'
 
 describe('wrongWordsFilters', () => {
-  it('filters wrong words by date range, minimum wrong count, and dimension together', () => {
+  it('filters wrong words by date range, wrong-count range, and dimension together', () => {
     const words = [
       {
         word: 'alpha',
@@ -43,11 +43,28 @@ describe('wrongWordsFilters', () => {
 
     const result = filterWrongWords(words, {
       dimFilter: 'meaning',
-      minWrongCount: 5,
+      minWrongCount: 6,
+      maxWrongCount: 10,
       startDate: '2026-03-31',
       endDate: '2026-03-31',
     })
 
     expect(result.map(word => word.word)).toEqual(['alpha'])
+  })
+
+  it('treats 11~20 and 20次以上 as non-overlapping ranges', () => {
+    const words = [
+      { word: 'twenty', wrong_count: 20 },
+      { word: 'twenty-one', wrong_count: 21 },
+    ]
+
+    expect(filterWrongWords(words, {
+      minWrongCount: 11,
+      maxWrongCount: 20,
+    }).map(word => word.word)).toEqual(['twenty'])
+
+    expect(filterWrongWords(words, {
+      minWrongCount: 21,
+    }).map(word => word.word)).toEqual(['twenty-one'])
   })
 })

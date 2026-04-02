@@ -8,12 +8,114 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
+WRONG_WORD_DIMENSIONS = ('recognition', 'meaning', 'listening', 'dictation')
+WRONG_WORD_PENDING_REVIEW_TARGET = 4
+
 
 def _iso_utc(dt: datetime | None) -> str | None:
     """Return ISO-8601 string with explicit UTC suffix, or None."""
     if dt is None:
         return None
     return dt.strftime('%Y-%m-%dT%H:%M:%S') + '+00:00'
+
+
+def _normalize_wrong_word_iso(value) -> str | None:
+    if not isinstance(value, str):
+        return None
+
+    text_value = value.strip()
+    if not text_value:
+        return None
+
+    try:
+        return datetime.fromisoformat(text_value.replace('Z', '+00:00')).isoformat()
+    except Exception:
+        return None
+
+
+def _empty_wrong_word_dimension_state() -> dict:
+    return {
+        'history_wrong': 0,
+        'pass_streak': 0,
+        'last_wrong_at': None,
+        'last_pass_at': None,
+    }
+
+
+def _normalize_wrong_word_dimension_state(value) -> dict:
+    if not isinstance(value, dict):
+        return _empty_wrong_word_dimension_state()
+
+    return {
+        'history_wrong': max(0, int(value.get('history_wrong') or value.get('historyWrong') or 0)),
+        'pass_streak': min(
+            max(0, int(value.get('pass_streak') or value.get('passStreak') or 0)),
+            WRONG_WORD_PENDING_REVIEW_TARGET,
+        ),
+        'last_wrong_at': _normalize_wrong_word_iso(value.get('last_wrong_at') or value.get('lastWrongAt')),
+        'last_pass_at': _normalize_wrong_word_iso(value.get('last_pass_at') or value.get('lastPassAt')),
+    }
+
+
+def _build_wrong_word_dimension_states(record) -> dict:
+    states = {
+        dimension: _empty_wrong_word_dimension_state()
+        for dimension in WRONG_WORD_DIMENSIONS
+    }
+
+    raw_dimension_state = getattr(record, 'dimension_state', None)
+    if isinstance(raw_dimension_state, str) and raw_dimension_state.strip():
+        try:
+            parsed_dimension_state = json.loads(raw_dimension_state)
+        except Exception:
+            parsed_dimension_state = {}
+    elif isinstance(raw_dimension_state, dict):
+        parsed_dimension_state = raw_dimension_state
+    else:
+        parsed_dimension_state = {}
+
+    if isinstance(parsed_dimension_state, dict):
+        for dimension in WRONG_WORD_DIMENSIONS:
+            states[dimension] = _normalize_wrong_word_dimension_state(parsed_dimension_state.get(dimension))
+
+    states['meaning']['history_wrong'] = max(states['meaning']['history_wrong'], int(getattr(record, 'meaning_wrong', 0) or 0))
+    states['listening']['history_wrong'] = max(states['listening']['history_wrong'], int(getattr(record, 'listening_wrong', 0) or 0))
+    states['dictation']['history_wrong'] = max(states['dictation']['history_wrong'], int(getattr(record, 'dictation_wrong', 0) or 0))
+
+    raw_total_wrong = max(0, int(getattr(record, 'wrong_count', 0) or 0))
+    state_total_wrong = sum(states[dimension]['history_wrong'] for dimension in WRONG_WORD_DIMENSIONS)
+    if raw_total_wrong > 0 and state_total_wrong == 0:
+        states['recognition']['history_wrong'] = raw_total_wrong
+    elif raw_total_wrong > state_total_wrong:
+        states['recognition']['history_wrong'] += raw_total_wrong - state_total_wrong
+
+    return states
+
+
+def _is_wrong_word_dimension_pending(state: dict) -> bool:
+    return int(state.get('history_wrong') or 0) > 0 and int(state.get('pass_streak') or 0) < WRONG_WORD_PENDING_REVIEW_TARGET
+
+
+def _summarize_wrong_word_dimension_states(states: dict) -> dict:
+    history_wrong_count = sum(states[dimension]['history_wrong'] for dimension in WRONG_WORD_DIMENSIONS)
+    pending_wrong_count = sum(
+        states[dimension]['history_wrong']
+        for dimension in WRONG_WORD_DIMENSIONS
+        if _is_wrong_word_dimension_pending(states[dimension])
+    )
+    history_dimension_count = sum(
+        1 for dimension in WRONG_WORD_DIMENSIONS if states[dimension]['history_wrong'] > 0
+    )
+    pending_dimension_count = sum(
+        1 for dimension in WRONG_WORD_DIMENSIONS if _is_wrong_word_dimension_pending(states[dimension])
+    )
+
+    return {
+        'wrong_count': history_wrong_count,
+        'pending_wrong_count': pending_wrong_count,
+        'history_dimension_count': history_dimension_count,
+        'pending_dimension_count': pending_dimension_count,
+    }
 
 
 class User(db.Model):
@@ -322,6 +424,7 @@ class UserWrongWord(db.Model):
     meaning_wrong     = db.Column(db.Integer, default=0)
     dictation_correct = db.Column(db.Integer, default=0)
     dictation_wrong   = db.Column(db.Integer, default=0)
+    dimension_state = db.Column(db.Text, nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (
@@ -329,6 +432,8 @@ class UserWrongWord(db.Model):
     )
 
     def to_dict(self):
+        dimension_states = _build_wrong_word_dimension_states(self)
+        summary = _summarize_wrong_word_dimension_states(dimension_states)
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -336,13 +441,27 @@ class UserWrongWord(db.Model):
             'phonetic': self.phonetic,
             'pos': self.pos,
             'definition': self.definition,
-            'wrong_count': self.wrong_count,
+            'wrong_count': summary['wrong_count'],
+            'pending_wrong_count': summary['pending_wrong_count'],
+            'history_dimension_count': summary['history_dimension_count'],
+            'pending_dimension_count': summary['pending_dimension_count'],
+            'review_pass_target': WRONG_WORD_PENDING_REVIEW_TARGET,
             'listening_correct': self.listening_correct or 0,
             'listening_wrong':   self.listening_wrong   or 0,
             'meaning_correct':   self.meaning_correct   or 0,
             'meaning_wrong':     self.meaning_wrong     or 0,
             'dictation_correct': self.dictation_correct or 0,
             'dictation_wrong':   self.dictation_wrong   or 0,
+            'recognition_wrong': dimension_states['recognition']['history_wrong'],
+            'recognition_pending': _is_wrong_word_dimension_pending(dimension_states['recognition']),
+            'recognition_pass_streak': dimension_states['recognition']['pass_streak'],
+            'meaning_pending': _is_wrong_word_dimension_pending(dimension_states['meaning']),
+            'meaning_pass_streak': dimension_states['meaning']['pass_streak'],
+            'listening_pending': _is_wrong_word_dimension_pending(dimension_states['listening']),
+            'listening_pass_streak': dimension_states['listening']['pass_streak'],
+            'dictation_pending': _is_wrong_word_dimension_pending(dimension_states['dictation']),
+            'dictation_pass_streak': dimension_states['dictation']['pass_streak'],
+            'dimension_states': dimension_states,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
