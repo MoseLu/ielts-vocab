@@ -1,6 +1,7 @@
+import json
 from datetime import datetime, timedelta
 
-from models import User, UserLearningNote, UserQuickMemoryRecord, UserSmartWordStat, UserStudySession, UserWrongWord, db
+from models import User, UserLearningEvent, UserLearningNote, UserQuickMemoryRecord, UserSmartWordStat, UserStudySession, UserWrongWord, db
 
 
 def register_and_login(client, username='profile-user', password='password123'):
@@ -126,5 +127,169 @@ def test_learner_profile_endpoint_returns_focus_words_dimensions_and_topics(clie
     assert data['summary']['streak_days'] >= 2
     assert data['dimensions'][0]['dimension'] == 'meaning'
     assert data['focus_words'][0]['word'] == 'kind'
+    assert data['memory_system']['priority_dimension'] == 'recognition'
+    assert data['memory_system']['priority_dimension_label'] == '认读'
+    assert any(item['key'] == 'speaking' and item['status'] == 'needs_setup' for item in data['memory_system']['dimensions'])
     assert data['repeated_topics'][0]['word_context'] == 'kind'
     assert any('复习' in item for item in data['next_actions'])
+
+
+def test_learner_profile_includes_recent_live_pending_session_duration(client, app):
+    register_and_login(client, username='live-duration-profile-user')
+
+    now = datetime.utcnow().replace(microsecond=0)
+    completed_duration = 180
+    live_duration_floor = 30 * 60
+
+    with app.app_context():
+        user = User.query.filter_by(username='live-duration-profile-user').first()
+        assert user is not None
+
+        db.session.add_all([
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                words_studied=12,
+                correct_count=9,
+                wrong_count=3,
+                duration_seconds=completed_duration,
+                started_at=now - timedelta(hours=1),
+                ended_at=now - timedelta(minutes=57),
+            ),
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                started_at=now - timedelta(minutes=30),
+            ),
+        ])
+        db.session.commit()
+
+    response = client.get(f"/api/ai/learner-profile?date={now.strftime('%Y-%m-%d')}")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    expected_floor = completed_duration + live_duration_floor
+    assert data['summary']['today_sessions'] == 1
+    assert data['summary']['today_duration_seconds'] >= expected_floor
+    assert data['summary']['today_duration_seconds'] < expected_floor + 20
+
+
+def test_learner_profile_speaking_dimension_uses_persistent_events(client, app):
+    register_and_login(client, username='speaking-profile-user')
+
+    now = datetime.utcnow().replace(microsecond=0)
+
+    with app.app_context():
+        user = User.query.filter_by(username='speaking-profile-user').first()
+        assert user is not None
+
+        db.session.add_all([
+            UserLearningEvent(
+                user_id=user.id,
+                event_type='pronunciation_check',
+                source='assistant',
+                mode='speaking',
+                word='dynamic',
+                item_count=1,
+                correct_count=1,
+                wrong_count=0,
+                payload=json.dumps({
+                    'score': 85,
+                    'passed': True,
+                    'sentence': 'Dynamic pricing can confuse users.',
+                }, ensure_ascii=False),
+                occurred_at=now - timedelta(days=3),
+            ),
+            UserLearningEvent(
+                user_id=user.id,
+                event_type='speaking_simulation',
+                source='assistant',
+                mode='speaking',
+                item_count=1,
+                correct_count=1,
+                wrong_count=0,
+                payload=json.dumps({
+                    'part': 2,
+                    'topic': 'education',
+                    'target_words': ['dynamic'],
+                    'response_text': 'Dynamic vocabulary helped me explain the chart.',
+                }, ensure_ascii=False),
+                occurred_at=now - timedelta(days=2),
+            ),
+        ])
+        db.session.commit()
+
+    response = client.get(f"/api/ai/learner-profile?date={now.strftime('%Y-%m-%d')}")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    speaking = next(item for item in data['memory_system']['dimensions'] if item['key'] == 'speaking')
+
+    assert speaking['tracked'] is True
+    assert speaking['status'] == 'due'
+    assert speaking['tracked_words'] == 1
+    assert speaking['due_words'] == 1
+    assert 'dynamic' in speaking['focus_words']
+
+
+def test_learner_profile_listening_and_writing_dimensions_use_timed_events(client, app):
+    register_and_login(client, username='timed-dimension-user')
+
+    now = datetime.utcnow().replace(microsecond=0)
+
+    with app.app_context():
+        user = User.query.filter_by(username='timed-dimension-user').first()
+        assert user is not None
+
+        db.session.add_all([
+            UserLearningEvent(
+                user_id=user.id,
+                event_type='listening_review',
+                source='practice',
+                mode='listening',
+                word='dynamic',
+                item_count=1,
+                correct_count=1,
+                wrong_count=0,
+                payload=json.dumps({
+                    'passed': True,
+                    'source_mode': 'smart',
+                }, ensure_ascii=False),
+                occurred_at=now - timedelta(days=3),
+            ),
+            UserLearningEvent(
+                user_id=user.id,
+                event_type='writing_review',
+                source='practice',
+                mode='dictation',
+                word='coherent',
+                item_count=1,
+                correct_count=1,
+                wrong_count=0,
+                payload=json.dumps({
+                    'passed': True,
+                    'source_mode': 'dictation',
+                }, ensure_ascii=False),
+                occurred_at=now - timedelta(days=3),
+            ),
+        ])
+        db.session.commit()
+
+    response = client.get(f"/api/ai/learner-profile?date={now.strftime('%Y-%m-%d')}")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    listening = next(item for item in data['memory_system']['dimensions'] if item['key'] == 'listening')
+    writing = next(item for item in data['memory_system']['dimensions'] if item['key'] == 'writing')
+
+    assert listening['tracking_level'] == 'full'
+    assert listening['tracked'] is True
+    assert listening['status'] == 'due'
+    assert listening['due_words'] == 1
+    assert 'dynamic' in listening['focus_words']
+
+    assert writing['tracking_level'] == 'full'
+    assert writing['tracked'] is True
+    assert writing['status'] == 'due'
+    assert writing['due_words'] == 1
+    assert 'coherent' in writing['focus_words']
