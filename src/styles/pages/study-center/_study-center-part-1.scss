@@ -1,0 +1,380 @@
+/* Page: Study center dashboard */
+
+@use '../../utils/mixins' as *;
+
+.study-center-page {
+    background: transparent;
+}
+
+.study-center-page > .page-content {
+    @include page-content-fill(var(--page-section-gap));
+}
+
+.study-center-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.study-todo-panel,
+.study-quick-actions-panel,
+.study-guide-hero,
+.study-guide-panel,
+.study-guide-side-card,
+.study-book-card,
+.study-add-card {
+    @include panel-surface(
+        color-mix(in srgb, var(--surface-elevated) 97%, transparent),
+        1px solid var(--surface-border-strong),
+        10px,
+        var(--shadow-soft)
+    );
+}
+
+.study-todo-panel,
+.study-quick-actions-panel,
+.study-guide-panel,
+.study-guide-side-card {
+    padding: 16px;
+}
+
+.study-todo-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.study-todo-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.study-todo-eyebrow {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.study-todo-title {
+    margin: 6px 0 0;
+    font-size: clamp(24px, 3.2vw, 32px);
+    line-height: 1.14;
+    letter-spacing: -0.03em;
+}
+
+.study-todo-caption {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+}
+
+.study-todo-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.study-todo-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--surface-border-strong);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.86));
+}
+
+.study-todo-summary-item span {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.study-todo-summary-item strong {
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--text-primary);
+}
+
+.study-todo-list {
+    display: grid;
+    gap: 10px;
+}
+
+.study-todo-item {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid var(--surface-border-strong);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.9));
+}
+
+.study-todo-item.is-completed {
+    background: linear-gradient(180deg, rgba(240, 253, 244, 0.86), rgba(255, 255, 255, 0.92));
+    border-color: rgba(34, 197, 94, 0.18);
+}
+
+.study-todo-check {
+    width: 28px;
+    height: 28px;
+    margin-top: 2px;
+    border-radius: 999px;
+    border: 2px solid rgba(var(--accent-rgb), 0.34);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.study-todo-check span {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.18);
+}
+
+.study-todo-check.is-completed {
+    border-color: rgba(34, 197, 94, 0.24);
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--success);
+}
+
+.study-todo-check svg {
+    width: 14px;
+    height: 14px;
+}
+
+.study-todo-content {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    flex: 1;
+}
+
+.study-todo-main {
+    min-width: 0;
+}
+
+.study-todo-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.study-todo-title-row h2 {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.35;
+}
+
+.study-todo-main p {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+
+.study-todo-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.study-todo-state,
+.study-todo-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.study-todo-state {
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent);
+}
+
+.study-todo-state.is-completed {
+    background: rgba(34, 197, 94, 0.14);
+    color: var(--success);
+}
+
+.study-todo-badge {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--text-secondary);
+}
+
+.study-todo-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid var(--surface-border-strong);
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform var(--transition-fast),
+        border-color var(--transition-fast),
+        background var(--transition-fast);
+}
+
+.study-todo-action:hover {
+    transform: translateY(-1px);
+    border-color: rgba(var(--accent-rgb), 0.22);
+    background: rgba(var(--accent-rgb), 0.05);
+}
+
+.study-todo-empty {
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px dashed var(--surface-border-strong);
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: rgba(248, 250, 252, 0.7);
+}
+
+.study-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.study-quick-action {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid var(--surface-border-strong);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.9));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-fast);
+}
+
+.study-quick-action:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--accent-rgb), 0.22);
+    box-shadow: var(--shadow-panel);
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.94), rgba(255, 255, 255, 0.96));
+}
+
+.study-quick-action__label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.study-quick-action__value {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.study-guide-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(20px, 3vw, 30px);
+    background:
+        linear-gradient(142deg, rgba(255, 253, 248, 0.98) 0%, rgba(255, 249, 240, 0.97) 42%, rgba(248, 250, 252, 0.95) 100%);
+}
+
+.study-guide-hero::before {
+    content: '';
+    position: absolute;
+    inset: -120px auto auto -110px;
+    width: min(46vw, 420px);
+    height: min(46vw, 420px);
+    border-radius: 42% 58% 56% 44% / 40% 38% 62% 60%;
+    background:
+        radial-gradient(circle at 36% 38%, rgba(251, 191, 36, 0.34), rgba(249, 115, 22, 0.16) 38%, rgba(249, 115, 22, 0.04) 62%, transparent 76%);
+    filter: blur(6px);
+    opacity: 0.92;
+    pointer-events: none;
+}
+
+.study-guide-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(118deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.2) 24%, transparent 52%),
+        radial-gradient(circle at 88% 16%, rgba(15, 23, 42, 0.08), transparent 24%),
+        radial-gradient(circle at 78% 84%, rgba(148, 163, 184, 0.12), transparent 20%);
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+.study-guide-eyebrow {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.study-guide-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    margin-top: 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.study-guide-pill--accent {
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent);
+}
+
+.study-guide-pill--error {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--error);
+}
+
+.study-guide-pill--success {
+    background: rgba(34, 197, 94, 0.14);
+    color: var(--success);
+}
+
+.study-guide-pill--neutral {
+    background: rgba(15, 23, 42, 0.08);
+    color: var(--text-secondary);
+}
+
+.study-guide-title {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 12px 0 0;
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+}
+

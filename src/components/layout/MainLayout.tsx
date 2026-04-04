@@ -2,8 +2,8 @@
 
 import React from 'react'
 import { useAuth } from '../../contexts'
-import Header from '../Header'
-import LeftSidebar from '../LeftSidebar'
+import Header from './navigation/Header'
+import LeftSidebar from './navigation/LeftSidebar'
 
 interface MainLayoutProps {
   children: React.ReactNode

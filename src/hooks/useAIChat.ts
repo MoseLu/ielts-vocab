@@ -1,4 +1,4 @@
-export { useAIChat } from '../composables/ai-chat/useAIChat'
+export { useAIChat } from '../features/ai-chat/hooks/useAIChat'
 export {
   PASSIVE_STUDY_SESSION_MIN_SECONDS,
   STUDY_SESSION_IDLE_GRACE_MS,

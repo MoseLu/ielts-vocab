@@ -10,4 +10,4 @@ export { default as Popover } from './Popover'
 export { Scrollbar } from './Scrollbar'
 export { SegmentedControl, UnderlineTabs } from './NavigationControls'
 
-export { default as Toast } from '../Toast'
+export { default as Toast } from './Toast'

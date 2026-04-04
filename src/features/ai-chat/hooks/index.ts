@@ -1,2 +1,2 @@
-export { useAIChat } from '../../../hooks/useAIChat'
-export type { GeneratedBook } from '../../../hooks/useAIChat'
+export { useAIChat } from './useAIChat'
+export type { GeneratedBook } from './useAIChat'
