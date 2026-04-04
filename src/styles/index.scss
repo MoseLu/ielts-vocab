@@ -25,57 +25,36 @@
 @use './components/page-shell.scss';
 
 /* Pages: Auth */
-@use './pages/auth.scss';
-@use './pages/special-pages.scss';
+@use './pages/auth/index.scss' as *;
+@use './pages/special/index.scss' as *;
 
 /* Pages: Home / Study Center */
-@use './pages/home-banner.scss';
-@use './pages/home-sections.scss';
-@use './pages/study-center.scss';
-@use './pages/chapter-modal.scss';
-@use './pages/plan-modal.scss';
-@use './pages/day-card.scss';
+@use './pages/study-center/index.scss' as *;
+@use './pages/books/index.scss' as *;
 
 /* Pages: Practice */
-@use './pages/practice-layout.scss';
-@use './pages/practice-options.scss';
-@use './pages/practice-spelling.scss';
-@use './pages/practice-stage-guide.scss';
-@use './pages/practice-dictation.scss';
-@use './pages/practice-radio.scss';
-@use './pages/practice-quickmemory.scss';
-@use './pages/practice-complete.scss';
-@use './pages/practice-confusable.scss';
-
-/* Pages: Vocab Book */
-@use './pages/vocab-filters.scss';
-@use './pages/vocab-cards.scss';
-@use './pages/vocab-book-grid.scss';
-
-/* Pages: Practice Word List + Control Bar */
-@use './pages/practice-wordlist.scss';
+@use './pages/practice/index.scss' as *;
 
 /* Pages: Errors */
-@use './pages/errors.scss';
+@use './pages/errors/index.scss' as *;
 
 /* Pages: Stats */
-@use './pages/stats.scss';
+@use './pages/stats/index.scss' as *;
 
 /* Pages: Profile */
-@use './pages/profile.scss';
+@use './pages/profile/index.scss' as *;
 
 /* Pages: AI Chat */
-@use './pages/ai-chat.scss';
+@use './pages/ai-chat/index.scss' as *;
 
 /* Pages: Vocab Test */
-@use './pages/vocab-test.scss';
+@use './pages/vocab-test/index.scss' as *;
 
 /* Pages: Admin Dashboard */
-@use './pages/admin.scss';
+@use './pages/admin/index.scss' as *;
 
 /* Pages: Learning Journal */
-@use './pages/journal.scss';
-@use './pages/journal-markdown.scss';
+@use './pages/journal/index.scss' as *;
 
 /* Utils */
 @use './utils/utilities.scss';
