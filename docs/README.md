@@ -1,4 +1,5 @@
 # Docs Architecture
+Last updated: 2026-04-04 21:09:41 +08:00
 
 This directory is the project's durable documentation layer.
 
@@ -9,6 +10,7 @@ Use it for materials that should stay useful across sessions, contributors, and 
 ```text
 docs/
 - README.md                        # This index and placement rules
+- agents/                          # Child AGENTS/index docs when local guidance is needed
 - architecture/
   - audits/                        # Architecture and risk audits
   - specs/                         # Technical design specs
@@ -17,6 +19,7 @@ docs/
 - operations/                      # Tooling, automation, and operator runbooks
 - planning/
   - implementation/                # Concrete implementation plans
+- todo/                            # Child TODO breakdowns when root TODO needs detail
 - logs/
   - submit/                        # Append-only submit records
 ```
@@ -24,11 +27,13 @@ docs/
 ## Placement Rules
 
 - Put long-lived technical decisions in `architecture/specs/`.
+- Put child scope guidance under `agents/` only when root `AGENTS.md` would otherwise become noisy.
 - Put structural or risk reviews in `architecture/audits/`.
 - Put tooling setup and operational runbooks in `operations/`.
 - Put phased feature plans and rollout checklists in `planning/`.
 - Put governance history and cross-cutting UI cleanup logs in `governance/`.
 - Put cross-feature delivery checkpoints and release snapshots in `milestones/`.
+- Put detailed child task breakdowns in `todo/` when a root TODO item needs its own checklist.
 - Put append-only execution records in `logs/submit/`.
 
 ## Naming Rules

@@ -31,22 +31,36 @@
 
 .study-guide-hero {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     padding: clamp(20px, 3vw, 30px);
     background:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.14), transparent 32%),
-        linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(255, 255, 255, 0.92));
+        linear-gradient(142deg, rgba(255, 253, 248, 0.98) 0%, rgba(255, 249, 240, 0.97) 42%, rgba(248, 250, 252, 0.95) 100%);
+}
+
+.study-guide-hero::before {
+    content: '';
+    position: absolute;
+    inset: -120px auto auto -110px;
+    width: min(46vw, 420px);
+    height: min(46vw, 420px);
+    border-radius: 42% 58% 56% 44% / 40% 38% 62% 60%;
+    background:
+        radial-gradient(circle at 36% 38%, rgba(251, 191, 36, 0.34), rgba(249, 115, 22, 0.16) 38%, rgba(249, 115, 22, 0.04) 62%, transparent 76%);
+    filter: blur(6px);
+    opacity: 0.92;
+    pointer-events: none;
 }
 
 .study-guide-hero::after {
     content: '';
     position: absolute;
-    inset: auto -60px -80px auto;
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(251, 146, 60, 0.12), transparent 70%);
+    inset: 0;
+    background:
+        linear-gradient(118deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.2) 24%, transparent 52%),
+        radial-gradient(circle at 88% 16%, rgba(15, 23, 42, 0.08), transparent 24%),
+        radial-gradient(circle at 78% 84%, rgba(148, 163, 184, 0.12), transparent 20%);
+    opacity: 0.9;
     pointer-events: none;
 }
 
@@ -134,9 +148,10 @@
     gap: 6px;
     padding: 12px 14px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.84);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 249, 243, 0.68));
+    border: 1px solid rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
 }
 
 .study-guide-metric span {
