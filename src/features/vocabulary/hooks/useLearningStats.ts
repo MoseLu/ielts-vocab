@@ -158,11 +158,56 @@ export interface LearnerProfileTopic {
   latest_at: string | null
 }
 
+export interface LearnerProfileDailyPlanAction {
+  kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book'
+  cta_label: string
+  mode?: string | null
+  book_id?: string | null
+  dimension?: string | null
+}
+
+export interface LearnerProfileDailyPlanTask {
+  id: string
+  kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book'
+  title: string
+  description: string
+  status: 'pending' | 'completed'
+  completion_source?: 'completed_today' | 'already_clear' | null
+  badge: string
+  action: LearnerProfileDailyPlanAction
+}
+
+export interface LearnerProfileDailyPlanTodayContent {
+  date: string
+  studied_words: number
+  duration_seconds: number
+  sessions: number
+  latest_activity_title: string | null
+  latest_activity_at: string | null
+}
+
+export interface LearnerProfileDailyPlanFocusBook {
+  book_id: string
+  title: string
+  current_index: number
+  total_words: number
+  progress_percent: number
+  remaining_words: number
+  is_completed: boolean
+}
+
+export interface LearnerProfileDailyPlan {
+  tasks: LearnerProfileDailyPlanTask[]
+  today_content: LearnerProfileDailyPlanTodayContent
+  focus_book: LearnerProfileDailyPlanFocusBook | null
+}
+
 export interface LearnerProfile {
   date: string
   summary: LearnerProfileSummary
   dimensions: LearnerProfileDimension[]
   focus_words: LearnerProfileFocusWord[]
+  daily_plan?: LearnerProfileDailyPlan
   repeated_topics: LearnerProfileTopic[]
   next_actions: string[]
   mode_breakdown: ModeStat[]
