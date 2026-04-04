@@ -1,3 +1,3 @@
-export { default as DailySummaryDocument } from './DailySummaryDocument'
-export { default as JournalWorkspace } from './JournalWorkspace'
-export { default as QaHistoryDocument } from './QaHistoryDocument'
+export { default as DailySummaryDocument } from './documents/DailySummaryDocument'
+export { default as JournalWorkspace } from './layout/JournalWorkspace'
+export { default as QaHistoryDocument } from './documents/QaHistoryDocument'
