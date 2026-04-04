@@ -6,15 +6,17 @@ import random
 import functools
 import time
 from datetime import datetime, timedelta
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request, stream_with_context
 from sqlalchemy import text
 from models import db, User, UserBookProgress, UserChapterProgress, UserChapterModeProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory, UserLearningNote, WRONG_WORD_DIMENSIONS, WRONG_WORD_PENDING_REVIEW_TARGET, _build_wrong_word_dimension_states, _empty_wrong_word_dimension_state, _normalize_wrong_word_dimension_state, _summarize_wrong_word_dimension_states
 from routes.middleware import token_required
+from services.local_time import current_local_date, local_day_window_ms, recent_local_day_range, utc_naive_to_local_date_key, utc_now_naive
 from services.learner_profile import build_learner_profile
 from services.learning_events import record_learning_event
+from services.listening_confusables import get_preset_listening_confusables
 from services.memory_topics import build_memory_topics
 from services.study_sessions import get_live_pending_session_snapshot
-from services.llm import chat, web_search, TOOLS, TOOL_HANDLERS, correct_text, differentiate_synonyms
+from services.llm import chat, stream_chat_events, web_search, TOOLS, TOOL_HANDLERS, correct_text, differentiate_synonyms
 
 ai_bp = Blueprint('ai', __name__)
 
@@ -314,18 +316,19 @@ def _calc_streak_days(user_id: int) -> int:
     if not sessions:
         return 0
 
-    from datetime import timedelta
     date_set: set[str] = set()
     for s in sessions:
-        if s.started_at:
-            date_set.add(s.started_at.strftime('%Y-%m-%d'))
+        date_key = utc_naive_to_local_date_key(s.started_at)
+        if date_key:
+            date_set.add(date_key)
 
     if not date_set:
         return 0
 
     sorted_dates = sorted(date_set, reverse=True)
-    today_str = datetime.utcnow().strftime('%Y-%m-%d')
-    yesterday_str = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
+    today_local = current_local_date()
+    today_str = today_local.isoformat()
+    yesterday_str = (today_local - timedelta(days=1)).isoformat()
 
     if sorted_dates[0] not in (today_str, yesterday_str):
         return 0
@@ -345,10 +348,8 @@ def _calc_streak_days(user_id: int) -> int:
 
 def _quick_memory_word_stats(user_id: int):
     """速记(艾宾浩斯)表：今日新词/今日复习/累计复习词数、艾宾浩斯达成率等。"""
-    now_utc = datetime.utcnow()
-    today_start = datetime(now_utc.year, now_utc.month, now_utc.day)
-    today_start_ms = int(today_start.timestamp() * 1000)
-    tomorrow_ms = int((today_start + timedelta(days=1)).timestamp() * 1000)
+    now_utc = utc_now_naive()
+    _, today_start_ms, tomorrow_ms = local_day_window_ms(now_utc=now_utc)
     now_ms = int(now_utc.timestamp() * 1000)
 
     qm_rows = UserQuickMemoryRecord.query.filter_by(user_id=user_id).all()
@@ -534,6 +535,55 @@ def _levenshtein(a: str, b: str) -> int:
 
 
 _IPA_STRIP = re.compile(r'[/\[\]ˈˌ.: ]')
+_MEANING_POS_RE = re.compile(r'\b(?:n|v|vi|vt|adj|adv|prep|pron|conj|aux|int|num|art|a)\.\s*', re.IGNORECASE)
+
+
+def _clean_meaning_fragment(value: str) -> str:
+    return re.sub(r'\s+', ' ', _MEANING_POS_RE.sub(' ', (value or '')).replace('（', ' ').replace('）', ' ').replace('(', ' ').replace(')', ' ')).strip()
+
+
+def _normalize_meaning_text(value: str) -> str:
+    text = _clean_meaning_fragment(value).lower()
+    text = re.sub(r'[;；，,、/]', ' ', text)
+    text = re.sub(r'[。！？]', ' ', text)
+    return re.sub(r'\s+', ' ', text).strip()
+
+
+def _normalize_listening_token(token: str) -> str:
+    if token.endswith('ies') and len(token) > 4:
+        return f'{token[:-3]}y'
+    if re.search(r'(?:ches|shes|xes|zes|ses|oes)$', token) and len(token) > 4:
+        return token[:-2]
+    if token.endswith('s') and len(token) > 3 and not re.search(r'(?:ss|us|is)$', token):
+        return token[:-1]
+    return token
+
+
+def _normalize_listening_family_key(word: str | None, group_key: str | None = None) -> str:
+    base = (group_key or word or '').strip().lower()
+    if not base:
+        return ''
+
+    normalized = base
+    normalized = re.sub(r"[’‘`]", "'", normalized)
+    normalized = re.sub(r'[‐‑‒–—―]', '-', normalized)
+    normalized = re.sub(r'^[\s"\'“”‘’.,!?;:()[\]{}]+', '', normalized)
+    normalized = re.sub(r'[\s"\'“”‘’.,!?;:()[\]{}]+$', '', normalized)
+    normalized = re.sub(r'\s+', ' ', normalized)
+    normalized = re.sub(r'metres\b', 'meters', normalized)
+    normalized = re.sub(r'metre\b', 'meter', normalized)
+    normalized = re.sub(r'litres\b', 'liters', normalized)
+    normalized = re.sub(r'litre\b', 'liter', normalized)
+    normalized = re.sub(r'centres\b', 'centers', normalized)
+    normalized = re.sub(r'centre\b', 'center', normalized)
+    normalized = re.sub(r'theatres\b', 'theaters', normalized)
+    normalized = re.sub(r'theatre\b', 'theater', normalized)
+
+    tokens: list[str] = []
+    for token in normalized.split(' '):
+        parts = [_normalize_listening_token(part) for part in token.split('-')]
+        tokens.append('-'.join(parts))
+    return ' '.join(tokens).strip()
 
 
 def _confusability_score(
@@ -594,6 +644,8 @@ def get_similar_words(current_user: User):
       word     – target word (required)
       phonetic – IPA string (optional, improves phonetic scoring)
       pos      – part of speech (optional)
+      definition – optional; only used to avoid duplicate displayed meanings
+      group_key – optional; filters out same explicit confusable group
       n        – result count (default 10, max 20)
     """
     target_word = (request.args.get('word') or '').strip()
@@ -602,23 +654,67 @@ def get_similar_words(current_user: User):
 
     target_phonetic = request.args.get('phonetic', '')
     target_pos      = request.args.get('pos', '')
+    target_definition = request.args.get('definition', '')
+    target_group_key = request.args.get('group_key', '')
     n               = min(int(request.args.get('n', 10)), 20)
 
     pool = _get_global_vocab_pool()
     tw_lower = target_word.lower()
+    target_definition_norm = _normalize_meaning_text(target_definition)
+    target_family_key = _normalize_listening_family_key(target_word, target_group_key)
 
-    scored: list[tuple[float, dict]] = []
+    preset_results: list[dict] = []
+    seen_preset_family_keys: set[str] = set()
+    for preset_word in get_preset_listening_confusables(target_word, limit=n * 2):
+        candidate_word = (preset_word.get('word') or '').strip()
+        if not candidate_word or candidate_word.lower() == tw_lower:
+            continue
+        candidate_family_key = _normalize_listening_family_key(candidate_word, preset_word.get('group_key'))
+        if target_family_key and candidate_family_key == target_family_key:
+            continue
+        if candidate_family_key and candidate_family_key in seen_preset_family_keys:
+            continue
+        if target_definition_norm and _normalize_meaning_text(preset_word.get('definition', '')) == target_definition_norm:
+            continue
+        if candidate_family_key:
+            seen_preset_family_keys.add(candidate_family_key)
+        preset_results.append(preset_word)
+        if len(preset_results) >= n:
+            break
+
+    if preset_results:
+        return jsonify({'words': preset_results})
+
+    scored: list[tuple[float, str, dict]] = []
     for w in pool:
-        if w['word'].lower() == tw_lower:
+        candidate_word = (w.get('word') or '').strip()
+        if not candidate_word:
+            continue
+        candidate_family_key = _normalize_listening_family_key(candidate_word, w.get('group_key'))
+        if candidate_word.lower() == tw_lower:
+            continue
+        if target_family_key and candidate_family_key == target_family_key:
+            continue
+        if target_definition_norm and _normalize_meaning_text(w.get('definition', '')) == target_definition_norm:
             continue
         s = _confusability_score(
             target_word, target_phonetic, target_pos,
-            w['word'], w.get('phonetic', ''), w.get('pos', ''),
+            candidate_word, w.get('phonetic', ''), w.get('pos', ''),
         )
-        scored.append((s, w))
+        scored.append((s, candidate_family_key, w))
 
     scored.sort(key=lambda x: -x[0])
-    return jsonify({'words': [w for _, w in scored[:n]]})
+    results: list[dict] = []
+    seen_family_keys: set[str] = set()
+    for _, family_key, word_data in scored:
+        if family_key and family_key in seen_family_keys:
+            continue
+        if family_key:
+            seen_family_keys.add(family_key)
+        results.append(word_data)
+        if len(results) >= n:
+            break
+    return jsonify({'words': results})
 
 
 # ── GET /api/ai/context ───────────────────────────────────────────────────────
@@ -2228,56 +2324,57 @@ _SUMMARIZE_CHUNK = 20       # how many old turns to compress each time
 
 def _maybe_summarize_history(user_id: int):
     """If conversation history is long, compress old turns into UserMemory.conversation_summary."""
-    total = UserConversationHistory.query.filter_by(user_id=user_id).count()
-    mem = UserMemory.query.filter_by(user_id=user_id).first()
-    already_summarized = mem.summary_turn_count if mem else 0
+    with current_app.app_context():
+        total = UserConversationHistory.query.filter_by(user_id=user_id).count()
+        mem = UserMemory.query.filter_by(user_id=user_id).first()
+        already_summarized = mem.summary_turn_count if mem else 0
 
-    unsummarized = total - already_summarized
-    if unsummarized <= _SUMMARIZE_THRESHOLD:
-        return  # Not enough new turns yet
+        unsummarized = total - already_summarized
+        if unsummarized <= _SUMMARIZE_THRESHOLD:
+            return  # Not enough new turns yet
 
-    # Fetch the oldest un-summarized chunk
-    old_rows = (
-        UserConversationHistory.query
-        .filter_by(user_id=user_id)
-        .order_by(UserConversationHistory.created_at.asc())
-        .offset(already_summarized)
-        .limit(_SUMMARIZE_CHUNK)
-        .all()
-    )
-    if not old_rows:
-        return
+        # Fetch the oldest un-summarized chunk
+        old_rows = (
+            UserConversationHistory.query
+            .filter_by(user_id=user_id)
+            .order_by(UserConversationHistory.created_at.asc())
+            .offset(already_summarized)
+            .limit(_SUMMARIZE_CHUNK)
+            .all()
+        )
+        if not old_rows:
+            return
 
-    # Build a conversation snippet for the LLM to summarize
-    snippet = '\n'.join(
-        f"{'用户' if r.role == 'user' else 'AI'}：{r.content[:300]}"
-        for r in old_rows
-    )
-    existing_summary = mem.conversation_summary if mem else ''
+        # Build a conversation snippet for the LLM to summarize
+        snippet = '\n'.join(
+            f"{'用户' if r.role == 'user' else 'AI'}：{r.content[:300]}"
+            for r in old_rows
+        )
+        existing_summary = mem.conversation_summary if mem else ''
 
-    summary_prompt = [
-        {"role": "system", "content": (
-            "你是一个摘要助手，请将以下对话压缩为一段简洁的中文摘要（100-200字），"
-            "重点保留：用户的学习目标、偏好、困难、AI给出的重要建议和用户的关键反应。"
-            "不要编造内容，只提炼对话中已有的信息。"
-        )},
-        {"role": "user", "content": (
-            (f"【已有摘要】\n{existing_summary}\n\n" if existing_summary else '') +
-            f"【新增对话（{len(old_rows)}条）】\n{snippet}\n\n"
-            "请输出更新后的完整摘要："
-        )},
-    ]
-    try:
-        resp = chat(summary_prompt, max_tokens=400)
-        new_summary = resp.get('text', '').strip()
-        if new_summary:
-            mem = _get_or_create_memory(user_id)
-            mem.conversation_summary = new_summary
-            mem.summary_turn_count = already_summarized + len(old_rows)
-            db.session.commit()
-    except Exception as e:
-        import logging
-        logging.warning(f"[AI] Summarization failed for user={user_id}: {e}")
+        summary_prompt = [
+            {"role": "system", "content": (
+                "你是一个摘要助手，请将以下对话压缩为一段简洁的中文摘要（100-200字），"
+                "重点保留：用户的学习目标、偏好、困难、AI给出的重要建议和用户的关键反应。"
+                "不要编造内容，只提炼对话中已有的信息。"
+            )},
+            {"role": "user", "content": (
+                (f"【已有摘要】\n{existing_summary}\n\n" if existing_summary else '') +
+                f"【新增对话（{len(old_rows)}条）】\n{snippet}\n\n"
+                "请输出更新后的完整摘要："
+            )},
+        ]
+        try:
+            resp = chat(summary_prompt, max_tokens=400)
+            new_summary = resp.get('text', '').strip()
+            if new_summary:
+                mem = _get_or_create_memory(user_id)
+                mem.conversation_summary = new_summary
+                mem.summary_turn_count = already_summarized + len(old_rows)
+                db.session.commit()
+        except Exception as e:
+            import logging
+            logging.warning(f"[AI] Summarization failed for user={user_id}: {e}")
 
 
 # ── Per-request tool handlers (need user_id, built inside ask()) ──────────────
@@ -2361,6 +2458,217 @@ def _make_get_book_chapters(user_id: int):
     return handler
 
 
+def _build_ask_messages(current_user: User, user_message: str, frontend_context: dict) -> list[dict]:
+    import logging
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+    try:
+        ctx_data = _get_context_data(current_user.id)
+        context_msg = _build_learning_context_msg(ctx_data, frontend_context)
+        messages.append({"role": "user", "content": f"[学习数据]\n{context_msg}"})
+    except Exception as exc:
+        logging.warning(f"[AI] Failed to fetch user context: {exc}")
+        messages.append({"role": "user", "content": "[学习数据]\n数据加载失败，请根据用户当前状态回复。"})
+        if frontend_context:
+            ctx_str = _build_context_msg(frontend_context)
+            messages.append({"role": "user", "content": f"[当前学习状态]\n{ctx_str}"})
+
+    messages.extend(_load_history(current_user.id))
+
+    related_notes_msg = _build_related_notes_msg(
+        _collect_related_learning_notes(current_user.id, user_message, frontend_context)
+    )
+    if related_notes_msg:
+        messages.append({"role": "user", "content": related_notes_msg})
+
+    search_trigger_keywords = ['例句', '例 子', 'example', '怎么 用', '用法', '这个词', '这个词的', '这个单词']
+    needs_search = any(keyword in user_message for keyword in search_trigger_keywords)
+
+    if needs_search and frontend_context.get('currentWord'):
+        word = frontend_context['currentWord']
+        search_query = f"{word} example sentences IELTS context"
+        try:
+            search_results = web_search(search_query)
+            messages.append({"role": "user", "content": (
+                f"[网页搜索结果 for '{word}']\n{search_results}\n\n"
+                "请根据搜索结果，为用户解释这个单词的用法并给出例句。"
+            )})
+        except Exception:
+            messages.append({"role": "user", "content": user_message})
+    else:
+        messages.append({"role": "user", "content": user_message})
+
+    return messages
+
+
+def _build_ask_extra_handlers(current_user: User) -> dict[str, callable]:
+    def _handle_remember(note: str, category: str = 'other') -> str:
+        return _add_memory_note(current_user.id, note, category)
+
+    return {
+        'remember_user_note': _handle_remember,
+        'get_wrong_words': _make_get_wrong_words(current_user.id),
+        'get_chapter_words': _make_get_chapter_words(current_user.id),
+        'get_book_chapters': _make_get_book_chapters(current_user.id),
+    }
+
+
+def _persist_ask_response(current_user: User, user_message: str, frontend_context: dict, clean_reply: str) -> None:
+    import logging
+
+    _save_turn(current_user.id, user_message, clean_reply)
+
+    try:
+        word_ctx = frontend_context.get('currentWord') if frontend_context else None
+        note = UserLearningNote(
+            user_id=current_user.id,
+            question=user_message,
+            answer=clean_reply,
+            word_context=word_ctx,
+        )
+        db.session.add(note)
+        record_learning_event(
+            user_id=current_user.id,
+            event_type='assistant_question',
+            source='assistant',
+            mode=(frontend_context.get('practiceMode') if isinstance(frontend_context, dict) else None),
+            word=word_ctx,
+            payload={
+                'question': user_message[:500],
+                'answer_excerpt': clean_reply[:500],
+            },
+        )
+        db.session.commit()
+    except Exception as note_err:
+        db.session.rollback()
+        logging.warning(f"[AI] Failed to save learning note: {note_err}")
+
+    try:
+        import eventlet
+        eventlet.spawn(_maybe_summarize_history, current_user.id)
+    except Exception:
+        pass
+
+
+def _strip_options_for_stream(text: str) -> str:
+    stripped = re.sub(r'\[options\][\s\S]*?\[/options\]\s*', '', text)
+    open_tag_index = stripped.find('[options]')
+    if open_tag_index >= 0:
+        stripped = stripped[:open_tag_index]
+    return stripped.rstrip()
+
+
+def _encode_sse_event(payload: dict) -> str:
+    return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+def _build_tool_status_message(tool_name: str, tool_input: dict | None = None) -> str:
+    safe_input = tool_input if isinstance(tool_input, dict) else {}
+
+    if tool_name == 'web_search':
+        return 'AI 正在检索相关资料...'
+
+    if tool_name == 'remember_user_note':
+        category = str(safe_input.get('category', '') or '').strip()
+        if category == 'goal':
+            return 'AI 正在记录你的学习目标...'
+        if category == 'habit':
+            return 'AI 正在记录你的学习习惯...'
+        if category == 'weakness':
+            return 'AI 正在记录你的薄弱点...'
+        if category == 'preference':
+            return 'AI 正在记录你的学习偏好...'
+        if category == 'achievement':
+            return 'AI 正在记录你的学习进展...'
+        return 'AI 正在记录你的学习信息...'
+
+    if tool_name == 'get_wrong_words':
+        return 'AI 正在分析你的错词记录...'
+
+    if tool_name == 'get_chapter_words':
+        chapter_id = safe_input.get('chapter_id')
+        if chapter_id not in (None, ''):
+            return f'AI 正在读取第 {chapter_id} 章词表...'
+        return 'AI 正在读取章节词表...'
+
+    if tool_name == 'get_book_chapters':
+        return 'AI 正在读取词书章节结构...'
+
+    return 'AI 正在处理学习数据...'
+
+
+def _stream_chat_with_tools(
+    messages: list[dict],
+    *,
+    tools: list | None = None,
+    max_iterations: int = 5,
+    extra_handlers: dict | None = None,
+):
+    import logging as _log
+
+    handlers = {**TOOL_HANDLERS, **(extra_handlers or {})}
+
+    for i in range(max_iterations):
+        tool_called = False
+        for event in stream_chat_events(messages, tools=tools, max_tokens=4096):
+            event_type = event.get('type')
+            if event_type == 'text_delta':
+                yield {'type': 'text_delta', 'text': str(event.get('text', '') or '')}
+                continue
+            if event_type != 'tool_call':
+                continue
+
+            tool_called = True
+            tool_name = str(event.get('tool', '') or '')
+            raw_input = event.get('input', {})
+            tool_call_id = str(event.get('tool_call_id', f"call_{i}") or f"call_{i}")
+            handler = handlers.get(tool_name)
+            tool_input = _validate_tool_input(tool_name, raw_input) if isinstance(raw_input, dict) else None
+
+            if handler and tool_input is not None:
+                status_message = _build_tool_status_message(tool_name, tool_input)
+                yield {'type': 'status', 'stage': 'tool', 'tool': tool_name, 'message': status_message}
+                try:
+                    result = handler(**tool_input)
+                except Exception as exc:
+                    result = f"Tool error: {exc}"
+
+                messages.append({
+                    "role": "assistant",
+                    "content": [{
+                        "type": "tool_use",
+                        "id": tool_call_id,
+                        "name": tool_name,
+                        "input": tool_input
+                    }]
+                })
+                messages.append({
+                    "role": "user",
+                    "content": [{
+                        "type": "tool_result",
+                        "tool_use_id": tool_call_id,
+                        "content": result
+                    }]
+                })
+            elif handler and tool_input is None:
+                _log.warning(f"[AI] Tool '{tool_name}' input validation failed: {raw_input!r}")
+                messages.append({
+                    "role": "assistant",
+                    "content": f"[Tool '{tool_name}' input validation failed]"
+                })
+            else:
+                messages.append({
+                    "role": "assistant",
+                    "content": f"[Tool '{tool_name}' not available]"
+                })
+
+        if not tool_called:
+            return
+
+    yield {'type': 'text_delta', 'text': '[对话轮次过多，已停止]'}
+
+
 @ai_bp.route('/ask', methods=['POST'])
 @token_required
 def ask(current_user: User):
@@ -2378,61 +2686,8 @@ def ask(current_user: User):
     if not user_message:
         return jsonify({'error': 'Message is required'}), 400
 
-    # Build messages for LLM
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-    # Inject persistent user data (learning summary)
-    try:
-        ctx_data = _get_context_data(current_user.id)
-        context_msg = _build_learning_context_msg(ctx_data, frontend_context)
-        messages.append({"role": "user", "content": f"[学习数据]\n{context_msg}"})
-    except Exception as e:
-        logging.warning(f"[AI] Failed to fetch user context: {e}")
-        messages.append({"role": "user", "content": "[学习数据]\n数据加载失败，请根据用户当前状态回复。"})
-        # Still inject frontend context if available
-        if frontend_context:
-            ctx_str = _build_context_msg(frontend_context)
-            messages.append({"role": "user", "content": f"[当前学习状态]\n{ctx_str}"})
-
-    # Load and append conversation history so AI remembers past turns
-    history = _load_history(current_user.id)
-    messages.extend(history)
-
-    related_notes_msg = _build_related_notes_msg(
-        _collect_related_learning_notes(current_user.id, user_message, frontend_context)
-    )
-    if related_notes_msg:
-        messages.append({"role": "user", "content": related_notes_msg})
-
-    # Proactive search: if user asks about examples/definitions, search first
-    search_trigger_keywords = ['例句', '例 子', 'example', '怎么 用', '用法', '这个词', '这个词的', '这个单词']
-    needs_search = any(kw in user_message for kw in search_trigger_keywords)
-
-    if needs_search and frontend_context.get('currentWord'):
-        word = frontend_context['currentWord']
-        search_query = f"{word} example sentences IELTS context"
-        try:
-            from services.llm import web_search
-            search_results = web_search(search_query)
-            messages.append({"role": "user", "content": (
-                f"[网页搜索结果 for '{word}']\n{search_results}\n\n"
-                "请根据搜索结果，为用户解释这个单词的用法并给出例句。"
-            )})
-        except Exception:
-            messages.append({"role": "user", "content": user_message})
-    else:
-        messages.append({"role": "user", "content": user_message})
-
-    # Build per-request handlers that close over current_user.id
-    def _handle_remember(note: str, category: str = 'other') -> str:
-        return _add_memory_note(current_user.id, note, category)
-
-    extra_handlers = {
-        'remember_user_note': _handle_remember,
-        'get_wrong_words': _make_get_wrong_words(current_user.id),
-        'get_chapter_words': _make_get_chapter_words(current_user.id),
-        'get_book_chapters': _make_get_book_chapters(current_user.id),
-    }
+    messages = _build_ask_messages(current_user, user_message, frontend_context)
+    extra_handlers = _build_ask_extra_handlers(current_user)
 
     # Run chat with tool calling support — capped at 90 s total to prevent hangs
     try:
@@ -2445,41 +2700,7 @@ def ask(current_user: User):
         # Strip [options] blocks from the visible reply text
         clean_reply = _strip_options(final_text)
 
-        # Persist this turn so future calls include it as history
-        _save_turn(current_user.id, user_message, clean_reply)
-
-        # Auto-save Q&A as a learning note for the journal
-        try:
-            word_ctx = frontend_context.get('currentWord') if frontend_context else None
-            note = UserLearningNote(
-                user_id=current_user.id,
-                question=user_message,
-                answer=clean_reply,
-                word_context=word_ctx,
-            )
-            db.session.add(note)
-            record_learning_event(
-                user_id=current_user.id,
-                event_type='assistant_question',
-                source='assistant',
-                mode=(frontend_context.get('practiceMode') if isinstance(frontend_context, dict) else None),
-                word=word_ctx,
-                payload={
-                    'question': user_message[:500],
-                    'answer_excerpt': clean_reply[:500],
-                },
-            )
-            db.session.commit()
-        except Exception as note_err:
-            db.session.rollback()
-            logging.warning(f"[AI] Failed to save learning note: {note_err}")
-
-        # Trigger background summarization asynchronously (non-blocking)
-        try:
-            import eventlet
-            eventlet.spawn(_maybe_summarize_history, current_user.id)
-        except Exception:
-            pass
+        _persist_ask_response(current_user, user_message, frontend_context, clean_reply)
 
         return jsonify({
             'reply': clean_reply,
@@ -2490,6 +2711,70 @@ def ask(current_user: User):
         import logging as _log
         _log.error(f"[AI] /ask error for user={current_user.id}: {e}", exc_info=True)
         return jsonify({'error': 'AI 服务暂时不可用，请稍后重试'}), 500
+
+
+@ai_bp.route('/ask/stream', methods=['POST'])
+@token_required
+def ask_stream(current_user: User):
+    body = request.get_json() or {}
+    user_message = body.get('message', '').strip()
+    frontend_context = body.get('context', {})
+
+    import logging
+    logging.warning(f"[AI] ask/stream from user={current_user.id}: msg='{user_message[:50]}' ctx={frontend_context}")
+
+    if not user_message:
+        return jsonify({'error': 'Message is required'}), 400
+
+    messages = _build_ask_messages(current_user, user_message, frontend_context)
+    extra_handlers = _build_ask_extra_handlers(current_user)
+
+    @stream_with_context
+    def generate():
+        import logging as _log
+
+        raw_reply = ''
+        visible_reply = ''
+        try:
+            yield _encode_sse_event({'type': 'status', 'stage': 'start', 'message': 'AI 正在思考...'})
+
+            import eventlet
+            with eventlet.Timeout(90, RuntimeError('LLM timeout')):
+                for event in _stream_chat_with_tools(messages, tools=TOOLS, extra_handlers=extra_handlers):
+                    event_type = event.get('type')
+                    if event_type == 'status':
+                        yield _encode_sse_event(event)
+                        continue
+                    if event_type != 'text_delta':
+                        continue
+
+                    raw_reply += str(event.get('text', '') or '')
+                    next_visible_reply = _strip_options_for_stream(raw_reply)
+                    if next_visible_reply.startswith(visible_reply):
+                        visible_delta = next_visible_reply[len(visible_reply):]
+                    else:
+                        visible_delta = next_visible_reply
+
+                    if visible_delta:
+                        visible_reply = next_visible_reply
+                        yield _encode_sse_event({'type': 'text', 'delta': visible_delta})
+
+            clean_reply = _strip_options(raw_reply)
+            options = _parse_options(raw_reply) or []
+            _persist_ask_response(current_user, user_message, frontend_context, clean_reply)
+
+            if options:
+                yield _encode_sse_event({'type': 'options', 'options': options})
+            yield _encode_sse_event({'type': 'done', 'reply': clean_reply, 'options': options})
+        except Exception as exc:
+            _log.error(f"[AI] /ask/stream error for user={current_user.id}: {exc}", exc_info=True)
+            yield _encode_sse_event({'type': 'error', 'error': 'AI 服务暂时不可用，请稍后重试'})
+
+    response = Response(generate(), mimetype='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache, no-transform'
+    response.headers['X-Accel-Buffering'] = 'no'
+    response.headers['Connection'] = 'keep-alive'
+    return response
 
 
 # ── POST /api/ai/generate-book ───────────────────────────────────────────────
@@ -2963,15 +3248,14 @@ def clear_wrong_words(current_user: User):
 @token_required
 def get_learning_stats(current_user: User):
     """Return daily aggregated learning stats from study sessions, with optional filters."""
-    from datetime import datetime, timedelta
     from collections import defaultdict
 
     days = min(int(request.args.get('days', 30)), 90)
     book_id_filter = request.args.get('book_id') or None
     mode_filter = request.args.get('mode') or None
 
-    now_utc = datetime.utcnow()
-    since = now_utc - timedelta(days=days)
+    now_utc = utc_now_naive()
+    date_keys, since = recent_local_day_range(days, now_utc)
     query = UserStudySession.query.filter(
         UserStudySession.user_id == current_user.id,
         UserStudySession.started_at >= since,
@@ -3001,7 +3285,9 @@ def get_learning_stats(current_user: User):
         'wrong_count': 0, 'duration_seconds': 0, 'sessions': 0
     })
     for s in sessions:
-        date_key = s.started_at.strftime('%Y-%m-%d')
+        date_key = utc_naive_to_local_date_key(s.started_at)
+        if not date_key:
+            continue
         daily[date_key]['words_studied'] += s.words_studied or 0
         daily[date_key]['correct_count'] += s.correct_count or 0
         daily[date_key]['wrong_count'] += s.wrong_count or 0
@@ -3010,13 +3296,13 @@ def get_learning_stats(current_user: User):
 
     if filtered_live_pending:
         live_session = filtered_live_pending['session']
-        date_key = live_session.started_at.strftime('%Y-%m-%d')
-        daily[date_key]['duration_seconds'] += filtered_live_pending['elapsed_seconds']
+        date_key = utc_naive_to_local_date_key(live_session.started_at)
+        if date_key:
+            daily[date_key]['duration_seconds'] += filtered_live_pending['elapsed_seconds']
 
     # Build full date range (oldest → newest)
     result = []
-    for i in range(days):
-        d = (now_utc - timedelta(days=days - 1 - i)).strftime('%Y-%m-%d')
+    for d in date_keys:
         day_data = dict(daily.get(d, {
             'words_studied': 0, 'correct_count': 0,
             'wrong_count': 0, 'duration_seconds': 0, 'sessions': 0
@@ -3039,14 +3325,15 @@ def get_learning_stats(current_user: User):
 
     ch_daily: dict = defaultdict(lambda: {'words_studied': 0, 'correct_count': 0, 'wrong_count': 0})
     for cp in chapter_rows:
-        dk = cp.updated_at.strftime('%Y-%m-%d')
+        dk = utc_naive_to_local_date_key(cp.updated_at)
+        if not dk:
+            continue
         ch_daily[dk]['words_studied'] += cp.words_learned or 0
         ch_daily[dk]['correct_count'] += cp.correct_count or 0
         ch_daily[dk]['wrong_count'] += cp.wrong_count or 0
 
     fallback_result = []
-    for i in range(days):
-        d = (now_utc - timedelta(days=days - 1 - i)).strftime('%Y-%m-%d')
+    for d in date_keys:
         fd = dict(ch_daily.get(d, {'words_studied': 0, 'correct_count': 0, 'wrong_count': 0}))
         t = fd['correct_count'] + fd['wrong_count']
         fd['accuracy'] = round(fd['correct_count'] / t * 100) if t > 0 else None
@@ -3116,14 +3403,14 @@ def get_learning_stats(current_user: User):
     # Today's accuracy prefers real session data. Chapter progress can lag behind
     # or reflect only one completed chapter, which can incorrectly pin the day
     # at 100% while same-day practice sessions include mistakes.
-    today_str = now_utc.strftime('%Y-%m-%d')
+    today_str = current_local_date(now_utc).isoformat()
     today_chapters = [cp for cp in all_chapter_progress
-                      if cp.updated_at and cp.updated_at.strftime('%Y-%m-%d') == today_str]
+                      if utc_naive_to_local_date_key(cp.updated_at) == today_str]
     today_correct = sum(cp.correct_count or 0 for cp in today_chapters)
     today_wrong = sum(cp.wrong_count or 0 for cp in today_chapters)
     today_attempted = today_correct + today_wrong
     today_sessions = [s for s in all_user_sessions
-                      if s.started_at and s.started_at.strftime('%Y-%m-%d') == today_str]
+                      if utc_naive_to_local_date_key(s.started_at) == today_str]
     session_today_correct = sum(s.correct_count or 0 for s in today_sessions)
     session_today_wrong = sum(s.wrong_count or 0 for s in today_sessions)
     session_today_attempted = session_today_correct + session_today_wrong
@@ -3142,7 +3429,7 @@ def get_learning_stats(current_user: User):
         live_session = global_live_pending['session']
         live_elapsed = global_live_pending['elapsed_seconds']
         alltime_duration += live_elapsed
-        if live_session.started_at and live_session.started_at.strftime('%Y-%m-%d') == today_str:
+        if utc_naive_to_local_date_key(live_session.started_at) == today_str:
             today_duration += live_elapsed
 
     # ── Per-mode breakdown (all-time, from UserStudySession) ──────────────────
@@ -3630,6 +3917,9 @@ def get_quick_memory_review_queue(current_user: User):
     except (TypeError, ValueError):
         within_days = 1
 
+    scope = (request.args.get('scope') or 'window').strip().lower()
+    due_only = scope == 'due'
+
     book_id_filter = (request.args.get('book_id') or '').strip() or None
     chapter_id_filter = _normalize_chapter_id(request.args.get('chapter_id'))
 
@@ -3680,6 +3970,8 @@ def get_quick_memory_review_queue(current_user: User):
         if next_review <= now_ms:
             due_state = 'due'
         elif next_review <= window_end_ms:
+            if due_only:
+                continue
             due_state = 'upcoming'
         else:
             continue

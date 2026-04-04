@@ -1,12 +1,25 @@
 import json
 import random
 import string
+from flask import current_app, has_app_context
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from sqlalchemy import and_, not_, or_
 from werkzeug.security import generate_password_hash, check_password_hash
+from services.db_safety import ensure_sqlite_drop_all_allowed
 
-db = SQLAlchemy()
+
+class GuardedSQLAlchemy(SQLAlchemy):
+    def drop_all(self, *args, **kwargs):
+        if has_app_context():
+            ensure_sqlite_drop_all_allowed(
+                current_app.config.get('SQLALCHEMY_DATABASE_URI'),
+                testing=bool(current_app.config.get('TESTING') or current_app.testing),
+            )
+        return super().drop_all(*args, **kwargs)
+
+
+db = GuardedSQLAlchemy()
 
 WRONG_WORD_DIMENSIONS = ('recognition', 'meaning', 'listening', 'dictation')
 WRONG_WORD_PENDING_REVIEW_TARGET = 4

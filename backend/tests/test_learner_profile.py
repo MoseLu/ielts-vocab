@@ -293,3 +293,47 @@ def test_learner_profile_listening_and_writing_dimensions_use_timed_events(clien
     assert writing['status'] == 'due'
     assert writing['due_words'] == 1
     assert 'coherent' in writing['focus_words']
+
+
+def test_learner_profile_uses_local_calendar_day_for_sessions_and_activity(client, app):
+    register_and_login(client, username='local-day-profile-user')
+
+    with app.app_context():
+        user = User.query.filter_by(username='local-day-profile-user').first()
+        assert user is not None
+
+        db.session.add(
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                words_studied=4,
+                correct_count=3,
+                wrong_count=1,
+                duration_seconds=300,
+                started_at=datetime(2026, 4, 2, 23, 30, 0),
+                ended_at=datetime(2026, 4, 2, 23, 35, 0),
+            )
+        )
+        db.session.add(
+            UserLearningEvent(
+                user_id=user.id,
+                event_type='quick_memory_review',
+                source='quickmemory',
+                mode='quickmemory',
+                word='section',
+                item_count=1,
+                correct_count=0,
+                wrong_count=1,
+                occurred_at=datetime(2026, 4, 2, 23, 40, 0),
+            )
+        )
+        db.session.commit()
+
+    response = client.get('/api/ai/learner-profile?date=2026-04-03')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['summary']['today_sessions'] == 1
+    assert data['summary']['today_duration_seconds'] == 300
+    assert data['activity_summary']['total_events'] == 1
+    assert data['recent_activity'][0]['word'] == 'section'

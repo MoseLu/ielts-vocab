@@ -7,6 +7,7 @@ import tempfile
 import os
 import re
 from datetime import datetime, timedelta
+from routes import books as books_routes
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -25,6 +26,15 @@ def make_token(app, user_id):
 
 def auth_header(token):
     return {'Authorization': f'Bearer {token}'}
+
+
+def register_and_login(client, username='confusable-custom-user', password='password123'):
+    response = client.post('/api/auth/register', json={
+        'username': username,
+        'password': password,
+    })
+    assert response.status_code == 201
+    return response
 
 
 # ── /books (GET) ──────────────────────────────────────────────────────────────
@@ -65,6 +75,16 @@ class TestGetBooks:
         assert book is not None
         assert book['has_chapters'] is True
         assert book['word_count'] > 9000
+
+    def test_confusable_match_book_is_listed(self, client):
+        res = client.get('/api/books')
+        assert res.status_code == 200
+        books = res.get_json()['books']
+        book = next((b for b in books if b['id'] == 'ielts_confusable_match'), None)
+        assert book is not None
+        assert book['practice_mode'] == 'match'
+        assert book['category'] == 'confusable'
+        assert book['word_count'] == 2026
 
 
 # ── /books/<book_id> (GET) ────────────────────────────────────────────────────
@@ -239,6 +259,110 @@ class TestBookChapters:
         assert 'word' in data['words'][0]
         assert 'definition' in data['words'][0]
         assert all(re.fullmatch(r"[a-z]+(?:[-'][a-z]+)*", word['word']) for word in data['words'])
+
+    def test_get_confusable_match_chapters(self, client):
+        res = client.get('/api/books/ielts_confusable_match/chapters')
+        assert res.status_code == 200
+        data = res.get_json()
+
+        assert data['total_chapters'] == 9
+        assert data['total_words'] == 2026
+        assert data['chapters'][0]['title'] == '音近词辨析 01'
+        assert data['chapters'][1]['title'] == '音近词辨析 02'
+        assert all(chapter['title'].startswith('音近词辨析') for chapter in data['chapters'][:2])
+        assert all(chapter['title'].startswith('形近词辨析') for chapter in data['chapters'][2:])
+        assert all(chapter['word_count'] >= 120 for chapter in data['chapters'])
+
+    def test_get_confusable_match_chapter_words(self, client):
+        res = client.get('/api/books/ielts_confusable_match/chapters/1')
+        assert res.status_code == 200
+        data = res.get_json()
+
+        assert data['chapter']['id'] == 1
+        assert data['chapter']['title'] == '音近词辨析 01'
+        assert len(data['words']) == 120
+        assert data['words'][0]['word'] == 'whether'
+        assert data['words'][1]['word'] == 'weather'
+        assert data['words'][0]['phonetic'] == '/ˈweðə(r)/'
+        assert data['words'][0]['group_key'] == data['words'][1]['group_key']
+
+    def test_get_chapter_words_include_preloaded_listening_confusables(self, client, monkeypatch):
+        def attach_mock(word_entry, limit=None):
+            if word_entry.get('word') != 'whether':
+                return word_entry
+            return {
+                **word_entry,
+                'listening_confusables': [{
+                    'word': 'weather',
+                    'phonetic': '/ˈweðə(r)/',
+                    'pos': 'n.',
+                    'definition': '天气',
+                }],
+            }
+
+        monkeypatch.setattr(books_routes, 'attach_preset_listening_confusables', attach_mock)
+
+        res = client.get('/api/books/ielts_confusable_match/chapters/1')
+        assert res.status_code == 200
+        data = res.get_json()
+
+        assert data['words'][0]['word'] == 'whether'
+        assert data['words'][0]['listening_confusables'][0]['word'] == 'weather'
+
+    def test_create_confusable_custom_chapters_requires_auth(self, client):
+        res = client.post('/api/books/ielts_confusable_match/custom-chapters', json={
+            'groups': [['whether', 'weather']],
+        })
+        assert res.status_code == 401
+
+    def test_create_confusable_custom_chapters_are_merged_into_user_book(self, client):
+        register_and_login(client, username='confusable-custom-merge-user')
+
+        create = client.post('/api/books/ielts_confusable_match/custom-chapters', json={
+            'groups': [
+                ['whether', 'weather', 'site'],
+                ['affect', 'effect'],
+            ],
+        })
+        assert create.status_code == 201
+        created = create.get_json()
+        assert created['created_count'] == 2
+        created_ids = [chapter['id'] for chapter in created['created_chapters']]
+        assert all(chapter_id >= 1001 for chapter_id in created_ids)
+
+        books_res = client.get('/api/books')
+        assert books_res.status_code == 200
+        confusable_book = next(
+            book for book in books_res.get_json()['books']
+            if book['id'] == 'ielts_confusable_match'
+        )
+        assert confusable_book['word_count'] == 2031
+
+        chapters_res = client.get('/api/books/ielts_confusable_match/chapters')
+        assert chapters_res.status_code == 200
+        chapters_data = chapters_res.get_json()
+        assert chapters_data['total_chapters'] == 11
+        assert chapters_data['total_words'] == 2031
+        assert chapters_data['chapters'][-1]['is_custom'] is True
+        assert chapters_data['chapters'][-2]['is_custom'] is True
+
+        words_res = client.get(f"/api/books/ielts_confusable_match/chapters/{created_ids[0]}")
+        assert words_res.status_code == 200
+        words_data = words_res.get_json()
+        assert words_data['chapter']['is_custom'] is True
+        assert len(words_data['words']) == 3
+        assert {word['group_key'] for word in words_data['words']} == {f'custom-{created_ids[0]}'}
+
+    def test_create_confusable_custom_chapters_reports_missing_words(self, client):
+        register_and_login(client, username='confusable-custom-missing-user')
+
+        res = client.post('/api/books/ielts_confusable_match/custom-chapters', json={
+            'groups': [['weather', 'zzzznotaword']],
+        })
+        assert res.status_code == 400
+        data = res.get_json()
+        assert 'zzzznotaword' in data['error']
+        assert 'zzzznotaword' in data['missing_words']
 
 
 # ── /books/my (GET/POST/DELETE) ───────────────────────────────────────────────

@@ -96,6 +96,8 @@ export const WRONG_WORD_DIMENSION_LABELS: Record<WrongWordDimension, string> = {
 export const WRONG_WORD_PENDING_REVIEW_TARGET = 4
 export const WRONG_WORD_ERROR_REVIEW_TARGET = WRONG_WORD_PENDING_REVIEW_TARGET
 
+type ScopedUserId = string | number | null | undefined
+
 const LEGACY_DIMENSION_KEY_MAP: Record<Exclude<WrongWordDimension, 'recognition'>, string> = {
   meaning: 'meaning',
   listening: 'listening',
@@ -169,6 +171,40 @@ function normalizeDimensionState(value: unknown): WrongWordDimensionState | null
     last_wrong_at: asIsoDate(raw.last_wrong_at ?? raw.lastWrongAt),
     last_pass_at: asIsoDate(raw.last_pass_at ?? raw.lastPassAt),
   }
+}
+
+function normalizeScopedUserId(value: unknown): string | number | null {
+  return typeof value === 'string' || typeof value === 'number'
+    ? value
+    : null
+}
+
+function readAuthUserIdFromStorage(): string | number | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTH_USER)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { id?: unknown }
+    return normalizeScopedUserId(parsed.id)
+  } catch {
+    return null
+  }
+}
+
+function resolveScopedUserId(userId?: ScopedUserId): string | number | null {
+  return normalizeScopedUserId(userId) ?? readAuthUserIdFromStorage()
+}
+
+function buildUserScopedStorageKey(baseKey: string, userId?: ScopedUserId): string {
+  const resolvedUserId = resolveScopedUserId(userId)
+  return resolvedUserId == null ? baseKey : `${baseKey}:user:${String(resolvedUserId)}`
+}
+
+function readUserId(user: unknown): string | number | null {
+  if (!user || typeof user !== 'object' || !('id' in user)) {
+    return null
+  }
+
+  return normalizeScopedUserId((user as { id?: unknown }).id)
 }
 
 function normalizeDimensionStates(rawWord: WrongWordInput & Record<string, unknown>): WrongWordDimensionStateMap {
@@ -503,14 +539,22 @@ function updateWordWithDimensionMutation(
   )
 }
 
-export function readWrongWordsFromStorage(): WrongWordRecord[] {
-  const stored = getStorageItem<WrongWordInput[]>(STORAGE_KEYS.WRONG_WORDS, [])
+export function getWrongWordsStorageKey(userId?: ScopedUserId): string {
+  return buildUserScopedStorageKey(STORAGE_KEYS.WRONG_WORDS, userId)
+}
+
+export function getWrongWordsProgressStorageKey(userId?: ScopedUserId): string {
+  return buildUserScopedStorageKey(STORAGE_KEYS.WRONG_WORDS_PROGRESS, userId)
+}
+
+export function readWrongWordsFromStorage(userId?: ScopedUserId): WrongWordRecord[] {
+  const stored = getStorageItem<WrongWordInput[]>(getWrongWordsStorageKey(userId), [])
   return Array.isArray(stored) ? normalizeWrongWords(stored) : []
 }
 
-export function writeWrongWordsToStorage(words: WrongWordInput[]): WrongWordRecord[] {
+export function writeWrongWordsToStorage(words: WrongWordInput[], userId?: ScopedUserId): WrongWordRecord[] {
   const normalized = normalizeWrongWords(words)
-  setStorageItem(STORAGE_KEYS.WRONG_WORDS, normalized)
+  setStorageItem(getWrongWordsStorageKey(userId), normalized)
   return normalized
 }
 
@@ -766,7 +810,8 @@ export async function loadWrongWords({
   user?: unknown
   fetchRemote?: () => Promise<WrongWordsResponse>
 }): Promise<WrongWordRecord[]> {
-  const localWords = readWrongWordsFromStorage()
+  const userId = readUserId(user)
+  const localWords = readWrongWordsFromStorage(userId)
 
   if (!user || !fetchRemote) {
     return localWords
@@ -776,7 +821,7 @@ export async function loadWrongWords({
     const response = await fetchRemote()
     const remoteWords = Array.isArray(response.words) ? response.words : []
     const merged = mergeWrongWordLists(remoteWords, localWords)
-    writeWrongWordsToStorage(merged)
+    writeWrongWordsToStorage(merged, userId)
     return merged
   } catch {
     return localWords

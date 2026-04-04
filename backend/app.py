@@ -27,6 +27,7 @@ from routes.admin import admin_bp, init_admin
 from routes.notes import notes_bp
 from routes.tts import tts_bp
 from routes.middleware import init_middleware
+from services.db_backup import initialize_sqlite_backup_runtime
 
 # SQLite WAL mode
 # Runs once per new connection. WAL allows concurrent reads during writes,
@@ -168,25 +169,32 @@ def create_app(config_class=Config):
         _ensure_wrong_word_dimension_state_column()
         _ensure_admin_user()
 
+    if os.environ.get('PYTEST_RUNNING') != '1':
+        initialize_sqlite_backup_runtime(app)
+
     return app
 
 
-# Create app instance
-app = create_app()
+if os.environ.get('PYTEST_RUNNING') == '1':
+    app = None
+    socketio = None
+else:
+    # Create app instance
+    app = create_app()
 
-# Initialize SocketIO with eventlet for better WebSocket support
-socketio = SocketIO(
-    app,
-    cors_allowed_origins=app.config['CORS_ORIGINS'],
-    async_mode='eventlet',
-    ping_timeout=60,
-    ping_interval=25,
-    logger=app.config.get('DEBUG', False),
-    engineio_logger=app.config.get('DEBUG', False),
-)
+    # Initialize SocketIO with eventlet for better WebSocket support
+    socketio = SocketIO(
+        app,
+        cors_allowed_origins=app.config['CORS_ORIGINS'],
+        async_mode='eventlet',
+        ping_timeout=60,
+        ping_interval=25,
+        logger=app.config.get('DEBUG', False),
+        engineio_logger=app.config.get('DEBUG', False),
+    )
 
-# Register Socket.IO events for speech recognition
-register_socketio_events(socketio)
+    # Register Socket.IO events for speech recognition
+    register_socketio_events(socketio)
 
 
 if __name__ == '__main__':

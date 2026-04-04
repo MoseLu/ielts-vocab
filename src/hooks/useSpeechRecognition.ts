@@ -169,7 +169,7 @@ export function useSpeechRecognition({
           if (isRecordingRef.current && socketRef.current?.connected) {
             socketRef.current.emit('stop_recognition')
           }
-        }, 500)
+        }, autoStopDelayRef.current)
       }
     })
 

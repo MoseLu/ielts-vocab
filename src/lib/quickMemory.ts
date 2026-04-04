@@ -20,6 +20,8 @@ export type QuickMemoryRecordInput = Partial<QuickMemoryRecordState> & {
 
 const DAY_MS = 86_400_000
 
+type QuickMemoryStorageUserId = string | number | null | undefined
+
 export const QUICK_MEMORY_REVIEW_INTERVALS_DAYS = [1, 1, 4, 7, 14, 30] as const
 export const QUICK_MEMORY_MASTERY_TARGET = QUICK_MEMORY_REVIEW_INTERVALS_DAYS.length
 
@@ -29,6 +31,40 @@ function normalizeWordKey(word: string): string {
 
 function asNonNegativeNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, value) : fallback
+}
+
+function normalizeStorageUserId(value: QuickMemoryStorageUserId): string | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value)
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim()
+    return normalized || null
+  }
+
+  return null
+}
+
+function readStoredAuthUserId(): string | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTH_USER)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as { id?: unknown } | null
+    if (!parsed || typeof parsed !== 'object') return null
+
+    return normalizeStorageUserId(parsed.id as QuickMemoryStorageUserId)
+  } catch {
+    return null
+  }
+}
+
+export function getQuickMemoryStorageKey(userId?: QuickMemoryStorageUserId): string {
+  const resolvedUserId = normalizeStorageUserId(userId) ?? readStoredAuthUserId()
+  return resolvedUserId
+    ? `${STORAGE_KEYS.QUICK_MEMORY_RECORDS}:${resolvedUserId}`
+    : STORAGE_KEYS.QUICK_MEMORY_RECORDS
 }
 
 function normalizeQuickMemoryRecord(value: unknown): QuickMemoryRecordState | null {
@@ -61,9 +97,9 @@ export function nextQuickMemoryReviewTimestamp(knownCount: number, now = Date.no
   return now + days * DAY_MS
 }
 
-export function readQuickMemoryRecordsFromStorage(): QuickMemoryRecordMap {
+export function readQuickMemoryRecordsFromStorage(userId?: QuickMemoryStorageUserId): QuickMemoryRecordMap {
   try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS) || '{}')
+    const raw = JSON.parse(localStorage.getItem(getQuickMemoryStorageKey(userId)) || '{}')
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
 
     const normalized: QuickMemoryRecordMap = {}
@@ -81,7 +117,11 @@ export function readQuickMemoryRecordsFromStorage(): QuickMemoryRecordMap {
 }
 
 export function writeQuickMemoryRecordsToStorage(records: QuickMemoryRecordMap): QuickMemoryRecordMap {
-  localStorage.setItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS, JSON.stringify(records))
+  const storageKey = getQuickMemoryStorageKey()
+  localStorage.setItem(storageKey, JSON.stringify(records))
+  if (storageKey !== STORAGE_KEYS.QUICK_MEMORY_RECORDS) {
+    localStorage.removeItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS)
+  }
   return records
 }
 

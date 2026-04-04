@@ -7,6 +7,7 @@ const apiFetchMock = vi.fn()
 
 vi.mock('../contexts', () => ({
   useAuth: () => ({ user: { id: 1 } }),
+  useToast: () => ({ showToast: vi.fn() }),
 }))
 
 vi.mock('../lib', async () => {

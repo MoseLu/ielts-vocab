@@ -217,7 +217,7 @@ export default function ProfilePage() {
           {user?.avatar_url ? (
             <img src={user.avatar_url} alt="avatar" className="profile-avatar-img" />
           ) : (
-            <img src="/assets/default-avatar.jpg" alt="默认头像" className="profile-avatar-img" />
+            <img src="/default-avatar.jpg" alt="默认头像" className="profile-avatar-img" />
           )}
         </div>
         <div className="profile-user-info">

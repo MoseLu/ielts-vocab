@@ -54,7 +54,8 @@ export const DEFAULT_SETTINGS = {
   volume: '100',
   interval: '2',
   reviewInterval: '1',
-  reviewLimit: '100',
+  reviewLimit: 'unlimited',
+  reviewLimitCustomized: false,
   darkMode: false,
   fontSize: 'medium',
 } as const

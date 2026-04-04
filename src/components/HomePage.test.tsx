@@ -1,4 +1,3 @@
-﻿import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import HomePage from './HomePage'
@@ -30,6 +29,23 @@ const hooksState = vi.hoisted(() => ({
   wrongWords: {
     words: [],
   },
+  learningStats: {
+    alltime: {
+      ebbinghaus_due_total: 0,
+      streak_days: 4,
+      weakest_mode: 'meaning',
+      weakest_mode_accuracy: 68,
+    },
+    learnerProfile: {
+      summary: {
+        due_reviews: 0,
+        streak_days: 4,
+        weakest_mode: 'meaning',
+        weakest_mode_label: '汉译英',
+      },
+      next_actions: ['主线任务已清空，可以做一轮专项巩固。'],
+    },
+  },
 }))
 
 vi.mock('../features/vocabulary/hooks', () => ({
@@ -37,6 +53,7 @@ vi.mock('../features/vocabulary/hooks', () => ({
   useAllBookProgress: () => hooksState.allBookProgress,
   useMyBooks: () => hooksState.myBooks,
   useWrongWords: () => hooksState.wrongWords,
+  useLearningStats: () => hooksState.learningStats,
 }))
 
 vi.mock('./PlanModal', () => ({
@@ -71,6 +88,21 @@ describe('HomePage', () => {
     hooksState.myBooks.addBook.mockReset()
     hooksState.myBooks.removeBook.mockReset()
     hooksState.wrongWords.words = []
+    hooksState.learningStats.alltime = {
+      ebbinghaus_due_total: 0,
+      streak_days: 4,
+      weakest_mode: 'meaning',
+      weakest_mode_accuracy: 68,
+    }
+    hooksState.learningStats.learnerProfile = {
+      summary: {
+        due_reviews: 0,
+        streak_days: 4,
+        weakest_mode: 'meaning',
+        weakest_mode_label: '汉译英',
+      },
+      next_actions: ['主线任务已清空，可以做一轮专项巩固。'],
+    }
   })
 
   it('renders a page loading gate before book data is ready', () => {
@@ -89,22 +121,53 @@ describe('HomePage', () => {
 
     expect(container.querySelector('.page-skeleton--books')).not.toBeNull()
     expect(container.querySelectorAll('.page-skeleton-card--book')).toHaveLength(6)
-    expect(container.querySelector('.study-center-grid')).toBeNull()
+    expect(container.querySelector('.study-center-shell')).toBeNull()
   })
 
-  it('renders the study grid without the top banner or a standalone continue card', () => {
+  it('renders a guided homepage with a primary next-step CTA and book progress', () => {
     const { container } = render(
       <MemoryRouter>
         <HomePage />
       </MemoryRouter>,
     )
 
-    expect(container.querySelector('.study-banner')).toBeNull()
-    expect(container.querySelector('.study-center-grid')).not.toBeNull()
-    expect(container.querySelector('.study-book-card-cta')).toBeNull()
-    expect(container.querySelector('.study-book-state--active')).not.toBeNull()
-    expect(screen.getAllByText('测试词书').length).toBeGreaterThan(0)
+    expect(screen.getByText('今天推荐这样学')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '继续当前词书' })).toBeInTheDocument()
+    expect(screen.getByText('系统推荐顺序')).toBeInTheDocument()
+    expect(screen.getByText('我现在想...')).toBeInTheDocument()
+    expect(screen.getByText('先背新词')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '我想自己选' })).toBeInTheDocument()
+    expect(screen.getByText('你的词书')).toBeInTheDocument()
+    expect(screen.getByText('测试词书')).toBeInTheDocument()
     expect(container.querySelector('.study-book-progress-fill')).toHaveStyle({ width: '20%' })
+    expect(screen.getByText('主线任务已清空，可以做一轮专项巩固。')).toBeInTheDocument()
+  })
+
+  it('prioritizes due review as the main action when reviews are pending', () => {
+    hooksState.learningStats.alltime = {
+      ebbinghaus_due_total: 6,
+      streak_days: 4,
+      weakest_mode: 'meaning',
+      weakest_mode_accuracy: 68,
+    }
+    hooksState.learningStats.learnerProfile = {
+      summary: {
+        due_reviews: 6,
+        streak_days: 4,
+        weakest_mode: 'meaning',
+        weakest_mode_label: '汉译英',
+      },
+      next_actions: ['先复习到期词。'],
+    }
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('button', { name: '开始到期复习' })).toBeInTheDocument()
+    expect(screen.getAllByText('6 词到期').length).toBeGreaterThan(0)
+    expect(screen.getByText('先复习到期词')).toBeInTheDocument()
   })
 })
-

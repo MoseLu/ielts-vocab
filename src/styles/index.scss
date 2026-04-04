@@ -40,10 +40,12 @@
 @use './pages/practice-layout.scss';
 @use './pages/practice-options.scss';
 @use './pages/practice-spelling.scss';
+@use './pages/practice-stage-guide.scss';
 @use './pages/practice-dictation.scss';
 @use './pages/practice-radio.scss';
 @use './pages/practice-quickmemory.scss';
 @use './pages/practice-complete.scss';
+@use './pages/practice-confusable.scss';
 
 /* Pages: Vocab Book */
 @use './pages/vocab-filters.scss';

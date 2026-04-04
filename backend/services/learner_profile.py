@@ -1,8 +1,8 @@
-from datetime import date as date_type
 from datetime import datetime, timedelta
 
 from models import UserLearningEvent, UserLearningNote, UserQuickMemoryRecord, UserSmartWordStat, UserStudySession, UserWrongWord
 from services.learning_events import build_learning_activity_timeline
+from services.local_time import resolve_local_day_window, utc_naive_to_local_date_key, utc_now_naive
 from services.memory_topics import build_memory_topics
 from services.study_sessions import get_live_pending_session_snapshot
 
@@ -63,16 +63,14 @@ DIMENSION_STATUS_LABELS = {
 }
 
 def _resolve_target_date(target_date: str | None) -> tuple[str, datetime, datetime]:
-    date_str = target_date or date_type.today().strftime('%Y-%m-%d')
-    start_dt = datetime.strptime(date_str, '%Y-%m-%d')
-    return date_str, start_dt, start_dt + timedelta(days=1)
+    return resolve_local_day_window(target_date)
 
 
-def _calc_streak_days(user_id: int, end_dt: datetime) -> int:
+def _calc_streak_days(user_id: int, target_date: str) -> int:
     rows = (
         UserStudySession.query
         .filter_by(user_id=user_id)
-        .filter(UserStudySession.started_at < end_dt, UserStudySession.words_studied > 0)
+        .filter(UserStudySession.words_studied > 0)
         .order_by(UserStudySession.started_at.desc())
         .all()
     )
@@ -80,22 +78,23 @@ def _calc_streak_days(user_id: int, end_dt: datetime) -> int:
         return 0
 
     date_set = {
-        row.started_at.strftime('%Y-%m-%d')
+        utc_naive_to_local_date_key(row.started_at)
         for row in rows
         if row.started_at is not None
     }
+    date_set.discard(None)
     if not date_set:
         return 0
 
-    reference = (end_dt - timedelta(days=1)).date()
-    if reference.strftime('%Y-%m-%d') not in date_set:
-        previous = (reference - timedelta(days=1)).strftime('%Y-%m-%d')
+    reference = datetime.strptime(target_date, '%Y-%m-%d').date()
+    if reference.isoformat() not in date_set:
+        previous = (reference - timedelta(days=1)).isoformat()
         if previous not in date_set:
             return 0
         reference = reference - timedelta(days=1)
 
     streak = 0
-    while reference.strftime('%Y-%m-%d') in date_set:
+    while reference.isoformat() in date_set:
         streak += 1
         reference -= timedelta(days=1)
     return streak
@@ -939,7 +938,7 @@ def _build_next_actions(
 
 def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
     date_str, start_dt, end_dt = _resolve_target_date(target_date)
-    now_utc = datetime.utcnow()
+    now_utc = utc_now_naive()
 
     day_sessions = (
         UserStudySession.query
@@ -995,7 +994,7 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         .all()
     )
 
-    now_ms = int(datetime.utcnow().timestamp() * 1000)
+    now_ms = int(now_utc.timestamp() * 1000)
     due_reviews = UserQuickMemoryRecord.query.filter_by(user_id=user_id).filter(
         UserQuickMemoryRecord.next_review > 0,
         UserQuickMemoryRecord.next_review <= now_ms,
@@ -1046,7 +1045,7 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         'today_accuracy': today_accuracy,
         'today_duration_seconds': today_duration,
         'today_sessions': len(day_sessions),
-        'streak_days': _calc_streak_days(user_id, end_dt),
+        'streak_days': _calc_streak_days(user_id, date_str),
         'weakest_mode': weakest_mode['mode'] if weakest_mode else None,
         'weakest_mode_label': weakest_mode['label'] if weakest_mode else None,
         'weakest_mode_accuracy': weakest_mode['accuracy'] if weakest_mode else None,

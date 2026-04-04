@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVocabBooks, useAllBookProgress, useMyBooks } from '../features/vocabulary/hooks'
 import { useResponsivePageSkeletonCount } from '../hooks/useResponsiveSkeletonCount'
+import { buildBookPracticePath } from '../lib'
 import type { Book, BookProgress } from '../types'
 import PlanModal from './PlanModal'
 import ChapterModal, { Chapter } from './ChapterModal'
@@ -42,6 +43,7 @@ const SKILL_TYPES: FilterOption[] = [
   { key: 'writing', label: '写作' },
   { key: 'speaking', label: '口语' },
   { key: 'comprehensive', label: '综合' },
+  { key: 'confusable', label: '辨析' },
 ]
 
 const LEVEL_TYPES: FilterOption[] = [
@@ -125,14 +127,16 @@ function VocabBookPage() {
       localStorage.setItem('study_plan', JSON.stringify(plan))
     }
     localStorage.setItem('selected_book', JSON.stringify(selectedBook))
-    navigate(`/practice?book=${selectedBook?.id}`)
+    if (!selectedBook) return
+    navigate(buildBookPracticePath(selectedBook))
   }
 
   const handleSelectChapter = (chapter: Chapter, startIndex: number) => {
     localStorage.setItem('selected_book', JSON.stringify(selectedBook))
     localStorage.setItem('selected_chapter', JSON.stringify({ id: chapter.id, title: chapter.title }))
     localStorage.setItem('chapter_start_index', String(startIndex))
-    navigate(`/practice?book=${selectedBook?.id}&chapter=${chapter.id}`)
+    if (!selectedBook) return
+    navigate(buildBookPracticePath(selectedBook, chapter.id))
   }
 
   const filteredBooks = books.filter(book => {

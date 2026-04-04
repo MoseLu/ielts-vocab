@@ -1,14 +1,23 @@
 import {
   addWrongWordToList,
   applyWrongWordReviewResult,
+  getWrongWordsProgressStorageKey,
+  getWrongWordsStorageKey,
   getWrongWordDimensionHistoryWrong,
   isWrongWordPendingInDimension,
   WRONG_WORD_ERROR_REVIEW_TARGET,
+  readWrongWordsFromStorage,
   type WrongWordRecord,
+  writeWrongWordsToStorage,
 } from './wrongWordsStore'
+import { STORAGE_KEYS } from '../../constants'
 import { vi } from 'vitest'
 
 describe('wrongWordsStore review mastery', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
   function makeWord(overrides: Partial<WrongWordRecord> = {}): WrongWordRecord {
     return {
       word: 'alpha',
@@ -93,5 +102,30 @@ describe('wrongWordsStore review mastery', () => {
     expect(isWrongWordPendingInDimension(secondAdd[0], 'recognition')).toBe(true)
 
     vi.useRealTimers()
+  })
+
+  it('isolates wrong-word storage by authenticated user id', () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 2 }))
+    writeWrongWordsToStorage([makeWord({ word: 'admin-word' })], 2)
+
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 3 }))
+    writeWrongWordsToStorage([makeWord({ word: 'luo-word' })], 3)
+
+    expect(getWrongWordsStorageKey()).toBe('wrong_words:user:3')
+    expect(readWrongWordsFromStorage().map(word => word.word)).toEqual(['luo-word'])
+
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 2 }))
+    expect(getWrongWordsStorageKey()).toBe('wrong_words:user:2')
+    expect(readWrongWordsFromStorage().map(word => word.word)).toEqual(['admin-word'])
+  })
+
+  it('scopes wrong-word review progress keys by authenticated user id', () => {
+    expect(getWrongWordsProgressStorageKey()).toBe(STORAGE_KEYS.WRONG_WORDS_PROGRESS)
+
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 2 }))
+    expect(getWrongWordsProgressStorageKey()).toBe('wrong_words_progress:user:2')
+
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 'luo' }))
+    expect(getWrongWordsProgressStorageKey()).toBe('wrong_words_progress:user:luo')
   })
 })

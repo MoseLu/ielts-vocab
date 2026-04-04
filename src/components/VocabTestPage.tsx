@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Word } from './practice/types'
 import { shuffleArray, playWordAudio } from './practice/utils'
@@ -20,7 +20,7 @@ interface TestResult {
 }
 
 function playWord(word: string) {
-  playWordAudio(word, {})
+  void playWordAudio(word, {})
 }
 
 function generateTestOptions(correctWord: Word, allWords: Word[]): { text: string; correct: boolean }[] {
@@ -103,8 +103,20 @@ export default function VocabTestPage() {
   const [showResult, setShowResult] = useState(false)
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongWords, setWrongWords] = useState<Word[]>([])
+  const autoPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentQ = questions[qIndex]
+
+  const clearPendingAutoPlay = useCallback(() => {
+    if (autoPlayTimerRef.current == null) return
+    clearTimeout(autoPlayTimerRef.current)
+    autoPlayTimerRef.current = null
+  }, [])
+
+  const handlePlayWord = useCallback((word: string) => {
+    clearPendingAutoPlay()
+    playWord(word)
+  }, [clearPendingAutoPlay])
 
   useEffect(() => {
     fetch(`/api/books/${LISTENING_BOOK_ID}/words?per_page=200`)
@@ -123,7 +135,6 @@ export default function VocabTestPage() {
         }))
         setQuestions(testQs)
         setLoading(false)
-        setTimeout(() => playWord(testQs[0].word.word), 600)
       })
       .catch(() => {
         setError('加载词汇失败')
@@ -132,10 +143,16 @@ export default function VocabTestPage() {
   }, [])
 
   useEffect(() => {
-    if (currentQ && !showResult) {
-      setTimeout(() => playWord(currentQ.word.word), 300)
-    }
-  }, [qIndex, showResult, currentQ])
+    clearPendingAutoPlay()
+    if (!currentQ || showResult) return
+
+    autoPlayTimerRef.current = setTimeout(() => {
+      autoPlayTimerRef.current = null
+      playWord(currentQ.word.word)
+    }, 300)
+
+    return clearPendingAutoPlay
+  }, [clearPendingAutoPlay, qIndex, showResult, currentQ])
 
   const handleOptionSelect = useCallback((optIdx: number) => {
     if (selected !== null) return
@@ -176,9 +193,10 @@ export default function VocabTestPage() {
         }))
         setQuestions(testQs)
         setLoading(false)
-        setTimeout(() => playWord(testQs[0].word.word), 600)
       })
   }, [])
+
+  useEffect(() => clearPendingAutoPlay, [clearPendingAutoPlay])
 
   if (loading) {
     return (
@@ -238,7 +256,7 @@ export default function VocabTestPage() {
       </div>
 
       <div className="vocab-test-card">
-        <button className="vocab-test-audio" onClick={() => playWord(currentQ.word.word)}>
+        <button className="vocab-test-audio" onClick={() => handlePlayWord(currentQ.word.word)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
@@ -273,7 +291,7 @@ export default function VocabTestPage() {
         </div>
 
         <div className="vocab-test-actions">
-          <button className="vocab-test-secondary" onClick={() => playWord(currentQ.word.word)}>
+          <button className="vocab-test-secondary" onClick={() => handlePlayWord(currentQ.word.word)}>
             再听一遍
           </button>
           <button

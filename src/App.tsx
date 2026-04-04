@@ -11,6 +11,7 @@ import AuthPage from './components/AuthPage'
 import { Loading } from './components/ui/Loading'
 import HomePage from './components/HomePage'
 import PracticePage from './components/practice/PracticePage'
+import ConfusableMatchPage from './components/practice/ConfusableMatchPage'
 import VocabBookPage from './components/VocabBookPage'
 import ErrorsPage from './components/ErrorsPage'
 import StatsPage from './components/StatsPage'
@@ -53,7 +54,7 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
   const { user, logout, isAdmin, isLoading } = useAuth()
   const { toast } = useToast()
   const location = useLocation()
-  const isPractice = location.pathname === '/practice'
+  const isPractice = location.pathname.startsWith('/practice')
   const specialPages = ['/login', '/register', '/forgot-password', '/terms', '/404']
   const isSpecialPage = specialPages.includes(location.pathname)
 
@@ -222,6 +223,17 @@ function AppRoutes({ mode, currentDay, onModeChange, onDayChange }: AppRoutesPro
                     <AdminDashboard />
                   ) : (
                     <Navigate to={user ? "/plan" : "/login"} replace />
+                  )
+                }
+              />
+
+              <Route
+                path="/practice/confusable"
+                element={
+                  user ? (
+                    <ConfusableMatchPage />
+                  ) : (
+                    <Navigate to="/login" replace />
                   )
                 }
               />

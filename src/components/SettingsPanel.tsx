@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { DEFAULT_SETTINGS } from '../constants'
+import { normalizeAppSettings, readAppSettingsFromStorage, writeAppSettingsToStorage } from '../lib/appSettings'
 
 type TabType = 'answer' | 'sound' | 'display' | 'review'
 
@@ -21,6 +23,7 @@ interface AppSettings {
   showPos: boolean
   reviewInterval: string
   reviewLimit: string
+  reviewLimitCustomized: boolean
 }
 
 interface SettingsPanelProps {
@@ -44,16 +47,29 @@ const defaultSettings: AppSettings = {
   fontSize: 'medium',
   showPhonetic: true,
   showPos: true,
-  reviewInterval: '1',
-  reviewLimit: 'unlimited'
+  reviewInterval: DEFAULT_SETTINGS.reviewInterval,
+  reviewLimit: DEFAULT_SETTINGS.reviewLimit,
+  reviewLimitCustomized: DEFAULT_SETTINGS.reviewLimitCustomized,
+}
+
+function normalizeSettingsPanelState(value: unknown): AppSettings {
+  const candidate = typeof value === 'object' && value !== null
+    ? (value as Partial<AppSettings>)
+    : {}
+  const normalizedReviewSettings = normalizeAppSettings(candidate)
+
+  return {
+    ...defaultSettings,
+    ...candidate,
+    reviewInterval: String(normalizedReviewSettings.reviewInterval ?? defaultSettings.reviewInterval),
+    reviewLimit: String(normalizedReviewSettings.reviewLimit ?? defaultSettings.reviewLimit),
+    reviewLimitCustomized: normalizedReviewSettings.reviewLimitCustomized === true,
+  }
 }
 
 function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('answer')
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    const saved = localStorage.getItem('app_settings')
-    return saved ? JSON.parse(saved) : defaultSettings
-  })
+  const [settings, setSettings] = useState<AppSettings>(() => normalizeSettingsPanelState(readAppSettingsFromStorage()))
 
   // Apply settings to document on mount and when settings change
   useEffect(() => {
@@ -91,9 +107,15 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
   }, [showSettings, onClose])
 
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-    const newSettings = { ...settings, [key]: value }
+    const newSettings = normalizeSettingsPanelState({
+      ...settings,
+      [key]: value,
+      reviewLimitCustomized: key === 'reviewLimit'
+        ? true
+        : settings.reviewLimitCustomized,
+    })
     setSettings(newSettings)
-    localStorage.setItem('app_settings', JSON.stringify(newSettings))
+    writeAppSettingsToStorage(newSettings)
     // Apply immediately
     if (key === 'darkMode') {
       document.documentElement.setAttribute('data-theme', value ? 'dark' : 'light')
@@ -353,14 +375,14 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">复习数量</div>
-                    <div className="settings-item-desc">每次复习的单词数量上限</div>
+                    <div className="settings-item-desc">默认不设上限，需要时再手动分批</div>
                   </div>
                   <select className="settings-select" value={settings.reviewLimit} onChange={(e) => updateSetting('reviewLimit', e.target.value)}>
+                    <option value="unlimited">不设上限</option>
                     <option value="10">10个</option>
                     <option value="20">20个</option>
                     <option value="50">50个</option>
                     <option value="100">100个</option>
-                    <option value="unlimited">不设上限</option>
                   </select>
                 </div>
               </div>

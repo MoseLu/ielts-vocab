@@ -152,6 +152,12 @@ describe('PracticePage dictation retry flow', () => {
 
     expect(recordWordResultMock).toHaveBeenLastCalledWith('alpha', 'dictation', false)
     expect(recordModeAnswerMock).toHaveBeenLastCalledWith('dictation', false)
+    expect(container.textContent).toContain('拼写错误')
+    expect(container.textContent).toContain('正确拼写')
+    expect(container.textContent).toContain('你的输入')
+    expect(container.textContent).toContain('alpha')
+    expect(container.textContent).toContain('alpga')
+    expect(container.textContent).toContain('系统正在重播发音，稍后重新拼写。')
 
     const savedAfterWrong = JSON.parse(localStorage.getItem('day_progress') || '{}')
     expect(savedAfterWrong['1']).toMatchObject({
@@ -167,13 +173,25 @@ describe('PracticePage dictation retry flow', () => {
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['alpha', 'alpha'])
 
     act(() => {
-      vi.advanceTimersByTime(600)
+      vi.advanceTimersByTime(2400)
+    })
+    await flushMicrotasks()
+
+    const stillLockedInput = container.querySelector('.spelling-input') as HTMLInputElement
+    expect(stillLockedInput.value).toBe('alpga')
+    expect(stillLockedInput.disabled).toBe(true)
+    expect(container.textContent).toContain('拼写错误')
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).not.toContain('beta')
+
+    act(() => {
+      vi.advanceTimersByTime(300)
     })
     await flushMicrotasks()
 
     const currentInput = container.querySelector('.spelling-input') as HTMLInputElement
     expect(currentInput.value).toBe('')
     expect(currentInput.disabled).toBe(false)
+    expect(container.textContent).not.toContain('拼写错误')
     expect(playWordAudioMock.mock.calls.map(call => call[0])).not.toContain('beta')
 
     fireEvent.change(container.querySelector('.spelling-input') as HTMLInputElement, { target: { value: 'alpha' } })
@@ -201,5 +219,85 @@ describe('PracticePage dictation retry flow', () => {
 
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toContain('beta')
     expect(vi.mocked(setGlobalLearningContext)).toHaveBeenCalled()
+  })
+
+  it('locks wrong feedback after Enter submit until the user edits the input', async () => {
+    const { container } = render(
+      <MemoryRouter>
+        <PracticePage
+          currentDay={1}
+          mode="dictation"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await flushMicrotasks()
+
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+
+    const input = container.querySelector('.spelling-input') as HTMLInputElement
+
+    fireEvent.change(input, { target: { value: 'alpga' } })
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+
+    act(() => {
+      vi.advanceTimersByTime(3500)
+    })
+    await flushMicrotasks()
+
+    const lockedInput = container.querySelector('.spelling-input') as HTMLInputElement
+    expect(lockedInput.value).toBe('alpga')
+    expect(lockedInput.disabled).toBe(false)
+    expect(container.textContent).toContain('拼写错误')
+    expect(container.textContent).toContain('alpga')
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).not.toContain('beta')
+
+    fireEvent.change(lockedInput, { target: { value: 'alpha' } })
+
+    expect(container.textContent).toContain('拼写错误')
+    expect(container.textContent).toContain('alpga')
+    expect((container.querySelector('.spelling-input') as HTMLInputElement).value).toBe('alpha')
+
+    act(() => {
+      vi.advanceTimersByTime(120)
+    })
+    await flushMicrotasks()
+
+    expect(container.textContent).not.toContain('拼写错误')
+    expect((container.querySelector('.spelling-input') as HTMLInputElement).value).toBe('alpha')
+  })
+
+  it('replays dictation audio when Tab is pressed from the spelling input', async () => {
+    const { container } = render(
+      <MemoryRouter>
+        <PracticePage
+          currentDay={1}
+          mode="dictation"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await flushMicrotasks()
+
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+
+    playWordAudioMock.mockClear()
+
+    const input = container.querySelector('.spelling-input') as HTMLInputElement
+    input.focus()
+
+    fireEvent.keyDown(input, { key: 'Tab', code: 'Tab' })
+
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['alpha'])
   })
 })

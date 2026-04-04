@@ -8,9 +8,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import tempfile
+import subprocess
 import threading
 import time
+import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -18,6 +19,10 @@ from pathlib import Path
 
 DEFAULT_MODEL = os.environ.get('BAILIAN_TTS_MODEL', 'qwen3-tts-flash')
 DEFAULT_VOICE = os.environ.get('BAILIAN_TTS_VOICE', 'Serena')
+WORD_TTS_PROVIDER = os.environ.get('WORD_TTS_PROVIDER', '').strip().lower()
+WORD_TTS_MODEL = os.environ.get('WORD_TTS_MODEL', '').strip()
+WORD_TTS_VOICE = os.environ.get('WORD_TTS_VOICE', '').strip()
+_WORD_TTS_STRATEGY_TAG = 'dict-v1'
 
 # Each model name gets its own slot → independent RPM quota on 百炼 side.
 # Mix cosyvoice-* (char-based) and qwen* (token-based) freely since they are
@@ -113,6 +118,7 @@ def _get_minimax_key_with_sem() -> tuple[str, threading.Semaphore, threading.Sem
 _MINIMAX_VOICE = os.environ.get('MINIMAX_TTS_VOICE', 'English_Trustworthy_Man')
 _MINIMAX_SPEED = float(os.environ.get('MINIMAX_TTS_SPEED', '0.9'))
 _MINIMAX_FALLBACK_VOICES = ['English_Trustworthy_Man', 'English_Graceful_Lady', 'English_Diligent_Man', 'English_Aussie_Bloke']
+_MINIMAX_DEFAULT_MODEL = 'speech-2.8-hd'
 _MIN_VALID_MP3_BYTES = 512
 
 # Initialize on module load
@@ -140,10 +146,96 @@ def word_tts_cache_path(
 
 
 def default_cache_identity() -> tuple[str, str]:
-    """Return the model/voice pair used for local cache file names."""
+    """Return the global example-audio model/voice pair used for cache names."""
     if _TTS_PROVIDER == 'minimax':
-        return 'speech-2.8-hd', 'English_Trustworthy_Man'
+        return _MINIMAX_DEFAULT_MODEL, 'English_Trustworthy_Man'
     return DEFAULT_MODEL, DEFAULT_VOICE
+
+
+def default_word_tts_identity() -> tuple[str, str, str]:
+    """
+    Return the provider/model/voice triple used for isolated word pronunciation.
+
+    The default strategy is dictionary-audio-first with TTS fallback. The
+    strategy tag is baked into the cache identity so stale model-generated files
+    are not reused after pronunciation strategy changes.
+    """
+    provider = WORD_TTS_PROVIDER or 'hybrid'
+    fallback_provider = 'minimax' if _MINIMAX_API_KEYS else _TTS_PROVIDER
+    fallback_model = WORD_TTS_MODEL or (
+        _MINIMAX_DEFAULT_MODEL if fallback_provider == 'minimax' else DEFAULT_MODEL
+    )
+    fallback_voice = WORD_TTS_VOICE or (
+        _MINIMAX_VOICE if fallback_provider == 'minimax' else DEFAULT_VOICE
+    )
+
+    if provider == 'hybrid':
+        return provider, f'{fallback_model}@{_WORD_TTS_STRATEGY_TAG}', fallback_voice
+    if provider == 'minimax':
+        return provider, fallback_model, fallback_voice
+
+    model = WORD_TTS_MODEL or DEFAULT_MODEL
+    voice = WORD_TTS_VOICE or DEFAULT_VOICE
+    return provider, model, voice
+
+
+def _strip_word_tts_strategy_tag(model: str | None) -> str:
+    raw = (model or '').strip()
+    if not raw:
+        return _MINIMAX_DEFAULT_MODEL if _MINIMAX_API_KEYS else DEFAULT_MODEL
+    return raw.split('@', 1)[0].strip() or raw
+
+
+def _normalize_external_audio_url(url: str) -> str:
+    normalized = (url or '').strip()
+    if normalized.startswith('//'):
+        return f'https:{normalized}'
+    return normalized
+
+
+def fetch_dictionary_word_audio_bytes(word: str) -> bytes | None:
+    """Fetch authoritative dictionary pronunciation audio for a single word."""
+    import requests
+
+    normalized_word = normalize_word_key(word)
+    if not normalized_word or ' ' in normalized_word:
+        return None
+
+    try:
+        resp = requests.get(
+            f'https://api.dictionaryapi.dev/api/v2/entries/en/{normalized_word}',
+            timeout=20,
+        )
+        if resp.ok:
+            data = resp.json()
+            audio_urls: list[str] = []
+            for entry in data:
+                for phonetic in entry.get('phonetics', []):
+                    audio = _normalize_external_audio_url(phonetic.get('audio', ''))
+                    if audio and audio.startswith('https://'):
+                        audio_urls.append(audio)
+            for audio_url in audio_urls:
+                try:
+                    audio_resp = requests.get(audio_url, timeout=20)
+                    if audio_resp.ok:
+                        return ensure_mp3_bytes(audio_resp.content)
+                except Exception:
+                    continue
+    except Exception:
+        pass
+
+    youdao_url = (
+        'https://dict.youdao.com/dictvoice'
+        f'?audio={normalized_word}&type=2'
+    )
+    try:
+        resp = requests.get(youdao_url, timeout=20)
+        if resp.ok:
+            return ensure_mp3_bytes(resp.content)
+    except Exception:
+        pass
+
+    return None
 
 
 def is_probably_valid_mp3_bytes(audio: bytes) -> bool:
@@ -155,6 +247,52 @@ def is_probably_valid_mp3_bytes(audio: bytes) -> bool:
     if len(audio) >= 2 and audio[0] == 0xFF and (audio[1] & 0xE0) == 0xE0:
         return True
     return False
+
+
+def is_probably_valid_wav_bytes(audio: bytes) -> bool:
+    return len(audio) >= 12 and audio[:4] == b'RIFF' and audio[8:12] == b'WAVE'
+
+
+def transcode_wav_to_mp3_bytes(audio: bytes) -> bytes:
+    import imageio_ffmpeg
+
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    result = subprocess.run(
+        [
+            ffmpeg_exe,
+            '-hide_banner',
+            '-loglevel',
+            'error',
+            '-i',
+            'pipe:0',
+            '-f',
+            'mp3',
+            '-codec:a',
+            'libmp3lame',
+            '-b:a',
+            '128k',
+            'pipe:1',
+        ],
+        input=audio,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if result.returncode != 0:
+        stderr = result.stderr.decode('utf-8', errors='replace')[:300]
+        raise RuntimeError(f'Failed to transcode WAV audio to MP3: {stderr}')
+    mp3 = result.stdout
+    if not is_probably_valid_mp3_bytes(mp3):
+        raise RuntimeError('Transcoded WAV audio is not a valid MP3 payload')
+    return mp3
+
+
+def ensure_mp3_bytes(audio: bytes) -> bytes:
+    if is_probably_valid_mp3_bytes(audio):
+        return audio
+    if is_probably_valid_wav_bytes(audio):
+        return transcode_wav_to_mp3_bytes(audio)
+    raise RuntimeError('Unsupported audio payload returned by TTS provider')
 
 
 def is_probably_valid_mp3_file(path: Path) -> bool:
@@ -184,10 +322,9 @@ def write_bytes_atomically(path: Path, audio: bytes) -> None:
     if not is_probably_valid_mp3_bytes(audio):
         raise RuntimeError('Refusing to cache invalid MP3 payload')
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_name = tempfile.mkstemp(prefix=f'{path.stem}.', suffix='.tmp', dir=path.parent)
-    tmp_path = Path(tmp_name)
+    tmp_path = path.parent / f'{path.stem}.{uuid.uuid4().hex}.tmp'
     try:
-        with os.fdopen(fd, 'wb') as f:
+        with tmp_path.open('wb') as f:
             f.write(audio)
             f.flush()
             os.fsync(f.fileno())
@@ -212,6 +349,115 @@ _model_idx = 0
 _model_lock = threading.Lock()
 
 
+def _model_rate_interval(model: str) -> float:
+    normalized = (model or '').strip().lower()
+    if normalized.startswith('qwen3-tts-flash') or normalized.startswith('qwen3-tts-instruct-flash'):
+        # Official HTTP rate limit: 180 RPM.
+        return 0.35
+    if normalized.startswith('qwen-tts'):
+        # Official HTTP rate limit: 10 RPM.
+        return 7.0
+    return 0.0
+
+
+def _should_use_generation_pool(
+    requested_model: str | None,
+    *,
+    provider: str | None = None,
+) -> bool:
+    resolved_provider = (provider or _TTS_PROVIDER).strip().lower()
+    if resolved_provider in {'minimax', 'hybrid'}:
+        return False
+    resolved = (requested_model or DEFAULT_MODEL).strip()
+    return resolved == DEFAULT_MODEL and len(MODELS) > 1
+
+
+def _is_model_quota_error(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    if 'rate quota' in msg:
+        return False
+    return 'quota' in msg or 'exhaust' in msg or 'insufficient' in msg
+
+
+def _is_permanent_model_error(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    if _is_model_quota_error(exc):
+        return True
+    return (
+        'access denied' in msg
+        or 'not support http call' in msg
+        or 'invalid message type' in msg
+        or 'model not found' in msg
+    )
+
+
+class _PerModelScheduler:
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._next_allowed_at: dict[str, float] = {}
+        self._cooldown_until: dict[str, float] = {}
+        self._disabled: dict[str, str] = {}
+
+    def acquire(self, models: list[str]) -> str:
+        while True:
+            with self._lock:
+                active = [m for m in models if m not in self._disabled]
+                if not active:
+                    raise RuntimeError(f'No available TTS models remain in pool: {self._disabled}')
+
+                now = time.monotonic()
+                ranked: list[tuple[float, str]] = []
+                for model in active:
+                    ready_at = max(
+                        self._next_allowed_at.get(model, 0.0),
+                        self._cooldown_until.get(model, 0.0),
+                    )
+                    ranked.append((ready_at, model))
+                ranked.sort(key=lambda item: (item[0], _model_rate_interval(item[1]), item[1]))
+                ready_at, chosen = ranked[0]
+                if ready_at <= now:
+                    self._next_allowed_at[chosen] = now + _model_rate_interval(chosen)
+                    return chosen
+                sleep_for = ready_at - now
+            time.sleep(min(sleep_for, 0.5))
+
+    def cooldown(self, model: str, delay: float) -> None:
+        if delay <= 0.0:
+            return
+        with self._lock:
+            now = time.monotonic()
+            self._cooldown_until[model] = max(
+                self._cooldown_until.get(model, 0.0),
+                now + delay,
+            )
+
+    def disable(self, model: str, reason: str) -> None:
+        with self._lock:
+            if model not in self._disabled:
+                self._disabled[model] = reason
+                print(f'[TTS Model Disabled] {model}: {reason}')
+
+    def reserve_single(self, model: str) -> None:
+        interval = _model_rate_interval(model)
+        if interval <= 0.0:
+            return
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                ready_at = max(
+                    self._next_allowed_at.get(model, 0.0),
+                    self._cooldown_until.get(model, 0.0),
+                )
+                if ready_at <= now:
+                    self._next_allowed_at[model] = now + interval
+                    return
+                sleep_for = ready_at - now
+            time.sleep(min(sleep_for, 0.5))
+
+
+_MODEL_SCHEDULER = _PerModelScheduler()
+
+
 def _next_model() -> str:
     global _model_idx
     with _model_lock:
@@ -224,6 +470,7 @@ def synthesize_word_to_bytes(
     text: str,
     model: str | None = None,
     voice: str | None = None,
+    provider: str | None = None,
 ) -> bytes:
     """
     Call MiniMax, CosyVoice or Qwen HTTP REST API and return MP3 bytes.
@@ -232,13 +479,32 @@ def synthesize_word_to_bytes(
     """
     import requests
 
-    provider = _TTS_PROVIDER
+    resolved_provider = (provider or _TTS_PROVIDER).strip().lower()
+
+    if resolved_provider == 'hybrid':
+        dictionary_audio = fetch_dictionary_word_audio_bytes(text)
+        if dictionary_audio is not None:
+            return dictionary_audio
+
+        fallback_provider = 'minimax' if _MINIMAX_API_KEYS else _TTS_PROVIDER
+        fallback_model = _strip_word_tts_strategy_tag(model)
+        fallback_voice = (
+            (voice or '').strip()
+            or (_MINIMAX_VOICE if fallback_provider == 'minimax' else DEFAULT_VOICE)
+        )
+        return synthesize_word_to_bytes(
+            text,
+            fallback_model,
+            fallback_voice,
+            provider=fallback_provider,
+        )
 
     # ── MiniMax (fastest: direct hex in response, no second request) ───────────
-    if provider == 'minimax':
+    if resolved_provider == 'minimax':
         # Try voices in order; 2054 triggers fallback to next voice
         voices_to_try = _MINIMAX_FALLBACK_VOICES
         last_error: Exception | None = None
+        requested_model = (model or _MINIMAX_DEFAULT_MODEL).strip() or _MINIMAX_DEFAULT_MODEL
         for attempt_voice_idx in range(len(voices_to_try)):
             minimax_key, per_key_sem, global_sem, key_voice = _get_minimax_key_with_sem()
             try:
@@ -249,7 +515,7 @@ def synthesize_word_to_bytes(
                     chosen_voice = voices_to_try[attempt_voice_idx]
 
                 payload = {
-                    'model': 'speech-2.8-hd',
+                    'model': requested_model,
                     'text': text,
                     'stream': False,
                     'voice_setting': {
@@ -287,8 +553,6 @@ def synthesize_word_to_bytes(
                         return bytes.fromhex(audio_hex)
                     elif status_code == 2054 and attempt_voice_idx < len(voices_to_try) - 1:
                         # 2054 with this voice → try next fallback voice
-                        per_key_sem.release()
-                        global_sem.release()
                         continue
                     else:
                         raise DashScopeHTTPError(
@@ -304,8 +568,6 @@ def synthesize_word_to_bytes(
                     )
             except DashScopeHTTPError as e:
                 last_error = e
-                per_key_sem.release()
-                global_sem.release()
                 # Only retry 429/rate-limit; permanent errors break immediately
                 if e.status_code not in (429, 1002):
                     raise
@@ -314,66 +576,65 @@ def synthesize_word_to_bytes(
                 raise
             except Exception as e:
                 last_error = e
+                raise
+            finally:
                 per_key_sem.release()
                 global_sem.release()
-                raise
         if last_error:
             raise last_error
 
-    # ── Fallback to DashScope (CosyVoice / Qwen) ─────────────────────────
-    model = model or _next_model()
-    voice = voice or DEFAULT_VOICE
+    requested_model = (model or DEFAULT_MODEL).strip()
+    requested_voice = (voice or DEFAULT_VOICE).strip()
     api_key = _get_api_key()
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json',
     }
 
-    # ── CosyVoice family (character-based billing) ──────────────────────────
-    if model.startswith('cosyvoice') or model.startswith('sambert'):
-        payload = {
-            'model': model,
-            'input': {
-                'text': text,
-                'voice': voice,
-                'format': 'mp3',
-                'sample_rate': 24000,
-            },
-        }
-        resp = requests.post(
-            _COSYVOICE_HTTP_URL,
-            headers=headers,
-            json=payload,
-            timeout=30,
-        )
-        if resp.status_code == 200:
-            data = resp.json()
-            audio_data = data.get('output', {}).get('audio', {})
-            b64 = audio_data.get('data')
-            if b64:
-                import base64
-                return base64.b64decode(b64)
-            url = audio_data.get('url')
-            if url:
-                audio_resp = requests.get(url, timeout=30)
-                if audio_resp.ok:
-                    return audio_resp.content
-            raise RuntimeError(f'CosyVoice response missing audio: {audio_data}')
-        elif resp.status_code == 429:
-            raise DashScopeHTTPError('429 rate limit exceeded', 429)
-        else:
+    def do_request(actual_model: str, actual_voice: str) -> bytes:
+        # ── CosyVoice family (character-based billing) ──────────────────────
+        if actual_model.startswith('cosyvoice') or actual_model.startswith('sambert'):
+            payload = {
+                'model': actual_model,
+                'input': {
+                    'text': text,
+                    'voice': actual_voice,
+                    'format': 'mp3',
+                    'sample_rate': 24000,
+                },
+            }
+            resp = requests.post(
+                _COSYVOICE_HTTP_URL,
+                headers=headers,
+                json=payload,
+                timeout=30,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                audio_data = data.get('output', {}).get('audio', {})
+                b64 = audio_data.get('data')
+                if b64:
+                    import base64
+                    return ensure_mp3_bytes(base64.b64decode(b64))
+                url = audio_data.get('url')
+                if url:
+                    audio_resp = requests.get(url, timeout=30)
+                    if audio_resp.ok:
+                        return ensure_mp3_bytes(audio_resp.content)
+                raise RuntimeError(f'CosyVoice response missing audio: {audio_data}')
+            if resp.status_code == 429:
+                raise DashScopeHTTPError(f'{actual_model} 429 rate limit exceeded', 429)
             raise DashScopeHTTPError(
                 f'DashScope CosyVoice HTTP {resp.status_code}: {resp.text[:300]}',
                 resp.status_code,
             )
 
-    # ── Qwen TTS family (token-based billing) ────────────────────────────────
-    else:
+        # ── Qwen TTS family (token-based billing) ────────────────────────────
         payload = {
-            'model': model,
+            'model': actual_model,
             'input': {
                 'text': text,
-                'voice': voice,
+                'voice': actual_voice,
                 'language_type': 'English',
             },
         }
@@ -390,27 +651,49 @@ def synthesize_word_to_bytes(
                 code = data.get('code', '')
                 msg = data.get('message', '')
                 raise DashScopeHTTPError(
-                    f'Qwen TTS error {code}: {msg}',
+                    f'{actual_model} error {code}: {msg}',
                     int(status),
                 )
             audio_data = data.get('output', {}).get('audio', {})
             b64 = audio_data.get('data')
             if b64:
                 import base64
-                return base64.b64decode(b64)
+                return ensure_mp3_bytes(base64.b64decode(b64))
             url = audio_data.get('url')
             if url:
                 audio_resp = requests.get(url, timeout=30)
                 if audio_resp.ok:
-                    return audio_resp.content
+                    return ensure_mp3_bytes(audio_resp.content)
             raise RuntimeError(f'Qwen TTS response missing audio: {audio_data}')
-        elif resp.status_code == 429:
-            raise DashScopeHTTPError('429 rate limit exceeded', 429)
-        else:
-            raise DashScopeHTTPError(
-                f'Qwen TTS HTTP {resp.status_code}: {resp.text[:300]}',
-                resp.status_code,
-            )
+        if resp.status_code == 429:
+            raise DashScopeHTTPError(f'{actual_model} 429 rate limit exceeded', 429)
+        raise DashScopeHTTPError(
+            f'Qwen TTS HTTP {resp.status_code}: {resp.text[:300]}',
+            resp.status_code,
+        )
+
+    if _should_use_generation_pool(requested_model, provider=resolved_provider):
+        last_error: Exception | None = None
+        attempts = max(1, len(MODELS) * 2)
+        for _ in range(attempts):
+            actual_model = _MODEL_SCHEDULER.acquire(MODELS)
+            try:
+                return do_request(actual_model, requested_voice)
+            except Exception as exc:
+                last_error = exc
+                if _is_rate_limit_error(exc):
+                    _MODEL_SCHEDULER.cooldown(actual_model, max(1.0, _model_rate_interval(actual_model) * 2.0))
+                    continue
+                if _is_permanent_model_error(exc):
+                    _MODEL_SCHEDULER.disable(actual_model, str(exc)[:200])
+                    continue
+                raise
+        if last_error:
+            raise last_error
+        raise RuntimeError('No TTS model succeeded in generation pool')
+
+    _MODEL_SCHEDULER.reserve_single(requested_model)
+    return do_request(requested_model, requested_voice)
 
 
 def collect_unique_words(book_ids: list[str] | None = None) -> list[str]:
@@ -516,13 +799,88 @@ def _is_rate_limit_error(exc: Exception) -> bool:
     return False
 
 
+def recommended_batch_rate_interval(
+    model: str | None = None,
+    *,
+    provider: str | None = None,
+) -> float:
+    resolved_provider = (provider or _TTS_PROVIDER).strip().lower()
+    resolved_model = (model or DEFAULT_MODEL).strip().lower()
+    if resolved_provider != 'minimax' and _should_use_generation_pool(
+        model or DEFAULT_MODEL,
+        provider=resolved_provider,
+    ):
+        return 0.0
+    if resolved_provider == 'dashscope' and resolved_model in {
+        'qwen-tts-2025-05-22',
+        'qwen-tts-latest',
+        'qwen-tts-2025-04-10',
+        'qwen-tts',
+    }:
+        # Official RPM is low enough that we need a strict global interval.
+        return 7.0
+    return 0.0
+
+
+def recommended_batch_backoff_delays(rate_interval: float = 0.0) -> tuple[float, ...]:
+    if _should_use_generation_pool(DEFAULT_MODEL):
+        return (1.0, 2.0, 4.0)
+    if rate_interval > 0:
+        return (
+            max(20.0, rate_interval * 3.0),
+            max(40.0, rate_interval * 6.0),
+            max(60.0, rate_interval * 9.0),
+        )
+    return (3.0, 6.0, 12.0)
+
+
+def recommended_batch_concurrency(
+    model: str | None = None,
+    *,
+    provider: str | None = None,
+) -> int:
+    resolved_model = model or DEFAULT_MODEL
+    if _should_use_generation_pool(resolved_model, provider=provider):
+        return max(8, min(16, len(MODELS) * 2))
+    if recommended_batch_rate_interval(resolved_model, provider=provider) > 0:
+        return 1
+    return 16
+
+
+class _RequestRateLimiter:
+    def __init__(self, interval: float):
+        self.interval = max(0.0, interval)
+        self._lock = threading.Lock()
+        self._next_allowed_at = 0.0
+
+    def wait_for_turn(self) -> None:
+        if self.interval <= 0.0:
+            return
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                if now >= self._next_allowed_at:
+                    self._next_allowed_at = now + self.interval
+                    return
+                sleep_for = self._next_allowed_at - now
+            time.sleep(min(sleep_for, 1.0))
+
+    def cooldown(self, delay: float) -> None:
+        if delay <= 0.0:
+            return
+        with self._lock:
+            now = time.monotonic()
+            self._next_allowed_at = max(self._next_allowed_at, now + delay)
+
+
 def run_batch_generate_missing(
     book_ids: list[str] | None = None,
     *,
     cache_dir: Path | None = None,
     concurrency: int = 6,
-    backoff_delays: tuple[float, ...] = (3.0, 6.0, 12.0),
+    backoff_delays: tuple[float, ...] | None = None,
     rate_interval: float = 0.0,
+    sleep_fn: Callable[[float], None] | None = None,
 ) -> dict:
     """
     Generate MP3 for every word in VOCAB_BOOKS (or subset) that is not yet cached.
@@ -543,7 +901,17 @@ def run_batch_generate_missing(
     else:
         cache_dir.mkdir(parents=True, exist_ok=True)
 
-    model, voice = default_cache_identity()
+    provider, model, voice = default_word_tts_identity()
+    sleep = sleep_fn or time.sleep
+    if rate_interval <= 0.0:
+        rate_interval = recommended_batch_rate_interval(model, provider=provider)
+    if backoff_delays is None:
+        backoff_delays = recommended_batch_backoff_delays(rate_interval)
+    concurrency = max(1, int(concurrency))
+    if rate_interval > 0.0:
+        concurrency = 1
+    rate_limiter = _RequestRateLimiter(rate_interval)
+    progress_every = 5 if rate_interval > 0.0 else 50
     words = collect_unique_words(book_ids)
     total = len(words)
     completed = count_cached_words(words, cache_dir, model, voice)
@@ -583,14 +951,16 @@ def run_batch_generate_missing(
         try:
             for attempt in range(len(backoff_delays) + 1):
                 try:
-                    audio = synthesize_word_to_bytes(w, model, voice)
+                    rate_limiter.wait_for_turn()
+                    audio = synthesize_word_to_bytes(w, model, voice, provider=provider)
                     write_bytes_atomically(out_path, audio)
                     return True
                 except Exception as exc:
                     if _is_rate_limit_error(exc) and attempt < len(backoff_delays):
                         delay = backoff_delays[attempt]
+                        rate_limiter.cooldown(delay)
                         print(f'[Word TTS 429] {w!r} backoff {delay}s (attempt {attempt+1})')
-                        time.sleep(delay)
+                        sleep(delay)
                         continue
                     with errors_lock:
                         errors.append(f'{w!r}: {exc}')
@@ -616,7 +986,7 @@ def run_batch_generate_missing(
                     if was_new:
                         generated += 1
                         completed += 1
-                if done_count % 50 == 0 or completed == total:
+                if done_count % progress_every == 0 or completed == total:
                     write_batch_progress(
                         cache_dir, total, completed, 'running',
                         current_word=w,

@@ -36,6 +36,19 @@ class UnsupportedModelResponse:
         }
 
 
+class StreamResponse:
+    status_code = 200
+
+    def __init__(self, lines):
+        self._lines = lines
+
+    def raise_for_status(self):
+        return None
+
+    def iter_lines(self, decode_unicode=True):
+        return iter(self._lines)
+
+
 def test_chat_maps_legacy_minimax_v1_base_to_anthropic_messages_endpoint(monkeypatch):
     called = {}
 
@@ -133,3 +146,37 @@ def test_chat_retries_same_model_with_secondary_key_before_downgrading(monkeypat
     assert [call['model'] for call in calls] == ['MiniMax-M2.7-highspeed', 'MiniMax-M2.7-highspeed']
     assert [call['authorization'] for call in calls] == ['Bearer primary-key', 'Bearer secondary-key']
     assert result['text'] == 'ok'
+
+
+def test_stream_chat_events_yields_text_and_tool_calls(monkeypatch):
+    lines = [
+        'data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}',
+        'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"你好"}}',
+        'data: {"type":"content_block_stop","index":0}',
+        'data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"tool_1","name":"get_wrong_words","input":{}}}',
+        'data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\\"limit\\":5}"}}',
+        'data: {"type":"content_block_stop","index":1}',
+        'data: {"type":"message_stop"}',
+    ]
+
+    monkeypatch.setattr(llm, '_post_messages_request', lambda *args, **kwargs: StreamResponse(lines))
+
+    events = list(llm.stream_chat_events(
+        [{'role': 'user', 'content': 'hello'}],
+        tools=[{
+            'name': 'get_wrong_words',
+            'description': 'Fetch wrong words',
+            'parameters': {
+                'type': 'object',
+                'properties': {'limit': {'type': 'integer'}},
+            },
+        }],
+    ))
+
+    assert events[0] == {'type': 'text_delta', 'text': '你好'}
+    assert events[1] == {
+        'type': 'tool_call',
+        'tool': 'get_wrong_words',
+        'input': {'limit': 5},
+        'tool_call_id': 'tool_1',
+    }

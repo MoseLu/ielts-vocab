@@ -3,6 +3,7 @@ import type { QuickMemoryRecordState } from '../../lib/quickMemory'
 // ── Types for Practice Components ────────────────────────────────────────────────
 
 export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'quickmemory'
+export type SpellingSubmitSource = 'button' | 'enter'
 
 // ── Quick Memory — DHP + Ebbinghaus spaced repetition ──────────────────────
 export interface QuickMemoryRecord {
@@ -26,6 +27,7 @@ export interface QuickMemoryModeProps {
   chapterId: string | null
   bookChapters: Chapter[]
   reviewMode?: boolean
+  errorMode?: boolean
   reviewHasMore?: boolean
   onContinueReview?: () => void
   buildChapterPath?: (chapterId: string | number) => string
@@ -51,11 +53,21 @@ export interface WordExample {
   zh: string
 }
 
+export interface ListeningConfusableCandidate {
+  word: string
+  phonetic: string
+  pos: string
+  definition: string
+  group_key?: string
+}
+
 export interface Word {
   word: string
   phonetic: string
   pos: string
   definition: string
+  group_key?: string
+  listening_confusables?: ListeningConfusableCandidate[]
   book_id?: string
   book_title?: string
   chapter_id?: number | string
@@ -115,6 +127,7 @@ export interface Chapter {
   id: number | string
   title: string
   word_count?: number
+  is_custom?: boolean
 }
 
 // Props interfaces for components
@@ -194,10 +207,16 @@ export interface DictationModeProps {
   settings: AppSettings
   progressValue: number
   total: number
+  queueIndex: number
   previousWord: Word | null
   lastState: LastState | null
+  errorMode?: boolean
+  reviewMode?: boolean
+  spellingLocked?: boolean
+  spellingFeedbackDismissing?: boolean
+  spellingFeedbackSnapshot?: string | null
   onSpellingInputChange: (value: string) => void
-  onSpellingSubmit: () => void
+  onSpellingSubmit: (source?: SpellingSubmitSource) => void
   onSkip: () => void
   onGoBack: () => void
   onStartRecording: () => void
@@ -211,8 +230,12 @@ export interface OptionsModeProps {
   lastState: LastState | null
   mode: PracticeMode
   smartDimension?: SmartDimension
+  errorMode?: boolean
+  reviewMode?: boolean
   options: OptionItem[]
+  optionsLoading?: boolean
   selectedAnswer: number | null
+  wrongSelections?: number[]
   showResult: boolean
   correctIndex: number
   spellingInput: string
@@ -225,7 +248,7 @@ export interface OptionsModeProps {
   onOptionSelect: (idx: number) => void
   onSkip: () => void
   onGoBack: () => void
-  onSpellingSubmit: () => void
+  onSpellingSubmit: (source?: SpellingSubmitSource) => void
   onSpellingInputChange: (value: string) => void
   onStartRecording: () => void
   onStopRecording: () => void

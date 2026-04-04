@@ -22,7 +22,7 @@ socketio_instance = None
 # API configuration
 API_KEY = os.environ.get('DASHSCOPE_API_KEY', '')
 BASE_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/realtime'
-MODEL = 'qwen3-asr-flash-realtime'
+MODEL = os.environ.get('REALTIME_ASR_MODEL', 'qwen3-asr-flash-realtime')
 
 print(f"[Speech] Module loaded, API_KEY configured: {bool(API_KEY)}")
 
@@ -327,10 +327,10 @@ def register_socketio_events(socketio):
             with session_state['lock']:
                 session_state['ready'] = False
 
-            socketio.emit('recognition_stopped', {}, namespace='/speech')
+            socketio.emit('recognition_stopped', {}, namespace='/speech', to=session_id)
 
         except Exception as e:
             print(f"[Speech] Error stopping: {e}")
             socketio.emit('recognition_error', {
                 'error': str(e)
-            }, namespace='/speech')
+            }, namespace='/speech', to=session_id)

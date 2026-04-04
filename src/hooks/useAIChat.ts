@@ -20,12 +20,10 @@ import {
 } from '../lib'
 import { ChapterProgressMapSchema } from '../lib/schemas'
 import { STORAGE_KEYS } from '../constants'
+import { readWrongWordsFromStorage } from '../features/vocabulary/wrongWordsStore'
+import { readQuickMemoryRecordsFromStorage } from '../lib/quickMemory'
 
 // ── localStorage schemas (permissive — extra keys ignored) ───────────────────
-const QuickMemoryRecordSchema = z.record(
-  z.string(),
-  z.object({ status: z.enum(['known', 'unknown']), nextReview: z.number().optional() }).passthrough()
-)
 const ModePerformanceSchema = z.record(
   z.string(),
   z.object({ correct: z.number(), wrong: z.number() }).passthrough()
@@ -527,9 +525,7 @@ async function recoverPendingStudySession(): Promise<void> {
 
 function buildQuickMemorySummary() {
   try {
-    const parsed = safeParse(QuickMemoryRecordSchema, JSON.parse(localStorage.getItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS) || '{}'))
-    if (!parsed.success) return null
-    const records = parsed.data
+    const records = readQuickMemoryRecordsFromStorage()
     const now = Date.now()
     return Object.values(records).reduce(
       (acc, r) => {
@@ -759,6 +755,111 @@ export function recordModeAnswer(mode: string, correct: boolean) {
   }
 }
 
+type AIStreamEvent =
+  | { type: 'status'; stage?: string; message?: string; tool?: string }
+  | { type: 'text'; delta: string }
+  | { type: 'options'; options: string[] }
+  | { type: 'done'; reply: string; options?: string[] }
+  | { type: 'error'; error?: string }
+
+function resolveStreamStatusMessage(event: Extract<AIStreamEvent, { type: 'status' }>): string {
+  const explicitMessage = event.message?.trim()
+  if (explicitMessage) return explicitMessage
+  if (event.stage === 'tool') {
+    if (event.tool === 'web_search') return 'AI 正在检索相关资料...'
+    if (event.tool === 'remember_user_note') return 'AI 正在记录你的学习信息...'
+    if (event.tool === 'get_wrong_words') return 'AI 正在分析你的错词记录...'
+    if (event.tool === 'get_chapter_words') return 'AI 正在读取章节词表...'
+    if (event.tool === 'get_book_chapters') return 'AI 正在读取词书章节结构...'
+    return 'AI 正在处理学习数据...'
+  }
+  return 'AI 正在思考...'
+}
+
+async function streamAIReply(params: {
+  message: string
+  context: LearningContext
+  onEvent: (event: AIStreamEvent) => void | Promise<void>
+}): Promise<void> {
+  const response = await fetch(buildApiUrl('/api/ai/ask/stream'), {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    },
+    signal: AbortSignal.timeout(180_000),
+    body: JSON.stringify({
+      message: params.message,
+      context: params.context,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'AI 服务暂时不可用，请稍后重试' }))
+    throw new Error(error.error || 'AI 服务暂时不可用，请稍后重试')
+  }
+
+  if (!response.body) {
+    throw new Error('AI 响应流不可用')
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let receivedDone = false
+
+  const flushBuffer = async (force = false) => {
+    while (true) {
+      const match = buffer.match(/\r?\n\r?\n/)
+      if (!match || match.index == null) break
+
+      const rawEvent = buffer.slice(0, match.index)
+      buffer = buffer.slice(match.index + match[0].length)
+
+      const dataText = rawEvent
+        .split(/\r?\n/)
+        .filter(line => line.startsWith('data:'))
+        .map(line => line.slice(5).trimStart())
+        .join('\n')
+
+      if (!dataText) continue
+      const event = JSON.parse(dataText) as AIStreamEvent
+      if (event.type === 'done') receivedDone = true
+      await params.onEvent(event)
+    }
+
+    if (force && buffer.trim()) {
+      const dataText = buffer
+        .split(/\r?\n/)
+        .filter(line => line.startsWith('data:'))
+        .map(line => line.slice(5).trimStart())
+        .join('\n')
+
+      buffer = ''
+      if (dataText) {
+        const event = JSON.parse(dataText) as AIStreamEvent
+        if (event.type === 'done') receivedDone = true
+        await params.onEvent(event)
+      }
+    }
+  }
+
+  while (true) {
+    const { value, done } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    await flushBuffer()
+  }
+
+  buffer += decoder.decode()
+  await flushBuffer(true)
+
+  if (!receivedDone) {
+    throw new Error('AI 响应中断，请稍后重试')
+  }
+}
+
 // ── Main hook ─────────────────────────────────────────────────────────────────
 
 export function useAIChat(_options: UseAIChatOptions = {}) {
@@ -853,7 +954,7 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
 
   const _syncWrongWords = useCallback(async () => {
     try {
-      const wwParsed = safeParse(WrongWordsSchema, JSON.parse(localStorage.getItem(STORAGE_KEYS.WRONG_WORDS) || '[]'))
+      const wwParsed = safeParse(WrongWordsSchema, readWrongWordsFromStorage())
       const wrongWords = wwParsed.success ? wwParsed.data : []
       if (!wrongWords.length) return
       const ssParsed = safeParse(SmartWordStatsSchema, JSON.parse(localStorage.getItem(STORAGE_KEYS.SMART_WORD_STATS) || '{}'))
@@ -931,6 +1032,8 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
     setMessages(prev => [...prev, userMsg])
     setIsLoading(true)
     setError(null)
+    let streamingAssistantId: string | null = null
+    let streamedContent = ''
 
     try {
       const normalized = text.trim()
@@ -950,6 +1053,24 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
           options: options ?? undefined,
           timestamp: Date.now(),
         }])
+      }
+      const createStreamingAssistantMessage = () => {
+        const id = `asst_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+        setMessages(prev => [...prev, {
+          id,
+          role: 'assistant',
+          content: '',
+          isStreaming: true,
+          timestamp: Date.now(),
+        }])
+        return id
+      }
+      const updateAssistantMessage = (id: string, patch: Partial<AIMessage>) => {
+        setMessages(prev => prev.map(message => (
+          message.id === id
+            ? { ...message, ...patch }
+            : message
+        )))
       }
       const pausePendingFlows = () => {
         setPendingPronunciation(prev => (prev ? { ...prev, awaitingInput: false } : null))
@@ -1210,23 +1331,73 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
       }
 
       pausePendingFlows()
-      const raw = await apiFetch('/api/ai/ask', {
-        method: 'POST',
-        body: JSON.stringify({
-          message: text,
-          context,
-        }),
-      })
-      const result = safeParse(AIAskResponseSchema, raw)
-      if (!result.success) {
-        console.error('[AI] Zod validation failed:', JSON.stringify(raw, null, 2))
-        throw new Error('AI响应格式错误')
-      }
+      streamingAssistantId = createStreamingAssistantMessage()
+      let streamedOptions: string[] | undefined
 
-      appendAssistantMessage(result.data.reply, result.data.options ?? undefined)
+      await streamAIReply({
+        message: text,
+        context,
+        onEvent: (event) => {
+          if (!streamingAssistantId) return
+
+          if (event.type === 'status') {
+            if (!streamedContent.trim()) {
+              updateAssistantMessage(streamingAssistantId, {
+                content: resolveStreamStatusMessage(event),
+                isStreaming: true,
+              })
+            }
+            return
+          }
+
+          if (event.type === 'text') {
+            streamedContent += event.delta
+            updateAssistantMessage(streamingAssistantId, {
+              content: streamedContent,
+              isStreaming: true,
+            })
+            return
+          }
+
+          if (event.type === 'options') {
+            streamedOptions = event.options
+            updateAssistantMessage(streamingAssistantId, {
+              options: event.options,
+              isStreaming: true,
+            })
+            return
+          }
+
+          if (event.type === 'done') {
+            streamedContent = event.reply
+            streamedOptions = event.options ?? streamedOptions
+            updateAssistantMessage(streamingAssistantId, {
+              content: event.reply,
+              options: streamedOptions,
+              isStreaming: false,
+            })
+            return
+          }
+
+          if (event.type === 'error') {
+            throw new Error(event.error || 'AI 服务暂时不可用，请稍后重试')
+          }
+        },
+      })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '未知错误'
       setError(msg)
+      if (streamingAssistantId) {
+        if (streamedContent.trim()) {
+          setMessages(prev => prev.map(message => (
+            message.id === streamingAssistantId
+              ? { ...message, content: streamedContent, isStreaming: false }
+              : message
+          )))
+        } else {
+          setMessages(prev => prev.filter(message => message.id !== streamingAssistantId))
+        }
+      }
       setMessages(prev => [...prev, {
         id: `err_${Date.now()}`,
         role: 'assistant',

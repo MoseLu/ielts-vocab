@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useAIChat } from '../hooks/useAIChat'
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { renderJournalMarkdown } from '../lib/journalMarkdown'
 import { MicroLoading } from './ui'
 import { Scrollbar } from './ui/Scrollbar'
@@ -16,6 +17,21 @@ const SendIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <line x1="22" y1="2" x2="11" y2="13" />
     <polygon points="22 2 15 22 11 13 2 9 22 2" />
+  </svg>
+)
+
+const MicIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+    <path d="M19 11a7 7 0 0 1-14 0" />
+    <path d="M12 18v3" />
+    <path d="M8 21h8" />
+  </svg>
+)
+
+const StopIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <rect x="6" y="6" width="12" height="12" rx="2.5" />
   </svg>
 )
 
@@ -109,10 +125,13 @@ function MarkdownBubble({ content, className = '' }: { content: string; classNam
   )
 }
 
-function AssistantBubble({ content }: { content: string }) {
+function AssistantBubble({ content, isStreaming = false }: { content: string; isStreaming?: boolean }) {
   return (
-    <div className="ai-assistant-bubble">
-      <MarkdownBubble content={content} className="ai-assistant-bubble__content" />
+    <div className={`ai-assistant-bubble ${isStreaming ? 'ai-assistant-bubble--streaming' : ''}`.trim()}>
+      <MarkdownBubble
+        content={content}
+        className={`ai-assistant-bubble__content ${isStreaming ? 'ai-assistant-bubble__content--streaming' : ''}`.trim()}
+      />
       <CopyButton text={content} />
     </div>
   )
@@ -131,6 +150,15 @@ const QUICK_ACTIONS: Array<{ label: string; value: string; autoSend: boolean }> 
   { label: '发音训练', value: '开始发音训练', autoSend: true },
 ]
 
+const AI_INPUT_PLACEHOLDER = '输入问题，或发送学习指令'
+const AI_INPUT_MAX_HEIGHT = 120
+
+function resizeComposer(textarea: HTMLTextAreaElement | null) {
+  if (!textarea) return
+  textarea.style.height = 'auto'
+  textarea.style.height = `${Math.min(textarea.scrollHeight, AI_INPUT_MAX_HEIGHT)}px`
+}
+
 function AIChatPanel() {
   const {
     messages,
@@ -146,9 +174,86 @@ function AIChatPanel() {
 
   const [input, setInput] = useState('')
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [speechError, setSpeechError] = useState<string | null>(null)
+  const [speechStatus, setSpeechStatus] = useState('点击麦克风即可语音提问')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+  const speechPrefixRef = useRef('')
+  const speechShouldAutoSendRef = useRef(false)
+  const visibleMessages = messages.filter(message => (
+    message.role === 'user' || Boolean(message.content.trim()) || Boolean(message.options?.length)
+  ))
+  const lastMessage = messages[messages.length - 1]
+  const shouldShowLoadingBubble = isLoading && !(lastMessage?.role === 'assistant' && lastMessage.content.trim())
+  const syncComposer = useCallback((nextValue: string) => {
+    setInput(nextValue)
+    requestAnimationFrame(() => resizeComposer(inputRef.current))
+  }, [])
+  const resetComposer = useCallback(() => {
+    setInput('')
+    requestAnimationFrame(() => {
+      if (inputRef.current) {
+        inputRef.current.style.height = 'auto'
+      }
+    })
+  }, [])
+  const applySpeechTranscript = useCallback((spokenText: string) => {
+    const transcript = spokenText.trim()
+    const prefix = speechPrefixRef.current.trim()
+    const nextValue = prefix && transcript
+      ? `${prefix} ${transcript}`
+      : (transcript || prefix)
+
+    syncComposer(nextValue)
+    setSpeechError(null)
+    setSpeechStatus(transcript ? `语音转写中：${transcript}` : '正在听写...')
+
+    return nextValue.trim()
+  }, [syncComposer])
+  const {
+    isConnected: speechConnected,
+    isRecording: speechRecording,
+    startRecording: startSpeechRecording,
+    stopRecording: stopSpeechRecording,
+  } = useSpeechRecognition({
+    language: 'zh',
+    enableVad: true,
+    autoStop: true,
+    autoStopDelay: 800,
+    onPartial: (text: string) => {
+      applySpeechTranscript(text)
+    },
+    onResult: (text: string) => {
+      const nextValue = applySpeechTranscript(text)
+      if (!speechShouldAutoSendRef.current || !nextValue || isLoading) {
+        setSpeechStatus(nextValue ? '识别完成，可直接发送或继续修改' : '识别完成')
+        return
+      }
+
+      speechShouldAutoSendRef.current = false
+      setSpeechStatus('识别完成，正在发送...')
+      resetComposer()
+      sendMessage(nextValue)
+    },
+    onError: (error: string) => {
+      speechShouldAutoSendRef.current = false
+      setSpeechError(error)
+      setSpeechStatus(`语音输入不可用：${error}`)
+    },
+  })
+  const scrollMessagesToBottom = useCallback((behavior: ScrollBehavior = 'auto') => {
+    const wrap = panelRef.current?.querySelector('.ai-messages .el-scrollbar__wrap') as HTMLElement | null
+    if (wrap) {
+      if (typeof wrap.scrollTo === 'function') {
+        wrap.scrollTo({ top: wrap.scrollHeight, behavior })
+      } else {
+        wrap.scrollTop = wrap.scrollHeight
+      }
+      return
+    }
+    messagesEndRef.current?.scrollIntoView({ block: 'end', behavior })
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return
@@ -168,20 +273,53 @@ function AIChatPanel() {
   }, [isOpen])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
+    if (speechRecording) return
+    if (speechError) return
+    setSpeechStatus(speechConnected ? '点击麦克风即可语音提问' : '语音服务未连接')
+  }, [speechConnected, speechError, speechRecording])
+
+  useEffect(() => {
+    if (!isOpen) return
+    scrollMessagesToBottom(isLoading ? 'auto' : 'smooth')
+  }, [isOpen, isLoading, messages, scrollMessagesToBottom])
+
+  useEffect(() => {
+    if (isOpen) return
+    speechShouldAutoSendRef.current = false
+    if (speechRecording) {
+      stopSpeechRecording()
+    }
+  }, [isOpen, speechRecording, stopSpeechRecording])
+
+  useEffect(() => () => {
+    speechShouldAutoSendRef.current = false
+    stopSpeechRecording()
+  }, [stopSpeechRecording])
 
   const showQuickActions = !isGreeting && greetingDone && messages.every(message => message.role !== 'user')
 
   const handleSend = useCallback(() => {
     const text = input.trim()
     if (!text || isLoading) return
-    setInput('')
-    if (inputRef.current) {
-      inputRef.current.style.height = 'auto'
-    }
+    speechShouldAutoSendRef.current = false
+    setSpeechError(null)
+    resetComposer()
     sendMessage(text)
-  }, [input, isLoading, sendMessage])
+  }, [input, isLoading, resetComposer, sendMessage])
+
+  const handleVoiceToggle = useCallback(async () => {
+    if (speechRecording) {
+      speechShouldAutoSendRef.current = false
+      stopSpeechRecording()
+      return
+    }
+
+    speechPrefixRef.current = input.trim()
+    speechShouldAutoSendRef.current = !speechPrefixRef.current
+    setSpeechError(null)
+    setSpeechStatus('正在听写...')
+    await startSpeechRecording()
+  }, [input, speechRecording, startSpeechRecording, stopSpeechRecording])
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -191,23 +329,23 @@ function AIChatPanel() {
   }
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    speechShouldAutoSendRef.current = false
+    setSpeechError(null)
+    setSpeechStatus(speechConnected ? '点击麦克风即可语音提问' : '语音服务未连接')
     setInput(event.target.value)
-    event.target.style.height = 'auto'
-    event.target.style.height = `${Math.min(event.target.scrollHeight, 120)}px`
+    resizeComposer(event.target)
   }
 
   const handleQuickAction = useCallback((value: string, autoSend: boolean) => {
     if (autoSend) {
-      setInput('')
-      if (inputRef.current) {
-        inputRef.current.style.height = 'auto'
-      }
+      speechShouldAutoSendRef.current = false
+      resetComposer()
       sendMessage(value)
       return
     }
-    setInput(value)
+    syncComposer(value)
     requestAnimationFrame(() => inputRef.current?.focus())
-  }, [sendMessage])
+  }, [resetComposer, sendMessage, syncComposer])
 
   if (!isOpen) {
     return (
@@ -288,13 +426,13 @@ function AIChatPanel() {
       )}
 
       <Scrollbar className="ai-messages">
-        {messages.map((message) => (
+        {visibleMessages.map((message) => (
           <div
             key={message.id}
             className={`ai-msg ai-msg-${message.role} ${message.role === 'assistant' ? 'ai-msg--assistant-wide' : ''}`}
           >
             {message.role === 'assistant'
-              ? <AssistantBubble content={message.content} />
+              ? <AssistantBubble content={message.content} isStreaming={Boolean(message.isStreaming)} />
               : <PlainTextBubble content={message.content} />}
             {message.options && message.options.length > 0 && (
               <div className="ai-msg-options">
@@ -316,7 +454,7 @@ function AIChatPanel() {
           </div>
         ))}
 
-        {isLoading && (
+        {shouldShowLoadingBubble && (
           <div className="ai-msg ai-msg-assistant ai-msg--assistant-wide">
             <div className="ai-msg-bubble">
               <MicroLoading text="AI 正在思考..." className="ai-bubble-loading" tone="accent" />
@@ -327,26 +465,44 @@ function AIChatPanel() {
         <div ref={messagesEndRef} />
       </Scrollbar>
 
-      <div className="ai-input-row">
-        <textarea
-          ref={inputRef}
-          className="ai-input"
-          value={input}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          placeholder="输入问题，或直接说“生成复习计划”“开始口语训练”“开始发音训练”"
-          rows={1}
-          disabled={isLoading}
-        />
-        <button
-          className="ai-send-btn"
-          onClick={handleSend}
-          disabled={!input.trim() || isLoading}
-          aria-label="发送消息"
-          type="button"
+      <div className="ai-input-stack">
+        <div className="ai-input-row">
+          <textarea
+            ref={inputRef}
+            className="ai-input"
+            value={input}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            placeholder={speechRecording ? '正在听写，请稍候...' : AI_INPUT_PLACEHOLDER}
+            rows={1}
+            disabled={isLoading || speechRecording}
+          />
+          <button
+            className={`ai-voice-btn ${speechRecording ? 'ai-voice-btn--recording' : ''}`.trim()}
+            onClick={() => void handleVoiceToggle()}
+            disabled={isLoading || (!speechConnected && !speechRecording)}
+            aria-label={speechRecording ? '停止语音输入' : '开始语音输入'}
+            title={speechRecording ? '停止语音输入' : (speechConnected ? '开始语音输入' : '语音服务未连接')}
+            type="button"
+          >
+            {speechRecording ? <StopIcon /> : <MicIcon />}
+          </button>
+          <button
+            className="ai-send-btn"
+            onClick={handleSend}
+            disabled={!input.trim() || isLoading || speechRecording}
+            aria-label="发送消息"
+            type="button"
+          >
+            <SendIcon />
+          </button>
+        </div>
+        <div
+          className={`ai-voice-status ${speechError ? 'ai-voice-status--error' : ''} ${speechRecording ? 'ai-voice-status--recording' : ''}`.trim()}
+          aria-live="polite"
         >
-          <SendIcon />
-        </button>
+          {speechStatus}
+        </div>
       </div>
     </div>
   )

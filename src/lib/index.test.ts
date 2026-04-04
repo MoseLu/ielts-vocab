@@ -29,4 +29,21 @@ describe('apiFetch', () => {
     )
     expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent))
   })
+
+  it('formats retry_after responses into readable lockout messages', async () => {
+    setAuthSessionActive(false)
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: '登录尝试过于频繁，请 877 秒后再试',
+          retry_after: 877,
+        }),
+        { status: 429 },
+      ),
+    )
+
+    await expect(apiFetch('/api/auth/login', { method: 'POST' })).rejects.toThrow(
+      '登录尝试过于频繁，请 14分37秒后再试',
+    )
+  })
 })

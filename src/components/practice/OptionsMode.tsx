@@ -1,7 +1,9 @@
 // ── Options Mode Component (Listening / Meaning / Smart) ───────────────────────
 
 import { useRef, useEffect } from 'react'
-import type { OptionsModeProps, OptionItem, LastState, SmartDimension } from './types'
+import type { OptionsModeProps, OptionItem, LastState, SmartDimension, SpellingSubmitSource } from './types'
+import PracticeStageGuide from './PracticeStageGuide.tsx'
+import { buildChoiceStageGuide } from './practiceStageGuide'
 
 interface PrevWordBlockProps {
   previousWord: LastState['prevWord']
@@ -44,25 +46,66 @@ function BottomBar({ progressValue, total, queueIndex }: BottomBarProps) {
 
 interface OptionsGridProps {
   options: OptionItem[]
+  optionsLoading?: boolean
   selectedAnswer: number | null
+  wrongSelections: number[]
   showResult: boolean
   correctIndex: number
   onOptionSelect: (idx: number) => void
 }
 
-function OptionsGrid({ options, selectedAnswer, showResult, correctIndex, onOptionSelect }: OptionsGridProps) {
+function simplifyPosLabel(pos: string): string {
+  const normalized = pos.trim().toLowerCase().replace(/\.+$/g, '')
+  if (!normalized) return ''
+  if (normalized === 'adj') return 'adj'
+  if (normalized === 'adv') return 'adv'
+  if (normalized.startsWith('v')) return 'v'
+  if (normalized.startsWith('n')) return 'n'
+  if (normalized.startsWith('prep')) return 'prep'
+  if (normalized.startsWith('pron')) return 'pron'
+  if (normalized.startsWith('conj')) return 'conj'
+  if (normalized.startsWith('num')) return 'num'
+  if (normalized.startsWith('art')) return 'art'
+  if (normalized.startsWith('int')) return 'int'
+  return normalized
+}
+
+function OptionsGrid({
+  options,
+  optionsLoading = false,
+  selectedAnswer,
+  wrongSelections,
+  showResult,
+  correctIndex,
+  onOptionSelect,
+}: OptionsGridProps) {
+  if (optionsLoading) {
+    return <div className="options-loading">正在生成选项...</div>
+  }
+
+  const wrongSet = new Set(wrongSelections)
+
   return (
     <div className="options-grid">
       {options.map((option, idx) => {
         let cls = 'option-btn'
-        if (showResult) {
-          if (idx === correctIndex) cls += ' correct'
-          else if (idx === selectedAnswer) cls += ' wrong'
-        } else if (selectedAnswer === idx) cls += ' selected'
+        const isWrong = wrongSet.has(idx)
+        const isCorrect = showResult && idx === correctIndex
+        const shouldRevealWord = Boolean(option.word) && (isWrong || isCorrect)
+
+        if (isCorrect) cls += ' correct'
+        else if (isWrong) cls += ' wrong'
+        else if (!showResult && selectedAnswer === idx) cls += ' selected'
+
         return (
           <button key={idx} className={cls} onClick={() => onOptionSelect(idx)} disabled={showResult}>
             <div className="option-header">
-              <span className="option-pos">{option.pos}</span>
+              <span className="option-pos-group">
+                <span className="option-pos">{simplifyPosLabel(option.pos)}</span>
+                {shouldRevealWord && (
+                  <span className="option-word-reveal">{option.word}</span>
+                )}
+              </span>
               <span className="option-key">快捷键: {idx + 1}</span>
             </div>
             {option.display_mode === 'word' && option.word ? (
@@ -138,7 +181,7 @@ interface SmartDictationProps {
   speechConnected: boolean
   speechRecording: boolean
   onSpellingInputChange: (v: string) => void
-  onSpellingSubmit: () => void
+  onSpellingSubmit: (source?: SpellingSubmitSource) => void
   onStartRecording: () => void
   onStopRecording: () => void
   onPlayWord: (word: string) => void
@@ -193,7 +236,12 @@ function SmartDictation({
           className="spelling-input"
           value={spellingInput}
           onChange={e => onSpellingInputChange(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') onSpellingSubmit() }}
+          onKeyDown={e => {
+            if (e.key !== 'Enter') return
+            e.preventDefault()
+            if (e.repeat) return
+            onSpellingSubmit('enter')
+          }}
           placeholder="输入你听到的单词..."
           disabled={!!spellingResult}
           autoComplete="off"
@@ -229,7 +277,7 @@ function SmartDictation({
           </button>
         )}
         {!spellingResult && (
-          <button className="spelling-submit-btn" onClick={onSpellingSubmit} title="确认">
+          <button className="spelling-submit-btn" onClick={() => onSpellingSubmit('button')} title="确认">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
@@ -247,7 +295,7 @@ interface MeaningRecallInputProps {
   speechConnected: boolean
   speechRecording: boolean
   onSpellingInputChange: (v: string) => void
-  onSpellingSubmit: () => void
+  onSpellingSubmit: (source?: SpellingSubmitSource) => void
   onStartRecording: () => void
   onStopRecording: () => void
   onSkip: () => void
@@ -297,7 +345,12 @@ function MeaningRecallInput({
           className="spelling-input"
           value={spellingInput}
           onChange={e => onSpellingInputChange(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') onSpellingSubmit() }}
+          onKeyDown={e => {
+            if (e.key !== 'Enter') return
+            e.preventDefault()
+            if (e.repeat) return
+            onSpellingSubmit('enter')
+          }}
           placeholder="输入对应英文..."
           disabled={!!spellingResult}
           autoComplete="off"
@@ -333,7 +386,7 @@ function MeaningRecallInput({
           </button>
         )}
         {!spellingResult && (
-          <button className="spelling-submit-btn" onClick={onSpellingSubmit} title="确认">
+          <button className="spelling-submit-btn" onClick={() => onSpellingSubmit('button')} title="确认">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
@@ -360,8 +413,12 @@ export default function OptionsMode({
   lastState,
   mode,
   smartDimension = 'meaning',
+  errorMode = false,
+  reviewMode = false,
   options,
+  optionsLoading = false,
   selectedAnswer,
+  wrongSelections = [],
   showResult,
   correctIndex,
   spellingInput,
@@ -385,6 +442,15 @@ export default function OptionsMode({
     : (mode === 'meaning' ? 'definition' : 'audio')
   const isSmartDictation = mode === 'smart' && smartDimension === 'dictation'
   const isMeaningRecall = mode === 'meaning' || (mode === 'smart' && smartDimension === 'meaning')
+  const stageGuide = buildChoiceStageGuide({
+    mode,
+    smartDimension,
+    queueIndex,
+    total,
+    errorMode,
+    reviewMode,
+    answered: isSmartDictation || isMeaningRecall ? spellingResult !== null : showResult,
+  })
 
   return (
     <div className="practice-page">
@@ -392,6 +458,7 @@ export default function OptionsMode({
 
       <div className="practice-main">
         {mode === 'smart' && <SmartDimBadge dimension={smartDimension} />}
+        <PracticeStageGuide guide={stageGuide} />
 
         <WordDisplay
           currentWord={currentWord}
@@ -429,7 +496,9 @@ export default function OptionsMode({
           <>
             <OptionsGrid
               options={options}
+              optionsLoading={optionsLoading}
               selectedAnswer={selectedAnswer}
+              wrongSelections={wrongSelections}
               showResult={showResult}
               correctIndex={correctIndex}
               onOptionSelect={onOptionSelect}

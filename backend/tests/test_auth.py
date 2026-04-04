@@ -49,6 +49,29 @@ class TestRegister:
         data = res.get_json()
         assert data['user']['email'] == ''
 
+    def test_register_logs_audit_context(self, client, caplog):
+        caplog.set_level('INFO')
+        res = client.post(
+            '/api/auth/register',
+            json={
+                'username': 'audited-user',
+                'password': 'password123',
+                'email': 'audited-user@example.com',
+            },
+            headers={
+                'X-Forwarded-For': '203.0.113.10, 10.0.0.1',
+                'User-Agent': 'pytest-agent/1.0',
+                'Origin': 'https://axiomaticworld.com',
+            },
+            environ_overrides={'REMOTE_ADDR': '127.0.0.1'},
+        )
+        assert res.status_code == 201
+        assert 'Registration audit | outcome=created reason=ok' in caplog.text
+        assert 'username=audited-user' in caplog.text
+        assert 'email=audited-user@example.com' in caplog.text
+        assert 'client_ip=203.0.113.10' in caplog.text
+        assert 'forwarded_for=203.0.113.10, 10.0.0.1' in caplog.text
+
     def test_register_missing_username(self, client):
         res = client.post('/api/auth/register', json={
             'password': 'password123',
@@ -344,7 +367,7 @@ class TestLoginRateLimiting:
         # Manually expire the bucket in DB (simulate time passing)
         # This tests that the bucket resets correctly
         with app.app_context():
-            bucket = RateLimitBucket.query.filter_by(ip_address='127.0.0.1', purpose='login').first()
+            bucket = RateLimitBucket.query.filter_by(purpose='login').first()
             if bucket:
                 bucket.reset_at = datetime.utcnow() - timedelta(minutes=1)
                 from models import db
@@ -356,8 +379,8 @@ class TestLoginRateLimiting:
         })
         assert res.status_code == 200, "Should allow login after window expires"
 
-    def test_rate_limit_is_per_ip(self, client, app):
-        """Each IP should have its own rate limit bucket."""
+    def test_rate_limit_is_scoped_by_login_identifier(self, client, app):
+        """One account's failures should not lock other accounts behind the same proxy IP."""
         # Register two users
         client.post('/api/auth/register', json={
             'username': 'alice', 'password': 'password123', 'email': 'alice@example.com'
@@ -366,20 +389,76 @@ class TestLoginRateLimiting:
             'username': 'bob', 'password': 'password123', 'email': 'bob@example.com'
         })
 
-        # Exhaust rate limit for alice's IP
-        for _ in range(10):
-            client.post('/api/auth/login', json={
-                'email': 'alice@example.com', 'password': 'wrongpassword'
-            })
+        common_headers = {'X-Forwarded-For': '198.51.100.10, 10.0.0.1'}
+        common_environ = {'REMOTE_ADDR': '127.0.0.1'}
 
-        # Bob should still be able to try (not rate limited from alice's failures)
-        # Note: In test client, remote_addr is the same by default
-        # This test documents the per-IP behavior
-        res = client.post('/api/auth/login', json={
-            'email': 'bob@example.com', 'password': 'wrongpassword'
+        # Exhaust rate limit for alice using the same proxy chain/IP.
+        for _ in range(10):
+            res = client.post(
+                '/api/auth/login',
+                json={'email': 'alice@example.com', 'password': 'wrongpassword'},
+                headers=common_headers,
+                environ_overrides=common_environ,
+            )
+            assert res.status_code == 401
+
+        blocked = client.post(
+            '/api/auth/login',
+            json={'email': 'alice@example.com', 'password': 'wrongpassword'},
+            headers=common_headers,
+            environ_overrides=common_environ,
+        )
+        assert blocked.status_code == 429
+
+        bob_wrong = client.post(
+            '/api/auth/login',
+            json={'email': 'bob@example.com', 'password': 'wrongpassword'},
+            headers=common_headers,
+            environ_overrides=common_environ,
+        )
+        assert bob_wrong.status_code == 401
+
+        bob_success = client.post(
+            '/api/auth/login',
+            json={'email': 'bob@example.com', 'password': 'password123'},
+            headers=common_headers,
+            environ_overrides=common_environ,
+        )
+        assert bob_success.status_code == 200
+
+    def test_rate_limit_shares_bucket_between_email_and_username_for_same_account(self, client):
+        client.post('/api/auth/register', json={
+            'username': 'alice', 'password': 'password123', 'email': 'alice@example.com'
         })
-        # If IPs are same, bob would also be blocked - this is expected
-        assert res.status_code in (401, 429)
+
+        common_headers = {'X-Forwarded-For': '198.51.100.10, 10.0.0.1'}
+        common_environ = {'REMOTE_ADDR': '127.0.0.1'}
+
+        for _ in range(5):
+            res = client.post(
+                '/api/auth/login',
+                json={'email': 'alice@example.com', 'password': 'wrongpassword'},
+                headers=common_headers,
+                environ_overrides=common_environ,
+            )
+            assert res.status_code == 401
+
+        for _ in range(5):
+            res = client.post(
+                '/api/auth/login',
+                json={'email': 'alice', 'password': 'wrongpassword'},
+                headers=common_headers,
+                environ_overrides=common_environ,
+            )
+            assert res.status_code == 401
+
+        blocked = client.post(
+            '/api/auth/login',
+            json={'email': 'alice', 'password': 'wrongpassword'},
+            headers=common_headers,
+            environ_overrides=common_environ,
+        )
+        assert blocked.status_code == 429
 
     def test_rate_limit_uses_forwarded_client_ip_in_proxy_mode(self, client):
         client.post('/api/auth/register', json={

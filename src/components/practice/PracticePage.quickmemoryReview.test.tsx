@@ -5,11 +5,17 @@ import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import PracticePage from './PracticePage'
 import { QUICK_MEMORY_MASTERY_TARGET } from '../../lib/quickMemory'
+import { STORAGE_KEYS } from '../../constants'
+import { getWrongWordsStorageKey } from '../../features/vocabulary/wrongWordsStore'
 
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const practiceControlBarMock = vi.fn(() => <div data-testid="practice-control-bar" />)
 const fetchMock = vi.fn()
+
+function setAuthenticatedUser(id: number | string) {
+  localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id }))
+}
 
 vi.stubGlobal('fetch', fetchMock)
 
@@ -144,11 +150,12 @@ describe('PracticePage quick-memory review mode', () => {
     localStorage.setItem('app_settings', JSON.stringify({
       reviewInterval: '3',
       reviewLimit: '10',
+      reviewLimitCustomized: true,
       shuffle: true,
     }))
 
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due') {
         return Promise.resolve({
           words: [
             { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
@@ -187,8 +194,210 @@ describe('PracticePage quick-memory review mode', () => {
       expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:alpha,beta')
     })
 
-    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0')
-    expect(startSessionMock).toHaveBeenCalled()
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due')
+    expect(startSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('migrates legacy uncustomized review batches back to the default unlimited limit', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      reviewInterval: '3',
+      reviewLimit: '50',
+      shuffle: true,
+    }))
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory/review-queue?limit=0&within_days=3&offset=0&scope=due') {
+        return Promise.resolve({
+          words: [
+            { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
+          ],
+          summary: {
+            due_count: 1,
+            upcoming_count: 0,
+            returned_count: 1,
+            review_window_days: 3,
+            offset: 0,
+            limit: null,
+            total_count: 1,
+            has_more: false,
+            next_offset: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?review=due']}>
+        <PracticePage
+          user={{ id: 42 }}
+          currentDay={1}
+          mode="quickmemory"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:alpha')
+    })
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=0&within_days=3&offset=0&scope=due')
+    expect(JSON.parse(localStorage.getItem('app_settings') || '{}')).toMatchObject({
+      reviewLimit: 'unlimited',
+      reviewLimitCustomized: false,
+    })
+  })
+
+  it('preserves a deliberate 50-word batch when the user explicitly customized the review size', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      reviewInterval: '3',
+      reviewLimit: '50',
+      reviewLimitCustomized: true,
+      shuffle: true,
+    }))
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory/review-queue?limit=50&within_days=3&offset=0&scope=due') {
+        return Promise.resolve({
+          words: [
+            { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
+          ],
+          summary: {
+            due_count: 1,
+            upcoming_count: 0,
+            returned_count: 1,
+            review_window_days: 3,
+            offset: 0,
+            limit: 50,
+            total_count: 1,
+            has_more: false,
+            next_offset: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?review=due']}>
+        <PracticePage
+          user={{ id: 42 }}
+          currentDay={1}
+          mode="quickmemory"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:alpha')
+    })
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=50&within_days=3&offset=0&scope=due')
+  })
+
+  it('treats unlimited review batches as no cap instead of collapsing them to a single word', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      reviewInterval: '3',
+      reviewLimit: 'unlimited',
+      reviewLimitCustomized: true,
+      shuffle: true,
+    }))
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory/review-queue?limit=0&within_days=3&offset=0&scope=due') {
+        return Promise.resolve({
+          words: [
+            { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
+            { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
+          ],
+          summary: {
+            due_count: 2,
+            upcoming_count: 0,
+            returned_count: 2,
+            review_window_days: 3,
+            offset: 0,
+            limit: null,
+            total_count: 2,
+            has_more: false,
+            next_offset: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?review=due']}>
+        <PracticePage
+          user={{ id: 42 }}
+          currentDay={1}
+          mode="quickmemory"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:alpha,beta')
+    })
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=0&within_days=3&offset=0&scope=due')
+  })
+
+  it('shows the empty review state after the due queue resolves with no words', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      reviewInterval: '3',
+      reviewLimit: '10',
+      reviewLimitCustomized: true,
+      shuffle: true,
+    }))
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due') {
+        return Promise.resolve({
+          words: [],
+          summary: {
+            due_count: 0,
+            upcoming_count: 0,
+            returned_count: 0,
+            review_window_days: 3,
+            offset: 0,
+            limit: 10,
+            total_count: 0,
+            has_more: false,
+            next_offset: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?review=due']}>
+        <PracticePage
+          user={{ id: 42 }}
+          currentDay={1}
+          mode="quickmemory"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('暂无待复习的单词')).toBeInTheDocument()
+    })
+
+    expect(startSessionMock).not.toHaveBeenCalled()
   })
 
   it('loads the next review batch after the current 20-word batch is finished', async () => {
@@ -197,11 +406,12 @@ describe('PracticePage quick-memory review mode', () => {
     localStorage.setItem('app_settings', JSON.stringify({
       reviewInterval: '3',
       reviewLimit: '2',
+      reviewLimitCustomized: true,
       shuffle: true,
     }))
 
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=0') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=0&scope=due') {
         return Promise.resolve({
           words: [
             { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
@@ -221,7 +431,7 @@ describe('PracticePage quick-memory review mode', () => {
         })
       }
 
-      if (url === '/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=2') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=2&scope=due') {
         return Promise.resolve({
           words: [
             { word: 'gamma', phonetic: '/g/', pos: 'n.', definition: 'gamma def' },
@@ -267,19 +477,20 @@ describe('PracticePage quick-memory review mode', () => {
       expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:gamma,delta')
     })
 
-    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=0')
-    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=2')
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=0&scope=due')
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=2&scope=due')
   })
 
   it('filters the review queue by the selected book chapter and keeps chapter context in the toolbar', async () => {
     localStorage.setItem('app_settings', JSON.stringify({
       reviewInterval: '3',
       reviewLimit: '10',
+      reviewLimitCustomized: true,
       shuffle: true,
     }))
 
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&book_id=book-a&chapter_id=2') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due&book_id=book-a&chapter_id=2') {
         return Promise.resolve({
           words: [{
             word: 'gamma',
@@ -354,7 +565,7 @@ describe('PracticePage quick-memory review mode', () => {
     })
 
     expect(apiFetchMock).toHaveBeenCalledWith(
-      '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&book_id=book-a&chapter_id=2',
+      '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due&book_id=book-a&chapter_id=2',
     )
     const lastToolbarProps = practiceControlBarMock.mock.calls.at(-1)?.[0] as {
       bookId?: string
@@ -368,18 +579,20 @@ describe('PracticePage quick-memory review mode', () => {
 
   it('keeps history but clears recognition pending after quick-memory completion', async () => {
     const user = userEvent.setup()
+    setAuthenticatedUser(42)
 
     localStorage.setItem('app_settings', JSON.stringify({
       reviewInterval: '3',
       reviewLimit: '10',
+      reviewLimitCustomized: true,
       shuffle: true,
     }))
-    localStorage.setItem('wrong_words', JSON.stringify([
+    localStorage.setItem(getWrongWordsStorageKey(42), JSON.stringify([
       { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def', wrong_count: 2 },
     ]))
 
     apiFetchMock.mockImplementation((url: string, options?: { method?: string }) => {
-      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due') {
         return Promise.resolve({
           words: [
             { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
@@ -424,7 +637,7 @@ describe('PracticePage quick-memory review mode', () => {
 
     await user.click(screen.getByRole('button', { name: 'finish-ebbinghaus' }))
 
-    expect(JSON.parse(localStorage.getItem('wrong_words') || '[]')).toEqual([
+    expect(JSON.parse(localStorage.getItem(getWrongWordsStorageKey(42)) || '[]')).toEqual([
       expect.objectContaining({
         word: 'alpha',
         wrong_count: 2,

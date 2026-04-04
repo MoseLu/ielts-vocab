@@ -4,6 +4,9 @@ import { useResponsiveChapterSkeletonCount } from '../hooks/useResponsiveSkeleto
 import { apiFetch, buildApiUrl } from '../lib'
 import { Skeleton } from './ui'
 import { Scrollbar } from './ui/Scrollbar'
+import ConfusableCustomGroupsModal, {
+  type CustomConfusableChapter,
+} from './practice/ConfusableCustomGroupsModal'
 
 const MODE_META: Record<string, { label: string; title: string }> = {
   quickmemory: { label: '记', title: '速记模式' },
@@ -11,6 +14,7 @@ const MODE_META: Record<string, { label: string; title: string }> = {
   meaning: { label: '想', title: '汉译英' },
   dictation: { label: '默', title: '听写模式' },
   smart: { label: '智', title: '智能模式' },
+  match: { label: '连', title: '易混消消乐' },
 }
 
 interface Book {
@@ -18,12 +22,14 @@ interface Book {
   title: string
   description?: string
   word_count: number
+  practice_mode?: string
 }
 
 export interface Chapter {
   id: string | number
   title: string
   word_count?: number
+  is_custom?: boolean
 }
 
 interface ChapterModeData {
@@ -161,6 +167,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   const [chapterProgress, setChapterProgress] = useState<Record<string | number, ChapterProgress>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showCustomModal, setShowCustomModal] = useState(false)
   const { bodyRef, count: skeletonCount } = useResponsiveChapterSkeletonCount({
     rowMinHeight: 156,
     gap: 10,
@@ -168,6 +175,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   })
 
   const currentIndex = progress?.current_index || 0
+  const isConfusableBook = String(book.id) === 'ielts_confusable_match'
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -244,6 +252,20 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     onClose()
   }
 
+  const handleCustomCreated = (createdChapters: CustomConfusableChapter[]) => {
+    if (!createdChapters.length) return
+
+    setChapters(previous => {
+      const existingIds = new Set(previous.map(chapter => String(chapter.id)))
+      const appended = createdChapters.filter(chapter => !existingIds.has(String(chapter.id)))
+      return [...previous, ...appended]
+    })
+
+    const firstCreated = createdChapters[0]
+    const startIndex = chapters.reduce((sum, chapter) => sum + (chapter.word_count ?? 0), 0)
+    onSelectChapter(firstCreated, startIndex)
+  }
+
   const renderCard = (chapter: Chapter, isInSection: boolean) => {
     const isCurrent = chapter.id === currentChapterId
     const progressRecord = chapterProgress[chapter.id] ?? chapterProgress[String(chapter.id)]
@@ -275,6 +297,9 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : ''}`}
         onClick={() => handleSelect(chapter)}
       >
+        {chapter.is_custom && (
+          <div className="chapter-card-custom-tag">自定义</div>
+        )}
         <div className="chapter-card-name">{getCardLabel(chapter, isInSection)}</div>
 
         {hasModeData && (
@@ -323,6 +348,14 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
             <p className="chapter-modal-subtitle">{chapters.length} 章节 · {totalWords} 词</p>
           </div>
           <div className="chapter-modal-actions">
+            {isConfusableBook && (
+              <button
+                className="chapter-continue-btn"
+                onClick={() => setShowCustomModal(true)}
+              >
+                自定义组
+              </button>
+            )}
             {currentIndex > 0 && (
               <button className="chapter-continue-btn" onClick={handleContinue}>
                 继续学习
@@ -369,6 +402,14 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
           </Scrollbar>
         </div>
       </div>
+
+      {isConfusableBook && (
+        <ConfusableCustomGroupsModal
+          isOpen={showCustomModal}
+          onClose={() => setShowCustomModal(false)}
+          onCreated={handleCustomCreated}
+        />
+      )}
     </div>
   )
 }

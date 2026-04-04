@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-CLI: 全量生成词书单词百炼 TTS — 支持多线程并发加速（不触发 429 限流）
+CLI: 批量生成词书单词百炼 TTS。
 
 用法:
-  python scripts/run_word_tts_full_batch.py              # 默认并发=5
-  python scripts/run_word_tts_full_batch.py --jobs 8   # 并发=8
+  python scripts/run_word_tts_full_batch.py
+  python scripts/run_word_tts_full_batch.py --book ielts_listening_premium --book ielts_reading_premium
+  python scripts/run_word_tts_full_batch.py --rate-interval 7
 
 环境变量 (backend/.env):
-  DASHSCOPE_API_KEY      (必需)
-  BAILIAN_TTS_MODEL      (默认 cosyvoice-v3-flash)
-  BAILIAN_TTS_VOICE     (默认 longanyang)
+  DASHSCOPE_API_KEY    (必需)
+  BAILIAN_TTS_MODEL    (默认 cosyvoice-v3-flash)
+  BAILIAN_TTS_VOICE    (默认 longanyang)
 """
 
 from __future__ import annotations
@@ -17,9 +18,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import threading
-import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -35,8 +33,20 @@ load_dotenv(BACKEND_ROOT / '.env')
 
 parser = argparse.ArgumentParser(description='百炼 TTS 全量并发生成')
 parser.add_argument(
-    '--jobs', '-j', type=int, default=16,
-    help='并发线程数 (default: 16)',
+    '--jobs', '-j', type=int, default=None,
+    help='并发线程数；未指定时会按模型限速策略自动选择',
+)
+parser.add_argument(
+    '--book',
+    action='append',
+    default=[],
+    help='仅跑指定词书 id，可重复传入多次',
+)
+parser.add_argument(
+    '--rate-interval',
+    type=float,
+    default=None,
+    help='相邻 API 请求最小间隔秒数；未指定时按模型自动推断',
 )
 args = parser.parse_args()
 
@@ -49,22 +59,36 @@ def main() -> int:
         return 1
 
     from services.word_tts import (
+        default_cache_identity,
+        recommended_batch_backoff_delays,
+        recommended_batch_concurrency,
+        recommended_batch_rate_interval,
         run_batch_generate_missing,
         word_tts_data_dir,
     )
 
     cache_dir = word_tts_data_dir()
-    print(f'[Word TTS] cache_dir={cache_dir}')
-    print(f'[Word TTS] 并发数={args.jobs}  (HTTP REST API, 多模型轮询无429)')
+    model, voice = default_cache_identity()
+    rate_interval = (
+        args.rate_interval
+        if args.rate_interval is not None
+        else recommended_batch_rate_interval(model)
+    )
+    jobs = args.jobs if args.jobs is not None else recommended_batch_concurrency(model)
+    book_ids = args.book or None
+    backoff = recommended_batch_backoff_delays(rate_interval)
 
-    # 429 退避重试间隔（秒）- 降为快速退避，减少 worker 阻塞
-    backoff = (2.0, 4.0, 8.0)
+    print(f'[Word TTS] cache_dir={cache_dir}')
+    print(f'[Word TTS] model={model} voice={voice}')
+    print(f'[Word TTS] book_ids={book_ids or "ALL"}')
+    print(f'[Word TTS] jobs={jobs} rate_interval={rate_interval:.1f}s backoff={backoff}')
 
     stats = run_batch_generate_missing(
-        None,
+        book_ids,
         cache_dir=cache_dir,
-        concurrency=args.jobs,
+        concurrency=jobs,
         backoff_delays=backoff,
+        rate_interval=rate_interval,
     )
     print('[Word TTS] 完成:', stats)
     return 0 if not stats.get('errors') else 2

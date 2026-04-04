@@ -97,6 +97,7 @@ export const BookSchema = z.object({
   has_chapters: z.boolean().optional(),
   study_type: z.string().optional(),
   file: z.string().optional(),
+  practice_mode: z.string().optional(),
 })
 export type Book = z.infer<typeof BookSchema>
 
@@ -104,6 +105,7 @@ export const ChapterSchema = z.object({
   id: z.union([z.string(), z.number()]),
   title: z.string().min(1),
   word_count: z.number().int().nonnegative().optional(),
+  is_custom: z.boolean().optional(),
 })
 export type Chapter = z.infer<typeof ChapterSchema>
 
@@ -123,11 +125,22 @@ export type ProgressMap = z.infer<typeof ProgressMapSchema>
 
 // ── Practice ────────────────────────────────────────────────────────────────
 
+export const ListeningConfusableCandidateSchema = z.object({
+  word: z.string().min(1),
+  phonetic: z.string(),
+  pos: z.string(),
+  definition: z.string().min(1),
+  group_key: z.string().optional(),
+})
+export type ListeningConfusableCandidate = z.infer<typeof ListeningConfusableCandidateSchema>
+
 export const WordSchema = z.object({
   word: z.string().min(1),
   phonetic: z.string(),
   pos: z.string(),
   definition: z.string().min(1),
+  group_key: z.string().optional(),
+  listening_confusables: z.array(ListeningConfusableCandidateSchema).optional(),
   chapter_id: z.union([z.string(), z.number()]).optional(),
   chapter_title: z.string().optional(),
   examples: z.array(z.object({
@@ -195,6 +208,7 @@ export const AppSettingsSchema = z.object({
   interval: z.string().optional(),
   reviewInterval: z.string().optional(),
   reviewLimit: z.string().optional(),
+  reviewLimitCustomized: z.boolean().optional(),
   darkMode: z.boolean().optional(),
   fontSize: fontSizeValues.optional(),
 })

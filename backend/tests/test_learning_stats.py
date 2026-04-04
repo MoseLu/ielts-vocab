@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from models import User, UserChapterProgress, UserStudySession, db
+import routes.ai as ai_routes
+from models import User, UserChapterProgress, UserQuickMemoryRecord, UserStudySession, db
 
 
 def register_and_login(client, username='stats-user', password='password123'):
@@ -274,3 +275,52 @@ def test_learning_stats_includes_recent_live_pending_session_duration(client, ap
     quickmemory = next(item for item in data['mode_breakdown'] if item['mode'] == 'quickmemory')
     assert quickmemory['duration_seconds'] >= expected_floor
     assert quickmemory['duration_seconds'] < expected_floor + 20
+
+
+def test_learning_stats_uses_local_calendar_day_for_today_counts(client, app, monkeypatch):
+    register_and_login(client, username='local-day-stats-user')
+
+    fixed_now = datetime(2026, 4, 3, 6, 8, 53)
+    monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: fixed_now)
+
+    with app.app_context():
+        user = User.query.filter_by(username='local-day-stats-user').first()
+        assert user is not None
+
+        db.session.add(
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                book_id='ielts_confusable_match',
+                chapter_id='1',
+                words_studied=3,
+                correct_count=2,
+                wrong_count=1,
+                duration_seconds=600,
+                started_at=datetime(2026, 4, 2, 23, 30, 0),
+                ended_at=datetime(2026, 4, 2, 23, 40, 0),
+            )
+        )
+        db.session.add(
+            UserQuickMemoryRecord(
+                user_id=user.id,
+                word='section',
+                status='unknown',
+                first_seen=int(datetime(2026, 3, 25, 13, 14, 52, tzinfo=timezone.utc).timestamp() * 1000),
+                last_seen=int(datetime(2026, 4, 2, 23, 30, 11, tzinfo=timezone.utc).timestamp() * 1000),
+                known_count=0,
+                unknown_count=2,
+                next_review=int(datetime(2026, 4, 3, 23, 30, 11, tzinfo=timezone.utc).timestamp() * 1000),
+            )
+        )
+        db.session.commit()
+
+    response = client.get('/api/ai/learning-stats?days=7')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    today_row = next(item for item in data['daily'] if item['date'] == '2026-04-03')
+    assert today_row['sessions'] == 1
+    assert today_row['duration_seconds'] == 600
+    assert data['alltime']['today_duration_seconds'] == 600
+    assert data['alltime']['today_review_words'] == 1

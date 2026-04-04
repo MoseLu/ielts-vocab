@@ -30,7 +30,7 @@ import websocket
 # 配置
 API_KEY = os.environ.get('DASHSCOPE_API_KEY', '')
 BASE_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/realtime'
-MODEL = 'qwen3-asr-flash-realtime'
+MODEL = os.environ.get('REALTIME_ASR_MODEL', 'qwen3-asr-flash-realtime')
 PORT = int(os.environ.get('SPEECH_SERVICE_PORT', '5001'))
 
 # 活跃的识别会话

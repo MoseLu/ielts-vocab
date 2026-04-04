@@ -7,6 +7,7 @@ import {
   syllabifyWord,
   generateOptions,
   normalizeWordAnswer,
+  preloadWordAudio,
   playWordAudio,
   stopAudio,
 } from './utils'
@@ -197,6 +198,53 @@ describe('generateOptions', () => {
     expect(options.map(option => option.word)).toContain('word1')
     expect(options[correctIndex].word).toBe('word1')
   })
+
+  it('keeps real candidate definitions for listening mode without synthetic duplicates', () => {
+    const words: import('./types').Word[] = [
+      { word: 'ability', phonetic: '/əˈbɪləti/', definition: '能力；本领；才能', pos: 'n.' },
+      { word: 'faculty', phonetic: '/ˈfækəlti/', definition: '能力；本领；才能', pos: 'n.' },
+      { word: 'capability', phonetic: '/ˌkeɪpəˈbɪləti/', definition: '能力；才能；资质', pos: 'n.' },
+      { word: 'liability', phonetic: '/ˌlaɪəˈbɪləti/', definition: '责任；债务；义务', pos: 'n.' },
+      { word: 'facility', phonetic: '/fəˈsɪləti/', definition: '熟练；灵巧；能力', pos: 'n.' },
+      { word: 'agility', phonetic: '/əˈdʒɪləti/', definition: '敏捷；灵活', pos: 'n.' },
+    ]
+
+    const { options, correctIndex } = generateOptions(words[0], words, 'listening')
+    const distractorDefs = options
+      .filter((_, index) => index !== correctIndex)
+      .map(option => option.definition)
+    const allowedDefs = new Set([
+      '能力；才能；资质',
+      '责任；债务；义务',
+      '熟练；灵巧；能力',
+      '敏捷；灵活',
+    ])
+
+    expect(new Set(options.map(option => option.definition)).size).toBe(options.length)
+    expect(distractorDefs.every(definition => allowedDefs.has(definition))).toBe(true)
+    expect(distractorDefs).not.toContain('能力；本领；才能')
+    expect(options[correctIndex].definition).toBe('能力；本领；才能')
+  })
+
+  it('keeps only one distractor from the same english word family in listening mode', () => {
+    const words: import('./types').Word[] = [
+      { word: 'millimeter', phonetic: '/ˈmɪlɪˌmiːtə(r)/', definition: '毫米', pos: 'n.' },
+      { word: 'kilometer', phonetic: '/ˈkɪləˌmiːtə(r)/', definition: '公里；千米', pos: 'n.' },
+      { word: 'kilometre', phonetic: '/ˈkɪləˌmiːtə(r)/', definition: '公里', pos: 'n.' },
+      { word: 'kilometers', phonetic: '/kɪˈlɒmɪtəz/', definition: '千米', pos: 'n.' },
+      { word: 'barometer', phonetic: '/bəˈrɒmɪtə(r)/', definition: '气压计', pos: 'n.' },
+      { word: 'researcher', phonetic: '/rɪˈsɜːtʃə(r)/', definition: '研究者', pos: 'n.' },
+    ]
+
+    const { options } = generateOptions(words[0], words, 'listening')
+    const kilometerFamily = new Set(['kilometer', 'kilometre', 'kilometers'])
+    const kilometerVariants = options
+      .map(option => option.word)
+      .filter((word): word is string => typeof word === 'string' && kilometerFamily.has(word))
+
+    expect(kilometerVariants).toHaveLength(1)
+    expect(options).toHaveLength(4)
+  })
 })
 
 describe('normalizeWordAnswer', () => {
@@ -211,18 +259,10 @@ describe('normalizeWordAnswer', () => {
 })
 
 describe('playWordAudio', () => {
-  it('falls back to direct audio URLs without hitting missing cache endpoints or blob URLs', () => {
-    const fetchMock = vi.fn((input: RequestInfo | URL) => {
-      const url = String(input)
-      if (url.includes('api.dictionaryapi.dev')) {
-        return Promise.resolve(
-          new Response(JSON.stringify([]), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-      return Promise.resolve(new Response('', { status: 404 }))
+  it('reuses prefetched word audio without issuing another fetch', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6]).buffer),
     })
     const createdAudioSources: string[] = []
 
@@ -239,7 +279,12 @@ describe('playWordAudio', () => {
       pause = vi.fn()
       addEventListener = vi.fn()
       canPlayType = vi.fn(() => '')
-      play = vi.fn().mockResolvedValue(undefined)
+      play = vi.fn().mockImplementation(() => {
+        if (this.src.startsWith('data:audio/wav')) {
+          this.onended?.()
+        }
+        return Promise.resolve(undefined)
+      })
 
       constructor(src = '') {
         this.src = src
@@ -249,12 +294,76 @@ describe('playWordAudio', () => {
 
     Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
     Object.defineProperty(globalThis, 'Audio', { value: TestAudio as unknown as typeof Audio, writable: true })
+    const createObjectURL = vi.fn(() => 'blob:cached-word-audio')
+    const revokeObjectURL = vi.fn()
+    Object.defineProperty(globalThis.URL, 'createObjectURL', { value: createObjectURL, writable: true })
+    Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: revokeObjectURL, writable: true })
+
+    await preloadWordAudio('prefetched-word')
+    playWordAudio('prefetched-word', { playbackSpeed: '1', volume: '100' })
+    await Promise.resolve()
+    await Promise.resolve()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(createdAudioSources.some(src => src.startsWith('blob:'))).toBe(true)
+
+    stopAudio()
+  })
+
+  it('fetches the local word-audio endpoint without browser URL caching', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]).buffer),
+    })
+    const createdAudioSources: string[] = []
+
+    class TestAudio {
+      src = ''
+      volume = 1
+      playbackRate = 1
+      currentTime = 0
+      duration = 0
+      readyState = 4
+      onended: (() => void) | null = null
+      onerror: (() => void) | null = null
+      load = vi.fn()
+      pause = vi.fn()
+      addEventListener = vi.fn()
+      canPlayType = vi.fn(() => '')
+      play = vi.fn().mockImplementation(() => {
+        if (this.src.startsWith('data:audio/wav')) {
+          this.onended?.()
+        }
+        return Promise.resolve(undefined)
+      })
+
+      constructor(src = '') {
+        this.src = src
+        createdAudioSources.push(src)
+      }
+    }
+
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
+    Object.defineProperty(globalThis, 'Audio', { value: TestAudio as unknown as typeof Audio, writable: true })
+    const createObjectURL = vi.fn(() => 'blob:word-audio')
+    const revokeObjectURL = vi.fn()
+    Object.defineProperty(globalThis.URL, 'createObjectURL', { value: createObjectURL, writable: true })
+    Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: revokeObjectURL, writable: true })
 
     playWordAudio('global', { playbackSpeed: '1', volume: '100' })
+    await Promise.resolve()
+    await Promise.resolve()
+    await new Promise(resolve => setTimeout(resolve, 0))
 
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('dict.youdao.com'))).toBe(false)
-    expect(createdAudioSources.some(src => src.includes('/api/tts/word-audio'))).toBe(false)
-    expect(createdAudioSources.some(src => src.startsWith('blob:'))).toBe(false)
+    expect(fetchMock).toHaveBeenCalledWith('/api/tts/word-audio?w=global', {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    })
+    expect(createdAudioSources.some(src => src.includes('dict.youdao.com'))).toBe(false)
+    expect(createdAudioSources.some(src => src.includes('api.dictionaryapi.dev'))).toBe(false)
+    expect(createObjectURL).toHaveBeenCalled()
+    expect(createdAudioSources.some(src => src.startsWith('blob:'))).toBe(true)
 
     stopAudio()
   })

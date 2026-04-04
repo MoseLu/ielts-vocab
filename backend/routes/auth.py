@@ -9,6 +9,7 @@ or refresh, preventing replay attacks.
 Login is rate-limited: 10 failures per IP → 15-min lockout.
 """
 
+import hashlib
 import re
 import uuid
 from datetime import datetime, timedelta
@@ -39,17 +40,29 @@ def init_auth(app_instance):
     _app = app_instance
 
 
-# ── Rate limiter (database-backed, per IP) ─────────────────────────────────────
+# ── Rate limiter (database-backed, per login subject + IP) ────────────────────
 # Uses database instead of in-memory dict to support multi-process deployments.
 # For multi-server deployments (multiple app servers), use Redis instead.
 
-def _check_rate_limit(ip: str, purpose: str = 'login') -> tuple[bool, int]:
+def _rate_limit_bucket_key(ip: str, purpose: str, subject: str | None = None) -> str:
+    normalized_ip = (ip or '0.0.0.0').strip() or '0.0.0.0'
+    if not subject:
+        return normalized_ip
+
+    digest = hashlib.sha256(
+        f'{purpose}|{normalized_ip}|{subject}'.encode('utf-8')
+    ).hexdigest()[:40]
+    return f'v2:{digest}'
+
+
+def _check_rate_limit(ip: str, purpose: str = 'login', subject: str | None = None) -> tuple[bool, int]:
     """
     Returns (allowed, seconds_until_reset).
     Uses database-backed rate limiting to work across gunicorn/uwsgi workers.
     """
+    bucket_key = _rate_limit_bucket_key(ip, purpose, subject)
     allowed, wait = RateLimitBucket.check_and_increment(
-        ip_address=ip,
+        ip_address=bucket_key,
         purpose=purpose,
         max_attempts=_app.config['LOGIN_MAX_ATTEMPTS'],
         window_minutes=_app.config['LOGIN_LOCKOUT_MINUTES']
@@ -57,9 +70,26 @@ def _check_rate_limit(ip: str, purpose: str = 'login') -> tuple[bool, int]:
     return allowed, wait
 
 
-def _reset_rate_limit(ip: str, purpose: str = 'login'):
+def _reset_rate_limit(ip: str, purpose: str = 'login', subject: str | None = None):
     """Clear rate limit bucket after a successful action."""
-    RateLimitBucket.reset(ip_address=ip, purpose=purpose)
+    bucket_key = _rate_limit_bucket_key(ip, purpose, subject)
+    RateLimitBucket.reset(ip_address=bucket_key, purpose=purpose)
+
+
+def _find_user_by_identifier(identifier: str):
+    if '@' in identifier:
+        return User.query.filter_by(email=identifier).first()
+
+    user = User.query.filter_by(username=identifier).first()
+    if not user:
+        user = User.query.filter_by(email=identifier).first()
+    return user
+
+
+def _login_rate_limit_subject(identifier: str, user: User | None) -> str:
+    if user is not None:
+        return f'user:{user.id}'
+    return f'identifier:{identifier.strip().casefold()}'
 
 
 def _validate_email(email: str) -> bool:
@@ -89,6 +119,44 @@ def _validate_avatar_value(avatar_url: str) -> str | None:
     if _AVATAR_DATA_URL_RE.match(avatar_url):
         return None
     return '头像格式不受支持，请上传 JPG、PNG、WEBP 或 GIF 图片'
+
+
+def _request_client_details() -> dict[str, str]:
+    access_route = [segment for segment in request.access_route if segment]
+    client_ip = access_route[0] if access_route else (request.remote_addr or '0.0.0.0')
+    return {
+        'client_ip': client_ip,
+        'remote_addr': request.remote_addr or '0.0.0.0',
+        'forwarded_for': request.headers.get('X-Forwarded-For') or '-',
+        'origin': request.headers.get('Origin') or '-',
+        'referer': request.headers.get('Referer') or '-',
+        'user_agent': request.headers.get('User-Agent') or '-',
+    }
+
+
+def _log_registration_audit(
+    *,
+    outcome: str,
+    reason: str,
+    username: str,
+    email: str,
+    user_id: int | None = None,
+):
+    details = _request_client_details()
+    _app.logger.info(
+        'Registration audit | outcome=%s reason=%s user_id=%s username=%s email=%s client_ip=%s remote_addr=%s forwarded_for=%s origin=%s referer=%s user_agent=%s',
+        outcome,
+        reason,
+        user_id if user_id is not None else '-',
+        username or '-',
+        email or '-',
+        details['client_ip'],
+        details['remote_addr'],
+        details['forwarded_for'],
+        details['origin'],
+        details['referer'],
+        details['user_agent'],
+    )
 
 
 # ── Token helpers ─────────────────────────────────────────────────────────────
@@ -175,23 +243,36 @@ def register():
     username = (data.get('username') or '').strip()
 
     if not username:
+        _log_registration_audit(outcome='rejected', reason='missing_username', username=username, email=email)
         return jsonify({'error': '请输入用户名'}), 400
     if len(username) < 3:
+        _log_registration_audit(outcome='rejected', reason='short_username', username=username, email=email)
         return jsonify({'error': '用户名至少3个字符'}), 400
     if not password or len(password) < 6:
+        _log_registration_audit(outcome='rejected', reason='short_password', username=username, email=email)
         return jsonify({'error': '密码至少6个字符'}), 400
     if User.query.filter_by(username=username).first():
+        _log_registration_audit(outcome='rejected', reason='duplicate_username', username=username, email=email)
         return jsonify({'error': '用户名已被使用'}), 400
     if email:
         if not _validate_email(email):
+            _log_registration_audit(outcome='rejected', reason='invalid_email', username=username, email=email)
             return jsonify({'error': '邮箱格式不正确'}), 400
         if User.query.filter_by(email=email).first():
+            _log_registration_audit(outcome='rejected', reason='duplicate_email', username=username, email=email)
             return jsonify({'error': '该邮箱已被注册'}), 400
 
     user = User(email=email or None, username=username)
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
+    _log_registration_audit(
+        outcome='created',
+        reason='ok',
+        username=username,
+        email=email,
+        user_id=user.id,
+    )
 
     resp = make_response(jsonify({'message': '注册成功', 'user': user.to_dict(),
                                    'access_expires_in': _app.config['JWT_ACCESS_TOKEN_EXPIRES']}), 201)
@@ -202,13 +283,6 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     ip = request.remote_addr or '0.0.0.0'
-    allowed, wait = _check_rate_limit(ip)
-    if not allowed:
-        return jsonify({
-            'error': f'登录尝试过于频繁，请 {wait} 秒后再试',
-            'retry_after': wait,
-        }), 429
-
     data = request.get_json() or {}
     identifier = (data.get('email') or data.get('username') or '').strip()
     password = data.get('password', '')
@@ -216,17 +290,19 @@ def login():
     if not identifier or not password:
         return jsonify({'error': '请输入账号和密码'}), 400
 
-    if '@' in identifier:
-        user = User.query.filter_by(email=identifier).first()
-    else:
-        user = User.query.filter_by(username=identifier).first()
-        if not user:
-            user = User.query.filter_by(email=identifier).first()
+    user = _find_user_by_identifier(identifier)
+    login_subject = _login_rate_limit_subject(identifier, user)
+    allowed, wait = _check_rate_limit(ip, subject=login_subject)
+    if not allowed:
+        return jsonify({
+            'error': f'登录尝试过于频繁，请 {wait} 秒后再试',
+            'retry_after': wait,
+        }), 429
 
     if not user or not user.check_password(password):
         return jsonify({'error': '账号或密码错误'}), 401
 
-    _reset_rate_limit(ip)
+    _reset_rate_limit(ip, subject=login_subject)
 
     resp = make_response(jsonify({'message': '登录成功', 'user': user.to_dict(),
                                    'access_expires_in': _app.config['JWT_ACCESS_TOKEN_EXPIRES']}), 200)

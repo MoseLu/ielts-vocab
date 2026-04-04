@@ -333,6 +333,77 @@ def test_quick_memory_review_queue_supports_offset_pagination(client, app, monke
     }
 
 
+def test_quick_memory_review_queue_can_limit_to_due_scope(client, app, monkeypatch):
+    register_and_login(client, username='qm-review-due-only-user')
+
+    now_ms = int(time.time() * 1000)
+
+    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
+        'alpha': [{
+            'word': 'alpha',
+            'phonetic': '/a/',
+            'pos': 'n.',
+            'definition': 'alpha def',
+            'book_id': 'book-a',
+            'book_title': 'Book A',
+            'chapter_id': '1',
+            'chapter_title': 'Chapter 1',
+        }],
+        'beta': [{
+            'word': 'beta',
+            'phonetic': '/b/',
+            'pos': 'n.',
+            'definition': 'beta def',
+            'book_id': 'book-a',
+            'book_title': 'Book A',
+            'chapter_id': '2',
+            'chapter_title': 'Chapter 2',
+        }],
+    })
+    monkeypatch.setattr(ai_routes, '_get_global_vocab_pool', lambda: [
+        {'word': 'alpha', 'phonetic': '/a/', 'pos': 'n.', 'definition': 'alpha def'},
+        {'word': 'beta', 'phonetic': '/b/', 'pos': 'n.', 'definition': 'beta def'},
+    ])
+
+    with app.app_context():
+        user = User.query.filter_by(username='qm-review-due-only-user').first()
+        assert user is not None
+        db.session.add_all([
+            UserQuickMemoryRecord(
+                user_id=user.id,
+                word='alpha',
+                status='known',
+                first_seen=now_ms - 10_000,
+                last_seen=now_ms - 5_000,
+                known_count=2,
+                unknown_count=0,
+                next_review=now_ms - 2_000,
+                fuzzy_count=0,
+            ),
+            UserQuickMemoryRecord(
+                user_id=user.id,
+                word='beta',
+                status='known',
+                first_seen=now_ms - 9_000,
+                last_seen=now_ms - 4_000,
+                known_count=1,
+                unknown_count=0,
+                next_review=now_ms + 86_400_000,
+                fuzzy_count=0,
+            ),
+        ])
+        db.session.commit()
+
+    res = client.get('/api/ai/quick-memory/review-queue?limit=10&within_days=3&scope=due')
+
+    assert res.status_code == 200
+    data = res.get_json()
+    assert [word['word'] for word in data['words']] == ['alpha']
+    assert data['summary']['due_count'] == 1
+    assert data['summary']['upcoming_count'] == 0
+    assert data['summary']['total_count'] == 1
+
+
 def test_quick_memory_review_queue_filters_by_book_and_chapter(client, app, monkeypatch):
     register_and_login(client, username='qm-review-filter-user')
 

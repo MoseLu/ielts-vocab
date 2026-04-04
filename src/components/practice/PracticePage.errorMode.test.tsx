@@ -4,10 +4,29 @@ import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import PracticePage from './PracticePage'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
-import { loadSmartStats } from '../../lib/smartMode'
+import { chooseSmartDimension, loadSmartStats } from '../../lib/smartMode'
+import { STORAGE_KEYS } from '../../constants'
+import {
+  getWrongWordsProgressStorageKey,
+  getWrongWordsStorageKey,
+} from '../../features/vocabulary/wrongWordsStore'
 
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
+
+function setAuthenticatedUser(id: number | string) {
+  localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id }))
+}
+
+function seedScopedWrongWords(userId: number | string, words: unknown[]) {
+  setAuthenticatedUser(userId)
+  localStorage.setItem(getWrongWordsStorageKey(userId), JSON.stringify(words))
+}
+
+function seedScopedWrongWordsProgress(userId: number | string, snapshot: unknown) {
+  setAuthenticatedUser(userId)
+  localStorage.setItem(getWrongWordsProgressStorageKey(userId), JSON.stringify(snapshot))
+}
 
 vi.mock('../../hooks/useSpeechRecognition', () => ({
   useSpeechRecognition: () => ({
@@ -89,6 +108,8 @@ vi.mock('./OptionsMode', () => ({
     progressValue,
     onOptionSelect,
     correctIndex,
+    wrongSelections = [],
+    showResult,
     spellingInput,
     spellingResult,
     onSpellingInputChange,
@@ -99,13 +120,15 @@ vi.mock('./OptionsMode', () => ({
     progressValue: number
     onOptionSelect: (idx: number) => void
     correctIndex: number
+    wrongSelections?: number[]
+    showResult: boolean
     spellingInput: string
     spellingResult: 'correct' | 'wrong' | null
     onSpellingInputChange: (value: string) => void
     onSpellingSubmit: () => void
   }) => (
     <div data-testid="options-mode">
-      current:{currentWord.word};total:{total};progress:{progressValue}
+      current:{currentWord.word};total:{total};progress:{progressValue};wrongs:{wrongSelections.join(',')};result:{showResult ? 'done' : 'pending'}
       <button data-testid="answer-correct" onClick={() => onOptionSelect(correctIndex)}>correct</button>
       <button data-testid="answer-wrong" onClick={() => onOptionSelect(correctIndex === 0 ? 1 : 0)}>wrong</button>
       <input
@@ -129,19 +152,43 @@ describe('PracticePage error mode', () => {
     startSessionMock.mockClear()
     vi.mocked(setGlobalLearningContext).mockReset()
     vi.mocked(loadSmartStats).mockReturnValue({})
+    vi.mocked(chooseSmartDimension).mockReturnValue('meaning')
     localStorage.clear()
     vi.useRealTimers()
   })
 
-  it('merges backend wrong words into the review queue instead of using stale local cache only', async () => {
+  it('ignores stale global wrong-word cache when a logged-in user loads error review', async () => {
+    setAuthenticatedUser(42)
     localStorage.setItem('wrong_words', JSON.stringify([
       { word: 'local-only', phonetic: '/l/', pos: 'n.', definition: 'from local cache', wrong_count: 1 },
     ]))
 
     apiFetchMock.mockResolvedValue({
       words: [
-        { word: 'remote-1', phonetic: '/r1/', pos: 'n.', definition: 'remote word 1', wrong_count: 1 },
-        { word: 'remote-2', phonetic: '/r2/', pos: 'v.', definition: 'remote word 2', wrong_count: 1 },
+        {
+          word: 'remote-1',
+          phonetic: '/r1/',
+          pos: 'n.',
+          definition: 'remote word 1',
+          wrong_count: 1,
+          listening_confusables: [
+            { word: 'remote-a', phonetic: '/ra/', pos: 'n.', definition: 'remote distractor a' },
+            { word: 'remote-b', phonetic: '/rb/', pos: 'n.', definition: 'remote distractor b' },
+            { word: 'remote-c', phonetic: '/rc/', pos: 'n.', definition: 'remote distractor c' },
+          ],
+        },
+        {
+          word: 'remote-2',
+          phonetic: '/r2/',
+          pos: 'v.',
+          definition: 'remote word 2',
+          wrong_count: 1,
+          listening_confusables: [
+            { word: 'remote-d', phonetic: '/rd/', pos: 'v.', definition: 'remote distractor d' },
+            { word: 'remote-e', phonetic: '/re/', pos: 'v.', definition: 'remote distractor e' },
+            { word: 'remote-f', phonetic: '/rf/', pos: 'v.', definition: 'remote distractor f' },
+          ],
+        },
       ],
     })
 
@@ -158,20 +205,24 @@ describe('PracticePage error mode', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId('practice-control-bar')).toHaveTextContent('total:3')
+      expect(screen.getByTestId('practice-control-bar')).toHaveTextContent('total:2')
     })
 
-    expect(screen.getByTestId('options-mode')).toHaveTextContent('total:3')
+    expect(screen.getByTestId('options-mode')).toHaveTextContent('total:2')
     expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/wrong-words')
-    expect(JSON.parse(localStorage.getItem('wrong_words') || '[]')).toHaveLength(3)
+    expect(JSON.parse(localStorage.getItem(getWrongWordsStorageKey(42)) || '[]')).toHaveLength(2)
+    expect(JSON.parse(localStorage.getItem('wrong_words') || '[]')).toHaveLength(1)
   })
 
-  it('lets the learner continue into the next review round with only the words missed this round', async () => {
+  it('records error-review results in the logged-in user scoped wrong-word store', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
     localStorage.setItem('wrong_words', JSON.stringify([
+      { word: 'legacy-global', phonetic: '/l/', pos: 'n.', definition: 'legacy global cache', wrong_count: 1 },
+    ]))
+    seedScopedWrongWords(42, [
       { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 2 },
       { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 2 },
-    ]))
+    ])
 
     apiFetchMock.mockResolvedValue({ words: [] })
 
@@ -191,33 +242,30 @@ describe('PracticePage error mode', () => {
       expect(screen.getByTestId('options-mode')).toHaveTextContent('current:alpha')
     })
 
-    fireEvent.click(screen.getByTestId('answer-correct'))
-    await waitFor(() => {
-      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:beta')
-    }, { timeout: 2500 })
-
-    fireEvent.click(screen.getByTestId('answer-wrong'))
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: '继续第2轮（1词）' })).toBeInTheDocument()
-    }, { timeout: 2500 })
-
-    fireEvent.click(screen.getByRole('button', { name: '继续第2轮（1词）' }))
+    fireEvent.change(screen.getByTestId('meaning-input'), { target: { value: 'WRONG' } })
+    fireEvent.click(screen.getByTestId('submit-recall'))
 
     await waitFor(() => {
       expect(screen.getByTestId('options-mode')).toHaveTextContent('current:beta')
-      expect(screen.getByTestId('options-mode')).toHaveTextContent('total:1')
     }, { timeout: 2500 })
-  }, 15000)
+
+    const scopedWords = JSON.parse(localStorage.getItem(getWrongWordsStorageKey(42)) || '[]')
+    const alphaRecord = scopedWords.find((word: { word: string }) => word.word === 'alpha')
+    expect(alphaRecord?.wrong_count).toBeGreaterThan(2)
+    expect(alphaRecord?.meaning_wrong).toBeGreaterThan(0)
+    expect(JSON.parse(localStorage.getItem('wrong_words') || '[]')).toEqual([
+      expect.objectContaining({ word: 'legacy-global' }),
+    ])
+  })
 
   it('restores saved wrong-word review progress instead of restarting from the first word', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: true }))
-    localStorage.setItem('wrong_words', JSON.stringify([
+    seedScopedWrongWords(42, [
       { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 1 },
       { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 1 },
       { word: 'gamma', phonetic: '/g/', pos: 'n.', definition: 'gamma definition', wrong_count: 1 },
-    ]))
-    localStorage.setItem('wrong_words_progress', JSON.stringify({
+    ])
+    seedScopedWrongWordsProgress(42, {
       _last: {
         current_index: 1,
         correct_count: 2,
@@ -226,7 +274,7 @@ describe('PracticePage error mode', () => {
         queue_words: ['alpha', 'beta', 'gamma'],
         updatedAt: '2026-03-30T12:00:00.000Z',
       },
-    }))
+    })
 
     apiFetchMock.mockResolvedValue({ words: [] })
 
@@ -252,10 +300,10 @@ describe('PracticePage error mode', () => {
 
   it('accepts typed english recall answers in meaning mode and advances on correct submit', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
-    localStorage.setItem('wrong_words', JSON.stringify([
+    seedScopedWrongWords(42, [
       { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 1 },
       { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 1 },
-    ]))
+    ])
 
     apiFetchMock.mockResolvedValue({ words: [] })
 
@@ -308,12 +356,12 @@ describe('PracticePage error mode', () => {
     })
 
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: true }))
-    localStorage.setItem('wrong_words', JSON.stringify([
+    seedScopedWrongWords(42, [
       { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 4 },
       { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 3 },
       { word: 'gamma', phonetic: '/g/', pos: 'n.', definition: 'gamma definition', wrong_count: 2 },
       { word: 'delta', phonetic: '/d/', pos: 'n.', definition: 'delta definition', wrong_count: 1 },
-    ]))
+    ])
 
     apiFetchMock.mockResolvedValue({ words: [] })
 
@@ -357,9 +405,9 @@ describe('PracticePage error mode – learner profile merge', () => {
 
   it('merges backend learner profile insights into practice AI context', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: true }))
-    localStorage.setItem('wrong_words', JSON.stringify([
+    seedScopedWrongWords(42, [
       { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 2 },
-    ]))
+    ])
 
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/ai/wrong-words') {
@@ -495,9 +543,20 @@ describe('PracticePage error mode – progress persistence regression', () => {
     // The bug was that a useEffect triggered by the correctCount state change
     // would overwrite it with is_completed:false before goNext() navigated.
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
-    localStorage.setItem('wrong_words', JSON.stringify([
-      { word: 'only', phonetic: '/o/', pos: 'n.', definition: 'only definition', wrong_count: 1 },
-    ]))
+    seedScopedWrongWords(1, [
+      {
+        word: 'only',
+        phonetic: '/o/',
+        pos: 'n.',
+        definition: 'only definition',
+        wrong_count: 1,
+        listening_confusables: [
+          { word: 'owner', phonetic: '/owner/', pos: 'n.', definition: 'owner definition' },
+          { word: 'honor', phonetic: '/honor/', pos: 'n.', definition: 'honor definition' },
+          { word: 'lonely', phonetic: '/lonely/', pos: 'adj.', definition: 'lonely definition' },
+        ],
+      },
+    ])
 
     apiFetchMock.mockResolvedValue({ words: [] })
 
@@ -518,10 +577,11 @@ describe('PracticePage error mode – progress persistence regression', () => {
     })
 
     // Answer the (only) word correctly.
-    fireEvent.click(screen.getByTestId('answer-correct'))
+    fireEvent.change(screen.getByTestId('meaning-input'), { target: { value: 'ONLY' } })
+    fireEvent.click(screen.getByTestId('submit-recall'))
 
     await waitFor(() => {
-      const stored = JSON.parse(localStorage.getItem('wrong_words_progress') || '{}')
+      const stored = JSON.parse(localStorage.getItem(getWrongWordsProgressStorageKey(1)) || '{}')
       expect(stored._last?.is_completed).toBe(true)
     })
   })

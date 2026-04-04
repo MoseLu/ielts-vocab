@@ -115,6 +115,40 @@ function _buildHeaders(options: RequestInit): Record<string, string> {
   return { 'Content-Type': 'application/json', ...existing }
 }
 
+function _formatRetryAfter(seconds: number): string {
+  const totalSeconds = Math.max(1, Math.ceil(seconds))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const remainingSeconds = totalSeconds % 60
+
+  if (hours > 0) {
+    if (minutes > 0) return `${hours}小时${minutes}分钟后再试`
+    return `${hours}小时后再试`
+  }
+  if (minutes > 0) {
+    if (remainingSeconds > 0) return `${minutes}分${remainingSeconds}秒后再试`
+    return `${minutes}分钟后再试`
+  }
+  return `${remainingSeconds}秒后再试`
+}
+
+function _buildApiErrorMessage(
+  status: number,
+  payload: { error?: unknown; retry_after?: unknown },
+): string {
+  const fallback = typeof payload.error === 'string' && payload.error.trim()
+    ? payload.error.trim()
+    : '请求失败，请稍后重试'
+  const retryAfter = Number(payload.retry_after)
+
+  if (status === 429 && Number.isFinite(retryAfter) && retryAfter > 0) {
+    const prefix = fallback.replace(/，?\s*请\s*\d+\s*秒后再试$/, '').trim() || '操作过于频繁'
+    return `${prefix}，请 ${_formatRetryAfter(retryAfter)}`
+  }
+
+  return fallback
+}
+
 export async function apiFetch<T>(
   url: string,
   options: RequestInit = {}
@@ -144,7 +178,7 @@ export async function apiFetch<T>(
       const retry = await fetch(url, init)
       if (!retry.ok) {
         const err = await retry.json().catch(() => ({ error: '请求失败，请稍后重试' }))
-        throw new Error(err.error || '请求失败，请稍后重试')
+        throw new Error(_buildApiErrorMessage(retry.status, err))
       }
       return retry.json() as Promise<T>
     } catch {
@@ -158,7 +192,7 @@ export async function apiFetch<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: '请求失败，请稍后重试' }))
-    throw new Error(error.error || '请求失败，请稍后重试')
+    throw new Error(_buildApiErrorMessage(response.status, error))
   }
 
   return response.json() as Promise<T>
@@ -222,4 +256,5 @@ export function capitalize(str: string): string {
 // ── Re-export schemas & validation ─────────────────────────────────────────────
 export * from './schemas'
 export * from './validation'
+export * from './bookPractice'
 export { useForm } from './useForm'

@@ -9,7 +9,9 @@ const showToastMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const logSessionMock = vi.fn()
 const cancelSessionMock = vi.fn()
-const playWordAudioMock = vi.fn()
+const playWordAudioMock = vi.fn(() => Promise.resolve(true))
+const prepareWordAudioPlaybackMock = vi.fn().mockResolvedValue(true)
+const preloadWordAudioMock = vi.fn().mockResolvedValue(true)
 const stopAudioMock = vi.fn()
 
 vi.mock('../../hooks/useSpeechRecognition', () => ({
@@ -59,6 +61,8 @@ vi.mock('./utils', async () => {
   return {
     ...actual,
     playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
+    prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
+    preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
     stopAudio: (...args: unknown[]) => stopAudioMock(...args),
   }
 })
@@ -100,12 +104,18 @@ describe('PracticePage quick-memory review countdown', () => {
     logSessionMock.mockClear()
     cancelSessionMock.mockClear()
     playWordAudioMock.mockClear()
+    playWordAudioMock.mockImplementation(() => Promise.resolve(true))
+    prepareWordAudioPlaybackMock.mockClear()
+    prepareWordAudioPlaybackMock.mockResolvedValue(true)
+    preloadWordAudioMock.mockClear()
+    preloadWordAudioMock.mockResolvedValue(true)
     stopAudioMock.mockClear()
     localStorage.clear()
 
     localStorage.setItem('app_settings', JSON.stringify({
       reviewInterval: '3',
       reviewLimit: '10',
+      reviewLimitCustomized: true,
       shuffle: true,
       playbackSpeed: '1',
       volume: '100',
@@ -116,7 +126,7 @@ describe('PracticePage quick-memory review countdown', () => {
         return Promise.resolve({})
       }
 
-      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due') {
         return Promise.resolve({
           words: [
             { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },

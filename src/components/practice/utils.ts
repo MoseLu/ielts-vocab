@@ -165,6 +165,70 @@ function confusabilityScore(target: Word, candidate: Word): number {
   return score
 }
 
+const MEANING_POS_RE = /\b(?:n|v|vi|vt|adj|adv|prep|pron|conj|aux|int|num|art|a)\.\s*/gi
+
+function cleanMeaningFragment(value: string): string {
+  return value
+    .replace(MEANING_POS_RE, ' ')
+    .replace(/[()（）[\]【】]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeMeaningText(value: string): string {
+  return cleanMeaningFragment(value)
+    .toLowerCase()
+    .replace(/[;；，,、/]/g, ' ')
+    .replace(/[。！？]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const LISTENING_VARIANT_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/metres\b/g, 'meters'],
+  [/metre\b/g, 'meter'],
+  [/litres\b/g, 'liters'],
+  [/litre\b/g, 'liter'],
+  [/centres\b/g, 'centers'],
+  [/centre\b/g, 'center'],
+  [/theatres\b/g, 'theaters'],
+  [/theatre\b/g, 'theater'],
+]
+
+function singularizeListeningToken(token: string): string {
+  if (token.endsWith('ies') && token.length > 4) return `${token.slice(0, -3)}y`
+  if (/(?:ches|shes|xes|zes|ses|oes)$/.test(token) && token.length > 4) return token.slice(0, -2)
+  if (token.endsWith('s') && token.length > 3 && !/(?:ss|us|is)$/.test(token)) return token.slice(0, -1)
+  return token
+}
+
+function normalizeListeningFamilyKey(word: Pick<Word, 'word' | 'group_key'>): string {
+  const explicitGroupKey = normalizeWordAnswer(word.group_key ?? '')
+  const normalizedWord = explicitGroupKey || normalizeWordAnswer(word.word)
+  if (!normalizedWord) return ''
+
+  const variantNormalized = LISTENING_VARIANT_REPLACEMENTS.reduce(
+    (value, [pattern, replacement]) => value.replace(pattern, replacement),
+    normalizedWord,
+  )
+
+  return variantNormalized
+    .split(' ')
+    .map(token => token.split('-').map(singularizeListeningToken).join('-'))
+    .join(' ')
+}
+
+function listeningDistractorScore(
+  currentWord: Word,
+  candidate: Word,
+  priorityIndex?: number,
+): number {
+  const priorityBonus = priorityIndex == null ? 0 : 6 - Math.min(priorityIndex, 5)
+
+  return confusabilityScore(currentWord, candidate)
+    + priorityBonus
+}
+
 export function generateOptions(
   currentWord: Word,
   allWords: Word[],
@@ -175,26 +239,39 @@ export function generateOptions(
     : (modeOrConfig ?? {})
   const mode = config.mode
   const isMeaningMode = mode === 'meaning'
+  const isListeningMode = mode === 'listening'
+  const currentWordKey = currentWord.word.trim().toLowerCase()
+  const currentDefinitionKey = normalizeMeaningText(currentWord.definition)
+  const currentListeningFamilyKey = isListeningMode
+    ? normalizeListeningFamilyKey(currentWord)
+    : ''
   const getCandidateKey = (word: Word): string => (
     isMeaningMode
       ? word.word.trim().toLowerCase()
-      : word.definition.trim().toLowerCase()
+      : isListeningMode
+        ? normalizeListeningFamilyKey(word)
+        : normalizeMeaningText(word.definition)
   )
   const seenWords = new Set<string>()
   const seenDefinitions = new Set<string>()
+  const seenListeningFamilies = new Set<string>()
   const candidates = allWords.filter((word) => {
     const wordKey = word.word.trim().toLowerCase()
-    const defKey = word.definition.trim().toLowerCase()
-    if (!wordKey || !defKey) return false
-    if (wordKey === currentWord.word.trim().toLowerCase()) return false
+    const defKey = normalizeMeaningText(word.definition)
+    const listeningFamilyKey = isListeningMode ? normalizeListeningFamilyKey(word) : ''
+    if (!wordKey || !defKey || (isListeningMode && !listeningFamilyKey)) return false
+    if (wordKey === currentWordKey) return false
+    if (isListeningMode && listeningFamilyKey === currentListeningFamilyKey) return false
     if (isMeaningMode) {
       if (seenWords.has(wordKey)) return false
     } else {
-      if (word.definition === currentWord.definition) return false
+      if (defKey === currentDefinitionKey) return false
       if (seenWords.has(wordKey) || seenDefinitions.has(defKey)) return false
+      if (isListeningMode && seenListeningFamilies.has(listeningFamilyKey)) return false
     }
     seenWords.add(wordKey)
     seenDefinitions.add(defKey)
+    if (isListeningMode) seenListeningFamilies.add(listeningFamilyKey)
     return true
   })
   const priorityWordMap = new Map(
@@ -203,16 +280,19 @@ export function generateOptions(
 
   let distractorWords: Word[]
 
-  if (mode === 'listening' && candidates.length >= 3) {
-    // Sort by confusability, then pick from the top portion with randomness
+  if (isListeningMode && candidates.length >= 3) {
+    // Listening mode is an English confusable-word discrimination task.
     const scored = candidates
-      .map(w => ({ w, s: confusabilityScore(currentWord, w) }))
-      .sort((a, b) => b.s - a.s)
-    // Use top 40% (min 6) as the "confusable pool", shuffle and take 3
-    const topN = Math.max(6, Math.ceil(scored.length * 0.4))
-    const pool = scored.slice(0, topN).map(x => x.w)
-    distractorWords = shuffleArray(pool).slice(0, 3)
-    // Fill any gap (small vocab) with random from the rest
+      .map((word) => {
+        const priorityIndex = priorityWordMap.get(word.word.trim().toLowerCase())
+        return {
+          word,
+          score: listeningDistractorScore(currentWord, word, priorityIndex),
+        }
+      })
+      .sort((a, b) => b.score - a.score)
+    distractorWords = scored.slice(0, 3).map(item => item.word)
+
     if (distractorWords.length < 3) {
       const used = new Set(distractorWords.map(getCandidateKey))
       const rest = candidates.filter(w => !used.has(getCandidateKey(w)))
@@ -258,7 +338,8 @@ export function generateOptions(
           display_mode: 'word',
         }
       : {
-          definition: word.definition,
+          word: word.word,
+          definition: cleanMeaningFragment(word.definition) || word.definition,
           pos: word.pos,
           display_mode: 'definition',
         }
@@ -272,67 +353,22 @@ export function generateOptions(
         display_mode: 'word',
       }
     : {
-        definition: currentWord.definition,
+        word: currentWord.word,
+        definition: cleanMeaningFragment(currentWord.definition) || currentWord.definition,
         pos: currentWord.pos,
         display_mode: 'definition',
       }
   const allOpts = shuffleArray<OptionItem>([correct, ...distractors])
   const correctIndex = allOpts.findIndex(option => (
     isMeaningMode
-      ? option.word?.trim().toLowerCase() === currentWord.word.trim().toLowerCase()
-      : option.definition === currentWord.definition
+      ? option.word?.trim().toLowerCase() === currentWordKey
+      : normalizeMeaningText(option.definition) === currentDefinitionKey
   ))
   return { options: allOpts, correctIndex }
 }
 
 export function playWord(word: string, settings: { playbackSpeed?: string; volume?: string }): void {
-  speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(word)
-  u.rate = parseFloat(settings.playbackSpeed || '1.0')
-  u.volume = parseFloat(settings.volume || '100') / 100
-  speechSynthesis.speak(u)
-}
-
-// ── Voice selection ──────────────────────────────────────────────────────────
-
-// Priority list: neural/online voices (clearest, most natural stress)
-const PREFERRED_VOICES = [
-  'Google US English',
-  'Microsoft Aria Online (Natural)',
-  'Microsoft Christopher Online (Natural)',
-  'Microsoft Guy Online (Natural)',
-  'Microsoft Aria',
-  'Samantha',            // macOS
-  'Alex',                // macOS
-]
-
-let _bestVoice: SpeechSynthesisVoice | null | undefined = undefined
-
-function getBestEnglishVoice(): SpeechSynthesisVoice | null {
-  if (_bestVoice !== undefined) return _bestVoice
-  const voices = speechSynthesis.getVoices()
-  if (!voices.length) return null  // voices not loaded yet — do NOT cache, let next call retry
-
-  for (const name of PREFERRED_VOICES) {
-    const v = voices.find(v => v.name === name)
-    if (v) { _bestVoice = v; return v }
-  }
-  // Any online (neural) en-US voice
-  const online = voices.find(v => !v.localService && v.lang === 'en-US')
-  if (online) { _bestVoice = online; return online }
-  // Any en-US
-  const enUs = voices.find(v => v.lang === 'en-US')
-  if (enUs) { _bestVoice = enUs; return enUs }
-  // Any English
-  _bestVoice = voices.find(v => v.lang.startsWith('en')) ?? null
-  return _bestVoice
-}
-
-// Reset voice cache whenever browser loads new voices
-if (typeof speechSynthesis !== 'undefined') {
-  speechSynthesis.addEventListener('voiceschanged', () => {
-    _bestVoice = undefined  // force re-selection with fresh voice list
-  })
+  void playWordAudio(word, settings)
 }
 
 // ── Audio playback ───────────────────────────────────────────────────────────
@@ -354,6 +390,8 @@ let _audioStopped = false
 let _htmlAudioWarmupPromise: Promise<void> | null = null
 const SILENT_WAV_DATA_URI =
   'data:audio/wav;base64,UklGRlYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YTIAAACA'
+const _wordAudioCache = new Map<string, ArrayBuffer>()
+const _wordAudioInFlight = new Map<string, Promise<ArrayBuffer | null>>()
 
 /**
  * Play a 100 ms silent WAV through HTMLAudioElement to initialise the browser's
@@ -383,136 +421,66 @@ function _warmupHtmlAudio(): Promise<void> {
   return _htmlAudioWarmupPromise
 }
 
-// Pre-warm the browser's speechSynthesis engine on module load so the first
-// TTS play is not truncated.
-;(function warmUpSpeechSynthesis() {
-  if (typeof speechSynthesis === 'undefined') return
-  const u = new SpeechSynthesisUtterance('')
-  u.volume = 0
-  u.rate = 1
-  speechSynthesis.speak(u)
-  speechSynthesis.cancel()
-})()
+function _wordAudioCacheKey(word: string): string {
+  return word.trim().toLowerCase()
+}
 
-// Cache of word → audio URL from Free Dictionary API (null = no recording found)
-const _audioUrlCache = new Map<string, string | null>()
+async function _fetchWordAudioBuffer(word: string): Promise<ArrayBuffer | null> {
+  const text = word.trim()
+  const key = _wordAudioCacheKey(text)
+  if (!key) return null
 
-/**
- * Fetch a real pronunciation URL from dictionaryapi.dev (Wiktionary recordings).
- * Results are cached so subsequent calls are instant.
- */
-async function fetchAudioUrl(word: string): Promise<string | null> {
-  const key = word.toLowerCase()
-  if (_audioUrlCache.has(key)) return _audioUrlCache.get(key)!
-
-  // Skip dictionary API for phrases (contains spaces) - they're not supported
-  if (word.includes(' ')) {
-    _audioUrlCache.set(key, null)
-    return null
+  if (_wordAudioCache.has(key)) {
+    return _wordAudioCache.get(key)!
   }
 
-  try {
-    const controller = new AbortController()
-    const tid = setTimeout(() => controller.abort(), 3000)
-    const res = await fetch(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
-      { signal: controller.signal },
-    )
-    clearTimeout(tid)
-    if (!res.ok) { _audioUrlCache.set(key, null); return null }
-    const data = await res.json()
-    for (const entry of data) {
-      for (const p of (entry.phonetics || [])) {
-        if (p.audio) {
-          const url = (p.audio as string).startsWith('//')
-            ? 'https:' + p.audio
-            : p.audio as string
-          if (url.startsWith('https')) {
-            _audioUrlCache.set(key, url)
-            return url
-          }
-        }
-      }
+  const pending = _wordAudioInFlight.get(key)
+  if (pending) {
+    return pending
+  }
+
+  const request = (async () => {
+    try {
+      const res = await fetch(`/api/tts/word-audio?w=${encodeURIComponent(text)}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      })
+      if (!res.ok) return null
+      const buf = await res.arrayBuffer()
+      _wordAudioCache.set(key, buf)
+      return buf
+    } catch {
+      return null
+    } finally {
+      _wordAudioInFlight.delete(key)
     }
-  } catch { /* network error or abort */ }
-  _audioUrlCache.set(key, null)
-  return null
+  })()
+
+  _wordAudioInFlight.set(key, request)
+  return request
+}
+
+export async function preloadWordAudio(word: string): Promise<boolean> {
+  const buf = await _fetchWordAudioBuffer(word)
+  return buf != null
+}
+
+export async function prepareWordAudioPlayback(word: string): Promise<boolean> {
+  const [buf] = await Promise.all([
+    _fetchWordAudioBuffer(word),
+    _warmupHtmlAudio(),
+  ])
+  return buf != null
 }
 
 /**
- * Play word pronunciation.
- *
- * Priority:
- *  1. Wiktionary URL (cached)               → direct audio playback
- *  2. Youdao direct audio URL              → direct audio playback
- *  3. Speech synthesis                     → always available
- */
-export function playWordAudio(
-  word: string,
-  settings: { playbackSpeed?: string; volume?: string },
-  onEnd?: () => void,
-): void {
-  stopAudio()
-  const gen = _audioGeneration
-
-  const volume = parseFloat(settings.volume || '100') / 100
-  const rate   = Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '0.8')))
-
-  const key = word.toLowerCase()
-
-  // ── Wiktionary URL: already a complete file URL, play immediately ────────────
-  if (_audioUrlCache.has(key)) {
-    const url = _audioUrlCache.get(key)
-    if (url) {
-      const audio = new Audio(url)
-      audio.volume = volume
-      audio.playbackRate = rate
-      if (onEnd) audio.onended = () => onEnd()
-      _currentAudio = audio
-      const doPlay = () => {
-        if (_audioGeneration !== gen) return
-        audio.play().catch(() => {
-          if (_audioGeneration !== gen) return
-          _currentAudio = null
-          _playFallbackAudio(gen, word, key, volume, rate, onEnd)
-        })
-      }
-      // Wait for hardware warmup before playing (warmup runs concurrently with
-      // the audio element loading, so it adds no extra perceived delay).
-      const start = () => {
-        if (_audioGeneration !== gen) return
-        _warmupHtmlAudio().then(doPlay)
-      }
-
-      if (audio.readyState >= 2) {
-        start()
-      } else {
-        audio.addEventListener('canplaythrough', start, { once: true })
-        audio.load()
-      }
-      return
-    }
-    // Cached null → no Wiktionary recording. Skip to Youdao.
-  }
-
-  // ── Same-origin cache, then Youdao direct URL, then TTS ──────────────────
-  _playFallbackAudio(gen, word, key, volume, rate, onEnd)
-
-  // ── Background: prefetch Wiktionary URL for next time ────────────────────
-  fetchAudioUrl(word)
-}
-
-/**
- * Play a direct audio URL through HTMLAudioElement.
- * Uses browser media loading instead of fetch so cross-origin audio can play
- * without requiring the remote server to expose CORS headers.
+ * Play a same-origin audio URL through HTMLAudioElement.
  */
 function _playAudioUrl(
   gen: number,
   url: string,
   volume: number,
   rate: number,
-  onFailure: () => void,
   onEnd?: () => void,
 ): void {
   const audio = new Audio(url)
@@ -526,13 +494,14 @@ function _playAudioUrl(
     if (settled || _audioGeneration !== gen) return
     settled = true
     if (_currentAudio === audio) _currentAudio = null
-    onFailure()
+    if (onEnd) onEnd()
   }
 
   audio.onerror = fail
   audio.onended = () => {
     if (settled || _audioGeneration !== gen) return
     settled = true
+    if (_currentAudio === audio) _currentAudio = null
     if (onEnd) onEnd()
   }
 
@@ -558,69 +527,174 @@ function _playAudioUrl(
   start()
 }
 
-function _playFallbackAudio(
-  gen: number,
+/**
+ * Play word pronunciation from the local backend endpoint.
+ * Fetch the MP3 bytes explicitly so browser URL caching cannot keep serving a
+ * stale bad pronunciation after the server cache is repaired.
+ */
+export function playWordAudio(
   word: string,
-  key: string,
-  volume: number,
-  rate: number,
+  settings: { playbackSpeed?: string; volume?: string },
   onEnd?: () => void,
-): void {
-  const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(key)}&type=2`
+): Promise<boolean> {
+  stopAudio()
+  _audioStopped = false
+  const gen = _audioGeneration
+  const text = word.trim()
+  if (!text) {
+    if (onEnd) onEnd()
+    return Promise.resolve(false)
+  }
 
-  _playAudioUrl(
-    gen,
-    youdaoUrl,
-    volume,
-    rate,
-    () => _speakWithSynthesis(gen, word, volume, rate, onEnd),
-    onEnd,
-  )
+  const volume = parseFloat(settings.volume || '100') / 100
+  const rate = Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '0.8')))
+  const key = _wordAudioCacheKey(text)
+
+  if (_wordAudioCache.has(key)) {
+    const buf = _wordAudioCache.get(key)!
+    return _warmupHtmlAudio().then(() => {
+      if (_audioGeneration !== gen) return false
+      return _playAudioBuffer(gen, buf, volume, rate, onEnd)
+    }).catch(() => {
+      if (_audioGeneration !== gen) return false
+      if (onEnd) onEnd()
+      return false
+    })
+  }
+
+  return (async () => {
+    try {
+      const [buf] = await Promise.all([
+        _fetchWordAudioBuffer(text),
+        _warmupHtmlAudio(),
+      ])
+      if (_audioGeneration !== gen) return false
+      if (!buf) {
+        if (onEnd) onEnd()
+        return false
+      }
+      return _playAudioBuffer(gen, buf, volume, rate, onEnd)
+    } catch {
+      if (_audioGeneration !== gen) return false
+      if (onEnd) onEnd()
+      return false
+    }
+  })()
 }
 
 /**
- * Speech synthesis — always complete (no partial audio risk).
+ * Play an MP3 ArrayBuffer through HTMLAudioElement.
  */
-function _speakWithSynthesis(
+function _playAudioBuffer(
   gen: number,
-  word: string | undefined,
+  buf: ArrayBuffer,
   volume: number,
   rate: number,
   onEnd?: () => void,
-): void {
-  if (typeof speechSynthesis === 'undefined') return
-  const overallTimer = setTimeout(() => {
-    if (_audioGeneration !== gen) return
-    console.warn('[playWordAudio] speech timeout, no audio played')
-  }, 5000)
-  const u = new SpeechSynthesisUtterance(word ?? '')
-  u.lang   = 'en-US'
-  u.rate   = rate
-  u.volume = volume
-  const voice = getBestEnglishVoice()
-  if (voice) u.voice = voice
-  u.onend = () => { clearTimeout(overallTimer); if (onEnd) onEnd() }
-  u.onerror = () => {
-    clearTimeout(overallTimer)
-    speechSynthesis.cancel()
-    console.warn('[playWordAudio] speechSynthesis error, no audio played')
+): Promise<boolean> {
+  const blob = new Blob([buf], { type: 'audio/mpeg' })
+  const blobUrl = URL.createObjectURL(blob)
+  const audio = new Audio(blobUrl)
+  audio.volume = volume
+  audio.playbackRate = rate
+  _currentAudio = audio
+
+  let settled = false
+  let started = false
+  const cleanup = () => URL.revokeObjectURL(blobUrl)
+  const cancel = (resolve: (value: boolean) => void) => {
+    if (settled) return
+    settled = true
+    cleanup()
+    if (_currentAudio === audio) _currentAudio = null
+    resolve(started)
   }
-  setTimeout(() => {
-    if (_audioGeneration !== gen) return
-    speechSynthesis.speak(u)
-  }, 50)
+
+  return new Promise<boolean>((resolve) => {
+    const markStarted = () => {
+      if (_audioGeneration !== gen) {
+        cancel(resolve)
+        return
+      }
+      if (started || settled) return
+      started = true
+      resolve(true)
+    }
+
+    const fail = () => {
+      if (_audioGeneration !== gen) {
+        cancel(resolve)
+        return
+      }
+      if (settled) return
+      settled = true
+      cleanup()
+      if (_currentAudio === audio) _currentAudio = null
+      resolve(started)
+      if (onEnd) onEnd()
+    }
+
+    audio.onerror = fail
+    audio.onended = () => {
+      if (_audioGeneration !== gen) {
+        cancel(resolve)
+        return
+      }
+      if (settled) return
+      settled = true
+      cleanup()
+      if (_currentAudio === audio) _currentAudio = null
+      resolve(started)
+      if (!_audioStopped && onEnd) onEnd()
+    }
+
+    const start = () => {
+      if (_audioGeneration !== gen) {
+        cancel(resolve)
+        return
+      }
+      if (settled) return
+      try {
+        const playResult = audio.play()
+        if (playResult && typeof playResult.then === 'function') {
+          void playResult.then(markStarted).catch(fail)
+          return
+        }
+        markStarted()
+      } catch {
+        fail()
+      }
+    }
+
+    if (typeof audio.addEventListener === 'function') {
+      audio.addEventListener('playing', markStarted, { once: true })
+    }
+
+    if (audio.readyState >= 2) {
+      start()
+      return
+    }
+
+    if (typeof audio.addEventListener === 'function') {
+      audio.addEventListener('canplaythrough', start, { once: true })
+      audio.load()
+      return
+    }
+
+    start()
+  })
 }
 
-/** Stop any in-progress audio (both Audio element and speechSynthesis). */
+/** Stop any in-progress audio. */
 export function stopAudio(): void {
   _audioStopped = true
   _audioGeneration++
   if (_currentAudio) {
     _currentAudio.onended = null
+    _currentAudio.onerror = null
     _currentAudio.pause()
     _currentAudio = null
   }
-  if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
 }
 
 // ── Example Audio ────────────────────────────────────────────────────────────────
@@ -629,8 +703,7 @@ export function stopAudio(): void {
 const _exampleAudioCache = new Map<string, ArrayBuffer>()
 
 /**
- * Play example sentence audio from MiniMax TTS (backend /api/tts/example-audio).
- * Falls back to speechSynthesis on network error.
+ * Play example sentence audio from the local MiniMax-backed backend endpoint.
  */
 export function playExampleAudio(
   sentence: string,
@@ -646,36 +719,8 @@ export function playExampleAudio(
   const rate = parseFloat(settings.playbackSpeed || '1')
   const key = sentence
 
-  const loadAndPlay = (buf: ArrayBuffer | null) => {
-    if (!buf) {
-      _speakWithSynthesis(gen, sentence, volume, rate, onEnd)
-      return
-    }
-    const blob = new Blob([buf], { type: 'audio/mpeg' })
-    const blobUrl = URL.createObjectURL(blob)
-    const audio = new Audio(blobUrl)
-    audio.volume = volume
-    audio.playbackRate = rate
-    audio.onended = () => { if (!_audioStopped && onEnd) onEnd() }
-    _currentAudio = audio
-    const doPlay = () => {
-      if (_audioGeneration !== gen) return
-      audio.play().catch(() => {
-        if (_audioGeneration !== gen) return
-        _currentAudio = null
-        if (onEnd) onEnd()
-      })
-    }
-    if (audio.readyState >= 2) {
-      doPlay()
-    } else {
-      audio.addEventListener('canplaythrough', () => doPlay(), { once: true })
-      audio.load()
-    }
-  }
-
   if (_exampleAudioCache.has(key)) {
-    _warmupHtmlAudio().then(() => loadAndPlay(_exampleAudioCache.get(key)!))
+    _warmupHtmlAudio().then(() => _playAudioBuffer(gen, _exampleAudioCache.get(key)!, volume, rate, onEnd))
     return
   }
 
@@ -689,13 +734,16 @@ export function playExampleAudio(
       })
       await warmup
       if (_audioGeneration !== gen) return
-      if (!res.ok) { loadAndPlay(null); return }
+      if (!res.ok) {
+        if (onEnd) onEnd()
+        return
+      }
       const buf = await res.arrayBuffer()
       _exampleAudioCache.set(key, buf)
-      loadAndPlay(buf)
+      _playAudioBuffer(gen, buf, volume, rate, onEnd)
     } catch {
-      await warmup
-      loadAndPlay(null)
+      if (_audioGeneration !== gen) return
+      if (onEnd) onEnd()
     }
   })()
 }

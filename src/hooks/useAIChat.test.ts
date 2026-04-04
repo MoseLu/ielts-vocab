@@ -171,6 +171,79 @@ describe('startSession recovery', () => {
 })
 
 describe('useAIChat semantic commands', () => {
+  it('streams assistant replies incrementally for default chat requests', async () => {
+    let controller: ReadableStreamDefaultController<Uint8Array> | null = null
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        controller = ctrl
+      },
+    })
+
+    const mockFetch = vi.fn(() =>
+      Promise.resolve(new Response(stream, {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      })),
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    const { result } = renderHook(() => useAIChat())
+
+    let sendPromise!: Promise<void>
+    await act(async () => {
+      sendPromise = result.current.sendMessage('今天怎么复习更合适？')
+      await Promise.resolve()
+    })
+
+    await act(async () => {
+      controller?.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 'start', message: 'AI 正在思考...' })}\n\n`))
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(result.current.messages.at(-1)?.content).toBe('AI 正在思考...')
+    })
+
+    await act(async () => {
+      controller?.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 'tool', tool: 'get_wrong_words' })}\n\n`))
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(result.current.messages.at(-1)?.content).toBe('AI 正在分析你的错词记录...')
+    })
+
+    await act(async () => {
+      controller?.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'text', delta: '先复习听力弱项。' })}\n\n`))
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(result.current.messages.at(-1)?.content).toBe('先复习听力弱项。')
+    })
+
+    await act(async () => {
+      controller?.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'text', delta: '再做 10 个错词巩固。' })}\n\n`))
+      controller?.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'options', options: ['A. 开始复习', 'B. 先看计划'] })}\n\n`))
+      controller?.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', reply: '先复习听力弱项。再做 10 个错词巩固。', options: ['A. 开始复习', 'B. 先看计划'] })}\n\n`))
+      controller?.close()
+      await sendPromise
+    })
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockFetch.mock.calls[0][0]).toBe('/api/ai/ask/stream')
+    expect(result.current.messages.at(-1)).toMatchObject({
+      role: 'assistant',
+      content: '先复习听力弱项。再做 10 个错词巩固。',
+      options: ['A. 开始复习', 'B. 先看计划'],
+      isStreaming: false,
+    })
+    expect(result.current.isLoading).toBe(false)
+
+    vi.restoreAllMocks()
+  })
+
   it('records pronunciation after a semantic start flow and free-form reply', async () => {
     setGlobalLearningContext({
       currentWord: 'dynamic',

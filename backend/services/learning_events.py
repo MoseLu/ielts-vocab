@@ -1,9 +1,9 @@
 import json
 from collections import Counter
-from datetime import date as date_type
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from models import UserLearningEvent
+from services.local_time import resolve_local_day_window
 
 MODE_LABELS = {
     'smart': '智能练习',
@@ -119,9 +119,7 @@ def record_learning_event(
 
 
 def _resolve_target_date(target_date: str | None) -> tuple[str, datetime, datetime]:
-    date_str = target_date or date_type.today().strftime('%Y-%m-%d')
-    start_dt = datetime.strptime(date_str, '%Y-%m-%d')
-    return date_str, start_dt, start_dt + timedelta(days=1)
+    return resolve_local_day_window(target_date)
 
 
 def _format_event_title(event: UserLearningEvent, payload: dict) -> str:

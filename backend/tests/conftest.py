@@ -7,6 +7,7 @@ import pytest
 
 # Ensure backend dir is on path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ['PYTEST_RUNNING'] = '1'
 
 from app import create_app
 from models import db as _db

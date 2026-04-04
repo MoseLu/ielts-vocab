@@ -1,0 +1,152 @@
+.practice-stage-guide {
+    --guide-color: var(--accent);
+    width: min(100%, 760px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 22px;
+    border-radius: 28px;
+    border: 1px solid color-mix(in srgb, var(--guide-color) 18%, var(--surface-border-strong));
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--guide-color) 14%, transparent), transparent 44%),
+        linear-gradient(
+            155deg,
+            color-mix(in srgb, var(--guide-color) 10%, white) 0%,
+            color-mix(in srgb, var(--surface-elevated) 95%, white) 52%,
+            rgba(255, 255, 255, 0.98) 100%
+        );
+    box-shadow: var(--shadow-panel);
+    isolation: isolate;
+}
+
+.practice-stage-guide::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            120deg,
+            color-mix(in srgb, var(--guide-color) 14%, transparent),
+            transparent 28%,
+            transparent 72%,
+            color-mix(in srgb, var(--guide-color) 8%, transparent)
+        );
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.practice-stage-guide--error {
+    --guide-color: var(--error);
+}
+
+.practice-stage-guide--review {
+    --guide-color: var(--success);
+}
+
+.practice-stage-guide--focus {
+    --guide-color: var(--warning);
+}
+
+.practice-stage-guide__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.practice-stage-guide__pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 12px;
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--guide-color) 12%, white);
+    border: 1px solid color-mix(in srgb, var(--guide-color) 18%, transparent);
+    color: color-mix(in srgb, var(--guide-color) 82%, var(--text-primary));
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.practice-stage-guide__headline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.practice-stage-guide__eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: color-mix(in srgb, var(--guide-color) 76%, var(--text-secondary));
+}
+
+.practice-stage-guide__title {
+    font-size: clamp(1.1rem, 2vw, 1.42rem);
+    line-height: 1.35;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.practice-stage-guide__context {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.practice-stage-guide__rows {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.practice-stage-guide__row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 100%;
+    padding: 14px 14px 15px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--guide-color) 5%, white);
+    border: 1px solid color-mix(in srgb, var(--guide-color) 12%, var(--surface-border-strong));
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+}
+
+.practice-stage-guide__label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: color-mix(in srgb, var(--guide-color) 74%, var(--text-secondary));
+}
+
+.practice-stage-guide__value {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text-primary);
+}
+
+@media (max-width: 720px) {
+    .practice-stage-guide__rows {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .practice-stage-guide {
+        padding: 18px 16px;
+        border-radius: 24px;
+    }
+
+    .practice-stage-guide__row {
+        padding: 13px 13px 14px;
+        border-radius: 18px;
+    }
+}

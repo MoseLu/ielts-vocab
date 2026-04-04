@@ -65,7 +65,7 @@ export default function RadioMode({
     // Capture the current generation — any callbacks from a previous word that
     // fire after this point must not execute (user may have skipped ahead).
     const gen = radioGenRef.current
-    playWordAudio(word.word, s, () => {
+    void playWordAudio(word.word, s, () => {
       if (!radioActiveRef.current) return
       if (radioGenRef.current !== gen) return // stale — word was skipped
       if (repeat < maxRepeat) {

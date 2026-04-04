@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../../../contexts'
 import { apiFetch } from '../../../lib'
 
@@ -172,6 +172,8 @@ export type RangeKey = 7 | 14 | 30
 
 export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
   const { user } = useAuth()
+  const userId = user?.id ?? null
+  const lastFetchStartedAtRef = useRef(0)
   const [daily, setDaily] = useState<DailyLearning[]>([])
   const [books, setBooks] = useState<LearningBook[]>([])
   const [modes, setModes] = useState<string[]>([])
@@ -187,11 +189,12 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
   const [loading, setLoading] = useState(true)
 
   const fetchStats = useCallback(async () => {
-    if (!user) {
+    if (!userId) {
       setLoading(false)
       return
     }
 
+    lastFetchStartedAtRef.current = Date.now()
     setLoading(true)
     try {
       const params = new URLSearchParams({ days: String(days) })
@@ -211,8 +214,8 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
           chapter_breakdown?: ChapterBreakdownRow[]
           chapter_mode_stats?: ChapterModeStatRow[]
           use_fallback?: boolean
-        }>(`/api/ai/learning-stats?${params}`),
-        apiFetch<LearnerProfile>('/api/ai/learner-profile').catch(() => null),
+        }>(`/api/ai/learning-stats?${params}`, { cache: 'no-store' }),
+        apiFetch<LearnerProfile>('/api/ai/learner-profile', { cache: 'no-store' }).catch(() => null),
       ])
       setDaily(d.daily || [])
       setBooks(d.books || [])
@@ -231,9 +234,47 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
     } finally {
       setLoading(false)
     }
-  }, [days, bookId, mode, user])
+  }, [days, bookId, mode, userId])
+
+  const refetchIfStale = useCallback(() => {
+    if (Date.now() - lastFetchStartedAtRef.current < 1500) return
+    void fetchStats()
+  }, [fetchStats])
 
   useEffect(() => { fetchStats() }, [fetchStats])
+
+  useEffect(() => {
+    if (!userId) return
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchIfStale()
+      }
+    }
+
+    window.addEventListener('focus', refetchIfStale)
+    window.addEventListener('pageshow', refetchIfStale)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', refetchIfStale)
+      window.removeEventListener('pageshow', refetchIfStale)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [fetchStats, userId])
+
+  useEffect(() => {
+    if (!userId) return
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      refetchIfStale()
+    }, 60_000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [refetchIfStale, userId])
 
   return {
     daily,
