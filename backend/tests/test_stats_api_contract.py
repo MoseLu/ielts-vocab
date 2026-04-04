@@ -541,9 +541,9 @@ def test_learning_stats_contract_matches_mixed_data_aggregation(client, app, mon
     assert data['alltime']['today_review_words'] == 1
     assert data['alltime']['alltime_review_words'] == 3
     assert data['alltime']['cumulative_review_events'] == 5
-    assert data['alltime']['ebbinghaus_rate'] is None
-    assert data['alltime']['ebbinghaus_due_total'] == 0
-    assert data['alltime']['ebbinghaus_met'] == 0
+    assert data['alltime']['ebbinghaus_rate'] == 50
+    assert data['alltime']['ebbinghaus_due_total'] == 2
+    assert data['alltime']['ebbinghaus_met'] == 1
     assert data['alltime']['qm_word_total'] == 10
     assert data['alltime']['upcoming_reviews_3d'] == 4
     assert data['alltime']['streak_days'] == 14
@@ -552,12 +552,12 @@ def test_learning_stats_contract_matches_mixed_data_aggregation(client, app, mon
     assert data['alltime']['trend_direction'] == 'improving'
 
     ebbinghaus_stages = {item['stage']: item for item in data['alltime']['ebbinghaus_stages']}
-    assert ebbinghaus_stages[0]['due_total'] == 0
+    assert ebbinghaus_stages[0]['due_total'] == 1
     assert ebbinghaus_stages[0]['due_met'] == 0
-    assert ebbinghaus_stages[0]['actual_pct'] is None
-    assert ebbinghaus_stages[2]['due_total'] == 0
-    assert ebbinghaus_stages[2]['due_met'] == 0
-    assert ebbinghaus_stages[2]['actual_pct'] is None
+    assert ebbinghaus_stages[0]['actual_pct'] == 0
+    assert ebbinghaus_stages[2]['due_total'] == 1
+    assert ebbinghaus_stages[2]['due_met'] == 1
+    assert ebbinghaus_stages[2]['actual_pct'] == 100
 
     assert {item['id'] for item in data['books']} == {'book-a', 'book-b'}
     assert sorted(item['title'] for item in data['books']) == ['Book A', 'Book B']
@@ -782,7 +782,7 @@ def test_learner_profile_contract_matches_summary_modes_and_activity_counts(clie
         'weakest_mode': 'meaning',
         'weakest_mode_label': '汉译英',
         'weakest_mode_accuracy': 50,
-        'due_reviews': 0,
+        'due_reviews': 2,
         'trend_direction': 'improving',
     }
 
@@ -795,8 +795,8 @@ def test_learner_profile_contract_matches_summary_modes_and_activity_counts(clie
     assert data['memory_system']['priority_dimension'] == 'recognition'
     recognition = next(item for item in data['memory_system']['dimensions'] if item['key'] == 'recognition')
     assert recognition['tracked_words'] == 10
-    assert recognition['due_words'] == 0
-    assert recognition['status'] == 'strengthen'
+    assert recognition['due_words'] == 2
+    assert recognition['status'] == 'due'
 
     mode_map = {item['mode']: item for item in data['mode_breakdown']}
     assert list(item['mode'] for item in data['mode_breakdown']) == ['listening', 'meaning', 'quickmemory']
@@ -851,4 +851,58 @@ def test_learner_profile_contract_matches_summary_modes_and_activity_counts(clie
     assert data['recent_activity'][-1]['event_type'] == 'study_session'
     assert data['repeated_topics'][0]['word_context'] == 'kind'
     assert data['repeated_topics'][0]['count'] == 2
-    assert data['next_actions'][0] == '认读维度先盯住 alpha、delta、epsilon，用英译中快反重建核心词义通路。'
+    assert data['next_actions'][0] == '先按认读的 1/3/7/30 天节奏复习 2 个到期词，要求 1 秒内说出中文义。'
+
+
+def test_due_review_counts_stay_consistent_between_stats_profile_and_queue(client, app, monkeypatch):
+    patch_stats_environment(monkeypatch)
+    register_and_login(client, username='stats-due-consistency-user')
+    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
+        'alpha': [{
+            'word': 'alpha',
+            'phonetic': '/a/',
+            'pos': 'n.',
+            'definition': 'alpha def',
+            'book_id': 'book-a',
+            'book_title': 'Book A',
+            'chapter_id': '1',
+            'chapter_title': 'Chapter A1',
+        }],
+        'effect': [{
+            'word': 'effect',
+            'phonetic': '/ɪˈfekt/',
+            'pos': 'n.',
+            'definition': 'result',
+            'book_id': 'book-b',
+            'book_title': 'Book B',
+            'chapter_id': '2',
+            'chapter_title': 'Chapter B2',
+        }],
+    })
+    monkeypatch.setattr(ai_routes, '_get_global_vocab_pool', lambda: [
+        {'word': 'alpha', 'phonetic': '/a/', 'pos': 'n.', 'definition': 'alpha def'},
+        {'word': 'effect', 'phonetic': '/ɪˈfekt/', 'pos': 'n.', 'definition': 'result'},
+    ])
+
+    with app.app_context():
+        user = User.query.filter_by(username='stats-due-consistency-user').first()
+        assert user is not None
+        seed_stats_contract_data(user.id)
+
+    stats_res = client.get('/api/ai/learning-stats?days=14')
+    profile_res = client.get('/api/ai/learner-profile?date=2026-04-04')
+    queue_res = client.get('/api/ai/quick-memory/review-queue?limit=0&within_days=3&offset=0&scope=due')
+
+    assert stats_res.status_code == 200
+    assert profile_res.status_code == 200
+    assert queue_res.status_code == 200
+
+    stats_data = stats_res.get_json()
+    profile_data = profile_res.get_json()
+    queue_data = queue_res.get_json()
+
+    assert stats_data['alltime']['ebbinghaus_due_total'] == 2
+    assert profile_data['summary']['due_reviews'] == 2
+    assert queue_data['summary']['due_count'] == 2
+    assert queue_data['summary']['returned_count'] == 2
+    assert queue_data['summary']['total_count'] == 2

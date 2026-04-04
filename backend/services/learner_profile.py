@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from models import UserLearningEvent, UserLearningNote, UserQuickMemoryRecord, UserSmartWordStat, UserStudySession, UserWrongWord
 from services.learning_events import build_learning_activity_timeline
-from services.local_time import resolve_local_day_window, utc_naive_to_local_date_key, utc_now_naive
+from services.local_time import resolve_local_day_window, utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 from services.memory_topics import build_memory_topics
 from services.study_sessions import get_live_pending_session_snapshot
 
@@ -994,7 +994,7 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         .all()
     )
 
-    now_ms = int(now_utc.timestamp() * 1000)
+    now_ms = utc_naive_to_epoch_ms(now_utc)
     due_reviews = UserQuickMemoryRecord.query.filter_by(user_id=user_id).filter(
         UserQuickMemoryRecord.next_review > 0,
         UserQuickMemoryRecord.next_review <= now_ms,

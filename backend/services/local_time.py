@@ -80,9 +80,10 @@ def local_day_window_ms(
     now_utc: datetime | None = None,
 ) -> tuple[str, int, int]:
     date_str, start_utc, end_utc = resolve_local_day_window(target_date, now_utc)
-    return date_str, _utc_naive_to_epoch_ms(start_utc), _utc_naive_to_epoch_ms(end_utc)
+    return date_str, utc_naive_to_epoch_ms(start_utc), utc_naive_to_epoch_ms(end_utc)
 
 
-def _utc_naive_to_epoch_ms(dt: datetime) -> int:
+def utc_naive_to_epoch_ms(dt: datetime) -> int:
+    """Convert a UTC-naive datetime to epoch milliseconds without local-time skew."""
     utc_dt = dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
     return int(utc_dt.timestamp() * 1000)

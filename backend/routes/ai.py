@@ -10,7 +10,7 @@ from flask import Blueprint, Response, current_app, jsonify, request, stream_wit
 from sqlalchemy import text
 from models import db, User, UserBookProgress, UserChapterProgress, UserChapterModeProgress, CustomBook, CustomBookChapter, CustomBookWord, UserWrongWord, UserStudySession, UserQuickMemoryRecord, UserSmartWordStat, UserConversationHistory, UserMemory, UserLearningNote, WRONG_WORD_DIMENSIONS, WRONG_WORD_PENDING_REVIEW_TARGET, _build_wrong_word_dimension_states, _empty_wrong_word_dimension_state, _normalize_wrong_word_dimension_state, _summarize_wrong_word_dimension_states
 from routes.middleware import token_required
-from services.local_time import current_local_date, local_day_window_ms, recent_local_day_range, utc_naive_to_local_date_key, utc_now_naive
+from services.local_time import current_local_date, local_day_window_ms, recent_local_day_range, utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 from services.learner_profile import build_learner_profile
 from services.learning_events import record_learning_event
 from services.listening_confusables import get_preset_listening_confusables
@@ -351,7 +351,7 @@ def _quick_memory_word_stats(user_id: int):
     """速记(艾宾浩斯)表：今日新词/今日复习/累计复习词数、艾宾浩斯达成率等。"""
     now_utc = utc_now_naive()
     _, today_start_ms, tomorrow_ms = local_day_window_ms(now_utc=now_utc)
-    now_ms = int(now_utc.timestamp() * 1000)
+    now_ms = utc_naive_to_epoch_ms(now_utc)
 
     qm_rows = UserQuickMemoryRecord.query.filter_by(user_id=user_id).all()
     today_new = 0
