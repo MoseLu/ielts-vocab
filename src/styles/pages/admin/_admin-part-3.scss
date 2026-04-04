@@ -1,0 +1,382 @@
+
+@use '../../utils/mixins' as *;
+
+/* Horizontal user info row in modal header */
+.admin-modal-user-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-modal-username-hl {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.admin-modal-meta-sep {
+  font-size: 13px;
+  color: var(--border);
+  user-select: none;
+}
+
+.admin-modal-meta-item {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.admin-modal-email {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.admin-modal-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.admin-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: color 0.12s, background 0.12s;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.admin-modal-close:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+
+.admin-modal-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* User summary stats row */
+.admin-modal-stats {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  background: var(--bg-color);
+}
+
+.admin-modal-stat {
+  flex: 1;
+  min-width: 80px;
+  padding: 12px 10px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+.admin-modal-stat:last-child { border-right: none; }
+
+.admin-modal-stat-val {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-modal-stat-lbl {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* Filter bar inside user detail modal */
+.admin-detail-filters {
+  @include toolbar-surface($justify: flex-start, $padding: 10px, $gap: 8px, $background: var(--bg-secondary), $border: none, $radius: 0, $shadow: none);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-filter-separator {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.admin-filter-date {
+  @include input-control(32px, 5px 8px, 6px, 1px solid var(--border), var(--bg-color), var(--text-primary), 12px);
+}
+
+.admin-filter-select {
+  @include input-control(32px, 5px 8px, 6px, 1px solid var(--border), var(--bg-color), var(--text-primary), 12px);
+  cursor: pointer;
+}
+
+.admin-filter-apply {
+  @include accent-button(32px, 5px 14px, 6px, var(--accent), #fff, none, 12px, 600);
+  transition: background 0.12s;
+}
+.admin-filter-apply:hover { background: var(--accent-hover); }
+
+.admin-filter-reset {
+  @include control-button(32px, 5px 12px, 6px, 1px solid var(--border), transparent, var(--text-secondary), 12px, 400);
+  transition: background 0.12s;
+}
+.admin-filter-reset:hover { background: var(--bg-tertiary); }
+
+/* Detail tabs */
+.admin-detail-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.admin-detail-tab {
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.12s;
+  white-space: nowrap;
+}
+.admin-detail-tab:hover { color: var(--text-primary); }
+.admin-detail-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.admin-modal-body {
+  padding: 16px 20px;
+  max-height: 520px;
+  overflow-y: auto;
+  background: var(--bg-color);
+}
+
+.admin-modal-toggle-fs {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: color 0.12s, background 0.12s;
+  flex-shrink: 0;
+  line-height: 0;
+  margin-right: 4px;
+}
+.admin-modal-toggle-fs:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+
+/* Detail table */
+.admin-detail-table {
+  @include data-table-base();
+}
+
+.admin-detail-table th {
+  @include data-table-head-cell(7px 10px, var(--bg-secondary), 11px, 600, var(--text-tertiary), 1px solid var(--border));
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-detail-table td {
+  @include data-table-body-cell(9px 10px);
+  vertical-align: middle;
+}
+
+.admin-detail-table tbody tr:last-child td { border-bottom: none; }
+.admin-detail-table tbody tr:hover td { background: var(--bg-secondary) !important; }
+
+/* Status badges */
+.admin-status-badge {
+  @include pill-badge(20px, 2px 8px, 10px, transparent, var(--text-secondary), 11px, 600);
+}
+.admin-status-badge.completed {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.admin-status-badge.ongoing {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Wrong word count */
+.admin-wrong-count { font-weight: 600; }
+.admin-wrong-count.high { color: var(--error); }
+.admin-wrong-count.mid { color: var(--warning); }
+
+/* Chart tab */
+.admin-detail-chart {}
+
+.admin-section-title--compact {
+  margin-bottom: 8px;
+}
+
+.admin-section-title--spaced {
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.admin-chart-table {
+  @include data-table-base();
+}
+
+.admin-chart-table__row {
+  border-top: 1px solid var(--border);
+}
+
+.admin-chart-table__th,
+.admin-chart-table__td {
+  padding: 6px 8px;
+}
+
+.admin-chart-table__th {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.admin-chart-table__th--left,
+.admin-chart-table__td--left {
+  text-align: left;
+}
+
+.admin-chart-table__th--right,
+.admin-chart-table__td--right {
+  text-align: right;
+}
+
+.admin-detail-note {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+
+.admin-detail-ellipsis {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-detail-ellipsis--wide {
+  max-width: 200px;
+}
+
+/* ── TTS Batch Generate Tab ─────────────────────────────────────────────── */
+
+.admin-tts-panel { position: relative; }
+
+.admin-tts-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.admin-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.admin-section-desc {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.tts-books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.tts-book-card {
+  @include metric-card(10px, var(--bg-secondary));
+  @include page-stack(10px);
+  border-left: 4px solid var(--book-color, var(--accent));
+}
+
+.tts-book-card--skeleton {
+  border-left-color: var(--border);
+}
+
+.tts-book-card.done {
+  border-color: var(--success);
+  border-left-color: var(--success);
+}
+
+.tts-book-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.tts-book-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tts-progress-bar {
+  width: 100%;
+  height: 6px;
+  appearance: none;
+  border: none;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.tts-progress-bar::-webkit-progress-bar {
+  background: var(--border);
+}
+
+.tts-progress-bar::-webkit-progress-value {
+  background: var(--accent);
+}
+
+.tts-progress-bar::-moz-progress-bar {
+  background: var(--accent);
+}
+
+.tts-book-card.done .tts-progress-bar::-webkit-progress-value {
+  background: var(--success);
+}
+
+.tts-book-card.done .tts-progress-bar::-moz-progress-bar {
+  background: var(--success);
+}
+
+.tts-progress-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.admin-tts-error {
+  color: var(--error);
+  padding: 16px;
+}
+
+.tts-progress-flag {
+  margin-left: 6px;
+}
+
+.tts-progress-flag--warning {
+  color: var(--warning);
+}
+
+.tts-progress-flag--error {
+  color: var(--error);
+}
+
+.admin-modal-actions {
+  display: flex;
+  align-items: center;
+}
+
+.admin-filter-separator {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.admin-section-title--tight {
+  margin-bottom: 8px;
+}
