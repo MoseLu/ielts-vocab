@@ -63,6 +63,11 @@ test-results/
 # TTS audio cache
 backend/tts_cache/
 backend/word_tts_cache/
+backend/backups/
+
+# Local runtime artifacts
+.playwright-cli/
+logs/runtime/
 
 # Temporary generated directories
 录音文件生成记录/

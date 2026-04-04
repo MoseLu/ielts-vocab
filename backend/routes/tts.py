@@ -8,13 +8,13 @@ import os
 import io
 import json
 import hashlib
-import eventlet
 import requests
 from datetime import datetime
 from pathlib import Path
 from flask import Blueprint, request, jsonify, send_file, current_app
 from dotenv import load_dotenv
 from routes.middleware import admin_required
+from services.runtime_async import sleep as runtime_sleep, spawn_background
 from services.word_tts import (
     default_cache_identity,
     default_word_tts_identity,
@@ -413,7 +413,7 @@ def _generate_for_book(book_id: str, examples: list):
                 except Exception as e:
                     print(f'[TTS Gen Error] {sentence[:40]}: {e}')
                 # 每次 API 调用后等待 1.5s，避免触发限速
-                eventlet.sleep(1.5)
+                runtime_sleep(1.5)
 
             completed += 1
             # 每 5 条或最后一条时写入进度
@@ -481,7 +481,7 @@ def _call_tts_api(sentence: str, voice_id: str, save_path: Path):
             if attempt < len(backoff_delays):
                 delay = backoff_delays[attempt]
                 print(f'[TTS 429] 退避 {delay}s (第{attempt + 1}次重试, voice={voice_id})')
-                eventlet.sleep(delay)
+                runtime_sleep(delay)
                 continue
             raise Exception(f"TTS 429: quota exceeded after {attempt + 1} attempts")
 
@@ -538,7 +538,7 @@ def admin_generate_book(current_user, book_id):
         return jsonify({'error': 'Already generating', 'total': len(examples)}), 409
     _generating_books.add(book_id)
     total = len(examples)
-    eventlet.spawn(_generate_for_book, book_id, examples)
+    spawn_background(_generate_for_book, book_id, examples)
     return jsonify({'message': 'Generation started', 'total': total}), 202
 
 
@@ -616,7 +616,7 @@ def _generate_words_worker(book_ids: list[str] | None):
         run_batch_generate_missing(
             book_ids,
             cache_dir=cache_dir,
-            sleep_fn=eventlet.sleep,
+            sleep_fn=runtime_sleep,
         )
     except Exception as e:
         print(f'[Word TTS Fatal] {e}')
@@ -706,7 +706,7 @@ def admin_generate_words(current_user):
         return jsonify({'error': 'No words found'}), 400
 
     _generating_words = True
-    eventlet.spawn(_generate_words_worker, book_ids)
+    spawn_background(_generate_words_worker, book_ids)
     return jsonify({
         'message': 'Word TTS generation started',
         'total': len(words),

@@ -15,6 +15,7 @@ from services.learner_profile import build_learner_profile
 from services.learning_events import record_learning_event
 from services.listening_confusables import get_preset_listening_confusables
 from services.memory_topics import build_memory_topics
+from services.runtime_async import maybe_timeout, spawn_background
 from services.study_sessions import get_live_pending_session_snapshot
 from services.llm import chat, stream_chat_events, web_search, TOOLS, TOOL_HANDLERS, correct_text, differentiate_synonyms
 
@@ -2545,8 +2546,7 @@ def _persist_ask_response(current_user: User, user_message: str, frontend_contex
         logging.warning(f"[AI] Failed to save learning note: {note_err}")
 
     try:
-        import eventlet
-        eventlet.spawn(_maybe_summarize_history, current_user.id)
+        spawn_background(_maybe_summarize_history, current_user.id)
     except Exception:
         pass
 
@@ -2691,8 +2691,7 @@ def ask(current_user: User):
 
     # Run chat with tool calling support — capped at 90 s total to prevent hangs
     try:
-        import eventlet
-        with eventlet.Timeout(90, RuntimeError('LLM timeout')):
+        with maybe_timeout(90, RuntimeError('LLM timeout')):
             response = _chat_with_tools(messages, tools=TOOLS, extra_handlers=extra_handlers)
 
         final_text = response.get("text", str(response))
@@ -2738,8 +2737,7 @@ def ask_stream(current_user: User):
         try:
             yield _encode_sse_event({'type': 'status', 'stage': 'start', 'message': 'AI 正在思考...'})
 
-            import eventlet
-            with eventlet.Timeout(90, RuntimeError('LLM timeout')):
+            with maybe_timeout(90, RuntimeError('LLM timeout')):
                 for event in _stream_chat_with_tools(messages, tools=TOOLS, extra_handlers=extra_handlers):
                     event_type = event.get('type')
                     if event_type == 'status':

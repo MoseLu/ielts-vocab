@@ -29,83 +29,19 @@ import {
 import { apiFetch } from '../../lib'
 import { useToast } from '../../contexts/ToastContext'
 import {
-  mergeQuickMemoryRecordsByLastSeen,
   readQuickMemoryRecordsFromStorage,
   updateQuickMemoryRecord,
   writeQuickMemoryRecordsToStorage,
-  type QuickMemoryRecordInput,
   type QuickMemoryRecordState,
 } from '../../lib/quickMemory'
-
-function buildQuickMemorySyncRecord(word: string, record: QuickMemoryRecordState) {
-  return {
-    word: word.toLowerCase(),
-    bookId: record.bookId,
-    chapterId: record.chapterId,
-    status: record.status,
-    firstSeen: record.firstSeen,
-    lastSeen: record.lastSeen,
-    knownCount: record.knownCount,
-    unknownCount: record.unknownCount,
-    nextReview: record.nextReview,
-    fuzzyCount: record.fuzzyCount,
-  }
-}
-
-async function syncRecordsToBackend(
-  records: Array<{ word: string; record: QuickMemoryRecordState }>,
-  options: { keepalive?: boolean } = {},
-): Promise<void> {
-  if (!records.length) return
-
-  await apiFetch('/api/ai/quick-memory/sync', {
-    method: 'POST',
-    keepalive: options.keepalive,
-    body: JSON.stringify({
-      source: 'quickmemory',
-      records: records.map(({ word, record }) => buildQuickMemorySyncRecord(word, record)),
-    }),
-  })
-}
-
-/** Fetch records from backend and merge into localStorage (backend wins for newer lastSeen). */
-async function loadRecordsFromBackend(): Promise<void> {
-  try {
-    const localRecords = readQuickMemoryRecordsFromStorage()
-    const data = await apiFetch<{ records: QuickMemoryRecordInput[] }>('/api/ai/quick-memory')
-    const serverRecords = Array.isArray(data.records) ? data.records : []
-    const merged = mergeQuickMemoryRecordsByLastSeen(
-      localRecords,
-      serverRecords,
-    )
-    writeQuickMemoryRecordsToStorage(merged)
-
-    const serverLastSeenByWord = new Map<string, number>()
-    serverRecords.forEach(item => {
-      const wordKey = String(item.word || '').trim().toLowerCase()
-      if (!wordKey) return
-      const nextLastSeen = typeof item.lastSeen === 'number' ? item.lastSeen : 0
-      serverLastSeenByWord.set(
-        wordKey,
-        Math.max(serverLastSeenByWord.get(wordKey) ?? 0, nextLastSeen),
-      )
-    })
-
-    const newerLocalRecords = Object.entries(merged)
-      .filter(([wordKey, record]) => record.lastSeen > (serverLastSeenByWord.get(wordKey) ?? 0))
-      .map(([word, record]) => ({ word, record }))
-
-    if (newerLocalRecords.length > 0) {
-      void syncRecordsToBackend(newerLocalRecords).catch(() => {})
-    }
-  } catch {
-    // Non-critical
-  }
-}
+import {
+  reconcileQuickMemoryRecordsWithBackend,
+  syncQuickMemoryRecordsToBackend,
+} from '../../lib/quickMemorySync'
 
 /** Fire-and-forget: sync a single updated record to the backend. */
 function syncRecordToBackend(word: string, record: QuickMemoryRecordState): void {
-  void syncRecordsToBackend([{ word, record }]).catch(() => {})
+  void syncQuickMemoryRecordsToBackend([{ word, record }]).catch(() => {})
 }
 
 // ── Circular countdown SVG ────────────────────────────────────────────────────
@@ -364,7 +300,7 @@ export default function QuickMemoryMode({
     pendingRecordSyncRef.current = {}
     recordSyncInFlightRef.current = true
 
-    void syncRecordsToBackend(
+    void syncQuickMemoryRecordsToBackend(
       pendingEntries.map(([word, record]) => ({ word, record })),
       { keepalive },
     ).catch(() => {
@@ -642,7 +578,9 @@ export default function QuickMemoryMode({
   }, [done, reviewMode, bookId, chapterId, index, results])
 
   // ── Load records from backend on mount (merge into localStorage) ──────────
-  useEffect(() => { loadRecordsFromBackend() }, [])
+  useEffect(() => {
+    void reconcileQuickMemoryRecordsWithBackend().catch(() => {})
+  }, [])
 
   // ── Start server-side session timer on mount ───────────────────────────────
   useEffect(() => {

@@ -1,5 +1,6 @@
-import eventlet
-eventlet.monkey_patch()
+from services.runtime_async import patch_standard_library
+
+patch_standard_library()
 
 from dotenv import load_dotenv
 import os
@@ -11,7 +12,6 @@ from sqlalchemy import event, inspect, text
 from sqlalchemy.engine import Engine
 from flask import Flask
 from flask_cors import CORS
-from flask_socketio import SocketIO
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
@@ -21,7 +21,6 @@ from routes.progress import progress_bp
 from routes.vocabulary import vocabulary_bp
 from routes.speech import speech_bp
 from routes.books import books_bp, init_books
-from routes.speech_socketio import register_socketio_events
 from routes.ai import ai_bp
 from routes.admin import admin_bp, init_admin
 from routes.notes import notes_bp
@@ -175,27 +174,7 @@ def create_app(config_class=Config):
     return app
 
 
-if os.environ.get('PYTEST_RUNNING') == '1':
-    app = None
-    socketio = None
-else:
-    # Create app instance
-    app = create_app()
-
-    # Initialize SocketIO with eventlet for better WebSocket support
-    socketio = SocketIO(
-        app,
-        cors_allowed_origins=app.config['CORS_ORIGINS'],
-        async_mode='eventlet',
-        ping_timeout=60,
-        ping_interval=25,
-        logger=app.config.get('DEBUG', False),
-        engineio_logger=app.config.get('DEBUG', False),
-    )
-
-    # Register Socket.IO events for speech recognition
-    register_socketio_events(socketio)
-
+app = None if os.environ.get('PYTEST_RUNNING') == '1' else create_app()
 
 if __name__ == '__main__':
     print("=" * 50)
@@ -214,8 +193,8 @@ if __name__ == '__main__':
     print("  GET  /api/vocabulary    - Get all vocabulary")
     print("  GET  /api/vocabulary/day/<day> - Get day vocabulary")
     print()
-    print("WebSocket Endpoints:")
-    print("  /speech - Real-time speech recognition")
+    print("Speech Service:")
+    print("  Socket.IO /speech runs in backend/speech_service.py on port 5001")
     print("=" * 50)
 
-    socketio.run(app, debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)

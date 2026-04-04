@@ -1,8 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useLearningStats } from './useLearningStats'
 
 const apiFetchMock = vi.fn()
+const reconcileQuickMemoryRecordsWithBackendMock = vi.fn(() => Promise.resolve())
 const authState = vi.hoisted(() => ({
   user: { id: 2, username: 'luo' },
 }))
@@ -17,10 +18,21 @@ vi.mock('../../../lib', () => ({
   apiFetch: (...args: unknown[]) => apiFetchMock(...args),
 }))
 
+vi.mock('../../../lib/quickMemorySync', () => ({
+  reconcileQuickMemoryRecordsWithBackend: (...args: unknown[]) => reconcileQuickMemoryRecordsWithBackendMock(...args),
+}))
+
 describe('useLearningStats', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
+
   beforeEach(() => {
     vi.useRealTimers()
     apiFetchMock.mockReset()
+    reconcileQuickMemoryRecordsWithBackendMock.mockReset()
+    reconcileQuickMemoryRecordsWithBackendMock.mockResolvedValue(undefined)
     apiFetchMock.mockImplementation((url: string) => {
       if (url.startsWith('/api/ai/learning-stats?')) {
         return Promise.resolve({
@@ -56,6 +68,11 @@ describe('useLearningStats', () => {
       expect(apiFetchMock).toHaveBeenCalledTimes(2)
     })
 
+    expect(reconcileQuickMemoryRecordsWithBackendMock).toHaveBeenCalledWith({
+      skipIfLocalEmpty: true,
+      minIntervalMs: 15_000,
+    })
+
     expect(apiFetchMock).toHaveBeenNthCalledWith(
       1,
       '/api/ai/learning-stats?days=7',
@@ -83,11 +100,14 @@ describe('useLearningStats', () => {
     let nowMs = 1_000
     const dateNowSpy = vi.spyOn(Date, 'now').mockImplementation(() => nowMs)
     const intervalCallbacks: Array<() => void> = []
-    const setIntervalSpy = vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler) => {
-      intervalCallbacks.push(handler as () => void)
-      return 1 as unknown as number
+    const nativeSetInterval = window.setInterval.bind(window)
+    const setIntervalSpy = vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
+      if (timeout === 60_000 && typeof handler === 'function') {
+        intervalCallbacks.push(handler as () => void)
+      }
+
+      return nativeSetInterval(handler, timeout, ...args)
     }) as typeof window.setInterval)
-    const clearIntervalSpy = vi.spyOn(window, 'clearInterval').mockImplementation(() => {})
 
     renderHook(() => useLearningStats(7, 'all', 'all'))
 
@@ -104,8 +124,20 @@ describe('useLearningStats', () => {
       expect(apiFetchMock).toHaveBeenCalledTimes(4)
     })
 
-    clearIntervalSpy.mockRestore()
     setIntervalSpy.mockRestore()
     dateNowSpy.mockRestore()
+  })
+
+  it('reconciles local quick-memory records before the stats request starts', async () => {
+    renderHook(() => useLearningStats(7, 'all', 'all'))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledTimes(2)
+    })
+
+    expect(reconcileQuickMemoryRecordsWithBackendMock).toHaveBeenCalledTimes(1)
+    expect(
+      reconcileQuickMemoryRecordsWithBackendMock.mock.invocationCallOrder[0],
+    ).toBeLessThan(apiFetchMock.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER)
   })
 })

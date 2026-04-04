@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../../../contexts'
 import { apiFetch } from '../../../lib'
+import { reconcileQuickMemoryRecordsWithBackend } from '../../../lib/quickMemorySync'
 
 export interface DailyLearning {
   date: string           // 'YYYY-MM-DD'
@@ -197,6 +198,11 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
     lastFetchStartedAtRef.current = Date.now()
     setLoading(true)
     try {
+      await reconcileQuickMemoryRecordsWithBackend({
+        skipIfLocalEmpty: true,
+        minIntervalMs: 15_000,
+      }).catch(() => {})
+
       const params = new URLSearchParams({ days: String(days) })
       if (bookId && bookId !== 'all') params.set('book_id', bookId)
       if (mode && mode !== 'all') params.set('mode', mode)

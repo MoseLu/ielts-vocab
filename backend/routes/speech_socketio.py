@@ -3,11 +3,10 @@ import base64
 import json
 import time
 import threading
-import eventlet
-from eventlet.semaphore import Semaphore
 from pathlib import Path
 from dotenv import load_dotenv
 from flask_socketio import emit
+from services.runtime_async import spawn_background
 
 # Load .env from backend directory
 env_path = Path(__file__).parent.parent / '.env'
@@ -82,7 +81,7 @@ def register_socketio_events(socketio):
             'ready': False,
             'enable_vad': enable_vad,
             'audio_queue': [],
-            'lock': Semaphore(1)
+            'lock': threading.Lock()
         }
         active_sessions[session_id] = session_state
 
@@ -235,9 +234,7 @@ def register_socketio_events(socketio):
 
             session_state['ws'] = ws
 
-            # Use eventlet spawn instead of threading for proper message routing
-            import eventlet
-            eventlet.spawn(ws.run_forever)
+            spawn_background(ws.run_forever)
 
         except Exception as e:
             print(f"[Speech] Error starting recognition: {e}")
