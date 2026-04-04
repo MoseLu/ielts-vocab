@@ -1,0 +1,381 @@
+.stats-main-cell--learning .stats-section--learning .stats-chart-loading--learn-split,
+.stats-main-cell--learning .stats-section--learning .stats-empty--compact {
+    min-height: 88px;
+}
+
+.stats-main-cell--learning .stats-section--learning .lc-legend-row--compact {
+    flex-shrink: 0;
+}
+
+/* 顶行内边距与区块间距统一 10px，避免学习记录区 margin 过大导致与艾宾浩斯视觉高度差 */
+.stats-main-right-top .stats-section--learning .stats-learning-split-head {
+    margin-bottom: 10px !important;
+}
+
+.stats-main-right-top .stats-section--learning .lc-filters--compact {
+    margin-bottom: 10px !important;
+}
+
+.stats-main-right-top .stats-card-ebbinghaus .stats-ebb-hint-compact {
+    margin: 0 0 10px 0 !important;
+}
+
+.stats-main-right-top .ebbinghaus-summary-row--compact {
+    margin-bottom: 10px;
+}
+
+/* 右下：章节卡在格内 flex:1 继承父级分配高度，表滚动区再继承剩余 */
+.stats-section--chapter-cell {
+    display: block;
+    min-height: auto;
+    max-height: none;
+    height: auto;
+    padding-bottom: 0;
+    overflow: visible;
+}
+
+.stats-main-layout--balanced .stats-section--chapter-cell {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+}
+
+.stats-section--chapter-cell .stats-section-title {
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.stats-section--chapter-cell .stats-section-hint {
+    font-size: 11px;
+    margin-bottom: 10px;
+}
+
+.stats-section--chapter-cell .stats-chart-loading {
+    flex: 1 1 auto;
+    min-height: 72px;
+}
+
+.stats-empty--chapter-cell {
+    flex: 1 1 auto;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 主布局右下格：在 .stats-section--chapter-cell 内占满剩余高度（flex 继承链），再 overflow 滚动 */
+.mode-breakdown-table-wrap.stats-table-scroll--in-cell {
+    min-height: auto;
+    min-width: 0;
+    width: 100%;
+    max-height: none;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.stats-main-layout--balanced .mode-breakdown-table-wrap.stats-table-scroll--in-cell {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.mode-breakdown-table-wrap.stats-table-scroll--in-cell .stats-data-table {
+    width: 100%;
+}
+
+/* 默认（非主布局顶格）艾宾浩斯内层随内容；主布局顶格由 .stats-main-cell--ebb 覆盖 */
+.stats-ebb-inner {
+    display: block;
+    overflow: visible;
+}
+
+.stats-ebb-inner > .stats-chart-loading {
+    min-height: 88px;
+}
+
+.stats-ebb-chart-wrap {
+    flex: 0 0 auto;
+    overflow: visible;
+}
+
+.stats-wrong-vertical {
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-stack);
+    overflow: visible;
+}
+
+.stats-wrong-pie-block {
+    flex: 0 0 auto;
+}
+
+.stats-wrong-pie-block .stats-pie-wrap--wrong-top {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.stats-wrong-pie-block .stats-pie-svg--lg {
+    width: 140px;
+    height: 140px;
+}
+
+.stats-wrong-table-block {
+    min-height: auto;
+    display: block;
+}
+
+.stats-wrong-table-scroll {
+    min-height: auto;
+    overflow-x: auto;
+    overflow-y: visible;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+
+.stats-ebb-hint-compact {
+    margin: 0 0 var(--space-stack) 0 !important;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.ebbinghaus-summary-row--compact {
+    margin-bottom: var(--space-stack);
+    gap: var(--space-stack);
+}
+
+/* 百分比居左，右侧三项用更直白的说明词 */
+.ebbinghaus-summary-row--split {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.ebbinghaus-summary-row--split .ebbinghaus-big--compact {
+    flex-shrink: 0;
+}
+
+.ebbinghaus-rate-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* 总达成率分档提醒：<50 红；50–80 橙；>80 绿 */
+.ebbinghaus-big--compact.ebb-rate--na {
+    color: var(--text-tertiary);
+}
+
+.ebbinghaus-big--compact.ebb-rate--low {
+    color: var(--error);
+}
+
+.ebbinghaus-big--compact.ebb-rate--mid {
+    color: var(--accent);
+}
+
+.ebbinghaus-big--compact.ebb-rate--high {
+    color: var(--success);
+}
+
+[data-theme="dark"] .ebbinghaus-big--compact.ebb-rate--high {
+    color: #4ade80;
+}
+
+[data-theme="dark"] .ebbinghaus-big--compact.ebb-rate--low {
+    color: #f87171;
+}
+
+.ebbinghaus-meta--compact {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: stretch;
+    gap: 10px 16px;
+    margin-left: auto;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text-secondary);
+    text-align: right;
+    min-width: 0;
+}
+
+.ebb-meta-item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    min-width: 78px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.04);
+    white-space: normal;
+}
+
+[data-theme="dark"] .ebb-meta-item {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.ebb-meta-label {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-tertiary);
+    text-align: right;
+}
+
+.ebb-upcoming-hint {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-stack);
+    padding: 8px 12px;
+    background: rgba(249, 115, 22, 0.08);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-stack);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.ebb-upcoming-hint strong {
+    color: var(--accent);
+}
+
+.stats-review-btn--ebb {
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+.ebb-meta-num {
+    font-weight: 700;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-deep);
+}
+
+.ebbinghaus-big--compact {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.ebb-rate-caption {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-secondary);
+}
+
+.ebb-meta-help {
+    margin: 0 0 var(--space-stack);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.stats-chart-loading--ebb-split {
+    height: 88px;
+}
+
+/* 宽屏下列很宽时勿让 SVG 随宽度无限变高（≈128px 视口高度即可） */
+.ebb-chart-wrap--compact .ebb-chart-svg {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: 132px;
+    aspect-ratio: 560 / 128;
+    display: block;
+}
+
+.ebb-chart-wrap--compact .ebb-chart-legend {
+    margin-top: var(--space-stack);
+    gap: var(--space-stack);
+    font-size: 10px;
+}
+
+.ebb-chart-wrap--compact .ebb-chart-note {
+    margin-top: var(--space-stack);
+    font-size: 10px;
+}
+
+.stats-section--learning .stats-learning-split-head {
+    margin-bottom: var(--space-stack) !important;
+}
+
+.stats-section--learning .stats-learning-split-head .stats-section-title {
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.lc-filters--compact {
+    margin-bottom: var(--space-stack) !important;
+}
+
+.stats-chart-loading--learn-split {
+    height: 88px;
+}
+
+.stats-empty--compact {
+    padding: var(--space-stack) 0 !important;
+}
+
+.lc-legend-row--compact {
+    margin-top: var(--space-stack) !important;
+    font-size: 11px;
+}
+
+/* 默认 compact 折线图限高；主布局顶格「学习记录」由 .stats-main-cell--learning … 覆盖为可伸展 */
+.lc-wrap--compact .lc-svg {
+    min-height: 0;
+    max-height: none;
+}
+
+@media (max-width: 900px) {
+    .stats-main-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-main-layout--balanced {
+        align-items: flex-start;
+    }
+
+    .stats-main-left {
+        width: 100%;
+    }
+
+    .stats-main-right-bottom {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .stats-main-right-top {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-main-layout--balanced .stats-main-right-bottom {
+        height: auto;
+        min-height: auto;
+    }
+
+    .stats-main-layout--balanced .stats-main-right-bottom > .stats-main-cell,
+    .stats-main-layout--balanced .stats-section--chapter-cell,
+    .stats-main-layout--balanced .mode-breakdown-table-wrap.stats-table-scroll--in-cell {
+        display: block;
+        height: auto;
+        min-height: auto;
+        overflow-y: visible;
+    }
+
+    .stats-cards.stats-cards-8,
+    .stats-cards.stats-cards-9 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+

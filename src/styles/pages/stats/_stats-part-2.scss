@@ -1,0 +1,379 @@
+
+@media (max-width: 1100px) {
+    .stats-cards,
+    .stats-cards.stats-cards-6,
+    .stats-cards.stats-cards-8,
+    .stats-cards.stats-cards-9 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .stats-cards,
+    .stats-cards.stats-cards-6,
+    .stats-cards.stats-cards-8,
+    .stats-cards.stats-cards-9 {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-card {
+        min-height: 138px;
+    }
+
+    .stats-section,
+    .stats-main-layout .stats-section,
+    .stats-left-stack > .stats-section {
+        padding: 10px;
+        border-radius: 10px;
+    }
+}
+
+.stats-pie-wrap--strip {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-stack);
+}
+
+.stats-pie-svg--strip {
+    width: 88px;
+    height: 88px;
+    flex-shrink: 0;
+}
+
+/* 宽屏勿用多列 auto-fill 网格，否则每格高度不齐、同一行基线错位；改为单列 + 每行不换行 */
+.stats-pie-legend--strip {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    align-items: stretch;
+}
+
+.stats-pie-legend--strip li {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-stack);
+    margin-bottom: 0;
+    min-height: 1.35em;
+}
+
+.stats-pie-legend--strip .stats-pie-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stats-pie-legend--strip .stats-pie-val,
+.stats-pie-legend--strip .stats-pie-sub {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.stats-chart-loading--strip {
+    height: 72px;
+}
+
+/* ── 主布局高度：父级 .stats-main-layout 行内 align-items:stretch → 左列(错词 Top+概览)与右列同高，行高=max(左,右)。
+   右列 .stats-main-right overflow:hidden + 纵向 flex，统一约束艾宾浩斯/学习记录与下方表格；底行 flex:1 1 0% + min-height:0，表格区再 flex:1 + overflow:auto 吃满剩余并滚动。── */
+/* 与上方「模式占比」同宽：上方 grid 已用负 margin 与 .stats-section 同参考宽；此处不再加横向 padding，避免与卡片内边距重复缩窄整行 */
+.stats-main-layout-wrap {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-left: 0;
+    padding-right: 0;
+    overflow: visible;
+}
+
+.stats-main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, var(--stats-col-left-pct, 32%)) minmax(0, 1fr);
+    align-items: flex-start;
+    gap: var(--stats-align-gutter, 10px);
+    width: 100%;
+    min-width: 0;
+    min-height: auto;
+    box-sizing: border-box;
+}
+
+.stats-main-layout--balanced {
+    align-items: stretch;
+}
+
+.stats-main-left {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.stats-main-left .stats-left-stack {
+    gap: var(--stats-align-gutter, 10px);
+}
+
+.stats-main-right {
+    min-width: 0;
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--stats-align-gutter, 10px);
+    overflow: visible;
+}
+
+.stats-main-right-top {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--stats-align-gutter, 10px);
+    min-height: auto;
+}
+
+.stats-main-right-top > .stats-main-cell {
+    min-width: 0;
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-main-right-bottom {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--stats-align-gutter, 10px);
+    min-height: auto;
+    overflow: visible;
+}
+
+.stats-main-right-bottom > .stats-main-cell {
+    min-width: 0;
+    min-height: auto;
+    overflow: visible;
+}
+
+.stats-main-layout--balanced .stats-main-right-bottom {
+    height: var(--stats-right-bottom-height);
+    min-height: var(--stats-right-bottom-height);
+}
+
+.stats-main-layout--balanced .stats-main-right-bottom > .stats-main-cell {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-left-stack {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--stats-align-gutter, 10px);
+}
+
+/* 与 gap 统一间距，避免最后一卡多出 margin 导致整列底边与对不齐 */
+.stats-left-stack > .stats-section,
+.stats-main-layout .stats-section {
+    margin-bottom: 0;
+}
+
+.stats-card-wrong {
+    min-height: auto;
+}
+
+.stats-card-wrong .stats-section-title {
+    margin-bottom: var(--space-stack);
+    flex-shrink: 0;
+}
+
+.stats-card-wrong .stats-section-hint {
+    margin: 0 0 var(--space-stack) 0;
+    flex-shrink: 0;
+}
+
+.stats-card-wrong-body {
+    min-height: auto;
+    display: block;
+    overflow: visible;
+}
+
+.stats-card-wrong-body > .stats-chart-loading,
+.stats-card-wrong-body > .stats-empty {
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stats-card-wrong-overview {
+    flex: 0 0 auto;
+}
+
+.stats-card-wrong-overview .stats-section-title {
+    margin-bottom: var(--space-stack);
+}
+
+.stats-card-profile {
+    min-height: auto;
+}
+
+.stats-profile-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stats-profile-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.stats-profile-pill {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.98) 0%, rgba(255, 237, 213, 0.9) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.24);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stats-profile-pill__label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.stats-profile-pill strong {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.stats-profile-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stats-profile-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stats-profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(241, 245, 249, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.stats-profile-chip strong {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.stats-profile-list,
+.stats-profile-actions {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--text-secondary);
+}
+
+.stats-profile-list li,
+.stats-profile-actions li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.stats-profile-list--topics li {
+    justify-content: space-between;
+}
+
+.stats-profile-muted,
+.stats-profile-trend {
+    margin: 0;
+    color: var(--text-tertiary);
+    font-size: 12px;
+}
+
+.stats-main-cell--ebb .stats-card-ebbinghaus {
+    min-height: 0;
+    overflow: visible;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-main-cell--ebb .stats-ebb-inner {
+    min-height: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: visible;
+}
+
+.stats-main-cell--ebb .stats-ebb-chart-wrap {
+    min-height: auto;
+    justify-content: center;
+}
+
+.stats-main-cell--ebb .ebb-chart-wrap--compact {
+    min-height: auto;
+    justify-content: center;
+}
+
+.stats-main-cell--ebb .ebb-chart-wrap--compact .ebb-chart-svg {
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    min-height: 72px;
+    height: auto;
+    aspect-ratio: 560 / 128;
+    object-fit: contain;
+}
+
+.stats-main-cell--ebb .stats-card-ebbinghaus > .stats-section-title {
+    font-size: 14px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.stats-main-cell--ebb .stats-card-ebbinghaus > .stats-section-hint {
+    flex-shrink: 0;
+}
+
+.stats-main-cell--learning .stats-section--learning {
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-main-cell--learning .stats-section--learning .stats-learning-split-head,
+.stats-main-cell--learning .stats-section--learning .lc-filters--compact {
+    flex-shrink: 0;
+}
+
+.stats-main-cell--learning .stats-section--learning .lc-wrap--compact {
+    min-height: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.stats-main-cell--learning .stats-section--learning .lc-wrap--compact .lc-svg {
+    width: 100%;
+    min-height: 118px;
+    max-height: none;
+    height: auto;
+}
+

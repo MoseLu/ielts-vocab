@@ -219,10 +219,10 @@ def test_learning_stats_prefers_today_sessions_for_today_accuracy_when_chapter_p
     assert data['alltime']['today_accuracy'] == 80
 
 
-def test_learning_stats_includes_recent_live_pending_session_duration(client, app):
+def test_learning_stats_includes_recent_live_pending_session_duration(client, app, monkeypatch):
     register_and_login(client, username='live-duration-stats-user')
 
-    now = datetime.utcnow().replace(microsecond=0)
+    now = datetime(2026, 4, 5, 6, 0, 0)
     completed_duration = 120
     live_duration_floor = 45 * 60
 
@@ -260,6 +260,7 @@ def test_learning_stats_includes_recent_live_pending_session_duration(client, ap
         ])
         db.session.commit()
 
+    monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: now)
     response = client.get('/api/ai/learning-stats?days=7')
 
     assert response.status_code == 200
@@ -324,3 +325,44 @@ def test_learning_stats_uses_local_calendar_day_for_today_counts(client, app, mo
     assert today_row['duration_seconds'] == 600
     assert data['alltime']['today_duration_seconds'] == 600
     assert data['alltime']['today_review_words'] == 1
+
+
+def test_learning_stats_splits_cross_midnight_sessions_into_today(client, app, monkeypatch):
+    register_and_login(client, username='cross-midnight-stats-user')
+
+    fixed_now = datetime(2026, 4, 5, 0, 40, 0)
+    monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: fixed_now)
+
+    with app.app_context():
+        user = User.query.filter_by(username='cross-midnight-stats-user').first()
+        assert user is not None
+
+        db.session.add(
+            UserStudySession(
+                user_id=user.id,
+                mode='quickmemory',
+                book_id='ielts_reading_premium',
+                chapter_id='2',
+                words_studied=20,
+                correct_count=14,
+                wrong_count=6,
+                duration_seconds=1200,
+                started_at=datetime(2026, 4, 4, 15, 50, 0),
+                ended_at=datetime(2026, 4, 4, 16, 10, 0),
+            )
+        )
+        db.session.commit()
+
+    response = client.get('/api/ai/learning-stats?days=7')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    today_row = next(item for item in data['daily'] if item['date'] == '2026-04-05')
+    assert today_row['sessions'] == 1
+    assert today_row['words_studied'] == 10
+    assert today_row['correct_count'] == 7
+    assert today_row['wrong_count'] == 3
+    assert today_row['duration_seconds'] == 600
+    assert today_row['accuracy'] == 70
+    assert data['alltime']['today_duration_seconds'] == 600
+    assert data['alltime']['today_accuracy'] == 70

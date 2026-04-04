@@ -1,0 +1,380 @@
+/* Page: Statistics
+   大区块纵向间距：var(--space-stack)。根容器用 flex + gap，避免相邻块 margin 折叠成 0。 */
+
+@use '../../utils/mixins' as *;
+
+.stats-page {
+    display: block;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
+}
+
+.stats-page > * + * {
+    margin-top: 10px;
+}
+
+.stats-pie-dot--0 { background: #f97316; }
+.stats-pie-dot--1 { background: #3b82f6; }
+.stats-pie-dot--2 { background: #10b981; }
+.stats-pie-dot--3 { background: #8b5cf6; }
+.stats-pie-dot--4 { background: #ec4899; }
+.stats-pie-dot--5 { background: #14b8a6; }
+.stats-pie-dot--6 { background: #eab308; }
+.stats-pie-dot--7 { background: #64748b; }
+
+.stats-pie-dot--wrong-0 { background: #dc2626; }
+.stats-pie-dot--wrong-1 { background: #ea580c; }
+.stats-pie-dot--wrong-2 { background: #f59e0b; }
+.stats-pie-dot--wrong-3 { background: #eab308; }
+.stats-pie-dot--wrong-4 { background: #84cc16; }
+.stats-pie-dot--wrong-5 { background: #22c55e; }
+.stats-pie-dot--wrong-6 { background: #14b8a6; }
+.stats-pie-dot--wrong-7 { background: #0ea5e9; }
+.stats-pie-dot--wrong-8 { background: #6366f1; }
+.stats-pie-dot--wrong-9 { background: #a855f7; }
+
+.ebb-dot--target { background: #0ea5e9; }
+.ebb-dot--actual { background: #ea580c; }
+
+.legend-dot--accent { background: var(--accent); }
+
+.stats-page {
+    /* 与下方「错词 | 艾宾浩斯…」主布局同一竖线分割与槽宽 */
+    --stats-col-left-pct: 32%;
+    --stats-align-gutter: 10px;
+    box-sizing: border-box;
+}
+
+.stats-page > .stats-page-intro,
+.stats-page > .stats-cards,
+.stats-page > .stats-section--mode-strip,
+.stats-page > .stats-main-layout-wrap,
+.stats-page > .stats-section {
+    margin-bottom: 0;
+}
+
+/* Stat Cards Row：网格拉高单元格后，卡片内内容垂直居中（避免无副标题的卡偏上） */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-stack);
+    align-items: stretch;
+}
+
+.stats-cards.stats-cards-6 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.stats-cards.stats-cards-8,
+.stats-cards.stats-cards-9 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.stats-page-intro {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+}
+
+/* ── 模式占比 + 各模式统计：左右各 50% ── */
+.stats-section--mode-strip .stats-section-title {
+    margin-bottom: var(--space-stack);
+}
+
+.stats-mode-strip-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-stack);
+    margin-bottom: var(--space-stack);
+}
+
+.mode-recommendation {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--accent-light);
+    border: 1px solid rgba(var(--accent-rgb), 0.22);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+}
+
+.mode-recommendation strong {
+    color: var(--accent);
+}
+
+.mode-recommendation-acc {
+    color: var(--text-tertiary);
+    margin-left: 4px;
+    font-size: 11px;
+}
+
+.stats-section--mode-strip .stats-section-hint {
+    margin: 0 0 var(--space-stack) 0;
+}
+
+/* 与 .stats-main-layout 左列同宽，保证与下方错词列同一竖线 */
+.stats-section--mode-strip {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+/* 顶部两列标题同一行，下方再分栏。默认两列水平排布；仅窄屏再叠成单列（断点勿过大，否则分屏/平板仍被压成垂直） */
+.stats-mode-strip-grid {
+    display: grid;
+    width: 100%;
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, var(--stats-col-left-pct)) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+        "title-pie title-modes"
+        "content-pie content-modes";
+    gap: var(--stats-align-gutter);
+    align-items: start;
+}
+
+/* 保持区块按正常内容宽度展开，避免负 margin 导致内容被父层裁切 */
+.stats-section--mode-strip .stats-mode-strip-grid {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.stats-mode-strip-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.stats-mode-strip-title--pie {
+    grid-area: title-pie;
+}
+
+.stats-mode-strip-title--modes {
+    grid-area: title-modes;
+    border-left: none;
+    padding-left: 0;
+}
+
+.stats-mode-strip-col {
+    min-width: 0;
+}
+
+.stats-mode-strip-col--pie {
+    grid-area: content-pie;
+}
+
+.stats-mode-strip-col--modes {
+    grid-area: content-modes;
+    border-left: none;
+    padding-left: 0;
+}
+
+.mode-breakdown-table-wrap--strip {
+    overflow-x: auto;
+    overflow-y: visible;
+    max-height: none;
+}
+
+.stats-table--mode-strip {
+    font-size: 11px;
+}
+
+.stats-table--mode-strip th,
+.stats-table--mode-strip td {
+    padding: 5px 6px;
+    white-space: nowrap;
+}
+
+.stats-empty--mode-strip {
+    padding: 12px 8px;
+    font-size: 12px;
+}
+
+.stats-chart-loading--strip-table {
+    min-height: 72px;
+    height: 72px;
+}
+
+@media (max-width: 640px) {
+    .stats-mode-strip-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        grid-template-areas:
+            "title-pie"
+            "content-pie"
+            "title-modes"
+            "content-modes";
+    }
+
+    .stats-mode-strip-title--modes {
+        border-top: 1px solid var(--border);
+        padding-top: var(--stats-align-gutter, 10px);
+    }
+
+    .stats-mode-strip-col--modes {
+        padding-left: 0;
+    }
+}
+
+.stats-cards,
+.stats-cards.stats-cards-6,
+.stats-cards.stats-cards-8,
+.stats-cards.stats-cards-9 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.stats-card {
+    @include metric-card(10px, var(--surface-base), 1px solid rgba(226, 232, 240, 0.96), 10px, var(--shadow-soft));
+}
+
+.stats-card::before {
+    display: none;
+}
+
+.stats-card-value {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+
+.stats-card-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0;
+}
+
+.stats-card-sub {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.stats-section,
+.stats-main-layout .stats-section,
+.stats-left-stack > .stats-section {
+    @include panel-surface(var(--surface-base), 1px solid rgba(226, 232, 240, 0.96), 10px, var(--shadow-soft));
+    padding: 10px;
+}
+
+.stats-section-title {
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--text-primary);
+}
+
+.stats-section-hint {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.stats-mode-strip-header {
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.mode-recommendation {
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--accent-light);
+    border: 1px solid rgba(var(--accent-rgb), 0.18);
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.stats-mode-strip-grid,
+.stats-main-layout,
+.stats-main-right-top,
+.stats-main-right-bottom {
+    gap: 10px;
+}
+
+.stats-pie-wrap,
+.stats-pie-wrap--strip,
+.stats-pie-wrap--wrong-top {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: 0;
+}
+
+.stats-pie-svg {
+    filter: none;
+}
+
+.stats-data-table,
+.stats-table {
+    @include data-table-base(13px, separate);
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+.stats-data-table thead th,
+.stats-table thead th {
+    @include data-table-head-cell(10px, var(--bg-secondary), 11px, 800, var(--text-secondary), none);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.stats-data-table th,
+.stats-data-table td,
+.stats-table th,
+.stats-table td {
+    @include data-table-body-cell(10px, transparent, var(--text-primary), 1px solid rgba(226, 232, 240, 0.82));
+    border-bottom: 1px solid rgba(226, 232, 240, 0.82);
+}
+
+.stats-data-table tbody tr:hover,
+.stats-table tbody tr:hover {
+    background: var(--surface-hover);
+}
+
+.wrong-count-badge,
+.error-reason-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.wrong-count-badge {
+    background: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+}
+
+.error-reason-tag {
+    background: rgba(14, 165, 233, 0.1);
+    color: #0369a1;
+}
+
+.stats-chart-loading,
+.stats-empty {
+    border-radius: 10px;
+    background: var(--surface-muted);
+}
