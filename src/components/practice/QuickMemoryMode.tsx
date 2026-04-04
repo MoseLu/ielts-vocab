@@ -1,32 +1,10 @@
-﻿// ── Quick Memory Mode ─────────────────────────────────────────────────────────
-// DHP (Dynamic Hierarchical Progress) + SSP (Spaced-repetition + Ebbinghaus)
-//
-// Flow per word:
-//   1. Show word only — 4-second countdown
-//   2. User taps "认识" or "不认识" (or timer expires → "不认识")
-//   3. Reveal: phonetic + definition + auto-play pronunciation
-//   4. "下一个" → advance
-//
-// Records are persisted to localStorage (STORAGE_KEYS.QUICK_MEMORY_RECORDS).
-// Each word carries: firstSeen, lastSeen, knownCount, unknownCount, nextReview.
-// nextReview uses Ebbinghaus intervals: 1 / 1 / 4 / 7 / 14 / 30 days.
-// After the full streak completes, nextReview becomes 0 and the word leaves the due queue.
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
 import PracticeStageGuide from './PracticeStageGuide.tsx'
 import { buildQuickMemoryStageGuide } from './practiceStageGuide'
 import { playWordAudio, prepareWordAudioPlayback, preloadWordAudio, stopAudio } from './utils'
-import {
-  PASSIVE_STUDY_SESSION_MIN_SECONDS,
-  cancelSession,
-  flushStudySessionOnPageHide,
-  logSession,
-  startSession,
-  touchStudySessionActivity,
-  updateStudySessionSnapshot,
-} from '../../hooks/useAIChat'
-import { apiFetch } from '../../lib'
+import { updateStudySessionSnapshot } from '../../hooks/useAIChat'
 import { useToast } from '../../contexts/ToastContext'
 import {
   readQuickMemoryRecordsFromStorage,
@@ -38,179 +16,17 @@ import {
   reconcileQuickMemoryRecordsWithBackend,
   syncQuickMemoryRecordsToBackend,
 } from '../../lib/quickMemorySync'
+import { QuickMemoryCountdownRing } from './quick-memory/QuickMemoryCountdownRing'
+import {
+  QuickMemorySummary,
+  type QuickMemorySessionResult as SessionResult,
+} from './quick-memory/QuickMemorySummary'
+import { useQuickMemorySession } from '../../composables/practice/quick-memory/useQuickMemorySession'
 
-/** Fire-and-forget: sync a single updated record to the backend. */
+const TIMER_SECONDS = 4
+
 function syncRecordToBackend(word: string, record: QuickMemoryRecordState): void {
   void syncQuickMemoryRecordsToBackend([{ word, record }]).catch(() => {})
-}
-
-// ── Circular countdown SVG ────────────────────────────────────────────────────
-const TIMER_SECONDS = 4
-const RADIUS = 20
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS
-
-function CountdownRing({ seconds, total }: { seconds: number; total: number }) {
-  const progress = seconds / total
-  const dash = progress * CIRCUMFERENCE
-  return (
-    <svg className="qm-timer-svg" viewBox="0 0 48 48" width="48" height="48">
-      {/* Track */}
-      <circle cx="24" cy="24" r={RADIUS} fill="none" stroke="var(--border)" strokeWidth="3" />
-      {/* Progress arc */}
-      <circle
-        cx="24" cy="24" r={RADIUS}
-        fill="none"
-        stroke={seconds <= 1 ? 'var(--error)' : 'var(--accent)'}
-        strokeWidth="3"
-        strokeDasharray={`${dash} ${CIRCUMFERENCE}`}
-        strokeLinecap="round"
-        transform="rotate(-90 24 24)"
-        style={{ transition: 'stroke-dasharray 0.9s linear, stroke 0.2s' }}
-      />
-      {/* Digit */}
-      <text
-        x="24" y="24"
-        dominantBaseline="central"
-        textAnchor="middle"
-        fontSize="14"
-        fontWeight="700"
-        fill={seconds <= 1 ? 'var(--error)' : 'var(--text-primary)'}
-      >
-        {seconds}
-      </text>
-    </svg>
-  )
-}
-
-// ── Session summary ───────────────────────────────────────────────────────────
-interface SessionResult {
-  wordIdx: number
-  choice: 'known' | 'unknown'
-  wasFuzzy: boolean   // user went back and re-answered this word
-}
-
-function SummaryScreen({
-  results,
-  vocabulary,
-  queue,
-  bookId,
-  chapterId,
-  bookChapters,
-  reviewMode,
-  reviewHasMore,
-  onContinueReview,
-  buildChapterPath,
-  onRestart,
-  onModeChange,
-  onNavigate,
-}: {
-  results: SessionResult[]
-  vocabulary: Word[]
-  queue: number[]
-  bookId: string | null
-  chapterId: string | null
-  bookChapters: { id: number | string; title: string }[]
-  reviewMode?: boolean
-  reviewHasMore?: boolean
-  onContinueReview?: () => void
-  buildChapterPath?: (chapterId: string | number) => string
-  onRestart: () => void
-  onModeChange: (mode: string) => void
-  onNavigate: (path: string) => void
-}) {
-  const known   = results.filter(r => r.choice === 'known')
-  const unknown = results.filter(r => r.choice === 'unknown')
-  const fuzzy   = results.filter(r => r.wasFuzzy)
-
-  const currentIdx = bookChapters.findIndex(c => String(c.id) === String(chapterId))
-  const nextChapter = currentIdx >= 0 && currentIdx < bookChapters.length - 1
-    ? bookChapters[currentIdx + 1]
-    : null
-
-  const accuracy = results.length > 0 ? Math.round(known.length / results.length * 100) : 0
-
-  return (
-    <div className="qm-summary">
-      <div className="qm-summary-title">本轮完成</div>
-      <div className="qm-summary-stats">
-        <div className="qm-stat qm-stat-known">
-          <span className="qm-stat-num">{known.length}</span>
-          <span className="qm-stat-label">认识</span>
-        </div>
-        <div className="qm-stat qm-stat-unknown">
-          <span className="qm-stat-num">{unknown.length}</span>
-          <span className="qm-stat-label">不认识</span>
-        </div>
-        {fuzzy.length > 0 && (
-          <div className="qm-stat qm-stat-fuzzy">
-            <span className="qm-stat-num">{fuzzy.length}</span>
-            <span className="qm-stat-label">模糊</span>
-          </div>
-        )}
-        <div className="qm-stat">
-          <span className="qm-stat-num">{accuracy}%</span>
-          <span className="qm-stat-label">正确率</span>
-        </div>
-      </div>
-
-      {fuzzy.length > 0 && (
-        <div className="qm-summary-section">
-          <div className="qm-summary-section-title">模糊单词（回退重答）</div>
-          <div className="qm-summary-word-list">
-            {fuzzy.map(r => {
-              const w = vocabulary[queue[r.wordIdx]]
-              return w ? (
-                <span key={r.wordIdx} className={`qm-summary-word-tag qm-summary-word-fuzzy`}>{w.word}</span>
-              ) : null
-            })}
-          </div>
-        </div>
-      )}
-
-      {unknown.length > 0 && (
-        <div className="qm-summary-section">
-          <div className="qm-summary-section-title">需要复习</div>
-          <div className="qm-summary-word-list">
-            {unknown.map(r => {
-              const w = vocabulary[queue[r.wordIdx]]
-              return w ? (
-                <span key={r.wordIdx} className={`qm-summary-word-tag${r.wasFuzzy ? ' qm-summary-word-fuzzy' : ''}`}>{w.word}</span>
-              ) : null
-            })}
-          </div>
-        </div>
-      )}
-
-      <div className="qm-summary-actions">
-        <button className="qm-btn-restart" onClick={onRestart}>再来一轮</button>
-        {reviewHasMore && onContinueReview ? (
-          <button
-            className="qm-btn-next-chapter"
-            onClick={onContinueReview}
-          >
-            下一组复习
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          </button>
-        ) : nextChapter && bookId ? (
-          <button
-            className="qm-btn-next-chapter"
-            onClick={() => onNavigate(
-              buildChapterPath?.(nextChapter.id) ?? `/practice?book=${bookId}&chapter=${nextChapter.id}&mode=quickmemory`,
-            )}
-          >
-            {reviewMode ? '下一章节复习' : '下一章节'}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          </button>
-        ) : (
-          <button className="qm-btn-mode" onClick={() => onModeChange('smart')}>换个模式</button>
-        )}
-      </div>
-    </div>
-  )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -245,7 +61,6 @@ export default function QuickMemoryMode({
   // Set of queue indices the user navigated back to (= uncertain/fuzzy about)
   const [revisitedSet, setRevisitedSet] = useState<Set<number>>(new Set())
   const resultsRef = useRef<SessionResult[]>([])
-
   const timerRef        = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
   const revealTimerRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const chosenRef       = useRef(false)   // guard against double-fire
@@ -313,45 +128,25 @@ export default function QuickMemoryMode({
     })
   }, [])
 
-  useEffect(() => {
-    const touch = () => {
-      if (sessionStartRef.current <= 0) return
-      touchStudySessionActivity(sessionIdRef.current)
-    }
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') touch()
-    }
-    window.addEventListener('pointerdown', touch, true)
-    window.addEventListener('keydown', touch, true)
-    window.addEventListener('focus', touch)
-    document.addEventListener('visibilitychange', onVisible)
-    return () => {
-      window.removeEventListener('pointerdown', touch, true)
-      window.removeEventListener('keydown', touch, true)
-      window.removeEventListener('focus', touch)
-      document.removeEventListener('visibilitychange', onVisible)
-    }
-  }, [])
-
-  useEffect(() => {
-    const handlePageHide = () => {
-      flushPendingRecordSync(true)
-      if (sessionLoggedRef.current || sessionStartRef.current <= 0) return
-      const finalResults = resultsRef.current
-      flushStudySessionOnPageHide({
-        mode: 'quickmemory',
-        bookId: bookIdRef.current,
-        chapterId: chapterIdRef.current,
-        wordsStudied: finalResults.length,
-        correctCount: finalResults.filter(r => r.choice === 'known').length,
-        wrongCount: finalResults.filter(r => r.choice === 'unknown').length,
-        startedAt: sessionStartRef.current,
-        sessionId: sessionIdRef.current,
-      })
-    }
-    window.addEventListener('pagehide', handlePageHide)
-    return () => window.removeEventListener('pagehide', handlePageHide)
-  }, [flushPendingRecordSync])
+  useQuickMemorySession({
+    bookId,
+    chapterId,
+    done,
+    index,
+    queueLength: queue.length,
+    reviewMode,
+    results,
+    resultsRef,
+    sessionStartRef,
+    bookIdRef,
+    chapterIdRef,
+    sessionIdRef,
+    sessionLoggedRef,
+    pendingSessionCancelRef,
+    flushPendingRecordSync,
+    syncSessionSnapshot,
+    showSaveError: () => showToast('进度保存失败，请检查网络连接', 'error'),
+  })
 
   // Reset session-scoped state when practice context changes.
   // On the very first load (queue going from empty to populated), restore
@@ -485,156 +280,16 @@ export default function QuickMemoryMode({
     }
   }, [currentWord?.word, nextWord?.word, phase, index, reveal, settings])   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Save chapter progress when a round is done ────────────────────────────
-  useEffect(() => {
-    if (reviewMode || !done || !bookId || !chapterId) return
-    const correct = results.filter(r => r.choice === 'known').length
-    const wrong   = results.filter(r => r.choice === 'unknown').length
-
-    const progressData = {
-      current_index: queue.length,
-      correct_count: correct,
-      wrong_count:   wrong,
-      words_learned: queue.length,
-      is_completed:  true,
-    }
-
-    // Persist locally
-    const chapterProgress: Record<string, typeof progressData & { updatedAt: string }> =
-      JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-    chapterProgress[`${bookId}_${chapterId}`] = { ...progressData, updatedAt: new Date().toISOString() }
-    localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
-
-    // Save chapter-level progress — toast on failure so user knows
-    apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
-      method: 'POST',
-      body: JSON.stringify(progressData),
-    }).catch(() => showToast('进度保存失败，请检查网络连接', 'error'))
-
-    // Save per-mode accuracy so it shows as an independent badge in ChapterModal
-    apiFetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
-      method: 'POST',
-      body: JSON.stringify({
-        mode: 'quickmemory',
-        correct_count: correct,
-        wrong_count: wrong,
-        is_completed: true,
-      }),
-    }).catch(() => {})
-  }, [bookId, chapterId, done, queue, results, reviewMode, showToast, vocabulary])
-
-  // ── Log completed sessions immediately, including review/global sessions ──
-  useEffect(() => {
-    if (!done || sessionLoggedRef.current || results.length < queue.length) return
-    const finalResults = resultsRef.current
-    if (finalResults.length < queue.length) return
-    const correct = finalResults.filter(r => r.choice === 'known').length
-    const wrong   = finalResults.filter(r => r.choice === 'unknown').length
-
-    sessionLoggedRef.current = true
-    flushPendingRecordSync()
-    syncSessionSnapshot({
-      activeAt: Date.now(),
-      wordsStudied: queue.length,
-      correctCount: correct,
-      wrongCount: wrong,
-    })
-    logSession({
-      mode: 'quickmemory',
-      bookId,
-      chapterId,
-      wordsStudied: queue.length,
-      correctCount: correct,
-      wrongCount: wrong,
-      durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
-      startedAt: sessionStartRef.current,
-      sessionId: sessionIdRef.current,
-    })
-  }, [bookId, chapterId, done, flushPendingRecordSync, queue.length, results, syncSessionSnapshot])
-
-  // ── Save partial chapter progress on unmount (if session not completed) ──────
-  useEffect(() => {
-    return () => {
-      if (reviewMode || done || !bookId || !chapterId || index === 0) return
-      const correct = results.filter(r => r.choice === 'known').length
-      const wrong   = results.filter(r => r.choice === 'unknown').length
-      const partialProgress = {
-        current_index: index,
-        correct_count: correct,
-        wrong_count:   wrong,
-        words_learned: index,
-        is_completed:  false,
-        updatedAt:     new Date().toISOString(),
-      }
-      const chapterProgress: Record<string, typeof partialProgress> =
-        JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-      // Only overwrite if no completed record already exists
-      const existing = chapterProgress[`${bookId}_${chapterId}`]
-      if (!existing?.is_completed) {
-        chapterProgress[`${bookId}_${chapterId}`] = partialProgress
-        localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
-      }
-    }
-  }, [done, reviewMode, bookId, chapterId, index, results])
-
   // ── Load records from backend on mount (merge into localStorage) ──────────
   useEffect(() => {
     void reconcileQuickMemoryRecordsWithBackend().catch(() => {})
   }, [])
 
-  // ── Start server-side session timer on mount ───────────────────────────────
-  useEffect(() => {
-    sessionStartRef.current = Date.now()
-    sessionLoggedRef.current = false
-    pendingSessionCancelRef.current = false
-    startSession({
-      mode: 'quickmemory',
-      bookId,
-      chapterId,
-    }).then(id => {
-      sessionIdRef.current = id
-      if (pendingSessionCancelRef.current && id) {
-        cancelSession(id)
-      }
-    }).catch(() => {})
-  }, [bookId, chapterId])
-
-  // ── Cleanup audio + session lifecycle on unmount ──────────────────────────
   useEffect(() => () => {
     stopAudio()
     clearInterval(timerRef.current)
     clearTimeout(revealTimerRef.current)
-    flushPendingRecordSync(true)
-
-    if (sessionLoggedRef.current) return
-
-    const finalResults = resultsRef.current
-    const durationSeconds = Math.round((Date.now() - sessionStartRef.current) / 1000)
-    if (finalResults.length <= 0 && durationSeconds < PASSIVE_STUDY_SESSION_MIN_SECONDS) {
-      pendingSessionCancelRef.current = true
-      cancelSession(sessionIdRef.current)
-      return
-    }
-
-    sessionLoggedRef.current = true
-    syncSessionSnapshot({
-      activeAt: Date.now(),
-      wordsStudied: finalResults.length,
-      correctCount: finalResults.filter(r => r.choice === 'known').length,
-      wrongCount: finalResults.filter(r => r.choice === 'unknown').length,
-    })
-    logSession({
-      mode: 'quickmemory',
-      bookId: bookIdRef.current,
-      chapterId: chapterIdRef.current,
-      wordsStudied: finalResults.length,
-      correctCount: finalResults.filter(r => r.choice === 'known').length,
-      wrongCount: finalResults.filter(r => r.choice === 'unknown').length,
-      durationSeconds,
-      startedAt: sessionStartRef.current,
-      sessionId: sessionIdRef.current,
-    })
-  }, [flushPendingRecordSync])
+  }, [])
 
   // ── Advance to next word ───────────────────────────────────────────────────
   const handleNext = useCallback(() => {
@@ -704,7 +359,7 @@ export default function QuickMemoryMode({
   // ── Summary screen ─────────────────────────────────────────────────────────
   if (done) {
     return (
-      <SummaryScreen
+      <QuickMemorySummary
         results={results}
         vocabulary={vocabulary}
         queue={queue}
@@ -748,7 +403,7 @@ export default function QuickMemoryMode({
         {phase === 'question' && (
           <>
             <div className="qm-countdown-ring">
-              <CountdownRing seconds={countdown} total={TIMER_SECONDS} />
+              <QuickMemoryCountdownRing seconds={countdown} total={TIMER_SECONDS} />
             </div>
 
             <div className="qm-word">{currentWord.word}</div>

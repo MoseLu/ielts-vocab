@@ -1,0 +1,379 @@
+/* Page: Practice – dictation container, mic button */
+
+/* Dictation Mode */
+.dictation-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    width: 100%;
+    max-width: 500px;
+    margin: auto;
+    padding: var(--space-xl);
+}
+
+.dictation-play-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.dictation-mode-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-sm);
+    letter-spacing: -0.01em;
+}
+
+.dictation-hint {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.dictation-replay-hint {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+.dictation-replay-hint.revealed {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.spelling-answer {
+    font-size: 14px;
+    color: var(--error);
+    background: var(--error-light);
+    border: 1px solid var(--error-bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    width: 100%;
+    text-align: center;
+}
+
+.dictation-error-feedback {
+    width: 100%;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+    padding: 14px 16px 12px;
+    border-radius: 24px;
+    border: 1px solid rgba(var(--error-rgb), 0.14);
+    background:
+        radial-gradient(circle at top, rgba(var(--success-rgb), 0.12), transparent 46%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(var(--error-rgb), 0.05) 100%);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+    text-align: center;
+    animation: dictation-error-enter 220ms ease;
+    backdrop-filter: blur(10px);
+    transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.dictation-error-feedback::before {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -20px;
+    width: 132px;
+    height: 132px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(var(--success-rgb), 0.18), transparent 68%);
+    opacity: 0.75;
+    z-index: -1;
+}
+
+.dictation-error-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.dictation-error-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 9px;
+    border-radius: var(--radius-full);
+    background: rgba(var(--error-rgb), 0.1);
+    color: var(--error);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.dictation-error-support {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.dictation-error-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: min(100%, 352px);
+}
+
+.dictation-error-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+    padding: 10px 12px 11px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.66), 0 8px 18px rgba(15, 23, 42, 0.04);
+}
+
+.dictation-error-item-correct {
+    background: linear-gradient(180deg, rgba(var(--success-rgb), 0.07), rgba(255, 255, 255, 0.9));
+    border-color: rgba(var(--success-rgb), 0.16);
+}
+
+.dictation-error-item-correct .dictation-error-word {
+    color: var(--success);
+}
+
+.dictation-error-item-wrong {
+    background: linear-gradient(180deg, rgba(var(--error-rgb), 0.05), rgba(255, 255, 255, 0.84));
+    border-color: rgba(var(--error-rgb), 0.16);
+}
+
+.dictation-error-item-wrong .dictation-error-word {
+    color: var(--error);
+}
+
+.dictation-error-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    letter-spacing: 0.05em;
+}
+
+.dictation-error-word {
+    width: 100%;
+    font-family: var(--font-display);
+}
+
+.dictation-error-letter-row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(20px, auto);
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+}
+
+.dictation-error-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    min-height: 30px;
+    padding: 0 4px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-size: clamp(1.05rem, 3.8vw, 1.55rem);
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    transition: transform var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+    animation: dictation-letter-rise 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--letter-order, 0) * 36ms);
+}
+
+.dictation-error-word-correct .dictation-error-letter.is-match {
+    background: rgba(var(--success-rgb), 0.08);
+    color: color-mix(in srgb, var(--success) 88%, var(--text-primary));
+    border-color: rgba(var(--success-rgb), 0.08);
+}
+
+.dictation-error-word-correct .dictation-error-letter.is-focus {
+    background: rgba(var(--success-rgb), 0.14);
+    color: var(--success);
+    border-color: rgba(var(--success-rgb), 0.26);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(var(--success-rgb), 0.12);
+    animation:
+        dictation-letter-rise 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+        dictation-letter-confirm 920ms ease-out both;
+    animation-delay:
+        calc(var(--letter-order, 0) * 36ms),
+        calc(var(--letter-order, 0) * 36ms + 150ms);
+}
+
+.dictation-error-word-correct .dictation-error-letter.is-ghost {
+    opacity: 0;
+    border-style: dashed;
+    animation: none;
+}
+
+.dictation-error-word-submitted .dictation-error-letter.is-match {
+    background: rgba(148, 163, 184, 0.08);
+    color: var(--text-primary);
+    border-color: rgba(148, 163, 184, 0.14);
+}
+
+.dictation-error-word-submitted .dictation-error-letter.is-focus {
+    background: rgba(var(--error-rgb), 0.12);
+    color: var(--error);
+    border-color: rgba(var(--error-rgb), 0.28);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(var(--error-rgb), 0.12);
+    animation:
+        dictation-letter-rise 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+        dictation-letter-alert 460ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    animation-delay:
+        calc(var(--letter-order, 0) * 36ms),
+        calc(var(--letter-order, 0) * 36ms + 150ms);
+}
+
+.dictation-error-word-submitted .dictation-error-letter.is-extra {
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent-dark);
+    border-color: rgba(var(--accent-rgb), 0.28);
+    animation:
+        dictation-letter-rise 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+        dictation-letter-alert 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    animation-delay:
+        calc(var(--letter-order, 0) * 36ms),
+        calc(var(--letter-order, 0) * 36ms + 140ms);
+}
+
+.dictation-error-word-submitted .dictation-error-letter.is-missing {
+    background: rgba(var(--error-rgb), 0.04);
+    color: rgba(var(--error-rgb), 0.75);
+    border-color: rgba(var(--error-rgb), 0.18);
+    border-style: dashed;
+    animation:
+        dictation-letter-rise 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+        dictation-letter-alert 380ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    animation-delay:
+        calc(var(--letter-order, 0) * 36ms),
+        calc(var(--letter-order, 0) * 36ms + 140ms);
+}
+
+.dictation-error-meta,
+.dictation-error-detail,
+.dictation-error-note {
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.dictation-error-meta {
+    color: var(--text-secondary);
+}
+
+.dictation-error-underline {
+    width: min(180px, 62%);
+    height: 2px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(90deg, transparent, rgba(var(--error-rgb), 0.4), transparent);
+}
+
+.dictation-error-detail {
+    width: 100%;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(var(--success-rgb), 0.18);
+    color: var(--text-secondary);
+}
+
+.dictation-error-note {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.dictation-response-stage {
+    width: 100%;
+    height: 184px;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.dictation-response-stage.is-dismissing .dictation-error-feedback {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+    pointer-events: none;
+}
+
+.dictation-live-stage {
+    width: min(100%, 352px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 100%;
+}
+
+.dictation-live-answer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: rgba(var(--success-rgb), 0.08);
+    border: 1px solid rgba(var(--success-rgb), 0.16);
+}
+
+.dictation-live-answer-label,
+.dictation-live-preview-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+}
+
+.dictation-live-answer-word {
+    font-size: clamp(1.3rem, 4.2vw, 1.72rem);
+    line-height: 1;
+    color: var(--success);
+    font-family: var(--font-display);
+    letter-spacing: -0.04em;
+}
+
+.dictation-live-answer-detail {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.dictation-live-preview {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 10px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(var(--accent-rgb), 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+

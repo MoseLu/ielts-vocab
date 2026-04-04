@@ -91,7 +91,7 @@ vi.mock('./OptionsMode', () => ({
   default: () => null,
 }))
 
-vi.mock('../SettingsPanel', () => ({
+vi.mock('../settings/SettingsPanel', () => ({
   default: () => null,
 }))
 

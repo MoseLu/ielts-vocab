@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 import PracticePage from './PracticePage'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats } from '../../lib/smartMode'
+import { getWrongWordsStorageKey } from '../../features/vocabulary/wrongWordsStore'
 
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
@@ -73,7 +74,7 @@ vi.mock('./QuickMemoryMode', () => ({
   default: () => null,
 }))
 
-vi.mock('../SettingsPanel', () => ({
+vi.mock('../settings/SettingsPanel', () => ({
   default: () => null,
 }))
 
@@ -109,7 +110,7 @@ describe('PracticePage backend learner profile', () => {
 
   it('merges backend learner profile insights into practice AI context', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: true }))
-    localStorage.setItem('wrong_words', JSON.stringify([
+    localStorage.setItem(getWrongWordsStorageKey(42), JSON.stringify([
       { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 2 },
     ]))
 

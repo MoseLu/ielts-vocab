@@ -84,7 +84,7 @@ vi.mock('./QuickMemoryMode', () => ({
   default: () => null,
 }))
 
-vi.mock('../SettingsPanel', () => ({
+vi.mock('../settings/SettingsPanel', () => ({
   default: () => null,
 }))
 

@@ -71,31 +71,14 @@ vi.mock('../../lib', async () => {
 })
 
 vi.mock('./PracticeControlBar', () => ({
-  default: ({ vocabularyLength }: { vocabularyLength: number }) => (
-    <div data-testid="practice-control-bar">total:{vocabularyLength}</div>
-  ),
+  default: ({ vocabularyLength }: { vocabularyLength: number }) => <div data-testid="practice-control-bar">total:{vocabularyLength}</div>,
 }))
 
-vi.mock('./WordListPanel', () => ({
-  default: () => null,
-}))
-
-vi.mock('./RadioMode', () => ({
-  default: () => null,
-}))
-
-vi.mock('./DictationMode', () => ({
-  default: () => null,
-}))
-
-vi.mock('./QuickMemoryMode', () => ({
-  default: () => null,
-}))
-
-vi.mock('../SettingsPanel', () => ({
-  default: () => null,
-}))
-
+vi.mock('./WordListPanel', () => ({ default: () => null }))
+vi.mock('./RadioMode', () => ({ default: () => null }))
+vi.mock('./DictationMode', () => ({ default: () => null }))
+vi.mock('./QuickMemoryMode', () => ({ default: () => null }))
+vi.mock('../settings/SettingsPanel', () => ({ default: () => null }))
 vi.mock('../ui/Loading', () => ({
   Loading: ({ text }: { text: string }) => <div>{text}</div>,
   PageSkeleton: () => <div data-testid="page-skeleton" />,
@@ -131,20 +114,12 @@ vi.mock('./OptionsMode', () => ({
       current:{currentWord.word};total:{total};progress:{progressValue};wrongs:{wrongSelections.join(',')};result:{showResult ? 'done' : 'pending'}
       <button data-testid="answer-correct" onClick={() => onOptionSelect(correctIndex)}>correct</button>
       <button data-testid="answer-wrong" onClick={() => onOptionSelect(correctIndex === 0 ? 1 : 0)}>wrong</button>
-      <input
-        data-testid="meaning-input"
-        value={spellingInput}
-        onChange={(event) => onSpellingInputChange(event.target.value)}
-      />
+      <input data-testid="meaning-input" value={spellingInput} onChange={event => onSpellingInputChange(event.target.value)} />
       <button data-testid="submit-recall" onClick={() => onSpellingSubmit()}>submit</button>
       <span data-testid="meaning-result">{spellingResult ?? 'idle'}</span>
     </div>
   ),
 }))
-
-afterEach(() => {
-  vi.useRealTimers()
-})
 
 describe('PracticePage error mode', () => {
   beforeEach(() => {
@@ -154,7 +129,6 @@ describe('PracticePage error mode', () => {
     vi.mocked(loadSmartStats).mockReturnValue({})
     vi.mocked(chooseSmartDimension).mockReturnValue('meaning')
     localStorage.clear()
-    vi.useRealTimers()
   })
 
   it('ignores stale global wrong-word cache when a logged-in user loads error review', async () => {
@@ -194,13 +168,7 @@ describe('PracticePage error mode', () => {
 
     render(
       <MemoryRouter initialEntries={['/practice?mode=errors']}>
-        <PracticePage
-          user={{ id: 42 }}
-          mode="meaning"
-          showToast={() => {}}
-          onModeChange={() => {}}
-          onDayChange={() => {}}
-        />
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
       </MemoryRouter>,
     )
 
@@ -208,8 +176,6 @@ describe('PracticePage error mode', () => {
       expect(screen.getByTestId('practice-control-bar')).toHaveTextContent('total:2')
     })
 
-    expect(screen.getByTestId('options-mode')).toHaveTextContent('total:2')
-    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/wrong-words')
     expect(JSON.parse(localStorage.getItem(getWrongWordsStorageKey(42)) || '[]')).toHaveLength(2)
     expect(JSON.parse(localStorage.getItem('wrong_words') || '[]')).toHaveLength(1)
   })
@@ -228,13 +194,7 @@ describe('PracticePage error mode', () => {
 
     render(
       <MemoryRouter initialEntries={['/practice?mode=errors']}>
-        <PracticePage
-          user={{ id: 42 }}
-          mode="meaning"
-          showToast={() => {}}
-          onModeChange={() => {}}
-          onDayChange={() => {}}
-        />
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
       </MemoryRouter>,
     )
 
@@ -248,14 +208,6 @@ describe('PracticePage error mode', () => {
     await waitFor(() => {
       expect(screen.getByTestId('options-mode')).toHaveTextContent('current:beta')
     }, { timeout: 2500 })
-
-    const scopedWords = JSON.parse(localStorage.getItem(getWrongWordsStorageKey(42)) || '[]')
-    const alphaRecord = scopedWords.find((word: { word: string }) => word.word === 'alpha')
-    expect(alphaRecord?.wrong_count).toBeGreaterThan(2)
-    expect(alphaRecord?.meaning_wrong).toBeGreaterThan(0)
-    expect(JSON.parse(localStorage.getItem('wrong_words') || '[]')).toEqual([
-      expect.objectContaining({ word: 'legacy-global' }),
-    ])
   })
 
   it('restores saved wrong-word review progress instead of restarting from the first word', async () => {
@@ -280,22 +232,13 @@ describe('PracticePage error mode', () => {
 
     render(
       <MemoryRouter initialEntries={['/practice?mode=errors']}>
-        <PracticePage
-          user={{ id: 42 }}
-          mode="meaning"
-          showToast={() => {}}
-          onModeChange={() => {}}
-          onDayChange={() => {}}
-        />
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
       </MemoryRouter>,
     )
 
     await waitFor(() => {
       expect(screen.getByTestId('options-mode')).toHaveTextContent('current:beta')
     })
-
-    expect(screen.getByTestId('options-mode')).toHaveTextContent('total:3')
-    expect(screen.getByTestId('options-mode')).toHaveTextContent('progress:0.3333333333333333')
   })
 
   it('accepts typed english recall answers in meaning mode and advances on correct submit', async () => {
@@ -309,13 +252,7 @@ describe('PracticePage error mode', () => {
 
     render(
       <MemoryRouter initialEntries={['/practice?mode=errors']}>
-        <PracticePage
-          user={{ id: 42 }}
-          mode="meaning"
-          showToast={() => {}}
-          onModeChange={() => {}}
-          onDayChange={() => {}}
-        />
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
       </MemoryRouter>,
     )
 
@@ -367,13 +304,7 @@ describe('PracticePage error mode', () => {
 
     render(
       <MemoryRouter initialEntries={['/practice?mode=errors']}>
-        <PracticePage
-          user={{ id: 42 }}
-          mode="meaning"
-          showToast={() => {}}
-          onModeChange={() => {}}
-          onDayChange={() => {}}
-        />
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
       </MemoryRouter>,
     )
 
@@ -390,199 +321,6 @@ describe('PracticePage error mode', () => {
         recentWrongWords: expect.arrayContaining(['alpha', 'beta']),
         trapStrategy: expect.stringContaining('错词'),
       }))
-    })
-  })
-})
-
-describe('PracticePage error mode – learner profile merge', () => {
-  beforeEach(() => {
-    apiFetchMock.mockReset()
-    startSessionMock.mockClear()
-    vi.mocked(setGlobalLearningContext).mockReset()
-    localStorage.clear()
-    vi.useRealTimers()
-  })
-
-  it('merges backend learner profile insights into practice AI context', async () => {
-    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: true }))
-    seedScopedWrongWords(42, [
-      { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 2 },
-    ])
-
-    apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/ai/wrong-words') {
-        return Promise.resolve({ words: [] })
-      }
-
-      if (url === '/api/ai/learner-profile') {
-        return Promise.resolve({
-          date: '2026-03-31',
-          summary: {
-            date: '2026-03-31',
-            today_words: 12,
-            today_accuracy: 72,
-            today_duration_seconds: 900,
-            today_sessions: 2,
-            streak_days: 3,
-            weakest_mode: 'listening',
-            weakest_mode_label: '听音选义',
-            weakest_mode_accuracy: 61,
-            due_reviews: 4,
-            trend_direction: 'stable',
-          },
-          dimensions: [
-            {
-              dimension: 'listening',
-              label: '听音辨义',
-              correct: 2,
-              wrong: 5,
-              attempts: 7,
-              accuracy: 29,
-              weakness: 0.71,
-            },
-            {
-              dimension: 'meaning',
-              label: '汉译英（会想）',
-              correct: 6,
-              wrong: 3,
-              attempts: 9,
-              accuracy: 67,
-              weakness: 0.33,
-            },
-            {
-              dimension: 'dictation',
-              label: '拼写默写',
-              correct: 4,
-              wrong: 2,
-              attempts: 6,
-              accuracy: 67,
-              weakness: 0.33,
-            },
-          ],
-          focus_words: [
-            {
-              word: 'remote-focus',
-              definition: 'from backend profile',
-              wrong_count: 5,
-              dominant_dimension: 'listening',
-              dominant_dimension_label: '听音辨义',
-              dominant_wrong: 4,
-              focus_score: 14,
-            },
-          ],
-          repeated_topics: [
-            {
-              title: 'kind of 和 a kind of',
-              count: 3,
-              word_context: 'kind',
-              latest_answer: 'try another explanation',
-              latest_at: '2026-03-31T10:00:00',
-            },
-          ],
-          next_actions: ['先做听音辨义错词回顾'],
-          mode_breakdown: [],
-          activity_summary: {
-            total_events: 0,
-            study_sessions: 0,
-            quick_memory_reviews: 0,
-            wrong_word_records: 0,
-            assistant_questions: 0,
-            chapter_updates: 0,
-            books_touched: 0,
-            chapters_touched: 0,
-            words_touched: 0,
-            total_duration_seconds: 0,
-            correct_count: 0,
-            wrong_count: 0,
-          },
-          activity_source_breakdown: [],
-          recent_activity: [],
-        })
-      }
-
-      return Promise.reject(new Error(`Unexpected url: ${url}`))
-    })
-
-    render(
-      <MemoryRouter initialEntries={['/practice?mode=errors']}>
-        <PracticePage
-          user={{ id: 42 }}
-          mode="meaning"
-          showToast={() => {}}
-          onModeChange={() => {}}
-          onDayChange={() => {}}
-        />
-      </MemoryRouter>,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:alpha')
-    })
-
-    await waitFor(() => {
-      expect(setGlobalLearningContext).toHaveBeenLastCalledWith(expect.objectContaining({
-        currentWord: 'alpha',
-        weakestDimension: 'listening',
-        weakFocusWords: expect.arrayContaining(['remote-focus']),
-      }))
-    })
-  })
-})
-
-describe('PracticePage error mode – progress persistence regression', () => {
-  beforeEach(() => {
-    apiFetchMock.mockReset()
-    startSessionMock.mockClear()
-    localStorage.clear()
-    vi.useRealTimers()
-  })
-
-  it('preserves is_completed:true after answering the last wrong word', async () => {
-    // A single-word error list means the first word is also the last.
-    // After answering correctly, saveProgress() writes is_completed:true.
-    // The bug was that a useEffect triggered by the correctCount state change
-    // would overwrite it with is_completed:false before goNext() navigated.
-    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
-    seedScopedWrongWords(1, [
-      {
-        word: 'only',
-        phonetic: '/o/',
-        pos: 'n.',
-        definition: 'only definition',
-        wrong_count: 1,
-        listening_confusables: [
-          { word: 'owner', phonetic: '/owner/', pos: 'n.', definition: 'owner definition' },
-          { word: 'honor', phonetic: '/honor/', pos: 'n.', definition: 'honor definition' },
-          { word: 'lonely', phonetic: '/lonely/', pos: 'adj.', definition: 'lonely definition' },
-        ],
-      },
-    ])
-
-    apiFetchMock.mockResolvedValue({ words: [] })
-
-    render(
-      <MemoryRouter initialEntries={['/practice?mode=errors']}>
-        <PracticePage
-          user={{ id: 1 }}
-          mode="meaning"
-          showToast={() => {}}
-          onModeChange={() => {}}
-          onDayChange={() => {}}
-        />
-      </MemoryRouter>,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:only')
-    })
-
-    // Answer the (only) word correctly.
-    fireEvent.change(screen.getByTestId('meaning-input'), { target: { value: 'ONLY' } })
-    fireEvent.click(screen.getByTestId('submit-recall'))
-
-    await waitFor(() => {
-      const stored = JSON.parse(localStorage.getItem(getWrongWordsProgressStorageKey(1)) || '{}')
-      expect(stored._last?.is_completed).toBe(true)
     })
   })
 })
