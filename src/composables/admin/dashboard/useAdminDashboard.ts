@@ -7,6 +7,7 @@ import type {
   Overview,
   TtsBook,
   UserDetail,
+  WrongWordsSort,
 } from '../../../components/admin/dashboard/AdminDashboard.types'
 
 type SortOrder = 'asc' | 'desc'
@@ -16,6 +17,7 @@ interface UserDetailFilters {
   dateTo?: string
   mode?: string
   bookId?: string
+  wrongWordsSort?: WrongWordsSort
 }
 
 interface UsersResponse {
@@ -56,6 +58,7 @@ export function useAdminDashboard() {
   const [detailDateFrom, setDetailDateFrom] = useState('')
   const [detailDateTo, setDetailDateTo] = useState('')
   const [detailMode, setDetailMode] = useState('')
+  const [detailWrongWordsSort, setDetailWrongWordsSort] = useState<WrongWordsSort>('last_error')
   const [ttsBooks, setTtsBooks] = useState<TtsBook[]>([])
   const [ttsBooksLoading, setTtsBooksLoading] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -120,6 +123,7 @@ export function useAdminDashboard() {
   const fetchUserDetail = useCallback(async (userId: number, filters?: UserDetailFilters) => {
     try {
       const params = new URLSearchParams()
+      params.set('wrong_words_sort', filters?.wrongWordsSort ?? 'last_error')
       if (filters?.dateFrom) params.set('date_from', filters.dateFrom)
       if (filters?.dateTo) params.set('date_to', filters.dateTo)
       if (filters?.mode) params.set('mode', filters.mode)
@@ -250,11 +254,13 @@ export function useAdminDashboard() {
   }, [fetchUsers, order, search, sort])
 
   const handleSelectUser = useCallback((userId: number) => {
+    const defaultWrongWordsSort: WrongWordsSort = 'last_error'
     setDetailDateFrom('')
     setDetailDateTo('')
     setDetailMode('')
+    setDetailWrongWordsSort(defaultWrongWordsSort)
     setDetailTab('progress')
-    void fetchUserDetail(userId)
+    void fetchUserDetail(userId, { wrongWordsSort: defaultWrongWordsSort })
   }, [fetchUserDetail])
 
   const closeDetail = useCallback(() => {
@@ -278,6 +284,7 @@ export function useAdminDashboard() {
     detailDateFrom,
     detailDateTo,
     detailMode,
+    detailWrongWordsSort,
     ttsBooks,
     ttsBooksLoading,
     loading,
@@ -290,6 +297,7 @@ export function useAdminDashboard() {
     setDetailDateFrom,
     setDetailDateTo,
     setDetailMode,
+    setDetailWrongWordsSort,
     fetchUserDetail,
     handleGenerate,
     handleSearchSubmit,

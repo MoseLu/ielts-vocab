@@ -6,6 +6,7 @@ import {
   type DailyPlanAction,
   type DailyPlanTask,
   type StudyBookCard,
+  type StudyGuidanceSection,
 } from './homePageModels'
 
 export function TodoTaskRow({
@@ -36,24 +37,26 @@ export function TodoTaskRow({
                 <h3>{task.title}</h3>
                 <span className="study-todo-subtitle">{task.description}</span>
               </div>
-              <div className="study-todo-title-meta">
-                <span className={`study-todo-progress${isCompleted ? ' is-completed' : ''}`}>
-                  {task.badge}
-                </span>
-                <span className={`study-todo-state${isCompleted ? ' is-completed' : ''}`}>
-                  {getTaskStateLabel(task)}
-                </span>
-              </div>
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          className="study-todo-action"
-          onClick={() => onAction(task.action)}
-        >
-          {task.action.cta_label}
-        </button>
+        <div className="study-todo-head-side">
+          <button
+            type="button"
+            className="study-todo-action"
+            onClick={() => onAction(task.action)}
+          >
+            {task.action.cta_label}
+          </button>
+          <div className="study-todo-title-meta">
+            <span className={`study-todo-progress${isCompleted ? ' is-completed' : ''}`}>
+              {task.badge}
+            </span>
+            <span className={`study-todo-state${isCompleted ? ' is-completed' : ''}`}>
+              {getTaskStateLabel(task)}
+            </span>
+          </div>
+        </div>
       </div>
 
       {taskSteps.length > 0 && (
@@ -82,24 +85,51 @@ export function TodoTaskRow({
   )
 }
 
-export function QuickActionButton({
-  label,
-  value,
-  onClick,
+export function StudyGuidancePanel({
+  guidance,
 }: {
-  label: string
-  value: string
-  onClick: () => void
+  guidance: StudyGuidanceSection
 }) {
   return (
-    <button
-      type="button"
-      className="study-quick-action"
-      onClick={onClick}
-    >
-      <span className="study-quick-action__label">{label}</span>
-      <span className="study-quick-action__value">{value}</span>
-    </button>
+    <div className="study-guidance-grid" aria-label="学习指标指导">
+      {guidance.cards.map(card => (
+        <article
+          key={card.id}
+          className={`study-guidance-card study-guidance-card--${card.tone}`}
+        >
+          <div className="study-guidance-card__top">
+            <div className="study-guidance-card__heading">
+              <span className="study-guidance-card__eyebrow">{card.eyebrow}</span>
+              <h3>{card.title}</h3>
+            </div>
+            <span className="study-guidance-card__badge">{card.badge}</span>
+          </div>
+
+          <p className="study-guidance-card__description">{card.description}</p>
+
+          <div className="study-guidance-card__facts" aria-label={`${card.title}关键指标`}>
+            {card.facts.map(fact => (
+              <span key={`${card.id}-${fact}`} className="study-guidance-card__fact">
+                {fact}
+              </span>
+            ))}
+          </div>
+
+          <div className="study-guidance-sections" aria-label={`${card.title}规则说明`}>
+            {card.sections.map(section => (
+              <section key={`${card.id}-${section.label}`} className="study-guidance-section">
+                <h4 className="study-guidance-section__label">{section.label}</h4>
+                <ul className="study-guidance-steps">
+                  {section.items.map(item => (
+                    <li key={`${card.id}-${section.label}-${item}`}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </article>
+      ))}
+    </div>
   )
 }
 

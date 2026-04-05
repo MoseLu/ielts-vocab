@@ -1,3 +1,59 @@
+def _parse_wrong_word_iso_timestamp(value):
+    if not isinstance(value, str) or not value.strip():
+        return 0.0
+
+    try:
+        return datetime.fromisoformat(value.replace('Z', '+00:00')).timestamp()
+    except ValueError:
+        return 0.0
+
+
+def _resolve_wrong_word_last_error(record):
+    dimension_states = record.get('dimension_states')
+    last_wrong_candidates = []
+
+    if isinstance(dimension_states, dict):
+        for dimension in ('recognition', 'meaning', 'listening', 'dictation'):
+            state = dimension_states.get(dimension)
+            if not isinstance(state, dict):
+                continue
+            last_wrong_at = state.get('last_wrong_at') or state.get('lastWrongAt')
+            if _parse_wrong_word_iso_timestamp(last_wrong_at) > 0:
+                last_wrong_candidates.append(last_wrong_at)
+
+    if last_wrong_candidates:
+        return max(last_wrong_candidates, key=_parse_wrong_word_iso_timestamp)
+
+    fallback_updated_at = record.get('updated_at')
+    return fallback_updated_at if _parse_wrong_word_iso_timestamp(fallback_updated_at) > 0 else None
+
+
+def _get_sorted_wrong_words(user_id, sort_mode):
+    wrong_words = [row.to_dict() for row in UserWrongWord.query.filter_by(user_id=user_id).all()]
+
+    for record in wrong_words:
+        record['last_wrong_at'] = _resolve_wrong_word_last_error(record)
+
+    if sort_mode == 'wrong_count':
+        wrong_words.sort(
+            key=lambda record: (
+                -int(record.get('wrong_count') or 0),
+                -_parse_wrong_word_iso_timestamp(record.get('last_wrong_at')),
+                (record.get('word') or '').lower(),
+            )
+        )
+    else:
+        wrong_words.sort(
+            key=lambda record: (
+                -_parse_wrong_word_iso_timestamp(record.get('last_wrong_at')),
+                -int(record.get('wrong_count') or 0),
+                (record.get('word') or '').lower(),
+            )
+        )
+
+    return wrong_words[:50]
+
+
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
 @admin_required
 def get_user_detail(current_user, user_id):
@@ -7,6 +63,7 @@ def get_user_detail(current_user, user_id):
       date_to    YYYY-MM-DD  filter sessions/daily to this date (inclusive)
       mode       practice mode filter (smart|listening|meaning|dictation|quickmemory|radio)
       book_id    book filter
+      wrong_words_sort  wrong word sort (last_error|wrong_count), defaults to last_error
     """
     user = User.query.get_or_404(user_id)
 
@@ -15,6 +72,9 @@ def get_user_detail(current_user, user_id):
     date_to   = request.args.get('date_to')     # YYYY-MM-DD string
     f_mode    = request.args.get('mode')
     f_book    = request.args.get('book_id')
+    wrong_words_sort = request.args.get('wrong_words_sort', 'last_error')
+    if wrong_words_sort not in ('last_error', 'wrong_count'):
+        wrong_words_sort = 'last_error'
 
     # ── Build filtered session query ──────────────────────────────────────────
     def _apply_filters(q):
@@ -37,11 +97,8 @@ def get_user_detail(current_user, user_id):
         .order_by(desc(UserChapterProgress.updated_at)).limit(50).all()
     )]
 
-    # Wrong words (top by wrong_count)
-    wrong_words = [r.to_dict() for r in (
-        UserWrongWord.query.filter_by(user_id=user_id)
-        .order_by(desc(UserWrongWord.wrong_count)).limit(50).all()
-    )]
+    # Wrong words (default by latest error time, fallback by wrong_count)
+    wrong_words = _get_sorted_wrong_words(user_id, wrong_words_sort)
 
     # Study sessions — filtered, latest 100
     session_q = _apply_filters(

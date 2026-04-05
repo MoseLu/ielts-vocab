@@ -15,10 +15,11 @@ import ChapterModal from '../../books/dialogs/ChapterModal'
 import PlanModal from '../../books/dialogs/PlanModal'
 import {
   MyBookCard,
-  QuickActionButton,
+  StudyGuidancePanel,
   TodoTaskRow,
 } from './HomePageSections'
 import {
+  buildStudyGuidanceSection,
   buildTaskGuidanceSteps,
   buildStudyBookCards,
   type DailyPlanAction,
@@ -44,7 +45,7 @@ export default function HomePage() {
   const { books, loading: booksLoading } = useVocabBooks()
   const { progressMap, loading: progressLoading } = useAllBookProgress()
   const { myBookIds, loading: myBooksLoading, addBook, removeBook } = useMyBooks()
-  const { learnerProfile, loading: learningStatsLoading } = useLearningStats(7, 'all', 'all')
+  const { learnerProfile, alltime, loading: learningStatsLoading } = useLearningStats(7, 'all', 'all')
   const { containerRef, count: skeletonCount } = useResponsivePageSkeletonCount({
     minColumnWidth: 260,
     gap: 10,
@@ -159,21 +160,19 @@ export default function HomePage() {
     }
   }
 
-  const startWeakModePractice = () => {
-    const weakestMode = learnerProfile?.summary.weakest_mode
-    if (!weakestMode) {
-      navigate('/stats')
-      return
-    }
-
-    requestPracticeMode(weakestMode)
-    openBookFromAction(dailyPlan?.focus_book?.book_id ?? focusBookCard?.book.id ?? null)
-  }
-
-  const focusTask = taskMap['focus-book']
   const reviewTask = taskMap['due-review']
   const errorTask = taskMap['error-review']
-  const weakestModeLabel = learnerProfile?.summary.weakest_mode_label ?? '先看画像'
+  const studyGuidance = useMemo(() => buildStudyGuidanceSection({
+    learnerProfile,
+    alltime,
+    reviewTask,
+    errorTask,
+    focusBookTitle: dailyPlan?.focus_book?.title ?? focusBookCard?.book.title ?? null,
+    focusBookRemainingWords:
+      dailyPlan?.focus_book?.remaining_words
+      ?? focusBookCard?.remainingWords
+      ?? null,
+  }), [alltime, dailyPlan, errorTask, focusBookCard, learnerProfile, reviewTask])
 
   return (
     <div className="study-center-page">
@@ -208,11 +207,11 @@ export default function HomePage() {
               </div>
             </section>
 
-            <section className="study-todo-panel">
-              <div className="study-todo-head">
-                <h1 className="study-todo-title">今日待办</h1>
-              </div>
+            <section className="study-guidance-panel">
+              <StudyGuidancePanel guidance={studyGuidance} />
+            </section>
 
+            <section className="study-todo-panel">
               {taskList.length > 0 ? (
                 <ol className="study-todo-list" aria-label="今日待办列表">
                   {taskList.map(task => (
@@ -228,38 +227,6 @@ export default function HomePage() {
                   待办还在同步，先从词书开始。
                 </div>
               )}
-            </section>
-
-            <section className="study-quick-actions-panel">
-              <div className="study-section-head study-section-head--compact">
-                <h2>快捷入口</h2>
-              </div>
-              <div className="study-quick-actions">
-                <QuickActionButton
-                  label="背新词"
-                  value={focusTask?.kind === 'add-book'
-                    ? '先选词书'
-                    : focusBookCard
-                      ? (focusBookCard.isComplete ? '主线已清空' : `剩余 ${focusBookCard.remainingWords} 词`)
-                      : '先选词书'}
-                  onClick={() => runDailyPlanAction(focusTask?.action)}
-                />
-                <QuickActionButton
-                  label="去复习"
-                  value={reviewTask?.badge ?? '同步中'}
-                  onClick={() => runDailyPlanAction(reviewTask?.action)}
-                />
-                <QuickActionButton
-                  label="清错词"
-                  value={errorTask?.badge ?? '同步中'}
-                  onClick={() => runDailyPlanAction(errorTask?.action)}
-                />
-                <QuickActionButton
-                  label="练弱项"
-                  value={weakestModeLabel}
-                  onClick={startWeakModePractice}
-                />
-              </div>
             </section>
           </div>
         </PageReady>

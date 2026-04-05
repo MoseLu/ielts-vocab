@@ -2,7 +2,7 @@
 
 import { test, expect } from '@playwright/test'
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173'
+const BASE = process.env.BASE_URL || 'http://localhost:3020'
 
 test.describe('Practice Page', () => {
   test.beforeEach(async ({ page }) => {

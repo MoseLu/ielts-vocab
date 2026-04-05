@@ -6,8 +6,9 @@ def _load_part(relative_path: str) -> None:
     exec(compile(part_path.read_text(encoding='utf-8'), str(part_path), 'exec'), globals())
 
 
-_load_part('generate_confusable_book_parts/part_01.py')
-_load_part('generate_confusable_book_parts/part_02.py')
-_load_part('generate_confusable_book_parts/part_03.py')
+_load_part('generate_confusable_book_steps/core.py')
+_load_part('generate_confusable_book_steps/group_builders.py')
+_load_part('generate_confusable_book_steps/high_value_listening.py')
+_load_part('generate_confusable_book_steps/cli.py')
 
 del _load_part

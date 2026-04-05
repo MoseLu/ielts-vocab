@@ -216,10 +216,22 @@ export interface LearnerProfile {
 export type MetricKey = 'words' | 'accuracy' | 'duration'
 export type RangeKey = 7 | 14 | 30
 
-export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
+export interface UseLearningStatsOptions {
+  pollIntervalMs?: number
+}
+
+export function useLearningStats(
+  days: RangeKey,
+  bookId: string,
+  mode: string,
+  options: UseLearningStatsOptions = {},
+) {
   const { user } = useAuth()
   const userId = user?.id ?? null
+  const { pollIntervalMs = 60_000 } = options
   const lastFetchStartedAtRef = useRef(0)
+  const hasResolvedInitialFetchRef = useRef(false)
+  const lastUserIdRef = useRef(userId)
   const [daily, setDaily] = useState<DailyLearning[]>([])
   const [books, setBooks] = useState<LearningBook[]>([])
   const [modes, setModes] = useState<string[]>([])
@@ -233,15 +245,32 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
   const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
   const [useFallback, setUseFallback] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+
+  useEffect(() => {
+    if (lastUserIdRef.current === userId) return
+
+    lastUserIdRef.current = userId
+    hasResolvedInitialFetchRef.current = false
+    setLoading(Boolean(userId))
+    setRefreshing(false)
+  }, [userId])
 
   const fetchStats = useCallback(async () => {
     if (!userId) {
+      hasResolvedInitialFetchRef.current = false
       setLoading(false)
+      setRefreshing(false)
       return
     }
 
+    const isInitialFetch = !hasResolvedInitialFetchRef.current
     lastFetchStartedAtRef.current = Date.now()
-    setLoading(true)
+    if (isInitialFetch) {
+      setLoading(true)
+    } else {
+      setRefreshing(true)
+    }
     try {
       await reconcileQuickMemoryRecordsWithBackend({
         skipIfLocalEmpty: true,
@@ -283,7 +312,9 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
     } catch {
       // ignore
     } finally {
+      hasResolvedInitialFetchRef.current = true
       setLoading(false)
+      setRefreshing(false)
     }
   }, [days, bookId, mode, userId])
 
@@ -312,20 +343,21 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
       window.removeEventListener('pageshow', refetchIfStale)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [fetchStats, userId])
+  }, [refetchIfStale, userId])
 
   useEffect(() => {
     if (!userId) return
+    if (pollIntervalMs <= 0) return
 
     const intervalId = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return
       refetchIfStale()
-    }, 60_000)
+    }, pollIntervalMs)
 
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [refetchIfStale, userId])
+  }, [pollIntervalMs, refetchIfStale, userId])
 
   return {
     daily,
@@ -341,6 +373,7 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
     learnerProfile,
     useFallback,
     loading,
+    refreshing,
     refetch: fetchStats,
   }
 }

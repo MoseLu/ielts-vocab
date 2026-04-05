@@ -46,6 +46,31 @@
   margin-bottom: 12px;
 }
 
+.admin-detail-summary--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-detail-inline-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-detail-inline-filter__label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.admin-detail-table--wrong-words th,
+.admin-detail-table--wrong-words td {
+  text-align: center;
+}
+
 .admin-cell-ellipsis {
   max-width: 120px;
   overflow: hidden;

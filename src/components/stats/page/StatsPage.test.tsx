@@ -22,6 +22,7 @@ const hooksState = vi.hoisted(() => ({
     learnerProfile: null,
     useFallback: false,
     loading: true,
+    refreshing: false,
     refetch: vi.fn(),
   },
 }))
@@ -74,6 +75,7 @@ describe('StatsPage', () => {
     hooksState.learningStats.learnerProfile = null
     hooksState.learningStats.useFallback = false
     hooksState.learningStats.loading = true
+    hooksState.learningStats.refreshing = false
     hooksState.learningStats.refetch.mockReset()
   })
 
@@ -85,7 +87,7 @@ describe('StatsPage', () => {
     )
 
     expect(container.querySelector('.page-skeleton--stats')).not.toBeNull()
-    expect(container.querySelector('.stats-page')).toBeNull()
+    expect(container.querySelector('.page-content.stats-page')).not.toBeNull()
   })
 
   it('renders the statistics dashboard after data resolves', () => {
@@ -152,12 +154,18 @@ describe('StatsPage', () => {
     )
 
     expect(container.querySelector('.page-skeleton')).toBeNull()
+    expect(container.querySelector('.stats-insight-grid .stats-main-card--profile .stats-card-profile')).not.toBeNull()
+    expect(container.querySelector('.stats-wrong-cluster')).not.toBeNull()
+    expect(container.querySelector('.stats-wrong-cluster-grid .stats-main-card--wrong-history .stats-card-wrong')).not.toBeNull()
+    expect(container.querySelector('.stats-wrong-cluster-grid .stats-main-card--wrong-pending .stats-card-wrong')).not.toBeNull()
     expect(screen.getByText('今日学习新词数')).toBeInTheDocument()
     expect(screen.getByText('累计学习新词数')).toBeInTheDocument()
     expect(screen.getByText('统一学习画像')).toBeInTheDocument()
     expect(screen.getByText('按时复习率')).toBeInTheDocument()
     expect(screen.getByText('已到复习点')).toBeInTheDocument()
     expect(screen.getByText('复习库词数')).toBeInTheDocument()
+    expect(screen.queryByText('章节正确率（细项）')).not.toBeInTheDocument()
+    expect(screen.queryByText('章节 × 模式 正确率')).not.toBeInTheDocument()
     expect(screen.getAllByText('kind').length).toBeGreaterThan(0)
   })
 
@@ -201,7 +209,7 @@ describe('StatsPage', () => {
     expect(screen.getByText(/当前没有词到达复习点，所以前两项会显示 0/)).toBeInTheDocument()
   })
 
-  it('shows section skeletons during in-place stats refreshes', () => {
+  it('keeps cached chart sections visible during background refreshes', () => {
     hooksState.learningStats.alltime = {
       total_words: 120,
       accuracy: 88,
@@ -229,7 +237,8 @@ describe('StatsPage', () => {
       total_sessions: 3,
       accuracy: 90,
     }
-    hooksState.learningStats.loading = true
+    hooksState.learningStats.loading = false
+    hooksState.learningStats.refreshing = true
 
     const { container } = render(
       <MemoryRouter>
@@ -238,7 +247,8 @@ describe('StatsPage', () => {
     )
 
     expect(container.querySelector('.page-skeleton')).toBeNull()
-    expect(container.querySelector('.stats-skeleton')).not.toBeNull()
-    expect(container.querySelector('.loading-spinner')).toBeNull()
+    expect(container.querySelector('.stats-skeleton')).toBeNull()
+    expect(screen.getByText('模式占比与各模式统计')).toBeInTheDocument()
+    expect(screen.getByText('学习记录')).toBeInTheDocument()
   })
 })

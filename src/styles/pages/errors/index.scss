@@ -97,9 +97,15 @@
 }
 
 .errors-clear-btn:hover {
-    border-color: var(--error);
-    color: var(--error);
-    background: var(--error-light);
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.errors-clear-btn:disabled {
+    cursor: not-allowed;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
 }
 
 /* Tab bar */
@@ -175,11 +181,41 @@
     color: var(--text-secondary);
 }
 
+.errors-selection-summary {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.errors-dim-summary {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-secondary));
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+}
+
+.errors-dim-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 /* Dimension filter pills */
 .errors-dim-filter {
+    flex: 1;
     flex-wrap: wrap;
     margin-bottom: 10px;
     max-width: 100%;
+}
+
+.errors-select-heading {
+    flex: 0 0 72px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 10px;
 }
 
 /* Empty state */
@@ -287,27 +323,24 @@
     flex-wrap: wrap;
 }
 
-.errors-item-remove {
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    color: var(--text-tertiary);
+.errors-item-select {
+    flex: 0 0 72px;
+    display: inline-flex;
+    justify-content: center;
+    color: var(--text-secondary);
     cursor: pointer;
-    padding: 4px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    transition: all var(--transition-fast);
+    user-select: none;
 }
 
-.errors-item-remove:hover {
-    background: var(--error-light);
-    color: var(--error);
+.errors-item-select--checked {
+    color: var(--accent);
 }
 
-.errors-item-remove svg {
+.errors-item-checkbox {
     width: 16px;
     height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
 }
 
 /* Dimension error badges */
@@ -375,4 +408,17 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .errors-toolbar,
+    .errors-actions {
+        flex-wrap: wrap;
+    }
+
+    .errors-dim-filter-row {
+        gap: 8px;
+    }
+
+    .errors-select-heading,
+    .errors-item-select {
+        flex-basis: 56px;
+    }
 }

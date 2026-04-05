@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWrongWords } from '../../../features/vocabulary/hooks'
 import {
@@ -18,7 +18,15 @@ import {
   hasWrongWordHistory,
   hasWrongWordPending,
   isWrongWordPendingInDimension,
+  readWrongWordsReviewSelectionFromStorage,
+  writeWrongWordsReviewSelectionToStorage,
 } from '../../../features/vocabulary/wrongWordsStore'
+import {
+  dedupeWrongWordKeys,
+  getScopedWrongWordDimensions,
+  isSameWrongWordKeyList,
+  normalizeWrongWordKey,
+} from './errorsPageHelpers'
 import { Page, PageContent, PageHeader } from '../../layout'
 import { EmptyState, SegmentedControl, UnderlineTabs } from '../../ui'
 
@@ -86,24 +94,54 @@ export default function ErrorsPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [wrongCountRange, setWrongCountRange] = useState<WrongCountRange>('all')
-  const { words, removeWord, clearAll } = useWrongWords()
+  const [selectedWordKeys, setSelectedWordKeys] = useState<string[]>(
+    () => readWrongWordsReviewSelectionFromStorage(),
+  )
+  const { words } = useWrongWords()
   const { minWrongCount, maxWrongCount } = getWrongCountBounds(wrongCountRange)
 
   const historyWords = useMemo(() => words.filter(word => hasWrongWordHistory(word)), [words])
   const pendingWords = useMemo(() => words.filter(word => hasWrongWordPending(word)), [words])
   const scopeWords = scope === 'pending' ? pendingWords : historyWords
+  const knownWordKeySet = useMemo(
+    () => new Set(words.map(word => normalizeWrongWordKey(word.word)).filter(Boolean)),
+    [words],
+  )
 
-  const dimCounts = useMemo(() => {
-    return WRONG_WORD_DIMENSIONS.reduce((result, dimension) => {
-      result[dimension] = scopeWords.filter(word => {
-        if (scope === 'history') {
-          return getWrongWordDimensionHistoryWrong(word, dimension) > 0
-        }
-        return isWrongWordPendingInDimension(word, dimension)
-      }).length
+  useEffect(() => {
+    const nextSelectedWordKeys = selectedWordKeys.filter(key => knownWordKeySet.has(key))
+    if (isSameWrongWordKeyList(nextSelectedWordKeys, selectedWordKeys)) return
+
+    setSelectedWordKeys(nextSelectedWordKeys)
+    writeWrongWordsReviewSelectionToStorage(nextSelectedWordKeys)
+  }, [knownWordKeySet, selectedWordKeys])
+
+  const dimStats = useMemo(() => {
+    const counts = WRONG_WORD_DIMENSIONS.reduce((result, dimension) => {
+      result[dimension] = 0
       return result
     }, {} as Record<WrongWordDimension, number>)
+    let hitCount = 0
+    let overlappingWordCount = 0
+
+    scopeWords.forEach(word => {
+      const matchedDimensions = getScopedWrongWordDimensions(word, scope)
+      hitCount += matchedDimensions.length
+      if (matchedDimensions.length > 1) {
+        overlappingWordCount += 1
+      }
+      matchedDimensions.forEach(dimension => {
+        counts[dimension] += 1
+      })
+    })
+
+    return {
+      counts,
+      hitCount,
+      overlappingWordCount,
+    }
   }, [scope, scopeWords])
+  const dimCounts = dimStats.counts
 
   const filteredWords = useMemo(() => {
     return [...filterWrongWords(words, {
@@ -127,6 +165,14 @@ export default function ErrorsPage() {
       return getWrongWordActiveCount(b, scope) - getWrongWordActiveCount(a, scope)
     })
   }, [dimFilter, endDate, maxWrongCount, minWrongCount, scope, startDate, words])
+  const selectedWordKeySet = useMemo(() => new Set(selectedWordKeys), [selectedWordKeys])
+  const selectedFilteredWordCount = useMemo(() => {
+    return filteredWords.filter(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word))).length
+  }, [filteredWords, selectedWordKeySet])
+  const selectedWordCount = selectedWordKeys.length
+  const selectedOutsideFilterCount = Math.max(0, selectedWordCount - selectedFilteredWordCount)
+  const allFilteredSelected = filteredWords.length > 0
+    && filteredWords.every(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
 
   const hasActiveFilters = dimFilter !== 'all' || Boolean(startDate) || Boolean(endDate) || wrongCountRange !== 'all'
   const practiceQuery = buildWrongWordsPracticeQuery({
@@ -137,6 +183,35 @@ export default function ErrorsPage() {
     minWrongCount,
     maxWrongCount,
   })
+  const manualPracticeQuery = practiceQuery ? `${practiceQuery}&selection=manual` : 'selection=manual'
+
+  const updateSelectedWordKeys = (updater: (previous: string[]) => string[]) => {
+    setSelectedWordKeys(previous => {
+      const next = dedupeWrongWordKeys(updater(previous))
+      writeWrongWordsReviewSelectionToStorage(next)
+      return next
+    })
+  }
+
+  const toggleWordSelection = (word: string) => {
+    const key = normalizeWrongWordKey(word)
+    updateSelectedWordKeys(previous => (
+      previous.includes(key)
+        ? previous.filter(item => item !== key)
+        : [...previous, key]
+    ))
+  }
+
+  const selectFilteredWords = () => {
+    updateSelectedWordKeys(previous => [
+      ...previous,
+      ...filteredWords.map(word => word.word),
+    ])
+  }
+
+  const clearSelectedWords = () => {
+    updateSelectedWordKeys(() => [])
+  }
 
   const toolbar = (
     <div className="errors-toolbar">
@@ -155,19 +230,28 @@ export default function ErrorsPage() {
         <div className="errors-actions">
           <button
             className="errors-practice-btn"
-            disabled={filteredWords.length === 0}
+            disabled={selectedWordCount === 0}
             onClick={() => {
               requestPracticeMode(dimFilter)
-              navigate(practiceQuery ? `/practice?mode=errors&${practiceQuery}` : '/practice?mode=errors')
+              navigate(`/practice?mode=errors&${manualPracticeQuery}`)
             }}
           >
-            复习（{filteredWords.length}词）
+            复习已选（{selectedWordCount}词）
           </button>
-          {scope === 'pending' && pendingWords.length > 0 && (
-            <button className="errors-clear-btn" onClick={clearAll}>
-              清空未过
-            </button>
-          )}
+          <button
+            className="errors-clear-btn"
+            disabled={filteredWords.length === 0 || allFilteredSelected}
+            onClick={selectFilteredWords}
+          >
+            勾选当前筛选
+          </button>
+          <button
+            className="errors-clear-btn"
+            disabled={selectedWordCount === 0}
+            onClick={clearSelectedWords}
+          >
+            清空勾选
+          </button>
         </div>
       )}
     </div>
@@ -283,21 +367,40 @@ export default function ErrorsPage() {
               </div>
             )}
 
-            <SegmentedControl
-              className="errors-dim-filter"
-              ariaLabel="错词维度筛选"
-              value={dimFilter}
-              onChange={value => setDimFilter(value as DimFilter)}
-              options={[
-                { value: 'all', label: '全部', badge: scopeWords.length },
-                ...WRONG_WORD_DIMENSIONS.map(dimension => ({
-                  value: dimension,
-                  label: DIM_SHORT_LABEL[dimension],
-                  badge: dimCounts[dimension] > 0 ? dimCounts[dimension] : undefined,
-                  disabled: dimCounts[dimension] === 0,
-                })),
-              ]}
-            />
+            <div className="errors-selection-summary">
+              错词不会被删除；勾选后只加入复习。已勾选 {selectedWordCount} 词，当前筛选中 {selectedFilteredWordCount} 词
+              {selectedOutsideFilterCount > 0 ? `，另外 ${selectedOutsideFilterCount} 词来自其他筛选` : ''}
+              。
+            </div>
+
+            {scopeWords.length > 0 && (
+              <div className="errors-dim-summary" role="note">
+                按维度筛选时会重叠统计：当前 {scopeWords.length} 个{SCOPE_LABELS[scope]}命中了 {dimStats.hitCount} 次维度
+                {dimStats.overlappingWordCount > 0
+                  ? `，其中 ${dimStats.overlappingWordCount} 个词同时出现在多个维度里`
+                  : ''}
+                ，所以这些数字不是拆分汇总。
+              </div>
+            )}
+
+            <div className="errors-dim-filter-row">
+              <SegmentedControl
+                className="errors-dim-filter"
+                ariaLabel="错词维度筛选"
+                value={dimFilter}
+                onChange={value => setDimFilter(value as DimFilter)}
+                options={[
+                  { value: 'all', label: '全部', badge: scopeWords.length },
+                  ...WRONG_WORD_DIMENSIONS.map(dimension => ({
+                    value: dimension,
+                    label: DIM_SHORT_LABEL[dimension],
+                    badge: dimCounts[dimension] > 0 ? dimCounts[dimension] : undefined,
+                    disabled: dimCounts[dimension] === 0,
+                  })),
+                ]}
+              />
+              <div className="errors-select-heading">加入复习</div>
+            </div>
 
             {filteredWords.length === 0 ? (
               <EmptyState
@@ -312,6 +415,8 @@ export default function ErrorsPage() {
                   const collectedOn = formatWrongWordOccurrenceDate(word)
                   const historyDims = WRONG_WORD_DIMENSIONS.filter(dimension => getWrongWordDimensionHistoryWrong(word, dimension) > 0)
                   const pendingDimensionCount = WRONG_WORD_DIMENSIONS.filter(dimension => isWrongWordPendingInDimension(word, dimension)).length
+                  const wordKey = normalizeWrongWordKey(word.word)
+                  const checked = selectedWordKeySet.has(wordKey)
 
                   return (
                     <div key={word.word} className="errors-item">
@@ -364,18 +469,15 @@ export default function ErrorsPage() {
                           })}
                         </div>
                       </div>
-                      {scope === 'pending' && hasWrongWordPending(word) && (
-                        <button
-                          className="errors-item-remove"
-                          onClick={() => removeWord(word.word)}
-                          title="移出未过错词"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </button>
-                      )}
+                      <label className={`errors-item-select${checked ? ' errors-item-select--checked' : ''}`}>
+                        <input
+                          className="errors-item-checkbox"
+                          type="checkbox"
+                          aria-label={`选择 ${word.word}`}
+                          checked={checked}
+                          onChange={() => toggleWordSelection(word.word)}
+                        />
+                      </label>
                     </div>
                   )
                 })}

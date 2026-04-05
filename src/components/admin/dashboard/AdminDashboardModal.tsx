@@ -4,11 +4,13 @@ import {
   buildSessionWordSample,
   fmtChapterId,
   fmtDate,
+  fmtDateTime,
   fmtSeconds,
   fmtSessionTimeRange,
   modeLabels,
   bookLabels,
   type UserDetail,
+  type WrongWordsSort,
 } from './AdminDashboard.types'
 import { MiniBarChart } from './AdminDashboardPrimitives'
 
@@ -19,13 +21,21 @@ interface AdminDashboardModalProps {
   detailDateFrom: string
   detailDateTo: string
   detailMode: string
+  detailWrongWordsSort: WrongWordsSort
   onClose: () => void
   onToggleFullscreen: () => void
   onSetDetailTab: (value: AdminDetailTab) => void
   onSetDetailDateFrom: (value: string) => void
   onSetDetailDateTo: (value: string) => void
   onSetDetailMode: (value: string) => void
-  onFetchUserDetail: (userId: number, opts?: { dateFrom?: string; dateTo?: string; mode?: string; bookId?: string }) => void
+  onSetDetailWrongWordsSort: (value: WrongWordsSort) => void
+  onFetchUserDetail: (userId: number, opts?: {
+    dateFrom?: string
+    dateTo?: string
+    mode?: string
+    bookId?: string
+    wrongWordsSort?: WrongWordsSort
+  }) => void
 }
 
 export function AdminDashboardModal({
@@ -35,12 +45,14 @@ export function AdminDashboardModal({
   detailDateFrom,
   detailDateTo,
   detailMode,
+  detailWrongWordsSort,
   onClose,
   onToggleFullscreen,
   onSetDetailTab,
   onSetDetailDateFrom,
   onSetDetailDateTo,
   onSetDetailMode,
+  onSetDetailWrongWordsSort,
   onFetchUserDetail,
 }: AdminDashboardModalProps) {
   const modalHeader = (
@@ -133,12 +145,13 @@ export function AdminDashboardModal({
         dateFrom: detailDateFrom,
         dateTo: detailDateTo,
         mode: detailMode,
+        wrongWordsSort: detailWrongWordsSort,
       })}>查询</button>
       <button className="admin-filter-reset" onClick={() => {
         onSetDetailDateFrom('')
         onSetDetailDateTo('')
         onSetDetailMode('')
-        onFetchUserDetail(selectedUser.user.id)
+        onFetchUserDetail(selectedUser.user.id, { wrongWordsSort: detailWrongWordsSort })
       }}>重置</button>
     </div>
   )
@@ -240,10 +253,34 @@ export function AdminDashboardModal({
             <div className="admin-empty">暂无错词</div>
           ) : (
             <>
-              <div className="admin-detail-summary">
-                共 {selectedUser.user.stats.wrong_words_count} 个错词，显示前 {selectedUser.wrong_words.length} 个（按错误次数排序）
+              <div className="admin-detail-summary admin-detail-summary--row">
+                <span>
+                  共 {selectedUser.user.stats.wrong_words_count} 个错词，显示前 {selectedUser.wrong_words.length} 个
+                  {detailWrongWordsSort === 'last_error' ? '，当前按最近错误排序' : '，当前按错误次数排序'}
+                </span>
+                <label className="admin-detail-inline-filter">
+                  <span className="admin-detail-inline-filter__label">错词排序</span>
+                  <select
+                    aria-label="错词排序"
+                    className="admin-filter-select"
+                    value={detailWrongWordsSort}
+                    onChange={e => {
+                      const nextSort = e.target.value as WrongWordsSort
+                      onSetDetailWrongWordsSort(nextSort)
+                      onFetchUserDetail(selectedUser.user.id, {
+                        dateFrom: detailDateFrom,
+                        dateTo: detailDateTo,
+                        mode: detailMode,
+                        wrongWordsSort: nextSort,
+                      })
+                    }}
+                  >
+                    <option value="last_error">最近错误时间</option>
+                    <option value="wrong_count">错误次数</option>
+                  </select>
+                </label>
               </div>
-              <table className="admin-detail-table">
+              <table className="admin-detail-table admin-detail-table--wrong-words">
                 <thead><tr><th>单词</th><th>音标</th><th>词性</th><th>释义</th><th>错误次数</th><th>最近错误</th></tr></thead>
                 <tbody>
                   {selectedUser.wrong_words.map((w, i) => (
@@ -253,7 +290,7 @@ export function AdminDashboardModal({
                       <td className="admin-cell-muted">{w.pos || '—'}</td>
                       <td className="admin-cell-ellipsis admin-cell-ellipsis--wide" title={w.definition}>{w.definition}</td>
                       <td><span className={`admin-wrong-count ${w.wrong_count >= 5 ? 'high' : w.wrong_count >= 3 ? 'mid' : ''}`}>{w.wrong_count}次</span></td>
-                      <td className="admin-cell-muted">{fmtDate(w.updated_at)}</td>
+                      <td className="admin-cell-muted">{fmtDateTime(w.last_wrong_at || w.updated_at)}</td>
                     </tr>
                   ))}
                 </tbody>

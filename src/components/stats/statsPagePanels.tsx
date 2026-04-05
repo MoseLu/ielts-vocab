@@ -110,11 +110,11 @@ export function LearnerProfileCard({
         </div>
       </div>
 
-      <div className="stats-profile-block">
+      <div className="stats-profile-block stats-profile-block--focus">
         <h3 className="stats-subsection-title">重点突破词</h3>
         {focusWords.length > 0 ? (
-          <ul className="stats-profile-list">
-            {focusWords.slice(0, 4).map(item => (
+          <ul className="stats-profile-list stats-profile-list--focus">
+            {focusWords.slice(0, 3).map(item => (
               <li key={item.word}>
                 <strong>{item.word}</strong>
                 <span>{item.dominant_dimension_label}</span>
@@ -126,7 +126,7 @@ export function LearnerProfileCard({
         )}
       </div>
 
-      <div className="stats-profile-block">
+      <div className="stats-profile-block stats-profile-block--topics">
         <h3 className="stats-subsection-title">重复困惑主题</h3>
         {repeatedTopics.length > 0 ? (
           <ul className="stats-profile-list stats-profile-list--topics">
@@ -142,10 +142,10 @@ export function LearnerProfileCard({
         )}
       </div>
 
-      <div className="stats-profile-block">
+      <div className="stats-profile-block stats-profile-block--actions">
         <h3 className="stats-subsection-title">下一步动作</h3>
         <ul className="stats-profile-actions">
-          {nextActions.slice(0, 3).map(action => (
+          {nextActions.slice(0, 2).map(action => (
             <li key={action}>{action}</li>
           ))}
         </ul>

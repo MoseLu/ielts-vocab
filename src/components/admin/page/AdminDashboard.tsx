@@ -19,6 +19,7 @@ export default function AdminDashboard() {
     detailDateFrom,
     detailDateTo,
     detailMode,
+    detailWrongWordsSort,
     ttsBooks,
     ttsBooksLoading,
     loading,
@@ -31,6 +32,7 @@ export default function AdminDashboard() {
     setDetailDateFrom,
     setDetailDateTo,
     setDetailMode,
+    setDetailWrongWordsSort,
     fetchUserDetail,
     handleGenerate,
     handleSearchSubmit,
@@ -78,12 +80,14 @@ export default function AdminDashboard() {
           detailDateFrom={detailDateFrom}
           detailDateTo={detailDateTo}
           detailMode={detailMode}
+          detailWrongWordsSort={detailWrongWordsSort}
           onClose={closeDetail}
           onToggleFullscreen={() => setIsFullscreen(flag => !flag)}
           onSetDetailTab={setDetailTab}
           onSetDetailDateFrom={setDetailDateFrom}
           onSetDetailDateTo={setDetailDateTo}
           onSetDetailMode={setDetailMode}
+          onSetDetailWrongWordsSort={setDetailWrongWordsSort}
           onFetchUserDetail={fetchUserDetail}
         />
       )}

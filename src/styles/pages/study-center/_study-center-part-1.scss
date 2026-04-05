@@ -17,6 +17,7 @@
 }
 
 .study-todo-panel,
+.study-guidance-panel,
 .study-quick-actions-panel,
 .study-guide-hero,
 .study-guide-panel,
@@ -32,6 +33,7 @@
 }
 
 .study-todo-panel,
+.study-guidance-panel,
 .study-quick-actions-panel,
 .study-guide-panel,
 .study-guide-side-card {
@@ -57,17 +59,20 @@
 
 .study-todo-list {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin: 0;
     padding: 0;
     list-style: none;
+    align-items: stretch;
 }
 
 .study-todo-item {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 16px;
+    gap: 12px;
+    height: 100%;
+    padding: 14px;
     border-radius: 18px;
     border: 1px solid rgba(15, 23, 42, 0.08);
     background:
@@ -82,10 +87,10 @@
 }
 
 .study-todo-card-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 12px 14px;
 }
 
 .study-todo-heading {
@@ -97,6 +102,14 @@
 }
 
 .study-todo-main {
+    min-width: 0;
+}
+
+.study-todo-head-side {
+    display: grid;
+    justify-items: end;
+    align-content: start;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -140,24 +153,19 @@
     transform: rotate(45deg) scale(1);
 }
 .study-todo-title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    display: block;
     min-width: 0;
 }
 .study-todo-title-main {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px 10px;
+    display: grid;
+    gap: 4px;
     min-width: 0;
 }
 .study-todo-title-row h3 {
     margin: 0;
     font-size: 16px;
     line-height: 1.35;
-    white-space: nowrap;
+    white-space: normal;
 }
 .study-todo-subtitle {
     min-width: 0;
@@ -168,7 +176,9 @@
 .study-todo-title-meta {
     display: inline-flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
+    flex-wrap: wrap;
     flex-shrink: 0;
 }
 .study-todo-steps {
@@ -299,19 +309,6 @@
 }
 
 @media (max-width: 960px) {
-    .study-todo-card-head {
-        flex-direction: column;
-    }
-    .study-todo-title-row {
-        flex-wrap: wrap;
-        align-items: flex-start;
-    }
-    .study-todo-title-row h3 {
-        white-space: normal;
-    }
-    .study-todo-title-main {
-        align-items: flex-start;
-    }
     .study-todo-step {
         flex-direction: column;
         align-items: stretch;
@@ -319,12 +316,28 @@
     .study-todo-step-state {
         align-self: flex-start;
     }
-    .study-todo-action {
-        align-self: stretch;
-        width: 100%;
+}
+@media (max-width: 860px) {
+    .study-todo-list {
+        grid-template-columns: 1fr;
     }
 }
 @media (max-width: 640px) {
+    .study-todo-card-head {
+        grid-template-columns: 1fr;
+    }
+
+    .study-todo-head-side {
+        justify-items: stretch;
+    }
+
+    .study-todo-title-meta {
+        justify-content: flex-start;
+    }
+
+    .study-todo-action {
+        width: 100%;
+    }
 }
 .study-todo-empty {
     padding: 16px;

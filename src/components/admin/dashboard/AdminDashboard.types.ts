@@ -83,6 +83,7 @@ export interface UserDetail {
     pos: string
     definition: string
     wrong_count: number
+    last_wrong_at: string | null
     updated_at: string
   }>
   sessions: Array<{
@@ -122,6 +123,7 @@ export interface UserDetail {
 
 export type AdminTab = 'overview' | 'users' | 'tts'
 export type AdminDetailTab = 'progress' | 'wrong_words' | 'sessions' | 'chart' | 'chapter_daily'
+export type WrongWordsSort = 'last_error' | 'wrong_count'
 
 export const modeLabels: Record<string, string> = {
   smart: '智能模式',
@@ -170,6 +172,12 @@ export function fmtTime(iso: string | null) {
   const d = parseDateValue(iso)
   if (!d) return '—'
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+export function fmtDateTime(iso: string | null) {
+  const d = parseDateValue(iso)
+  if (!d) return '—'
+  return `${fmtDate(iso)} ${fmtTime(iso)}`
 }
 
 export function resolveSessionEnd(startedAt: string | null, endedAt: string | null, durationSeconds: number) {

@@ -86,4 +86,11 @@ describe('useSpeechRecognition', () => {
     expect(ioMock).toHaveBeenCalledWith('wss://axiomaticworld.com/speech', expect.any(Object))
     expect(consoleLogSpy).not.toHaveBeenCalled()
   })
+
+  it('does not create a socket connection when disabled', () => {
+    renderHook(() => useSpeechRecognition({ enabled: false }))
+
+    expect(ioMock).not.toHaveBeenCalled()
+    expect(mockSocket.disconnect).not.toHaveBeenCalled()
+  })
 })

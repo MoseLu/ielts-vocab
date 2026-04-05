@@ -36,6 +36,24 @@ export function getWrongWordsProgressStorageKey(userId?: ScopedUserId): string {
   return buildUserScopedStorageKey(STORAGE_KEYS.WRONG_WORDS_PROGRESS, userId)
 }
 
+export function getWrongWordsReviewSelectionStorageKey(userId?: ScopedUserId): string {
+  return buildUserScopedStorageKey(STORAGE_KEYS.WRONG_WORDS_REVIEW_SELECTION, userId)
+}
+
+function normalizeWrongWordSelection(words: string[]): string[] {
+  const result: string[] = []
+  const seen = new Set<string>()
+
+  words.forEach(word => {
+    const normalized = typeof word === 'string' ? word.trim().toLowerCase() : ''
+    if (!normalized || seen.has(normalized)) return
+    seen.add(normalized)
+    result.push(normalized)
+  })
+
+  return result
+}
+
 export function readWrongWordsFromStorage(userId?: ScopedUserId): WrongWordRecord[] {
   const stored = getStorageItem<WrongWordInput[]>(getWrongWordsStorageKey(userId), [])
   return Array.isArray(stored) ? mergeWrongWordLists(stored) : []
@@ -44,6 +62,17 @@ export function readWrongWordsFromStorage(userId?: ScopedUserId): WrongWordRecor
 export function writeWrongWordsToStorage(words: WrongWordInput[], userId?: ScopedUserId): WrongWordRecord[] {
   const normalized = mergeWrongWordLists(words)
   setStorageItem(getWrongWordsStorageKey(userId), normalized)
+  return normalized
+}
+
+export function readWrongWordsReviewSelectionFromStorage(userId?: ScopedUserId): string[] {
+  const stored = getStorageItem<string[]>(getWrongWordsReviewSelectionStorageKey(userId), [])
+  return Array.isArray(stored) ? normalizeWrongWordSelection(stored) : []
+}
+
+export function writeWrongWordsReviewSelectionToStorage(words: string[], userId?: ScopedUserId): string[] {
+  const normalized = normalizeWrongWordSelection(words)
+  setStorageItem(getWrongWordsReviewSelectionStorageKey(userId), normalized)
   return normalized
 }
 

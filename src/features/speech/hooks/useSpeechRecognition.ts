@@ -10,6 +10,8 @@ import { io, Socket } from 'socket.io-client'
 // ============================================================================
 
 export interface SpeechRecognitionOptions {
+  /** Whether the socket connection should be active */
+  enabled?: boolean
   /** Language code (default: 'zh') */
   language?: string
   /** Enable voice activity detection (default: true) */
@@ -72,6 +74,7 @@ interface RecognitionErrorPayload {
 // ============================================================================
 
 export function useSpeechRecognition({
+  enabled = true,
   language = 'zh',
   enableVad = true,
   autoStop = true,
@@ -89,7 +92,6 @@ export function useSpeechRecognition({
   const processorRef = useRef<ScriptProcessorNode | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const isRecordingRef = useRef(false)
-  const mountedRef = useRef(false)
   const autoStopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Use refs to keep callbacks fresh without triggering re-renders
@@ -108,9 +110,13 @@ export function useSpeechRecognition({
 
   // Initialize socket once on mount
   useEffect(() => {
-    if (mountedRef.current) return
-    mountedRef.current = true
-
+    if (!enabled) {
+      setIsConnected(false)
+      setIsRecording(false)
+      setIsReady(false)
+      isRecordingRef.current = false
+      return
+    }
 
     // Use relative path via Vite proxy; supports remote access (NAT traversal)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -227,9 +233,12 @@ export function useSpeechRecognition({
         socketRef.current.disconnect()
         socketRef.current = null
       }
-      mountedRef.current = false
+      setIsConnected(false)
+      setIsRecording(false)
+      setIsReady(false)
+      isRecordingRef.current = false
     }
-  }, []) // Empty deps - only run once
+  }, [enabled])
 
   // Start recording
   const startRecording = useCallback(async () => {

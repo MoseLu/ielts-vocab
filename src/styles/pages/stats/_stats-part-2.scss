@@ -21,8 +21,8 @@
     }
 
     .stats-section,
-    .stats-main-layout .stats-section,
-    .stats-left-stack > .stats-section {
+    .stats-insight-grid .stats-section,
+    .stats-wrong-cluster-grid > .stats-section {
         padding: 10px;
         border-radius: 10px;
     }
@@ -78,102 +78,87 @@
     height: 72px;
 }
 
-/* ── 主布局高度：父级 .stats-main-layout 行内 align-items:stretch → 左列(错词 Top+概览)与右列同高，行高=max(左,右)。
-   右列 .stats-main-right overflow:hidden + 纵向 flex，统一约束艾宾浩斯/学习记录与下方表格；底行 flex:1 1 0% + min-height:0，表格区再 flex:1 + overflow:auto 吃满剩余并滚动。── */
-/* 与上方「模式占比」同宽：上方 grid 已用负 margin 与 .stats-section 同参考宽；此处不再加横向 padding，避免与卡片内边距重复缩窄整行 */
+/* ── 主布局：学习画像独占上行，下方两张图表各占半宽；错词分层保持独立一组。── */
 .stats-main-layout-wrap {
     width: 100%;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--stats-align-gutter, 10px);
     box-sizing: border-box;
     padding-left: 0;
     padding-right: 0;
     overflow: visible;
 }
 
-.stats-main-layout {
+.stats-insight-grid {
     display: grid;
-    grid-template-columns: minmax(0, var(--stats-col-left-pct, 32%)) minmax(0, 1fr);
-    align-items: flex-start;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
     gap: var(--stats-align-gutter, 10px);
     width: 100%;
     min-width: 0;
-    min-height: auto;
     box-sizing: border-box;
 }
 
-.stats-main-layout--balanced {
-    align-items: stretch;
-}
-
-.stats-main-left {
+.stats-main-card {
     min-width: 0;
     box-sizing: border-box;
-}
-
-.stats-main-left .stats-left-stack {
-    gap: var(--stats-align-gutter, 10px);
-}
-
-.stats-main-right {
-    min-width: 0;
-    min-height: auto;
     display: flex;
-    flex-direction: column;
-    gap: var(--stats-align-gutter, 10px);
-    overflow: visible;
 }
 
-.stats-main-right-top {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--stats-align-gutter, 10px);
-    min-height: auto;
+.stats-main-card--profile {
+    grid-column: 1 / -1;
 }
 
-.stats-main-right-top > .stats-main-cell {
-    min-width: 0;
-    min-height: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-.stats-main-right-bottom {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--stats-align-gutter, 10px);
-    min-height: auto;
-    overflow: visible;
-}
-
-.stats-main-right-bottom > .stats-main-cell {
-    min-width: 0;
-    min-height: auto;
-    overflow: visible;
-}
-
-.stats-main-layout--balanced .stats-main-right-bottom {
-    height: var(--stats-right-bottom-height);
-    min-height: var(--stats-right-bottom-height);
-}
-
-.stats-main-layout--balanced .stats-main-right-bottom > .stats-main-cell {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.stats-left-stack {
-    min-width: 0;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--stats-align-gutter, 10px);
-}
-
-/* 与 gap 统一间距，避免最后一卡多出 margin 导致整列底边与对不齐 */
-.stats-left-stack > .stats-section,
-.stats-main-layout .stats-section {
+.stats-main-card > .stats-section,
+.stats-insight-grid .stats-section {
     margin-bottom: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.stats-wrong-cluster {
+    display: flex;
+    flex-direction: column;
+    gap: var(--stats-align-gutter, 10px);
+}
+
+.stats-wrong-cluster-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px 16px;
+}
+
+.stats-wrong-cluster-copy {
+    flex: 1 1 280px;
+    min-width: 0;
+}
+
+.stats-wrong-cluster-copy .stats-section-title,
+.stats-wrong-cluster-copy .stats-section-hint {
+    margin-bottom: 0;
+}
+
+.stats-wrong-cluster-copy .stats-section-hint {
+    margin-top: 4px;
+}
+
+.stats-wrong-cluster-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px 14px;
+}
+
+.stats-wrong-cluster-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--stats-align-gutter, 10px);
+    align-items: start;
 }
 
 .stats-card-wrong {
@@ -204,25 +189,18 @@
     justify-content: center;
 }
 
-.stats-card-wrong-overview {
-    flex: 0 0 auto;
-}
-
-.stats-card-wrong-overview .stats-section-title {
-    margin-bottom: var(--space-stack);
-}
-
 .stats-card-profile {
     min-height: auto;
 }
 
 .stats-profile-card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
 }
 
 .stats-profile-summary {
+    grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
@@ -252,6 +230,12 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
+}
+
+.stats-profile-block--focus,
+.stats-profile-block--actions {
+    grid-column: 1 / -1;
 }
 
 .stats-profile-chip-list {
@@ -298,11 +282,76 @@
     justify-content: space-between;
 }
 
+.stats-profile-list--focus,
+.stats-profile-list--topics {
+    list-style: none;
+    padding-left: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.stats-profile-list--focus li,
+.stats-profile-list--topics li {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 4px;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.96);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.stats-profile-list--focus strong,
+.stats-profile-list--topics strong {
+    display: block;
+    max-width: 100%;
+    line-height: 1.2;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stats-profile-list--focus span,
+.stats-profile-list--topics span {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-secondary);
+}
+
+.stats-profile-actions {
+    list-style: none;
+    padding-left: 0;
+    gap: 8px;
+}
+
+.stats-profile-actions li {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255, 247, 237, 0.7);
+    border: 1px solid rgba(251, 191, 36, 0.18);
+    line-height: 1.5;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}
+
 .stats-profile-muted,
 .stats-profile-trend {
     margin: 0;
     color: var(--text-tertiary);
     font-size: 12px;
+}
+
+.stats-profile-trend {
+    grid-column: 1 / -1;
 }
 
 .stats-main-cell--ebb .stats-card-ebbinghaus {

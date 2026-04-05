@@ -13,7 +13,7 @@ import { DEFAULT_SETTINGS } from '../../../constants'
 import { apiFetch, buildApiUrl } from '../../../lib'
 import { loadSmartStats, loadSmartStatsFromBackend, buildSmartQueue } from '../../../lib/smartMode'
 import { filterWrongWords, parseWrongWordsFiltersFromSearchParams } from '../../../features/vocabulary/wrongWordsFilters'
-import { loadWrongWords } from '../../../features/vocabulary/wrongWordsStore'
+import { loadWrongWords, readWrongWordsReviewSelectionFromStorage } from '../../../features/vocabulary/wrongWordsStore'
 import { safeParse } from '../../../lib/validation'
 import { LearnerProfileSchema, type LearnerProfile as BackendLearnerProfile } from '../../../lib/schemas'
 import { shuffleArray } from '../../../components/practice/utils'
@@ -21,6 +21,7 @@ import {
   buildWrongWordsQueue,
   createResetProgressState,
   filterVocabularyForMode,
+  normalizeOptionWordKey,
   persistWrongWordsProgress,
   readWrongWordsProgress,
   type ReviewQueueContext,
@@ -274,10 +275,18 @@ export function usePracticePageData({
           })
           if (cancelled) return
 
-          const filteredWrongWords = filterWrongWords(
-            wrongWords,
-            parseWrongWordsFiltersFromSearchParams(searchParams),
-          )
+          const selectedWrongWordKeys = searchParams.get('selection') === 'manual'
+            ? new Set(readWrongWordsReviewSelectionFromStorage(userId))
+            : null
+          const filteredWrongWords = selectedWrongWordKeys
+            ? wrongWords.filter(word => {
+                const key = normalizeOptionWordKey(word.word)
+                return key ? selectedWrongWordKeys.has(key) : false
+              })
+            : filterWrongWords(
+                wrongWords,
+                parseWrongWordsFiltersFromSearchParams(searchParams),
+              )
           const savedWords: Word[] = filteredWrongWords.map(word => ({
             word: word.word,
             phonetic: word.phonetic,
@@ -287,7 +296,7 @@ export function usePracticePageData({
           const words = filterVocabularyForMode(savedWords, mode)
           const indices = Array.from({ length: words.length }, (_, index) => index)
           const fallbackQueue = settings.shuffle !== false ? shuffleArray(indices) : indices
-          const savedProgress = readWrongWordsProgress(mode, userId)
+          const savedProgress = selectedWrongWordKeys ? null : readWrongWordsProgress(mode, userId)
           const nextQueue = savedProgress?.is_completed
             ? fallbackQueue
             : buildWrongWordsQueue(words, savedProgress?.queue_words) ?? fallbackQueue

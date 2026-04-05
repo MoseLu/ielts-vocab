@@ -28,7 +28,27 @@ const hooksState = vi.hoisted(() => ({
   },
   learningStats: {
     loading: false,
-    alltime: null,
+    alltime: {
+      total_words: 120,
+      accuracy: 76,
+      duration_seconds: 3600,
+      today_accuracy: 80,
+      today_duration_seconds: 900,
+      today_new_words: 12,
+      today_review_words: 6,
+      alltime_review_words: 30,
+      cumulative_review_events: 56,
+      ebbinghaus_rate: 33,
+      ebbinghaus_due_total: 6,
+      ebbinghaus_met: 2,
+      qm_word_total: 18,
+      ebbinghaus_stages: [],
+      upcoming_reviews_3d: 9,
+      streak_days: 4,
+      weakest_mode: 'meaning',
+      weakest_mode_accuracy: 68,
+      trend_direction: 'stable',
+    },
     learnerProfile: {
       date: '2026-04-04',
       summary: {
@@ -161,6 +181,27 @@ describe('HomePage', () => {
     hooksState.myBooks.addBook.mockReset()
     hooksState.myBooks.removeBook.mockReset()
     hooksState.learningStats.loading = false
+    hooksState.learningStats.alltime = {
+      total_words: 120,
+      accuracy: 76,
+      duration_seconds: 3600,
+      today_accuracy: 80,
+      today_duration_seconds: 900,
+      today_new_words: 12,
+      today_review_words: 6,
+      alltime_review_words: 30,
+      cumulative_review_events: 56,
+      ebbinghaus_rate: 33,
+      ebbinghaus_due_total: 6,
+      ebbinghaus_met: 2,
+      qm_word_total: 18,
+      ebbinghaus_stages: [],
+      upcoming_reviews_3d: 9,
+      streak_days: 4,
+      weakest_mode: 'meaning',
+      weakest_mode_accuracy: 68,
+      trend_direction: 'stable',
+    }
     hooksState.learningStats.learnerProfile.daily_plan.focus_book = {
       book_id: 'book-1',
       title: '测试词书',
@@ -249,11 +290,16 @@ describe('HomePage', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('今日待办')).toBeInTheDocument()
+    expect(screen.queryByText('今日待办')).not.toBeInTheDocument()
+    expect(screen.queryByText('指标怎么达成')).not.toBeInTheDocument()
+    expect(screen.getByText('错词怎么减少')).toBeInTheDocument()
+    expect(screen.getByText('复习怎样算完成')).toBeInTheDocument()
+    expect(screen.getByText('每个模式看什么')).toBeInTheDocument()
+    expect(screen.getByText('系统还缺哪一关')).toBeInTheDocument()
     expect(screen.getByText('到期复习')).toBeInTheDocument()
     expect(screen.getAllByText('清错词').length).toBeGreaterThan(0)
     expect(screen.getByText('推进词书')).toBeInTheDocument()
-    expect(screen.getByText('快捷入口')).toBeInTheDocument()
+    expect(screen.queryByText('快捷入口')).not.toBeInTheDocument()
     expect(screen.queryByText('今天已学')).not.toBeInTheDocument()
     expect(screen.queryByText('学习时长')).not.toBeInTheDocument()
     expect(screen.queryByText('主线词书')).not.toBeInTheDocument()
@@ -261,9 +307,9 @@ describe('HomePage', () => {
     expect(screen.getAllByText('测试词书').length).toBeGreaterThan(0)
     expect(screen.getByText('待完成')).toBeInTheDocument()
     expect(screen.getAllByText('已清空').length).toBeGreaterThan(0)
-    expect(screen.getByText('今日完成')).toBeInTheDocument()
-    expect(screen.getByText('背新词')).toBeInTheDocument()
-    expect(screen.getByText('练弱项')).toBeInTheDocument()
+    expect(screen.getAllByText('今日完成').length).toBeGreaterThan(0)
+    expect(screen.queryByText('背新词')).not.toBeInTheDocument()
+    expect(screen.queryByText('练弱项')).not.toBeInTheDocument()
     expect(screen.queryByText('今天先处理这 3 件事')).not.toBeInTheDocument()
     expect(screen.queryByText('系统会根据今天的真实学习数据自动勾选，你不用手动处理。')).not.toBeInTheDocument()
     expect(screen.queryByText('你的词书')).not.toBeInTheDocument()
@@ -273,17 +319,28 @@ describe('HomePage', () => {
     expect(screen.getByText('打开速记复习队列，只处理到期这一组。')).toBeInTheDocument()
     expect(screen.getByText('先完成 6 词到期，每个词都要做到能立刻回想释义。')).toBeInTheDocument()
     expect(screen.getByText('完成标准：到期数量归零，回到首页后这一项才会自动勾选。')).toBeInTheDocument()
+    expect(screen.getByText('只要某一项还没连续答对 4 次，这一项就还算“没清掉”。')).toBeInTheDocument()
+    expect(screen.getByText('频次：1 天 / 1 天 / 4 天 / 7 天 / 14 天 / 30 天')).toBeInTheDocument()
+    expect(screen.getByText('同一个词要按 1 天 / 1 天 / 4 天 / 7 天 / 14 天 / 30 天 这 6 轮节奏反复通过，才算把“认识它”这一步走完整。')).toBeInTheDocument()
+    expect(screen.getByText('某一章显示这个模式已完成，意思是你已经把这一章在这个模式下完整练过一轮。')).toBeInTheDocument()
+    expect(screen.getByText('现在还没有一场专门的“总检查”，去把认识、会想、听得到、会拼写这四项一起复核一遍。')).toBeInTheDocument()
+    expect(screen.queryByText(/history_wrong/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/nextReview/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/is_completed/i)).not.toBeInTheDocument()
     expect(screen.getByText('当前步骤')).toBeInTheDocument()
     expect(screen.getAllByText('待处理').length).toBeGreaterThan(0)
     expect(screen.getAllByText('已完成').length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('.study-guidance-card')).toHaveLength(4)
     expect(container.querySelectorAll('.study-todo-item')).toHaveLength(3)
     expect(container.querySelectorAll('.study-todo-card-head')).toHaveLength(3)
     expect(container.querySelector('.study-todo-summary')).toBeNull()
     expect(container.querySelectorAll('.study-todo-item.is-completed')).toHaveLength(2)
+    expect(container.querySelector('.study-todo-head')).toBeNull()
     expect(container.querySelectorAll('.study-todo-card-head .study-todo-action')).toHaveLength(3)
     expect(container.querySelectorAll('.study-todo-progress')).toHaveLength(3)
     expect(container.querySelectorAll('.study-todo-progress.is-completed')).toHaveLength(2)
     expect(container.querySelectorAll('.study-todo-footer')).toHaveLength(0)
+    expect(container.querySelector('.study-quick-actions-panel')).toBeNull()
     expect(container.querySelectorAll('.study-todo-check[type=\"checkbox\"]')).toHaveLength(3)
     expect(container.querySelectorAll('.study-todo-check[type=\"checkbox\"]:checked')).toHaveLength(2)
     expect(container.querySelectorAll('.study-todo-step-check[type=\"checkbox\"]')).toHaveLength(9)
@@ -313,8 +370,8 @@ describe('HomePage', () => {
 
     expect(sectionClasses).toEqual([
       'study-guide-panel',
+      'study-guidance-panel',
       'study-todo-panel',
-      'study-quick-actions-panel',
     ])
   })
 

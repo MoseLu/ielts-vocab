@@ -175,8 +175,6 @@ export function isStatsInitialLoading({
   pieChartLength,
   historyWrongTopLength,
   pendingWrongTopLength,
-  chapterBreakdownLength,
-  chapterModeStatsLength,
   hasLearnerProfile,
 }: {
   chartLoading: boolean
@@ -189,8 +187,6 @@ export function isStatsInitialLoading({
   pieChartLength: number
   historyWrongTopLength: number
   pendingWrongTopLength: number
-  chapterBreakdownLength: number
-  chapterModeStatsLength: number
   hasLearnerProfile: boolean
 }) {
   return (
@@ -204,8 +200,6 @@ export function isStatsInitialLoading({
     pieChartLength === 0 &&
     historyWrongTopLength === 0 &&
     pendingWrongTopLength === 0 &&
-    chapterBreakdownLength === 0 &&
-    chapterModeStatsLength === 0 &&
     !hasLearnerProfile
   )
 }

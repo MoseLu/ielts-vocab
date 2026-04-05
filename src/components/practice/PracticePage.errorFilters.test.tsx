@@ -5,7 +5,10 @@ import { vi } from 'vitest'
 import PracticePage from './PracticePage'
 import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { loadSmartStats } from '../../lib/smartMode'
-import { getWrongWordsStorageKey } from '../../features/vocabulary/wrongWordsStore'
+import {
+  getWrongWordsReviewSelectionStorageKey,
+  getWrongWordsStorageKey,
+} from '../../features/vocabulary/wrongWordsStore'
 
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
@@ -166,6 +169,31 @@ describe('PracticePage error mode filters', () => {
     await waitFor(() => {
       expect(screen.getByTestId('options-mode')).toHaveTextContent('current:alpha')
       expect(screen.getByTestId('options-mode')).toHaveTextContent('total:1')
+    })
+  })
+
+  it('uses only manually selected wrong words when launched from the wrong-word checklist', async () => {
+    apiFetchMock.mockResolvedValue({ words: [] })
+    localStorage.setItem(
+      getWrongWordsReviewSelectionStorageKey(42),
+      JSON.stringify(['beta', 'delta']),
+    )
+
+    render(
+      <MemoryRouter initialEntries={['/practice?mode=errors&selection=manual']}>
+        <PracticePage
+          user={{ id: 42 }}
+          mode="meaning"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('total:2')
+      expect(screen.getByTestId('options-mode')).toHaveTextContent(/current:(beta|delta)/)
     })
   })
 })

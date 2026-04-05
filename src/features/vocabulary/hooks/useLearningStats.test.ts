@@ -22,6 +22,31 @@ vi.mock('../../../lib/quickMemorySync', () => ({
   reconcileQuickMemoryRecordsWithBackend: (...args: unknown[]) => reconcileQuickMemoryRecordsWithBackendMock(...args),
 }))
 
+function buildStatsResponse() {
+  return {
+    daily: [],
+    books: [],
+    modes: [],
+    summary: null,
+    alltime: { today_review_words: 2 },
+    mode_breakdown: [],
+    pie_chart: [],
+    wrong_top10: [],
+    chapter_breakdown: [],
+    chapter_mode_stats: [],
+    use_fallback: false,
+  }
+}
+
+function createDeferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>(res => {
+    resolve = res
+  })
+
+  return { promise, resolve }
+}
+
 describe('useLearningStats', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -35,19 +60,7 @@ describe('useLearningStats', () => {
     reconcileQuickMemoryRecordsWithBackendMock.mockResolvedValue(undefined)
     apiFetchMock.mockImplementation((url: string) => {
       if (url.startsWith('/api/ai/learning-stats?')) {
-        return Promise.resolve({
-          daily: [],
-          books: [],
-          modes: [],
-          summary: null,
-          alltime: { today_review_words: 2 },
-          mode_breakdown: [],
-          pie_chart: [],
-          wrong_top10: [],
-          chapter_breakdown: [],
-          chapter_mode_stats: [],
-          use_fallback: false,
-        })
+        return Promise.resolve(buildStatsResponse())
       }
 
       if (url === '/api/ai/learner-profile') {
@@ -125,6 +138,72 @@ describe('useLearningStats', () => {
     })
 
     setIntervalSpy.mockRestore()
+    dateNowSpy.mockRestore()
+  })
+
+  it('skips periodic polling when the caller disables it', async () => {
+    const setIntervalSpy = vi.spyOn(window, 'setInterval')
+
+    renderHook(() => useLearningStats(7, 'all', 'all', { pollIntervalMs: 0 }))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledTimes(2)
+    })
+
+    const statsPollingCalls = setIntervalSpy.mock.calls.filter(([, timeout]) => timeout === 60_000)
+    expect(statsPollingCalls).toHaveLength(0)
+    setIntervalSpy.mockRestore()
+  })
+
+  it('keeps loading false during background refreshes after the first fetch resolves', async () => {
+    let nowMs = 1_000
+    let statsRequestCount = 0
+    const dateNowSpy = vi.spyOn(Date, 'now').mockImplementation(() => nowMs)
+    const backgroundStats = createDeferred<ReturnType<typeof buildStatsResponse>>()
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/ai/learning-stats?')) {
+        statsRequestCount += 1
+        if (statsRequestCount === 2) {
+          return backgroundStats.promise
+        }
+
+        return Promise.resolve(buildStatsResponse())
+      }
+
+      if (url === '/api/ai/learner-profile') {
+        return Promise.resolve(null)
+      }
+
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    const { result } = renderHook(() => useLearningStats(7, 'all', 'all'))
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    act(() => {
+      nowMs += 2_000
+      window.dispatchEvent(new Event('focus'))
+    })
+
+    await waitFor(() => {
+      expect(statsRequestCount).toBe(2)
+      expect(result.current.refreshing).toBe(true)
+    })
+
+    expect(result.current.loading).toBe(false)
+
+    act(() => {
+      backgroundStats.resolve(buildStatsResponse())
+    })
+
+    await waitFor(() => {
+      expect(result.current.refreshing).toBe(false)
+    })
+
     dateNowSpy.mockRestore()
   })
 

@@ -5,6 +5,8 @@ import os
 import re
 
 _listening_confusable_index_cache: dict[str, list[dict]] | None = None
+_high_value_listening_confusable_index_cache: dict[str, list[dict]] | None = None
+_HIGH_VALUE_ONLY_THRESHOLD = 3
 
 
 def get_listening_confusables_path() -> str:
@@ -14,6 +16,16 @@ def get_listening_confusables_path() -> str:
         '..',
         'vocabulary_data',
         'ielts_listening_confusables.json',
+    )
+
+
+def get_high_value_listening_confusables_path() -> str:
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        '..',
+        '..',
+        'vocabulary_data',
+        'ielts_high_value_confusables.json',
     )
 
 
@@ -32,23 +44,15 @@ def normalize_listening_confusable_key(word: str | None) -> str:
     return normalized.strip(" .'")
 
 
-def load_listening_confusable_index() -> dict[str, list[dict]]:
-    global _listening_confusable_index_cache
-
-    if _listening_confusable_index_cache is not None:
-        return _listening_confusable_index_cache
-
-    path = get_listening_confusables_path()
+def _load_confusable_index_file(path: str, *, warning_label: str) -> dict[str, list[dict]]:
     try:
         with open(path, 'r', encoding='utf-8') as file_obj:
             payload = json.load(file_obj)
     except FileNotFoundError:
-        _listening_confusable_index_cache = {}
-        return _listening_confusable_index_cache
+        return {}
     except Exception as exc:
-        print(f"Warning: could not load listening confusables index: {exc}")
-        _listening_confusable_index_cache = {}
-        return _listening_confusable_index_cache
+        print(f"Warning: could not load {warning_label}: {exc}")
+        return {}
 
     raw_index = payload.get('words', {}) if isinstance(payload, dict) else {}
     index: dict[str, list[dict]] = {}
@@ -70,7 +74,7 @@ def load_listening_confusable_index() -> dict[str, list[dict]]:
                 if not candidate_word or not candidate_definition:
                     continue
 
-                candidate_key = candidate_word.lower()
+                candidate_key = normalize_listening_confusable_key(candidate_word)
                 if candidate_key in seen_words:
                     continue
 
@@ -85,8 +89,52 @@ def load_listening_confusable_index() -> dict[str, list[dict]]:
             if candidates:
                 index[key] = candidates
 
-    _listening_confusable_index_cache = index
+    return index
+
+
+def load_listening_confusable_index() -> dict[str, list[dict]]:
+    global _listening_confusable_index_cache
+
+    if _listening_confusable_index_cache is not None:
+        return _listening_confusable_index_cache
+
+    _listening_confusable_index_cache = _load_confusable_index_file(
+        get_listening_confusables_path(),
+        warning_label='listening confusables index',
+    )
     return _listening_confusable_index_cache
+
+
+def load_high_value_listening_confusable_index() -> dict[str, list[dict]]:
+    global _high_value_listening_confusable_index_cache
+
+    if _high_value_listening_confusable_index_cache is not None:
+        return _high_value_listening_confusable_index_cache
+
+    _high_value_listening_confusable_index_cache = _load_confusable_index_file(
+        get_high_value_listening_confusables_path(),
+        warning_label='high-value listening confusables index',
+    )
+    return _high_value_listening_confusable_index_cache
+
+
+def _merge_confusable_candidates(*candidate_groups: list[dict]) -> list[dict]:
+    merged: list[dict] = []
+    seen_words: set[str] = set()
+
+    for candidates in candidate_groups:
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                continue
+
+            candidate_key = normalize_listening_confusable_key(candidate.get('word'))
+            if not candidate_key or candidate_key in seen_words:
+                continue
+
+            seen_words.add(candidate_key)
+            merged.append(dict(candidate))
+
+    return merged
 
 
 def get_preset_listening_confusables(word: str | None, limit: int | None = None) -> list[dict]:
@@ -94,7 +142,14 @@ def get_preset_listening_confusables(word: str | None, limit: int | None = None)
     if not key:
         return []
 
-    candidates = load_listening_confusable_index().get(key, [])
+    high_value_candidates = load_high_value_listening_confusable_index().get(key, [])
+    if len(high_value_candidates) >= _HIGH_VALUE_ONLY_THRESHOLD:
+        candidates = _merge_confusable_candidates(high_value_candidates)
+    else:
+        candidates = _merge_confusable_candidates(
+            high_value_candidates,
+            load_listening_confusable_index().get(key, []),
+        )
     if limit is not None:
         candidates = candidates[:max(0, int(limit))]
     return [dict(candidate) for candidate in candidates]

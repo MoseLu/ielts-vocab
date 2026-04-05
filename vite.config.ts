@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const DEV_SERVER_PORT = 3020
+const PREVIEW_PORT = 3002
+
 export default defineConfig({
   plugins: [react()],
   root: '.',
@@ -14,8 +17,8 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0', // Allow access from any local interface
-    port: 3002,
-    strictPort: true, // Fail instead of switching ports when 3002 is occupied
+    port: DEV_SERVER_PORT,
+    strictPort: true, // Fail instead of switching ports when 3020 is occupied
     open: false,
     allowedHosts: true, // Accept requests from any host in local proxy setups
     hmr: {
@@ -46,7 +49,7 @@ export default defineConfig({
   },
   preview: {
     host: '0.0.0.0',
-    port: 3002,
+    port: PREVIEW_PORT,
     strictPort: true,
     allowedHosts: true,
     // Disable HMR overlay in preview mode

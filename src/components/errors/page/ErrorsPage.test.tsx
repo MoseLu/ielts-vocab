@@ -57,6 +57,7 @@ vi.mock('react-router-dom', async () => {
 describe('ErrorsPage', () => {
   beforeEach(() => {
     navigateMock.mockReset()
+    localStorage.clear()
   })
 
   it('explains that pending wrong words clear after four consecutive passes in the same dimension', () => {
@@ -69,6 +70,30 @@ describe('ErrorsPage', () => {
     expect(
       screen.getByText(/同一维度连续答对 4 次后，从未过错词移出/)
     ).toBeInTheDocument()
+  })
+
+  it('clarifies that dimension counts can overlap on the same word', () => {
+    render(
+      <MemoryRouter>
+        <ErrorsPage />
+      </MemoryRouter>,
+    )
+
+    expect(
+      screen.getByText(/按维度筛选时会重叠统计：当前 3 个未过错词命中了 6 次维度，其中 3 个词同时出现在多个维度里，所以这些数字不是拆分汇总。/)
+    ).toBeInTheDocument()
+  })
+
+  it('keeps wrong words in the list and lets learners select them for review', () => {
+    render(
+      <MemoryRouter>
+        <ErrorsPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByTitle('移出未过错词')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('选择 alpha')).toBeInTheDocument()
+    expect(screen.getAllByText('加入复习')).toHaveLength(1)
   })
 
   it('builds a targeted review route from the selected date and wrong-count range', () => {
@@ -87,14 +112,15 @@ describe('ErrorsPage', () => {
     fireEvent.change(screen.getByLabelText('错次区间'), {
       target: { value: '6-10' },
     })
+    fireEvent.click(screen.getByLabelText('选择 alpha'))
 
-    const reviewButton = screen.getByRole('button', { name: '复习（1词）' })
+    const reviewButton = screen.getByRole('button', { name: '复习已选（1词）' })
     expect(reviewButton).toBeInTheDocument()
 
     fireEvent.click(reviewButton)
 
     expect(navigateMock).toHaveBeenCalledWith(
-      '/practice?mode=errors&scope=pending&startDate=2026-03-31&endDate=2026-03-31&minWrong=6&maxWrong=10',
+      '/practice?mode=errors&scope=pending&startDate=2026-03-31&endDate=2026-03-31&minWrong=6&maxWrong=10&selection=manual',
     )
   })
 })

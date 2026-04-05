@@ -95,6 +95,7 @@ function AIChatPanel() {
     startRecording: startSpeechRecording,
     stopRecording: stopSpeechRecording,
   } = useSpeechRecognition({
+    enabled: isOpen,
     language: 'zh',
     enableVad: true,
     autoStop: true,

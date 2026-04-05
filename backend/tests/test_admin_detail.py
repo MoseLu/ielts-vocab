@@ -1,6 +1,7 @@
+import json
 from datetime import datetime, timedelta
 
-from models import User, UserLearningEvent, UserStudySession, db
+from models import User, UserLearningEvent, UserStudySession, UserWrongWord, db
 
 
 def register_user(client, username, password='password123'):
@@ -112,3 +113,89 @@ def test_admin_user_detail_includes_session_end_and_word_samples(client, app):
     assert session['ended_at'] == '2026-04-01T09:15:00+00:00'
     assert session['studied_words'] == ['campaign', 'engine', 'satellite']
     assert session['studied_words_total'] == 3
+
+
+def test_admin_user_detail_wrong_words_supports_last_error_and_wrong_count_sort(client, app):
+    register_user(client, 'admin-detail-sort-admin')
+    register_user(client, 'admin-detail-sort-learner')
+
+    with app.app_context():
+        admin = User.query.filter_by(username='admin-detail-sort-admin').first()
+        learner = User.query.filter_by(username='admin-detail-sort-learner').first()
+        admin.is_admin = True
+
+        def build_dimension_state(history_wrong, last_wrong_at):
+            return json.dumps({
+                'recognition': {
+                    'history_wrong': history_wrong,
+                    'pass_streak': 0,
+                    'last_wrong_at': last_wrong_at,
+                    'last_pass_at': None,
+                },
+                'meaning': {
+                    'history_wrong': 0,
+                    'pass_streak': 0,
+                    'last_wrong_at': None,
+                    'last_pass_at': None,
+                },
+                'listening': {
+                    'history_wrong': 0,
+                    'pass_streak': 0,
+                    'last_wrong_at': None,
+                    'last_pass_at': None,
+                },
+                'dictation': {
+                    'history_wrong': 0,
+                    'pass_streak': 0,
+                    'last_wrong_at': None,
+                    'last_pass_at': None,
+                },
+            }, ensure_ascii=False)
+
+        db.session.add_all([
+            UserWrongWord(
+                user_id=learner.id,
+                word='alpha',
+                phonetic='/a/',
+                pos='n.',
+                definition='alpha definition',
+                wrong_count=9,
+                dimension_state=build_dimension_state(9, '2026-04-01T08:00:00+00:00'),
+                updated_at=datetime(2026, 4, 4, 8, 0, 0),
+            ),
+            UserWrongWord(
+                user_id=learner.id,
+                word='beta',
+                phonetic='/b/',
+                pos='n.',
+                definition='beta definition',
+                wrong_count=3,
+                dimension_state=build_dimension_state(3, '2026-04-04T10:00:00+00:00'),
+                updated_at=datetime(2026, 4, 4, 10, 0, 0),
+            ),
+            UserWrongWord(
+                user_id=learner.id,
+                word='gamma',
+                phonetic='/g/',
+                pos='n.',
+                definition='gamma definition',
+                wrong_count=9,
+                dimension_state=build_dimension_state(9, '2026-04-03T09:00:00+00:00'),
+                updated_at=datetime(2026, 4, 3, 9, 0, 0),
+            ),
+        ])
+        db.session.commit()
+        learner_id = learner.id
+
+    login_user(client, 'admin-detail-sort-admin')
+
+    default_response = client.get(f'/api/admin/users/{learner_id}')
+    assert default_response.status_code == 200
+    default_wrong_words = default_response.get_json()['wrong_words']
+    assert [item['word'] for item in default_wrong_words[:3]] == ['beta', 'gamma', 'alpha']
+    assert default_wrong_words[0]['last_wrong_at'] == '2026-04-04T10:00:00+00:00'
+
+    count_response = client.get(f'/api/admin/users/{learner_id}?wrong_words_sort=wrong_count')
+    assert count_response.status_code == 200
+    count_wrong_words = count_response.get_json()['wrong_words']
+    assert [item['word'] for item in count_wrong_words[:3]] == ['gamma', 'alpha', 'beta']

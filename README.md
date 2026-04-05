@@ -63,7 +63,9 @@ npm install
 npm run dev
 ```
 
-前端开发服务器默认运行在 `http://127.0.0.1:3002`。
+前端开发服务器默认运行在 `http://127.0.0.1:3020`。
+
+`npm run preview` 继续把 `dist` 跑在 `http://127.0.0.1:3002`，用于本地生产式代理链路。
 
 常用前端命令：
 
@@ -75,11 +77,12 @@ npm test
 
 ## 本地代理链路
 
-这个项目默认按生产式代理链路调试：
+这个项目现在区分两条前端链路：
 
-1. Vite 开发服务器：`http://127.0.0.1:3002`
-2. 本地 `nginx`：监听 `80`，转发到 `3002`
-3. `natapp`：把 `https://axiomaticworld.com` 转发到本地 `80`
+1. 源码开发：Vite dev server 运行在 `http://127.0.0.1:3020`
+2. 生产式联调：Vite preview 运行在 `http://127.0.0.1:3002`
+3. 本地 `nginx`：监听 `80`，转发到 `3002`
+4. `natapp`：把 `https://axiomaticworld.com` 转发到本地 `80`
 
 也就是：
 
@@ -91,7 +94,7 @@ https://axiomaticworld.com
 -> local :3002
 ```
 
-如果出现 `ERR_SSL_PROTOCOL_ERROR`、`/api/...` 异常或前后端跨域表现不一致，先检查这条代理链路，而不是只看前端代码。
+如果出现 `ERR_SSL_PROTOCOL_ERROR`、`/api/...` 异常或前后端跨域表现不一致，先检查这条 `natapp -> nginx -> vite preview(:3002)` 链路，而不是只看前端代码。
 
 ## 主要接口
 
