@@ -134,6 +134,48 @@ def test_learning_stats_skips_implausible_legacy_short_sessions(client, app):
     assert listening['sessions'] == 1
 
 
+def test_learning_stats_skips_epoch_sized_broken_duration_rows(client, app):
+    register_and_login(client, username='broken-duration-stats-user')
+
+    with app.app_context():
+        user = User.query.filter_by(username='broken-duration-stats-user').first()
+        assert user is not None
+
+        db.session.add_all([
+            UserStudySession(
+                user_id=user.id,
+                mode='listening',
+                words_studied=1,
+                correct_count=1,
+                wrong_count=0,
+                duration_seconds=1_775_322_098,
+                started_at=datetime(2026, 4, 4, 17, 1, 38, 477224),
+                ended_at=datetime(2026, 4, 4, 17, 1, 38, 476222),
+            ),
+            UserStudySession(
+                user_id=user.id,
+                mode='listening',
+                words_studied=7,
+                correct_count=6,
+                wrong_count=1,
+                duration_seconds=82,
+                started_at=datetime(2026, 4, 4, 9, 0, 0),
+                ended_at=datetime(2026, 4, 4, 9, 1, 22),
+            ),
+        ])
+        db.session.commit()
+
+    response = client.get('/api/ai/learning-stats?days=7')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    listening = next(item for item in data['mode_breakdown'] if item['mode'] == 'listening')
+    assert data['summary']['total_duration_seconds'] == 82
+    assert data['alltime']['duration_seconds'] == 82
+    assert listening['duration_seconds'] == 82
+    assert listening['sessions'] == 1
+
+
 def test_learning_stats_uses_review_sessions_for_accuracy_when_no_chapter_progress_exists(client, app):
     register_and_login(client, username='review-only-stats-user')
 

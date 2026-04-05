@@ -254,25 +254,68 @@ describe('HomePage', () => {
     expect(screen.getAllByText('清错词').length).toBeGreaterThan(0)
     expect(screen.getByText('推进词书')).toBeInTheDocument()
     expect(screen.getByText('快捷入口')).toBeInTheDocument()
-    expect(screen.getByText('你的词书')).toBeInTheDocument()
+    expect(screen.queryByText('今天已学')).not.toBeInTheDocument()
+    expect(screen.queryByText('学习时长')).not.toBeInTheDocument()
+    expect(screen.queryByText('主线词书')).not.toBeInTheDocument()
+    expect(screen.queryByText('最近学习')).not.toBeInTheDocument()
     expect(screen.getAllByText('测试词书').length).toBeGreaterThan(0)
     expect(screen.getByText('待完成')).toBeInTheDocument()
     expect(screen.getAllByText('已清空').length).toBeGreaterThan(0)
     expect(screen.getByText('今日完成')).toBeInTheDocument()
     expect(screen.getByText('背新词')).toBeInTheDocument()
     expect(screen.getByText('练弱项')).toBeInTheDocument()
+    expect(screen.queryByText('今天先处理这 3 件事')).not.toBeInTheDocument()
+    expect(screen.queryByText('系统会根据今天的真实学习数据自动勾选，你不用手动处理。')).not.toBeInTheDocument()
+    expect(screen.queryByText('你的词书')).not.toBeInTheDocument()
+    expect(screen.queryByText('当前在学词书会排在最前，方便直接开始今天的主线。')).not.toBeInTheDocument()
+    expect(screen.queryByText('不改待办逻辑，只把常用路径收成一排。')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '管理词书' })).not.toBeInTheDocument()
+    expect(screen.getByText('打开速记复习队列，只处理到期这一组。')).toBeInTheDocument()
+    expect(screen.getByText('先完成 6 词到期，每个词都要做到能立刻回想释义。')).toBeInTheDocument()
+    expect(screen.getByText('完成标准：到期数量归零，回到首页后这一项才会自动勾选。')).toBeInTheDocument()
+    expect(screen.getByText('当前步骤')).toBeInTheDocument()
+    expect(screen.getAllByText('待处理').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('已完成').length).toBeGreaterThan(0)
     expect(container.querySelectorAll('.study-todo-item')).toHaveLength(3)
+    expect(container.querySelectorAll('.study-todo-card-head')).toHaveLength(3)
+    expect(container.querySelector('.study-todo-summary')).toBeNull()
     expect(container.querySelectorAll('.study-todo-item.is-completed')).toHaveLength(2)
+    expect(container.querySelectorAll('.study-todo-card-head .study-todo-action')).toHaveLength(3)
+    expect(container.querySelectorAll('.study-todo-progress')).toHaveLength(3)
+    expect(container.querySelectorAll('.study-todo-progress.is-completed')).toHaveLength(2)
+    expect(container.querySelectorAll('.study-todo-footer')).toHaveLength(0)
+    expect(container.querySelectorAll('.study-todo-check[type=\"checkbox\"]')).toHaveLength(3)
+    expect(container.querySelectorAll('.study-todo-check[type=\"checkbox\"]:checked')).toHaveLength(2)
+    expect(container.querySelectorAll('.study-todo-step-check[type=\"checkbox\"]')).toHaveLength(9)
+    expect(container.querySelectorAll('.study-todo-step-check[type=\"checkbox\"]:checked')).toHaveLength(6)
+    expect(container.querySelectorAll('.study-todo-step')).toHaveLength(9)
+    expect(container.querySelectorAll('.study-todo-step-state.is-current')).toHaveLength(1)
+    expect(container.querySelectorAll('.study-todo-step-state.is-pending')).toHaveLength(2)
+    expect(container.querySelectorAll('.study-todo-step-state.is-completed')).toHaveLength(6)
     expect(container.querySelector('.study-book-progress-fill')).toHaveStyle({ width: '20%' })
 
     expect(screen.queryByText('今天推荐这样学')).not.toBeInTheDocument()
     expect(screen.queryByText('系统推荐顺序')).not.toBeInTheDocument()
     expect(screen.queryByText('我现在想...')).not.toBeInTheDocument()
     expect(screen.queryByText('系统提醒')).not.toBeInTheDocument()
+  })
 
-    const todoPanel = container.querySelector('.study-todo-panel')
-    const booksHeading = screen.getByText('你的词书')
-    expect(Boolean(todoPanel && (todoPanel.compareDocumentPosition(booksHeading) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true)
+  it('renders the book panel first in DOM order', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    )
+
+    const sectionClasses = Array.from(container.querySelectorAll('.study-center-shell > section')).map(
+      section => section.className,
+    )
+
+    expect(sectionClasses).toEqual([
+      'study-guide-panel',
+      'study-todo-panel',
+      'study-quick-actions-panel',
+    ])
   })
 
   it('shows add-book as the third task when no focus book is available', () => {

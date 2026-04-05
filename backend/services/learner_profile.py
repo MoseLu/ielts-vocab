@@ -1,13 +1,13 @@
-from services._split_loader import load_split_module_parts
+from services._module_loader import load_split_module_files
 
 
-load_split_module_parts(
+load_split_module_files(
     __file__,
     (
-        'learner_profile_parts/part_01.py',
-        'learner_profile_parts/part_02.py',
-        'learner_profile_parts/part_03.py',
-        'learner_profile_parts/part_04.py',
+        'learner_profile_service/core_dimensions.py',
+        'learner_profile_service/timed_dimensions.py',
+        'learner_profile_service/recommendations.py',
+        'learner_profile_service/profile_builder.py',
     ),
     globals(),
 )

@@ -28,6 +28,29 @@ def cancel_session(current_user: User):
     return jsonify({'deleted': True}), 200
 
 
+def _normalize_client_duration_seconds(
+    raw_duration,
+    *,
+    started_at: datetime | None = None,
+    ended_at: datetime | None = None,
+) -> int:
+    try:
+        duration_seconds = max(0, int(raw_duration or 0))
+    except (TypeError, ValueError):
+        duration_seconds = 0
+
+    if started_at is not None and ended_at is not None and ended_at >= started_at:
+        elapsed_seconds = max(0, int((ended_at - started_at).total_seconds()))
+        if duration_seconds <= 0:
+            return elapsed_seconds
+        if duration_seconds > 86400 and elapsed_seconds <= 86400:
+            return elapsed_seconds
+        return max(duration_seconds, elapsed_seconds)
+
+    # Broken clients can accidentally send epoch seconds when startedAt is missing.
+    return 0 if duration_seconds > 86400 else duration_seconds
+
+
 @ai_bp.route('/log-session', methods=['POST'])
 @token_required
 def log_session(current_user: User):
@@ -110,7 +133,11 @@ def log_session(current_user: User):
         # Fallback: create a new row using client-supplied timestamps/duration
         started_at = _parse_client_epoch_ms(body.get('startedAt'))
 
-        duration_seconds = body.get('durationSeconds', 0) or 0
+        duration_seconds = _normalize_client_duration_seconds(
+            body.get('durationSeconds', 0),
+            started_at=started_at,
+            ended_at=client_ended_at,
+        )
         words_studied = body.get('wordsStudied', 0) or 0
         correct_count = body.get('correctCount', 0) or 0
         wrong_count = body.get('wrongCount', 0) or 0

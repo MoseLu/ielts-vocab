@@ -1,11 +1,11 @@
-from services._split_loader import load_split_module_parts
+from services._module_loader import load_split_module_files
 
 
-load_split_module_parts(
+load_split_module_files(
     __file__,
     (
-        'notes_parts/part_01.py',
-        'notes_parts/part_02.py',
+        'notes_routes/summary_generation.py',
+        'notes_routes/summary_jobs_and_exports.py',
     ),
     globals(),
 )

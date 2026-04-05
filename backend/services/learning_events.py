@@ -25,6 +25,7 @@ SOURCE_LABELS = {
     'wrong_words': '错词记录',
     'chapter_progress': '章节进度',
     'chapter_mode_progress': '章节模式进度',
+    'book_progress': '词书进度',
 }
 
 EVENT_LABELS = {
@@ -38,6 +39,7 @@ EVENT_LABELS = {
     'speaking_simulation': '口语模拟',
     'chapter_progress_updated': '章节进度更新',
     'chapter_mode_progress_updated': '章节模式进度更新',
+    'book_progress_updated': '词书进度更新',
     'writing_correction_used': '写作纠错',
     'writing_correction_adoption': '纠错采纳反馈',
     'ielts_example_hit': 'IELTS 例句查询',
@@ -216,6 +218,8 @@ def _format_event_title(event: UserLearningEvent, payload: dict) -> str:
         return f"{chapter_label} 学习进度更新".strip()
     if event.event_type == 'chapter_mode_progress_updated':
         return f"{chapter_label} {mode_label} 进度更新".strip()
+    if event.event_type == 'book_progress_updated':
+        return '词书学习进度更新'
     return event_label
 
 

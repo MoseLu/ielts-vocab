@@ -88,6 +88,9 @@ function buildSessionPayload(data: {
   startedAt: number
   endedAt?: number
 }) {
+  const startedAt = Number.isFinite(data.startedAt) ? Math.max(0, Math.trunc(data.startedAt)) : 0
+  const endedAtInput = data.endedAt ?? Date.now()
+  const endedAt = Number.isFinite(endedAtInput) ? Math.max(0, Math.trunc(endedAtInput)) : Date.now()
   const payload = {
     sessionId: data.sessionId ?? undefined,
     mode: data.mode,
@@ -97,13 +100,19 @@ function buildSessionPayload(data: {
     correctCount: Math.max(0, Math.trunc(data.correctCount)),
     wrongCount: Math.max(0, Math.trunc(data.wrongCount)),
     durationSeconds: Math.max(0, Math.trunc(data.durationSeconds)),
-    startedAt: data.startedAt,
-    endedAt: data.endedAt ?? Date.now(),
+    startedAt,
+    endedAt,
   }
 
+  const derivedDuration = (
+    payload.startedAt > 0
+    && payload.endedAt >= payload.startedAt
+  )
+    ? Math.round((payload.endedAt - payload.startedAt) / 1000)
+    : 0
   const normalizedDuration = Math.max(
     payload.durationSeconds,
-    Math.round((payload.endedAt - payload.startedAt) / 1000),
+    derivedDuration,
   )
 
   return {

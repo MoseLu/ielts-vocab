@@ -216,6 +216,25 @@ def test_log_session_is_idempotent_for_completed_session(client, app):
         ).count() == event_count
 
 
+def test_log_session_clamps_epoch_sized_duration_when_started_at_missing(client, app):
+    register_and_login(client, username='session-user-epoch')
+
+    response = client.post('/api/ai/log-session', json={
+        'mode': 'listening',
+        'wordsStudied': 1,
+        'correctCount': 1,
+        'wrongCount': 0,
+        'durationSeconds': int(datetime.utcnow().timestamp()),
+        'startedAt': 0,
+    })
+    assert response.status_code == 201
+
+    with app.app_context():
+        session = UserStudySession.query.order_by(UserStudySession.id.desc()).first()
+        assert session is not None
+        assert session.duration_seconds == 1
+
+
 def test_greet_returns_fallback_when_ai_service_fails(client, monkeypatch):
     register_and_login(client, username='greet-user')
 

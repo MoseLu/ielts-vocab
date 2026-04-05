@@ -1,21 +1,21 @@
-from services._split_loader import load_split_module_parts
+from services._module_loader import load_split_module_files
 
 
-load_split_module_parts(
+load_split_module_files(
     __file__,
     (
-        'ai_parts/part_01.py',
-        'ai_parts/part_02.py',
-        'ai_parts/part_03.py',
-        'ai_parts/part_04.py',
-        'ai_parts/part_05.py',
-        'ai_parts/part_06.py',
-        'ai_parts/part_07.py',
-        'ai_parts/part_08.py',
-        'ai_parts/part_09.py',
-        'ai_parts/part_10.py',
-        'ai_parts/part_11.py',
-        'ai_parts/part_12.py',
+        'ai_routes/shared/learning_metrics.py',
+        'ai_routes/practice/similar_words.py',
+        'ai_routes/profile/context_and_profile.py',
+        'ai_routes/assistant/prompt_helpers.py',
+        'ai_routes/assistant/tool_context.py',
+        'ai_routes/assistant/practice_support.py',
+        'ai_routes/assistant/streaming_chat.py',
+        'ai_routes/assistant/ask_and_custom_books.py',
+        'ai_routes/progress/wrong_words.py',
+        'ai_routes/progress/learning_stats_and_session_start.py',
+        'ai_routes/progress/session_logging_and_quick_memory.py',
+        'ai_routes/progress/sync_endpoints.py',
     ),
     globals(),
 )

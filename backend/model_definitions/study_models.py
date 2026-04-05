@@ -117,11 +117,26 @@ class UserStudySession(db.Model):
         )
 
     @classmethod
+    def implausible_client_duration_clause(cls):
+        """Broken fallback rows where epoch seconds leaked into duration_seconds."""
+        return and_(
+            cls.duration_seconds > 86400,
+            or_(
+                cls.started_at.is_(None),
+                cls.ended_at.is_(None),
+                cls.ended_at <= cls.started_at,
+            ),
+        )
+
+    @classmethod
     def analytics_clause(cls):
         """Study rows that are both meaningful and plausible enough for reporting."""
         return and_(
             cls.meaningful_clause(),
-            not_(cls.implausible_legacy_clause()),
+            not_(or_(
+                cls.implausible_legacy_clause(),
+                cls.implausible_client_duration_clause(),
+            )),
         )
 
     def has_activity(self) -> bool:

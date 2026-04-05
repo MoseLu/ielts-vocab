@@ -35,126 +35,63 @@
 .study-quick-actions-panel,
 .study-guide-panel,
 .study-guide-side-card {
-    padding: 16px;
+    padding: 10px;
 }
 
 .study-todo-panel {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-}
-
-.study-todo-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
     gap: 12px;
 }
 
-.study-todo-eyebrow {
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
+.study-todo-head {
+    display: block;
 }
 
 .study-todo-title {
-    margin: 6px 0 0;
-    font-size: clamp(24px, 3.2vw, 32px);
-    line-height: 1.14;
-    letter-spacing: -0.03em;
-}
-
-.study-todo-caption {
-    margin: 8px 0 0;
-    font-size: 13px;
-    line-height: 1.65;
-    color: var(--text-secondary);
-}
-
-.study-todo-summary {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.study-todo-summary-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid var(--surface-border-strong);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.86));
-}
-
-.study-todo-summary-item span {
-    font-size: 12px;
-    color: var(--text-tertiary);
-}
-
-.study-todo-summary-item strong {
-    font-size: 15px;
-    line-height: 1.45;
-    color: var(--text-primary);
+    margin: 0;
+    font-size: clamp(18px, 2.2vw, 22px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
 }
 
 .study-todo-list {
     display: grid;
-    gap: 10px;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .study-todo-item {
     display: flex;
-    gap: 12px;
-    padding: 14px;
-    border-radius: 16px;
-    border: 1px solid var(--surface-border-strong);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.9));
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.9));
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
 .study-todo-item.is-completed {
-    background: linear-gradient(180deg, rgba(240, 253, 244, 0.86), rgba(255, 255, 255, 0.92));
-    border-color: rgba(34, 197, 94, 0.18);
+    border-color: rgba(34, 197, 94, 0.16);
+    background:
+        linear-gradient(180deg, rgba(244, 253, 247, 0.94), rgba(255, 255, 255, 0.92));
 }
 
-.study-todo-check {
-    width: 28px;
-    height: 28px;
-    margin-top: 2px;
-    border-radius: 999px;
-    border: 2px solid rgba(var(--accent-rgb), 0.34);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-    flex-shrink: 0;
-}
-
-.study-todo-check span {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: rgba(var(--accent-rgb), 0.18);
-}
-
-.study-todo-check.is-completed {
-    border-color: rgba(34, 197, 94, 0.24);
-    background: rgba(34, 197, 94, 0.12);
-    color: var(--success);
-}
-
-.study-todo-check svg {
-    width: 14px;
-    height: 14px;
-}
-
-.study-todo-content {
+.study-todo-card-head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 16px;
+    gap: 14px;
+}
+
+.study-todo-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
     min-width: 0;
     flex: 1;
 }
@@ -163,48 +100,161 @@
     min-width: 0;
 }
 
+.study-todo-check,
+.study-todo-step-check {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin: 3px 0 0;
+    border-radius: 4px;
+    border: 1.5px solid rgba(148, 163, 184, 0.72);
+    background: rgba(255, 255, 255, 0.96);
+    position: relative;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+.study-todo-check::after,
+.study-todo-step-check::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 5px;
+    width: 5px;
+    height: 10px;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(45deg) scale(0);
+    transform-origin: center;
+    transition: transform var(--transition-fast);
+}
+
+.study-todo-check:checked,
+.study-todo-step-check:checked {
+    border-color: rgba(34, 197, 94, 0.42);
+    background: var(--success);
+}
+
+.study-todo-check:checked::after,
+.study-todo-step-check:checked::after {
+    transform: rotate(45deg) scale(1);
+}
 .study-todo-title-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
+    min-width: 0;
 }
-
-.study-todo-title-row h2 {
+.study-todo-title-main {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    min-width: 0;
+}
+.study-todo-title-row h3 {
     margin: 0;
     font-size: 16px;
     line-height: 1.35;
+    white-space: nowrap;
+}
+.study-todo-subtitle {
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+.study-todo-title-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.study-todo-steps {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.study-todo-step {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: rgba(248, 250, 252, 0.82);
+}
+.study-todo-item.is-completed .study-todo-step {
+    background: rgba(240, 253, 244, 0.56);
+}
+.study-todo-step.is-current {
+    border-color: rgba(var(--accent-rgb), 0.18);
+    background: rgba(var(--accent-rgb), 0.05);
+}
+.study-todo-step-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+.study-todo-step.is-current .study-todo-step-check {
+    border-color: rgba(var(--accent-rgb), 0.36);
+    background: rgba(var(--accent-rgb), 0.08);
 }
 
-.study-todo-main p {
-    margin: 8px 0 0;
+.study-todo-step-label {
+    min-width: 0;
     font-size: 13px;
-    line-height: 1.7;
+    line-height: 1.55;
     color: var(--text-secondary);
 }
 
-.study-todo-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.study-todo-state,
-.study-todo-badge {
+.study-todo-step-state {
     display: inline-flex;
     align-items: center;
+    border-radius: 999px;
     min-height: 24px;
     padding: 0 8px;
-    border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
     white-space: nowrap;
 }
 
-.study-todo-state {
+.study-todo-step-state.is-completed {
+    background: rgba(34, 197, 94, 0.14);
+    color: var(--success);
+}
+
+.study-todo-step-state.is-current {
     background: rgba(var(--accent-rgb), 0.12);
     color: var(--accent);
+}
+
+.study-todo-step-state.is-pending {
+    background: rgba(148, 163, 184, 0.14);
+    color: var(--text-tertiary);
+}
+
+.study-todo-state,
+.study-todo-progress {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.study-todo-state {
+    background: rgba(148, 163, 184, 0.14);
+    color: var(--text-tertiary);
 }
 
 .study-todo-state.is-completed {
@@ -212,22 +262,29 @@
     color: var(--success);
 }
 
-.study-todo-badge {
-    background: rgba(15, 23, 42, 0.06);
-    color: var(--text-secondary);
+.study-todo-progress {
+    border: 1px solid rgba(var(--accent-rgb), 0.16);
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent);
+}
+
+.study-todo-progress.is-completed {
+    border-color: rgba(34, 197, 94, 0.18);
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
 }
 
 .study-todo-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 42px;
-    padding: 0 14px;
-    border-radius: 12px;
-    border: 1px solid var(--surface-border-strong);
-    background: rgba(255, 255, 255, 0.88);
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: rgba(248, 250, 252, 0.88);
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     transition:
@@ -237,11 +294,38 @@
 }
 
 .study-todo-action:hover {
-    transform: translateY(-1px);
-    border-color: rgba(var(--accent-rgb), 0.22);
-    background: rgba(var(--accent-rgb), 0.05);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    background: rgba(var(--accent-rgb), 0.06);
 }
 
+@media (max-width: 960px) {
+    .study-todo-card-head {
+        flex-direction: column;
+    }
+    .study-todo-title-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+    .study-todo-title-row h3 {
+        white-space: normal;
+    }
+    .study-todo-title-main {
+        align-items: flex-start;
+    }
+    .study-todo-step {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .study-todo-step-state {
+        align-self: flex-start;
+    }
+    .study-todo-action {
+        align-self: stretch;
+        width: 100%;
+    }
+}
+@media (max-width: 640px) {
+}
 .study-todo-empty {
     padding: 16px;
     border-radius: 16px;

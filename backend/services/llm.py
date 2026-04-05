@@ -1,11 +1,11 @@
-from services._split_loader import load_split_module_parts
+from services._module_loader import load_split_module_files
 
 
-load_split_module_parts(
+load_split_module_files(
     __file__,
     (
-        'llm_parts/part_01.py',
-        'llm_parts/part_02.py',
+        'llm_service/api_client.py',
+        'llm_service/chat_streaming.py',
     ),
     globals(),
 )

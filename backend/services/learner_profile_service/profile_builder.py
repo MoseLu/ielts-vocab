@@ -1,4 +1,13 @@
-def _build_daily_plan(*, summary: dict, wrong_words, day_sessions, activity_timeline: dict, user_id: int) -> dict:
+def _build_daily_plan(
+    *,
+    summary: dict,
+    wrong_words,
+    day_sessions,
+    activity_timeline: dict,
+    day_start: datetime,
+    day_end: datetime,
+    user_id: int,
+) -> dict:
     due_reviews = int(summary.get('due_reviews') or 0)
     pending_wrong_word_count = _count_pending_wrong_words(wrong_words)
     recommended_wrong_dimension, recommended_wrong_count = _recommend_wrong_dimension(wrong_words)
@@ -12,10 +21,12 @@ def _build_daily_plan(*, summary: dict, wrong_words, day_sessions, activity_time
         )
     )
     error_review_done_today = pending_wrong_word_count <= 0 and _has_session_mode_today(day_sessions, 'errors')
-    focus_book_done_today = _has_book_activity_today(
+    focus_book_done_today = _has_book_progress_today(
+        user_id=user_id,
         book_id=(focus_book or {}).get('book_id'),
+        day_start=day_start,
+        day_end=day_end,
         day_sessions=day_sessions,
-        activity_timeline=activity_timeline,
     )
 
     latest_activity = (activity_timeline.get('recent_events') or [None])[0] or {}
@@ -280,6 +291,8 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         wrong_words=wrong_words,
         day_sessions=day_sessions,
         activity_timeline=activity_timeline,
+        day_start=start_dt,
+        day_end=end_dt,
         user_id=user_id,
     )
 

@@ -1,14 +1,14 @@
-from services._split_loader import load_split_module_parts
+from services._module_loader import load_split_module_files
 
 
-load_split_module_parts(
+load_split_module_files(
     __file__,
     (
-        'books_parts/part_01.py',
-        'books_parts/part_02.py',
-        'books_parts/part_03.py',
-        'books_parts/part_04.py',
-        'books_parts/part_05.py',
+        'books_routes/catalog/confusable_books.py',
+        'books_routes/catalog/vocabulary_loader.py',
+        'books_routes/catalog/book_catalog.py',
+        'books_routes/progress/book_progress.py',
+        'books_routes/library/my_books_and_examples.py',
     ),
     globals(),
 )

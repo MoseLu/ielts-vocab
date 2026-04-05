@@ -1,26 +1,12 @@
 import type { MouseEvent } from 'react'
 import type { Book } from '../../../types'
 import {
+  getStepStateLabel,
   getTaskStateLabel,
   type DailyPlanAction,
   type DailyPlanTask,
   type StudyBookCard,
 } from './homePageModels'
-
-export function TodaySummaryItem({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
-  return (
-    <div className="study-todo-summary-item">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  )
-}
 
 export function TodoTaskRow({
   task,
@@ -30,33 +16,37 @@ export function TodoTaskRow({
   onAction: (action: DailyPlanAction) => void
 }) {
   const isCompleted = task.status === 'completed'
+  const taskSteps = task.steps ?? []
 
   return (
-    <div className={`study-todo-item${isCompleted ? ' is-completed' : ''}`}>
-      <div className={`study-todo-check${isCompleted ? ' is-completed' : ''}`} aria-hidden="true">
-        {isCompleted ? (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        ) : (
-          <span />
-        )}
-      </div>
-
-      <div className="study-todo-content">
-        <div className="study-todo-main">
-          <div className="study-todo-title-row">
-            <h2>{task.title}</h2>
-            <span className={`study-todo-state${isCompleted ? ' is-completed' : ''}`}>
-              {getTaskStateLabel(task)}
-            </span>
-          </div>
-          <p>{task.description}</p>
-          <div className="study-todo-meta">
-            <span className="study-todo-badge">{task.badge}</span>
+    <li className={`study-todo-item${isCompleted ? ' is-completed' : ''}`}>
+      <div className="study-todo-card-head">
+        <div className="study-todo-heading">
+          <input
+            type="checkbox"
+            className="study-todo-check"
+            checked={isCompleted}
+            readOnly
+            tabIndex={-1}
+            aria-hidden="true"
+          />
+          <div className="study-todo-main">
+            <div className="study-todo-title-row">
+              <div className="study-todo-title-main">
+                <h3>{task.title}</h3>
+                <span className="study-todo-subtitle">{task.description}</span>
+              </div>
+              <div className="study-todo-title-meta">
+                <span className={`study-todo-progress${isCompleted ? ' is-completed' : ''}`}>
+                  {task.badge}
+                </span>
+                <span className={`study-todo-state${isCompleted ? ' is-completed' : ''}`}>
+                  {getTaskStateLabel(task)}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-
         <button
           type="button"
           className="study-todo-action"
@@ -65,7 +55,30 @@ export function TodoTaskRow({
           {task.action.cta_label}
         </button>
       </div>
-    </div>
+
+      {taskSteps.length > 0 && (
+        <ul className="study-todo-steps" aria-label={`${task.title}执行步骤`}>
+          {taskSteps.map(step => (
+            <li key={step.id} className={`study-todo-step is-${step.status}`}>
+              <div className="study-todo-step-main">
+                <input
+                  type="checkbox"
+                  className="study-todo-step-check"
+                  checked={step.status === 'completed'}
+                  readOnly
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+                <span className="study-todo-step-label">{step.label}</span>
+              </div>
+              <span className={`study-todo-step-state is-${step.status}`}>
+                {getStepStateLabel(step)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
   )
 }
 
@@ -90,6 +103,10 @@ export function QuickActionButton({
   )
 }
 
+function getHomeBookDisplayTitle(title: string) {
+  return title === '雅思综合词汇5000+' ? '雅思综合词汇' : title
+}
+
 export function MyBookCard({
   card,
   onSelect,
@@ -99,6 +116,8 @@ export function MyBookCard({
   onSelect: (book: Book) => void
   onRemove: (bookId: string, event: MouseEvent<HTMLButtonElement>) => void
 }) {
+  const displayTitle = getHomeBookDisplayTitle(card.book.title)
+
   return (
     <div
       key={card.book.id}
@@ -125,7 +144,7 @@ export function MyBookCard({
         </div>
 
         <div className="study-book-header">
-          <h3 className="study-book-title">{card.book.title}</h3>
+          <h3 className="study-book-title" title={displayTitle}>{displayTitle}</h3>
           <div className="study-book-badges">
             {card.book.is_paid && <span className="study-book-badge">付费</span>}
             {card.isActive && <span className="study-book-state study-book-state--active">进行中</span>}
@@ -140,7 +159,7 @@ export function MyBookCard({
       <div
         className="study-book-progress-bar"
         role="progressbar"
-        aria-label={`${card.book.title} 学习进度`}
+        aria-label={`${displayTitle} 学习进度`}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={card.progressPercent}

@@ -125,6 +125,27 @@ describe('logSession', () => {
     })).resolves.not.toThrow()
     vi.restoreAllMocks()
   })
+
+  it('does not expand duration to epoch seconds when startedAt is missing', async () => {
+    const mockFetch = vi.fn(() =>
+      Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    await logSession({
+      mode: 'listening',
+      wordsStudied: 1,
+      correctCount: 1,
+      wrongCount: 0,
+      durationSeconds: 1,
+      startedAt: 0,
+      endedAt: Date.now(),
+    })
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body as string)
+    expect(body.durationSeconds).toBe(1)
+    vi.restoreAllMocks()
+  })
 })
 
 describe('startSession recovery', () => {

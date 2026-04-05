@@ -16,12 +16,11 @@ import PlanModal from '../../books/dialogs/PlanModal'
 import {
   MyBookCard,
   QuickActionButton,
-  TodaySummaryItem,
   TodoTaskRow,
 } from './HomePageSections'
 import {
+  buildTaskGuidanceSteps,
   buildStudyBookCards,
-  formatDurationSeconds,
   type DailyPlanAction,
   type DailyPlanTask,
   type StudyPlan,
@@ -62,13 +61,7 @@ export default function HomePage() {
   ), [books, myBookIds, progressMap])
 
   const dailyPlan = learnerProfile?.daily_plan
-  const taskList = dailyPlan?.tasks ?? []
-  const taskMap = useMemo(() => {
-    return taskList.reduce<Record<string, DailyPlanTask>>((acc, task) => {
-      acc[task.id] = task
-      return acc
-    }, {})
-  }, [taskList])
+  const rawTaskList = dailyPlan?.tasks ?? []
 
   const focusBookCard = useMemo(() => {
     const focusBookId = dailyPlan?.focus_book?.book_id
@@ -80,14 +73,20 @@ export default function HomePage() {
     return bookCards.find(card => !card.isComplete) ?? bookCards[0] ?? null
   }, [bookCards, dailyPlan])
 
-  const todayContent = dailyPlan?.today_content ?? {
-    date: learnerProfile?.summary.date ?? '',
-    studied_words: learnerProfile?.summary.today_words ?? 0,
-    duration_seconds: learnerProfile?.summary.today_duration_seconds ?? 0,
-    sessions: learnerProfile?.summary.today_sessions ?? 0,
-    latest_activity_title: null,
-    latest_activity_at: null,
-  }
+  const taskList = useMemo(() => {
+    const focusBookTitle = dailyPlan?.focus_book?.title ?? focusBookCard?.book.title ?? null
+    return rawTaskList.map(task => ({
+      ...task,
+      steps: buildTaskGuidanceSteps(task, { focusBookTitle }),
+    }))
+  }, [dailyPlan, focusBookCard, rawTaskList])
+
+  const taskMap = useMemo(() => {
+    return taskList.reduce<Record<string, DailyPlanTask>>((acc, task) => {
+      acc[task.id] = task
+      return acc
+    }, {})
+  }, [taskList])
 
   const handleSelectBook = (book: Book) => {
     if (!myBookIds.has(book.id)) {
@@ -175,7 +174,6 @@ export default function HomePage() {
   const reviewTask = taskMap['due-review']
   const errorTask = taskMap['error-review']
   const weakestModeLabel = learnerProfile?.summary.weakest_mode_label ?? '先看画像'
-  const focusBookText = dailyPlan?.focus_book?.title ?? focusBookCard?.book.title ?? '未设置'
 
   return (
     <div className="study-center-page">
@@ -185,46 +183,56 @@ export default function HomePage() {
           fallback={<PageSkeleton variant="books" itemCount={skeletonCount} bookMinWidth={260} />}
         >
           <div className="study-center-shell">
+            <section className="study-guide-panel">
+              <div className="study-center-grid">
+                {bookCards.map(card => (
+                  <MyBookCard
+                    key={card.book.id}
+                    card={card}
+                    onSelect={handleSelectBook}
+                    onRemove={handleRemoveBook}
+                  />
+                ))}
+
+                <button
+                  type="button"
+                  className="study-add-card"
+                  onClick={() => navigate('/books')}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  <span>{bookCards.length > 0 ? '添加或切换词书' : '添加第一本词书'}</span>
+                </button>
+              </div>
+            </section>
+
             <section className="study-todo-panel">
               <div className="study-todo-head">
-                <div>
-                  <div className="study-todo-eyebrow">今日待办</div>
-                  <h1 className="study-todo-title">今天先处理这 3 件事</h1>
-                  <p className="study-todo-caption">系统会根据今天的真实学习数据自动勾选，你不用手动处理。</p>
+                <h1 className="study-todo-title">今日待办</h1>
+              </div>
+
+              {taskList.length > 0 ? (
+                <ol className="study-todo-list" aria-label="今日待办列表">
+                  {taskList.map(task => (
+                    <TodoTaskRow
+                      key={task.id}
+                      task={task}
+                      onAction={runDailyPlanAction}
+                    />
+                  ))}
+                </ol>
+              ) : (
+                <div className="study-todo-empty">
+                  待办还在同步，先从词书开始。
                 </div>
-              </div>
-
-              <div className="study-todo-summary">
-                <TodaySummaryItem label="今天已学" value={`${todayContent.studied_words} 词`} />
-                <TodaySummaryItem label="学习时长" value={formatDurationSeconds(todayContent.duration_seconds)} />
-                <TodaySummaryItem label="主线词书" value={focusBookText} />
-                <TodaySummaryItem
-                  label="最近学习"
-                  value={todayContent.latest_activity_title ?? '今天还没有新的学习记录'}
-                />
-              </div>
-
-              <div className="study-todo-list">
-                {taskList.length > 0 ? taskList.map(task => (
-                  <TodoTaskRow
-                    key={task.id}
-                    task={task}
-                    onAction={runDailyPlanAction}
-                  />
-                )) : (
-                  <div className="study-todo-empty">
-                    今日待办正在同步，先从词书开始也可以。
-                  </div>
-                )}
-              </div>
+              )}
             </section>
 
             <section className="study-quick-actions-panel">
               <div className="study-section-head study-section-head--compact">
-                <div>
-                  <h2>快捷入口</h2>
-                  <p>不改待办逻辑，只把常用路径收成一排。</p>
-                </div>
+                <h2>快捷入口</h2>
               </div>
               <div className="study-quick-actions">
                 <QuickActionButton
@@ -251,45 +259,6 @@ export default function HomePage() {
                   value={weakestModeLabel}
                   onClick={startWeakModePractice}
                 />
-              </div>
-            </section>
-
-            <section className="study-guide-panel">
-              <div className="study-section-head">
-                <div>
-                  <h2>你的词书</h2>
-                  <p>词书区直接放回首页上方，方便你马上进入今天的内容。</p>
-                </div>
-                <button
-                  type="button"
-                  className="study-section-link"
-                  onClick={() => navigate('/books')}
-                >
-                  管理词书
-                </button>
-              </div>
-
-              <div className="study-center-grid">
-                {bookCards.map(card => (
-                  <MyBookCard
-                    key={card.book.id}
-                    card={card}
-                    onSelect={handleSelectBook}
-                    onRemove={handleRemoveBook}
-                  />
-                ))}
-
-                <button
-                  type="button"
-                  className="study-add-card"
-                  onClick={() => navigate('/books')}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  <span>{bookCards.length > 0 ? '添加或切换词书' : '添加第一本词书'}</span>
-                </button>
               </div>
             </section>
           </div>

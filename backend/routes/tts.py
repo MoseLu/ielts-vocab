@@ -1,11 +1,11 @@
-from services._split_loader import load_split_module_parts
+from services._module_loader import load_split_module_files
 
 
-load_split_module_parts(
+load_split_module_files(
     __file__,
     (
-        'tts_parts/part_01.py',
-        'tts_parts/part_02.py',
+        'tts_routes/sentence_audio.py',
+        'tts_routes/batch_and_word_audio.py',
     ),
     globals(),
 )

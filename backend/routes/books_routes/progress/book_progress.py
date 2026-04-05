@@ -289,6 +289,13 @@ def save_progress(current_user):
         progress = UserBookProgress(user_id=user_id, book_id=book_id)
         db.session.add(progress)
 
+    before_snapshot = {
+        'current_index': progress.current_index or 0,
+        'correct_count': progress.correct_count or 0,
+        'wrong_count': progress.wrong_count or 0,
+        'is_completed': bool(progress.is_completed),
+    }
+
     if 'current_index' in data:
         progress.current_index = max(progress.current_index or 0, int(data['current_index'] or 0))
     if 'correct_count' in data:
@@ -297,6 +304,26 @@ def save_progress(current_user):
         progress.wrong_count = data['wrong_count']
     if 'is_completed' in data:
         progress.is_completed = data['is_completed']
+
+    after_snapshot = {
+        'current_index': progress.current_index or 0,
+        'correct_count': progress.correct_count or 0,
+        'wrong_count': progress.wrong_count or 0,
+        'is_completed': bool(progress.is_completed),
+    }
+    if after_snapshot != before_snapshot:
+        record_learning_event(
+            user_id=user_id,
+            event_type='book_progress_updated',
+            source='book_progress',
+            book_id=book_id,
+            item_count=after_snapshot['current_index'],
+            correct_count=after_snapshot['correct_count'],
+            wrong_count=after_snapshot['wrong_count'],
+            payload={
+                'is_completed': after_snapshot['is_completed'],
+            },
+        )
 
     db.session.commit()
 
