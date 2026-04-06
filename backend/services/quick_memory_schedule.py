@@ -40,11 +40,13 @@ def resolve_quick_memory_next_review_ms(
     stored_next_review: int | None = 0,
 ) -> int:
     safe_known_count = max(0, int(known_count or 0))
+    safe_stored_next_review = max(0, int(stored_next_review or 0))
     if safe_known_count >= QUICK_MEMORY_MASTERY_TARGET:
+        return 0
+    if safe_stored_next_review <= 0 and safe_known_count <= 0:
         return 0
 
     safe_last_seen_ms = max(0, int(last_seen_ms or 0))
-    safe_stored_next_review = max(0, int(stored_next_review or 0))
     if safe_last_seen_ms <= 0:
         return safe_stored_next_review
 

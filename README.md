@@ -24,14 +24,23 @@
 ## 目录概览
 
 ```text
-src/
-- app/                      # 路由入口
-- components/               # 页面与通用组件
-- contexts/                 # Auth / Settings / Toast / AIChat
-- features/                 # 领域功能
-- hooks/                    # 共享 hooks
-- lib/                      # schema、工具、markdown 渲染等
-- styles/                   # 页面样式
+frontend/
+- package.json              # Frontend package manifest
+- vite.config.ts            # Frontend build/proxy config
+- vitest.config.ts          # Frontend unit-test config
+- playwright.config.ts      # Frontend e2e config
+- index.html                # Vite HTML 入口
+- assets/                   # 静态资源
+- src/
+  - app/                    # 路由入口
+  - components/             # 页面与通用组件
+  - contexts/               # Auth / Settings / Toast / AIChat
+  - features/               # 领域功能
+  - hooks/                  # 共享 hooks
+  - lib/                    # schema、工具、markdown 渲染等
+  - styles/                 # 页面样式
+ - tests/
+   - e2e/                   # Playwright 端到端测试
 
 backend/
 - app.py                    # Flask 入口
@@ -42,6 +51,7 @@ backend/
 
 docs/                       # 设计、计划、审计文档
 vocabulary_data/            # 词书与词汇数据
+pnpm-workspace.yaml         # 根目录 workspace 编排
 ```
 
 ## 本地开发
@@ -63,6 +73,8 @@ pnpm install
 pnpm dev
 ```
 
+前端源码和前端包配置现在都位于 `frontend/`，仓库根目录只保留 workspace 与启动编排入口。
+
 前端开发服务器默认运行在 `http://127.0.0.1:3020`。
 
 `pnpm preview` 继续把 `dist` 跑在 `http://127.0.0.1:3002`，用于本地生产式代理链路。
@@ -73,6 +85,7 @@ pnpm dev
 pnpm build
 pnpm preview
 pnpm test
+pnpm test:e2e
 ```
 
 ## 本地代理链路

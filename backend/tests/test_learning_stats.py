@@ -17,8 +17,9 @@ def register_and_login(client, username='stats-user', password='password123'):
     assert res.status_code == 200
 
 
-def test_learning_stats_ignores_empty_started_sessions(client, app):
+def test_learning_stats_ignores_empty_started_sessions(client, app, monkeypatch):
     register_and_login(client)
+    fixed_now = datetime(2026, 3, 30, 12, 0, 0)
 
     with app.app_context():
         user = User.query.filter_by(username='stats-user').first()
@@ -47,6 +48,7 @@ def test_learning_stats_ignores_empty_started_sessions(client, app):
         ])
         db.session.commit()
 
+    monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: fixed_now)
     response = client.get('/api/ai/learning-stats?days=7')
 
     assert response.status_code == 200

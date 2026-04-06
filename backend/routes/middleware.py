@@ -43,40 +43,68 @@ def _decode_token(token: str) -> dict:
     )
 
 
+def _resolve_current_user(*, allow_missing: bool) -> tuple[User | None, tuple | None]:
+    token = _extract_token()
+    if not token:
+        if allow_missing:
+            return None, None
+        return None, (jsonify({'error': '请先登录', 'code': 'NO_TOKEN'}), 401)
+
+    try:
+        payload = _decode_token(token)
+    except jwt.ExpiredSignatureError:
+        if allow_missing:
+            return None, None
+        return None, (jsonify({'error': '登录已过期，请重新登录', 'code': 'TOKEN_EXPIRED'}), 401)
+    except jwt.InvalidTokenError:
+        if allow_missing:
+            return None, None
+        return None, (jsonify({'error': '登录凭证无效', 'code': 'INVALID_TOKEN'}), 401)
+
+    if payload.get('type') != 'access':
+        if allow_missing:
+            return None, None
+        return None, (jsonify({'error': '登录凭证类型错误', 'code': 'WRONG_TOKEN_TYPE'}), 401)
+
+    jti = payload.get('jti')
+    if jti and RevokedToken.is_revoked(jti):
+        if allow_missing:
+            return None, None
+        return None, (jsonify({'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}), 401)
+
+    current_user = User.query.get(payload['user_id'])
+    if not current_user:
+        if allow_missing:
+            return None, None
+        return None, (jsonify({'error': '用户不存在', 'code': 'USER_NOT_FOUND'}), 401)
+
+    if current_user.tokens_revoked_before:
+        iat = payload.get('iat')
+        if iat and datetime.utcfromtimestamp(iat) < current_user.tokens_revoked_before:
+            if allow_missing:
+                return None, None
+            return None, (jsonify({'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}), 401)
+
+    return current_user, None
+
+
 def token_required(f):
     """Decorator: require a valid, non-revoked access token."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = _extract_token()
-        if not token:
-            return jsonify({'error': '请先登录', 'code': 'NO_TOKEN'}), 401
+        current_user, error_response = _resolve_current_user(allow_missing=False)
+        if error_response is not None:
+            return error_response
+        return f(current_user, *args, **kwargs)
 
-        try:
-            payload = _decode_token(token)
-        except jwt.ExpiredSignatureError:
-            return jsonify({'error': '登录已过期，请重新登录', 'code': 'TOKEN_EXPIRED'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'error': '登录凭证无效', 'code': 'INVALID_TOKEN'}), 401
+    return decorated
 
-        # Token type guard — must be an access token
-        if payload.get('type') != 'access':
-            return jsonify({'error': '登录凭证类型错误', 'code': 'WRONG_TOKEN_TYPE'}), 401
 
-        # Revocation check (individual JTI)
-        jti = payload.get('jti')
-        if jti and RevokedToken.is_revoked(jti):
-            return jsonify({'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}), 401
-
-        current_user = User.query.get(payload['user_id'])
-        if not current_user:
-            return jsonify({'error': '用户不存在', 'code': 'USER_NOT_FOUND'}), 401
-
-        # Mass-revocation check: reject tokens issued before tokens_revoked_before
-        if current_user.tokens_revoked_before:
-            iat = payload.get('iat')
-            if iat and datetime.utcfromtimestamp(iat) < current_user.tokens_revoked_before:
-                return jsonify({'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}), 401
-
+def optional_token_required(f):
+    """Decorator: resolve the current user when possible, otherwise pass None."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        current_user, _error_response = _resolve_current_user(allow_missing=True)
         return f(current_user, *args, **kwargs)
 
     return decorated

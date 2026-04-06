@@ -1,0 +1,58 @@
+{
+  "name": "ielts-vocab-frontend",
+  "version": "1.0.0",
+  "description": "IELTS Vocabulary Learning App with 30-day structured learning plan",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm run verify:repo-guards && vite build",
+    "check:file-lines": "pnpm --dir .. check:file-lines",
+    "check:style-discipline": "pnpm --dir .. check:style-discipline",
+    "lint": "eslint .. --config ./eslint.config.mjs --max-warnings=0",
+    "preview": "vite preview",
+    "test": "pnpm run verify:repo-guards && vitest run",
+    "test:watch": "pnpm run verify:repo-guards && vitest",
+    "test:e2e": "playwright test",
+    "verify:repo-guards": "pnpm run check:file-lines && pnpm run check:style-discipline && pnpm run lint"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "@playwright/test": "^1.58.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "jsdom": "^25.0.1",
+    "msw": "^2.12.14",
+    "sass": "^1.98.0",
+    "eslint": "^9.38.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.9"
+  },
+  "keywords": [
+    "ielts",
+    "vocabulary",
+    "learning"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@9.0.0",
+  "dependencies": {
+    "@floating-ui/react": "^0.27.19",
+    "@types/dompurify": "^3.0.5",
+    "dompurify": "^3.3.3",
+    "marked": "^17.0.5",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1",
+    "socket.io-client": "^4.8.3",
+    "zod": "^4.3.6"
+  }
+}

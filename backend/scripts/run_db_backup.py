@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument('--database', default=str(BACKEND_DIR / 'database.sqlite'), help='Path to the live SQLite database')
     parser.add_argument('--backup-dir', default=str(BACKEND_DIR / 'backups'), help='Directory where backup files are stored')
     parser.add_argument('--label', default='manual', help='Label included in the backup filename')
-    parser.add_argument('--keep', type=int, default=max(1, int(os.environ.get('DB_BACKUP_KEEP', '96'))), help='How many snapshots to retain')
+    parser.add_argument('--keep', type=int, default=max(1, int(os.environ.get('DB_BACKUP_KEEP', '10'))), help='How many snapshots to retain')
     return parser.parse_args()
 
 

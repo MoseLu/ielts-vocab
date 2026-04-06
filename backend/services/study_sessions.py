@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from models import UserStudySession
+from models import UserStudySession, db
 
 _LIVE_PENDING_SESSION_WINDOW = timedelta(hours=3)
+_DEFAULT_PENDING_SESSION_MATCH_WINDOW_SECONDS = 15
 
 
 def _get_session_effective_end(session: UserStudySession, *, now: datetime | None = None) -> datetime | None:
@@ -150,3 +151,81 @@ def get_live_pending_session_snapshot(
         'session': session,
         'elapsed_seconds': elapsed_seconds,
     }
+
+
+def normalize_chapter_id(value) -> str | None:
+    if value is None:
+        return None
+    text_value = str(value).strip()
+    return text_value or None
+
+
+def find_pending_session(
+    *,
+    user_id: int,
+    mode: str | None,
+    book_id: str | None,
+    chapter_id: str | None,
+    started_at: datetime | None = None,
+    window_seconds: int = _DEFAULT_PENDING_SESSION_MATCH_WINDOW_SECONDS,
+) -> UserStudySession | None:
+    base_query = UserStudySession.query.filter_by(
+        user_id=user_id,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+    ).filter(
+        UserStudySession.ended_at.is_(None),
+        UserStudySession.words_studied == 0,
+        UserStudySession.correct_count == 0,
+        UserStudySession.wrong_count == 0,
+        UserStudySession.duration_seconds == 0,
+    )
+
+    if started_at is not None:
+        query = base_query.filter(
+            UserStudySession.started_at >= started_at - timedelta(seconds=window_seconds),
+            UserStudySession.started_at <= started_at + timedelta(seconds=window_seconds),
+        )
+    else:
+        query = base_query.filter(
+            UserStudySession.started_at >= datetime.utcnow() - timedelta(seconds=window_seconds),
+        )
+
+    session = query.order_by(UserStudySession.started_at.desc()).first()
+    if session or started_at is None:
+        return session
+
+    return base_query.filter(
+        UserStudySession.started_at >= datetime.utcnow() - timedelta(minutes=30),
+    ).order_by(UserStudySession.started_at.desc()).first()
+
+
+def start_or_reuse_study_session(
+    *,
+    user_id: int,
+    mode: str,
+    book_id: str | None,
+    chapter_id: str | None,
+    reuse_window_seconds: int,
+) -> UserStudySession:
+    existing = find_pending_session(
+        user_id=user_id,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+        window_seconds=reuse_window_seconds,
+    )
+    if existing:
+        return existing
+
+    session = UserStudySession(
+        user_id=user_id,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+        started_at=datetime.utcnow(),
+    )
+    db.session.add(session)
+    db.session.commit()
+    return session

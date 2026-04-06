@@ -1,0 +1,478 @@
+/* Practice: control bar and word list panel */
+
+.practice-ctrl-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    min-height: 48px;
+    background: transparent;
+    border-bottom: none;
+    position: sticky;
+    top: 0;
+    z-index: var(--layer-sticky);
+    gap: 10px;
+    backdrop-filter: none;
+    box-shadow: none;
+}
+
+.practice-ctrl-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 4px 6px 0;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.practice-ctrl-brand-logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.practice-ctrl-brand-text {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.practice-ctx-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    padding: 9px 12px;
+    border-radius: 999px;
+    background: var(--surface-hover);
+}
+
+.practice-ctrl-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: color-mix(in srgb, var(--surface-elevated) 78%, transparent);
+    padding: 4px 8px;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+}
+
+.practice-ctx-arrow {
+    width: 14px;
+    height: 14px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    transition: transform var(--transition-fast);
+}
+
+.practice-ctrl-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: auto;
+}
+
+.practice-ctrl-icon-btn,
+.radio-quick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+    border: 1px solid color-mix(in srgb, var(--surface-border-strong) 86%, var(--text-inverse) 14%);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 9px 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+}
+
+.practice-ctrl-icon-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.practice-ctrl-icon-btn:hover,
+.radio-quick-btn:hover {
+    background: var(--surface-hover);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.practice-ctrl-icon-btn.active {
+    background: var(--surface-active);
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 25%, var(--surface-border-strong));
+    box-shadow: var(--glow-accent);
+}
+
+.practice-mode-btn {
+    padding-inline: 14px;
+}
+
+.practice-mode-label {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.popover-radio-panel,
+.popover-ctx-panel,
+.popover-mode-panel {
+    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 18px;
+    box-shadow: var(--shadow-panel);
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+}
+
+.popover-radio-panel {
+    min-width: 96px;
+}
+
+.popover-ctx-scroll {
+    max-height: 320px;
+}
+
+.popover-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    text-align: left;
+}
+
+.popover-option:hover {
+    background: var(--surface-hover);
+    color: var(--accent);
+}
+
+.popover-option.active {
+    color: var(--accent);
+    background: var(--surface-active);
+}
+
+.ctx-opt-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ctx-radio {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+}
+
+.ctx-radio.checked {
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: inset 0 0 0 2.5px var(--bg-color);
+}
+
+.popover-loading {
+    padding: 20px 14px;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+.wordlist-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--layer-dropdown);
+    background: var(--overlay-medium);
+}
+
+.wordlist-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(420px, 100vw);
+    height: 100vh;
+    height: 100dvh;
+    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+    border-left: 1px solid var(--surface-border-strong);
+    border-radius: 24px 0 0 24px;
+    box-shadow: var(--shadow-overlay);
+    z-index: var(--layer-modal);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(100%);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.22s ease;
+    transform-origin: center right;
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+}
+
+.wordlist-panel.open {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+.wordlist-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 20px 16px;
+    border-bottom: 1px solid var(--surface-border-strong);
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+    z-index: 1;
+}
+
+.wordlist-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.wordlist-total {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: var(--surface-hover);
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+}
+
+.wordlist-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    transition: all var(--transition-fast);
+}
+
+.wordlist-close:hover {
+    background: var(--surface-hover);
+    color: var(--accent);
+}
+
+.wordlist-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.wordlist-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0 calc(18px + env(safe-area-inset-bottom, 0px));
+    overscroll-behavior: contain;
+}
+
+.wordlist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 16px;
+    border-left: 3px solid transparent;
+    transition: all var(--transition-fast);
+}
+
+.wordlist-item:hover {
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface-elevated));
+}
+
+.wordlist-item.current {
+    background: color-mix(in srgb, var(--success-light) 88%, var(--surface-elevated));
+    border-left-color: var(--success);
+}
+
+.wordlist-item.current:hover {
+    background: color-mix(in srgb, var(--success-light) 94%, var(--surface-elevated));
+}
+
+.wordlist-item.correct .wordlist-word {
+    color: var(--success);
+}
+
+.wordlist-item.wrong .wordlist-word {
+    color: var(--error);
+}
+
+.wordlist-item-status {
+    flex-shrink: 0;
+    width: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 3px;
+}
+
+.wl-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-full);
+}
+
+.wl-dot-current {
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+}
+
+.wl-dot-pending {
+    background: var(--border);
+}
+
+.wl-icon {
+    width: 13px;
+    height: 13px;
+}
+
+.wl-icon.correct {
+    color: var(--success);
+    stroke: var(--success);
+}
+
+.wl-icon.wrong {
+    color: var(--error);
+    stroke: var(--error);
+}
+
+.wordlist-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.wordlist-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    align-self: center;
+    margin-left: auto;
+    padding-left: 10px;
+}
+
+.wordlist-action-btn {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface-elevated) 90%, transparent);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.wordlist-action-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    color: var(--text-primary);
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--surface-border-strong));
+    background: var(--surface-hover);
+}
+
+.wordlist-action-btn:disabled {
+    cursor: wait;
+    opacity: 0.72;
+}
+
+.wordlist-action-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.wordlist-action-btn--familiar.is-active {
+    color: var(--success);
+    border-color: color-mix(in srgb, var(--success) 32%, var(--surface-border-strong));
+    background: color-mix(in srgb, var(--success-light) 72%, var(--surface-elevated));
+}
+
+.wordlist-action-btn--favorite.is-active {
+    color: var(--chart-series-5);
+    border-color: color-mix(in srgb, var(--chart-series-5) 32%, var(--surface-border-strong));
+    background: color-mix(in srgb, var(--chart-series-5) 12%, var(--surface-elevated));
+}
+
+.wordlist-action-btn.is-pending {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.wordlist-word {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.wordlist-phonetic {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+}
+
+.wordlist-def {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .practice-ctrl-bar {
+        padding: 8px 10px;
+    }
+
+    .practice-ctrl-brand-text {
+        font-size: 14px;
+    }
+
+    .practice-mode-label {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .practice-ctrl-brand-text {
+        display: none;
+    }
+
+    .wordlist-panel {
+        width: 100vw;
+        border-radius: 0;
+    }
+}

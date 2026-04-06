@@ -3,18 +3,27 @@ import path from 'node:path'
 import process from 'node:process'
 
 const rootDir = process.cwd()
+const frontendDir = 'frontend'
+
+function frontendAwarePath(relativePath) {
+  if (relativePath === 'src' || relativePath.startsWith('src/')) {
+    return path.posix.join(frontendDir, relativePath)
+  }
+  return relativePath
+}
 
 function read(relativePath) {
-  return readFileSync(path.join(rootDir, relativePath), 'utf8')
+  return readFileSync(path.join(rootDir, frontendAwarePath(relativePath)), 'utf8')
 }
 
 function listScssFiles(relativeDir) {
-  const absoluteDir = path.join(rootDir, relativeDir)
+  const displayDir = frontendAwarePath(relativeDir)
+  const absoluteDir = path.join(rootDir, displayDir)
   const entries = readdirSync(absoluteDir, { withFileTypes: true })
   const files = []
 
   for (const entry of entries) {
-    const relativePath = path.join(relativeDir, entry.name).replace(/\\/g, '/')
+    const relativePath = path.join(displayDir, entry.name).replace(/\\/g, '/')
     if (entry.isDirectory()) {
       files.push(...listScssFiles(relativePath))
       continue
@@ -28,7 +37,7 @@ function listScssFiles(relativeDir) {
 }
 
 function reportFailure(errors, relativePath, message) {
-  errors.push(`${relativePath}: ${message}`)
+  errors.push(`${frontendAwarePath(relativePath)}: ${message}`)
 }
 
 const errors = []
@@ -147,7 +156,7 @@ for (const relativePath of pageStyleFiles) {
 }
 
 const tokenSourceRootFiles = new Set([
-  'src/styles/base.scss',
+  frontendAwarePath('src/styles/base.scss'),
 ])
 
 const allStyleFiles = listScssFiles('src/styles').filter((relativePath) => !tokenSourceRootFiles.has(relativePath))

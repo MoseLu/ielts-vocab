@@ -204,7 +204,9 @@ class TestMe:
 
     def test_get_me_no_token(self, client):
         res = client.get('/api/auth/me')
-        assert res.status_code == 401
+        assert res.status_code == 200
+        assert res.get_json()['user'] is None
+        assert res.get_json()['authenticated'] is False
 
 
 # ── /send-code (requires auth) ─────────────────────────────────────────────────

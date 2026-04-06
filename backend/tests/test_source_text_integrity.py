@@ -15,7 +15,7 @@ SKIP_PARTS = {
     'word_tts_cache',
 }
 ASCII_ONLY_FILES = (
-    REPO_ROOT / 'vite.config.ts',
+    REPO_ROOT / 'frontend' / 'vite.config.ts',
     REPO_ROOT / 'backend' / 'app.py',
 )
 MOJIBAKE_TOKENS = (
