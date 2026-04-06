@@ -1,0 +1,63 @@
+# UI Governance Log
+
+## 2026-03-30
+
+- Fixed `src/styles/pages/vocab-book-grid.css`: `.vb-grid` gap is now `10px`.
+- Fixed `src/styles/pages/journal.css`: removed remaining orange gradient styling and normalized the main spacing/radius values to the `10px` rhythm.
+- Fixed `src/styles/pages/errors.css`: `.errors-empty` now stretches to the available page height and centers correctly.
+- Continued round-two style governance:
+  - `src/components/ChapterModal.tsx` and `src/styles/pages/chapter-modal.css` no longer use inline badge/progress styles.
+  - `src/components/VocabTestPage.tsx` and `src/styles/pages/vocab-test.css` no longer use inline progress/ring/badge styles.
+- Added shared empty-state infrastructure:
+  - `src/components/ui/EmptyState.tsx` and `src/styles/components/empty-state.css` now provide reusable page/component empty states.
+  - `src/components/ErrorsPage.tsx` now uses the shared empty state, and `src/styles/pages/errors.css` defines the correct parent height chain for true page-level centering.
+- Journal rendering follow-up:
+  - Removed the top-level `.journal-page .page-content` gap so section spacing is controlled by the section boxes themselves.
+  - Added `src/lib/journalMarkdown.ts` to normalize compressed one-line markdown before rendering, then wired `src/components/LearningJournalPage.tsx` to use it for summaries and note answers.
+  - Reworked the AI note record area in `src/styles/pages/journal.css` away from the old table layout into a two-column note card pattern, and deleted the stale responsive table rules that were no longer used.
+- Large-file decomposition pass:
+  - Split `src/components/StatsPage.tsx` into the `src/components/stats/` feature folder (`index.tsx`, `constants.ts`, `helpers.ts`, `pieCharts.tsx`, `ebbinghausChart.tsx`, `charts.tsx`) and left `src/components/StatsPage.tsx` as a thin entry file.
+  - Audited remaining frontend files still above 500 lines: `src/components/practice/PracticePage.tsx`, `src/components/AdminDashboard.tsx`, `src/styles/pages/stats.css`, `src/styles/pages/admin.css`, `src/styles/pages/journal.css`, `src/components/practice/QuickMemoryMode.tsx`.
+- Style-tree follow-up:
+  - Re-audited frontend style usage and confirmed inline-style leakage still exists in `AdminDashboard`, `Header`, `StatsPage`, `AIChatPanel`, `Popover`, `Scrollbar`, `AvatarUpload`, and several practice subcomponents.
+  - Installed `sass` and switched the frontend style entry from `src/styles/index.css` to `src/styles/index.scss` so the CSS-to-SCSS migration can proceed incrementally from a single root entry.
+- SCSS migration round one:
+  - Migrated the six audited style targets into SCSS modules: `src/styles/pages/admin.scss`, `src/styles/layout/header-base.scss`, `src/styles/layout/header-selectors.scss`, `src/styles/pages/stats.scss`, `src/styles/pages/ai-chat.scss`, `src/styles/components/popover.scss`, and `src/styles/components/scrollbar.scss`.
+  - Updated `src/styles/index.scss` to import the new `.scss` files instead of the old `.css` paths.
+  - Removed JSX inline-style usage from the six audited components: `src/components/AdminDashboard.tsx`, `src/components/Header.tsx`, `src/components/StatsPage.tsx`, `src/components/AIChatPanel.tsx`, `src/components/ui/Popover.tsx`, and `src/components/ui/Scrollbar.tsx`.
+  - Replaced ad-hoc inline sizing/positioning with shared classes, SVG/progress primitives, and ref-driven CSS variables where geometry must remain dynamic.
+- Inline-style cleanup follow-up:
+  - Removed the remaining JSX inline styles from `src/components/AvatarUpload.tsx`, `src/components/HomePage.tsx`, `src/components/PlanModal.tsx`, and `src/components/VocabBookPage.tsx`.
+  - Reworked the related UI styling in `src/styles/components/avatar.css`, `src/styles/pages/study-center.css`, `src/styles/pages/plan-modal.css`, and `src/styles/pages/vocab-book-grid.css` so hidden inputs, accent icons, completion states, and progress indicators all come from the shared style tree.
+  - Replaced the last width-driven progress divs with native `progress` elements and confirmed the frontend now has zero remaining `style={{ ... }}` usages under `src/**/*.tsx`.
+- SCSS migration round two:
+  - Migrated the first foundation group from CSS to SCSS: `src/styles/base.scss`, `src/styles/layout/app.scss`, `src/styles/utils/utilities.scss`, and `src/styles/utils/responsive.scss`.
+  - Updated `src/styles/index.scss` so the root style tree now imports these SCSS modules directly.
+- SCSS migration round three:
+  - Migrated the shared component style group from CSS to SCSS: `src/styles/components/avatar.scss`, `src/styles/components/complete.scss`, `src/styles/components/dropdowns.scss`, `src/styles/components/empty-state.scss`, `src/styles/components/settings.scss`, and `src/styles/components/toast.scss`.
+  - Updated `src/styles/index.scss` so the component layer is now imported through SCSS modules end-to-end.
+- SCSS migration round four:
+  - Migrated the first high-touch page group from CSS to SCSS: `src/styles/pages/study-center.scss`, `src/styles/pages/plan-modal.scss`, `src/styles/pages/vocab-book-grid.scss`, and `src/styles/pages/journal.scss`.
+  - Updated `src/styles/index.scss` so these page modules now participate in the SCSS style tree directly.
+- SCSS migration completion:
+  - Migrated the remaining page style modules from CSS to SCSS and removed the legacy `src/styles/index.css` entry file.
+  - `src/styles` now contains zero `.css` files; the style system is fully SCSS-based with `src/styles/index.scss` as the only root entry.
+  - Added `src/styles/README.md` to document the style tree, file ownership, lookup order, and editing rules for future UI changes.
+- SCSS governance round two:
+  - Added reusable structural mixins in `src/styles/utils/_mixins.scss`: `toolbar-surface`, `table-shell`, and `metric-card`, alongside the previously extracted page/layout helpers.
+  - Rewired repeated container patterns in `src/styles/pages/admin.scss` so tabs, stat cards, chart sections, generic cards, table wrappers, and modal detail filters all consume the shared mixin layer instead of duplicating surface definitions.
+  - Rewired repeated container patterns in `src/styles/pages/journal.scss` so the filter bar, tab strip, section shell, and summary cards now consume the shared mixin layer.
+  - Rewired repeated container patterns in `src/styles/pages/stats.scss` so intro panels, metric cards, section shells, and learning filters now consume the shared mixin layer.
+  - Updated `src/styles/README.md` to document the new reuse-first SCSS building blocks and when to use them.
+  - Extended the mixin layer with table helpers: `data-table-base`, `data-table-head-cell`, and `data-table-body-cell`.
+  - Applied the table helpers in `src/styles/pages/admin.scss` for detail tables, chart tables, and inline tables, and reused `metric-card` for TTS book cards.
+  - Applied the table helpers and shared card/section mixins in the later duplicated section of `src/styles/pages/stats.scss` so both the early and fallback stat/table definitions now consume the same SCSS primitives.
+  - Added shared interaction mixins in `src/styles/utils/_mixins.scss`: `control-button`, `accent-button`, `input-control`, and `pill-badge`.
+  - Rewired buttons, inputs, badges, and pills in `src/styles/pages/admin.scss`, `src/styles/pages/journal.scss`, `src/styles/pages/stats.scss`, `src/styles/pages/study-center.scss`, and `src/styles/pages/vocab-book-grid.scss` to consume the new interaction layer instead of re-declaring local control styling.
+  - Removed remaining decorative gradient backgrounds from the frontend SCSS tree; the only surviving gradient usage is the functional `mask-image` fade in `src/styles/pages/journal.scss`.
+  - Added a semantic dark-theme layer in `src/styles/base.scss` for overlay/floating/muted surfaces, stronger border tiers, focus rings, chart tones, and accent glow so dark mode is no longer driven only by raw background/text inversion.
+  - Rewired the main shell to the dark-aware semantic layer in `src/styles/layout/app.scss` and `src/styles/layout/header-base.scss`, including sidebar/header surfaces, hover fills, mobile menu, search focus, and top/bottom navigation chrome.
+  - Reworked key page surfaces for dark mode in `src/styles/pages/auth.scss`, `src/styles/pages/ai-chat.scss`, `src/styles/pages/admin.scss`, `src/styles/pages/stats.scss`, `src/styles/pages/journal.scss`, and `src/styles/pages/study-center.scss` so cards, tables, inputs, pills, focus states, and empty/loading containers use the shared semantic surface tokens instead of light-mode-biased colors.
+  - Promoted the dark-theme work into the shared component layer: `src/styles/components/dropdowns.scss`, `src/styles/components/popover.scss`, `src/styles/components/settings.scss`, `src/styles/components/toast.scss`, `src/styles/components/empty-state.scss`, `src/styles/components/complete.scss`, `src/styles/components/avatar.scss`, and `src/styles/utils/utilities.scss` now inherit the semantic surface/border/focus tokens instead of hard-coded light-surface values.
+  - Updated `src/styles/utils/_mixins.scss` so default panel, toolbar, table, button, and input primitives now align with the semantic theme system and ship with consistent focus-visible / disabled behavior.
+  - After the theme pass, only a handful of `[data-theme="dark"]` rules remain in `src/styles/pages/stats.scss` for chart-specific semantic coloring; general UI dark-mode support is now token-driven.

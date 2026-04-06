@@ -1,8 +1,6 @@
 # Dependencies
 node_modules/
-package-lock.json
-pnpm-lock.yaml
-.pnpm-debug.log
+pnpm-debug.log*
 
 # Python
 __pycache__/
@@ -34,7 +32,7 @@ Thumbs.db
 
 # Logs
 *.log
-npm-debug.log*
+gcm-diagnose.log
 
 # Environment variables
 .env
@@ -48,6 +46,7 @@ build/
 # Temporary files
 *.tmp
 .cache/
+*.stackdump
 
 # Claude Code
 .claude/
@@ -58,6 +57,19 @@ backend/generate_*.py
 # Test coverage and results
 coverage/
 test-results/
+output/
+
+# TTS audio cache
+backend/tts_cache/
+backend/word_tts_cache/
+backend/backups/
+
+# Local runtime artifacts
+.playwright-cli/
+logs/runtime/
+
+# Temporary generated directories
+录音文件生成记录/
 
 # Vocabulary data (local generated)
 vocabulary_data/*.txt
@@ -65,3 +77,4 @@ vocabulary_data/*.bak
 vocabulary_data/*.lock
 vocabulary_data/*.json.bak
 vocabulary_data/vocabulary_examples.json
+录音文件生成记录/

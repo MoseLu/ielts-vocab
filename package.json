@@ -5,12 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "pnpm run verify:repo-guards && vite build",
+    "check:file-lines": "node scripts/check-file-line-limits.mjs",
+    "check:style-discipline": "node scripts/check-style-discipline.mjs",
+    "lint": "eslint . --max-warnings=0",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "pnpm run verify:repo-guards && vitest run",
+    "test:watch": "pnpm run verify:repo-guards && vitest",
+    "verify:repo-guards": "pnpm run check:file-lines && pnpm run check:style-discipline && pnpm run lint"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
     "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -21,6 +27,9 @@
     "@vitest/coverage-v8": "^2.1.9",
     "jsdom": "^25.0.1",
     "msw": "^2.12.14",
+    "sass": "^1.98.0",
+    "eslint": "^9.38.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
     "typescript": "^5.9.3",
     "vite": "^5.4.11",
     "vitest": "^2.1.9"

@@ -1,0 +1,52 @@
+{
+  "groups": [
+    {
+      "id": "strict-cluster",
+      "words": ["strict", "strike", "struck", "striking", "string", "stock"]
+    },
+    {
+      "id": "contact-cluster",
+      "words": ["contact", "contract", "contrast", "context", "content"]
+    },
+    {
+      "id": "whether-cluster",
+      "words": ["whether", "weather"]
+    },
+    {
+      "id": "cite-cluster",
+      "words": ["cite", "site", "sight"]
+    },
+    {
+      "id": "piece-cluster",
+      "words": ["piece", "peace", "peak", "pierce"]
+    },
+    {
+      "id": "semester-cluster",
+      "words": ["semester", "seminar", "seminars", "segment", "sentence"]
+    },
+    {
+      "id": "accept-cluster",
+      "words": ["accept", "except", "expect"]
+    },
+    {
+      "id": "adapt-cluster",
+      "words": ["adapt", "adopt", "adept"]
+    },
+    {
+      "id": "quiet-cluster",
+      "words": ["quiet", "quite", "quit"]
+    },
+    {
+      "id": "forward-cluster",
+      "words": ["forward", "former", "formal", "forth"]
+    },
+    {
+      "id": "price-cluster",
+      "words": ["price", "prize", "prime", "pride"]
+    },
+    {
+      "id": "affect-cluster",
+      "words": ["affect", "effect", "effective", "efficient"]
+    }
+  ]
+}

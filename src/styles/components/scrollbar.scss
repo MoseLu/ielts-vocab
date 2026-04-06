@@ -1,0 +1,80 @@
+/* ── Custom Scrollbar (Element Plus el-scrollbar style) ──────────────────────
+   Outer container hides overflow; inner wrap scrolls with native bar hidden.
+   A JS-positioned track + thumb overlays the right edge.
+
+   细节参考 Element Plus：
+   - 轨道圆角、滚动头圆角
+   - 滚动头高度随内容比例变化
+   - 出现/悬停时 opacity 过渡
+   - hover 时轨道/滚动头变色                                        */
+
+/* ── Outer container ── */
+.el-scrollbar {
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+}
+
+/* ── Inner scrollable wrap ── */
+.el-scrollbar__wrap {
+    height: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    /* Hide native scrollbar — Firefox */
+    scrollbar-width: none;
+    /* Hide native scrollbar — IE / Edge */
+    -ms-overflow-style: none;
+}
+
+/* Hide native scrollbar — WebKit */
+.el-scrollbar__wrap::-webkit-scrollbar {
+    display: none;
+}
+
+/* ── Vertical track (the rail) ── */
+.el-scrollbar__bar {
+    position: absolute;
+    right: 3px;
+    top: 2px;
+    bottom: 2px;
+    width: 6px;
+    border-radius: 9999px;
+    background: transparent;
+    cursor: default;
+    z-index: var(--layer-local-overlay);
+    user-select: none;
+    touch-action: none;
+    /* 默认隐藏，hover / 滚动时显示 */
+    opacity: 0;
+    transition: opacity 0ms;
+    /* Element Plus 风格：hover 时略微扩张宽度 */
+}
+
+.el-scrollbar__bar:hover,
+.el-scrollbar__bar.is-show {
+    opacity: 1;
+    transition: opacity 160ms ease-out;
+}
+
+/* ── Thumb ── */
+.el-scrollbar__thumb {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--scrollbar-thumb-height, 100%);
+    transform: translateY(var(--scrollbar-thumb-offset, 0));
+    cursor: pointer;
+    border-radius: 9999px;
+    background-color: var(--scrollbar-thumb);
+    transition: background-color 200ms ease, width 200ms ease;
+}
+
+.el-scrollbar__bar:hover .el-scrollbar__thumb {
+    background-color: var(--scrollbar-thumb-hover);
+}
+
+/* hover 时变宽：Element Plus 效果 */
+.el-scrollbar__bar:hover {
+    width: 8px;
+    right: 2px;
+}

@@ -1,0 +1,35 @@
+/* Component: Toast Notification */
+
+.toast {
+    position: fixed;
+    bottom: var(--space-xl);
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface-floating);
+    color: var(--text-primary);
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: var(--layer-toast);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-strong);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast.success {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: color-mix(in srgb, var(--success) 35%, var(--success-bg));
+}
+
+.toast.error {
+    background: var(--error-bg);
+    color: var(--error);
+    border-color: color-mix(in srgb, var(--error) 35%, var(--error-bg));
+}

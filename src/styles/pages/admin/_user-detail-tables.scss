@@ -1,0 +1,83 @@
+
+@use '../../utils/mixins' as *;
+
+.admin-section-title--stacked {
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.admin-inline-table {
+  @include data-table-base();
+}
+
+.admin-inline-table-head {
+  color: var(--text-tertiary);
+}
+
+.admin-inline-table-row {
+  border-top: 1px solid var(--border);
+}
+
+.admin-inline-table-cell {
+  padding: 6px 8px;
+}
+
+.admin-inline-table-cell--left {
+  text-align: left;
+  padding: 4px 8px;
+}
+
+.admin-inline-table-cell--right {
+  text-align: right;
+  padding: 4px 8px;
+}
+
+.admin-cell-positive {
+  color: var(--success);
+}
+
+.admin-cell-negative {
+  color: var(--error);
+}
+
+.admin-detail-summary {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+
+.admin-detail-summary--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-detail-inline-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-detail-inline-filter__label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.admin-detail-table--wrong-words th,
+.admin-detail-table--wrong-words td {
+  text-align: center;
+}
+
+.admin-cell-ellipsis {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-cell-ellipsis--wide {
+  max-width: 200px;
+}

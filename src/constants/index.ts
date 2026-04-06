@@ -13,7 +13,7 @@ export const PRACTICE_MODES = {
 export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRACTICE_MODES], string> = {
   [PRACTICE_MODES.SMART]: '智能模式',
   [PRACTICE_MODES.LISTENING]: '听音选义',
-  [PRACTICE_MODES.MEANING]: '看词选义',
+  [PRACTICE_MODES.MEANING]: '释义拼词',
   [PRACTICE_MODES.DICTATION]: '听写模式',
   [PRACTICE_MODES.RADIO]: '随身听',
   [PRACTICE_MODES.QUICK_MEMORY]: '快速记忆',
@@ -31,9 +31,11 @@ export const STORAGE_KEYS = {
   CHAPTER_PROGRESS: 'chapter_progress',
   WRONG_WORDS: 'wrong_words',
   WRONG_WORDS_PROGRESS: 'wrong_words_progress',
+  WRONG_WORDS_REVIEW_SELECTION: 'wrong_words_review_selection',
   SMART_WORD_STATS: 'smart_word_stats',
   QUICK_MEMORY_RECORDS: 'quick_memory_records',
   CHAPTER_MODE_PROGRESS: 'chapter_mode_progress',
+  ACTIVE_STUDY_SESSION: 'active_study_session',
 } as const
 
 // API endpoints
@@ -52,6 +54,9 @@ export const DEFAULT_SETTINGS = {
   playbackSpeed: '1.0',
   volume: '100',
   interval: '2',
+  reviewInterval: '1',
+  reviewLimit: 'unlimited',
+  reviewLimitCustomized: false,
   darkMode: false,
   fontSize: 'medium',
 } as const

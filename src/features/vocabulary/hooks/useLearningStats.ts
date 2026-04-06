@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../../../contexts'
 import { apiFetch } from '../../../lib'
+import { reconcileQuickMemoryRecordsWithBackend } from '../../../lib/quickMemorySync'
 
 export interface DailyLearning {
   date: string           // 'YYYY-MM-DD'
@@ -115,11 +116,122 @@ export interface ChapterModeStatRow {
   accuracy: number
 }
 
+export interface LearnerProfileSummary {
+  date: string
+  today_words: number
+  today_accuracy: number
+  today_duration_seconds: number
+  today_sessions: number
+  streak_days: number
+  weakest_mode: string | null
+  weakest_mode_label: string | null
+  weakest_mode_accuracy: number | null
+  due_reviews: number
+  trend_direction: 'improving' | 'stable' | 'declining' | 'new'
+}
+
+export interface LearnerProfileDimension {
+  dimension: string
+  label: string
+  correct: number
+  wrong: number
+  attempts: number
+  accuracy: number | null
+  weakness: number
+}
+
+export interface LearnerProfileFocusWord {
+  word: string
+  definition: string
+  wrong_count: number
+  dominant_dimension: string
+  dominant_dimension_label: string
+  dominant_wrong: number
+  focus_score: number
+}
+
+export interface LearnerProfileTopic {
+  title: string
+  count: number
+  word_context: string
+  latest_answer: string
+  latest_at: string | null
+}
+
+export interface LearnerProfileDailyPlanAction {
+  kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book'
+  cta_label: string
+  mode?: string | null
+  book_id?: string | null
+  dimension?: string | null
+}
+
+export interface LearnerProfileDailyPlanTask {
+  id: string
+  kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book'
+  title: string
+  description: string
+  status: 'pending' | 'completed'
+  completion_source?: 'completed_today' | 'already_clear' | null
+  badge: string
+  action: LearnerProfileDailyPlanAction
+}
+
+export interface LearnerProfileDailyPlanTodayContent {
+  date: string
+  studied_words: number
+  duration_seconds: number
+  sessions: number
+  latest_activity_title: string | null
+  latest_activity_at: string | null
+}
+
+export interface LearnerProfileDailyPlanFocusBook {
+  book_id: string
+  title: string
+  current_index: number
+  total_words: number
+  progress_percent: number
+  remaining_words: number
+  is_completed: boolean
+}
+
+export interface LearnerProfileDailyPlan {
+  tasks: LearnerProfileDailyPlanTask[]
+  today_content: LearnerProfileDailyPlanTodayContent
+  focus_book: LearnerProfileDailyPlanFocusBook | null
+}
+
+export interface LearnerProfile {
+  date: string
+  summary: LearnerProfileSummary
+  dimensions: LearnerProfileDimension[]
+  focus_words: LearnerProfileFocusWord[]
+  daily_plan?: LearnerProfileDailyPlan
+  repeated_topics: LearnerProfileTopic[]
+  next_actions: string[]
+  mode_breakdown: ModeStat[]
+}
+
 export type MetricKey = 'words' | 'accuracy' | 'duration'
 export type RangeKey = 7 | 14 | 30
 
-export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
+export interface UseLearningStatsOptions {
+  pollIntervalMs?: number
+}
+
+export function useLearningStats(
+  days: RangeKey,
+  bookId: string,
+  mode: string,
+  options: UseLearningStatsOptions = {},
+) {
   const { user } = useAuth()
+  const userId = user?.id ?? null
+  const { pollIntervalMs = 60_000 } = options
+  const lastFetchStartedAtRef = useRef(0)
+  const hasResolvedInitialFetchRef = useRef(false)
+  const lastUserIdRef = useRef(userId)
   const [daily, setDaily] = useState<DailyLearning[]>([])
   const [books, setBooks] = useState<LearningBook[]>([])
   const [modes, setModes] = useState<string[]>([])
@@ -130,34 +242,61 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
   const [wrongTop10, setWrongTop10] = useState<WrongTopItem[]>([])
   const [chapterBreakdown, setChapterBreakdown] = useState<ChapterBreakdownRow[]>([])
   const [chapterModeStats, setChapterModeStats] = useState<ChapterModeStatRow[]>([])
+  const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
   const [useFallback, setUseFallback] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+
+  useEffect(() => {
+    if (lastUserIdRef.current === userId) return
+
+    lastUserIdRef.current = userId
+    hasResolvedInitialFetchRef.current = false
+    setLoading(Boolean(userId))
+    setRefreshing(false)
+  }, [userId])
 
   const fetchStats = useCallback(async () => {
-    if (!user) {
+    if (!userId) {
+      hasResolvedInitialFetchRef.current = false
       setLoading(false)
+      setRefreshing(false)
       return
     }
 
-    setLoading(true)
+    const isInitialFetch = !hasResolvedInitialFetchRef.current
+    lastFetchStartedAtRef.current = Date.now()
+    if (isInitialFetch) {
+      setLoading(true)
+    } else {
+      setRefreshing(true)
+    }
     try {
+      await reconcileQuickMemoryRecordsWithBackend({
+        skipIfLocalEmpty: true,
+        minIntervalMs: 15_000,
+      }).catch(() => {})
+
       const params = new URLSearchParams({ days: String(days) })
       if (bookId && bookId !== 'all') params.set('book_id', bookId)
       if (mode && mode !== 'all') params.set('mode', mode)
 
-      const d = await apiFetch<{
-        daily?: DailyLearning[]
-        books?: LearningBook[]
-        modes?: string[]
-        summary?: LearningSummary | null
-        alltime?: LearningAlltime | null
-        mode_breakdown?: ModeStat[]
-        pie_chart?: PieSegment[]
-        wrong_top10?: WrongTopItem[]
-        chapter_breakdown?: ChapterBreakdownRow[]
-        chapter_mode_stats?: ChapterModeStatRow[]
-        use_fallback?: boolean
-      }>(`/api/ai/learning-stats?${params}`)
+      const [d, profile] = await Promise.all([
+        apiFetch<{
+          daily?: DailyLearning[]
+          books?: LearningBook[]
+          modes?: string[]
+          summary?: LearningSummary | null
+          alltime?: LearningAlltime | null
+          mode_breakdown?: ModeStat[]
+          pie_chart?: PieSegment[]
+          wrong_top10?: WrongTopItem[]
+          chapter_breakdown?: ChapterBreakdownRow[]
+          chapter_mode_stats?: ChapterModeStatRow[]
+          use_fallback?: boolean
+        }>(`/api/ai/learning-stats?${params}`, { cache: 'no-store' }),
+        apiFetch<LearnerProfile>('/api/ai/learner-profile', { cache: 'no-store' }).catch(() => null),
+      ])
       setDaily(d.daily || [])
       setBooks(d.books || [])
       setModes(d.modes || [])
@@ -168,15 +307,57 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
       setWrongTop10(d.wrong_top10 || [])
       setChapterBreakdown(d.chapter_breakdown || [])
       setChapterModeStats(d.chapter_mode_stats || [])
+      setLearnerProfile(profile || null)
       setUseFallback(d.use_fallback || false)
     } catch {
       // ignore
     } finally {
+      hasResolvedInitialFetchRef.current = true
       setLoading(false)
+      setRefreshing(false)
     }
-  }, [days, bookId, mode, user])
+  }, [days, bookId, mode, userId])
+
+  const refetchIfStale = useCallback(() => {
+    if (Date.now() - lastFetchStartedAtRef.current < 1500) return
+    void fetchStats()
+  }, [fetchStats])
 
   useEffect(() => { fetchStats() }, [fetchStats])
+
+  useEffect(() => {
+    if (!userId) return
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchIfStale()
+      }
+    }
+
+    window.addEventListener('focus', refetchIfStale)
+    window.addEventListener('pageshow', refetchIfStale)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', refetchIfStale)
+      window.removeEventListener('pageshow', refetchIfStale)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [refetchIfStale, userId])
+
+  useEffect(() => {
+    if (!userId) return
+    if (pollIntervalMs <= 0) return
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      refetchIfStale()
+    }, pollIntervalMs)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [pollIntervalMs, refetchIfStale, userId])
 
   return {
     daily,
@@ -189,8 +370,10 @@ export function useLearningStats(days: RangeKey, bookId: string, mode: string) {
     wrongTop10,
     chapterBreakdown,
     chapterModeStats,
+    learnerProfile,
     useFallback,
     loading,
+    refreshing,
     refetch: fetchStats,
   }
 }

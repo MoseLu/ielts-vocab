@@ -1,0 +1,431 @@
+.confusable-shell {
+  --match-neon: color-mix(in srgb, var(--success) 78%, var(--tone-blue) 22%);
+  --match-neon-rgb: 15, 159, 121;
+  --match-danger: color-mix(in srgb, var(--error) 90%, var(--accent) 10%);
+  --match-danger-rgb: 255, 90, 103;
+  --match-danger-ink: color-mix(in srgb, var(--error) 88%, var(--text-primary));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-subtle) 96%, transparent), var(--bg-secondary));
+}
+
+.confusable-ctrl-bar {
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  position: static;
+}
+
+.confusable-shell .practice-ctrl-brand {
+  gap: 0.55rem;
+  min-height: 36px;
+  padding: 0;
+}
+
+.confusable-shell .practice-ctrl-brand-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+}
+
+.confusable-shell .practice-ctrl-brand-text {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.confusable-shell .practice-ctrl-right {
+  gap: 0.4rem;
+}
+
+.confusable-shell .practice-ctrl-icon-btn {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 11px;
+  border-radius: 12px;
+}
+
+.confusable-shell .practice-mode-btn {
+  padding-inline: 12px;
+}
+
+.confusable-shell .practice-mode-label {
+  font-size: 12px;
+}
+
+.confusable-shell .practice-ctx-arrow {
+  width: 12px;
+  height: 12px;
+}
+
+.confusable-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  width: min(1420px, 100%);
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.confusable-board {
+  flex: 1;
+  min-height: 0;
+}
+
+.confusable-workspace {
+  display: flex;
+  min-height: 100%;
+}
+
+.confusable-focus-panel {
+  width: 100%;
+  min-height: 0;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--text-primary) 5%, transparent);
+}
+
+.confusable-focus-panel::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--confusable-group-accent) 82%, transparent);
+}
+
+.confusable-focus-panel.is-completed {
+  border-color: color-mix(in srgb, var(--confusable-group-accent) 22%, var(--border));
+}
+
+.confusable-focus-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.confusable-focus-copy {
+  min-width: 0;
+}
+
+.confusable-focus-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--confusable-group-accent) 10%, var(--surface-subtle));
+  color: color-mix(in srgb, var(--confusable-group-accent) 72%, var(--text-primary));
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.confusable-focus-copy h2 {
+  margin: 10px 0 6px;
+  font-size: clamp(1.1rem, 0.95rem + 0.6vw, 1.45rem);
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.confusable-focus-copy p {
+  margin: 0;
+  max-width: 44rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.confusable-progress-ring {
+  position: relative;
+  flex-shrink: 0;
+  width: 92px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      color-mix(in srgb, var(--confusable-group-accent) 82%, transparent) calc(var(--confusable-progress-ratio) * 1turn),
+      color-mix(in srgb, var(--surface-muted) 94%, transparent) 0turn
+    );
+}
+
+.confusable-progress-ring::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 84%, transparent);
+}
+
+.confusable-progress-ring__core {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.confusable-progress-ring__core strong {
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--success);
+}
+
+.confusable-progress-ring__core span {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.confusable-focus-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  min-height: min(66vh, 720px);
+}
+
+.confusable-group-board {
+  position: relative;
+  min-height: 0;
+  padding: 4px 0;
+}
+
+.confusable-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.confusable-line {
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.confusable-line--success {
+  stroke: color-mix(in srgb, var(--confusable-group-accent) 78%, var(--success));
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--confusable-group-accent) 38%, transparent));
+  animation: confusable-line-pop 0.9s ease forwards;
+}
+
+.confusable-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.confusable-card {
+  position: relative;
+  min-height: 112px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.confusable-card::before {
+  content: '';
+  position: absolute;
+  inset: 10px auto 10px 0;
+  width: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--confusable-group-accent) 80%, transparent);
+}
+
+.confusable-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--confusable-group-accent) 24%, var(--border-hover));
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--text-primary) 7%, transparent);
+}
+
+.confusable-card.is-selected {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--confusable-group-accent) 54%, var(--border-focus));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--confusable-group-accent) 10%, transparent);
+}
+
+.confusable-card.is-success {
+  border-color: color-mix(in srgb, var(--success) 62%, var(--confusable-group-accent));
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--success) 12%, transparent),
+    0 16px 28px color-mix(in srgb, var(--success) 16%, transparent);
+  animation: confusable-green-flash 0.8s ease;
+}
+
+.confusable-card.is-error {
+  border-color: var(--match-danger);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--match-danger) 10%, transparent),
+    0 10px 18px color-mix(in srgb, var(--match-danger) 16%, transparent);
+  animation: confusable-red-pulse 0.2s ease-in-out 2;
+}
+
+.confusable-side-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confusable-insight-panel,
+.confusable-queue-panel {
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-subtle) 96%, transparent);
+}
+
+.confusable-insight-panel {
+  flex: 1;
+  min-height: 0;
+  opacity: 0.78;
+  transform: translateY(0);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.confusable-insight-panel.is-visible {
+  opacity: 1;
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--confusable-group-accent) 28%, var(--border));
+}
+
+.confusable-side-kicker {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.confusable-insight-panel strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.confusable-insight-panel p {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.confusable-insight-list {
+  display: grid;
+  gap: 10px;
+}
+
+.confusable-insight-item {
+  display: grid;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 90%, transparent);
+}
+
+.confusable-insight-word {
+  font-family:
+    'IBM Plex Mono',
+    'DM Mono',
+    ui-monospace,
+    SFMono-Regular,
+    monospace;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.confusable-insight-meaning {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.confusable-queue-list {
+  display: grid;
+  gap: 10px;
+}
+
+.confusable-queue-item {
+  padding: 10px 10px 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--confusable-group-accent) 74%, transparent);
+}
+
+.confusable-queue-item strong,
+.confusable-queue-item span {
+  display: block;
+}
+
+.confusable-queue-item strong {
+  margin-bottom: 4px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.confusable-queue-item span,
+.confusable-queue-empty {
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 980px) {
+  .confusable-focus-body {
+    grid-template-columns: 1fr;
+  }
+
+  .confusable-side-rail {
+    order: -1;
+  }
+
+  .confusable-insight-panel {
+    flex: unset;
+  }
+}
+
+@media (max-width: 640px) {
+  .confusable-stage {
+    padding: 10px;
+  }
+
+  .confusable-focus-head {
+    flex-direction: column;
+  }
+
+  .confusable-progress-ring {
+    width: 84px;
+  }
+
+  .confusable-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

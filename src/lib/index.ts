@@ -1,6 +1,7 @@
 // ── Utility Functions ────────────────────────────────────────────────────────────
 
-import type { z } from 'zod'
+const RAW_API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim() ?? ''
+const NORMALIZED_API_BASE = RAW_API_BASE.replace(/\/+$/, '')
 
 // LocalStorage helpers with type safety
 export function getStorageItem<T>(key: string, defaultValue: T): T {
@@ -20,6 +21,14 @@ export function removeStorageItem(key: string): void {
   localStorage.removeItem(key)
 }
 
+export function buildApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  if (!NORMALIZED_API_BASE) return normalizedPath
+  if (normalizedPath.startsWith('/api/')) return `${NORMALIZED_API_BASE}${normalizedPath}`
+  return `${NORMALIZED_API_BASE}${normalizedPath}`
+}
+
 // ── Secure API fetch — HttpOnly cookie mode ───────────────────────────────────
 // • Always sends credentials (cookies) so the HttpOnly access_token is included
 // • On 401, attempts one silent token refresh via POST /api/auth/refresh
@@ -27,36 +36,73 @@ export function removeStorageItem(key: string): void {
 // • If refresh fails, fires 'auth:session-expired' so AuthContext can clear state
 
 let _refreshing: Promise<void> | null = null
+let _authSessionActive = false
+
+export function setAuthSessionActive(active: boolean): void {
+  _authSessionActive = active
+}
 
 async function _attemptRefresh(): Promise<void> {
-  // Deduplicate: if a refresh is already in flight, wait for it
+  // Deduplicate: if a refresh is already in flight, wait for it.
+  // The promise is stored BEFORE any await to prevent race conditions
+  // where two concurrent 401s could each start their own refresh.
   if (_refreshing) return _refreshing
 
-  _refreshing = (async () => {
-    // Try up to 2 times to handle transient network drops (e.g. natapp tunnel
-    // blip) without immediately treating them as token expiry.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const r = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          credentials: 'include',
-          signal: AbortSignal.timeout(10_000),
-        })
-        if (r.ok) return
-        // A real 401 means the token is genuinely expired — don't retry
-        if (r.status === 401) throw new Error('auth_failed')
-        // Any other HTTP error: fall through to retry
-        throw new Error(`refresh_http_${r.status}`)
-      } catch (err) {
-        const isAuthFailure = err instanceof Error && err.message === 'auth_failed'
-        if (isAuthFailure || attempt === 1) throw err
-        // Wait 1.5 s then retry (covers brief tunnel reconnection)
-        await new Promise(res => setTimeout(res, 1500))
-      }
-    }
-  })().finally(() => { _refreshing = null })
+  // Create promise first, store it synchronously, then execute.
+  // This ordering ensures any concurrent caller sees _refreshing already set.
+  let resolveRefreshing: () => void
+  let rejectRefreshing: (reason?: unknown) => void
+  const promise = new Promise<void>((resolve, reject) => {
+    resolveRefreshing = resolve
+    rejectRefreshing = reject
+  })
 
-  return _refreshing
+  _refreshing = promise
+
+  // Immediately capture resolveRefreshing (synchronous assignment above)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const resolve = resolveRefreshing!
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const reject = rejectRefreshing!
+
+  // Run refresh logic, store the result, then resolve the outer promise.
+  // This allows all concurrent callers to wait on the same promise.
+  _doRefresh()
+    .then(() => {
+      resolve()
+    })
+    .catch(error => {
+      reject(error)
+    })
+    .finally(() => {
+      _refreshing = null
+    })
+
+  return promise
+}
+
+async function _doRefresh(): Promise<void> {
+  // Try up to 2 times to handle transient network drops (e.g. natapp tunnel
+  // blip) without immediately treating them as token expiry.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+        signal: AbortSignal.timeout(10_000),
+      })
+      if (r.ok) return
+      // A real 401 means the token is genuinely expired — don't retry
+      if (r.status === 401) throw new Error('auth_failed')
+      // Any other HTTP error: fall through to retry
+      throw new Error(`refresh_http_${r.status}`)
+    } catch (err) {
+      const isAuthFailure = err instanceof Error && err.message === 'auth_failed'
+      if (isAuthFailure || attempt === 1) throw err
+      // Wait 1.5 s then retry (covers brief tunnel reconnection)
+      await new Promise(res => setTimeout(res, 1500))
+    }
+  }
 }
 
 function _buildHeaders(options: RequestInit): Record<string, string> {
@@ -67,6 +113,40 @@ function _buildHeaders(options: RequestInit): Record<string, string> {
       ? Object.fromEntries(options.headers)
       : (options.headers as Record<string, string>) || {}
   return { 'Content-Type': 'application/json', ...existing }
+}
+
+function _formatRetryAfter(seconds: number): string {
+  const totalSeconds = Math.max(1, Math.ceil(seconds))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const remainingSeconds = totalSeconds % 60
+
+  if (hours > 0) {
+    if (minutes > 0) return `${hours}小时${minutes}分钟后再试`
+    return `${hours}小时后再试`
+  }
+  if (minutes > 0) {
+    if (remainingSeconds > 0) return `${minutes}分${remainingSeconds}秒后再试`
+    return `${minutes}分钟后再试`
+  }
+  return `${remainingSeconds}秒后再试`
+}
+
+function _buildApiErrorMessage(
+  status: number,
+  payload: { error?: unknown; retry_after?: unknown },
+): string {
+  const fallback = typeof payload.error === 'string' && payload.error.trim()
+    ? payload.error.trim()
+    : '请求失败，请稍后重试'
+  const retryAfter = Number(payload.retry_after)
+
+  if (status === 429 && Number.isFinite(retryAfter) && retryAfter > 0) {
+    const prefix = fallback.replace(/，?\s*请\s*\d+\s*秒后再试$/, '').trim() || '操作过于频繁'
+    return `${prefix}，请 ${_formatRetryAfter(retryAfter)}`
+  }
+
+  return fallback
 }
 
 export async function apiFetch<T>(
@@ -85,10 +165,12 @@ export async function apiFetch<T>(
 
   // Silent token refresh on 401 (but not for auth endpoints themselves)
   if (
+    _authSessionActive &&
     response.status === 401 &&
     !url.includes('/api/auth/login') &&
     !url.includes('/api/auth/register') &&
-    !url.includes('/api/auth/refresh')
+    !url.includes('/api/auth/refresh') &&
+    !url.includes('/api/auth/logout')
   ) {
     try {
       await _attemptRefresh()
@@ -96,19 +178,21 @@ export async function apiFetch<T>(
       const retry = await fetch(url, init)
       if (!retry.ok) {
         const err = await retry.json().catch(() => ({ error: '请求失败，请稍后重试' }))
-        throw new Error(err.error || '请求失败，请稍后重试')
+        throw new Error(_buildApiErrorMessage(retry.status, err))
       }
       return retry.json() as Promise<T>
     } catch {
       // Refresh failed — session truly expired
-      window.dispatchEvent(new CustomEvent('auth:session-expired'))
+      if (_authSessionActive) {
+        window.dispatchEvent(new CustomEvent('auth:session-expired'))
+      }
       throw new Error('登录已过期，请重新登录')
     }
   }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: '请求失败，请稍后重试' }))
-    throw new Error(error.error || '请求失败，请稍后重试')
+    throw new Error(_buildApiErrorMessage(response.status, error))
   }
 
   return response.json() as Promise<T>
@@ -172,4 +256,5 @@ export function capitalize(str: string): string {
 // ── Re-export schemas & validation ─────────────────────────────────────────────
 export * from './schemas'
 export * from './validation'
+export * from './bookPractice'
 export { useForm } from './useForm'

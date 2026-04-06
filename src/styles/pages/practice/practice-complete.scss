@@ -1,0 +1,390 @@
+/* Page: Practice – loading state, complete screen, bottom stats bar */
+
+@use '../../utils/mixins' as *;
+
+/* Loading */
+.practice-loading {
+    @include flex-center-column(var(--space-md));
+    flex: 1;
+    min-height: 100%;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--bg-tertiary);
+    border-top-color: var(--accent);
+    border-radius: var(--radius-full);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Complete Screen */
+.practice-complete {
+    @include flex-center-column(var(--space-lg));
+    min-height: 70vh;
+    text-align: center;
+    padding: var(--space-2xl);
+}
+
+.practice-complete .complete-icon {
+    font-size: 64px;
+}
+
+.practice-complete h2 {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.practice-complete .complete-stats {
+    display: flex;
+    gap: var(--space-xl);
+}
+
+.practice-complete .stat-correct {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.practice-complete .stat-wrong {
+    color: var(--error);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.complete-btn {
+    padding: var(--space-sm) var(--space-2xl);
+    background: var(--accent);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.complete-btn:hover {
+    background: var(--accent-hover);
+}
+
+/* Icon button in header */
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Previous word panel - top-left of practice page */
+/* Previous word inline — no card, blends with background */
+.prev-word-inline {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: 12px 18px 0;
+    animation: fadeInDown 0.18s ease;
+    width: min(100%, 920px);
+    margin: 0 auto;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.prev-back-btn {
+    background: color-mix(in srgb, var(--surface-elevated) 74%, transparent);
+    border: 1px solid var(--surface-border-strong);
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 18px;
+    line-height: 1;
+    padding: 6px 8px;
+    border-radius: 12px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    transition: all 0.12s ease;
+}
+
+.prev-back-btn:hover:not(:disabled) {
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.prev-back-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.prev-word-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 14px;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface-elevated) 95%, transparent);
+    border: 1px solid var(--surface-border-strong);
+    box-shadow: var(--shadow-soft);
+}
+
+.prev-word-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    line-height: 1.2;
+}
+
+.prev-word-phonetic {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.prev-word-def {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+/* word-pos-tag alias */
+.word-pos-tag {
+    font-size: 10px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 1px 5px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Bottom bar: stats + progress */
+.practice-bottom-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 8px 20px 12px;
+    background: transparent;
+    margin-top: 0;
+    width: min(100%, 920px);
+    margin-inline: auto;
+}
+
+.bottom-progress-track {
+    flex: 1;
+    height: 8px;
+    background: var(--surface-inset);
+    border-radius: var(--radius-full);
+    position: relative;
+    overflow: visible;
+}
+
+.bottom-progress-fill {
+    height: 100%;
+  background: var(--accent);
+    border-radius: var(--radius-full);
+    transition: width 0.4s ease;
+    position: relative;
+}
+
+.bottom-progress-dot {
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: var(--radius-full);
+    border: 3px solid color-mix(in srgb, var(--text-inverse) 94%, transparent);
+    box-shadow: 0 10px 18px rgba(var(--accent-rgb), 0.24);
+}
+
+.bottom-progress-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    white-space: nowrap;
+    padding: 9px 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-elevated) 95%, transparent);
+    border: 1px solid var(--surface-border-strong);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Completion screen updates */
+.complete-emoji {
+    font-size: 64px;
+}
+
+.complete-stats-row {
+    display: flex;
+    gap: var(--space-xl);
+}
+
+.complete-stats-row .stat-correct {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.complete-stats-row .stat-wrong {
+    color: var(--error);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.practice-complete-copy {
+    max-width: 420px;
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.practice-complete-copy--compact {
+    margin-bottom: 10px;
+}
+
+/* ── Pause Overlay ─────────────────────────────────────────────────────────── */
+
+.practice-pause-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--layer-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--overlay-strong);
+    backdrop-filter: blur(6px);
+    animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.practice-pause-card {
+    background: var(--bg-card, var(--bg-color));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-overlay);
+    animation: scaleUp 0.15s ease;
+}
+
+@keyframes scaleUp {
+    from { opacity: 0; transform: scale(0.93); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.practice-pause-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.practice-pause-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.practice-pause-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.practice-pause-stat {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.practice-pause-sub {
+    font-size: 13px;
+    display: flex;
+    gap: 12px;
+}
+
+.practice-pause-correct { color: var(--success); }
+.practice-pause-wrong   { color: var(--error); }
+
+.practice-pause-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+    margin: 0;
+    max-width: 260px;
+}
+
+.practice-pause-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.practice-pause-resume {
+    padding: 10px 0;
+    background: var(--accent);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    width: 100%;
+}
+
+.practice-pause-resume:hover {
+    background: var(--accent-hover);
+}
+
+.practice-pause-exit {
+    padding: 10px 0;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
+}
+
+.practice-pause-exit:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}

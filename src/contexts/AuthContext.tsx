@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import type { User } from '../types'
 import { STORAGE_KEYS } from '../constants'
-import { apiFetch, safeParse, LoginSchema, RegisterSchema, UserSchema } from '../lib'
+import { apiFetch, safeParse, LoginSchema, RegisterSchema, UserSchema, setAuthSessionActive } from '../lib'
 import { useToast } from './ToastContext'
 
 interface AuthContextValue {
@@ -55,11 +55,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Persist only user data (not the token) for instant hydration
   const _saveUser = (u: User) => {
+    setAuthSessionActive(true)
     setUser(u)
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(u))
   }
 
   const _clearUser = () => {
+    if (_refreshTimer.current) {
+      clearTimeout(_refreshTimer.current)
+      _refreshTimer.current = null
+    }
+    setAuthSessionActive(false)
     setUser(null)
     localStorage.removeItem(STORAGE_KEYS.AUTH_USER)
     localStorage.removeItem('my_books')
@@ -69,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const cached = localStorage.getItem(STORAGE_KEYS.AUTH_USER)
     if (!cached) {
+      setAuthSessionActive(false)
       // No cached user means not logged in — skip server round-trip to avoid
       // a spurious 401 appearing in the browser console.
       setIsLoading(false)
@@ -78,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = JSON.parse(cached)
       const parsed = safeParse(UserSchema, raw)
+      setAuthSessionActive(true)
       setUser(parsed.success ? parsed.data : {
         id: raw.id ?? 0, email: raw.email || '', username: raw.username,
         avatar_url: raw.avatar_url ?? null, is_admin: raw.is_admin ?? false,
@@ -152,10 +160,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [_scheduleRefresh])
 
   const logout = useCallback(async () => {
-    if (_refreshTimer.current) clearTimeout(_refreshTimer.current)
-    // Ask the server to revoke tokens and clear cookies
-    await apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     _clearUser()
+    // Ask the server to revoke tokens and clear cookies, but do not trigger refresh logic
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    }).catch(() => {})
   }, [])
 
   const updateUser = useCallback((updatedUser: User) => {

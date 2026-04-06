@@ -1,0 +1,257 @@
+import { PageSkeleton, SegmentedControl } from '../../ui'
+import { AdminTableSkeleton, MiniBarChart, StatCard } from './AdminDashboardPrimitives'
+import {
+  bookLabels,
+  fmtDate,
+  fmtSeconds,
+  modeLabels,
+  type AdminTab,
+  type AdminUser,
+  type Overview,
+} from './AdminDashboard.types'
+
+interface AdminDashboardViewProps {
+  tab: AdminTab
+  overview: Overview | null
+  overviewLoading: boolean
+  users: AdminUser[]
+  total: number
+  page: number
+  pages: number
+  search: string
+  sort: string
+  order: 'asc' | 'desc'
+  loading: boolean
+  error: string
+  onDismissError: () => void
+  onTabChange: (value: AdminTab) => void
+  onSearchSubmit: () => void
+  onSearchClear: () => void
+  onSearchChange: (value: string) => void
+  onSort: (column: string) => void
+  onPageChange: (page: number) => void
+  onSelectUser: (userId: number) => void
+}
+
+function SortIcon({ current, order, column }: { current: string; order: 'asc' | 'desc'; column: string }) {
+  return (
+    <span className={`admin-sort-icon ${current === column ? 'is-active' : ''}`}>
+      {current === column ? (order === 'desc' ? '▼' : '▲') : '⇅'}
+    </span>
+  )
+}
+
+export function AdminDashboardView({
+  tab,
+  overview,
+  overviewLoading,
+  users,
+  total,
+  page,
+  pages,
+  search,
+  sort,
+  order,
+  loading,
+  error,
+  onDismissError,
+  onTabChange,
+  onSearchSubmit,
+  onSearchClear,
+  onSearchChange,
+  onSort,
+  onPageChange,
+  onSelectUser,
+}: AdminDashboardViewProps) {
+  return (
+    <div className="admin-dashboard">
+      {error && (
+        <div className="admin-error" onClick={onDismissError}>
+          {error} <span className="admin-error-dismiss">（点击关闭）</span>
+        </div>
+      )}
+
+      <SegmentedControl
+        className="admin-tabs"
+        ariaLabel="管理台导航"
+        value={tab}
+        onChange={onTabChange}
+        options={[
+          { value: 'overview', label: '平台概览' },
+          { value: 'users', label: '用户管理', badge: total },
+        ]}
+      />
+
+      {tab === 'overview' && (
+        <div className="admin-overview">
+          {overviewLoading && !overview && <PageSkeleton variant="admin" />}
+          {overview && (
+            <>
+              <div className="admin-stat-grid">
+                <StatCard label="总用户数" value={overview.total_users} sub={`今日新增 ${overview.new_users_today}`} tone="indigo" />
+                <StatCard label="今日活跃" value={overview.active_users_today} sub={`7日活跃 ${overview.active_users_7d}`} tone="green" />
+                <StatCard label="总学习时长" value={fmtSeconds(overview.total_study_seconds)} sub={`共 ${overview.total_sessions} 次练习`} tone="amber" />
+                <StatCard label="总学习单词" value={overview.total_words_studied.toLocaleString()} sub={`平均准确率 ${overview.avg_accuracy}%`} tone="blue" />
+              </div>
+
+              <div className="admin-chart-section">
+                <div className="admin-section-title">近14天每日学习趋势</div>
+                {overview.daily_activity.length === 0 ? (
+                  <div className="admin-empty">暂无数据</div>
+                ) : (
+                  <div className="admin-chart-wrapper">
+                    <div className="admin-summary-heading admin-summary-heading--compact">
+                      <span className="admin-summary-heading-text">练习次数</span>
+                    </div>
+                    <MiniBarChart data={overview.daily_activity} valueKey="sessions" labelKey="day" tone="indigo" />
+                    <div className="admin-chart-labels">
+                      {overview.daily_activity.map((d, i) => (
+                        <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>
+                      ))}
+                    </div>
+                    <div className="admin-summary-heading">
+                      <span className="admin-summary-heading-text">学习单词数</span>
+                    </div>
+                    <MiniBarChart data={overview.daily_activity} valueKey="words" labelKey="day" tone="green" />
+                    <div className="admin-chart-labels">
+                      {overview.daily_activity.map((d, i) => (
+                        <span key={i} className="admin-chart-label">{d.day.slice(5)}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="admin-two-col">
+                <div className="admin-card">
+                  <div className="admin-section-title">练习模式分布</div>
+                  {overview.mode_stats.length === 0 ? (
+                    <div className="admin-empty">暂无数据</div>
+                  ) : (
+                    <div className="admin-mode-list">
+                      {overview.mode_stats.map((m, i) => {
+                        const totalSessions = overview.mode_stats.reduce((s, x) => s + x.count, 0)
+                        const pct = totalSessions > 0 ? Math.round(m.count / totalSessions * 100) : 0
+                        return (
+                          <div key={i} className="admin-mode-row">
+                            <div className="admin-mode-name">{modeLabels[m.mode] || m.mode}</div>
+                            <div className="admin-mode-bar-wrap">
+                              <progress className="admin-mode-bar" max={100} value={pct} />
+                            </div>
+                            <div className="admin-mode-count">{m.count}次 ({pct}%)</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="admin-card">
+                  <div className="admin-section-title">热门词书 TOP 5</div>
+                  {overview.top_books.length === 0 ? (
+                    <div className="admin-empty">暂无数据</div>
+                  ) : (
+                    <div className="admin-book-list">
+                      {overview.top_books.map((b, i) => (
+                        <div key={i} className="admin-book-row">
+                          <span className="admin-book-rank">#{i + 1}</span>
+                          <span className="admin-book-name">{bookLabels[b.book_id] || b.book_id}</span>
+                          <span className="admin-book-meta">{b.sessions}次练习 · {b.users}人</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === 'users' && (
+        <div className="admin-users">
+          <form className="admin-search-row" onSubmit={e => { e.preventDefault(); onSearchSubmit() }}>
+            <input
+              className="admin-search-input"
+              placeholder="搜索用户名或邮箱..."
+              value={search}
+              onChange={e => onSearchChange(e.target.value)}
+            />
+            <button type="submit" className="admin-search-btn">搜索</button>
+            {search && (
+              <button type="button" className="admin-search-clear" onClick={onSearchClear}>清除</button>
+            )}
+            <span className="admin-total-hint">共 {total} 位用户</span>
+          </form>
+
+          <div className="admin-table-wrap">
+            {loading ? (
+              <AdminTableSkeleton />
+            ) : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th onClick={() => onSort('username')} className="sortable">用户名 <SortIcon current={sort} order={order} column="username" /></th>
+                    <th>邮箱</th>
+                    <th onClick={() => onSort('study_time')} className="sortable">学习时长 <SortIcon current={sort} order={order} column="study_time" /></th>
+                    <th onClick={() => onSort('words_studied')} className="sortable">学习单词 <SortIcon current={sort} order={order} column="words_studied" /></th>
+                    <th onClick={() => onSort('accuracy')} className="sortable">准确率 <SortIcon current={sort} order={order} column="accuracy" /></th>
+                    <th>错词数</th>
+                    <th>7日练习</th>
+                    <th onClick={() => onSort('last_active')} className="sortable">最近活跃 <SortIcon current={sort} order={order} column="last_active" /></th>
+                    <th onClick={() => onSort('created_at')} className="sortable">注册时间 <SortIcon current={sort} order={order} column="created_at" /></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length === 0 ? (
+                    <tr><td colSpan={9} className="admin-empty-cell">暂无数据</td></tr>
+                  ) : users.map(u => (
+                    <tr key={u.id} className="admin-user-row" onClick={() => onSelectUser(u.id)}>
+                      <td>
+                        <div className="admin-user-name-cell">
+                          {u.avatar_url ? (
+                            <img src={u.avatar_url} alt="" className="admin-avatar" />
+                          ) : (
+                            <div className="admin-avatar-placeholder">{(u.username || '?')[0].toUpperCase()}</div>
+                          )}
+                          <span>{u.username}</span>
+                          {u.is_admin && <span className="admin-badge">管理员</span>}
+                        </div>
+                      </td>
+                      <td className="admin-cell-muted">{u.email || '—'}</td>
+                      <td>{fmtSeconds(u.stats.total_study_seconds)}</td>
+                      <td>{u.stats.total_words_studied.toLocaleString()}</td>
+                      <td>
+                        <span className={`admin-accuracy ${u.stats.accuracy >= 80 ? 'good' : u.stats.accuracy >= 60 ? 'mid' : u.stats.accuracy > 0 ? 'low' : ''}`}>
+                          {u.stats.accuracy > 0 ? `${u.stats.accuracy}%` : '—'}
+                        </span>
+                      </td>
+                      <td>{u.stats.wrong_words_count > 0 ? u.stats.wrong_words_count : '—'}</td>
+                      <td>
+                        <span className={`admin-sessions-badge ${u.stats.recent_sessions_7d > 0 ? 'active' : ''}`}>
+                          {u.stats.recent_sessions_7d > 0 ? `${u.stats.recent_sessions_7d}次` : '—'}
+                        </span>
+                      </td>
+                      <td className="admin-cell-muted">{fmtDate(u.stats.last_active)}</td>
+                      <td className="admin-cell-muted">{fmtDate(u.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {pages > 1 && (
+            <div className="admin-pagination">
+              <button disabled={page <= 1} onClick={() => onPageChange(page - 1)}>上一页</button>
+              {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
+                <button key={p} className={p === page ? 'active' : ''} onClick={() => onPageChange(p)}>{p}</button>
+              ))}
+              <button disabled={page >= pages} onClick={() => onPageChange(page + 1)}>下一页</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

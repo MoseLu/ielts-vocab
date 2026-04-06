@@ -1,0 +1,381 @@
+.study-guide-description {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 12px 0 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+
+.study-guide-caption {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+    margin: 10px 0 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-tertiary);
+}
+
+.study-guide-metrics {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.study-guide-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--study-glass-base), var(--study-glass-warm));
+    border: 1px solid var(--study-glass-border);
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-elevated) 74%, transparent);
+}
+
+.study-guide-metric span {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.study-guide-metric strong {
+    font-size: 16px;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.study-guide-actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.study-guide-primary-btn,
+.study-guide-secondary-btn,
+.study-section-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform var(--transition-fast),
+        border-color var(--transition-fast),
+        background var(--transition-fast),
+        color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.study-guide-primary-btn {
+    border: none;
+    background: var(--accent);
+    color: var(--text-inverse);
+    box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.24);
+}
+
+.study-guide-primary-btn:hover {
+    transform: translateY(-1px);
+}
+
+.study-guide-secondary-btn,
+.study-section-link {
+    border: 1px solid var(--surface-border-strong);
+    background: var(--study-glass-base);
+    color: var(--text-primary);
+}
+
+.study-guide-secondary-btn:hover,
+.study-section-link:hover {
+    border-color: rgba(var(--accent-rgb), 0.22);
+    background: rgba(var(--accent-rgb), 0.05);
+}
+
+.study-guide-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.95fr);
+    gap: 10px;
+}
+
+.study-guide-side {
+    display: grid;
+    gap: 10px;
+}
+
+.study-self-serve-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.study-choice-card {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--study-glass-base), var(--study-glass-soft));
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-fast);
+}
+
+.study-choice-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--accent-rgb), 0.22);
+    box-shadow: var(--shadow-panel);
+    background: linear-gradient(180deg, var(--study-glass-warm), var(--study-glass-base));
+}
+
+.study-choice-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.study-choice-card__title {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.3;
+}
+
+.study-choice-card__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+.study-choice-card__description {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+}
+
+.study-choice-card__cta {
+    display: inline-flex;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.study-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.study-section-head--compact {
+    margin-bottom: 10px;
+}
+
+.study-section-head h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.study-section-head p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.study-guide-steps {
+    display: grid;
+    gap: 10px;
+}
+
+.study-step-card {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--study-glass-base), var(--study-glass-soft));
+    text-align: left;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    cursor: pointer;
+    transition:
+        transform var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-fast);
+}
+
+.study-step-card:hover:not(.is-disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-panel);
+}
+
+.study-step-card.is-current {
+    border-color: rgba(var(--accent-rgb), 0.22);
+    background: linear-gradient(180deg, var(--study-glass-warm), var(--study-glass-base));
+}
+
+.study-step-card.is-ready {
+    border-color: color-mix(in srgb, var(--warning) 28%, transparent);
+}
+
+.study-step-card.is-optional {
+    border-color: color-mix(in srgb, var(--info) 18%, var(--success) 8%);
+}
+
+.study-step-card.is-done {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--study-glass-soft) 92%, transparent), var(--study-glass-base));
+}
+
+.study-step-card.is-disabled {
+    cursor: default;
+}
+
+.study-step-order {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+    font-weight: 800;
+    background: var(--surface-inset);
+    color: var(--text-primary);
+}
+
+.study-step-body {
+    min-width: 0;
+}
+
+.study-step-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.study-step-title {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.study-step-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.study-step-status--current {
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent);
+}
+
+.study-step-status--ready {
+    background: var(--study-status-ready-bg);
+    color: var(--study-status-ready-fg);
+}
+
+.study-step-status--done {
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    color: var(--success);
+}
+
+.study-step-status--optional {
+    background: var(--study-status-optional-bg);
+    color: var(--study-status-optional-fg);
+}
+
+.study-step-description {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+}
+
+.study-step-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.study-step-badge,
+.study-step-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.study-step-badge {
+    background: var(--surface-inset);
+    color: var(--text-secondary);
+}
+
+.study-step-tag {
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--accent);
+}
+
+.study-step-cta {
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.study-guide-notes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.study-guide-notes li {
+    position: relative;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}

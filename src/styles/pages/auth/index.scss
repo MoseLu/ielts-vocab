@@ -1,0 +1,361 @@
+/* Page: Authentication */
+
+.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: var(--space-lg);
+    background: var(--surface-subtle);
+    position: relative;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-panel);
+}
+
+.auth-title {
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: var(--space-sm);
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.auth-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 15px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    color: var(--text-primary);
+    background: var(--surface-muted);
+    outline: none;
+    margin-bottom: var(--space-md);
+    transition: all var(--transition-fast);
+    box-shadow: inset 0 1px 0 var(--surface-inset);
+}
+
+@media (max-width: 640px) {
+    .auth-page {
+        padding: 56px 10px 10px;
+    }
+}
+
+.auth-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.auth-input:hover {
+    border-color: var(--text-tertiary);
+}
+
+.auth-input:focus {
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+    outline: none;
+}
+
+.auth-btn {
+    width: 100%;
+    height: 48px;
+    background: var(--accent);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.auth-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.auth-btn:active {
+    transform: translateY(0);
+}
+
+.auth-btn.secondary {
+    background: var(--surface-base);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    margin-top: var(--space-sm);
+}
+
+.auth-btn.secondary:hover {
+    background: var(--surface-hover);
+    border-color: var(--text-secondary);
+    transform: none;
+    box-shadow: none;
+}
+
+/* Agreement Checkbox - 爱听写风格 */
+.agreement-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: var(--space-lg);
+    font-size: 14px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.agreement-checkbox {
+    appearance: none;
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--surface-base);
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.agreement-checkbox::after {
+    content: '';
+    width: 8px;
+    height: 5px;
+    border-left: 2px solid var(--text-inverse);
+    border-bottom: 2px solid var(--text-inverse);
+    transform: rotate(-45deg) scale(0);
+    transform-origin: center;
+    transition: transform var(--transition-fast);
+}
+
+.agreement-checkbox:hover {
+    border-color: var(--accent);
+    background: var(--surface-hover);
+}
+
+.agreement-checkbox:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.agreement-checkbox:checked::after {
+    transform: rotate(-45deg) scale(1);
+}
+
+.agreement-checkbox:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.agreement-text {
+    line-height: 1.4;
+}
+
+.agreement-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.agreement-link:hover {
+    text-decoration: underline;
+}
+
+.auth-switch {
+    text-align: center;
+    margin-top: var(--space-lg);
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.auth-switch a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────────────── */
+.auth-tabs {
+    margin-bottom: var(--space-xl);
+}
+
+/* ── Form fields with labels ──────────────────────────────────────── */
+.auth-form-field {
+    margin-bottom: var(--space-md);
+}
+
+.auth-form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.auth-form-field .auth-input {
+    margin-bottom: 0;
+}
+
+.required-mark {
+    color: var(--error);
+    margin-left: 2px;
+    font-size: 12px;
+}
+
+/* ── Forgot password row (link below password field) ──────────────── */
+.auth-forgot-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -8px;
+    margin-bottom: var(--space-md);
+}
+
+.auth-forgot-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.auth-forgot-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Forgot password back header ─────────────────────────────────── */
+.auth-back-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.auth-back-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.auth-back-btn:hover {
+    color: var(--text-primary);
+}
+
+.auth-forgot-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* ── Send code row (email + button side by side) ──────────────────── */
+.auth-code-row {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
+}
+
+.auth-code-row .auth-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.auth-send-code-btn {
+    flex-shrink: 0;
+    height: 48px;
+    padding: 0 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+
+.auth-send-code-btn:hover:not(:disabled) {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+}
+
+.auth-send-code-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── Input with icons wrapper ──────────────────────────────────── */
+.auth-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.auth-input-wrapper .auth-input {
+    flex: 1;
+    padding-right: 44px;
+    margin-bottom: 0;
+}
+
+.auth-input-wrapper .auth-input.auth-input-error {
+    margin-bottom: 0;
+}
+
+/* Icon button inside input */
+.auth-input-icon-btn {
+    position: absolute;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+    z-index: 1;
+}
+
+.auth-input-icon-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+.auth-input-icon-btn:active {
+    transform: scale(0.95);
+}

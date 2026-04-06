@@ -1,6 +1,6 @@
 // ── Word List Panel Component ───────────────────────────────────────────────────
 
-import React, { useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import type { WordListPanelProps } from './types'
 
 export default function WordListPanel({
@@ -16,7 +16,7 @@ export default function WordListPanel({
 
   // Scroll current word into view
   useEffect(() => {
-    if (show && currentWordListItemRef.current) {
+    if (show && currentWordListItemRef.current && typeof currentWordListItemRef.current.scrollIntoView === 'function') {
       currentWordListItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     }
   }, [queueIndex, show])

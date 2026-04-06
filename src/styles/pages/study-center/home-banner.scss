@@ -1,0 +1,214 @@
+/* Page: Home – header banner & progress ring */
+
+/* Page: Home – banner, tabs, day grid (legacy layout) */
+
+/* Page: Study Center (学习中心) + Chapter Modal */
+
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: var(--space-sm);
+}
+
+.page-subtitle {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
+}
+
+.day-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--space-md);
+}
+
+.day-card {
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.day-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+    transform: translateY(-2px);
+}
+
+.day-card.completed {
+    background: var(--success-light);
+    border-color: var(--success);
+}
+
+.day-card.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.day-card.locked:hover {
+    border-color: var(--border);
+    box-shadow: none;
+    transform: none;
+}
+
+.day-number {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: var(--space-xs);
+}
+
+.day-status {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.day-card.completed .day-status {
+    color: var(--success);
+}
+
+/* Unified container — all children inherit same width */
+.home-page {
+    padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* ── Banner ── */
+.home-banner {
+    background: var(--surface-base);
+    border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl) var(--space-2xl);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-xl);
+}
+
+.home-banner-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.home-banner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-radius: var(--radius-full);
+    padding: 4px 12px 4px 8px;
+    margin-bottom: var(--space-md);
+}
+
+.home-banner-badge svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+.home-welcome {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+    line-height: 1.2;
+}
+
+.home-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+    line-height: 1.5;
+}
+
+.home-stats-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.home-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.home-stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.home-stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.02em;
+}
+
+.home-stat-divider {
+    width: 1px;
+    height: 28px;
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+    flex-shrink: 0;
+}
+
+/* Right side of banner */
+.home-banner-right {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.home-progress-ring {
+    position: relative;
+    width: 96px;
+    height: 96px;
+}
+
+.progress-ring-svg {
+    width: 96px;
+    height: 96px;
+}
+
+.progress-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-ring-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.progress-ring-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+.home-current-day {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-radius: var(--radius-full);
+    padding: 3px 12px;
+}

@@ -1,0 +1,305 @@
+/* Component: Avatar Upload */
+
+.avatar-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--layer-modal);
+    backdrop-filter: blur(2px);
+}
+
+.avatar-modal {
+    width: 90%;
+    max-width: 400px;
+    background: var(--surface-floating);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.avatar-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.avatar-modal-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.avatar-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-modal-close:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.avatar-modal-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+.avatar-modal-body {
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.avatar-preview-area {
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    border: 3px solid var(--border-subtle);
+    background: var(--surface-muted);
+}
+
+.avatar-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-preview-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    background: var(--surface-inset);
+}
+
+.avatar-actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.avatar-file-input {
+    display: none;
+}
+
+.avatar-upload-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--accent);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.avatar-upload-btn:hover {
+    background: var(--accent-hover);
+}
+
+.avatar-upload-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.avatar-remove-btn {
+    padding: var(--space-sm) var(--space-lg);
+    background: none;
+    color: var(--error);
+    border: 1px solid var(--error);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.avatar-remove-btn:hover {
+    background: var(--error-light);
+}
+
+.avatar-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin: 0;
+}
+
+.avatar-error {
+    font-size: 13px;
+    color: var(--error);
+    background: var(--error-light);
+    border: 1px solid var(--error);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    width: 100%;
+    text-align: center;
+}
+
+.avatar-modal-footer {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--border-subtle);
+    justify-content: flex-end;
+}
+
+.avatar-cancel-btn {
+    padding: var(--space-sm) var(--space-xl);
+    background: none;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.avatar-cancel-btn:hover {
+    background: var(--surface-hover);
+}
+
+.avatar-save-btn {
+    padding: var(--space-sm) var(--space-xl);
+    background: var(--accent);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.avatar-save-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+
+.avatar-save-btn:disabled,
+.avatar-cancel-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* User avatar image in header button */
+.user-avatar-img {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+
+/* User dropdown header section */
+.user-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+}
+
+/* Clickable avatar in dropdown — replaces .user-dropdown-avatar */
+.user-dropdown-avatar-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    color: var(--text-inverse);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: filter 0.15s ease;
+}
+
+.user-dropdown-avatar-btn:hover {
+    filter: brightness(0.85);
+}
+
+.user-dropdown-avatar-btn .user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-edit-hint {
+    position: absolute;
+    inset: 0;
+    background: var(--overlay);
+    color: var(--text-inverse);
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    border-radius: var(--radius-full);
+}
+
+.user-dropdown-avatar-btn:hover .avatar-edit-hint {
+    opacity: 1;
+}
+
+/* Keep old class as alias in case used elsewhere */
+.user-dropdown-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    color: var(--text-inverse);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.user-dropdown-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.user-dropdown-email {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.user-dropdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: var(--space-xs) 0;
+}

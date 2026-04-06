@@ -27,6 +27,13 @@ export interface Word {
   phonetic: string
   pos: string
   definition: string
+  listening_confusables?: Array<{
+    word: string
+    phonetic: string
+    pos: string
+    definition: string
+    group_key?: string
+  }>
   chapter_id?: number | string
   chapter_title?: string
 }
@@ -47,6 +54,9 @@ export interface AppSettings {
   playbackSpeed?: string
   volume?: string
   interval?: string
+  reviewInterval?: string
+  reviewLimit?: string
+  reviewLimitCustomized?: boolean
   darkMode?: boolean
   fontSize?: string
   [key: string]: unknown
@@ -58,14 +68,18 @@ export interface Book {
   title: string
   description?: string
   word_count: number
+  chapter_count?: number
+  group_count?: number
   category?: string
   level?: string
   icon?: string
   color?: string
   is_paid?: boolean
   has_chapters?: boolean
+  is_auto_favorites?: boolean
   study_type?: string
   file?: string
+  practice_mode?: string
   [key: string]: unknown
 }
 
@@ -73,6 +87,8 @@ export interface Chapter {
   id: number | string
   title: string
   word_count?: number
+  group_count?: number
+  is_custom?: boolean
 }
 
 export interface BookProgress {
@@ -104,6 +120,7 @@ export interface AIMessage {
   role: 'user' | 'assistant'
   content: string
   options?: string[]
+  isStreaming?: boolean
   timestamp: number
 }
 

@@ -1,0 +1,118 @@
+/* Page: Practice - favorite actions */
+
+.practice-favorite-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg-color) 88%, transparent);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+}
+
+.practice-favorite-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    color: var(--error);
+    border-color: color-mix(in srgb, var(--error) 30%, var(--border));
+    box-shadow: var(--shadow-md);
+}
+
+.practice-favorite-btn:disabled {
+    cursor: wait;
+}
+
+.practice-favorite-btn.is-active {
+    color: var(--error);
+    border-color: color-mix(in srgb, var(--error) 40%, var(--border));
+    background: color-mix(in srgb, var(--error) 12%, var(--bg-color));
+}
+
+.practice-favorite-btn.is-pending {
+    opacity: 0.72;
+}
+
+.practice-favorite-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.practice-main-header,
+.dictation-topbar,
+.radio-stage-toolbar {
+    width: min(100%, 720px);
+}
+
+.practice-main-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: var(--space-md);
+}
+
+.practice-main-header__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.practice-main-header__action,
+.dictation-topbar__action,
+.qm-card-toolbar__action,
+.radio-stage-toolbar__action {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.dictation-topbar,
+.radio-stage-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 auto 12px;
+}
+
+.dictation-topbar__spacer,
+.qm-card-toolbar__spacer {
+    flex: 1;
+}
+
+.qm-card-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    margin-bottom: -8px;
+}
+
+.qm-card-toolbar--question {
+    margin-bottom: -14px;
+}
+
+.qm-card-toolbar--question .qm-card-toolbar__action,
+.qm-card-toolbar__spacer {
+    width: var(--qm-side-rail-size, 48px);
+    flex: 0 0 var(--qm-side-rail-size, 48px);
+}
+
+.qm-card-toolbar--question .qm-card-toolbar__action {
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .practice-favorite-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .practice-main-header,
+    .dictation-topbar,
+    .radio-stage-toolbar {
+        width: 100%;
+    }
+}

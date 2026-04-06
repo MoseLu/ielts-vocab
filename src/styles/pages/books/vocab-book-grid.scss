@@ -1,0 +1,247 @@
+/* Page: Vocab book grid and filter surface */
+
+@use '../../utils/mixins' as *;
+
+.vocab-book-page {
+    gap: 10px;
+    padding: var(--page-gutter);
+    box-sizing: border-box;
+}
+
+.vb-page-header {
+    min-height: auto;
+    width: 100%;
+    align-items: stretch;
+}
+
+.vb-page-body {
+    min-height: 0;
+}
+
+.vb-filters {
+    width: 100%;
+    padding: 2px 0 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.vb-filter-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.vb-filter-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px 24px;
+    width: 100%;
+}
+
+.vb-filter-btn {
+    position: relative;
+    @include control-button(0, 0, 0, none, transparent, var(--text-secondary), 15px, 500);
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: auto;
+    padding: 0 0 10px;
+    border-radius: 0;
+    transition: color var(--transition-fast), opacity var(--transition-fast);
+    white-space: nowrap;
+}
+
+.vb-filter-row--compact {
+    justify-content: flex-start;
+}
+
+.vb-filter-btn--compact {
+    flex: 0 0 auto;
+    min-width: max-content;
+}
+
+.vb-filter-btn::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 20px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--accent);
+    opacity: 0;
+    transform: scaleX(0.2);
+    transform-origin: left center;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.vb-filter-btn:hover {
+    color: var(--accent);
+    opacity: 1;
+}
+
+.vb-filter-btn.active {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.vb-filter-btn.active::after {
+    opacity: 1;
+    transform: scaleX(1);
+}
+
+.vb-main {
+    flex: 1;
+    padding: 0;
+    background: transparent;
+    min-height: 0;
+}
+
+.vb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+}
+
+.vb-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 24px;
+    padding: 20px 18px 18px;
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+    min-height: 180px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+
+.vb-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.vb-card:hover {
+    border-color: rgba(var(--accent-rgb), 0.26);
+    box-shadow: var(--shadow-panel);
+    background: color-mix(in srgb, var(--accent) 4%, var(--surface-elevated));
+    transform: translateY(-3px);
+}
+
+.vb-card:hover::before {
+    opacity: 1;
+}
+
+.vb-card-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    @include pill-badge(24px, 5px 10px, 999px, var(--accent), white, 11px, 600);
+    box-shadow: 0 10px 18px rgba(var(--accent-rgb), 0.24);
+}
+
+.vb-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.35;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: calc(100% - 72px);
+}
+
+.vb-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.vb-card-count {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.vb-card-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.55;
+}
+
+.vb-card-progress {
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vb-card-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--surface-inset);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.vb-card-progress-fill {
+    height: 100%;
+    display: block;
+    background: var(--accent);
+    border-radius: 99px;
+}
+
+.vb-card-progress-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vb-card-added {
+    @include pill-badge(30px, 7px 10px, 999px, color-mix(in srgb, var(--success) 10%, var(--surface-elevated)), var(--success), 12px, 600);
+    gap: 10px;
+    margin-top: 4px;
+    width: fit-content;
+}
+
+.vb-card-added svg {
+    width: 12px;
+    height: 12px;
+}
+
+@media (max-width: 900px) {
+    .vb-filters {
+        padding: 2px 0 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .vb-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vb-card {
+        min-height: 160px;
+    }
+}

@@ -1,0 +1,224 @@
+/* Page: Practice - radio/listening mode */
+
+/* Radio mode */
+.radio-mode {
+    background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 56px);
+    padding: clamp(28px, 6vh, 64px) 16px 24px;
+    gap: 18px;
+}
+
+.radio-stage {
+    width: min(100%, 760px);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.radio-stage-word {
+    margin: 0;
+    font-size: clamp(2.2rem, 7vw, 4.4rem);
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+.radio-stage-phonetic {
+    margin: 0;
+    font-size: clamp(1.15rem, 3vw, 1.7rem);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.radio-stage-definition {
+    margin: 10px 0 0;
+    max-width: 720px;
+    font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+.radio-stage-definition .word-pos-tag {
+    margin-right: 10px;
+}
+
+.radio-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 2.2vw, 20px);
+    margin-top: 14px;
+}
+
+.radio-ctrl-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: transform var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.radio-ctrl-btn:hover {
+    color: var(--text-primary);
+    background: var(--surface-hover);
+    transform: translateY(-1px);
+}
+
+.radio-ctrl-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.radio-play-btn {
+    width: 58px;
+    height: 58px;
+    background: var(--accent);
+    color: var(--text-inverse);
+    box-shadow: var(--glow-accent);
+}
+
+.radio-play-btn:hover {
+    background: var(--accent-hover);
+    color: var(--text-inverse);
+}
+
+.radio-progress-track {
+    width: min(72vw, 640px);
+    height: 4px;
+    border-radius: 999px;
+    background: var(--border-subtle);
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.radio-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+    border-radius: inherit;
+    transition: width 0.35s ease;
+}
+
+.radio-progress-label {
+    font-size: 14px;
+    color: var(--text-tertiary);
+}
+
+.radio-bottom-btns {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.radio-stop-btn,
+.radio-home-btn {
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.radio-stop-btn:hover,
+.radio-home-btn:hover {
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border-subtle));
+    color: var(--text-primary);
+    background: var(--surface-elevated);
+}
+
+@media (max-width: 768px) {
+    .radio-mode {
+        padding: 24px 14px calc(80px + env(safe-area-inset-bottom));
+        gap: 14px;
+    }
+
+    .radio-stage-definition {
+        line-height: 1.58;
+    }
+
+    .radio-progress-track {
+        width: min(84vw, 560px);
+    }
+}
+
+/* Mic button in dictation */
+.mic-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 56px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+.mic-btn:hover {
+    color: var(--accent);
+}
+
+.mic-btn:focus {
+    background: transparent;
+    outline: none;
+}
+
+.mic-btn.recording {
+    color: var(--error);
+}
+
+.mic-btn.disconnected {
+    color: var(--text-muted);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@keyframes micPulse {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+.mic-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.spin {
+    animation: spinAnim 1s linear infinite;
+}
+
+@keyframes spinAnim {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

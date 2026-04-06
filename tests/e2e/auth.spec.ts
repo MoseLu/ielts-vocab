@@ -5,7 +5,7 @@
 //   pnpm exec playwright install chromium
 //
 // Start servers (two terminals):
-//   Terminal 1: pnpm run dev          # frontend at http://localhost:5173
+//   Terminal 1: pnpm run dev          # frontend at http://localhost:3020
 //   Terminal 2: cd backend && python app.py  # backend at http://localhost:5000
 //
 // Run tests:
@@ -13,7 +13,7 @@
 
 import { test, expect } from '@playwright/test'
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173'
+const BASE = process.env.BASE_URL || 'http://localhost:3020'
 
 // ── /login ─────────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 // ── Toast Context ───────────────────────────────────────────────────────────────
 
 import React, { createContext, useContext, useState, useCallback } from 'react'
-import { safeParse, ToastDataSchema, ToastTypeSchema } from '../lib'
+import { safeParse, ToastDataSchema } from '../lib'
 
 interface ToastContextValue {
   toast: { message: string; type: 'info' | 'success' | 'error' } | null

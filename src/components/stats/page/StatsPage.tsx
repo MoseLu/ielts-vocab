@@ -1,0 +1,397 @@
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { PageSkeleton } from '../../ui'
+import { SegmentedControl, UnderlineTabs } from '../../ui/NavigationControls'
+import { useWrongWords, useLearningStats } from '../../../features/vocabulary/hooks'
+import { hasWrongWordHistory, hasWrongWordPending, WRONG_WORD_SCOPE_LABELS } from '../../../features/vocabulary/wrongWordsStore'
+import type { MetricKey, RangeKey } from '../../../features/vocabulary/hooks'
+import {
+  StatsSectionSkeleton,
+  WrongTopBlock,
+  buildWrongTopItems,
+  ebbinghausRateCaption,
+  ebbinghausSummaryHelp,
+  EbbinghausDualChart,
+  fmtDuration,
+  fmtPct,
+  isStatsInitialLoading,
+  LearnerProfileCard,
+  LearningChart,
+  MODE_LABELS,
+  ModeBreakdownTableBody,
+  ModePieChart,
+  resolveEbbStages,
+} from '../StatsPageSupport'
+import {
+  ebbRateToneClass,
+  METRIC_OPTIONS,
+  RANGE_OPTIONS,
+  startEbbinghausReview,
+  StatsSummaryCards,
+} from '../statsPageSections'
+
+const STATS_REFRESH_OPTIONS = {
+  pollIntervalMs: 0,
+} as const
+
+export default function StatsPage() {
+  const navigate = useNavigate()
+  const { words: wrongWords, loading: wrongWordsLoading } = useWrongWords()
+
+  const [range, setRange] = useState<RangeKey>(30)
+  const [metric, setMetric] = useState<MetricKey>('words')
+  const [bookId, setBookId] = useState('all')
+  const [mode, setMode] = useState('all')
+
+  const {
+    daily,
+    books,
+    modes,
+    summary,
+    alltime,
+    modeBreakdown,
+    pieChart,
+    learnerProfile,
+    useFallback,
+    loading: chartLoading,
+  } = useLearningStats(range, bookId, mode, STATS_REFRESH_OPTIONS)
+
+  const historyWrongWords = useMemo(
+    () => wrongWords.filter(word => hasWrongWordHistory(word)),
+    [wrongWords],
+  )
+  const pendingWrongWords = useMemo(
+    () => wrongWords.filter(word => hasWrongWordPending(word)),
+    [wrongWords],
+  )
+  const historyWrongTop10 = useMemo(
+    () => buildWrongTopItems(historyWrongWords, 'history'),
+    [historyWrongWords],
+  )
+  const pendingWrongTop10 = useMemo(
+    () => buildWrongTopItems(pendingWrongWords, 'pending'),
+    [pendingWrongWords],
+  )
+
+  const dueReviewCount = learnerProfile?.summary.due_reviews ?? alltime?.ebbinghaus_due_total
+  const displayDueReviews = dueReviewCount ?? (chartLoading ? '…' : '--')
+  const displayPendingWrongWords = wrongWordsLoading
+    ? '…'
+    : pendingWrongWords.length
+  const focusBook = learnerProfile?.daily_plan?.focus_book ?? null
+  const displayFocusBookRemaining = focusBook
+    ? (focusBook.is_completed ? '已清空' : `${focusBook.remaining_words}词`)
+    : '未添加'
+  const focusBookScope = focusBook
+    ? `按当前主线词书《${focusBook.title}》的剩余词数统计。`
+    : '当前还没有主线词书，无法生成今日主线剩余量。'
+  const focusBookMeaning = focusBook
+    ? (
+        focusBook.is_completed
+          ? '表示当前主线词书已经推进完成，今天可以切换到下一本或回到复习。'
+          : '表示做完到期复习和错词清理后，主线还剩多少词要继续推进。'
+      )
+    : '先去词书页添加词书，首页和统计页才会生成稳定的主线任务。'
+  const displayTodayWords = learnerProfile?.summary.today_words ?? (chartLoading ? '…' : '--')
+  const displayTodayDuration = alltime && alltime.today_duration_seconds > 0
+    ? fmtDuration(alltime.today_duration_seconds)
+    : '--'
+  const displayTodayAccuracy = fmtPct(alltime?.today_accuracy ?? learnerProfile?.summary.today_accuracy ?? null)
+  const weakestModeLabel = learnerProfile?.summary.weakest_mode_label
+    ?? (alltime?.weakest_mode ? (MODE_LABELS[alltime.weakest_mode] || alltime.weakest_mode) : null)
+  const displayWeakestMode = weakestModeLabel ?? (chartLoading ? '…' : '待判定')
+  const displayTotalLearned = alltime?.total_words != null ? alltime.total_words : (chartLoading ? '…' : '--')
+  const displayStreak = learnerProfile?.summary.streak_days ?? alltime?.streak_days ?? '--'
+  const ebbRateCaption = ebbinghausRateCaption(alltime)
+  const ebbSummaryHelp = ebbinghausSummaryHelp(alltime)
+
+  const hasChartData = daily.some(d => {
+    if (metric === 'words') return d.words_studied > 0
+    if (metric === 'accuracy') return d.accuracy != null
+    return d.duration_seconds > 0
+  })
+
+  const ebbStages = resolveEbbStages(alltime)
+  const isInitialLoading = isStatsInitialLoading({
+    chartLoading,
+    summary,
+    alltime,
+    dailyLength: daily.length,
+    booksLength: books.length,
+    modesLength: modes.length,
+    modeBreakdownLength: modeBreakdown.length,
+    pieChartLength: pieChart.length,
+    historyWrongTopLength: historyWrongTop10.length,
+    pendingWrongTopLength: pendingWrongTop10.length,
+    hasLearnerProfile: Boolean(learnerProfile),
+  })
+
+  if (isInitialLoading) return <div className="page-content stats-page"><PageSkeleton variant="stats" metricCount={9} /></div>
+
+  return (
+    <div className="page-content stats-page">
+      <StatsSummaryCards
+        dueReviews={displayDueReviews}
+        pendingWrongWords={displayPendingWrongWords}
+        focusBookRemaining={displayFocusBookRemaining}
+        focusBookScope={focusBookScope}
+        focusBookMeaning={focusBookMeaning}
+        todayWords={displayTodayWords}
+        todayDuration={displayTodayDuration}
+        todayAccuracy={displayTodayAccuracy}
+        weakestMode={displayWeakestMode}
+        totalLearned={displayTotalLearned}
+        streak={displayStreak}
+      />
+
+        <div className="stats-section stats-section--mode-strip">
+          <div className="stats-mode-strip-header">
+            <h2 className="stats-section-title">模式占比与各模式统计</h2>
+            {alltime?.weakest_mode && (
+              <span className="mode-recommendation">
+                建议加强：<strong>{MODE_LABELS[alltime.weakest_mode] || alltime.weakest_mode}</strong>
+                {alltime.weakest_mode_accuracy != null && (
+                  <span className="mode-recommendation-acc">（正确率 {alltime.weakest_mode_accuracy}%）</span>
+                )}
+              </span>
+            )}
+          </div>
+          <p className="stats-section-hint">
+            饼图与各模式「学习词数」：<strong>速记模式</strong>按速记词表里的不同单词统计；其余模式按练习会话累计统计，同一个词重复练会重复计数。所以各模式相加，可能高于上方「累计学过的不同词」。
+          </p>
+          <div className="stats-mode-strip-grid">
+            <h3 className="stats-mode-strip-title stats-mode-strip-title--pie">模式占比</h3>
+            <h3 className="stats-mode-strip-title stats-mode-strip-title--modes">各模式统计</h3>
+            <div className="stats-mode-strip-col stats-mode-strip-col--pie">
+              {chartLoading ? (
+                <StatsSectionSkeleton variant="donut" />
+              ) : (
+                <ModePieChart segments={pieChart} variant="strip" />
+              )}
+            </div>
+            <div className="stats-mode-strip-col stats-mode-strip-col--modes">
+              {chartLoading ? (
+                <StatsSectionSkeleton variant="table" />
+              ) : (
+                <ModeBreakdownTableBody modeBreakdown={modeBreakdown} onNavigate={() => navigate('/plan')} />
+              )}
+            </div>
+          </div>
+      </div>
+
+      <div className="stats-main-layout-wrap">
+        <div className="stats-insight-grid">
+          <div className="stats-main-card stats-main-card--profile">
+            <section className="stats-section stats-card-profile" aria-labelledby="stats-profile-title">
+              <h2 id="stats-profile-title" className="stats-section-title">统一学习画像</h2>
+              <p className="stats-section-hint">把薄弱模式、易错维度、重复困惑主题和下一步动作放在同一视图里。</p>
+              <LearnerProfileCard learnerProfile={learnerProfile} loading={chartLoading} />
+            </section>
+          </div>
+
+          <div className="stats-main-card stats-main-card--ebb stats-main-cell--ebb">
+            <section className="stats-section stats-card-ebbinghaus" aria-labelledby="stats-ebb-title">
+              <h2 id="stats-ebb-title" className="stats-section-title">艾宾浩斯复习达成</h2>
+              <p className="stats-section-hint stats-ebb-hint-compact">
+                衡量「到期是否按时复习」：蓝虚线为艾宾浩斯标准遗忘曲线（理论参考折线）；橙实线为各轮实际按时完成度。橙线整体高于蓝线，说明按时复习对抗遗忘的效果越好。
+              </p>
+              <div className="stats-ebb-inner">
+                {chartLoading ? (
+                  <StatsSectionSkeleton variant="split" />
+                ) : (
+                  <>
+                    <div className="ebbinghaus-summary-row ebbinghaus-summary-row--compact ebbinghaus-summary-row--split">
+                      <div className="ebbinghaus-rate-block">
+                        <div
+                          className={`ebbinghaus-big ebbinghaus-big--compact ${ebbRateToneClass(alltime?.ebbinghaus_rate)}`}
+                        >
+                          {fmtPct(alltime?.ebbinghaus_rate)}
+                        </div>
+                        <div className="ebb-rate-caption">{ebbRateCaption}</div>
+                      </div>
+                      <div className="ebbinghaus-meta ebbinghaus-meta--compact">
+                        <span className="ebb-meta-item">
+                          <span className="ebb-meta-label">已到复习点</span>
+                          <span className="ebb-meta-num">{alltime?.ebbinghaus_due_total ?? 0}</span>
+                        </span>
+                        <span className="ebb-meta-item">
+                          <span className="ebb-meta-label">按时完成</span>
+                          <span className="ebb-meta-num">{alltime?.ebbinghaus_met ?? 0}</span>
+                        </span>
+                        <span className="ebb-meta-item">
+                          <span className="ebb-meta-label">复习库词数</span>
+                          <span className="ebb-meta-num">{alltime?.qm_word_total ?? 0}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <p className="ebb-meta-help">{ebbSummaryHelp}</p>
+                    {(alltime?.upcoming_reviews_3d ?? 0) > 0 && (
+                      <div className="ebb-upcoming-hint">
+                        <span>接下来3天待复习 <strong>{alltime?.upcoming_reviews_3d}</strong> 词</span>
+                        <button
+                          type="button"
+                          className="stats-review-btn stats-review-btn--ebb"
+                          onClick={() => startEbbinghausReview(navigate)}
+                        >
+                          去复习
+                        </button>
+                      </div>
+                    )}
+                    <div className="stats-ebb-chart-wrap">
+                      <EbbinghausDualChart stages={ebbStages} compact />
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+          </div>
+
+          <div className="stats-main-card stats-main-card--learning stats-main-cell--learning">
+            <section className="stats-section stats-section--learning" aria-labelledby="stats-learning-title">
+              <div className="stats-section-header stats-learning-split-head">
+                <h2 id="stats-learning-title" className="stats-section-title">学习记录</h2>
+                <SegmentedControl
+                  className="lc-tabs"
+                  ariaLabel="学习记录时间范围"
+                  value={range}
+                  onChange={setRange}
+                  options={RANGE_OPTIONS.map(o => ({
+                    value: o.value,
+                    label: o.label,
+                  }))}
+                />
+              </div>
+
+              <div className="lc-filters lc-filters--compact">
+                <UnderlineTabs
+                  className="lc-metric-tabs"
+                  ariaLabel="学习记录指标"
+                  value={metric}
+                  onChange={setMetric}
+                  options={METRIC_OPTIONS.map(o => ({
+                    value: o.value,
+                    label: o.label,
+                  }))}
+                />
+                <div className="lc-selects">
+                  {books.length > 0 && (
+                    <select
+                      className="lc-select"
+                      value={bookId}
+                      onChange={e => setBookId(e.target.value)}
+                    >
+                      <option value="all">全部词书</option>
+                      {books.map(b => (
+                        <option key={b.id} value={b.id}>{b.title}</option>
+                      ))}
+                    </select>
+                  )}
+                  {modes.length > 0 && (
+                    <select
+                      className="lc-select"
+                      value={mode}
+                      onChange={e => setMode(e.target.value)}
+                    >
+                      <option value="all">全部模式</option>
+                      {modes.map(m => (
+                        <option key={m} value={m}>{MODE_LABELS[m] || m}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              {chartLoading ? (
+                <StatsSectionSkeleton variant="chart" />
+              ) : !hasChartData ? (
+                <div className="stats-empty stats-empty--compact">
+                  <p>该时间段暂无学习记录</p>
+                  <a className="stats-go-practice" onClick={() => navigate('/plan')}>去练习 →</a>
+                </div>
+              ) : (
+                <LearningChart data={daily} metric={metric} range={range} compact />
+              )}
+
+              {!chartLoading && hasChartData && summary && (
+                <div className="lc-legend-row lc-legend-row--compact">
+                  <div className="lc-legend">
+                    <span className="lc-crosshair-legend" title="悬停图表时显示">
+                      <i className="lc-crosshair-icon" aria-hidden />
+                      悬停所选日期
+                    </span>
+                    <span className="lc-legend-sep" aria-hidden>
+                      ·
+                    </span>
+                    <span className="legend-dot legend-dot--accent" />
+                    <span>{METRIC_OPTIONS.find(o => o.value === metric)?.label}</span>
+                    {useFallback && (
+                      <span className="lc-fallback-note">（基于章节进度估算）</span>
+                    )}
+                  </div>
+                  <div className="lc-period-summary">
+                    <span>{range}天共 <strong>{summary.total_words}</strong> 词</span>
+                    {summary.accuracy != null && <span>· 正确率 <strong>{summary.accuracy}%</strong></span>}
+                    {!useFallback && <span>· <strong>{summary.total_sessions}</strong> 次练习</span>}
+                  </div>
+                  {alltime?.trend_direction && alltime?.trend_direction !== 'stable' && (
+                    <div className="lc-trend-insight">
+                      <span className={`lc-trend-badge lc-trend-badge--${alltime.trend_direction}`}>
+                        {alltime.trend_direction === 'improving' ? '↑' : '↓'}
+                      </span>
+                      <span>
+                        {alltime.trend_direction === 'improving'
+                          ? '学习效果在提升'
+                          : '学习效果有下滑，建议加强复习'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
+
+        <section className="stats-wrong-cluster" aria-label="错词分层">
+          <div className="stats-wrong-cluster-grid">
+            <div className="stats-main-card stats-main-card--wrong-history">
+              <section className="stats-section stats-card-wrong" aria-label={`${WRONG_WORD_SCOPE_LABELS.history} Top 10`}>
+                <div className="stats-card-wrong-body">
+                  {chartLoading ? (
+                    <StatsSectionSkeleton variant="donut" />
+                  ) : historyWrongTop10.length === 0 ? (
+                    <div className="stats-empty"><p>暂无累计错词数据</p></div>
+                  ) : (
+                    <WrongTopBlock
+                      title={`${WRONG_WORD_SCOPE_LABELS.history} Top 10`}
+                      scope="history"
+                      items={historyWrongTop10}
+                    />
+                  )}
+                </div>
+              </section>
+            </div>
+
+            <div className="stats-main-card stats-main-card--wrong-pending">
+              <section className="stats-section stats-card-wrong" aria-label={`${WRONG_WORD_SCOPE_LABELS.pending} Top 10`}>
+                <div className="stats-card-wrong-body">
+                  {chartLoading ? (
+                    <StatsSectionSkeleton variant="donut" />
+                  ) : pendingWrongTop10.length === 0 ? (
+                    <div className="stats-empty"><p>暂无待清错词数据</p></div>
+                  ) : (
+                    <WrongTopBlock
+                      title={`${WRONG_WORD_SCOPE_LABELS.pending} Top 10`}
+                      scope="pending"
+                      items={pendingWrongTop10}
+                    />
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}
+

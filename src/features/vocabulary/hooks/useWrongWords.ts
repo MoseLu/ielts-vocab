@@ -1,20 +1,68 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../../contexts'
 import { apiFetch } from '../../../lib'
+import {
+  QUICK_MEMORY_MASTERY_TARGET,
+  getQuickMemoryReviewProgress,
+  isQuickMemoryRecordMastered,
+  readQuickMemoryRecordsFromStorage,
+} from '../../../lib/quickMemory'
+import {
+  WRONG_WORD_PENDING_REVIEW_TARGET,
+  addWrongWordToList,
+  clearAllWrongWordPendingFromList,
+  clearWrongWordPendingFromList,
+  loadWrongWords,
+  mergeWrongWordLists,
+  type WrongWordDimension,
+  type WrongWordRecord,
+  writeWrongWordsToStorage,
+} from '../wrongWordsStore'
 
-export interface WrongWord {
-  word: string
-  phonetic: string
-  pos?: string
-  definition: string
-  wrong_count?: number
-  // Per-dimension stats from backend
-  listening_correct?: number
-  listening_wrong?: number
-  meaning_correct?: number
-  meaning_wrong?: number
-  dictation_correct?: number
-  dictation_wrong?: number
+export type WrongWord = WrongWordRecord
+
+function decorateWrongWords(words: WrongWord[]): WrongWord[] {
+  const records = readQuickMemoryRecordsFromStorage()
+
+  return words.map(word => {
+    const key = word.word.trim().toLowerCase()
+    const quickMemoryRecord = key ? records[key] : undefined
+    const quickMemoryProgress = quickMemoryRecord
+      ? getQuickMemoryReviewProgress(quickMemoryRecord)
+      : {
+          streak: word.ebbinghaus_streak ?? 0,
+          target: word.ebbinghaus_target ?? QUICK_MEMORY_MASTERY_TARGET,
+          remaining: word.ebbinghaus_remaining ?? QUICK_MEMORY_MASTERY_TARGET,
+          completed: Boolean(word.ebbinghaus_completed),
+        }
+
+    const recognitionPassStreak = quickMemoryRecord
+      ? Math.max(
+          word.recognition_pass_streak ?? 0,
+          getQuickMemoryReviewProgress(quickMemoryRecord, WRONG_WORD_PENDING_REVIEW_TARGET).streak,
+        )
+      : (word.recognition_pass_streak ?? 0)
+
+    const [decorated] = mergeWrongWordLists([{
+      ...word,
+      recognitionPassStreak: recognitionPassStreak,
+      ebbinghaus_streak: quickMemoryProgress.streak,
+      ebbinghaus_target: quickMemoryProgress.target,
+      ebbinghaus_remaining: quickMemoryProgress.remaining,
+      ebbinghaus_completed: quickMemoryRecord
+        ? isQuickMemoryRecordMastered(quickMemoryRecord)
+        : Boolean(word.ebbinghaus_completed),
+    }])
+
+    return decorated ?? {
+      ...word,
+      recognition_pass_streak: recognitionPassStreak,
+      ebbinghaus_streak: quickMemoryProgress.streak,
+      ebbinghaus_target: quickMemoryProgress.target,
+      ebbinghaus_remaining: quickMemoryProgress.remaining,
+      ebbinghaus_completed: quickMemoryProgress.completed,
+    }
+  })
 }
 
 export function useWrongWords() {
@@ -23,13 +71,12 @@ export function useWrongWords() {
   const [loading, setLoading] = useState(true)
 
   const fetchWords = useCallback(async () => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
     try {
-      const data = await apiFetch<{ words?: WrongWord[] }>('/api/ai/wrong-words')
-      setWords(data.words || [])
+      const nextWords = await loadWrongWords({
+        user,
+        fetchRemote: () => apiFetch<{ words?: WrongWord[] }>('/api/ai/wrong-words'),
+      })
+      setWords(decorateWrongWords(nextWords))
     } catch {
       // ignore
     } finally {
@@ -41,17 +88,26 @@ export function useWrongWords() {
     fetchWords()
   }, [fetchWords])
 
-  const addWord = useCallback(async (word: WrongWord) => {
-    // Optimistic update
+  const addWord = useCallback(async (word: WrongWord, dimension: WrongWordDimension = 'recognition') => {
+    let nextWordsSnapshot: WrongWord[] = []
+
     setWords(prev => {
-      if (prev.find(w => w.word === word.word)) return prev
-      return [{ ...word, wrong_count: 1 }, ...prev]
+      const nextWords = addWrongWordToList(prev, { ...word, wrong_count: word.wrong_count ?? 1 }, { dimension })
+      nextWordsSnapshot = nextWords
+      writeWrongWordsToStorage(nextWords)
+      return decorateWrongWords(nextWords)
     })
+
     if (!user) return
     try {
+      const targetWord = nextWordsSnapshot.find(
+        item => item.word.trim().toLowerCase() === word.word.trim().toLowerCase(),
+      )
+      if (!targetWord) return
+
       await apiFetch('/api/ai/wrong-words/sync', {
         method: 'POST',
-        body: JSON.stringify({ words: [word] }),
+        body: JSON.stringify({ words: [targetWord] }),
       })
     } catch {
       // ignore
@@ -59,20 +115,47 @@ export function useWrongWords() {
   }, [user])
 
   const removeWord = useCallback(async (word: string) => {
-    setWords(prev => prev.filter(w => w.word !== word))
+    let nextWordsSnapshot: WrongWord[] = []
+
+    setWords(prev => {
+      const nextWords = clearWrongWordPendingFromList(prev, word)
+      nextWordsSnapshot = nextWords
+      writeWrongWordsToStorage(nextWords)
+      return decorateWrongWords(nextWords)
+    })
+
     if (!user) return
     try {
-      await apiFetch(`/api/ai/wrong-words/${encodeURIComponent(word)}`, { method: 'DELETE' })
+      const targetWord = nextWordsSnapshot.find(
+        item => item.word.trim().toLowerCase() === word.trim().toLowerCase(),
+      )
+      if (!targetWord) return
+
+      await apiFetch('/api/ai/wrong-words/sync', {
+        method: 'POST',
+        body: JSON.stringify({ words: [targetWord] }),
+      })
     } catch {
       // ignore
     }
   }, [user])
 
   const clearAll = useCallback(async () => {
-    setWords([])
+    let nextWordsSnapshot: WrongWord[] = []
+
+    setWords(prev => {
+      const nextWords = clearAllWrongWordPendingFromList(prev)
+      nextWordsSnapshot = nextWords
+      writeWrongWordsToStorage(nextWords)
+      return decorateWrongWords(nextWords)
+    })
+
     if (!user) return
     try {
-      await apiFetch('/api/ai/wrong-words', { method: 'DELETE' })
+      await apiFetch('/api/ai/wrong-words/sync', {
+        method: 'POST',
+        body: JSON.stringify({ words: nextWordsSnapshot }),
+      })
     } catch {
       // ignore
     }

@@ -1,0 +1,64 @@
+/* ============================================================
+   IELTS Vocab App - Master SCSS Entry Point
+   Load order: base -> layout -> components -> pages -> utils
+   ============================================================ */
+
+/* Base */
+@use './base.scss';
+
+/* Layout */
+@use './layout/app.scss';
+@use './layout/header-base.scss';
+@use './layout/header-selectors.scss';
+
+/* Components */
+@use './components/scrollbar.scss';
+@use './components/dropdowns.scss';
+@use './components/toast.scss';
+@use './components/complete.scss';
+@use './components/settings.scss';
+@use './components/avatar.scss';
+@use './components/empty-state.scss';
+@use './components/popover.scss';
+@use './components/navigation.scss';
+@use './components/page.scss';
+@use './components/page-shell.scss';
+@use './components/global-word-search.scss';
+@use './components/global-word-search-detail.scss';
+@use './components/ui-primitives.scss';
+
+/* Pages: Auth */
+@use './pages/auth/index.scss' as *;
+@use './pages/special/index.scss' as *;
+
+/* Pages: Home / Study Center */
+@use './pages/study-center/index.scss' as *;
+@use './pages/books/index.scss' as *;
+
+/* Pages: Practice */
+@use './pages/practice/index.scss' as *;
+
+/* Pages: Errors */
+@use './pages/errors/index.scss' as *;
+
+/* Pages: Stats */
+@use './pages/stats/index.scss' as *;
+
+/* Pages: Profile */
+@use './pages/profile/index.scss' as *;
+
+/* Pages: AI Chat */
+@use './pages/ai-chat/index.scss' as *;
+
+/* Pages: Vocab Test */
+@use './pages/vocab-test/index.scss' as *;
+
+/* Pages: Admin Dashboard */
+@use './pages/admin/index.scss' as *;
+
+/* Pages: Learning Journal */
+@use './pages/journal/index.scss' as *;
+
+/* Utils */
+@use './utils/utilities.scss';
+@use './utils/responsive.scss';

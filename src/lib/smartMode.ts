@@ -4,7 +4,7 @@ import { STORAGE_KEYS } from '../constants'
 import { apiFetch } from './index'
 // Tracks per-word proficiency across three dimensions:
 //   音 (listening)  - 听音选义
-//   意 (meaning)    - 看词选义
+//   意 (meaning)    - 释义拼词
 //   形 (dictation)  - 听写拼写
 // Smart mode uses these stats to auto-weight which dimension to test next.
 
@@ -24,6 +24,7 @@ export interface WordSmartStats {
 export type SmartWordStatsStore = Record<string, WordSmartStats>
 
 const STORAGE_KEY = 'smart_word_stats'
+const PENDING_SYNC_KEY = 'smart_word_stats_pending'
 
 export function loadSmartStats(): SmartWordStatsStore {
   try {
@@ -121,23 +122,119 @@ export function buildSmartQueue(wordKeys: string[], stats: SmartWordStatsStore):
 
 // ── Backend sync helpers ──────────────────────────────────────────────────────
 
-/** Push all localStorage smart stats to the backend (fire-and-forget). */
-export function syncSmartStatsToBackend(): void {
+interface PendingSync {
+  word: string
+  listening: { correct: number; wrong: number }
+  meaning: { correct: number; wrong: number }
+  dictation: { correct: number; wrong: number }
+  failedAt: string  // ISO timestamp
+}
+
+interface SmartStatsSyncContext {
+  bookId?: string | null
+  chapterId?: string | null
+  mode?: string | null
+}
+
+function _loadPendingSync(): PendingSync[] {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_SYNC_KEY) || '[]')
+  } catch {
+    return []
+  }
+}
+
+function _savePendingSync(pending: PendingSync[]): void {
+  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending))
+}
+
+function _mergePendingIntoStats(pending: PendingSync[], stats: SmartWordStatsStore): SmartWordStatsStore {
+  const result = { ...stats }
+  for (const p of pending) {
+    const key = p.word.toLowerCase()
+    const existing = result[key]
+    if (!existing) {
+      result[key] = {
+        listening: { ...p.listening },
+        meaning: { ...p.meaning },
+        dictation: { ...p.dictation },
+      }
+    } else {
+      // Merge, keeping max values per dimension
+      result[key] = {
+        listening: {
+          correct: Math.max(existing.listening.correct, p.listening.correct),
+          wrong: Math.max(existing.listening.wrong, p.listening.wrong),
+        },
+        meaning: {
+          correct: Math.max(existing.meaning.correct, p.meaning.correct),
+          wrong: Math.max(existing.meaning.wrong, p.meaning.wrong),
+        },
+        dictation: {
+          correct: Math.max(existing.dictation.correct, p.dictation.correct),
+          wrong: Math.max(existing.dictation.wrong, p.dictation.wrong),
+        },
+      }
+    }
+  }
+  return result
+}
+
+/** Push all localStorage smart stats to the backend with retry queue.
+ * Failed syncs are stored locally and retried on next sync attempt. */
+export function syncSmartStatsToBackend(context?: SmartStatsSyncContext): void {
   if (!localStorage.getItem(STORAGE_KEYS.AUTH_USER)) return
-  const stats = loadSmartStats()
-  const entries = Object.entries(stats)
+
+  // Merge pending stats with current stats before syncing
+  const pending = _loadPendingSync()
+  const currentStats = loadSmartStats()
+  const mergedStats = pending.length > 0 ? _mergePendingIntoStats(pending, currentStats) : currentStats
+  const entries = Object.entries(mergedStats)
   if (!entries.length) return
+
+  const payload = entries.map(([word, ws]) => ({
+    word,
+    listening: ws.listening,
+    meaning: ws.meaning,
+    dictation: ws.dictation,
+  }))
+
   apiFetch('/api/ai/smart-stats/sync', {
     method: 'POST',
     body: JSON.stringify({
-      stats: entries.map(([word, ws]) => ({
-        word,
-        listening: ws.listening,
-        meaning: ws.meaning,
-        dictation: ws.dictation,
-      })),
+      stats: payload,
+      context: {
+        bookId: context?.bookId ?? undefined,
+        chapterId: context?.chapterId ?? undefined,
+        mode: context?.mode ?? undefined,
+      },
     }),
-  }).catch(() => {})
+  }).then(() => {
+    // On success, clear pending queue since all data is now on server
+    if (pending.length > 0) {
+      localStorage.removeItem(PENDING_SYNC_KEY)
+    }
+  }).catch(() => {
+    // On failure, add current stats to pending queue for retry
+    // Deduplicate: don't re-add words that are already pending
+    const existingPendingWords = new Set(pending.map(p => p.word.toLowerCase()))
+    const newPending: PendingSync[] = [
+      ...pending,
+      ...entries
+        .filter(([word]) => !existingPendingWords.has(word.toLowerCase()))
+        .map(([word, ws]) => ({
+          word,
+          listening: { ...ws.listening },
+          meaning: { ...ws.meaning },
+          dictation: { ...ws.dictation },
+          failedAt: new Date().toISOString(),
+        })),
+    ]
+    // Keep max 7 days of pending entries
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+    const recentPending = newPending.filter(p => new Date(p.failedAt).getTime() > sevenDaysAgo)
+    _savePendingSync(recentPending)
+  })
 }
 
 /** Fetch smart stats from backend and merge into localStorage (backend wins per-dim if higher total). */

@@ -7,6 +7,7 @@ import {
   chooseSmartDimension,
   buildSmartQueue,
   getWordMastery,
+  syncSmartStatsToBackend,
 } from './smartMode'
 
 const SMART_KEY = 'smart_word_stats'
@@ -187,5 +188,45 @@ describe('getWordMastery', () => {
     const info = getWordMastery('mastered', stats)
     expect(info.level).toBe(3)
     expect(info.label).toBe('已掌握')
+  })
+})
+
+describe('syncSmartStatsToBackend', () => {
+  it('includes practice context when syncing smart stats', async () => {
+    localStorage.setItem('auth_user', JSON.stringify({ id: 1 }))
+    localStorage.setItem(SMART_KEY, JSON.stringify({
+      dynamic: {
+        listening: { correct: 2, wrong: 1 },
+        meaning: { correct: 0, wrong: 0 },
+        dictation: { correct: 1, wrong: 0 },
+      },
+    }))
+
+    const mockFetch = vi.fn(() =>
+      Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    syncSmartStatsToBackend({
+      bookId: 'ielts_speaking',
+      chapterId: '2',
+      mode: 'listening',
+    })
+
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    const [url, options] = mockFetch.mock.calls[0]
+    expect(url).toBe('/api/ai/smart-stats/sync')
+    const body = JSON.parse(options.body as string)
+    expect(body.context).toEqual({
+      bookId: 'ielts_speaking',
+      chapterId: '2',
+      mode: 'listening',
+    })
+    expect(body.stats[0].word).toBe('dynamic')
+
+    vi.restoreAllMocks()
   })
 })

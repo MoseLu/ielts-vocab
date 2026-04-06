@@ -10,12 +10,16 @@ let _currentContext: LearningContext = {}
 export function setGlobalLearningContext(ctx: Partial<LearningContext>) {
   _currentContext = { ..._currentContext, ...ctx }
   // Also push into the React state so useAIChat's buildContext picks it up immediately
-  _setContextRef(_currentContext)
+  if (_setContextRef) {
+    _setContextRef(_currentContext)
+  }
 }
 
 export function clearGlobalLearningContext() {
   _currentContext = {}
-  _setContextRef({})
+  if (_setContextRef) {
+    _setContextRef({})
+  }
 }
 
 export function getGlobalLearningContext(): LearningContext {

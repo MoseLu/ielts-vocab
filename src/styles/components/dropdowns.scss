@@ -1,0 +1,321 @@
+/* Component: All Dropdown Menus (day, mode, user) */
+
+.mode-selector {
+    position: relative;
+    display: inline-block;
+}
+
+.mode-selector-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--surface-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.mode-selector-btn:hover {
+    border-color: rgba(var(--accent-rgb), 0.42);
+    box-shadow: var(--focus-ring);
+}
+
+.mode-selector-btn.active {
+    border-color: rgba(var(--accent-rgb), 0.42);
+    background: var(--surface-hover);
+}
+
+.mode-selector-btn svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+.mode-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 300px;
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: var(--space-sm);
+    display: none;
+    animation: dropdownFadeIn 0.25s ease;
+    z-index: var(--layer-dropdown);
+}
+
+.mode-dropdown.show {
+    display: block;
+}
+
+.mode-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.mode-option:hover {
+    background: var(--surface-hover);
+}
+
+.mode-option.selected {
+    background: var(--surface-active);
+}
+
+/* Radio button style */
+.mode-option-radio {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.mode-option.selected .mode-option-radio {
+    border-color: var(--accent);
+    background: var(--accent);
+}
+
+.mode-option.selected .mode-option-radio::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--text-inverse);
+    border-radius: var(--radius-full);
+}
+
+.mode-option-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--surface-muted);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.mode-option.selected .mode-option-icon {
+    background: var(--accent);
+    color: var(--text-inverse);
+}
+
+.mode-option-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.mode-option-content {
+    flex: 1;
+}
+
+.mode-option-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.mode-option-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.user-menu {
+    position: relative;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    margin-top: 4px;
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xs);
+    min-width: 200px;
+    box-shadow: var(--shadow-floating);
+    display: none;
+    z-index: var(--layer-dropdown);
+    animation: dropdownFadeIn 0.18s ease;
+}
+
+/* Popover arrow for user dropdown */
+.user-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: 14px;
+    width: 12px;
+    height: 12px;
+    background: var(--surface-floating);
+    border-top: 1px solid var(--border-strong);
+    border-left: 1px solid var(--border-strong);
+    transform: rotate(45deg);
+    border-radius: 2px;
+    z-index: var(--layer-raised);
+}
+
+.user-dropdown.show {
+    display: block;
+}
+
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 9px var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background: var(--surface-hover);
+    color: var(--accent);
+}
+
+.dropdown-item svg {
+    flex-shrink: 0;
+}
+
+.dropdown-item.logout-item {
+    color: var(--error);
+}
+
+.dropdown-item.logout-item:hover {
+    background: var(--error-light);
+}
+
+.day-dropdown-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.day-dropdown-scroll {
+    /* max-height + overflow handled by Scrollbar component */
+}
+
+.day-dropdown-item.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.mode-item-name {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.mode-item-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+}
+
+.mode-dropdown-item.active .mode-item-desc {
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+.user-dropdown-header {
+    padding: var(--space-sm) var(--space-md);
+}
+
+.user-dropdown-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.user-dropdown-email {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+}
+
+.user-dropdown-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: var(--space-xs) 0;
+}
+
+/* ── Dropdown positional overrides (canonical) ── */
+.day-dropdown {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    left: auto !important;
+    transform: none !important;
+    min-width: 220px;
+    max-width: 400px;
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 0;
+    z-index: var(--layer-dropdown);
+    overflow: hidden;
+    max-height: none;
+    animation: dropdownFadeIn 0.18s ease;
+}
+
+.day-dropdown.show {
+    display: block !important;
+}
+
+.day-dropdown-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mode-dropdown {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    left: auto !important;
+    transform: none !important;
+    width: 240px;
+    background: var(--surface-floating);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: var(--space-xs);
+    z-index: var(--layer-dropdown);
+    animation: dropdownFadeIn 0.18s ease;
+}
+
+.mode-dropdown.show {
+    display: block !important;
+}

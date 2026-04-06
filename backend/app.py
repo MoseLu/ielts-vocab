@@ -1,17 +1,19 @@
-import eventlet
-eventlet.monkey_patch()
+from services.runtime_async import patch_standard_library
+
+patch_standard_library()
 
 from dotenv import load_dotenv
 import os
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 import sqlite3
-from sqlalchemy import event
+import secrets
+from sqlalchemy import event, inspect, text
 from sqlalchemy.engine import Engine
 from flask import Flask
 from flask_cors import CORS
-from flask_socketio import SocketIO
 from flask_migrate import Migrate
+from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
 from models import db
 from routes.auth import auth_bp, init_auth
@@ -19,13 +21,14 @@ from routes.progress import progress_bp
 from routes.vocabulary import vocabulary_bp
 from routes.speech import speech_bp
 from routes.books import books_bp, init_books
-from routes.speech_socketio import register_socketio_events
 from routes.ai import ai_bp
 from routes.admin import admin_bp, init_admin
 from routes.notes import notes_bp
+from routes.tts import tts_bp
 from routes.middleware import init_middleware
+from services.db_backup import initialize_sqlite_backup_runtime
 
-# ── SQLite WAL mode ───────────────────────────────────────────────────────────
+# SQLite WAL mode
 # Runs once per new connection. WAL allows concurrent reads during writes,
 # which removes the read-write lock contention on a multi-user server.
 # synchronous=NORMAL is safe with WAL and significantly faster than FULL.
@@ -40,6 +43,52 @@ def _set_sqlite_pragmas(dbapi_conn, _record):
 migrate = Migrate()
 
 
+def _ensure_quick_memory_context_columns():
+    """Backfill newly added quick-memory context columns on existing SQLite files."""
+    inspector = inspect(db.engine)
+    try:
+        columns = {column['name'] for column in inspector.get_columns('user_quick_memory_records')}
+    except Exception:
+        return
+
+    statements: list[str] = []
+    if 'book_id' not in columns:
+        statements.append('ALTER TABLE user_quick_memory_records ADD COLUMN book_id VARCHAR(100)')
+    if 'chapter_id' not in columns:
+        statements.append('ALTER TABLE user_quick_memory_records ADD COLUMN chapter_id VARCHAR(100)')
+
+    if not statements:
+        return
+
+    for statement in statements:
+        db.session.execute(text(statement))
+
+    db.session.execute(text(
+        'CREATE INDEX IF NOT EXISTS ix_user_quick_memory_records_book_id '
+        'ON user_quick_memory_records (book_id)'
+    ))
+    db.session.execute(text(
+        'CREATE INDEX IF NOT EXISTS ix_user_quick_memory_records_chapter_id '
+        'ON user_quick_memory_records (chapter_id)'
+    ))
+    db.session.commit()
+
+
+def _ensure_wrong_word_dimension_state_column():
+    """Backfill wrong-word per-dimension state column on existing SQLite files."""
+    inspector = inspect(db.engine)
+    try:
+        columns = {column['name'] for column in inspector.get_columns('user_wrong_words')}
+    except Exception:
+        return
+
+    if 'dimension_state' in columns:
+        return
+
+    db.session.execute(text('ALTER TABLE user_wrong_words ADD COLUMN dimension_state TEXT'))
+    db.session.commit()
+
+
 def _ensure_admin_user():
     """Create an admin user if not exists. Credentials must be set via environment variables."""
     import os
@@ -50,17 +99,22 @@ def _ensure_admin_user():
 
     admin = User.query.filter_by(username=admin_username).first()
     if not admin:
+        # Generate a secure random password if none was provided. Startup is no longer blocked.
         if not admin_password:
-            raise ValueError(
-                f"ADMIN_INITIAL_PASSWORD env var must be set on first run to create admin user '{admin_username}'. "
-                "Example: export ADMIN_INITIAL_PASSWORD=your_secure_password"
+            admin_password = secrets.token_urlsafe(24)
+            print(
+                f"[Admin] ADMIN_INITIAL_PASSWORD not set - generated random password.\n"
+                f"         Save this NOW: ADMIN_USERNAME={admin_username} ADMIN_INITIAL_PASSWORD={admin_password}\n"
+                f"         Or set env var and re-run: export ADMIN_INITIAL_PASSWORD=your_secure_password"
             )
+        else:
+            print(f"[Admin] Using password from ADMIN_INITIAL_PASSWORD env var.")
         admin = User(username=admin_username, email=None)
         admin.set_password(admin_password)
         admin.is_admin = True
         db.session.add(admin)
         db.session.commit()
-        print(f"[Admin] User '{admin_username}' created. Password set from ADMIN_INITIAL_PASSWORD env var.")
+        print(f"[Admin] User '{admin_username}' created.")
     else:
         if not admin.is_admin:
             admin.is_admin = True
@@ -71,6 +125,13 @@ def _ensure_admin_user():
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    if app.config.get('TRUST_PROXY_HEADERS'):
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_for=app.config.get('PROXY_FIX_X_FOR', 1),
+            x_proto=app.config.get('PROXY_FIX_X_PROTO', 1),
+        )
 
     # Initialize extensions
     db.init_app(app)
@@ -92,38 +153,28 @@ def create_app(config_class=Config):
     init_books(app)
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
     app.register_blueprint(notes_bp, url_prefix='/api/notes')
+    app.register_blueprint(tts_bp, url_prefix='/api/tts')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     init_admin(app)
 
     # Create database tables and ensure admin user.
-    # db.create_all() is idempotent — safe to call on every startup.
+    # db.create_all() is idempotent and safe to call on every startup.
     # For schema changes going forward, use Flask-Migrate:
     #   flask db migrate -m "description"
     #   flask db upgrade
     with app.app_context():
         db.create_all()
+        _ensure_quick_memory_context_columns()
+        _ensure_wrong_word_dimension_state_column()
         _ensure_admin_user()
+
+    if os.environ.get('PYTEST_RUNNING') != '1':
+        initialize_sqlite_backup_runtime(app)
 
     return app
 
 
-# Create app instance
-app = create_app()
-
-# Initialize SocketIO with eventlet for better WebSocket support
-socketio = SocketIO(
-    app,
-    cors_allowed_origins=app.config['CORS_ORIGINS'],
-    async_mode='eventlet',
-    ping_timeout=60,
-    ping_interval=25,
-    logger=app.config.get('DEBUG', False),
-    engineio_logger=app.config.get('DEBUG', False),
-)
-
-# Register Socket.IO events for speech recognition
-register_socketio_events(socketio)
-
+app = None if os.environ.get('PYTEST_RUNNING') == '1' else create_app()
 
 if __name__ == '__main__':
     print("=" * 50)
@@ -142,8 +193,8 @@ if __name__ == '__main__':
     print("  GET  /api/vocabulary    - Get all vocabulary")
     print("  GET  /api/vocabulary/day/<day> - Get day vocabulary")
     print()
-    print("WebSocket Endpoints:")
-    print("  /speech - Real-time speech recognition")
+    print("Speech Service:")
+    print("  Socket.IO /speech runs in backend/speech_service.py on port 5001")
     print("=" * 50)
 
-    socketio.run(app, debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)

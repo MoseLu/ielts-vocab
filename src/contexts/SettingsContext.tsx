@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { AppSettings } from '../types'
-import { STORAGE_KEYS, DEFAULT_SETTINGS } from '../constants'
+import { DEFAULT_SETTINGS } from '../constants'
 import { safeParse, AppSettingsSchema } from '../lib'
+import { readAppSettingsFromStorage, writeAppSettingsToStorage } from '../lib/appSettings'
 
 interface SettingsContextValue {
   settings: AppSettings
@@ -15,16 +16,8 @@ const SettingsContext = createContext<SettingsContextValue | null>(null)
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.APP_SETTINGS)
-      if (!saved) return DEFAULT_SETTINGS as AppSettings
-
-      // Validate stored settings with Zod, falling back to defaults on failure
-      const parsed = safeParse(AppSettingsSchema, JSON.parse(saved))
-      return parsed.success ? parsed.data : (DEFAULT_SETTINGS as AppSettings)
-    } catch {
-      return DEFAULT_SETTINGS as AppSettings
-    }
+    const parsed = safeParse(AppSettingsSchema, readAppSettingsFromStorage())
+    return parsed.success ? parsed.data : (DEFAULT_SETTINGS as AppSettings)
   })
 
   useEffect(() => {
@@ -46,7 +39,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       // Validate before persisting
       const parsed = safeParse(AppSettingsSchema, newSettings)
       if (parsed.success) {
-        localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(parsed.data))
+        writeAppSettingsToStorage(parsed.data)
       }
 
       return newSettings
@@ -55,7 +48,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS as AppSettings)
-    localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(DEFAULT_SETTINGS))
+    writeAppSettingsToStorage(DEFAULT_SETTINGS)
   }, [])
 
   return (

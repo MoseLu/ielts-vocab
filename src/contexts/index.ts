@@ -10,5 +10,5 @@ export {
   getGlobalLearningContext,
 } from './AIChatContext'
 
-// Re-export AI Chat hook from the dedicated module
-export { useAIChat } from '../hooks/useAIChat'
+// Re-export AI Chat hook from the feature module
+export { useAIChat } from '../features/ai-chat/hooks'

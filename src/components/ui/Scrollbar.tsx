@@ -24,13 +24,15 @@ export function Scrollbar({
   wrapStyle,
   maxHeight,
 }: ScrollbarProps) {
+  const rootRef = useRef<HTMLDivElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const thumbRef = useRef<HTMLDivElement>(null)
   const [thumbH, setThumbH] = useState(0)      // thumb height as % of track
   const [thumbMove, setThumbMove] = useState(0) // translateY as % of thumb height
   const [barVisible, setBarVisible] = useState(false)
   const [dragging, setDragging] = useState(false)
 
-  const hideTimer = useRef<ReturnType<typeof setTimeout>>()
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const dragState = useRef({ startY: 0, startScrollTop: 0 })
 
   // ── Recalculate thumb size + position ────────────────────────────────────
@@ -125,28 +127,41 @@ export function Scrollbar({
   }
 
   const maxHeightVal = typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight
-  const outerStyle: React.CSSProperties = {
-    ...(maxHeightVal ? { maxHeight: maxHeightVal } : {}),
-    ...style,
-  }
-  const innerStyle: React.CSSProperties = {
-    ...(maxHeightVal ? { maxHeight: maxHeightVal } : {}),
-    ...wrapStyle,
-  }
 
   const isVisible = (barVisible || dragging) && thumbH > 0
 
+  useEffect(() => {
+    const root = rootRef.current
+    const wrap = wrapRef.current
+    if (!root || !wrap) return
+    if (maxHeightVal) {
+      root.style.maxHeight = maxHeightVal
+      wrap.style.maxHeight = maxHeightVal
+    } else {
+      root.style.removeProperty('max-height')
+      wrap.style.removeProperty('max-height')
+    }
+    if (style) Object.assign(root.style, style)
+    if (wrapStyle) Object.assign(wrap.style, wrapStyle)
+  }, [maxHeightVal, style, wrapStyle])
+
+  useEffect(() => {
+    const thumb = thumbRef.current
+    if (!thumb) return
+    thumb.style.setProperty('--scrollbar-thumb-height', `${thumbH}%`)
+    thumb.style.setProperty('--scrollbar-thumb-offset', `${thumbMove}%`)
+  }, [thumbH, thumbMove])
+
   return (
     <div
+      ref={rootRef}
       className={`el-scrollbar ${className}`}
-      style={outerStyle}
       onMouseEnter={showBar}
       onMouseLeave={scheduleHide}
     >
       <div
         ref={wrapRef}
         className={`el-scrollbar__wrap ${wrapClassName}`}
-        style={innerStyle}
         onScroll={handleScroll}
       >
         {children}
@@ -159,8 +174,8 @@ export function Scrollbar({
           onClick={handleTrackClick}
         >
           <div
+            ref={thumbRef}
             className="el-scrollbar__thumb"
-            style={{ height: `${thumbH}%`, transform: `translateY(${thumbMove}%)` }}
             onMouseDown={handleThumbDown}
           />
         </div>

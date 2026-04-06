@@ -53,8 +53,9 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
   const [displayPanel, setDisplayPanel] = useState(false)
   // isClosing: whether the closing animation is playing
   const [isClosing, setIsClosing] = useState(false)
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const arrowRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : uncontrolledOpen
@@ -97,10 +98,8 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     shift({ padding: 8 }),
     fuiArrow({ element: arrowRef, padding: 8 }),
     size({
-      apply({ rects, elements }) {
-        Object.assign(elements.floating.style, {
-          minWidth: `${Math.round(rects.reference.width)}px`,
-        })
+      apply({ rects }) {
+        panelRef.current?.style.setProperty('--popover-min-width', `${Math.round(rects.reference.width)}px`)
       },
     }),
   ]
@@ -109,6 +108,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     refs,
     x,
     y,
+    strategy,
     placement: resolvedPlacement,
     middlewareData: { arrow: arrowData },
   } = useFloating({
@@ -116,6 +116,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     middleware,
     whileElementsMounted: autoUpdate,
     open: displayPanel,
+    strategy: 'fixed',
   })
 
   // Close on outside click
@@ -123,11 +124,14 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     if (!displayPanel) return
     const handle = (e: MouseEvent) => {
       const target = e.target as Node
+      const reference = refs.reference.current
+      const floating = refs.floating.current
+      const targetWithinReference = reference instanceof Element && reference.contains(target)
       if (
-        refs.reference.current &&
-        refs.floating.current &&
-        !refs.reference.current.contains(target) &&
-        !refs.floating.current.contains(target)
+        reference &&
+        floating &&
+        !targetWithinReference &&
+        !floating.contains(target)
       ) {
         setOpen(false)
       }
@@ -146,31 +150,36 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
     return () => document.removeEventListener('keydown', handle)
   }, [displayPanel, setOpen])
 
-  // Arrow style: Floating UI sets horizontal (x) or vertical (y) position
-  const arrowStyle: React.CSSProperties = arrowData
-    ? {
-        left: arrowData.x != null ? `${arrowData.x}px` : undefined,
-        top: arrowData.y != null ? `${arrowData.y}px` : undefined,
-      }
-    : {}
+  useEffect(() => {
+    const arrow = arrowRef.current
+    if (!arrow) return
+    if (arrowData?.x != null) arrow.style.left = `${arrowData.x}px`
+    else arrow.style.removeProperty('left')
+    if (arrowData?.y != null) arrow.style.top = `${arrowData.y}px`
+    else arrow.style.removeProperty('top')
+  }, [arrowData])
+
+  const floatingStyle =
+    x != null && y != null
+      ? { position: strategy, left: x, top: y }
+      : { position: strategy, visibility: 'hidden' as const }
 
   const panel = displayPanel
     ? createPortal(
         <div
-          ref={refs.setFloating}
-          className={`popover-panel ${panelClassName} ${isClosing ? 'popover-closing' : ''}`}
-          style={{
-            position: 'fixed',
-            left: x ?? 0,
-            top: y ?? 0,
+          ref={(node) => {
+            refs.setFloating(node)
+            panelRef.current = node
           }}
+          className={`popover-panel ${panelClassName} ${isClosing ? 'popover-closing' : ''}`}
           data-placement={resolvedPlacement}
+          style={floatingStyle}
           // Clicking anywhere inside the panel closes the dropdown.
           // Individual items that should NOT auto-close can call e.stopPropagation().
           onClick={() => setOpen(false)}
         >
           {/* Arrow — Element Plus single-element technique */}
-          <div ref={arrowRef} className="popover-arrow" style={arrowStyle} />
+          <div ref={arrowRef} className="popover-arrow" />
 
           <div className="popover-content">
             {children}
@@ -185,7 +194,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
       <div
         ref={refs.setReference}
         onClick={() => setOpen(!isOpen)}
-        style={{ display: 'inline-block', cursor: 'pointer' }}
+        className="popover-trigger"
       >
         {trigger}
       </div>

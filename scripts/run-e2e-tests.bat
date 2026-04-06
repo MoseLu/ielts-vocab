@@ -15,10 +15,31 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+REM Check if pnpm is installed
+where pnpm >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo Error: pnpm is not installed
+    echo Please install pnpm or enable Corepack first
+    pause
+    exit /b 1
+)
+
 REM Check if Playwright is installed
 if not exist "node_modules\.bin\playwright.cmd" (
-    echo Installing Playwright...
-    call npx playwright install chromium
+    echo Installing frontend dependencies...
+    call pnpm install
+    if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+)
+
+if not exist "node_modules\.bin\playwright.cmd" (
+    echo Error: Playwright CLI is still unavailable after pnpm install
+    pause
+    exit /b 1
+)
+
+echo Ensuring Playwright browser is installed...
+call pnpm exec playwright install chromium
+if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 )
 
 echo.
@@ -51,44 +72,44 @@ goto end
 :run_all
 echo.
 echo Running all E2E tests...
-call npx playwright test
+call pnpm exec playwright test
 goto end
 
 :run_specific
 echo.
 set /p testfile="Enter test file name (e.g., auth.spec.ts): "
 echo Running %testfile%...
-call npx playwright test %testfile%
+call pnpm exec playwright test %testfile%
 goto end
 
 :run_headed
 echo.
 echo Running tests in headed mode...
-call npx playwright test --headed
+call pnpm exec playwright test --headed
 goto end
 
 :run_ui
 echo.
 echo Running tests with UI...
-call npx playwright test --ui
+call pnpm exec playwright test --ui
 goto end
 
 :run_debug
 echo.
 echo Running tests in debug mode...
-call npx playwright test --debug
+call pnpm exec playwright test --debug
 goto end
 
 :view_report
 echo.
 echo Opening test report...
-call npx playwright show-report
+call pnpm exec playwright show-report
 goto end
 
 :install_playwright
 echo.
 echo Installing Playwright browsers...
-call npx playwright install --with-deps chromium
+call pnpm exec playwright install --with-deps chromium
 echo.
 echo Installation complete!
 goto end

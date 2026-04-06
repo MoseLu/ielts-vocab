@@ -1,0 +1,384 @@
+@use '../../utils/mixins' as *;
+
+/* Learning Journal */
+
+.journal-page {
+  gap: 10px;
+  padding: var(--page-gutter);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.journal-page-skeleton {
+  flex: 1;
+  min-height: 0;
+}
+
+.journal-workspace-content {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.journal-workspace-content > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.journal-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+  min-height: 48px;
+}
+
+.journal-filter-bar {
+  @include toolbar-surface(
+    $background: color-mix(in srgb, var(--surface-base) 92%, var(--surface-muted)),
+    $border: 1px solid var(--border-subtle),
+    $padding: 6px 8px,
+    $gap: 10px,
+    $wrap: nowrap,
+    $shadow: none
+  );
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 48px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.journal-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+}
+
+.journal-filter-label {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-tertiary);
+}
+
+.journal-date-input {
+  @include input-control(
+    36px,
+    0 10px 0 36px,
+    10px,
+    1px solid var(--border),
+    color-mix(in srgb, var(--surface-base) 96%, var(--surface-muted)),
+    var(--text-primary),
+    0.88rem
+  );
+  width: 144px;
+  flex: 0 1 144px;
+  min-height: 36px;
+  background-color: color-mix(in srgb, var(--surface-base) 96%, var(--surface-muted));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M16 3v4M8 3v4M3 10h18'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  appearance: none;
+  box-shadow: none;
+}
+
+.journal-date-input:focus {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.journal-filter-reset,
+.journal-export-btn,
+.journal-generate-btn,
+.journal-regen-btn,
+.journal-page-btn {
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.journal-filter-reset {
+  @include control-button(36px, 0, 10px, 1px solid transparent, transparent, var(--text-secondary), 0.84rem, 600);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.journal-filter-reset:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  transform: none;
+}
+
+.journal-export-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  margin-left: 0;
+  padding-left: 6px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.journal-export-btn {
+  @include control-button(36px, 0, 10px, 1px solid transparent, transparent, var(--text-secondary), 0.82rem, 700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+}
+
+.journal-export-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--accent);
+  transform: none;
+  box-shadow: none;
+}
+
+.journal-summary-actions {
+  @include toolbar-surface(
+    $background: color-mix(in srgb, var(--surface-base) 92%, var(--surface-muted)),
+    $border: 1px solid var(--border-subtle),
+    $padding: 6px 8px,
+    $gap: 10px,
+    $wrap: nowrap,
+    $shadow: none
+  );
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 48px;
+}
+
+.journal-summary-actions__buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.journal-summary-progress,
+.journal-summary-progress-panel {
+  @include metric-card(
+    10px,
+    color-mix(in srgb, var(--surface-base) 94%, var(--surface-muted)),
+    1px solid var(--border-subtle),
+    10px,
+    none
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.journal-summary-progress__head,
+.journal-summary-progress-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.journal-summary-progress__head strong,
+.journal-summary-progress-panel__head strong {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.journal-summary-progress__track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-muted));
+}
+
+.journal-summary-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 62%, var(--surface-elevated)));
+  transition: width var(--transition-normal);
+}
+
+.journal-summary-progress-panel {
+  max-width: 560px;
+}
+
+.journal-summary-progress-panel__eyebrow {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.journal-summary-progress-panel__copy {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.journal-tabs {
+  flex-shrink: 0;
+}
+
+.journal-doc-shell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  @include panel-surface(var(--surface-base), 1px solid var(--border), 10px, var(--shadow-sm));
+}
+
+.journal-doc-shell--summary {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.journal-doc-shell--notes {
+  min-height: 0;
+  height: 100%;
+}
+
+.journal-doc-sidebar {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 8px;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-muted) 72%, var(--surface-base));
+  overflow: hidden;
+}
+
+.journal-doc-sidebar-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 72px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.journal-doc-sidebar-copy {
+  @include page-stack(6px);
+}
+
+.journal-doc-sidebar-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.journal-doc-sidebar-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.journal-doc-sidebar-subtitle {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.journal-doc-sidebar-stat {
+  @include pill-badge(28px, 0 10px, 999px, color-mix(in srgb, var(--accent) 8%, transparent), var(--accent), 0.82rem, 700);
+  align-self: flex-start;
+}
+
+.journal-generate-btn {
+  @include accent-button(38px, 0 10px, 10px, var(--accent), var(--text-inverse), 1px solid transparent, 0.88rem, 700);
+  align-self: stretch;
+}
+
+.journal-generate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--glow-accent);
+}
+
+.journal-doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.journal-doc-sidebar-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.journal-doc-sidebar-body > .journal-loading,
+.journal-doc-sidebar-body > .journal-error,
+.journal-doc-sidebar-body > .journal-empty {
+  flex: 1;
+  min-height: 0;
+}
+
+.journal-doc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.journal-doc-item:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
+  background: var(--surface-base);
+}
+
+.journal-doc-item.active {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: var(--surface-base);
+  box-shadow: var(--shadow-soft);
+}
+
+.journal-doc-item-eyebrow {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+

@@ -1,6 +1,7 @@
 // ── Modal Components ────────────────────────────────────────────────────────────
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useId, useRef } from 'react'
+import { Button } from './Button'
 
 interface ModalProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ export function Modal({
   showCloseButton = true,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -41,54 +43,40 @@ export function Modal({
 
   if (!isOpen) return null
 
-  const sizes = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    full: 'max-w-4xl',
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Overlay */}
+    <div className="ui-modal">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fadeIn"
+        className="ui-modal__overlay"
         onClick={closeOnOverlay ? onClose : undefined}
       />
-
-      {/* Modal */}
       <div
         ref={modalRef}
-        className={`relative bg-card rounded-xl shadow-2xl w-full ${sizes[size]} animate-scaleIn`}
+        className={['ui-modal__panel', `ui-modal__panel--${size}`].join(' ')}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
+        aria-labelledby={title ? titleId : undefined}
       >
-        {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="ui-modal__header">
             {title && (
-              <h2 id="modal-title" className="text-lg font-semibold">
+              <h2 id={titleId} className="ui-modal__title">
                 {title}
               </h2>
             )}
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg hover:bg-secondary text-secondary hover:text-primary transition-colors"
+                className="ui-modal__close"
                 aria-label="关闭"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             )}
           </div>
         )}
-
-        {/* Content */}
-        <div className="p-4">{children}</div>
+        <div className="ui-modal__body">{children}</div>
       </div>
     </div>
   )
@@ -115,31 +103,27 @@ export function ConfirmDialog({
   cancelText = '取消',
   variant = 'danger',
 }: ConfirmDialogProps) {
-  const buttonVariants = {
-    danger: 'bg-error hover:bg-error/90',
-    warning: 'bg-warning hover:bg-warning/90',
-    info: 'bg-accent hover:bg-accent/90',
+  const confirmVariant = {
+    danger: 'danger',
+    warning: 'warning',
+    info: 'primary',
+  } as const
+
+  const handleConfirm = () => {
+    onConfirm()
+    onClose()
   }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm" showCloseButton={false}>
-      <p className="text-secondary mb-6">{message}</p>
-      <div className="flex gap-3 justify-end">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 rounded-lg border border-border hover:bg-secondary transition-colors"
-        >
+      <p>{message}</p>
+      <div className="ui-modal__actions">
+        <Button variant="secondary" onClick={onClose}>
           {cancelText}
-        </button>
-        <button
-          onClick={() => {
-            onConfirm()
-            onClose()
-          }}
-          className={`px-4 py-2 rounded-lg text-white transition-colors ${buttonVariants[variant]}`}
-        >
+        </Button>
+        <Button variant={confirmVariant[variant]} onClick={handleConfirm}>
           {confirmText}
-        </button>
+        </Button>
       </div>
     </Modal>
   )

@@ -49,6 +49,26 @@ const speechSynthesisMock = {
 }
 Object.defineProperty(globalThis, 'speechSynthesis', { value: speechSynthesisMock, writable: true })
 
+class MockSpeechSynthesisUtterance {
+  text: string
+  lang = ''
+  rate = 1
+  pitch = 1
+  volume = 1
+  voice = null
+  onstart: (() => void) | null = null
+  onend: (() => void) | null = null
+  onerror: (() => void) | null = null
+
+  constructor(text = '') {
+    this.text = text
+  }
+}
+Object.defineProperty(globalThis, 'SpeechSynthesisUtterance', {
+  value: MockSpeechSynthesisUtterance,
+  writable: true,
+})
+
 // Mock Audio
 class MockAudio {
   play = vi.fn().mockResolvedValue(undefined)
