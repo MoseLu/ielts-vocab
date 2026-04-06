@@ -6,6 +6,7 @@ load_split_module_files(
     (
         'books_routes/catalog/confusable_books.py',
         'books_routes/catalog/favorite_books.py',
+        'books_routes/catalog/familiar_words.py',
         'books_routes/catalog/vocabulary_loader.py',
         'books_routes/catalog/book_catalog.py',
         'books_routes/catalog/word_detail_routes.py',

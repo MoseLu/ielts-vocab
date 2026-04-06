@@ -51,6 +51,41 @@ def _clear_wrong_word_pending_states(states: dict) -> dict:
             cleared[dimension] = state
     return cleared
 
+
+def _get_or_create_wrong_word_record(
+    current_user: User,
+    word_value: str,
+    payload: dict,
+    record_cache: dict[str, UserWrongWord],
+) -> UserWrongWord:
+    cached = record_cache.get(word_value)
+    if cached is not None:
+        return cached
+
+    existing = UserWrongWord.query.filter_by(
+        user_id=current_user.id,
+        word=word_value,
+    ).first()
+    if existing is None:
+        existing = UserWrongWord(
+            user_id=current_user.id,
+            word=word_value,
+            phonetic=payload.get('phonetic'),
+            pos=payload.get('pos'),
+            definition=payload.get('definition'),
+            wrong_count=0,
+            listening_correct=0,
+            listening_wrong=0,
+            meaning_correct=0,
+            meaning_wrong=0,
+            dictation_correct=0,
+            dictation_wrong=0,
+        )
+        db.session.add(existing)
+
+    record_cache[word_value] = existing
+    return existing
+
 @ai_bp.route('/wrong-words', methods=['GET'])
 @token_required
 def get_wrong_words(current_user: User):
@@ -76,31 +111,14 @@ def sync_wrong_words(current_user: User):
     if not isinstance(words, list):
         return jsonify({'error': 'words must be an array'}), 400
 
+    record_cache: dict[str, UserWrongWord] = {}
+    processed_words: set[str] = set()
     updated = 0
     for w in words:
         word_value = str(w.get('word') or '').strip()
         if not word_value:
             continue
-        existing = UserWrongWord.query.filter_by(
-            user_id=current_user.id,
-            word=word_value
-        ).first()
-        if existing is None:
-            existing = UserWrongWord(
-                user_id=current_user.id,
-                word=word_value,
-                phonetic=w.get('phonetic'),
-                pos=w.get('pos'),
-                definition=w.get('definition'),
-                wrong_count=0,
-                listening_correct=0,
-                listening_wrong=0,
-                meaning_correct=0,
-                meaning_wrong=0,
-                dictation_correct=0,
-                dictation_wrong=0,
-            )
-            db.session.add(existing)
+        existing = _get_or_create_wrong_word_record(current_user, word_value, w, record_cache)
 
         previous_wrong_count, current_wrong_count = _apply_wrong_word_snapshot(existing, w)
         wrong_delta = max(0, current_wrong_count - previous_wrong_count)
@@ -121,7 +139,9 @@ def sync_wrong_words(current_user: User):
                     'dimension_states': json.loads(existing.dimension_state or '{}'),
                 },
             )
-        updated += 1
+        if word_value not in processed_words:
+            processed_words.add(word_value)
+            updated += 1
 
     db.session.commit()
     return jsonify({'updated': updated})

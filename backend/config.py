@@ -33,6 +33,20 @@ def _build_cors_origins() -> list[str]:
 
     return merged
 
+
+def _resolve_sqlite_db_path(base_dir: str) -> str:
+    configured = (os.environ.get('SQLITE_DB_PATH') or '').strip()
+    if configured:
+        return os.path.abspath(configured)
+    return os.path.join(base_dir, 'database.sqlite')
+
+
+def _resolve_backup_dir(base_dir: str, sqlite_db_path: str) -> str:
+    configured = (os.environ.get('DB_BACKUP_DIR') or '').strip()
+    if configured:
+        return os.path.abspath(configured)
+    return os.path.join(os.path.dirname(sqlite_db_path), 'backups')
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
@@ -43,13 +57,14 @@ class Config:
 
     # Database
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'database.sqlite')
+    SQLITE_DB_PATH = _resolve_sqlite_db_path(BASE_DIR)
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + SQLITE_DB_PATH
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ALLOW_DESTRUCTIVE_DB_OPERATIONS = os.environ.get('ALLOW_DESTRUCTIVE_DB_OPERATIONS', 'false').lower() == 'true'
     DB_BACKUP_ENABLED = os.environ.get('DB_BACKUP_ENABLED', 'true').lower() == 'true'
-    DB_BACKUP_DIR = os.environ.get('DB_BACKUP_DIR', os.path.join(BASE_DIR, 'backups'))
+    DB_BACKUP_DIR = _resolve_backup_dir(BASE_DIR, SQLITE_DB_PATH)
     DB_BACKUP_INTERVAL_SECONDS = max(0, int(os.environ.get('DB_BACKUP_INTERVAL_SECONDS', '900')))
-    DB_BACKUP_KEEP = max(1, int(os.environ.get('DB_BACKUP_KEEP', '96')))
+    DB_BACKUP_KEEP = max(1, int(os.environ.get('DB_BACKUP_KEEP', '10')))
     DB_BACKUP_ON_START = os.environ.get('DB_BACKUP_ON_START', 'true').lower() == 'true'
     DB_BACKUP_STARTUP_MIN_AGE_SECONDS = max(0, int(os.environ.get('DB_BACKUP_STARTUP_MIN_AGE_SECONDS', '300')))
 

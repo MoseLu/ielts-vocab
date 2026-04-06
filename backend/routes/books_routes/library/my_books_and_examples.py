@@ -1,3 +1,8 @@
+from services.books_confusable_service import (
+    update_confusable_custom_chapter_response,
+)
+
+
 @books_bp.route('/<book_id>/chapters/<int:chapter_id>/mode-progress', methods=['POST'])
 @token_required
 def save_chapter_mode_progress(current_user, book_id, chapter_id):
@@ -109,79 +114,13 @@ def remove_my_book(current_user, book_id):
 @books_bp.route(f'/{CONFUSABLE_MATCH_BOOK_ID}/custom-chapters/<int:chapter_id>', methods=['PUT'])
 @token_required
 def update_confusable_custom_chapter(current_user, chapter_id):
-    """Update words inside an existing custom confusable group."""
     data = request.get_json() or {}
-    custom_chapter = _get_confusable_custom_chapter(current_user.id, chapter_id)
-    if not custom_chapter:
-        return jsonify({'error': '未找到可编辑的自定义易混组'}), 404
-
-    try:
-        groups = _normalize_confusable_custom_groups([data.get('words')])
-    except ValueError as exc:
-        return jsonify({'error': str(exc)}), 400
-
-    resolved_groups, missing_words = _resolve_confusable_group_words(groups)
-    if missing_words:
-        missing_summary = '、'.join(missing_words[:12])
-        if len(missing_words) > 12:
-            missing_summary += ' 等'
-        return jsonify({
-            'error': f'以下单词在现有词库中未找到完整音标或中文释义：{missing_summary}',
-            'missing_words': missing_words,
-        }), 400
-    if not resolved_groups:
-        return jsonify({'error': '请至少保留 2 个有效单词'}), 400
-
-    resolved_words = resolved_groups[0]
-    previous_word_count = int(custom_chapter.word_count or len(custom_chapter.words))
-    custom_chapter.title = _build_confusable_custom_chapter_title(
-        [word['word'] for word in resolved_words],
-        int(custom_chapter.sort_order or 0) + 1,
+    payload, status = update_confusable_custom_chapter_response(
+        current_user.id,
+        chapter_id,
+        data.get('words'),
     )
-    custom_chapter.word_count = len(resolved_words)
-
-    for word in list(custom_chapter.words):
-        db.session.delete(word)
-    db.session.flush()
-
-    for word in resolved_words:
-        db.session.add(CustomBookWord(
-            chapter_id=str(chapter_id),
-            word=word['word'],
-            phonetic=word['phonetic'],
-            pos=word['pos'],
-            definition=word['definition'],
-        ))
-
-    if custom_chapter.book:
-        custom_chapter.book.word_count = max(
-            0,
-            int(custom_chapter.book.word_count or 0) - previous_word_count + len(resolved_words),
-        )
-
-    UserChapterProgress.query.filter_by(
-        user_id=current_user.id,
-        book_id=CONFUSABLE_MATCH_BOOK_ID,
-        chapter_id=chapter_id,
-    ).delete()
-    UserChapterModeProgress.query.filter_by(
-        user_id=current_user.id,
-        book_id=CONFUSABLE_MATCH_BOOK_ID,
-        chapter_id=chapter_id,
-    ).delete()
-
-    db.session.commit()
-    refreshed_chapter = _get_confusable_custom_chapter(current_user.id, chapter_id)
-    return jsonify({
-        'chapter': {
-            'id': chapter_id,
-            'title': refreshed_chapter.title,
-            'word_count': int(refreshed_chapter.word_count or len(refreshed_chapter.words)),
-            'group_count': 1,
-            'is_custom': True,
-        },
-        'words': _serialize_confusable_custom_words(refreshed_chapter),
-    }), 200
+    return jsonify(payload), status
 
 
 # ── GET /api/books/examples ───────────────────────────────────────────────────

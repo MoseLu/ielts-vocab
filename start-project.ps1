@@ -1,5 +1,6 @@
 param(
-    [string]$ProjectRoot
+    [string]$ProjectRoot,
+    [switch]$AllowDetachedRuntime
 )
 
 $ErrorActionPreference = 'Stop'
@@ -163,6 +164,111 @@ function Ensure-LatestCode {
     throw "The current branch has diverged from $upstreamBranch. Local ahead: $ahead  Remote ahead: $behind."
 }
 
+function Normalize-ComparablePath {
+    param([string]$Path)
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return ''
+    }
+
+    return ([System.IO.Path]::GetFullPath($Path)).TrimEnd('\').Replace('/', '\').ToLowerInvariant()
+}
+
+function Get-GitWorktreeCatalog {
+    $lines = @(git worktree list --porcelain 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $lines.Count -eq 0) {
+        return @()
+    }
+
+    $catalog = @()
+    $entry = @{}
+
+    foreach ($line in ($lines + '')) {
+        if (-not $line) {
+            if ($entry.ContainsKey('Path')) {
+                $catalog += [pscustomobject]@{
+                    Path = $entry.Path
+                    NormalizedPath = Normalize-ComparablePath $entry.Path
+                    Branch = $entry.Branch
+                    Detached = [bool]$entry.Detached
+                }
+                $entry = @{}
+            }
+            continue
+        }
+
+        if ($line.StartsWith('worktree ')) {
+            $entry.Path = $line.Substring(9).Trim()
+            continue
+        }
+
+        if ($line.StartsWith('branch ')) {
+            $entry.Branch = $line.Substring(7).Trim()
+            continue
+        }
+
+        if ($line -eq 'detached') {
+            $entry.Detached = $true
+        }
+    }
+
+    return $catalog
+}
+
+function Assert-CanonicalRuntimeWorktree {
+    param([switch]$AllowDetachedRuntime)
+
+    $currentRoot = Normalize-ComparablePath $root
+    $worktrees = @(Get-GitWorktreeCatalog)
+    if ($worktrees.Count -eq 0) {
+        return
+    }
+
+    $currentEntry = $worktrees | Where-Object { $_.NormalizedPath -eq $currentRoot } | Select-Object -First 1
+    if (-not $currentEntry) {
+        return
+    }
+
+    if (-not $currentEntry.Detached) {
+        if ($currentEntry.Branch) {
+            Write-Host "        Runtime owner worktree: $($currentEntry.Path) ($($currentEntry.Branch))"
+        }
+        return
+    }
+
+    if ($AllowDetachedRuntime) {
+        Write-Host '[WARN] Detached worktree runtime allowed by -AllowDetachedRuntime.'
+        return
+    }
+
+    $preferredEntry = $worktrees |
+        Where-Object { -not $_.Detached -and $_.Branch } |
+        Sort-Object Path |
+        Select-Object -First 1
+
+    if ($preferredEntry) {
+        throw "Detached worktree runtime is blocked for ports $frontendPort/$backendPort/$speechPort. Use $($preferredEntry.Path) ($($preferredEntry.Branch)) or rerun with -AllowDetachedRuntime."
+    }
+
+    throw "Detached worktree runtime is blocked for ports $frontendPort/$backendPort/$speechPort. Rerun with -AllowDetachedRuntime only if you intentionally want this worktree to own the canonical runtime."
+}
+
+function Resolve-SharedBackendDataRoot {
+    $gitCommonDirRaw = (git rev-parse --path-format=absolute --git-common-dir 2>$null).Trim()
+    if (-not $gitCommonDirRaw) {
+        return Join-Path $root 'backend'
+    }
+
+    $gitCommonDir = (Resolve-Path $gitCommonDirRaw).Path
+    $canonicalRepoRoot = Split-Path -Parent $gitCommonDir
+    $canonicalBackendRoot = Join-Path $canonicalRepoRoot 'backend'
+    if (Test-Path $canonicalBackendRoot) {
+        return $canonicalBackendRoot
+    }
+
+    return Join-Path $root 'backend'
+}
+
 function Start-LoggedProcess {
     param(
         [string]$Title,
@@ -180,18 +286,23 @@ try {
         New-Item -ItemType Directory -Path $logDir | Out-Null
     }
 
-    Write-Step '[1/5] Stopping existing services on project ports...'
+    Write-Step '[1/6] Checking required commands and runtime owner...'
+    Require-Command git
+    Require-Command pnpm
+    Require-Command python
+    Assert-CanonicalRuntimeWorktree -AllowDetachedRuntime:$AllowDetachedRuntime
+
+    Write-Step '[2/6] Stopping existing services on project ports...'
     Stop-PortListeners -Port $backendPort -Label 'backend'
     Stop-PortListeners -Port $speechPort -Label 'speech-service'
     Stop-PortListeners -Port $frontendPort -Label 'frontend-preview'
 
-    Write-Step '[2/5] Checking required commands and files...'
-    Require-Command git
-    Require-Command pnpm
-    Require-Command python
-
+    Write-Step '[3/6] Checking required files...'
     if (-not (Test-Path (Join-Path $root 'package.json'))) {
         throw 'package.json was not found in the project root.'
+    }
+    if (-not (Test-Path (Join-Path $root 'frontend\package.json'))) {
+        throw 'frontend\package.json was not found.'
     }
     if (-not (Test-Path (Join-Path $root 'backend\app.py'))) {
         throw 'backend\app.py was not found.'
@@ -203,11 +314,25 @@ try {
         throw 'backend\.env was not found. Flask configuration is incomplete.'
     }
 
-    Write-Step '[3/5] Ensuring the code is up to date...'
+    Write-Step '[4/6] Ensuring the code is up to date...'
     Ensure-LatestCode
 
-    Write-Step '[4/5] Rebuilding frontend preview assets...'
-    pnpm build
+    Write-Step '[5/6] Rebuilding frontend preview assets...'
+    pnpm --dir frontend build
+
+    $sharedBackendRoot = Resolve-SharedBackendDataRoot
+    $sharedSqliteDbPath = Join-Path $sharedBackendRoot 'database.sqlite'
+    $sharedBackupDir = Join-Path $sharedBackendRoot 'backups'
+    $backendEnvPrefix = ''
+
+    if (Test-Path $sharedSqliteDbPath) {
+        $backendEnvPrefix = ('set "SQLITE_DB_PATH={0}" && set "DB_BACKUP_DIR={1}" && ' -f $sharedSqliteDbPath, $sharedBackupDir)
+        if ($sharedBackendRoot -ne (Join-Path $root 'backend')) {
+            Write-Host "        Using shared backend data from $sharedBackendRoot"
+        }
+    } else {
+        Write-Host "        Shared backend database not found; using local backend directory under $root"
+    }
 
     Set-Content -Path $backendOut -Value ''
     Set-Content -Path $backendErr -Value ''
@@ -223,16 +348,16 @@ try {
     Add-Content -Path $frontendOut -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] frontend preview start ====="
     Add-Content -Path $frontendErr -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] frontend preview start ====="
 
-    Write-Step '[5/5] Starting backend, speech service, and frontend preview...'
-    Start-LoggedProcess -Title 'IELTS Flask Backend' -WorkingDirectory (Join-Path $root 'backend') -CommandLine "python -u app.py 1>>`"$backendOut`" 2>>`"$backendErr`""
+    Write-Step '[6/6] Starting backend, speech service, and frontend preview...'
+    Start-LoggedProcess -Title 'IELTS Flask Backend' -WorkingDirectory (Join-Path $root 'backend') -CommandLine "${backendEnvPrefix}python -u app.py 1>>`"$backendOut`" 2>>`"$backendErr`""
     Wait-PortState -Port $backendPort -Listening $true -TimeoutSeconds 30
     Wait-HttpReady -Url "http://127.0.0.1:$backendPort/api/books/stats" -TimeoutSeconds 30
 
-    Start-LoggedProcess -Title 'IELTS Speech Service' -WorkingDirectory (Join-Path $root 'backend') -CommandLine "python -u speech_service.py 1>>`"$speechOut`" 2>>`"$speechErr`""
+    Start-LoggedProcess -Title 'IELTS Speech Service' -WorkingDirectory (Join-Path $root 'backend') -CommandLine "${backendEnvPrefix}python -u speech_service.py 1>>`"$speechOut`" 2>>`"$speechErr`""
     Wait-PortState -Port $speechPort -Listening $true -TimeoutSeconds 30
     Wait-HttpReady -Url "http://127.0.0.1:$speechPort/health" -TimeoutSeconds 30
 
-    Start-LoggedProcess -Title 'IELTS Frontend Preview' -WorkingDirectory $root -CommandLine "pnpm preview -- --host 0.0.0.0 --port $frontendPort 1>>`"$frontendOut`" 2>>`"$frontendErr`""
+    Start-LoggedProcess -Title 'IELTS Frontend Preview' -WorkingDirectory (Join-Path $root 'frontend') -CommandLine "pnpm preview -- --host 0.0.0.0 --port $frontendPort 1>>`"$frontendOut`" 2>>`"$frontendErr`""
     Wait-PortState -Port $frontendPort -Listening $true -TimeoutSeconds 30
     Wait-HttpReady -Url "http://127.0.0.1:$frontendPort/login" -TimeoutSeconds 30
 

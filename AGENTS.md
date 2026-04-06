@@ -1,9 +1,9 @@
 # Project Notes
-Last updated: 2026-04-04 22:11:58 +08:00
+Last updated: 2026-04-06 22:35:18 +08:00
 
 ## Repo Summary
 - IELTS vocabulary learning web app with React 19 + TypeScript + Vite on the frontend and Flask + SQLite on the backend.
-- Main scopes: `src/` for product UI and learning flows, `backend/` for APIs and persistence, `vocabulary_data/` for book assets, and `docs/` for durable plans, audits, and runbooks.
+- Main scopes: `frontend/` for the frontend package, build configs, source, and e2e coverage; `backend/` for APIs and persistence; `vocabulary_data/` for book assets; and `docs/` for durable plans, audits, and runbooks.
 - Runtime now has three local entry points: preview UI on `3002`, main API on `5000`, and speech Socket.IO service on `5001`.
 
 ## Working Agreements
@@ -15,7 +15,7 @@ Last updated: 2026-04-04 22:11:58 +08:00
 - Keep `pnpm check:file-lines` and `pnpm lint` green before submit; `pnpm build` and `pnpm test` now run the guardrail bundle automatically.
 - Keep `pytest backend/tests/test_source_text_integrity.py -q` green after backend or text-heavy edits.
 - Treat the local production-style chain as canonical for runtime bugs: `natapp -> nginx(:80) -> vite preview(:3002)` for UI, `/api` to Flask `:5000`, and `/socket.io` to speech service `:5001`.
-- When touching runtime startup, keep `start-project.bat` and `start-project.ps1` aligned with `vite.config.ts`, `nginx.conf.example`, and the real service ports.
+- When touching runtime startup, keep `start-project.bat` and `start-project.ps1` aligned with `frontend/vite.config.ts`, `nginx.conf.example`, and the real service ports.
 
 ## Current Focus
 - Keep production-style local startup and proxy behavior stable after the speech-service split.
@@ -26,7 +26,7 @@ Last updated: 2026-04-04 22:11:58 +08:00
 - Split speech handling out of the main Flask app into `backend/speech_service.py` on port `5001`, and updated proxy/startup flow accordingly.
 - Added quick-memory reconciliation before learning-stats fetches so newer local records reach the backend before dashboard reads.
 - Fixed the due-review timezone skew that undercounted recently due words in `learning-stats` and `learner-profile`.
-- The current working tree includes an uncommitted homepage hero background polish in `src/styles/pages/study-center.scss`.
+- The current working tree includes an uncommitted homepage hero background polish in `frontend/src/styles/pages/study-center.scss`.
 
 ## Encoding & Patch Strategy
 - Assume repo text files are UTF-8 unless the file itself proves otherwise.
@@ -42,33 +42,42 @@ Last updated: 2026-04-04 22:11:58 +08:00
 - `vocabulary_data/**` and `pnpm-lock.yaml` are explicitly exempt because they are generated data or lockfiles.
 - Historical oversize files are frozen in `scripts/file-line-limit.config.json`. They are temporary exceptions, may not grow past their recorded baseline, and should be split down over time.
 - `scripts/check-file-line-limits.mjs` is the enforcement gate. It fails when a new oversize file appears, when a baseline file grows, or when the baseline file is not cleaned up after a file drops back to `<= 500` lines.
-- `eslint.config.mjs` mirrors the `500`-line cap for tracked JS/TS files, while letting the oversize baseline remain temporarily exempt until those files are split.
+- `frontend/eslint.config.mjs` mirrors the `500`-line cap for tracked JS/TS files, while letting the oversize baseline remain temporarily exempt until those files are split.
 - `.github/workflows/ci.yml` runs both the file-line script and ESLint explicitly before frontend tests/build so the rule is enforced in CI, not just locally.
 
 ## Technology Stack
 - Frontend: React 19 + TypeScript + Vite
 - Styling: SCSS + CSS variables
-- Validation: Zod runtime schemas in `src/lib/schemas.ts`
+- Validation: Zod runtime schemas in `frontend/src/lib/schemas.ts`
 - Backend: Python Flask + SQLite
 - Auth: JWT + localStorage
 - Realtime: Socket.IO / WebSocket for speech
 
 ## Project Structure
 ```text
-src/
-- app/                      # App router entry
-- components/
-  - ui/                     # Base UI components
-  - layout/                 # Shared shell/layout pieces
-  - practice/               # Practice feature components
-- contexts/                 # Auth / Settings / Toast / AIChat
-- features/
-  - vocabulary/hooks/       # Data hooks for books, words, progress, stats
-  - ai-chat/                # AI chat feature
-  - speech/                 # Speech recognition feature
-- hooks/                    # Shared hooks
-- lib/                      # Schemas, helpers, sync logic, formatting
-- styles/                   # Global and page SCSS
+frontend/
+- package.json              # Frontend package manifest
+- vite.config.ts            # Frontend build/proxy config
+- vitest.config.ts          # Frontend unit-test config
+- playwright.config.ts      # Frontend e2e config
+- index.html                # Vite HTML entry
+- assets/                   # Static assets
+- src/
+  - app/                    # App router entry
+  - components/
+    - ui/                   # Base UI components
+    - layout/               # Shared shell/layout pieces
+    - practice/             # Practice feature components
+  - contexts/               # Auth / Settings / Toast / AIChat
+  - features/
+    - vocabulary/hooks/     # Data hooks for books, words, progress, stats
+    - ai-chat/              # AI chat feature
+    - speech/               # Speech recognition feature
+  - hooks/                  # Shared hooks
+  - lib/                    # Schemas, helpers, sync logic, formatting
+  - styles/                 # Global and page SCSS
+ - tests/
+   - e2e/                   # Playwright end-to-end coverage
 
 backend/
 - app.py                    # Main Flask API on :5000
@@ -85,12 +94,14 @@ docs/
 - operations/               # Runbooks and operator docs
 - planning/                 # Design and implementation plans
 - logs/submit/              # Append-only submit records
+
+pnpm-workspace.yaml         # Root workspace orchestration
 ```
 
 ## Zod Validation
-- Schema location: `src/lib/schemas.ts`
-- Validation utilities: `src/lib/validation.ts`
-- Form hook: `src/lib/useForm.ts`
+- Schema location: `frontend/src/lib/schemas.ts`
+- Validation utilities: `frontend/src/lib/validation.ts`
+- Form hook: `frontend/src/lib/useForm.ts`
 - Auth, settings, toast, AI chat, and vocabulary hooks all validate inputs or API payloads through Zod-backed helpers.
 
 ## Key Features
@@ -117,6 +128,7 @@ pnpm install
 pnpm dev
 pnpm build
 pnpm preview
+pnpm test:e2e
 
 # Backend
 cd backend

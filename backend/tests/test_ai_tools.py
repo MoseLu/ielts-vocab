@@ -242,6 +242,53 @@ def test_wrong_words_sync_preserves_history_but_allows_pending_clear(client, app
     assert word['meaning_pass_streak'] == 4
 
 
+def test_wrong_words_sync_deduplicates_same_word_within_one_request(client, app):
+    register_and_login(client, username='wrong-words-duplicate-user')
+
+    sync = client.post('/api/ai/wrong-words/sync', json={
+        'sourceMode': 'meaning',
+        'words': [
+            {
+                'word': 'alpha',
+                'phonetic': '/a/',
+                'pos': 'n.',
+                'definition': '测试词',
+                'wrong_count': 2,
+                'meaning_wrong': 2,
+                'dimension_states': {
+                    'meaning': {
+                        'history_wrong': 2,
+                        'pass_streak': 0,
+                        'last_wrong_at': '2026-04-02T08:00:00+00:00',
+                    },
+                },
+            },
+            {
+                'word': 'alpha',
+                'phonetic': '/a/',
+                'pos': 'n.',
+                'definition': '测试词',
+                'wrong_count': 2,
+                'meaning_wrong': 2,
+                'dimension_states': {
+                    'meaning': {
+                        'history_wrong': 2,
+                        'pass_streak': 0,
+                        'last_wrong_at': '2026-04-02T08:00:00+00:00',
+                    },
+                },
+            },
+        ],
+    })
+    assert sync.status_code == 200
+    assert sync.get_json()['updated'] == 1
+
+    with app.app_context():
+        records = UserWrongWord.query.filter_by(word='alpha').all()
+        assert len(records) == 1
+        assert records[0].wrong_count == 2
+
+
 def test_generate_book_accepts_text_response_payload(client, monkeypatch):
     register_and_login(client, username='generate-book-user')
 

@@ -18,6 +18,23 @@ from models import (
 from routes.middleware import token_required, _extract_token, _decode_token
 from services.learning_events import record_learning_event
 from services.listening_confusables import attach_preset_listening_confusables
+from services.books_confusable_service import (
+    augment_book_for_user as _augment_book_for_user_service,
+    build_confusable_custom_book_id as _build_confusable_custom_book_id_service,
+    build_confusable_custom_chapter_title as _build_confusable_custom_chapter_title_service,
+    build_confusable_lookup as _build_confusable_lookup_service,
+    get_confusable_custom_book as _get_confusable_custom_book_service,
+    get_confusable_custom_chapter as _get_confusable_custom_chapter_service,
+    get_confusable_custom_word_count as _get_confusable_custom_word_count_service,
+    is_confusable_match_book as _is_confusable_match_book_service,
+    list_confusable_custom_chapters as _list_confusable_custom_chapters_service,
+    merge_confusable_custom_chapters as _merge_confusable_custom_chapters_service,
+    next_confusable_custom_chapter_id as _next_confusable_custom_chapter_id_service,
+    normalize_confusable_custom_groups as _normalize_confusable_custom_groups_service,
+    resolve_confusable_group_words as _resolve_confusable_group_words_service,
+    resolve_optional_current_user as _resolve_optional_current_user_service,
+    serialize_confusable_custom_words as _serialize_confusable_custom_words_service,
+)
 
 books_bp = Blueprint('books', __name__)
 
@@ -51,280 +68,62 @@ def init_books(app_instance):
 
 
 def _is_confusable_match_book(book_id: str) -> bool:
-    return str(book_id) == CONFUSABLE_MATCH_BOOK_ID
+    return _is_confusable_match_book_service(book_id)
 
 
 def _build_confusable_custom_book_id(user_id: int) -> str:
-    return f'{CONFUSABLE_CUSTOM_BOOK_PREFIX}_{user_id}'
+    return _build_confusable_custom_book_id_service(user_id)
 
 
 def _resolve_optional_current_user() -> User | None:
-    """Best-effort auth for public routes that can enrich responses per user."""
-    token = _extract_token()
-    if not token:
-        return None
-
-    try:
-        payload = _decode_token(token)
-    except Exception:
-        return None
-
-    if payload.get('type') != 'access':
-        return None
-
-    user_id = payload.get('user_id')
-    if user_id is None:
-        return None
-
-    return User.query.get(user_id)
-
-
-def _normalize_lookup_word_key(value) -> str:
-    if not isinstance(value, str):
-        return ''
-    return value.strip().lower()
-
-
-def _score_lookup_candidate(word_entry: dict, source_priority: int) -> tuple[int, int, int]:
-    definition = (word_entry.get('definition') or '').strip()
-    phonetic = (word_entry.get('phonetic') or '').strip()
-    pos = (word_entry.get('pos') or '').strip()
-    completeness = (3 if definition else 0) + (2 if phonetic else 0) + (1 if pos else 0)
-    definition_length = min(len(definition), 200)
-    return (completeness, -source_priority, definition_length)
-
+    return _resolve_optional_current_user_service()
 
 def _build_confusable_lookup() -> dict[str, dict]:
-    global _confusable_lookup_cache
-
-    if isinstance(_confusable_lookup_cache, dict):
-        return _confusable_lookup_cache
-
-    lookup = {}
-    for source_priority, book_id in enumerate(CONFUSABLE_LOOKUP_SOURCE_IDS):
-        words = load_book_vocabulary(book_id) or []
-        for word_entry in words:
-            key = _normalize_lookup_word_key(word_entry.get('word'))
-            if not key:
-                continue
-
-            candidate = {
-                'word': (word_entry.get('word') or '').strip() or key,
-                'phonetic': (word_entry.get('phonetic') or '').strip(),
-                'pos': (word_entry.get('pos') or '').strip(),
-                'definition': (word_entry.get('definition') or '').strip(),
-            }
-            candidate['_score'] = _score_lookup_candidate(candidate, source_priority)
-
-            existing = lookup.get(key)
-            if existing is None or candidate['_score'] > existing['_score']:
-                lookup[key] = candidate
-
-    for key, override in CONFUSABLE_LOOKUP_OVERRIDES.items():
-        candidate = {
-            'word': (override.get('word') or '').strip() or key,
-            'phonetic': (override.get('phonetic') or '').strip(),
-            'pos': (override.get('pos') or '').strip(),
-            'definition': (override.get('definition') or '').strip(),
-        }
-        candidate['_score'] = _score_lookup_candidate(candidate, -1)
-
-        existing = lookup.get(key)
-        if existing is None or candidate['_score'] > existing['_score']:
-            lookup[key] = candidate
-
-    _confusable_lookup_cache = lookup
-    return lookup
+    return _build_confusable_lookup_service()
 
 
 def _normalize_confusable_custom_groups(raw_groups) -> list[list[str]]:
-    if not isinstance(raw_groups, list) or not raw_groups:
-        raise ValueError('请至少输入一组易混词')
-
-    if len(raw_groups) > CONFUSABLE_CUSTOM_MAX_GROUPS:
-        raise ValueError(f'一次最多创建 {CONFUSABLE_CUSTOM_MAX_GROUPS} 组易混词')
-
-    groups = []
-    for index, raw_group in enumerate(raw_groups, start=1):
-        if isinstance(raw_group, str):
-            tokens = CONFUSABLE_WORD_TOKEN_RE.findall(raw_group)
-        elif isinstance(raw_group, list):
-            tokens = []
-            for item in raw_group:
-                if not isinstance(item, str):
-                    continue
-                tokens.extend(CONFUSABLE_WORD_TOKEN_RE.findall(item))
-        else:
-            tokens = []
-
-        unique_words = []
-        seen = set()
-        for token in tokens:
-            normalized = _normalize_lookup_word_key(token)
-            if not normalized or normalized in seen:
-                continue
-            seen.add(normalized)
-            unique_words.append(normalized)
-
-        if len(unique_words) < 2:
-            raise ValueError(f'第 {index} 组至少需要 2 个不同单词')
-        if len(unique_words) > CONFUSABLE_CUSTOM_MAX_WORDS_PER_GROUP:
-            raise ValueError(
-                f'第 {index} 组最多支持 {CONFUSABLE_CUSTOM_MAX_WORDS_PER_GROUP} 个单词'
-            )
-
-        groups.append(unique_words)
-
-    return groups
+    return _normalize_confusable_custom_groups_service(raw_groups)
 
 
 def _resolve_confusable_group_words(groups: list[list[str]]) -> tuple[list[list[dict]], list[str]]:
-    lookup = _build_confusable_lookup()
-    resolved_groups = []
-    missing_words = set()
-
-    for group in groups:
-        resolved_words = []
-        for word in group:
-            candidate = lookup.get(word)
-            if not candidate:
-                missing_words.add(word)
-                continue
-
-            if not candidate.get('definition') or not candidate.get('phonetic'):
-                missing_words.add(word)
-                continue
-
-            resolved_words.append({
-                'word': candidate['word'],
-                'phonetic': candidate['phonetic'],
-                'pos': candidate.get('pos') or 'n.',
-                'definition': candidate['definition'],
-            })
-
-        if resolved_words:
-            resolved_groups.append(resolved_words)
-
-    return resolved_groups, sorted(missing_words)
+    return _resolve_confusable_group_words_service(groups)
 
 
 def _get_confusable_custom_book(user_id: int, create: bool = False) -> CustomBook | None:
-    book_id = _build_confusable_custom_book_id(user_id)
-    book = CustomBook.query.filter_by(id=book_id, user_id=user_id).first()
-    if book or not create:
-        return book
-
-    book = CustomBook(
-        id=book_id,
-        user_id=user_id,
-        title='我的易混辨析',
-        description='用户手动创建的易混词组合',
-        word_count=0,
-    )
-    db.session.add(book)
-    return book
+    return _get_confusable_custom_book_service(user_id, create=create)
 
 
 def _get_confusable_custom_word_count(user_id: int | None) -> int:
-    if not user_id:
-        return 0
-    book = _get_confusable_custom_book(user_id)
-    return int(book.word_count or 0) if book else 0
+    return _get_confusable_custom_word_count_service(user_id)
 
 
 def _list_confusable_custom_chapters(user_id: int | None) -> list[dict]:
-    if not user_id:
-        return []
-
-    book = _get_confusable_custom_book(user_id)
-    if not book:
-        return []
-
-    chapters = []
-    for chapter in book.chapters:
-        try:
-            chapter_id = int(str(chapter.id))
-        except (TypeError, ValueError):
-            continue
-
-        chapters.append({
-            'id': chapter_id,
-            'title': chapter.title,
-            'word_count': int(chapter.word_count or len(chapter.words)),
-            'group_count': 1,
-            'is_custom': True,
-        })
-
-    return chapters
+    return _list_confusable_custom_chapters_service(user_id)
 
 
 def _get_confusable_custom_chapter(user_id: int | None, chapter_id: int) -> CustomBookChapter | None:
-    if not user_id:
-        return None
-
-    book_id = _build_confusable_custom_book_id(user_id)
-    return CustomBookChapter.query.filter_by(book_id=book_id, id=str(chapter_id)).first()
+    return _get_confusable_custom_chapter_service(user_id, chapter_id)
 
 
 def _next_confusable_custom_chapter_id(book: CustomBook) -> int:
-    numeric_ids = []
-    for chapter in book.chapters:
-        try:
-            numeric_ids.append(int(str(chapter.id)))
-        except (TypeError, ValueError):
-            continue
-
-    return max([CONFUSABLE_CUSTOM_CHAPTER_OFFSET] + numeric_ids) + 1
+    return _next_confusable_custom_chapter_id_service(book)
 
 
 def _build_confusable_custom_chapter_title(words: list[str], sequence: int) -> str:
-    preview = ' / '.join(words[:3])
-    if len(words) > 3:
-        preview += ' / ...'
-    return f'自定义易混组 {sequence:02d} · {preview}'
+    return _build_confusable_custom_chapter_title_service(words, sequence)
 
 
 def _serialize_confusable_custom_words(chapter: CustomBookChapter) -> list[dict]:
-    group_key = f'custom-{chapter.id}'
-    return [
-        {
-            'word': (word.word or '').strip(),
-            'phonetic': (word.phonetic or '').strip(),
-            'pos': (word.pos or 'n.').strip() or 'n.',
-            'definition': (word.definition or '').strip(),
-            'group_key': group_key,
-        }
-        for word in chapter.words
-        if (word.word or '').strip()
-    ]
+    return _serialize_confusable_custom_words_service(chapter)
 
 
 def _merge_confusable_custom_chapters(chapters_data: dict, user_id: int | None) -> dict:
-    custom_chapters = _list_confusable_custom_chapters(user_id)
-    if not custom_chapters:
-        return chapters_data
-
-    merged = {
-        'total_chapters': int(chapters_data.get('total_chapters') or 0) + len(custom_chapters),
-        'total_words': int(chapters_data.get('total_words') or 0) + sum(
-            int(chapter.get('word_count') or 0) for chapter in custom_chapters
-        ),
-        'total_groups': int(chapters_data.get('total_groups') or 0) + sum(
-            int(chapter.get('group_count') or 0) for chapter in custom_chapters
-        ),
-        'chapters': [*(chapters_data.get('chapters') or []), *custom_chapters],
-    }
-    return merged
+    return _merge_confusable_custom_chapters_service(chapters_data, user_id)
 
 
 def _augment_book_for_user(book: dict, user_id: int | None) -> dict:
-    book_data = dict(book)
-    if _is_confusable_match_book(book_data.get('id')):
-        if user_id:
-            book_data['word_count'] = int(book_data.get('word_count') or 0) + _get_confusable_custom_word_count(user_id)
-        book_data['chapter_count'] = _get_book_chapter_count(book_data.get('id'), user_id=user_id)
-        book_data['group_count'] = _get_book_group_count(book_data.get('id'), user_id=user_id)
-    return book_data
+    return _augment_book_for_user_service(book, user_id)
 
 # Vocabulary books configuration
 VOCAB_BOOKS = [

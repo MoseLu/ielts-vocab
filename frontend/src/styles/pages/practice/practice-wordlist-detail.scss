@@ -1,0 +1,167 @@
+.wordlist-item-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.wordlist-item-main:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring-strong);
+    border-radius: 14px;
+}
+
+.wordlist-item.is-detail-selected {
+    background: var(--surface-hover);
+    border-left-color: color-mix(in srgb, var(--accent) 72%, var(--surface-elevated));
+}
+
+.wordlist-item.current.is-detail-selected {
+    background: color-mix(in srgb, var(--success-light) 88%, var(--surface-elevated));
+    border-left-color: var(--success);
+}
+
+.wordlist-detail-panel {
+    position: fixed;
+    top: 18px;
+    right: calc(min(420px, 100vw) + 20px);
+    width: min(760px, calc(100vw - min(420px, 100vw) - 40px));
+    max-width: calc(100vw - min(420px, 100vw) - 40px);
+    height: calc(100dvh - 36px);
+    max-height: calc(100dvh - 36px);
+    z-index: var(--layer-global-search);
+    display: flex;
+    flex-direction: column;
+    border-radius: 24px;
+    border: 1px solid color-mix(in srgb, var(--surface-border-strong) 92%, transparent);
+    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+    box-shadow: var(--shadow-overlay);
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+}
+
+.wordlist-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border-strong) 85%, transparent);
+    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+}
+
+.wordlist-detail-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.wordlist-detail-eyebrow {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}
+
+.wordlist-detail-title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.wordlist-detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.wordlist-detail-status {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface-hover);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.wordlist-detail-status--fallback {
+    background: color-mix(in srgb, var(--warning) 14%, transparent);
+    color: var(--warning);
+}
+
+.wordlist-detail-close {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--surface-border-strong) 84%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-floating) 88%, transparent);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.wordlist-detail-close:hover {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.wordlist-detail-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.wordlist-detail-body {
+    flex: 1;
+    min-height: 0;
+    padding: 0 14px 14px 0;
+}
+
+.wordlist-detail-body .global-word-search-detail {
+    height: 100%;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 14px 6px 14px 20px;
+}
+
+@media (max-width: 1024px) {
+    .wordlist-detail-panel {
+        top: 0;
+        right: 0;
+        width: min(760px, 100vw);
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .wordlist-detail-panel {
+        width: 100vw;
+        max-width: 100vw;
+    }
+
+    .wordlist-detail-header {
+        padding-top: calc(18px + env(safe-area-inset-top, 0px));
+    }
+
+    .wordlist-detail-body {
+        padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    }
+}
