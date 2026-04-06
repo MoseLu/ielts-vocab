@@ -83,9 +83,23 @@ class TestDefaultCacheIdentity:
 
 
 class TestDefaultWordTtsIdentity:
-    def test_prefers_dictionary_first_strategy_for_word_audio(self, monkeypatch):
+    def test_defaults_word_audio_to_tts_with_versioned_cache_identity(self, monkeypatch):
         monkeypatch.setattr(word_tts, '_TTS_PROVIDER', 'dashscope')
         monkeypatch.setattr(word_tts, 'WORD_TTS_PROVIDER', '')
+        monkeypatch.setattr(word_tts, '_MINIMAX_API_KEYS', ['primary-key'])
+        monkeypatch.setattr(word_tts, 'WORD_TTS_MODEL', '')
+        monkeypatch.setattr(word_tts, 'WORD_TTS_VOICE', '')
+        monkeypatch.setattr(word_tts, '_MINIMAX_VOICE', 'English_Trustworthy_Man')
+
+        assert word_tts.default_word_tts_identity() == (
+            'minimax',
+            f'{word_tts._MINIMAX_DEFAULT_MODEL}@{word_tts._WORD_TTS_STRATEGY_TAG}',
+            'English_Trustworthy_Man',
+        )
+
+    def test_explicit_hybrid_override_keeps_dictionary_first_strategy(self, monkeypatch):
+        monkeypatch.setattr(word_tts, '_TTS_PROVIDER', 'dashscope')
+        monkeypatch.setattr(word_tts, 'WORD_TTS_PROVIDER', 'hybrid')
         monkeypatch.setattr(word_tts, '_MINIMAX_API_KEYS', ['primary-key'])
         monkeypatch.setattr(word_tts, 'WORD_TTS_MODEL', '')
         monkeypatch.setattr(word_tts, 'WORD_TTS_VOICE', '')
@@ -105,7 +119,7 @@ class TestDefaultWordTtsIdentity:
 
         assert word_tts.default_word_tts_identity() == (
             'dashscope',
-            'qwen-tts-2025-05-22',
+            f'qwen-tts-2025-05-22@{word_tts._WORD_TTS_STRATEGY_TAG}',
             'Cherry',
         )
 
@@ -165,6 +179,30 @@ class TestCachedMp3Validation:
 
     def test_accepts_id3_payload(self):
         assert word_tts.is_probably_valid_mp3_bytes(VALID_MP3)
+
+    def test_prepends_leading_silence_for_word_audio(self, monkeypatch):
+        import imageio_ffmpeg
+
+        seen = {}
+
+        class FakeResult:
+            returncode = 0
+            stderr = b''
+            stdout = VALID_MP3
+
+        def fake_run(command, **kwargs):
+            seen['command'] = command
+            seen['input'] = kwargs['input']
+            return FakeResult()
+
+        monkeypatch.setattr(imageio_ffmpeg, 'get_ffmpeg_exe', lambda: 'ffmpeg')
+        monkeypatch.setattr(word_tts.subprocess, 'run', fake_run)
+
+        audio = word_tts.add_leading_silence_to_mp3_bytes(VALID_MP3)
+
+        assert audio == VALID_MP3
+        assert seen['input'] == VALID_MP3
+        assert f'adelay={word_tts._WORD_TTS_LEADING_SILENCE_MS}:all=1' in seen['command']
 
 
 class TestDashScopeAudioNormalization:

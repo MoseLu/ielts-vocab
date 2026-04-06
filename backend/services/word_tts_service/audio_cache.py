@@ -22,7 +22,8 @@ DEFAULT_VOICE = os.environ.get('BAILIAN_TTS_VOICE', 'Serena')
 WORD_TTS_PROVIDER = os.environ.get('WORD_TTS_PROVIDER', '').strip().lower()
 WORD_TTS_MODEL = os.environ.get('WORD_TTS_MODEL', '').strip()
 WORD_TTS_VOICE = os.environ.get('WORD_TTS_VOICE', '').strip()
-_WORD_TTS_STRATEGY_TAG = 'dict-v1'
+_WORD_TTS_STRATEGY_TAG = 'tts-v2-50ms'
+_WORD_TTS_LEADING_SILENCE_MS = 50
 
 # Each model name gets its own slot → independent RPM quota on 百炼 side.
 # Mix cosyvoice-* (char-based) and qwen* (token-based) freely since they are
@@ -156,27 +157,29 @@ def default_word_tts_identity() -> tuple[str, str, str]:
     """
     Return the provider/model/voice triple used for isolated word pronunciation.
 
-    The default strategy is dictionary-audio-first with TTS fallback. The
-    strategy tag is baked into the cache identity so stale model-generated files
-    are not reused after pronunciation strategy changes.
+    By default isolated word audio should come from the configured TTS provider,
+    not third-party dictionary clips. Dictionary-first remains available only as
+    an explicit override because some external sources start too abruptly and
+    can sound clipped during auto-play.
     """
-    provider = WORD_TTS_PROVIDER or 'hybrid'
     fallback_provider = 'minimax' if _MINIMAX_API_KEYS else _TTS_PROVIDER
+    provider = WORD_TTS_PROVIDER or fallback_provider
     fallback_model = WORD_TTS_MODEL or (
         _MINIMAX_DEFAULT_MODEL if fallback_provider == 'minimax' else DEFAULT_MODEL
     )
     fallback_voice = WORD_TTS_VOICE or (
         _MINIMAX_VOICE if fallback_provider == 'minimax' else DEFAULT_VOICE
     )
+    cache_model = f'{fallback_model}@{_WORD_TTS_STRATEGY_TAG}'
 
     if provider == 'hybrid':
-        return provider, f'{fallback_model}@{_WORD_TTS_STRATEGY_TAG}', fallback_voice
+        return provider, cache_model, fallback_voice
     if provider == 'minimax':
-        return provider, fallback_model, fallback_voice
+        return provider, cache_model, fallback_voice
 
     model = WORD_TTS_MODEL or DEFAULT_MODEL
     voice = WORD_TTS_VOICE or DEFAULT_VOICE
-    return provider, model, voice
+    return provider, f'{model}@{_WORD_TTS_STRATEGY_TAG}', voice
 
 
 def _strip_word_tts_strategy_tag(model: str | None) -> str:
@@ -284,6 +287,50 @@ def transcode_wav_to_mp3_bytes(audio: bytes) -> bytes:
     mp3 = result.stdout
     if not is_probably_valid_mp3_bytes(mp3):
         raise RuntimeError('Transcoded WAV audio is not a valid MP3 payload')
+    return mp3
+
+
+def add_leading_silence_to_mp3_bytes(
+    audio: bytes,
+    milliseconds: int = _WORD_TTS_LEADING_SILENCE_MS,
+) -> bytes:
+    if milliseconds <= 0:
+        return ensure_mp3_bytes(audio)
+
+    import imageio_ffmpeg
+
+    normalized_audio = ensure_mp3_bytes(audio)
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    result = subprocess.run(
+        [
+            ffmpeg_exe,
+            '-hide_banner',
+            '-loglevel',
+            'error',
+            '-f',
+            'mp3',
+            '-i',
+            'pipe:0',
+            '-af',
+            f'adelay={milliseconds}:all=1',
+            '-f',
+            'mp3',
+            '-codec:a',
+            'libmp3lame',
+            '-b:a',
+            '128k',
+            'pipe:1',
+        ],
+        input=normalized_audio,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if result.returncode != 0:
+        return normalized_audio
+    mp3 = result.stdout
+    if not is_probably_valid_mp3_bytes(mp3):
+        return normalized_audio
     return mp3
 
 

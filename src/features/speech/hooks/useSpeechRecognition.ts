@@ -69,6 +69,20 @@ interface RecognitionErrorPayload {
   error: string
 }
 
+const LOCAL_VITE_DEV_PORTS = new Set(['3000', '3020', '5173'])
+
+function resolveSpeechSocketUrl(location: Location): string {
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const isLocalViteDevServer =
+    location.protocol === 'http:' && LOCAL_VITE_DEV_PORTS.has(location.port)
+
+  if (isLocalViteDevServer) {
+    return `${protocol}//${location.hostname}:5001/speech`
+  }
+
+  return `${protocol}//${location.host}/speech`
+}
+
 // ============================================================================
 // Hook Implementation
 // ============================================================================
@@ -118,13 +132,10 @@ export function useSpeechRecognition({
       return
     }
 
-    // Use relative path via Vite proxy; supports remote access (NAT traversal)
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.host
-    const speechUrl = `${protocol}//${host}`
-
-
-    const socket = io(`${speechUrl}/speech`, {
+    // Local Vite dev mode talks to the speech service directly because the
+    // dev proxy intermittently corrupts websocket frames on browser clients.
+    const socket = io(resolveSpeechSocketUrl(window.location), {
+      autoConnect: false,
       transports: ['websocket'],  // 优先 WebSocket，减少轮询开销
       reconnection: true,
       reconnectionAttempts: 3,    // 减少重连次数
@@ -207,9 +218,15 @@ export function useSpeechRecognition({
     })
 
     socketRef.current = socket
+    // Defer the first connect by one task so React StrictMode's dev-only
+    // mount/unmount cycle does not start a websocket that is immediately closed.
+    const connectTimer = setTimeout(() => {
+      socket.connect()
+    }, 0)
 
     // Cleanup on unmount
     return () => {
+      clearTimeout(connectTimer)
       // Clear auto-stop timeout
       if (autoStopTimeoutRef.current) {
         clearTimeout(autoStopTimeoutRef.current)

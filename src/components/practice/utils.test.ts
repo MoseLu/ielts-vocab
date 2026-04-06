@@ -7,6 +7,7 @@ import {
   syllabifyWord,
   generateOptions,
   normalizeWordAnswer,
+  playExampleAudio,
   preloadWordAudio,
   playWordAudio,
   stopAudio,
@@ -259,11 +260,20 @@ describe('normalizeWordAnswer', () => {
 })
 
 describe('playWordAudio', () => {
+  const createAudioResponse = (bytes: number[]) => ({
+    ok: true,
+    headers: new Headers({ 'X-Audio-Bytes': String(bytes.length) }),
+    arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array(bytes).buffer),
+  })
+
   it('reuses prefetched word audio without issuing another fetch', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6]).buffer),
-    })
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createAudioResponse([4, 5, 6]))
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'X-Audio-Bytes': '3' }),
+      })
     const createdAudioSources: string[] = []
 
     class TestAudio {
@@ -304,18 +314,13 @@ describe('playWordAudio', () => {
     await Promise.resolve()
     await Promise.resolve()
     await new Promise(resolve => setTimeout(resolve, 0))
-
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(createdAudioSources.some(src => src.startsWith('blob:'))).toBe(true)
-
     stopAudio()
   })
 
   it('fetches the local word-audio endpoint without browser URL caching', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]).buffer),
-    })
+    const fetchMock = vi.fn().mockResolvedValue(createAudioResponse([1, 2, 3]))
     const createdAudioSources: string[] = []
 
     class TestAudio {
@@ -355,7 +360,6 @@ describe('playWordAudio', () => {
     await Promise.resolve()
     await Promise.resolve()
     await new Promise(resolve => setTimeout(resolve, 0))
-
     expect(fetchMock).toHaveBeenCalledWith('/api/tts/word-audio?w=global', {
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
@@ -365,6 +369,130 @@ describe('playWordAudio', () => {
     expect(createObjectURL).toHaveBeenCalled()
     expect(createdAudioSources.some(src => src.startsWith('blob:'))).toBe(true)
 
+    stopAudio()
+  })
+
+  it('drops mismatched cached word audio and refetches a complete copy', async () => {
+    let now = 1_000
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => now)
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'X-Audio-Bytes': '4' }),
+      })
+      .mockResolvedValueOnce(createAudioResponse([7, 8, 9, 10]))
+
+    class TestAudio {
+      src = ''
+      volume = 1
+      playbackRate = 1
+      currentTime = 0
+      duration = 0
+      readyState = 4
+      onended: (() => void) | null = null
+      onerror: (() => void) | null = null
+      load = vi.fn()
+      pause = vi.fn()
+      addEventListener = vi.fn()
+      canPlayType = vi.fn(() => '')
+      play = vi.fn().mockImplementation(() => {
+        if (this.src.startsWith('data:audio/wav')) this.onended?.()
+        return Promise.resolve(undefined)
+      })
+    }
+
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
+    Object.defineProperty(globalThis, 'Audio', { value: TestAudio as unknown as typeof Audio, writable: true })
+    Object.defineProperty(globalThis.URL, 'createObjectURL', { value: vi.fn(() => 'blob:word-audio'), writable: true })
+    Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: vi.fn(), writable: true })
+
+    await preloadWordAudio('stale-word')
+    now += 6_000
+    playWordAudio('stale-word', { playbackSpeed: '1', volume: '100' })
+    await Promise.resolve()
+    await Promise.resolve()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=stale-word', {
+      method: 'HEAD',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    })
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=stale-word', {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    })
+    nowSpy.mockRestore()
+    stopAudio()
+  })
+
+  it('drops mismatched cached example audio and refetches a complete copy', async () => {
+    let now = 1_000
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => now)
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'X-Audio-Bytes': '4' }),
+      })
+      .mockResolvedValueOnce(createAudioResponse([7, 8, 9, 10]))
+
+    class TestAudio {
+      src = ''
+      volume = 1
+      playbackRate = 1
+      currentTime = 0
+      duration = 0
+      readyState = 4
+      onended: (() => void) | null = null
+      onerror: (() => void) | null = null
+      load = vi.fn()
+      pause = vi.fn()
+      addEventListener = vi.fn()
+      canPlayType = vi.fn(() => '')
+      play = vi.fn().mockImplementation(() => {
+        if (this.src.startsWith('data:audio/wav')) this.onended?.()
+        return Promise.resolve(undefined)
+      })
+    }
+
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
+    Object.defineProperty(globalThis, 'Audio', { value: TestAudio as unknown as typeof Audio, writable: true })
+    Object.defineProperty(globalThis.URL, 'createObjectURL', { value: vi.fn(() => 'blob:example-audio'), writable: true })
+    Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: vi.fn(), writable: true })
+
+    playExampleAudio('Example sentence', 'alpha', { playbackSpeed: '1', volume: '100' })
+    await Promise.resolve()
+    await Promise.resolve()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    now += 6_000
+    playExampleAudio('Example sentence', 'alpha', { playbackSpeed: '1', volume: '100' })
+    await Promise.resolve()
+    await Promise.resolve()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/example-audio', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'application/json',
+        'X-Audio-Metadata-Only': '1',
+      },
+      body: JSON.stringify({ sentence: 'Example sentence', word: 'alpha' }),
+    })
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/example-audio', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sentence: 'Example sentence', word: 'alpha' }),
+    })
+    nowSpy.mockRestore()
     stopAudio()
   })
 })

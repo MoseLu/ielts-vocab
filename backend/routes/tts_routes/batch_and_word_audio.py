@@ -209,6 +209,8 @@ def get_word_audio():
     Query: w — 单词文本（最长 160 字符）
     """
     from services.word_tts import (
+        _strip_word_tts_strategy_tag,
+        add_leading_silence_to_mp3_bytes,
         normalize_word_key,
         synthesize_word_to_bytes,
         word_tts_cache_path,
@@ -223,9 +225,14 @@ def get_word_audio():
     path = word_tts_cache_path(_word_tts_dir(), key, model, voice)
     if path.exists() and not is_probably_valid_mp3_file(path):
         remove_invalid_cached_audio(path)
+    if request.method == 'HEAD':
+        byte_length = path.stat().st_size if path.exists() else None
+        return _audio_metadata_response(byte_length)
     if not path.exists():
         try:
-            audio_bytes = synthesize_word_to_bytes(raw, model, voice, provider=provider)
+            synthesis_model = _strip_word_tts_strategy_tag(model)
+            audio_bytes = synthesize_word_to_bytes(raw, synthesis_model, voice, provider=provider)
+            audio_bytes = add_leading_silence_to_mp3_bytes(audio_bytes)
             write_bytes_atomically(path, audio_bytes)
         except Exception as exc:
             current_app.logger.exception('Word audio generation failed for "%s"', raw)
@@ -240,9 +247,7 @@ def get_word_audio():
         as_attachment=False,
         download_name=f'{key}.mp3',
     )
-    response.headers['Cache-Control'] = 'no-store, max-age=0'
-    response.headers['Pragma'] = 'no-cache'
-    return response
+    return _apply_audio_headers(response, byte_length=path.stat().st_size)
 
 
 @tts_bp.route('/admin/generate-words', methods=['POST'])

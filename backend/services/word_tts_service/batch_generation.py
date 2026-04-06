@@ -128,7 +128,12 @@ def run_batch_generate_missing(
             for attempt in range(len(backoff_delays) + 1):
                 try:
                     rate_limiter.wait_for_turn()
-                    audio = synthesize_word_to_bytes(w, model, voice, provider=provider)
+                    audio = synthesize_word_to_bytes(
+                        w,
+                        _strip_word_tts_strategy_tag(model),
+                        voice,
+                        provider=provider,
+                    )
                     write_bytes_atomically(out_path, audio)
                     return True
                 except Exception as exc:

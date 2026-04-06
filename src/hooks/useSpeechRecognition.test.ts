@@ -10,6 +10,7 @@ const { mockSocket, ioMock } = vi.hoisted(() => {
     handlers: new Map<string, SocketHandler[]>(),
     anyHandlers: [] as SocketHandler[],
     emit: vi.fn(),
+    connect: vi.fn(),
     disconnect: vi.fn(),
     on(event: string, handler: SocketHandler) {
       const current = this.handlers.get(event) ?? []
@@ -48,8 +49,10 @@ describe('useSpeechRecognition', () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
+    vi.useFakeTimers()
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     ioMock.mockClear()
+    mockSocket.connect.mockClear()
     mockSocket.emit.mockClear()
     mockSocket.disconnect.mockClear()
     mockSocket.handlers.clear()
@@ -62,11 +65,15 @@ describe('useSpeechRecognition', () => {
       value: {
         protocol: 'https:',
         host: 'axiomaticworld.com',
+        hostname: 'axiomaticworld.com',
+        port: '',
       },
     })
   })
 
   afterEach(() => {
+    vi.runOnlyPendingTimers()
+    vi.useRealTimers()
     consoleLogSpy.mockRestore()
     Object.defineProperty(window, 'location', {
       configurable: true,
@@ -76,6 +83,7 @@ describe('useSpeechRecognition', () => {
 
   it('does not emit debug logs during normal socket setup and ready events', () => {
     renderHook(() => useSpeechRecognition({}))
+    vi.runAllTimers()
 
     act(() => {
       mockSocket.trigger('connect')
@@ -83,8 +91,33 @@ describe('useSpeechRecognition', () => {
       mockSocket.trigger('recognition_started', { session_id: 'session-1' })
     })
 
-    expect(ioMock).toHaveBeenCalledWith('wss://axiomaticworld.com/speech', expect.any(Object))
+    expect(ioMock).toHaveBeenCalledWith(
+      'wss://axiomaticworld.com/speech',
+      expect.objectContaining({ autoConnect: false })
+    )
+    expect(mockSocket.connect).toHaveBeenCalledTimes(1)
     expect(consoleLogSpy).not.toHaveBeenCalled()
+  })
+
+  it('connects directly to the speech service in local vite dev mode', () => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        protocol: 'http:',
+        host: 'localhost:3020',
+        hostname: 'localhost',
+        port: '3020',
+      },
+    })
+
+    renderHook(() => useSpeechRecognition({}))
+    vi.runAllTimers()
+
+    expect(ioMock).toHaveBeenCalledWith(
+      'ws://localhost:5001/speech',
+      expect.objectContaining({ autoConnect: false })
+    )
+    expect(mockSocket.connect).toHaveBeenCalledTimes(1)
   })
 
   it('does not create a socket connection when disabled', () => {

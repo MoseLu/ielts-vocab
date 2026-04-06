@@ -32,6 +32,27 @@ class TestWordAudioRoute:
         assert res.status_code == 200
         assert res.mimetype == 'audio/mpeg'
         assert res.headers['Cache-Control'] == 'no-store, max-age=0'
+        assert res.headers['X-Audio-Bytes'] == str(len(VALID_MP3))
+
+    def test_head_returns_cached_audio_metadata_without_generation(self, client, monkeypatch, tmp_path):
+        monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
+        monkeypatch.setattr(
+            tts,
+            'default_word_tts_identity',
+            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+        )
+        target = tmp_path / 'abc123.mp3'
+        target.write_bytes(VALID_MP3)
+        monkeypatch.setattr(
+            'services.word_tts.word_tts_cache_path',
+            lambda cache_dir, normalized_key, model, voice: target,
+        )
+
+        res = client.head('/api/tts/word-audio?w=hello')
+
+        assert res.status_code == 204
+        assert res.headers['X-Audio-Bytes'] == str(len(VALID_MP3))
+        assert not res.data
 
     def test_missing_cache_generates_and_returns_audio(self, client, monkeypatch, tmp_path):
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
@@ -55,6 +76,7 @@ class TestWordAudioRoute:
         )
         assert res.status_code == 200
         assert res.mimetype == 'audio/mpeg'
+        assert res.headers['X-Audio-Bytes'] == str(len(VALID_MP3))
         assert target.exists()
         assert target.read_bytes() == VALID_MP3
 
@@ -123,6 +145,6 @@ class TestWordAudioRoute:
         assert res.status_code == 200
         assert seen == {
             'provider': 'hybrid',
-            'model': 'speech-2.8-hd@dict-v1',
+            'model': 'speech-2.8-hd',
             'voice': 'English_Trustworthy_Man',
         }

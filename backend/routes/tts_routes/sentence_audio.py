@@ -11,7 +11,7 @@ import hashlib
 import requests
 from datetime import datetime
 from pathlib import Path
-from flask import Blueprint, request, jsonify, send_file, current_app
+from flask import Blueprint, request, jsonify, send_file, current_app, Response
 from dotenv import load_dotenv
 from routes.middleware import admin_required
 from services.runtime_async import sleep as runtime_sleep, spawn_background
@@ -29,6 +29,19 @@ env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(env_path)
 
 tts_bp = Blueprint('tts', __name__)
+_AUDIO_BYTES_HEADER = 'X-Audio-Bytes'
+
+
+def _apply_audio_headers(response: Response, *, byte_length: int | None = None) -> Response:
+    response.headers['Cache-Control'] = 'no-store, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    if isinstance(byte_length, int) and byte_length > 0:
+        response.headers[_AUDIO_BYTES_HEADER] = str(byte_length)
+    return response
+
+
+def _audio_metadata_response(byte_length: int | None = None) -> Response:
+    return _apply_audio_headers(Response(status=204), byte_length=byte_length)
 
 
 def add_pause_tags(text: str, pause_seconds: float = 0.3) -> str:
@@ -275,6 +288,7 @@ def generate_example_audio():
     sentence = (data.get('sentence') or '').strip()
     if not sentence:
         return jsonify({'error': 'sentence is required'}), 400
+    metadata_only = request.headers.get('X-Audio-Metadata-Only') == '1'
 
     from services.word_tts import synthesize_word_to_bytes
 
@@ -293,9 +307,18 @@ def generate_example_audio():
     # 命中缓存 → 直接返回本地文件
     if cached_file.exists() and is_probably_valid_mp3_file(cached_file):
         print(f"[TTS Cache HIT] {cached_file.name} (voice={voice_id})")
-        return send_file(cached_file, mimetype='audio/mpeg', as_attachment=False,
-                        download_name=f'example_{cache_key}.mp3')
+        if metadata_only:
+            return _audio_metadata_response(cached_file.stat().st_size)
+        response = send_file(
+            cached_file,
+            mimetype='audio/mpeg',
+            as_attachment=False,
+            download_name=f'example_{cache_key}.mp3',
+        )
+        return _apply_audio_headers(response, byte_length=cached_file.stat().st_size)
     remove_invalid_cached_audio(cached_file)
+    if metadata_only:
+        return _audio_metadata_response()
 
     print(
         f"[TTS Cache MISS] provider={provider} model={model} "
@@ -309,12 +332,13 @@ def generate_example_audio():
 
         audio_data = io.BytesIO(audio_bytes)
         audio_data.seek(0)
-        return send_file(
+        response = send_file(
             audio_data,
             mimetype='audio/mpeg',
             as_attachment=False,
             download_name=f'example_{cache_key}.mp3'
         )
+        return _apply_audio_headers(response, byte_length=len(audio_bytes))
     except Exception as exc:
         current_app.logger.exception('Example audio generation failed for "%s"', sentence)
         status_code = getattr(exc, 'status_code', 502)
