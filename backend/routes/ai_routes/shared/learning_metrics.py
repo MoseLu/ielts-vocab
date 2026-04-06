@@ -15,6 +15,7 @@ from services.learner_profile import build_learner_profile
 from services.learning_events import record_learning_event
 from services.listening_confusables import get_preset_listening_confusables
 from services.memory_topics import build_memory_topics
+from services.quick_memory_schedule import load_user_quick_memory_records, resolve_quick_memory_next_review_ms
 from services.runtime_async import maybe_timeout, spawn_background
 from services.study_sessions import get_live_pending_session_snapshot, get_session_window_metrics
 from services.llm import chat, stream_chat_events, web_search, TOOLS, TOOL_HANDLERS, correct_text, differentiate_synonyms
@@ -119,6 +120,11 @@ def _decorate_wrong_words_with_quick_memory_progress(
         return []
 
     word_keys = [_normalize_word_key(word.word) for word in words if _normalize_word_key(word.word)]
+    pool_by_word = {
+        _normalize_word_key(item.get('word')): item
+        for item in _get_global_vocab_pool()
+        if _normalize_word_key(item.get('word'))
+    }
     qm_rows = []
     if word_keys:
         qm_rows = (
@@ -137,6 +143,21 @@ def _decorate_wrong_words_with_quick_memory_progress(
     for word in words:
         item = word.to_dict()
         qm_row = qm_by_word.get(_normalize_word_key(word.word))
+        vocab_item = _resolve_quick_memory_vocab_entry(_normalize_word_key(word.word))
+        fallback_item = pool_by_word.get(_normalize_word_key(word.word))
+        practice_metadata = vocab_item or fallback_item or {}
+        if practice_metadata:
+            item.update({
+                'group_key': practice_metadata.get('group_key'),
+                'listening_confusables': practice_metadata.get('listening_confusables') or [],
+                'examples': practice_metadata.get('examples') or [],
+            })
+            if not item.get('phonetic'):
+                item['phonetic'] = practice_metadata.get('phonetic', '')
+            if not item.get('pos'):
+                item['pos'] = practice_metadata.get('pos', '')
+            if not item.get('definition'):
+                item['definition'] = practice_metadata.get('definition', '')
         streak = min((qm_row.known_count or 0) if qm_row else 0, _QUICK_MEMORY_MASTERY_TARGET)
         item.update({
             'ebbinghaus_streak': streak,
@@ -353,7 +374,7 @@ def _quick_memory_word_stats(user_id: int):
     _, today_start_ms, tomorrow_ms = local_day_window_ms(now_utc=now_utc)
     now_ms = utc_naive_to_epoch_ms(now_utc)
 
-    qm_rows = UserQuickMemoryRecord.query.filter_by(user_id=user_id).all()
+    qm_rows = load_user_quick_memory_records(user_id)
     today_new = 0
     today_review = 0
     alltime_review_words = 0  # 至少有过第 2 次作答的词（视为进入复习）

@@ -198,7 +198,7 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         .order_by(UserWrongWord.wrong_count.desc(), UserWrongWord.updated_at.desc())
         .all()
     )
-    qm_rows = UserQuickMemoryRecord.query.filter_by(user_id=user_id).all()
+    qm_rows = load_user_quick_memory_records(user_id)
     dimension_events = (
         UserLearningEvent.query
         .filter_by(user_id=user_id)
@@ -224,10 +224,10 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
     )
 
     now_ms = utc_naive_to_epoch_ms(now_utc)
-    due_reviews = UserQuickMemoryRecord.query.filter_by(user_id=user_id).filter(
-        UserQuickMemoryRecord.next_review > 0,
-        UserQuickMemoryRecord.next_review <= now_ms,
-    ).count()
+    due_reviews = sum(
+        1 for row in qm_rows
+        if (row.next_review or 0) > 0 and (row.next_review or 0) <= now_ms
+    )
 
     today_words = sum(item['words_studied'] for item in day_session_metrics)
     today_correct = sum(item['correct_count'] for item in day_session_metrics)

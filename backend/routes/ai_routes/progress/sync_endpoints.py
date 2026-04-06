@@ -15,6 +15,19 @@ def sync_quick_memory(current_user: User):
             continue
         record_book_id = (r.get('bookId') or r.get('book_id') or '').strip() or None
         record_chapter_id = _normalize_chapter_id(r.get('chapterId', r.get('chapter_id')))
+        try:
+            record_last_seen = max(0, int(r.get('lastSeen', 0) or 0))
+        except (TypeError, ValueError):
+            record_last_seen = 0
+        try:
+            record_known_count = max(0, int(r.get('knownCount', 0) or 0))
+        except (TypeError, ValueError):
+            record_known_count = 0
+        canonical_next_review = resolve_quick_memory_next_review_ms(
+            record_known_count,
+            record_last_seen,
+            r.get('nextReview', 0),
+        )
         existing = UserQuickMemoryRecord.query.filter_by(
             user_id=current_user.id, word=word
         ).first()
@@ -39,10 +52,10 @@ def sync_quick_memory(current_user: User):
                     existing.chapter_id = record_chapter_id
                 existing.status        = r.get('status', existing.status)
                 existing.first_seen    = r.get('firstSeen', existing.first_seen)
-                existing.last_seen     = r.get('lastSeen', existing.last_seen)
-                existing.known_count   = r.get('knownCount', existing.known_count)
+                existing.last_seen     = record_last_seen if record_last_seen is not None else existing.last_seen
+                existing.known_count   = record_known_count if record_known_count is not None else existing.known_count
                 existing.unknown_count = r.get('unknownCount', existing.unknown_count)
-                existing.next_review   = r.get('nextReview', existing.next_review)
+                existing.next_review   = canonical_next_review
                 # fuzzy_count: take the max so it never decreases
                 if r.get('fuzzyCount') is not None:
                     existing.fuzzy_count = max(existing.fuzzy_count or 0, r['fuzzyCount'])
@@ -54,10 +67,10 @@ def sync_quick_memory(current_user: User):
                 chapter_id=record_chapter_id,
                 status=r.get('status', 'unknown'),
                 first_seen=r.get('firstSeen', 0),
-                last_seen=r.get('lastSeen', 0),
-                known_count=r.get('knownCount', 0),
+                last_seen=record_last_seen,
+                known_count=record_known_count,
                 unknown_count=r.get('unknownCount', 0),
-                next_review=r.get('nextReview', 0),
+                next_review=canonical_next_review,
                 fuzzy_count=r.get('fuzzyCount', 0),
             )
             db.session.add(new_rec)

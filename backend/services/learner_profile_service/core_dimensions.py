@@ -14,12 +14,13 @@ from models import (
 from services.learning_events import build_learning_activity_timeline
 from services.local_time import resolve_local_day_window, utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 from services.memory_topics import build_memory_topics
+from services.quick_memory_schedule import load_user_quick_memory_records
 from services.study_sessions import get_live_pending_session_snapshot, get_session_window_metrics
 
 MODE_LABELS = {
     'smart': '智能练习',
     'listening': '听音选义',
-    'meaning': '汉译英',
+    'meaning': '释义拼词',
     'dictation': '听写',
     'radio': '随身听',
     'quickmemory': '速记',
@@ -28,7 +29,7 @@ MODE_LABELS = {
 
 DIMENSION_LABELS = {
     'listening': '听音辨义',
-    'meaning': '汉译英（会想）',
+    'meaning': '释义拼词（会想）',
     'dictation': '拼写默写',
 }
 
@@ -38,7 +39,7 @@ FOUR_DIMENSION_CONFIG = {
         'definition': '看到英文单词后，1 秒内说出核心中文义。',
         'schedule_days': [1, 3, 7, 30],
         'mastery_rule': '按第1/3/7/30天节点连续答对，才算认读维度稳定。',
-        'evidence_label': '速记记录 + 汉译英（会想）',
+        'evidence_label': '速记记录 + 释义拼词（会想）',
     },
     'listening': {
         'label': '听力',
@@ -345,7 +346,7 @@ def _build_recognition_dimension(recognition_rows, qm_rows, now_ms: int) -> dict
         'accuracy': accuracy,
         'focus_words': focus_words,
         'next_action': next_action,
-        'evidence_note': '当前认读维度优先依据速记复习状态与汉译英（会想）记录判断。',
+        'evidence_note': '当前认读维度优先依据速记复习状态与释义拼词（会想）记录判断。',
     }
 
 

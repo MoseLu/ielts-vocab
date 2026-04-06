@@ -1,6 +1,7 @@
 import {
   getQuickMemoryStorageKey,
   QUICK_MEMORY_MASTERY_TARGET,
+  nextQuickMemoryReviewTimestamp,
   readQuickMemoryRecordsFromStorage,
   resetQuickMemoryRecord,
   updateQuickMemoryRecord,
@@ -65,6 +66,33 @@ describe('quickMemory', () => {
       lastSeen: 2000,
     }))
     expect(result.record?.nextReview).toBeGreaterThan(2000)
+  })
+
+  it('aligns next review times to the same local due day regardless of study hour', () => {
+    const morning = new Date(2026, 3, 5, 9, 15, 0, 0).getTime()
+    const afternoon = new Date(2026, 3, 5, 17, 45, 0, 0).getTime()
+    const nextDayStart = new Date(2026, 3, 6, 0, 0, 0, 0).getTime()
+
+    expect(nextQuickMemoryReviewTimestamp(0, morning)).toBe(nextDayStart)
+    expect(nextQuickMemoryReviewTimestamp(0, afternoon)).toBe(nextDayStart)
+  })
+
+  it('normalizes legacy hour-level nextReview values when reading from storage', () => {
+    localStorage.setItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS, JSON.stringify({
+      alpha: {
+        status: 'known',
+        firstSeen: new Date(2026, 3, 5, 9, 0, 0, 0).getTime(),
+        lastSeen: new Date(2026, 3, 5, 18, 30, 0, 0).getTime(),
+        knownCount: 1,
+        unknownCount: 0,
+        nextReview: new Date(2026, 3, 6, 18, 30, 0, 0).getTime(),
+        fuzzyCount: 0,
+      },
+    }))
+
+    const records = readQuickMemoryRecordsFromStorage()
+
+    expect(records.alpha.nextReview).toBe(new Date(2026, 3, 6, 0, 0, 0, 0).getTime())
   })
 
   it('stores quick-memory records under a user-scoped key', () => {

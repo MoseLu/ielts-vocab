@@ -18,8 +18,6 @@ export type QuickMemoryRecordInput = Partial<QuickMemoryRecordState> & {
   word?: string | null
 }
 
-const DAY_MS = 86_400_000
-
 type QuickMemoryStorageUserId = string | number | null | undefined
 
 export const QUICK_MEMORY_REVIEW_INTERVALS_DAYS = [1, 1, 4, 7, 14, 30] as const
@@ -27,6 +25,16 @@ export const QUICK_MEMORY_MASTERY_TARGET = QUICK_MEMORY_REVIEW_INTERVALS_DAYS.le
 
 function normalizeWordKey(word: string): string {
   return word.trim().toLowerCase()
+}
+
+function startOfLocalDayTimestamp(timestamp: number): number {
+  const localDate = new Date(timestamp)
+  localDate.setHours(0, 0, 0, 0)
+  return localDate.getTime()
+}
+
+function localDateKey(timestamp: number): string {
+  return new Date(timestamp).toDateString()
 }
 
 function asNonNegativeNumber(value: unknown, fallback = 0): number {
@@ -71,14 +79,28 @@ function normalizeQuickMemoryRecord(value: unknown): QuickMemoryRecordState | nu
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
 
   const raw = value as Record<string, unknown>
+  const firstSeen = asNonNegativeNumber(raw.firstSeen)
+  const lastSeen = asNonNegativeNumber(raw.lastSeen)
+  const knownCount = asNonNegativeNumber(raw.knownCount)
+  const unknownCount = asNonNegativeNumber(raw.unknownCount)
+  const storedNextReview = asNonNegativeNumber(raw.nextReview)
+  const expectedNextReview = lastSeen > 0
+    ? nextQuickMemoryReviewTimestamp(knownCount, lastSeen)
+    : storedNextReview
+  const nextReview = lastSeen > 0 && (
+    storedNextReview <= 0
+    || localDateKey(storedNextReview) === localDateKey(expectedNextReview)
+  )
+    ? expectedNextReview
+    : storedNextReview
 
   return {
     status: raw.status === 'known' ? 'known' : 'unknown',
-    firstSeen: asNonNegativeNumber(raw.firstSeen),
-    lastSeen: asNonNegativeNumber(raw.lastSeen),
-    knownCount: asNonNegativeNumber(raw.knownCount),
-    unknownCount: asNonNegativeNumber(raw.unknownCount),
-    nextReview: asNonNegativeNumber(raw.nextReview),
+    firstSeen,
+    lastSeen,
+    knownCount,
+    unknownCount,
+    nextReview,
     fuzzyCount: asNonNegativeNumber(raw.fuzzyCount),
     bookId: typeof raw.bookId === 'string' && raw.bookId.trim() ? raw.bookId.trim() : undefined,
     chapterId: typeof raw.chapterId === 'string' && raw.chapterId.trim() ? raw.chapterId.trim() : undefined,
@@ -94,7 +116,9 @@ export function nextQuickMemoryReviewTimestamp(knownCount: number, now = Date.no
   const days = QUICK_MEMORY_REVIEW_INTERVALS_DAYS[
     Math.min(safeKnownCount, QUICK_MEMORY_REVIEW_INTERVALS_DAYS.length - 1)
   ]
-  return now + days * DAY_MS
+  const dueDate = new Date(startOfLocalDayTimestamp(now))
+  dueDate.setDate(dueDate.getDate() + days)
+  return dueDate.getTime()
 }
 
 export function readQuickMemoryRecordsFromStorage(userId?: QuickMemoryStorageUserId): QuickMemoryRecordMap {

@@ -102,8 +102,30 @@ def test_ask_executes_get_wrong_words_tool_call(client, app, monkeypatch):
     assert 'input validation failed' not in second_call_dump
 
 
-def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app):
+def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app, monkeypatch):
     register_and_login(client, username='wrong-words-progress-user')
+
+    ai_routes._get_global_vocab_pool.cache_clear()
+    ai_routes._get_quick_memory_vocab_lookup.cache_clear()
+    monkeypatch.setattr(ai_routes, '_get_global_vocab_pool', lambda: [{
+        'word': 'alpha',
+        'phonetic': '/a/',
+        'pos': 'n.',
+        'definition': '测试词',
+        'group_key': 'alpha-group',
+        'listening_confusables': [{
+            'word': 'alfa',
+            'phonetic': '/ˈalfə/',
+            'pos': 'n.',
+            'definition': '相似发音词',
+            'group_key': 'alfa-group',
+        }],
+        'examples': [{
+            'en': 'Alpha appears in the example sentence.',
+            'zh': 'alpha 出现在例句里。',
+        }],
+    }])
+    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {})
 
     with app.app_context():
         from models import User
@@ -154,6 +176,11 @@ def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app):
     assert word['ebbinghaus_target'] == 6
     assert word['ebbinghaus_remaining'] == 2
     assert word['ebbinghaus_completed'] is False
+    assert word['examples'] == [{
+        'en': 'Alpha appears in the example sentence.',
+        'zh': 'alpha 出现在例句里。',
+    }]
+    assert word['listening_confusables'][0]['word'] == 'alfa'
 
 
 def test_wrong_words_sync_preserves_history_but_allows_pending_clear(client, app):

@@ -2,6 +2,7 @@ import time
 
 from models import db, User, UserQuickMemoryRecord
 from routes import ai as ai_routes
+from services.quick_memory_schedule import compute_quick_memory_next_review_ms
 
 
 def register_and_login(client, username='qm-review-user', password='password123'):
@@ -21,6 +22,7 @@ def test_quick_memory_review_queue_returns_due_words_with_metadata(client, app, 
     register_and_login(client)
 
     now_ms = int(time.time() * 1000)
+    upcoming_next_review = compute_quick_memory_next_review_ms(1, now_ms - 3_000)
 
     monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
         'alpha': [{
@@ -28,6 +30,9 @@ def test_quick_memory_review_queue_returns_due_words_with_metadata(client, app, 
             'phonetic': '/a/',
             'pos': 'n.',
             'definition': 'alpha def',
+            'group_key': 'alpha-group',
+            'listening_confusables': [{'word': 'alfa', 'phonetic': '/ˈalfə/', 'pos': 'n.', 'definition': 'alfa def', 'group_key': 'alpha-group-2'}],
+            'examples': [{'en': 'Alpha appears in the first example.', 'zh': 'alpha 出现在第一个例句里。'}],
             'book_id': 'book-a',
             'book_title': 'Book A',
             'chapter_id': '1',
@@ -155,7 +160,7 @@ def test_quick_memory_review_queue_returns_due_words_with_metadata(client, app, 
                 'due_count': 0,
                 'upcoming_count': 1,
                 'total_count': 1,
-                'next_review': now_ms + 86_400_000,
+                'next_review': upcoming_next_review,
             },
         ],
         'selected_context': {
@@ -172,6 +177,8 @@ def test_quick_memory_review_queue_returns_due_words_with_metadata(client, app, 
     assert [word['word'] for word in data['words']] == ['alpha', 'beta', 'gamma']
     assert data['words'][0]['definition'] == 'alpha def'
     assert data['words'][0]['chapter_title'] == 'Chapter 1'
+    assert data['words'][0]['examples'] == [{'en': 'Alpha appears in the first example.', 'zh': 'alpha 出现在第一个例句里。'}]
+    assert data['words'][0]['listening_confusables'][0]['word'] == 'alfa'
     assert data['words'][1]['dueState'] == 'due'
     assert data['words'][2]['dueState'] == 'upcoming'
 
@@ -180,6 +187,7 @@ def test_quick_memory_review_queue_supports_offset_pagination(client, app, monke
     register_and_login(client, username='qm-review-offset-user')
 
     now_ms = int(time.time() * 1000)
+    upcoming_next_review = compute_quick_memory_next_review_ms(1, now_ms - 2_000)
 
     monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
         'alpha': [{
@@ -317,7 +325,7 @@ def test_quick_memory_review_queue_supports_offset_pagination(client, app, monke
                 'due_count': 0,
                 'upcoming_count': 1,
                 'total_count': 1,
-                'next_review': now_ms + 86_400_000,
+                'next_review': upcoming_next_review,
             },
         ],
         'selected_context': {

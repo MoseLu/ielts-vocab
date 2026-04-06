@@ -250,7 +250,7 @@ def log_session(current_user: User):
 @token_required
 def get_quick_memory(current_user: User):
     """Return all quick-memory records for the current user."""
-    records = UserQuickMemoryRecord.query.filter_by(user_id=current_user.id).all()
+    records = load_user_quick_memory_records(current_user.id)
     return jsonify({'records': [r.to_dict() for r in records]}), 200
 
 
@@ -297,12 +297,9 @@ def get_quick_memory_review_queue(current_user: User):
     upcoming_words = []
     context_map: dict[tuple[str, str], dict] = {}
 
-    rows = (
-        UserQuickMemoryRecord.query
-        .filter_by(user_id=current_user.id)
-        .filter(UserQuickMemoryRecord.next_review > 0)
-        .order_by(UserQuickMemoryRecord.next_review.asc())
-        .all()
+    rows = sorted(
+        [row for row in load_user_quick_memory_records(current_user.id) if (row.next_review or 0) > 0],
+        key=lambda row: row.next_review or 0,
     )
 
     for row in rows:
