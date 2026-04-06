@@ -67,7 +67,9 @@ export function useStatsPage() {
   const displayTodayAccuracy = fmtPct(alltime?.today_accuracy ?? learnerProfile?.summary.today_accuracy ?? null)
   const displayTotalLearnedNewWords = alltime?.total_words != null ? alltime.total_words : (chartLoading ? '…' : '--')
   const displayTotalReviewedWords = alltime?.alltime_review_words ?? (chartLoading ? '…' : '--')
-  const displayCumulativeReviewEvents = alltime?.cumulative_review_events ?? (chartLoading ? '…' : '--')
+  const displayTotalStudyDuration = alltime && alltime.duration_seconds > 0
+    ? fmtDuration(alltime.duration_seconds)
+    : '--'
   const displayStreak = learnerProfile?.summary.streak_days ?? alltime?.streak_days ?? '--'
   const ebbRateCaption = ebbinghausRateCaption(alltime)
   const ebbSummaryHelp = ebbinghausSummaryHelp(alltime)
@@ -131,7 +133,7 @@ export function useStatsPage() {
     displayTodayAccuracy,
     displayTotalLearnedNewWords,
     displayTotalReviewedWords,
-    displayCumulativeReviewEvents,
+    displayTotalStudyDuration,
     displayStreak,
     ebbRateCaption,
     ebbSummaryHelp,

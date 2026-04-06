@@ -31,7 +31,7 @@ interface StatsSummaryCardsProps {
   todayReviewWords: number | string
   totalLearnedNewWords: number | string
   totalReviewedWords: number | string
-  cumulativeReviewEvents: number | string
+  totalStudyDuration: string
   todayWords: number | string
   todayDuration: string
   todayAccuracy: string
@@ -51,7 +51,7 @@ export function StatsSummaryCards({
   todayReviewWords,
   totalLearnedNewWords,
   totalReviewedWords,
-  cumulativeReviewEvents,
+  totalStudyDuration,
   todayWords,
   todayDuration,
   todayAccuracy,
@@ -100,8 +100,8 @@ export function StatsSummaryCards({
       variant: 'simple',
     },
     {
-      value: cumulativeReviewEvents,
-      label: '累计复习总次数',
+      value: totalStudyDuration,
+      label: '总学习时长',
       variant: 'simple',
     },
     {

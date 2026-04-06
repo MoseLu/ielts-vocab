@@ -46,7 +46,7 @@ export default function StatsPage() {
     displayTodayAccuracy,
     displayTotalLearnedNewWords,
     displayTotalReviewedWords,
-    displayCumulativeReviewEvents,
+    displayTotalStudyDuration,
     displayStreak,
     ebbRateCaption,
     ebbSummaryHelp,
@@ -82,7 +82,7 @@ export default function StatsPage() {
         todayReviewWords={displayTodayReviewWords}
         totalLearnedNewWords={displayTotalLearnedNewWords}
         totalReviewedWords={displayTotalReviewedWords}
-        cumulativeReviewEvents={displayCumulativeReviewEvents}
+        totalStudyDuration={displayTotalStudyDuration}
         todayWords={displayTodayWords}
         todayDuration={displayTodayDuration}
         todayAccuracy={displayTodayAccuracy}
