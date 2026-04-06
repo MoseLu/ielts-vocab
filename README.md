@@ -59,20 +59,20 @@ python app.py
 ### 2. 启动前端
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 前端开发服务器默认运行在 `http://127.0.0.1:3020`。
 
-`npm run preview` 继续把 `dist` 跑在 `http://127.0.0.1:3002`，用于本地生产式代理链路。
+`pnpm preview` 继续把 `dist` 跑在 `http://127.0.0.1:3002`，用于本地生产式代理链路。
 
 常用前端命令：
 
 ```bash
-npm run build
-npm run preview
-npm test
+pnpm build
+pnpm preview
+pnpm test
 ```
 
 ## 本地代理链路
@@ -110,8 +110,8 @@ https://axiomaticworld.com
 推荐至少执行以下检查：
 
 ```bash
-npm test
-npm run build
+pnpm test
+pnpm build
 pytest backend/tests/test_source_text_integrity.py -q
 ```
 

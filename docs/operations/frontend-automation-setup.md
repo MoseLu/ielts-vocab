@@ -38,9 +38,9 @@ Use Playwright MCP through the coding assistant.
 Run Playwright tests from the repository:
 
 ```bash
-npx playwright test
-npx playwright test --headed
-npx playwright test --ui
+pnpm exec playwright test
+pnpm exec playwright test --headed
+pnpm exec playwright test --ui
 ```
 
 ## Local Prerequisites
@@ -55,7 +55,7 @@ python app.py
 2. Start the frontend:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 3. If needed, also verify the proxy path:
@@ -77,7 +77,7 @@ https://axiomaticworld.com -> natapp -> local :80 -> nginx -> local :3002
 
 ```bash
 agent-browser install --with-deps
-npx playwright install chromium
+pnpm exec playwright install chromium
 ```
 
 ### Port conflict

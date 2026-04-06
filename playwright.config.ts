@@ -26,7 +26,7 @@ export default defineConfig({
           timeout: 120_000,
         },
         {
-          command: 'npm run dev -- --host 127.0.0.1 --port 3020',
+          command: 'pnpm dev -- --host 127.0.0.1 --port 3020',
           cwd: '.',
           url: baseURL,
           reuseExistingServer: !process.env.CI,

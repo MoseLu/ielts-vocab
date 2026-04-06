@@ -4,12 +4,12 @@
 
 1. **Install dependencies:**
    ```bash
-   npm install
+   pnpm install
    ```
 
 2. **Install Playwright browsers:**
    ```bash
-   npx playwright install chromium
+   pnpm exec playwright install chromium
    ```
 
 3. **Start backend server:**
@@ -21,39 +21,39 @@
 
 4. **Start frontend server:**
    ```bash
-   npm run dev
+   pnpm dev
    ```
 
 ## Running Tests
 
 ### Run all tests:
 ```bash
-npx playwright test
+pnpm exec playwright test
 ```
 
 ### Run specific test file:
 ```bash
-npx playwright test auth.spec.ts
+pnpm exec playwright test auth.spec.ts
 ```
 
 ### Run tests in headed mode (show browser):
 ```bash
-npx playwright test --headed
+pnpm exec playwright test --headed
 ```
 
 ### Run tests with UI:
 ```bash
-npx playwright test --ui
+pnpm exec playwright test --ui
 ```
 
 ### Run tests in debug mode:
 ```bash
-npx playwright test --debug
+pnpm exec playwright test --debug
 ```
 
 ### View test report:
 ```bash
-npx playwright show-report
+pnpm exec playwright show-report
 ```
 
 ## Test Coverage
@@ -122,7 +122,7 @@ Edit `playwright.config.ts` to change:
 - For real auth tests, update auth.spec.ts with real credentials
 
 ### Browser not found:
-- Run `npx playwright install chromium`
+- Run `pnpm exec playwright install chromium`
 - Ensure you have enough disk space
 
 ## CI/CD Integration
@@ -131,13 +131,13 @@ Add to your CI pipeline:
 
 ```yaml
 - name: Install dependencies
-  run: npm ci
+  run: pnpm install --frozen-lockfile
 
 - name: Install Playwright
-  run: npx playwright install --with-deps chromium
+  run: pnpm exec playwright install --with-deps chromium
 
 - name: Run E2E tests
-  run: npx playwright test
+  run: pnpm exec playwright test
 
 - name: Upload test results
   if: always()

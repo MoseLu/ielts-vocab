@@ -26,11 +26,11 @@
 ## Verification
 
 - `pytest backend/tests -q`
-- `npm run build`
-- `PLAYWRIGHT_SKIP_WEBSERVER=true npx playwright test --list`
+- `pnpm build`
+- `PLAYWRIGHT_SKIP_WEBSERVER=true pnpm exec playwright test --list`
 
 以上命令已通过。
 
 ## Notes
 
-- `npm test` 在本轮修复前存在一个学习日志页测试与当前日期逻辑不一致的问题，本轮已一并校正，目的是让新增 CI 默认可执行。
+- `pnpm test` 在本轮修复前存在一个学习日志页测试与当前日期逻辑不一致的问题，本轮已一并校正，目的是让新增 CI 默认可执行。

@@ -1,8 +1,6 @@
 # Dependencies
 node_modules/
-package-lock.json
-pnpm-lock.yaml
-.pnpm-debug.log
+pnpm-debug.log*
 
 # Python
 __pycache__/
@@ -34,7 +32,7 @@ Thumbs.db
 
 # Logs
 *.log
-npm-debug.log*
+gcm-diagnose.log
 
 # Environment variables
 .env
@@ -59,6 +57,7 @@ backend/generate_*.py
 # Test coverage and results
 coverage/
 test-results/
+output/
 
 # TTS audio cache
 backend/tts_cache/

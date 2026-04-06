@@ -11,8 +11,8 @@ Last updated: 2026-04-04 22:11:58 +08:00
 - Before using `apply_patch`, read exact target lines and anchor on stable ASCII or code structure.
 - If a file shows encoding corruption, rewrite the whole logical block instead of stacking small mojibake patches.
 - Keep tracked hand-edited text files at `<= 500` lines unless they are covered by the checked-in oversize baseline.
-- Treat `vocabulary_data/**`, `package-lock.json`, and `pnpm-lock.yaml` as generated artifacts that are exempt from the `500`-line cap.
-- Keep `npm run check:file-lines` and `npm run lint` green before submit; `npm run build` and `npm test` now run the guardrail bundle automatically.
+- Treat `vocabulary_data/**` and `pnpm-lock.yaml` as generated artifacts that are exempt from the `500`-line cap.
+- Keep `pnpm check:file-lines` and `pnpm lint` green before submit; `pnpm build` and `pnpm test` now run the guardrail bundle automatically.
 - Keep `pytest backend/tests/test_source_text_integrity.py -q` green after backend or text-heavy edits.
 - Treat the local production-style chain as canonical for runtime bugs: `natapp -> nginx(:80) -> vite preview(:3002)` for UI, `/api` to Flask `:5000`, and `/socket.io` to speech service `:5001`.
 - When touching runtime startup, keep `start-project.bat` and `start-project.ps1` aligned with `vite.config.ts`, `nginx.conf.example`, and the real service ports.
@@ -39,7 +39,7 @@ Last updated: 2026-04-04 22:11:58 +08:00
 
 ## File Line Guardrail
 - The hard cap is `500` lines for tracked hand-edited text files across app code, backend code, tests, scripts, docs, and config.
-- `vocabulary_data/**`, `package-lock.json`, and `pnpm-lock.yaml` are explicitly exempt because they are generated data or lockfiles.
+- `vocabulary_data/**` and `pnpm-lock.yaml` are explicitly exempt because they are generated data or lockfiles.
 - Historical oversize files are frozen in `scripts/file-line-limit.config.json`. They are temporary exceptions, may not grow past their recorded baseline, and should be split down over time.
 - `scripts/check-file-line-limits.mjs` is the enforcement gate. It fails when a new oversize file appears, when a baseline file grows, or when the baseline file is not cleaned up after a file drops back to `<= 500` lines.
 - `eslint.config.mjs` mirrors the `500`-line cap for tracked JS/TS files, while letting the oversize baseline remain temporarily exempt until those files are split.
@@ -113,10 +113,10 @@ docs/
 ## Development
 ```bash
 # Frontend
-npm install
-npm run dev
-npm run build
-npm run preview
+pnpm install
+pnpm dev
+pnpm build
+pnpm preview
 
 # Backend
 cd backend

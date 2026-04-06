@@ -2,7 +2,6 @@
   "maxLines": 500,
   "exemptions": [
     "vocabulary_data/**",
-    "package-lock.json",
     "pnpm-lock.yaml"
   ],
   "baseline": {}

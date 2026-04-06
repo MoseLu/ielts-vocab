@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run verify:repo-guards && vite build",
+    "build": "pnpm run verify:repo-guards && vite build",
     "check:file-lines": "node scripts/check-file-line-limits.mjs",
+    "check:style-discipline": "node scripts/check-style-discipline.mjs",
     "lint": "eslint . --max-warnings=0",
     "preview": "vite preview",
-    "test": "npm run verify:repo-guards && vitest run",
-    "test:watch": "npm run verify:repo-guards && vitest",
-    "verify:repo-guards": "npm run check:file-lines && npm run lint"
+    "test": "pnpm run verify:repo-guards && vitest run",
+    "test:watch": "pnpm run verify:repo-guards && vitest",
+    "verify:repo-guards": "pnpm run check:file-lines && pnpm run check:style-discipline && pnpm run lint"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.46.1",

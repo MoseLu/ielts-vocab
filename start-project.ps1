@@ -187,7 +187,7 @@ try {
 
     Write-Step '[2/5] Checking required commands and files...'
     Require-Command git
-    Require-Command npm
+    Require-Command pnpm
     Require-Command python
 
     if (-not (Test-Path (Join-Path $root 'package.json'))) {
@@ -207,7 +207,7 @@ try {
     Ensure-LatestCode
 
     Write-Step '[4/5] Rebuilding frontend preview assets...'
-    npm run build
+    pnpm build
 
     Set-Content -Path $backendOut -Value ''
     Set-Content -Path $backendErr -Value ''
@@ -232,7 +232,7 @@ try {
     Wait-PortState -Port $speechPort -Listening $true -TimeoutSeconds 30
     Wait-HttpReady -Url "http://127.0.0.1:$speechPort/health" -TimeoutSeconds 30
 
-    Start-LoggedProcess -Title 'IELTS Frontend Preview' -WorkingDirectory $root -CommandLine "npm run preview -- --host 0.0.0.0 --port $frontendPort 1>>`"$frontendOut`" 2>>`"$frontendErr`""
+    Start-LoggedProcess -Title 'IELTS Frontend Preview' -WorkingDirectory $root -CommandLine "pnpm preview -- --host 0.0.0.0 --port $frontendPort 1>>`"$frontendOut`" 2>>`"$frontendErr`""
     Wait-PortState -Port $frontendPort -Listening $true -TimeoutSeconds 30
     Wait-HttpReady -Url "http://127.0.0.1:$frontendPort/login" -TimeoutSeconds 30
 

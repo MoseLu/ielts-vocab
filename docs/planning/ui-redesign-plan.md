@@ -33,7 +33,7 @@ Last updated: 2026-03-29
 - Clean corrupted copy and unify empty, loading, and error states.
 
 ## Verification
-- Run `npm test` after each completed phase.
+- Run `pnpm test` after each completed phase.
 - Use visual passes to catch layout regressions that unit tests cannot cover.
 
 ## Progress Log
