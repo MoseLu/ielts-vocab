@@ -20,8 +20,6 @@ export default function AdminDashboard() {
     detailDateTo,
     detailMode,
     detailWrongWordsSort,
-    ttsBooks,
-    ttsBooksLoading,
     loading,
     overviewLoading,
     error,
@@ -34,7 +32,6 @@ export default function AdminDashboard() {
     setDetailMode,
     setDetailWrongWordsSort,
     fetchUserDetail,
-    handleGenerate,
     handleSearchSubmit,
     handleSearchClear,
     handleSort,
@@ -57,8 +54,6 @@ export default function AdminDashboard() {
         search={search}
         sort={sort}
         order={order}
-        ttsBooks={ttsBooks}
-        ttsBooksLoading={ttsBooksLoading}
         loading={loading}
         error={error}
         onDismissError={dismissError}
@@ -69,7 +64,6 @@ export default function AdminDashboard() {
         onSort={handleSort}
         onPageChange={handlePageChange}
         onSelectUser={handleSelectUser}
-        onGenerateTtsBook={handleGenerate}
       />
 
       {selectedUser && (

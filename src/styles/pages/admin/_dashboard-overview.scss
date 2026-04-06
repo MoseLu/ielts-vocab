@@ -138,10 +138,10 @@
   margin-bottom: 6px;
 }
 
-.admin-stat-value--indigo { color: #6366f1; }
+.admin-stat-value--indigo { color: var(--tone-indigo); }
 .admin-stat-value--green { color: var(--success); }
 .admin-stat-value--amber { color: var(--warning); }
-.admin-stat-value--blue { color: #3b82f6; }
+.admin-stat-value--blue { color: var(--tone-blue); }
 
 .admin-stat-sub {
   font-size: 12px;
@@ -189,7 +189,7 @@
 }
 
 .admin-mini-bar-chart-svg--indigo {
-  color: #6366f1;
+  color: var(--tone-indigo);
 }
 
 .admin-mini-bar-chart-svg--green {
@@ -320,7 +320,7 @@
 .admin-search-btn {
   padding: 10px;
   background: var(--accent);
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 10px;
   font-size: 13px;

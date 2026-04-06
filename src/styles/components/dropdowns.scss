@@ -48,7 +48,7 @@
     padding: var(--space-sm);
     display: none;
     animation: dropdownFadeIn 0.25s ease;
-    z-index: 200;
+    z-index: var(--layer-dropdown);
 }
 
 .mode-dropdown.show {
@@ -95,7 +95,7 @@
     content: '';
     width: 6px;
     height: 6px;
-    background: white;
+    background: var(--text-inverse);
     border-radius: var(--radius-full);
 }
 
@@ -113,7 +113,7 @@
 
 .mode-option.selected .mode-option-icon {
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
 }
 
 .mode-option-icon svg {
@@ -151,12 +151,9 @@
     border-radius: var(--radius-lg);
     padding: var(--space-xs);
     min-width: 200px;
-    box-shadow:
-        0 6px 16px rgba(0, 0, 0, 0.08),
-        0 3px 6px rgba(0, 0, 0, 0.04),
-        0 0 0 1px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-floating);
     display: none;
-    z-index: 200;
+    z-index: var(--layer-dropdown);
     animation: dropdownFadeIn 0.18s ease;
 }
 
@@ -173,7 +170,7 @@
     border-left: 1px solid var(--border-strong);
     transform: rotate(45deg);
     border-radius: 2px;
-    z-index: 1;
+    z-index: var(--layer-raised);
 }
 
 .user-dropdown.show {
@@ -288,7 +285,7 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
     padding: 0;
-    z-index: 300;
+    z-index: var(--layer-dropdown);
     overflow: hidden;
     max-height: none;
     animation: dropdownFadeIn 0.18s ease;
@@ -315,7 +312,7 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
     padding: var(--space-xs);
-    z-index: 300;
+    z-index: var(--layer-dropdown);
     animation: dropdownFadeIn 0.18s ease;
 }
 

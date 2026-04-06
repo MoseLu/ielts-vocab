@@ -199,7 +199,7 @@
 .vb-card-progress-bar {
     flex: 1;
     height: 6px;
-    background: rgba(15, 23, 42, 0.08);
+    background: var(--surface-inset);
     border-radius: 99px;
     overflow: hidden;
 }
@@ -219,7 +219,7 @@
 }
 
 .vb-card-added {
-    @include pill-badge(30px, 7px 10px, 999px, color-mix(in srgb, var(--success) 10%, white), var(--success), 12px, 600);
+    @include pill-badge(30px, 7px 10px, 999px, color-mix(in srgb, var(--success) 10%, var(--surface-elevated)), var(--success), 12px, 600);
     gap: 10px;
     margin-top: 4px;
     width: fit-content;

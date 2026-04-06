@@ -47,7 +47,7 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
         canvas.width = size
         canvas.height = size
         const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-        ctx.fillStyle = '#fff'
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-inverse').trim()
         ctx.fillRect(0, 0, size, size)
         const min = Math.min(img.width, img.height)
         const sx = (img.width - min) / 2

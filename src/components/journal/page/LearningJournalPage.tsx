@@ -8,6 +8,7 @@ import QaHistoryDocument from '../documents/QaHistoryDocument'
 import JournalWorkspace from '../layout/JournalWorkspace'
 import { JournalNotesActions, JournalSummaryActions } from './JournalPageActions'
 import { PageSkeleton } from '../../ui'
+import { Page } from '../../layout'
 
 export default function LearningJournalPage() {
   const {
@@ -48,7 +49,15 @@ export default function LearningJournalPage() {
   } = useLearningJournalPage()
 
   if (isInitialSummaryLoading || isInitialNotesLoading) {
-    return <PageSkeleton variant="journal" itemCount={4} />
+    return (
+      <Page className="journal-page">
+        <PageSkeleton
+          variant="journal"
+          itemCount={4}
+          className="journal-page-skeleton"
+        />
+      </Page>
+    )
   }
 
   return (

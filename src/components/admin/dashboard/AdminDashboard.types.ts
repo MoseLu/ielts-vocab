@@ -36,16 +36,6 @@ export interface ModeStats {
   words: number
 }
 
-export interface TtsBook {
-  book_id: string
-  title: string
-  color: string
-  total: number
-  cached: number
-  generating?: boolean
-  status?: 'idle' | 'running' | 'done' | 'error' | 'interrupted'
-}
-
 export interface TopBook {
   book_id: string
   sessions: number
@@ -121,14 +111,14 @@ export interface UserDetail {
   }>
 }
 
-export type AdminTab = 'overview' | 'users' | 'tts'
+export type AdminTab = 'overview' | 'users'
 export type AdminDetailTab = 'progress' | 'wrong_words' | 'sessions' | 'chart' | 'chapter_daily'
 export type WrongWordsSort = 'last_error' | 'wrong_count'
 
 export const modeLabels: Record<string, string> = {
   smart: '智能模式',
   listening: '听音选义',
-  meaning: '汉译英',
+  meaning: '释义拼词',
   dictation: '听写模式',
   radio: '随身听',
   quickmemory: '速记模式',

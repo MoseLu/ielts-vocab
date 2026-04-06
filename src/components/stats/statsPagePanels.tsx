@@ -1,5 +1,5 @@
 import { Skeleton } from '../ui'
-import { type WrongWordCollectionScope } from '../../features/vocabulary/wrongWordsStore'
+import { getWrongWordDimensionLabel, type WrongWordCollectionScope } from '../../features/vocabulary/wrongWordsStore'
 import type { LearnerProfile, ModeStat } from '../../features/vocabulary/hooks'
 import { MODE_LABELS, fmtDuration, fmtPct, inferErrorReason, trendDirectionLabel, type WrongTopDisplayItem } from './statsPageCore'
 import { WrongTopPieChart } from './statsPageCharts'
@@ -103,7 +103,7 @@ export function LearnerProfileCard({
         <div className="stats-profile-chip-list">
           {dimensions.slice(0, 3).map(item => (
             <div key={item.dimension} className="stats-profile-chip">
-              <span>{item.label}</span>
+              <span>{getWrongWordDimensionLabel(item.dimension, item.label) ?? item.label}</span>
               <strong>{fmtPct(item.accuracy)}</strong>
             </div>
           ))}
@@ -117,7 +117,7 @@ export function LearnerProfileCard({
             {focusWords.slice(0, 3).map(item => (
               <li key={item.word}>
                 <strong>{item.word}</strong>
-                <span>{item.dominant_dimension_label}</span>
+                <span>{getWrongWordDimensionLabel(item.dominant_dimension, item.dominant_dimension_label) ?? item.dominant_dimension_label}</span>
               </li>
             ))}
           </ul>
@@ -237,8 +237,8 @@ export function WrongTopBlock({
                 <th>序号</th>
                 <th>单词</th>
                 <th>音标</th>
-                <th>{scope === 'pending' ? '未过权重' : '历史错次'}</th>
-                <th>主错因</th>
+                <th>{scope === 'pending' ? '待清错次' : '累计错次'}</th>
+                <th>主要问题类型</th>
               </tr>
             </thead>
             <tbody>

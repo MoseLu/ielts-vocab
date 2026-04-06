@@ -10,16 +10,15 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
 
   return (
     <svg
-      className={`loading-spin ${className}`.trim()}
+      className={`loading-spin loading-spinner-graphic ${className}`.trim()}
       width={dim}
       height={dim}
       fill="none"
       viewBox="0 0 24 24"
-      style={{ color: 'var(--accent)' }}
       aria-hidden="true"
     >
       <circle
-        style={{ opacity: 0.22 }}
+        className="loading-spinner-graphic__track"
         cx="12"
         cy="12"
         r="10"
@@ -27,7 +26,7 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
         strokeWidth="3.5"
       />
       <path
-        style={{ opacity: 0.92 }}
+        className="loading-spinner-graphic__head"
         fill="currentColor"
         d="M12 2a10 10 0 0 1 10 10h-3.5A6.5 6.5 0 0 0 12 5.5V2Z"
       />

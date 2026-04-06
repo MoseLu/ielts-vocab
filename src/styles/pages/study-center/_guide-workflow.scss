@@ -33,10 +33,10 @@
     gap: 6px;
     padding: 12px 14px;
     border-radius: 14px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 249, 243, 0.68));
-    border: 1px solid rgba(255, 255, 255, 0.88);
+    background: linear-gradient(180deg, var(--study-glass-base), var(--study-glass-warm));
+    border: 1px solid var(--study-glass-border);
     backdrop-filter: blur(12px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-elevated) 74%, transparent);
 }
 
 .study-guide-metric span {
@@ -82,7 +82,7 @@
 .study-guide-primary-btn {
     border: none;
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.24);
 }
 
@@ -93,7 +93,7 @@
 .study-guide-secondary-btn,
 .study-section-link {
     border: 1px solid var(--surface-border-strong);
-    background: rgba(255, 255, 255, 0.78);
+    background: var(--study-glass-base);
     color: var(--text-primary);
 }
 
@@ -125,7 +125,7 @@
     padding: 14px;
     border: 1px solid var(--surface-border-strong);
     border-radius: 16px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.92));
+    background: linear-gradient(180deg, var(--study-glass-base), var(--study-glass-soft));
     text-align: left;
     cursor: pointer;
     transition:
@@ -139,7 +139,7 @@
     transform: translateY(-2px);
     border-color: rgba(var(--accent-rgb), 0.22);
     box-shadow: var(--shadow-panel);
-    background: linear-gradient(180deg, rgba(255, 247, 237, 0.94), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(180deg, var(--study-glass-warm), var(--study-glass-base));
 }
 
 .study-choice-card__top {
@@ -218,7 +218,7 @@
     padding: 14px;
     border: 1px solid var(--surface-border-strong);
     border-radius: 16px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.92));
+    background: linear-gradient(180deg, var(--study-glass-base), var(--study-glass-soft));
     text-align: left;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -239,19 +239,19 @@
 
 .study-step-card.is-current {
     border-color: rgba(var(--accent-rgb), 0.22);
-    background: linear-gradient(180deg, rgba(255, 247, 237, 0.96), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(180deg, var(--study-glass-warm), var(--study-glass-base));
 }
 
 .study-step-card.is-ready {
-    border-color: rgba(245, 158, 11, 0.28);
+    border-color: color-mix(in srgb, var(--warning) 28%, transparent);
 }
 
 .study-step-card.is-optional {
-    border-color: rgba(20, 184, 166, 0.26);
+    border-color: color-mix(in srgb, var(--info) 18%, var(--success) 8%);
 }
 
 .study-step-card.is-done {
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.72), rgba(255, 255, 255, 0.8));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--study-glass-soft) 92%, transparent), var(--study-glass-base));
 }
 
 .study-step-card.is-disabled {
@@ -268,7 +268,7 @@
     flex-shrink: 0;
     font-size: 15px;
     font-weight: 800;
-    background: rgba(15, 23, 42, 0.06);
+    background: var(--surface-inset);
     color: var(--text-primary);
 }
 
@@ -307,18 +307,18 @@
 }
 
 .study-step-status--ready {
-    background: rgba(245, 158, 11, 0.14);
-    color: #b45309;
+    background: var(--study-status-ready-bg);
+    color: var(--study-status-ready-fg);
 }
 
 .study-step-status--done {
-    background: rgba(34, 197, 94, 0.12);
+    background: color-mix(in srgb, var(--success) 12%, transparent);
     color: var(--success);
 }
 
 .study-step-status--optional {
-    background: rgba(20, 184, 166, 0.12);
-    color: #0f766e;
+    background: var(--study-status-optional-bg);
+    color: var(--study-status-optional-fg);
 }
 
 .study-step-description {
@@ -347,7 +347,7 @@
 }
 
 .study-step-badge {
-    background: rgba(15, 23, 42, 0.06);
+    background: var(--surface-inset);
     color: var(--text-secondary);
 }
 

@@ -27,7 +27,7 @@
 .segmented-control__item.is-active {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: var(--text-inverse);
 }
 
 .segmented-control__label {
@@ -39,7 +39,7 @@
     20px,
     0 6px,
     999px,
-    color-mix(in srgb, rgba(15, 23, 42, 0.12) 100%, transparent),
+    color-mix(in srgb, var(--text-primary) 8%, transparent),
     inherit,
     11px,
     700
@@ -48,7 +48,7 @@
 }
 
 .segmented-control__item.is-active .segmented-control__badge {
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--white-overlay);
   color: inherit;
 }
 

@@ -17,17 +17,26 @@ export function Card({
   hover = false,
   onClick,
 }: CardProps) {
-  const paddings = {
-    none: '',
-    sm: 'p-3',
-    md: 'p-4',
-    lg: 'p-6',
+  const cardClassName = [
+    'ui-card',
+    `ui-card--pad-${padding}`,
+    (hover || onClick) ? 'ui-card--interactive' : '',
+    className,
+  ].filter(Boolean).join(' ')
+
+  const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (event) => {
+    if (!onClick) return
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onClick()
+    }
   }
 
   return (
     <div
-      className={`bg-card rounded-xl border border-border ${paddings[padding]} ${hover ? 'hover:shadow-lg hover:border-accent/30 cursor-pointer transition-all' : ''} ${className}`}
+      className={cardClassName}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
@@ -43,7 +52,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className = '' }: CardHeaderProps) {
   return (
-    <div className={`font-semibold text-lg ${className}`}>
+    <div className={['ui-card__header', className].filter(Boolean).join(' ')}>
       {children}
     </div>
   )
@@ -55,7 +64,7 @@ interface CardContentProps {
 }
 
 export function CardContent({ children, className = '' }: CardContentProps) {
-  return <div className={className}>{children}</div>
+  return <div className={['ui-card__content', className].filter(Boolean).join(' ')}>{children}</div>
 }
 
 interface CardFooterProps {
@@ -65,7 +74,7 @@ interface CardFooterProps {
 
 export function CardFooter({ children, className = '' }: CardFooterProps) {
   return (
-    <div className={`mt-4 pt-4 border-t border-border ${className}`}>
+    <div className={['ui-card__footer', className].filter(Boolean).join(' ')}>
       {children}
     </div>
   )

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PageSkeleton } from '../../ui'
 import { SegmentedControl, UnderlineTabs } from '../../ui/NavigationControls'
 import { useWrongWords, useLearningStats } from '../../../features/vocabulary/hooks'
-import { hasWrongWordHistory, hasWrongWordPending } from '../../../features/vocabulary/wrongWordsStore'
+import { hasWrongWordHistory, hasWrongWordPending, WRONG_WORD_SCOPE_LABELS } from '../../../features/vocabulary/wrongWordsStore'
 import type { MetricKey, RangeKey } from '../../../features/vocabulary/hooks'
 import {
   StatsSectionSkeleton,
@@ -36,7 +36,7 @@ const STATS_REFRESH_OPTIONS = {
 
 export default function StatsPage() {
   const navigate = useNavigate()
-  const { words: wrongWords } = useWrongWords()
+  const { words: wrongWords, loading: wrongWordsLoading } = useWrongWords()
 
   const [range, setRange] = useState<RangeKey>(30)
   const [metric, setMetric] = useState<MetricKey>('words')
@@ -73,20 +73,35 @@ export default function StatsPage() {
     [pendingWrongWords],
   )
 
+  const dueReviewCount = learnerProfile?.summary.due_reviews ?? alltime?.ebbinghaus_due_total
+  const displayDueReviews = dueReviewCount ?? (chartLoading ? '…' : '--')
+  const displayPendingWrongWords = wrongWordsLoading
+    ? '…'
+    : pendingWrongWords.length
+  const focusBook = learnerProfile?.daily_plan?.focus_book ?? null
+  const displayFocusBookRemaining = focusBook
+    ? (focusBook.is_completed ? '已清空' : `${focusBook.remaining_words}词`)
+    : '未添加'
+  const focusBookScope = focusBook
+    ? `按当前主线词书《${focusBook.title}》的剩余词数统计。`
+    : '当前还没有主线词书，无法生成今日主线剩余量。'
+  const focusBookMeaning = focusBook
+    ? (
+        focusBook.is_completed
+          ? '表示当前主线词书已经推进完成，今天可以切换到下一本或回到复习。'
+          : '表示做完到期复习和错词清理后，主线还剩多少词要继续推进。'
+      )
+    : '先去词书页添加词书，首页和统计页才会生成稳定的主线任务。'
+  const displayTodayWords = learnerProfile?.summary.today_words ?? (chartLoading ? '…' : '--')
   const displayTodayDuration = alltime && alltime.today_duration_seconds > 0
-    ? fmtDuration(alltime.today_duration_seconds) : '--'
-  const displayAlltimeDuration = alltime && alltime.duration_seconds > 0
-    ? fmtDuration(alltime.duration_seconds) : '--'
-
-  const displayTotalNew = alltime?.total_words != null ? alltime.total_words : (chartLoading ? '…' : '--')
-  const displayTodayNew = alltime?.today_new_words ?? (chartLoading ? '…' : '--')
-  const displayTodayReview = alltime?.today_review_words ?? (chartLoading ? '…' : '--')
-  const displayAlltimeReview = alltime?.alltime_review_words ?? (chartLoading ? '…' : '--')
-
-  const displayTodayAccuracy = fmtPct(alltime?.today_accuracy)
-  const displayAlltimeAccuracy = fmtPct(alltime?.accuracy)
-  const displayStreak = alltime?.streak_days != null && alltime?.streak_days > 0
-    ? alltime.streak_days : '--'
+    ? fmtDuration(alltime.today_duration_seconds)
+    : '--'
+  const displayTodayAccuracy = fmtPct(alltime?.today_accuracy ?? learnerProfile?.summary.today_accuracy ?? null)
+  const weakestModeLabel = learnerProfile?.summary.weakest_mode_label
+    ?? (alltime?.weakest_mode ? (MODE_LABELS[alltime.weakest_mode] || alltime.weakest_mode) : null)
+  const displayWeakestMode = weakestModeLabel ?? (chartLoading ? '…' : '待判定')
+  const displayTotalLearned = alltime?.total_words != null ? alltime.total_words : (chartLoading ? '…' : '--')
+  const displayStreak = learnerProfile?.summary.streak_days ?? alltime?.streak_days ?? '--'
   const ebbRateCaption = ebbinghausRateCaption(alltime)
   const ebbSummaryHelp = ebbinghausSummaryHelp(alltime)
 
@@ -115,19 +130,17 @@ export default function StatsPage() {
 
   return (
     <div className="page-content stats-page">
-      <p className="stats-page-intro">
-        「新词 / 复习」来自速记（艾宾浩斯）同步数据；「累计学习新词」为全书进度与去重逻辑综合结果。
-      </p>
-
       <StatsSummaryCards
-        todayNew={displayTodayNew}
-        totalNew={displayTotalNew}
-        todayReview={displayTodayReview}
-        alltimeReview={displayAlltimeReview}
+        dueReviews={displayDueReviews}
+        pendingWrongWords={displayPendingWrongWords}
+        focusBookRemaining={displayFocusBookRemaining}
+        focusBookScope={focusBookScope}
+        focusBookMeaning={focusBookMeaning}
+        todayWords={displayTodayWords}
         todayDuration={displayTodayDuration}
-        alltimeDuration={displayAlltimeDuration}
         todayAccuracy={displayTodayAccuracy}
-        alltimeAccuracy={displayAlltimeAccuracy}
+        weakestMode={displayWeakestMode}
+        totalLearned={displayTotalLearned}
         streak={displayStreak}
       />
 
@@ -144,7 +157,7 @@ export default function StatsPage() {
             )}
           </div>
           <p className="stats-section-hint">
-            饼图与各模式「学习词数」：<strong>速记模式</strong>为速记词表去重词数（每词一行）；其余模式为练习会话累计（同一词多次练习会重复计）。各模式相加仍可能高于上方「累计学习新词数」——后者为全书章节进度与全局去重综合结果。
+            饼图与各模式「学习词数」：<strong>速记模式</strong>按速记词表里的不同单词统计；其余模式按练习会话累计统计，同一个词重复练会重复计数。所以各模式相加，可能高于上方「累计学过的不同词」。
           </p>
           <div className="stats-mode-strip-grid">
             <h3 className="stats-mode-strip-title stats-mode-strip-title--pie">模式占比</h3>
@@ -341,15 +354,15 @@ export default function StatsPage() {
         <section className="stats-wrong-cluster" aria-label="错词分层">
           <div className="stats-wrong-cluster-grid">
             <div className="stats-main-card stats-main-card--wrong-history">
-              <section className="stats-section stats-card-wrong" aria-label="历史错词 Top 10">
+              <section className="stats-section stats-card-wrong" aria-label={`${WRONG_WORD_SCOPE_LABELS.history} Top 10`}>
                 <div className="stats-card-wrong-body">
                   {chartLoading ? (
                     <StatsSectionSkeleton variant="donut" />
                   ) : historyWrongTop10.length === 0 ? (
-                    <div className="stats-empty"><p>暂无历史错词数据</p></div>
+                    <div className="stats-empty"><p>暂无累计错词数据</p></div>
                   ) : (
                     <WrongTopBlock
-                      title="历史错词 Top 10"
+                      title={`${WRONG_WORD_SCOPE_LABELS.history} Top 10`}
                       scope="history"
                       items={historyWrongTop10}
                     />
@@ -359,15 +372,15 @@ export default function StatsPage() {
             </div>
 
             <div className="stats-main-card stats-main-card--wrong-pending">
-              <section className="stats-section stats-card-wrong" aria-label="未过错词 Top 10">
+              <section className="stats-section stats-card-wrong" aria-label={`${WRONG_WORD_SCOPE_LABELS.pending} Top 10`}>
                 <div className="stats-card-wrong-body">
                   {chartLoading ? (
                     <StatsSectionSkeleton variant="donut" />
                   ) : pendingWrongTop10.length === 0 ? (
-                    <div className="stats-empty"><p>暂无未过错词数据</p></div>
+                    <div className="stats-empty"><p>暂无待清错词数据</p></div>
                   ) : (
                     <WrongTopBlock
-                      title="未过错词 Top 10"
+                      title={`${WRONG_WORD_SCOPE_LABELS.pending} Top 10`}
                       scope="pending"
                       items={pendingWrongTop10}
                     />

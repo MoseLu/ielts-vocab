@@ -46,8 +46,8 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent/5 to-accent/10">
-      <div className="w-full max-w-md p-6">
+    <div className="auth-layout">
+      <div className="auth-layout__inner">
         {children}
       </div>
     </div>

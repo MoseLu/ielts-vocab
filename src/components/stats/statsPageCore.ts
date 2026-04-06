@@ -11,6 +11,7 @@ import {
   type WrongWordDimension,
   type WrongWordRecord,
   WRONG_WORD_DIMENSIONS,
+  WRONG_WORD_DIMENSION_LABELS,
   getWrongWordActiveCount,
   getWrongWordDimensionHistoryWrong,
   isWrongWordPendingInDimension,
@@ -19,7 +20,7 @@ import {
 export const MODE_LABELS: Record<string, string> = {
   smart: '智能模式',
   listening: '听力模式',
-  meaning: '汉译英模式',
+  meaning: '释义拼词模式',
   dictation: '默写模式',
   radio: '选择模式',
   quickmemory: '速记模式',
@@ -42,13 +43,6 @@ export interface ChartProps {
   metric: MetricKey
   range: RangeKey
   compact?: boolean
-}
-
-const WRONG_REASON_LABELS: Record<WrongWordDimension, string> = {
-  recognition: '认识',
-  meaning: '会想',
-  listening: '听得到',
-  dictation: '会拼写',
 }
 
 export function getScopedDimensionCount(
@@ -79,7 +73,7 @@ export function inferErrorReason(
     return getScopedDimensionCount(word, right, scope) - getScopedDimensionCount(word, left, scope)
   })
 
-  return WRONG_REASON_LABELS[topDimension] || '—'
+  return WRONG_WORD_DIMENSION_LABELS[topDimension] || '—'
 }
 
 export function buildWrongTopItems(

@@ -120,7 +120,7 @@
     flex-direction: column;
     gap: 16px;
     padding: 20px;
-    background: color-mix(in srgb, var(--surface-subtle) 92%, white);
+    background: color-mix(in srgb, var(--surface-subtle) 92%, var(--surface-elevated));
     border-right: 1px solid var(--border-subtle);
     overflow: auto;
 }
@@ -383,13 +383,13 @@
 .not-found-btn--primary {
     background: var(--accent);
     border-color: var(--accent);
-    color: white;
+    color: var(--text-inverse);
 }
 
 .not-found-btn--primary:hover {
     background: var(--accent-hover);
     border-color: var(--accent-hover);
-    color: white;
+    color: var(--text-inverse);
 }
 
 @media (max-width: 640px) {

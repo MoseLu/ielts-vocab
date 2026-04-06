@@ -36,7 +36,8 @@ describe('LearningJournalPage markdown rendering', () => {
     const { container } = render(<LearningJournalPage />)
 
     expect(container.querySelector('.page-skeleton--journal')).not.toBeNull()
-    expect(container.querySelector('.journal-page')).toBeNull()
+    expect(container.querySelector('.journal-page')).not.toBeNull()
+    expect(container.querySelector('.journal-page .journal-page-skeleton')).not.toBeNull()
 
     resolveSummaries?.({ summaries: [] })
 
@@ -70,7 +71,7 @@ describe('LearningJournalPage markdown rendering', () => {
             today_sessions: 2,
             streak_days: 5,
             weakest_mode: 'meaning',
-            weakest_mode_label: '汉译英',
+            weakest_mode_label: '释义拼词',
             weakest_mode_accuracy: 68,
             due_reviews: 3,
             trend_direction: 'improving',
@@ -78,7 +79,7 @@ describe('LearningJournalPage markdown rendering', () => {
           dimensions: [
             {
               dimension: 'meaning',
-              label: '汉译英（会想）',
+              label: '释义拼词（会想）',
               correct: 8,
               wrong: 4,
               attempts: 12,
@@ -92,7 +93,7 @@ describe('LearningJournalPage markdown rendering', () => {
               definition: 'type',
               wrong_count: 3,
               dominant_dimension: 'meaning',
-              dominant_dimension_label: '汉译英（会想）',
+              dominant_dimension_label: '释义拼词（会想）',
               dominant_wrong: 2,
               focus_score: 8,
             },

@@ -18,11 +18,8 @@
     background: var(--surface-floating);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
-    box-shadow:
-        0 6px 16px rgba(0, 0, 0, 0.08),
-        0 3px 6px rgba(0, 0, 0, 0.04),
-        0 0 0 1px rgba(0, 0, 0, 0.03);
-    z-index: 9999;
+    box-shadow: var(--shadow-floating);
+    z-index: var(--layer-tooltip);
     animation: popoverFadeIn 0.18s ease forwards;
 }
 
@@ -235,7 +232,7 @@
     height: 40px;
     border-radius: var(--radius-full);
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     display: flex;
     align-items: center;
     justify-content: center;

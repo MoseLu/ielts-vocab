@@ -4,7 +4,7 @@
     position: fixed;
     inset: 0;
     background: var(--overlay);
-    z-index: 500;
+    z-index: var(--layer-modal);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -128,7 +128,7 @@
     margin-top: 12px;
     padding: 10px 16px;
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: 6px;
     font-size: 14px;

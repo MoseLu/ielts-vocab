@@ -22,7 +22,7 @@
     padding: 12px 14px;
     border-radius: 14px;
     border: 1px solid var(--surface-border-strong);
-    background: rgba(255, 255, 255, 0.78);
+    background: color-mix(in srgb, var(--surface-elevated) 78%, transparent);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -108,7 +108,7 @@
 .study-book-remove:hover {
     background: var(--error-light);
     color: var(--error);
-    border-color: rgba(239, 68, 68, 0.25);
+    border-color: color-mix(in srgb, var(--error) 25%, transparent);
 }
 
 .study-book-remove svg {
@@ -180,7 +180,7 @@
 }
 
 .study-book-state {
-    @include pill-badge(24px, 4px 8px, 999px, rgba(15, 23, 42, 0.08), var(--text-secondary), 11px, 700);
+    @include pill-badge(24px, 4px 8px, 999px, var(--surface-inset), var(--text-secondary), 11px, 700);
 }
 
 .study-book-state--active {
@@ -189,7 +189,7 @@
 }
 
 .study-book-state--complete {
-    background: rgba(34, 197, 94, 0.12);
+    background: color-mix(in srgb, var(--success) 12%, transparent);
     color: var(--success);
 }
 
@@ -201,7 +201,7 @@
 
 .study-book-progress-bar {
     height: 8px;
-    background: rgba(15, 23, 42, 0.08);
+    background: var(--surface-inset);
     border-radius: 999px;
     overflow: hidden;
 }

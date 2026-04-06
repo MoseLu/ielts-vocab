@@ -41,7 +41,7 @@
     border-radius: 9999px;
     background: transparent;
     cursor: default;
-    z-index: 10;
+    z-index: var(--layer-local-overlay);
     user-select: none;
     touch-action: none;
     /* 默认隐藏，hover / 滚动时显示 */
@@ -65,12 +65,12 @@
     transform: translateY(var(--scrollbar-thumb-offset, 0));
     cursor: pointer;
     border-radius: 9999px;
-    background-color: var(--scrollbar-thumb, rgba(144, 147, 153, 0.4));
+    background-color: var(--scrollbar-thumb);
     transition: background-color 200ms ease, width 200ms ease;
 }
 
 .el-scrollbar__bar:hover .el-scrollbar__thumb {
-    background-color: var(--scrollbar-thumb-hover, rgba(144, 147, 153, 0.6));
+    background-color: var(--scrollbar-thumb-hover);
 }
 
 /* hover 时变宽：Element Plus 效果 */

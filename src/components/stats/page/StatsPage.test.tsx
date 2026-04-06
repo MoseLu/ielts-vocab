@@ -7,6 +7,7 @@ import StatsPage from './StatsPage'
 const hooksState = vi.hoisted(() => ({
   wrongWords: {
     words: [],
+    loading: false,
   },
   learningStats: {
     daily: [],
@@ -62,6 +63,7 @@ describe('StatsPage', () => {
 
   beforeEach(() => {
     hooksState.wrongWords.words = []
+    hooksState.wrongWords.loading = false
     hooksState.learningStats.daily = []
     hooksState.learningStats.books = []
     hooksState.learningStats.modes = []
@@ -134,16 +136,36 @@ describe('StatsPage', () => {
         trend_direction: 'improving',
       },
       dimensions: [
-        { dimension: 'meaning', label: '汉译英（会想）', correct: 12, wrong: 8, attempts: 20, accuracy: 60, weakness: 0.4 },
+        { dimension: 'meaning', label: '释义拼词（会想）', correct: 12, wrong: 8, attempts: 20, accuracy: 60, weakness: 0.4 },
       ],
       focus_words: [
-        { word: 'kind', definition: 'type', wrong_count: 4, dominant_dimension: 'meaning', dominant_dimension_label: '汉译英（会想）', dominant_wrong: 3, focus_score: 11 },
+        { word: 'kind', definition: 'type', wrong_count: 4, dominant_dimension: 'meaning', dominant_dimension_label: '释义拼词（会想）', dominant_wrong: 3, focus_score: 11 },
       ],
       repeated_topics: [
         { title: 'kind of vs a kind of', count: 2, word_context: 'kind', latest_answer: '...', latest_at: null },
       ],
       next_actions: ['优先复习 4 个已到期的速记单词。'],
       mode_breakdown: [],
+      daily_plan: {
+        tasks: [],
+        today_content: {
+          date: '2026-03-31',
+          studied_words: 42,
+          duration_seconds: 1200,
+          sessions: 3,
+          latest_activity_title: '完成测试词书第 1 章',
+          latest_activity_at: '2026-03-31T09:00:00',
+        },
+        focus_book: {
+          book_id: 'book-1',
+          title: '测试词书',
+          current_index: 20,
+          total_words: 100,
+          progress_percent: 20,
+          remaining_words: 80,
+          is_completed: false,
+        },
+      },
     }
     hooksState.learningStats.loading = false
 
@@ -158,8 +180,18 @@ describe('StatsPage', () => {
     expect(container.querySelector('.stats-wrong-cluster')).not.toBeNull()
     expect(container.querySelector('.stats-wrong-cluster-grid .stats-main-card--wrong-history .stats-card-wrong')).not.toBeNull()
     expect(container.querySelector('.stats-wrong-cluster-grid .stats-main-card--wrong-pending .stats-card-wrong')).not.toBeNull()
-    expect(screen.getByText('今日学习新词数')).toBeInTheDocument()
-    expect(screen.getByText('累计学习新词数')).toBeInTheDocument()
+    expect(screen.getByText('到期待复习词')).toBeInTheDocument()
+    expect(screen.getByText('待清错词')).toBeInTheDocument()
+    expect(screen.getByText('当前词书剩余')).toBeInTheDocument()
+    expect(screen.getByText('今日学习词数')).toBeInTheDocument()
+    expect(screen.getByText('当前弱项模式')).toBeInTheDocument()
+    expect(screen.getByText('累计学过的不同词')).toBeInTheDocument()
+    expect(screen.getAllByText('怎么算')).toHaveLength(3)
+    expect(screen.getByText(/优先看今天还剩多少没清掉/)).toBeInTheDocument()
+    expect(screen.getByText(/只有连续答对到目标次数才会消掉/)).toBeInTheDocument()
+    expect(screen.getByText(/表示做完到期复习和错词清理后/)).toBeInTheDocument()
+    expect(screen.getByText('80词')).toBeInTheDocument()
+    expect(screen.getByText('连续学习天数')).toBeInTheDocument()
     expect(screen.getByText('统一学习画像')).toBeInTheDocument()
     expect(screen.getByText('按时复习率')).toBeInTheDocument()
     expect(screen.getByText('已到复习点')).toBeInTheDocument()

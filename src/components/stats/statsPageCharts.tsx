@@ -2,12 +2,12 @@ import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 're
 import type { EbbinghausStagePoint, PieSegment } from '../../features/vocabulary/hooks'
 import { fmtDate, fmtDuration, MODE_LABELS, type ChartProps, type WrongTopDisplayItem } from './statsPageCore'
 
-const PIE_COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#14b8a6', '#eab308', '#64748b']
+const PIE_COLORS = ['var(--chart-series-1)', 'var(--chart-series-2)', 'var(--chart-series-3)', 'var(--chart-series-4)', 'var(--chart-series-5)', 'var(--chart-series-6)', 'var(--chart-series-7)', 'var(--chart-series-8)']
 const PIE_COLOR_CLASSES = ['stats-pie-dot--0', 'stats-pie-dot--1', 'stats-pie-dot--2', 'stats-pie-dot--3', 'stats-pie-dot--4', 'stats-pie-dot--5', 'stats-pie-dot--6', 'stats-pie-dot--7']
-const WRONG_PIE_COLORS = ['#dc2626', '#ea580c', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#a855f7']
+const WRONG_PIE_COLORS = ['var(--chart-wrong-1)', 'var(--chart-wrong-2)', 'var(--chart-wrong-3)', 'var(--chart-wrong-4)', 'var(--chart-wrong-5)', 'var(--chart-wrong-6)', 'var(--chart-wrong-7)', 'var(--chart-wrong-8)', 'var(--chart-wrong-9)', 'var(--chart-wrong-10)']
 const WRONG_PIE_COLOR_CLASSES = ['stats-pie-dot--wrong-0', 'stats-pie-dot--wrong-1', 'stats-pie-dot--wrong-2', 'stats-pie-dot--wrong-3', 'stats-pie-dot--wrong-4', 'stats-pie-dot--wrong-5', 'stats-pie-dot--wrong-6', 'stats-pie-dot--wrong-7', 'stats-pie-dot--wrong-8', 'stats-pie-dot--wrong-9']
-const EBB_TARGET = '#0ea5e9'
-const EBB_ACTUAL = '#ea580c'
+const EBB_TARGET = 'var(--chart-ebb-target)'
+const EBB_ACTUAL = 'var(--chart-ebb-actual)'
 const EBB_STANDARD_FORGETTING_REF: readonly number[] = [100, 92, 78, 65, 52, 42]
 const EBB_TIP_HALF_W = 112
 
@@ -355,7 +355,7 @@ export function LearningChart({ data, metric, range, compact }: ChartProps) {
             </g>
           )
         })}
-        {fillPoints && <polygon points={fillPoints} fill="rgba(255, 126, 54, 0.10)" />}
+        {fillPoints && <polygon points={fillPoints} fill="var(--chart-accent-fill)" />}
         {segments.map((segment, index) => (
           <polyline key={index} points={segment.join(' ')} fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
         ))}

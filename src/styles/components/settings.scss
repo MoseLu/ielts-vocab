@@ -11,7 +11,7 @@
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: var(--layer-modal);
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -136,7 +136,7 @@
 
 .settings-tab.active {
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
 }
 
 .settings-tab svg {
@@ -261,7 +261,7 @@
     width: 20px;
     left: 3px;
     bottom: 3px;
-    background: white;
+    background: var(--text-inverse);
     border-radius: var(--radius-full);
     transition: all var(--transition-fast);
     box-shadow: var(--shadow-sm);

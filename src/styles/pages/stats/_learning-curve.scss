@@ -130,7 +130,7 @@
     padding: 6px var(--space-stack);
     box-shadow: var(--shadow-md);
     pointer-events: none;
-    z-index: 10;
+    z-index: var(--layer-local-overlay);
     white-space: nowrap;
     min-width: 80px;
     text-align: center;
@@ -227,7 +227,7 @@
     border-radius: var(--radius-full);
     font-size: 10px;
     font-weight: 700;
-    color: white;
+    color: var(--text-inverse);
     flex-shrink: 0;
 }
 
@@ -240,11 +240,11 @@
 }
 
 [data-theme="dark"] .lc-trend-badge--improving {
-    background: #4ade80;
+    background: var(--success-strong);
 }
 
 [data-theme="dark"] .lc-trend-badge--declining {
-    background: #f87171;
+    background: var(--error-strong);
 }
 
 .lc-fallback-note {
@@ -294,7 +294,7 @@
     flex-shrink: 0;
     border-radius: 50%;
     border: 18px solid color-mix(in srgb, var(--surface-elevated) 90%, var(--text-primary) 10%);
-    border-right-color: color-mix(in srgb, var(--surface-elevated) 98%, white 2%);
+    border-right-color: color-mix(in srgb, var(--surface-elevated) 98%, var(--surface-base) 2%);
     border-bottom-color: color-mix(in srgb, var(--surface-elevated) 94%, var(--text-primary) 6%);
 }
 

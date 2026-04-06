@@ -7,8 +7,8 @@ describe('Button', () => {
     render(<Button>Continue</Button>)
 
     const button = screen.getByRole('button', { name: 'Continue' })
-    expect(button.className).toContain('bg-accent')
-    expect(button.className).toContain('rounded-2xl')
+    expect(button.className).toContain('ui-button')
+    expect(button.className).toContain('ui-button--primary')
   })
 
   it('renders loading state and disables interaction', () => {
@@ -16,6 +16,6 @@ describe('Button', () => {
 
     const button = screen.getByRole('button', { name: 'Saving' })
     expect(button).toBeDisabled()
-    expect(container.querySelector('svg.animate-spin')).not.toBeNull()
+    expect(container.querySelector('svg.ui-button__spinner.loading-spin')).not.toBeNull()
   })
 })

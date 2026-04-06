@@ -75,20 +75,3 @@ export function AdminTableSkeleton() {
     </div>
   )
 }
-
-export function TtsBooksSkeleton() {
-  return (
-    <div className="admin-tts-skeleton" aria-hidden="true">
-      {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="tts-book-card tts-book-card--skeleton">
-          <Skeleton width="58%" height={18} />
-          <div className="tts-book-progress">
-            <Skeleton width="100%" height={8} />
-            <Skeleton width="46%" height={14} />
-          </div>
-          <Skeleton variant="rectangular" width="40%" height={38} />
-        </div>
-      ))}
-    </div>
-  )
-}

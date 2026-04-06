@@ -17,9 +17,9 @@
     cursor: pointer;
     transition: all var(--transition-fast);
 }
-.day-selector:hover { background: var(--accent); color: white; }
+.day-selector:hover { background: var(--accent); color: var(--text-inverse); }
 .day-selector:hover .day-selector-current,
-.day-selector:hover .day-selector-arrow { color: white; }
+.day-selector:hover .day-selector-arrow { color: var(--text-inverse); }
 
 .day-selector-current { font-size: 14px; font-weight: 600; color: var(--accent); }
 .day-selector-arrow { width: 16px; height: 16px; color: var(--accent); transition: transform var(--transition-fast); }
@@ -53,7 +53,7 @@
     cursor: pointer; transition: all var(--transition-fast); font-size: 14px;
 }
 .day-dropdown-item:hover { background: var(--bg-secondary); }
-.day-dropdown-item.active { background: var(--accent); color: white; }
+.day-dropdown-item.active { background: var(--accent); color: var(--text-inverse); }
 
 .day-grid-dropdown { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--space-xs); }
 
@@ -64,7 +64,7 @@
     cursor: pointer; transition: all var(--transition-fast);
 }
 .day-item:hover { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
-.day-item.selected { background: var(--accent); color: white; border-color: var(--accent); }
+.day-item.selected { background: var(--accent); color: var(--text-inverse); border-color: var(--accent); }
 
 .day-indicator {
     margin-top: var(--space-xs);

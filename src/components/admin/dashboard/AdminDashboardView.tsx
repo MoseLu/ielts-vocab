@@ -1,5 +1,5 @@
 import { PageSkeleton, SegmentedControl } from '../../ui'
-import { AdminTableSkeleton, MiniBarChart, StatCard, TtsBooksSkeleton } from './AdminDashboardPrimitives'
+import { AdminTableSkeleton, MiniBarChart, StatCard } from './AdminDashboardPrimitives'
 import {
   bookLabels,
   fmtDate,
@@ -8,7 +8,6 @@ import {
   type AdminTab,
   type AdminUser,
   type Overview,
-  type TtsBook,
 } from './AdminDashboard.types'
 
 interface AdminDashboardViewProps {
@@ -22,8 +21,6 @@ interface AdminDashboardViewProps {
   search: string
   sort: string
   order: 'asc' | 'desc'
-  ttsBooks: TtsBook[]
-  ttsBooksLoading: boolean
   loading: boolean
   error: string
   onDismissError: () => void
@@ -34,7 +31,6 @@ interface AdminDashboardViewProps {
   onSort: (column: string) => void
   onPageChange: (page: number) => void
   onSelectUser: (userId: number) => void
-  onGenerateTtsBook: (bookId: string) => void
 }
 
 function SortIcon({ current, order, column }: { current: string; order: 'asc' | 'desc'; column: string }) {
@@ -56,8 +52,6 @@ export function AdminDashboardView({
   search,
   sort,
   order,
-  ttsBooks,
-  ttsBooksLoading,
   loading,
   error,
   onDismissError,
@@ -68,7 +62,6 @@ export function AdminDashboardView({
   onSort,
   onPageChange,
   onSelectUser,
-  onGenerateTtsBook,
 }: AdminDashboardViewProps) {
   return (
     <div className="admin-dashboard">
@@ -86,7 +79,6 @@ export function AdminDashboardView({
         options={[
           { value: 'overview', label: '平台概览' },
           { value: 'users', label: '用户管理', badge: total },
-          { value: 'tts', label: '词书音频' },
         ]}
       />
 
@@ -256,44 +248,6 @@ export function AdminDashboardView({
                 <button key={p} className={p === page ? 'active' : ''} onClick={() => onPageChange(p)}>{p}</button>
               ))}
               <button disabled={page >= pages} onClick={() => onPageChange(page + 1)}>下一页</button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === 'tts' && (
-        <div className="admin-tts-panel">
-          {ttsBooksLoading ? (
-            <TtsBooksSkeleton />
-          ) : ttsBooks.length === 0 ? (
-            <div className="admin-tts-error">加载失败，请刷新重试或检查管理员登录状态</div>
-          ) : (
-            <div className="tts-books-grid">
-              {ttsBooks.map(book => {
-                const isDone = book.status === 'done' || (book.cached === book.total && book.total > 0)
-                const isRunning = book.generating || book.status === 'running'
-                const isInterrupted = book.status === 'interrupted'
-                const isError = book.status === 'error'
-                const cardClass = `tts-book-card ${isDone ? 'done' : ''} ${isInterrupted || isError ? 'interrupted' : ''}`
-                const btnLabel = isRunning ? '生成中...' : isDone ? '已完成' : isInterrupted ? '续传' : isError ? '重试' : '生成'
-                const btnClass = `tts-generate-btn ${isRunning ? 'loading' : ''} ${isDone ? 'done' : ''} ${isInterrupted || isError ? 'interrupted' : ''}`
-                return (
-                  <div key={book.book_id} className={cardClass}>
-                    <div className="tts-book-title">{book.title}</div>
-                    <div className="tts-book-progress">
-                      <progress className="tts-progress-bar" max={book.total || 1} value={book.cached} />
-                      <span className="tts-progress-text">
-                        {book.cached} / {book.total} 条
-                        {isInterrupted && <span className="tts-progress-flag tts-progress-flag--warning">已中断</span>}
-                        {isError && <span className="tts-progress-flag tts-progress-flag--error">出错</span>}
-                      </span>
-                    </div>
-                    <button className={btnClass} onClick={() => onGenerateTtsBook(book.book_id)} disabled={isRunning || isDone}>
-                      {btnLabel}
-                    </button>
-                  </div>
-                )
-              })}
             </div>
           )}
         </div>

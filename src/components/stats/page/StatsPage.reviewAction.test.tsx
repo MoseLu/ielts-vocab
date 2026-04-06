@@ -8,6 +8,7 @@ const navigateMock = vi.fn()
 const hooksState = vi.hoisted(() => ({
   wrongWords: {
     words: [],
+    loading: false,
   },
   learningStats: {
     daily: [],

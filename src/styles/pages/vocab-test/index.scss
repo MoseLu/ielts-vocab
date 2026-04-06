@@ -111,18 +111,18 @@
     height: 72px;
     border-radius: 50%;
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.35);
+    box-shadow: var(--glow-accent);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .vocab-test-play-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.45);
+    box-shadow: var(--glow-accent-strong);
 }
 .vocab-test-play-btn:active { transform: scale(0.96); }
 .vocab-test-hint {
@@ -179,8 +179,8 @@
     justify-content: center;
     flex-shrink: 0;
 }
-.vocab-test-opt.correct .opt-indicator { background: var(--success); color: white; }
-.vocab-test-opt.wrong .opt-indicator { background: var(--error); color: white; }
+.vocab-test-opt.correct .opt-indicator { background: var(--success); color: var(--text-inverse); }
+.vocab-test-opt.wrong .opt-indicator { background: var(--error); color: var(--text-inverse); }
 
 .opt-text {
     font-size: 14px;
@@ -215,7 +215,7 @@
     width: 100%;
     padding: 14px;
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-lg);
     font-size: 15px;
@@ -258,7 +258,7 @@
 .vocab-test-error button {
     padding: 10px 24px;
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -374,7 +374,7 @@
 .result-btn.primary {
     background: var(--accent);
     border-color: var(--accent);
-    color: white;
+    color: var(--text-inverse);
 }
 .result-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .result-btn:not(.primary):hover { background: var(--bg-secondary); color: var(--text-primary); }

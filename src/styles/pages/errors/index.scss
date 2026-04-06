@@ -65,7 +65,7 @@
 
 .errors-practice-btn {
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-full);
     padding: 6px 14px;
@@ -93,7 +93,10 @@
     padding: 6px 12px;
     font-size: 13px;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition:
+        color var(--transition-fast),
+        border-color var(--transition-fast),
+        background-color var(--transition-fast);
 }
 
 .errors-clear-btn:hover {
@@ -231,7 +234,7 @@
 .errors-go-practice {
     display: inline-block;
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-full);
     padding: 6px 18px;
@@ -346,7 +349,7 @@
 /* Dimension error badges */
 .errors-item-dims {
     display: flex;
-    gap: 5px;
+    gap: 6px;
     flex-wrap: wrap;
     margin-top: 6px;
 }
@@ -354,10 +357,11 @@
 .errors-dim-badge {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
+    flex-wrap: wrap;
     font-size: 11px;
     font-weight: 600;
-    padding: 2px 8px;
+    padding: 4px 10px;
     border-radius: var(--radius-full);
     line-height: 1.5;
 }

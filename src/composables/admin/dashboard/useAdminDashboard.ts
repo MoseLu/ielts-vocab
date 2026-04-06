@@ -5,7 +5,6 @@ import type {
   AdminTab,
   AdminUser,
   Overview,
-  TtsBook,
   UserDetail,
   WrongWordsSort,
 } from '../../../components/admin/dashboard/AdminDashboard.types'
@@ -24,18 +23,6 @@ interface UsersResponse {
   users: AdminUser[]
   total: number
   pages: number
-}
-
-interface TtsBooksResponse {
-  books: TtsBook[]
-}
-
-interface TtsBookStatus {
-  book_id: string
-  total: number
-  cached: number
-  generating: boolean
-  status: TtsBook['status']
 }
 
 function getErrorMessage(error: unknown) {
@@ -59,27 +46,11 @@ export function useAdminDashboard() {
   const [detailDateTo, setDetailDateTo] = useState('')
   const [detailMode, setDetailMode] = useState('')
   const [detailWrongWordsSort, setDetailWrongWordsSort] = useState<WrongWordsSort>('last_error')
-  const [ttsBooks, setTtsBooks] = useState<TtsBook[]>([])
-  const [ttsBooksLoading, setTtsBooksLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [overviewLoading, setOverviewLoading] = useState(false)
   const [error, setError] = useState('')
 
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null)
-  const ttsPollingTimers = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map())
-
-  const clearTtsPolling = useCallback((bookId: string) => {
-    const timer = ttsPollingTimers.current.get(bookId)
-    if (timer == null) return
-
-    clearInterval(timer)
-    ttsPollingTimers.current.delete(bookId)
-  }, [])
-
-  const clearAllTtsPolling = useCallback(() => {
-    ttsPollingTimers.current.forEach(timer => clearInterval(timer))
-    ttsPollingTimers.current.clear()
-  }, [])
 
   const fetchOverview = useCallback(async () => {
     setOverviewLoading(true)
@@ -137,74 +108,10 @@ export function useAdminDashboard() {
     }
   }, [])
 
-  const fetchTtsBooks = useCallback(async () => {
-    setTtsBooksLoading(true)
-
-    try {
-      const data = await apiFetch<TtsBooksResponse>('/api/tts/books-summary')
-      setTtsBooks(data.books || [])
-    } catch (error) {
-      console.error('Failed to fetch TTS books:', error)
-    } finally {
-      setTtsBooksLoading(false)
-    }
-  }, [])
-
-  const startTtsPolling = useCallback((bookId: string) => {
-    if (ttsPollingTimers.current.has(bookId)) return
-
-    const timer = setInterval(async () => {
-      try {
-        const data = await apiFetch<TtsBookStatus>(`/api/tts/status/${bookId}`)
-        setTtsBooks(previous =>
-          previous.map(book => (book.book_id === bookId ? { ...book, ...data } : book)),
-        )
-
-        if (!data.generating) {
-          clearTtsPolling(bookId)
-        }
-      } catch {
-        // Ignore transient polling failures and keep the current state.
-      }
-    }, 2000)
-
-    ttsPollingTimers.current.set(bookId, timer)
-  }, [clearTtsPolling])
-
-  const handleGenerate = useCallback(async (bookId: string) => {
-    try {
-      await apiFetch(`/api/tts/generate/${bookId}`, { method: 'POST' })
-      startTtsPolling(bookId)
-    } catch (error) {
-      console.error('Failed to start generation:', error)
-    }
-  }, [startTtsPolling])
-
   useEffect(() => {
     void fetchOverview()
     void fetchUsers(1, '', 'created_at', 'desc')
   }, [fetchOverview, fetchUsers])
-
-  useEffect(() => {
-    if (tab === 'tts' && ttsBooks.length === 0) {
-      void fetchTtsBooks()
-    }
-  }, [fetchTtsBooks, tab, ttsBooks.length])
-
-  useEffect(() => {
-    if (tab !== 'tts') {
-      clearAllTtsPolling()
-      return
-    }
-
-    ttsBooks.forEach(book => {
-      if (book.generating || book.status === 'running') {
-        startTtsPolling(book.book_id)
-      } else {
-        clearTtsPolling(book.book_id)
-      }
-    })
-  }, [clearAllTtsPolling, clearTtsPolling, startTtsPolling, tab, ttsBooks])
 
   useEffect(() => {
     refreshTimer.current = setInterval(() => {
@@ -223,12 +130,6 @@ export function useAdminDashboard() {
       }
     }
   }, [fetchOverview, fetchUsers, order, page, search, sort, tab])
-
-  useEffect(() => {
-    return () => {
-      clearAllTtsPolling()
-    }
-  }, [clearAllTtsPolling])
 
   const handleSearchSubmit = useCallback(() => {
     setPage(1)
@@ -285,8 +186,6 @@ export function useAdminDashboard() {
     detailDateTo,
     detailMode,
     detailWrongWordsSort,
-    ttsBooks,
-    ttsBooksLoading,
     loading,
     overviewLoading,
     error,
@@ -299,7 +198,6 @@ export function useAdminDashboard() {
     setDetailMode,
     setDetailWrongWordsSort,
     fetchUserDetail,
-    handleGenerate,
     handleSearchSubmit,
     handleSearchClear,
     handleSort,

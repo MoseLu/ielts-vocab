@@ -2,25 +2,25 @@
   position: fixed;
   right: 10px;
   bottom: 10px;
-  z-index: 500;
+  z-index: var(--layer-topmost);
   width: 44px;
   height: 44px;
   padding: 0;
   border: none;
   border-radius: var(--radius-full);
   background: var(--accent);
-  color: white;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(var(--accent-rgb), 0.35);
+  box-shadow: var(--glow-accent);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ai-fab:hover {
   transform: scale(1.08);
-  box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.5);
+  box-shadow: var(--shadow-floating);
 }
 
 .ai-fab:active {
@@ -36,13 +36,13 @@
   position: fixed;
   right: 24px;
   bottom: 24px;
-  z-index: 500;
+  z-index: var(--layer-topmost);
   width: min(380px, calc(100vw - 32px));
   height: min(560px, calc(100vh - 48px));
   background: var(--surface-floating);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-overlay);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -91,7 +91,7 @@
   flex-shrink: 0;
   border-radius: var(--radius-full);
   background: var(--accent);
-  color: white;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,7 +183,7 @@
 
 .ai-quick-btn:hover {
   background: var(--accent);
-  color: white;
+  color: var(--text-inverse);
   border-color: var(--accent);
 }
 
@@ -240,10 +240,10 @@
 }
 
 .ai-msg-user .ai-msg-bubble {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 94%, #c2410c), color-mix(in srgb, var(--accent) 82%, #9a3412));
-  color: #fffaf5;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: var(--text-inverse);
   border-bottom-right-radius: 4px;
-  box-shadow: 0 8px 22px rgba(var(--accent-rgb), 0.18);
+  box-shadow: var(--glow-accent);
 }
 
 .ai-msg-user .ai-msg-bubble,
@@ -278,7 +278,7 @@
   height: 1.05em;
   margin-left: 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 78%, white);
+  background: color-mix(in srgb, var(--accent) 78%, var(--text-inverse));
   vertical-align: -0.14em;
   animation: aiStreamCaretPulse 1s ease-in-out infinite;
 }
@@ -335,7 +335,7 @@
 }
 
 .ai-markdown-content pre {
-  background: #111827;
+  background: var(--surface-code);
   font-size: 12px;
 }
 

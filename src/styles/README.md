@@ -54,15 +54,19 @@ Files:
 - [complete.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/complete.scss)
 - [dropdowns.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/dropdowns.scss)
 - [empty-state.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/empty-state.scss)
+- [global-word-search-detail.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/global-word-search-detail.scss)
+- [global-word-search.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/global-word-search.scss)
 - [popover.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/popover.scss)
 - [scrollbar.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/scrollbar.scss)
 - [settings.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/settings.scss)
 - [toast.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/toast.scss)
+- [ui-primitives.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/components/ui-primitives.scss)
 
 When changing:
 
 - If the same UI pattern appears on more than one page, move it here.
 - Component styles should not know page route context.
+- Shared UI primitives such as button, card, input, modal, and global search belong here instead of TSX utility strings or the `layout/` layer.
 
 ### `pages/`
 
@@ -101,6 +105,8 @@ When changing:
 - Use this layer for page-only layout and visuals.
 - Do not redefine tokens here.
 - If a rule becomes shared, move it to `components` or `layout`.
+- Page partial file names must describe the slice they own, for example `_dashboard-overview.scss`, `_learning-curve.scss`, `_user-detail-modal.scss`.
+- Do not create anonymous sequence names such as `_part-1.scss`, `_part-2.scss`, or similar non-semantic numbering.
 
 ### `utils/`
 
@@ -170,6 +176,8 @@ If you want to change:
 - Do not reintroduce `index.css`.
 - Do not use inline `style={{ ... }}` in TSX for normal visual styling.
 - Prefer tokens over raw values.
+- Outside [base.scss](/F:/enterprise-workspace/projects/ielts-vocab/src/styles/base.scss), do not introduce raw `#hex`, raw `rgb(...)` / `rgba(...)` / `hsl(...)`, `color: white`, or `color-mix(... white)`.
+- If a themed page needs special colors, define page-scoped semantic CSS variables near the page root first, then consume those variables in descendants instead of scattering one-off color values.
 - Prefer pure orange accent surfaces over gradients unless explicitly approved.
 - Spacing rhythm is `10px` based unless a token defines otherwise.
 - If a style needs dynamic geometry, prefer CSS variables set by refs over ad-hoc JSX inline styles.

@@ -23,6 +23,9 @@
 @use './components/navigation.scss';
 @use './components/page.scss';
 @use './components/page-shell.scss';
+@use './components/global-word-search.scss';
+@use './components/global-word-search-detail.scss';
+@use './components/ui-primitives.scss';
 
 /* Pages: Auth */
 @use './pages/auth/index.scss' as *;

@@ -171,6 +171,19 @@ body,
     flex-direction: column;
 }
 
+.auth-layout {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 10px;
+    background: var(--surface-subtle);
+}
+
+.auth-layout__inner {
+    width: min(100%, 420px);
+}
+
 /* ── Bottom Navigation (Mobile) ── */
 .bottom-nav {
     display: none;
@@ -181,8 +194,8 @@ body,
     height: 64px;
     background: var(--surface-overlay);
     border-top: 1px solid var(--border-strong);
-    z-index: 99;
-    box-shadow: 0 -12px 30px rgba(15, 23, 42, 0.08);
+    z-index: var(--layer-sticky);
+    box-shadow: var(--shadow-floating);
     backdrop-filter: blur(14px);
 }
 

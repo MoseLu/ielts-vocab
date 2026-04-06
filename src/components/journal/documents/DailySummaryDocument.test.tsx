@@ -44,7 +44,7 @@ describe('DailySummaryDocument', () => {
             today_sessions: 3,
             streak_days: 7,
             weakest_mode: 'meaning',
-            weakest_mode_label: '汉译英',
+            weakest_mode_label: '释义拼词',
             weakest_mode_accuracy: 68,
             due_reviews: 5,
             trend_direction: 'improving',
@@ -52,7 +52,7 @@ describe('DailySummaryDocument', () => {
           dimensions: [
             {
               dimension: 'meaning',
-              label: '汉译英（会想）',
+              label: '释义拼词（会想）',
               correct: 9,
               wrong: 5,
               attempts: 14,
@@ -66,7 +66,7 @@ describe('DailySummaryDocument', () => {
               definition: 'type',
               wrong_count: 3,
               dominant_dimension: 'meaning',
-              dominant_dimension_label: '汉译英（会想）',
+              dominant_dimension_label: '释义拼词（会想）',
               dominant_wrong: 2,
               focus_score: 8,
             },

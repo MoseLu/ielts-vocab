@@ -58,6 +58,18 @@
     animation: spin 1s linear infinite;
 }
 
+.loading-spinner-graphic {
+    color: var(--accent);
+}
+
+.loading-spinner-graphic__track {
+    opacity: 0.22;
+}
+
+.loading-spinner-graphic__head {
+    opacity: 0.92;
+}
+
 .loading-state {
     display: flex;
     flex-direction: column;
@@ -158,7 +170,7 @@
     background: linear-gradient(
         90deg,
         color-mix(in srgb, var(--surface-elevated) 92%, var(--text-primary) 8%) 0%,
-        color-mix(in srgb, var(--surface-elevated) 98%, white 2%) 50%,
+        color-mix(in srgb, var(--surface-elevated) 98%, var(--surface-base) 2%) 50%,
         color-mix(in srgb, var(--surface-elevated) 92%, var(--text-primary) 8%) 100%
     );
     background-size: 220% 100%;
@@ -181,6 +193,11 @@
 .page-skeleton {
     width: 100%;
     min-height: calc(100vh - var(--header-height, 0px) - 20px);
+    padding: var(--page-gutter);
+    box-sizing: border-box;
+}
+
+.page-content > .page-skeleton {
     padding: 0;
 }
 
