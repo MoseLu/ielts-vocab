@@ -28,6 +28,12 @@ interface VocabBookCardProps {
   isInMyBooks: boolean
 }
 
+const CONFUSABLE_BOOK_ID = 'ielts_confusable_match'
+
+function isConfusableBook(book: Pick<Book, 'id'>): boolean {
+  return String(book.id) === CONFUSABLE_BOOK_ID
+}
+
 const STUDY_TYPES: FilterOption[] = [
   { key: null, label: '全部' },
   { key: 'ielts', label: '雅思' },
@@ -58,13 +64,17 @@ function VocabBookCard({ book, progress, onSelect, isInMyBooks }: VocabBookCardP
   const progressPercent = progress
     ? Math.min(100, Math.round((currentIndex / book.word_count) * 100))
     : 0
+  const isConfusable = isConfusableBook(book)
+  const countValue = isConfusable ? book.group_count ?? 0 : book.word_count
+  const countUnit = isConfusable ? '组' : '词'
+  const progressText = isConfusable ? `${progressPercent}%` : `${currentIndex}/${book.word_count}`
 
   return (
     <div className="vb-card" onClick={() => onSelect(book)}>
       {book.is_paid && <span className="vb-card-badge">已购</span>}
       <h3 className="vb-card-title">{book.title}</h3>
       <div className="vb-card-meta">
-        <span className="vb-card-count">{book.word_count} 词</span>
+        <span className="vb-card-count">{countValue} {countUnit}</span>
         {book.description && <span className="vb-card-desc">{book.description}</span>}
       </div>
       {progress && (
@@ -82,7 +92,7 @@ function VocabBookCard({ book, progress, onSelect, isInMyBooks }: VocabBookCardP
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="vb-card-progress-text">{currentIndex}/{book.word_count}</span>
+          <span className="vb-card-progress-text">{progressText}</span>
         </div>
       )}
       {isInMyBooks && (

@@ -123,4 +123,29 @@ describe('VocabBookPage', () => {
       expect(button).toHaveClass('vb-filter-btn--compact')
     })
   })
+
+  it('shows confusable books in groups instead of words', () => {
+    hooksState.vocabBooks.books = [
+      {
+        id: 'ielts_confusable_match',
+        title: '雅思易混词辨析',
+        word_count: 2026,
+        group_count: 540,
+        study_type: 'ielts',
+        category: 'confusable',
+        level: 'advanced',
+      },
+    ]
+    hooksState.allBookProgress.progressMap = {}
+    hooksState.myBooks.myBookIds = new Set()
+
+    render(
+      <MemoryRouter>
+        <VocabBookPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('540 组')).toBeInTheDocument()
+    expect(screen.queryByText('2026 词')).toBeNull()
+  })
 })

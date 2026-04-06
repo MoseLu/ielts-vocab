@@ -85,6 +85,8 @@ class TestGetBooks:
         assert book['practice_mode'] == 'match'
         assert book['category'] == 'confusable'
         assert book['word_count'] == 2026
+        assert book['chapter_count'] == 9
+        assert book['group_count'] == 540
 
 
 # ── /books/<book_id> (GET) ────────────────────────────────────────────────────
@@ -100,6 +102,61 @@ class TestGetBook:
     def test_get_nonexistent_book(self, client):
         res = client.get('/api/books/does_not_exist')
         assert res.status_code == 404
+
+
+class TestSearchWords:
+    def test_search_words_prioritizes_exact_matches_and_returns_detail_fields(self, client, monkeypatch):
+        monkeypatch.setattr(books_routes, '_global_word_search_catalog', None)
+        monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
+            {'id': 'book-a', 'title': 'Book A'},
+            {'id': 'book-b', 'title': 'Book B'},
+        ])
+        monkeypatch.setattr(books_routes, 'load_book_vocabulary', lambda book_id: {
+            'book-a': [
+                {
+                    'word': 'quit',
+                    'phonetic': '/kwɪt/',
+                    'pos': 'v.',
+                    'definition': '停止；离开',
+                    'chapter_id': 2,
+                    'chapter_title': 'Chapter 2',
+                    'examples': [{'en': 'He quit last year.', 'zh': '他去年戒掉了。'}],
+                },
+                {
+                    'word': 'quite',
+                    'phonetic': '/kwaɪt/',
+                    'pos': 'adv.',
+                    'definition': '相当；非常',
+                },
+            ],
+            'book-b': [
+                {
+                    'word': 'exit',
+                    'phonetic': '/ˈeksɪt/',
+                    'pos': 'v.',
+                    'definition': '退出，quit 的近义表达',
+                },
+            ],
+        }[book_id])
+
+        res = client.get('/api/books/search?q=quit&limit=5')
+
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['query'] == 'quit'
+        assert data['total'] == 3
+        assert data['results'][0]['word'] == 'quit'
+        assert data['results'][0]['book_id'] == 'book-a'
+        assert data['results'][0]['book_title'] == 'Book A'
+        assert data['results'][0]['chapter_title'] == 'Chapter 2'
+        assert data['results'][0]['match_type'] == 'exact'
+        assert data['results'][0]['examples'][0]['en'] == 'He quit last year.'
+        assert data['results'][1]['match_type'] == 'prefix'
+        assert data['results'][2]['match_type'] == 'definition'
+
+    def test_search_words_requires_non_empty_query(self, client):
+        res = client.get('/api/books/search?q=')
+        assert res.status_code == 400
 
 
 # ── /books/categories (GET) ───────────────────────────────────────────────────
@@ -267,11 +324,13 @@ class TestBookChapters:
 
         assert data['total_chapters'] == 9
         assert data['total_words'] == 2026
+        assert data['total_groups'] == 540
         assert data['chapters'][0]['title'] == '音近词辨析 01'
         assert data['chapters'][1]['title'] == '音近词辨析 02'
         assert all(chapter['title'].startswith('音近词辨析') for chapter in data['chapters'][:2])
         assert all(chapter['title'].startswith('形近词辨析') for chapter in data['chapters'][2:])
         assert all(chapter['word_count'] >= 120 for chapter in data['chapters'])
+        assert all(chapter['group_count'] == 60 for chapter in data['chapters'])
 
     def test_get_confusable_match_chapter_words(self, client):
         res = client.get('/api/books/ielts_confusable_match/chapters/1')
@@ -337,14 +396,19 @@ class TestBookChapters:
             if book['id'] == 'ielts_confusable_match'
         )
         assert confusable_book['word_count'] == 2031
+        assert confusable_book['chapter_count'] == 11
+        assert confusable_book['group_count'] == 542
 
         chapters_res = client.get('/api/books/ielts_confusable_match/chapters')
         assert chapters_res.status_code == 200
         chapters_data = chapters_res.get_json()
         assert chapters_data['total_chapters'] == 11
         assert chapters_data['total_words'] == 2031
+        assert chapters_data['total_groups'] == 542
         assert chapters_data['chapters'][-1]['is_custom'] is True
         assert chapters_data['chapters'][-2]['is_custom'] is True
+        assert chapters_data['chapters'][-1]['group_count'] == 1
+        assert chapters_data['chapters'][-2]['group_count'] == 1
 
         words_res = client.get(f"/api/books/ielts_confusable_match/chapters/{created_ids[0]}")
         assert words_res.status_code == 200
@@ -363,6 +427,7 @@ class TestBookChapters:
         data = res.get_json()
         assert 'zzzznotaword' in data['error']
         assert 'zzzznotaword' in data['missing_words']
+
 
 
 # ── /books/my (GET/POST/DELETE) ───────────────────────────────────────────────

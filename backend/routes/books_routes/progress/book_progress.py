@@ -1,6 +1,28 @@
 @books_bp.route('/<book_id>/chapters/<int:chapter_id>', methods=['GET'])
 def get_chapter_words(book_id, chapter_id):
     """Get words from a specific chapter"""
+    if _is_favorites_book(book_id):
+        if chapter_id != FAVORITES_CHAPTER_ID:
+            return jsonify({'error': 'Chapter not found'}), 404
+
+        current_user = _resolve_optional_current_user()
+        if not current_user:
+            return jsonify({'error': 'Book not found'}), 404
+
+        words = _serialize_favorite_words(current_user.id)
+        if not words:
+            return jsonify({'error': 'Chapter not found'}), 404
+
+        return jsonify({
+            'chapter': {
+                'id': FAVORITES_CHAPTER_ID,
+                'title': FAVORITES_CHAPTER_TITLE,
+                'word_count': len(words),
+                'is_custom': True,
+            },
+            'words': words,
+        }), 200
+
     book = next((b for b in VOCAB_BOOKS if b['id'] == book_id), None)
     if not book:
         return jsonify({'error': 'Book not found'}), 404
@@ -17,6 +39,7 @@ def get_chapter_words(book_id, chapter_id):
                     'id': chapter_id,
                     'title': custom_chapter.title,
                     'word_count': int(custom_chapter.word_count or len(custom_chapter.words)),
+                    'group_count': 1,
                     'is_custom': True,
                 },
                 'words': _serialize_confusable_custom_words(custom_chapter),
@@ -129,6 +152,28 @@ def get_chapter_words(book_id, chapter_id):
 @books_bp.route('/<book_id>/words', methods=['GET'])
 def get_book_words(book_id):
     """Get words from a specific book with pagination"""
+    if _is_favorites_book(book_id):
+        current_user = _resolve_optional_current_user()
+        if not current_user:
+            return jsonify({'error': 'Book not found'}), 404
+
+        words = _serialize_favorite_words(current_user.id)
+        if not words:
+            return jsonify({'error': 'Book not found'}), 404
+
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 100, type=int)
+        start = (page - 1) * per_page
+        end = start + per_page
+
+        return jsonify({
+            'words': words[start:end],
+            'total': len(words),
+            'page': page,
+            'per_page': per_page,
+            'total_pages': (len(words) + per_page - 1) // per_page,
+        }), 200
+
     book = next((b for b in VOCAB_BOOKS if b['id'] == book_id), None)
     if not book:
         return jsonify({'error': 'Book not found'}), 404

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import ChapterModal from './ChapterModal'
 
@@ -109,5 +109,35 @@ describe('ChapterModal', () => {
     expect(container.querySelector('.chapter-loading--centered')).not.toBeNull()
     expect(container.querySelectorAll('.chapter-skeleton-card')).toHaveLength(12)
     expect(container.querySelector('.loading-spinner')).toBeNull()
+  })
+
+  it('shows confusable chapters in groups instead of words', async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        chapters: [
+          { id: 1, title: '音近词辨析 01', word_count: 120, group_count: 60 },
+          { id: 2, title: '音近词辨析 02', word_count: 120, group_count: 60 },
+        ],
+      }),
+    } as Response)
+
+    apiFetchMock.mockResolvedValue({ chapter_progress: {} })
+
+    render(
+      <ChapterModal
+        book={{ id: 'ielts_confusable_match', title: '雅思易混词辨析', word_count: 2026, group_count: 540 }}
+        progress={{ current_index: 0 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('2 章节 · 120 组')).toBeInTheDocument()
+    })
+
+    expect(screen.getAllByText('60 组')).toHaveLength(2)
+    expect(screen.queryByText('120 词')).toBeNull()
   })
 })

@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../../contexts'
 import AvatarUpload from '../../profile/avatar/AvatarUpload'
 import SettingsPanel from '../../settings/SettingsPanel'
 import Popover from '../../ui/Popover'
 import { Scrollbar } from '../../ui/Scrollbar'
+import { openGlobalWordSearch } from './globalWordSearchEvents'
 
 export interface User {
   username?: string
@@ -37,7 +38,6 @@ function Header({
   const [showSettings, setShowSettings] = useState(false)
   const [showAvatarUpload, setShowAvatarUpload] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
   const dayDropdownRef = useRef<HTMLDivElement>(null)
@@ -45,7 +45,7 @@ function Header({
   const modeNames: Record<PracticeMode, string> = {
     'smart': '智能模式',
     'listening': '听音选义',
-    'meaning': '汉译英',
+    'meaning': '释义拼词',
     'dictation': '听写模式',
     'radio': '随身听',
   }
@@ -53,7 +53,7 @@ function Header({
   const modeDescriptions: Record<PracticeMode, string> = {
     'smart': '根据水平自动调整',
     'listening': '听发音选中文释义',
-    'meaning': '看中文回想并输入英文',
+    'meaning': '看中文释义，拼英文单词',
     'dictation': '听发音拼写单词',
     'radio': '连续播放音频',
   }
@@ -85,14 +85,6 @@ function Header({
   const handleLogout = () => {
     onLogout()
     navigate('/login')
-  }
-
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      // TODO: Implement search
-      console.log('Search:', searchQuery)
-    }
   }
 
   return (
@@ -139,19 +131,18 @@ function Header({
         )}
 
         {/* Global Search */}
-        <div className="header-search-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              placeholder="单词查询"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-            />
-          </div>
+        <button
+          type="button"
+          className="header-btn header-search-shortcut"
+          title="单词搜索（Shift + Q）"
+          aria-label="打开全局单词搜索"
+          onClick={() => openGlobalWordSearch()}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+        </button>
 
         {/* Toolbar: settings, help, user */}
         <div className="header-toolbar">
@@ -305,7 +296,7 @@ function Header({
               <div className="help-modal-section">
                 <h3 className="help-modal-title">键盘快捷键</h3>
                 <div className="help-modal-list">
-                  {([['1 - 4', '选择答案选项'], ['5', '不知道（跳过）'], ['空格', '重新播放发音'], ['Esc', '退出练习']] as [string, string][]).map(([key, desc]) => (
+                  {([['Shift + Q', '打开单词搜索'], ['1 - 4', '选择答案选项'], ['5', '不知道（跳过）'], ['空格', '重新播放发音'], ['Esc', '退出练习']] as [string, string][]).map(([key, desc]) => (
                     <div key={key} className="help-modal-row">
                       <kbd className="help-modal-kbd">{key}</kbd>
                       <span className="help-modal-text">{desc}</span>

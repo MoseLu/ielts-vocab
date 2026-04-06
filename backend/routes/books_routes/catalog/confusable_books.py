@@ -26,6 +26,14 @@ CONFUSABLE_CUSTOM_BOOK_PREFIX = 'confusable_custom'
 CONFUSABLE_CUSTOM_CHAPTER_OFFSET = 1000
 CONFUSABLE_CUSTOM_MAX_GROUPS = 12
 CONFUSABLE_CUSTOM_MAX_WORDS_PER_GROUP = 8
+CONFUSABLE_LOOKUP_OVERRIDES = {
+    'strick': {
+        'word': 'strick',
+        'phonetic': '/strɪk/',
+        'pos': 'n.',
+        'definition': '麻束；梳理好的亚麻纤维束',
+    },
+}
 CONFUSABLE_LOOKUP_SOURCE_IDS = (
     'ielts_reading_premium',
     'ielts_listening_premium',
@@ -111,6 +119,19 @@ def _build_confusable_lookup() -> dict[str, dict]:
             existing = lookup.get(key)
             if existing is None or candidate['_score'] > existing['_score']:
                 lookup[key] = candidate
+
+    for key, override in CONFUSABLE_LOOKUP_OVERRIDES.items():
+        candidate = {
+            'word': (override.get('word') or '').strip() or key,
+            'phonetic': (override.get('phonetic') or '').strip(),
+            'pos': (override.get('pos') or '').strip(),
+            'definition': (override.get('definition') or '').strip(),
+        }
+        candidate['_score'] = _score_lookup_candidate(candidate, -1)
+
+        existing = lookup.get(key)
+        if existing is None or candidate['_score'] > existing['_score']:
+            lookup[key] = candidate
 
     _confusable_lookup_cache = lookup
     return lookup
@@ -230,6 +251,7 @@ def _list_confusable_custom_chapters(user_id: int | None) -> list[dict]:
             'id': chapter_id,
             'title': chapter.title,
             'word_count': int(chapter.word_count or len(chapter.words)),
+            'group_count': 1,
             'is_custom': True,
         })
 
@@ -287,6 +309,9 @@ def _merge_confusable_custom_chapters(chapters_data: dict, user_id: int | None) 
         'total_words': int(chapters_data.get('total_words') or 0) + sum(
             int(chapter.get('word_count') or 0) for chapter in custom_chapters
         ),
+        'total_groups': int(chapters_data.get('total_groups') or 0) + sum(
+            int(chapter.get('group_count') or 0) for chapter in custom_chapters
+        ),
         'chapters': [*(chapters_data.get('chapters') or []), *custom_chapters],
     }
     return merged
@@ -294,8 +319,11 @@ def _merge_confusable_custom_chapters(chapters_data: dict, user_id: int | None) 
 
 def _augment_book_for_user(book: dict, user_id: int | None) -> dict:
     book_data = dict(book)
-    if _is_confusable_match_book(book_data.get('id')) and user_id:
-        book_data['word_count'] = int(book_data.get('word_count') or 0) + _get_confusable_custom_word_count(user_id)
+    if _is_confusable_match_book(book_data.get('id')):
+        if user_id:
+            book_data['word_count'] = int(book_data.get('word_count') or 0) + _get_confusable_custom_word_count(user_id)
+        book_data['chapter_count'] = _get_book_chapter_count(book_data.get('id'), user_id=user_id)
+        book_data['group_count'] = _get_book_group_count(book_data.get('id'), user_id=user_id)
     return book_data
 
 # Vocabulary books configuration

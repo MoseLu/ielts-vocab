@@ -94,7 +94,7 @@ export default function HomePage() {
       addBook(book.id)
     }
     setSelectedBook(book)
-    setShowChapterModal(Boolean(book.is_paid || book.practice_mode === 'match'))
+    setShowChapterModal(Boolean(book.is_paid || book.practice_mode === 'match' || book.is_auto_favorites))
   }
 
   const handleStartStudy = (plan: StudyPlan | null) => {

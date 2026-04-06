@@ -8,6 +8,7 @@ import ErrorsPage from '../components/errors/page/ErrorsPage'
 import HomePage from '../components/home/page/HomePage'
 import LearningJournalPage from '../components/journal/page/LearningJournalPage'
 import BottomNav from '../components/layout/navigation/BottomNav'
+import GlobalWordSearch from '../components/layout/navigation/GlobalWordSearch'
 import Header, { type PracticeMode } from '../components/layout/navigation/Header'
 import LeftSidebar from '../components/layout/navigation/LeftSidebar'
 import NotFoundPage from '../components/not-found/page/NotFoundPage'
@@ -57,7 +58,7 @@ export function AppRoutes({
   onDayChange,
 }: AppRoutesProps) {
   const { user, logout, isAdmin, isLoading } = useAuth()
-  const { toast } = useToast()
+  const { toast, showToast } = useToast()
   const location = useLocation()
   const isPractice = location.pathname.startsWith('/practice')
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
@@ -139,11 +140,12 @@ export function AppRoutes({
                 element={(
                   <AuthenticatedRoute isAuthenticated={Boolean(user)}>
                     <PracticePage
+                      user={user ?? undefined}
                       currentDay={currentDay ?? undefined}
                       mode={mode as PracticeMode}
                       onModeChange={nextMode => onModeChange(nextMode)}
                       onDayChange={onDayChange}
-                      showToast={() => {}}
+                      showToast={showToast}
                     />
                   </AuthenticatedRoute>
                 )}
@@ -213,6 +215,7 @@ export function AppRoutes({
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} />}
+      {user && !isSpecialPage && <GlobalWordSearch />}
       {user && !isPractice && !isSpecialPage && <BottomNav />}
       {user && !isSpecialPage && <AIChatPanel />}
     </div>

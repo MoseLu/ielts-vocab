@@ -1,3 +1,5 @@
+from models import WordCatalogEntry
+
 CSV_CHAPTER_GROUPS = {
     # ── 雅思综合词汇5000+ ──────────────────────────────────────────────────
     'ielts_comprehensive': [
@@ -138,9 +140,32 @@ _csv_chapter_cache = {}
 _json_chapter_cache = {}
 # Cache for normalized word lookup used by custom confusable groups.
 _confusable_lookup_cache = None
+# Cache for catalog-backed examples: {word_lower: [examples]}
+_catalog_examples_cache = None
 # Cache for vocabulary examples: {word_lower: [examples]}
 _examples_cache = None
 _CORRUPTED_CHAPTER_TITLE_RE = re.compile(r'^[?？\uFFFD]\s*(\d+)\s*[?？\uFFFD]\s+(\d{4}-\d{4})$')
+
+
+def _load_catalog_examples():
+    """Load examples from the unified word catalog once per process."""
+    global _catalog_examples_cache
+    if _catalog_examples_cache is not None:
+        return _catalog_examples_cache
+
+    loaded_examples = {}
+    try:
+        rows = WordCatalogEntry.query.all()
+        for row in rows:
+            normalized_word = str(row.normalized_word or '').strip().lower()
+            examples = row.get_examples()
+            if normalized_word and examples:
+                loaded_examples[normalized_word] = examples
+    except Exception:
+        return {}
+
+    _catalog_examples_cache = loaded_examples
+    return _catalog_examples_cache
 
 
 def _load_examples():
@@ -167,11 +192,12 @@ def _load_examples():
 
 
 def _merge_examples(word_entry):
-    """Add examples to a word entry if available. Returns a new dict (non-mutating)."""
+    """Add examples to a word entry, preferring unified catalog content."""
     word_text = word_entry.get('word', '').strip()
     if not word_text:
         return word_entry
-    examples = _load_examples().get(word_text.lower())
+    normalized_word = word_text.lower()
+    examples = _load_catalog_examples().get(normalized_word) or _load_examples().get(normalized_word)
     if examples:
         return {**word_entry, 'examples': examples}
     return word_entry
@@ -344,12 +370,13 @@ def _build_json_chapters(book_id):
 
 def _normalize_csv_word(row):
     """Convert a CSV row dict to a normalized word dict."""
-    return {
+    normalized = {
         'word': row.get('word', '').strip(),
         'phonetic': row.get('phonetic', ''),
         'pos': row.get('pos', 'n.'),
         'definition': row.get('translation', '') or row.get('definition', ''),
     }
+    return _copy_optional_word_fields(row, normalized)
 
 
 def _copy_optional_word_fields(source_word, target_word):
@@ -357,4 +384,7 @@ def _copy_optional_word_fields(source_word, target_word):
     group_key = source_word.get('group_key')
     if isinstance(group_key, str) and group_key.strip():
         target_word['group_key'] = group_key.strip()
+    headword = source_word.get('headword')
+    if isinstance(headword, str) and headword.strip():
+        target_word['headword'] = headword.strip()
     return target_word

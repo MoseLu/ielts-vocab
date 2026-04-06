@@ -75,6 +75,13 @@ def add_my_book(current_user):
     if not book_id:
         return jsonify({'error': '缺少 book_id'}), 400
 
+    if _is_favorites_book(book_id):
+        if _favorite_word_count(current_user.id) <= 0:
+            return jsonify({'error': '收藏词书由系统自动创建'}), 400
+        _ensure_favorites_book_membership(current_user.id)
+        db.session.commit()
+        return jsonify({'book_id': book_id, 'auto_managed': True}), 200
+
     existing = UserAddedBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
     if existing:
         return jsonify({'message': '已在词书中'}), 200
@@ -89,11 +96,92 @@ def add_my_book(current_user):
 @token_required
 def remove_my_book(current_user, book_id):
     """Remove a book from the user's list."""
+    if _is_favorites_book(book_id) and _favorite_word_count(current_user.id) > 0:
+        return jsonify({'message': '收藏词书由系统自动管理'}), 200
+
     record = UserAddedBook.query.filter_by(user_id=current_user.id, book_id=book_id).first()
     if record:
         db.session.delete(record)
         db.session.commit()
     return jsonify({'message': '已移除'}), 200
+
+
+@books_bp.route(f'/{CONFUSABLE_MATCH_BOOK_ID}/custom-chapters/<int:chapter_id>', methods=['PUT'])
+@token_required
+def update_confusable_custom_chapter(current_user, chapter_id):
+    """Update words inside an existing custom confusable group."""
+    data = request.get_json() or {}
+    custom_chapter = _get_confusable_custom_chapter(current_user.id, chapter_id)
+    if not custom_chapter:
+        return jsonify({'error': '未找到可编辑的自定义易混组'}), 404
+
+    try:
+        groups = _normalize_confusable_custom_groups([data.get('words')])
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    resolved_groups, missing_words = _resolve_confusable_group_words(groups)
+    if missing_words:
+        missing_summary = '、'.join(missing_words[:12])
+        if len(missing_words) > 12:
+            missing_summary += ' 等'
+        return jsonify({
+            'error': f'以下单词在现有词库中未找到完整音标或中文释义：{missing_summary}',
+            'missing_words': missing_words,
+        }), 400
+    if not resolved_groups:
+        return jsonify({'error': '请至少保留 2 个有效单词'}), 400
+
+    resolved_words = resolved_groups[0]
+    previous_word_count = int(custom_chapter.word_count or len(custom_chapter.words))
+    custom_chapter.title = _build_confusable_custom_chapter_title(
+        [word['word'] for word in resolved_words],
+        int(custom_chapter.sort_order or 0) + 1,
+    )
+    custom_chapter.word_count = len(resolved_words)
+
+    for word in list(custom_chapter.words):
+        db.session.delete(word)
+    db.session.flush()
+
+    for word in resolved_words:
+        db.session.add(CustomBookWord(
+            chapter_id=str(chapter_id),
+            word=word['word'],
+            phonetic=word['phonetic'],
+            pos=word['pos'],
+            definition=word['definition'],
+        ))
+
+    if custom_chapter.book:
+        custom_chapter.book.word_count = max(
+            0,
+            int(custom_chapter.book.word_count or 0) - previous_word_count + len(resolved_words),
+        )
+
+    UserChapterProgress.query.filter_by(
+        user_id=current_user.id,
+        book_id=CONFUSABLE_MATCH_BOOK_ID,
+        chapter_id=chapter_id,
+    ).delete()
+    UserChapterModeProgress.query.filter_by(
+        user_id=current_user.id,
+        book_id=CONFUSABLE_MATCH_BOOK_ID,
+        chapter_id=chapter_id,
+    ).delete()
+
+    db.session.commit()
+    refreshed_chapter = _get_confusable_custom_chapter(current_user.id, chapter_id)
+    return jsonify({
+        'chapter': {
+            'id': chapter_id,
+            'title': refreshed_chapter.title,
+            'word_count': int(refreshed_chapter.word_count or len(refreshed_chapter.words)),
+            'group_count': 1,
+            'is_custom': True,
+        },
+        'words': _serialize_confusable_custom_words(refreshed_chapter),
+    }), 200
 
 
 # ── GET /api/books/examples ───────────────────────────────────────────────────

@@ -154,16 +154,18 @@ export function MyBookCard({
       className="study-book-card study-book-card-main"
       onClick={() => onSelect(card.book)}
     >
-      <button
-        className="study-book-remove"
-        onClick={(event) => onRemove(card.book.id, event)}
-        title="移除"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
+      {!card.book.is_auto_favorites && (
+        <button
+          className="study-book-remove"
+          onClick={(event) => onRemove(card.book.id, event)}
+          title="移除"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      )}
 
       <div className="study-book-icon-row">
         <div className="study-book-icon study-book-icon--accent">
@@ -177,6 +179,7 @@ export function MyBookCard({
           <h3 className="study-book-title" title={displayTitle}>{displayTitle}</h3>
           <div className="study-book-badges">
             {card.book.is_paid && <span className="study-book-badge">付费</span>}
+            {card.book.is_auto_favorites && <span className="study-book-badge">系统</span>}
             {card.isActive && <span className="study-book-state study-book-state--active">进行中</span>}
             {card.isComplete && <span className="study-book-state study-book-state--complete">已完成</span>}
           </div>
@@ -184,7 +187,7 @@ export function MyBookCard({
       </div>
 
       <div className="study-book-progress-text">
-        {card.currentIndex} / {card.book.word_count} 词
+        {card.displayCurrentCount} / {card.displayTotalCount} {card.displayUnit}
       </div>
       <div
         className="study-book-progress-bar"
@@ -204,7 +207,7 @@ export function MyBookCard({
         {card.isComplete ? (
           <span className="study-book-status-complete">主线已完成</span>
         ) : (
-          <span>剩余 {card.remainingWords} 词</span>
+          <span>剩余 {card.displayRemainingCount} {card.displayUnit}</span>
         )}
       </div>
     </div>

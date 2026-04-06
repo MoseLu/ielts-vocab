@@ -6,12 +6,15 @@ export const BookSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   word_count: z.number().int().nonnegative(),
+  chapter_count: z.number().int().nonnegative().optional(),
+  group_count: z.number().int().nonnegative().optional(),
   category: z.string().optional(),
   level: z.string().optional(),
   icon: z.string().optional(),
   color: z.string().optional(),
   is_paid: z.boolean().optional(),
   has_chapters: z.boolean().optional(),
+  is_auto_favorites: z.boolean().optional(),
   study_type: z.string().optional(),
   file: z.string().optional(),
   practice_mode: z.string().optional(),
@@ -22,6 +25,7 @@ export const ChapterSchema = z.object({
   id: z.union([z.string(), z.number()]),
   title: z.string().min(1),
   word_count: z.number().int().nonnegative().optional(),
+  group_count: z.number().int().nonnegative().optional(),
   is_custom: z.boolean().optional(),
 })
 export type Chapter = z.infer<typeof ChapterSchema>

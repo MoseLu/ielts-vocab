@@ -5,6 +5,7 @@ load_split_module_files(
     __file__,
     (
         'model_definitions/core_models.py',
+        'model_definitions/word_detail_models.py',
         'model_definitions/study_models.py',
         'model_definitions/note_models.py',
     ),

@@ -1,5 +1,9 @@
 import type { LearningAlltime, LearnerProfile } from '../../../features/vocabulary/hooks'
-import { WRONG_WORD_PENDING_REVIEW_TARGET } from '../../../features/vocabulary/wrongWordsStore'
+import {
+  getWrongWordDimensionLabel,
+  WRONG_WORD_DIMENSION_LABELS,
+  WRONG_WORD_PENDING_REVIEW_TARGET,
+} from '../../../features/vocabulary/wrongWordsStore'
 import { QUICK_MEMORY_REVIEW_INTERVALS_DAYS } from '../../../lib/quickMemory'
 import type { Book, BookProgress } from '../../../types'
 
@@ -15,6 +19,10 @@ export interface StudyBookCard {
   currentIndex: number
   progressPercent: number
   remainingWords: number
+  displayCurrentCount: number
+  displayTotalCount: number
+  displayRemainingCount: number
+  displayUnit: '词' | '组'
   isActive: boolean
   isComplete: boolean
 }
@@ -82,14 +90,25 @@ export function buildStudyBookCards(
       const progress = progressMap[book.id]
       const currentIndex = Math.max(0, Number(progress?.current_index) || 0)
       const safeWordCount = Math.max(1, Number(book.word_count) || 1)
-      const progressPercent = Math.min(100, Math.round((currentIndex / safeWordCount) * 100))
+      const progressRatio = Math.min(1, currentIndex / safeWordCount)
+      const progressPercent = Math.min(100, Math.round(progressRatio * 100))
       const remainingWords = Math.max(0, safeWordCount - currentIndex)
+      const isConfusable = String(book.id) === 'ielts_confusable_match' && Number(book.group_count) > 0
+      const displayTotalCount = isConfusable ? Number(book.group_count) || 0 : safeWordCount
+      const displayCurrentCount = isConfusable
+        ? Math.min(displayTotalCount, Math.max(currentIndex > 0 ? 1 : 0, Math.round(progressRatio * displayTotalCount)))
+        : currentIndex
+      const displayRemainingCount = Math.max(0, displayTotalCount - displayCurrentCount)
 
       return {
         book,
         currentIndex,
         progressPercent,
         remainingWords,
+        displayCurrentCount,
+        displayTotalCount,
+        displayRemainingCount,
+        displayUnit: isConfusable ? '组' : '词',
         isActive: currentIndex > 0 && progressPercent < 100,
         isComplete: progressPercent >= 100,
       }
@@ -187,6 +206,8 @@ export function buildStudyGuidanceSection({
   const focusBookProgress = typeof focusBookRemainingWords === 'number'
     ? (focusBookRemainingWords > 0 ? `还剩 ${focusBookRemainingWords} 词` : '主线已清空')
     : '主线进度看词书卡片'
+  const weakestDimensionLabel = getWrongWordDimensionLabel(weakestDimension?.dimension, weakestDimension?.label) ?? '当前最薄弱的一项'
+  const allWrongDimensionLabels = Object.values(WRONG_WORD_DIMENSION_LABELS).join('、')
   return {
     cards: [
       {
@@ -195,18 +216,18 @@ export function buildStudyGuidanceSection({
         title: '错词怎么减少',
         badge: errorTask?.status === 'completed'
           ? '今日待清已空'
-          : (weakestDimension ? `${weakestDimension.label} 优先处理` : `连续 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次才会消掉`),
+          : (weakestDimension ? `${weakestDimensionLabel} 优先处理` : `连续 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次才会消掉`),
         description: `错词不会直接删除。哪一项能力答错了，就要把这一项连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次，它才会从待清里消掉。`,
         facts: [
           `当前：${errorTask?.badge ?? '看待清范围'}`,
-          `优先：${weakestDimension?.label ?? '当前最薄弱的一项'}`,
+          `优先：${weakestDimensionLabel}`,
           `门槛：连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次`,
         ],
         sections: [
           {
             label: '怎么记入',
             items: [
-              '认识、会想、听得到、会拼写这四项会分开记录，不会互相抵消。',
+              `${allWrongDimensionLabels} 这四类问题会分开记录，不会互相抵消。`,
               `只要某一项还没连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次，这一项就还算“没清掉”。`,
             ],
           },
@@ -214,7 +235,7 @@ export function buildStudyGuidanceSection({
             label: '怎么变少',
             items: [
               weakestDimension
-                ? `你现在应该先处理 ${weakestDimension.label}，因为这是你最近最容易丢分的一项。`
+                ? `你现在应该先处理 ${weakestDimensionLabel}，因为这是你最近最容易丢分的一项。`
                 : '同一个词如果同时卡在几项能力上，就要一项一项地清。',
               `同一项连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次后，只会消掉这一项错误，不会顺带把其他项一起清掉。`,
             ],
@@ -262,7 +283,7 @@ export function buildStudyGuidanceSection({
           {
             label: '还要注意',
             items: [
-              '艾宾浩斯主要检查你还能不能认出这个词、回想出意思，不会替你检查听音、会想和拼写。',
+              '艾宾浩斯主要检查你还能不能认出这个词、回想出意思，不会替你检查中文想英文、听音辨义和听音拼写。',
               '所以“今日复习完成”只代表今天这一步做完了，不代表这个词已经没有漏洞。',
             ],
           },
@@ -331,7 +352,7 @@ export function buildStudyGuidanceSection({
           {
             label: '现在还缺什么',
             items: [
-              '现在还没有一场专门的“总检查”，去把认识、会想、听得到、会拼写这四项一起复核一遍。',
+              `现在还没有一场专门的“总检查”，去把${allWrongDimensionLabels}这四类问题一起复核一遍。`,
               '所以你现在看到的“今日完成”“章节完成”“模式完成”，都只能理解为阶段过关。',
             ],
           },

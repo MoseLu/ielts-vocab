@@ -11,7 +11,7 @@ import ConfusableCustomGroupsModal, {
 const MODE_META: Record<string, { label: string; title: string }> = {
   quickmemory: { label: '记', title: '速记模式' },
   listening: { label: '听', title: '听音选义' },
-  meaning: { label: '想', title: '汉译英' },
+  meaning: { label: '想', title: '释义拼词' },
   dictation: { label: '默', title: '听写模式' },
   smart: { label: '智', title: '智能模式' },
   match: { label: '连', title: '易混消消乐' },
@@ -22,6 +22,8 @@ interface Book {
   title: string
   description?: string
   word_count: number
+  chapter_count?: number
+  group_count?: number
   practice_mode?: string
 }
 
@@ -29,6 +31,7 @@ export interface Chapter {
   id: string | number
   title: string
   word_count?: number
+  group_count?: number
   is_custom?: boolean
 }
 
@@ -63,6 +66,7 @@ interface SectionGroup {
   label: string
   isMultiPart: boolean
   wordCount: number
+  groupCount: number
   chapters: Chapter[]
 }
 
@@ -72,7 +76,7 @@ interface ChapterModalSkeletonProps {
 
 type RenderUnit =
   | { kind: 'flat'; chapters: Chapter[] }
-  | { kind: 'section'; label: string; wordCount: number; chapters: Chapter[] }
+  | { kind: 'section'; label: string; wordCount: number; groupCount: number; chapters: Chapter[] }
 
 function findPartSeparatorIndex(title: string): number {
   const match = title.match(/\s+[·•]\s+Part\s+/i)
@@ -89,7 +93,13 @@ function groupBySection(chapters: Chapter[]): SectionGroup[] {
     const label = separatorIndex !== -1 ? chapter.title.slice(0, separatorIndex).trim() : chapter.title
 
     if (!map.has(label)) {
-      const group: SectionGroup = { label, isMultiPart: false, wordCount: 0, chapters: [] }
+      const group: SectionGroup = {
+        label,
+        isMultiPart: false,
+        wordCount: 0,
+        groupCount: 0,
+        chapters: [],
+      }
       map.set(label, group)
       groups.push(group)
     }
@@ -97,6 +107,7 @@ function groupBySection(chapters: Chapter[]): SectionGroup[] {
     const group = map.get(label)!
     group.chapters.push(chapter)
     group.wordCount += chapter.word_count ?? 0
+    group.groupCount += chapter.group_count ?? 0
   }
 
   for (const group of groups) {
@@ -125,6 +136,7 @@ function buildRenderUnits(groups: SectionGroup[]): RenderUnit[] {
       kind: 'section',
       label: group.label,
       wordCount: group.wordCount,
+      groupCount: group.groupCount,
       chapters: group.chapters,
     })
   }
@@ -286,6 +298,8 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
       : chapter.word_count
         ? Math.round(((progressRecord?.words_learned ?? 0) / chapter.word_count) * 100)
         : 0
+    const displayCount = isConfusableBook ? chapter.group_count ?? 0 : chapter.word_count ?? 0
+    const displayUnit = isConfusableBook ? '组' : '词'
 
     const getAccuracyClass = (accuracy: number) => (
       accuracy >= 80 ? 'mode-badge-high' : accuracy >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
@@ -317,7 +331,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         )}
 
         <div className="chapter-card-footer">
-          <span className="chapter-card-count">{chapter.word_count ?? 0} 词</span>
+          <span className="chapter-card-count">{displayCount} {displayUnit}</span>
           {isCompleted ? (
             <span className="chapter-status-done">已完成 {progressRecord?.accuracy ?? 0}%</span>
           ) : hasStarted ? (
@@ -338,6 +352,10 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   }
 
   const totalWords = chapters.reduce((sum, chapter) => sum + (chapter.word_count ?? 0), 0)
+  const totalGroups = chapters.reduce((sum, chapter) => sum + (chapter.group_count ?? 0), 0)
+  const subtitle = isConfusableBook
+    ? `${chapters.length} 章节 · ${totalGroups} 组`
+    : `${chapters.length} 章节 · ${totalWords} 词`
 
   return (
     <div className="chapter-modal-overlay" onClick={(event) => event.target === event.currentTarget && onClose()}>
@@ -345,7 +363,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         <div className="chapter-modal-header">
           <div className="chapter-modal-info">
             <h2 className="chapter-modal-title">{book.title}</h2>
-            <p className="chapter-modal-subtitle">{chapters.length} 章节 · {totalWords} 词</p>
+            <p className="chapter-modal-subtitle">{subtitle}</p>
           </div>
           <div className="chapter-modal-actions">
             {isConfusableBook && (
@@ -388,7 +406,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
                       <div className="chapter-section-label">
                         <span className="chapter-section-name">{unit.label}</span>
                         <span className="chapter-section-meta">
-                          {unit.chapters.length} 节 · {unit.wordCount} 词
+                          {unit.chapters.length} 节 · {isConfusableBook ? `${unit.groupCount} 组` : `${unit.wordCount} 词`}
                         </span>
                       </div>
                       <div className="chapter-grid">

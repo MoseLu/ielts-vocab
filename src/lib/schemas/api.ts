@@ -28,6 +28,123 @@ export const WordsListResponseSchema = z.object({
   total: z.number().int().nonnegative(),
 })
 
+const WordSearchExampleSchema = z.object({
+  en: z.string().catch(''),
+  zh: z.string().catch(''),
+})
+
+const WordSearchConfusableSchema = z.object({
+  word: z.string().min(1),
+  phonetic: z.string().catch(''),
+  pos: z.string().catch(''),
+  definition: z.string().catch(''),
+  group_key: z.string().optional(),
+})
+
+export const WordSearchResultSchema = WordSchema.extend({
+  phonetic: z.string().catch(''),
+  pos: z.string().catch(''),
+  definition: z.string().catch(''),
+  listening_confusables: z.array(WordSearchConfusableSchema).optional(),
+  examples: z.array(WordSearchExampleSchema).optional(),
+  book_id: z.string(),
+  book_title: z.string(),
+  match_type: z.enum(['exact', 'prefix', 'contains', 'definition', 'example']),
+})
+export type WordSearchResult = z.infer<typeof WordSearchResultSchema>
+
+export const WordSearchResponseSchema = z.object({
+  query: z.string(),
+  total: z.number().int().nonnegative(),
+  results: z.array(WordSearchResultSchema),
+})
+export type WordSearchResponse = z.infer<typeof WordSearchResponseSchema>
+
+export const WordRootSegmentSchema = z.object({
+  kind: z.enum(['前缀', '词根', '后缀']),
+  text: z.string(),
+  meaning: z.string(),
+})
+export type WordRootSegment = z.infer<typeof WordRootSegmentSchema>
+
+export const WordRootDetailSchema = z.object({
+  word: z.string(),
+  normalized_word: z.string(),
+  segments: z.array(WordRootSegmentSchema),
+  summary: z.string(),
+  source: z.string().optional(),
+  updated_at: z.string().nullable().optional(),
+})
+export type WordRootDetail = z.infer<typeof WordRootDetailSchema>
+
+export const WordEnglishMeaningEntrySchema = z.object({
+  pos: z.string().catch(''),
+  definition: z.string().catch(''),
+})
+export type WordEnglishMeaningEntry = z.infer<typeof WordEnglishMeaningEntrySchema>
+
+export const WordEnglishDetailSchema = z.object({
+  word: z.string(),
+  normalized_word: z.string(),
+  entries: z.array(WordEnglishMeaningEntrySchema),
+  source: z.string().optional(),
+  updated_at: z.string().nullable().optional(),
+})
+export type WordEnglishDetail = z.infer<typeof WordEnglishDetailSchema>
+
+export const WordDerivativeDetailSchema = z.object({
+  word: z.string(),
+  phonetic: z.string(),
+  pos: z.string(),
+  definition: z.string(),
+  relation_type: z.string().optional(),
+  source: z.string().optional(),
+  sort_order: z.number().int().optional(),
+})
+export type WordDerivativeDetail = z.infer<typeof WordDerivativeDetailSchema>
+
+export const WordDetailExampleSchema = z.object({
+  en: z.string().catch(''),
+  zh: z.string().catch(''),
+  source: z.string().optional(),
+  sort_order: z.number().int().optional(),
+})
+export type WordDetailExample = z.infer<typeof WordDetailExampleSchema>
+
+export const WordDetailBookRefSchema = z.object({
+  book_id: z.string(),
+  book_title: z.string().catch(''),
+  chapter_id: z.string().catch(''),
+  chapter_title: z.string().catch(''),
+})
+export type WordDetailBookRef = z.infer<typeof WordDetailBookRefSchema>
+
+export const WordDetailNoteSchema = z.object({
+  word: z.string(),
+  content: z.string(),
+  updated_at: z.string().nullable().optional(),
+})
+export type WordDetailNote = z.infer<typeof WordDetailNoteSchema>
+
+export const WordDetailResponseSchema = z.object({
+  word: z.string(),
+  phonetic: z.string().catch(''),
+  pos: z.string().catch(''),
+  definition: z.string().catch(''),
+  root: WordRootDetailSchema,
+  english: WordEnglishDetailSchema,
+  examples: z.array(WordDetailExampleSchema),
+  derivatives: z.array(WordDerivativeDetailSchema),
+  books: z.array(WordDetailBookRefSchema).optional(),
+  note: WordDetailNoteSchema,
+})
+export type WordDetailResponse = z.infer<typeof WordDetailResponseSchema>
+
+export const SaveWordDetailNoteResponseSchema = z.object({
+  note: WordDetailNoteSchema,
+})
+export type SaveWordDetailNoteResponse = z.infer<typeof SaveWordDetailNoteResponseSchema>
+
 export const ProgressResponseSchema = z.object({
   progress: z.union([BookProgressSchema, ProgressMapSchema]),
 })

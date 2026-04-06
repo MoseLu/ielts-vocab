@@ -68,12 +68,15 @@ export interface Book {
   title: string
   description?: string
   word_count: number
+  chapter_count?: number
+  group_count?: number
   category?: string
   level?: string
   icon?: string
   color?: string
   is_paid?: boolean
   has_chapters?: boolean
+  is_auto_favorites?: boolean
   study_type?: string
   file?: string
   practice_mode?: string
@@ -84,6 +87,7 @@ export interface Chapter {
   id: number | string
   title: string
   word_count?: number
+  group_count?: number
   is_custom?: boolean
 }
 
