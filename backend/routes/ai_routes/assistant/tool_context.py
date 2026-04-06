@@ -231,7 +231,7 @@ def _build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     if recent_sessions:
         parts.append("\n【最近练习记录（最新10条）】")
         mode_zh = {
-            'smart': '智能', 'listening': '听音选义', 'meaning': '汉译英',
+            'smart': '智能', 'listening': '听音选义', 'meaning': '释义拼词',
             'dictation': '听写', 'radio': '随身听', 'quickmemory': '速记',
         }
         for s in recent_sessions:

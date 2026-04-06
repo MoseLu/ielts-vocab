@@ -3,7 +3,7 @@ def _build_context_msg(ctx: dict) -> str:
     parts = []
     dimension_labels = {
         'listening': '听音辨义',
-        'meaning': '汉译英（会想）',
+        'meaning': '释义拼词（会想）',
         'dictation': '拼写默写',
     }
 
@@ -108,7 +108,7 @@ def _build_context_msg(ctx: dict) -> str:
         mode_labels = {
             'smart': '智能练习',
             'listening': '听音选义',
-            'meaning': '汉译英',
+            'meaning': '释义拼词',
             'dictation': '听写',
             'radio': '随身听',
             'quickmemory': '速记',

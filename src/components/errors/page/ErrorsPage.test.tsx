@@ -60,7 +60,7 @@ describe('ErrorsPage', () => {
     localStorage.clear()
   })
 
-  it('explains that pending wrong words clear after four consecutive passes in the same dimension', () => {
+  it('explains the difference between pending and accumulated wrong words', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
@@ -68,19 +68,23 @@ describe('ErrorsPage', () => {
     )
 
     expect(
-      screen.getByText(/同一维度连续答对 4 次后，从未过错词移出/)
+      screen.getByText(/一个词只要答错过，就会进入“累计错词”/)
     ).toBeInTheDocument()
   })
 
-  it('clarifies that dimension counts can overlap on the same word', () => {
+  it('uses action-oriented labels for problem-type filters and explains overlap clearly', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
       </MemoryRouter>,
     )
 
+    expect(screen.getByRole('tab', { name: /看词认义/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /中文想英文/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /听音辨义/ })).toBeInTheDocument()
+
     expect(
-      screen.getByText(/按维度筛选时会重叠统计：当前 3 个未过错词命中了 6 次维度，其中 3 个词同时出现在多个维度里，所以这些数字不是拆分汇总。/)
+      screen.getByText(/一个词可能同时属于多类问题，所以这里的标签数量会重复计算。当前 3 个待清错词对应了 6 个问题标签，其中 3 个词同时落在多个问题类型里，这些数字不是互斥拆分。/)
     ).toBeInTheDocument()
   })
 

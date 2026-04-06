@@ -8,7 +8,7 @@ from services.local_time import resolve_local_day_window
 MODE_LABELS = {
     'smart': '智能练习',
     'listening': '听音选义',
-    'meaning': '汉译英',
+    'meaning': '释义拼词',
     'dictation': '听写',
     'speaking': '口语',
     'radio': '随身听',

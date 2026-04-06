@@ -289,7 +289,7 @@ def test_learner_profile_contract_matches_summary_modes_and_activity_counts(clie
         'today_sessions': 2,
         'streak_days': 14,
         'weakest_mode': 'meaning',
-        'weakest_mode_label': '汉译英',
+        'weakest_mode_label': '释义拼词',
         'weakest_mode_accuracy': 50,
         'due_reviews': 2,
         'trend_direction': 'improving',

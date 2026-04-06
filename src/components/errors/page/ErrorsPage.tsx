@@ -11,10 +11,11 @@ import {
   type WrongWordDimension,
   WRONG_WORD_DIMENSIONS,
   WRONG_WORD_DIMENSION_LABELS,
+  WRONG_WORD_DIMENSION_TITLES,
   WRONG_WORD_PENDING_REVIEW_TARGET,
+  WRONG_WORD_SCOPE_LABELS,
   getWrongWordActiveCount,
   getWrongWordDimensionHistoryWrong,
-  getWrongWordDimensionProgress,
   hasWrongWordHistory,
   hasWrongWordPending,
   isWrongWordPendingInDimension,
@@ -22,6 +23,7 @@ import {
   writeWrongWordsReviewSelectionToStorage,
 } from '../../../features/vocabulary/wrongWordsStore'
 import {
+  describeWrongWordDimension,
   dedupeWrongWordKeys,
   getScopedWrongWordDimensions,
   isSameWrongWordKeyList,
@@ -33,18 +35,6 @@ import { EmptyState, SegmentedControl, UnderlineTabs } from '../../ui'
 type ActiveTab = 'words' | 'real'
 type DimFilter = 'all' | WrongWordDimension
 type WrongCountRange = 'all' | '0-5' | '6-10' | '11-20' | '20+'
-
-const DIM_SHORT_LABEL: Record<WrongWordDimension, string> = {
-  recognition: '认识',
-  meaning: '会想',
-  listening: '听得到',
-  dictation: '会拼写',
-}
-
-const SCOPE_LABELS: Record<WrongWordCollectionScope, string> = {
-  pending: '未过错词',
-  history: '历史错词',
-}
 
 const WRONG_COUNT_RANGE_OPTIONS: { value: WrongCountRange; label: string }[] = [
   { value: 'all', label: '全部' },
@@ -287,13 +277,13 @@ export default function ErrorsPage() {
               </svg>
             )}
             title="暂无错词"
-            description='答错后的单词会同时进入历史错词和未过错词，后续通过才会从未过错词移出'
+            description='答错后的单词会进入累计错词；相关问题类型没清掉前，也会继续留在待清错词里。'
             action={<button className="errors-go-practice" onClick={() => navigate('/plan')}>去练习 →</button>}
           />
         ) : (
           <div className="errors-content-scroll">
             <div className="errors-review-rule">
-              历史错词只增不减；未过错词会按维度定向移除。当前规则是同一维度连续答对 {WRONG_WORD_PENDING_REVIEW_TARGET} 次后，从未过错词移出，但仍保留在历史错词里。
+              一个词只要答错过，就会进入“累计错词”。如果某一类问题还没连续答对 {WRONG_WORD_PENDING_REVIEW_TARGET} 次，它也会继续留在“待清错词”里，方便你按问题类型集中清理。
             </div>
 
             <SegmentedControl
@@ -302,8 +292,8 @@ export default function ErrorsPage() {
               value={scope}
               onChange={value => setScope(value as WrongWordCollectionScope)}
               options={[
-                { value: 'pending', label: SCOPE_LABELS.pending, badge: pendingWords.length > 0 ? pendingWords.length : undefined },
-                { value: 'history', label: SCOPE_LABELS.history, badge: historyWords.length > 0 ? historyWords.length : undefined },
+                { value: 'pending', label: WRONG_WORD_SCOPE_LABELS.pending, badge: pendingWords.length > 0 ? pendingWords.length : undefined },
+                { value: 'history', label: WRONG_WORD_SCOPE_LABELS.history, badge: historyWords.length > 0 ? historyWords.length : undefined },
               ]}
             />
 
@@ -331,7 +321,7 @@ export default function ErrorsPage() {
               </label>
 
               <label className="errors-filter-field errors-filter-field--compact">
-                <span className="errors-filter-label">{scope === 'pending' ? '未过权重' : '历史错次'}</span>
+                <span className="errors-filter-label">{scope === 'pending' ? '待清错次' : '累计错次'}</span>
                 <select
                   aria-label="错次区间"
                   className="errors-filter-select"
@@ -363,7 +353,7 @@ export default function ErrorsPage() {
 
             {hasActiveFilters && (
               <div className="errors-filter-summary">
-                当前筛选命中 {filteredWords.length} 个{scope === 'pending' ? '未过错词' : '历史错词'}
+                当前筛选命中 {filteredWords.length} 个{scope === 'pending' ? '待清错词' : '累计错词'}
               </div>
             )}
 
@@ -375,11 +365,11 @@ export default function ErrorsPage() {
 
             {scopeWords.length > 0 && (
               <div className="errors-dim-summary" role="note">
-                按维度筛选时会重叠统计：当前 {scopeWords.length} 个{SCOPE_LABELS[scope]}命中了 {dimStats.hitCount} 次维度
+                一个词可能同时属于多类问题，所以这里的标签数量会重复计算。当前 {scopeWords.length} 个{WRONG_WORD_SCOPE_LABELS[scope]}对应了 {dimStats.hitCount} 个问题标签
                 {dimStats.overlappingWordCount > 0
-                  ? `，其中 ${dimStats.overlappingWordCount} 个词同时出现在多个维度里`
+                  ? `，其中 ${dimStats.overlappingWordCount} 个词同时落在多个问题类型里`
                   : ''}
-                ，所以这些数字不是拆分汇总。
+                ，这些数字不是互斥拆分。
               </div>
             )}
 
@@ -393,9 +383,10 @@ export default function ErrorsPage() {
                   { value: 'all', label: '全部', badge: scopeWords.length },
                   ...WRONG_WORD_DIMENSIONS.map(dimension => ({
                     value: dimension,
-                    label: DIM_SHORT_LABEL[dimension],
+                    label: WRONG_WORD_DIMENSION_LABELS[dimension],
                     badge: dimCounts[dimension] > 0 ? dimCounts[dimension] : undefined,
                     disabled: dimCounts[dimension] === 0,
+                    title: WRONG_WORD_DIMENSION_TITLES[dimension],
                   })),
                 ]}
               />
@@ -406,8 +397,8 @@ export default function ErrorsPage() {
               <EmptyState
                 page
                 className="errors-empty"
-                title={hasActiveFilters ? '当前筛选暂无错词' : `${SCOPE_LABELS[scope]}为空`}
-                description={hasActiveFilters ? '调整日期、错次或维度后再试' : (scope === 'pending' ? '当前没有待继续攻克的错词' : '继续练习，历史错词会自动累计')}
+                title={hasActiveFilters ? '当前筛选暂无错词' : `${WRONG_WORD_SCOPE_LABELS[scope]}为空`}
+                description={hasActiveFilters ? '调整日期、错次或问题类型后再试' : (scope === 'pending' ? '当前没有待继续攻克的错词' : '继续练习，累计错词会自动增加')}
               />
             ) : (
               <div className="errors-list">
@@ -425,8 +416,8 @@ export default function ErrorsPage() {
                           <span className="errors-item-word">{word.word}</span>
                           <span className="errors-item-total-count">
                             {scope === 'pending'
-                              ? `未过×${getWrongWordActiveCount(word, 'pending')}`
-                              : `历史×${getWrongWordActiveCount(word, 'history')}`}
+                              ? `待清错次×${getWrongWordActiveCount(word, 'pending')}`
+                              : `累计错次×${getWrongWordActiveCount(word, 'history')}`}
                           </span>
                         </div>
                         {(word.phonetic || collectedOn) && (
@@ -441,29 +432,24 @@ export default function ErrorsPage() {
                         </div>
                         <div className="errors-item-dims">
                           <span className="errors-dim-badge errors-dim-progress">
-                            历史 {historyDims.length} 维
+                            出现过 {historyDims.length} 类问题
                           </span>
                           <span className={`errors-dim-badge ${pendingDimensionCount > 0 ? 'errors-dim-progress' : 'errors-dim-ok'}`}>
-                            未过 {pendingDimensionCount} 维
+                            待清 {pendingDimensionCount} 类问题
                           </span>
                           {historyDims.map(dimension => {
-                            const historyWrong = getWrongWordDimensionHistoryWrong(word, dimension)
-                            const progress = getWrongWordDimensionProgress(word, dimension)
+                            const dimensionCopy = describeWrongWordDimension(word, dimension)
                             const highlighted = dimFilter === dimension
 
                             return (
                               <span
                                 key={dimension}
-                                title={WRONG_WORD_DIMENSION_LABELS[dimension]}
-                                className={`errors-dim-badge ${progress.pending ? 'errors-dim-progress' : 'errors-dim-ok'}${highlighted ? ' errors-dim-highlight' : ''}`}
+                                title={dimensionCopy.title}
+                                className={`errors-dim-badge ${dimensionCopy.pending ? 'errors-dim-progress' : 'errors-dim-ok'}${highlighted ? ' errors-dim-highlight' : ''}`}
                               >
-                                {DIM_SHORT_LABEL[dimension]}
-                                <span className="errors-dim-wrong"> 历史×{historyWrong}</span>
-                                {progress.pending ? (
-                                  <span className="errors-dim-correct"> 待过 {progress.streak}/{progress.target}</span>
-                                ) : (
-                                  <span className="errors-dim-correct"> 已过</span>
-                                )}
+                                {dimensionCopy.label}
+                                <span className="errors-dim-wrong"> {dimensionCopy.detail}</span>
+                                <span className="errors-dim-correct"> {dimensionCopy.status}</span>
                               </span>
                             )
                           })}

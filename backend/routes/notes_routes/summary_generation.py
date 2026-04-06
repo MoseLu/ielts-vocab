@@ -113,7 +113,7 @@ def _collect_summary_source_data(user_id: int, target_date: str):
 _SUMMARY_MODE_LABELS = {
     'smart': '智能练习',
     'listening': '听音选义',
-    'meaning': '汉译英',
+    'meaning': '释义拼词',
     'dictation': '听写',
     'radio': '随身听',
     'quickmemory': '速记',

@@ -66,15 +66,8 @@ const MODE_LABELS: Record<GuidedPracticeMode, string> = {
   smart: '智能模式',
   quickmemory: '快速记忆',
   listening: '听音选义',
-  meaning: '汉译英',
+  meaning: '释义拼词',
   dictation: '听写模式',
-}
-
-const DIMENSION_SHORT_LABELS: Record<WrongWordDimension, string> = {
-  recognition: '认识',
-  meaning: '会想',
-  listening: '听得到',
-  dictation: '会拼写',
 }
 
 function parseTimestamp(value?: string | null): number {
@@ -165,7 +158,7 @@ function buildFallbackActions({
   if (pendingWrongWordCount > 0) {
     if (recommendedWrongDimension) {
       actions.push(
-        `错词优先清 ${DIMENSION_SHORT_LABELS[recommendedWrongDimension]}，当前还有 ${recommendedWrongDimensionCount} 个词未过。`,
+        `错词优先清「${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension]}」，当前还有 ${recommendedWrongDimensionCount} 个词待清。`,
       )
     } else {
       actions.push(`错词还有 ${pendingWrongWordCount} 个待处理，建议今天清一轮。`)
@@ -278,10 +271,10 @@ export function buildGuidedStudySummary({
       kind: 'error-review',
       title: '先把错词清一轮，别让问题继续堆积',
       description: recommendedWrongDimension?.count
-        ? `${pendingWrongWordCount} 个错词仍未通过，建议优先处理「${DIMENSION_SHORT_LABELS[recommendedWrongDimension.dimension]}」维度。`
-        : `${pendingWrongWordCount} 个错词仍未通过，先清错再推进新词会更稳。`,
+        ? `${pendingWrongWordCount} 个错词还在待清，建议优先处理「${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}」这类问题。`
+        : `${pendingWrongWordCount} 个错词还在待清，先清错再推进新词会更稳。`,
       ctaLabel: recommendedWrongDimension?.count
-        ? `先清${DIMENSION_SHORT_LABELS[recommendedWrongDimension.dimension]}`
+        ? `先清${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}`
         : '开始清错词',
       badge: `${pendingWrongWordCount} 个待清理`,
       mode: recommendedWrongDimension?.dimension
@@ -347,7 +340,7 @@ export function buildGuidedStudySummary({
       title: '再清错词',
       description: pendingWrongWordCount > 0
         ? recommendedWrongDimension?.count
-          ? `优先攻克「${DIMENSION_SHORT_LABELS[recommendedWrongDimension.dimension]}」，当前 ${recommendedWrongDimension.count} 个词未过。`
+          ? `优先攻克「${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}」，当前 ${recommendedWrongDimension.count} 个词待清。`
           : `${pendingWrongWordCount} 个错词还没通过，建议清一轮。`
         : '当前没有待清理错词。',
       badge: pendingWrongWordCount > 0 ? `${pendingWrongWordCount} 个待处理` : '已清空',
@@ -359,7 +352,7 @@ export function buildGuidedStudySummary({
       action: {
         kind: 'error-review',
         ctaLabel: recommendedWrongDimension?.count
-          ? `清${DIMENSION_SHORT_LABELS[recommendedWrongDimension.dimension]}`
+          ? `清${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}`
           : '开始清错',
         mode: recommendedWrongDimension?.count
           ? normalizeWeakestMode(recommendedWrongDimension.dimension)
@@ -432,7 +425,7 @@ export function buildGuidedStudySummary({
 }
 
 export function getWrongDimensionShortLabel(dimension?: WrongWordDimension | null): string | null {
-  return dimension ? DIMENSION_SHORT_LABELS[dimension] : null
+  return dimension ? WRONG_WORD_DIMENSION_LABELS[dimension] : null
 }
 
 export function getWrongDimensionLongLabel(dimension?: WrongWordDimension | null): string | null {

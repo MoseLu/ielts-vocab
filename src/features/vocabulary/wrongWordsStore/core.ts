@@ -29,6 +29,37 @@ function asIsoDate(value: unknown): string | undefined {
   return new Date(timestamp).toISOString()
 }
 
+function normalizeOptionalText(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed || undefined
+}
+
+function normalizeExamples(value: unknown): WrongWordRecord['examples'] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    .map(item => ({
+      en: normalizeOptionalText(item.en) ?? '',
+      zh: normalizeOptionalText(item.zh) ?? '',
+    }))
+    .filter(item => item.en || item.zh)
+}
+
+function normalizeListeningConfusables(value: unknown): WrongWordRecord['listening_confusables'] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    .map(item => ({
+      word: normalizeOptionalText(item.word) ?? '',
+      phonetic: normalizeOptionalText(item.phonetic) ?? '',
+      pos: normalizeOptionalText(item.pos) ?? '',
+      definition: normalizeOptionalText(item.definition) ?? '',
+      group_key: normalizeOptionalText(item.group_key),
+    }))
+    .filter(item => item.word)
+}
+
 function readDateField(word: WrongWordInput & Record<string, unknown>, keys: string[]): string | undefined {
   for (const key of keys) {
     const value = asIsoDate(word[key])
@@ -349,6 +380,15 @@ export function normalizeWrongWord(word: WrongWordInput): WrongWordRecord | null
     phonetic: typeof word.phonetic === 'string' ? word.phonetic : '',
     pos: typeof word.pos === 'string' ? word.pos : '',
     definition: typeof word.definition === 'string' ? word.definition : '',
+    group_key: normalizeOptionalText(rawWord.group_key),
+    listening_confusables: normalizeListeningConfusables(rawWord.listening_confusables),
+    examples: normalizeExamples(rawWord.examples),
+    book_id: normalizeOptionalText(rawWord.book_id),
+    book_title: normalizeOptionalText(rawWord.book_title),
+    chapter_id: normalizeOptionalText(rawWord.chapter_id) ?? (
+      typeof rawWord.chapter_id === 'number' ? rawWord.chapter_id : undefined
+    ),
+    chapter_title: normalizeOptionalText(rawWord.chapter_title),
     first_wrong_at: firstWrongAt,
     updated_at: updatedAt,
     listening_correct: asNumber(word.listening_correct ?? word.listeningCorrect),
@@ -376,6 +416,13 @@ function mergeWrongWord(base: WrongWordRecord, incoming: WrongWordRecord): Wrong
     phonetic: base.phonetic || incoming.phonetic,
     pos: base.pos || incoming.pos,
     definition: base.definition || incoming.definition,
+    group_key: base.group_key || incoming.group_key,
+    listening_confusables: (base.listening_confusables?.length ? base.listening_confusables : incoming.listening_confusables) ?? [],
+    examples: (base.examples?.length ? base.examples : incoming.examples) ?? [],
+    book_id: base.book_id || incoming.book_id,
+    book_title: base.book_title || incoming.book_title,
+    chapter_id: base.chapter_id ?? incoming.chapter_id,
+    chapter_title: base.chapter_title || incoming.chapter_title,
     first_wrong_at: pickEarlierDate(base.first_wrong_at, incoming.first_wrong_at),
     updated_at: pickLaterDate(
       base.updated_at,

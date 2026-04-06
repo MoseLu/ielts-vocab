@@ -272,7 +272,7 @@ def test_greet_fallback_uses_learner_profile_clues(client, monkeypatch):
                     'weakest_mode_accuracy': 61,
                 },
                 'dimensions': [
-                    {'dimension': 'meaning', 'label': '汉译英（会想）', 'accuracy': 54},
+                    {'dimension': 'meaning', 'label': '释义拼词（会想）', 'accuracy': 54},
                 ],
                 'focus_words': [
                     {'word': 'kind'},
@@ -347,7 +347,7 @@ def test_greet_allows_profile_aware_freeform_reply_without_options(client, monke
                     'weakest_mode_accuracy': 61,
                 },
                 'dimensions': [
-                    {'dimension': 'meaning', 'label': '汉译英（会想）', 'accuracy': 54},
+                    {'dimension': 'meaning', 'label': '释义拼词（会想）', 'accuracy': 54},
                 ],
                 'focus_words': [
                     {'word': 'kind'},

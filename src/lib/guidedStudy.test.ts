@@ -34,7 +34,7 @@ describe('buildGuidedStudySummary', () => {
           today_sessions: 0,
           streak_days: 5,
           weakest_mode: 'meaning',
-          weakest_mode_label: '汉译英',
+          weakest_mode_label: '释义拼词',
           weakest_mode_accuracy: 62,
           due_reviews: 6,
           trend_direction: 'stable',
