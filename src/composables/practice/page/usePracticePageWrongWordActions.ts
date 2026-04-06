@@ -113,7 +113,7 @@ export function usePracticePageWrongWordActions({
     }
 
     if (recognitionCleared) {
-      showToast?.(`${word.word} 的「${WRONG_WORD_DIMENSION_LABELS.recognition}」已移出未过错词`, 'success')
+      showToast?.(`${word.word} 的「${WRONG_WORD_DIMENSION_LABELS.recognition}」已从待清错词移出`, 'success')
     }
   }, [bookId, chapterId, showToast, user, userId])
 
@@ -160,7 +160,7 @@ export function usePracticePageWrongWordActions({
     }
 
     if (wasCorrect && dimensionCleared) {
-      showToast?.(`${word.word} 的「${WRONG_WORD_DIMENSION_LABELS[reviewDimension]}」已移出未过错词`, 'success')
+      showToast?.(`${word.word} 的「${WRONG_WORD_DIMENSION_LABELS[reviewDimension]}」已从待清错词移出`, 'success')
     }
   }, [bookId, chapterId, errorMode, mode, showToast, smartDimension, user, userId, errorRoundResultsRef])
 

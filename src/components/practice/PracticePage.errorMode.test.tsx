@@ -13,6 +13,11 @@ import {
 
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
+const useFavoriteWordsMock = vi.fn(() => ({
+  isFavorite: () => false,
+  isPending: () => false,
+  toggleFavorite: vi.fn(),
+}))
 
 function setAuthenticatedUser(id: number | string) {
   localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id }))
@@ -60,6 +65,14 @@ vi.mock('../../hooks/useAIChat', () => ({
   touchStudySessionActivity: vi.fn(),
   updateStudySessionSnapshot: vi.fn(),
 }))
+
+vi.mock('../../features/vocabulary/hooks', async () => {
+  const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')
+  return {
+    ...actual,
+    useFavoriteWords: (...args: unknown[]) => useFavoriteWordsMock(...args),
+  }
+})
 
 vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')

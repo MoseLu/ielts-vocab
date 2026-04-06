@@ -46,7 +46,7 @@
     align-items: center;
     gap: var(--space-sm);
     box-shadow: var(--shadow-md);
-    z-index: 50;
+    z-index: var(--layer-sticky);
     animation: slideUp 0.3s ease;
 }
 
@@ -164,15 +164,15 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--text-inverse);
     transition: all var(--transition-normal);
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.4);
+    box-shadow: var(--glow-accent);
     margin-bottom: var(--space-lg);
 }
 
 .play-btn:hover {
     transform: scale(1.08);
-    box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.5);
+    box-shadow: var(--shadow-floating);
 }
 
 .play-btn:active {
@@ -185,10 +185,10 @@
 
 @keyframes pulse {
     0%, 100% {
-        box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.4);
+        box-shadow: var(--glow-accent);
     }
     50% {
-        box-shadow: 0 4px 24px rgba(var(--accent-rgb), 0.6);
+        box-shadow: var(--shadow-floating);
     }
 }
 

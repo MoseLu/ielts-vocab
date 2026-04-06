@@ -94,10 +94,11 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    expect(screen.getByText('先快速判断，别在这一关想太久')).toBeInTheDocument()
+    expect(screen.getByText('你认识这个单词吗？')).toBeInTheDocument()
 
     await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
-    expect(screen.getByText('确认这词是真的认识，不是碰巧眼熟')).toBeInTheDocument()
+    expect(screen.getByText('✓ 认识')).toBeInTheDocument()
+    expect(screen.getByText('fruit')).toBeInTheDocument()
     await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
 
     await waitFor(() => {

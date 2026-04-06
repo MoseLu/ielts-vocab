@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import type { Dispatch, SetStateAction } from 'react'
 import type { PracticeMode, SmartDimension, Word } from '../../../components/practice/types'
 
 interface UsePracticePageKeyboardShortcutsParams {
@@ -15,7 +14,7 @@ interface UsePracticePageKeyboardShortcutsParams {
   playWord: (word: string) => void
   handleOptionSelect: (index: number) => void
   handleSkip: () => void
-  setIsPaused: Dispatch<SetStateAction<boolean>>
+  onExitHome: () => void
 }
 
 export function usePracticePageKeyboardShortcuts({
@@ -31,7 +30,7 @@ export function usePracticePageKeyboardShortcuts({
   playWord,
   handleOptionSelect,
   handleSkip,
-  setIsPaused,
+  onExitHome,
 }: UsePracticePageKeyboardShortcutsParams) {
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -71,7 +70,7 @@ export function usePracticePageKeyboardShortcuts({
         if (event.key === '5') handleSkip()
       }
 
-      if (event.key === 'Escape') setIsPaused(value => !value)
+      if (event.key === 'Escape') onExitHome()
     }
 
     document.addEventListener('keydown', handleKey)
@@ -84,7 +83,7 @@ export function usePracticePageKeyboardShortcuts({
     mode,
     optionsLength,
     playWord,
-    setIsPaused,
+    onExitHome,
     showPracticeSettings,
     showResult,
     showWordList,

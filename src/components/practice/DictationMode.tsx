@@ -2,8 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react'
 import type { DictationModeProps, LastState } from './types'
-import PracticeStageGuide from './PracticeStageGuide.tsx'
-import { buildDictationStageGuide } from './practiceStageGuide'
+import { buildBlankSentence } from './exampleSentence'
 import { playExampleAudio, stopAudio } from './utils'
 import {
   DictationErrorFeedback,
@@ -53,23 +52,6 @@ function BottomBar({ progressValue, total, queueIndex }: BottomBarProps) {
   )
 }
 
-/** Build the sentence display with the target word replaced by blank underscores */
-function buildBlankSentence(sentence: string, targetWord: string): React.ReactNode {
-  // Case-insensitive replacement to find the word in context
-  const regex = new RegExp(`(${targetWord})`, 'gi')
-  const parts = sentence.split(regex)
-  return parts.map((part, i) => {
-    if (part.toLowerCase() === targetWord.toLowerCase()) {
-      return (
-        <span key={i} className="example-blank-word">
-          {targetWord.split('').map((_, j) => <span key={j} className="example-blank-slot" />)}
-        </span>
-      )
-    }
-    return <span key={i}>{part}</span>
-  })
-}
-
 export default function DictationMode({
   currentWord,
   spellingInput,
@@ -82,11 +64,10 @@ export default function DictationMode({
   queueIndex,
   previousWord,
   lastState,
-  errorMode = false,
-  reviewMode = false,
   spellingLocked = false,
   spellingFeedbackDismissing = false,
   spellingFeedbackSnapshot = null,
+  favoriteSlot,
   onSpellingInputChange,
   onSpellingSubmit,
   onGoBack,
@@ -123,15 +104,6 @@ export default function DictationMode({
   }, [currentWord.examples, currentWord.word, settings])
 
   const isExampleMode = activeSubMode === 'example'
-  const stageGuide = buildDictationStageGuide({
-    queueIndex,
-    total,
-    errorMode,
-    reviewMode,
-    isExampleMode,
-    phase: spellingResult === null ? 'challenge' : 'review',
-    isCorrect: spellingResult === 'correct',
-  })
   const currentExample = currentWord.examples?.[0]
   const sentenceText = currentExample?.en ?? ''
   const shouldRevealAnswer = manualReplayCount >= ANSWER_REVEAL_PLAY_COUNT
@@ -182,6 +154,12 @@ export default function DictationMode({
       <PrevWordBlock previousWord={previousWord} lastState={lastState} onGoBack={onGoBack} />
 
       <div className="dictation-container">
+        {favoriteSlot ? (
+          <div className="dictation-topbar">
+            <div className="dictation-topbar__spacer" />
+            <div className="dictation-topbar__action">{favoriteSlot}</div>
+          </div>
+        ) : null}
         {hasExamples && (
           <div className="dictation-submode-toggle">
             <button
@@ -200,8 +178,6 @@ export default function DictationMode({
             </button>
           </div>
         )}
-
-        <PracticeStageGuide guide={stageGuide} />
 
         <div className="dictation-play-area">
           <h2 className="dictation-mode-title">
@@ -319,9 +295,9 @@ export default function DictationMode({
             </button>
           )}
         </div>
-      </div>
 
-      <BottomBar progressValue={progressValue} total={total} queueIndex={queueIndex} />
+        <BottomBar progressValue={progressValue} total={total} queueIndex={queueIndex} />
+      </div>
     </div>
   )
 }

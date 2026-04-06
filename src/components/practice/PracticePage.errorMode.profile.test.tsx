@@ -10,6 +10,11 @@ import { getWrongWordsProgressStorageKey, getWrongWordsStorageKey } from '../../
 
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
+const useFavoriteWordsMock = vi.fn(() => ({
+  isFavorite: () => false,
+  isPending: () => false,
+  toggleFavorite: vi.fn(),
+}))
 
 function setAuthenticatedUser(id: number | string) {
   localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id }))
@@ -52,6 +57,14 @@ vi.mock('../../hooks/useAIChat', () => ({
   touchStudySessionActivity: vi.fn(),
   updateStudySessionSnapshot: vi.fn(),
 }))
+
+vi.mock('../../features/vocabulary/hooks', async () => {
+  const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')
+  return {
+    ...actual,
+    useFavoriteWords: (...args: unknown[]) => useFavoriteWordsMock(...args),
+  }
+})
 
 vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')
@@ -133,7 +146,7 @@ describe('PracticePage error mode profile and persistence', () => {
           },
           dimensions: [
             { dimension: 'listening', label: '听音辨义', correct: 2, wrong: 5, attempts: 7, accuracy: 29, weakness: 0.71 },
-            { dimension: 'meaning', label: '汉译英（会想）', correct: 6, wrong: 3, attempts: 9, accuracy: 67, weakness: 0.33 },
+            { dimension: 'meaning', label: '释义拼词（会想）', correct: 6, wrong: 3, attempts: 9, accuracy: 67, weakness: 0.33 },
             { dimension: 'dictation', label: '拼写默写', correct: 4, wrong: 2, attempts: 6, accuracy: 67, weakness: 0.33 },
           ],
           focus_words: [{

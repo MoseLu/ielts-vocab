@@ -4,16 +4,16 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 18px;
-    min-height: 64px;
-    background: color-mix(in srgb, var(--surface-base) 95%, transparent);
-    border-bottom: 1px solid var(--surface-border-strong);
+    padding: 8px 14px;
+    min-height: 48px;
+    background: transparent;
+    border-bottom: none;
     position: sticky;
     top: 0;
-    z-index: 30;
-    gap: 14px;
-    backdrop-filter: blur(14px);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+    z-index: var(--layer-sticky);
+    gap: 10px;
+    backdrop-filter: none;
+    box-shadow: none;
 }
 
 .practice-ctrl-brand {
@@ -57,7 +57,7 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.78);
+    background: color-mix(in srgb, var(--surface-elevated) 78%, transparent);
     padding: 4px 8px;
     border-radius: var(--radius-full);
     white-space: nowrap;
@@ -88,7 +88,7 @@
     justify-content: center;
     gap: 6px;
     background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
-    border: 1px solid color-mix(in srgb, var(--surface-border-strong) 86%, white 14%);
+    border: 1px solid color-mix(in srgb, var(--surface-border-strong) 86%, var(--text-inverse) 14%);
     color: var(--text-secondary);
     font-size: 12px;
     font-weight: 600;
@@ -207,13 +207,13 @@
 .wordlist-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 200;
-    background: rgba(0, 0, 0, 0.04);
+    z-index: var(--layer-local-overlay);
+    background: var(--overlay-medium);
 }
 
 .wordlist-panel {
     position: fixed;
-    top: 78px;
+    top: 64px;
     right: 14px;
     width: 320px;
     max-height: min(560px, calc(100vh - 96px));
@@ -221,7 +221,7 @@
     border: 1px solid var(--surface-border-strong);
     border-radius: 22px;
     box-shadow: var(--shadow-panel);
-    z-index: 201;
+    z-index: var(--layer-dropdown);
     display: flex;
     flex-direction: column;
     opacity: 0;
@@ -385,7 +385,7 @@
 
 @media (max-width: 640px) {
     .practice-ctrl-bar {
-        padding: 10px 12px;
+        padding: 8px 10px;
     }
 
     .practice-ctrl-brand-text {

@@ -292,6 +292,13 @@ export function usePracticePageData({
             phonetic: word.phonetic,
             pos: word.pos,
             definition: word.definition,
+            group_key: word.group_key,
+            listening_confusables: word.listening_confusables,
+            book_id: word.book_id,
+            book_title: word.book_title,
+            chapter_id: word.chapter_id,
+            chapter_title: word.chapter_title,
+            examples: word.examples,
           }))
           const words = filterVocabularyForMode(savedWords, mode)
           const indices = Array.from({ length: words.length }, (_, index) => index)

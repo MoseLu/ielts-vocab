@@ -1,40 +1,48 @@
 import Popover from '../../ui/Popover'
 import { Scrollbar } from '../../ui/Scrollbar'
 import type { Chapter } from '../types'
-import type { MatchCard } from '../confusableMatch'
-import { getSelectionHint } from './confusableMatchPageHelpers'
+
+const HOME_ICON_PATH = 'M3 10.5 12 3l9 7.5M5 9.5V21h5.5v-6.5h3V21H19V9.5'
+const LIST_ICON_PATH = 'M5 7.5h14M5 12h14M5 16.5h14'
+
+function formatCustomConfusableTitle(title: string): string {
+  const trimmed = title.trim()
+  const match = trimmed.match(/^自定义易混组\s*(\d+)/)
+  if (!match) return trimmed
+  return `自定义易混${Number(match[1])}`
+}
+
+function formatChapterTitle(title: string): string {
+  return formatCustomConfusableTitle(title || '选择章节')
+}
 
 interface ConfusableMatchHeaderProps {
-  bookId: string
   chapterId: string | null
   currentChapterTitle: string
   bookChapters: Chapter[]
-  supportsCustomGroups: boolean
-  selectedCard: MatchCard | null
-  answeredCount: number
-  totalWords: number
-  correctCount: number
-  wrongCount: number
-  onOpenCustomModal: () => void
+  canEditCurrentChapter: boolean
+  showWordList: boolean
+  onEditCurrentChapter: () => void
+  onWordListToggle: () => void
+  onExitHome: () => void
   onNavigate: (path: string) => void
   buildChapterPath: (chapterId: string | number) => string
 }
 
 export function ConfusableMatchHeader({
-  bookId,
   chapterId,
   currentChapterTitle,
   bookChapters,
-  supportsCustomGroups,
-  selectedCard,
-  answeredCount,
-  totalWords,
-  correctCount,
-  wrongCount,
-  onOpenCustomModal,
+  canEditCurrentChapter,
+  showWordList,
+  onEditCurrentChapter,
+  onWordListToggle,
+  onExitHome,
   onNavigate,
   buildChapterPath,
 }: ConfusableMatchHeaderProps) {
+  const displayTitle = formatChapterTitle(currentChapterTitle || '选择章节')
+
   return (
     <>
       <div className="practice-ctrl-bar confusable-ctrl-bar">
@@ -54,9 +62,14 @@ export function ConfusableMatchHeader({
         </button>
 
         <div className="practice-ctrl-right">
-          {supportsCustomGroups && (
-            <button type="button" className="confusable-toolbar-btn" onClick={onOpenCustomModal}>
-              自定义组
+          {canEditCurrentChapter && (
+            <button
+              type="button"
+              className="practice-ctrl-icon-btn practice-mode-btn"
+              onClick={onEditCurrentChapter}
+              title="编辑当前组"
+            >
+              <span className="practice-mode-label">编辑当前组</span>
             </button>
           )}
 
@@ -66,7 +79,7 @@ export function ConfusableMatchHeader({
             panelClassName="popover-ctx-panel"
             trigger={(
               <button className="practice-ctrl-icon-btn practice-mode-btn" title="切换章节">
-                <span className="practice-mode-label">{currentChapterTitle || '选择章节'}</span>
+                <span className="practice-mode-label">{displayTitle}</span>
                 <svg className="practice-ctx-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
@@ -81,43 +94,34 @@ export function ConfusableMatchHeader({
                   onClick={() => onNavigate(buildChapterPath(chapter.id))}
                 >
                   <span className={`ctx-radio ${String(chapter.id) === String(chapterId) ? 'checked' : ''}`} />
-                  {chapter.title}
+                  {formatChapterTitle(chapter.title)}
                 </button>
               ))}
             </Scrollbar>
           </Popover>
 
-          <div className="confusable-progress-chip">
-            <strong>{answeredCount}</strong>
-            <span>/ {totalWords} 已消除</span>
-          </div>
-        </div>
-      </div>
+          <button
+            className={`practice-ctrl-icon-btn ${showWordList ? 'active' : ''}`}
+            onClick={onWordListToggle}
+            title="单词列表"
+            aria-label="单词列表"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+              <path d={LIST_ICON_PATH} strokeLinecap="round" />
+            </svg>
+          </button>
 
-      <div className="confusable-stage-header">
-        <div>
-          <h1 className="confusable-title">{currentChapterTitle || '易混词辨析'}</h1>
-          <p className="confusable-subtitle">
-            每个小棋盘就是一组易混词。先点英文，再点中文，组内连线成功后就会像消消乐一样消失。
-          </p>
+          <button
+            className="practice-ctrl-icon-btn"
+            onClick={onExitHome}
+            title="返回主页"
+            aria-label="返回主页"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d={HOME_ICON_PATH} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
-        <div className="confusable-stats">
-          <span className="confusable-stat confusable-stat--ok">成功 {correctCount}</span>
-          <span className="confusable-stat confusable-stat--bad">误连 {wrongCount}</span>
-        </div>
-      </div>
-
-      <div className={`confusable-selection-tray ${selectedCard ? 'is-active' : ''}`}>
-        <div>
-          <span className="confusable-selection-label">当前连线</span>
-          <strong>{selectedCard ? '已选中一张卡片' : '从任意小棋盘开始'}</strong>
-          <span>{getSelectionHint(selectedCard)}</span>
-        </div>
-        {selectedCard && (
-          <span className={`confusable-selection-token confusable-selection-token--${selectedCard.side}`}>
-            {selectedCard.side === 'word' ? `EN · ${selectedCard.label}` : `中 · ${selectedCard.label}`}
-          </span>
-        )}
       </div>
     </>
   )

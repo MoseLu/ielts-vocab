@@ -1,4 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import PracticeControlBar from '../PracticeControlBar'
 import WordListPanel from '../WordListPanel'
 import DictationMode from '../DictationMode'
@@ -32,10 +33,11 @@ interface SharedModeLayoutProps {
   onDayChange?: (day: number) => void
   navigate: NavigateFunction
   buildChapterPath?: (chapterId: string | number) => string
-  onPause: () => void
+  onExitHome: () => void
   queue: number[]
   queueIndex: number
   wordStatuses: WordStatuses
+  favoriteSlot?: ReactNode
 }
 
 interface PracticePageDictationLayoutProps extends SharedModeLayoutProps {
@@ -59,7 +61,6 @@ interface PracticePageDictationLayoutProps extends SharedModeLayoutProps {
   onStartRecording: () => void
   onStopRecording: () => void
   onPlayWord: (word: string) => void
-  pauseOverlay: React.ReactNode
 }
 
 export function PracticePageDictationLayout(props: PracticePageDictationLayoutProps) {
@@ -80,10 +81,11 @@ export function PracticePageDictationLayout(props: PracticePageDictationLayoutPr
     onDayChange,
     navigate,
     buildChapterPath,
-    onPause,
+    onExitHome,
     queue,
     queueIndex,
     wordStatuses,
+    favoriteSlot,
     currentWord,
     spellingInput,
     spellingResult,
@@ -104,7 +106,6 @@ export function PracticePageDictationLayout(props: PracticePageDictationLayoutPr
     onStartRecording,
     onStopRecording,
     onPlayWord,
-    pauseOverlay,
   } = props
 
   return (
@@ -126,7 +127,7 @@ export function PracticePageDictationLayout(props: PracticePageDictationLayoutPr
         onDayChange={onDayChange}
         onNavigate={navigate}
         buildChapterPath={buildChapterPath}
-        onPause={onPause}
+        onExitHome={onExitHome}
       />
       <WordListPanel
         show={showWordList}
@@ -163,8 +164,8 @@ export function PracticePageDictationLayout(props: PracticePageDictationLayoutPr
         onStartRecording={onStartRecording}
         onStopRecording={onStopRecording}
         onPlayWord={onPlayWord}
+        favoriteSlot={favoriteSlot}
       />
-      {pauseOverlay}
     </div>
   )
 }
@@ -195,7 +196,6 @@ interface PracticePageOptionsLayoutProps extends SharedModeLayoutProps {
   onStartRecording: () => void
   onStopRecording: () => void
   onPlayWord: (word: string) => void
-  pauseOverlay: React.ReactNode
 }
 
 export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps) {
@@ -216,10 +216,11 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
     onDayChange,
     navigate,
     buildChapterPath,
-    onPause,
+    onExitHome,
     queue,
     queueIndex,
     wordStatuses,
+    favoriteSlot,
     currentWord,
     previousWord,
     lastState,
@@ -245,7 +246,6 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
     onStartRecording,
     onStopRecording,
     onPlayWord,
-    pauseOverlay,
   } = props
 
   return (
@@ -267,7 +267,7 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
         onDayChange={onDayChange}
         onNavigate={navigate}
         buildChapterPath={buildChapterPath}
-        onPause={onPause}
+        onExitHome={onExitHome}
       />
       <WordListPanel
         show={showWordList}
@@ -310,8 +310,8 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
         onStartRecording={onStartRecording}
         onStopRecording={onStopRecording}
         onPlayWord={onPlayWord}
+        favoriteSlot={favoriteSlot}
       />
-      {pauseOverlay}
     </div>
   )
 }

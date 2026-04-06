@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
+import FavoriteToggleButton from '../FavoriteToggleButton'
 import type {
   AppSettings,
   Chapter,
@@ -8,11 +9,11 @@ import type {
   QuickMemoryRecordState,
   RadioQuickSettings,
   SmartDimension,
+  SpellingSubmitSource,
   Word,
   WordStatuses,
 } from '../types'
 import {
-  PracticePagePauseOverlay,
   PracticePageQuickMemoryLayout,
   PracticePageRadioLayout,
 } from './PracticePageStates'
@@ -52,8 +53,11 @@ interface PracticePageContentProps {
   reviewOffset: number
   saveWrongWord: (word: Word) => void
   handleQuickMemoryRecordChange: (word: Word, record: QuickMemoryRecordState) => void
-  setQueueIndex: Dispatch<SetStateAction<number>>
   currentWord: Word
+  favoriteActive: boolean
+  favoriteBusy: boolean
+  onFavoriteWordIndexChange: (index: number) => void
+  onFavoriteToggle: () => void
   spellingInput: string
   spellingResult: 'correct' | 'wrong' | null
   speechConnected: boolean
@@ -64,7 +68,7 @@ interface PracticePageContentProps {
   spellingFeedbackDismissing: boolean
   spellingFeedbackSnapshot: string | null
   handleSpellingInputChange: (value: string) => void
-  handleSpellingSubmit: () => void
+  handleSpellingSubmit: (source?: SpellingSubmitSource) => void
   handleSkip: () => void
   goBack: () => void
   startRecording: () => Promise<void>
@@ -78,11 +82,7 @@ interface PracticePageContentProps {
   showResult: boolean
   correctIndex: number
   handleOptionSelect: (index: number) => void
-  handleMeaningRecallSubmit: () => void
-  isPaused: boolean
-  setIsPaused: Dispatch<SetStateAction<boolean>>
-  correctCount: number
-  wrongCount: number
+  handleMeaningRecallSubmit: (source?: SpellingSubmitSource) => void
   handleContinueReview: () => void
 }
 
@@ -117,8 +117,11 @@ export function PracticePageContent({
   reviewOffset,
   saveWrongWord,
   handleQuickMemoryRecordChange,
-  setQueueIndex,
   currentWord,
+  favoriteActive,
+  favoriteBusy,
+  onFavoriteWordIndexChange,
+  onFavoriteToggle,
   spellingInput,
   spellingResult,
   speechConnected,
@@ -144,23 +147,14 @@ export function PracticePageContent({
   correctIndex,
   handleOptionSelect,
   handleMeaningRecallSubmit,
-  isPaused,
-  setIsPaused,
-  correctCount,
-  wrongCount,
   handleContinueReview,
 }: PracticePageContentProps) {
   const progress = queueIndex / Math.max(vocabulary.length, 1)
-  const pauseOverlay = (
-    <PracticePagePauseOverlay
-      isPaused={isPaused}
-      mode={mode}
-      queue={queue}
-      queueIndex={queueIndex}
-      correctCount={correctCount}
-      wrongCount={wrongCount}
-      onResume={() => setIsPaused(false)}
-      onExit={() => navigate('/plan')}
+  const favoriteSlot = (
+    <FavoriteToggleButton
+      active={favoriteActive}
+      pending={favoriteBusy}
+      onClick={onFavoriteToggle}
     />
   )
 
@@ -181,7 +175,7 @@ export function PracticePageContent({
     onDayChange,
     navigate,
     buildChapterPath: resolvedPracticeBookId ? buildChapterPath : undefined,
-    onPause: () => setIsPaused(true),
+    onExitHome: () => navigate('/plan'),
     queue,
   }
 
@@ -196,7 +190,8 @@ export function PracticePageContent({
         onRadioSettingChange={handleRadioSettingChange}
         markRadioSessionInteraction={markRadioSessionInteraction}
         handleRadioProgressChange={handleRadioProgressChange}
-        pauseOverlay={pauseOverlay}
+        onIndexChange={onFavoriteWordIndexChange}
+        favoriteSlot={favoriteSlot}
       />
     )
   }
@@ -213,8 +208,8 @@ export function PracticePageContent({
         onWrongWord={saveWrongWord}
         onQuickMemoryRecordChange={handleQuickMemoryRecordChange}
         initialIndex={errorMode ? queueIndex : undefined}
-        onIndexChange={errorMode ? setQueueIndex : undefined}
-        pauseOverlay={pauseOverlay}
+        onIndexChange={onFavoriteWordIndexChange}
+        favoriteSlot={favoriteSlot}
       />
     )
   }
@@ -245,7 +240,7 @@ export function PracticePageContent({
         onStartRecording={startRecording}
         onStopRecording={stopRecording}
         onPlayWord={playWord}
-        pauseOverlay={pauseOverlay}
+        favoriteSlot={favoriteSlot}
       />
     )
   }
@@ -280,7 +275,7 @@ export function PracticePageContent({
       onStartRecording={startRecording}
       onStopRecording={stopRecording}
       onPlayWord={playWord}
-      pauseOverlay={pauseOverlay}
+      favoriteSlot={favoriteSlot}
     />
   )
 }

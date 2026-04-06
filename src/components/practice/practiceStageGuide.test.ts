@@ -35,7 +35,7 @@ describe('practiceStageGuide', () => {
 
     expect(guide.laneLabel).toBe('错词攻坚')
     expect(guide.title).toBe('别急着跳关，先看清错在哪里')
-    expect(guide.rows[1]?.value).toContain('字母层级')
+    expect(guide.rows[1]?.value).toContain('听音辨义')
   })
 
   it('builds quick-memory review guidance around the user choice', () => {
@@ -48,5 +48,17 @@ describe('practiceStageGuide', () => {
 
     expect(guide.title).toBe('立刻复盘，把陌生词钉住')
     expect(guide.rows[2]?.value).toContain('后续复习链')
+  })
+
+  it('describes quick-memory staging with the shared recognition wording', () => {
+    const guide = buildQuickMemoryStageGuide({
+      queueIndex: 0,
+      total: 8,
+      phase: 'question',
+      choice: null,
+    })
+
+    expect(guide.context).toContain('看词认义')
+    expect(guide.rows[1]?.value).toContain('看词认义')
   })
 })

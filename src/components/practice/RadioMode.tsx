@@ -13,8 +13,10 @@ export default function RadioMode({
   settings,
   onNavigate,
   onCloseSettings,
+  onIndexChange,
   onSessionInteraction,
   onProgressChange,
+  favoriteSlot,
 }: RadioModeProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [radioPaused, setRadioPaused] = useState(false)
@@ -37,6 +39,9 @@ export default function RadioMode({
   useEffect(() => {
     onProgressChange?.(Math.min(queue.length, currentIndex + 1))
   }, [currentIndex, queue.length, onProgressChange])
+  useEffect(() => {
+    onIndexChange?.(currentIndex)
+  }, [currentIndex, onIndexChange])
 
   // Stable recursive callback — always reads latest values from refs
   const radioPlayFrom = useCallback((idx: number, repeat: number = 0) => {
@@ -175,6 +180,11 @@ export default function RadioMode({
   return (
     <div className="practice-page radio-mode">
       <section className="radio-stage" aria-live="polite">
+        {favoriteSlot ? (
+          <div className="radio-stage-toolbar">
+            <div className="radio-stage-toolbar__action">{favoriteSlot}</div>
+          </div>
+        ) : null}
         <h1 className="radio-stage-word">{radioWord?.word ?? '...'}</h1>
         <p className="radio-stage-phonetic">{radioWord?.phonetic ?? '/-/'}</p>
         <p className="radio-stage-definition">

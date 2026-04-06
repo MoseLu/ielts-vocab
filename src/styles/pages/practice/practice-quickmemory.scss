@@ -1,12 +1,11 @@
-/* ── Quick Memory Mode ────────────────────────────────────────────────────────
-   DHP + Ebbinghaus spaced-repetition flash-card UI
-   ──────────────────────────────────────────────────────────────────────────── */
+/* ── Quick Memory Mode ──────────────────────────────────────────────────────── */
 
 /* ── Root layout ─────────────────────────────────────────────────────────── */
 .qm-root {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     min-height: calc(100vh - 48px);   /* below sticky control bar */
     padding: var(--space-lg) var(--space-md) var(--space-xl);
     background: var(--bg-secondary);
@@ -39,6 +38,7 @@
 
 /* ── Card ─────────────────────────────────────────────────────────────────── */
 .qm-card {
+    --qm-side-rail-size: 48px;
     background: var(--bg-color);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
@@ -70,12 +70,20 @@
 /* ── Countdown ring ───────────────────────────────────────────────────────── */
 .qm-countdown-ring {
     align-self: flex-end;
+    width: var(--qm-side-rail-size);
+    display: flex;
+    justify-content: center;
     margin-bottom: -10px;
 }
 
 .qm-timer-svg {
     display: block;
 }
+.qm-timer-track { stroke: var(--border); }
+.qm-timer-progress { stroke: var(--accent); transition: stroke-dasharray 0.9s linear, stroke 0.2s ease; }
+.qm-timer-progress.is-critical { stroke: var(--error); }
+.qm-timer-label { fill: var(--text-primary); }
+.qm-timer-label.is-critical { fill: var(--error); }
 
 /* ── Word display ─────────────────────────────────────────────────────────── */
 .qm-word {
@@ -147,7 +155,7 @@
 
 .qm-btn--unknown:hover {
     background: var(--error);
-    color: white;
+    color: var(--text-inverse);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(var(--error-rgb), 0.3);
 }
@@ -160,7 +168,7 @@
 
 .qm-btn--known:hover {
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.35);
 }
@@ -248,7 +256,7 @@
     flex: 1;
     padding: 12px 28px;
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-lg);
     font-size: 15px;
@@ -422,7 +430,7 @@ kbd {
 
 .qm-btn-restart {
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
 }
 
 .qm-btn-restart:hover {
@@ -450,7 +458,7 @@ kbd {
     cursor: pointer;
     transition: all var(--transition-fast);
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: 2px solid var(--accent);
 }
 .qm-btn-next-chapter:hover {

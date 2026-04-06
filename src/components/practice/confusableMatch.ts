@@ -139,7 +139,9 @@ export function resolveRoundGroupKeys(
       storedKeys.includes(group.key) && group.words.some(word => !answeredWordKeys.has(word.key)),
     )
     if (stored.length > 0) {
-      return stored.map(group => group.key)
+      return stored
+        .slice(0, groupsPerRound)
+        .map(group => group.key)
     }
   }
 

@@ -60,7 +60,7 @@
 .complete-btn {
     padding: var(--space-sm) var(--space-2xl);
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-md);
     font-size: 15px;
@@ -106,7 +106,7 @@
 }
 
 .prev-back-btn {
-    background: rgba(255, 255, 255, 0.74);
+    background: color-mix(in srgb, var(--surface-elevated) 74%, transparent);
     border: 1px solid var(--surface-border-strong);
     cursor: pointer;
     color: var(--text-tertiary);
@@ -178,9 +178,9 @@
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    padding: 14px 20px 18px;
+    padding: 8px 20px 12px;
     background: transparent;
-    margin-top: auto;
+    margin-top: 0;
     width: min(100%, 920px);
     margin-inline: auto;
 }
@@ -188,7 +188,7 @@
 .bottom-progress-track {
     flex: 1;
     height: 8px;
-    background: rgba(15, 23, 42, 0.08);
+    background: var(--surface-inset);
     border-radius: var(--radius-full);
     position: relative;
     overflow: visible;
@@ -211,7 +211,7 @@
     height: 14px;
     background: var(--accent);
     border-radius: var(--radius-full);
-    border: 3px solid rgba(255, 255, 255, 0.94);
+    border: 3px solid color-mix(in srgb, var(--text-inverse) 94%, transparent);
     box-shadow: 0 10px 18px rgba(var(--accent-rgb), 0.24);
 }
 
@@ -249,16 +249,28 @@
     font-size: 16px;
 }
 
+.practice-complete-copy {
+    max-width: 420px;
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.practice-complete-copy--compact {
+    margin-bottom: 10px;
+}
+
 /* ── Pause Overlay ─────────────────────────────────────────────────────────── */
 
 .practice-pause-overlay {
     position: fixed;
     inset: 0;
-    z-index: 200;
+    z-index: var(--layer-modal);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.55);
+    background: var(--overlay-strong);
     backdrop-filter: blur(6px);
     animation: fadeIn 0.15s ease;
 }
@@ -280,7 +292,7 @@
     flex-direction: column;
     align-items: center;
     gap: 14px;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-overlay);
     animation: scaleUp 0.15s ease;
 }
 
@@ -346,7 +358,7 @@
 .practice-pause-resume {
     padding: 10px 0;
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: 10px;
     font-size: 15px;

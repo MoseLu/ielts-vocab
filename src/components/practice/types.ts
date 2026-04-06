@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { QuickMemoryRecordState } from '../../lib/quickMemory'
 
 // ── Types for Practice Components ────────────────────────────────────────────────
@@ -41,6 +42,7 @@ export interface QuickMemoryModeProps {
   initialIndex?: number
   /** Called whenever the user advances or goes back, so the parent can persist position */
   onIndexChange?: (index: number) => void
+  favoriteSlot?: ReactNode
 }
 
 // Which dimension smart mode is testing for the current word
@@ -127,6 +129,7 @@ export interface Chapter {
   id: number | string
   title: string
   word_count?: number
+  group_count?: number
   is_custom?: boolean
 }
 
@@ -164,7 +167,7 @@ export interface PracticeControlBarProps {
   onDayChange: (day: number) => void
   onNavigate: (path: string) => void
   buildChapterPath?: (chapterId: string | number) => string
-  onPause?: () => void
+  onExitHome?: () => void
   // Radio mode quick settings
   radioQuickSettings?: RadioQuickSettings
   onRadioSettingChange?: (key: keyof RadioQuickSettings, value: string | boolean) => void
@@ -194,8 +197,10 @@ export interface RadioModeProps {
   onNavigate: (path: string) => void
   onCloseSettings: () => void
   onModeChange: (mode: string) => void
+  onIndexChange?: (index: number) => void
   onSessionInteraction?: () => void
   onProgressChange?: (wordsStudied: number) => void
+  favoriteSlot?: ReactNode
 }
 
 export interface DictationModeProps {
@@ -222,6 +227,7 @@ export interface DictationModeProps {
   onStartRecording: () => void
   onStopRecording: () => void
   onPlayWord: (word: string) => void
+  favoriteSlot?: ReactNode
 }
 
 export interface OptionsModeProps {
@@ -253,4 +259,5 @@ export interface OptionsModeProps {
   onStartRecording: () => void
   onStopRecording: () => void
   onPlayWord: (word: string) => void
+  favoriteSlot?: ReactNode
 }

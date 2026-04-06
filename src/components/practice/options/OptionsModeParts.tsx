@@ -1,10 +1,15 @@
 import { useEffect, useRef } from 'react'
+import smartDictationIcon from '../../../assets/icons/smart-dictation.svg'
+import smartListeningIcon from '../../../assets/icons/smart-listening.svg'
+import smartMeaningIcon from '../../../assets/icons/smart-meaning.svg'
+import { WRONG_WORD_DIMENSION_LABELS } from '../../../features/vocabulary/wrongWordsStore'
 import type {
   LastState,
   OptionItem,
   SmartDimension,
   SpellingSubmitSource,
 } from '../types'
+import { buildBlankSentence } from '../exampleSentence'
 import PracticeStageGuide from '../PracticeStageGuide.tsx'
 import { buildChoiceStageGuide } from '../practiceStageGuide'
 
@@ -145,7 +150,7 @@ export function WordDisplay({ currentWord, displayMode, onPlayWord }: WordDispla
       )}
       {displayMode === 'definition' && (
         <div className="meaning-prompt-card">
-          <div className="meaning-prompt-label">根据中文回想并输入对应英文</div>
+          <div className="meaning-prompt-label">看中文释义，拼英文单词</div>
           <div className="meaning-prompt-definition">
             <span className="word-pos-tag">{currentWord.pos}</span>
             {currentWord.definition}
@@ -156,10 +161,27 @@ export function WordDisplay({ currentWord, displayMode, onPlayWord }: WordDispla
   )
 }
 
-const SMART_DIM_CONFIG: Record<SmartDimension, { label: string; icon: string; cls: string }> = {
-  listening: { label: '听力', icon: '🔊', cls: 'smart-badge-listening' },
-  meaning:   { label: '会想', icon: '🧠', cls: 'smart-badge-meaning' },
-  dictation: { label: '拼写', icon: '✍️', cls: 'smart-badge-dictation' },
+interface ListeningExamplePromptProps {
+  sentence: string
+  targetWord: string
+}
+
+export function ListeningExamplePrompt({ sentence, targetWord }: ListeningExamplePromptProps) {
+  if (!sentence.trim()) return null
+
+  return (
+    <div className="listening-example-prompt">
+      <div className="listening-example-sentence">
+        {buildBlankSentence(sentence, targetWord)}
+      </div>
+    </div>
+  )
+}
+
+const SMART_DIM_CONFIG: Record<SmartDimension, { label: string; iconSrc: string; cls: string }> = {
+  listening: { label: WRONG_WORD_DIMENSION_LABELS.listening, iconSrc: smartListeningIcon, cls: 'smart-badge-listening' },
+  meaning:   { label: WRONG_WORD_DIMENSION_LABELS.meaning, iconSrc: smartMeaningIcon, cls: 'smart-badge-meaning' },
+  dictation: { label: WRONG_WORD_DIMENSION_LABELS.dictation, iconSrc: smartDictationIcon, cls: 'smart-badge-dictation' },
 }
 
 interface SmartDimBadgeProps {
@@ -170,7 +192,9 @@ export function SmartDimBadge({ dimension }: SmartDimBadgeProps) {
   const cfg = SMART_DIM_CONFIG[dimension]
   return (
     <div className={`smart-dim-badge ${cfg.cls}`}>
-      <span className="smart-badge-icon">{cfg.icon}</span>
+      <span className="smart-badge-icon">
+        <img src={cfg.iconSrc} alt="" aria-hidden="true" />
+      </span>
       <span className="smart-badge-label">{cfg.label}</span>
     </div>
   )
@@ -325,7 +349,7 @@ export function MeaningRecallInput({
 
   return (
     <div className="meaning-recall-area">
-      <p className="meaning-recall-hint">不看选项，直接回想并输入对应英文。</p>
+      <p className="meaning-recall-hint">不看选项，按中文释义拼出英文单词。</p>
 
       {spellingResult === 'correct' && (
         <div className="spelling-answer correct-answer">正确！</div>
@@ -353,7 +377,7 @@ export function MeaningRecallInput({
             if (e.repeat) return
             onSpellingSubmit('enter')
           }}
-          placeholder="输入对应英文..."
+          placeholder="输入英文单词..."
           disabled={!!spellingResult}
           autoComplete="off"
           spellCheck={false}

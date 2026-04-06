@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import PracticeControlBar from './PracticeControlBar'
 
 describe('PracticeControlBar layout', () => {
@@ -21,7 +22,7 @@ describe('PracticeControlBar layout', () => {
         onModeChange={() => {}}
         onDayChange={() => {}}
         onNavigate={() => {}}
-        onPause={() => {}}
+        onExitHome={() => {}}
       />,
     )
 
@@ -48,11 +49,40 @@ describe('PracticeControlBar layout', () => {
         onModeChange={() => {}}
         onDayChange={() => {}}
         onNavigate={() => {}}
-        onPause={() => {}}
+        onExitHome={() => {}}
       />,
     )
 
     expect(screen.getByText('艾宾浩斯复习')).toBeInTheDocument()
     expect(screen.queryByText('Day undefined')).not.toBeInTheDocument()
+  })
+
+  it('exits directly to home when the home icon is clicked', async () => {
+    const user = userEvent.setup()
+    const onExitHome = vi.fn()
+
+    render(
+      <PracticeControlBar
+        mode="quickmemory"
+        currentDay={undefined}
+        bookId={null}
+        chapterId={null}
+        errorMode={false}
+        vocabularyLength={12}
+        currentChapterTitle="艾宾浩斯复习"
+        bookChapters={[]}
+        showWordList={false}
+        showPracticeSettings={false}
+        onWordListToggle={() => {}}
+        onSettingsToggle={() => {}}
+        onModeChange={() => {}}
+        onDayChange={() => {}}
+        onNavigate={() => {}}
+        onExitHome={onExitHome}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: '返回主页' }))
+    expect(onExitHome).toHaveBeenCalledTimes(1)
   })
 })

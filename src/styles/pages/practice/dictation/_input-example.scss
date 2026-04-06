@@ -23,7 +23,7 @@
     min-width: 20px;
     min-height: 34px;
     padding: 0 4px 5px;
-    border-bottom: 2px solid rgba(148, 163, 184, 0.34);
+    border-bottom: 2px solid color-mix(in srgb, var(--text-tertiary) 34%, transparent);
     font-size: clamp(1.02rem, 3.8vw, 1.45rem);
     line-height: 1;
     font-weight: 700;
@@ -124,7 +124,7 @@
 
 .spelling-submit-btn:hover {
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     border-left-color: var(--accent);
 }
 
@@ -136,7 +136,7 @@
 
 .spelling-submit-btn:focus:hover {
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
 }
 
 .spelling-submit-btn svg {
@@ -170,7 +170,7 @@
 
 .submode-btn.active {
     background: var(--accent);
-    color: white;
+    color: var(--text-inverse);
     font-weight: 600;
 }
 
@@ -220,16 +220,18 @@
 
 .example-blank-word {
     display: inline-flex;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     margin: 0 2px;
+    vertical-align: baseline;
 }
 
-.example-blank-slot {
+.example-blank-segment {
     display: inline-flex;
-    width: 14px;
-    min-height: 18px;
-    border-bottom: 2px solid rgba(var(--accent-rgb), 0.24);
+    height: 0.95em;
+    min-width: 2.8em;
+    border-bottom: 2px solid rgba(var(--accent-rgb), 0.32);
 }
 
 .dictation-example-definition {

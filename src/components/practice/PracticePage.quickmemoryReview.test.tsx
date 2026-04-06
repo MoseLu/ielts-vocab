@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import PracticePage from './PracticePage'
@@ -10,6 +11,12 @@ const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const practiceControlBarMock = vi.fn(() => <div data-testid="practice-control-bar" />)
 const fetchMock = vi.fn()
+const toggleFavoriteMock = vi.fn()
+const useFavoriteWordsMock = vi.fn(() => ({
+  isFavorite: (word: string) => word === 'beta',
+  isPending: () => false,
+  toggleFavorite: (...args: unknown[]) => toggleFavoriteMock(...args),
+}))
 
 vi.stubGlobal('fetch', fetchMock)
 
@@ -46,6 +53,14 @@ vi.mock('../../hooks/useAIChat', () => ({
   updateStudySessionSnapshot: vi.fn(),
 }))
 
+vi.mock('../../features/vocabulary/hooks', async () => {
+  const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')
+  return {
+    ...actual,
+    useFavoriteWords: (...args: unknown[]) => useFavoriteWordsMock(...args),
+  }
+})
+
 vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')
   return {
@@ -72,25 +87,33 @@ vi.mock('../ui/Loading', () => ({
 vi.mock('./QuickMemoryMode', () => ({
   default: ({
     vocabulary,
-    reviewHasMore,
-    onContinueReview,
-    onQuickMemoryRecordChange,
-  }: {
-    vocabulary: Array<{ word: string }>
-    reviewHasMore?: boolean
-    onContinueReview?: () => void
-    onQuickMemoryRecordChange?: (word: { word: string }, record: {
-      status: 'known' | 'unknown'
-      firstSeen: number
+      reviewHasMore,
+      onContinueReview,
+      onQuickMemoryRecordChange,
+      onIndexChange,
+      favoriteSlot,
+    }: {
+      vocabulary: Array<{ word: string }>
+      reviewHasMore?: boolean
+      onContinueReview?: () => void
+      onIndexChange?: (index: number) => void
+      onQuickMemoryRecordChange?: (word: { word: string }, record: {
+        status: 'known' | 'unknown'
+        firstSeen: number
       lastSeen: number
       knownCount: number
       unknownCount: number
-      nextReview: number
-      fuzzyCount: number
-    }) => void
-  }) => (
+        nextReview: number
+        fuzzyCount: number
+      }) => void
+      favoriteSlot?: React.ReactNode
+    }) => (
     <div data-testid="quickmemory-mode">
       reviewWords:{vocabulary.map(word => word.word).join(',')}
+      {favoriteSlot}
+      {vocabulary[1] && onIndexChange ? (
+        <button type="button" onClick={() => onIndexChange(1)}>go-second-word</button>
+      ) : null}
       {vocabulary[0] && onQuickMemoryRecordChange ? (
         <button
           type="button"
@@ -120,6 +143,7 @@ describe('PracticePage quick-memory review mode', () => {
     startSessionMock.mockClear()
     practiceControlBarMock.mockClear()
     fetchMock.mockReset()
+    toggleFavoriteMock.mockReset()
     localStorage.clear()
   })
 
@@ -329,5 +353,53 @@ describe('PracticePage quick-memory review mode', () => {
     await waitFor(() => {
       expect(screen.getByText('暂无待复习的单词')).toBeInTheDocument()
     })
+  })
+
+  it('routes the favorite toggle to the currently displayed quick-memory word', async () => {
+    const user = userEvent.setup()
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory/review-queue?limit=0&within_days=1&offset=0&scope=due') {
+        return Promise.resolve({
+          words: [
+            { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
+            { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
+          ],
+          summary: {
+            due_count: 2,
+            upcoming_count: 0,
+            returned_count: 2,
+            review_window_days: 1,
+            offset: 0,
+            limit: null,
+            total_count: 2,
+            has_more: false,
+            next_offset: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?review=due']}>
+        <PracticePage user={{ id: 42 }} currentDay={1} mode="quickmemory" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:alpha,beta')
+    })
+
+    await user.click(screen.getByRole('button', { name: 'go-second-word' }))
+    await user.click(screen.getByRole('button', { name: '移出收藏词书' }))
+
+    expect(toggleFavoriteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ word: 'beta' }),
+      expect.objectContaining({
+        bookId: null,
+        chapterId: null,
+        chapterTitle: '艾宾浩斯复习',
+      }),
+    )
   })
 })

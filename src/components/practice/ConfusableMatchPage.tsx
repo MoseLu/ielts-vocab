@@ -1,24 +1,42 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useToast } from '../../contexts'
-import { apiFetch, buildApiUrl, buildBookPracticePath } from '../../lib'
-import type { Chapter, ProgressData, Word } from './types'
-import { buildMatchGroups, buildRoundCards, buildWordKeySet, getRoundGroups, resolveRoundGroupKeys, type MatchCard, type MatchProgressSnapshot } from './confusableMatch'
+import { buildBookPracticePath } from '../../lib'
+import type { Chapter, Word, WordStatuses } from './types'
+import {
+  buildMatchGroups,
+  buildRoundCards,
+  getRoundGroups,
+  getUnresolvedGroups,
+  resolveRoundGroupKeys,
+  type MatchCard,
+  type MatchGroup,
+} from './confusableMatch'
 import { ConfusableMatchBoard } from './confusable/ConfusableMatchBoard'
 import { ConfusableMatchHeader } from './confusable/ConfusableMatchHeader'
-import { measureLine, persistChapterSnapshot, readStoredChapterSnapshot, type ActiveLine } from './confusable/confusableMatchPageHelpers'
-import { ConfusableMatchCompletedState, ConfusableMatchErrorState, ConfusableMatchLoadingState, ConfusableMatchWarningOverlay } from './confusable/ConfusableMatchStatus'
+import {
+  clearStoredChapterSnapshot,
+  measureLine,
+  type ActiveLine,
+} from './confusable/confusableMatchPageHelpers'
+import {
+  buildConfusableMatchSnapshot,
+  loadConfusableMatchPageData,
+  persistConfusableMatchProgress,
+} from './confusable/confusableMatchPageData'
+import {
+  ConfusableMatchCompletedState,
+  ConfusableMatchErrorState,
+  ConfusableMatchLoadingState,
+  ConfusableMatchWarningOverlay,
+} from './confusable/ConfusableMatchStatus'
 import ConfusableCustomGroupsModal, { type CustomConfusableChapter } from './ConfusableCustomGroupsModal'
-const MATCH_GROUPS_MOBILE = 3
-const MATCH_GROUPS_DESKTOP = 4
+import WordListPanel from './WordListPanel'
+
+const MATCH_GROUPS_PER_ROUND = 1
 const MATCH_SUCCESS_DELAY = 900
 const MATCH_FAILURE_DELAY = 900
-type ChapterProgressResponse = { chapter_progress?: Record<string, ProgressData | MatchProgressSnapshot> }
-type ChapterWordsResponse = { chapter?: Chapter; words?: Word[] }
-type ChaptersResponse = { chapters?: Chapter[] }
-function resolveGroupsPerRound(): number {
-  return window.innerWidth < 900 ? MATCH_GROUPS_MOBILE : MATCH_GROUPS_DESKTOP
-}
+const MATCH_GROUP_INSIGHT_DELAY = 1800
 export default function ConfusableMatchPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -26,6 +44,7 @@ export default function ConfusableMatchPage() {
   const bookId = searchParams.get('book')
   const chapterId = searchParams.get('chapter')
   const supportsCustomGroups = bookId === 'ielts_confusable_match'
+  const groupsPerRound = MATCH_GROUPS_PER_ROUND
   const [bookChapters, setBookChapters] = useState<Chapter[]>([])
   const [currentChapterTitle, setCurrentChapterTitle] = useState('')
   const [vocabulary, setVocabulary] = useState<Word[]>([])
@@ -34,14 +53,16 @@ export default function ConfusableMatchPage() {
   const [answeredWordKeys, setAnsweredWordKeys] = useState<Set<string>>(new Set())
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [groupsPerRound, setGroupsPerRound] = useState(resolveGroupsPerRound)
   const [selectedCard, setSelectedCard] = useState<MatchCard | null>(null)
   const [successCardIds, setSuccessCardIds] = useState<string[]>([])
   const [errorCardIds, setErrorCardIds] = useState<string[]>([])
   const [activeLine, setActiveLine] = useState<ActiveLine | null>(null)
+  const [completedGroup, setCompletedGroup] = useState<MatchGroup | null>(null)
+  const [errorComparison, setErrorComparison] = useState<{ fromWord: string; toWord: string } | null>(null)
   const [warningText, setWarningText] = useState('')
   const [warningVisible, setWarningVisible] = useState(false)
   const [interactionLocked, setInteractionLocked] = useState(false)
+  const [showWordList, setShowWordList] = useState(false)
   const [showCustomModal, setShowCustomModal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -50,30 +71,65 @@ export default function ConfusableMatchPage() {
   const groupBoardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const persistRef = useRef('')
   const allGroups = useMemo(() => buildMatchGroups(vocabulary), [vocabulary])
-  const currentRoundGroups = useMemo(
-    () => getRoundGroups(allGroups, roundGroupKeys),
-    [allGroups, roundGroupKeys],
-  )
+  const groupOrderMap = useMemo(() => new Map(allGroups.map((group, index) => [group.key, index + 1])), [allGroups])
+  const currentRoundGroups = useMemo(() => getRoundGroups(allGroups, roundGroupKeys), [allGroups, roundGroupKeys])
+  const unresolvedGroups = useMemo(() => getUnresolvedGroups(allGroups, answeredWordKeys), [allGroups, answeredWordKeys])
   const boardGroups = useMemo(() => {
-    const groups = new Map<string, MatchCard[]>()
-    const orderedKeys: string[] = []
+    const cardsByGroup = new Map<string, MatchCard[]>()
     for (const card of boardCards) {
-      const existing = groups.get(card.groupKey)
+      const existing = cardsByGroup.get(card.groupKey)
       if (existing) {
         existing.push(card)
-        continue
+      } else {
+        cardsByGroup.set(card.groupKey, [card])
       }
-      groups.set(card.groupKey, [card])
-      orderedKeys.push(card.groupKey)
     }
-    return orderedKeys.map(key => ({
-      key,
-      cards: groups.get(key) ?? [],
+
+    return currentRoundGroups.map(group => ({
+      key: group.key,
+      groupNumber: groupOrderMap.get(group.key) ?? 0,
+      words: group.words,
+      cards: cardsByGroup.get(group.key) ?? [],
     }))
-  }, [boardCards])
+  }, [boardCards, currentRoundGroups, groupOrderMap])
+  const queuedGroups = useMemo(() => unresolvedGroups.slice(1, 4).map(group => ({
+    key: group.key,
+    groupNumber: groupOrderMap.get(group.key) ?? 0,
+    words: group.words,
+    cards: [],
+  })), [groupOrderMap, unresolvedGroups])
+  const completedBoardGroup = useMemo(() => (
+    completedGroup
+      ? { key: completedGroup.key, groupNumber: groupOrderMap.get(completedGroup.key) ?? 0, words: completedGroup.words, cards: [] }
+      : null
+  ), [completedGroup, groupOrderMap])
+
   const totalWords = vocabulary.length
   const answeredCount = answeredWordKeys.size
+  const totalGroups = allGroups.length
+  const answeredGroupCount = useMemo(
+    () => allGroups.filter(group => group.words.every(word => answeredWordKeys.has(word.key))).length,
+    [allGroups, answeredWordKeys],
+  )
   const isCompleted = totalWords > 0 && answeredCount >= totalWords
+  const currentChapter = useMemo(
+    () => bookChapters.find(chapter => String(chapter.id) === String(chapterId)) ?? null,
+    [bookChapters, chapterId],
+  )
+  const wordListQueue = useMemo(() => vocabulary.map((_, index) => index), [vocabulary])
+  const wordListStatuses = useMemo<WordStatuses>(() => {
+    const statuses: WordStatuses = {}
+    vocabulary.forEach((word, index) => {
+      if (answeredWordKeys.has(word.word.toLowerCase())) {
+        statuses[index] = 'correct'
+      }
+    })
+    return statuses
+  }, [answeredWordKeys, vocabulary])
+  const wordListCurrentIndex = useMemo(() => {
+    const nextPendingIndex = vocabulary.findIndex(word => !answeredWordKeys.has(word.word.toLowerCase()))
+    return nextPendingIndex >= 0 ? nextPendingIndex : Math.max(vocabulary.length - 1, 0)
+  }, [answeredWordKeys, vocabulary])
   const applyRound = useCallback(
     (nextRoundGroupKeys: string[], nextAnsweredWordKeys: Set<string>) => {
       const nextGroups = getRoundGroups(allGroups, nextRoundGroupKeys)
@@ -85,148 +141,100 @@ export default function ConfusableMatchPage() {
         setSuccessCardIds([])
         setErrorCardIds([])
         setActiveLine(null)
+        setCompletedGroup(null)
+        setErrorComparison(null)
       })
     },
     [allGroups],
   )
-  useEffect(() => {
-    const handleResize = () => {
-      setGroupsPerRound(resolveGroupsPerRound())
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  const resetBoardForWords = useCallback((nextChapter: Chapter, nextWords: Word[]) => {
+    const nextGroups = buildMatchGroups(nextWords)
+    const nextAnsweredWordKeys = new Set<string>()
+    const nextRoundGroupKeys = resolveRoundGroupKeys(nextGroups, nextAnsweredWordKeys, groupsPerRound)
+    const nextCards = buildRoundCards(getRoundGroups(nextGroups, nextRoundGroupKeys), nextAnsweredWordKeys)
+    startTransition(() => {
+      setVocabulary(nextWords)
+      setCurrentChapterTitle(nextChapter.title)
+      setAnsweredWordKeys(nextAnsweredWordKeys)
+      setCorrectCount(0)
+      setWrongCount(0)
+      setRoundGroupKeys(nextRoundGroupKeys)
+      setBoardCards(nextCards)
+      setSelectedCard(null)
+      setSuccessCardIds([])
+      setErrorCardIds([])
+      setActiveLine(null)
+      setCompletedGroup(null)
+      setErrorComparison(null)
+      setWarningVisible(false)
+      setWarningText('')
+      setInteractionLocked(false)
+    })
+  }, [groupsPerRound])
   useEffect(() => {
     let cancelled = false
-    const load = async () => {
-      if (!bookId) {
-        setError('缺少词书参数')
-        setLoading(false)
-        return
-      }
-      try {
-        setLoading(true)
-        setError(null)
-        persistRef.current = ''
-        const chaptersResponse = await fetch(buildApiUrl(`/api/books/${bookId}/chapters`))
-        if (!chaptersResponse.ok) {
-          throw new Error('加载章节失败')
-        }
-        const chaptersData = await chaptersResponse.json() as ChaptersResponse
-        if (cancelled) return
-        const nextChapters = chaptersData.chapters ?? []
-        setBookChapters(nextChapters)
-        if (!chapterId) {
-          const firstChapter = nextChapters[0]
-          if (!firstChapter) {
-            throw new Error('未找到可练习章节')
-          }
-          navigate(buildBookPracticePath({ id: bookId, practice_mode: 'match' }, firstChapter.id), {
-            replace: true,
-          })
-          return
-        }
-        const [chapterWordsData, progressData] = await Promise.all([
-          fetch(buildApiUrl(`/api/books/${bookId}/chapters/${chapterId}`)).then(async response => {
-            if (!response.ok) throw new Error('加载辨析词汇失败')
-            return response.json() as Promise<ChapterWordsResponse>
-          }),
-          apiFetch<ChapterProgressResponse>(`/api/books/${bookId}/chapters/progress`).catch(() => ({})),
-        ])
-        if (cancelled) return
-        const words = chapterWordsData.words ?? []
-        if (words.length < 2) {
-          throw new Error('当前章节词量不足，无法生成配对')
-        }
-        setVocabulary(words)
-        setCurrentChapterTitle(chapterWordsData.chapter?.title ?? '')
-        const storedSnapshot = readStoredChapterSnapshot(bookId, chapterId)
-        const serverSnapshot = progressData.chapter_progress?.[String(chapterId)] as MatchProgressSnapshot | undefined
-        const rawSnapshot = storedSnapshot ?? (
-          Array.isArray(serverSnapshot?.answered_words) && serverSnapshot.answered_words.length > 0
-            ? serverSnapshot
-            : null
-        )
-        const baseSnapshot =
-          rawSnapshot && rawSnapshot.is_completed
-            ? null
-            : rawSnapshot
-        const groups = buildMatchGroups(words)
-        const nextAnsweredWordKeys = buildWordKeySet(baseSnapshot?.answered_words)
-        const nextRoundGroupKeys = resolveRoundGroupKeys(
-          groups,
-          nextAnsweredWordKeys,
-          groupsPerRound,
-          baseSnapshot?.round_group_keys,
-        )
-        const nextCards = buildRoundCards(
-          getRoundGroups(groups, nextRoundGroupKeys),
-          nextAnsweredWordKeys,
-        )
+    if (!bookId) {
+      setError('缺少词书参数')
+      setLoading(false)
+      return () => { cancelled = true }
+    }
+
+    setLoading(true)
+    setError(null)
+    persistRef.current = ''
+
+    void loadConfusableMatchPageData({ bookId, chapterId, groupsPerRound, navigate })
+      .then(data => {
+        if (cancelled || data.redirectPath) return
+        setBookChapters(data.chapters)
         startTransition(() => {
-          setAnsweredWordKeys(nextAnsweredWordKeys)
-          setCorrectCount(baseSnapshot?.correct_count ?? nextAnsweredWordKeys.size)
-          setWrongCount(baseSnapshot?.wrong_count ?? 0)
-          setRoundGroupKeys(nextRoundGroupKeys)
-          setBoardCards(nextCards)
+          setVocabulary(data.words)
+          setCurrentChapterTitle(data.title)
+          setAnsweredWordKeys(data.answeredWordKeys)
+          setCorrectCount(data.correctCount)
+          setWrongCount(data.wrongCount)
+          setRoundGroupKeys(data.roundGroupKeys)
+          setBoardCards(data.cards)
           setSelectedCard(null)
           setSuccessCardIds([])
           setErrorCardIds([])
           setActiveLine(null)
+          setCompletedGroup(null)
+          setErrorComparison(null)
           setWarningVisible(false)
           setWarningText('')
         })
-      } catch (loadError) {
+      })
+      .catch(loadError => {
         if (!cancelled) {
           setError(loadError instanceof Error ? loadError.message : '加载辨析词汇失败')
         }
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) {
           setHydrated(true)
           setLoading(false)
         }
-      }
-    }
-    void load()
+      })
+
     return () => {
       cancelled = true
     }
-  }, [bookId, chapterId, navigate])
+  }, [bookId, chapterId, groupsPerRound, navigate])
   useEffect(() => {
     if (!bookId || !chapterId || !hydrated || !vocabulary.length) return
-    const snapshot: MatchProgressSnapshot = {
-      current_index: answeredCount,
-      correct_count: correctCount,
-      wrong_count: wrongCount,
-      is_completed: isCompleted,
-      words_learned: answeredCount,
-      answered_words: Array.from(answeredWordKeys).sort(),
-      round_group_keys: roundGroupKeys,
-      updatedAt: new Date().toISOString(),
-    }
+    const snapshot = buildConfusableMatchSnapshot({
+      answeredCount,
+      correctCount,
+      wrongCount,
+      isCompleted,
+      answeredWordKeys,
+      roundGroupKeys,
+    })
     const serialized = JSON.stringify(snapshot)
     if (serialized === persistRef.current) return
     persistRef.current = serialized
-    persistChapterSnapshot(bookId, chapterId, snapshot)
-    void apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
-      method: 'POST',
-      body: JSON.stringify({
-        current_index: snapshot.current_index,
-        correct_count: snapshot.correct_count,
-        wrong_count: snapshot.wrong_count,
-        is_completed: snapshot.is_completed,
-        words_learned: snapshot.words_learned,
-      }),
-    }).catch(() => {})
-    void apiFetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
-      method: 'POST',
-      body: JSON.stringify({
-        mode: 'match',
-        correct_count: snapshot.correct_count,
-        wrong_count: snapshot.wrong_count,
-        is_completed: snapshot.is_completed,
-      }),
-    }).catch(() => {})
+    persistConfusableMatchProgress({ bookId, chapterId, snapshot })
   }, [
     answeredCount,
     answeredWordKeys,
@@ -239,27 +247,33 @@ export default function ConfusableMatchPage() {
     vocabulary.length,
     wrongCount,
   ])
-  const advanceIfRoundCleared = useCallback(
-    (nextAnsweredWordKeys: Set<string>) => {
-      const remainingInCurrentRound = currentRoundGroups.some(group =>
-        group.words.some(word => !nextAnsweredWordKeys.has(word.key)),
-      )
-      if (remainingInCurrentRound) {
-        return
-      }
-      const nextRoundGroupKeys = resolveRoundGroupKeys(
-        allGroups,
-        nextAnsweredWordKeys,
-        groupsPerRound,
-      )
-      applyRound(nextRoundGroupKeys, nextAnsweredWordKeys)
-    },
-    [allGroups, applyRound, currentRoundGroups, groupsPerRound],
-  )
+  const advanceIfRoundCleared = useCallback((nextAnsweredWordKeys: Set<string>) => {
+    const activeGroup = currentRoundGroups[0]
+    if (!activeGroup) return
+
+    const remainingInCurrentRound = activeGroup.words.some(word => !nextAnsweredWordKeys.has(word.key))
+    if (remainingInCurrentRound) return
+
+    const nextRoundGroupKeys = resolveRoundGroupKeys(allGroups, nextAnsweredWordKeys, groupsPerRound)
+    setCompletedGroup(activeGroup)
+    setInteractionLocked(true)
+    window.setTimeout(() => {
+      startTransition(() => {
+        applyRound(nextRoundGroupKeys, nextAnsweredWordKeys)
+        setCompletedGroup(null)
+        setInteractionLocked(false)
+      })
+    }, MATCH_GROUP_INSIGHT_DELAY)
+  }, [allGroups, applyRound, currentRoundGroups, groupsPerRound])
   const handleCorrectMatch = useCallback((wordCard: MatchCard, definitionCard: MatchCard) => {
     const nextCorrectCount = correctCount + 1
     const nextAnsweredWordKeys = new Set(answeredWordKeys)
     nextAnsweredWordKeys.add(wordCard.wordKey)
+    const activeGroup = currentRoundGroups[0]
+    const willClearGroup = activeGroup
+      ? activeGroup.words.every(word => nextAnsweredWordKeys.has(word.key))
+      : false
+
     setInteractionLocked(true)
     setSelectedCard(null)
     setSuccessCardIds([wordCard.id, definitionCard.id])
@@ -271,6 +285,7 @@ export default function ConfusableMatchPage() {
         wordCard.groupKey,
       ),
     )
+
     window.setTimeout(() => {
       startTransition(() => {
         setBoardCards(previousCards => previousCards.filter(card => card.wordKey !== wordCard.wordKey))
@@ -280,18 +295,26 @@ export default function ConfusableMatchPage() {
         setActiveLine(null)
       })
       advanceIfRoundCleared(nextAnsweredWordKeys)
-      setInteractionLocked(false)
+      if (!willClearGroup) {
+        setInteractionLocked(false)
+      }
     }, MATCH_SUCCESS_DELAY)
-  }, [advanceIfRoundCleared, answeredWordKeys, correctCount])
+  }, [advanceIfRoundCleared, answeredWordKeys, correctCount, currentRoundGroups])
   const handleWrongMatch = useCallback((wordCard: MatchCard, definitionCard: MatchCard) => {
     setInteractionLocked(true)
     setSelectedCard(null)
     setWrongCount(count => count + 1)
     setErrorCardIds([wordCard.id, definitionCard.id])
+    setErrorComparison({
+      fromWord: wordCard.word,
+      toWord: definitionCard.word,
+    })
     setWarningText(`“${wordCard.word}” 和当前中文不是一组`)
     setWarningVisible(true)
+
     window.setTimeout(() => {
       setErrorCardIds([])
+      setErrorComparison(null)
       setWarningVisible(false)
       setWarningText('')
       setInteractionLocked(false)
@@ -300,6 +323,7 @@ export default function ConfusableMatchPage() {
   const handleCardClick = useCallback((card: MatchCard) => {
     if (interactionLocked) return
     if (answeredWordKeys.has(card.wordKey)) return
+
     if (!selectedCard) {
       setSelectedCard(card)
       return
@@ -312,6 +336,7 @@ export default function ConfusableMatchPage() {
       setSelectedCard(card)
       return
     }
+
     const wordCard = selectedCard.side === 'word' ? selectedCard : card
     const definitionCard = selectedCard.side === 'definition' ? selectedCard : card
     if (wordCard.wordKey === definitionCard.wordKey) {
@@ -335,6 +360,8 @@ export default function ConfusableMatchPage() {
       setSuccessCardIds([])
       setErrorCardIds([])
       setActiveLine(null)
+      setCompletedGroup(null)
+      setErrorComparison(null)
       setWarningVisible(false)
       setWarningText('')
       setInteractionLocked(false)
@@ -348,19 +375,38 @@ export default function ConfusableMatchPage() {
       return [...previous, ...appended]
     })
     const firstCreated = createdChapters[0]
-    navigate(
-      buildBookPracticePath({ id: bookId, practice_mode: 'match' }, firstCreated.id),
-      { replace: false },
-    )
+    navigate(buildBookPracticePath({ id: bookId, practice_mode: 'match' }, firstCreated.id), {
+      replace: false,
+    })
     showToast(`已切换到 ${firstCreated.title}`, 'success')
   }, [bookId, navigate, showToast])
+  const handleCustomUpdated = useCallback((updatedChapter: CustomConfusableChapter, words: Word[]) => {
+    if (!bookId || !chapterId) return
+    clearStoredChapterSnapshot(bookId, String(chapterId))
+    setBookChapters(previous => previous.map(chapter => (
+      String(chapter.id) === String(updatedChapter.id)
+        ? { ...chapter, ...updatedChapter }
+        : chapter
+    )))
+    resetBoardForWords(
+      {
+        id: updatedChapter.id,
+        title: updatedChapter.title,
+        word_count: updatedChapter.word_count,
+        group_count: updatedChapter.group_count,
+        is_custom: updatedChapter.is_custom,
+      },
+      words,
+    )
+    showToast(`已更新 ${updatedChapter.title}`, 'success')
+  }, [bookId, chapterId, resetBoardForWords, showToast])
   if (loading) {
     return <ConfusableMatchLoadingState />
   }
   if (error || !bookId) {
     return <ConfusableMatchErrorState error={error ?? '缺少词书参数'} onBack={() => navigate('/books')} />
   }
-  if (isCompleted) {
+  if (isCompleted && !completedGroup) {
     return (
       <ConfusableMatchCompletedState
         chapterTitle={currentChapterTitle}
@@ -375,37 +421,52 @@ export default function ConfusableMatchPage() {
     <div className="practice-session-layout confusable-shell">
       <div className="confusable-stage">
         <ConfusableMatchHeader
-          bookId={bookId}
           chapterId={chapterId}
           currentChapterTitle={currentChapterTitle}
           bookChapters={bookChapters}
-          supportsCustomGroups={supportsCustomGroups}
-          selectedCard={selectedCard}
-          answeredCount={answeredCount}
-          totalWords={totalWords}
-          correctCount={correctCount}
-          wrongCount={wrongCount}
-          onOpenCustomModal={() => setShowCustomModal(true)}
+          canEditCurrentChapter={Boolean(currentChapter?.is_custom)}
+          showWordList={showWordList}
+          onEditCurrentChapter={() => setShowCustomModal(true)}
+          onWordListToggle={() => setShowWordList(value => !value)}
+          onExitHome={() => navigate('/plan')}
           onNavigate={navigate}
-          buildChapterPath={(nextChapterId) => buildBookPracticePath({ id: bookId, practice_mode: 'match' }, nextChapterId)}
+          buildChapterPath={nextChapterId => buildBookPracticePath({ id: bookId, practice_mode: 'match' }, nextChapterId)}
         />
         <ConfusableMatchBoard
           boardGroups={boardGroups}
+          queuedGroups={queuedGroups}
           selectedCard={selectedCard}
           activeLine={activeLine}
           errorCardIds={errorCardIds}
           successCardIds={successCardIds}
+          answeredGroupCount={answeredGroupCount}
+          totalGroups={totalGroups}
+          completedGroup={completedBoardGroup}
+          errorComparison={errorComparison}
           groupBoardRefs={groupBoardRefs}
           cardRefs={cardRefs}
           onCardClick={handleCardClick}
         />
       </div>
       {warningVisible && <ConfusableMatchWarningOverlay warningText={warningText} />}
+      {showWordList && (
+        <WordListPanel
+          show={showWordList}
+          vocabulary={vocabulary}
+          queue={wordListQueue}
+          queueIndex={wordListCurrentIndex}
+          wordStatuses={wordListStatuses}
+          onClose={() => setShowWordList(false)}
+        />
+      )}
       {supportsCustomGroups && (
         <ConfusableCustomGroupsModal
           isOpen={showCustomModal}
           onClose={() => setShowCustomModal(false)}
+          editChapter={currentChapter?.is_custom ? currentChapter : null}
+          initialWords={currentChapter?.is_custom ? vocabulary.map(word => word.word) : undefined}
           onCreated={handleCustomCreated}
+          onUpdated={handleCustomUpdated}
         />
       )}
     </div>

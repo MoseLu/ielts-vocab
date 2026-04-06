@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition'
 import { setGlobalLearningContext } from '../../../contexts/AIChatContext'
@@ -124,7 +124,7 @@ export function usePracticePageEffects({
     },
   })
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!currentWord || !vocabulary.length) return
 
     let cancelled = false

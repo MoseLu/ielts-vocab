@@ -44,6 +44,23 @@ export function persistChapterSnapshot(
   localStorage.setItem(STORAGE_KEYS.CHAPTER_PROGRESS, JSON.stringify(current))
 }
 
+export function clearStoredChapterSnapshot(bookId: string, chapterId: string) {
+  const key = `${bookId}_${chapterId}`
+  const current = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.CHAPTER_PROGRESS) || '{}') as Record<
+        string,
+        MatchProgressSnapshot
+      >
+    } catch {
+      return {}
+    }
+  })()
+
+  delete current[key]
+  localStorage.setItem(STORAGE_KEYS.CHAPTER_PROGRESS, JSON.stringify(current))
+}
+
 export function measureLine(
   boardElement: HTMLDivElement | null,
   fromElement: HTMLElement | null,
@@ -69,7 +86,7 @@ export function measureLine(
 }
 
 export function getSelectionHint(selectedCard: MatchCard | null): string {
-  if (!selectedCard) return '每个小棋盘只包含一组易混词，优先在同组内完成消除。'
+  if (!selectedCard) return '每个小棋盘都是一整组易混词，组内词数不固定，优先在当前组内完成消除。'
   return selectedCard.side === 'word'
     ? `继续点击对应中文：${selectedCard.word}`
     : `继续点击对应英文：${selectedCard.label}`

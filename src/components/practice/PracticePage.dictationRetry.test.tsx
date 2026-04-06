@@ -10,6 +10,11 @@ const startSessionMock = vi.fn().mockResolvedValue(null)
 const playWordAudioMock = vi.fn()
 const recordWordResultMock = vi.fn()
 const recordModeAnswerMock = vi.fn()
+const useFavoriteWordsMock = vi.fn(() => ({
+  isFavorite: () => false,
+  isPending: () => false,
+  toggleFavorite: vi.fn(),
+}))
 
 vi.mock('../../hooks/useSpeechRecognition', () => ({
   useSpeechRecognition: () => ({
@@ -43,6 +48,14 @@ vi.mock('../../hooks/useAIChat', () => ({
   touchStudySessionActivity: vi.fn(),
   updateStudySessionSnapshot: vi.fn(),
 }))
+
+vi.mock('../../features/vocabulary/hooks', async () => {
+  const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')
+  return {
+    ...actual,
+    useFavoriteWords: (...args: unknown[]) => useFavoriteWordsMock(...args),
+  }
+})
 
 vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')

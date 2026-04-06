@@ -1,4 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import type { AppSettings, Chapter, PracticeMode, Word, WordStatuses } from '../types'
 import PracticeControlBar from '../PracticeControlBar'
 import WordListPanel from '../WordListPanel'
@@ -41,7 +42,7 @@ export function PracticePageLoadingState({
         <div className="practice-complete">
           <div className="complete-emoji" aria-hidden="true">!</div>
           <h2>当前词表暂无可用听音辨析</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+          <p className="practice-complete-copy">
             这个范围内的单词还没有准备好完整的听音干扰组，请切换到其他词书、章节或练习模式。
           </p>
           <button className="complete-btn" onClick={() => navigate('/plan')}>返回主页</button>
@@ -56,7 +57,7 @@ export function PracticePageLoadingState({
         <div className="practice-complete">
           <div className="complete-emoji" aria-hidden="true">✓</div>
           <h2>暂无待复习的单词</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+          <p className="practice-complete-copy">
             目前没有到期需要复习的单词，继续学习新词后再来！
           </p>
           <button className="complete-btn" onClick={() => navigate('/plan')}>返回主页</button>
@@ -123,7 +124,7 @@ export function PracticePageCompletedState({
           <span className="stat-wrong">错误 {wrongCount}</span>
         </div>
         {errorMode && (
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+          <p className="practice-complete-copy practice-complete-copy--compact">
             第 {errorReviewRound} 轮已完成，剩余 {nextErrorRoundWords.length} 个单词需要继续巩固。
           </p>
         )}
@@ -216,7 +217,8 @@ interface SharedLayoutProps {
   onDayChange?: (day: number) => void
   navigate: NavigateFunction
   buildChapterPath?: (chapterId: string | number) => string
-  onPause: () => void
+  onExitHome: () => void
+  favoriteSlot?: ReactNode
 }
 
 interface PracticePageRadioLayoutProps extends SharedLayoutProps {
@@ -231,9 +233,9 @@ interface PracticePageRadioLayoutProps extends SharedLayoutProps {
     interval: string
   }
   onRadioSettingChange: (key: 'playbackSpeed' | 'playbackCount' | 'loopMode' | 'interval', value: string | boolean) => void
+  onIndexChange: (index: number) => void
   markRadioSessionInteraction: () => void
   handleRadioProgressChange: (wordsStudied: number) => void
-  pauseOverlay: React.ReactNode
 }
 
 export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
@@ -254,16 +256,17 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
     onDayChange,
     navigate,
     buildChapterPath,
-    onPause,
+    onExitHome,
+    favoriteSlot,
     queue,
     radioIndex,
     wordStatuses,
     settings,
     radioQuickSettings,
     onRadioSettingChange,
+    onIndexChange,
     markRadioSessionInteraction,
     handleRadioProgressChange,
-    pauseOverlay,
   } = props
 
   return (
@@ -285,7 +288,7 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
         onDayChange={onDayChange}
         onNavigate={navigate}
         buildChapterPath={buildChapterPath}
-        onPause={onPause}
+        onExitHome={onExitHome}
         radioQuickSettings={radioQuickSettings}
         onRadioSettingChange={onRadioSettingChange}
       />
@@ -315,10 +318,11 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
         onNavigate={navigate}
         onCloseSettings={onSettingsToggle}
         onModeChange={onModeChange}
+        onIndexChange={onIndexChange}
         onSessionInteraction={markRadioSessionInteraction}
         onProgressChange={handleRadioProgressChange}
+        favoriteSlot={favoriteSlot}
       />
-      {pauseOverlay}
     </div>
   )
 }
@@ -342,7 +346,6 @@ interface PracticePageQuickMemoryLayoutProps extends SharedLayoutProps {
   }) => void
   initialIndex?: number
   onIndexChange?: (index: number) => void
-  pauseOverlay: React.ReactNode
 }
 
 export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayoutProps) {
@@ -363,7 +366,8 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
     onDayChange,
     navigate,
     buildChapterPath,
-    onPause,
+    onExitHome,
+    favoriteSlot,
     queue,
     settings,
     reviewMode,
@@ -374,7 +378,6 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
     onQuickMemoryRecordChange,
     initialIndex,
     onIndexChange,
-    pauseOverlay,
   } = props
 
   return (
@@ -396,7 +399,7 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
         onDayChange={onDayChange}
         onNavigate={navigate}
         buildChapterPath={buildChapterPath}
-        onPause={onPause}
+        onExitHome={onExitHome}
       />
       {showPracticeSettings && (
         <SettingsPanel showSettings={showPracticeSettings} onClose={onSettingsToggle} />
@@ -420,8 +423,8 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
         onQuickMemoryRecordChange={onQuickMemoryRecordChange}
         initialIndex={initialIndex}
         onIndexChange={onIndexChange}
+        favoriteSlot={favoriteSlot}
       />
-      {pauseOverlay}
     </div>
   )
 }

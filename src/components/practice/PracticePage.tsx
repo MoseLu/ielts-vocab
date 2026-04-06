@@ -17,20 +17,13 @@ import { usePracticePageEffects } from '../../composables/practice/page/usePract
 import { usePracticePageActions } from '../../composables/practice/page/usePracticePageActions'
 import { usePracticePageControls } from '../../composables/practice/page/usePracticePageControls'
 import { usePracticePageKeyboardShortcuts } from '../../composables/practice/page/usePracticePageKeyboardShortcuts'
+import { useFavoriteWords } from '../../features/vocabulary/hooks'
 import { PracticePageContent } from './page/PracticePageContent'
 import type { ErrorReviewRoundResults } from './errorReviewSession'
-import {
-  PracticePageCompletedState,
-  PracticePageLoadingState,
-} from './page/PracticePageStates'
-import {
-  readUserId,
-  type ReviewQueueContext,
-  type ReviewQueueSummary,
-} from './page/practicePageHelpers'
+import { PracticePageCompletedState, PracticePageLoadingState } from './page/PracticePageStates'
+import { readUserId, type ReviewQueueContext, type ReviewQueueSummary } from './page/practicePageHelpers'
 
 export type { PracticeMode, Word, AppSettings, Chapter }
-
 function PracticePage({
   user,
   currentDay,
@@ -67,8 +60,7 @@ function PracticePage({
   const [spellingFeedbackLocked, setSpellingFeedbackLocked] = useState(false)
   const [spellingFeedbackDismissing, setSpellingFeedbackDismissing] = useState(false)
   const [spellingFeedbackSnapshot, setSpellingFeedbackSnapshot] = useState<string | null>(null)
-  const [radioIndex] = useState(0)
-  const [isPaused, setIsPaused] = useState(false)
+  const [favoriteQueueIndex, setFavoriteQueueIndex] = useState(0)
   const [showWordList, setShowWordList] = useState(false)
   const [showPracticeSettings, setShowPracticeSettings] = useState(false)
   const [bookChapters, setBookChapters] = useState<Chapter[]>([])
@@ -208,6 +200,17 @@ function PracticePage({
   const resolvedPracticeBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId
   const resolvedPracticeChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
   const currentWord = vocabulary[queue[queueIndex]]
+
+  useEffect(() => {
+    const nextIndex = queue.length > 0 ? Math.min(queueIndex, queue.length - 1) : 0
+    setFavoriteQueueIndex(nextIndex)
+  }, [bookId, chapterId, errorMode, mode, queue.length, queueIndex, reviewMode])
+
+  const favoriteWordIndex = mode === 'quickmemory' || mode === 'radio' ? favoriteQueueIndex : queueIndex
+  const favoriteWord = vocabulary[queue[favoriteWordIndex]] ?? currentWord
+  const { isFavorite, isPending, toggleFavorite } = useFavoriteWords({ userId, vocabulary, showToast })
+  const favoriteActive = isFavorite(favoriteWord?.word)
+  const favoriteBusy = isPending(favoriteWord?.word)
 
   const {
     speechConnected,
@@ -381,7 +384,7 @@ function PracticePage({
     playWord,
     handleOptionSelect,
     handleSkip,
-    setIsPaused,
+    onExitHome: () => navigate('/plan'),
   })
 
   if (!vocabulary.length) {
@@ -416,6 +419,15 @@ function PracticePage({
     )
   }
 
+  const handleFavoriteToggle = () => {
+    if (!favoriteWord) return
+    void toggleFavorite(favoriteWord, {
+      bookId: favoriteWord.book_id != null ? String(favoriteWord.book_id) : resolvedPracticeBookId,
+      chapterId: favoriteWord.chapter_id != null ? String(favoriteWord.chapter_id) : resolvedPracticeChapterId,
+      chapterTitle: favoriteWord.chapter_title ?? currentChapterTitle ?? null,
+    })
+  }
+
   return (
     <PracticePageContent
       mode={mode}
@@ -436,7 +448,7 @@ function PracticePage({
       buildChapterPath={buildChapterPath}
       queue={queue}
       queueIndex={queueIndex}
-      radioIndex={radioIndex}
+      radioIndex={favoriteQueueIndex}
       wordStatuses={wordStatuses}
       settings={settings}
       radioQuickSettings={radioQuickSettings}
@@ -448,8 +460,11 @@ function PracticePage({
       reviewOffset={reviewOffset}
       saveWrongWord={saveWrongWord}
       handleQuickMemoryRecordChange={handleQuickMemoryRecordChange}
-      setQueueIndex={setQueueIndex}
       currentWord={currentWord}
+      favoriteActive={favoriteActive}
+      favoriteBusy={favoriteBusy}
+      onFavoriteWordIndexChange={setFavoriteQueueIndex}
+      onFavoriteToggle={handleFavoriteToggle}
       spellingInput={spellingInput}
       spellingResult={spellingResult}
       speechConnected={speechConnected}
@@ -460,7 +475,7 @@ function PracticePage({
       spellingFeedbackDismissing={spellingFeedbackDismissing}
       spellingFeedbackSnapshot={spellingFeedbackSnapshot}
       handleSpellingInputChange={handleSpellingInputChange}
-      handleSpellingSubmit={() => handleSpellingSubmit()}
+      handleSpellingSubmit={handleSpellingSubmit}
       handleSkip={handleSkip}
       goBack={goBack}
       startRecording={startRecording}
@@ -474,11 +489,7 @@ function PracticePage({
       showResult={showResult}
       correctIndex={correctIndex}
       handleOptionSelect={handleOptionSelect}
-      handleMeaningRecallSubmit={() => handleMeaningRecallSubmit()}
-      isPaused={isPaused}
-      setIsPaused={setIsPaused}
-      correctCount={correctCount}
-      wrongCount={wrongCount}
+      handleMeaningRecallSubmit={handleMeaningRecallSubmit}
       handleContinueReview={handleContinueReview}
     />
   )

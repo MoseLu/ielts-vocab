@@ -47,7 +47,7 @@ describe('DictationMode', () => {
   it('auto-plays example audio when example mode is active', async () => {
     render(<DictationMode {...baseProps} />)
 
-    expect(screen.getByText('先听例句，再补全空缺词')).toBeInTheDocument()
+    expect(screen.getByText('根据语境填写单词')).toBeInTheDocument()
 
     await waitFor(() => {
       expect(playExampleAudioMock).toHaveBeenCalledWith(
@@ -69,7 +69,7 @@ describe('DictationMode', () => {
     await user.click(wordModeButton)
     await user.click(container.querySelector('.play-btn-large') as HTMLButtonElement)
 
-    expect(screen.getByText('先听发音，再完整拼出单词')).toBeInTheDocument()
+    expect(screen.getByText('根据发音写出单词')).toBeInTheDocument()
     expect(onPlayWord).toHaveBeenCalledWith('attention')
   })
 

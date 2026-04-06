@@ -11,6 +11,7 @@ export type {
 } from './useVocabBooks'
 export { useMyBooks } from './useMyBooks'
 export type { MyBook } from './useMyBooks'
+export { useFavoriteWords } from './useFavoriteWords'
 export { useWrongWords } from './useWrongWords'
 export type { WrongWord } from './useWrongWords'
 export { useStats } from './useStats'

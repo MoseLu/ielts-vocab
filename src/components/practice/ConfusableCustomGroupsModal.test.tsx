@@ -32,7 +32,20 @@ describe('ConfusableCustomGroupsModal', () => {
         ['collect', 'college'],
         ['affect', 'effect'],
       ],
-      lineCount: 2,
+      groupCount: 2,
+      issues: [],
+    })
+  })
+
+  it('merges multiline long groups when lines are separated by a blank line', () => {
+    expect(
+      parseConfusableCustomDraft('strick,\nstock,\nstruck,\nstriking,\nstring\n\naffect effect'),
+    ).toEqual({
+      groups: [
+        ['strick', 'stock', 'struck', 'striking', 'string'],
+        ['affect', 'effect'],
+      ],
+      groupCount: 2,
       issues: [],
     })
   })
@@ -65,6 +78,7 @@ describe('ConfusableCustomGroupsModal', () => {
     await waitFor(() => {
       expect(screen.getByText('collect')).toBeInTheDocument()
       expect(screen.getByText('affect')).toBeInTheDocument()
+      expect(screen.getByText('3 个词 · 6 张卡片')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: '创建并开始练习' }))
@@ -104,5 +118,55 @@ describe('ConfusableCustomGroupsModal', () => {
 
     expect(apiFetchMock).not.toHaveBeenCalled()
     expect(await screen.findByRole('alert')).toHaveTextContent('第 1 组至少需要 2 个不同单词')
+  })
+
+  it('updates an existing custom group in edit mode', async () => {
+    const onUpdated = vi.fn()
+
+    apiFetchMock.mockResolvedValue({
+      chapter: { id: 1001, title: '自定义易混组 01 · affect / effect / ...', word_count: 4, group_count: 1, is_custom: true },
+      words: [
+        { word: 'affect', phonetic: '/əˈfekt/', pos: 'v.', definition: '影响', group_key: 'custom-1001' },
+        { word: 'effect', phonetic: '/ɪˈfekt/', pos: 'n.', definition: '效果', group_key: 'custom-1001' },
+        { word: 'adapt', phonetic: '/əˈdæpt/', pos: 'v.', definition: '适应', group_key: 'custom-1001' },
+        { word: 'adopt', phonetic: '/əˈdɒpt/', pos: 'v.', definition: '采用', group_key: 'custom-1001' },
+      ],
+    })
+
+    render(
+      <ConfusableCustomGroupsModal
+        isOpen
+        editChapter={{ id: 1001, title: '自定义易混组 01 · whether / weather', word_count: 2, is_custom: true }}
+        initialWords={['whether', 'weather']}
+        onClose={() => {}}
+        onUpdated={onUpdated}
+      />,
+    )
+
+    expect(screen.getByDisplayValue('whether, weather')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: {
+        value: 'affect, effect, adapt, adopt',
+      },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '保存并刷新当前组' }))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith(
+        '/api/books/ielts_confusable_match/custom-chapters/1001',
+        expect.objectContaining({ method: 'PUT' }),
+      )
+    })
+
+    expect(onUpdated).toHaveBeenCalledWith(
+      { id: 1001, title: '自定义易混组 01 · affect / effect / ...', word_count: 4, group_count: 1, is_custom: true },
+      expect.arrayContaining([
+        expect.objectContaining({ word: 'affect' }),
+        expect.objectContaining({ word: 'adopt' }),
+      ]),
+    )
+    expect(showToastMock).toHaveBeenCalledWith('已更新当前自定义易混组', 'success')
   })
 })

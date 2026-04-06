@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import RadioMode from './RadioMode'
 import type { RadioModeProps } from './types'
@@ -48,5 +49,28 @@ describe('RadioMode layout', () => {
     expect(screen.getByText('1 / 1')).toBeInTheDocument()
     expect(screen.queryByText('★ ★ ★')).not.toBeInTheDocument()
     expect(container.querySelector('.radio-stage-line')).toBeNull()
+  })
+
+  it('reports the displayed word index when the user skips forward', async () => {
+    const user = userEvent.setup()
+    const onIndexChange = vi.fn()
+
+    render(
+      <RadioMode
+        {...baseProps}
+        vocabulary={[
+          baseProps.vocabulary[0],
+          { word: 'minus', phonetic: '/ˈmaɪnəs/', pos: 'prep.', definition: '减去' },
+        ]}
+        queue={[0, 1]}
+        onIndexChange={onIndexChange}
+      />,
+    )
+
+    await user.click(screen.getByTitle('下一个'))
+
+    expect(onIndexChange).toHaveBeenNthCalledWith(1, 0)
+    expect(onIndexChange).toHaveBeenLastCalledWith(1)
+    expect(screen.getByText('minus')).toBeInTheDocument()
   })
 })

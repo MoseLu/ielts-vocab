@@ -16,7 +16,7 @@ export default function WordListPanel({
 
   // Scroll current word into view
   useEffect(() => {
-    if (show && currentWordListItemRef.current) {
+    if (show && currentWordListItemRef.current && typeof currentWordListItemRef.current.scrollIntoView === 'function') {
       currentWordListItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     }
   }, [queueIndex, show])

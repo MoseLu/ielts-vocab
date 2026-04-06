@@ -1,8 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
-import PracticeStageGuide from './PracticeStageGuide.tsx'
-import { buildQuickMemoryStageGuide } from './practiceStageGuide'
 import { playWordAudio, prepareWordAudioPlayback, preloadWordAudio, stopAudio } from './utils'
 import { updateStudySessionSnapshot } from '../../hooks/useAIChat'
 import { useToast } from '../../contexts/ToastContext'
@@ -48,6 +46,7 @@ export default function QuickMemoryMode({
   onQuickMemoryRecordChange,
   initialIndex,
   onIndexChange,
+  favoriteSlot,
 }: QuickMemoryModeProps) {
   const { showToast } = useToast()
   const [index, setIndex]         = useState(0)
@@ -162,6 +161,7 @@ export default function QuickMemoryMode({
         : 0
     hasRestoredIndexRef.current = true
     setIndex(startIndex)
+    onIndexChange?.(startIndex)
     setPhase('question')
     setCountdown(TIMER_SECONDS)
     setChoice(null)
@@ -171,7 +171,7 @@ export default function QuickMemoryMode({
     setRevisitedSet(new Set())
     sessionLoggedRef.current = false
     pendingSessionCancelRef.current = false
-  }, [bookId, chapterId, queue.length])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [bookId, chapterId, onIndexChange, queue.length])  // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reveal helper ──────────────────────────────────────────────────────────
   const reveal = useCallback((picked: 'known' | 'unknown') => {
@@ -343,13 +343,14 @@ export default function QuickMemoryMode({
   const handleRestart = useCallback(() => {
     stopAudio()
     setIndex(0)
+    onIndexChange?.(0)
     setPhase('question')
     setChoice(null)
     setResults([])
     resultsRef.current = []
     setRevisitedSet(new Set())
     setDone(false)
-  }, [])
+  }, [onIndexChange])
 
   // ── Guard: no words ────────────────────────────────────────────────────────
   if (!currentWord && !done) {
@@ -377,14 +378,6 @@ export default function QuickMemoryMode({
     )
   }
 
-  const stageGuide = buildQuickMemoryStageGuide({
-    queueIndex: index,
-    total: queue.length,
-    reviewMode,
-    errorMode,
-    phase: phase === 'question' ? 'challenge' : 'review',
-    choice,
-  })
   const progress = ((index) / queue.length) * 100
 
   return (
@@ -397,8 +390,12 @@ export default function QuickMemoryMode({
 
       {/* Card */}
       <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
-        <PracticeStageGuide guide={stageGuide} />
-
+        {favoriteSlot ? (
+          <div className={`qm-card-toolbar${phase === 'question' ? ' qm-card-toolbar--question' : ''}`}>
+            {phase === 'question' ? <div className="qm-card-toolbar__spacer" /> : null}
+            <div className="qm-card-toolbar__action">{favoriteSlot}</div>
+          </div>
+        ) : null}
         {/* ── Question phase ── */}
         {phase === 'question' && (
           <>

@@ -3,7 +3,7 @@
 import type { OptionsModeProps, SmartDimension } from './types'
 import {
   BottomBar,
-  ChoiceStageGuide,
+  ListeningExamplePrompt,
   MeaningRecallInput,
   OptionsGrid,
   PrevWordBlock,
@@ -22,8 +22,6 @@ export default function OptionsMode({
   lastState,
   mode,
   smartDimension = 'meaning',
-  errorMode = false,
-  reviewMode = false,
   options,
   optionsLoading = false,
   selectedAnswer,
@@ -37,6 +35,7 @@ export default function OptionsMode({
   progressValue,
   total,
   queueIndex,
+  favoriteSlot,
   onOptionSelect,
   onSkip,
   onGoBack,
@@ -51,27 +50,38 @@ export default function OptionsMode({
     : (mode === 'meaning' ? 'definition' : 'audio')
   const isSmartDictation = mode === 'smart' && smartDimension === 'dictation'
   const isMeaningRecall = mode === 'meaning' || (mode === 'smart' && smartDimension === 'meaning')
+  const listeningExample = currentWord.examples?.[0]?.en ?? ''
+  const showListeningExample = displayMode === 'audio'
+    && !optionsLoading
+    && Boolean(listeningExample)
+
   return (
     <div className="practice-page">
       <PrevWordBlock previousWord={previousWord} lastState={lastState} onGoBack={onGoBack} />
 
       <div className="practice-main">
-        {mode === 'smart' && <SmartDimBadge dimension={smartDimension} />}
-        <ChoiceStageGuide
-          mode={mode}
-          smartDimension={smartDimension}
-          queueIndex={queueIndex}
-          total={total}
-          errorMode={errorMode}
-          reviewMode={reviewMode}
-          answered={isSmartDictation || isMeaningRecall ? spellingResult !== null : showResult}
-        />
+        {(mode === 'smart' || favoriteSlot) && (
+          <div className="practice-main-header">
+            <div className="practice-main-header__meta">
+              {mode === 'smart' && <SmartDimBadge dimension={smartDimension} />}
+            </div>
+            {favoriteSlot ? (
+              <div className="practice-main-header__action">{favoriteSlot}</div>
+            ) : null}
+          </div>
+        )}
 
-        <WordDisplay
-          currentWord={currentWord}
-          displayMode={displayMode}
-          onPlayWord={onPlayWord}
-        />
+        {displayMode === 'definition' && (
+          <WordDisplay
+            currentWord={currentWord}
+            displayMode={displayMode}
+            onPlayWord={onPlayWord}
+          />
+        )}
+
+        {showListeningExample && (
+          <ListeningExamplePrompt sentence={listeningExample} targetWord={currentWord.word} />
+        )}
 
         {isSmartDictation ? (
           <SmartDictation
@@ -119,6 +129,7 @@ export default function OptionsMode({
                 className="replay-btn"
                 onClick={() => onPlayWord(currentWord.word)}
                 title="再读一遍，快捷键 Tab"
+                aria-label="再读一遍，快捷键 Tab"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -128,9 +139,9 @@ export default function OptionsMode({
             </div>
           </>
         )}
-      </div>
 
-      <BottomBar progressValue={progressValue} total={total} queueIndex={queueIndex} />
+        <BottomBar progressValue={progressValue} total={total} queueIndex={queueIndex} />
+      </div>
     </div>
   )
 }

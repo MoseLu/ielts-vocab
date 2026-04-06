@@ -303,6 +303,7 @@ export function generateOptions(
         }
       : {
           word: word.word,
+          phonetic: word.phonetic,
           definition: cleanMeaningFragment(word.definition) || word.definition,
           pos: word.pos,
           display_mode: 'definition',

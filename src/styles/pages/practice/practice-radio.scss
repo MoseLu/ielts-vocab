@@ -27,14 +27,14 @@
     line-height: 1.05;
     font-weight: 700;
     letter-spacing: -0.02em;
-    color: #24354a;
+    color: var(--text-primary);
 }
 
 .radio-stage-phonetic {
     margin: 0;
     font-size: clamp(1.15rem, 3vw, 1.7rem);
     font-weight: 500;
-    color: #7e8ea6;
+    color: var(--text-secondary);
 }
 
 .radio-stage-definition {
@@ -42,7 +42,7 @@
     max-width: 720px;
     font-size: clamp(1.05rem, 2.4vw, 1.45rem);
     line-height: 1.7;
-    color: #23374c;
+    color: var(--text-primary);
 }
 
 .radio-stage-definition .word-pos-tag {
@@ -66,14 +66,14 @@
     border-radius: 999px;
     border: none;
     background: transparent;
-    color: #8a97a9;
+    color: var(--text-tertiary);
     cursor: pointer;
     transition: transform var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
 }
 
 .radio-ctrl-btn:hover {
-    color: #2c3c53;
-    background: rgba(255, 255, 255, 0.45);
+    color: var(--text-primary);
+    background: var(--surface-hover);
     transform: translateY(-1px);
 }
 
@@ -85,35 +85,35 @@
 .radio-play-btn {
     width: 58px;
     height: 58px;
-    background: #1f2c3f;
-    color: #f8fbff;
-    box-shadow: 0 12px 28px rgba(23, 36, 54, 0.24);
+    background: var(--accent);
+    color: var(--text-inverse);
+    box-shadow: var(--glow-accent);
 }
 
 .radio-play-btn:hover {
-    background: #24354a;
-    color: #fff;
+    background: var(--accent-hover);
+    color: var(--text-inverse);
 }
 
 .radio-progress-track {
     width: min(72vw, 640px);
     height: 4px;
     border-radius: 999px;
-    background: rgba(58, 73, 93, 0.14);
+    background: var(--border-subtle);
     overflow: hidden;
     margin-top: 8px;
 }
 
 .radio-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #ff925e 0%, #ff7c3b 100%);
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
     border-radius: inherit;
     transition: width 0.35s ease;
 }
 
 .radio-progress-label {
     font-size: 14px;
-    color: #8b97a8;
+    color: var(--text-tertiary);
 }
 
 .radio-bottom-btns {
@@ -129,18 +129,18 @@
     border-radius: 12px;
     font-size: 13px;
     font-weight: 600;
-    border: 1px solid rgba(63, 79, 99, 0.18);
-    background: rgba(255, 255, 255, 0.55);
-    color: #6f7d90;
+    border: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
 .radio-stop-btn:hover,
 .radio-home-btn:hover {
-    border-color: rgba(35, 55, 77, 0.35);
-    color: #24354a;
-    background: rgba(255, 255, 255, 0.82);
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border-subtle));
+    color: var(--text-primary);
+    background: var(--surface-elevated);
 }
 
 @media (max-width: 768px) {

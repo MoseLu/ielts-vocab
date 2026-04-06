@@ -104,7 +104,7 @@ describe('ConfusableMatchPage', () => {
     localStorage.clear()
   })
 
-  it('renders matches, removes correct pairs, and shows a warning on wrong links', async () => {
+  it('focuses one confusable group at a time and advances after showing the insight card', async () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/practice/confusable?book=ielts_confusable_match&chapter=1']}>
         <ConfusableMatchPage />
@@ -112,37 +112,111 @@ describe('ConfusableMatchPage', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('site')).toBeInTheDocument()
-      expect(screen.getByText('天气')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /site/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /位置；场所/i })).toBeInTheDocument()
     })
+
+    expect(screen.queryByRole('button', { name: /whether/i })).toBeNull()
+    expect(container.querySelector('.practice-mode-label')?.textContent).toBe('音近词辨析')
+    expect(screen.getByText('词族 1 / 2')).toBeInTheDocument()
+    expect(screen.getByText('/ 2 组')).toBeInTheDocument()
+    expect(screen.getByText('下一组')).toBeInTheDocument()
+    expect(screen.getAllByText(/whether \/ weather/i).length).toBeGreaterThan(0)
 
     vi.useFakeTimers()
 
-    fireEvent.click(screen.getByText('site').closest('button')!)
-    fireEvent.click(screen.getByText('位置；场所').closest('button')!)
-
-    expect(container.querySelector('.confusable-line')).not.toBeNull()
-    expect(container.querySelectorAll('.confusable-card.is-success')).toHaveLength(2)
-
-    await act(async () => {
-      vi.advanceTimersByTime(950)
-    })
-
-    expect(screen.queryByText('site')).toBeNull()
-    expect(screen.queryByText('位置；场所')).toBeNull()
-    expect(screen.getByText('成功 1')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('sight').closest('button')!)
-    fireEvent.click(screen.getByText('天气').closest('button')!)
+    fireEvent.click(screen.getByRole('button', { name: /site/i }))
+    fireEvent.click(screen.getAllByText('看见；景象；视力')[0].closest('button')!)
 
     expect(screen.getByText('配对错误')).toBeInTheDocument()
-    expect(screen.getByText('“sight” 和当前中文不是一组')).toBeInTheDocument()
+    expect(screen.getByText('“site” 和当前中文不是一组')).toBeInTheDocument()
 
     await act(async () => {
       vi.advanceTimersByTime(950)
     })
 
-    expect(screen.queryByText('配对错误')).toBeNull()
-    expect(screen.getByText('误连 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /site/i }))
+    fireEvent.click(screen.getAllByText('位置；场所')[0].closest('button')!)
+
+    await act(async () => {
+      vi.advanceTimersByTime(950)
+    })
+
+    expect(screen.getByRole('button', { name: /sight/i })).toBeInTheDocument()
+    expect(container.querySelector('.confusable-progress-ring__core strong')?.textContent).toBe('0')
+
+    fireEvent.click(screen.getByRole('button', { name: /sight/i }))
+    fireEvent.click(screen.getAllByText('看见；景象；视力')[0].closest('button')!)
+
+    await act(async () => {
+      vi.advanceTimersByTime(950)
+    })
+
+    expect(screen.getByText('本组辨析')).toBeInTheDocument()
+    expect(screen.getAllByText(/site \/ sight/i).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: /whether/i })).toBeNull()
+
+    await act(async () => {
+      vi.advanceTimersByTime(1850)
+    })
+
+    expect(screen.getByRole('button', { name: /whether/i })).toBeInTheDocument()
+    expect(container.querySelector('.confusable-progress-ring__core strong')?.textContent).toBe('1')
+    expect(screen.getByText('词族 2 / 2')).toBeInTheDocument()
+  })
+
+  it('shows the edit action for custom chapters and opens the editor', async () => {
+    vi.mocked(global.fetch).mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input)
+
+      if (url.includes('/api/books/ielts_confusable_match/chapters/1001')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            chapter: { id: 1001, title: '自定义易混组 01 · site / sight', word_count: 2, is_custom: true },
+            words: [
+              { word: 'site', phonetic: '/saɪt/', pos: 'n.', definition: '位置；场所', group_key: 'custom-1001' },
+              { word: 'sight', phonetic: '/saɪt/', pos: 'n.', definition: '看见；景象；视力', group_key: 'custom-1001' },
+            ],
+          }),
+        } as Response)
+      }
+
+      if (url.includes('/api/books/ielts_confusable_match/chapters')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            chapters: [{ id: 1001, title: '自定义易混组 01 · site / sight', word_count: 2, group_count: 1, is_custom: true }],
+          }),
+        } as Response)
+      }
+
+      return Promise.reject(new Error(`Unhandled fetch: ${url}`))
+    })
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.includes('/api/books/ielts_confusable_match/chapters/progress')) {
+        return Promise.resolve({ chapter_progress: {} })
+      }
+      if (url.includes('/mode-progress') || url.includes('/progress')) {
+        return Promise.resolve({})
+      }
+      return Promise.reject(new Error(`Unhandled apiFetch: ${url}`))
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice/confusable?book=ielts_confusable_match&chapter=1001']}>
+        <ConfusableMatchPage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '编辑当前组' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '编辑当前组' }))
+
+    expect(screen.getByText('编辑当前易混组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('site, sight')).toBeInTheDocument()
   })
 })

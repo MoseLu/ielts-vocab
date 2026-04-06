@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PracticePage from './PracticePage'
+import { chooseSmartDimension } from '../../lib/smartMode'
 
 const apiFetchMock = vi.fn()
 const fetchMock = vi.fn()
@@ -10,6 +11,11 @@ const startSessionMock = vi.fn().mockResolvedValue(null)
 const logSessionMock = vi.fn()
 const playWordAudioMock = vi.fn()
 const stopAudioMock = vi.fn()
+const useFavoriteWordsMock = vi.fn(() => ({
+  isFavorite: () => false,
+  isPending: () => false,
+  toggleFavorite: vi.fn(),
+}))
 
 vi.stubGlobal('fetch', fetchMock)
 
@@ -45,6 +51,14 @@ vi.mock('../../hooks/useAIChat', () => ({
   touchStudySessionActivity: vi.fn(),
   updateStudySessionSnapshot: vi.fn(),
 }))
+
+vi.mock('../../features/vocabulary/hooks', async () => {
+  const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')
+  return {
+    ...actual,
+    useFavoriteWords: (...args: unknown[]) => useFavoriteWordsMock(...args),
+  }
+})
 
 vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')
@@ -95,18 +109,26 @@ vi.mock('../ui', () => ({
 vi.mock('./OptionsMode', () => ({
   default: ({
     currentWord,
+    mode,
+    smartDimension,
     options,
     optionsLoading = false,
     correctIndex,
     onOptionSelect,
   }: {
     currentWord: { word: string }
+    mode?: string
+    smartDimension?: string
     options: Array<{ definition: string }>
     optionsLoading?: boolean
     correctIndex: number
     onOptionSelect: (idx: number) => void
   }) => (
-    <div data-testid="options-mode">
+    <div
+      data-testid="options-mode"
+      data-mode={mode ?? ''}
+      data-smart-dimension={smartDimension ?? ''}
+    >
       <div data-testid="options-state">
         {optionsLoading
           ? `loading:${currentWord.word}`
@@ -135,6 +157,7 @@ describe('PracticePage listening options loading', () => {
     logSessionMock.mockClear()
     playWordAudioMock.mockClear()
     stopAudioMock.mockClear()
+    vi.mocked(chooseSmartDimension).mockReturnValue('meaning')
     localStorage.clear()
   })
 
@@ -296,5 +319,53 @@ describe('PracticePage listening options loading', () => {
 
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
     expect(stopAudioMock.mock.calls.length).toBe(stopCallsAfterFirstPlayback)
+  })
+
+  it('commits smart mode with the resolved dimension immediately', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
+    vi.mocked(chooseSmartDimension).mockReturnValue('listening')
+
+    const vocabulary = [
+      {
+        word: 'guide',
+        phonetic: '/gaid/',
+        pos: 'n.',
+        definition: '向导',
+        listening_confusables: [
+          { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+          { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+          { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+        ],
+      },
+      { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+      { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+      { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+    ]
+
+    fetchMock.mockResolvedValue({
+      json: async () => ({ vocabulary }),
+    })
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/progress') return Promise.resolve({})
+      throw new Error(`Unexpected url: ${url}`)
+    })
+
+    render(
+      <MemoryRouter>
+        <PracticePage
+          currentDay={1}
+          mode="smart"
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveAttribute('data-mode', 'smart')
+      expect(screen.getByTestId('options-mode')).toHaveAttribute('data-smart-dimension', 'listening')
+    })
   })
 })
