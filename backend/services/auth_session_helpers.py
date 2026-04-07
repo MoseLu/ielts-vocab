@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import jwt
+from flask import has_request_context, request
 
 from models import RateLimitBucket, RevokedToken, User
 
@@ -15,7 +16,6 @@ _AVATAR_DATA_URL_RE = re.compile(
     re.IGNORECASE,
 )
 _AVATAR_HTTP_URL_RE = re.compile(r'^https?://', re.IGNORECASE)
-
 
 def rate_limit_bucket_key(ip: str, purpose: str, subject: str | None = None) -> str:
     normalized_ip = (ip or '0.0.0.0').strip() or '0.0.0.0'
@@ -150,14 +150,29 @@ def make_refresh_token(app, user_id: int) -> tuple[str, str, datetime]:
     return token, jti, expires_at
 
 
+def _should_use_secure_cookies(app) -> bool:
+    if not app.config['COOKIE_SECURE']:
+        return False
+
+    if not has_request_context():
+        return True
+
+    if request.is_secure:
+        return True
+
+    forwarded_proto = (request.headers.get('X-Forwarded-Proto') or '').split(',')[0].strip().lower()
+    return forwarded_proto == 'https'
+
+
 def set_auth_cookies(app, response, user_id: int) -> dict:
     access_token, access_jti, access_exp = make_access_token(app, user_id)
     refresh_token, refresh_jti, refresh_exp = make_refresh_token(app, user_id)
+    secure_cookie = _should_use_secure_cookies(app)
     response.set_cookie(
         'access_token',
         access_token,
         httponly=True,
-        secure=app.config['COOKIE_SECURE'],
+        secure=secure_cookie,
         samesite=app.config['COOKIE_SAMESITE'],
         max_age=app.config['JWT_ACCESS_TOKEN_EXPIRES'],
         path='/',
@@ -166,7 +181,7 @@ def set_auth_cookies(app, response, user_id: int) -> dict:
         'refresh_token',
         refresh_token,
         httponly=True,
-        secure=app.config['COOKIE_SECURE'],
+        secure=secure_cookie,
         samesite=app.config['COOKIE_SAMESITE'],
         max_age=app.config['JWT_REFRESH_TOKEN_EXPIRES'],
         path='/api/auth/refresh',
@@ -181,12 +196,13 @@ def set_auth_cookies(app, response, user_id: int) -> dict:
 
 
 def clear_auth_cookies(app, response):
+    secure_cookie = _should_use_secure_cookies(app)
     for name, path in [('access_token', '/'), ('refresh_token', '/api/auth/refresh')]:
         response.set_cookie(
             name,
             '',
             httponly=True,
-            secure=app.config['COOKIE_SECURE'],
+            secure=secure_cookie,
             samesite=app.config['COOKIE_SAMESITE'],
             max_age=0,
             expires=0,
