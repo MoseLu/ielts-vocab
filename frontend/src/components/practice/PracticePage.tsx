@@ -92,6 +92,7 @@ function PracticePage({
     sessionWrongRef,
     correctCountRef,
     wrongCountRef,
+    completedSessionDurationSecondsRef,
     sessionLoggedRef,
     effectiveSessionModeRef,
     sessionBookIdRef,
@@ -366,6 +367,7 @@ function PracticePage({
     sessionStartRef,
     sessionIdRef,
     sessionLoggedRef,
+    completedSessionDurationSecondsRef,
     sessionUniqueWordsRef,
     sessionBookIdRef,
     sessionChapterIdRef,
@@ -408,12 +410,14 @@ function PracticePage({
       <PracticePageCompletedState
         navigate={navigate}
         bookId={bookId}
+        chapterId={chapterId}
         currentDay={currentDay}
         correctCount={correctCount}
         wrongCount={wrongCount}
         errorMode={errorMode}
         errorReviewRound={errorReviewRound}
         reviewMode={reviewMode}
+        sessionDurationSeconds={completedSessionDurationSecondsRef.current}
         reviewSummary={reviewSummary}
         vocabulary={vocabulary}
         errorRoundResults={errorRoundResultsRef.current}

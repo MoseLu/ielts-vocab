@@ -7,7 +7,6 @@ import type { AppSettings, Word } from './types'
 import { STORAGE_KEYS } from '../../constants'
 import { getQuickMemoryStorageKey } from '../../lib/quickMemory'
 import { PRACTICE_GLOBAL_SHORTCUT_REPLAY_EVENT } from './page/practiceGlobalShortcutEvents'
-
 const apiFetchMock = vi.fn(() => Promise.resolve({}))
 const showToastMock = vi.fn()
 const logSessionMock = vi.fn()
@@ -15,19 +14,17 @@ const startSessionMock = vi.fn(() => Promise.resolve(1))
 const cancelSessionMock = vi.fn(() => Promise.resolve())
 const flushStudySessionOnPageHideMock = vi.fn()
 const touchStudySessionActivityMock = vi.fn()
-const updateStudySessionSnapshotMock = vi.fn()
-const playWordAudioMock = vi.fn(() => Promise.resolve(true))
+const updateStudySessionSnapshotMock = vi.fn(); const playWordAudioMock = vi.fn(() => Promise.resolve(true))
 const prepareWordAudioPlaybackMock = vi.fn(() => Promise.resolve(true))
 const preloadWordAudioMock = vi.fn(() => Promise.resolve(true))
 const stopAudioMock = vi.fn()
-
 vi.mock('./utils', () => ({
   playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
   prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
   preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
+  preloadWordAudioBatch: (...args: unknown[]) => preloadWordAudioMock(...args),
   stopAudio: (...args: unknown[]) => stopAudioMock(...args),
 }))
-
 vi.mock('../../hooks/useAIChat', () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   logSession: (...args: unknown[]) => logSessionMock(...args),
@@ -37,21 +34,17 @@ vi.mock('../../hooks/useAIChat', () => ({
   touchStudySessionActivity: (...args: unknown[]) => touchStudySessionActivityMock(...args),
   updateStudySessionSnapshot: (...args: unknown[]) => updateStudySessionSnapshotMock(...args),
 }))
-
 vi.mock('../../lib', () => ({
   apiFetch: (...args: unknown[]) => apiFetchMock(...args),
 }))
-
 vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({ showToast: showToastMock }),
 }))
-
 describe('QuickMemoryMode', () => {
   const vocabulary: Word[] = [
     { word: 'apple', phonetic: '/ˈæpəl/', pos: 'n.', definition: 'fruit' },
   ]
   const settings: AppSettings = {}
-
   beforeEach(() => {
     apiFetchMock.mockClear()
     showToastMock.mockClear()
@@ -71,11 +64,9 @@ describe('QuickMemoryMode', () => {
     localStorage.clear()
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 1 }))
   })
-
   afterEach(() => {
     vi.useRealTimers()
   })
-
   it('resets out of the summary screen when chapter context changes', async () => {
     const user = userEvent.setup()
     const { container, rerender } = render(
@@ -94,7 +85,6 @@ describe('QuickMemoryMode', () => {
         onWrongWord={() => {}}
       />,
     )
-
     expect(screen.getByText('你认识这个单词吗？')).toBeInTheDocument()
 
     await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
@@ -409,18 +399,19 @@ describe('QuickMemoryMode', () => {
     })
   })
 
-  it('waits for the question audio to be prepared and actually start before starting the 4-second countdown', async () => {
+  it('waits for the question audio to finish before starting the 4-second countdown', async () => {
     vi.useFakeTimers()
-
     const resolvePreparation: Array<(ready: boolean) => void> = []
     const resolvePlaybackStart: Array<(started: boolean) => void> = []
+    let playbackEnd: (() => void) | undefined
     prepareWordAudioPlaybackMock.mockImplementation(
       () => new Promise<boolean>(resolve => {
         resolvePreparation.push(resolve)
       }),
     )
     playWordAudioMock.mockImplementation(
-      () => new Promise<boolean>(resolve => {
+      (_word: string, _settings: AppSettings, onEnd?: () => void) => new Promise<boolean>(resolve => {
+        playbackEnd = onEnd
         resolvePlaybackStart.push(resolve)
       }),
     )
@@ -464,7 +455,14 @@ describe('QuickMemoryMode', () => {
     await act(async () => {
       vi.advanceTimersByTime(1000)
     })
-
+    expect(screen.getByText('4')).toBeInTheDocument()
+    await act(async () => {
+      playbackEnd?.()
+      await Promise.resolve()
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(1000)
+    })
     expect(screen.getByText('3')).toBeInTheDocument()
   })
 
@@ -487,10 +485,16 @@ describe('QuickMemoryMode', () => {
       expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
     })
     playWordAudioMock.mockClear()
+    stopAudioMock.mockClear()
+    await act(async () => {
+      window.dispatchEvent(new Event(PRACTICE_GLOBAL_SHORTCUT_REPLAY_EVENT))
+      await Promise.resolve()
+    })
 
-    window.dispatchEvent(new Event(PRACTICE_GLOBAL_SHORTCUT_REPLAY_EVENT))
-
-    expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
+    await waitFor(() => {
+      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
+    })
+    expect(stopAudioMock).toHaveBeenCalled()
     expect(screen.getAllByText('重播发音').length).toBeGreaterThan(0)
   })
 })

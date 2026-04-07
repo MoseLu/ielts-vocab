@@ -71,7 +71,6 @@ interface RecognitionErrorPayload {
 
 const LOCAL_VITE_DEV_PORTS = new Set(['3000', '3020', '5173'])
 const DEFAULT_SPEECH_SOCKET_PATH = '/socket.io'
-const PROXIED_SPEECH_SOCKET_PATH = '/speech-socket.io'
 
 interface SpeechSocketConfig {
   path: string
@@ -91,7 +90,7 @@ function resolveSpeechSocketConfig(location: Location): SpeechSocketConfig {
   }
 
   return {
-    path: PROXIED_SPEECH_SOCKET_PATH,
+    path: DEFAULT_SPEECH_SOCKET_PATH,
     url: `${protocol}//${location.host}/speech`,
   }
 }
@@ -147,9 +146,8 @@ export function useSpeechRecognition({
 
     // Local Vite dev mode talks to the speech service directly because the
     // dev proxy intermittently corrupts websocket frames on browser clients.
-    // Preview/prod stay same-origin, but use a custom proxy path so speech
-    // traffic goes through the preview server instead of a stale system nginx
-    // /socket.io route that may still point at the main Flask app.
+    // Preview/prod stay same-origin through the canonical nginx /socket.io
+    // proxy to the dedicated speech service on port 5001.
     const speechSocket = resolveSpeechSocketConfig(window.location)
     const socket = io(speechSocket.url, {
       autoConnect: false,

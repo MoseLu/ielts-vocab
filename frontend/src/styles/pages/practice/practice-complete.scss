@@ -235,6 +235,8 @@
 .complete-stats-row {
     display: flex;
     gap: var(--space-xl);
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .complete-stats-row .stat-correct {
@@ -245,6 +247,12 @@
 
 .complete-stats-row .stat-wrong {
     color: var(--error);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.complete-stats-row .stat-duration {
+    color: var(--accent);
     font-weight: 600;
     font-size: 16px;
 }

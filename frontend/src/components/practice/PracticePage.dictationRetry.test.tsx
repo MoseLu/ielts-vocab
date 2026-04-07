@@ -8,6 +8,8 @@ import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const playWordAudioMock = vi.fn()
+const prepareWordAudioPlaybackMock = vi.fn(() => Promise.resolve(true))
+const preloadWordAudioMock = vi.fn(() => Promise.resolve(true))
 const recordWordResultMock = vi.fn()
 const recordModeAnswerMock = vi.fn()
 const useFavoriteWordsMock = vi.fn(() => ({
@@ -71,6 +73,9 @@ vi.mock('./utils', async () => {
   return {
     ...actual,
     playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
+    prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
+    preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
+    preloadWordAudioBatch: (...args: unknown[]) => preloadWordAudioMock(...args),
     stopAudio: vi.fn(),
   }
 })
@@ -110,6 +115,8 @@ describe('PracticePage dictation retry flow', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.clearAllMocks()
+    prepareWordAudioPlaybackMock.mockClear()
+    preloadWordAudioMock.mockClear()
     localStorage.clear()
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
 
@@ -155,6 +162,7 @@ describe('PracticePage dictation retry flow', () => {
     act(() => {
       vi.advanceTimersByTime(300)
     })
+    await flushMicrotasks()
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['alpha'])
 
     const input = container.querySelector('.spelling-input') as HTMLInputElement

@@ -350,7 +350,9 @@ kbd {
 
 .qm-summary-stats {
     display: flex;
-    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px 40px;
 }
 
 .qm-stat {

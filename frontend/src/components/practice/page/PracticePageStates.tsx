@@ -9,6 +9,16 @@ import SettingsPanel from '../../settings/SettingsPanel'
 import { PageSkeleton } from '../../ui'
 import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../errorReviewSession'
 
+function formatSessionDuration(seconds: number): string {
+  const safeSeconds = Math.max(0, Math.round(seconds))
+  const hours = Math.floor(safeSeconds / 3600)
+  const minutes = Math.floor((safeSeconds % 3600) / 60)
+  const remainingSeconds = safeSeconds % 60
+  if (hours > 0) return minutes > 0 ? `${hours}小时${minutes}分` : `${hours}小时`
+  if (minutes > 0) return remainingSeconds > 0 ? `${minutes}分${remainingSeconds}秒` : `${minutes}分`
+  return `${remainingSeconds}秒`
+}
+
 interface ReviewQueueSummary {
   due_count: number
   upcoming_count: number
@@ -76,12 +86,14 @@ export function PracticePageLoadingState({
 interface PracticePageCompletedStateProps {
   navigate: NavigateFunction
   bookId: string | null
+  chapterId: string | null
   currentDay?: number
   correctCount: number
   wrongCount: number
   errorMode: boolean
   errorReviewRound: number
   reviewMode: boolean
+  sessionDurationSeconds?: number | null
   reviewSummary: ReviewQueueSummary | null
   vocabulary: Word[]
   errorRoundResults: ErrorReviewRoundResults
@@ -92,12 +104,14 @@ interface PracticePageCompletedStateProps {
 export function PracticePageCompletedState({
   navigate,
   bookId,
+  chapterId,
   currentDay,
   correctCount,
   wrongCount,
   errorMode,
   errorReviewRound,
   reviewMode,
+  sessionDurationSeconds,
   reviewSummary,
   vocabulary,
   errorRoundResults,
@@ -108,6 +122,9 @@ export function PracticePageCompletedState({
     ? reviewSummary.total_count - reviewSummary.offset - reviewSummary.returned_count
     : 0
   const nextErrorRoundWords = errorMode ? buildNextErrorReviewWords(vocabulary, errorRoundResults) : []
+  const sessionDurationText = chapterId && sessionDurationSeconds != null
+    ? formatSessionDuration(sessionDurationSeconds)
+    : null
 
   return (
     <div className="practice-session-layout">
@@ -122,6 +139,7 @@ export function PracticePageCompletedState({
         <div className="complete-stats-row">
           <span className="stat-correct">正确 {correctCount}</span>
           <span className="stat-wrong">错误 {wrongCount}</span>
+          {sessionDurationText && <span className="stat-duration">本次用时 {sessionDurationText}</span>}
         </div>
         {errorMode && (
           <p className="practice-complete-copy practice-complete-copy--compact">

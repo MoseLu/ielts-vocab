@@ -95,7 +95,7 @@ describe('useSpeechRecognition', () => {
       'wss://axiomaticworld.com/speech',
       expect.objectContaining({
         autoConnect: false,
-        path: '/speech-socket.io',
+        path: '/socket.io',
       })
     )
     expect(mockSocket.connect).toHaveBeenCalledTimes(1)

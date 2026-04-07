@@ -78,6 +78,7 @@ export function usePracticePageActions({
   sessionStartRef,
   sessionIdRef,
   sessionLoggedRef,
+  completedSessionDurationSecondsRef,
   sessionUniqueWordsRef,
   sessionBookIdRef,
   sessionChapterIdRef,
@@ -120,6 +121,8 @@ export function usePracticePageActions({
       const finalSessionCorrect = wasCorrect ? sessionCorrectRef.current + 1 : sessionCorrectRef.current
       const finalSessionWrong = wasCorrect ? sessionWrongRef.current : sessionWrongRef.current + 1
       const sessionStart = sessionStartRef.current
+      const durationSeconds = sessionStart > 0 ? Math.round((Date.now() - sessionStart) / 1000) : 0
+      completedSessionDurationSecondsRef.current = durationSeconds
       sessionLoggedRef.current = true
       syncCurrentSessionSnapshot()
       logSession({
@@ -129,7 +132,7 @@ export function usePracticePageActions({
         wordsStudied: sessionUniqueWordsRef.current.size,
         correctCount: finalSessionCorrect,
         wrongCount: finalSessionWrong,
-        durationSeconds: sessionStart > 0 ? Math.round((Date.now() - sessionStart) / 1000) : 0,
+        durationSeconds,
         startedAt: sessionStart,
         sessionId: sessionIdRef.current,
       })
@@ -139,6 +142,10 @@ export function usePracticePageActions({
         mode: effectiveSessionModeRef.current,
       })
       if (errorMode) {
+        setQueueIndex(queue.length)
+        return
+      }
+      if (sessionChapterIdRef.current) {
         setQueueIndex(queue.length)
         return
       }
@@ -156,6 +163,7 @@ export function usePracticePageActions({
     previousWord,
     queue,
     queueIndex,
+    completedSessionDurationSecondsRef,
     sessionBookIdRef,
     sessionChapterIdRef,
     sessionCorrectRef,

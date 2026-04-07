@@ -6,6 +6,8 @@ import { loadSmartStats, chooseSmartDimension } from '../../../lib/smartMode'
 import { readWrongWordsFromStorage } from '../../../features/vocabulary/wrongWordsStore'
 import { buildLearnerProfile, mergeLearnerProfileWithBackend } from '../../../components/practice/learnerProfile'
 import {
+  prepareWordAudioPlayback,
+  preloadWordAudioBatch,
   generateOptions,
   playWordAudio as playWordUtil,
   stopAudio as stopAudioUtil,
@@ -100,6 +102,11 @@ export function usePracticePageEffects({
   const autoPlayStartedKeyRef = useRef<string | null>(null)
   const currentOptionsWordKey = normalizeOptionWordKey(currentWord?.word)
   const choiceOptionsReady = currentOptionsWordKey != null && currentOptionsWordKey === optionsWordKey
+  const upcomingWords = queue
+    .slice(queueIndex + 1, queueIndex + 4)
+    .map(index => vocabulary[index]?.word?.trim())
+    .filter((word): word is string => Boolean(word))
+  const upcomingWordsKey = upcomingWords.join('|')
 
   const {
     isConnected: speechConnected,
@@ -232,6 +239,16 @@ export function usePracticePageEffects({
   ])
 
   useEffect(() => {
+    const activeWord = currentWord?.word?.trim()
+    if (!activeWord) return
+
+    void prepareWordAudioPlayback(activeWord).catch(() => {})
+    if (upcomingWords.length) {
+      void preloadWordAudioBatch(upcomingWords).catch(() => {})
+    }
+  }, [currentWord?.word, upcomingWordsKey])
+
+  useEffect(() => {
     if (!currentWord) return
     const shouldAutoPlay = mode === 'listening'
       || mode === 'dictation'
@@ -249,13 +266,19 @@ export function usePracticePageEffects({
     const autoPlayKey = `${mode}:${smartDimension}:${queueIndex}:${currentWord.word}`
     if (autoPlayStartedKeyRef.current === autoPlayKey) return
 
+    let cancelled = false
     autoPlayTimerRef.current = window.setTimeout(() => {
       autoPlayTimerRef.current = null
-      autoPlayStartedKeyRef.current = autoPlayKey
-      playWordUtil(currentWord.word, settings)
+      void (async () => {
+        const prepared = await prepareWordAudioPlayback(currentWord.word).catch(() => false)
+        if (cancelled || !prepared) return
+        autoPlayStartedKeyRef.current = autoPlayKey
+        playWordUtil(currentWord.word, settings)
+      })()
     }, 280)
 
     return () => {
+      cancelled = true
       if (autoPlayTimerRef.current != null) {
         window.clearTimeout(autoPlayTimerRef.current)
         autoPlayTimerRef.current = null
