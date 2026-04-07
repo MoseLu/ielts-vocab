@@ -11,6 +11,7 @@ from services.books_vocabulary_loader_service import (
     merge_examples as _merge_examples_service,
     normalize_chapter_title as _normalize_chapter_title_service,
     normalize_csv_word as _normalize_csv_word_service,
+    resolve_unified_examples as _resolve_unified_examples_service,
 )
 
 CSV_CHAPTER_GROUPS = {
@@ -170,6 +171,14 @@ def _load_examples():
 
 def _merge_examples(word_entry):
     return _merge_examples_service(word_entry)
+
+
+def _resolve_unified_examples(word, fallback_examples=None, limit=1):
+    return _resolve_unified_examples_service(
+        word,
+        fallback_examples=fallback_examples,
+        limit=limit,
+    )
 
 
 def _enrich_word_entry(word_entry):

@@ -16,6 +16,69 @@ def _accuracy(correct_count: int, wrong_count: int) -> int | None:
     return round(correct_count / attempted * 100) if attempted > 0 else None
 
 
+def _serialize_wrong_top_item(
+    record: UserWrongWord,
+    *,
+    scope: str,
+) -> dict | None:
+    item = record.to_dict()
+    dimension_states = item.get('dimension_states') or {}
+
+    def get_dimension_wrong(dimension: str) -> int:
+        state = dimension_states.get(dimension) or {}
+        return int(state.get('history_wrong') or 0)
+
+    recognition_wrong = get_dimension_wrong('recognition')
+    meaning_wrong = get_dimension_wrong('meaning')
+    listening_wrong = get_dimension_wrong('listening')
+    dictation_wrong = get_dimension_wrong('dictation')
+
+    if scope == 'pending':
+        recognition_wrong = recognition_wrong if item.get('recognition_pending') else 0
+        meaning_wrong = meaning_wrong if item.get('meaning_pending') else 0
+        listening_wrong = listening_wrong if item.get('listening_pending') else 0
+        dictation_wrong = dictation_wrong if item.get('dictation_pending') else 0
+
+    wrong_count = recognition_wrong + meaning_wrong + listening_wrong + dictation_wrong
+    if wrong_count <= 0:
+        return None
+
+    return {
+        'word': item.get('word') or '',
+        'wrong_count': wrong_count,
+        'phonetic': item.get('phonetic') or '',
+        'pos': item.get('pos') or '',
+        'recognition_wrong': recognition_wrong,
+        'meaning_wrong': meaning_wrong,
+        'listening_wrong': listening_wrong,
+        'dictation_wrong': dictation_wrong,
+    }
+
+
+def build_wrong_top_lists(*, user_id: int) -> tuple[list[dict], list[dict]]:
+    rows = (
+        UserWrongWord.query
+        .filter_by(user_id=user_id)
+        .order_by(UserWrongWord.wrong_count.desc(), UserWrongWord.word.asc())
+        .all()
+    )
+
+    history_items: list[dict] = []
+    pending_items: list[dict] = []
+    for row in rows:
+        history_item = _serialize_wrong_top_item(row, scope='history')
+        if history_item is not None:
+            history_items.append(history_item)
+
+        pending_item = _serialize_wrong_top_item(row, scope='pending')
+        if pending_item is not None:
+            pending_items.append(pending_item)
+
+    history_items.sort(key=lambda item: (-item['wrong_count'], item['word']))
+    pending_items.sort(key=lambda item: (-item['wrong_count'], item['word']))
+    return history_items[:10], pending_items[:10]
+
+
 def build_mode_breakdown(
     *,
     user_id: int,
@@ -95,21 +158,8 @@ def build_mode_breakdown(
 
 
 def build_wrong_top10(*, user_id: int) -> list[dict]:
-    wrong_top = UserWrongWord.query.filter_by(user_id=user_id).order_by(
-        UserWrongWord.wrong_count.desc()
-    ).limit(10).all()
-    return [
-        {
-            'word': wrong_word.word,
-            'wrong_count': wrong_word.wrong_count or 0,
-            'phonetic': wrong_word.phonetic or '',
-            'pos': wrong_word.pos or '',
-            'listening_wrong': wrong_word.listening_wrong or 0,
-            'meaning_wrong': wrong_word.meaning_wrong or 0,
-            'dictation_wrong': wrong_word.dictation_wrong or 0,
-        }
-        for wrong_word in wrong_top
-    ]
+    history_top, _ = build_wrong_top_lists(user_id=user_id)
+    return history_top
 
 
 def build_chapter_breakdowns(

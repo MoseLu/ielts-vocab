@@ -48,13 +48,47 @@ def load_examples():
     return books._examples_cache
 
 
+def _normalize_example_entries(example_list, *, limit: int = 1) -> list[dict]:
+    normalized: list[dict] = []
+    seen: set[str] = set()
+    for item in example_list or []:
+        if not isinstance(item, dict):
+            continue
+        en = ' '.join(str(item.get('en') or '').split())
+        zh = ' '.join(str(item.get('zh') or '').split())
+        key = en.lower()
+        if not en or key in seen:
+            continue
+        seen.add(key)
+        normalized.append({'en': en, 'zh': zh})
+        if len(normalized) >= limit:
+            break
+    return normalized
+
+
+def resolve_unified_examples(word: str, *, fallback_examples=None, limit: int = 1) -> list[dict]:
+    normalized_word = str(word or '').strip().lower()
+    if not normalized_word:
+        return []
+
+    short_examples = _normalize_example_entries(
+        load_examples().get(normalized_word),
+        limit=limit,
+    )
+    if short_examples:
+        return short_examples
+
+    if fallback_examples is None:
+        fallback_examples = load_catalog_examples().get(normalized_word)
+    return _normalize_example_entries(fallback_examples, limit=limit)
+
+
 def merge_examples(word_entry):
     word_text = word_entry.get('word', '').strip()
     if not word_text:
         return word_entry
 
-    normalized_word = word_text.lower()
-    examples = load_catalog_examples().get(normalized_word) or load_examples().get(normalized_word)
+    examples = resolve_unified_examples(word_text)
     if examples:
         return {**word_entry, 'examples': examples}
     return word_entry

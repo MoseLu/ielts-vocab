@@ -42,8 +42,9 @@ def get_context(current_user: User):
 @token_required
 def get_learner_profile(current_user: User):
     target_date = request.args.get('date') or None
+    view = request.args.get('view') or 'full'
     try:
-        profile = build_learner_profile(current_user.id, target_date)
+        profile = build_learner_profile(current_user.id, target_date, view)
     except ValueError:
         return jsonify({'error': 'date must be YYYY-MM-DD'}), 400
     return jsonify(profile)

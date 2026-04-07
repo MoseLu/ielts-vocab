@@ -5,10 +5,6 @@ import { vi } from 'vitest'
 import StatsPage from './StatsPage'
 
 const hooksState = vi.hoisted(() => ({
-  wrongWords: {
-    words: [],
-    loading: false,
-  },
   learningStats: {
     daily: [],
     books: [],
@@ -18,6 +14,8 @@ const hooksState = vi.hoisted(() => ({
     modeBreakdown: [],
     pieChart: [],
     wrongTop10: [],
+    historyWrongTop10: [],
+    pendingWrongTop10: [],
     chapterBreakdown: [],
     chapterModeStats: [],
     learnerProfile: null,
@@ -29,7 +27,6 @@ const hooksState = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../features/vocabulary/hooks', () => ({
-  useWrongWords: () => hooksState.wrongWords,
   useLearningStats: () => hooksState.learningStats,
 }))
 
@@ -62,8 +59,6 @@ describe('StatsPage', () => {
   })
 
   beforeEach(() => {
-    hooksState.wrongWords.words = []
-    hooksState.wrongWords.loading = false
     hooksState.learningStats.daily = []
     hooksState.learningStats.books = []
     hooksState.learningStats.modes = []
@@ -72,6 +67,8 @@ describe('StatsPage', () => {
     hooksState.learningStats.modeBreakdown = []
     hooksState.learningStats.pieChart = []
     hooksState.learningStats.wrongTop10 = []
+    hooksState.learningStats.historyWrongTop10 = []
+    hooksState.learningStats.pendingWrongTop10 = []
     hooksState.learningStats.chapterBreakdown = []
     hooksState.learningStats.chapterModeStats = []
     hooksState.learningStats.learnerProfile = null
@@ -149,6 +146,12 @@ describe('StatsPage', () => {
       { mode: 'radio', value: 18, sessions: 2 },
       { mode: 'smart', value: 24, sessions: 3 },
     ]
+    hooksState.learningStats.historyWrongTop10 = [
+      { word: 'alpha', wrong_count: 5, phonetic: '/ˈalfə/', pos: 'n.', meaning_wrong: 5 },
+    ]
+    hooksState.learningStats.pendingWrongTop10 = [
+      { word: 'beta', wrong_count: 3, phonetic: '/ˈbeɪtə/', pos: 'n.', listening_wrong: 3 },
+    ]
     hooksState.learningStats.learnerProfile = {
       date: '2026-03-31',
       summary: {
@@ -212,7 +215,10 @@ describe('StatsPage', () => {
     expect(screen.getByText('今日学习新词')).toBeInTheDocument()
     expect(screen.getByText('今日复习旧词')).toBeInTheDocument()
     expect(screen.getByText('累计学习新词')).toBeInTheDocument()
-    expect(screen.getByText('今日学习词数')).toBeInTheDocument()
+    expect(screen.getByText('今日触达词数')).toBeInTheDocument()
+    expect(
+      screen.getByText('今日触达词数').closest('.stats-card')?.querySelector('.stats-card-value')?.textContent,
+    ).toBe('25')
     expect(screen.getByText('累计复习旧词')).toBeInTheDocument()
     expect(screen.getByText('总学习时长')).toBeInTheDocument()
     expect(screen.getAllByText('2小时').length).toBeGreaterThan(0)

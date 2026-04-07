@@ -32,6 +32,8 @@ function buildStatsResponse() {
     mode_breakdown: [],
     pie_chart: [],
     wrong_top10: [],
+    history_wrong_top10: [],
+    pending_wrong_top10: [],
     chapter_breakdown: [],
     chapter_mode_stats: [],
     use_fallback: false,
@@ -63,7 +65,7 @@ describe('useLearningStats', () => {
         return Promise.resolve(buildStatsResponse())
       }
 
-      if (url === '/api/ai/learner-profile') {
+      if (url === '/api/ai/learner-profile?view=stats') {
         return Promise.resolve(null)
       }
 
@@ -93,7 +95,7 @@ describe('useLearningStats', () => {
     )
     expect(apiFetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/ai/learner-profile',
+      '/api/ai/learner-profile?view=stats',
       { cache: 'no-store' },
     )
 
@@ -171,7 +173,7 @@ describe('useLearningStats', () => {
         return Promise.resolve(buildStatsResponse())
       }
 
-      if (url === '/api/ai/learner-profile') {
+      if (url === '/api/ai/learner-profile?view=stats') {
         return Promise.resolve(null)
       }
 

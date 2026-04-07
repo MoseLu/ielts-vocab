@@ -20,6 +20,11 @@ export interface WrongWordFilters {
   endDate?: string
 }
 
+export function normalizeWrongWordSearchTerm(value?: string): string {
+  if (typeof value !== 'string') return ''
+  return value.trim().toLowerCase()
+}
+
 function normalizeDateInput(value?: string): string | undefined {
   if (typeof value !== 'string') return undefined
   const trimmed = value.trim()
@@ -57,6 +62,18 @@ function normalizeDimensionFilter(value?: WrongWordDimensionFilter): WrongWordDi
 
 function normalizeScope(value?: WrongWordCollectionScope): WrongWordCollectionScope {
   return value === 'history' ? 'history' : 'pending'
+}
+
+export function matchesWrongWordSearchTerm<T extends Partial<WrongWordRecord>>(
+  word: T,
+  searchTerm?: string,
+): boolean {
+  const normalizedSearch = normalizeWrongWordSearchTerm(searchTerm)
+  if (!normalizedSearch) return true
+
+  return [word.word, word.phonetic, word.definition, word.pos].some(candidate => (
+    typeof candidate === 'string' && candidate.toLowerCase().includes(normalizedSearch)
+  ))
 }
 
 export function getWrongWordOccurrenceAt(word: Partial<WrongWordRecord>): string | null {

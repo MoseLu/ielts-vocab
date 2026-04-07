@@ -89,6 +89,7 @@ export interface WrongTopItem {
   wrong_count: number
   phonetic: string
   pos: string
+  recognition_wrong?: number
   listening_wrong?: number
   meaning_wrong?: number
   dictation_wrong?: number
@@ -240,6 +241,8 @@ export function useLearningStats(
   const [modeBreakdown, setModeBreakdown] = useState<ModeStat[]>([])
   const [pieChart, setPieChart] = useState<PieSegment[]>([])
   const [wrongTop10, setWrongTop10] = useState<WrongTopItem[]>([])
+  const [historyWrongTop10, setHistoryWrongTop10] = useState<WrongTopItem[]>([])
+  const [pendingWrongTop10, setPendingWrongTop10] = useState<WrongTopItem[]>([])
   const [chapterBreakdown, setChapterBreakdown] = useState<ChapterBreakdownRow[]>([])
   const [chapterModeStats, setChapterModeStats] = useState<ChapterModeStatRow[]>([])
   const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
@@ -291,11 +294,13 @@ export function useLearningStats(
           mode_breakdown?: ModeStat[]
           pie_chart?: PieSegment[]
           wrong_top10?: WrongTopItem[]
+          history_wrong_top10?: WrongTopItem[]
+          pending_wrong_top10?: WrongTopItem[]
           chapter_breakdown?: ChapterBreakdownRow[]
           chapter_mode_stats?: ChapterModeStatRow[]
           use_fallback?: boolean
         }>(`/api/ai/learning-stats?${params}`, { cache: 'no-store' }),
-        apiFetch<LearnerProfile>('/api/ai/learner-profile', { cache: 'no-store' }).catch(() => null),
+        apiFetch<LearnerProfile>('/api/ai/learner-profile?view=stats', { cache: 'no-store' }).catch(() => null),
       ])
       setDaily(d.daily || [])
       setBooks(d.books || [])
@@ -304,7 +309,10 @@ export function useLearningStats(
       setAlltime(d.alltime || null)
       setModeBreakdown(d.mode_breakdown || [])
       setPieChart(d.pie_chart || [])
-      setWrongTop10(d.wrong_top10 || [])
+      const nextHistoryWrongTop10 = d.history_wrong_top10 || d.wrong_top10 || []
+      setWrongTop10(nextHistoryWrongTop10)
+      setHistoryWrongTop10(nextHistoryWrongTop10)
+      setPendingWrongTop10(d.pending_wrong_top10 || [])
       setChapterBreakdown(d.chapter_breakdown || [])
       setChapterModeStats(d.chapter_mode_stats || [])
       setLearnerProfile(profile || null)
@@ -368,6 +376,8 @@ export function useLearningStats(
     modeBreakdown,
     pieChart,
     wrongTop10,
+    historyWrongTop10,
+    pendingWrongTop10,
     chapterBreakdown,
     chapterModeStats,
     learnerProfile,

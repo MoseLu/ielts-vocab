@@ -154,7 +154,46 @@ def _build_daily_plan(
     }
 
 
-def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
+def _build_learner_profile_payload(
+    *,
+    view: str,
+    date_str: str,
+    summary: dict,
+    dimensions: list[dict],
+    focus_words: list[dict],
+    repeated_topics: list[dict],
+    next_actions: list[str],
+    modes: list[dict],
+    memory_system: dict | None = None,
+    daily_plan: dict | None = None,
+    activity_timeline: dict | None = None,
+) -> dict:
+    payload = {
+        'date': date_str,
+        'summary': summary,
+        'dimensions': dimensions,
+        'focus_words': focus_words,
+        'repeated_topics': repeated_topics,
+        'next_actions': next_actions,
+        'mode_breakdown': modes,
+    }
+
+    if view == 'stats':
+        return payload
+
+    return {
+        **payload,
+        'memory_system': memory_system or {},
+        'daily_plan': daily_plan,
+        'activity_summary': (activity_timeline or {}).get('summary') or {},
+        'activity_source_breakdown': (activity_timeline or {}).get('source_breakdown') or [],
+        'activity_event_breakdown': (activity_timeline or {}).get('event_breakdown') or [],
+        'recent_activity': (activity_timeline or {}).get('recent_events') or [],
+    }
+
+
+def build_learner_profile(user_id: int, target_date: str | None = None, view: str = 'full') -> dict:
+    profile_view = 'stats' if view == 'stats' else 'full'
     date_str, start_dt, end_dt = _resolve_target_date(target_date)
     now_utc = utc_now_naive()
 
@@ -199,21 +238,23 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         .all()
     )
     qm_rows = load_user_quick_memory_records(user_id)
-    dimension_events = (
-        UserLearningEvent.query
-        .filter_by(user_id=user_id)
-        .filter(
-            UserLearningEvent.occurred_at < end_dt,
-            UserLearningEvent.event_type.in_((
-                'listening_review',
-                'writing_review',
-                'pronunciation_check',
-                'speaking_simulation',
-            )),
+    dimension_events = []
+    if profile_view != 'stats':
+        dimension_events = (
+            UserLearningEvent.query
+            .filter_by(user_id=user_id)
+            .filter(
+                UserLearningEvent.occurred_at < end_dt,
+                UserLearningEvent.event_type.in_((
+                    'listening_review',
+                    'writing_review',
+                    'pronunciation_check',
+                    'speaking_simulation',
+                )),
+            )
+            .order_by(UserLearningEvent.occurred_at.asc(), UserLearningEvent.id.asc())
+            .all()
         )
-        .order_by(UserLearningEvent.occurred_at.asc(), UserLearningEvent.id.asc())
-        .all()
-    )
     notes = (
         UserLearningNote.query
         .filter_by(user_id=user_id)
@@ -254,15 +295,17 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
     modes, weakest_mode = _build_mode_summary(all_sessions)
     dimensions = _build_dimension_breakdown(smart_rows, wrong_words)
     focus_words = _build_focus_words(wrong_words)
-    memory_system = _build_memory_system(
-        smart_rows=smart_rows,
-        wrong_words=wrong_words,
-        focus_words=focus_words,
-        qm_rows=qm_rows,
-        dimension_events=dimension_events,
-        now_ms=now_ms,
-        now_utc=now_utc,
-    )
+    memory_system = None
+    if profile_view != 'stats':
+        memory_system = _build_memory_system(
+            smart_rows=smart_rows,
+            wrong_words=wrong_words,
+            focus_words=focus_words,
+            qm_rows=qm_rows,
+            dimension_events=dimension_events,
+            now_ms=now_ms,
+            now_utc=now_utc,
+        )
     repeated_topics = build_memory_topics(notes, limit=5, include_singletons=False)
     next_actions = _build_next_actions(
         memory_system=memory_system,
@@ -271,7 +314,9 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         focus_words=focus_words,
         due_reviews=due_reviews,
     )
-    activity_timeline = build_learning_activity_timeline(user_id, date_str)
+    activity_timeline = None
+    if profile_view != 'stats':
+        activity_timeline = build_learning_activity_timeline(user_id, date_str)
 
     summary = {
         'date': date_str,
@@ -286,28 +331,28 @@ def build_learner_profile(user_id: int, target_date: str | None = None) -> dict:
         'due_reviews': due_reviews,
         'trend_direction': _build_trend_direction(all_sessions),
     }
-    daily_plan = _build_daily_plan(
-        summary=summary,
-        wrong_words=wrong_words,
-        day_sessions=day_sessions,
-        activity_timeline=activity_timeline,
-        day_start=start_dt,
-        day_end=end_dt,
-        user_id=user_id,
-    )
+    daily_plan = None
+    if profile_view != 'stats':
+        daily_plan = _build_daily_plan(
+            summary=summary,
+            wrong_words=wrong_words,
+            day_sessions=day_sessions,
+            activity_timeline=activity_timeline or {},
+            day_start=start_dt,
+            day_end=end_dt,
+            user_id=user_id,
+        )
 
-    return {
-        'date': date_str,
-        'summary': summary,
-        'dimensions': dimensions,
-        'focus_words': focus_words,
-        'memory_system': memory_system,
-        'daily_plan': daily_plan,
-        'repeated_topics': repeated_topics,
-        'next_actions': next_actions,
-        'mode_breakdown': modes,
-        'activity_summary': activity_timeline.get('summary') or {},
-        'activity_source_breakdown': activity_timeline.get('source_breakdown') or [],
-        'activity_event_breakdown': activity_timeline.get('event_breakdown') or [],
-        'recent_activity': activity_timeline.get('recent_events') or [],
-    }
+    return _build_learner_profile_payload(
+        view=profile_view,
+        date_str=date_str,
+        summary=summary,
+        dimensions=dimensions,
+        focus_words=focus_words,
+        repeated_topics=repeated_topics,
+        next_actions=next_actions,
+        modes=modes,
+        memory_system=memory_system,
+        daily_plan=daily_plan,
+        activity_timeline=activity_timeline,
+    )

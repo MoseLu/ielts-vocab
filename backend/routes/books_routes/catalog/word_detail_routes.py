@@ -31,6 +31,11 @@ def get_word_details():
     current_user = _resolve_optional_current_user()
     normalized_word = normalize_word_key(raw_word)
     catalog_payload = catalog_entry.to_dict()
+    examples = _resolve_unified_examples(
+        raw_word,
+        fallback_examples=catalog_payload['examples'],
+        limit=1,
+    )
     return jsonify({
         'word': raw_word,
         'phonetic': catalog_payload['phonetic'],
@@ -38,7 +43,7 @@ def get_word_details():
         'definition': catalog_payload['definition'],
         'root': catalog_payload['root'],
         'english': catalog_payload['english'],
-        'examples': catalog_payload['examples'],
+        'examples': examples,
         'derivatives': catalog_payload['derivatives'],
         'books': catalog_payload['books'],
         'note': _serialize_note_for_user(current_user, raw_word, normalized_word),

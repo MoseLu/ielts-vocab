@@ -10,6 +10,7 @@ SKIP_PARTS = {
     '.git',
     '__pycache__',
     '.pytest_cache',
+    'output',
     'test-results',
     'tts_cache',
     'word_tts_cache',

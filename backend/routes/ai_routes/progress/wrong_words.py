@@ -86,12 +86,48 @@ def _get_or_create_wrong_word_record(
     record_cache[word_value] = existing
     return existing
 
+
+def _use_compact_wrong_words_payload() -> bool:
+    detail_mode = str(request.args.get('details') or '').strip().lower()
+    return detail_mode in {'compact', 'summary', 'basic', 'lite'}
+
+
+def _normalize_wrong_word_search_term(value) -> str:
+    return str(value or '').strip().lower()
+
+
+def _matches_wrong_word_search(record: UserWrongWord, search_term: str) -> bool:
+    if not search_term:
+        return True
+
+    candidates = (
+        record.word,
+        record.phonetic,
+        record.definition,
+        record.pos,
+    )
+    return any(
+        isinstance(candidate, str) and search_term in candidate.lower()
+        for candidate in candidates
+    )
+
+
 @ai_bp.route('/wrong-words', methods=['GET'])
 @token_required
 def get_wrong_words(current_user: User):
     """Get all wrong words for the current user from the backend."""
-    words = UserWrongWord.query.filter_by(user_id=current_user.id)\
-        .order_by(UserWrongWord.wrong_count.desc()).all()
+    search_term = _normalize_wrong_word_search_term(request.args.get('search'))
+    words = (
+        UserWrongWord.query
+        .filter_by(user_id=current_user.id)
+        .order_by(UserWrongWord.wrong_count.desc(), UserWrongWord.updated_at.desc())
+        .all()
+    )
+    if search_term:
+        words = [word for word in words if _matches_wrong_word_search(word, search_term)]
+    if _use_compact_wrong_words_payload():
+        return jsonify({'words': [word.to_dict() for word in words]}), 200
+
     return jsonify({'words': _decorate_wrong_words_with_quick_memory_progress(current_user.id, words)}), 200
 
 
@@ -182,4 +218,3 @@ def clear_wrong_words(current_user: User):
 
 
 # ── POST /api/ai/log-session ─────────────────────────────────────────────────
-

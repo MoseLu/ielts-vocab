@@ -1,7 +1,8 @@
+import json
 from datetime import datetime, timedelta, timezone
 
 import routes.ai as ai_routes
-from models import User, UserChapterProgress, UserQuickMemoryRecord, UserStudySession, db
+from models import User, UserChapterProgress, UserQuickMemoryRecord, UserStudySession, UserWrongWord, db
 
 
 def register_and_login(client, username='stats-user', password='password123'):
@@ -410,3 +411,54 @@ def test_learning_stats_splits_cross_midnight_sessions_into_today(client, app, m
     assert today_row['accuracy'] == 70
     assert data['alltime']['today_duration_seconds'] == 600
     assert data['alltime']['today_accuracy'] == 70
+
+
+def test_learning_stats_includes_history_and_pending_wrong_top_lists(client, app):
+    register_and_login(client, username='wrong-top-stats-user')
+
+    with app.app_context():
+        user = User.query.filter_by(username='wrong-top-stats-user').first()
+        assert user is not None
+
+        db.session.add_all([
+            UserWrongWord(
+                user_id=user.id,
+                word='alpha',
+                phonetic='/a/',
+                pos='n.',
+                definition='first',
+                wrong_count=5,
+                dimension_state=json.dumps({
+                    'recognition': {'history_wrong': 2, 'pass_streak': 4},
+                    'meaning': {'history_wrong': 3, 'pass_streak': 0},
+                    'listening': {'history_wrong': 0, 'pass_streak': 0},
+                    'dictation': {'history_wrong': 0, 'pass_streak': 0},
+                }, ensure_ascii=False),
+            ),
+            UserWrongWord(
+                user_id=user.id,
+                word='beta',
+                phonetic='/b/',
+                pos='n.',
+                definition='second',
+                wrong_count=4,
+                dimension_state=json.dumps({
+                    'recognition': {'history_wrong': 4, 'pass_streak': 0},
+                    'meaning': {'history_wrong': 0, 'pass_streak': 0},
+                    'listening': {'history_wrong': 0, 'pass_streak': 0},
+                    'dictation': {'history_wrong': 0, 'pass_streak': 0},
+                }, ensure_ascii=False),
+            ),
+        ])
+        db.session.commit()
+
+    response = client.get('/api/ai/learning-stats?days=7')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['history_wrong_top10'][0]['word'] == 'alpha'
+    assert data['history_wrong_top10'][0]['wrong_count'] == 5
+    assert data['pending_wrong_top10'][0]['word'] == 'beta'
+    assert data['pending_wrong_top10'][0]['wrong_count'] == 4
+    assert data['pending_wrong_top10'][0]['recognition_wrong'] == 4
+    assert data['pending_wrong_top10'][0]['meaning_wrong'] == 0

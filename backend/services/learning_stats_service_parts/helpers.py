@@ -11,7 +11,7 @@ from models import (
 from services.learning_stats_breakdowns import (
     build_chapter_breakdowns,
     build_mode_breakdown,
-    build_wrong_top10,
+    build_wrong_top_lists,
     resolve_trend_direction,
     resolve_weakest_mode,
 )

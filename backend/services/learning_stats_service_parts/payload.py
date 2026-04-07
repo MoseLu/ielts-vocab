@@ -174,6 +174,7 @@ def build_learning_stats_payload(
         global_live_pending=global_live_pending,
         quick_memory_word_stats_resolver=quick_memory_word_stats_resolver,
     )
+    history_wrong_top10, pending_wrong_top10 = build_wrong_top_lists(user_id=user_id)
     chapter_breakdown, chapter_mode_stats = build_chapter_breakdowns(
         user_id=user_id,
         all_chapter_progress=all_chapter_progress,
@@ -214,7 +215,9 @@ def build_learning_stats_payload(
             {'mode': item['mode'], 'value': item['words_studied'], 'sessions': item['sessions']}
             for item in mode_breakdown
         ],
-        'wrong_top10': build_wrong_top10(user_id=user_id),
+        'wrong_top10': history_wrong_top10,
+        'history_wrong_top10': history_wrong_top10,
+        'pending_wrong_top10': pending_wrong_top10,
         'chapter_breakdown': chapter_breakdown,
         'chapter_mode_stats': chapter_mode_stats,
     }

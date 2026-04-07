@@ -82,6 +82,11 @@ def _mock_catalog():
     ]
 
 
+def _stub_example_caches(monkeypatch, *, short_examples=None, catalog_examples=None):
+    monkeypatch.setattr(books_routes, '_examples_cache', short_examples or {})
+    monkeypatch.setattr(books_routes, '_catalog_examples_cache', catalog_examples or {})
+
+
 class TestWordDetails:
     def test_word_details_requires_word(self, client):
         res = client.get('/api/books/word-details')
@@ -89,6 +94,9 @@ class TestWordDetails:
 
     def test_word_details_bootstrap_root_and_derivatives(self, client, app, monkeypatch):
         monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', _mock_catalog)
+        _stub_example_caches(monkeypatch, short_examples={
+            'quit': [{'en': 'Quit the course before the deadline.', 'zh': '在截止前退出课程。'}],
+        })
 
         res = client.get('/api/books/word-details?word=quit')
 
@@ -101,7 +109,7 @@ class TestWordDetails:
         assert data['root']['segments'][0]['text'] == 'quit'
         assert data['english']['entries'] == []
         assert [item['word'] for item in data['derivatives']] == ['quits', 'quitting', 'quitter']
-        assert data['examples'][0]['en'] == 'He decided to quit last year.'
+        assert data['examples'][0]['en'] == 'Quit the course before the deadline.'
         assert data['books'][0]['book_id'] == 'book-a'
         assert data['note']['content'] == ''
 
@@ -113,6 +121,17 @@ class TestWordDetails:
             assert WordCatalogBookRef.query.filter_by(catalog_entry_id=catalog_entry.id).count() == 1
             derivative_words = [item['word'] for item in catalog_entry.get_derivatives()]
             assert derivative_words == ['quits', 'quitting', 'quitter']
+            assert catalog_entry.get_examples()[0]['en'] == 'He decided to quit last year.'
+
+    def test_word_details_fall_back_to_catalog_examples_when_short_examples_missing(self, client, monkeypatch):
+        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', _mock_catalog)
+        _stub_example_caches(monkeypatch, short_examples={})
+
+        res = client.get('/api/books/word-details?word=quit')
+
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['examples'][0]['en'] == 'He decided to quit last year.'
 
     def test_word_details_include_headword_family(self, client, monkeypatch):
         monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', _mock_catalog)
@@ -127,6 +146,7 @@ class TestWordDetails:
 
     def test_word_details_fall_back_to_placeholder_derivatives(self, client, monkeypatch):
         monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', lambda: [])
+        _stub_example_caches(monkeypatch, short_examples={})
 
         res = client.get('/api/books/word-details?word=quit')
 
@@ -171,6 +191,9 @@ class TestWordDetails:
             'definition': '停止；离开',
             'examples': [{'en': 'He decided to quit last year.', 'zh': '他决定去年辞职。'}],
         }])
+        _stub_example_caches(monkeypatch, short_examples={
+            'quit': [{'en': 'Quit before the deadline if needed.', 'zh': '如果有需要，就在截止前退出。'}],
+        })
         monkeypatch.setattr(word_detail_enrichment, 'request_llm_batch', lambda *_args, **_kwargs: {
             'quit': {
                 'word': 'quit',
@@ -215,7 +238,7 @@ class TestWordDetails:
         data = res.get_json()
         assert data['phonetic'] == '/kwɪt/'
         assert data['english']['entries'][0]['definition'] == 'to stop doing something'
-        assert data['examples'][0]['en'] == 'She decided to quit her job before the exam season.'
+        assert data['examples'][0]['en'] == 'Quit before the deadline if needed.'
         assert data['derivatives'][0]['word'] == 'quitter'
         assert 'ielts_listening_premium' in {item['book_id'] for item in data['books']}
 

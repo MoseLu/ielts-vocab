@@ -136,15 +136,13 @@ def get_word_examples():
     Response:
       { "examples": { "<word>": [{"en": "...", "zh": "..."}] } }
     """
-    examples_map = _load_examples()
-
     single = request.args.get('word', '').strip().lower()
     batch_raw = request.args.get('words', '').strip()
 
     if single:
         # Single-word lookup
         result = {}
-        hits = examples_map.get(single)
+        hits = _resolve_unified_examples(single)
         if hits:
             result[single] = hits
         return jsonify({'examples': result}), 200
@@ -154,7 +152,7 @@ def get_word_examples():
         words = [w.strip().lower() for w in batch_raw.split(',') if w.strip()]
         result = {}
         for w in words:
-            hits = examples_map.get(w)
+            hits = _resolve_unified_examples(w)
             if hits:
                 result[w] = hits
         return jsonify({'examples': result}), 200
