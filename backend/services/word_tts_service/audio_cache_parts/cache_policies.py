@@ -69,7 +69,7 @@ def _should_use_generation_pool(
     provider: str | None = None,
 ) -> bool:
     resolved_provider = (provider or _TTS_PROVIDER).strip().lower()
-    if resolved_provider in {'minimax', 'hybrid'}:
+    if resolved_provider in {'minimax', 'hybrid', 'azure', 'volcengine'}:
         return False
     resolved = (requested_model or DEFAULT_MODEL).strip()
     return resolved == DEFAULT_MODEL and len(MODELS) > 1

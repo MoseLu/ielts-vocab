@@ -180,29 +180,19 @@ class TestCachedMp3Validation:
     def test_accepts_id3_payload(self):
         assert word_tts.is_probably_valid_mp3_bytes(VALID_MP3)
 
-    def test_prepends_leading_silence_for_word_audio(self, monkeypatch):
-        import imageio_ffmpeg
+    def test_word_audio_no_longer_prepends_leading_silence(self, monkeypatch):
+        called = {'run': False}
 
-        seen = {}
+        def fake_run(*args, **kwargs):
+            called['run'] = True
+            raise AssertionError('subprocess.run should not be called')
 
-        class FakeResult:
-            returncode = 0
-            stderr = b''
-            stdout = VALID_MP3
-
-        def fake_run(command, **kwargs):
-            seen['command'] = command
-            seen['input'] = kwargs['input']
-            return FakeResult()
-
-        monkeypatch.setattr(imageio_ffmpeg, 'get_ffmpeg_exe', lambda: 'ffmpeg')
         monkeypatch.setattr(word_tts.subprocess, 'run', fake_run)
 
         audio = word_tts.add_leading_silence_to_mp3_bytes(VALID_MP3)
 
         assert audio == VALID_MP3
-        assert seen['input'] == VALID_MP3
-        assert f'adelay={word_tts._WORD_TTS_LEADING_SILENCE_MS}:all=1' in seen['command']
+        assert called['run'] is False
 
 
 class TestDashScopeAudioNormalization:

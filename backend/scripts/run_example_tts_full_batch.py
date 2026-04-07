@@ -67,6 +67,22 @@ def _provider() -> str:
     return os.environ.get('BAILIAN_TTS_PROVIDER', 'minimax').strip().lower()
 
 
+def _require_provider_credentials(provider: str) -> bool:
+    if provider == 'azure':
+        if not os.environ.get('AZURE_SPEECH_KEY', '').strip():
+            print('ERROR: 请在 backend/.env 中设置 AZURE_SPEECH_KEY', file=sys.stderr)
+            return False
+        if not os.environ.get('AZURE_SPEECH_REGION', '').strip():
+            print('ERROR: 请在 backend/.env 中设置 AZURE_SPEECH_REGION', file=sys.stderr)
+            return False
+        return True
+
+    if provider != 'minimax' and not os.environ.get('DASHSCOPE_API_KEY', '').strip():
+        print('ERROR: 请在 backend/.env 中设置 DASHSCOPE_API_KEY', file=sys.stderr)
+        return False
+    return True
+
+
 def _cache_dir() -> Path:
     d = BACKEND_ROOT / 'tts_cache'
     d.mkdir(parents=True, exist_ok=True)
@@ -149,8 +165,7 @@ def main() -> int:
     )
 
     provider = _provider()
-    if provider != 'minimax' and not os.environ.get('DASHSCOPE_API_KEY', '').strip():
-        print('ERROR: 请在 backend/.env 中设置 DASHSCOPE_API_KEY', file=sys.stderr)
+    if not _require_provider_credentials(provider):
         return 1
 
     model, default_voice = default_cache_identity()
@@ -198,7 +213,13 @@ def main() -> int:
         for attempt in range(len(backoff) + 1):
             try:
                 limiter.wait_for_turn()
-                audio = synthesize_word_to_bytes(text_for_tts, model, voice)
+                audio = synthesize_word_to_bytes(
+                    text_for_tts,
+                    model,
+                    voice,
+                    provider=provider,
+                    content_mode='sentence' if provider == 'azure' else None,
+                )
                 write_bytes_atomically(cache_path, audio)
                 return sentence, True
             except Exception as exc:

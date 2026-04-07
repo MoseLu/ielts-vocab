@@ -5,11 +5,21 @@ import io
 import re
 
 
-def apply_audio_headers(response, *, audio_bytes_header: str, byte_length: int | None = None):
+def apply_audio_headers(
+    response,
+    *,
+    audio_bytes_header: str,
+    byte_length: int | None = None,
+    audio_cache_key_header: str | None = None,
+    cache_key: str | None = None,
+):
     response.headers['Cache-Control'] = 'no-store, max-age=0'
     response.headers['Pragma'] = 'no-cache'
+    response.headers['Accept-Ranges'] = 'none'
     if isinstance(byte_length, int) and byte_length > 0:
         response.headers[audio_bytes_header] = str(byte_length)
+    if audio_cache_key_header and cache_key:
+        response.headers[audio_cache_key_header] = cache_key
     return response
 
 
@@ -102,6 +112,7 @@ def generate_speech_response(
             mimetype='audio/mpeg',
             as_attachment=False,
             download_name=f'tts_{cache_key}.mp3',
+            conditional=False,
         )
     remove_invalid_cached_audio(cached_file)
 
@@ -148,6 +159,7 @@ def generate_speech_response(
                 mimetype='audio/mpeg',
                 as_attachment=False,
                 download_name=f'tts_{cache_key}.mp3',
+                conditional=False,
             )
         if response.status_code == 429:
             return jsonify({
@@ -181,6 +193,10 @@ def generate_example_audio_response(
     if not sentence:
         return {'error': 'sentence is required'}, 400
 
+    def _cache_key_for_file(path):
+        stat = path.stat()
+        return f'{path.stem}:{stat.st_size}:{stat.st_mtime_ns}'
+
     provider = current_tts_provider()
     model, voice_id = example_tts_identity_resolver(sentence)
     text_for_tts = (
@@ -192,15 +208,21 @@ def generate_example_audio_response(
     cached_file = cache_dir_resolver() / f'{cache_key}.mp3'
 
     if cached_file.exists() and is_probably_valid_mp3_file(cached_file):
+        cache_key_value = _cache_key_for_file(cached_file)
         if metadata_only:
-            return audio_metadata_response(cached_file.stat().st_size)
+            return audio_metadata_response(cached_file.stat().st_size, cache_key=cache_key_value)
         response = send_file(
             cached_file,
             mimetype='audio/mpeg',
             as_attachment=False,
             download_name=f'example_{cache_key}.mp3',
+            conditional=False,
         )
-        return apply_audio_headers_resolver(response, byte_length=cached_file.stat().st_size)
+        return apply_audio_headers_resolver(
+            response,
+            byte_length=cached_file.stat().st_size,
+            cache_key=cache_key_value,
+        )
 
     remove_invalid_cached_audio(cached_file)
     if metadata_only:
@@ -209,6 +231,7 @@ def generate_example_audio_response(
     try:
         audio_bytes = synthesize_word_to_bytes(text_for_tts, model, voice_id)
         write_bytes_atomically(cached_file, audio_bytes)
+        cache_key_value = _cache_key_for_file(cached_file)
         audio_data = io.BytesIO(audio_bytes)
         audio_data.seek(0)
         response = send_file(
@@ -216,8 +239,13 @@ def generate_example_audio_response(
             mimetype='audio/mpeg',
             as_attachment=False,
             download_name=f'example_{cache_key}.mp3',
+            conditional=False,
         )
-        return apply_audio_headers_resolver(response, byte_length=len(audio_bytes))
+        return apply_audio_headers_resolver(
+            response,
+            byte_length=len(audio_bytes),
+            cache_key=cache_key_value,
+        )
     except Exception as exc:
         current_app.logger.exception('Example audio generation failed for "%s"', sentence)
         status_code = getattr(exc, 'status_code', 502)

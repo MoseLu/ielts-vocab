@@ -1,5 +1,5 @@
 """
-DashScope (百炼) CosyVoice word-level TTS helpers.
+Shared word-level TTS config and cache identity helpers.
 Used for offline-cached pronunciation MP3s; paths are deterministic from word + model + voice.
 """
 
@@ -17,13 +17,22 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
+
+def _first_non_empty_env(*names: str, default: str = '') -> str:
+    for name in names:
+        value = os.environ.get(name, '').strip()
+        if value:
+            return value
+    return default
+
+
 DEFAULT_MODEL = os.environ.get('BAILIAN_TTS_MODEL', 'qwen3-tts-flash')
 DEFAULT_VOICE = os.environ.get('BAILIAN_TTS_VOICE', 'Serena')
 WORD_TTS_PROVIDER = os.environ.get('WORD_TTS_PROVIDER', '').strip().lower()
 WORD_TTS_MODEL = os.environ.get('WORD_TTS_MODEL', '').strip()
 WORD_TTS_VOICE = os.environ.get('WORD_TTS_VOICE', '').strip()
-_WORD_TTS_STRATEGY_TAG = 'tts-v2-50ms'
-_WORD_TTS_LEADING_SILENCE_MS = 50
+_WORD_TTS_STRATEGY_TAG = 'tts-v3-nosilence'
+_WORD_TTS_LEADING_SILENCE_MS = 0
 
 # Each model name gets its own slot → independent RPM quota on 百炼 side.
 # Mix cosyvoice-* (char-based) and qwen* (token-based) freely since they are
@@ -31,7 +40,7 @@ _WORD_TTS_LEADING_SILENCE_MS = 50
 _RAW_MODELS = os.environ.get('BAILIAN_TTS_MODELS', DEFAULT_MODEL).split(',')
 MODELS = [m.strip() for m in _RAW_MODELS if m.strip()]
 
-# ── TTS Provider: 'minimax' (fast, direct hex response) or 'dashscope' ─────
+# ── TTS Provider: 'minimax', 'dashscope', or 'azure' ────────────────────────
 _TTS_PROVIDER = os.environ.get('BAILIAN_TTS_PROVIDER', 'minimax').lower()
 
 # ── HTTP endpoints ────────────────────────────────────────────────────────────
@@ -146,10 +155,44 @@ def word_tts_cache_path(
     return cache_dir / f'{word_tts_file_stem(normalized_key, model, voice)}.mp3'
 
 
+def _word_tts_fallback_provider() -> str:
+    if _TTS_PROVIDER in {'azure', 'volcengine', 'minimax'}:
+        return _TTS_PROVIDER
+    if _MINIMAX_API_KEYS:
+        return 'minimax'
+    return _TTS_PROVIDER
+
+
+def _provider_default_model(provider: str | None = None) -> str:
+    resolved_provider = (provider or _TTS_PROVIDER).strip().lower()
+    if resolved_provider == 'minimax':
+        return _MINIMAX_DEFAULT_MODEL
+    if resolved_provider == 'azure':
+        return azure_default_model()
+    if resolved_provider == 'volcengine':
+        return volcengine_default_model()
+    return DEFAULT_MODEL
+
+
+def _provider_default_voice(provider: str | None = None) -> str:
+    resolved_provider = (provider or _TTS_PROVIDER).strip().lower()
+    if resolved_provider == 'minimax':
+        return _MINIMAX_VOICE
+    if resolved_provider == 'azure':
+        return azure_sentence_voice()
+    if resolved_provider == 'volcengine':
+        return volcengine_default_voice()
+    return DEFAULT_VOICE
+
+
 def default_cache_identity() -> tuple[str, str]:
     """Return the global example-audio model/voice pair used for cache names."""
     if _TTS_PROVIDER == 'minimax':
         return _MINIMAX_DEFAULT_MODEL, 'English_Trustworthy_Man'
+    if _TTS_PROVIDER == 'azure':
+        return f'{azure_default_model()}@{_AZURE_SENTENCE_CACHE_TAG}', azure_sentence_voice()
+    if _TTS_PROVIDER == 'volcengine':
+        return volcengine_default_model(), volcengine_default_voice()
     return DEFAULT_MODEL, DEFAULT_VOICE
 
 
@@ -162,30 +205,40 @@ def default_word_tts_identity() -> tuple[str, str, str]:
     an explicit override because some external sources start too abruptly and
     can sound clipped during auto-play.
     """
-    fallback_provider = 'minimax' if _MINIMAX_API_KEYS else _TTS_PROVIDER
+    fallback_provider = _word_tts_fallback_provider()
     provider = WORD_TTS_PROVIDER or fallback_provider
-    fallback_model = WORD_TTS_MODEL or (
-        _MINIMAX_DEFAULT_MODEL if fallback_provider == 'minimax' else DEFAULT_MODEL
+
+    if provider == 'azure':
+        model = WORD_TTS_MODEL or azure_default_model()
+        voice = WORD_TTS_VOICE or azure_word_voice()
+        return provider, f'{model}@{_AZURE_WORD_CACHE_TAG}', voice
+
+    if fallback_provider == 'azure':
+        fallback_model = WORD_TTS_MODEL or azure_default_model()
+        fallback_voice = WORD_TTS_VOICE or azure_word_voice()
+    else:
+        fallback_model = WORD_TTS_MODEL or _provider_default_model(fallback_provider)
+        fallback_voice = WORD_TTS_VOICE or _provider_default_voice(fallback_provider)
+    cache_model = (
+        f'{fallback_model}@{_AZURE_WORD_CACHE_TAG}'
+        if fallback_provider == 'azure'
+        else f'{fallback_model}@{_WORD_TTS_STRATEGY_TAG}'
     )
-    fallback_voice = WORD_TTS_VOICE or (
-        _MINIMAX_VOICE if fallback_provider == 'minimax' else DEFAULT_VOICE
-    )
-    cache_model = f'{fallback_model}@{_WORD_TTS_STRATEGY_TAG}'
 
     if provider == 'hybrid':
         return provider, cache_model, fallback_voice
-    if provider == 'minimax':
+    if provider in {'minimax', 'volcengine'}:
         return provider, cache_model, fallback_voice
 
-    model = WORD_TTS_MODEL or DEFAULT_MODEL
-    voice = WORD_TTS_VOICE or DEFAULT_VOICE
+    model = WORD_TTS_MODEL or _provider_default_model(provider)
+    voice = WORD_TTS_VOICE or _provider_default_voice(provider)
     return provider, f'{model}@{_WORD_TTS_STRATEGY_TAG}', voice
 
 
 def _strip_word_tts_strategy_tag(model: str | None) -> str:
     raw = (model or '').strip()
     if not raw:
-        return _MINIMAX_DEFAULT_MODEL if _MINIMAX_API_KEYS else DEFAULT_MODEL
+        return _provider_default_model(_word_tts_fallback_provider())
     return raw.split('@', 1)[0].strip() or raw
 
 

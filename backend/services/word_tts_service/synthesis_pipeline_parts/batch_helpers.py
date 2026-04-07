@@ -49,7 +49,7 @@ def count_cached_words(
         key = normalize_word_key(w)
         if not key:
             continue
-        if word_tts_cache_path(cache_dir, key, model, voice).exists():
+        if is_probably_valid_mp3_file(word_tts_cache_path(cache_dir, key, model, voice)):
             n += 1
     return n
 

@@ -49,18 +49,18 @@ class _RequestRateLimiter:
             self._next_allowed_at = max(self._next_allowed_at, now + delay)
 
 
-def run_batch_generate_missing(
-    book_ids: list[str] | None = None,
+def run_batch_generate_words(
+    words: list[str],
     *,
     cache_dir: Path | None = None,
     concurrency: int = 6,
     backoff_delays: tuple[float, ...] | None = None,
     rate_interval: float = 0.0,
     sleep_fn: Callable[[float], None] | None = None,
+    progress_callback: Callable[[dict], None] | None = None,
 ) -> dict:
     """
-    Generate MP3 for every word in VOCAB_BOOKS (or subset) that is not yet cached.
-    Uses DEFAULT_MODEL / DEFAULT_VOICE. Safe to re-run (skips existing files).
+    Generate MP3 for the provided word list, skipping already valid cached audio.
 
     Concurrency: N worker threads call the API concurrently.  A token bucket
     refills at a fixed interval so the steady-state throughput is
@@ -70,7 +70,7 @@ def run_batch_generate_missing(
     backoff; after backoff the token bucket resumes refilling normally.
 
     Returns stats dict with keys:
-      total, completed_final, generated_this_run, errors (list of str).
+      total, completed_initial, completed_final, generated_this_run, errors.
     """
     if cache_dir is None:
         cache_dir = word_tts_data_dir()
@@ -88,15 +88,31 @@ def run_batch_generate_missing(
         concurrency = 1
     rate_limiter = _RequestRateLimiter(rate_interval)
     progress_every = 5 if rate_interval > 0.0 else 50
-    words = collect_unique_words(book_ids)
+    words = [word for word in words if normalize_word_key(word)]
     total = len(words)
     completed = count_cached_words(words, cache_dir, model, voice)
-    write_batch_progress(cache_dir, total, completed, 'running', current_word=None)
+    completed_initial = completed
+
+    def emit_progress(status: str, current_word: str | None) -> None:
+        if progress_callback is None:
+            return
+        progress_callback({
+            'total': total,
+            'completed_initial': completed_initial,
+            'completed_final': completed,
+            'generated_this_run': generated,
+            'status': status,
+            'current_word': current_word,
+        })
+
+    generated = 0
+    emit_progress('running', None)
 
     if completed >= total:
-        write_batch_progress(cache_dir, total, completed, 'done', current_word=None)
+        emit_progress('done', None)
         return {
             'total': total,
+            'completed_initial': completed_initial,
             'completed_final': completed,
             'generated_this_run': 0,
             'errors': [],
@@ -133,6 +149,7 @@ def run_batch_generate_missing(
                         _strip_word_tts_strategy_tag(model),
                         voice,
                         provider=provider,
+                        content_mode='word',
                     )
                     write_bytes_atomically(out_path, audio)
                     return True
@@ -153,8 +170,6 @@ def run_batch_generate_missing(
             # per-key concurrency (≤3 concurrent requests per key),
             # which keeps us safely within MiniMax RPM limits.
 
-    generated = 0
-
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
         futures = {executor.submit(process_word, w): w for w in words}
 
@@ -168,19 +183,57 @@ def run_batch_generate_missing(
                         generated += 1
                         completed += 1
                 if done_count % progress_every == 0 or completed == total:
-                    write_batch_progress(
-                        cache_dir, total, completed, 'running',
-                        current_word=w,
-                    )
+                    emit_progress('running', w)
             except Exception as exc:
                 with errors_lock:
                     errors.append(f'{w!r}: {exc}')
                 print(f'[Word TTS Future Error] {w!r}: {exc}')
 
-    write_batch_progress(cache_dir, total, completed, 'done', current_word=None)
+    emit_progress('done', None)
     return {
         'total': total,
+        'completed_initial': completed_initial,
         'completed_final': completed,
         'generated_this_run': generated,
         'errors': errors,
     }
+
+
+def run_batch_generate_missing(
+    book_ids: list[str] | None = None,
+    *,
+    cache_dir: Path | None = None,
+    concurrency: int = 6,
+    backoff_delays: tuple[float, ...] | None = None,
+    rate_interval: float = 0.0,
+    sleep_fn: Callable[[float], None] | None = None,
+) -> dict:
+    """
+    Generate MP3 for every word in VOCAB_BOOKS (or subset) that is not yet cached.
+    Uses DEFAULT_MODEL / DEFAULT_VOICE. Safe to re-run (skips existing files).
+    """
+    if cache_dir is None:
+        cache_dir = word_tts_data_dir()
+    else:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+
+    words = collect_unique_words(book_ids)
+
+    def write_default_progress(payload: dict) -> None:
+        write_batch_progress(
+            cache_dir,
+            payload['total'],
+            payload['completed_final'],
+            payload['status'],
+            current_word=payload.get('current_word'),
+        )
+
+    return run_batch_generate_words(
+        words,
+        cache_dir=cache_dir,
+        concurrency=concurrency,
+        backoff_delays=backoff_delays,
+        rate_interval=rate_interval,
+        sleep_fn=sleep_fn,
+        progress_callback=write_default_progress,
+    )
