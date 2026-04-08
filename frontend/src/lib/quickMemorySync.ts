@@ -13,6 +13,10 @@ export interface QuickMemorySyncEntry {
   record: QuickMemoryRecordState
 }
 
+export interface QuickMemoryReconcileResult {
+  uploadedCount: number
+}
+
 interface ReconcileQuickMemoryOptions {
   skipIfLocalEmpty?: boolean
   minIntervalMs?: number
@@ -50,11 +54,11 @@ export async function syncQuickMemoryRecordsToBackend(
   })
 }
 
-const reconcileState = new Map<string, { inFlight: Promise<void> | null; lastCompletedAt: number }>()
+const reconcileState = new Map<string, { inFlight: Promise<QuickMemoryReconcileResult> | null; lastCompletedAt: number }>()
 
 export async function reconcileQuickMemoryRecordsWithBackend(
   options: ReconcileQuickMemoryOptions = {},
-): Promise<void> {
+): Promise<QuickMemoryReconcileResult> {
   const storageKey = getQuickMemoryStorageKey()
   const existingState = reconcileState.get(storageKey)
   const state = existingState ?? { inFlight: null, lastCompletedAt: 0 }
@@ -63,13 +67,15 @@ export async function reconcileQuickMemoryRecordsWithBackend(
   const minIntervalMs = options.minIntervalMs ?? 0
   if (!options.force) {
     if (state.inFlight) return state.inFlight
-    if (minIntervalMs > 0 && Date.now() - state.lastCompletedAt < minIntervalMs) return
+    if (minIntervalMs > 0 && Date.now() - state.lastCompletedAt < minIntervalMs) {
+      return { uploadedCount: 0 }
+    }
   }
 
   const task = (async () => {
     const localRecords = readQuickMemoryRecordsFromStorage()
     if (options.skipIfLocalEmpty && Object.keys(localRecords).length === 0) {
-      return
+      return { uploadedCount: 0 }
     }
 
     const data = await apiFetch<{ records: QuickMemoryRecordInput[] }>('/api/ai/quick-memory', {
@@ -97,15 +103,19 @@ export async function reconcileQuickMemoryRecordsWithBackend(
     if (newerLocalRecords.length > 0) {
       await syncQuickMemoryRecordsToBackend(newerLocalRecords)
     }
+
+    return { uploadedCount: newerLocalRecords.length }
   })()
 
   state.inFlight = task
+  let result: QuickMemoryReconcileResult
   try {
-    await task
+    result = await task
   } finally {
     state.inFlight = null
     state.lastCompletedAt = Date.now()
   }
+  return result
 }
 
 export function resetQuickMemorySyncStateForTests(): void {

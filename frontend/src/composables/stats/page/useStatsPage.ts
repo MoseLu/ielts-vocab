@@ -15,6 +15,8 @@ import {
 
 const STATS_REFRESH_OPTIONS = {
   pollIntervalMs: 0,
+  blockInitialQuickMemoryReconcile: false,
+  blockOnLearnerProfile: false,
 } as const
 
 export function useStatsPage() {
@@ -38,6 +40,7 @@ export function useStatsPage() {
     learnerProfile,
     useFallback,
     loading: chartLoading,
+    learnerProfileLoading,
   } = useLearningStats(range, bookId, mode, STATS_REFRESH_OPTIONS)
 
   const displayTodayNewWords = alltime?.today_new_words ?? (chartLoading ? '…' : '--')
@@ -108,6 +111,7 @@ export function useStatsPage() {
     learnerProfile,
     useFallback,
     chartLoading,
+    learnerProfileLoading,
     historyWrongTop10,
     pendingWrongTop10,
     displayTodayNewWords,

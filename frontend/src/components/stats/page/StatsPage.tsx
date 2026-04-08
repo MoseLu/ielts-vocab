@@ -37,6 +37,7 @@ export default function StatsPage() {
     learnerProfile,
     useFallback,
     chartLoading,
+    learnerProfileLoading,
     historyWrongTop10,
     pendingWrongTop10,
     displayTodayNewWords,
@@ -130,7 +131,7 @@ export default function StatsPage() {
             <section className="stats-section stats-card-profile" aria-labelledby="stats-profile-title">
               <h2 id="stats-profile-title" className="stats-section-title">统一学习画像</h2>
               <p className="stats-section-hint">把薄弱模式、易错维度、重复困惑主题和下一步动作放在同一视图里。</p>
-              <LearnerProfileCard learnerProfile={learnerProfile} loading={chartLoading} />
+              <LearnerProfileCard learnerProfile={learnerProfile} loading={learnerProfileLoading} />
             </section>
           </div>
 

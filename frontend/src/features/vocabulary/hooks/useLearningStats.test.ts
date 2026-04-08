@@ -3,14 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useLearningStats } from './useLearningStats'
 
 const apiFetchMock = vi.fn()
-const reconcileQuickMemoryRecordsWithBackendMock = vi.fn(() => Promise.resolve())
+const reconcileQuickMemoryRecordsWithBackendMock = vi.fn(() => Promise.resolve({ uploadedCount: 0 }))
 const authState = vi.hoisted(() => ({
   user: { id: 2, username: 'luo' },
+  isLoading: false,
 }))
 
 vi.mock('../../../contexts', () => ({
   useAuth: () => ({
     user: authState.user,
+    isLoading: authState.isLoading,
   }),
 }))
 
@@ -59,7 +61,9 @@ describe('useLearningStats', () => {
     vi.useRealTimers()
     apiFetchMock.mockReset()
     reconcileQuickMemoryRecordsWithBackendMock.mockReset()
-    reconcileQuickMemoryRecordsWithBackendMock.mockResolvedValue(undefined)
+    reconcileQuickMemoryRecordsWithBackendMock.mockResolvedValue({ uploadedCount: 0 })
+    authState.user = { id: 2, username: 'luo' }
+    authState.isLoading = false
     apiFetchMock.mockImplementation((url: string) => {
       if (url.startsWith('/api/ai/learning-stats?')) {
         return Promise.resolve(buildStatsResponse())
@@ -209,6 +213,25 @@ describe('useLearningStats', () => {
     dateNowSpy.mockRestore()
   })
 
+  it('keeps the first-screen loading state until auth hydration finishes', async () => {
+    authState.user = null
+    authState.isLoading = true
+
+    const { result, rerender } = renderHook(() => useLearningStats(7, 'all', 'all', { pollIntervalMs: 0 }))
+
+    expect(result.current.loading).toBe(true)
+    expect(apiFetchMock).not.toHaveBeenCalled()
+
+    authState.user = { id: 2, username: 'luo' }
+    authState.isLoading = false
+    rerender()
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledTimes(2)
+      expect(result.current.loading).toBe(false)
+    })
+  })
+
   it('reconciles local quick-memory records before the stats request starts', async () => {
     renderHook(() => useLearningStats(7, 'all', 'all'))
 
@@ -220,5 +243,60 @@ describe('useLearningStats', () => {
     expect(
       reconcileQuickMemoryRecordsWithBackendMock.mock.invocationCallOrder[0],
     ).toBeLessThan(apiFetchMock.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER)
+  })
+
+  it('starts stats requests immediately on the stats page while quick-memory reconciliation continues in the background', async () => {
+    const reconcileDeferred = createDeferred<{ uploadedCount: number }>()
+    reconcileQuickMemoryRecordsWithBackendMock.mockReturnValue(reconcileDeferred.promise)
+
+    const { result } = renderHook(() => useLearningStats(7, 'all', 'all', {
+      pollIntervalMs: 0,
+      blockInitialQuickMemoryReconcile: false,
+      blockOnLearnerProfile: false,
+    }))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledTimes(2)
+      expect(apiFetchMock).toHaveBeenCalledWith(
+        '/api/ai/learning-stats?days=7',
+        { cache: 'no-store' },
+      )
+    })
+
+    expect(reconcileQuickMemoryRecordsWithBackendMock).toHaveBeenCalledTimes(1)
+    expect(result.current.loading).toBe(false)
+
+    act(() => {
+      reconcileDeferred.resolve({ uploadedCount: 0 })
+    })
+  })
+
+  it('refreshes stats once more after a background reconcile uploads newer quick-memory records', async () => {
+    let statsRequestCount = 0
+    reconcileQuickMemoryRecordsWithBackendMock.mockResolvedValue({ uploadedCount: 2 })
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/ai/learning-stats?')) {
+        statsRequestCount += 1
+        return Promise.resolve(buildStatsResponse())
+      }
+
+      if (url === '/api/ai/learner-profile?view=stats') {
+        return Promise.resolve(null)
+      }
+
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    const { result } = renderHook(() => useLearningStats(7, 'all', 'all', {
+      pollIntervalMs: 0,
+      blockInitialQuickMemoryReconcile: false,
+      blockOnLearnerProfile: false,
+    }))
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+      expect(result.current.refreshing).toBe(false)
+      expect(statsRequestCount).toBe(2)
+    })
   })
 })

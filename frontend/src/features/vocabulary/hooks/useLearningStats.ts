@@ -219,6 +219,24 @@ export type RangeKey = 7 | 14 | 30
 
 export interface UseLearningStatsOptions {
   pollIntervalMs?: number
+  blockInitialQuickMemoryReconcile?: boolean
+  blockOnLearnerProfile?: boolean
+}
+
+interface LearningStatsResponse {
+  daily?: DailyLearning[]
+  books?: LearningBook[]
+  modes?: string[]
+  summary?: LearningSummary | null
+  alltime?: LearningAlltime | null
+  mode_breakdown?: ModeStat[]
+  pie_chart?: PieSegment[]
+  wrong_top10?: WrongTopItem[]
+  history_wrong_top10?: WrongTopItem[]
+  pending_wrong_top10?: WrongTopItem[]
+  chapter_breakdown?: ChapterBreakdownRow[]
+  chapter_mode_stats?: ChapterModeStatRow[]
+  use_fallback?: boolean
 }
 
 export function useLearningStats(
@@ -227,12 +245,18 @@ export function useLearningStats(
   mode: string,
   options: UseLearningStatsOptions = {},
 ) {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading = false } = useAuth()
   const userId = user?.id ?? null
-  const { pollIntervalMs = 60_000 } = options
+  const {
+    pollIntervalMs = 60_000,
+    blockInitialQuickMemoryReconcile = true,
+    blockOnLearnerProfile = true,
+  } = options
   const lastFetchStartedAtRef = useRef(0)
   const hasResolvedInitialFetchRef = useRef(false)
   const lastUserIdRef = useRef(userId)
+  const lastAuthLoadingRef = useRef(authLoading)
+  const requestIdRef = useRef(0)
   const [daily, setDaily] = useState<DailyLearning[]>([])
   const [books, setBooks] = useState<LearningBook[]>([])
   const [modes, setModes] = useState<string[]>([])
@@ -248,83 +272,159 @@ export function useLearningStats(
   const [learnerProfile, setLearnerProfile] = useState<LearnerProfile | null>(null)
   const [useFallback, setUseFallback] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [learnerProfileLoading, setLearnerProfileLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
+  const applyStatsPayload = useCallback((data: LearningStatsResponse) => {
+    setDaily(data.daily || [])
+    setBooks(data.books || [])
+    setModes(data.modes || [])
+    setSummary(data.summary || null)
+    setAlltime(data.alltime || null)
+    setModeBreakdown(data.mode_breakdown || [])
+    setPieChart(data.pie_chart || [])
+    const nextHistoryWrongTop10 = data.history_wrong_top10 || data.wrong_top10 || []
+    setWrongTop10(nextHistoryWrongTop10)
+    setHistoryWrongTop10(nextHistoryWrongTop10)
+    setPendingWrongTop10(data.pending_wrong_top10 || [])
+    setChapterBreakdown(data.chapter_breakdown || [])
+    setChapterModeStats(data.chapter_mode_stats || [])
+    setUseFallback(data.use_fallback || false)
+  }, [])
+
+  const fetchStatsPayload = useCallback(async () => {
+    const params = new URLSearchParams({ days: String(days) })
+    if (bookId && bookId !== 'all') params.set('book_id', bookId)
+    if (mode && mode !== 'all') params.set('mode', mode)
+
+    return apiFetch<LearningStatsResponse>(`/api/ai/learning-stats?${params}`, { cache: 'no-store' })
+  }, [bookId, days, mode])
+
+  const fetchLearnerProfile = useCallback(async () => {
+    return apiFetch<LearnerProfile>('/api/ai/learner-profile?view=stats', { cache: 'no-store' }).catch(() => null)
+  }, [])
+
   useEffect(() => {
-    if (lastUserIdRef.current === userId) return
+    if (lastUserIdRef.current === userId && lastAuthLoadingRef.current === authLoading) return
 
     lastUserIdRef.current = userId
+    lastAuthLoadingRef.current = authLoading
     hasResolvedInitialFetchRef.current = false
-    setLoading(Boolean(userId))
+    setLoading(authLoading || Boolean(userId))
+    setLearnerProfileLoading(authLoading || Boolean(userId))
     setRefreshing(false)
-  }, [userId])
+  }, [authLoading, userId])
 
   const fetchStats = useCallback(async () => {
+    if (authLoading) {
+      setLoading(true)
+      setLearnerProfileLoading(true)
+      setRefreshing(false)
+      return
+    }
+
     if (!userId) {
       hasResolvedInitialFetchRef.current = false
       setLoading(false)
+      setLearnerProfileLoading(false)
       setRefreshing(false)
       return
     }
 
     const isInitialFetch = !hasResolvedInitialFetchRef.current
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
     lastFetchStartedAtRef.current = Date.now()
     if (isInitialFetch) {
       setLoading(true)
     } else {
       setRefreshing(true)
     }
-    try {
-      await reconcileQuickMemoryRecordsWithBackend({
-        skipIfLocalEmpty: true,
-        minIntervalMs: 15_000,
-      }).catch(() => {})
+    setLearnerProfileLoading(true)
 
-      const params = new URLSearchParams({ days: String(days) })
-      if (bookId && bookId !== 'all') params.set('book_id', bookId)
-      if (mode && mode !== 'all') params.set('mode', mode)
-
-      const [d, profile] = await Promise.all([
-        apiFetch<{
-          daily?: DailyLearning[]
-          books?: LearningBook[]
-          modes?: string[]
-          summary?: LearningSummary | null
-          alltime?: LearningAlltime | null
-          mode_breakdown?: ModeStat[]
-          pie_chart?: PieSegment[]
-          wrong_top10?: WrongTopItem[]
-          history_wrong_top10?: WrongTopItem[]
-          pending_wrong_top10?: WrongTopItem[]
-          chapter_breakdown?: ChapterBreakdownRow[]
-          chapter_mode_stats?: ChapterModeStatRow[]
-          use_fallback?: boolean
-        }>(`/api/ai/learning-stats?${params}`, { cache: 'no-store' }),
-        apiFetch<LearnerProfile>('/api/ai/learner-profile?view=stats', { cache: 'no-store' }).catch(() => null),
-      ])
-      setDaily(d.daily || [])
-      setBooks(d.books || [])
-      setModes(d.modes || [])
-      setSummary(d.summary || null)
-      setAlltime(d.alltime || null)
-      setModeBreakdown(d.mode_breakdown || [])
-      setPieChart(d.pie_chart || [])
-      const nextHistoryWrongTop10 = d.history_wrong_top10 || d.wrong_top10 || []
-      setWrongTop10(nextHistoryWrongTop10)
-      setHistoryWrongTop10(nextHistoryWrongTop10)
-      setPendingWrongTop10(d.pending_wrong_top10 || [])
-      setChapterBreakdown(d.chapter_breakdown || [])
-      setChapterModeStats(d.chapter_mode_stats || [])
+    const handleProfileResolution = (profile: LearnerProfile | null) => {
+      if (requestId !== requestIdRef.current) return
       setLearnerProfile(profile || null)
-      setUseFallback(d.use_fallback || false)
+      setLearnerProfileLoading(false)
+    }
+
+    try {
+      const reconcilePromise = blockInitialQuickMemoryReconcile
+        ? null
+        : reconcileQuickMemoryRecordsWithBackend({
+            skipIfLocalEmpty: true,
+            minIntervalMs: 15_000,
+          }).catch(() => ({ uploadedCount: 0 }))
+
+      if (blockInitialQuickMemoryReconcile) {
+        await reconcileQuickMemoryRecordsWithBackend({
+          skipIfLocalEmpty: true,
+          minIntervalMs: 15_000,
+        }).catch(() => ({ uploadedCount: 0 }))
+      }
+
+      const statsPromise = fetchStatsPayload()
+      const profilePromise = fetchLearnerProfile()
+
+      if (blockOnLearnerProfile) {
+        const [statsPayload, profile] = await Promise.all([statsPromise, profilePromise])
+        if (requestId !== requestIdRef.current) return
+        applyStatsPayload(statsPayload)
+        handleProfileResolution(profile)
+      } else {
+        void profilePromise.then(handleProfileResolution)
+
+        const statsPayload = await statsPromise
+        if (requestId !== requestIdRef.current) return
+        applyStatsPayload(statsPayload)
+      }
+
+      hasResolvedInitialFetchRef.current = true
+      if (requestId === requestIdRef.current) {
+        setLoading(false)
+        setRefreshing(false)
+      }
+
+      if (reconcilePromise) {
+        void reconcilePromise.then(async result => {
+          if ((result?.uploadedCount ?? 0) <= 0) return
+          if (requestId !== requestIdRef.current) return
+
+          setRefreshing(true)
+          try {
+            const refreshedStats = await fetchStatsPayload()
+            if (requestId !== requestIdRef.current) return
+            applyStatsPayload(refreshedStats)
+          } catch {
+            // ignore
+          } finally {
+            if (requestId === requestIdRef.current) {
+              setRefreshing(false)
+            }
+          }
+        })
+      }
     } catch {
       // ignore
+      if (requestId === requestIdRef.current) {
+        setLearnerProfileLoading(false)
+      }
     } finally {
-      hasResolvedInitialFetchRef.current = true
-      setLoading(false)
-      setRefreshing(false)
+      if (!hasResolvedInitialFetchRef.current && requestId === requestIdRef.current) {
+        hasResolvedInitialFetchRef.current = true
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
-  }, [days, bookId, mode, userId])
+  }, [
+    applyStatsPayload,
+    authLoading,
+    blockInitialQuickMemoryReconcile,
+    blockOnLearnerProfile,
+    fetchLearnerProfile,
+    fetchStatsPayload,
+    userId,
+  ])
 
   const refetchIfStale = useCallback(() => {
     if (Date.now() - lastFetchStartedAtRef.current < 1500) return
@@ -383,6 +483,7 @@ export function useLearningStats(
     learnerProfile,
     useFallback,
     loading,
+    learnerProfileLoading,
     refreshing,
     refetch: fetchStats,
   }

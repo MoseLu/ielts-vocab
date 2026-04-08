@@ -421,12 +421,13 @@
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
+    align-items: stretch;
 }
 
 .stats-main-cell--learning .stats-section--learning .lc-wrap--compact .lc-svg {
     width: 100%;
-    min-height: 118px;
+    min-height: 180px;
     max-height: none;
-    height: auto;
+    height: 100%;
+    flex: 1 1 auto;
 }
-

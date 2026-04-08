@@ -21,6 +21,7 @@ const hooksState = vi.hoisted(() => ({
     learnerProfile: null,
     useFallback: false,
     loading: true,
+    learnerProfileLoading: true,
     refreshing: false,
     refetch: vi.fn(),
   },
@@ -74,6 +75,7 @@ describe('StatsPage', () => {
     hooksState.learningStats.learnerProfile = null
     hooksState.learningStats.useFallback = false
     hooksState.learningStats.loading = true
+    hooksState.learningStats.learnerProfileLoading = true
     hooksState.learningStats.refreshing = false
     hooksState.learningStats.refetch.mockReset()
   })
@@ -168,10 +170,10 @@ describe('StatsPage', () => {
         trend_direction: 'improving',
       },
       dimensions: [
-        { dimension: 'meaning', label: '释义拼词（会想）', correct: 12, wrong: 8, attempts: 20, accuracy: 60, weakness: 0.4 },
+        { dimension: 'meaning', label: '默写模式', correct: 12, wrong: 8, attempts: 20, accuracy: 60, weakness: 0.4 },
       ],
       focus_words: [
-        { word: 'kind', definition: 'type', wrong_count: 4, dominant_dimension: 'meaning', dominant_dimension_label: '释义拼词（会想）', dominant_wrong: 3, focus_score: 11 },
+        { word: 'kind', definition: 'type', wrong_count: 4, dominant_dimension: 'meaning', dominant_dimension_label: '默写模式', dominant_wrong: 3, focus_score: 11 },
       ],
       repeated_topics: [
         { title: 'kind of vs a kind of', count: 2, word_context: 'kind', latest_answer: '...', latest_at: null },
@@ -200,6 +202,7 @@ describe('StatsPage', () => {
       },
     }
     hooksState.learningStats.loading = false
+    hooksState.learningStats.learnerProfileLoading = false
 
     const { container } = render(
       <MemoryRouter>
@@ -272,6 +275,7 @@ describe('StatsPage', () => {
       accuracy: 90,
     }
     hooksState.learningStats.loading = false
+    hooksState.learningStats.learnerProfileLoading = false
 
     render(
       <MemoryRouter>
@@ -312,6 +316,7 @@ describe('StatsPage', () => {
       accuracy: 90,
     }
     hooksState.learningStats.loading = false
+    hooksState.learningStats.learnerProfileLoading = false
     hooksState.learningStats.refreshing = true
 
     const { container } = render(
