@@ -323,7 +323,7 @@ describe('HomePage', () => {
     expect(screen.getByText('频次：1 天 / 1 天 / 4 天 / 7 天 / 14 天 / 30 天')).toBeInTheDocument()
     expect(screen.getByText('同一个词要按 1 天 / 1 天 / 4 天 / 7 天 / 14 天 / 30 天 这 6 轮节奏反复通过，才算把“认识它”这一步走完整。')).toBeInTheDocument()
     expect(screen.getByText('某一章显示这个模式已完成，意思是你已经把这一章在这个模式下完整练过一轮。')).toBeInTheDocument()
-    expect(screen.getByText('现在还没有一场专门的“总检查”，去把看词认义、中文想英文、听音辨义、听音拼写这四类问题一起复核一遍。')).toBeInTheDocument()
+    expect(screen.getByText('现在还没有一场专门的“总检查”，去把速记模式、释义拼词、听音选义、听写模式这四个模式维度一起复核一遍。')).toBeInTheDocument()
     expect(screen.queryByText(/history_wrong/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/nextReview/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/is_completed/i)).not.toBeInTheDocument()

@@ -215,9 +215,9 @@ describe('StatsPage', () => {
     expect(screen.getByText('今日学习新词')).toBeInTheDocument()
     expect(screen.getByText('今日复习旧词')).toBeInTheDocument()
     expect(screen.getByText('累计学习新词')).toBeInTheDocument()
-    expect(screen.getByText('今日触达词数')).toBeInTheDocument()
+    expect(screen.getByText('今日学过单词')).toBeInTheDocument()
     expect(
-      screen.getByText('今日触达词数').closest('.stats-card')?.querySelector('.stats-card-value')?.textContent,
+      screen.getByText('今日学过单词').closest('.stats-card')?.querySelector('.stats-card-value')?.textContent,
     ).toBe('25')
     expect(screen.getByText('累计复习旧词')).toBeInTheDocument()
     expect(screen.getByText('总学习时长')).toBeInTheDocument()

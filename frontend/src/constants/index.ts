@@ -1,3 +1,5 @@
+import { PRACTICE_MODE_LABELS } from './practiceModes'
+
 // ── Application Constants ────────────────────────────────────────────────────────
 
 // Practice modes
@@ -11,12 +13,12 @@ export const PRACTICE_MODES = {
 } as const
 
 export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRACTICE_MODES], string> = {
-  [PRACTICE_MODES.SMART]: '智能模式',
-  [PRACTICE_MODES.LISTENING]: '听音选义',
-  [PRACTICE_MODES.MEANING]: '释义拼词',
-  [PRACTICE_MODES.DICTATION]: '听写模式',
-  [PRACTICE_MODES.RADIO]: '随身听',
-  [PRACTICE_MODES.QUICK_MEMORY]: '快速记忆',
+  [PRACTICE_MODES.SMART]: PRACTICE_MODE_LABELS.smart,
+  [PRACTICE_MODES.LISTENING]: PRACTICE_MODE_LABELS.listening,
+  [PRACTICE_MODES.MEANING]: PRACTICE_MODE_LABELS.meaning,
+  [PRACTICE_MODES.DICTATION]: PRACTICE_MODE_LABELS.dictation,
+  [PRACTICE_MODES.RADIO]: PRACTICE_MODE_LABELS.radio,
+  [PRACTICE_MODES.QUICK_MEMORY]: PRACTICE_MODE_LABELS.quickmemory,
 }
 
 // LocalStorage keys

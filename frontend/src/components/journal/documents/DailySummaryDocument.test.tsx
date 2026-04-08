@@ -160,7 +160,7 @@ describe('DailySummaryDocument', () => {
     expect(screen.getByText('统一学习画像')).toBeInTheDocument()
     expect(screen.getByText('今日行为流')).toBeInTheDocument()
     expect(screen.getByText('今日共追踪 5 条学习动作，覆盖 1 本词书、2 个章节、4 个单词，累计 25分钟，动作口径答题正确率 82%。')).toBeInTheDocument()
-    expect(screen.getByText('智能练习 第2章')).toBeInTheDocument()
+    expect(screen.getByText('智能模式 第2章')).toBeInTheDocument()
     expect(screen.getByText('kind of vs a kind of')).toBeInTheDocument()
     expect(screen.getByText('优先复习 5 个已到期的速记单词。')).toBeInTheDocument()
   })

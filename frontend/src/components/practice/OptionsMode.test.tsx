@@ -194,6 +194,6 @@ describe('OptionsMode listening feedback', () => {
       />,
     )
 
-    expect(screen.getByText('中文想英文')).toBeInTheDocument()
+    expect(screen.getByText('释义拼词')).toBeInTheDocument()
   })
 })

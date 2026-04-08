@@ -1,4 +1,5 @@
 import type { PracticeMode, SmartDimension } from './types'
+import { PRACTICE_MODE_LABELS } from '../../constants/practiceModes'
 
 export type PracticeStageGuideTone = 'accent' | 'error' | 'review' | 'focus'
 export type PracticeStageGuidePhase = 'challenge' | 'review'
@@ -64,7 +65,7 @@ function resolveLane({
   if (mode === 'quickmemory') {
     return {
       label: '新词速记',
-      context: '这关先判断你能不能看词认义，再决定这词后续要不要进入复习链。',
+      context: `这关先用${PRACTICE_MODE_LABELS.quickmemory}检查你能不能快速认出词义，再决定这词后续要不要进入复习链。`,
       tone: 'accent',
     }
   }
@@ -160,17 +161,17 @@ export function buildChoiceStageGuide({
     title: answered ? '核对回想结果，补上正确提取' : '看释义，主动拼词',
     context: lane.context,
     tone: lane.tone,
-    rows: answered
-      ? buildRows(
-          '对照正确答案，确认自己刚才是完全不会、拼错了，还是只差一点点。',
-          '把“只会看词认义”纠正成“能中文想英文”，这一步最能避免眼熟假象。',
-          '看清之后进入下一关，系统会继续把词从看词认义推进到主动提取。',
-        )
-      : buildRows(
-          '根据中文释义和词性，直接拼出英文单词，不要依赖选项提示。',
-          '把“看词认义”升级成“中文想英文”，检验你是不是真的能把词调出来。',
-          '提交后系统会立刻判定；答错时会马上展示正确答案帮助你重建记忆。',
-        ),
+      rows: answered
+        ? buildRows(
+            '对照正确答案，确认自己刚才是完全不会、拼错了，还是只差一点点。',
+            `把“只会在${PRACTICE_MODE_LABELS.quickmemory}里认得出”推进到“能在${PRACTICE_MODE_LABELS.meaning}里主动拼出来”，这一步最能避免眼熟假象。`,
+            `看清之后进入下一关，系统会继续把词从${PRACTICE_MODE_LABELS.quickmemory}推进到${PRACTICE_MODE_LABELS.meaning}的主动提取。`,
+          )
+        : buildRows(
+            '根据中文释义和词性，直接拼出英文单词，不要依赖选项提示。',
+            `把“能在${PRACTICE_MODE_LABELS.quickmemory}里认出来”升级成“能在${PRACTICE_MODE_LABELS.meaning}里主动拼出来”，检验你是不是真的能把词调出来。`,
+            '提交后系统会立刻判定；答错时会马上展示正确答案帮助你重建记忆。',
+          ),
   }
 }
 
@@ -210,7 +211,7 @@ export function buildDictationStageGuide({
           )
         : buildRows(
             '看清自己是听漏了、字母顺序错了，还是根本没抓住这个词。',
-            '把错误拆到字母层级，才能真正修复“能听音辨义却还拼不出”的问题。',
+            `把错误拆到字母层级，才能真正修复“能做${PRACTICE_MODE_LABELS.listening}却还过不了${PRACTICE_MODE_LABELS.dictation}”的问题。`,
             '复盘完继续下一关，系统会保留这次失误作为后续强化依据。',
           ),
     }
@@ -271,8 +272,8 @@ export function buildQuickMemoryStageGuide({
           )
         : buildRows(
             '快速确认释义和音标，再进入下一关，不用在这词上停太久。',
-            '防止把“似曾相识”误判成“已经掌握”，把看词认义判断做得更干净。',
-            '进入下一关后，系统会继续根据你的看词认义状态调整后续复习压力。',
+            `防止把“似曾相识”误判成“已经掌握”，把${PRACTICE_MODE_LABELS.quickmemory}的判断做得更干净。`,
+            `进入下一关后，系统会继续根据你的${PRACTICE_MODE_LABELS.quickmemory}状态调整后续复习压力。`,
           ),
     }
   }
@@ -286,7 +287,7 @@ export function buildQuickMemoryStageGuide({
     tone: lane.tone,
     rows: buildRows(
       '看见单词后，4 秒内判断自己是“认识”还是“不认识”，先做直觉判断。',
-      '先把词按看词认义的熟悉度分层，系统才能决定哪些词该立即回炉、哪些词可以放缓复习。',
+      `先把词按${PRACTICE_MODE_LABELS.quickmemory}的熟悉度分层，系统才能决定哪些词该立即回炉、哪些词可以放缓复习。`,
       '选完后会立刻展示音标和释义，再带你进入下一关继续闯。',
     ),
   }

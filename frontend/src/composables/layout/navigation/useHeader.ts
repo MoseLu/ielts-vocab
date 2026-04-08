@@ -1,24 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../contexts'
+import {
+  HEADER_PRACTICE_MODE_DESCRIPTIONS,
+  HEADER_PRACTICE_MODE_LABELS,
+} from '../../../constants/practiceModes'
 import { openGlobalWordSearch } from '../../../components/layout/navigation/globalWordSearchEvents'
 import type { HeaderProps, PracticeMode } from '../../../components/layout/navigation/Header.types'
-
-const MODE_NAMES: Record<PracticeMode, string> = {
-  smart: '智能模式',
-  listening: '听音选义',
-  meaning: '释义拼词',
-  dictation: '听写模式',
-  radio: '随身听',
-}
-
-const MODE_DESCRIPTIONS: Record<PracticeMode, string> = {
-  smart: '根据水平自动调整',
-  listening: '听发音选中文释义',
-  meaning: '看中文释义，拼英文单词',
-  dictation: '听发音拼写单词',
-  radio: '连续播放音频',
-}
 
 export function useHeader({ onLogout, onDayChange, onUserUpdate }: Pick<HeaderProps, 'onLogout' | 'onDayChange' | 'onUserUpdate'>) {
   const { updateUser, isAdmin } = useAuth()
@@ -95,8 +83,8 @@ export function useHeader({ onLogout, onDayChange, onUserUpdate }: Pick<HeaderPr
     location,
     dayDropdownRef,
     mainNavItems,
-    modeNames: MODE_NAMES,
-    modeDescriptions: MODE_DESCRIPTIONS,
+    modeNames: HEADER_PRACTICE_MODE_LABELS as Record<PracticeMode, string>,
+    modeDescriptions: HEADER_PRACTICE_MODE_DESCRIPTIONS as Record<PracticeMode, string>,
     showDayDropdown,
     showHelp,
     showSettings,

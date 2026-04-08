@@ -1,4 +1,5 @@
 import { Skeleton } from '../ui'
+import { getPracticeModeLabel, normalizeModeText } from '../../constants/practiceModes'
 import { getWrongWordDimensionLabel, type WrongWordCollectionScope } from '../../features/vocabulary/wrongWordsStore'
 import type { LearnerProfile, ModeStat } from '../../features/vocabulary/hooks'
 import { MODE_LABELS, fmtDuration, fmtPct, inferErrorReason, trendDirectionLabel, type WrongTopDisplayItem } from './statsPageCore'
@@ -86,7 +87,7 @@ export function LearnerProfileCard({
       <div className="stats-profile-summary">
         <div className="stats-profile-pill">
           <span className="stats-profile-pill__label">最弱模式</span>
-          <strong>{summary.weakest_mode_label || '待判定'}</strong>
+          <strong>{getPracticeModeLabel(summary.weakest_mode, summary.weakest_mode_label) || '待判定'}</strong>
         </div>
         <div className="stats-profile-pill">
           <span className="stats-profile-pill__label">连续学习</span>
@@ -146,7 +147,7 @@ export function LearnerProfileCard({
         <h3 className="stats-subsection-title">下一步动作</h3>
         <ul className="stats-profile-actions">
           {nextActions.slice(0, 2).map(action => (
-            <li key={action}>{action}</li>
+            <li key={action}>{normalizeModeText(action)}</li>
           ))}
         </ul>
       </div>

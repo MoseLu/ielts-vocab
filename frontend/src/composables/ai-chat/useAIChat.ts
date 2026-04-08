@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { AIMessage, LearningContext } from '../../types'
+import { getWrongWordDimensionModeLabel, normalizeModeText } from '../../constants/practiceModes'
 import {
   AIAskResponseSchema,
   AIPronunciationCheckResponseSchema,
@@ -316,21 +317,23 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
         if (!result.success) throw new Error('复习计划响应格式错误')
 
         const lines = [`今日复习计划（${result.data.level}）：`]
-        if (result.data.mastery_rule) lines.push(result.data.mastery_rule)
+        if (result.data.mastery_rule) lines.push(normalizeModeText(result.data.mastery_rule))
         if (result.data.priority_dimension) {
           const reason = result.data.priority_reason ? `，原因：${result.data.priority_reason}` : ''
-          lines.push(`当前优先维度：${result.data.priority_dimension}${reason}`)
+          const priorityLabel = getWrongWordDimensionModeLabel(result.data.priority_dimension, result.data.priority_dimension)
+          lines.push(`当前优先维度：${priorityLabel || result.data.priority_dimension}${reason}`)
         }
         if (result.data.dimensions.length > 0) {
           lines.push('四维安排：')
           result.data.dimensions.forEach(item => {
             const schedule = item.schedule_label ? `，周期 ${item.schedule_label}` : ''
-            lines.push(`- ${item.label || '维度'}：${item.status_label || '待安排'}${schedule}`)
+            const label = getWrongWordDimensionModeLabel(item.key, item.label) || item.label || '维度'
+            lines.push(`- ${label}：${normalizeModeText(item.status_label || '待安排')}${schedule}`)
           })
         }
         if (result.data.plan.length > 0) {
           lines.push('建议动作：')
-          lines.push(...result.data.plan.map(item => `- ${item}`))
+          lines.push(...result.data.plan.map(item => `- ${normalizeModeText(item)}`))
         }
         appendAssistantMessage(lines.join('\n'))
         return
