@@ -1,4 +1,5 @@
 from routes import ai as ai_routes
+from services import ai_assistant_ask_service as ask_service
 
 
 def register_and_login(client, username='ai-stream-user', password='password123'):
@@ -19,11 +20,11 @@ def test_ask_stream_returns_sse_text_options_and_done(client, monkeypatch):
 
     persisted = {}
 
-    monkeypatch.setattr(ai_routes, '_build_ask_messages', lambda *args, **kwargs: [{'role': 'system', 'content': 'test'}])
-    monkeypatch.setattr(ai_routes, '_build_ask_extra_handlers', lambda *args, **kwargs: {})
+    monkeypatch.setattr(ask_service, 'build_ask_messages', lambda *args, **kwargs: [{'role': 'system', 'content': 'test'}])
+    monkeypatch.setattr(ask_service, 'build_ask_extra_handlers', lambda *args, **kwargs: {})
     monkeypatch.setattr(
-        ai_routes,
-        '_persist_ask_response',
+        ask_service,
+        'persist_ask_response',
         lambda current_user, user_message, frontend_context, clean_reply: persisted.update({
             'message': user_message,
             'reply': clean_reply,
@@ -35,7 +36,7 @@ def test_ask_stream_returns_sse_text_options_and_done(client, monkeypatch):
         yield {'type': 'text_delta', 'text': '先复习错词。'}
         yield {'type': 'text_delta', 'text': '\n[options]\nA. 开始复习\nB. 先看计划\n[/options]'}
 
-    monkeypatch.setattr(ai_routes, '_stream_chat_with_tools', fake_stream)
+    monkeypatch.setattr(ask_service, 'stream_chat_with_tools', fake_stream)
 
     response = client.post('/api/ai/ask/stream', json={
         'message': '今天怎么复习？',

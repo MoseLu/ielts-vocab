@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from importlib import import_module
+
+from flask import current_app
+from sqlalchemy.exc import IntegrityError
+
+from services import ai_assistant_repository
+from services.llm import chat
 
 
 HISTORY_LIMIT = 20
@@ -11,56 +16,41 @@ SUMMARIZE_THRESHOLD = 40
 SUMMARIZE_CHUNK = 20
 
 
-def _ai_module():
-    return import_module('routes.ai')
-
-
 def save_turn(user_id: int, user_message: str, assistant_reply: str) -> None:
-    ai = _ai_module()
     try:
-        ai.db.session.add(ai.UserConversationHistory(
-            user_id=user_id,
-            role='user',
-            content=user_message,
-        ))
-        ai.db.session.add(ai.UserConversationHistory(
-            user_id=user_id,
-            role='assistant',
-            content=assistant_reply,
-        ))
+        ai_assistant_repository.add_conversation_turn(
+            user_id,
+            user_message=user_message,
+            assistant_reply=assistant_reply,
+        )
         cutoff = datetime.utcnow() - timedelta(days=HISTORY_PRUNE_DAYS)
-        ai.UserConversationHistory.query.filter(
-            ai.UserConversationHistory.user_id == user_id,
-            ai.UserConversationHistory.created_at < cutoff,
-        ).delete(synchronize_session=False)
-        ai.db.session.commit()
+        ai_assistant_repository.prune_conversation_history_before(
+            user_id,
+            cutoff=cutoff,
+        )
+        ai_assistant_repository.commit()
     except Exception as exc:
-        ai.db.session.rollback()
+        ai_assistant_repository.rollback()
         logging.warning("[AI] Failed to save conversation turn: %s", exc)
 
 
 def get_or_create_memory(user_id: int):
-    ai = _ai_module()
-    from sqlalchemy.exc import IntegrityError
-
-    memory = ai.UserMemory.query.filter_by(user_id=user_id).first()
+    memory = ai_assistant_repository.get_user_memory(user_id)
     if memory:
         return memory
 
     try:
-        memory = ai.UserMemory(user_id=user_id)
-        ai.db.session.add(memory)
-        ai.db.session.flush()
+        memory = ai_assistant_repository.create_user_memory(user_id)
+        ai_assistant_repository.flush()
     except IntegrityError:
-        ai.db.session.rollback()
-        memory = ai.UserMemory.query.filter_by(user_id=user_id).first()
+        ai_assistant_repository.rollback()
+        memory = ai_assistant_repository.get_user_memory(user_id)
 
     return memory
 
 
 def load_memory(user_id: int) -> dict:
-    ai = _ai_module()
-    memory = ai.UserMemory.query.filter_by(user_id=user_id).first()
+    memory = ai_assistant_repository.get_user_memory(user_id)
     if not memory:
         return {}
     return {
@@ -71,9 +61,8 @@ def load_memory(user_id: int) -> dict:
 
 
 def add_memory_note(user_id: int, note: str, category: str) -> str:
-    ai = _ai_module()
     try:
-        memory = ai._get_or_create_memory(user_id)
+        memory = get_or_create_memory(user_id)
         notes = memory.get_ai_notes()
         if not any(item.get('note') == note for item in notes):
             notes.append({
@@ -82,31 +71,28 @@ def add_memory_note(user_id: int, note: str, category: str) -> str:
                 'created_at': datetime.utcnow().strftime('%Y-%m-%d'),
             })
             memory.set_ai_notes(notes[-30:])
-        ai.db.session.commit()
+        ai_assistant_repository.commit()
         return f"已记录：[{category}] {note}"
     except Exception as exc:
-        ai.db.session.rollback()
+        ai_assistant_repository.rollback()
         logging.warning("[AI] Failed to save memory note: %s", exc)
         return f"记录失败：{exc}"
 
 
 def maybe_summarize_history(user_id: int) -> None:
-    ai = _ai_module()
-    with ai.current_app.app_context():
-        total = ai.UserConversationHistory.query.filter_by(user_id=user_id).count()
-        memory = ai.UserMemory.query.filter_by(user_id=user_id).first()
+    with current_app.app_context():
+        total = ai_assistant_repository.count_conversation_history(user_id)
+        memory = ai_assistant_repository.get_user_memory(user_id)
         summarized_count = memory.summary_turn_count if memory else 0
         unsummarized = total - summarized_count
         if unsummarized <= SUMMARIZE_THRESHOLD:
             return
 
-        old_rows = (
-            ai.UserConversationHistory.query
-            .filter_by(user_id=user_id)
-            .order_by(ai.UserConversationHistory.created_at.asc())
-            .offset(summarized_count)
-            .limit(SUMMARIZE_CHUNK)
-            .all()
+        old_rows = ai_assistant_repository.list_conversation_history(
+            user_id,
+            limit=SUMMARIZE_CHUNK,
+            offset=summarized_count,
+            descending=False,
         )
         if not old_rows:
             return
@@ -135,24 +121,21 @@ def maybe_summarize_history(user_id: int) -> None:
             },
         ]
         try:
-            response = ai.chat(summary_prompt, max_tokens=400)
+            response = chat(summary_prompt, max_tokens=400)
             new_summary = response.get('text', '').strip()
             if new_summary:
-                memory = ai._get_or_create_memory(user_id)
+                memory = get_or_create_memory(user_id)
                 memory.conversation_summary = new_summary
                 memory.summary_turn_count = summarized_count + len(old_rows)
-                ai.db.session.commit()
+                ai_assistant_repository.commit()
         except Exception as exc:
             logging.warning("[AI] Summarization failed for user=%s: %s", user_id, exc)
 
 
 def load_history(user_id: int) -> list[dict]:
-    ai = _ai_module()
-    rows = (
-        ai.UserConversationHistory.query
-        .filter_by(user_id=user_id)
-        .order_by(ai.UserConversationHistory.created_at.desc())
-        .limit(HISTORY_LIMIT)
-        .all()
+    rows = ai_assistant_repository.list_conversation_history(
+        user_id,
+        limit=HISTORY_LIMIT,
+        descending=True,
     )
     return [{"role": row.role, "content": row.content} for row in reversed(rows)]

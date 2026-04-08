@@ -3,28 +3,30 @@ from __future__ import annotations
 import json
 import logging
 import re
-from importlib import import_module
 
-
-def _ai_module():
-    return import_module('routes.ai')
+from services import learning_stats_repository
+from services.ai_route_support_service import (
+    _QUICK_MEMORY_MASTERY_TARGET,
+    _decorate_wrong_words_with_quick_memory_progress,
+    _load_vocab_books,
+)
+from services.ai_tool_input_service import validate_tool_input
+from services.books_catalog_query_service import load_book_vocabulary
+from services.books_structure_service import load_book_chapters
+from services.llm import TOOL_HANDLERS, chat, stream_chat_events
 
 
 def make_get_wrong_words(user_id: int):
     def handler(limit: int = 100, book_id: str | None = None) -> str:
-        ai = _ai_module()
         limit_value = min(int(limit), 300)
-        words = (
-            ai.UserWrongWord.query
-            .filter_by(user_id=user_id)
-            .order_by(ai.UserWrongWord.wrong_count.desc())
-            .limit(limit_value)
-            .all()
+        words = learning_stats_repository.list_user_wrong_words_for_stats(
+            user_id,
+            limit=limit_value,
         )
         if not words:
             return "暂无错词记录。"
 
-        decorated = ai._decorate_wrong_words_with_quick_memory_progress(user_id, words)
+        decorated = _decorate_wrong_words_with_quick_memory_progress(user_id, words)
         prefix = ''
         if book_id:
             prefix = "当前错词记录暂不支持按词书过滤，以下返回全部错词。\n"
@@ -32,7 +34,7 @@ def make_get_wrong_words(user_id: int):
             (
                 f"{word['word']}（{word.get('phonetic') or ''}，{word.get('pos') or ''}）"
                 f"{word.get('definition') or ''}  错误{word.get('wrong_count', 0)}次"
-                f"  艾宾浩斯{word.get('ebbinghaus_streak', 0)}/{word.get('ebbinghaus_target', ai._QUICK_MEMORY_MASTERY_TARGET)}"
+                f"  艾宾浩斯{word.get('ebbinghaus_streak', 0)}/{word.get('ebbinghaus_target', _QUICK_MEMORY_MASTERY_TARGET)}"
             )
             for word in decorated
         ]
@@ -43,9 +45,7 @@ def make_get_wrong_words(user_id: int):
 
 def make_get_chapter_words(user_id: int):
     def handler(book_id: str, chapter_id: int) -> str:
-        from routes.books import VOCAB_BOOKS, load_book_vocabulary
-
-        book = next((item for item in VOCAB_BOOKS if item['id'] == book_id), None)
+        book = next((item for item in _load_vocab_books() if item['id'] == book_id), None)
         if not book:
             return f"找不到词书 '{book_id}'，请检查 book_id 是否正确。"
 
@@ -69,10 +69,7 @@ def make_get_chapter_words(user_id: int):
 
 def make_get_book_chapters(user_id: int):
     def handler(book_id: str) -> str:
-        ai = _ai_module()
-        from routes.books import VOCAB_BOOKS, load_book_chapters
-
-        book = next((item for item in VOCAB_BOOKS if item['id'] == book_id), None)
+        book = next((item for item in _load_vocab_books() if item['id'] == book_id), None)
         if not book:
             return f"找不到词书 '{book_id}'，请检查 book_id 是否正确。"
 
@@ -82,7 +79,10 @@ def make_get_book_chapters(user_id: int):
 
         chapter_progress = {
             str(record.chapter_id): record
-            for record in ai.UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
+            for record in learning_stats_repository.list_user_chapter_progress_rows(
+                user_id,
+                book_id=book_id,
+            )
         }
         lines = []
         for chapter in structure.get('chapters', []):
@@ -118,10 +118,9 @@ def chat_with_tools(
     max_iterations: int = 5,
     extra_handlers: dict | None = None,
 ) -> dict:
-    ai = _ai_module()
-    handlers = {**ai.TOOL_HANDLERS, **(extra_handlers or {})}
+    handlers = {**TOOL_HANDLERS, **(extra_handlers or {})}
     for index in range(max_iterations):
-        response = ai.chat(messages, tools=tools, max_tokens=4096)
+        response = chat(messages, tools=tools, max_tokens=4096)
         if response.get("type") != "tool_call":
             return response
 
@@ -129,7 +128,7 @@ def chat_with_tools(
         raw_input = response.get("input", {})
         tool_call_id = response.get("tool_call_id", f"call_{index}")
         handler = handlers.get(tool_name)
-        tool_input = ai._validate_tool_input(tool_name, raw_input) if isinstance(raw_input, dict) else None
+        tool_input = validate_tool_input(tool_name, raw_input) if isinstance(raw_input, dict) else None
 
         if handler and tool_input is not None:
             try:
@@ -217,12 +216,11 @@ def stream_chat_with_tools(
     max_iterations: int = 5,
     extra_handlers: dict | None = None,
 ):
-    ai = _ai_module()
-    handlers = {**ai.TOOL_HANDLERS, **(extra_handlers or {})}
+    handlers = {**TOOL_HANDLERS, **(extra_handlers or {})}
 
     for index in range(max_iterations):
         tool_called = False
-        for event in ai.stream_chat_events(messages, tools=tools, max_tokens=4096):
+        for event in stream_chat_events(messages, tools=tools, max_tokens=4096):
             event_type = event.get('type')
             if event_type == 'text_delta':
                 yield {'type': 'text_delta', 'text': str(event.get('text', '') or '')}
@@ -235,10 +233,10 @@ def stream_chat_with_tools(
             raw_input = event.get('input', {})
             tool_call_id = str(event.get('tool_call_id', f"call_{index}") or f"call_{index}")
             handler = handlers.get(tool_name)
-            tool_input = ai._validate_tool_input(tool_name, raw_input) if isinstance(raw_input, dict) else None
+            tool_input = validate_tool_input(tool_name, raw_input) if isinstance(raw_input, dict) else None
 
             if handler and tool_input is not None:
-                status_message = ai._build_tool_status_message(tool_name, tool_input)
+                status_message = build_tool_status_message(tool_name, tool_input)
                 yield {'type': 'status', 'stage': 'tool', 'tool': tool_name, 'message': status_message}
                 try:
                     result = handler(**tool_input)

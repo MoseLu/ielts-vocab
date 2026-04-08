@@ -33,13 +33,20 @@
 }
 
 .ai-panel {
+  --ai-panel-surface: color-mix(in srgb, var(--bg-color) 92%, var(--bg-secondary));
+  --ai-panel-surface-accent: color-mix(in srgb, var(--accent-light) 28%, var(--bg-color));
   position: fixed;
   right: 24px;
   bottom: 24px;
   z-index: var(--layer-topmost);
   width: min(380px, calc(100vw - 32px));
   height: min(620px, calc(100vh - 48px));
-  background: var(--surface-floating);
+  background: linear-gradient(
+    180deg,
+    var(--ai-panel-surface-accent) 0%,
+    var(--ai-panel-surface) 20%,
+    var(--bg-color) 100%
+  );
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-overlay);
@@ -74,7 +81,7 @@
   gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
-  background: var(--surface-floating);
+  background: var(--ai-panel-surface-accent);
   flex-shrink: 0;
 }
 
@@ -164,8 +171,8 @@
   padding: 12px;
   border-bottom: 1px solid var(--border);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 72%),
-    var(--surface-floating);
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--ai-panel-surface-accent)), var(--ai-panel-surface) 72%),
+    var(--ai-panel-surface);
   max-height: min(40%, 320px);
   min-height: 0;
   overflow: hidden;

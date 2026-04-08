@@ -17,10 +17,10 @@ import {
   useAIChatPanel,
 } from '../../../composables/ai-chat/page/useAIChatPanel'
 
-const VOICE_BAR_HEIGHT_PROFILE = [0.08, 0.22, 0.56, 0.96, 0.74, 0.3, 0.12, 0.68]
-const VOICE_BAR_WIDTH_PROFILE = [0.52, 0.68, 0.96, 1.18, 0.9, 0.62, 0.46, 0.88]
-const VOICE_BAR_ACTIVE_THRESHOLD = 0.12
-const VOICE_BAR_STRONG_THRESHOLD = 0.3
+const VOICE_BAR_HEIGHT_PROFILE = [0.12, 0.26, 0.64, 1, 0.72, 0.24, 0.08, 0.58]
+const VOICE_BAR_WIDTH_PROFILE = [0.56, 0.72, 0.9, 1.08, 0.86, 0.66, 0.52, 0.82]
+const VOICE_BAR_ACTIVE_THRESHOLD = 0.08
+const VOICE_BAR_STRONG_THRESHOLD = 0.52
 
 function getVoiceBarAppearance(level: number, index: number, total: number): {
   className: string
@@ -32,24 +32,20 @@ function getVoiceBarAppearance(level: number, index: number, total: number): {
   const normalizedLevel = Math.max(0, Math.min(1, level))
   const intensity = normalizedLevel <= VOICE_BAR_ACTIVE_THRESHOLD
     ? 0
-    : Math.pow((normalizedLevel - VOICE_BAR_ACTIVE_THRESHOLD) / (1 - VOICE_BAR_ACTIVE_THRESHOLD), 0.92)
-  const visualLevel = intensity <= 0
+    : Math.pow((normalizedLevel - VOICE_BAR_ACTIVE_THRESHOLD) / (1 - VOICE_BAR_ACTIVE_THRESHOLD), 0.78)
+  const visualHeight = intensity <= 0
     ? 0
-    : Math.min(1, intensity * 0.84 + shape * 0.24)
-  const tone = intensity <= 0
-    ? 'silent'
-    : intensity >= VOICE_BAR_STRONG_THRESHOLD
-      ? 'active'
-      : 'soft'
+    : Math.min(1, intensity * 0.92 + shape * 0.08)
+  const variant = intensity <= 0.02 ? 'dot' : 'wave'
+  const emphasis = intensity >= VOICE_BAR_STRONG_THRESHOLD ? ' ai-voice-bar--strong' : ''
 
   return {
-    className: `ai-voice-bar ai-voice-bar--${tone}`,
+    className: `ai-voice-bar ai-voice-bar--${variant}${emphasis}`,
     style: {
       ['--ai-voice-age' as string]: age.toFixed(3),
       ['--ai-voice-index' as string]: index,
       ['--ai-voice-intensity' as string]: intensity.toFixed(3),
-      ['--ai-voice-level' as string]: visualLevel.toFixed(3),
-      ['--ai-voice-shape' as string]: shape.toFixed(3),
+      ['--ai-voice-height' as string]: visualHeight.toFixed(3),
       ['--ai-voice-width' as string]: width.toFixed(3),
     } as CSSProperties,
   }
@@ -261,7 +257,7 @@ function AIChatPanel() {
                 : speechRecording
                   ? '正在听写，请稍候...'
                   : AI_INPUT_PLACEHOLDER}
-              rows={5}
+              rows={3}
               disabled={isLoading || speechRecording || speechProcessing}
             />
             <div className={`ai-input-footer ${showVoiceVisualizer || showSpeechStatus ? 'ai-input-footer--active' : ''}`.trim()}>

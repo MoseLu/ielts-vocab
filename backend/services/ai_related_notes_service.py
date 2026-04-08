@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from importlib import import_module
+
+from services import learner_profile_repository
+from services.memory_topics import build_memory_topics
 
 
 _QUERY_STOPWORDS = {
@@ -10,10 +12,6 @@ _QUERY_STOPWORDS = {
     'which', 'from', 'into', 'your', 'about', 'please', 'could', 'would', 'should',
     'kind',
 }
-
-
-def _ai_module():
-    return import_module('routes.ai')
 
 
 def _extract_query_tokens(text: str) -> set[str]:
@@ -42,23 +40,20 @@ def collect_related_learning_notes(
     frontend_context: dict | None = None,
     limit: int = 3,
 ) -> dict | None:
-    ai = _ai_module()
     query_tokens = _extract_query_tokens(user_message)
     normalized_message = _normalize_question_signature(user_message)
     current_word = ((frontend_context or {}).get('currentWord') or '').strip().lower()
 
-    recent_notes = (
-        ai.UserLearningNote.query
-        .filter_by(user_id=user_id)
-        .order_by(ai.UserLearningNote.created_at.desc())
-        .limit(80)
-        .all()
+    recent_notes = learner_profile_repository.list_user_learning_notes(
+        user_id,
+        limit=80,
+        descending=True,
     )
     if not recent_notes:
         return None
 
     topic_matches = []
-    memory_topics = ai.build_memory_topics(
+    memory_topics = build_memory_topics(
         recent_notes,
         limit=12,
         include_singletons=True,

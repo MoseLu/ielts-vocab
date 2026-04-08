@@ -16,7 +16,10 @@ def chat(
     """
     global _primary_rate_limited
 
-    current_key, key_type = get_api_key_with_fallback(force_secondary=force_secondary)
+    current_key, key_type = get_api_key_with_fallback(
+        force_secondary=force_secondary,
+        model=model,
+    )
     if not current_key:
         raise ValueError("MiniMax API key not found in .env file")
 
@@ -24,8 +27,6 @@ def chat(
         "model": model,
         "messages": messages,
         "max_tokens": max_tokens,
-        # Request reasoning details separately
-        "extra_body": {"reasoning_split": True},
     }
 
     if tools:
@@ -133,7 +134,6 @@ def stream_chat_events(
         "messages": messages,
         "max_tokens": max_tokens,
         "stream": True,
-        "extra_body": {"reasoning_split": True},
     }
 
     if tools:

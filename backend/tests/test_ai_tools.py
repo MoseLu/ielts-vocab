@@ -2,6 +2,10 @@ import json
 
 from models import UserQuickMemoryRecord, UserWrongWord, db
 from routes import ai as ai_routes
+from services import ai_assistant_ask_service as ask_service
+from services import ai_assistant_tool_service as tool_service
+from services import ai_custom_books_service as custom_books_service
+from services import ai_vocab_catalog_service as vocab_catalog_service
 
 
 def register_and_login(client, username='ai-tools-user', password='password123'):
@@ -84,8 +88,8 @@ def test_ask_executes_get_wrong_words_tool_call(client, app, monkeypatch):
             'text': '已根据你的错词记录整理出复习建议。',
         }
 
-    monkeypatch.setattr(ai_routes, 'chat', fake_chat)
-    monkeypatch.setattr(ai_routes, '_maybe_summarize_history', lambda user_id: None)
+    monkeypatch.setattr(tool_service, 'chat', fake_chat)
+    monkeypatch.setattr(ask_service, 'maybe_summarize_history', lambda user_id: None)
 
     res = client.post('/api/ai/ask', json={
         'message': '帮我复习错词',
@@ -105,9 +109,9 @@ def test_ask_executes_get_wrong_words_tool_call(client, app, monkeypatch):
 def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app, monkeypatch):
     register_and_login(client, username='wrong-words-progress-user')
 
-    ai_routes._get_global_vocab_pool.cache_clear()
-    ai_routes._get_quick_memory_vocab_lookup.cache_clear()
-    monkeypatch.setattr(ai_routes, '_get_global_vocab_pool', lambda: [{
+    vocab_catalog_service._get_global_vocab_pool.cache_clear()
+    vocab_catalog_service._get_quick_memory_vocab_lookup.cache_clear()
+    monkeypatch.setattr(vocab_catalog_service, '_get_global_vocab_pool', lambda: [{
         'word': 'alpha',
         'phonetic': '/a/',
         'pos': 'n.',
@@ -125,7 +129,7 @@ def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app, monkeypat
             'zh': 'alpha 出现在例句里。',
         }],
     }])
-    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {})
+    monkeypatch.setattr(vocab_catalog_service, '_get_quick_memory_vocab_lookup', lambda: {})
 
     with app.app_context():
         from models import User
@@ -309,7 +313,7 @@ def test_generate_book_accepts_text_response_payload(client, monkeypatch):
         ],
     }
 
-    monkeypatch.setattr(ai_routes, 'chat', lambda messages, max_tokens=8192: {
+    monkeypatch.setattr(custom_books_service, 'chat', lambda messages, max_tokens=8192: {
         'type': 'text',
         'text': json.dumps(payload, ensure_ascii=False),
     })

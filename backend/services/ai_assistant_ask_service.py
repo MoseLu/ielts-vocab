@@ -1,32 +1,56 @@
 from __future__ import annotations
 
-from importlib import import_module
+import logging
 
+from flask import Response, current_app, jsonify, stream_with_context
 
-def _ai_module():
-    return import_module('routes.ai')
+from services import ai_assistant_repository
+from services.ai_assistant_memory_service import (
+    add_memory_note,
+    load_history,
+    maybe_summarize_history,
+    save_turn,
+)
+from services.ai_assistant_tool_service import (
+    chat_with_tools,
+    encode_sse_event,
+    make_get_book_chapters,
+    make_get_chapter_words,
+    make_get_wrong_words,
+    stream_chat_with_tools,
+    strip_options_for_stream,
+)
+from services.ai_learning_context_service import build_learning_context_msg
+from services.ai_prompt_context_service import parse_options, strip_options
+from services.ai_related_notes_service import (
+    build_related_notes_msg,
+    collect_related_learning_notes,
+)
+from services.ai_route_support_service import SYSTEM_PROMPT, _get_context_data
+from services.learning_events import record_learning_event
+from services.llm import TOOLS, web_search
+from services.runtime_async import maybe_timeout, spawn_background
 
 
 def build_ask_messages(current_user, user_message: str, frontend_context: dict) -> list[dict]:
-    ai = _ai_module()
-    import logging
-
-    messages = [{"role": "system", "content": ai.SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     try:
-        ctx_data = ai._get_context_data(current_user.id)
-        context_msg = ai._build_learning_context_msg(ctx_data, frontend_context)
+        ctx_data = _get_context_data(current_user.id)
+        context_msg = build_learning_context_msg(ctx_data, frontend_context)
         messages.append({"role": "user", "content": f"[学习数据]\n{context_msg}"})
     except Exception as exc:
         logging.warning("[AI] Failed to fetch user context: %s", exc)
         messages.append({"role": "user", "content": "[学习数据]\n数据加载失败，请根据用户当前状态回复。"})
         if frontend_context:
-            context_text = ai._build_context_msg(frontend_context)
+            from services.ai_prompt_context_service import build_context_msg
+
+            context_text = build_context_msg(frontend_context)
             messages.append({"role": "user", "content": f"[当前学习状态]\n{context_text}"})
 
-    messages.extend(ai._load_history(current_user.id))
+    messages.extend(load_history(current_user.id))
 
-    related_notes_msg = ai._build_related_notes_msg(
-        ai._collect_related_learning_notes(current_user.id, user_message, frontend_context)
+    related_notes_msg = build_related_notes_msg(
+        collect_related_learning_notes(current_user.id, user_message, frontend_context)
     )
     if related_notes_msg:
         messages.append({"role": "user", "content": related_notes_msg})
@@ -37,7 +61,7 @@ def build_ask_messages(current_user, user_message: str, frontend_context: dict) 
         word = frontend_context['currentWord']
         search_query = f"{word} example sentences IELTS context"
         try:
-            search_results = ai.web_search(search_query)
+            search_results = web_search(search_query)
             messages.append({
                 "role": "user",
                 "content": (
@@ -54,34 +78,28 @@ def build_ask_messages(current_user, user_message: str, frontend_context: dict) 
 
 
 def build_ask_extra_handlers(current_user) -> dict[str, callable]:
-    ai = _ai_module()
-
     def handle_remember(note: str, category: str = 'other') -> str:
-        return ai._add_memory_note(current_user.id, note, category)
+        return add_memory_note(current_user.id, note, category)
 
     return {
         'remember_user_note': handle_remember,
-        'get_wrong_words': ai._make_get_wrong_words(current_user.id),
-        'get_chapter_words': ai._make_get_chapter_words(current_user.id),
-        'get_book_chapters': ai._make_get_book_chapters(current_user.id),
+        'get_wrong_words': make_get_wrong_words(current_user.id),
+        'get_chapter_words': make_get_chapter_words(current_user.id),
+        'get_book_chapters': make_get_book_chapters(current_user.id),
     }
 
 
 def persist_ask_response(current_user, user_message: str, frontend_context: dict, clean_reply: str) -> None:
-    ai = _ai_module()
-    import logging
-
-    ai._save_turn(current_user.id, user_message, clean_reply)
+    save_turn(current_user.id, user_message, clean_reply)
     try:
         word_context = frontend_context.get('currentWord') if frontend_context else None
-        note = ai.UserLearningNote(
-            user_id=current_user.id,
+        ai_assistant_repository.create_learning_note(
+            current_user.id,
             question=user_message,
             answer=clean_reply,
             word_context=word_context,
         )
-        ai.db.session.add(note)
-        ai.record_learning_event(
+        record_learning_event(
             user_id=current_user.id,
             event_type='assistant_question',
             source='assistant',
@@ -92,30 +110,27 @@ def persist_ask_response(current_user, user_message: str, frontend_context: dict
                 'answer_excerpt': clean_reply[:500],
             },
         )
-        ai.db.session.commit()
+        ai_assistant_repository.commit()
     except Exception as exc:
-        ai.db.session.rollback()
+        ai_assistant_repository.rollback()
         logging.warning("[AI] Failed to save learning note: %s", exc)
 
     try:
-        app = ai.current_app._get_current_object()
+        app = current_app._get_current_object()
 
         def summarize_history_in_app():
             with app.app_context():
-                ai._maybe_summarize_history(current_user.id)
+                maybe_summarize_history(current_user.id)
 
-        ai.spawn_background(summarize_history_in_app)
+        spawn_background(summarize_history_in_app)
     except Exception:
         pass
 
 
 def ask_response(current_user, body):
-    ai = _ai_module()
-    import logging
-
     body = body or {}
     user_message = str(body.get('message', '') or '').strip()
-    frontend_context = body.get('context') or {}
+    frontend_context = body.get('context') if isinstance(body.get('context'), dict) else {}
 
     logging.warning(
         "[AI] ask from user=%s: msg='%s' ctx=%s",
@@ -124,33 +139,30 @@ def ask_response(current_user, body):
         frontend_context,
     )
     if not user_message:
-        return ai.jsonify({'error': 'Message is required'}), 400
+        return jsonify({'error': 'Message is required'}), 400
 
-    messages = ai._build_ask_messages(current_user, user_message, frontend_context)
-    extra_handlers = ai._build_ask_extra_handlers(current_user)
+    messages = build_ask_messages(current_user, user_message, frontend_context)
+    extra_handlers = build_ask_extra_handlers(current_user)
     try:
-        with ai.maybe_timeout(90, RuntimeError('LLM timeout')):
-            response = ai._chat_with_tools(messages, tools=ai.TOOLS, extra_handlers=extra_handlers)
+        with maybe_timeout(90, RuntimeError('LLM timeout')):
+            response = chat_with_tools(messages, tools=TOOLS, extra_handlers=extra_handlers)
         final_text = response.get("text", str(response))
-        options = ai._parse_options(final_text)
-        clean_reply = ai._strip_options(final_text)
-        ai._persist_ask_response(current_user, user_message, frontend_context, clean_reply)
-        return ai.jsonify({
+        options = parse_options(final_text)
+        clean_reply = strip_options(final_text)
+        persist_ask_response(current_user, user_message, frontend_context, clean_reply)
+        return jsonify({
             'reply': clean_reply,
             'options': options,
         })
     except Exception as exc:
         logging.error("[AI] /ask error for user=%s: %s", current_user.id, exc, exc_info=True)
-        return ai.jsonify({'error': 'AI 服务暂时不可用，请稍后重试'}), 500
+        return jsonify({'error': 'AI 服务暂时不可用，请稍后重试'}), 500
 
 
 def ask_stream_response(current_user, body):
-    ai = _ai_module()
-    import logging
-
     body = body or {}
     user_message = str(body.get('message', '') or '').strip()
-    frontend_context = body.get('context') or {}
+    frontend_context = body.get('context') if isinstance(body.get('context'), dict) else {}
 
     logging.warning(
         "[AI] ask/stream from user=%s: msg='%s' ctx=%s",
@@ -159,46 +171,46 @@ def ask_stream_response(current_user, body):
         frontend_context,
     )
     if not user_message:
-        return ai.jsonify({'error': 'Message is required'}), 400
+        return jsonify({'error': 'Message is required'}), 400
 
-    messages = ai._build_ask_messages(current_user, user_message, frontend_context)
-    extra_handlers = ai._build_ask_extra_handlers(current_user)
+    messages = build_ask_messages(current_user, user_message, frontend_context)
+    extra_handlers = build_ask_extra_handlers(current_user)
 
-    @ai.stream_with_context
+    @stream_with_context
     def generate():
         raw_reply = ''
         visible_reply = ''
         try:
-            yield ai._encode_sse_event({'type': 'status', 'stage': 'start', 'message': 'AI 正在思考...'})
-            with ai.maybe_timeout(90, RuntimeError('LLM timeout')):
-                for event in ai._stream_chat_with_tools(messages, tools=ai.TOOLS, extra_handlers=extra_handlers):
+            yield encode_sse_event({'type': 'status', 'stage': 'start', 'message': 'AI 正在思考...'})
+            with maybe_timeout(90, RuntimeError('LLM timeout')):
+                for event in stream_chat_with_tools(messages, tools=TOOLS, extra_handlers=extra_handlers):
                     event_type = event.get('type')
                     if event_type == 'status':
-                        yield ai._encode_sse_event(event)
+                        yield encode_sse_event(event)
                         continue
                     if event_type != 'text_delta':
                         continue
                     raw_reply += str(event.get('text', '') or '')
-                    next_visible_reply = ai._strip_options_for_stream(raw_reply)
+                    next_visible_reply = strip_options_for_stream(raw_reply)
                     if next_visible_reply.startswith(visible_reply):
                         visible_delta = next_visible_reply[len(visible_reply):]
                     else:
                         visible_delta = next_visible_reply
                     if visible_delta:
                         visible_reply = next_visible_reply
-                        yield ai._encode_sse_event({'type': 'text', 'delta': visible_delta})
+                        yield encode_sse_event({'type': 'text', 'delta': visible_delta})
 
-            clean_reply = ai._strip_options(raw_reply)
-            options = ai._parse_options(raw_reply) or []
-            ai._persist_ask_response(current_user, user_message, frontend_context, clean_reply)
+            clean_reply = strip_options(raw_reply)
+            options = parse_options(raw_reply) or []
+            persist_ask_response(current_user, user_message, frontend_context, clean_reply)
             if options:
-                yield ai._encode_sse_event({'type': 'options', 'options': options})
-            yield ai._encode_sse_event({'type': 'done', 'reply': clean_reply, 'options': options})
+                yield encode_sse_event({'type': 'options', 'options': options})
+            yield encode_sse_event({'type': 'done', 'reply': clean_reply, 'options': options})
         except Exception as exc:
             logging.error("[AI] /ask/stream error for user=%s: %s", current_user.id, exc, exc_info=True)
-            yield ai._encode_sse_event({'type': 'error', 'error': 'AI 服务暂时不可用，请稍后重试'})
+            yield encode_sse_event({'type': 'error', 'error': 'AI 服务暂时不可用，请稍后重试'})
 
-    response = ai.Response(generate(), mimetype='text/event-stream')
+    response = Response(generate(), mimetype='text/event-stream')
     response.headers['Cache-Control'] = 'no-cache, no-transform'
     response.headers['X-Accel-Buffering'] = 'no'
     response.headers['Connection'] = 'keep-alive'
