@@ -21,9 +21,85 @@ socketio_instance = None
 # API configuration
 API_KEY = os.environ.get('DASHSCOPE_API_KEY', '')
 BASE_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/realtime'
-MODEL = os.environ.get('REALTIME_ASR_MODEL', 'qwen3-asr-flash-realtime')
+DEFAULT_REALTIME_ASR_MODEL = 'qwen3-asr-flash-realtime'
 
-print(f"[Speech] Module loaded, API_KEY configured: {bool(API_KEY)}")
+BENIGN_WS_ERROR_SNIPPETS = (
+    'already closed',
+    'connection is already closed',
+    'socket is already closed',
+)
+
+IDLE_TIMEOUT_CLOSE_SNIPPETS = (
+    'idle timeout',
+    'idle too long',
+)
+
+def _resolve_realtime_asr_model():
+    configured_model = os.environ.get('REALTIME_ASR_MODEL', DEFAULT_REALTIME_ASR_MODEL).strip()
+    if not configured_model:
+        return DEFAULT_REALTIME_ASR_MODEL
+
+    if configured_model.startswith('qwen3-asr-') and 'realtime' in configured_model:
+        return configured_model
+
+    print(
+        f"[Speech] REALTIME_ASR_MODEL={configured_model} is incompatible with "
+        f"the qwen3 transcription socket contract; falling back to "
+        f"{DEFAULT_REALTIME_ASR_MODEL}"
+    )
+    return DEFAULT_REALTIME_ASR_MODEL
+
+
+MODEL = _resolve_realtime_asr_model()
+
+print(f"[Speech] Module loaded, API_KEY configured: {bool(API_KEY)}, model={MODEL}")
+
+
+def _is_benign_ws_error(error):
+    message = str(error).strip().lower()
+    return any(snippet in message for snippet in BENIGN_WS_ERROR_SNIPPETS)
+
+
+def _is_idle_timeout_close(close_status_code, close_msg):
+    if close_status_code != 1007:
+        return False
+
+    message = (close_msg or '').strip().lower()
+    return any(snippet in message for snippet in IDLE_TIMEOUT_CLOSE_SNIPPETS)
+
+
+def _mark_session_inactive(session_state):
+    with session_state['lock']:
+        session_state['ready'] = False
+        session_state['closing'] = True
+        session_state['audio_queue'].clear()
+
+
+def _close_session_ws(session_id, session_state):
+    ws = session_state.get('ws')
+    session_state['ws'] = None
+
+    if not ws:
+        return
+
+    try:
+        ws.close()
+    except Exception as error:
+        if not _is_benign_ws_error(error):
+            print(f"[{session_id}] Error closing DashScope WS: {error}")
+
+
+def _extract_partial_transcript(message):
+    text = message.get('text', '')
+    if text:
+        return text
+
+    stash = message.get('stash', '')
+    if isinstance(stash, str):
+        return stash
+    if isinstance(stash, dict):
+        return stash.get('text', '')
+    return ''
 
 
 def register_socketio_events(socketio):
@@ -48,9 +124,8 @@ def register_socketio_events(socketio):
         if session_id in active_sessions:
             session_data = active_sessions[session_id]
             try:
-                ws = session_data.get('ws')
-                if ws:
-                    ws.close()
+                _mark_session_inactive(session_data)
+                _close_session_ws(session_id, session_data)
             except Exception as e:
                 print(f"[Speech] Error closing WS: {e}")
             del active_sessions[session_id]
@@ -75,10 +150,17 @@ def register_socketio_events(socketio):
             }, namespace='/speech', to=session_id)
             return
 
+        existing_session = active_sessions.get(session_id)
+        if existing_session:
+            print(f"[Speech] Replacing stale session: {session_id}")
+            _mark_session_inactive(existing_session)
+            _close_session_ws(session_id, existing_session)
+
         # Session state
         session_state = {
             'ws': None,
             'ready': False,
+            'closing': False,
             'enable_vad': enable_vad,
             'audio_queue': [],
             'lock': threading.Lock()
@@ -135,6 +217,7 @@ def register_socketio_events(socketio):
 
                     with session_state['lock']:
                         session_state['ready'] = True
+                        session_state['closing'] = False
                         # Send queued audio
                         queue_size = len(session_state['audio_queue'])
                         if queue_size > 0:
@@ -152,7 +235,7 @@ def register_socketio_events(socketio):
                     print(f"[{session_id}] Session updated")
 
                 elif event_type == 'conversation.item.input_audio_transcription.text':
-                    text = data.get('text', '') or data.get('stash', {}).get('text', '')
+                    text = _extract_partial_transcript(data)
                     if text:
                         print(f"[{session_id}] Partial: {text}")
                         socketio.emit('partial_result', {
@@ -179,13 +262,13 @@ def register_socketio_events(socketio):
 
                 elif event_type == 'session.finished':
                     print(f"[{session_id}] Session finished")
+                    _mark_session_inactive(session_state)
                     socketio.emit('recognition_complete', {}, namespace='/speech', to=session_id)
-                    with session_state['lock']:
-                        session_state['ready'] = False
 
                 elif event_type == 'error':
                     error_msg = data.get('error', {}).get('message', 'Unknown error')
                     print(f"[{session_id}] DashScope error: {error_msg}")
+                    _mark_session_inactive(session_state)
                     socketio.emit('recognition_error', {
                         'error': error_msg
                     }, namespace='/speech', to=session_id)
@@ -194,15 +277,24 @@ def register_socketio_events(socketio):
                 print(f"[{session_id}] Error parsing message: {e}")
 
         def on_ws_error(ws, error):
+            if _is_benign_ws_error(error):
+                print(f"[{session_id}] DashScope WS already closed: {error}")
+                _mark_session_inactive(session_state)
+                return
+
             print(f"[{session_id}] DashScope WS error: {error}")
+            _mark_session_inactive(session_state)
             socketio.emit('recognition_error', {
                 'error': str(error)
             }, namespace='/speech', to=session_id)
 
         def on_ws_close(ws, close_status_code, close_msg):
             print(f"[{session_id}] DashScope WS closed: {close_status_code} - {close_msg}")
-            with session_state['lock']:
-                session_state['ready'] = False
+            _mark_session_inactive(session_state)
+            session_state['ws'] = None
+
+            if close_status_code in (1000, 1001) or _is_idle_timeout_close(close_status_code, close_msg):
+                return
 
         def send_audio_to_ws(ws, audio_data):
             try:
@@ -285,11 +377,19 @@ def register_socketio_events(socketio):
                     ws.send(json.dumps(event))
                     print(f"[Speech] Sent {len(audio_data)} bytes to DashScope")
                 except Exception as e:
-                    print(f"[{session_id}] Error sending audio: {e}")
+                    if _is_benign_ws_error(e):
+                        print(f"[{session_id}] Dropped audio after DashScope session closed")
+                        session_state['ready'] = False
+                        session_state['closing'] = True
+                    else:
+                        print(f"[{session_id}] Error sending audio: {e}")
             else:
-                # Queue audio if not ready
-                session_state['audio_queue'].append(audio_data)
-                print(f"[Speech] Queued audio, queue size: {len(session_state['audio_queue'])}")
+                if session_state.get('closing'):
+                    print(f"[Speech] Dropped audio for closing session: {session_id}")
+                else:
+                    # Queue audio if not ready
+                    session_state['audio_queue'].append(audio_data)
+                    print(f"[Speech] Queued audio, queue size: {len(session_state['audio_queue'])}")
 
     @socketio.on('stop_recognition', namespace='/speech')
     def handle_stop_recognition():
@@ -306,6 +406,7 @@ def register_socketio_events(socketio):
 
         try:
             print(f"[Speech] Stopping: {session_id}")
+            _mark_session_inactive(session_state)
 
             if ws:
                 if not enable_vad:
@@ -313,16 +414,21 @@ def register_socketio_events(socketio):
                         "event_id": f"event_commit_{int(time.time() * 1000)}",
                         "type": "input_audio_buffer.commit"
                     }
-                    ws.send(json.dumps(commit_event))
+                    try:
+                        ws.send(json.dumps(commit_event))
+                    except Exception as e:
+                        if not _is_benign_ws_error(e):
+                            raise
 
                 finish_event = {
                     "event_id": f"event_finish_{int(time.time() * 1000)}",
                     "type": "session.finish"
                 }
-                ws.send(json.dumps(finish_event))
-
-            with session_state['lock']:
-                session_state['ready'] = False
+                try:
+                    ws.send(json.dumps(finish_event))
+                except Exception as e:
+                    if not _is_benign_ws_error(e):
+                        raise
 
             socketio.emit('recognition_stopped', {}, namespace='/speech', to=session_id)
 
