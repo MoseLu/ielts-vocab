@@ -1,13 +1,15 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
-
-/**
- * Custom hook for real-time speech recognition using DashScope qwen3-asr
- */
-
-// ============================================================================
-// Type Definitions
-// ============================================================================
+import {
+  createBrowserSpeechRecognition,
+  encodePcm16,
+  normalizeAudioLevel,
+  resolveSpeechSocketConfig,
+  SPEECH_EMPTY_RESULT_MESSAGE,
+  SPEECH_IDLE_LEVEL,
+  SPEECH_MIN_ACTIVE_LEVEL,
+  type BrowserSpeechRecognitionInstance,
+} from './speechRecognitionUtils'
 
 export interface SpeechRecognitionOptions {
   /** Whether the socket connection should be active */
@@ -26,6 +28,8 @@ export interface SpeechRecognitionOptions {
   onPartial?: (text: string) => void
   /** Callback when an error occurs */
   onError?: (error: string) => void
+  /** Callback with a normalized input level between 0 and 1 */
+  onLevel?: (level: number) => void
 }
 
 export interface UseSpeechRecognitionReturn {
@@ -33,6 +37,8 @@ export interface UseSpeechRecognitionReturn {
   isConnected: boolean
   /** Whether audio is currently being recorded and sent */
   isRecording: boolean
+  /** Whether the backend is still finishing speech-to-text */
+  isProcessing: boolean
   /** Whether the recognition session is ready to receive audio */
   isReady: boolean
   /** Start recording and speech recognition */
@@ -40,65 +46,27 @@ export interface UseSpeechRecognitionReturn {
   /** Stop recording and speech recognition */
   stopRecording: () => void
 }
-
-// Internal callback container stored in a ref to avoid stale closures
 interface CallbacksRef {
   onResult?: (text: string) => void
   onPartial?: (text: string) => void
   onError?: (error: string) => void
+  onLevel?: (level: number) => void
 }
-
-// Socket event payload types
 interface ConnectedPayload {
   api_configured: boolean
 }
-
 interface RecognitionStartedPayload {
   session_id?: string
 }
-
 interface PartialResultPayload {
   text: string
 }
-
 interface FinalResultPayload {
   text: string
 }
-
 interface RecognitionErrorPayload {
   error: string
 }
-
-const LOCAL_VITE_DEV_PORTS = new Set(['3000', '3020', '5173'])
-const DEFAULT_SPEECH_SOCKET_PATH = '/socket.io'
-
-interface SpeechSocketConfig {
-  path: string
-  url: string
-}
-
-function resolveSpeechSocketConfig(location: Location): SpeechSocketConfig {
-  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const isLocalViteDevServer =
-    location.protocol === 'http:' && LOCAL_VITE_DEV_PORTS.has(location.port)
-
-  if (isLocalViteDevServer) {
-    return {
-      path: DEFAULT_SPEECH_SOCKET_PATH,
-      url: `${protocol}//${location.hostname}:5001/speech`,
-    }
-  }
-
-  return {
-    path: DEFAULT_SPEECH_SOCKET_PATH,
-    url: `${protocol}//${location.host}/speech`,
-  }
-}
-
-// ============================================================================
-// Hook Implementation
-// ============================================================================
-
 export function useSpeechRecognition({
   enabled = true,
   language = 'zh',
@@ -108,22 +76,129 @@ export function useSpeechRecognition({
   onResult,
   onPartial,
   onError,
+  onLevel,
 }: SpeechRecognitionOptions): UseSpeechRecognitionReturn {
   const [isConnected, setIsConnected] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [isReady, setIsReady] = useState(false)
-
   const socketRef = useRef<Socket | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const processorRef = useRef<ScriptProcessorNode | null>(null)
+  const browserRecognitionRef = useRef<BrowserSpeechRecognitionInstance | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const isRecordingRef = useRef(false)
+  const isProcessingRef = useRef(false)
+  const hasTranscriptRef = useRef(false)
+  const transcriptSourceRef = useRef<'backend' | 'browser' | null>(null)
   const autoStopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   // Use refs to keep callbacks fresh without triggering re-renders
-  const callbacksRef = useRef<CallbacksRef>({ onResult, onPartial, onError })
+  const callbacksRef = useRef<CallbacksRef>({ onResult, onPartial, onError, onLevel })
   const autoStopRef = useRef(autoStop)
   const autoStopDelayRef = useRef(autoStopDelay)
+
+  const syncProcessingState = useCallback((nextValue: boolean) => {
+    isProcessingRef.current = nextValue
+    setIsProcessing(nextValue)
+  }, [])
+
+  const clearAutoStopTimeout = useCallback(() => {
+    if (autoStopTimeoutRef.current) {
+      clearTimeout(autoStopTimeoutRef.current)
+      autoStopTimeoutRef.current = null
+    }
+  }, [])
+
+  const resetAudioLevel = useCallback(() => {
+    callbacksRef.current.onLevel?.(SPEECH_IDLE_LEVEL)
+  }, [])
+
+  const stopBrowserRecognition = useCallback((abort = false) => {
+    const recognition = browserRecognitionRef.current
+    if (!recognition) return
+    try {
+      if (abort) {
+        recognition.abort()
+      } else {
+        recognition.stop()
+      }
+    } catch {}
+  }, [])
+
+  const setupBrowserRecognition = useCallback((nextLanguage: string) => {
+    const recognition = createBrowserSpeechRecognition(window, nextLanguage)
+    if (!recognition) return
+
+    recognition.onresult = event => {
+      const chunks: string[] = []
+      let isFinal = false
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index]
+        const transcript = result?.[0]?.transcript?.trim()
+        if (transcript) chunks.push(transcript)
+        isFinal = Boolean(result?.isFinal) || isFinal
+      }
+
+      const text = chunks.join(' ').trim()
+      if (!text) return
+      if (transcriptSourceRef.current && transcriptSourceRef.current !== 'browser') return
+
+      transcriptSourceRef.current = 'browser'
+      hasTranscriptRef.current = true
+      if (isFinal) {
+        callbacksRef.current.onResult?.(text)
+      } else {
+        callbacksRef.current.onPartial?.(text)
+      }
+    }
+
+    recognition.onend = () => {
+      if (browserRecognitionRef.current === recognition) {
+        browserRecognitionRef.current = null
+      }
+    }
+
+    browserRecognitionRef.current = recognition
+    try {
+      recognition.start()
+    } catch {
+      browserRecognitionRef.current = null
+    }
+  }, [])
+
+  const cleanupAudioResources = useCallback(() => {
+    if (processorRef.current) {
+      processorRef.current.onaudioprocess = null
+      processorRef.current.disconnect()
+      processorRef.current = null
+    }
+
+    if (audioContextRef.current) {
+      const audioContext = audioContextRef.current
+      audioContextRef.current = null
+      void audioContext.close().catch(() => {})
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+  }, [])
+
+  const stopAudioCapture = useCallback(() => {
+    isRecordingRef.current = false
+    clearAutoStopTimeout()
+    cleanupAudioResources()
+    setIsRecording(false)
+    setIsReady(false)
+  }, [cleanupAudioResources, clearAutoStopTimeout])
+
+  const finishRecognitionSession = useCallback(() => {
+    stopBrowserRecognition(true)
+    stopAudioCapture()
+    resetAudioLevel()
+    syncProcessingState(false)
+  }, [resetAudioLevel, stopAudioCapture, stopBrowserRecognition, syncProcessingState])
 
   useEffect(() => {
     autoStopRef.current = autoStop
@@ -131,34 +206,33 @@ export function useSpeechRecognition({
   }, [autoStop, autoStopDelay])
 
   useEffect(() => {
-    callbacksRef.current = { onResult, onPartial, onError }
-  }, [onResult, onPartial, onError])
+    callbacksRef.current = { onResult, onPartial, onError, onLevel }
+  }, [onError, onLevel, onPartial, onResult])
 
-  // Initialize socket once on mount
   useEffect(() => {
     if (!enabled) {
+      clearAutoStopTimeout()
+      cleanupAudioResources()
       setIsConnected(false)
       setIsRecording(false)
+      syncProcessingState(false)
       setIsReady(false)
       isRecordingRef.current = false
+      resetAudioLevel()
       return
     }
 
-    // Local Vite dev mode talks to the speech service directly because the
-    // dev proxy intermittently corrupts websocket frames on browser clients.
-    // Preview/prod stay same-origin through the canonical nginx /socket.io
-    // proxy to the dedicated speech service on port 5001.
     const speechSocket = resolveSpeechSocketConfig(window.location)
     const socket = io(speechSocket.url, {
       autoConnect: false,
       path: speechSocket.path,
-      transports: ['websocket'],  // 优先 WebSocket，减少轮询开销
+      transports: speechSocket.transports,
       reconnection: true,
       reconnectionAttempts: 3,    // 减少重连次数
       reconnectionDelay: 1000,    // 初始延迟 1s
       reconnectionDelayMax: 3000, // 最大延迟 3s
       timeout: 5000,             // 5秒超时
-      rememberUpgrade: true,      // 记住上次的传输方式
+      rememberUpgrade: speechSocket.rememberUpgrade,
     })
 
     socket.on('connect', () => {
@@ -167,7 +241,7 @@ export function useSpeechRecognition({
 
     socket.on('disconnect', (_reason: string) => {
       setIsConnected(false)
-      setIsReady(false)
+      finishRecognitionSession()
     })
 
     socket.on('connected', (data: ConnectedPayload) => {
@@ -179,25 +253,28 @@ export function useSpeechRecognition({
     socket.on('recognition_started', (_data: RecognitionStartedPayload) => {
       setIsReady(true)
     })
-
-
     socket.on('partial_result', (data: PartialResultPayload) => {
       if (data.text) {
+        if (transcriptSourceRef.current && transcriptSourceRef.current !== 'backend') return
+        transcriptSourceRef.current = 'backend'
+        hasTranscriptRef.current = true
         callbacksRef.current.onPartial?.(data.text)
       }
     })
 
     socket.on('final_result', (data: FinalResultPayload) => {
       if (data.text) {
+        if (transcriptSourceRef.current && transcriptSourceRef.current !== 'backend') return
+        transcriptSourceRef.current = 'backend'
+        hasTranscriptRef.current = true
         callbacksRef.current.onResult?.(data.text)
       }
-      // Auto-stop after final result if enabled
+      if (isProcessingRef.current) {
+        finishRecognitionSession()
+        return
+      }
       if (autoStopRef.current && isRecordingRef.current) {
-        // Clear any existing timeout
-        if (autoStopTimeoutRef.current) {
-          clearTimeout(autoStopTimeoutRef.current)
-        }
-        // Stop after a short delay
+        clearAutoStopTimeout()
         autoStopTimeoutRef.current = setTimeout(() => {
           if (isRecordingRef.current && socketRef.current?.connected) {
             socketRef.current.emit('stop_recognition')
@@ -208,79 +285,64 @@ export function useSpeechRecognition({
 
     socket.on('speech_started', () => {
       // Cancel any pending auto-stop if user starts speaking again
-      if (autoStopTimeoutRef.current) {
-        clearTimeout(autoStopTimeoutRef.current)
-        autoStopTimeoutRef.current = null
-      }
+      clearAutoStopTimeout()
     })
 
     socket.on('recognition_complete', () => {
-      setIsRecording(false)
-      setIsReady(false)
-      isRecordingRef.current = false
+      if (isProcessingRef.current && !hasTranscriptRef.current) {
+        callbacksRef.current.onError?.(SPEECH_EMPTY_RESULT_MESSAGE)
+      }
+      finishRecognitionSession()
     })
 
     socket.on('recognition_error', (data: RecognitionErrorPayload) => {
       console.error('[Speech] Error:', data.error)
       callbacksRef.current.onError?.(data.error)
-      setIsRecording(false)
-      isRecordingRef.current = false
+      finishRecognitionSession()
     })
 
     socket.on('recognition_stopped', () => {
-      setIsRecording(false)
-      setIsReady(false)
-      isRecordingRef.current = false
+      if (isProcessingRef.current) return
+      finishRecognitionSession()
     })
 
     socketRef.current = socket
-    // Defer the first connect by one task so React StrictMode's dev-only
-    // mount/unmount cycle does not start a websocket that is immediately closed.
     const connectTimer = setTimeout(() => {
       socket.connect()
     }, 0)
 
-    // Cleanup on unmount
     return () => {
       clearTimeout(connectTimer)
-      // Clear auto-stop timeout
-      if (autoStopTimeoutRef.current) {
-        clearTimeout(autoStopTimeoutRef.current)
-        autoStopTimeoutRef.current = null
-      }
-      // Stop audio
-      if (processorRef.current) {
-        processorRef.current.disconnect()
-        processorRef.current = null
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close()
-        audioContextRef.current = null
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop())
-        streamRef.current = null
-      }
-      // Disconnect socket
+      clearAutoStopTimeout()
+      cleanupAudioResources()
+      syncProcessingState(false)
+      resetAudioLevel()
       if (socketRef.current) {
         socketRef.current.disconnect()
         socketRef.current = null
       }
       setIsConnected(false)
       setIsRecording(false)
+      setIsProcessing(false)
       setIsReady(false)
       isRecordingRef.current = false
+      isProcessingRef.current = false
     }
-  }, [enabled])
+  }, [
+    cleanupAudioResources,
+    clearAutoStopTimeout,
+    enabled,
+    finishRecognitionSession,
+    resetAudioLevel,
+    syncProcessingState,
+  ])
 
-  // Start recording
   const startRecording = useCallback(async () => {
     if (!socketRef.current?.connected) {
       callbacksRef.current.onError?.('未连接到语音服务')
       return
     }
 
-    // Check for secure context (HTTPS required for microphone access)
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       const isSecure =
         window.location.protocol === 'https:' ||
@@ -297,10 +359,18 @@ export function useSpeechRecognition({
     }
 
     try {
+      clearAutoStopTimeout()
+      cleanupAudioResources()
+      syncProcessingState(false)
+      resetAudioLevel()
+      hasTranscriptRef.current = false
+      transcriptSourceRef.current = null
+      setupBrowserRecognition(language)
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 16000,
           channelCount: 1,
+          autoGainControl: true,
           echoCancellation: true,
           noiseSuppression: true,
         },
@@ -308,7 +378,7 @@ export function useSpeechRecognition({
 
       streamRef.current = stream
 
-      const audioContext = new AudioContext({ sampleRate: 16000 })
+      const audioContext = new AudioContext()
       if (audioContext.state === 'suspended') {
         await audioContext.resume()
       }
@@ -318,23 +388,16 @@ export function useSpeechRecognition({
       const processor = audioContext.createScriptProcessor(4096, 1, 1)
       processorRef.current = processor
 
-      // Start recognition session
       socketRef.current.emit('start_recognition', {
         language,
         enable_vad: enableVad,
       })
 
-      // Handle audio data
       processor.onaudioprocess = (event: AudioProcessingEvent) => {
         if (isRecordingRef.current && socketRef.current?.connected) {
           const inputData = event.inputBuffer.getChannelData(0)
-          // Convert float32 to int16 PCM
-          const pcmData = new Int16Array(inputData.length)
-          for (let i = 0; i < inputData.length; i++) {
-            const s = Math.max(-1, Math.min(1, inputData[i]))
-            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff
-          }
-          // Send as Uint8Array for proper binary transfer
+          callbacksRef.current.onLevel?.(normalizeAudioLevel(inputData))
+          const pcmData = encodePcm16(inputData, audioContext.sampleRate)
           const uint8Data = new Uint8Array(pcmData.buffer)
           socketRef.current.emit('audio_data', uint8Data)
         }
@@ -343,10 +406,14 @@ export function useSpeechRecognition({
       source.connect(processor)
       processor.connect(audioContext.destination)
 
+      callbacksRef.current.onLevel?.(SPEECH_MIN_ACTIVE_LEVEL)
       setIsRecording(true)
       isRecordingRef.current = true
     } catch (error: unknown) {
       console.error('[Speech] Error:', error)
+      cleanupAudioResources()
+      syncProcessingState(false)
+      resetAudioLevel()
       const err = error as Error & { name?: string }
       if (err.name === 'NotAllowedError') {
         callbacksRef.current.onError?.('麦克风权限被拒绝')
@@ -356,43 +423,37 @@ export function useSpeechRecognition({
         callbacksRef.current.onError?.('无法访问麦克风: ' + err.message)
       }
     }
-  }, [language, enableVad])
+  }, [
+    cleanupAudioResources,
+    clearAutoStopTimeout,
+    enableVad,
+    language,
+    resetAudioLevel,
+    syncProcessingState,
+  ])
 
-  // Stop recording
   const stopRecording = useCallback(() => {
-    isRecordingRef.current = false
-
-    // Clear auto-stop timeout
-    if (autoStopTimeoutRef.current) {
-      clearTimeout(autoStopTimeoutRef.current)
-      autoStopTimeoutRef.current = null
+    if (!isRecordingRef.current && !isProcessingRef.current) {
+      return
     }
 
-    if (processorRef.current) {
-      processorRef.current.disconnect()
-      processorRef.current = null
-    }
-
-    if (audioContextRef.current) {
-      audioContextRef.current.close()
-      audioContextRef.current = null
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop())
-      streamRef.current = null
-    }
+    stopAudioCapture()
 
     if (socketRef.current?.connected) {
+      syncProcessingState(true)
+      callbacksRef.current.onLevel?.(0.2)
+      stopBrowserRecognition()
       socketRef.current.emit('stop_recognition')
+      return
     }
 
-    setIsRecording(false)
-  }, [])
+    finishRecognitionSession()
+  }, [finishRecognitionSession, stopAudioCapture, stopBrowserRecognition, syncProcessingState])
 
   return {
     isConnected,
     isRecording,
+    isProcessing,
     isReady,
     startRecording,
     stopRecording,
