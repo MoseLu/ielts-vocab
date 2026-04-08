@@ -281,10 +281,12 @@
         margin: 0;
         position: absolute;
         bottom: 0;
+        max-height: min(82vh, 640px);
     }
 
     .avatar-modal-overlay {
         align-items: flex-end;
+        padding: 0;
     }
 
     /* Radio mode */
