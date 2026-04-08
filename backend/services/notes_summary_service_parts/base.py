@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta
-from importlib import import_module
 
+from flask import jsonify
 
-def _notes_module():
-    return import_module('routes.notes')
+from services import daily_summary_repository, learning_note_repository, notes_summary_context_repository
+from services.notes_summary_runtime import GENERATE_COOLDOWN_SECONDS, SUMMARY_MODE_LABELS
 
 
 def parse_int_param(value: str | None, default: int, min_val: int, max_val: int) -> tuple[int, str | None]:
@@ -41,15 +41,14 @@ def date_bounds(target_date: str) -> tuple[datetime, datetime]:
 
 
 def check_generate_cooldown(user_id: int, target_date: str):
-    notes = _notes_module()
-    existing = notes.UserDailySummary.query.filter_by(user_id=user_id, date=target_date).first()
+    existing = daily_summary_repository.get_daily_summary(user_id, target_date)
     if existing and existing.generated_at:
         elapsed = (utc_now() - existing.generated_at).total_seconds()
-        if elapsed < notes._GENERATE_COOLDOWN_SECONDS:
-            retry_after = max(1, int(notes._GENERATE_COOLDOWN_SECONDS - elapsed))
+        if elapsed < GENERATE_COOLDOWN_SECONDS:
+            retry_after = max(1, int(GENERATE_COOLDOWN_SECONDS - elapsed))
             wait_min = max(1, (retry_after + 59) // 60)
             return existing, (
-                notes.jsonify({
+                jsonify({
                     'error': f'生成过于频繁，请 {wait_min} 分钟后再试',
                     'cooldown': True,
                     'retry_after': retry_after,
@@ -60,23 +59,21 @@ def check_generate_cooldown(user_id: int, target_date: str):
 
 
 def collect_summary_source_data(user_id: int, target_date: str):
-    notes = _notes_module()
     start_dt, end_dt = date_bounds(target_date)
-    learning_notes = (
-        notes.UserLearningNote.query
-        .filter_by(user_id=user_id)
-        .filter(notes.UserLearningNote.created_at >= start_dt, notes.UserLearningNote.created_at < end_dt)
-        .order_by(notes.UserLearningNote.created_at.asc())
-        .all()
+    learning_notes = learning_note_repository.list_learning_notes(
+        user_id,
+        start_at=start_dt,
+        end_before=end_dt,
+        descending=False,
+        order_by='created_at',
     )
-    sessions = (
-        notes.UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(notes.UserStudySession.started_at >= start_dt, notes.UserStudySession.started_at < end_dt)
-        .order_by(notes.UserStudySession.started_at.asc())
-        .all()
+    sessions = notes_summary_context_repository.list_study_sessions_in_window(
+        user_id,
+        start_at=start_dt,
+        end_before=end_dt,
+        descending=False,
     )
-    wrong_words = notes.UserWrongWord.query.filter_by(user_id=user_id).limit(50).all()
+    wrong_words = notes_summary_context_repository.list_wrong_words(user_id, limit=50)
     return learning_notes, sessions, wrong_words
 
 
@@ -88,14 +85,12 @@ def format_duration(seconds: int) -> str:
 
 
 def summary_streak_days(user_id: int, target_date: str) -> int:
-    notes = _notes_module()
     _start_dt, end_dt = date_bounds(target_date)
-    rows = (
-        notes.UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(notes.UserStudySession.started_at < end_dt, notes.UserStudySession.words_studied > 0)
-        .order_by(notes.UserStudySession.started_at.desc())
-        .all()
+    rows = notes_summary_context_repository.list_study_sessions_before(
+        user_id,
+        end_before=end_dt,
+        descending=True,
+        require_words_studied=True,
     )
     if not rows:
         return 0
@@ -123,7 +118,6 @@ def summary_streak_days(user_id: int, target_date: str) -> int:
 
 
 def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_words) -> dict:
-    notes = _notes_module()
     _start_dt, end_dt = date_bounds(target_date)
     today_words = sum(session.words_studied or 0 for session in sessions)
     today_duration = sum(session.duration_seconds or 0 for session in sessions)
@@ -134,7 +128,7 @@ def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_word
 
     today_mode_breakdown = []
     for session in sessions:
-        mode_label = notes._SUMMARY_MODE_LABELS.get(session.mode or '', session.mode or '未知模式')
+        mode_label = SUMMARY_MODE_LABELS.get(session.mode or '', session.mode or '未知模式')
         correct = session.correct_count or 0
         wrong = session.wrong_count or 0
         attempted = correct + wrong
@@ -147,11 +141,10 @@ def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_word
             'duration_seconds': session.duration_seconds or 0,
         })
 
-    all_sessions = (
-        notes.UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(notes.UserStudySession.started_at < end_dt)
-        .all()
+    all_sessions = notes_summary_context_repository.list_study_sessions_before(
+        user_id,
+        end_before=end_dt,
+        descending=False,
     )
     mode_totals: dict[str, dict] = {}
     for session in all_sessions:
@@ -159,7 +152,7 @@ def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_word
         if not mode:
             continue
         bucket = mode_totals.setdefault(mode, {
-            'label': notes._SUMMARY_MODE_LABELS.get(mode, mode),
+            'label': SUMMARY_MODE_LABELS.get(mode, mode),
             'correct': 0,
             'wrong': 0,
             'words': 0,

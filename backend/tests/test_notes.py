@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 import jwt
-import routes.notes as notes_routes
 
 from models import User, UserDailySummary, UserLearningNote, UserStudySession, UserWrongWord
 
@@ -67,7 +66,10 @@ def test_generate_summary_allows_regeneration_after_short_cooldown(client, db, a
     db.session.add(summary)
     db.session.commit()
 
-    monkeypatch.setattr('routes.notes.chat', lambda *args, **kwargs: {'text': '# refreshed summary'})
+    monkeypatch.setattr(
+        'services.notes_summary_job_service.chat',
+        lambda *args, **kwargs: {'text': '# refreshed summary'},
+    )
 
     response = client.post(
         '/api/notes/summaries/generate',
@@ -92,8 +94,11 @@ def test_generate_summary_job_reports_progress_and_completion(client, db, app, m
         def start(self):
             self.target(*self.args, **self.kwargs)
 
-    monkeypatch.setattr(notes_routes.threading, 'Thread', ImmediateThread)
-    monkeypatch.setattr(notes_routes, '_stream_summary_text', lambda *args, **kwargs: iter(['第一段。', '第二段。']))
+    monkeypatch.setattr('services.notes_summary_job_service.threading.Thread', ImmediateThread)
+    monkeypatch.setattr(
+        'services.notes_summary_runtime.stream_summary_text',
+        lambda *args, **kwargs: iter(['第一段。', '第二段。']),
+    )
 
     response = client.post(
         '/api/notes/summaries/generate-jobs',
@@ -131,7 +136,7 @@ def test_generate_summary_job_reuses_running_job_for_same_date(client, db, app, 
         def start(self):
             started['count'] += 1
 
-    monkeypatch.setattr(notes_routes.threading, 'Thread', DormantThread)
+    monkeypatch.setattr('services.notes_summary_job_service.threading.Thread', DormantThread)
 
     first = client.post(
         '/api/notes/summaries/generate-jobs',
@@ -202,7 +207,7 @@ def test_generate_summary_includes_learning_snapshot_and_recurring_topics(client
         captured['messages'] = messages
         return {'text': '# refreshed summary'}
 
-    monkeypatch.setattr('routes.notes.chat', fake_chat)
+    monkeypatch.setattr('services.notes_summary_job_service.chat', fake_chat)
 
     response = client.post(
         '/api/notes/summaries/generate',

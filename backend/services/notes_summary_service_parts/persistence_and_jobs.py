@@ -1,3 +1,10 @@
+from datetime import timedelta
+
+from services import daily_summary_repository
+from services.notes_summary_service_parts.base import utc_now
+from services.notes_summary_runtime import SUMMARY_JOB_TTL_SECONDS, _summary_jobs, _summary_jobs_lock
+
+
 def fallback_summary_content(target_date: str) -> str:
     return (
         f"# {target_date} 学习总结\n\n"
@@ -9,34 +16,25 @@ def fallback_summary_content(target_date: str) -> str:
 
 
 def save_summary(existing, user_id: int, target_date: str, summary_content: str):
-    notes = _notes_module()
-    if existing:
-        existing.content = summary_content
-        existing.generated_at = utc_now()
-        notes.db.session.commit()
-        return existing
-
-    summary = notes.UserDailySummary(
+    return daily_summary_repository.save_daily_summary(
+        existing,
         user_id=user_id,
-        date=target_date,
-        content=summary_content,
+        target_date=target_date,
+        summary_content=summary_content,
+        generated_at=utc_now(),
     )
-    notes.db.session.add(summary)
-    notes.db.session.commit()
-    return summary
 
 
 def prune_summary_jobs() -> None:
-    notes = _notes_module()
-    cutoff = utc_now() - timedelta(seconds=notes._SUMMARY_JOB_TTL_SECONDS)
-    with notes._summary_jobs_lock:
+    cutoff = utc_now() - timedelta(seconds=SUMMARY_JOB_TTL_SECONDS)
+    with _summary_jobs_lock:
         stale_job_ids = [
             job_id
-            for job_id, job in notes._summary_jobs.items()
+            for job_id, job in _summary_jobs.items()
             if job['updated_at'] < cutoff and job['status'] in {'completed', 'failed'}
         ]
         for job_id in stale_job_ids:
-            notes._summary_jobs.pop(job_id, None)
+            _summary_jobs.pop(job_id, None)
 
 
 def serialize_summary_job(job: dict) -> dict:

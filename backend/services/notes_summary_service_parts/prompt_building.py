@@ -1,3 +1,7 @@
+from services.notes_summary_service_parts.base import format_duration
+from services.notes_summary_runtime import SUMMARY_MODE_LABELS
+
+
 def build_summary_prompt(
     target_date: str,
     notes_list,
@@ -7,7 +11,6 @@ def build_summary_prompt(
     topic_insights: list[dict] | None = None,
     learner_profile: dict | None = None,
 ) -> str:
-    notes = _notes_module()
     prompt_parts = [f"请为 {target_date} 生成学习总结。", ""]
 
     if learning_snapshot:
@@ -36,7 +39,7 @@ def build_summary_prompt(
     if sessions:
         prompt_parts.append("### 当天练习记录")
         for session in sessions:
-            mode_label = notes._SUMMARY_MODE_LABELS.get(session.mode or '', session.mode or '未知模式')
+            mode_label = SUMMARY_MODE_LABELS.get(session.mode or '', session.mode or '未知模式')
             duration_text = format_duration(session.duration_seconds or 0)
             correct = session.correct_count or 0
             wrong = session.wrong_count or 0
