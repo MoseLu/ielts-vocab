@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from models import User, UserLearningNote, db
-from routes import ai as ai_routes
+from services import ai_assistant_ask_service as ask_service
+from services import ai_practice_support_service as practice_support_service
 
 
 def register_and_login(client, username='memory-user', password='password123'):
@@ -47,7 +48,7 @@ def test_ask_injects_related_note_memory_for_repeated_questions(client, app, mon
         captured['messages'] = messages
         return {'text': '当然可以，我换一种方式解释。'}
 
-    monkeypatch.setattr(ai_routes, '_chat_with_tools', fake_chat_with_tools)
+    monkeypatch.setattr(ask_service, 'chat_with_tools', fake_chat_with_tools)
 
     response = client.post('/api/ai/ask', json={
         'message': 'kind of 和 a kind of 有什么区别',
@@ -85,7 +86,7 @@ def test_ask_injects_behavior_breakdown_into_learning_data_prompt(client, monkey
     })
     assert log_res.status_code == 200
 
-    monkeypatch.setattr(ai_routes, 'correct_text', lambda text: {
+    monkeypatch.setattr(practice_support_service, 'correct_text', lambda text: {
         'is_valid_english': True,
         'original_text': text,
         'corrected_text': text,
@@ -103,7 +104,7 @@ def test_ask_injects_behavior_breakdown_into_learning_data_prompt(client, monkey
         captured['messages'] = messages
         return {'text': '可以先复习今天的薄弱点。'}
 
-    monkeypatch.setattr(ai_routes, '_chat_with_tools', fake_chat_with_tools)
+    monkeypatch.setattr(ask_service, 'chat_with_tools', fake_chat_with_tools)
 
     ask_res = client.post('/api/ai/ask', json={
         'message': '今天怎么复习更合适？',

@@ -280,6 +280,38 @@ describe('AIChatPanel', () => {
     expect(container.querySelector('.ai-voice-visualizer--processing')).not.toBeNull()
   })
 
+  it('raises waveform peaks as speech levels increase', () => {
+    useAIChatMock.mockReturnValue({
+      messages: [],
+      isLoading: false,
+      isGreeting: false,
+      greetingDone: true,
+      isOpen: true,
+      contextLoaded: true,
+      openPanel: vi.fn(),
+      closePanel: vi.fn(),
+      sendMessage: vi.fn(),
+    })
+    useSpeechRecognitionMock.mockReturnValue({
+      isConnected: true,
+      isRecording: true,
+      isProcessing: false,
+      isReady: true,
+      startRecording: vi.fn().mockResolvedValue(undefined),
+      stopRecording: vi.fn(),
+    })
+
+    const { container, getByText } = render(<AIChatPanel />)
+
+    act(() => {
+      latestSpeechOptions?.onLevel?.(0.72)
+    })
+
+    expect(getByText('0:00')).toBeInTheDocument()
+    expect(container.querySelector('.ai-voice-bar--wave')).not.toBeNull()
+    expect(container.querySelector('.ai-voice-bar--strong')).not.toBeNull()
+  })
+
   it('streams partial speech results into the composer', async () => {
     const user = userEvent.setup()
     const startRecording = vi.fn().mockResolvedValue(undefined)

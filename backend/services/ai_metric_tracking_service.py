@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from models import db
+from services import learning_event_repository
 from services.learning_events import record_learning_event
 
 
@@ -92,9 +92,9 @@ def track_metric(user_id: int, metric: str, payload: dict | None = None):
             item_count=item_count,
             payload=safe_payload,
         )
-        db.session.commit()
+        learning_event_repository.commit()
     except Exception as exc:
-        db.session.rollback()
+        learning_event_repository.rollback()
         logging.warning(
             '[AI_METRIC] failed to persist metric user=%s metric=%s err=%s',
             user_id,

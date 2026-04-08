@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import calendar
 from datetime import datetime
-from importlib import import_module
+
+from services.ai_prompt_context_service import build_context_msg
 
 
 GREET_SYSTEM_PROMPT = """你是一个 IELTS 英语词汇学习规划助手，名叫"雅思小助手"。请用中文回复用户。
@@ -50,12 +51,7 @@ B. 选项B
 """
 
 
-def _ai_module():
-    return import_module('routes.ai')
-
-
 def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
-    ai = _ai_module()
     parts = []
     weekday_zh = ['一', '二', '三', '四', '五', '六', '日']
     now = datetime.now()
@@ -171,7 +167,7 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
         mode_zh = {
             'smart': '智能',
             'listening': '听音选义',
-            'meaning': '释义拼词',
+            'meaning': '默写模式',
             'dictation': '听写',
             'radio': '随身听',
             'quickmemory': '速记',
@@ -296,7 +292,7 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
                         parts.append(f"    {title}")
 
     if frontend_context:
-        context_text = ai._build_context_msg(frontend_context)
+        context_text = build_context_msg(frontend_context)
         if context_text and context_text != '暂无':
             parts.append(f"\n[当前学习状态]\n{context_text}")
 

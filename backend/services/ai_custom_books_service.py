@@ -4,7 +4,18 @@ import json
 import re
 import uuid
 from datetime import datetime
-from importlib import import_module
+
+from flask import jsonify
+
+from models import (
+    WRONG_WORD_DIMENSIONS,
+    WRONG_WORD_PENDING_REVIEW_TARGET,
+    _empty_wrong_word_dimension_state,
+    _normalize_wrong_word_dimension_state,
+)
+from services import ai_custom_book_repository
+from services.ai_route_support_service import _get_context_data
+from services.llm import chat
 
 
 GENERATE_BOOK_PROMPT = """你是一个 IELTS 词汇专家。用户希望生成一份自定义词汇书，请根据以下信息生成词表。
@@ -35,12 +46,7 @@ GENERATE_BOOK_PROMPT = """你是一个 IELTS 词汇专家。用户希望生成�
 """
 
 
-def _ai_module():
-    return import_module('routes.ai')
-
-
 def generate_book_response(current_user, body):
-    ai = _ai_module()
     body = body or {}
     target_words = body.get('targetWords', 100)
     user_level = body.get('userLevel', 'intermediate')
@@ -48,7 +54,7 @@ def generate_book_response(current_user, body):
     exclude_words = body.get('excludeWords', [])
 
     try:
-        ctx = ai._get_context_data(current_user.id)
+        ctx = _get_context_data(current_user.id)
         wrong_words = ctx.get('wrongWords', [])
         wrong_word_list = [word['word'] for word in wrong_words[:30]]
         all_exclude = list(set(exclude_words + wrong_word_list))
@@ -69,51 +75,48 @@ def generate_book_response(current_user, body):
     ]
 
     try:
-        raw = ai.chat(messages, max_tokens=8192)
+        raw = chat(messages, max_tokens=8192)
         raw_text = raw.get('text', '') if isinstance(raw, dict) else str(raw)
         json_match = re.search(r'\{[\s\S]*\}', raw_text)
         if not json_match:
-            return ai.jsonify({'error': 'Failed to parse generated book data'}), 500
+            return jsonify({'error': 'Failed to parse generated book data'}), 500
 
         data = json.loads(json_match.group())
         book_id = f"custom_{uuid.uuid4().hex[:12]}"
-        book = ai.CustomBook(
-            id=book_id,
+        book = ai_custom_book_repository.create_custom_book(
+            book_id=book_id,
             user_id=current_user.id,
             title=data.get('title', '自定义词书'),
             description=data.get('description', ''),
             word_count=len(data.get('words', [])),
         )
-        ai.db.session.add(book)
 
         chapter_map = {}
         chapters = data.get('chapters', [])
         for index, chapter_data in enumerate(chapters):
-            chapter = ai.CustomBookChapter(
-                id=chapter_data.get('id', f"ch_{uuid.uuid4().hex[:6]}"),
+            chapter = ai_custom_book_repository.create_custom_book_chapter(
+                chapter_id=chapter_data.get('id', f"ch_{uuid.uuid4().hex[:6]}"),
                 book_id=book_id,
                 title=chapter_data.get('title', '未命名章节'),
                 word_count=chapter_data.get('wordCount', 0),
                 sort_order=index,
             )
-            ai.db.session.add(chapter)
             chapter_map[chapter.id] = chapter
 
         for word_data in data.get('words', []):
-            word = ai.CustomBookWord(
+            ai_custom_book_repository.create_custom_book_word(
                 chapter_id=word_data.get('chapterId', next(iter(chapter_map.keys()), 'ch1')),
                 word=word_data.get('word', ''),
                 phonetic=word_data.get('phonetic', ''),
                 pos=word_data.get('pos', ''),
                 definition=word_data.get('definition', ''),
             )
-            ai.db.session.add(word)
 
-        ai.db.session.commit()
-        words = ai.CustomBookWord.query.filter(
-            ai.CustomBookWord.chapter_id.in_([chapter.id for chapter in book.chapters])
-        ).all()
-        return ai.jsonify({
+        ai_custom_book_repository.commit()
+        words = ai_custom_book_repository.list_custom_book_words_for_chapter_ids(
+            [chapter.id for chapter in book.chapters]
+        )
+        return jsonify({
             'bookId': book_id,
             'title': book.title,
             'description': book.description,
@@ -121,26 +124,22 @@ def generate_book_response(current_user, body):
             'words': [word.to_dict() for word in words],
         })
     except json.JSONDecodeError as exc:
-        return ai.jsonify({'error': f'Failed to parse generated book: {exc}'}), 500
+        return jsonify({'error': f'Failed to parse generated book: {exc}'}), 500
     except Exception as exc:
-        ai.db.session.rollback()
-        return ai.jsonify({'error': f'Book generation failed: {exc}'}), 500
+        ai_custom_book_repository.rollback()
+        return jsonify({'error': f'Book generation failed: {exc}'}), 500
 
 
 def list_custom_books_response(current_user):
-    ai = _ai_module()
-    books = ai.CustomBook.query.filter_by(user_id=current_user.id).order_by(
-        ai.CustomBook.created_at.desc()
-    ).all()
-    return ai.jsonify({'books': [book.to_dict() for book in books]})
+    books = ai_custom_book_repository.list_custom_books(current_user.id)
+    return jsonify({'books': [book.to_dict() for book in books]})
 
 
 def get_custom_book_response(current_user, book_id: str):
-    ai = _ai_module()
-    book = ai.CustomBook.query.filter_by(id=book_id, user_id=current_user.id).first()
+    book = ai_custom_book_repository.get_custom_book(current_user.id, book_id)
     if not book:
-        return ai.jsonify({'error': 'Book not found'}), 404
-    return ai.jsonify(book.to_dict())
+        return jsonify({'error': 'Book not found'}), 404
+    return jsonify(book.to_dict())
 
 
 def normalize_wrong_word_counter(value, default: int = 0) -> int:
@@ -151,8 +150,7 @@ def normalize_wrong_word_counter(value, default: int = 0) -> int:
 
 
 def clamp_wrong_word_pass_streak(value) -> int:
-    ai = _ai_module()
-    return min(normalize_wrong_word_counter(value), ai.WRONG_WORD_PENDING_REVIEW_TARGET)
+    return min(normalize_wrong_word_counter(value), WRONG_WORD_PENDING_REVIEW_TARGET)
 
 
 def normalize_wrong_word_iso(value) -> str | None:
@@ -179,10 +177,9 @@ def pick_later_wrong_word_iso(*values) -> str | None:
 
 
 def build_incoming_wrong_word_dimension_states(payload: dict) -> dict:
-    ai = _ai_module()
     states = {
-        dimension: ai._empty_wrong_word_dimension_state()
-        for dimension in ai.WRONG_WORD_DIMENSIONS
+        dimension: _empty_wrong_word_dimension_state()
+        for dimension in WRONG_WORD_DIMENSIONS
     }
 
     raw_dimension_state = payload.get('dimension_states') or payload.get('dimensionStates')
@@ -194,8 +191,8 @@ def build_incoming_wrong_word_dimension_states(payload: dict) -> dict:
     if not isinstance(raw_dimension_state, dict):
         raw_dimension_state = {}
 
-    for dimension in ai.WRONG_WORD_DIMENSIONS:
-        states[dimension] = ai._normalize_wrong_word_dimension_state(raw_dimension_state.get(dimension))
+    for dimension in WRONG_WORD_DIMENSIONS:
+        states[dimension] = _normalize_wrong_word_dimension_state(raw_dimension_state.get(dimension))
 
     recognition_wrong = normalize_wrong_word_counter(
         payload.get('recognition_wrong', payload.get('recognitionWrong'))
@@ -234,13 +231,13 @@ def build_incoming_wrong_word_dimension_states(payload: dict) -> dict:
     fallback_wrong_count = normalize_wrong_word_counter(
         payload.get('wrong_count', payload.get('wrongCount'))
     )
-    total_history_wrong = sum(states[dimension]['history_wrong'] for dimension in ai.WRONG_WORD_DIMENSIONS)
+    total_history_wrong = sum(states[dimension]['history_wrong'] for dimension in WRONG_WORD_DIMENSIONS)
     if fallback_wrong_count > 0 and total_history_wrong == 0:
         states['recognition']['history_wrong'] = fallback_wrong_count
     elif fallback_wrong_count > total_history_wrong:
         states['recognition']['history_wrong'] += fallback_wrong_count - total_history_wrong
 
-    normalized_total = sum(states[dimension]['history_wrong'] for dimension in ai.WRONG_WORD_DIMENSIONS)
+    normalized_total = sum(states[dimension]['history_wrong'] for dimension in WRONG_WORD_DIMENSIONS)
     word_value = str(payload.get('word') or '').strip()
     if normalized_total == 0 and word_value:
         states['recognition']['history_wrong'] = 1
@@ -249,12 +246,11 @@ def build_incoming_wrong_word_dimension_states(payload: dict) -> dict:
 
 
 def merge_wrong_word_dimension_states(existing_states: dict, incoming_states: dict) -> dict:
-    ai = _ai_module()
     merged = {}
 
-    for dimension in ai.WRONG_WORD_DIMENSIONS:
-        base_state = ai._normalize_wrong_word_dimension_state(existing_states.get(dimension))
-        incoming_state = ai._normalize_wrong_word_dimension_state(incoming_states.get(dimension))
+    for dimension in WRONG_WORD_DIMENSIONS:
+        base_state = _normalize_wrong_word_dimension_state(existing_states.get(dimension))
+        incoming_state = _normalize_wrong_word_dimension_state(incoming_states.get(dimension))
         latest_wrong_at = pick_later_wrong_word_iso(
             base_state.get('last_wrong_at'),
             incoming_state.get('last_wrong_at'),

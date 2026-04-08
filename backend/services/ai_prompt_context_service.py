@@ -1,18 +1,14 @@
 from __future__ import annotations
 
 import re
-from importlib import import_module
-
-
-def _books_module():
-    return import_module('routes.books')
+from services import books_registry_service
 
 
 def build_context_msg(ctx: dict) -> str:
     parts = []
     dimension_labels = {
         'listening': '听音辨义',
-        'meaning': '释义拼词（会想）',
+        'meaning': '默写模式',
         'dictation': '拼写默写',
     }
 
@@ -106,7 +102,7 @@ def build_context_msg(ctx: dict) -> str:
         mode_labels = {
             'smart': '智能练习',
             'listening': '听音选义',
-            'meaning': '释义拼词',
+            'meaning': '默写模式',
             'dictation': '听写',
             'radio': '随身听',
             'quickmemory': '速记',
@@ -142,9 +138,8 @@ def build_context_msg(ctx: dict) -> str:
 
     local_book = ctx.get('localBookProgress')
     if local_book and isinstance(local_book, dict):
-        books = _books_module()
-        book_title_map = {book['id']: book['title'] for book in books.VOCAB_BOOKS}
-        book_word_count_map = {book['id']: book.get('word_count', 0) for book in books.VOCAB_BOOKS}
+        book_title_map = books_registry_service.get_vocab_book_title_map()
+        book_word_count_map = books_registry_service.get_vocab_book_word_count_map()
         parts.append("本地各词书进度：")
         for book_id, stats in local_book.items():
             title = book_title_map.get(book_id, book_id)

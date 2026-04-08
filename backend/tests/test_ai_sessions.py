@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from models import UserLearningEvent, UserStudySession, db
-from routes import ai as ai_routes
+from services import ai_practice_support_service as practice_support_service
 
 
 def register_and_login(client, username='session-user', password='password123'):
@@ -241,7 +241,7 @@ def test_greet_returns_fallback_when_ai_service_fails(client, monkeypatch):
     def raise_ai_error(*args, **kwargs):
         raise RuntimeError('simulated ai failure')
 
-    monkeypatch.setattr(ai_routes, '_chat_with_tools', raise_ai_error)
+    monkeypatch.setattr(practice_support_service, 'chat_with_tools', raise_ai_error)
 
     res = client.post('/api/ai/greet', json={'context': {}})
 
@@ -272,7 +272,7 @@ def test_greet_fallback_uses_learner_profile_clues(client, monkeypatch):
                     'weakest_mode_accuracy': 61,
                 },
                 'dimensions': [
-                    {'dimension': 'meaning', 'label': '释义拼词（会想）', 'accuracy': 54},
+                    {'dimension': 'meaning', 'label': '默写模式', 'accuracy': 54},
                 ],
                 'focus_words': [
                     {'word': 'kind'},
@@ -313,8 +313,8 @@ def test_greet_fallback_uses_learner_profile_clues(client, monkeypatch):
     def raise_ai_error(*args, **kwargs):
         raise RuntimeError('simulated ai failure')
 
-    monkeypatch.setattr(ai_routes, '_get_context_data', fake_context_data)
-    monkeypatch.setattr(ai_routes, '_chat_with_tools', raise_ai_error)
+    monkeypatch.setattr(practice_support_service, '_get_context_data', fake_context_data)
+    monkeypatch.setattr(practice_support_service, 'chat_with_tools', raise_ai_error)
 
     res = client.post('/api/ai/greet', json={'context': {}})
 
@@ -347,7 +347,7 @@ def test_greet_allows_profile_aware_freeform_reply_without_options(client, monke
                     'weakest_mode_accuracy': 61,
                 },
                 'dimensions': [
-                    {'dimension': 'meaning', 'label': '释义拼词（会想）', 'accuracy': 54},
+                    {'dimension': 'meaning', 'label': '默写模式', 'accuracy': 54},
                 ],
                 'focus_words': [
                     {'word': 'kind'},
@@ -391,8 +391,8 @@ def test_greet_allows_profile_aware_freeform_reply_without_options(client, monke
             'text': '晚上好，今天你在 kind 这类辨析上已经反复卡住了。我可以直接换一种讲法，把这个点一次讲透。'
         }
 
-    monkeypatch.setattr(ai_routes, '_get_context_data', fake_context_data)
-    monkeypatch.setattr(ai_routes, '_chat_with_tools', fake_chat_with_tools)
+    monkeypatch.setattr(practice_support_service, '_get_context_data', fake_context_data)
+    monkeypatch.setattr(practice_support_service, 'chat_with_tools', fake_chat_with_tools)
 
     res = client.post('/api/ai/greet', json={'context': {}})
 
@@ -444,7 +444,7 @@ def test_review_plan_returns_four_dimension_actions(client, monkeypatch):
             },
         }
 
-    monkeypatch.setattr(ai_routes, 'build_learner_profile', fake_profile)
+    monkeypatch.setattr(practice_support_service, 'build_learner_profile', fake_profile)
 
     res = client.get('/api/ai/review-plan')
 

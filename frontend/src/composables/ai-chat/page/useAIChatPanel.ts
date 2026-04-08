@@ -22,9 +22,9 @@ const SPEECH_DISCONNECTED_STATUS = ''
 const SPEECH_RECORDING_STATUS = ''
 const SPEECH_PROCESSING_STATUS = '正在转写，请稍候...'
 const SPEECH_COMPLETED_STATUS = ''
-const SPEECH_WAVEFORM_SLOTS = 36
+const SPEECH_WAVEFORM_SLOTS = 42
 const SPEECH_WAVEFORM_IDLE_LEVEL = 0
-const SPEECH_WAVEFORM_ACTIVE_THRESHOLD = 0.14
+const SPEECH_WAVEFORM_ACTIVE_THRESHOLD = 0.1
 
 type LauncherAction = { label: string; value: string; autoSend: boolean }
 
@@ -104,13 +104,19 @@ export function useAIChatPanel() {
     setSpeechWaveform(previous => {
       const tail = previous[previous.length - 1] ?? SPEECH_WAVEFORM_IDLE_LEVEL
       const preTail = previous[previous.length - 2] ?? tail
-      const activeLevel = nextLevel >= SPEECH_WAVEFORM_ACTIVE_THRESHOLD
-      const releasedLevel = activeLevel
-        ? nextLevel * 0.68 + tail * 0.22 + preTail * 0.1
-        : Math.max(0, tail * 0.64 - 0.045)
-      const shapedLevel = releasedLevel < SPEECH_WAVEFORM_ACTIVE_THRESHOLD * 0.72
-        ? SPEECH_WAVEFORM_IDLE_LEVEL
-        : Math.min(1, releasedLevel)
+      const activeLevel = nextLevel <= SPEECH_WAVEFORM_ACTIVE_THRESHOLD
+        ? 0
+        : Math.pow(
+          (nextLevel - SPEECH_WAVEFORM_ACTIVE_THRESHOLD) / (1 - SPEECH_WAVEFORM_ACTIVE_THRESHOLD),
+          0.76,
+        )
+      const risingLevel = activeLevel > tail
+        ? activeLevel * 0.76 + tail * 0.16 + preTail * 0.08
+        : activeLevel * 0.42 + tail * 0.44 + preTail * 0.14
+      const decayedLevel = Math.max(0, tail * 0.82 - 0.028)
+      const shapedLevel = activeLevel > 0
+        ? Math.min(1, risingLevel)
+        : (decayedLevel < 0.02 ? SPEECH_WAVEFORM_IDLE_LEVEL : decayedLevel)
 
       return [
         ...previous.slice(-(SPEECH_WAVEFORM_SLOTS - 1)),

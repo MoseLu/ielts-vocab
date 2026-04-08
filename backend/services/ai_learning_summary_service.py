@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from sqlalchemy import text
-
-from models import UserQuickMemoryRecord, UserStudySession, db
+from services import quick_memory_record_repository, learning_stats_repository
 from services.ai_text_support import normalize_word_key
 from services.local_time import (
     current_local_date,
@@ -41,11 +39,9 @@ def decorate_wrong_words_with_quick_memory_progress(
     }
     qm_rows = []
     if word_keys:
-        qm_rows = (
-            UserQuickMemoryRecord.query
-            .filter_by(user_id=user_id)
-            .filter(UserQuickMemoryRecord.word.in_(word_keys))
-            .all()
+        qm_rows = quick_memory_record_repository.list_user_quick_memory_records_for_words(
+            user_id,
+            word_keys,
         )
 
     qm_by_word = {
@@ -90,24 +86,7 @@ def decorate_wrong_words_with_quick_memory_progress(
 
 def alltime_distinct_practiced_words(user_id: int) -> int:
     try:
-        result = db.session.execute(
-            text(
-                """
-                SELECT COUNT(*) FROM (
-                    SELECT LOWER(TRIM(word)) AS w FROM user_smart_word_stats
-                    WHERE user_id = :uid AND word IS NOT NULL AND TRIM(word) != ''
-                    UNION
-                    SELECT LOWER(TRIM(word)) FROM user_quick_memory_records
-                    WHERE user_id = :uid AND word IS NOT NULL AND TRIM(word) != ''
-                    UNION
-                    SELECT LOWER(TRIM(word)) FROM user_wrong_words
-                    WHERE user_id = :uid AND word IS NOT NULL AND TRIM(word) != ''
-                )
-                """
-            ),
-            {'uid': user_id},
-        ).scalar()
-        return int(result or 0)
+        return learning_stats_repository.count_alltime_distinct_practiced_words(user_id)
     except Exception:
         return 0
 
@@ -132,12 +111,9 @@ def chapter_title_map(book_id: str, *, load_book_chapters) -> dict:
 
 
 def calc_streak_days(user_id: int, reference_date: str | None = None) -> int:
-    rows = (
-        UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(UserStudySession.words_studied > 0)
-        .order_by(UserStudySession.started_at.desc())
-        .all()
+    rows = learning_stats_repository.list_user_study_sessions_with_words(
+        user_id,
+        descending=True,
     )
     if not rows:
         return 0
