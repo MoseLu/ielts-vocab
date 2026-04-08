@@ -122,7 +122,7 @@ export function PracticePageCompletedState({
     ? reviewSummary.total_count - reviewSummary.offset - reviewSummary.returned_count
     : 0
   const nextErrorRoundWords = errorMode ? buildNextErrorReviewWords(vocabulary, errorRoundResults) : []
-  const sessionDurationText = chapterId && sessionDurationSeconds != null
+  const sessionDurationText = sessionDurationSeconds != null
     ? formatSessionDuration(sessionDurationSeconds)
     : null
 

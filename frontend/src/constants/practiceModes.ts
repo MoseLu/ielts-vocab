@@ -33,8 +33,8 @@ const PRACTICE_MODE_META: Record<CanonicalPracticeMode, PracticeModeMeta> = {
     shortLabel: '听',
   },
   meaning: {
-    label: '释义拼词',
-    description: '看中文释义，拼英文单词',
+    label: '默写模式',
+    description: '看中文释义，默写英文单词',
     shortLabel: '想',
   },
   dictation: {
@@ -146,7 +146,7 @@ export const WRONG_WORD_DIMENSION_TO_MODE: Record<WrongWordDimensionKey, Canonic
 
 const WRONG_WORD_DIMENSION_TITLES_META: Record<WrongWordDimensionKey, string> = {
   recognition: `${PRACTICE_MODE_LABELS.quickmemory}：看到英文单词时，能不能立刻认出中文意思`,
-  meaning: `${PRACTICE_MODE_LABELS.meaning}：看到中文意思时，能不能主动拼出英文单词`,
+  meaning: `${PRACTICE_MODE_LABELS.meaning}：看到中文意思时，能不能主动默写出英文单词`,
   listening: `${PRACTICE_MODE_LABELS.listening}：听到发音后，能不能判断它对应的意思`,
   dictation: `${PRACTICE_MODE_LABELS.dictation}：听到发音后，能不能把单词完整拼出来`,
 }
@@ -177,6 +177,8 @@ const MODE_ALIAS_TO_KEY: Record<string, CanonicalPracticeMode> = {
   '听音辨义': 'listening',
   '听音辨义（会辨）': 'listening',
   meaning: 'meaning',
+  '默写模式': 'meaning',
+  '默写模式（会想）': 'meaning',
   '释义拼词': 'meaning',
   '释义拼词（会想）': 'meaning',
   '中文想英文': 'meaning',

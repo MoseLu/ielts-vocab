@@ -59,7 +59,7 @@ const hooksState = vi.hoisted(() => ({
         today_sessions: 2,
         streak_days: 4,
         weakest_mode: 'meaning',
-        weakest_mode_label: '释义拼词',
+        weakest_mode_label: '默写模式',
         weakest_mode_accuracy: 68,
         due_reviews: 6,
         trend_direction: 'stable',
@@ -323,7 +323,7 @@ describe('HomePage', () => {
     expect(screen.getByText('频次：1 天 / 1 天 / 4 天 / 7 天 / 14 天 / 30 天')).toBeInTheDocument()
     expect(screen.getByText('同一个词要按 1 天 / 1 天 / 4 天 / 7 天 / 14 天 / 30 天 这 6 轮节奏反复通过，才算把“认识它”这一步走完整。')).toBeInTheDocument()
     expect(screen.getByText('某一章显示这个模式已完成，意思是你已经把这一章在这个模式下完整练过一轮。')).toBeInTheDocument()
-    expect(screen.getByText('现在还没有一场专门的“总检查”，去把速记模式、释义拼词、听音选义、听写模式这四个模式维度一起复核一遍。')).toBeInTheDocument()
+    expect(screen.getByText('现在还没有一场专门的“总检查”，去把速记模式、默写模式、听音选义、听写模式这四个模式维度一起复核一遍。')).toBeInTheDocument()
     expect(screen.queryByText(/history_wrong/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/nextReview/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/is_completed/i)).not.toBeInTheDocument()

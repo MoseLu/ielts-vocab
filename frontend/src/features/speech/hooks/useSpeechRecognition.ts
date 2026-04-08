@@ -1,72 +1,31 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
+import type {
+  CallbacksRef,
+  ConnectedPayload,
+  FinalResultPayload,
+  PartialResultPayload,
+  RecognitionErrorPayload,
+  RecognitionStartedPayload,
+  SpeechRecognitionOptions,
+  UseSpeechRecognitionReturn,
+} from './speechRecognitionTypes'
 import {
   createBrowserSpeechRecognition,
-  encodePcm16,
-  normalizeAudioLevel,
+  hasAudiblePcmSignal,
   resolveSpeechSocketConfig,
   SPEECH_EMPTY_RESULT_MESSAGE,
   SPEECH_IDLE_LEVEL,
   SPEECH_MIN_ACTIVE_LEVEL,
+  SPEECH_NO_SIGNAL_MESSAGE,
   type BrowserSpeechRecognitionInstance,
 } from './speechRecognitionUtils'
-
-export interface SpeechRecognitionOptions {
-  /** Whether the socket connection should be active */
-  enabled?: boolean
-  /** Language code (default: 'zh') */
-  language?: string
-  /** Enable voice activity detection (default: true) */
-  enableVad?: boolean
-  /** Auto-stop after final result (default: true) */
-  autoStop?: boolean
-  /** Delay before auto-stop in ms (default: 1500) */
-  autoStopDelay?: number
-  /** Callback when final recognition result is available */
-  onResult?: (text: string) => void
-  /** Callback when partial recognition result is available */
-  onPartial?: (text: string) => void
-  /** Callback when an error occurs */
-  onError?: (error: string) => void
-  /** Callback with a normalized input level between 0 and 1 */
-  onLevel?: (level: number) => void
-}
-
-export interface UseSpeechRecognitionReturn {
-  /** Whether the socket is connected to the server */
-  isConnected: boolean
-  /** Whether audio is currently being recorded and sent */
-  isRecording: boolean
-  /** Whether the backend is still finishing speech-to-text */
-  isProcessing: boolean
-  /** Whether the recognition session is ready to receive audio */
-  isReady: boolean
-  /** Start recording and speech recognition */
-  startRecording: () => Promise<void>
-  /** Stop recording and speech recognition */
-  stopRecording: () => void
-}
-interface CallbacksRef {
-  onResult?: (text: string) => void
-  onPartial?: (text: string) => void
-  onError?: (error: string) => void
-  onLevel?: (level: number) => void
-}
-interface ConnectedPayload {
-  api_configured: boolean
-}
-interface RecognitionStartedPayload {
-  session_id?: string
-}
-interface PartialResultPayload {
-  text: string
-}
-interface FinalResultPayload {
-  text: string
-}
-interface RecognitionErrorPayload {
-  error: string
-}
+import { startSpeechAudioCapture } from './speechRecognitionAudioCapture'
+import {
+  requestRecordedAudioFallback as requestRecordedAudioFallbackTask,
+  startMediaRecorderCapture,
+  uploadRecordedAudio as uploadRecordedAudioTask,
+} from './speechRecognitionFileFallback'
 export function useSpeechRecognition({
   enabled = true,
   language = 'zh',
@@ -83,36 +42,35 @@ export function useSpeechRecognition({
   const [isProcessing, setIsProcessing] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const socketRef = useRef<Socket | null>(null)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const processorRef = useRef<ScriptProcessorNode | null>(null)
+  const audioCaptureStopRef = useRef<(() => Promise<void>) | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const browserRecognitionRef = useRef<BrowserSpeechRecognitionInstance | null>(null)
+  const captureIdRef = useRef(0)
+  const recordedChunksRef = useRef<Blob[]>([])
+  const recordedMimeTypeRef = useRef('')
+  const recordedPcmChunksRef = useRef<Int16Array[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const isRecordingRef = useRef(false)
   const isProcessingRef = useRef(false)
+  const hasMicSignalRef = useRef(false)
   const hasTranscriptRef = useRef(false)
-  const transcriptSourceRef = useRef<'backend' | 'browser' | null>(null)
+  const transcriptSourceRef = useRef<'backend' | 'browser' | 'upload' | null>(null)
+  const uploadRequestedCaptureRef = useRef<number | null>(null)
   const autoStopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Use refs to keep callbacks fresh without triggering re-renders
   const callbacksRef = useRef<CallbacksRef>({ onResult, onPartial, onError, onLevel })
   const autoStopRef = useRef(autoStop)
   const autoStopDelayRef = useRef(autoStopDelay)
-
   const syncProcessingState = useCallback((nextValue: boolean) => {
     isProcessingRef.current = nextValue
     setIsProcessing(nextValue)
   }, [])
-
   const clearAutoStopTimeout = useCallback(() => {
     if (autoStopTimeoutRef.current) {
       clearTimeout(autoStopTimeoutRef.current)
       autoStopTimeoutRef.current = null
     }
   }, [])
-
-  const resetAudioLevel = useCallback(() => {
-    callbacksRef.current.onLevel?.(SPEECH_IDLE_LEVEL)
-  }, [])
-
+  const resetAudioLevel = useCallback(() => { callbacksRef.current.onLevel?.(SPEECH_IDLE_LEVEL) }, [])
   const stopBrowserRecognition = useCallback((abort = false) => {
     const recognition = browserRecognitionRef.current
     if (!recognition) return
@@ -124,7 +82,6 @@ export function useSpeechRecognition({
       }
     } catch {}
   }, [])
-
   const setupBrowserRecognition = useCallback((nextLanguage: string) => {
     const recognition = createBrowserSpeechRecognition(window, nextLanguage)
     if (!recognition) return
@@ -165,18 +122,11 @@ export function useSpeechRecognition({
       browserRecognitionRef.current = null
     }
   }, [])
-
   const cleanupAudioResources = useCallback(() => {
-    if (processorRef.current) {
-      processorRef.current.onaudioprocess = null
-      processorRef.current.disconnect()
-      processorRef.current = null
-    }
-
-    if (audioContextRef.current) {
-      const audioContext = audioContextRef.current
-      audioContextRef.current = null
-      void audioContext.close().catch(() => {})
+    if (audioCaptureStopRef.current) {
+      const stopAudioCapture = audioCaptureStopRef.current
+      audioCaptureStopRef.current = null
+      void stopAudioCapture().catch(() => {})
     }
 
     if (streamRef.current) {
@@ -184,7 +134,6 @@ export function useSpeechRecognition({
       streamRef.current = null
     }
   }, [])
-
   const stopAudioCapture = useCallback(() => {
     isRecordingRef.current = false
     clearAutoStopTimeout()
@@ -192,14 +141,42 @@ export function useSpeechRecognition({
     setIsRecording(false)
     setIsReady(false)
   }, [cleanupAudioResources, clearAutoStopTimeout])
-
   const finishRecognitionSession = useCallback(() => {
     stopBrowserRecognition(true)
     stopAudioCapture()
     resetAudioLevel()
     syncProcessingState(false)
   }, [resetAudioLevel, stopAudioCapture, stopBrowserRecognition, syncProcessingState])
-
+  const uploadRecordedAudio = useCallback((captureId: number) => {
+    void uploadRecordedAudioTask({
+      captureId,
+      chunks: recordedChunksRef.current,
+      mimeType: recordedMimeTypeRef.current,
+      pcmChunks: recordedPcmChunksRef.current,
+      getCurrentCaptureId: () => captureIdRef.current,
+      getCurrentTranscriptSource: () => transcriptSourceRef.current,
+      onFinish: finishRecognitionSession,
+      onResult: text => {
+        transcriptSourceRef.current = 'upload'
+        hasTranscriptRef.current = true
+        callbacksRef.current.onResult?.(text)
+      },
+      onError: message => {
+        callbacksRef.current.onError?.(message)
+      },
+    })
+  }, [finishRecognitionSession])
+  const requestRecordedAudioFallback = useCallback((captureId: number) => (
+    requestRecordedAudioFallbackTask({
+      captureId,
+      requestedCaptureId: uploadRequestedCaptureRef.current,
+      setRequestedCaptureId: nextCaptureId => { uploadRequestedCaptureRef.current = nextCaptureId },
+      recorder: mediaRecorderRef.current,
+      chunks: recordedChunksRef.current,
+      pcmChunks: recordedPcmChunksRef.current,
+      upload: uploadRecordedAudio,
+    })
+  ), [uploadRecordedAudio])
   useEffect(() => {
     autoStopRef.current = autoStop
     autoStopDelayRef.current = autoStopDelay
@@ -290,6 +267,12 @@ export function useSpeechRecognition({
 
     socket.on('recognition_complete', () => {
       if (isProcessingRef.current && !hasTranscriptRef.current) {
+        if (!hasMicSignalRef.current) {
+          callbacksRef.current.onError?.(SPEECH_NO_SIGNAL_MESSAGE)
+          finishRecognitionSession()
+          return
+        }
+        if (requestRecordedAudioFallback(captureIdRef.current)) return
         callbacksRef.current.onError?.(SPEECH_EMPTY_RESULT_MESSAGE)
       }
       finishRecognitionSession()
@@ -297,6 +280,14 @@ export function useSpeechRecognition({
 
     socket.on('recognition_error', (data: RecognitionErrorPayload) => {
       console.error('[Speech] Error:', data.error)
+      if (isProcessingRef.current && !hasTranscriptRef.current && !hasMicSignalRef.current) {
+        callbacksRef.current.onError?.(SPEECH_NO_SIGNAL_MESSAGE)
+        finishRecognitionSession()
+        return
+      }
+      if (isProcessingRef.current && !hasTranscriptRef.current && requestRecordedAudioFallback(captureIdRef.current)) {
+        return
+      }
       callbacksRef.current.onError?.(data.error)
       finishRecognitionSession()
     })
@@ -363,8 +354,14 @@ export function useSpeechRecognition({
       cleanupAudioResources()
       syncProcessingState(false)
       resetAudioLevel()
+      hasMicSignalRef.current = false
       hasTranscriptRef.current = false
       transcriptSourceRef.current = null
+      captureIdRef.current += 1
+      uploadRequestedCaptureRef.current = null
+      recordedChunksRef.current = []
+      recordedMimeTypeRef.current = ''
+      recordedPcmChunksRef.current = []
       setupBrowserRecognition(language)
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -377,40 +374,55 @@ export function useSpeechRecognition({
       })
 
       streamRef.current = stream
-
-      const audioContext = new AudioContext()
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume()
+      const startedRecorder = startMediaRecorderCapture(
+        window,
+        stream,
+        captureIdRef.current,
+        chunk => {
+          recordedChunksRef.current = [...recordedChunksRef.current, chunk]
+        },
+        (activeCaptureId, recorder) => {
+          if (
+            uploadRequestedCaptureRef.current === activeCaptureId &&
+            !recordedPcmChunksRef.current.some(chunk => chunk.length > 0)
+          ) {
+            uploadRecordedAudio(activeCaptureId)
+          }
+          if (mediaRecorderRef.current === recorder) {
+            mediaRecorderRef.current = null
+          }
+        },
+      )
+      if (startedRecorder) {
+        mediaRecorderRef.current = startedRecorder.recorder
+        recordedMimeTypeRef.current = startedRecorder.mimeType
       }
-      audioContextRef.current = audioContext
-
-      const source = audioContext.createMediaStreamSource(stream)
-      const processor = audioContext.createScriptProcessor(4096, 1, 1)
-      processorRef.current = processor
 
       socketRef.current.emit('start_recognition', {
         language,
         enable_vad: enableVad,
       })
 
-      processor.onaudioprocess = (event: AudioProcessingEvent) => {
-        if (isRecordingRef.current && socketRef.current?.connected) {
-          const inputData = event.inputBuffer.getChannelData(0)
-          callbacksRef.current.onLevel?.(normalizeAudioLevel(inputData))
-          const pcmData = encodePcm16(inputData, audioContext.sampleRate)
-          const uint8Data = new Uint8Array(pcmData.buffer)
-          socketRef.current.emit('audio_data', uint8Data)
-        }
-      }
+      const audioCapture = await startSpeechAudioCapture({
+        stream,
+        onLevel: level => {
+          callbacksRef.current.onLevel?.(level)
+        },
+        onPcmFrame: pcmData => {
+          if (!hasMicSignalRef.current && hasAudiblePcmSignal(pcmData)) hasMicSignalRef.current = true
+          recordedPcmChunksRef.current.push(pcmData.slice())
+          if (!isRecordingRef.current || !socketRef.current?.connected) return
+          socketRef.current.emit('audio_data', new Uint8Array(pcmData.buffer))
+        },
+      })
+      audioCaptureStopRef.current = audioCapture.stop
 
-      source.connect(processor)
-      processor.connect(audioContext.destination)
-
+      isRecordingRef.current = true
       callbacksRef.current.onLevel?.(SPEECH_MIN_ACTIVE_LEVEL)
       setIsRecording(true)
-      isRecordingRef.current = true
     } catch (error: unknown) {
       console.error('[Speech] Error:', error)
+      isRecordingRef.current = false
       cleanupAudioResources()
       syncProcessingState(false)
       resetAudioLevel()
@@ -437,7 +449,15 @@ export function useSpeechRecognition({
       return
     }
 
+    const captureId = captureIdRef.current
+    const hasRecordedAudioFallback = requestRecordedAudioFallback(captureId)
+
     stopAudioCapture()
+
+    if (hasTranscriptRef.current && transcriptSourceRef.current === 'browser') {
+      finishRecognitionSession()
+      return
+    }
 
     if (socketRef.current?.connected) {
       syncProcessingState(true)
@@ -447,9 +467,26 @@ export function useSpeechRecognition({
       return
     }
 
-    finishRecognitionSession()
-  }, [finishRecognitionSession, stopAudioCapture, stopBrowserRecognition, syncProcessingState])
+    if (hasRecordedAudioFallback) {
+      syncProcessingState(true)
+      callbacksRef.current.onLevel?.(0.2)
+      stopBrowserRecognition()
+      return
+    }
 
+    if (!hasMicSignalRef.current) {
+      callbacksRef.current.onError?.(SPEECH_NO_SIGNAL_MESSAGE)
+      finishRecognitionSession()
+      return
+    }
+    finishRecognitionSession()
+  }, [
+    finishRecognitionSession,
+    requestRecordedAudioFallback,
+    stopAudioCapture,
+    stopBrowserRecognition,
+    syncProcessingState,
+  ])
   return {
     isConnected,
     isRecording,
@@ -459,5 +496,4 @@ export function useSpeechRecognition({
     stopRecording,
   }
 }
-
 export default useSpeechRecognition

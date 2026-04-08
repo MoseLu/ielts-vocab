@@ -2,4 +2,4 @@ export { useSpeechRecognition } from '../features/speech/hooks/useSpeechRecognit
 export type {
   SpeechRecognitionOptions,
   UseSpeechRecognitionReturn,
-} from '../features/speech/hooks/useSpeechRecognition'
+} from '../features/speech/hooks/speechRecognitionTypes'

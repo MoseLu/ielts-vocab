@@ -135,7 +135,7 @@ describe('QuickMemoryMode session duration summary', () => {
     expect(screen.getByText('45秒')).toBeInTheDocument()
   })
 
-  it('does not show session duration for non-chapter review summary', async () => {
+  it('shows session duration for non-chapter error review summary', async () => {
     const { container } = render(
       <QuickMemoryMode
         vocabulary={vocabulary}
@@ -144,7 +144,7 @@ describe('QuickMemoryMode session duration summary', () => {
         bookId={null}
         chapterId={null}
         bookChapters={[]}
-        reviewMode
+        errorMode
         onModeChange={() => {}}
         onNavigate={() => {}}
         onWrongWord={() => {}}
@@ -161,6 +161,7 @@ describe('QuickMemoryMode session duration summary', () => {
     })
 
     expect(screen.getByText('本轮完成')).toBeInTheDocument()
-    expect(screen.queryByText('本次用时')).not.toBeInTheDocument()
+    expect(screen.getByText('本次用时')).toBeInTheDocument()
+    expect(screen.getByText('45秒')).toBeInTheDocument()
   })
 })

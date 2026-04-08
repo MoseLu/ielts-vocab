@@ -4,6 +4,8 @@ export const SPEECH_TARGET_SAMPLE_RATE = 16000
 export const SPEECH_IDLE_LEVEL = 0
 export const SPEECH_MIN_ACTIVE_LEVEL = 0.08
 export const SPEECH_EMPTY_RESULT_MESSAGE = '未识别到清晰语音，请重试'
+export const SPEECH_NO_SIGNAL_MESSAGE = '未检测到麦克风输入，请检查系统麦克风和浏览器权限'
+const REMOTE_SPEECH_TRANSPORTS: Array<'polling' | 'websocket'> = ['websocket', 'polling']
 
 export interface SpeechSocketConfig {
   path: string
@@ -31,6 +33,12 @@ export interface BrowserSpeechRecognitionInstance {
 }
 
 type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognitionInstance
+const MEDIA_RECORDER_MIME_CANDIDATES = [
+  'audio/webm;codecs=opus',
+  'audio/webm',
+  'audio/ogg;codecs=opus',
+  'audio/mp4',
+]
 
 export function resolveSpeechSocketConfig(location: Location): SpeechSocketConfig {
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -48,8 +56,8 @@ export function resolveSpeechSocketConfig(location: Location): SpeechSocketConfi
 
   return {
     path: DEFAULT_SPEECH_SOCKET_PATH,
-    rememberUpgrade: false,
-    transports: ['polling'],
+    rememberUpgrade: true,
+    transports: REMOTE_SPEECH_TRANSPORTS,
     url: `${protocol}//${location.host}/speech`,
   }
 }
@@ -84,6 +92,47 @@ export function encodePcm16(inputData: Float32Array, sourceSampleRate: number) {
   return pcmData
 }
 
+export function buildWavBlobFromPcmChunks(chunks: Int16Array[], sampleRate = SPEECH_TARGET_SAMPLE_RATE) {
+  const normalizedChunks = chunks.filter(chunk => chunk.length > 0)
+  const totalSamples = normalizedChunks.reduce((sum, chunk) => sum + chunk.length, 0)
+  const wavBuffer = new ArrayBuffer(44 + totalSamples * 2)
+  const view = new DataView(wavBuffer)
+
+  const writeAscii = (offset: number, value: string) => {
+    for (let index = 0; index < value.length; index += 1) {
+      view.setUint8(offset + index, value.charCodeAt(index))
+    }
+  }
+
+  writeAscii(0, 'RIFF')
+  view.setUint32(4, 36 + totalSamples * 2, true)
+  writeAscii(8, 'WAVE')
+  writeAscii(12, 'fmt ')
+  view.setUint32(16, 16, true)
+  view.setUint16(20, 1, true)
+  view.setUint16(22, 1, true)
+  view.setUint32(24, sampleRate, true)
+  view.setUint32(28, sampleRate * 2, true)
+  view.setUint16(32, 2, true)
+  view.setUint16(34, 16, true)
+  writeAscii(36, 'data')
+  view.setUint32(40, totalSamples * 2, true)
+
+  let offset = 44
+  for (const chunk of normalizedChunks) {
+    for (let index = 0; index < chunk.length; index += 1) {
+      view.setInt16(offset, chunk[index], true)
+      offset += 2
+    }
+  }
+
+  return new Blob([wavBuffer], { type: 'audio/wav' })
+}
+
+export function hasAudiblePcmSignal(pcmData: Int16Array, threshold = 16) {
+  return pcmData.some(sample => Math.abs(sample) > threshold)
+}
+
 function resolveBrowserRecognitionLanguage(language: string) {
   if (language.startsWith('zh')) return 'zh-CN'
   if (language.startsWith('en')) return 'en-US'
@@ -113,4 +162,17 @@ export function createBrowserSpeechRecognition(
   recognition.maxAlternatives = 1
   recognition.lang = resolveBrowserRecognitionLanguage(language)
   return recognition
+}
+
+export function resolveMediaRecorderMimeType(windowObject: Window & typeof globalThis) {
+  const recorder = windowObject.MediaRecorder
+  if (!recorder?.isTypeSupported) return ''
+  return MEDIA_RECORDER_MIME_CANDIDATES.find(type => recorder.isTypeSupported(type)) ?? ''
+}
+
+export function buildRecordedAudioFilename(mimeType: string) {
+  if (mimeType.includes('ogg')) return 'speech-input.ogg'
+  if (mimeType.includes('mp4') || mimeType.includes('mpeg')) return 'speech-input.mp4'
+  if (mimeType.includes('wav')) return 'speech-input.wav'
+  return 'speech-input.webm'
 }

@@ -27,4 +27,29 @@ describe('PracticePageCompletedState session duration', () => {
     expect(screen.getByText('错词复习完成')).toBeInTheDocument()
     expect(screen.getByText(/本次用时 2分5秒/)).toBeInTheDocument()
   })
+
+  it('shows session duration for non-chapter error review completion', () => {
+    render(
+      <PracticePageCompletedState
+        navigate={vi.fn()}
+        bookId={null}
+        chapterId={null}
+        currentDay={1}
+        correctCount={8}
+        wrongCount={2}
+        errorMode
+        errorReviewRound={2}
+        reviewMode={false}
+        sessionDurationSeconds={125}
+        reviewSummary={null}
+        vocabulary={[]}
+        errorRoundResults={{}}
+        onContinueReview={() => {}}
+        onContinueErrorReview={() => {}}
+      />,
+    )
+
+    expect(screen.getByText('错词复习完成')).toBeInTheDocument()
+    expect(screen.getByText(/本次用时 2分5秒/)).toBeInTheDocument()
+  })
 })

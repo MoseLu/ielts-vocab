@@ -381,9 +381,7 @@ export default function QuickMemoryMode({
         reviewHasMore={reviewHasMore}
         onContinueReview={onContinueReview}
         buildChapterPath={buildChapterPath}
-        sessionDurationSeconds={bookId && chapterId
-          ? completedSessionDurationSecondsRef.current
-          : null}
+        sessionDurationSeconds={completedSessionDurationSecondsRef.current}
         onRestart={handleRestart}
         onModeChange={onModeChange}
         onNavigate={onNavigate}

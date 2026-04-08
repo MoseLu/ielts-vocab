@@ -44,6 +44,14 @@ vi.mock('socket.io-client', () => ({
 
 const { useSpeechRecognition } = await import('./useSpeechRecognition')
 
+function createMockGainNode() {
+  return {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: { value: 1 },
+  }
+}
+
 describe('useSpeechRecognition', () => {
   const originalLocation = window.location
   const originalAudioContext = globalThis.AudioContext
@@ -113,8 +121,8 @@ describe('useSpeechRecognition', () => {
       expect.objectContaining({
         autoConnect: false,
         path: '/socket.io',
-        rememberUpgrade: false,
-        transports: ['polling'],
+        rememberUpgrade: true,
+        transports: ['websocket', 'polling'],
       })
     )
     expect(mockSocket.connect).toHaveBeenCalledTimes(1)
@@ -175,6 +183,7 @@ describe('useSpeechRecognition', () => {
       state: AudioContextState = 'running'
       resume = vi.fn(() => Promise.resolve())
       close = audioContextClose
+      createGain = vi.fn(() => createMockGainNode())
       createMediaStreamSource = vi.fn(() => ({
         connect: sourceConnect,
       }))
@@ -237,6 +246,7 @@ describe('useSpeechRecognition', () => {
       state: AudioContextState = 'running'
       resume = vi.fn(() => Promise.resolve())
       close = vi.fn(() => Promise.resolve())
+      createGain = vi.fn(() => createMockGainNode())
       createMediaStreamSource = vi.fn(() => ({
         connect: vi.fn(),
       }))
@@ -293,6 +303,7 @@ describe('useSpeechRecognition', () => {
       state: AudioContextState = 'running'
       resume = vi.fn(() => Promise.resolve())
       close = vi.fn(() => Promise.resolve())
+      createGain = vi.fn(() => createMockGainNode())
       createMediaStreamSource = vi.fn(() => ({
         connect: vi.fn(),
       }))
@@ -342,7 +353,7 @@ describe('useSpeechRecognition', () => {
     expect(result.current.isProcessing).toBe(false)
   })
 
-  it('surfaces a clear error when the backend finishes without any transcript', async () => {
+  it('surfaces a clear error when no microphone signal is captured', async () => {
     const stream = {
       getTracks: () => [{ stop: vi.fn() }],
     }
@@ -354,6 +365,7 @@ describe('useSpeechRecognition', () => {
       state: AudioContextState = 'running'
       resume = vi.fn(() => Promise.resolve())
       close = vi.fn(() => Promise.resolve())
+      createGain = vi.fn(() => createMockGainNode())
       createMediaStreamSource = vi.fn(() => ({
         connect: vi.fn(),
       }))
@@ -391,7 +403,7 @@ describe('useSpeechRecognition', () => {
       mockSocket.trigger('recognition_complete')
     })
 
-    expect(onError).toHaveBeenCalledWith('未识别到清晰语音，请重试')
+    expect(onError).toHaveBeenCalledWith('未检测到麦克风输入，请检查系统麦克风和浏览器权限')
     expect(result.current.isProcessing).toBe(false)
   })
 
@@ -427,6 +439,7 @@ describe('useSpeechRecognition', () => {
       state: AudioContextState = 'running'
       resume = vi.fn(() => Promise.resolve())
       close = vi.fn(() => Promise.resolve())
+      createGain = vi.fn(() => createMockGainNode())
       createMediaStreamSource = vi.fn(() => ({ connect: vi.fn() }))
       createScriptProcessor = vi.fn(() => ({ connect: vi.fn(), disconnect: vi.fn(), onaudioprocess: null }))
     }
