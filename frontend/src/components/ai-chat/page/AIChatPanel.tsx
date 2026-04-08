@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import {
   AIRobotSVG,
   AssistantBubble,
@@ -9,13 +10,50 @@ import {
   SendIcon,
   StopIcon,
 } from '../panel/AIChatPanelChrome'
-import { MicroLoading } from '../../ui'
+import { MicroLoading, Spinner } from '../../ui'
 import { Scrollbar } from '../../ui/Scrollbar'
 import {
   AI_INPUT_PLACEHOLDER,
-  QUICK_ACTIONS,
   useAIChatPanel,
 } from '../../../composables/ai-chat/page/useAIChatPanel'
+
+const VOICE_BAR_HEIGHT_PROFILE = [0.08, 0.22, 0.56, 0.96, 0.74, 0.3, 0.12, 0.68]
+const VOICE_BAR_WIDTH_PROFILE = [0.52, 0.68, 0.96, 1.18, 0.9, 0.62, 0.46, 0.88]
+const VOICE_BAR_ACTIVE_THRESHOLD = 0.12
+const VOICE_BAR_STRONG_THRESHOLD = 0.3
+
+function getVoiceBarAppearance(level: number, index: number, total: number): {
+  className: string
+  style: CSSProperties
+} {
+  const shape = VOICE_BAR_HEIGHT_PROFILE[index % VOICE_BAR_HEIGHT_PROFILE.length] ?? 0.5
+  const width = VOICE_BAR_WIDTH_PROFILE[index % VOICE_BAR_WIDTH_PROFILE.length] ?? 1
+  const age = total > 1 ? index / (total - 1) : 1
+  const normalizedLevel = Math.max(0, Math.min(1, level))
+  const intensity = normalizedLevel <= VOICE_BAR_ACTIVE_THRESHOLD
+    ? 0
+    : Math.pow((normalizedLevel - VOICE_BAR_ACTIVE_THRESHOLD) / (1 - VOICE_BAR_ACTIVE_THRESHOLD), 0.92)
+  const visualLevel = intensity <= 0
+    ? 0
+    : Math.min(1, intensity * 0.84 + shape * 0.24)
+  const tone = intensity <= 0
+    ? 'silent'
+    : intensity >= VOICE_BAR_STRONG_THRESHOLD
+      ? 'active'
+      : 'soft'
+
+  return {
+    className: `ai-voice-bar ai-voice-bar--${tone}`,
+    style: {
+      ['--ai-voice-age' as string]: age.toFixed(3),
+      ['--ai-voice-index' as string]: index,
+      ['--ai-voice-intensity' as string]: intensity.toFixed(3),
+      ['--ai-voice-level' as string]: visualLevel.toFixed(3),
+      ['--ai-voice-shape' as string]: shape.toFixed(3),
+      ['--ai-voice-width' as string]: width.toFixed(3),
+    } as CSSProperties,
+  }
+}
 
 function AIChatPanel() {
   const {
@@ -31,6 +69,8 @@ function AIChatPanel() {
     isFullscreen,
     speechError,
     speechStatus,
+    speechDurationLabel,
+    speechWaveform,
     messagesEndRef,
     inputRef,
     panelRef,
@@ -38,11 +78,17 @@ function AIChatPanel() {
     shouldShowLoadingBubble,
     speechConnected,
     speechRecording,
+    speechProcessing,
+    showQuickActionLauncher,
     showQuickActions,
+    isQuickActionsExpanded,
+    launcherActions,
+    hiddenOptionsMessageId,
     handleSend,
     handleVoiceToggle,
     handleInput,
     handleQuickAction,
+    toggleQuickActions,
     toggleFullscreen,
   } = useAIChatPanel()
 
@@ -59,6 +105,21 @@ function AIChatPanel() {
       </button>
     )
   }
+
+  const showVoiceVisualizer = speechRecording || speechProcessing
+  const showSpeechStatus = Boolean(speechStatus)
+  const showSpeechDuration = speechRecording || speechProcessing
+  const voiceButtonClassName = [
+    'ai-voice-btn',
+    speechRecording ? 'ai-voice-btn--recording' : '',
+    speechProcessing ? 'ai-voice-btn--processing' : '',
+  ].filter(Boolean).join(' ')
+  const inputShellClassName = [
+    'ai-input-shell',
+    speechRecording ? 'ai-input-shell--recording' : '',
+    speechProcessing ? 'ai-input-shell--processing' : '',
+    speechError ? 'ai-input-shell--error' : '',
+  ].filter(Boolean).join(' ')
 
   return (
     <div className={`ai-panel ${isFullscreen ? 'ai-panel--fullscreen' : ''}`} ref={panelRef}>
@@ -86,8 +147,8 @@ function AIChatPanel() {
           <button
             className="ai-panel-icon-btn"
             onClick={toggleFullscreen}
-            aria-label={isFullscreen ? '还原窗口' : '全屏显示'}
-            title={isFullscreen ? '还原窗口' : '全屏显示'}
+            aria-label={isFullscreen ? '最小化窗口' : '展开窗口'}
+            title={isFullscreen ? '最小化窗口' : '展开窗口'}
             type="button"
           >
             {isFullscreen ? <RestoreIcon /> : <FullscreenIcon />}
@@ -105,22 +166,39 @@ function AIChatPanel() {
         </div>
       )}
 
-      {showQuickActions && (
-        <div className="ai-quick-actions">
-          {QUICK_ACTIONS.map(action => (
-            <button
-              key={action.label}
-              className="ai-quick-btn"
-              onClick={() => {
-                if (!isLoading) {
-                  handleQuickAction(action.value, action.autoSend)
-                }
-              }}
-              type="button"
-            >
-              {action.label}
-            </button>
-          ))}
+      {showQuickActionLauncher && (
+        <div className={`ai-starter-panel ${showQuickActions ? 'ai-starter-panel--expanded' : ''}`.trim()}>
+          <div className="ai-starter-copy">
+            <div className="ai-starter-title">不知道先问什么？</div>
+            <p className="ai-starter-text">先看常见任务，再决定要不要直接开始。</p>
+          </div>
+          <button
+            className="ai-starter-toggle"
+            onClick={toggleQuickActions}
+            aria-expanded={isQuickActionsExpanded}
+            type="button"
+          >
+            {isQuickActionsExpanded ? '收起常见任务' : '看看常见任务'}
+          </button>
+
+          {showQuickActions && (
+            <div className="ai-quick-actions">
+              {launcherActions.map(action => (
+                <button
+                  key={`${action.label}-${action.value}`}
+                  className="ai-quick-btn"
+                  onClick={() => {
+                    if (!isLoading) {
+                      handleQuickAction(action.value, action.autoSend)
+                    }
+                  }}
+                  type="button"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -133,7 +211,7 @@ function AIChatPanel() {
             {message.role === 'assistant'
               ? <AssistantBubble content={message.content} isStreaming={Boolean(message.isStreaming)} />
               : <PlainTextBubble content={message.content} />}
-            {message.options && message.options.length > 0 && (
+            {message.options && message.options.length > 0 && message.id !== hiddenOptionsMessageId && (
               <div className="ai-msg-options">
                 {message.options.map(option => (
                   <button
@@ -166,46 +244,95 @@ function AIChatPanel() {
 
       <div className="ai-input-stack">
         <div className="ai-input-row">
-          <textarea
-            ref={inputRef}
-            className="ai-input"
-            value={input}
-            onChange={event => handleInput(event.target.value, event.target)}
-            onKeyDown={event => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault()
-                handleSend()
-              }
-            }}
-            placeholder={speechRecording ? '正在听写，请稍候...' : AI_INPUT_PLACEHOLDER}
-            rows={1}
-            disabled={isLoading || speechRecording}
-          />
-          <button
-            className={`ai-voice-btn ${speechRecording ? 'ai-voice-btn--recording' : ''}`.trim()}
-            onClick={() => void handleVoiceToggle()}
-            disabled={isLoading || (!speechConnected && !speechRecording)}
-            aria-label={speechRecording ? '停止语音输入' : '开始语音输入'}
-            title={speechRecording ? '停止语音输入' : (speechConnected ? '开始语音输入' : '语音服务未连接')}
-            type="button"
-          >
-            {speechRecording ? <StopIcon /> : <MicIcon />}
-          </button>
-          <button
-            className="ai-send-btn"
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading || speechRecording}
-            aria-label="发送消息"
-            type="button"
-          >
-            <SendIcon />
-          </button>
-        </div>
-        <div
-          className={`ai-voice-status ${speechError ? 'ai-voice-status--error' : ''} ${speechRecording ? 'ai-voice-status--recording' : ''}`.trim()}
-          aria-live="polite"
-        >
-          {speechStatus}
+          <div className={inputShellClassName}>
+            <textarea
+              ref={inputRef}
+              className="ai-input"
+              value={input}
+              onChange={event => handleInput(event.target.value, event.target)}
+              onKeyDown={event => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault()
+                  handleSend()
+                }
+              }}
+              placeholder={speechProcessing
+                ? '正在转写，请稍候...'
+                : speechRecording
+                  ? '正在听写，请稍候...'
+                  : AI_INPUT_PLACEHOLDER}
+              rows={5}
+              disabled={isLoading || speechRecording || speechProcessing}
+            />
+            <div className={`ai-input-footer ${showVoiceVisualizer || showSpeechStatus ? 'ai-input-footer--active' : ''}`.trim()}>
+              {(showVoiceVisualizer || showSpeechStatus) && (
+                <div className="ai-input-footer-main">
+                  {showVoiceVisualizer && (
+                    <div
+                      className={`ai-voice-visualizer ${speechProcessing ? 'ai-voice-visualizer--processing' : ''}`.trim()}
+                      aria-hidden="true"
+                    >
+                      <span className="ai-voice-visualizer__line" />
+                      {speechWaveform.map((level, index) => {
+                        const appearance = getVoiceBarAppearance(level, index, speechWaveform.length)
+
+                        return (
+                          <span
+                            key={`voice-bar-${index}`}
+                            className={appearance.className}
+                            style={appearance.style}
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
+                  {showSpeechStatus && (
+                    <div
+                      className={[
+                        'ai-voice-status',
+                        speechError ? 'ai-voice-status--error' : '',
+                        speechRecording ? 'ai-voice-status--recording' : '',
+                        speechProcessing ? 'ai-voice-status--processing' : '',
+                      ].filter(Boolean).join(' ')}
+                      aria-live="polite"
+                    >
+                      {speechStatus}
+                    </div>
+                  )}
+                </div>
+              )}
+              {showSpeechDuration && <div className="ai-voice-duration">{speechDurationLabel}</div>}
+              <div className="ai-input-actions">
+                <button
+                  className={voiceButtonClassName}
+                  onClick={() => void handleVoiceToggle()}
+                  disabled={isLoading || speechProcessing || (!speechConnected && !speechRecording)}
+                  aria-label={speechProcessing ? '语音转写中' : speechRecording ? '停止语音输入' : '开始语音输入'}
+                  title={speechProcessing
+                    ? '正在将语音转换为文字'
+                    : speechRecording
+                      ? '停止语音输入'
+                      : (speechConnected ? '开始语音输入' : '语音服务未连接')}
+                  type="button"
+                >
+                  {speechProcessing
+                    ? <Spinner size="sm" className="ai-voice-btn-spinner" />
+                    : speechRecording
+                      ? <StopIcon />
+                      : <MicIcon />}
+                </button>
+                <button
+                  className="ai-send-btn"
+                  onClick={handleSend}
+                  disabled={!input.trim() || isLoading || speechRecording || speechProcessing}
+                  aria-label="发送消息"
+                  type="button"
+                >
+                  <SendIcon />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

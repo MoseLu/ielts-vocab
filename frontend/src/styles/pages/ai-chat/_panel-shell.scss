@@ -38,7 +38,7 @@
   bottom: 24px;
   z-index: var(--layer-topmost);
   width: min(380px, calc(100vw - 32px));
-  height: min(560px, calc(100vh - 48px));
+  height: min(620px, calc(100vh - 48px));
   background: var(--surface-floating);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-xl);
@@ -158,24 +158,93 @@
   color: var(--text-primary);
 }
 
-.ai-quick-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.ai-starter-panel {
+  display: grid;
+  gap: 10px;
   padding: 12px;
   border-bottom: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 72%),
+    var(--surface-floating);
+  max-height: min(40%, 320px);
+  min-height: 0;
+  overflow: hidden;
+  flex: 0 1 auto;
   flex-shrink: 0;
+}
+
+.ai-starter-panel--expanded {
+  gap: 12px;
+}
+
+.ai-starter-copy {
+  min-width: 0;
+}
+
+.ai-starter-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ai-starter-text {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.ai-starter-toggle {
+  width: 100%;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(var(--accent-rgb), 0.22);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-hover));
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ai-starter-toggle:hover {
+  border-color: rgba(var(--accent-rgb), 0.36);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-hover));
+}
+
+.ai-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
+  gap: 8px;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+  padding-right: 4px;
+}
+
+.ai-panel--fullscreen .ai-starter-panel {
+  max-height: min(38%, 360px);
+}
+
+.ai-panel--fullscreen .ai-quick-actions {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 176px), 1fr));
 }
 
 .ai-quick-btn {
   width: 100%;
-  padding: 9px 14px;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 14px;
   border: 1px solid rgba(var(--accent-rgb), 0.2);
   border-radius: var(--radius-md);
   background: var(--surface-hover);
   color: var(--accent);
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.45;
   text-align: left;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -376,4 +445,3 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-

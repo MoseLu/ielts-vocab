@@ -16,12 +16,38 @@ export const QUICK_ACTIONS: Array<{ label: string; value: string; autoSend: bool
 ]
 
 export const AI_INPUT_PLACEHOLDER = '输入问题，或发送学习指令'
-const AI_INPUT_MAX_HEIGHT = 120
+const AI_INPUT_MAX_HEIGHT = 220
+const SPEECH_READY_STATUS = ''
+const SPEECH_DISCONNECTED_STATUS = ''
+const SPEECH_RECORDING_STATUS = ''
+const SPEECH_PROCESSING_STATUS = '正在转写，请稍候...'
+const SPEECH_COMPLETED_STATUS = ''
+const SPEECH_WAVEFORM_SLOTS = 36
+const SPEECH_WAVEFORM_IDLE_LEVEL = 0
+const SPEECH_WAVEFORM_ACTIVE_THRESHOLD = 0.14
+
+type LauncherAction = { label: string; value: string; autoSend: boolean }
+
+function formatSpeechDuration(totalSeconds: number) {
+  const safeSeconds = Math.max(0, totalSeconds)
+  const minutes = Math.floor(safeSeconds / 60)
+  const seconds = safeSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
 
 function resizeComposer(textarea: HTMLTextAreaElement | null) {
   if (!textarea) return
   textarea.style.height = 'auto'
   textarea.style.height = `${Math.min(textarea.scrollHeight, AI_INPUT_MAX_HEIGHT)}px`
+}
+
+function createSpeechWaveform(seed = SPEECH_WAVEFORM_IDLE_LEVEL) {
+  return Array.from({ length: SPEECH_WAVEFORM_SLOTS }, () => seed)
+}
+
+function normalizeSpeechWaveLevel(level: number) {
+  if (!Number.isFinite(level)) return SPEECH_WAVEFORM_IDLE_LEVEL
+  return Math.min(1, Math.max(SPEECH_WAVEFORM_IDLE_LEVEL, level))
 }
 
 export function useAIChatPanel() {
@@ -38,20 +64,60 @@ export function useAIChatPanel() {
   } = useAIChat()
 
   const [input, setInput] = useState('')
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(true)
+  const [isQuickActionsExpanded, setIsQuickActionsExpanded] = useState(false)
   const [speechError, setSpeechError] = useState<string | null>(null)
-  const [speechStatus, setSpeechStatus] = useState('点击麦克风即可语音提问')
+  const [speechStatus, setSpeechStatus] = useState(SPEECH_READY_STATUS)
+  const [speechDurationSeconds, setSpeechDurationSeconds] = useState(0)
+  const [speechWaveform, setSpeechWaveform] = useState<number[]>(() => createSpeechWaveform())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const speechPrefixRef = useRef('')
-  const speechShouldAutoSendRef = useRef(false)
+  const speechStartedAtRef = useRef<number | null>(null)
 
   const visibleMessages = messages.filter(message => (
     message.role === 'user' || Boolean(message.content.trim()) || Boolean(message.options?.length)
   ))
+  const hasUserMessages = messages.some(message => message.role === 'user')
+  const greetingMessage = messages.find(message => message.id === 'greet') ?? messages.find(message => message.role === 'assistant')
+  const greetingOptions = !hasUserMessages ? greetingMessage?.options ?? [] : []
+  const launcherActions: LauncherAction[] = [
+    ...greetingOptions.map(option => ({ label: option, value: option, autoSend: true })),
+    ...QUICK_ACTIONS.filter(action => !greetingOptions.includes(action.label) && !greetingOptions.includes(action.value)),
+  ]
+  const hiddenOptionsMessageId = greetingMessage?.options?.length ? greetingMessage.id : null
   const lastMessage = messages[messages.length - 1]
   const shouldShowLoadingBubble = isLoading && !(lastMessage?.role === 'assistant' && lastMessage.content.trim())
+
+  const resetSpeechWaveform = useCallback((seed = SPEECH_WAVEFORM_IDLE_LEVEL) => {
+    setSpeechWaveform(createSpeechWaveform(seed))
+  }, [])
+
+  const pushSpeechWaveLevel = useCallback((level: number) => {
+    if (level <= 0) {
+      resetSpeechWaveform()
+      return
+    }
+
+    const nextLevel = normalizeSpeechWaveLevel(level)
+    setSpeechWaveform(previous => {
+      const tail = previous[previous.length - 1] ?? SPEECH_WAVEFORM_IDLE_LEVEL
+      const preTail = previous[previous.length - 2] ?? tail
+      const activeLevel = nextLevel >= SPEECH_WAVEFORM_ACTIVE_THRESHOLD
+      const releasedLevel = activeLevel
+        ? nextLevel * 0.68 + tail * 0.22 + preTail * 0.1
+        : Math.max(0, tail * 0.64 - 0.045)
+      const shapedLevel = releasedLevel < SPEECH_WAVEFORM_ACTIVE_THRESHOLD * 0.72
+        ? SPEECH_WAVEFORM_IDLE_LEVEL
+        : Math.min(1, releasedLevel)
+
+      return [
+        ...previous.slice(-(SPEECH_WAVEFORM_SLOTS - 1)),
+        shapedLevel,
+      ]
+    })
+  }, [resetSpeechWaveform])
 
   const syncComposer = useCallback((nextValue: string) => {
     setInput(nextValue)
@@ -67,7 +133,7 @@ export function useAIChatPanel() {
     })
   }, [])
 
-  const applySpeechTranscript = useCallback((spokenText: string) => {
+  const applySpeechTranscript = useCallback((spokenText: string, isFinal = false) => {
     const transcript = spokenText.trim()
     const prefix = speechPrefixRef.current.trim()
     const nextValue = prefix && transcript
@@ -76,7 +142,7 @@ export function useAIChatPanel() {
 
     syncComposer(nextValue)
     setSpeechError(null)
-    setSpeechStatus(transcript ? `语音转写中：${transcript}` : '正在听写...')
+    setSpeechStatus(isFinal ? SPEECH_COMPLETED_STATUS : SPEECH_RECORDING_STATUS)
 
     return nextValue.trim()
   }, [syncComposer])
@@ -84,6 +150,7 @@ export function useAIChatPanel() {
   const {
     isConnected: speechConnected,
     isRecording: speechRecording,
+    isProcessing: speechProcessing,
     startRecording: startSpeechRecording,
     stopRecording: stopSpeechRecording,
   } = useSpeechRecognition({
@@ -96,21 +163,16 @@ export function useAIChatPanel() {
       applySpeechTranscript(text)
     },
     onResult: (text: string) => {
-      const nextValue = applySpeechTranscript(text)
-      if (!speechShouldAutoSendRef.current || !nextValue || isLoading) {
-        setSpeechStatus(nextValue ? '识别完成，可直接发送或继续修改' : '识别完成')
-        return
-      }
-
-      speechShouldAutoSendRef.current = false
-      setSpeechStatus('识别完成，正在发送...')
-      resetComposer()
-      sendMessage(nextValue)
+      const nextValue = applySpeechTranscript(text, true)
+      setSpeechStatus(nextValue ? SPEECH_COMPLETED_STATUS : '')
     },
     onError: (error: string) => {
-      speechShouldAutoSendRef.current = false
       setSpeechError(error)
       setSpeechStatus(`语音输入不可用：${error}`)
+      resetSpeechWaveform()
+    },
+    onLevel: (level: number) => {
+      pushSpeechWaveLevel(level)
     },
   })
 
@@ -141,14 +203,30 @@ export function useAIChatPanel() {
 
   useEffect(() => {
     if (!isOpen) return
+    setIsFullscreen(true)
     inputRef.current?.focus()
   }, [isOpen])
 
   useEffect(() => {
-    if (speechRecording) return
-    if (speechError) return
-    setSpeechStatus(speechConnected ? '点击麦克风即可语音提问' : '语音服务未连接')
-  }, [speechConnected, speechError, speechRecording])
+    if (speechError || speechRecording || speechProcessing) return
+    setSpeechStatus(current => {
+      if (!speechConnected) {
+        return SPEECH_DISCONNECTED_STATUS
+      }
+
+      if (
+        current === SPEECH_READY_STATUS ||
+        current === SPEECH_DISCONNECTED_STATUS ||
+        current === SPEECH_RECORDING_STATUS ||
+        current === SPEECH_COMPLETED_STATUS ||
+        current === SPEECH_PROCESSING_STATUS
+      ) {
+        return SPEECH_READY_STATUS
+      }
+
+      return current
+    })
+  }, [speechConnected, speechError, speechProcessing, speechRecording])
 
   useEffect(() => {
     if (!isOpen) return
@@ -156,61 +234,113 @@ export function useAIChatPanel() {
   }, [isOpen, isLoading, messages, scrollMessagesToBottom])
 
   useEffect(() => {
-    if (isOpen) return
-    speechShouldAutoSendRef.current = false
     if (speechRecording) {
-      stopSpeechRecording()
+      if (speechStartedAtRef.current === null) {
+        speechStartedAtRef.current = Date.now()
+      }
+
+      const syncDuration = () => {
+        if (speechStartedAtRef.current === null) return
+        setSpeechDurationSeconds(Math.floor((Date.now() - speechStartedAtRef.current) / 1000))
+      }
+
+      syncDuration()
+      const intervalId = window.setInterval(syncDuration, 250)
+      return () => window.clearInterval(intervalId)
     }
-  }, [isOpen, speechRecording, stopSpeechRecording])
 
-  useEffect(() => () => {
-    speechShouldAutoSendRef.current = false
-    stopSpeechRecording()
-  }, [stopSpeechRecording])
+    if (!speechProcessing) {
+      speechStartedAtRef.current = null
+      setSpeechDurationSeconds(0)
+    }
+  }, [speechProcessing, speechRecording])
 
-  const showQuickActions = !isGreeting && greetingDone && messages.every(message => message.role !== 'user')
+  useEffect(() => {
+    if (isOpen) return
+    speechPrefixRef.current = ''
+    setIsQuickActionsExpanded(false)
+    setSpeechError(null)
+    setSpeechStatus(SPEECH_READY_STATUS)
+    speechStartedAtRef.current = null
+    setSpeechDurationSeconds(0)
+    resetSpeechWaveform()
+  }, [isOpen, resetSpeechWaveform])
+
+  useEffect(() => {
+    if (!hasUserMessages) return
+    setIsQuickActionsExpanded(false)
+  }, [hasUserMessages])
+
+  const showQuickActionLauncher = !isGreeting && greetingDone && !hasUserMessages
+  const showQuickActions = showQuickActionLauncher && isQuickActionsExpanded
 
   const handleSend = useCallback(() => {
     const text = input.trim()
-    if (!text || isLoading) return
-    speechShouldAutoSendRef.current = false
+    if (!text || isLoading || speechRecording || speechProcessing) return
+    setIsQuickActionsExpanded(false)
     setSpeechError(null)
+    setSpeechStatus(speechConnected ? SPEECH_READY_STATUS : SPEECH_DISCONNECTED_STATUS)
     resetComposer()
     sendMessage(text)
-  }, [input, isLoading, resetComposer, sendMessage])
+  }, [
+    input,
+    isLoading,
+    resetComposer,
+    sendMessage,
+    speechConnected,
+    speechProcessing,
+    speechRecording,
+  ])
 
   const handleVoiceToggle = useCallback(async () => {
+    if (speechProcessing) return
+
     if (speechRecording) {
-      speechShouldAutoSendRef.current = false
+      setSpeechError(null)
+      setSpeechStatus(SPEECH_PROCESSING_STATUS)
       stopSpeechRecording()
       return
     }
 
     speechPrefixRef.current = input.trim()
-    speechShouldAutoSendRef.current = !speechPrefixRef.current
+    speechStartedAtRef.current = Date.now()
+    setSpeechDurationSeconds(0)
     setSpeechError(null)
-    setSpeechStatus('正在听写...')
+    setSpeechStatus(SPEECH_RECORDING_STATUS)
+    resetSpeechWaveform()
     await startSpeechRecording()
-  }, [input, speechRecording, startSpeechRecording, stopSpeechRecording])
+  }, [
+    input,
+    resetSpeechWaveform,
+    speechProcessing,
+    speechRecording,
+    startSpeechRecording,
+    stopSpeechRecording,
+  ])
 
   const handleInput = useCallback((nextValue: string, target: HTMLTextAreaElement | null) => {
-    speechShouldAutoSendRef.current = false
     setSpeechError(null)
-    setSpeechStatus(speechConnected ? '点击麦克风即可语音提问' : '语音服务未连接')
+    setSpeechStatus(speechConnected ? SPEECH_READY_STATUS : SPEECH_DISCONNECTED_STATUS)
     setInput(nextValue)
     resizeComposer(target)
   }, [speechConnected])
 
   const handleQuickAction = useCallback((value: string, autoSend: boolean) => {
+    setIsQuickActionsExpanded(false)
+    setSpeechError(null)
+    setSpeechStatus(speechConnected ? SPEECH_READY_STATUS : SPEECH_DISCONNECTED_STATUS)
     if (autoSend) {
-      speechShouldAutoSendRef.current = false
       resetComposer()
       sendMessage(value)
       return
     }
     syncComposer(value)
     requestAnimationFrame(() => inputRef.current?.focus())
-  }, [resetComposer, sendMessage, syncComposer])
+  }, [resetComposer, sendMessage, speechConnected, syncComposer])
+
+  const toggleQuickActions = useCallback(() => {
+    setIsQuickActionsExpanded(value => !value)
+  }, [])
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen(value => !value)
@@ -229,6 +359,8 @@ export function useAIChatPanel() {
     isFullscreen,
     speechError,
     speechStatus,
+    speechDurationLabel: formatSpeechDuration(speechDurationSeconds),
+    speechWaveform,
     messagesEndRef,
     inputRef,
     panelRef,
@@ -236,11 +368,17 @@ export function useAIChatPanel() {
     shouldShowLoadingBubble,
     speechConnected,
     speechRecording,
+    speechProcessing,
+    showQuickActionLauncher,
     showQuickActions,
+    isQuickActionsExpanded,
+    launcherActions,
+    hiddenOptionsMessageId,
     handleSend,
     handleVoiceToggle,
     handleInput,
     handleQuickAction,
+    toggleQuickActions,
     toggleFullscreen,
   }
 }
