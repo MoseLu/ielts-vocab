@@ -1,11 +1,12 @@
+from services import learning_event_repository
+
+
 def build_learning_activity_timeline(user_id: int, target_date: str | None = None, limit: int = 12) -> dict:
     date_str, start_dt, end_dt = _resolve_target_date(target_date)
-    rows = (
-        UserLearningEvent.query
-        .filter_by(user_id=user_id)
-        .filter(UserLearningEvent.occurred_at >= start_dt, UserLearningEvent.occurred_at < end_dt)
-        .order_by(UserLearningEvent.occurred_at.asc(), UserLearningEvent.id.asc())
-        .all()
+    rows = learning_event_repository.list_user_learning_events_in_window(
+        user_id,
+        start_at=start_dt,
+        end_at=end_dt,
     )
 
     source_counts = Counter()

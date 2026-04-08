@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
-from models import UserQuickMemoryRecord, db
+from models import UserQuickMemoryRecord
+from services import quick_memory_record_repository
 from services.local_time import get_app_timezone
 
 QUICK_MEMORY_REVIEW_INTERVALS_DAYS = (1, 1, 4, 7, 14, 30)
@@ -81,10 +82,10 @@ def normalize_quick_memory_record_schedule(record: UserQuickMemoryRecord) -> boo
 
 
 def load_user_quick_memory_records(user_id: int) -> list[UserQuickMemoryRecord]:
-    rows = UserQuickMemoryRecord.query.filter_by(user_id=user_id).all()
+    rows = quick_memory_record_repository.list_user_quick_memory_records(user_id)
     changed = False
     for row in rows:
         changed = normalize_quick_memory_record_schedule(row) or changed
     if changed:
-        db.session.commit()
+        quick_memory_record_repository.commit()
     return rows

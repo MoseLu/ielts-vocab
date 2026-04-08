@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from models import UserStudySession, db
+from models import UserStudySession
+from services import study_session_repository
 
 _LIVE_PENDING_SESSION_WINDOW = timedelta(hours=3)
 _DEFAULT_PENDING_SESSION_MATCH_WINDOW_SECONDS = 15
@@ -105,40 +106,21 @@ def get_live_pending_session_snapshot(
     if since is not None and since > threshold:
         threshold = since
 
-    query = (
-        UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(
-            UserStudySession.started_at >= threshold,
-            UserStudySession.ended_at.is_(None),
-            UserStudySession.words_studied == 0,
-            UserStudySession.correct_count == 0,
-            UserStudySession.wrong_count == 0,
-            UserStudySession.duration_seconds == 0,
-        )
+    session = study_session_repository.find_recent_open_placeholder_session(
+        user_id=user_id,
+        threshold=threshold,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
     )
-    if mode is not None:
-        query = query.filter(UserStudySession.mode == mode)
-    if book_id is not None:
-        query = query.filter(UserStudySession.book_id == book_id)
-    if chapter_id is not None:
-        query = query.filter(UserStudySession.chapter_id == chapter_id)
-
-    session = query.order_by(UserStudySession.started_at.desc(), UserStudySession.id.desc()).first()
     if session is None or session.started_at is None:
         return None
 
     # If newer finished analytics rows exist, this open placeholder is stale.
-    newer_analytics_exists = (
-        UserStudySession.query
-        .filter(
-            UserStudySession.user_id == user_id,
-            UserStudySession.id != session.id,
-            UserStudySession.started_at > session.started_at,
-            UserStudySession.analytics_clause(),
-        )
-        .first()
-        is not None
+    newer_analytics_exists = study_session_repository.newer_analytics_session_exists(
+        user_id=user_id,
+        exclude_session_id=session.id,
+        started_after=session.started_at,
     )
     if newer_analytics_exists:
         return None
@@ -169,36 +151,34 @@ def find_pending_session(
     started_at: datetime | None = None,
     window_seconds: int = _DEFAULT_PENDING_SESSION_MATCH_WINDOW_SECONDS,
 ) -> UserStudySession | None:
-    base_query = UserStudySession.query.filter_by(
+    now_utc = datetime.utcnow()
+    if started_at is not None:
+        session = study_session_repository.find_pending_session_in_window(
+            user_id=user_id,
+            mode=mode,
+            book_id=book_id,
+            chapter_id=chapter_id,
+            started_after=started_at - timedelta(seconds=window_seconds),
+            started_before=started_at + timedelta(seconds=window_seconds),
+        )
+    else:
+        session = study_session_repository.find_pending_session_in_window(
+            user_id=user_id,
+            mode=mode,
+            book_id=book_id,
+            chapter_id=chapter_id,
+            started_after=now_utc - timedelta(seconds=window_seconds),
+        )
+    if session or started_at is None:
+        return session
+
+    return study_session_repository.find_pending_session_in_window(
         user_id=user_id,
         mode=mode,
         book_id=book_id,
         chapter_id=chapter_id,
-    ).filter(
-        UserStudySession.ended_at.is_(None),
-        UserStudySession.words_studied == 0,
-        UserStudySession.correct_count == 0,
-        UserStudySession.wrong_count == 0,
-        UserStudySession.duration_seconds == 0,
+        started_after=now_utc - timedelta(minutes=30),
     )
-
-    if started_at is not None:
-        query = base_query.filter(
-            UserStudySession.started_at >= started_at - timedelta(seconds=window_seconds),
-            UserStudySession.started_at <= started_at + timedelta(seconds=window_seconds),
-        )
-    else:
-        query = base_query.filter(
-            UserStudySession.started_at >= datetime.utcnow() - timedelta(seconds=window_seconds),
-        )
-
-    session = query.order_by(UserStudySession.started_at.desc()).first()
-    if session or started_at is None:
-        return session
-
-    return base_query.filter(
-        UserStudySession.started_at >= datetime.utcnow() - timedelta(minutes=30),
-    ).order_by(UserStudySession.started_at.desc()).first()
 
 
 def start_or_reuse_study_session(
@@ -219,13 +199,12 @@ def start_or_reuse_study_session(
     if existing:
         return existing
 
-    session = UserStudySession(
+    session = study_session_repository.create_study_session(
         user_id=user_id,
         mode=mode,
         book_id=book_id,
         chapter_id=chapter_id,
         started_at=datetime.utcnow(),
     )
-    db.session.add(session)
-    db.session.commit()
+    study_session_repository.commit()
     return session
