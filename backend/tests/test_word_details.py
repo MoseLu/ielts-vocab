@@ -1,5 +1,6 @@
-import routes.books as books_routes
 import services.legacy_word_detail_migration as legacy_word_detail_migration
+import services.books_catalog_service as books_catalog_service
+import services.books_vocabulary_loader_service as books_vocabulary_loader_service
 import services.word_detail_enrichment as word_detail_enrichment
 from models import (
     WordCatalogBookRef,
@@ -83,8 +84,8 @@ def _mock_catalog():
 
 
 def _stub_example_caches(monkeypatch, *, short_examples=None, catalog_examples=None):
-    monkeypatch.setattr(books_routes, '_examples_cache', short_examples or {})
-    monkeypatch.setattr(books_routes, '_catalog_examples_cache', catalog_examples or {})
+    monkeypatch.setattr(books_vocabulary_loader_service, '_examples_cache', short_examples or {})
+    monkeypatch.setattr(books_vocabulary_loader_service, '_catalog_examples_cache', catalog_examples or {})
 
 
 class TestWordDetails:
@@ -93,7 +94,7 @@ class TestWordDetails:
         assert res.status_code == 400
 
     def test_word_details_bootstrap_root_and_derivatives(self, client, app, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', _mock_catalog)
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _mock_catalog)
         _stub_example_caches(monkeypatch, short_examples={
             'quit': [{'en': 'Quit the course before the deadline.', 'zh': '在截止前退出课程。'}],
         })
@@ -124,7 +125,7 @@ class TestWordDetails:
             assert catalog_entry.get_examples()[0]['en'] == 'He decided to quit last year.'
 
     def test_word_details_fall_back_to_catalog_examples_when_short_examples_missing(self, client, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', _mock_catalog)
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _mock_catalog)
         _stub_example_caches(monkeypatch, short_examples={})
 
         res = client.get('/api/books/word-details?word=quit')
@@ -134,7 +135,7 @@ class TestWordDetails:
         assert data['examples'][0]['en'] == 'He decided to quit last year.'
 
     def test_word_details_include_headword_family(self, client, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', _mock_catalog)
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _mock_catalog)
 
         res = client.get('/api/books/word-details?word=analysis')
 
@@ -145,7 +146,7 @@ class TestWordDetails:
         assert 'analytical' in derivative_words
 
     def test_word_details_fall_back_to_placeholder_derivatives(self, client, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', lambda: [])
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', lambda: [])
         _stub_example_caches(monkeypatch, short_examples={})
 
         res = client.get('/api/books/word-details?word=quit')
@@ -157,7 +158,7 @@ class TestWordDetails:
         assert data['examples'] == []
 
     def test_word_details_ignore_legacy_tables_during_runtime_reads(self, client, app, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', _mock_catalog)
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _mock_catalog)
 
         with app.app_context():
             root = WordRootDetail(
@@ -182,7 +183,7 @@ class TestWordDetails:
         assert data['root']['segments'][0]['text'] != 'legacyquit'
 
     def test_llm_enrichment_persists_english_and_examples(self, client, app, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', lambda: [{
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', lambda: [{
             'word': 'quit',
             'book_id': 'ielts_listening_premium',
             'book_title': 'Listening Premium',
@@ -243,7 +244,7 @@ class TestWordDetails:
         assert 'ielts_listening_premium' in {item['book_id'] for item in data['books']}
 
     def test_explicit_legacy_migration_backfills_catalog(self, app, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', lambda: [{
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', lambda: [{
             'word': 'quit',
             'book_id': 'book-a',
             'book_title': 'Book A',
@@ -306,7 +307,7 @@ class TestWordDetails:
             assert catalog_entry.get_examples()[0]['en'] == 'He decided to quit last year.'
 
     def test_word_notes_save_and_clear(self, client, app, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', _mock_catalog)
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _mock_catalog)
         client.post('/api/auth/register', json={
             'username': 'word-note-user',
             'password': 'password123',
@@ -334,7 +335,7 @@ class TestWordDetails:
             assert UserWordNote.query.count() == 0
 
     def test_llm_enrichment_stops_fast_on_quota_exhausted(self, app, monkeypatch):
-        monkeypatch.setattr(books_routes, '_build_global_word_search_catalog', lambda: [
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', lambda: [
             {
                 'word': 'quit',
                 'book_id': 'book-a',

@@ -1,85 +1,27 @@
-from models import UserWordNote
-from services.word_catalog_service import ensure_word_catalog_entry, normalize_word_key
+from flask import jsonify, request
 
-
-WORD_NOTE_LIMIT = 500
-
-
-def _serialize_note_for_user(user, word: str, normalized_word: str) -> dict:
-    if not user:
-        return {'word': word, 'content': '', 'updated_at': None}
-
-    record = UserWordNote.query.filter_by(
-        user_id=user.id,
-        normalized_word=normalized_word,
-    ).first()
-    if not record:
-        return {'word': word, 'content': '', 'updated_at': None}
-    return record.to_dict()
+from routes.middleware import token_required
+from services.books_confusable_service import resolve_optional_current_user
+from services.books_word_detail_service import (
+    build_word_details_response as _service_build_word_details_response,
+    save_word_detail_note_response as _service_save_word_detail_note_response,
+)
 
 
 @books_bp.route('/word-details', methods=['GET'])
 def get_word_details():
-    raw_word = (request.args.get('word') or '').strip()
-    if not raw_word:
-        return jsonify({'error': 'word is required'}), 400
-
-    catalog_entry, changed = ensure_word_catalog_entry(raw_word)
-    if changed:
-        db.session.commit()
-
-    current_user = _resolve_optional_current_user()
-    normalized_word = normalize_word_key(raw_word)
-    catalog_payload = catalog_entry.to_dict()
-    examples = _resolve_unified_examples(
-        raw_word,
-        fallback_examples=catalog_payload['examples'],
-        limit=1,
+    payload, status = _service_build_word_details_response(
+        request.args.get('word'),
+        resolve_optional_current_user(),
     )
-    return jsonify({
-        'word': raw_word,
-        'phonetic': catalog_payload['phonetic'],
-        'pos': catalog_payload['pos'],
-        'definition': catalog_payload['definition'],
-        'root': catalog_payload['root'],
-        'english': catalog_payload['english'],
-        'examples': examples,
-        'derivatives': catalog_payload['derivatives'],
-        'books': catalog_payload['books'],
-        'note': _serialize_note_for_user(current_user, raw_word, normalized_word),
-    }), 200
+    return jsonify(payload), status
 
 
 @books_bp.route('/word-details/note', methods=['PUT'])
 @token_required
 def save_word_detail_note(current_user):
-    data = request.get_json() or {}
-    raw_word = (data.get('word') or '').strip()
-    if not raw_word:
-        return jsonify({'error': 'word is required'}), 400
-
-    content = str(data.get('content') or '')[:WORD_NOTE_LIMIT]
-    normalized_word = normalize_word_key(raw_word)
-    record = UserWordNote.query.filter_by(
-        user_id=current_user.id,
-        normalized_word=normalized_word,
-    ).first()
-
-    if not content.strip():
-        if record:
-            db.session.delete(record)
-            db.session.commit()
-        return jsonify({'note': {'word': raw_word, 'content': '', 'updated_at': None}}), 200
-
-    if not record:
-        record = UserWordNote(
-            user_id=current_user.id,
-            word=raw_word,
-            normalized_word=normalized_word,
-        )
-        db.session.add(record)
-
-    record.word = raw_word
-    record.content = content
-    db.session.commit()
-    return jsonify({'note': record.to_dict()}), 200
+    payload, status = _service_save_word_detail_note_response(
+        current_user.id,
+        request.get_json() or {},
+    )
+    return jsonify(payload), status
