@@ -2,6 +2,7 @@ import logging
 import os
 import requests
 import json
+import time
 
 # Read .env directly to bypass MCP proxy env var interception
 _BACKEND_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -28,11 +29,19 @@ API_KEY_2 = _env.get('MINIMAX_API_KEY_2', '')
 # Use MiniMax-M2.7-highspeed for primary key, M2.7 for secondary
 DEFAULT_MODEL = "MiniMax-M2.7-highspeed"
 FALLBACK_MODEL = "MiniMax-M2.5"
+CONNECT_TIMEOUT_SECONDS = max(1, int(_env.get('LLM_CONNECT_TIMEOUT_SECONDS', '10')))
+READ_TIMEOUT_SECONDS = max(CONNECT_TIMEOUT_SECONDS, int(_env.get('LLM_READ_TIMEOUT_SECONDS', '90')))
+MAX_REQUEST_ATTEMPTS = max(1, int(_env.get('LLM_MAX_REQUEST_ATTEMPTS', '3')))
+RETRY_BACKOFF_SECONDS = max(0.0, float(_env.get('LLM_RETRY_BACKOFF_SECONDS', '0.75')))
+TRANSIENT_STATUS_CODES = {408, 425, 500, 502, 503, 504}
 
 # Track which key to use (simple round-robin for load balancing)
 _use_secondary_key = False
 # Track if primary key is rate-limited (429)
 _primary_rate_limited = False
+# Track models known to be unsupported on the primary key so repeated requests
+# can skip the guaranteed failure path and go straight to the secondary key.
+_primary_unsupported_models: set[str] = set()
 
 
 def _build_messages_url(base_url: str) -> str:
@@ -68,26 +77,92 @@ def _extract_error_message(resp: requests.Response) -> str:
     return str(error or data)
 
 
+def _build_timeout(stream: bool) -> tuple[int, int]:
+    read_timeout = READ_TIMEOUT_SECONDS
+    if stream:
+        read_timeout = max(read_timeout, 120)
+    return (CONNECT_TIMEOUT_SECONDS, read_timeout)
+
+
+def _should_retry_status(status_code: int) -> bool:
+    return status_code in TRANSIENT_STATUS_CODES
+
+
+def _is_model_unsupported_response(resp: requests.Response) -> bool:
+    return 'not support model' in _extract_error_message(resp).lower()
+
+
+def _should_retry_exception(exc: Exception) -> bool:
+    transient_errors = (
+        requests.exceptions.Timeout,
+        requests.exceptions.ConnectionError,
+        requests.exceptions.ChunkedEncodingError,
+    )
+    return isinstance(exc, transient_errors)
+
+
+def _sleep_before_retry(attempt: int, reason: str) -> None:
+    delay = RETRY_BACKOFF_SECONDS * attempt
+    if delay <= 0:
+        return
+    logging.warning(
+        "[LLM] Retrying attempt %s/%s after %s in %.2fs",
+        attempt + 1,
+        MAX_REQUEST_ATTEMPTS,
+        reason,
+        delay,
+    )
+    time.sleep(delay)
+
+
 def _post_messages_request(
     payload: dict,
     *,
     force_secondary: bool = False,
     allow_model_fallback: bool = True,
     stream: bool = False,
+    attempt: int = 1,
 ):
     global _primary_rate_limited
 
-    current_key, key_type = get_api_key_with_fallback(force_secondary=force_secondary)
+    current_key, key_type = get_api_key_with_fallback(
+        force_secondary=force_secondary,
+        model=str(payload.get('model', '') or ''),
+    )
     if not current_key:
         raise ValueError("MiniMax API key not found in .env file")
 
-    resp = requests.post(
-        _build_messages_url(BASE_URL),
-        json=payload,
-        headers=_build_headers(current_key, stream=stream),
-        timeout=60,
-        stream=stream,
-    )
+    try:
+        resp = requests.post(
+            _build_messages_url(BASE_URL),
+            json=payload,
+            headers=_build_headers(current_key, stream=stream),
+            timeout=_build_timeout(stream),
+            stream=stream,
+        )
+    except requests.exceptions.RequestException as exc:
+        if _should_retry_exception(exc) and attempt < MAX_REQUEST_ATTEMPTS:
+            if key_type == 'primary' and API_KEY_2 and not force_secondary:
+                logging.warning(
+                    "[LLM] Primary key request failed (%s), retrying with secondary key",
+                    type(exc).__name__,
+                )
+                return _post_messages_request(
+                    payload,
+                    force_secondary=True,
+                    allow_model_fallback=allow_model_fallback,
+                    stream=stream,
+                    attempt=attempt + 1,
+                )
+            _sleep_before_retry(attempt, type(exc).__name__)
+            return _post_messages_request(
+                payload,
+                force_secondary=force_secondary,
+                allow_model_fallback=allow_model_fallback,
+                stream=stream,
+                attempt=attempt + 1,
+            )
+        raise
 
     if resp.status_code == 429:
         if key_type == 'primary' and API_KEY_2:
@@ -98,13 +173,23 @@ def _post_messages_request(
                 force_secondary=True,
                 allow_model_fallback=allow_model_fallback,
                 stream=stream,
+                attempt=attempt + 1,
             )
-        raise RuntimeError("Both API keys are rate limited. Please try again later.")
+        if attempt < MAX_REQUEST_ATTEMPTS:
+            _sleep_before_retry(attempt, 'HTTP 429')
+            return _post_messages_request(
+                payload,
+                force_secondary=force_secondary,
+                allow_model_fallback=allow_model_fallback,
+                stream=stream,
+                attempt=attempt + 1,
+            )
+        raise RuntimeError("LLM provider rate limited. Please try again later.")
 
     if resp.status_code >= 500 and allow_model_fallback:
-        error_message = _extract_error_message(resp).lower()
-        if 'not support model' in error_message and payload.get('model') != FALLBACK_MODEL:
+        if _is_model_unsupported_response(resp) and payload.get('model') != FALLBACK_MODEL:
             if key_type == 'primary' and API_KEY_2 and not force_secondary:
+                _primary_unsupported_models.add(str(payload.get('model', '') or ''))
                 logging.warning(
                     "[LLM] Model %s unsupported on primary key, retrying with secondary key",
                     payload.get('model'),
@@ -114,6 +199,7 @@ def _post_messages_request(
                     force_secondary=True,
                     allow_model_fallback=allow_model_fallback,
                     stream=stream,
+                    attempt=attempt + 1,
                 )
             logging.warning(
                 "[LLM] Model %s unsupported for current token plan, falling back to %s",
@@ -127,7 +213,30 @@ def _post_messages_request(
                 force_secondary=force_secondary,
                 allow_model_fallback=False,
                 stream=stream,
+                attempt=attempt + 1,
             )
+
+    if _should_retry_status(resp.status_code) and attempt < MAX_REQUEST_ATTEMPTS:
+        if key_type == 'primary' and API_KEY_2 and not force_secondary:
+            logging.warning(
+                "[LLM] Primary key returned %s, retrying with secondary key",
+                resp.status_code,
+            )
+            return _post_messages_request(
+                payload,
+                force_secondary=True,
+                allow_model_fallback=allow_model_fallback,
+                stream=stream,
+                attempt=attempt + 1,
+            )
+        _sleep_before_retry(attempt, f'HTTP {resp.status_code}')
+        return _post_messages_request(
+            payload,
+            force_secondary=force_secondary,
+            allow_model_fallback=allow_model_fallback,
+            stream=stream,
+            attempt=attempt + 1,
+        )
 
     resp.raise_for_status()
     return resp
@@ -145,9 +254,11 @@ def get_api_key():
         return API_KEY_2  # Fallback to secondary if primary is empty
 
 
-def get_api_key_with_fallback(force_secondary=False):
+def get_api_key_with_fallback(force_secondary=False, model: str = ''):
     """Get API key, automatically falling back to secondary if primary is rate-limited."""
     if force_secondary and API_KEY_2:
+        return API_KEY_2, 'secondary'
+    elif model and model in _primary_unsupported_models and API_KEY_2:
         return API_KEY_2, 'secondary'
     elif _primary_rate_limited and API_KEY_2:
         return API_KEY_2, 'secondary'

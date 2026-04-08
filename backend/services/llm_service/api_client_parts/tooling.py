@@ -116,18 +116,18 @@ def web_search(query: str) -> str:
     Results are cached in the database for up to 7 days.
     """
     from datetime import datetime, timedelta
-    from models import db, SearchCache
+    from services import search_cache_repository
 
     # Prune expired cache entries (opportunistic, non-blocking on failure)
     try:
         cutoff = datetime.utcnow() - timedelta(days=_SEARCH_CACHE_TTL_DAYS)
-        SearchCache.query.filter(SearchCache.created_at < cutoff).delete(synchronize_session=False)
-        db.session.commit()
+        search_cache_repository.prune_search_cache_older_than(cutoff)
+        search_cache_repository.commit()
     except Exception:
-        db.session.rollback()
+        search_cache_repository.rollback()
 
     # Check cache (only fresh entries remain after prune above)
-    cached = SearchCache.query.filter_by(query=query).first()
+    cached = search_cache_repository.get_search_cache(query)
     if cached:
         return f"[Cached]\n{cached.result}"
 
@@ -151,11 +151,10 @@ def web_search(query: str) -> str:
 
     # Cache result
     try:
-        cache_entry = SearchCache(query=query, result=summary)
-        db.session.add(cache_entry)
-        db.session.commit()
+        search_cache_repository.create_search_cache(query, summary)
+        search_cache_repository.commit()
     except Exception:
-        pass
+        search_cache_repository.rollback()
 
     return summary
 
