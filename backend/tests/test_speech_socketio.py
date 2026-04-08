@@ -3,8 +3,8 @@ import threading
 import pytest
 import websocket
 
-from routes import speech_socketio
-from speech_service import app, socketio
+from services import asr_service
+from speech_service import app, resolve_socketio_async_mode, socketio
 
 
 def _namespace_sid(client):
@@ -17,22 +17,33 @@ def _namespace_sid(client):
 
 @pytest.fixture(autouse=True)
 def clear_active_sessions():
-    speech_socketio.active_sessions.clear()
+    asr_service.active_sessions.clear()
     yield
-    speech_socketio.active_sessions.clear()
+    asr_service.active_sessions.clear()
 
 
 def test_resolve_realtime_asr_model_falls_back_from_incompatible_model(monkeypatch):
     monkeypatch.setenv('REALTIME_ASR_MODEL', 'fun-asr-realtime-2025-09-15')
 
     assert (
-        speech_socketio._resolve_realtime_asr_model()
-        == speech_socketio.DEFAULT_REALTIME_ASR_MODEL
+        asr_service._resolve_realtime_asr_model()
+        == asr_service.DEFAULT_REALTIME_ASR_MODEL
     )
 
 
+def test_resolve_socketio_async_mode_prefers_websocket_capable_runtimes(monkeypatch):
+    def fake_find_spec(name):
+        if name in {'gevent', 'geventwebsocket'}:
+            return object()
+        return None
+
+    monkeypatch.setattr('speech_service.importlib.util.find_spec', fake_find_spec)
+
+    assert resolve_socketio_async_mode() == 'gevent'
+
+
 def test_extract_partial_transcript_supports_string_stash():
-    assert speech_socketio._extract_partial_transcript({
+    assert asr_service._extract_partial_transcript({
         'text': '',
         'stash': 'The widespread adoption',
     }) == 'The widespread adoption'
@@ -49,7 +60,7 @@ def test_stop_recognition_ignores_closed_connection_errors():
     client = socketio.test_client(app, namespace='/speech')
     client.get_received('/speech')
     sid = _namespace_sid(client)
-    speech_socketio.active_sessions[sid] = {
+    asr_service.active_sessions[sid] = {
         'ws': ClosedWebSocket(),
         'ready': True,
         'closing': False,
@@ -65,8 +76,8 @@ def test_stop_recognition_ignores_closed_connection_errors():
 
     assert 'recognition_stopped' in names
     assert 'recognition_error' not in names
-    assert speech_socketio.active_sessions[sid]['ready'] is False
-    assert speech_socketio.active_sessions[sid]['closing'] is True
+    assert asr_service.active_sessions[sid]['ready'] is False
+    assert asr_service.active_sessions[sid]['closing'] is True
 
     client.disconnect(namespace='/speech')
 
@@ -100,14 +111,14 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
         return ws
 
     monkeypatch.setattr(websocket, 'WebSocketApp', fake_websocket_app)
-    monkeypatch.setattr(speech_socketio, 'spawn_background', lambda target: spawn_calls.append(target))
-    monkeypatch.setattr(speech_socketio, 'API_KEY', 'test-key')
+    monkeypatch.setattr(asr_service, 'spawn_background', lambda target: spawn_calls.append(target))
+    monkeypatch.setenv('DASHSCOPE_API_KEY', 'test-key')
 
     client = socketio.test_client(app, namespace='/speech')
     client.get_received('/speech')
     sid = _namespace_sid(client)
     old_ws = ExistingWebSocket()
-    speech_socketio.active_sessions[sid] = {
+    asr_service.active_sessions[sid] = {
         'ws': old_ws,
         'ready': True,
         'closing': False,
@@ -125,8 +136,8 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
     assert len(created_ws) == 1
     assert len(spawn_calls) == 1
     assert spawn_calls[0].__self__ is created_ws[0]
-    assert speech_socketio.active_sessions[sid]['ws'] is created_ws[0]
-    assert speech_socketio.active_sessions[sid]['enable_vad'] is False
-    assert speech_socketio.active_sessions[sid]['audio_queue'] == []
+    assert asr_service.active_sessions[sid]['ws'] is created_ws[0]
+    assert asr_service.active_sessions[sid]['enable_vad'] is False
+    assert asr_service.active_sessions[sid]['audio_queue'] == []
 
     client.disconnect(namespace='/speech')
