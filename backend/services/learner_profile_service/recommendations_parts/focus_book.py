@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from datetime import datetime
+
+from services import books_catalog_service, books_registry_service, learner_profile_repository
+
+
 def _parse_iso_datetime(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -8,12 +15,7 @@ def _parse_iso_datetime(value: str | None) -> datetime | None:
 
 
 def _pick_focus_book(user_id: int) -> dict | None:
-    added_rows = (
-        UserAddedBook.query
-        .filter_by(user_id=user_id)
-        .order_by(UserAddedBook.added_at.asc(), UserAddedBook.id.asc())
-        .all()
-    )
+    added_rows = learner_profile_repository.list_user_added_books_for_focus(user_id)
     if not added_rows:
         return None
 
@@ -21,43 +23,30 @@ def _pick_focus_book(user_id: int) -> dict | None:
     if not added_book_ids:
         return None
 
-    from models import CustomBook
-    from routes.books import VOCAB_BOOKS, _serialize_effective_book_progress
-
     added_rank = {book_id: index for index, book_id in enumerate(added_book_ids)}
     added_book_id_set = set(added_book_ids)
     progress_by_id = {
         row.book_id: row
-        for row in UserBookProgress.query.filter_by(user_id=user_id).all()
+        for row in learner_profile_repository.list_user_book_progress_rows(user_id)
         if row.book_id in added_book_id_set
     }
     chapter_by_book: dict[str, list[UserChapterProgress]] = {}
-    for row in UserChapterProgress.query.filter_by(user_id=user_id).all():
+    for row in learner_profile_repository.list_user_chapter_progress_rows(user_id):
         if row.book_id not in added_book_id_set:
             continue
         chapter_by_book.setdefault(row.book_id, []).append(row)
 
-    book_title_map = {book['id']: book.get('title') or book['id'] for book in VOCAB_BOOKS}
-    book_word_count_map = {
-        book['id']: max(0, int(book.get('word_count') or 0))
-        for book in VOCAB_BOOKS
-    }
+    book_title_map = books_registry_service.get_vocab_book_title_map()
+    book_word_count_map = books_registry_service.get_vocab_book_word_count_map()
 
-    custom_books = (
-        CustomBook.query
-        .filter(
-            CustomBook.user_id == user_id,
-            CustomBook.id.in_(added_book_ids),
-        )
-        .all()
-    )
+    custom_books = learner_profile_repository.list_custom_books_for_ids(user_id, added_book_ids)
     for row in custom_books:
         book_title_map[row.id] = row.title or row.id
         book_word_count_map[row.id] = max(0, int(row.word_count or 0))
 
     candidates: list[dict] = []
     for book_id in added_book_ids:
-        effective = _serialize_effective_book_progress(
+        effective = books_catalog_service.serialize_effective_book_progress(
             book_id,
             progress_record=progress_by_id.get(book_id),
             chapter_records=chapter_by_book.get(book_id, []),

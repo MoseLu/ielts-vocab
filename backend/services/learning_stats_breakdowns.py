@@ -8,6 +8,7 @@ from models import (
     UserStudySession,
     UserWrongWord,
 )
+from services import learning_stats_repository
 from services.learning_stats_modes import normalize_stats_mode
 
 
@@ -56,12 +57,7 @@ def _serialize_wrong_top_item(
 
 
 def build_wrong_top_lists(*, user_id: int) -> tuple[list[dict], list[dict]]:
-    rows = (
-        UserWrongWord.query
-        .filter_by(user_id=user_id)
-        .order_by(UserWrongWord.wrong_count.desc(), UserWrongWord.word.asc())
-        .all()
-    )
+    rows = learning_stats_repository.list_user_wrong_words_for_stats(user_id)
 
     history_items: list[dict] = []
     pending_items: list[dict] = []
@@ -200,7 +196,7 @@ def build_chapter_breakdowns(
     chapter_breakdown.sort(key=lambda item: (item['book_id'], item['chapter_id']))
 
     chapter_mode_stats = []
-    for chapter_mode_progress in UserChapterModeProgress.query.filter_by(user_id=user_id).all():
+    for chapter_mode_progress in learning_stats_repository.list_user_chapter_mode_progress_rows(user_id):
         total_attempted = (chapter_mode_progress.correct_count or 0) + (chapter_mode_progress.wrong_count or 0)
         if total_attempted == 0:
             continue

@@ -1,16 +1,7 @@
 from datetime import datetime, timedelta
 
-from models import (
-    UserAddedBook,
-    UserBookProgress,
-    UserChapterProgress,
-    UserLearningEvent,
-    UserLearningNote,
-    UserQuickMemoryRecord,
-    UserSmartWordStat,
-    UserStudySession,
-    UserWrongWord,
-)
+from models import UserQuickMemoryRecord
+from services import learner_profile_repository
 from services.learning_events import build_learning_activity_timeline
 from services.local_time import resolve_local_day_window, utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 from services.memory_topics import build_memory_topics
@@ -20,7 +11,7 @@ from services.study_sessions import get_live_pending_session_snapshot, get_sessi
 MODE_LABELS = {
     'smart': '智能练习',
     'listening': '听音选义',
-    'meaning': '释义拼词',
+    'meaning': '默写模式',
     'dictation': '听写',
     'radio': '随身听',
     'quickmemory': '速记',
@@ -29,7 +20,7 @@ MODE_LABELS = {
 
 DIMENSION_LABELS = {
     'listening': '听音辨义',
-    'meaning': '释义拼词（会想）',
+    'meaning': '默写模式',
     'dictation': '拼写默写',
 }
 
@@ -39,7 +30,7 @@ FOUR_DIMENSION_CONFIG = {
         'definition': '看到英文单词后，1 秒内说出核心中文义。',
         'schedule_days': [1, 3, 7, 30],
         'mastery_rule': '按第1/3/7/30天节点连续答对，才算认读维度稳定。',
-        'evidence_label': '速记记录 + 释义拼词（会想）',
+        'evidence_label': '速记记录 + 默写模式',
     },
     'listening': {
         'label': '听力',
@@ -78,12 +69,9 @@ def _resolve_target_date(target_date: str | None) -> tuple[str, datetime, dateti
 
 
 def _calc_streak_days(user_id: int, target_date: str) -> int:
-    rows = (
-        UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(UserStudySession.words_studied > 0)
-        .order_by(UserStudySession.started_at.desc())
-        .all()
+    rows = learner_profile_repository.list_user_study_sessions_with_words(
+        user_id,
+        descending=True,
     )
     if not rows:
         return 0

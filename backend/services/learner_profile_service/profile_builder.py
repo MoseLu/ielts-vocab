@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from services import learner_profile_repository
+
+
 def _build_daily_plan(
     *,
     summary: dict,
@@ -197,16 +202,11 @@ def build_learner_profile(user_id: int, target_date: str | None = None, view: st
     date_str, start_dt, end_dt = _resolve_target_date(target_date)
     now_utc = utc_now_naive()
 
-    day_session_candidates = (
-        UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(
-            UserStudySession.started_at < end_dt,
-            UserStudySession.analytics_clause(),
-        )
-        .order_by(UserStudySession.started_at.asc())
-        .all()
+    all_sessions = learner_profile_repository.list_user_analytics_sessions(
+        user_id,
+        before=end_dt,
     )
+    day_session_candidates = all_sessions
     day_sessions = []
     day_session_metrics = []
     for session in day_session_candidates:
@@ -220,48 +220,25 @@ def build_learner_profile(user_id: int, target_date: str | None = None, view: st
             continue
         day_sessions.append(session)
         day_session_metrics.append(window_metrics)
-    all_sessions = (
-        UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(
-            UserStudySession.started_at < end_dt,
-            UserStudySession.analytics_clause(),
-        )
-        .order_by(UserStudySession.started_at.asc())
-        .all()
-    )
-    smart_rows = UserSmartWordStat.query.filter_by(user_id=user_id).all()
-    wrong_words = (
-        UserWrongWord.query
-        .filter_by(user_id=user_id)
-        .order_by(UserWrongWord.wrong_count.desc(), UserWrongWord.updated_at.desc())
-        .all()
-    )
+    smart_rows = learner_profile_repository.list_user_smart_word_stats(user_id)
+    wrong_words = learner_profile_repository.list_user_wrong_words_for_profile(user_id)
     qm_rows = load_user_quick_memory_records(user_id)
     dimension_events = []
     if profile_view != 'stats':
-        dimension_events = (
-            UserLearningEvent.query
-            .filter_by(user_id=user_id)
-            .filter(
-                UserLearningEvent.occurred_at < end_dt,
-                UserLearningEvent.event_type.in_((
-                    'listening_review',
-                    'writing_review',
-                    'pronunciation_check',
-                    'speaking_simulation',
-                )),
-            )
-            .order_by(UserLearningEvent.occurred_at.asc(), UserLearningEvent.id.asc())
-            .all()
+        dimension_events = learner_profile_repository.list_user_learning_events(
+            user_id,
+            before=end_dt,
+            event_types=(
+                'listening_review',
+                'writing_review',
+                'pronunciation_check',
+                'speaking_simulation',
+            ),
         )
-    notes = (
-        UserLearningNote.query
-        .filter_by(user_id=user_id)
-        .filter(UserLearningNote.created_at < end_dt)
-        .order_by(UserLearningNote.created_at.desc())
-        .limit(80)
-        .all()
+    notes = learner_profile_repository.list_user_learning_notes(
+        user_id,
+        before=end_dt,
+        limit=80,
     )
 
     now_ms = utc_naive_to_epoch_ms(now_utc)

@@ -1,3 +1,41 @@
+from __future__ import annotations
+
+from collections import defaultdict
+from datetime import datetime
+from typing import Callable
+
+from models import UserStudySession
+from services import learning_stats_repository
+from services.learning_stats_breakdowns import (
+    build_chapter_breakdowns,
+    build_mode_breakdown,
+    build_wrong_top_lists,
+    resolve_trend_direction,
+    resolve_weakest_mode,
+)
+from services.learning_stats_modes import normalize_stats_mode, stats_mode_candidates
+from services.learning_stats_service_parts.helpers import (
+    _accuracy,
+    _append_live_pending_duration,
+    _build_day_windows,
+    _build_daily_series,
+    _build_fallback_daily_series,
+    _build_filter_options,
+    _build_period_summary_from_sessions,
+    _empty_daily_bucket,
+)
+from services.local_time import (
+    current_local_date,
+    recent_local_day_range,
+    resolve_local_day_window,
+    utc_naive_to_local_date_key,
+)
+from services.study_sessions import (
+    get_live_pending_session_snapshot,
+    get_session_window_metrics,
+)
+
+
 def build_learning_stats_payload(
     *,
     user_id: int,
@@ -19,17 +57,12 @@ def build_learning_stats_payload(
     _, _, range_end = resolve_local_day_window(date_keys[-1], now_utc)
     day_windows = _build_day_windows(date_keys, now_utc)
 
-    query = UserStudySession.query.filter(
-        UserStudySession.user_id == user_id,
-        UserStudySession.started_at < range_end,
-        UserStudySession.analytics_clause(),
+    session_candidates = learning_stats_repository.list_user_analytics_sessions(
+        user_id,
+        before=range_end,
+        book_id=book_id_filter,
+        mode_candidates=mode_filter_candidates,
     )
-    if book_id_filter:
-        query = query.filter(UserStudySession.book_id == book_id_filter)
-    if mode_filter_candidates:
-        query = query.filter(UserStudySession.mode.in_(mode_filter_candidates))
-
-    session_candidates = query.all()
     sessions: list[UserStudySession] = []
     daily = defaultdict(_empty_daily_bucket)
 

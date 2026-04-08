@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import routes.ai as ai_routes
 from models import User, UserChapterProgress, UserQuickMemoryRecord, UserStudySession, UserWrongWord, db
+from services import ai_route_support_service as route_support_service
 
 
 def register_and_login(client, username='stats-user', password='password123'):
@@ -50,6 +51,7 @@ def test_learning_stats_ignores_empty_started_sessions(client, app, monkeypatch)
         db.session.commit()
 
     monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: fixed_now)
+    monkeypatch.setattr(route_support_service, 'utc_now_naive', lambda: fixed_now)
     response = client.get('/api/ai/learning-stats?days=7')
 
     assert response.status_code == 200
@@ -306,6 +308,7 @@ def test_learning_stats_includes_recent_live_pending_session_duration(client, ap
         db.session.commit()
 
     monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: now)
+    monkeypatch.setattr(route_support_service, 'utc_now_naive', lambda: now)
     response = client.get('/api/ai/learning-stats?days=7')
 
     assert response.status_code == 200
@@ -328,6 +331,7 @@ def test_learning_stats_uses_local_calendar_day_for_today_counts(client, app, mo
 
     fixed_now = datetime(2026, 4, 3, 6, 8, 53)
     monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: fixed_now)
+    monkeypatch.setattr(route_support_service, 'utc_now_naive', lambda: fixed_now)
 
     with app.app_context():
         user = User.query.filter_by(username='local-day-stats-user').first()
@@ -377,6 +381,7 @@ def test_learning_stats_splits_cross_midnight_sessions_into_today(client, app, m
 
     fixed_now = datetime(2026, 4, 5, 0, 40, 0)
     monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: fixed_now)
+    monkeypatch.setattr(route_support_service, 'utc_now_naive', lambda: fixed_now)
 
     with app.app_context():
         user = User.query.filter_by(username='cross-midnight-stats-user').first()

@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 
 import routes.books as books_routes
+import services.books_registry_service as books_registry_service
 import services.learner_profile as learner_profile_service
 from models import (
     User,
@@ -15,8 +16,6 @@ from models import (
     UserWrongWord,
     db,
 )
-
-
 def register_and_login(client, username='profile-user', password='password123'):
     client.post('/api/auth/register', json={
         'username': username,
@@ -28,6 +27,13 @@ def register_and_login(client, username='profile-user', password='password123'):
         'password': password,
     })
     assert res.status_code == 200
+def patch_vocab_books(monkeypatch, books):
+    normalized_books = [
+        {'file': f'test-book-{index}.json', 'has_chapters': True, **book}
+        for index, book in enumerate(books, start=1)
+    ]
+    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', normalized_books, raising=False)
+    monkeypatch.setattr(books_registry_service, 'VOCAB_BOOKS', normalized_books, raising=False)
 
 
 def test_learner_profile_endpoint_returns_focus_words_dimensions_and_topics(client, app):
@@ -437,9 +443,9 @@ def test_learner_profile_daily_plan_marks_due_error_and_focus_book_pending(clien
 
     now = datetime(2026, 4, 4, 4, 0, 0)
     monkeypatch.setattr(learner_profile_service, 'utc_now_naive', lambda: now)
-    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
+    patch_vocab_books(monkeypatch, [
         {'id': 'book-a', 'title': 'Book A', 'word_count': 100},
-    ], raising=False)
+    ])
 
     with app.app_context():
         user = User.query.filter_by(username='daily-plan-pending-user').first()

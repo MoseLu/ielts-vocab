@@ -1,13 +1,10 @@
+from services.books_registry_service import get_vocab_book_title_map
 from services.learning_stats_service import build_learning_stats_payload
 from services.study_sessions import normalize_chapter_id, start_or_reuse_study_session
 
 
 def _resolve_book_title_map() -> dict[str, str]:
-    try:
-        from routes.books import VOCAB_BOOKS
-        return {book['id']: book['title'] for book in VOCAB_BOOKS}
-    except Exception:
-        return {}
+    return get_vocab_book_title_map()
 
 
 def _normalize_start_session_mode(value) -> str:

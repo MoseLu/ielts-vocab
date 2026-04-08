@@ -3,9 +3,9 @@ def test_learner_profile_daily_plan_marks_completed_tasks_after_today_activity(c
 
     now = datetime(2026, 4, 4, 4, 0, 0)
     monkeypatch.setattr(learner_profile_service, 'utc_now_naive', lambda: now)
-    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
+    patch_vocab_books(monkeypatch, [
         {'id': 'book-a', 'title': 'Book A', 'word_count': 100},
-    ], raising=False)
+    ])
 
     with app.app_context():
         user = User.query.filter_by(username='daily-plan-complete-user').first()
@@ -91,9 +91,9 @@ def test_learner_profile_daily_plan_keeps_focus_book_pending_for_duration_only_b
 
     now = datetime(2026, 4, 4, 4, 0, 0)
     monkeypatch.setattr(learner_profile_service, 'utc_now_naive', lambda: now)
-    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
+    patch_vocab_books(monkeypatch, [
         {'id': 'book-a', 'title': 'Book A', 'word_count': 100},
-    ], raising=False)
+    ])
 
     with app.app_context():
         user = User.query.filter_by(username='daily-plan-duration-only-user').first()
@@ -151,9 +151,9 @@ def test_learner_profile_daily_plan_keeps_focus_book_pending_for_same_day_progre
 
     now = datetime(2026, 4, 4, 4, 0, 0)
     monkeypatch.setattr(learner_profile_service, 'utc_now_naive', lambda: now)
-    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
+    patch_vocab_books(monkeypatch, [
         {'id': 'book-a', 'title': 'Book A', 'word_count': 100},
-    ], raising=False)
+    ])
 
     with app.app_context():
         user = User.query.filter_by(username='daily-plan-progress-touch-user').first()
@@ -185,9 +185,9 @@ def test_learner_profile_daily_plan_keeps_focus_book_pending_for_quickmemory_rev
 
     now = datetime(2026, 4, 4, 4, 0, 0)
     monkeypatch.setattr(learner_profile_service, 'utc_now_naive', lambda: now)
-    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
+    patch_vocab_books(monkeypatch, [
         {'id': 'book-a', 'title': 'Book A', 'word_count': 100},
-    ], raising=False)
+    ])
 
     with app.app_context():
         user = User.query.filter_by(username='daily-plan-quickmemory-focus-user').first()
@@ -245,9 +245,9 @@ def test_learner_profile_daily_plan_falls_back_to_add_book_when_none_added(clien
 
     now = datetime(2026, 4, 4, 4, 0, 0)
     monkeypatch.setattr(learner_profile_service, 'utc_now_naive', lambda: now)
-    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
+    patch_vocab_books(monkeypatch, [
         {'id': 'book-a', 'title': 'Book A', 'word_count': 100},
-    ], raising=False)
+    ])
 
     response = client.get('/api/ai/learner-profile?date=2026-04-04')
 
