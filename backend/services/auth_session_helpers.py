@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import jwt
 from flask import has_request_context, request
 
-from models import RateLimitBucket, RevokedToken, User
+from services import auth_repository
 
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$')
 _AVATAR_DATA_URL_RE = re.compile(
@@ -28,7 +28,7 @@ def rate_limit_bucket_key(ip: str, purpose: str, subject: str | None = None) -> 
 
 
 def check_rate_limit(app, ip: str, purpose: str = 'login', subject: str | None = None) -> tuple[bool, int]:
-    return RateLimitBucket.check_and_increment(
+    return auth_repository.check_rate_limit(
         ip_address=rate_limit_bucket_key(ip, purpose, subject),
         purpose=purpose,
         max_attempts=app.config['LOGIN_MAX_ATTEMPTS'],
@@ -37,22 +37,17 @@ def check_rate_limit(app, ip: str, purpose: str = 'login', subject: str | None =
 
 
 def reset_rate_limit(ip: str, purpose: str = 'login', subject: str | None = None):
-    RateLimitBucket.reset(
+    auth_repository.reset_rate_limit(
         ip_address=rate_limit_bucket_key(ip, purpose, subject),
         purpose=purpose,
     )
 
 
 def find_user_by_identifier(identifier: str):
-    if '@' in identifier:
-        return User.query.filter_by(email=identifier).first()
-    user = User.query.filter_by(username=identifier).first()
-    if not user:
-        user = User.query.filter_by(email=identifier).first()
-    return user
+    return auth_repository.find_user_by_identifier(identifier)
 
 
-def login_rate_limit_subject(identifier: str, user: User | None) -> str:
+def login_rate_limit_subject(identifier: str, user) -> str:
     if user is not None:
         return f'user:{user.id}'
     return f'identifier:{identifier.strip().casefold()}'
@@ -217,6 +212,9 @@ def revoke_token_if_present(app, token: str | None):
         payload = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
         jti = payload.get('jti')
         if jti:
-            RevokedToken.revoke(jti, datetime.utcfromtimestamp(payload['exp']))
+            auth_repository.revoke_token(
+                jti,
+                expires_at=datetime.utcfromtimestamp(payload['exp']),
+            )
     except Exception:
         pass

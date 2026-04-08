@@ -1,6 +1,6 @@
 # ── Tests for backend/routes/auth.py email flows ─────────────────────────────
 
-from models import EmailVerificationCode
+from models import EmailVerificationCode, User
 
 
 class TestSendCode:
@@ -51,6 +51,28 @@ class TestBindEmail:
         assert res.status_code == 400
         assert '错误' in res.get_json()['error']
 
+    def test_bind_email_success_updates_user(self, client, app, db):
+        reg = client.post('/api/auth/register', json={
+            'username': 'bind-success-user', 'password': 'password123',
+        })
+        user_id = reg.get_json()['user']['id']
+        with app.app_context():
+            code = EmailVerificationCode.create_for(
+                'bound@example.com',
+                'bind_email',
+                user_id=user_id,
+            ).code
+
+        res = client.post('/api/auth/bind-email', json={
+            'email': 'bound@example.com', 'code': code,
+        })
+
+        assert res.status_code == 200
+        assert res.get_json()['user']['email'] == 'bound@example.com'
+        with app.app_context():
+            user = db.session.get(User, user_id)
+            assert user.email == 'bound@example.com'
+
 
 class TestForgotPassword:
     def test_forgot_password_unknown_email(self, client):
@@ -91,3 +113,32 @@ class TestResetPassword:
             'email': 'alice@example.com', 'code': '000000', 'password': '123',
         })
         assert res.status_code == 400
+
+    def test_reset_password_success_updates_password_hash(self, client, app):
+        client.post('/api/auth/register', json={
+            'username': 'reset-success-user',
+            'password': 'password123',
+            'email': 'reset-success@example.com',
+        })
+        client.post('/api/auth/forgot-password', json={'email': 'reset-success@example.com'})
+
+        with app.app_context():
+            record = EmailVerificationCode.query.filter_by(
+                email='reset-success@example.com',
+                purpose='reset_password',
+                used=False,
+            ).order_by(EmailVerificationCode.created_at.desc()).first()
+            assert record is not None
+            code = record.code
+
+        res = client.post('/api/auth/reset-password', json={
+            'email': 'reset-success@example.com',
+            'code': code,
+            'password': 'newpassword123',
+        })
+
+        assert res.status_code == 200
+        with app.app_context():
+            user = User.query.filter_by(email='reset-success@example.com').first()
+            assert user is not None
+            assert user.check_password('newpassword123') is True

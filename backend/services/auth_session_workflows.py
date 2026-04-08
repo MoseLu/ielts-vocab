@@ -4,7 +4,7 @@ from datetime import datetime
 
 import jwt
 
-from models import RevokedToken, User, db
+from services import auth_repository
 from services.auth_session_helpers import (
     check_rate_limit,
     find_user_by_identifier,
@@ -31,21 +31,22 @@ def perform_register(app, request, data: dict) -> tuple[dict, int, int | None]:
     if not password or len(password) < 6:
         log_registration_audit(app, request, outcome='rejected', reason='short_password', username=username, email=email)
         return {'error': '密码至少6个字符'}, 400, None
-    if User.query.filter_by(username=username).first():
+    if auth_repository.get_user_by_username(username):
         log_registration_audit(app, request, outcome='rejected', reason='duplicate_username', username=username, email=email)
         return {'error': '用户名已被使用'}, 400, None
     if email:
         if not validate_email(email):
             log_registration_audit(app, request, outcome='rejected', reason='invalid_email', username=username, email=email)
             return {'error': '邮箱格式不正确'}, 400, None
-        if User.query.filter_by(email=email).first():
+        if auth_repository.get_user_by_email(email):
             log_registration_audit(app, request, outcome='rejected', reason='duplicate_email', username=username, email=email)
             return {'error': '该邮箱已被注册'}, 400, None
 
-    user = User(email=email or None, username=username)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
+    user = auth_repository.create_user(
+        username=username,
+        email=email or None,
+        password=password,
+    )
     log_registration_audit(
         app,
         request,
@@ -109,22 +110,25 @@ def perform_refresh(app, refresh_token: str | None) -> tuple[dict, int, int | No
         return {'error': '登录凭证类型错误', 'code': 'WRONG_TOKEN_TYPE'}, 401, None
 
     old_jti = payload.get('jti')
-    if old_jti and RevokedToken.is_revoked(old_jti):
+    if old_jti and auth_repository.is_token_revoked(old_jti):
         try:
-            victim = User.query.get(payload['user_id'])
+            victim = auth_repository.get_user(payload['user_id'])
             if victim:
                 victim.tokens_revoked_before = datetime.utcnow()
-                db.session.commit()
+                auth_repository.commit_user(victim)
         except Exception:
             pass
         return {'error': '登录凭证已失效，请重新登录', 'code': 'TOKEN_REVOKED'}, 401, None
 
-    user = User.query.get(payload['user_id'])
+    user = auth_repository.get_user(payload['user_id'])
     if not user:
         return {'error': '用户不存在', 'code': 'USER_NOT_FOUND'}, 401, None
 
     if old_jti:
-        RevokedToken.revoke(old_jti, datetime.utcfromtimestamp(payload['exp']))
+        auth_repository.revoke_token(
+            old_jti,
+            expires_at=datetime.utcfromtimestamp(payload['exp']),
+        )
 
     return {
         'message': 'ok',
@@ -137,7 +141,7 @@ def perform_logout(app, access_token: str | None, refresh_token: str | None) -> 
     revoke_token_if_present(app, access_token)
     revoke_token_if_present(app, refresh_token)
     try:
-        RevokedToken.prune_expired()
+        auth_repository.prune_expired_revoked_tokens()
     except Exception:
         pass
     return {'message': '已退出登录'}, 200
@@ -159,5 +163,5 @@ def update_avatar(current_user, data: dict) -> tuple[dict, int]:
     if error:
         return {'error': error}, 400
     current_user.avatar_url = avatar_url
-    db.session.commit()
+    auth_repository.commit_user(current_user)
     return {'message': '头像已更新', 'user': current_user.to_dict()}, 200
