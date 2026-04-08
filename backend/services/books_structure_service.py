@@ -155,8 +155,10 @@ def serialize_effective_book_progress(
     chapter_wrong_count = sum(max(int(record.wrong_count or 0), 0) for record in chapter_records)
 
     total_words = get_book_word_count(book_id, user_id=user_id)
-    total_chapters = get_book_chapter_count(book_id, user_id=user_id) if chapter_records else 0
+    total_chapters = get_book_chapter_count(book_id, user_id=user_id)
     completed_chapter_count = sum(1 for record in chapter_records if bool(record.is_completed))
+    if total_chapters > 0:
+        completed_chapter_count = min(completed_chapter_count, total_chapters)
     all_chapters_completed = total_chapters > 0 and completed_chapter_count >= total_chapters
 
     effective_current_index = chapter_words_learned if chapter_records else base_current_index
@@ -178,6 +180,12 @@ def serialize_effective_book_progress(
         )
         or (bool(chapter_records) and total_words > 0 and chapter_words_learned >= total_words)
     )
+    progress_percent = 0
+    if total_words > 0:
+        progress_percent = round(effective_current_index / total_words * 100)
+        progress_percent = max(0, min(progress_percent, 100))
+        if effective_is_completed:
+            progress_percent = 100
 
     updated_candidates = []
     if progress_record and progress_record.updated_at:
@@ -190,6 +198,10 @@ def serialize_effective_book_progress(
     return {
         'book_id': book_id,
         'current_index': effective_current_index,
+        'total_words': total_words,
+        'total_chapters': total_chapters,
+        'completed_chapters': completed_chapter_count,
+        'progress_percent': progress_percent,
         'correct_count': max(base_correct_count, chapter_correct_count),
         'wrong_count': max(base_wrong_count, chapter_wrong_count),
         'is_completed': effective_is_completed,

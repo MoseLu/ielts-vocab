@@ -6,9 +6,10 @@ from models import (
 from sqlalchemy import func, desc
 from datetime import datetime, timedelta
 from routes.middleware import admin_required
-from routes.books import _serialize_effective_book_progress
+from routes.books import _favorite_words_query, _serialize_effective_book_progress
 
 admin_bp = Blueprint('admin', __name__)
+EXCLUDED_ADMIN_PROGRESS_BOOK_IDS = {'ielts_confusable_match'}
 
 
 def init_admin(app_instance):
@@ -27,10 +28,13 @@ def _get_effective_book_progress(user_id):
     book_ids = set(progress_by_book) | set(chapters_by_book)
     effective_rows = []
     for book_id in book_ids:
+        if book_id in EXCLUDED_ADMIN_PROGRESS_BOOK_IDS:
+            continue
         progress = _serialize_effective_book_progress(
             book_id,
             progress_record=progress_by_book.get(book_id),
             chapter_records=chapters_by_book.get(book_id, []),
+            user_id=user_id,
         )
         if progress:
             effective_rows.append(progress)
@@ -338,4 +342,3 @@ def get_users(current_user):
 
 
 # ── Single user detail ─────────────────────────────────────────────────────────
-

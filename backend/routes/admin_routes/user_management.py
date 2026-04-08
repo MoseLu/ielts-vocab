@@ -54,6 +54,10 @@ def _get_sorted_wrong_words(user_id, sort_mode):
     return wrong_words[:50]
 
 
+def _get_favorite_words(user_id):
+    return [row.to_dict() for row in _favorite_words_query(user_id).all()]
+
+
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
 @admin_required
 def get_user_detail(current_user, user_id):
@@ -99,6 +103,7 @@ def get_user_detail(current_user, user_id):
 
     # Wrong words (default by latest error time, fallback by wrong_count)
     wrong_words = _get_sorted_wrong_words(user_id, wrong_words_sort)
+    favorite_words = _get_favorite_words(user_id)
 
     # Study sessions — filtered, latest 100
     session_q = _apply_filters(
@@ -202,6 +207,7 @@ def get_user_detail(current_user, user_id):
         'book_progress': book_progress,
         'chapter_progress': chapter_progress,
         'wrong_words': wrong_words,
+        'favorite_words': favorite_words,
         'sessions': sessions,
         'daily_study': daily_study,
         'chapter_daily': chapter_daily,

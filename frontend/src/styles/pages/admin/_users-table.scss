@@ -4,7 +4,7 @@
 
 .admin-table th {
   padding: 11px 14px;
-  text-align: left;
+  text-align: center;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-tertiary);
@@ -31,6 +31,7 @@
   color: var(--text-primary);
   vertical-align: middle;
   background: transparent;
+  text-align: center;
 }
 
 .admin-table tbody tr:last-child td { border-bottom: none; }
@@ -38,7 +39,7 @@
 .admin-user-row { cursor: pointer; }
 .admin-user-row:hover td { background: var(--surface-hover) !important; }
 
-@media (max-width: 880px) {
+@media (max-width: 1180px) {
   .admin-dashboard {
     padding: 10px;
   }
@@ -46,6 +47,20 @@
   .admin-tabs {
     width: 100%;
     overflow-x: auto;
+  }
+
+  .admin-search-row {
+    align-items: stretch;
+  }
+
+  .admin-search-input {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .admin-total-hint {
+    width: 100%;
+    margin-left: 0;
   }
 
   .admin-table {
@@ -90,6 +105,7 @@
     padding: 10px 0 0;
     border-bottom: none;
     background: transparent !important;
+    overflow-wrap: anywhere;
   }
 
   .admin-table td:first-child {
@@ -107,20 +123,45 @@
     color: var(--text-tertiary);
   }
 
-  .admin-table td[data-label="User"]::before {
+  .admin-table td[data-label="用户"]::before {
     display: none;
   }
 
   .admin-user-name-cell {
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .admin-pagination {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 680px) {
+  .admin-search-btn,
+  .admin-search-clear {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: center;
   }
 }
 
 .admin-user-name-cell {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+}
+
+.admin-user-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin-user-name--admin {
+  color: #b98512;
 }
 
 .admin-avatar {
@@ -145,19 +186,9 @@
   flex-shrink: 0;
 }
 .admin-avatar-placeholder.large {
-  width: 48px;
-  height: 48px;
-  font-size: 18px;
-}
-
-.admin-badge {
-  font-size: 10px;
-  font-weight: 700;
-  background: var(--warning-bg);
-  color: var(--warning);
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid color-mix(in srgb, var(--warning) 28%, transparent);
+  width: 44px;
+  height: 44px;
+  font-size: 16px;
 }
 
 .admin-cell-muted { color: var(--text-tertiary) !important; }
@@ -233,6 +264,7 @@
 }
 
 .admin-modal-overlay.admin-modal-overlay-fs {
+  inset: var(--header-height) 0 0 0;
   padding: 0;
   align-items: stretch;
 }
@@ -310,22 +342,33 @@
 .admin-modal-fs-sidebar .admin-detail-tabs {
   flex-direction: column;
   border-bottom: none;
-  padding: 8px;
-  gap: 2px;
+  align-items: center;
+  padding: 12px 10px;
+  gap: 8px;
   flex: 1;
 }
 
 .admin-modal-fs-sidebar .admin-detail-tab {
-  text-align: left;
-  border-bottom: 2px solid transparent;
-  border-left: 3px solid transparent;
-  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  text-align: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
   margin-bottom: 0;
+  transition: background 0.12s, color 0.12s, transform 0.12s, box-shadow 0.12s;
+}
+.admin-modal-fs-sidebar .admin-detail-tab:hover {
+  background: var(--surface-hover);
+  transform: translateY(-1px);
 }
 .admin-modal-fs-sidebar .admin-detail-tab.active {
   background: var(--accent-light);
-  border-left-color: var(--accent);
-  border-bottom-color: transparent;
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.18);
 }
 
 /* Main content area */
@@ -347,7 +390,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-secondary);
 }
@@ -356,6 +401,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1 1 320px;
+  min-width: 0;
 }
 
 .admin-modal-avatar {
@@ -363,6 +410,7 @@
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .admin-modal-username {

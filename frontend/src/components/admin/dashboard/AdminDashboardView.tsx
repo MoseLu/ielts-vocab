@@ -21,6 +21,8 @@ interface AdminDashboardViewProps {
   search: string
   sort: string
   order: 'asc' | 'desc'
+  currentUserId?: number
+  currentUserAvatarUrl?: string | null
   loading: boolean
   error: string
   onDismissError: () => void
@@ -31,6 +33,17 @@ interface AdminDashboardViewProps {
   onSort: (column: string) => void
   onPageChange: (page: number) => void
   onSelectUser: (userId: number) => void
+}
+
+function resolveDisplayAvatarUrl(
+  avatarUrl: string | null | undefined,
+  userId: number,
+  currentUserId?: number,
+  currentUserAvatarUrl?: string | null,
+) {
+  if (avatarUrl) return avatarUrl
+  if (currentUserId === userId && currentUserAvatarUrl) return currentUserAvatarUrl
+  return null
 }
 
 function SortIcon({ current, order, column }: { current: string; order: 'asc' | 'desc'; column: string }) {
@@ -52,6 +65,8 @@ export function AdminDashboardView({
   search,
   sort,
   order,
+  currentUserId,
+  currentUserAvatarUrl,
   loading,
   error,
   onDismissError,
@@ -205,37 +220,45 @@ export function AdminDashboardView({
                 <tbody>
                   {users.length === 0 ? (
                     <tr><td colSpan={9} className="admin-empty-cell">暂无数据</td></tr>
-                  ) : users.map(u => (
-                    <tr key={u.id} className="admin-user-row" onClick={() => onSelectUser(u.id)}>
-                      <td>
-                        <div className="admin-user-name-cell">
-                          {u.avatar_url ? (
-                            <img src={u.avatar_url} alt="" className="admin-avatar" />
-                          ) : (
-                            <div className="admin-avatar-placeholder">{(u.username || '?')[0].toUpperCase()}</div>
-                          )}
-                          <span>{u.username}</span>
-                          {u.is_admin && <span className="admin-badge">管理员</span>}
-                        </div>
-                      </td>
-                      <td className="admin-cell-muted">{u.email || '—'}</td>
-                      <td>{fmtSeconds(u.stats.total_study_seconds)}</td>
-                      <td>{u.stats.total_words_studied.toLocaleString()}</td>
-                      <td>
-                        <span className={`admin-accuracy ${u.stats.accuracy >= 80 ? 'good' : u.stats.accuracy >= 60 ? 'mid' : u.stats.accuracy > 0 ? 'low' : ''}`}>
-                          {u.stats.accuracy > 0 ? `${u.stats.accuracy}%` : '—'}
-                        </span>
-                      </td>
-                      <td>{u.stats.wrong_words_count > 0 ? u.stats.wrong_words_count : '—'}</td>
-                      <td>
-                        <span className={`admin-sessions-badge ${u.stats.recent_sessions_7d > 0 ? 'active' : ''}`}>
-                          {u.stats.recent_sessions_7d > 0 ? `${u.stats.recent_sessions_7d}次` : '—'}
-                        </span>
-                      </td>
-                      <td className="admin-cell-muted">{fmtDate(u.stats.last_active)}</td>
-                      <td className="admin-cell-muted">{fmtDate(u.created_at)}</td>
-                    </tr>
-                  ))}
+                  ) : users.map(u => {
+                    const displayAvatarUrl = resolveDisplayAvatarUrl(
+                      u.avatar_url,
+                      u.id,
+                      currentUserId,
+                      currentUserAvatarUrl,
+                    )
+
+                    return (
+                      <tr key={u.id} className="admin-user-row" onClick={() => onSelectUser(u.id)}>
+                        <td data-label="用户">
+                          <div className="admin-user-name-cell">
+                            {displayAvatarUrl ? (
+                              <img src={displayAvatarUrl} alt="" className="admin-avatar" />
+                            ) : (
+                              <div className="admin-avatar-placeholder">{(u.username || '?')[0].toUpperCase()}</div>
+                            )}
+                            <span className={`admin-user-name${u.is_admin ? ' admin-user-name--admin' : ''}`}>{u.username}</span>
+                          </div>
+                        </td>
+                        <td className="admin-cell-muted" data-label="邮箱">{u.email || '—'}</td>
+                        <td data-label="学习时长">{fmtSeconds(u.stats.total_study_seconds)}</td>
+                        <td data-label="学习单词">{u.stats.total_words_studied.toLocaleString()}</td>
+                        <td data-label="准确率">
+                          <span className={`admin-accuracy ${u.stats.accuracy >= 80 ? 'good' : u.stats.accuracy >= 60 ? 'mid' : u.stats.accuracy > 0 ? 'low' : ''}`}>
+                            {u.stats.accuracy > 0 ? `${u.stats.accuracy}%` : '—'}
+                          </span>
+                        </td>
+                        <td data-label="错词数">{u.stats.wrong_words_count > 0 ? u.stats.wrong_words_count : '—'}</td>
+                        <td data-label="7日练习">
+                          <span className={`admin-sessions-badge ${u.stats.recent_sessions_7d > 0 ? 'active' : ''}`}>
+                            {u.stats.recent_sessions_7d > 0 ? `${u.stats.recent_sessions_7d}次` : '—'}
+                          </span>
+                        </td>
+                        <td className="admin-cell-muted" data-label="最近活跃">{fmtDate(u.stats.last_active)}</td>
+                        <td className="admin-cell-muted" data-label="注册时间">{fmtDate(u.created_at)}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             )}

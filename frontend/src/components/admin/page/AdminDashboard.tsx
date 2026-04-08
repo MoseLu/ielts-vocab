@@ -1,8 +1,10 @@
 import { useAdminDashboard } from '../../../composables/admin/dashboard/useAdminDashboard'
+import { useAuth } from '../../../contexts'
 import { AdminDashboardModal } from '../dashboard/AdminDashboardModal'
 import { AdminDashboardView } from '../dashboard/AdminDashboardView'
 
 export default function AdminDashboard() {
+  const { user: currentUser } = useAuth()
   const {
     tab,
     overview,
@@ -54,6 +56,8 @@ export default function AdminDashboard() {
         search={search}
         sort={sort}
         order={order}
+        currentUserId={currentUser?.id}
+        currentUserAvatarUrl={currentUser?.avatar_url ?? null}
         loading={loading}
         error={error}
         onDismissError={dismissError}
@@ -75,6 +79,8 @@ export default function AdminDashboard() {
           detailDateTo={detailDateTo}
           detailMode={detailMode}
           detailWrongWordsSort={detailWrongWordsSort}
+          currentUserId={currentUser?.id}
+          currentUserAvatarUrl={currentUser?.avatar_url ?? null}
           onClose={closeDetail}
           onToggleFullscreen={() => setIsFullscreen(flag => !flag)}
           onSetDetailTab={setDetailTab}

@@ -1,3 +1,5 @@
+import { PRACTICE_MODE_LABELS } from '../../../constants/practiceModes'
+
 export interface UserStats {
   total_correct: number
   total_wrong: number
@@ -61,10 +63,14 @@ export interface UserDetail {
   user: AdminUser
   book_progress: Array<{
     book_id: string
+    current_index: number
+    total_words: number
+    total_chapters: number
+    completed_chapters: number
+    progress_percent: number
     correct_count: number
     wrong_count: number
     is_completed: boolean
-    current_index: number
     updated_at: string
   }>
   wrong_words: Array<{
@@ -75,6 +81,19 @@ export interface UserDetail {
     wrong_count: number
     last_wrong_at: string | null
     updated_at: string
+  }>
+  favorite_words: Array<{
+    word: string
+    normalized_word: string
+    phonetic: string
+    pos: string
+    definition: string
+    source_book_id: string | null
+    source_book_title: string | null
+    source_chapter_id: string | null
+    source_chapter_title: string | null
+    created_at: string | null
+    updated_at: string | null
   }>
   sessions: Array<{
     id: number
@@ -112,19 +131,13 @@ export interface UserDetail {
 }
 
 export type AdminTab = 'overview' | 'users'
-export type AdminDetailTab = 'progress' | 'wrong_words' | 'sessions' | 'chart' | 'chapter_daily'
+export type AdminDetailTab = 'progress' | 'favorite_words' | 'wrong_words' | 'sessions' | 'chart' | 'chapter_daily'
 export type WrongWordsSort = 'last_error' | 'wrong_count'
 
-export const modeLabels: Record<string, string> = {
-  smart: '智能模式',
-  listening: '听音选义',
-  meaning: '释义拼词',
-  dictation: '听写模式',
-  radio: '随身听',
-  quickmemory: '速记模式',
-}
+export const modeLabels: Record<string, string> = PRACTICE_MODE_LABELS
 
 export const bookLabels: Record<string, string> = {
+  ielts_auto_favorites: '收藏词书',
   ielts_reading_premium: '雅思阅读精讲',
   ielts_listening_premium: '雅思听力精讲',
   ielts_comprehensive: '雅思全面词汇',

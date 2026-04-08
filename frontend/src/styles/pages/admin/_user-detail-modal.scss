@@ -7,12 +7,18 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
 .admin-modal-username-hl {
   font-size: 15px;
   font-weight: 700;
   color: var(--accent);
+}
+
+.admin-modal-username-hl--admin {
+  color: #b98512;
 }
 
 .admin-modal-meta-sep {
@@ -24,6 +30,7 @@
 .admin-modal-meta-item {
   font-size: 13px;
   color: var(--text-tertiary);
+  overflow-wrap: anywhere;
 }
 
 .admin-modal-email {
@@ -54,6 +61,7 @@
 .admin-modal-actions {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 /* User summary stats row */
@@ -173,17 +181,62 @@
 
 .admin-detail-table th {
   @include data-table-head-cell(7px 10px, var(--bg-secondary), 11px, 600, var(--text-tertiary), 1px solid var(--border));
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
 }
 
 .admin-detail-table td {
   @include data-table-body-cell(9px 10px);
   vertical-align: middle;
+  text-align: center;
 }
 
 .admin-detail-table tbody tr:last-child td { border-bottom: none; }
 .admin-detail-table tbody tr:hover td { background: var(--bg-secondary) !important; }
+
+.admin-book-progress {
+  min-width: 180px;
+  margin-inline: auto;
+}
+
+.admin-book-progress__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.admin-book-progress__meta strong {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.admin-book-progress__track {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-tertiary));
+  overflow: hidden;
+}
+
+.admin-book-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--bg-color)));
+}
+
+.admin-book-performance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  text-align: center;
+}
 
 /* Status badges */
 .admin-status-badge {
@@ -235,12 +288,12 @@
 
 .admin-chart-table__th--left,
 .admin-chart-table__td--left {
-  text-align: left;
+  text-align: center;
 }
 
 .admin-chart-table__th--right,
 .admin-chart-table__td--right {
-  text-align: right;
+  text-align: center;
 }
 
 .admin-detail-note {

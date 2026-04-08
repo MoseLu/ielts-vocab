@@ -1,7 +1,17 @@
 import json
 from datetime import datetime, timedelta
 
-from models import User, UserLearningEvent, UserStudySession, UserWrongWord, db
+from models import (
+    User,
+    UserBookProgress,
+    UserChapterProgress,
+    UserFavoriteWord,
+    UserLearningEvent,
+    UserStudySession,
+    UserWrongWord,
+    db,
+)
+from services.books_structure_service import get_book_chapter_count, get_book_word_count
 
 
 def register_user(client, username, password='password123'):
@@ -199,3 +209,117 @@ def test_admin_user_detail_wrong_words_supports_last_error_and_wrong_count_sort(
     assert count_response.status_code == 200
     count_wrong_words = count_response.get_json()['wrong_words']
     assert [item['word'] for item in count_wrong_words[:3]] == ['gamma', 'alpha', 'beta']
+
+
+def test_admin_user_detail_progress_hides_confusable_book_and_returns_real_progress(client, app):
+    register_user(client, 'admin-detail-progress-admin')
+    register_user(client, 'admin-detail-progress-learner')
+
+    with app.app_context():
+        admin = User.query.filter_by(username='admin-detail-progress-admin').first()
+        learner = User.query.filter_by(username='admin-detail-progress-learner').first()
+        admin.is_admin = True
+
+        db.session.add_all([
+            UserBookProgress(
+                user_id=learner.id,
+                book_id='ielts_listening_premium',
+                current_index=12,
+                correct_count=8,
+                wrong_count=2,
+                is_completed=False,
+                updated_at=datetime(2026, 4, 5, 8, 0, 0),
+            ),
+            UserBookProgress(
+                user_id=learner.id,
+                book_id='ielts_confusable_match',
+                current_index=99,
+                correct_count=60,
+                wrong_count=8,
+                is_completed=False,
+                updated_at=datetime(2026, 4, 5, 9, 0, 0),
+            ),
+            UserChapterProgress(
+                user_id=learner.id,
+                book_id='ielts_listening_premium',
+                chapter_id=1,
+                words_learned=30,
+                correct_count=18,
+                wrong_count=4,
+                is_completed=True,
+                updated_at=datetime(2026, 4, 6, 10, 0, 0),
+            ),
+        ])
+        db.session.commit()
+        learner_id = learner.id
+
+        expected_total_words = get_book_word_count('ielts_listening_premium', user_id=learner.id)
+        expected_total_chapters = get_book_chapter_count('ielts_listening_premium', user_id=learner.id)
+
+    login_user(client, 'admin-detail-progress-admin')
+    response = client.get(f'/api/admin/users/{learner_id}')
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert [row['book_id'] for row in payload['book_progress']] == ['ielts_listening_premium']
+
+    progress = payload['book_progress'][0]
+    assert progress['current_index'] == 30
+    assert progress['correct_count'] == 18
+    assert progress['wrong_count'] == 4
+    assert progress['total_words'] == expected_total_words
+    assert progress['total_chapters'] == expected_total_chapters
+    assert progress['completed_chapters'] == 1
+    assert progress['progress_percent'] == round(30 / expected_total_words * 100)
+
+
+def test_admin_user_detail_includes_favorite_words(client, app):
+    register_user(client, 'admin-detail-favorite-admin')
+    register_user(client, 'admin-detail-favorite-learner')
+
+    with app.app_context():
+        admin = User.query.filter_by(username='admin-detail-favorite-admin').first()
+        learner = User.query.filter_by(username='admin-detail-favorite-learner').first()
+        admin.is_admin = True
+
+        db.session.add_all([
+            UserFavoriteWord(
+                user_id=learner.id,
+                word='abandon',
+                normalized_word='abandon',
+                phonetic='/əˈbændən/',
+                pos='v.',
+                definition='to leave behind',
+                source_book_id='ielts_listening_premium',
+                source_book_title='雅思听力精讲',
+                source_chapter_id='12',
+                source_chapter_title='第12章',
+                created_at=datetime(2026, 4, 6, 8, 0, 0),
+                updated_at=datetime(2026, 4, 6, 8, 0, 0),
+            ),
+            UserFavoriteWord(
+                user_id=learner.id,
+                word='compile',
+                normalized_word='compile',
+                phonetic='/kəmˈpaɪl/',
+                pos='v.',
+                definition='to collect information',
+                source_book_id='ielts_reading_premium',
+                source_book_title='雅思阅读精讲',
+                source_chapter_id='3',
+                source_chapter_title='第3章',
+                created_at=datetime(2026, 4, 7, 8, 0, 0),
+                updated_at=datetime(2026, 4, 7, 8, 0, 0),
+            ),
+        ])
+        db.session.commit()
+        learner_id = learner.id
+
+    login_user(client, 'admin-detail-favorite-admin')
+    response = client.get(f'/api/admin/users/{learner_id}')
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert [item['word'] for item in payload['favorite_words']] == ['compile', 'abandon']
+    assert payload['favorite_words'][0]['source_book_title'] == '雅思阅读精讲'
+    assert payload['favorite_words'][1]['source_chapter_title'] == '第12章'

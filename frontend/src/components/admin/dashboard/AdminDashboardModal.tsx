@@ -12,7 +12,24 @@ import {
   type UserDetail,
   type WrongWordsSort,
 } from './AdminDashboard.types'
+import { AdminDashboardFavoriteWordsPanel } from './AdminDashboardFavoriteWordsPanel'
 import { MiniBarChart } from './AdminDashboardPrimitives'
+
+type BookProgress = UserDetail['book_progress'][number]
+
+const HIDDEN_PROGRESS_BOOK_IDS = new Set(['ielts_confusable_match'])
+
+function getBookProgressPercent(progress: BookProgress) {
+  if (progress.total_words > 0) {
+    return Math.max(0, Math.min(progress.progress_percent, 100))
+  }
+
+  if (progress.total_chapters > 0) {
+    return Math.max(0, Math.min(Math.round(progress.completed_chapters / progress.total_chapters * 100), 100))
+  }
+
+  return 0
+}
 
 interface AdminDashboardModalProps {
   selectedUser: UserDetail
@@ -22,6 +39,8 @@ interface AdminDashboardModalProps {
   detailDateTo: string
   detailMode: string
   detailWrongWordsSort: WrongWordsSort
+  currentUserId?: number
+  currentUserAvatarUrl?: string | null
   onClose: () => void
   onToggleFullscreen: () => void
   onSetDetailTab: (value: AdminDetailTab) => void
@@ -38,6 +57,17 @@ interface AdminDashboardModalProps {
   }) => void
 }
 
+function resolveDisplayAvatarUrl(
+  avatarUrl: string | null | undefined,
+  userId: number,
+  currentUserId?: number,
+  currentUserAvatarUrl?: string | null,
+) {
+  if (avatarUrl) return avatarUrl
+  if (currentUserId === userId && currentUserAvatarUrl) return currentUserAvatarUrl
+  return null
+}
+
 export function AdminDashboardModal({
   selectedUser,
   isFullscreen,
@@ -46,6 +76,8 @@ export function AdminDashboardModal({
   detailDateTo,
   detailMode,
   detailWrongWordsSort,
+  currentUserId,
+  currentUserAvatarUrl,
   onClose,
   onToggleFullscreen,
   onSetDetailTab,
@@ -55,19 +87,28 @@ export function AdminDashboardModal({
   onSetDetailWrongWordsSort,
   onFetchUserDetail,
 }: AdminDashboardModalProps) {
+  const visibleBookProgress = selectedUser.book_progress.filter(book => !HIDDEN_PROGRESS_BOOK_IDS.has(book.book_id))
+  const displayAvatarUrl = resolveDisplayAvatarUrl(
+    selectedUser.user.avatar_url,
+    selectedUser.user.id,
+    currentUserId,
+    currentUserAvatarUrl,
+  )
+
   const modalHeader = (
     <div className="admin-modal-header">
       <div className="admin-modal-user-info">
-        {selectedUser.user.avatar_url ? (
-          <img src={selectedUser.user.avatar_url} alt="" className="admin-modal-avatar" />
+        {displayAvatarUrl ? (
+          <img src={displayAvatarUrl} alt="" className="admin-modal-avatar" />
         ) : (
           <div className="admin-avatar-placeholder large">
             {(selectedUser.user.username || '?')[0].toUpperCase()}
           </div>
         )}
         <div className="admin-modal-user-meta-row">
-          <span className="admin-modal-username-hl">{selectedUser.user.username}</span>
-          {selectedUser.user.is_admin && <span className="admin-badge">管理员</span>}
+          <span className={`admin-modal-username-hl${selectedUser.user.is_admin ? ' admin-modal-username-hl--admin' : ''}`}>
+            {selectedUser.user.username}
+          </span>
           <span className="admin-modal-meta-sep">·</span>
           <span className="admin-modal-meta-item">{selectedUser.user.email || '未绑定邮箱'}</span>
           <span className="admin-modal-meta-sep">·</span>
@@ -158,9 +199,9 @@ export function AdminDashboardModal({
 
   const modalTabs = (
     <div className="admin-detail-tabs">
-      {(['chart', 'chapter_daily', 'sessions', 'progress', 'wrong_words'] as const).map(t => (
+      {(['chart', 'chapter_daily', 'sessions', 'progress', 'favorite_words', 'wrong_words'] as const).map(t => (
         <button key={t} className={`admin-detail-tab ${detailTab === t ? 'active' : ''}`} onClick={() => onSetDetailTab(t)}>
-          {{ chart: '每日趋势', chapter_daily: '章节明细', sessions: '学习明细', progress: '词书进度', wrong_words: '错词本' }[t]}
+          {{ chart: '每日趋势', chapter_daily: '章节明细', sessions: '学习明细', progress: '词书进度', favorite_words: '收藏词书', wrong_words: '错词本' }[t]}
         </button>
       ))}
     </div>
@@ -222,21 +263,50 @@ export function AdminDashboardModal({
       )}
       {detailTab === 'progress' && (
         <div>
-          {selectedUser.book_progress.length === 0 ? (
+          {visibleBookProgress.length === 0 ? (
             <div className="admin-empty">暂无学习进度</div>
           ) : (
             <table className="admin-detail-table">
-              <thead><tr><th>词书</th><th>正确</th><th>错误</th><th>准确率</th><th>状态</th><th>更新时间</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>词书</th>
+                  <th>学习进度</th>
+                  <th>章节</th>
+                  <th>答题表现</th>
+                  <th>状态</th>
+                  <th>更新时间</th>
+                </tr>
+              </thead>
               <tbody>
-                {selectedUser.book_progress.map((b, i) => {
+                {visibleBookProgress.map((b, i) => {
                   const tot = b.correct_count + b.wrong_count
                   const acc = tot > 0 ? Math.round(b.correct_count / tot * 100) : 0
+                  const progressPercent = getBookProgressPercent(b)
+                  const learnedWords = b.total_words > 0 ? Math.min(b.current_index, b.total_words) : b.current_index
                   return (
                     <tr key={i}>
                       <td>{bookLabels[b.book_id] || b.book_id}</td>
-                      <td className="admin-cell-positive">{b.correct_count}</td>
-                      <td className="admin-cell-negative">{b.wrong_count}</td>
-                      <td>{tot > 0 ? `${acc}%` : '—'}</td>
+                      <td>
+                        <div className="admin-book-progress">
+                          <div className="admin-book-progress__meta">
+                            <strong>{progressPercent}%</strong>
+                            <span>{b.total_words > 0 ? `${learnedWords} / ${b.total_words} 词` : `${learnedWords} 词`}</span>
+                          </div>
+                          <div className="admin-book-progress__track" aria-hidden="true">
+                            <span className="admin-book-progress__fill" style={{ width: `${progressPercent}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="admin-cell-muted">
+                        {b.total_chapters > 0 ? `${b.completed_chapters} / ${b.total_chapters} 章` : '—'}
+                      </td>
+                      <td>
+                        <div className="admin-book-performance">
+                          <span className="admin-cell-positive">对 {b.correct_count}</span>
+                          <span className="admin-cell-negative">错 {b.wrong_count}</span>
+                          <span className="admin-cell-muted">{tot > 0 ? `准确率 ${acc}%` : '暂无答题记录'}</span>
+                        </div>
+                      </td>
                       <td><span className={`admin-status-badge ${b.is_completed ? 'completed' : 'ongoing'}`}>{b.is_completed ? '已完成' : '学习中'}</span></td>
                       <td className="admin-cell-muted">{fmtDate(b.updated_at)}</td>
                     </tr>
@@ -245,6 +315,14 @@ export function AdminDashboardModal({
               </tbody>
             </table>
           )}
+        </div>
+      )}
+      {detailTab === 'favorite_words' && (
+        <div>
+          <AdminDashboardFavoriteWordsPanel
+            favoriteWords={selectedUser.favorite_words}
+            username={selectedUser.user.username}
+          />
         </div>
       )}
       {detailTab === 'wrong_words' && (
