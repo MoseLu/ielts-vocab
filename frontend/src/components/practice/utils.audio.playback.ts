@@ -115,37 +115,32 @@ async function waitForPreparedAudio(audio: HTMLAudioElement, minimumReadyState =
   })
 }
 
-async function primeAudioOutput(audio: HTMLAudioElement): Promise<void> {
+async function primeAudioOutput(): Promise<void> {
   if (audioOutputPrimed) return
-  const originalMuted = audio.muted
-  const originalVolume = audio.volume
-  const originalRate = audio.playbackRate
-  try {
-    audio.muted = true
-    audio.volume = 0
-    audio.playbackRate = 1
+  // Use a separate silent element so we never consume frames of the real audio.
+  // The previous implementation played the actual audio element for AUDIO_OUTPUT_PRIME_MS,
+  // which caused the beginning of the word to be skipped if currentTime = 0 did not
+  // complete synchronously before the next play() call.
+  await new Promise<void>(resolve => {
     try {
-      audio.pause()
-      audio.currentTime = 0
-    } catch {}
-    const result = audio.play()
-    if (result && typeof result.then === 'function') await result
-    await new Promise(resolve => setTimeout(resolve, AUDIO_OUTPUT_PRIME_MS))
-    audio.pause()
-    try {
-      audio.currentTime = 0
-    } catch {}
-    audioOutputPrimed = true
-  } catch {
-    try {
-      audio.pause()
-      audio.currentTime = 0
-    } catch {}
-  } finally {
-    audio.muted = originalMuted
-    audio.volume = originalVolume
-    audio.playbackRate = originalRate
-  }
+      const primer = new Audio(SILENT_WAV_DATA_URI)
+      let settled = false
+      const finish = () => {
+        if (settled) return
+        settled = true
+        primer.pause()
+        resolve()
+      }
+      primer.muted = true
+      primer.onended = finish
+      primer.onerror = finish
+      setTimeout(finish, AUDIO_OUTPUT_PRIME_MS)
+      void primer.play().then(finish).catch(finish)
+    } catch {
+      resolve()
+    }
+  })
+  audioOutputPrimed = true
 }
 
 function getAudioContextCtor(): ManagedAudioContextCtor | null {
@@ -190,6 +185,12 @@ function getOrCreateManagedAudioContext(): AudioContext | null {
   if (!AudioContextCtor) return null
   try {
     managedAudioContext = new AudioContextCtor()
+    // The decoded buffer cache and prime state are tied to a specific AudioContext
+    // instance. When a new context is created (e.g. because the old one was closed
+    // by the browser after a long suspension), stale AudioBuffers from the previous
+    // context must not be used with the new one.
+    decodedBufferCache = new WeakMap()
+    managedAudioOutputPrimed = false
     ensureAudioUnlockListeners()
     return managedAudioContext
   } catch {
@@ -333,13 +334,34 @@ async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boo
   attachAudioSource(audio, src)
   const prepared = await waitForPreparedAudio(audio)
   if (!prepared || !options.isCurrent()) return false
-  await primeAudioOutput(audio)
+  await primeAudioOutput()
   if (!options.isCurrent()) return false
+
+  // Seek to the beginning. If the element was previously played (e.g. pooled URL
+  // reuse), currentTime may be at the end of the audio.  Wait for the 'seeked'
+  // event so that play() never starts at a stale position.
+  const needsSeek = audio.currentTime !== 0
   try {
     audio.pause()
     audio.currentTime = 0
   } catch {
     // Ignore browsers that reject currentTime writes before playback starts.
+  }
+  if (needsSeek) {
+    await new Promise<void>(resolve => {
+      let seekSettled = false
+      const onSeeked = () => {
+        if (seekSettled) return
+        seekSettled = true
+        resolve()
+      }
+      if (typeof audio.addEventListener === 'function') {
+        audio.addEventListener('seeked', onSeeked, { once: true })
+      }
+      // Fallback: don't block forever if 'seeked' never fires.
+      setTimeout(onSeeked, 200)
+    })
+    if (!options.isCurrent()) return false
   }
   audio.volume = options.volume
   audio.playbackRate = options.rate
