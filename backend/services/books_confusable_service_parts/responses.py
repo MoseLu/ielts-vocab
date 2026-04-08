@@ -1,5 +1,7 @@
+from services import books_confusable_repository
+
+
 def create_confusable_custom_chapters_response(user_id: int, groups):
-    books = _books_module()
     try:
         normalized_groups = normalize_confusable_custom_groups(groups)
     except ValueError as exc:
@@ -18,13 +20,13 @@ def create_confusable_custom_chapters_response(user_id: int, groups):
     custom_book = get_confusable_custom_book(user_id, create=True)
     existing_chapter_count = len(custom_book.chapters)
     next_chapter_id = next_confusable_custom_chapter_id(custom_book)
-
     created_chapters = []
     total_words_added = 0
+
     for index, words in enumerate(resolved_groups, start=1):
         chapter_id = str(next_chapter_id + index - 1)
-        chapter = books.CustomBookChapter(
-            id=chapter_id,
+        chapter = books_confusable_repository.create_custom_book_chapter(
+            chapter_id=chapter_id,
             book_id=custom_book.id,
             title=build_confusable_custom_chapter_title(
                 [word['word'] for word in words],
@@ -33,15 +35,14 @@ def create_confusable_custom_chapters_response(user_id: int, groups):
             word_count=len(words),
             sort_order=existing_chapter_count + index - 1,
         )
-        books.db.session.add(chapter)
         for word in words:
-            books.db.session.add(books.CustomBookWord(
+            books_confusable_repository.create_custom_book_word(
                 chapter_id=chapter_id,
                 word=word['word'],
                 phonetic=word['phonetic'],
                 pos=word['pos'],
                 definition=word['definition'],
-            ))
+            )
 
         total_words_added += len(words)
         created_chapters.append({
@@ -53,15 +54,11 @@ def create_confusable_custom_chapters_response(user_id: int, groups):
         })
 
     custom_book.word_count = int(custom_book.word_count or 0) + total_words_added
-    books.db.session.commit()
-    return {
-        'created_count': len(created_chapters),
-        'created_chapters': created_chapters,
-    }, 201
+    books_confusable_repository.commit()
+    return {'created_count': len(created_chapters), 'created_chapters': created_chapters}, 201
 
 
 def update_confusable_custom_chapter_response(user_id: int, chapter_id: int, words_input):
-    books = _books_module()
     custom_chapter = get_confusable_custom_chapter(user_id, chapter_id)
     if not custom_chapter:
         return {'error': '未找到可编辑的自定义易混组'}, 404
@@ -92,17 +89,17 @@ def update_confusable_custom_chapter_response(user_id: int, chapter_id: int, wor
     custom_chapter.word_count = len(resolved_words)
 
     for word in list(custom_chapter.words):
-        books.db.session.delete(word)
-    books.db.session.flush()
+        books_confusable_repository.delete_row(word)
+    books_confusable_repository.flush()
 
     for word in resolved_words:
-        books.db.session.add(books.CustomBookWord(
+        books_confusable_repository.create_custom_book_word(
             chapter_id=str(chapter_id),
             word=word['word'],
             phonetic=word['phonetic'],
             pos=word['pos'],
             definition=word['definition'],
-        ))
+        )
 
     if custom_chapter.book:
         custom_chapter.book.word_count = max(
@@ -110,18 +107,18 @@ def update_confusable_custom_chapter_response(user_id: int, chapter_id: int, wor
             int(custom_chapter.book.word_count or 0) - previous_word_count + len(resolved_words),
         )
 
-    books.UserChapterProgress.query.filter_by(
+    books_confusable_repository.delete_user_chapter_progress(
         user_id=user_id,
-        book_id=books.CONFUSABLE_MATCH_BOOK_ID,
+        book_id=CONFUSABLE_MATCH_BOOK_ID,
         chapter_id=chapter_id,
-    ).delete()
-    books.UserChapterModeProgress.query.filter_by(
+    )
+    books_confusable_repository.delete_user_chapter_mode_progress(
         user_id=user_id,
-        book_id=books.CONFUSABLE_MATCH_BOOK_ID,
+        book_id=CONFUSABLE_MATCH_BOOK_ID,
         chapter_id=chapter_id,
-    ).delete()
+    )
 
-    books.db.session.commit()
+    books_confusable_repository.commit()
     refreshed_chapter = get_confusable_custom_chapter(user_id, chapter_id)
     return {
         'chapter': {
