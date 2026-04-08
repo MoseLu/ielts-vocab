@@ -1,4 +1,4 @@
-import { filterWrongWords, matchesWrongWordSearchTerm } from './wrongWordsFilters'
+import { compareWrongWordSearchResults, filterWrongWords, matchesWrongWordSearchTerm } from './wrongWordsFilters'
 
 describe('wrongWordsFilters', () => {
   it('filters wrong words by date range, wrong-count range, and dimension together', () => {
@@ -68,26 +68,75 @@ describe('wrongWordsFilters', () => {
     }).map(word => word.word)).toEqual(['twenty-one'])
   })
 
-  it('matches wrong-word search terms against the word field only', () => {
+  it('matches wrong-word search terms against word substrings before secondary prefix/suffix filtering', () => {
+    expect(matchesWrongWordSearchTerm({
+      word: 'toast',
+      definition: 'bread',
+    }, 'oa')).toBe(true)
+
+    expect(matchesWrongWordSearchTerm({
+      word: 'toast',
+      definition: 'bread',
+    }, 'zz')).toBe(false)
+
+    expect(matchesWrongWordSearchTerm({
+      word: 'starter',
+      definition: 'begin',
+    }, 'st', 'prefix')).toBe(true)
+
+    expect(matchesWrongWordSearchTerm({
+      word: 'toast',
+      definition: 'st bread',
+    }, 'st', 'prefix')).toBe(false)
+
+    expect(matchesWrongWordSearchTerm({
+      word: 'toast',
+      definition: 'st bread',
+    }, 'st', 'suffix')).toBe(true)
+
     expect(matchesWrongWordSearchTerm({
       word: 'present',
-      phonetic: '/ˈprez(ə)nt/',
-      pos: 'adj.',
+      pos: 'st.',
       definition: 'current',
-    }, 'pre')).toBe(true)
+    }, 'st', 'suffix')).toBe(false)
+  })
 
-    expect(matchesWrongWordSearchTerm({
-      word: 'without',
-      phonetic: '/wɪˈðaʊt/',
-      pos: 'prep.',
-      definition: 'not having',
-    }, 'pre')).toBe(false)
+  it('orders default search results by exact match, then prefix hits, then earlier substring hits', () => {
+    const words = [
+      { word: 'st', definition: 'abbrev' },
+      { word: 'study', definition: 'learn carefully' },
+      { word: 'mist', definition: 'fine drops' },
+      { word: 'toast', definition: 'crispy bread' },
+    ]
 
-    expect(matchesWrongWordSearchTerm({
-      word: 'along',
-      phonetic: '/əˈlɒŋ/',
-      pos: 'adv.',
-      definition: 'prep. example',
-    }, 'pre')).toBe(false)
+    const result = [...words].sort((left, right) => compareWrongWordSearchResults(left, right, 'st'))
+
+    expect(result.map(word => word.word)).toEqual(['st', 'study', 'mist', 'toast'])
+  })
+
+  it('orders prefix search results by exact match, then shorter words, then alphabetically', () => {
+    const words = [
+      { word: 'st', definition: 'abbrev' },
+      { word: 'study', definition: 'learn carefully' },
+      { word: 'start', definition: 'begin' },
+      { word: 'street', definition: 'road' },
+    ]
+
+    const result = [...words].sort((left, right) => compareWrongWordSearchResults(left, right, 'st', 'prefix'))
+
+    expect(result.map(word => word.word)).toEqual(['st', 'start', 'study', 'street'])
+  })
+
+  it('orders suffix search results by exact match, then shorter words, then alphabetically', () => {
+    const words = [
+      { word: 'st', definition: 'abbrev' },
+      { word: 'forest', definition: 'woods' },
+      { word: 'mist', definition: 'fine drops' },
+      { word: 'toast', definition: 'crispy bread' },
+    ]
+
+    const result = [...words].sort((left, right) => compareWrongWordSearchResults(left, right, 'st', 'suffix'))
+
+    expect(result.map(word => word.word)).toEqual(['st', 'mist', 'toast', 'forest'])
   })
 })

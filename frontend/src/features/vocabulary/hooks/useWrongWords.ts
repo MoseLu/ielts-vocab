@@ -14,6 +14,7 @@ import {
   clearWrongWordPendingFromList,
   loadWrongWords,
   mergeWrongWordLists,
+  readWrongWordsFromStorage,
   type WrongWordDimension,
   type WrongWordRecord,
   writeWrongWordsToStorage,
@@ -72,10 +73,11 @@ function decorateWrongWords(words: WrongWord[]): WrongWord[] {
 export function useWrongWords(options: UseWrongWordsOptions = {}) {
   const { user } = useAuth()
   const { includeDetails = true } = options
-  const [words, setWords] = useState<WrongWord[]>([])
+  const [words, setWords] = useState<WrongWord[]>(() => decorateWrongWords(readWrongWordsFromStorage()))
   const [loading, setLoading] = useState(true)
 
   const fetchWords = useCallback(async () => {
+    setLoading(true)
     try {
       const endpoint = includeDetails
         ? '/api/ai/wrong-words'

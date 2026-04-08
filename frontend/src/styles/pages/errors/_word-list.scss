@@ -9,6 +9,82 @@
     flex-shrink: 0;
 }
 
+.errors-search-results {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-color);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.errors-search-status {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    min-height: 30px;
+    padding: 0 12px;
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--accent) 6%, var(--bg-secondary));
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.errors-search-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 52px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-color);
+    transition: background var(--transition-fast);
+}
+
+.errors-search-item:last-child {
+    border-bottom: none;
+}
+
+.errors-search-item:hover {
+    background: color-mix(in srgb, var(--bg-secondary) 82%, var(--bg-color));
+}
+
+.errors-search-item.is-selected {
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg-color));
+}
+
+.errors-search-item-main {
+    min-width: 0;
+}
+
+.errors-search-item-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px 12px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.errors-search-item-word {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.errors-search-item-definition {
+    min-width: 0;
+    flex: 1 1 280px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .errors-item {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 52px;
@@ -189,6 +265,21 @@
 }
 
 @media (max-width: 768px) {
+    .errors-search-item {
+        grid-template-columns: minmax(0, 1fr) 44px;
+        gap: 8px;
+        padding: 12px 10px;
+    }
+
+    .errors-search-item-row {
+        gap: 4px 8px;
+    }
+
+    .errors-search-item-definition {
+        flex-basis: 100%;
+        white-space: normal;
+    }
+
     .errors-item {
         grid-template-columns: minmax(0, 1fr) 44px;
         gap: 8px;

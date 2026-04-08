@@ -9,6 +9,7 @@ const apiFetchMock = vi.fn()
 
 const hooksState = vi.hoisted(() => ({
   wrongWords: {
+    loading: false,
     words: [
       {
         word: 'alpha',
@@ -110,6 +111,7 @@ describe('ErrorsPage', () => {
     localStorage.clear()
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-04-07T08:00:00.000Z'))
+    hooksState.wrongWords.loading = false
     hooksState.wrongWords.words = [
       {
         word: 'alpha',
@@ -188,19 +190,33 @@ describe('ErrorsPage', () => {
     vi.useRealTimers()
   })
 
-  it('uses a staged progress bar and FAQ instead of long inline explanations', () => {
+  it('keeps the FAQ guidance without rendering the removed top overview module', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('错词按这个顺序推进')).toBeInTheDocument()
-    expect(screen.getByText('当前查看：待清错词')).toBeInTheDocument()
+    expect(screen.queryByText('错词按这个顺序推进')).not.toBeInTheDocument()
+    expect(screen.queryByText('当前查看：待清错词')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /待清错词和累计错词有什么区别/ }))
 
     expect(screen.getByText(/答错过就会留在累计错词里/)).toBeInTheDocument()
+  })
+
+  it('shows a skeleton instead of a fake empty state while wrong words are still loading', () => {
+    hooksState.wrongWords.loading = true
+    hooksState.wrongWords.words = []
+
+    const { container } = render(
+      <MemoryRouter>
+        <ErrorsPage />
+      </MemoryRouter>,
+    )
+
+    expect(container.querySelector('.page-skeleton')).not.toBeNull()
+    expect(screen.queryByText('暂无错词')).not.toBeInTheDocument()
   })
 
   it('uses action-oriented labels for problem-type filters', () => {
@@ -211,7 +227,7 @@ describe('ErrorsPage', () => {
     )
 
     expect(screen.getByRole('tab', { name: /速记模式/ })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /释义拼词/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /默写模式/ })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /听音选义/ })).toBeInTheDocument()
   })
 
@@ -224,7 +240,9 @@ describe('ErrorsPage', () => {
 
     expect(screen.queryByTitle('移出未过错词')).not.toBeInTheDocument()
     expect(screen.getByLabelText('选择 alpha')).toBeInTheDocument()
-    expect(screen.getAllByText('加入复习')).toHaveLength(1)
+    expect(screen.queryByText('加入复习')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('词头')).not.toBeChecked()
+    expect(screen.getByLabelText('词尾')).not.toBeChecked()
     expect(screen.getAllByText('错词本进度').length).toBeGreaterThan(0)
     expect(screen.getAllByText('长期复习').length).toBeGreaterThan(0)
     expect(screen.getByText('今天移出 2 项')).toBeInTheDocument()
@@ -244,25 +262,37 @@ describe('ErrorsPage', () => {
     expect(screen.queryByLabelText('选择 gamma')).not.toBeInTheDocument()
   })
 
-  it('moves wrong-count and reset controls into the filter header and supports searching wrong words', async () => {
-    apiFetchMock.mockResolvedValue({
-      words: [
-        {
-          word: 'alpha',
-          phonetic: '/a/',
-          pos: 'n.',
-          definition: 'alpha definition',
-          wrong_count: 6,
-        },
-        {
-          word: 'beta',
-          phonetic: '/b/',
-          pos: 'n.',
-          definition: 'beta definition',
-          wrong_count: 5,
-        },
-      ],
-    })
+  it('moves wrong-count and reset controls into the filter header and supports prefix/suffix word search', async () => {
+    hooksState.wrongWords.words = [
+      {
+        word: 'start',
+        phonetic: '/stɑːt/',
+        pos: 'v.',
+        definition: 'begin',
+        wrong_count: 6,
+        first_wrong_at: '2026-04-07T02:00:00.000Z',
+        meaning_wrong: 3,
+      },
+      {
+        word: 'mist',
+        phonetic: '/mɪst/',
+        pos: 'n.',
+        definition: 'fine drops',
+        wrong_count: 5,
+        first_wrong_at: '2026-04-07T04:00:00.000Z',
+        meaning_wrong: 2,
+      },
+      {
+        word: 'toast',
+        phonetic: '/təʊst/',
+        pos: 'n.',
+        definition: 'bread',
+        wrong_count: 8,
+        first_wrong_at: '2026-04-07T05:00:00.000Z',
+        listening_wrong: 4,
+      },
+    ]
+    apiFetchMock.mockResolvedValue({ words: [] })
 
     const { container } = render(
       <MemoryRouter>
@@ -282,19 +312,43 @@ describe('ErrorsPage', () => {
     expect(within(filterActions as HTMLElement).getByRole('button', { name: '重置筛选' })).toBeInTheDocument()
     expect(within(dimShell as HTMLElement).getByRole('searchbox', { name: '搜索错词' })).toBeInTheDocument()
     expect(within(dimShell as HTMLElement).getByRole('button', { name: '执行搜索' })).toBeInTheDocument()
+    expect(within(dimShell as HTMLElement).getByLabelText('词头')).not.toBeChecked()
+    expect(within(dimShell as HTMLElement).getByLabelText('词尾')).not.toBeChecked()
+    expect(within(dimShell as HTMLElement).getByLabelText('词头')).toBeDisabled()
+    expect(within(dimShell as HTMLElement).getByLabelText('词尾')).toBeDisabled()
 
     fireEvent.change(screen.getByRole('searchbox', { name: '搜索错词' }), {
-      target: { value: 'alp' },
+      target: { value: 'st' },
     })
     await act(async () => {
       fireEvent.submit(container.querySelector('.errors-search-form') as HTMLFormElement)
       await Promise.resolve()
     })
 
-    expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/wrong-words?details=compact&search=alp')
-    expect(screen.getByLabelText('选择 alpha')).toBeInTheDocument()
-    expect(screen.queryByLabelText('选择 beta')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('选择 gamma')).not.toBeInTheDocument()
+    expect(apiFetchMock).toHaveBeenLastCalledWith('/api/ai/wrong-words?details=compact&search=st')
+    expect(container.querySelector('.errors-search-results')).not.toBeNull()
+    expect(screen.getByText('搜索“st” · 3 个结果')).toBeInTheDocument()
+    expect(screen.getByLabelText('词头')).not.toBeDisabled()
+    expect(screen.getByLabelText('词尾')).not.toBeDisabled()
+    expect(screen.getByLabelText('选择 start')).toBeInTheDocument()
+    expect(screen.getByLabelText('选择 mist')).toBeInTheDocument()
+    expect(screen.getByLabelText('选择 toast')).toBeInTheDocument()
+    expect(screen.queryByText('错词按这个顺序推进')).not.toBeInTheDocument()
+    expect(screen.queryByText('错词本进度')).not.toBeInTheDocument()
+ 
+    fireEvent.click(screen.getByLabelText('词头'))
+
+    expect(screen.getByText('词头匹配“st” · 1 个结果')).toBeInTheDocument()
+    expect(screen.getByLabelText('选择 start')).toBeInTheDocument()
+    expect(screen.queryByLabelText('选择 mist')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('选择 toast')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByLabelText('词尾'))
+
+    expect(screen.getByText('词尾匹配“st” · 2 个结果')).toBeInTheDocument()
+    expect(screen.getByLabelText('选择 mist')).toBeInTheDocument()
+    expect(screen.getByLabelText('选择 toast')).toBeInTheDocument()
+    expect(screen.queryByLabelText('选择 start')).not.toBeInTheDocument()
   })
 
   it('builds a targeted review route from the selected date and wrong-count range', () => {
@@ -323,6 +377,37 @@ describe('ErrorsPage', () => {
     expect(navigateMock).toHaveBeenCalledWith(
       '/practice?mode=errors&scope=pending&startDate=2026-04-07&endDate=2026-04-07&minWrong=6&maxWrong=10&selection=manual',
     )
+  })
+
+  it('adds a current-page bulk-select button without replacing the full-results selection', () => {
+    hooksState.wrongWords.words = Array.from({ length: 15 }, (_, index) => ({
+      word: `word-${index + 1}`,
+      phonetic: `/w${index + 1}/`,
+      pos: 'n.',
+      definition: `definition-${index + 1}`,
+      wrong_count: 5,
+      first_wrong_at: '2026-04-07T02:00:00.000Z',
+      meaning_wrong: 5,
+    }))
+
+    const { container } = render(
+      <MemoryRouter>
+        <ErrorsPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('button', { name: '全选结果' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '全选当前页' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '全选当前页' }))
+
+    expect(screen.getByRole('button', { name: '开始复习（10词）' })).toBeInTheDocument()
+
+    const scopeRow = container.querySelector('.errors-scope-row')
+    fireEvent.click(within(scopeRow as HTMLElement).getByRole('button', { name: '下一页' }))
+    fireEvent.click(screen.getByRole('button', { name: '全选当前页' }))
+
+    expect(screen.getByRole('button', { name: '开始复习（15词）' })).toBeInTheDocument()
   })
 
   it('paginates large wrong-word lists instead of rendering everything at once', () => {

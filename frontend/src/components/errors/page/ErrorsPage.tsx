@@ -5,11 +5,12 @@ import {
   WRONG_WORD_DIMENSION_TITLES,
   WRONG_WORD_SCOPE_LABELS,
 } from '../../../features/vocabulary/wrongWordsStore'
+import type { WrongWordSearchMode } from '../../../features/vocabulary/wrongWordsFilters'
 import { Page, PageContent, PageHeader } from '../../layout'
-import { EmptyState, SegmentedControl, UnderlineTabs } from '../../ui'
+import { EmptyState, PageSkeleton, SegmentedControl, UnderlineTabs } from '../../ui'
 import { useErrorsPage, type WrongCountRange } from '../../../composables/errors/page/useErrorsPage'
 import { ErrorsFAQCard } from './ErrorsFAQCard'
-import { ErrorsOverview } from './ErrorsOverview'
+import { ErrorsSearchWordItem } from './ErrorsSearchWordItem'
 import { ErrorsWordItem } from './ErrorsWordItem'
 
 const WRONG_COUNT_RANGE_OPTIONS: Array<{ value: WrongCountRange; label: string }> = [
@@ -18,6 +19,11 @@ const WRONG_COUNT_RANGE_OPTIONS: Array<{ value: WrongCountRange; label: string }
   { value: '6-10', label: '6~10 次' },
   { value: '11-20', label: '11~20 次' },
   { value: '20+', label: '20 次以上' },
+]
+
+const SEARCH_MODE_OPTIONS: Array<{ value: WrongWordSearchMode; label: string }> = [
+  { value: 'prefix', label: '词头' },
+  { value: 'suffix', label: '词尾' },
 ]
 
 export default function ErrorsPage() {
@@ -29,6 +35,8 @@ export default function ErrorsPage() {
     endDate,
     wrongCountRange,
     searchText,
+    searchMode,
+    appliedSearch,
     words,
     historyWords,
     pendingWords,
@@ -38,8 +46,10 @@ export default function ErrorsPage() {
     selectedWordKeySet,
     selectedWordCount,
     allFilteredSelected,
+    allPaginatedSelected,
     hasActiveFilters,
     canResetFilters,
+    loading,
     searchLoading,
     page,
     totalPages,
@@ -53,17 +63,27 @@ export default function ErrorsPage() {
     setEndDate,
     setWrongCountRange,
     setSearchText,
+    setSearchMode,
     setPage,
     applySearch,
     applyTodayDateRange,
     applyRecentDaysDateRange,
     toggleWordSelection,
     selectFilteredWords,
+    selectPaginatedWords,
     clearSelectedWords,
     resetFilters,
     startSelectedPractice,
     goToPlan,
   } = useErrorsPage()
+  const isSearchMode = Boolean(appliedSearch)
+  const searchStatusLabel = !isSearchMode
+    ? ''
+    : searchMode === 'prefix'
+      ? `词头匹配“${appliedSearch}”`
+      : searchMode === 'suffix'
+        ? `词尾匹配“${appliedSearch}”`
+        : `搜索“${appliedSearch}”`
 
   const toolbar = (
     <div className="errors-toolbar">
@@ -96,6 +116,13 @@ export default function ErrorsPage() {
           </button>
           <button
             className="errors-clear-btn"
+            disabled={paginatedWords.length === 0 || allPaginatedSelected}
+            onClick={selectPaginatedWords}
+          >
+            全选当前页
+          </button>
+          <button
+            className="errors-clear-btn"
             disabled={selectedWordCount === 0}
             onClick={clearSelectedWords}
           >
@@ -123,6 +150,8 @@ export default function ErrorsPage() {
             title="真题错题功能"
             description="敬请期待"
           />
+        ) : loading && words.length === 0 ? (
+          <PageSkeleton variant="books" itemCount={4} />
         ) : words.length === 0 ? (
           <EmptyState
             page
@@ -141,8 +170,7 @@ export default function ErrorsPage() {
           />
         ) : (
           <div className="errors-content-scroll">
-            <ErrorsOverview scope={scope} />
-            <ErrorsFAQCard />
+            {!isSearchMode && <ErrorsFAQCard />}
 
             <div className="errors-scope-row">
               <SegmentedControl
@@ -291,7 +319,7 @@ export default function ErrorsPage() {
                         className="errors-filter-input errors-search-input"
                         type="search"
                         value={searchText}
-                        placeholder="模糊搜索单词"
+                        placeholder="搜索单词"
                         onChange={event => setSearchText(event.target.value)}
                       />
                       <button
@@ -307,9 +335,34 @@ export default function ErrorsPage() {
                       </button>
                     </div>
                   </form>
+
+                  <div className="errors-search-mode-group" role="radiogroup" aria-label="搜索匹配方式">
+                    {SEARCH_MODE_OPTIONS.map(option => (
+                      <label
+                        key={option.value}
+                        className={`errors-search-mode-option${searchMode === option.value ? ' is-active' : ''}${!isSearchMode ? ' is-disabled' : ''}`}
+                      >
+                        <input
+                          className="errors-search-mode-radio"
+                          type="radio"
+                          name="errors-search-mode"
+                          value={option.value}
+                          checked={searchMode === option.value}
+                          disabled={!isSearchMode}
+                          onClick={event => {
+                            if (searchMode !== option.value) return
+                            event.preventDefault()
+                            setSearchMode(null)
+                          }}
+                          onChange={() => setSearchMode(option.value)}
+                        />
+                        <span className="errors-search-mode-marker" aria-hidden="true" />
+                        <span className="errors-search-mode-text">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="errors-select-heading">加入复习</div>
             </div>
 
             {filteredWords.length === 0 ? (
@@ -320,18 +373,35 @@ export default function ErrorsPage() {
                 description={hasActiveFilters ? '调整搜索词、日期、错次或问题类型后再试' : (scope === 'pending' ? '当前没有待继续攻克的错词' : '继续练习，累计错词会自动增加')}
               />
             ) : (
-              <div className="errors-list">
-                {paginatedWords.map(word => (
-                  <ErrorsWordItem
-                    key={word.word}
-                    word={word}
-                    scope={scope}
-                    dimFilter={dimFilter}
-                    selectedWordKeySet={selectedWordKeySet}
-                    toggleWordSelection={toggleWordSelection}
-                  />
-                ))}
-              </div>
+              <>
+                {isSearchMode && (
+                  <div className="errors-search-status">
+                    {searchStatusLabel} · {filteredWords.length} 个结果
+                  </div>
+                )}
+
+                <div className={isSearchMode ? 'errors-search-results' : 'errors-list'}>
+                  {paginatedWords.map(word => (
+                    isSearchMode ? (
+                      <ErrorsSearchWordItem
+                        key={word.word}
+                        word={word}
+                        selectedWordKeySet={selectedWordKeySet}
+                        toggleWordSelection={toggleWordSelection}
+                      />
+                    ) : (
+                      <ErrorsWordItem
+                        key={word.word}
+                        word={word}
+                        scope={scope}
+                        dimFilter={dimFilter}
+                        selectedWordKeySet={selectedWordKeySet}
+                        toggleWordSelection={toggleWordSelection}
+                      />
+                    )
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}

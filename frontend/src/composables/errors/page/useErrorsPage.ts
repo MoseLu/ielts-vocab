@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useWrongWords } from '../../../features/vocabulary/hooks'
 import {
   buildWrongWordsPracticeQuery,
+  compareWrongWordSearchResults,
   filterWrongWords,
   matchesWrongWordSearchTerm,
   normalizeWrongWordSearchTerm,
+  type WrongWordSearchMode,
 } from '../../../features/vocabulary/wrongWordsFilters'
 import {
   type WrongWordCollectionScope,
@@ -75,6 +77,7 @@ export function useErrorsPage() {
   const [endDate, setEndDate] = useState('')
   const [wrongCountRange, setWrongCountRange] = useState<WrongCountRange>('all')
   const [searchText, setSearchText] = useState('')
+  const [searchMode, setSearchMode] = useState<WrongWordSearchMode | null>(null)
   const [appliedSearch, setAppliedSearch] = useState('')
   const [remoteSearchWords, setRemoteSearchWords] = useState<WrongWordRecord[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
@@ -83,7 +86,7 @@ export function useErrorsPage() {
     () => readWrongWordsReviewSelectionFromStorage(),
   )
   const searchRequestIdRef = useRef(0)
-  const { words } = useWrongWords({ includeDetails: false })
+  const { words, loading } = useWrongWords({ includeDetails: false })
   const { minWrongCount, maxWrongCount } = getWrongCountBounds(wrongCountRange)
 
   const knownWordKeySet = useMemo(
@@ -102,10 +105,10 @@ export function useErrorsPage() {
   const visibleWords = useMemo(() => {
     if (!appliedSearch) return words
 
-    const localMatchedWords = words.filter(word => matchesWrongWordSearchTerm(word, appliedSearch))
-    const remoteMatchedWords = remoteSearchWords.filter(word => matchesWrongWordSearchTerm(word, appliedSearch))
+    const localMatchedWords = words.filter(word => matchesWrongWordSearchTerm(word, appliedSearch, searchMode))
+    const remoteMatchedWords = remoteSearchWords.filter(word => matchesWrongWordSearchTerm(word, appliedSearch, searchMode))
     return mergeWrongWordLists(localMatchedWords, remoteMatchedWords)
-  }, [appliedSearch, remoteSearchWords, words])
+  }, [appliedSearch, remoteSearchWords, searchMode, words])
 
   const historyWords = useMemo(() => visibleWords.filter(word => hasWrongWordHistory(word)), [visibleWords])
   const pendingWords = useMemo(() => visibleWords.filter(word => hasWrongWordPending(word)), [visibleWords])
@@ -146,6 +149,10 @@ export function useErrorsPage() {
       minWrongCount,
       maxWrongCount,
     })].sort((a, b) => {
+      if (appliedSearch) {
+        return compareWrongWordSearchResults(a, b, appliedSearch, searchMode)
+      }
+
       if (dimFilter !== 'all') {
         const aDimCount = scope === 'history'
           ? getWrongWordDimensionHistoryWrong(a, dimFilter)
@@ -158,7 +165,7 @@ export function useErrorsPage() {
 
       return getWrongWordActiveCount(b, scope) - getWrongWordActiveCount(a, scope)
     })
-  }, [dimFilter, endDate, maxWrongCount, minWrongCount, scope, startDate, visibleWords])
+  }, [appliedSearch, dimFilter, endDate, maxWrongCount, minWrongCount, scope, searchMode, startDate, visibleWords])
 
   const selectedWordKeySet = useMemo(() => new Set(selectedWordKeys), [selectedWordKeys])
   const selectedFilteredWordCount = useMemo(() => {
@@ -174,6 +181,8 @@ export function useErrorsPage() {
     const offset = (currentPage - 1) * ERRORS_PAGE_SIZE
     return filteredWords.slice(offset, offset + ERRORS_PAGE_SIZE)
   }, [currentPage, filteredWords])
+  const allPaginatedSelected = paginatedWords.length > 0
+    && paginatedWords.every(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
   const pageStartIndex = filteredWords.length === 0 ? 0 : ((currentPage - 1) * ERRORS_PAGE_SIZE) + 1
   const pageEndIndex = Math.min(currentPage * ERRORS_PAGE_SIZE, filteredWords.length)
 
@@ -182,7 +191,7 @@ export function useErrorsPage() {
     || Boolean(endDate)
     || wrongCountRange !== 'all'
     || Boolean(appliedSearch)
-  const canResetFilters = hasActiveFilters || Boolean(searchText)
+  const canResetFilters = hasActiveFilters || Boolean(searchText) || searchMode != null
   const practiceQuery = buildWrongWordsPracticeQuery({
     scope,
     dimFilter,
@@ -195,7 +204,7 @@ export function useErrorsPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [activeTab, appliedSearch, dimFilter, endDate, scope, startDate, wrongCountRange])
+  }, [activeTab, appliedSearch, dimFilter, endDate, scope, searchMode, startDate, wrongCountRange])
 
   useEffect(() => {
     if (page <= totalPages) return
@@ -226,6 +235,13 @@ export function useErrorsPage() {
     ])
   }, [filteredWords, updateSelectedWordKeys])
 
+  const selectPaginatedWords = useCallback(() => {
+    updateSelectedWordKeys(previous => [
+      ...previous,
+      ...paginatedWords.map(word => word.word),
+    ])
+  }, [paginatedWords, updateSelectedWordKeys])
+
   const clearSelectedWords = useCallback(() => {
     updateSelectedWordKeys(() => [])
   }, [updateSelectedWordKeys])
@@ -239,6 +255,7 @@ export function useErrorsPage() {
     setRemoteSearchWords([])
 
     if (!nextSearch) {
+      setSearchMode(null)
       setSearchLoading(false)
       return
     }
@@ -253,9 +270,7 @@ export function useErrorsPage() {
       const response = await apiFetch<{ words?: WrongWordRecord[] }>(`/api/ai/wrong-words?${params.toString()}`)
       if (searchRequestIdRef.current !== requestId) return
 
-      const nextRemoteWords = Array.isArray(response.words)
-        ? response.words.filter(word => matchesWrongWordSearchTerm(word, nextSearch))
-        : []
+      const nextRemoteWords = Array.isArray(response.words) ? response.words : []
       setRemoteSearchWords(nextRemoteWords)
     } catch {
       if (searchRequestIdRef.current !== requestId) return
@@ -274,6 +289,7 @@ export function useErrorsPage() {
     setEndDate('')
     setWrongCountRange('all')
     setSearchText('')
+    setSearchMode(null)
     setAppliedSearch('')
     setRemoteSearchWords([])
     setSearchLoading(false)
@@ -312,6 +328,7 @@ export function useErrorsPage() {
     endDate,
     wrongCountRange,
     searchText,
+    searchMode,
     appliedSearch,
     words,
     visibleWords,
@@ -326,8 +343,10 @@ export function useErrorsPage() {
     selectedFilteredWordCount,
     selectedOutsideFilterCount,
     allFilteredSelected,
+    allPaginatedSelected,
     hasActiveFilters,
     canResetFilters,
+    loading,
     searchLoading,
     page: currentPage,
     totalPages,
@@ -341,12 +360,14 @@ export function useErrorsPage() {
     setEndDate,
     setWrongCountRange,
     setSearchText,
+    setSearchMode,
     setPage,
     applySearch,
     applyTodayDateRange,
     applyRecentDaysDateRange,
     toggleWordSelection,
     selectFilteredWords,
+    selectPaginatedWords,
     clearSelectedWords,
     resetFilters,
     startSelectedPractice,
