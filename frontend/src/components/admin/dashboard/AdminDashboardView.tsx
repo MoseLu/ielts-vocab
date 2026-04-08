@@ -35,14 +35,19 @@ interface AdminDashboardViewProps {
   onSelectUser: (userId: number) => void
 }
 
+const DEFAULT_AVATAR_URL = '/default-avatar.jpg'
+
 function resolveDisplayAvatarUrl(
   avatarUrl: string | null | undefined,
   userId: number,
-  currentUserId?: number,
+  currentUserId?: string | number,
   currentUserAvatarUrl?: string | null,
 ) {
   if (avatarUrl) return avatarUrl
-  if (currentUserId === userId && currentUserAvatarUrl) return currentUserAvatarUrl
+  if (
+    currentUserId != null &&
+    String(currentUserId) === String(userId)
+  ) return currentUserAvatarUrl || DEFAULT_AVATAR_URL
   return null
 }
 
