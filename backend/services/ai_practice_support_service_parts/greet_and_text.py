@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from importlib import import_module
+import logging
 
+from flask import jsonify
 
-def _ai_module():
-    return import_module('routes.ai')
+from services.ai_assistant_memory_service import save_turn
+from services.ai_assistant_tool_service import chat_with_tools
+from services.ai_learning_context_service import GREET_SYSTEM_PROMPT_V2, build_learning_context_msg
+from services.ai_prompt_context_service import parse_options, strip_options
+from services.ai_route_support_service import _get_context_data, _track_metric
+from services.llm import correct_text
 
 
 def build_greet_fallback(current_user, ctx_data: dict | None = None) -> str:
@@ -85,16 +90,13 @@ def build_greet_fallback(current_user, ctx_data: dict | None = None) -> str:
 
 
 def greet_response(current_user, body):
-    ai = _ai_module()
-    import logging
-
     body = body or {}
     frontend_context = body.get('context') or {}
-    messages = [{"role": "system", "content": ai.GREET_SYSTEM_PROMPT_V2}]
+    messages = [{"role": "system", "content": GREET_SYSTEM_PROMPT_V2}]
     ctx_data = {}
     try:
-        ctx_data = ai._get_context_data(current_user.id)
-        context_msg = ai._build_learning_context_msg(ctx_data, frontend_context)
+        ctx_data = _get_context_data(current_user.id)
+        context_msg = build_learning_context_msg(ctx_data, frontend_context)
         messages.append({
             "role": "user",
             "content": (
@@ -118,37 +120,35 @@ def greet_response(current_user, body):
         })
 
     try:
-        response = ai._chat_with_tools(messages, tools=None)
+        response = chat_with_tools(messages, tools=None)
         final_text = response.get("text", str(response))
-        options = ai._parse_options(final_text) or []
-        clean_reply = ai._strip_options(final_text).strip()
-        ai._save_turn(current_user.id, '[用户打开了AI助手]', clean_reply)
-        return ai.jsonify({'reply': clean_reply, 'options': options})
+        options = parse_options(final_text) or []
+        clean_reply = strip_options(final_text).strip()
+        save_turn(current_user.id, '[用户打开了AI助手]', clean_reply)
+        return jsonify({'reply': clean_reply, 'options': options})
     except Exception as exc:
         logging.warning("[AI] greet failed for user=%s: %s", current_user.id, exc)
-        fallback_reply = ai._build_greet_fallback(current_user, ctx_data)
-        ai._save_turn(current_user.id, '[用户打开了AI助手]', fallback_reply)
-        return ai.jsonify({'reply': fallback_reply, 'options': []}), 200
+        fallback_reply = build_greet_fallback(current_user, ctx_data)
+        save_turn(current_user.id, '[用户打开了AI助手]', fallback_reply)
+        return jsonify({'reply': fallback_reply, 'options': []}), 200
 
 
 def correct_text_response(current_user, body):
-    ai = _ai_module()
     body = body or {}
     text_in = str(body.get('text') or '').strip()
     if not text_in:
-        return ai.jsonify({
+        return jsonify({
             'is_valid_english': False,
             'message': '请输入英文句子（建议 1-50 词）。',
         }), 200
     if len(text_in.split()) > 80:
-        return ai.jsonify({'error': '句子过长，请控制在 80 词内'}), 400
-    result = ai.correct_text(text_in)
-    ai._track_metric(current_user.id, 'writing_correction_used', {'length': len(text_in.split())})
-    return ai.jsonify(result), 200
+        return jsonify({'error': '句子过长，请控制在 80 词内'}), 400
+    result = correct_text(text_in)
+    _track_metric(current_user.id, 'writing_correction_used', {'length': len(text_in.split())})
+    return jsonify(result), 200
 
 
 def correction_feedback_response(current_user, body):
-    ai = _ai_module()
     adopted = bool((body or {}).get('adopted'))
-    ai._track_metric(current_user.id, 'writing_correction_adoption', {'adopted': adopted})
-    return ai.jsonify({'ok': True}), 200
+    _track_metric(current_user.id, 'writing_correction_adoption', {'adopted': adopted})
+    return jsonify({'ok': True}), 200
