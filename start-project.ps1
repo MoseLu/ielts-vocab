@@ -349,7 +349,7 @@ try {
     Add-Content -Path $frontendErr -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] frontend preview start ====="
 
     Write-Step '[6/6] Starting backend, speech service, and frontend preview...'
-    Start-LoggedProcess -Title 'IELTS Flask Backend' -WorkingDirectory (Join-Path $root 'backend') -CommandLine "${backendEnvPrefix}python -u app.py 1>>`"$backendOut`" 2>>`"$backendErr`""
+    Start-LoggedProcess -Title 'IELTS Backend API' -WorkingDirectory (Join-Path $root 'backend') -CommandLine "${backendEnvPrefix}python -u app.py 1>>`"$backendOut`" 2>>`"$backendErr`""
     Wait-PortState -Port $backendPort -Listening $true -TimeoutSeconds 30
     Wait-HttpReady -Url "http://127.0.0.1:$backendPort/api/books/stats" -TimeoutSeconds 30
 
@@ -363,7 +363,7 @@ try {
 
     Write-Host '[DONE] Project restarted successfully.'
     Write-Host "       Frontend preview: http://127.0.0.1:$frontendPort"
-    Write-Host "       Flask backend:    http://127.0.0.1:$backendPort"
+    Write-Host "       Backend API:      http://127.0.0.1:$backendPort"
     Write-Host "       Speech service:   http://127.0.0.1:$speechPort"
     Write-Host "       Logs directory:   $logDir"
     Write-Host "       Nginx should proxy /socket.io to port $speechPort and / to port $frontendPort."
