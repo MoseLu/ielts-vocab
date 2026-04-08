@@ -100,16 +100,7 @@ def _matches_wrong_word_search(record: UserWrongWord, search_term: str) -> bool:
     if not search_term:
         return True
 
-    candidates = (
-        record.word,
-        record.phonetic,
-        record.definition,
-        record.pos,
-    )
-    return any(
-        isinstance(candidate, str) and search_term in candidate.lower()
-        for candidate in candidates
-    )
+    return isinstance(record.word, str) and search_term in record.word.lower()
 
 
 @ai_bp.route('/wrong-words', methods=['GET'])

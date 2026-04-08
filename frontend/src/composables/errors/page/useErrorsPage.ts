@@ -17,6 +17,7 @@ import {
   hasWrongWordHistory,
   hasWrongWordPending,
   isWrongWordPendingInDimension,
+  mergeWrongWordLists,
   readWrongWordsReviewSelectionFromStorage,
   writeWrongWordsReviewSelectionToStorage,
 } from '../../../features/vocabulary/wrongWordsStore'
@@ -33,7 +34,7 @@ export type ActiveTab = 'words' | 'real'
 export type DimFilter = 'all' | WrongWordDimension
 export type WrongCountRange = 'all' | '0-5' | '6-10' | '11-20' | '20+'
 
-const ERRORS_PAGE_SIZE = 100
+const ERRORS_PAGE_SIZE = 10
 
 function formatDateInput(date: Date): string {
   const year = date.getFullYear()
@@ -75,7 +76,7 @@ export function useErrorsPage() {
   const [wrongCountRange, setWrongCountRange] = useState<WrongCountRange>('all')
   const [searchText, setSearchText] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
-  const [remoteSearchMatchedKeys, setRemoteSearchMatchedKeys] = useState<string[]>([])
+  const [remoteSearchWords, setRemoteSearchWords] = useState<WrongWordRecord[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [selectedWordKeys, setSelectedWordKeys] = useState<string[]>(
@@ -85,9 +86,6 @@ export function useErrorsPage() {
   const { words } = useWrongWords({ includeDetails: false })
   const { minWrongCount, maxWrongCount } = getWrongCountBounds(wrongCountRange)
 
-  const historyWords = useMemo(() => words.filter(word => hasWrongWordHistory(word)), [words])
-  const pendingWords = useMemo(() => words.filter(word => hasWrongWordPending(word)), [words])
-  const scopeWords = scope === 'pending' ? pendingWords : historyWords
   const knownWordKeySet = useMemo(
     () => new Set(words.map(word => normalizeWrongWordKey(word.word)).filter(Boolean)),
     [words],
@@ -100,6 +98,18 @@ export function useErrorsPage() {
     setSelectedWordKeys(nextSelectedWordKeys)
     writeWrongWordsReviewSelectionToStorage(nextSelectedWordKeys)
   }, [knownWordKeySet, selectedWordKeys])
+
+  const visibleWords = useMemo(() => {
+    if (!appliedSearch) return words
+
+    const localMatchedWords = words.filter(word => matchesWrongWordSearchTerm(word, appliedSearch))
+    const remoteMatchedWords = remoteSearchWords.filter(word => matchesWrongWordSearchTerm(word, appliedSearch))
+    return mergeWrongWordLists(localMatchedWords, remoteMatchedWords)
+  }, [appliedSearch, remoteSearchWords, words])
+
+  const historyWords = useMemo(() => visibleWords.filter(word => hasWrongWordHistory(word)), [visibleWords])
+  const pendingWords = useMemo(() => visibleWords.filter(word => hasWrongWordPending(word)), [visibleWords])
+  const scopeWords = scope === 'pending' ? pendingWords : historyWords
 
   const dimStats = useMemo(() => {
     const counts = WRONG_WORD_DIMENSIONS.reduce((result, dimension) => {
@@ -127,35 +137,14 @@ export function useErrorsPage() {
     }
   }, [scope, scopeWords])
 
-  const localSearchMatchedKeys = useMemo(() => {
-    if (!appliedSearch) return []
-
-    return dedupeWrongWordKeys(
-      words
-        .filter(word => matchesWrongWordSearchTerm(word, appliedSearch))
-        .map(word => normalizeWrongWordKey(word.word)),
-    )
-  }, [appliedSearch, words])
-
-  const searchMatchedKeySet = useMemo(() => {
-    if (!appliedSearch) return null
-    return new Set(dedupeWrongWordKeys([
-      ...localSearchMatchedKeys,
-      ...remoteSearchMatchedKeys,
-    ]))
-  }, [appliedSearch, localSearchMatchedKeys, remoteSearchMatchedKeys])
-
   const filteredWords = useMemo(() => {
-    return [...filterWrongWords(words, {
+    return [...filterWrongWords(visibleWords, {
       scope,
       dimFilter,
       startDate,
       endDate,
       minWrongCount,
       maxWrongCount,
-    }).filter(word => {
-      if (!searchMatchedKeySet) return true
-      return searchMatchedKeySet.has(normalizeWrongWordKey(word.word))
     })].sort((a, b) => {
       if (dimFilter !== 'all') {
         const aDimCount = scope === 'history'
@@ -169,7 +158,7 @@ export function useErrorsPage() {
 
       return getWrongWordActiveCount(b, scope) - getWrongWordActiveCount(a, scope)
     })
-  }, [dimFilter, endDate, maxWrongCount, minWrongCount, scope, searchMatchedKeySet, startDate, words])
+  }, [dimFilter, endDate, maxWrongCount, minWrongCount, scope, startDate, visibleWords])
 
   const selectedWordKeySet = useMemo(() => new Set(selectedWordKeys), [selectedWordKeys])
   const selectedFilteredWordCount = useMemo(() => {
@@ -247,7 +236,7 @@ export function useErrorsPage() {
 
     searchRequestIdRef.current = requestId
     setAppliedSearch(nextSearch)
-    setRemoteSearchMatchedKeys([])
+    setRemoteSearchWords([])
 
     if (!nextSearch) {
       setSearchLoading(false)
@@ -264,15 +253,13 @@ export function useErrorsPage() {
       const response = await apiFetch<{ words?: WrongWordRecord[] }>(`/api/ai/wrong-words?${params.toString()}`)
       if (searchRequestIdRef.current !== requestId) return
 
-      const nextRemoteKeys = Array.isArray(response.words)
-        ? dedupeWrongWordKeys(
-            response.words.map(word => normalizeWrongWordKey(word.word)),
-          )
+      const nextRemoteWords = Array.isArray(response.words)
+        ? response.words.filter(word => matchesWrongWordSearchTerm(word, nextSearch))
         : []
-      setRemoteSearchMatchedKeys(nextRemoteKeys)
+      setRemoteSearchWords(nextRemoteWords)
     } catch {
       if (searchRequestIdRef.current !== requestId) return
-      setRemoteSearchMatchedKeys([])
+      setRemoteSearchWords([])
     } finally {
       if (searchRequestIdRef.current === requestId) {
         setSearchLoading(false)
@@ -288,7 +275,7 @@ export function useErrorsPage() {
     setWrongCountRange('all')
     setSearchText('')
     setAppliedSearch('')
-    setRemoteSearchMatchedKeys([])
+    setRemoteSearchWords([])
     setSearchLoading(false)
   }, [])
 
@@ -327,6 +314,7 @@ export function useErrorsPage() {
     searchText,
     appliedSearch,
     words,
+    visibleWords,
     historyWords,
     pendingWords,
     scopeWords,

@@ -1,5 +1,20 @@
-export type WrongWordDimension = 'recognition' | 'meaning' | 'listening' | 'dictation'
+import {
+  getWrongWordDimensionModeLabel,
+  isWrongWordDimensionKey,
+  type WrongWordDimensionKey,
+  WRONG_WORD_DIMENSIONS,
+  WRONG_WORD_DIMENSION_LABELS,
+  WRONG_WORD_DIMENSION_TITLES,
+} from '../../../constants/practiceModes'
+
+export type WrongWordDimension = WrongWordDimensionKey
 export type WrongWordCollectionScope = 'history' | 'pending'
+
+export {
+  WRONG_WORD_DIMENSIONS,
+  WRONG_WORD_DIMENSION_LABELS,
+  WRONG_WORD_DIMENSION_TITLES,
+}
 
 export interface WrongWordExample {
   en: string
@@ -97,37 +112,13 @@ export type WrongWordInput = Partial<WrongWordRecord> & {
 export type WrongWordsResponse = { words?: WrongWordInput[] }
 export type ScopedUserId = string | number | null | undefined
 
-export const WRONG_WORD_DIMENSIONS: WrongWordDimension[] = [
-  'recognition',
-  'meaning',
-  'listening',
-  'dictation',
-]
-
-export const WRONG_WORD_DIMENSION_LABELS: Record<WrongWordDimension, string> = {
-  recognition: '看词认义',
-  meaning: '中文想英文',
-  listening: '听音辨义',
-  dictation: '听音拼写',
-}
-
-export const WRONG_WORD_DIMENSION_TITLES: Record<WrongWordDimension, string> = {
-  recognition: '看到英文单词时，能不能认出中文意思',
-  meaning: '看到中文意思时，能不能主动想到英文单词',
-  listening: '听到发音后，能不能判断它对应的意思',
-  dictation: '听到发音后，能不能把单词完整拼出来',
-}
-
 export const WRONG_WORD_SCOPE_LABELS: Record<WrongWordCollectionScope, string> = {
   pending: '待清错词',
   history: '累计错词',
 }
 
 export function isWrongWordDimension(value: string | null | undefined): value is WrongWordDimension {
-  return value === 'recognition'
-    || value === 'meaning'
-    || value === 'listening'
-    || value === 'dictation'
+  return isWrongWordDimensionKey(value)
 }
 
 export function getWrongWordDimensionLabel(
@@ -135,9 +126,7 @@ export function getWrongWordDimensionLabel(
   fallback?: string | null,
 ): string | null {
   if (isWrongWordDimension(dimension)) return WRONG_WORD_DIMENSION_LABELS[dimension]
-
-  const normalizedFallback = fallback?.trim()
-  return normalizedFallback ? normalizedFallback : null
+  return getWrongWordDimensionModeLabel(dimension, fallback)
 }
 
 export const WRONG_WORD_PENDING_REVIEW_TARGET = 4

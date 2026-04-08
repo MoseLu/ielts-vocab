@@ -3,12 +3,12 @@ import {
   WRONG_WORD_DIMENSIONS,
   WRONG_WORD_DIMENSION_LABELS,
   WRONG_WORD_DIMENSION_TITLES,
-  WRONG_WORD_PENDING_REVIEW_TARGET,
   WRONG_WORD_SCOPE_LABELS,
 } from '../../../features/vocabulary/wrongWordsStore'
 import { Page, PageContent, PageHeader } from '../../layout'
 import { EmptyState, SegmentedControl, UnderlineTabs } from '../../ui'
 import { useErrorsPage, type WrongCountRange } from '../../../composables/errors/page/useErrorsPage'
+import { ErrorsFAQCard } from './ErrorsFAQCard'
 import { ErrorsOverview } from './ErrorsOverview'
 import { ErrorsWordItem } from './ErrorsWordItem'
 
@@ -29,18 +29,14 @@ export default function ErrorsPage() {
     endDate,
     wrongCountRange,
     searchText,
-    appliedSearch,
     words,
     historyWords,
     pendingWords,
     scopeWords,
-    dimStats,
     dimCounts,
     filteredWords,
     selectedWordKeySet,
     selectedWordCount,
-    selectedFilteredWordCount,
-    selectedOutsideFilterCount,
     allFilteredSelected,
     hasActiveFilters,
     canResetFilters,
@@ -89,21 +85,21 @@ export default function ErrorsPage() {
             disabled={selectedWordCount === 0}
             onClick={startSelectedPractice}
           >
-            复习已选（{selectedWordCount}词）
+            开始复习（{selectedWordCount}词）
           </button>
           <button
             className="errors-clear-btn"
             disabled={filteredWords.length === 0 || allFilteredSelected}
             onClick={selectFilteredWords}
           >
-            勾选当前筛选
+            全选结果
           </button>
           <button
             className="errors-clear-btn"
             disabled={selectedWordCount === 0}
             onClick={clearSelectedWords}
           >
-            清空勾选
+            清空选择
           </button>
         </div>
       )}
@@ -145,22 +141,52 @@ export default function ErrorsPage() {
           />
         ) : (
           <div className="errors-content-scroll">
-            <div className="errors-review-rule">
-              一个词只要答错过，就会进入“累计错词”。如果某一类问题还没连续答对 {WRONG_WORD_PENDING_REVIEW_TARGET} 次，它也会继续留在“待清错词”里，方便你按问题类型集中清理。
+            <ErrorsOverview scope={scope} />
+            <ErrorsFAQCard />
+
+            <div className="errors-scope-row">
+              <SegmentedControl
+                className="errors-dim-filter"
+                ariaLabel="错词集合筛选"
+                value={scope}
+                onChange={value => setScope(value as 'pending' | 'history')}
+                options={[
+                  { value: 'pending', label: WRONG_WORD_SCOPE_LABELS.pending, badge: pendingWords.length > 0 ? pendingWords.length : undefined },
+                  { value: 'history', label: WRONG_WORD_SCOPE_LABELS.history, badge: historyWords.length > 0 ? historyWords.length : undefined },
+                ]}
+              />
+
+              {filteredWords.length > 0 && (
+                <div className="errors-scope-tools">
+                  <span className="errors-summary-pill">
+                    {pageStartIndex}-{pageEndIndex}/{filteredWords.length}
+                  </span>
+                  {totalPages > 1 && (
+                    <div className="errors-inline-pagination" role="navigation" aria-label="错词分页">
+                      <button
+                        type="button"
+                        className="errors-clear-btn"
+                        disabled={page <= 1}
+                        onClick={() => setPage(page - 1)}
+                      >
+                        上一页
+                      </button>
+                      <span className="errors-inline-pagination-status">
+                        {page}/{totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        className="errors-clear-btn"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage(page + 1)}
+                      >
+                        下一页
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-
-            <ErrorsOverview words={words} />
-
-            <SegmentedControl
-              className="errors-dim-filter"
-              ariaLabel="错词集合筛选"
-              value={scope}
-              onChange={value => setScope(value as 'pending' | 'history')}
-              options={[
-                { value: 'pending', label: WRONG_WORD_SCOPE_LABELS.pending, badge: pendingWords.length > 0 ? pendingWords.length : undefined },
-                { value: 'history', label: WRONG_WORD_SCOPE_LABELS.history, badge: historyWords.length > 0 ? historyWords.length : undefined },
-              ]}
-            />
 
             <div className="errors-filter-panel">
               <div className="errors-filter-panel-main">
@@ -204,6 +230,23 @@ export default function ErrorsPage() {
               </div>
 
               <div className="errors-filter-panel-actions">
+                <div className="errors-filter-shortcuts" role="group" aria-label="日期快捷筛选">
+                  <button
+                    type="button"
+                    className="errors-clear-btn"
+                    onClick={applyTodayDateRange}
+                  >
+                    只看今天新错词
+                  </button>
+                  <button
+                    type="button"
+                    className="errors-clear-btn"
+                    onClick={() => applyRecentDaysDateRange(7)}
+                  >
+                    最近 7 天
+                  </button>
+                </div>
+
                 <button
                   type="button"
                   className="errors-filter-reset"
@@ -214,60 +257,6 @@ export default function ErrorsPage() {
                 </button>
               </div>
             </div>
-
-            {hasActiveFilters && (
-              <div className="errors-filter-summary">
-                当前筛选命中 {filteredWords.length} 个{scope === 'pending' ? '待清错词' : '累计错词'}
-                {appliedSearch ? `，搜索“${appliedSearch}”` : ''}
-              </div>
-            )}
-
-            <div className="errors-selection-summary">
-              错词不会被删除；勾选后只加入复习。已勾选 {selectedWordCount} 词，当前筛选中 {selectedFilteredWordCount} 词
-              {selectedOutsideFilterCount > 0 ? `，另外 ${selectedOutsideFilterCount} 词来自其他筛选` : ''}
-              。
-            </div>
-
-            {filteredWords.length > 0 && (
-              <div className="errors-pagination" role="navigation" aria-label="错词分页">
-                <div className="errors-pagination-summary">
-                  当前显示第 {pageStartIndex}-{pageEndIndex} 条，共 {filteredWords.length} 条
-                </div>
-                {totalPages > 1 && (
-                  <div className="errors-pagination-actions">
-                    <button
-                      type="button"
-                      className="errors-clear-btn"
-                      disabled={page <= 1}
-                      onClick={() => setPage(page - 1)}
-                    >
-                      上一页
-                    </button>
-                    <span className="errors-pagination-status">
-                      第 {page}/{totalPages} 页
-                    </span>
-                    <button
-                      type="button"
-                      className="errors-clear-btn"
-                      disabled={page >= totalPages}
-                      onClick={() => setPage(page + 1)}
-                    >
-                      下一页
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {scopeWords.length > 0 && (
-              <div className="errors-dim-summary" role="note">
-                一个词可能同时属于多类问题，所以这里的标签数量会重复计算。当前 {scopeWords.length} 个{WRONG_WORD_SCOPE_LABELS[scope]}对应了 {dimStats.hitCount} 个问题标签
-                {dimStats.overlappingWordCount > 0
-                  ? `，其中 ${dimStats.overlappingWordCount} 个词同时落在多个问题类型里`
-                  : ''}
-                ，这些数字不是互斥拆分。
-              </div>
-            )}
 
             <div className="errors-dim-filter-row">
               <div className="errors-dim-filter-shell">
@@ -289,23 +278,6 @@ export default function ErrorsPage() {
                 />
 
                 <div className="errors-dim-filter-tools">
-                  <div className="errors-filter-shortcuts" role="group" aria-label="日期快捷筛选">
-                    <button
-                      type="button"
-                      className="errors-clear-btn"
-                      onClick={applyTodayDateRange}
-                    >
-                      只看今天新错词
-                    </button>
-                    <button
-                      type="button"
-                      className="errors-clear-btn"
-                      onClick={() => applyRecentDaysDateRange(7)}
-                    >
-                      最近 7 天
-                    </button>
-                  </div>
-
                   <form
                     className="errors-search-form"
                     onSubmit={event => {
@@ -319,7 +291,7 @@ export default function ErrorsPage() {
                         className="errors-filter-input errors-search-input"
                         type="search"
                         value={searchText}
-                        placeholder="模糊搜索单词、音标或释义"
+                        placeholder="模糊搜索单词"
                         onChange={event => setSearchText(event.target.value)}
                       />
                       <button
@@ -344,7 +316,7 @@ export default function ErrorsPage() {
               <EmptyState
                 page
                 className="errors-empty"
-                title={hasActiveFilters ? '当前筛选暂无错词' : `${WRONG_WORD_SCOPE_LABELS[scope]}为空`}
+                title={hasActiveFilters ? '暂无匹配错词' : `${WRONG_WORD_SCOPE_LABELS[scope]}为空`}
                 description={hasActiveFilters ? '调整搜索词、日期、错次或问题类型后再试' : (scope === 'pending' ? '当前没有待继续攻克的错词' : '继续练习，累计错词会自动增加')}
               />
             ) : (

@@ -1,4 +1,4 @@
-import { filterWrongWords } from './wrongWordsFilters'
+import { filterWrongWords, matchesWrongWordSearchTerm } from './wrongWordsFilters'
 
 describe('wrongWordsFilters', () => {
   it('filters wrong words by date range, wrong-count range, and dimension together', () => {
@@ -66,5 +66,28 @@ describe('wrongWordsFilters', () => {
     expect(filterWrongWords(words, {
       minWrongCount: 21,
     }).map(word => word.word)).toEqual(['twenty-one'])
+  })
+
+  it('matches wrong-word search terms against the word field only', () => {
+    expect(matchesWrongWordSearchTerm({
+      word: 'present',
+      phonetic: '/ˈprez(ə)nt/',
+      pos: 'adj.',
+      definition: 'current',
+    }, 'pre')).toBe(true)
+
+    expect(matchesWrongWordSearchTerm({
+      word: 'without',
+      phonetic: '/wɪˈðaʊt/',
+      pos: 'prep.',
+      definition: 'not having',
+    }, 'pre')).toBe(false)
+
+    expect(matchesWrongWordSearchTerm({
+      word: 'along',
+      phonetic: '/əˈlɒŋ/',
+      pos: 'adv.',
+      definition: 'prep. example',
+    }, 'pre')).toBe(false)
   })
 })

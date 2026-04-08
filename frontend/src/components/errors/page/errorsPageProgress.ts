@@ -1,33 +1,28 @@
 import {
+  type WrongWordCollectionScope,
   type WrongWordDimension,
   type WrongWordRecord,
   WRONG_WORD_DIMENSIONS,
   WRONG_WORD_DIMENSION_LABELS,
+  WRONG_WORD_SCOPE_LABELS,
   getWrongWordDimensionHistoryWrong,
   getWrongWordDimensionProgress,
   getWrongWordDimensionState,
-  hasWrongWordPending,
 } from '../../../features/vocabulary/wrongWordsStore'
 
 type Tone = 'neutral' | 'warning' | 'accent' | 'success'
 
-export interface ErrorJourneyCard {
+export interface ErrorJourneyStep {
   step: string
-  title: string
-  value: string
+  label: string
   detail: string
   tone: Tone
 }
 
-export interface ErrorSpotlightCard {
-  label: string
-  value: string
-  detail: string
-}
-
 export interface ErrorBookOverview {
-  journeyCards: ErrorJourneyCard[]
-  spotlightCards: ErrorSpotlightCard[]
+  activeIndex: number
+  focusLabel: string
+  steps: ErrorJourneyStep[]
 }
 
 export interface WrongWordDimensionProgressModel {
@@ -47,12 +42,19 @@ export interface WrongWordCardModel {
   statusDescription: string
   isTodayNew: boolean
   feedbackLabel: string | null
+  focusLabel: string | null
   bookProgressLabel: string
   bookProgressNote: string
   bookProgressPercent: number
+  historyDimensionCount: number
+  pendingDimensionCount: number
+  clearedDimensionCount: number
   reviewProgressLabel: string
   reviewProgressNote: string
   reviewProgressPercent: number
+  reviewTarget: number
+  reviewStreak: number
+  reviewRemaining: number
   dimensions: WrongWordDimensionProgressModel[]
 }
 
@@ -78,18 +80,6 @@ function formatMonthDay(value?: string): string | null {
 
   const date = new Date(timestamp)
   return `${date.getMonth() + 1}月${date.getDate()}日`
-}
-
-function countHistoryDimensions(word: WrongWordRecord): number {
-  return WRONG_WORD_DIMENSIONS.filter(dimension => getWrongWordDimensionHistoryWrong(word, dimension) > 0).length
-}
-
-function countPendingDimensions(word: WrongWordRecord): number {
-  return WRONG_WORD_DIMENSIONS.filter(dimension => getWrongWordDimensionProgress(word, dimension).pending).length
-}
-
-function countClearedDimensions(word: WrongWordRecord): number {
-  return Math.max(0, countHistoryDimensions(word) - countPendingDimensions(word))
 }
 
 function buildDimensionProgressModel(
@@ -123,80 +113,34 @@ function buildDimensionProgressModel(
   }
 }
 
-export function buildErrorBookOverview(words: WrongWordRecord[]): ErrorBookOverview {
-  const pendingWords = words.filter(word => hasWrongWordPending(word))
-  const clearedWords = words.filter(word => !hasWrongWordPending(word))
-  const masteredWords = words.filter(word => Boolean(word.ebbinghaus_completed))
-  const todayAddedWords = words.filter(word => isToday(word.first_wrong_at))
-  const todayProgressedWords = words.filter(word => (
-    WRONG_WORD_DIMENSIONS.some(dimension => isToday(getWrongWordDimensionState(word, dimension).last_pass_at))
-  ))
-  const todayMovedOutWords = words.filter(word => {
-    if (hasWrongWordPending(word)) return false
-
-    return WRONG_WORD_DIMENSIONS.some(dimension => {
-      if (getWrongWordDimensionHistoryWrong(word, dimension) <= 0) return false
-      return isToday(getWrongWordDimensionState(word, dimension).last_pass_at)
-    })
-  })
-
-  const totalHistoryDimensions = words.reduce((sum, word) => sum + countHistoryDimensions(word), 0)
-  const clearedDimensions = words.reduce((sum, word) => sum + countClearedDimensions(word), 0)
-  const pendingDimensions = Math.max(0, totalHistoryDimensions - clearedDimensions)
-
+export function buildErrorBookOverview(scope: WrongWordCollectionScope): ErrorBookOverview {
   return {
-    journeyCards: [
+    activeIndex: scope === 'pending' ? 1 : 2,
+    focusLabel: `当前查看：${WRONG_WORD_SCOPE_LABELS[scope]}`,
+    steps: [
       {
         step: '第 1 步',
-        title: '答错即收录',
-        value: `${words.length} 词`,
-        detail: '只要答错过一次，就会留下累计记录。',
+        label: '答错收录',
+        detail: '答错就会进入错词本',
         tone: 'neutral',
       },
       {
         step: '第 2 步',
-        title: '清错进行中',
-        value: `${pendingWords.length} 词`,
-        detail: `还有 ${pendingDimensions} 个问题项留在待清里。`,
+        label: '待清推进',
+        detail: '优先把问题项刷出待清',
         tone: 'warning',
       },
       {
         step: '第 3 步',
-        title: '已移出待清',
-        value: `${clearedWords.length} 词`,
-        detail: '这些词已经走出错词本当前阶段。',
+        label: '累计保留',
+        detail: '累计记录还会继续保留',
         tone: 'accent',
       },
       {
         step: '第 4 步',
-        title: '长期稳固',
-        value: `${masteredWords.length} 词`,
-        detail: '识别复习链已经走完艾宾浩斯。',
+        label: '长期复习',
+        detail: '最后进入长期稳固阶段',
         tone: 'success',
-      },
-    ],
-    spotlightCards: [
-      {
-        label: '今日新入错词',
-        value: String(todayAddedWords.length),
-        detail: '配合日期筛选可以只看今天第一次进错词本的词。',
-      },
-      {
-        label: '今日有推进',
-        value: String(todayProgressedWords.length),
-        detail: '这些词今天至少有一项连对数增加了。',
-      },
-      {
-        label: '今日移出待清',
-        value: String(todayMovedOutWords.length),
-        detail: '今天已经从错词本当前阶段毕业的词。',
-      },
-      {
-        label: '问题项已过关',
-        value: `${clearedDimensions}/${totalHistoryDimensions}`,
-        detail: pendingDimensions > 0
-          ? `还剩 ${pendingDimensions} 个问题项需要继续清理。`
-          : '当前所有问题项都已经走出待清阶段。',
       },
     ],
   }
@@ -256,6 +200,9 @@ export function buildWrongWordCardModel(word: WrongWordRecord): WrongWordCardMod
     feedbackLabel: movedOutTodayCount > 0
       ? `今天移出 ${movedOutTodayCount} 项`
       : (hasProgressToday ? '今天有推进' : null),
+    focusLabel: nextPendingDimension
+      ? `优先 ${nextPendingDimension.label} · ${nextPendingDimension.headline}`
+      : null,
     bookProgressLabel: historyDimensionCount > 0
       ? `${clearedDimensionCount}/${historyDimensionCount} 项已移出待清`
       : '暂未形成问题项',
@@ -265,6 +212,9 @@ export function buildWrongWordCardModel(word: WrongWordRecord): WrongWordCardMod
     bookProgressPercent: historyDimensionCount > 0
       ? Math.round((clearedDimensionCount / historyDimensionCount) * 100)
       : 0,
+    historyDimensionCount,
+    pendingDimensionCount,
+    clearedDimensionCount,
     reviewProgressLabel: Boolean(word.ebbinghaus_completed)
       ? '艾宾浩斯已完成'
       : (reviewTarget > 0 ? `艾宾浩斯 ${reviewStreak}/${reviewTarget}` : '等待长期复习'),
@@ -276,6 +226,9 @@ export function buildWrongWordCardModel(word: WrongWordRecord): WrongWordCardMod
             : '清错完成后会继续进入长期复习。'
         ),
     reviewProgressPercent,
+    reviewTarget,
+    reviewStreak,
+    reviewRemaining,
     dimensions,
   }
 }

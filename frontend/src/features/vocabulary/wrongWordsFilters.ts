@@ -71,9 +71,7 @@ export function matchesWrongWordSearchTerm<T extends Partial<WrongWordRecord>>(
   const normalizedSearch = normalizeWrongWordSearchTerm(searchTerm)
   if (!normalizedSearch) return true
 
-  return [word.word, word.phonetic, word.definition, word.pos].some(candidate => (
-    typeof candidate === 'string' && candidate.toLowerCase().includes(normalizedSearch)
-  ))
+  return typeof word.word === 'string' && word.word.toLowerCase().includes(normalizedSearch)
 }
 
 export function getWrongWordOccurrenceAt(word: Partial<WrongWordRecord>): string | null {

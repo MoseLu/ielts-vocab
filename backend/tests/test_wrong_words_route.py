@@ -103,8 +103,16 @@ def test_wrong_words_search_filters_fuzzy_match_in_compact_mode(client, app):
                 user_id=user.id,
                 word='beta',
                 phonetic='/b/',
-                pos='n.',
+                pos='prep.',
                 definition='second item',
+                wrong_count=2,
+            ),
+            UserWrongWord(
+                user_id=user.id,
+                word='without',
+                phonetic='/wɪˈðaʊt/',
+                pos='prep.',
+                definition='without something',
                 wrong_count=2,
             ),
         ])
@@ -115,3 +123,44 @@ def test_wrong_words_search_filters_fuzzy_match_in_compact_mode(client, app):
     assert response.status_code == 200
     data = response.get_json()
     assert [word['word'] for word in data['words']] == ['alpha']
+
+
+def test_wrong_words_search_matches_word_only_in_compact_mode(client, app):
+    register_and_login(client, username='wrong-words-search-word-only-user')
+
+    with app.app_context():
+        user = User.query.filter_by(username='wrong-words-search-word-only-user').first()
+        assert user is not None
+        db.session.add_all([
+            UserWrongWord(
+                user_id=user.id,
+                word='present',
+                phonetic='/ˈprez(ə)nt/',
+                pos='adj.',
+                definition='current',
+                wrong_count=3,
+            ),
+            UserWrongWord(
+                user_id=user.id,
+                word='without',
+                phonetic='/wɪˈðaʊt/',
+                pos='prep.',
+                definition='prep. not having',
+                wrong_count=2,
+            ),
+            UserWrongWord(
+                user_id=user.id,
+                word='along',
+                phonetic='/əˈlɒŋ/',
+                pos='adv.',
+                definition='move prep. example',
+                wrong_count=1,
+            ),
+        ])
+        db.session.commit()
+
+    response = client.get('/api/ai/wrong-words?details=compact&search=pre')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert [word['word'] for word in data['words']] == ['present']

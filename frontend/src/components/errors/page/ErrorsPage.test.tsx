@@ -188,33 +188,31 @@ describe('ErrorsPage', () => {
     vi.useRealTimers()
   })
 
-  it('explains the difference between pending and accumulated wrong words', () => {
+  it('uses a staged progress bar and FAQ instead of long inline explanations', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
       </MemoryRouter>,
     )
 
-    expect(
-      screen.getByText(/一个词只要答错过，就会进入“累计错词”/)
-    ).toBeInTheDocument()
-    expect(screen.getByText('现在每个错词走到哪一步')).toBeInTheDocument()
+    expect(screen.getByText('错词按这个顺序推进')).toBeInTheDocument()
+    expect(screen.getByText('当前查看：待清错词')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /待清错词和累计错词有什么区别/ }))
+
+    expect(screen.getByText(/答错过就会留在累计错词里/)).toBeInTheDocument()
   })
 
-  it('uses action-oriented labels for problem-type filters and explains overlap clearly', () => {
+  it('uses action-oriented labels for problem-type filters', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('tab', { name: /看词认义/ })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /中文想英文/ })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /听音辨义/ })).toBeInTheDocument()
-
-    expect(
-      screen.getByText(/一个词可能同时属于多类问题，所以这里的标签数量会重复计算。当前 3 个待清错词对应了 5 个问题标签，其中 2 个词同时落在多个问题类型里，这些数字不是互斥拆分。/)
-    ).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /速记模式/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /释义拼词/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /听音选义/ })).toBeInTheDocument()
   })
 
   it('keeps wrong words in the list and lets learners select them for review', () => {
@@ -241,7 +239,6 @@ describe('ErrorsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '只看今天新错词' }))
 
-    expect(screen.getByText('当前筛选命中 2 个待清错词')).toBeInTheDocument()
     expect(screen.getByLabelText('选择 alpha')).toBeInTheDocument()
     expect(screen.getByLabelText('选择 beta')).toBeInTheDocument()
     expect(screen.queryByLabelText('选择 gamma')).not.toBeInTheDocument()
@@ -256,6 +253,13 @@ describe('ErrorsPage', () => {
           pos: 'n.',
           definition: 'alpha definition',
           wrong_count: 6,
+        },
+        {
+          word: 'beta',
+          phonetic: '/b/',
+          pos: 'n.',
+          definition: 'beta definition',
+          wrong_count: 5,
         },
       ],
     })
@@ -273,9 +277,9 @@ describe('ErrorsPage', () => {
     expect(filterActions).not.toBeNull()
     expect(dimShell).not.toBeNull()
     expect(within(filterMain as HTMLElement).getByLabelText('错次区间')).toBeInTheDocument()
+    expect(within(filterActions as HTMLElement).getByRole('button', { name: '只看今天新错词' })).toBeInTheDocument()
+    expect(within(filterActions as HTMLElement).getByRole('button', { name: '最近 7 天' })).toBeInTheDocument()
     expect(within(filterActions as HTMLElement).getByRole('button', { name: '重置筛选' })).toBeInTheDocument()
-    expect(within(dimShell as HTMLElement).getByRole('button', { name: '只看今天新错词' })).toBeInTheDocument()
-    expect(within(dimShell as HTMLElement).getByRole('button', { name: '最近 7 天' })).toBeInTheDocument()
     expect(within(dimShell as HTMLElement).getByRole('searchbox', { name: '搜索错词' })).toBeInTheDocument()
     expect(within(dimShell as HTMLElement).getByRole('button', { name: '执行搜索' })).toBeInTheDocument()
 
@@ -288,7 +292,6 @@ describe('ErrorsPage', () => {
     })
 
     expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/wrong-words?details=compact&search=alp')
-    expect(screen.getByText('当前筛选命中 1 个待清错词，搜索“alp”')).toBeInTheDocument()
     expect(screen.getByLabelText('选择 alpha')).toBeInTheDocument()
     expect(screen.queryByLabelText('选择 beta')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('选择 gamma')).not.toBeInTheDocument()
@@ -312,7 +315,7 @@ describe('ErrorsPage', () => {
     })
     fireEvent.click(screen.getByLabelText('选择 alpha'))
 
-    const reviewButton = screen.getByRole('button', { name: '复习已选（1词）' })
+    const reviewButton = screen.getByRole('button', { name: '开始复习（1词）' })
     expect(reviewButton).toBeInTheDocument()
 
     fireEvent.click(reviewButton)
@@ -333,18 +336,21 @@ describe('ErrorsPage', () => {
       meaning_wrong: 5,
     }))
 
-    render(
+    const { container } = render(
       <MemoryRouter>
         <ErrorsPage />
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('当前显示第 1-100 条，共 105 条')).toBeInTheDocument()
-    expect(screen.queryByLabelText('选择 word-101')).not.toBeInTheDocument()
+    const scopeRow = container.querySelector('.errors-scope-row')
+    expect(scopeRow).not.toBeNull()
+    expect(container.querySelector('.errors-pagination')).toBeNull()
+    expect(within(scopeRow as HTMLElement).getByText('1-10/105')).toBeInTheDocument()
+    expect(screen.queryByLabelText('选择 word-11')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: '下一页' }))
+    fireEvent.click(within(scopeRow as HTMLElement).getByRole('button', { name: '下一页' }))
 
-    expect(screen.getByText('当前显示第 101-105 条，共 105 条')).toBeInTheDocument()
-    expect(screen.getByLabelText('选择 word-101')).toBeInTheDocument()
+    expect(within(scopeRow as HTMLElement).getByText('11-20/105')).toBeInTheDocument()
+    expect(screen.getByLabelText('选择 word-11')).toBeInTheDocument()
   })
 })

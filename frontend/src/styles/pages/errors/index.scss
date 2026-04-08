@@ -1,4 +1,5 @@
 @use './overview';
+@use './faq';
 @use './progress';
 @use './word-list';
 
@@ -27,15 +28,6 @@
     gap: 10px;
     overflow-y: auto;
     padding-right: 2px;
-}
-
-.errors-review-rule {
-    font-size: 12px;
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
 }
 
 .errors-actions {
@@ -103,6 +95,34 @@
 /* Tab bar */
 .errors-tabs {
     width: fit-content;
+}
+
+.errors-scope-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.errors-scope-tools {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.errors-inline-pagination {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.errors-inline-pagination-status {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
 }
 
 .errors-filter-panel {
@@ -191,43 +211,17 @@
     background: var(--bg-tertiary);
 }
 
-.errors-filter-summary {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.errors-selection-summary {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.errors-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.errors-pagination-summary,
-.errors-pagination-status {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.errors-pagination-actions {
+.errors-summary-pill {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-}
-
-.errors-dim-summary {
-    font-size: 12px;
+    min-height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: var(--bg-secondary);
     color: var(--text-secondary);
-    background: color-mix(in srgb, var(--accent) 8%, var(--bg-secondary));
-    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .errors-dim-filter-row {
@@ -249,7 +243,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
     flex: 0 0 auto;
 }
@@ -353,12 +347,14 @@
         flex-wrap: wrap;
     }
 
+    .errors-scope-row,
     .errors-dim-filter-row {
         align-items: flex-start;
         flex-wrap: wrap;
         gap: 8px;
     }
 
+    .errors-scope-tools,
     .errors-filter-panel-main,
     .errors-filter-panel-actions,
     .errors-dim-filter-shell,
@@ -377,7 +373,9 @@
 
     .errors-dim-filter-tools {
         justify-content: flex-start;
+        flex-wrap: wrap;
     }
+
     .errors-select-heading {
         flex-basis: 56px;
     }
