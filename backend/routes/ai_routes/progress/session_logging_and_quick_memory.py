@@ -4,7 +4,7 @@ from services.quick_memory_review_queue_service import (
 )
 from services.session_logging_service import (
     cancel_empty_session,
-    persist_study_session,
+    persist_study_session_response,
 )
 
 
@@ -22,19 +22,14 @@ def cancel_session(current_user: User):
 @token_required
 def log_session(current_user: User):
     """Persist a study session row or reconcile it with an existing placeholder."""
-    body = request.get_json() or {}
-    try:
-        payload, status = persist_study_session(
-            user_id=current_user.id,
-            body=body,
-            parse_client_epoch_ms=_parse_client_epoch_ms,
-            normalize_chapter_id=_normalize_chapter_id,
-            find_pending_session=_find_pending_session,
-        )
-        return jsonify(payload), status
-    except Exception as exc:
-        db.session.rollback()
-        return jsonify({'error': str(exc)}), 500
+    payload, status = persist_study_session_response(
+        user_id=current_user.id,
+        body=request.get_json() or {},
+        parse_client_epoch_ms=_parse_client_epoch_ms,
+        normalize_chapter_id=_normalize_chapter_id,
+        find_pending_session=_find_pending_session,
+    )
+    return jsonify(payload), status
 
 
 @ai_bp.route('/quick-memory', methods=['GET'])

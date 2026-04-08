@@ -2,6 +2,7 @@ import time
 
 from models import db, User, UserQuickMemoryRecord
 from routes import ai as ai_routes
+from services import ai_vocab_catalog_service as vocab_catalog_service
 from services.quick_memory_schedule import compute_quick_memory_next_review_ms
 
 
@@ -24,7 +25,7 @@ def test_quick_memory_review_queue_returns_due_words_with_metadata(client, app, 
     now_ms = int(time.time() * 1000)
     upcoming_next_review = compute_quick_memory_next_review_ms(1, now_ms - 3_000)
 
-    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
+    monkeypatch.setattr(vocab_catalog_service, '_get_quick_memory_vocab_lookup', lambda: {
         'alpha': [{
             'word': 'alpha',
             'phonetic': '/a/',
@@ -189,7 +190,7 @@ def test_quick_memory_review_queue_supports_offset_pagination(client, app, monke
     now_ms = int(time.time() * 1000)
     upcoming_next_review = compute_quick_memory_next_review_ms(1, now_ms - 2_000)
 
-    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
+    monkeypatch.setattr(vocab_catalog_service, '_get_quick_memory_vocab_lookup', lambda: {
         'alpha': [{
             'word': 'alpha',
             'phonetic': '/a/',
@@ -346,7 +347,7 @@ def test_quick_memory_review_queue_can_limit_to_due_scope(client, app, monkeypat
 
     now_ms = int(time.time() * 1000)
 
-    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
+    monkeypatch.setattr(vocab_catalog_service, '_get_quick_memory_vocab_lookup', lambda: {
         'alpha': [{
             'word': 'alpha',
             'phonetic': '/a/',
@@ -417,7 +418,7 @@ def test_quick_memory_review_queue_filters_by_book_and_chapter(client, app, monk
 
     now_ms = int(time.time() * 1000)
 
-    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
+    monkeypatch.setattr(vocab_catalog_service, '_get_quick_memory_vocab_lookup', lambda: {
         'alpha': [{
             'word': 'alpha',
             'phonetic': '/a/',

@@ -1,125 +1,21 @@
-def _apply_wrong_word_snapshot(record: UserWrongWord, payload: dict) -> tuple[int, int]:
-    previous_states = _build_wrong_word_dimension_states(record)
-    previous_summary = _summarize_wrong_word_dimension_states(previous_states)
-    incoming_states = _build_incoming_wrong_word_dimension_states(payload)
-    merged_states = _merge_wrong_word_dimension_states(previous_states, incoming_states)
-    merged_summary = _summarize_wrong_word_dimension_states(merged_states)
-
-    phonetic = payload.get('phonetic')
-    pos = payload.get('pos')
-    definition = payload.get('definition')
-    if isinstance(phonetic, str) and phonetic.strip():
-        record.phonetic = phonetic
-    if isinstance(pos, str) and pos.strip():
-        record.pos = pos
-    if isinstance(definition, str) and definition.strip():
-        record.definition = definition
-
-    record.wrong_count = merged_summary['wrong_count']
-    record.listening_correct = _max_wrong_word_counter(
-        record.listening_correct,
-        payload.get('listening_correct', payload.get('listeningCorrect')),
-    )
-    record.meaning_correct = _max_wrong_word_counter(
-        record.meaning_correct,
-        payload.get('meaning_correct', payload.get('meaningCorrect')),
-    )
-    record.dictation_correct = _max_wrong_word_counter(
-        record.dictation_correct,
-        payload.get('dictation_correct', payload.get('dictationCorrect')),
-    )
-    record.listening_wrong = merged_states['listening']['history_wrong']
-    record.meaning_wrong = merged_states['meaning']['history_wrong']
-    record.dictation_wrong = merged_states['dictation']['history_wrong']
-    record.dimension_state = json.dumps(merged_states, ensure_ascii=False)
-
-    return previous_summary['wrong_count'], merged_summary['wrong_count']
-
-
-def _clear_wrong_word_pending_states(states: dict) -> dict:
-    now_iso = datetime.utcnow().isoformat()
-    cleared = {}
-    for dimension in WRONG_WORD_DIMENSIONS:
-        state = _normalize_wrong_word_dimension_state(states.get(dimension))
-        if _normalize_wrong_word_counter(state.get('history_wrong')) > 0:
-            cleared[dimension] = {
-                **state,
-                'pass_streak': WRONG_WORD_PENDING_REVIEW_TARGET,
-                'last_pass_at': now_iso,
-            }
-        else:
-            cleared[dimension] = state
-    return cleared
-
-
-def _get_or_create_wrong_word_record(
-    current_user: User,
-    word_value: str,
-    payload: dict,
-    record_cache: dict[str, UserWrongWord],
-) -> UserWrongWord:
-    cached = record_cache.get(word_value)
-    if cached is not None:
-        return cached
-
-    existing = UserWrongWord.query.filter_by(
-        user_id=current_user.id,
-        word=word_value,
-    ).first()
-    if existing is None:
-        existing = UserWrongWord(
-            user_id=current_user.id,
-            word=word_value,
-            phonetic=payload.get('phonetic'),
-            pos=payload.get('pos'),
-            definition=payload.get('definition'),
-            wrong_count=0,
-            listening_correct=0,
-            listening_wrong=0,
-            meaning_correct=0,
-            meaning_wrong=0,
-            dictation_correct=0,
-            dictation_wrong=0,
-        )
-        db.session.add(existing)
-
-    record_cache[word_value] = existing
-    return existing
-
-
-def _use_compact_wrong_words_payload() -> bool:
-    detail_mode = str(request.args.get('details') or '').strip().lower()
-    return detail_mode in {'compact', 'summary', 'basic', 'lite'}
-
-
-def _normalize_wrong_word_search_term(value) -> str:
-    return str(value or '').strip().lower()
-
-
-def _matches_wrong_word_search(record: UserWrongWord, search_term: str) -> bool:
-    if not search_term:
-        return True
-
-    return isinstance(record.word, str) and search_term in record.word.lower()
+from services.ai_wrong_words_service import (
+    build_wrong_words_response as _service_build_wrong_words_response,
+    clear_wrong_word_response as _service_clear_wrong_word_response,
+    clear_wrong_words_response as _service_clear_wrong_words_response,
+    sync_wrong_words_response as _service_sync_wrong_words_response,
+)
 
 
 @ai_bp.route('/wrong-words', methods=['GET'])
 @token_required
 def get_wrong_words(current_user: User):
     """Get all wrong words for the current user from the backend."""
-    search_term = _normalize_wrong_word_search_term(request.args.get('search'))
-    words = (
-        UserWrongWord.query
-        .filter_by(user_id=current_user.id)
-        .order_by(UserWrongWord.wrong_count.desc(), UserWrongWord.updated_at.desc())
-        .all()
+    payload, status = _service_build_wrong_words_response(
+        current_user.id,
+        search_value=request.args.get('search'),
+        detail_mode=request.args.get('details'),
     )
-    if search_term:
-        words = [word for word in words if _matches_wrong_word_search(word, search_term)]
-    if _use_compact_wrong_words_payload():
-        return jsonify({'words': [word.to_dict() for word in words]}), 200
-
-    return jsonify({'words': _decorate_wrong_words_with_quick_memory_progress(current_user.id, words)}), 200
+    return jsonify(payload), status
 
 
 # ── POST /api/wrong-words/sync ──────────────────────────────────────────────
@@ -128,84 +24,27 @@ def get_wrong_words(current_user: User):
 @token_required
 def sync_wrong_words(current_user: User):
     """Sync wrong words from client localStorage to backend DB."""
-    body = request.get_json() or {}
-    words = body.get('words', [])
-    source_mode_raw = body.get('sourceMode')
-    source_mode = source_mode_raw.strip()[:30] if isinstance(source_mode_raw, str) and source_mode_raw.strip() else None
-    book_id = body.get('bookId') or None
-    chapter_id = _normalize_chapter_id(body.get('chapterId'))
-
-    if not isinstance(words, list):
-        return jsonify({'error': 'words must be an array'}), 400
-
-    record_cache: dict[str, UserWrongWord] = {}
-    processed_words: set[str] = set()
-    updated = 0
-    for w in words:
-        word_value = str(w.get('word') or '').strip()
-        if not word_value:
-            continue
-        existing = _get_or_create_wrong_word_record(current_user, word_value, w, record_cache)
-
-        previous_wrong_count, current_wrong_count = _apply_wrong_word_snapshot(existing, w)
-        wrong_delta = max(0, current_wrong_count - previous_wrong_count)
-        if source_mode and wrong_delta > 0:
-            record_learning_event(
-                user_id=current_user.id,
-                event_type='wrong_word_recorded',
-                source='wrong_words',
-                mode=source_mode,
-                book_id=book_id,
-                chapter_id=chapter_id,
-                word=existing.word,
-                item_count=1,
-                wrong_count=wrong_delta,
-                payload={
-                    'wrong_count': current_wrong_count,
-                    'definition': existing.definition or '',
-                    'dimension_states': json.loads(existing.dimension_state or '{}'),
-                },
-            )
-        if word_value not in processed_words:
-            processed_words.add(word_value)
-            updated += 1
-
-    db.session.commit()
-    return jsonify({'updated': updated})
+    payload, status = _service_sync_wrong_words_response(
+        current_user.id,
+        request.get_json() or {},
+    )
+    return jsonify(payload), status
 
 
 @ai_bp.route('/wrong-words/<word>', methods=['DELETE'])
 @token_required
 def delete_wrong_word(current_user: User, word: str):
     """Clear pending status for a wrong word without deleting its history."""
-    record = UserWrongWord.query.filter_by(user_id=current_user.id, word=word).first()
-    if record:
-        cleared_states = _clear_wrong_word_pending_states(_build_wrong_word_dimension_states(record))
-        summary = _summarize_wrong_word_dimension_states(cleared_states)
-        record.wrong_count = summary['wrong_count']
-        record.listening_wrong = cleared_states['listening']['history_wrong']
-        record.meaning_wrong = cleared_states['meaning']['history_wrong']
-        record.dictation_wrong = cleared_states['dictation']['history_wrong']
-        record.dimension_state = json.dumps(cleared_states, ensure_ascii=False)
-        db.session.commit()
-    return jsonify({'message': '已移出未过错词'}), 200
+    payload, status = _service_clear_wrong_word_response(current_user.id, word)
+    return jsonify(payload), status
 
 
 @ai_bp.route('/wrong-words', methods=['DELETE'])
 @token_required
 def clear_wrong_words(current_user: User):
     """Clear pending wrong-word state for all words without deleting history."""
-    records = UserWrongWord.query.filter_by(user_id=current_user.id).all()
-    for record in records:
-        cleared_states = _clear_wrong_word_pending_states(_build_wrong_word_dimension_states(record))
-        summary = _summarize_wrong_word_dimension_states(cleared_states)
-        record.wrong_count = summary['wrong_count']
-        record.listening_wrong = cleared_states['listening']['history_wrong']
-        record.meaning_wrong = cleared_states['meaning']['history_wrong']
-        record.dictation_wrong = cleared_states['dictation']['history_wrong']
-        record.dimension_state = json.dumps(cleared_states, ensure_ascii=False)
-    db.session.commit()
-    return jsonify({'message': '已清空未过错词'}), 200
+    payload, status = _service_clear_wrong_words_response(current_user.id)
+    return jsonify(payload), status
 
 
 # ── POST /api/ai/log-session ─────────────────────────────────────────────────
