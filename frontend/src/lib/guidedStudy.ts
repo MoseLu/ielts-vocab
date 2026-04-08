@@ -1,4 +1,5 @@
 import type { LearningAlltime, LearnerProfile, WrongWord } from '../features/vocabulary/hooks'
+import { getPracticeModeLabel, normalizeModeText } from '../constants/practiceModes'
 import {
   WRONG_WORD_DIMENSIONS,
   WRONG_WORD_DIMENSION_LABELS,
@@ -60,14 +61,6 @@ export interface GuidedStudySummary {
   weakestModeLabel: string | null
   streakDays: number
   nextActions: string[]
-}
-
-const MODE_LABELS: Record<GuidedPracticeMode, string> = {
-  smart: '智能模式',
-  quickmemory: '快速记忆',
-  listening: '听音选义',
-  meaning: '释义拼词',
-  dictation: '听写模式',
 }
 
 function parseTimestamp(value?: string | null): number {
@@ -181,7 +174,7 @@ function buildFallbackActions({
 }
 
 export function getGuidedPracticeModeLabel(mode?: GuidedPracticeMode | null): string | null {
-  return mode ? MODE_LABELS[mode] : null
+  return getPracticeModeLabel(mode)
 }
 
 export function buildGuidedStudySummary({
@@ -227,13 +220,13 @@ export function buildGuidedStudySummary({
     ?? null,
   )
   const weakestModeLabel =
-    learnerProfile?.summary.weakest_mode_label
+    getPracticeModeLabel(weakestMode, learnerProfile?.summary.weakest_mode_label)
     ?? getGuidedPracticeModeLabel(weakestMode)
     ?? null
   const streakDays = learnerProfile?.summary.streak_days ?? alltime?.streak_days ?? 0
 
   const nextActions = learnerProfile?.next_actions?.length
-    ? learnerProfile.next_actions.slice(0, 3)
+    ? learnerProfile.next_actions.slice(0, 3).map(action => normalizeModeText(action))
     : buildFallbackActions({
         dueReviewCount,
         pendingWrongWordCount,
@@ -298,10 +291,10 @@ export function buildGuidedStudySummary({
   } else if (weakestMode && activeBook) {
     primaryAction = {
       kind: 'focus-mode',
-      title: `主线已清空，今天做一轮${weakestModeLabel ?? MODE_LABELS[weakestMode]}巩固`,
+      title: `主线已清空，今天做一轮${weakestModeLabel ?? getGuidedPracticeModeLabel(weakestMode)}巩固`,
       description: '当复习、错词、新词都没有积压时，再做专项模式加练，用户会更容易理解自己下一步为什么这样学。',
       ctaLabel: '开始专项巩固',
-      badge: weakestModeLabel ?? MODE_LABELS[weakestMode],
+      badge: weakestModeLabel ?? getGuidedPracticeModeLabel(weakestMode),
       mode: weakestMode,
       bookId: activeBook.book.id,
       tone: 'success',
