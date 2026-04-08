@@ -349,7 +349,7 @@ _generating_books: set = set()
 
 
 def _get_book_examples(book_id):
-    from routes.books import load_book_vocabulary
+    from services.books_catalog_service import load_book_vocabulary
     return _service_get_book_examples(book_id, load_book_vocabulary=load_book_vocabulary)
 
 

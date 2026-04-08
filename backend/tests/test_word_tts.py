@@ -53,11 +53,11 @@ class TestCollectUniqueWords:
             return []
 
         monkeypatch.setattr(
-            'routes.books.load_book_vocabulary',
+            'services.books_catalog_service.load_book_vocabulary',
             fake_load,
         )
         monkeypatch.setattr(
-            'routes.books.VOCAB_BOOKS',
+            'services.books_registry_service.VOCAB_BOOKS',
             [{'id': 'b1', 'file': 'x.json'}],
         )
 

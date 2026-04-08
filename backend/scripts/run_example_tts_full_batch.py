@@ -129,7 +129,8 @@ def _example_cache_path(sentence: str, model: str, voice: str) -> Path:
 
 
 def collect_example_sentences(book_ids: list[str] | None) -> list[str]:
-    from routes.books import VOCAB_BOOKS, load_book_vocabulary
+    from services.books_catalog_service import load_book_vocabulary
+    from services.books_registry_service import VOCAB_BOOKS
 
     books = VOCAB_BOOKS if book_ids is None else [b for b in VOCAB_BOOKS if b['id'] in book_ids]
     seen: set[str] = set()

@@ -47,7 +47,7 @@ def _book_status(book_id: str, generating: bool) -> str:
 @admin_required
 def admin_books_summary(current_user):
     """所有词书 TTS 进度摘要."""
-    from routes.books import VOCAB_BOOKS
+    from services.books_registry_service import VOCAB_BOOKS
     result = []
     for book in VOCAB_BOOKS:
         examples = _get_book_examples(book['id'])
@@ -70,7 +70,7 @@ def admin_books_summary(current_user):
 @admin_required
 def admin_generate_book(current_user, book_id):
     """触发后台生成任务（interrupted/error 状态可重新触发）."""
-    from routes.books import VOCAB_BOOKS
+    from services.books_registry_service import VOCAB_BOOKS
     if not any(b['id'] == book_id for b in VOCAB_BOOKS):
         return jsonify({'error': 'Book not found'}), 404
     examples = _get_book_examples(book_id)
@@ -277,7 +277,7 @@ def admin_generate_words(current_user):
     Body 可选: { "book_id": "ielts_ultimate" } 限制单本书；省略则全词书。
     """
     global _generating_words
-    from routes.books import VOCAB_BOOKS
+    from services.books_registry_service import VOCAB_BOOKS
 
     data = request.get_json() or {}
     book_id = (data.get('book_id') or '').strip() or None

@@ -198,11 +198,11 @@ def azure_word_audio_duration_ms() -> str:
 
 
 def _build_azure_word_pronunciation_lookup() -> dict[str, str]:
-    from routes.books import VOCAB_BOOKS, load_book_vocabulary
+    from services import books_catalog_service, books_registry_service
 
     lookup: dict[str, str] = {}
-    for book in VOCAB_BOOKS:
-        vocabulary = load_book_vocabulary(book['id']) or []
+    for book in books_registry_service.list_vocab_books():
+        vocabulary = books_catalog_service.load_book_vocabulary(book['id']) or []
         for entry in vocabulary:
             normalized_word = normalize_word_key(entry.get('word'))
             phonetic = normalize_azure_ipa(entry.get('phonetic'))

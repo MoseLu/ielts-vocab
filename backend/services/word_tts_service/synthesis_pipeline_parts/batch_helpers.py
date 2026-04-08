@@ -3,18 +3,14 @@ def collect_unique_words(book_ids: list[str] | None = None) -> list[str]:
     All distinct words from VOCAB_BOOKS (or subset), first-seen casing preserved.
     Sorted case-insensitively for stable batch order.
     """
-    from routes.books import VOCAB_BOOKS, load_book_vocabulary
+    from services import books_catalog_service, books_registry_service
 
     seen_set: set[str] = set()
     out: list[str] = []
 
-    books = (
-        VOCAB_BOOKS
-        if book_ids is None
-        else [b for b in VOCAB_BOOKS if b['id'] in book_ids]
-    )
+    books = books_registry_service.list_vocab_books(book_ids)
     for book in books:
-        vocab = load_book_vocabulary(book['id'])
+        vocab = books_catalog_service.load_book_vocabulary(book['id'])
         if not vocab:
             continue
         for entry in vocab:
