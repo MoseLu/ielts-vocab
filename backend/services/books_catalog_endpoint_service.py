@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from importlib import import_module
-
-
-def _books_module():
-    return import_module('routes.books')
+from services import books_registry_service
 
 
 def build_categories_response():
-    books = _books_module()
     category_names = {
         'listening': '听力词汇',
         'reading': '阅读词汇',
@@ -19,7 +14,7 @@ def build_categories_response():
         'confusable': '易混辨析',
         'phrases': '短语搭配',
     }
-    categories = list(set(book['category'] for book in books.VOCAB_BOOKS))
+    categories = list(set(book['category'] for book in books_registry_service.list_vocab_books()))
     return {
         'categories': [
             {'id': category, 'name': category_names.get(category, category)}
@@ -29,13 +24,12 @@ def build_categories_response():
 
 
 def build_levels_response():
-    books = _books_module()
     level_names = {
         'beginner': '初级',
         'intermediate': '中级',
         'advanced': '高级',
     }
-    levels = list(set(book['level'] for book in books.VOCAB_BOOKS))
+    levels = list(set(book['level'] for book in books_registry_service.list_vocab_books()))
     return {
         'levels': [
             {'id': level, 'name': level_names.get(level, level)}
@@ -45,10 +39,10 @@ def build_levels_response():
 
 
 def build_books_stats_response():
-    books = _books_module()
-    total_words = sum(book['word_count'] for book in books.VOCAB_BOOKS)
+    books = books_registry_service.list_vocab_books()
+    total_words = sum(book['word_count'] for book in books)
     return {
-        'total_books': len(books.VOCAB_BOOKS),
+        'total_books': len(books),
         'total_words': total_words,
-        'categories': len(set(book['category'] for book in books.VOCAB_BOOKS)),
+        'categories': len(set(book['category'] for book in books)),
     }, 200
