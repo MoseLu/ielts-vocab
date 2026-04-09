@@ -264,7 +264,9 @@ describe('useLearningStats', () => {
     })
 
     expect(reconcileQuickMemoryRecordsWithBackendMock).toHaveBeenCalledTimes(1)
-    expect(result.current.loading).toBe(false)
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
 
     act(() => {
       reconcileDeferred.resolve({ uploadedCount: 0 })

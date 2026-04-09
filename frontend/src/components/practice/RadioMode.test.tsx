@@ -9,6 +9,7 @@ import { PRACTICE_GLOBAL_SHORTCUT_REPLAY_EVENT } from './page/practiceGlobalShor
 
 vi.mock('./utils', () => ({
   playWordAudio: vi.fn(),
+  preloadWordAudioBatch: vi.fn(),
   stopAudio: vi.fn(),
   syllabifyWord: (word: string) => [word],
 }))
