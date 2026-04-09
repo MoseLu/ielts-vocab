@@ -8,6 +8,7 @@ from services import (
     books_favorites_service,
     books_registry_service,
     books_vocabulary_loader_service,
+    phonetic_lookup_service,
 )
 
 
@@ -16,6 +17,28 @@ _global_word_search_catalog = None
 
 def _find_book(book_id):
     return books_registry_service.get_vocab_book(book_id)
+
+
+def _hydrate_missing_phonetics(words):
+    return phonetic_lookup_service.hydrate_missing_entry_phonetics(words)
+
+
+def _hydrate_primary_result_phonetic(results):
+    if not results:
+        return results
+
+    primary = results[0]
+    if phonetic_lookup_service.normalize_phonetic_text(primary.get('phonetic')):
+        return results
+
+    resolved_phonetic = phonetic_lookup_service.resolve_phonetic(
+        str(primary.get('word') or ''),
+        allow_remote=True,
+    )
+    if not resolved_phonetic:
+        return results
+
+    return [{**primary, 'phonetic': resolved_phonetic}, *results[1:]]
 
 
 def load_book_vocabulary(book_id):
@@ -38,6 +61,7 @@ def load_book_vocabulary(book_id):
         else:
             words = []
 
+        words = _hydrate_missing_phonetics(words)
         books_vocabulary_loader_service._vocabulary_cache[book_id] = [
             books_vocabulary_loader_service.enrich_word_entry(word)
             for word in words
@@ -241,7 +265,8 @@ def build_search_words_response(raw_query, limit_value=None):
         str(item.get('chapter_title') or ''),
     ))
 
-    results = [{**item, 'match_rank': None} for item in matches[:limit]]
+    results = _hydrate_missing_phonetics([{**item, 'match_rank': None} for item in matches[:limit]])
+    results = _hydrate_primary_result_phonetic(results)
     for item in results:
         item.pop('match_rank', None)
     return {'query': query, 'total': len(matches), 'results': results}, 200

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from services import books_personalization_repository, books_vocabulary_loader_service, word_catalog_repository
+from services import (
+    books_personalization_repository,
+    books_vocabulary_loader_service,
+    phonetic_lookup_service,
+    word_catalog_repository,
+)
 from services.word_catalog_service import ensure_word_catalog_entry, normalize_word_key
 
 
@@ -33,6 +38,14 @@ def build_word_details_response(raw_word: str, current_user) -> tuple[dict, int]
         word_catalog_repository.commit()
 
     normalized_word = normalize_word_key(word)
+    resolved_phonetic = (
+        phonetic_lookup_service.lookup_local_phonetic(word)
+        or phonetic_lookup_service.resolve_phonetic(word, allow_remote=True)
+    )
+    if resolved_phonetic and catalog_entry.phonetic != resolved_phonetic:
+        catalog_entry.phonetic = resolved_phonetic
+        word_catalog_repository.commit()
+
     catalog_payload = catalog_entry.to_dict()
     examples = books_vocabulary_loader_service.resolve_unified_examples(
         word,
