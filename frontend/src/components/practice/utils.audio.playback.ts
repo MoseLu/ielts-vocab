@@ -12,7 +12,6 @@ type PlaybackOptions = {
 
 type ManagedAudioContextCtor = new () => AudioContext
 type ManagedAudioWindow = Window & typeof globalThis & { webkitAudioContext?: ManagedAudioContextCtor }
-
 let currentAudio: HTMLAudioElement | null = null
 let currentBufferSource: AudioBufferSourceNode | null = null
 let currentBufferGain: GainNode | null = null
@@ -70,13 +69,11 @@ async function warmupHtmlAudio(): Promise<void> {
     }
   })
 }
-
 function getOrCreatePreparedAudio(src: string): HTMLAudioElement {
   const existing = preparedAudioPool.get(src)
   if (existing) return rememberPreparedAudio(src, existing)
   return rememberPreparedAudio(src, new Audio(src))
 }
-
 function attachAudioSource(audio: HTMLAudioElement, src: string): void {
   audio.preload = 'auto'
   if (audio.src !== src) audio.src = src
@@ -444,7 +441,10 @@ export async function prepareManagedAudioUrl(src: string): Promise<boolean> {
 
 export async function warmupManagedAudio(): Promise<void> {
   const htmlWarmup = htmlAudioWarmupPromise ?? (htmlAudioWarmupPromise = warmupHtmlAudio())
+  const audioContext = getOrCreateManagedAudioContext()
+  const resumed = audioContext ? await resumeManagedAudioContext() : false
   await htmlWarmup
+  if (resumed && audioContext?.state === 'running') await primeManagedAudioContextOutput(audioContext)
   ensureAudioUnlockListeners()
 }
 

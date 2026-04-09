@@ -102,4 +102,4 @@ class Config:
     LOGIN_LOCKOUT_MINUTES = 15
 
     # Request body size limit (DoS protection)
-    MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH_BYTES', str(10 * 1024 * 1024)))

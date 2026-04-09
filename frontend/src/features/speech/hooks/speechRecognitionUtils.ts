@@ -2,10 +2,14 @@ export const LOCAL_VITE_DEV_PORTS = new Set(['3000', '3020', '5173'])
 export const DEFAULT_SPEECH_SOCKET_PATH = '/socket.io'
 export const SPEECH_TARGET_SAMPLE_RATE = 16000
 export const SPEECH_IDLE_LEVEL = 0
-export const SPEECH_MIN_ACTIVE_LEVEL = 0.08
+export const SPEECH_MIN_ACTIVE_LEVEL = 0.02
+export const SPEECH_REALTIME_PCM_BATCH_BYTES = 3200
 export const SPEECH_EMPTY_RESULT_MESSAGE = '未识别到清晰语音，请重试'
 export const SPEECH_NO_SIGNAL_MESSAGE = '未检测到麦克风输入，请检查系统麦克风和浏览器权限'
 const REMOTE_SPEECH_TRANSPORTS: Array<'polling' | 'websocket'> = ['websocket', 'polling']
+const SPEECH_LEVEL_SILENCE_FLOOR = 0.0018
+const SPEECH_LEVEL_DB_FLOOR = -54
+const SPEECH_LEVEL_DB_CEILING = -10
 
 export interface SpeechSocketConfig {
   path: string
@@ -63,15 +67,30 @@ export function resolveSpeechSocketConfig(location: Location): SpeechSocketConfi
 }
 
 export function normalizeAudioLevel(inputData: Float32Array) {
-  if (!inputData.length) return SPEECH_MIN_ACTIVE_LEVEL
+  if (!inputData.length) return SPEECH_IDLE_LEVEL
 
   let energy = 0
+  let peak = 0
   for (let i = 0; i < inputData.length; i += 1) {
-    energy += inputData[i] * inputData[i]
+    const sample = inputData[i]
+    const absoluteSample = Math.abs(sample)
+    if (absoluteSample > peak) peak = absoluteSample
+    energy += sample * sample
   }
 
   const rms = Math.sqrt(energy / inputData.length)
-  return Math.min(1, Math.max(SPEECH_MIN_ACTIVE_LEVEL, rms * 8))
+  if (peak < SPEECH_LEVEL_SILENCE_FLOOR && rms < SPEECH_LEVEL_SILENCE_FLOOR) {
+    return SPEECH_IDLE_LEVEL
+  }
+
+  const rmsDb = 20 * Math.log10(Math.max(rms, 0.00001))
+  const normalizedDb = Math.min(1, Math.max(0, (rmsDb - SPEECH_LEVEL_DB_FLOOR) / (SPEECH_LEVEL_DB_CEILING - SPEECH_LEVEL_DB_FLOOR)))
+  const normalizedPeak = Math.min(1, Math.max(0, peak * 8.6))
+  const combinedLevel = normalizedDb * 0.58 + normalizedPeak * 0.42
+  const boostedLevel = Math.pow(combinedLevel, 0.54)
+
+  if (boostedLevel <= 0.01) return SPEECH_IDLE_LEVEL
+  return Math.min(1, Math.max(SPEECH_MIN_ACTIVE_LEVEL, boostedLevel))
 }
 
 export function encodePcm16(inputData: Float32Array, sourceSampleRate: number) {
@@ -127,6 +146,20 @@ export function buildWavBlobFromPcmChunks(chunks: Int16Array[], sampleRate = SPE
   }
 
   return new Blob([wavBuffer], { type: 'audio/wav' })
+}
+
+export function buildPcmPayloadFromChunks(chunks: Int16Array[]) {
+  const normalizedChunks = chunks.filter(chunk => chunk.length > 0)
+  const totalSamples = normalizedChunks.reduce((sum, chunk) => sum + chunk.length, 0)
+  const merged = new Int16Array(totalSamples)
+  let offset = 0
+
+  for (const chunk of normalizedChunks) {
+    merged.set(chunk, offset)
+    offset += chunk.length
+  }
+
+  return new Uint8Array(merged.buffer)
 }
 
 export function hasAudiblePcmSignal(pcmData: Int16Array, threshold = 16) {

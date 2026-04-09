@@ -137,8 +137,27 @@ def _current_tts_provider() -> str:
     return os.environ.get('BAILIAN_TTS_PROVIDER', 'minimax').strip().lower()
 
 
-def _current_english_voices() -> dict[str, str]:
-    provider = _current_tts_provider()
+def _normalize_tts_provider(provider: str | None) -> str | None:
+    normalized = (provider or '').strip().lower()
+    if not normalized:
+        return None
+    aliases = {
+        'bytedance': 'volcengine',
+        'doubao': 'volcengine',
+        'seedtts': 'volcengine',
+    }
+    normalized = aliases.get(normalized, normalized)
+    if normalized in {'azure', 'minimax', 'volcengine'}:
+        return normalized
+    return None
+
+
+def _requested_tts_provider(data: dict | None = None) -> str:
+    return _normalize_tts_provider((data or {}).get('provider')) or _current_tts_provider()
+
+
+def _current_english_voices(provider: str | None = None) -> dict[str, str]:
+    provider = _normalize_tts_provider(provider) or _current_tts_provider()
     if provider == 'minimax':
         return dict(_MINIMAX_ENGLISH_VOICES)
     if provider == 'azure':
@@ -151,8 +170,8 @@ def _current_english_voices() -> dict[str, str]:
     return {voice: voice}
 
 
-def _current_recommended_voices() -> list[str]:
-    provider = _current_tts_provider()
+def _current_recommended_voices(provider: str | None = None) -> list[str]:
+    provider = _normalize_tts_provider(provider) or _current_tts_provider()
     if provider == 'minimax':
         return list(_MINIMAX_RECOMMENDED_VOICES)
     if provider == 'azure':
@@ -211,13 +230,13 @@ def _synthesize_azure_bytes(text: str, voice_id: str, *, speed: float = 1.0) -> 
     )
 
 
-def _generate_non_minimax_speech(data: dict):
+def _generate_non_minimax_speech(data: dict, *, provider_override: str | None = None):
     text = (data.get('text') or '').strip()
     if not text:
         return jsonify({'error': 'text is required'}), 400
 
-    provider = _current_tts_provider()
-    english_voices = _current_english_voices()
+    provider = _normalize_tts_provider(provider_override) or _current_tts_provider()
+    english_voices = _current_english_voices(provider)
     default_model, default_voice = default_cache_identity()
     if provider == 'azure':
         default_model = azure_default_model()
@@ -287,11 +306,13 @@ def list_voices():
 
 @tts_bp.route('/generate', methods=['POST'])
 def generate_speech():
-    if _current_tts_provider() != 'minimax':
-        return _generate_non_minimax_speech(request.get_json() or {})
+    data = request.get_json() or {}
+    provider = _requested_tts_provider(data)
+    if provider != 'minimax':
+        return _generate_non_minimax_speech(data, provider_override=provider)
     return _service_generate_speech_response(
-        request.get_json() or {},
-        english_voices=_current_english_voices(),
+        data,
+        english_voices=_current_english_voices(provider),
         cache_path_resolver=_cache_path,
         is_probably_valid_mp3_file=is_probably_valid_mp3_file,
         remove_invalid_cached_audio=remove_invalid_cached_audio,

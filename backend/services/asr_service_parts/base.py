@@ -49,6 +49,7 @@ class RealtimeSessionState(TypedDict):
     ready: bool
     closing: bool
     enable_vad: bool
+    bytes_since_commit: int
     audio_queue: list[bytes]
     lock: Any
 

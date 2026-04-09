@@ -85,3 +85,30 @@ def test_generate_route_supports_volcengine_provider_branch(client, monkeypatch,
         'provider': 'volcengine',
         'speed': 1.1,
     }
+
+
+def test_generate_route_allows_per_request_minimax_override(client, monkeypatch):
+    seen = {}
+
+    def fake_generate(data, **kwargs):
+        seen['data'] = data
+        seen['voices'] = kwargs['english_voices']
+        return b'minimax-audio', 200, {'Content-Type': 'audio/mpeg'}
+
+    monkeypatch.setenv('BAILIAN_TTS_PROVIDER', 'azure')
+    monkeypatch.setattr(tts, '_service_generate_speech_response', fake_generate)
+
+    res = client.post(
+        '/api/tts/generate',
+        json={
+            'text': '你好，我是雅思助手。',
+            'provider': 'minimax',
+            'voice_id': 'female-tianmei',
+        },
+    )
+
+    assert res.status_code == 200
+    assert res.mimetype == 'audio/mpeg'
+    assert seen['data']['provider'] == 'minimax'
+    assert seen['data']['voice_id'] == 'female-tianmei'
+    assert 'female-tianmei' in seen['voices']

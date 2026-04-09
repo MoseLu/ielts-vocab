@@ -4,6 +4,8 @@ export interface SpeechRecognitionOptions {
   enableVad?: boolean
   autoStop?: boolean
   autoStopDelay?: number
+  enableBrowserRecognition?: boolean
+  enableRealtimeRecognition?: boolean
   onResult?: (text: string) => void
   onPartial?: (text: string) => void
   onError?: (error: string) => void

@@ -232,3 +232,18 @@ def register_socketio_events(socketio) -> None:
                 'recognition_error',
                 {'error': str(error)},
             )
+
+    @socketio.on('commit_audio_buffer', namespace=SOCKET_NAMESPACE)
+    def handle_commit_audio_buffer():
+        from flask import request
+
+        try:
+            commit_realtime_session_audio(request.sid)
+        except Exception as error:
+            print(f"[Speech] Error committing audio buffer: {error}")
+            _emit_socketio_event(
+                socketio,
+                request.sid,
+                'recognition_error',
+                {'error': str(error)},
+            )

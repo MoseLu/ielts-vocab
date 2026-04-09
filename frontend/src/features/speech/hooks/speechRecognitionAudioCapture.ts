@@ -69,7 +69,7 @@ function createScriptProcessorCapture(
   source: MediaStreamAudioSourceNode,
   onAudioFrame: (inputData: Float32Array, sampleRate: number) => void,
 ) {
-  const processor = audioContext.createScriptProcessor(4096, 1, 1)
+  const processor = audioContext.createScriptProcessor(1024, 1, 1)
   const sink = audioContext.createGain()
   sink.gain.value = 0
 

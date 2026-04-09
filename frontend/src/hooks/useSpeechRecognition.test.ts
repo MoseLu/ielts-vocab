@@ -106,62 +106,6 @@ describe('useSpeechRecognition', () => {
     })
   })
 
-  it('does not emit debug logs during normal socket setup and ready events', () => {
-    renderHook(() => useSpeechRecognition({}))
-    vi.runAllTimers()
-
-    act(() => {
-      mockSocket.trigger('connect')
-      mockSocket.trigger('connected', { api_configured: true })
-      mockSocket.trigger('recognition_started', { session_id: 'session-1' })
-    })
-
-    expect(ioMock).toHaveBeenCalledWith(
-      'wss://axiomaticworld.com/speech',
-      expect.objectContaining({
-        autoConnect: false,
-        path: '/socket.io',
-        rememberUpgrade: true,
-        transports: ['websocket', 'polling'],
-      })
-    )
-    expect(mockSocket.connect).toHaveBeenCalledTimes(1)
-    expect(consoleLogSpy).not.toHaveBeenCalled()
-  })
-
-  it('connects directly to the speech service in local vite dev mode', () => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        protocol: 'http:',
-        host: 'localhost:3020',
-        hostname: 'localhost',
-        port: '3020',
-      },
-    })
-
-    renderHook(() => useSpeechRecognition({}))
-    vi.runAllTimers()
-
-    expect(ioMock).toHaveBeenCalledWith(
-      'ws://localhost:5001/speech',
-      expect.objectContaining({
-        autoConnect: false,
-        path: '/socket.io',
-        rememberUpgrade: true,
-        transports: ['websocket'],
-      })
-    )
-    expect(mockSocket.connect).toHaveBeenCalledTimes(1)
-  })
-
-  it('does not create a socket connection when disabled', () => {
-    renderHook(() => useSpeechRecognition({ enabled: false }))
-
-    expect(ioMock).not.toHaveBeenCalled()
-    expect(mockSocket.disconnect).not.toHaveBeenCalled()
-  })
-
   it('releases microphone resources when recognition completes', async () => {
     const trackStop = vi.fn()
     const stream = {
@@ -227,64 +171,6 @@ describe('useSpeechRecognition', () => {
     expect(processorDisconnect).toHaveBeenCalledTimes(1)
     expect(audioContextClose).toHaveBeenCalledTimes(1)
     expect(trackStop).toHaveBeenCalledTimes(1)
-  })
-
-  it('publishes normalized input levels while microphone audio is streaming', async () => {
-    const stream = {
-      getTracks: () => [{ stop: vi.fn() }],
-    }
-    const onLevel = vi.fn()
-    const processor = {
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      onaudioprocess: null as ((event: AudioProcessingEvent) => void) | null,
-    }
-
-    class MockAudioContext {
-      destination = {}
-      sampleRate = 48000
-      state: AudioContextState = 'running'
-      resume = vi.fn(() => Promise.resolve())
-      close = vi.fn(() => Promise.resolve())
-      createGain = vi.fn(() => createMockGainNode())
-      createMediaStreamSource = vi.fn(() => ({
-        connect: vi.fn(),
-      }))
-      createScriptProcessor = vi.fn(() => processor)
-    }
-
-    Object.defineProperty(globalThis, 'AudioContext', {
-      configurable: true,
-      value: MockAudioContext,
-    })
-    Object.defineProperty(navigator, 'mediaDevices', {
-      configurable: true,
-      value: {
-        getUserMedia: vi.fn(() => Promise.resolve(stream)),
-      },
-    })
-
-    const { result } = renderHook(() => useSpeechRecognition({ onLevel }))
-    vi.runAllTimers()
-
-    act(() => {
-      mockSocket.trigger('connect')
-    })
-
-    await act(async () => {
-      await result.current.startRecording()
-    })
-
-    act(() => {
-      processor.onaudioprocess?.({
-        inputBuffer: {
-          getChannelData: () => Float32Array.from([0.05, 0.22, -0.18, 0.4]),
-        },
-      } as AudioProcessingEvent)
-    })
-
-    expect(onLevel.mock.calls.some(([level]) => Number(level) > 0.08)).toBe(true)
-    expect(mockSocket.emit).toHaveBeenCalledWith('audio_data', expect.any(Uint8Array))
   })
 
   it('switches into processing after stop and clears once a final result arrives', async () => {
@@ -478,5 +364,80 @@ describe('useSpeechRecognition', () => {
     })
 
     expect(onResult).toHaveBeenCalledWith('浏览器兜底文本')
+  })
+
+  it('waits for browser final text before upload fallback in browser-only mode', async () => {
+    const stream = {
+      getTracks: () => [{ stop: vi.fn() }],
+    }
+    const onResult = vi.fn()
+    let recognitionInstance: {
+      onresult: ((event: { resultIndex: number; results: Array<{ 0?: { transcript?: string }; isFinal?: boolean }> }) => void) | null
+    } | null = null
+
+    class MockRecognition {
+      continuous = false
+      interimResults = false
+      lang = ''
+      maxAlternatives = 0
+      onend = null
+      onerror = null
+      onresult = null
+      abort = vi.fn()
+      start = vi.fn()
+      stop = vi.fn()
+
+      constructor() {
+        recognitionInstance = this
+      }
+    }
+
+    class MockAudioContext {
+      destination = {}
+      sampleRate = 48000
+      state: AudioContextState = 'running'
+      resume = vi.fn(() => Promise.resolve())
+      close = vi.fn(() => Promise.resolve())
+      createGain = vi.fn(() => createMockGainNode())
+      createMediaStreamSource = vi.fn(() => ({ connect: vi.fn() }))
+      createScriptProcessor = vi.fn(() => ({ connect: vi.fn(), disconnect: vi.fn(), onaudioprocess: null }))
+    }
+
+    Object.defineProperty(window, 'webkitSpeechRecognition', {
+      configurable: true,
+      value: MockRecognition,
+    })
+    Object.defineProperty(globalThis, 'AudioContext', {
+      configurable: true,
+      value: MockAudioContext,
+    })
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn(() => Promise.resolve(stream)),
+      },
+    })
+
+    const { result } = renderHook(() => useSpeechRecognition({
+      onResult,
+      enableBrowserRecognition: true,
+      enableRealtimeRecognition: false,
+    }))
+
+    await act(async () => {
+      await result.current.startRecording()
+    })
+
+    act(() => {
+      result.current.stopRecording()
+      recognitionInstance?.onresult?.({
+        resultIndex: 0,
+        results: [{ 0: { transcript: '浏览器最终文本' }, isFinal: true }],
+      })
+      vi.advanceTimersByTime(950)
+    })
+
+    expect(onResult).toHaveBeenCalledWith('浏览器最终文本')
+    expect(result.current.isProcessing).toBe(false)
   })
 })

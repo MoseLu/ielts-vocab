@@ -6,6 +6,10 @@ import {
   SPEECH_EMPTY_RESULT_MESSAGE,
 } from './speechRecognitionUtils'
 
+const SPEECH_WAV_FALLBACK_MAX_BYTES = 900 * 1024
+const SPEECH_UPLOAD_SAFE_MAX_BYTES = 700 * 1024
+const SPEECH_UPLOAD_TOO_LARGE_MESSAGE = '单次语音过长，请缩短后重试'
+
 export interface StartedMediaRecorderCapture {
   mimeType: string
   recorder: MediaRecorder
@@ -53,6 +57,8 @@ async function transcribeRecordedAudio(audioBlob: Blob, filename: string) {
     throw new Error(
       typeof payload.error === 'string' && payload.error.trim()
         ? payload.error.trim()
+        : response.status === 413
+          ? '单次语音过长，请缩短后重试'
         : '语音转写失败，请重试'
     )
   }
@@ -76,19 +82,22 @@ export async function uploadRecordedAudio({
   const audioChunks = chunks.filter(chunk => chunk.size > 0)
   const uploadAttempts: UploadAudioAttempt[] = []
 
-  if (pcmChunks.some(chunk => chunk.length > 0)) {
-    uploadAttempts.push({
-      audioBlob: buildWavBlobFromPcmChunks(pcmChunks),
-      filename: 'speech-input.wav',
-    })
-  }
-
   if (audioChunks.length) {
     const audioBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' })
     uploadAttempts.push({
       audioBlob,
       filename: buildRecordedAudioFilename(audioBlob.type),
     })
+  }
+
+  if (pcmChunks.some(chunk => chunk.length > 0)) {
+    const wavBlob = buildWavBlobFromPcmChunks(pcmChunks)
+    if (!audioChunks.length || wavBlob.size <= SPEECH_WAV_FALLBACK_MAX_BYTES) {
+      uploadAttempts.push({
+        audioBlob: wavBlob,
+        filename: 'speech-input.wav',
+      })
+    }
   }
 
   if (!uploadAttempts.length) {
@@ -100,6 +109,10 @@ export async function uploadRecordedAudio({
   try {
     let lastError: string | null = null
     for (const attempt of uploadAttempts) {
+      if (attempt.audioBlob.size > SPEECH_UPLOAD_SAFE_MAX_BYTES) {
+        lastError = SPEECH_UPLOAD_TOO_LARGE_MESSAGE
+        continue
+      }
       try {
         const text = await transcribeRecordedAudio(attempt.audioBlob, attempt.filename)
         if (captureId !== getCurrentCaptureId() || getCurrentTranscriptSource()) return
@@ -141,12 +154,6 @@ export function requestRecordedAudioFallback({
 }: RequestRecordedAudioFallbackOptions) {
   if (requestedCaptureId === captureId) return true
 
-  if (pcmChunks.some(chunk => chunk.length > 0)) {
-    setRequestedCaptureId(captureId)
-    upload(captureId)
-    return true
-  }
-
   if (recorder && recorder.state !== 'inactive') {
     setRequestedCaptureId(captureId)
     if (typeof recorder.requestData === 'function') {
@@ -161,6 +168,12 @@ export function requestRecordedAudioFallback({
   }
 
   if (chunks.some(chunk => chunk.size > 0)) {
+    setRequestedCaptureId(captureId)
+    upload(captureId)
+    return true
+  }
+
+  if (pcmChunks.some(chunk => chunk.length > 0)) {
     setRequestedCaptureId(captureId)
     upload(captureId)
     return true

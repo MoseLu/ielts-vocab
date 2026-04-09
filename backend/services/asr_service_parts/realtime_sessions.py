@@ -8,9 +8,13 @@ def _create_session_state(enable_vad: bool) -> RealtimeSessionState:
         'ready': False,
         'closing': False,
         'enable_vad': enable_vad,
+        'bytes_since_commit': 0,
         'audio_queue': [],
         'lock': threading.Lock(),
     }
+
+
+REALTIME_COMMIT_BYTES = 192000
 
 
 def _is_benign_ws_error(error) -> bool:
@@ -30,6 +34,7 @@ def _mark_session_inactive(session_state: RealtimeSessionState) -> None:
     with session_state['lock']:
         session_state['ready'] = False
         session_state['closing'] = True
+        session_state['bytes_since_commit'] = 0
         session_state['audio_queue'].clear()
 
 
@@ -161,6 +166,11 @@ def send_audio_chunk(session_id: str, audio_data: bytes) -> None:
         if session_state.get('ready') and ws:
             try:
                 ws.send(json.dumps(_build_audio_append_event(audio_data)))
+                if not session_state.get('enable_vad', True):
+                    session_state['bytes_since_commit'] += len(audio_data)
+                    if session_state['bytes_since_commit'] >= REALTIME_COMMIT_BYTES:
+                        ws.send(json.dumps(_build_commit_event()))
+                        session_state['bytes_since_commit'] = 0
                 print(f"[Speech] Sent {len(audio_data)} bytes to DashScope")
             except Exception as error:
                 if _is_benign_ws_error(error):
@@ -202,3 +212,20 @@ def stop_realtime_session(socketio, session_id: str) -> None:
                 raise
 
     _emit_socketio_event(socketio, session_id, 'recognition_stopped')
+
+
+def commit_realtime_session_audio(session_id: str) -> None:
+    session_state = active_sessions.get(session_id)
+    if not session_state:
+        return
+
+    ws = session_state.get('ws')
+    if not ws or not session_state.get('ready') or session_state.get('closing'):
+        return
+
+    try:
+        ws.send(json.dumps(_build_commit_event()))
+        session_state['bytes_since_commit'] = 0
+    except Exception as error:
+        if not _is_benign_ws_error(error):
+            raise

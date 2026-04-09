@@ -48,16 +48,22 @@ def _create_file_recognition_callback(
     recognition_error: list[str],
     recognition_complete,
 ):
+    latest_text = ['']
+
     class FileRecognitionCallback(RecognitionCallback):
         def on_event(self, result: RecognitionResult):
             sentence = result.get_sentence()
-            if RecognitionResult.is_sentence_end(sentence):
-                text = sentence.get('text', '').strip()
-                if text:
+            text = sentence.get('text', '').strip()
+            if text:
+                latest_text[0] = text
+                if RecognitionResult.is_sentence_end(sentence):
                     result_text.append(text)
                     print(f"Final result: {text}")
 
         def on_complete(self):
+            if not result_text and latest_text[0]:
+                result_text.append(latest_text[0])
+                print(f"Fallback final result: {latest_text[0]}")
             print("Recognition complete")
             recognition_complete.set()
 
