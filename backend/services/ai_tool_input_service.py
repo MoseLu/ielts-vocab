@@ -8,6 +8,8 @@ _TOOL_INPUT_SCHEMA: dict[str, dict[str, tuple]] = {
     },
     "get_wrong_words": {
         "limit": (int, None),
+        "query": (str, 100),
+        "recent_first": (bool, None),
     },
     "get_chapter_words": {
         "book_id": (str, 100),

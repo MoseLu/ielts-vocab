@@ -44,17 +44,26 @@ REMEMBER_TOOL_DEF = {
 GET_WRONG_WORDS_TOOL_DEF = {
     "name": "get_wrong_words",
     "description": (
-        "Fetch the user's wrong words from the database. "
-        "Use this when the user asks about their mistakes, wants to review error-prone words, "
-        "or when you need to analyse which words they struggle with. "
-        "Returns word, phonetic, part-of-speech, definition and wrong_count."
+        "Fetch relevant wrong words from the database. "
+        "Use this when the user asks about recent mistakes, error-prone words, or mentions a specific word "
+        "that should be checked against their wrong-word history. "
+        "Prefer query-based retrieval for specific questions and recent_first=true for broad review. "
+        "Returns word, phonetic, part-of-speech, definition, wrong_count, and recency info."
     ),
     "parameters": {
         "type": "object",
         "properties": {
             "limit": {
                 "type": "integer",
-                "description": "Maximum number of wrong words to return (default 100, max 300)."
+                "description": "Maximum number of wrong words to return (default 12, max 300)."
+            },
+            "query": {
+                "type": "string",
+                "description": "Optional keyword or word fragment to match against the wrong-word database."
+            },
+            "recent_first": {
+                "type": "boolean",
+                "description": "When true, return the most recently updated matching wrong words first."
             }
         },
         "required": []

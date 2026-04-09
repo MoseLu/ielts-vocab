@@ -1,10 +1,9 @@
 import { z } from 'zod'
 import { getGlobalLearningContext } from '../../contexts/AIChatContext'
-import { STORAGE_KEYS } from '../../constants'
 import { ChapterProgressMapSchema } from '../../lib/schemas'
 import { readWrongWordsFromStorage } from '../../features/vocabulary/wrongWordsStore'
 import { readQuickMemoryRecordsFromStorage } from '../../lib/quickMemory'
-import { apiFetch, safeParse } from '../../lib'
+import { safeParse } from '../../lib'
 import type { LearningContext } from '../../types'
 
 const ModePerformanceSchema = z.record(
@@ -12,14 +11,40 @@ const ModePerformanceSchema = z.record(
   z.object({ correct: z.number(), wrong: z.number() }).passthrough(),
 )
 const WrongWordsSchema = z.array(z.record(z.string(), z.unknown()))
-const SmartWordStatsSchema = z.record(
-  z.string(),
-  z.object({
-    listening: z.object({ correct: z.number(), wrong: z.number() }),
-    meaning: z.object({ correct: z.number(), wrong: z.number() }),
-    dictation: z.object({ correct: z.number(), wrong: z.number() }),
-  }).passthrough(),
-)
+const RECENT_WRONG_WORD_LIMIT = 6
+const RECENT_WRONG_WORD_WINDOW_MS = 3 * 24 * 60 * 60 * 1000
+
+function parseWrongWordUpdatedAt(value: unknown): number {
+  if (typeof value !== 'string' || !value.trim()) return 0
+  const timestamp = Date.parse(value)
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+function buildRecentWrongWords() {
+  try {
+    const parsedWrongWords = safeParse(WrongWordsSchema, readWrongWordsFromStorage())
+    const wrongWords = parsedWrongWords.success ? parsedWrongWords.data : []
+    if (!wrongWords.length) return undefined
+
+    const now = Date.now()
+    const sorted = wrongWords
+      .map((word, index) => ({
+        index,
+        word: String(word.word ?? '').trim(),
+        updatedAt: parseWrongWordUpdatedAt(word.updated_at ?? word.updatedAt),
+      }))
+      .filter(item => item.word)
+      .sort((left, right) => right.updatedAt - left.updatedAt || left.index - right.index)
+
+    const recentOnly = sorted.filter(item => (
+      item.updatedAt > 0 && now - item.updatedAt <= RECENT_WRONG_WORD_WINDOW_MS
+    ))
+    const selected = (recentOnly.length > 0 ? recentOnly : sorted).slice(0, RECENT_WRONG_WORD_LIMIT)
+    return selected.map(item => item.word)
+  } catch {
+    return undefined
+  }
+}
 
 function buildQuickMemorySummary() {
   try {
@@ -157,42 +182,10 @@ export function buildAIChatContext(): LearningContext {
 
   return {
     ...getGlobalLearningContext(),
+    recentWrongWords: buildRecentWrongWords(),
     quickMemorySummary: buildQuickMemorySummary(),
     modePerformance: buildModePerformance(),
     localHistory: chapterProgressSummary,
     localBookProgress,
-  }
-}
-
-export async function syncWrongWords(): Promise<void> {
-  try {
-    const parsedWrongWords = safeParse(WrongWordsSchema, readWrongWordsFromStorage())
-    const wrongWords = parsedWrongWords.success ? parsedWrongWords.data : []
-    if (!wrongWords.length) return
-
-    const parsedStats = safeParse(
-      SmartWordStatsSchema,
-      JSON.parse(localStorage.getItem(STORAGE_KEYS.SMART_WORD_STATS) || '{}'),
-    )
-    const smartStats = parsedStats.success ? parsedStats.data : {}
-    const enriched = wrongWords.map(word => {
-      const stats = smartStats[word.word as string]
-      return {
-        ...word,
-        listeningCorrect: stats?.listening.correct ?? 0,
-        listeningWrong: stats?.listening.wrong ?? 0,
-        meaningCorrect: stats?.meaning.correct ?? 0,
-        meaningWrong: stats?.meaning.wrong ?? 0,
-        dictationCorrect: stats?.dictation.correct ?? 0,
-        dictationWrong: stats?.dictation.wrong ?? 0,
-      }
-    })
-
-    await apiFetch('/api/ai/wrong-words/sync', {
-      method: 'POST',
-      body: JSON.stringify({ words: enriched }),
-    })
-  } catch {
-    // Non-critical.
   }
 }

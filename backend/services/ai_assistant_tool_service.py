@@ -16,13 +16,34 @@ from services.books_structure_service import load_book_chapters
 from services.llm import TOOL_HANDLERS, chat, stream_chat_events
 
 
+def _format_wrong_word_result(word: dict) -> str:
+    updated_at = str(word.get('updated_at') or '')[:10]
+    updated_suffix = f"  最近更新{updated_at}" if updated_at else ''
+    return (
+        f"{word['word']}（{word.get('phonetic') or ''}，{word.get('pos') or ''}）"
+        f"{word.get('definition') or ''}  错误{word.get('wrong_count', 0)}次"
+        f"  艾宾浩斯{word.get('ebbinghaus_streak', 0)}/{word.get('ebbinghaus_target', _QUICK_MEMORY_MASTERY_TARGET)}"
+        f"{updated_suffix}"
+    )
+
+
 def make_get_wrong_words(user_id: int):
-    def handler(limit: int = 100, book_id: str | None = None) -> str:
-        limit_value = min(int(limit), 300)
-        words = learning_stats_repository.list_user_wrong_words_for_stats(
+    def handler(
+        limit: int = 12,
+        query: str | None = None,
+        recent_first: bool = True,
+        book_id: str | None = None,
+    ) -> str:
+        limit_value = max(1, min(int(limit), 300))
+        normalized_query = ' '.join(str(query or '').strip().split())
+        words = learning_stats_repository.list_user_wrong_words_for_ai(
             user_id,
             limit=limit_value,
+            query=normalized_query,
+            recent_first=recent_first,
         )
+        if not words and normalized_query:
+            return f"错词库中暂无与“{normalized_query}”相关的记录。"
         if not words:
             return "暂无错词记录。"
 
@@ -30,15 +51,14 @@ def make_get_wrong_words(user_id: int):
         prefix = ''
         if book_id:
             prefix = "当前错词记录暂不支持按词书过滤，以下返回全部错词。\n"
-        lines = [
-            (
-                f"{word['word']}（{word.get('phonetic') or ''}，{word.get('pos') or ''}）"
-                f"{word.get('definition') or ''}  错误{word.get('wrong_count', 0)}次"
-                f"  艾宾浩斯{word.get('ebbinghaus_streak', 0)}/{word.get('ebbinghaus_target', _QUICK_MEMORY_MASTERY_TARGET)}"
-            )
-            for word in decorated
-        ]
-        return prefix + f"共{len(lines)}个错词：\n" + "\n".join(lines)
+        lines = [_format_wrong_word_result(word) for word in decorated]
+        if normalized_query:
+            heading = f"与“{normalized_query}”相关的错词共{len(lines)}个"
+        elif recent_first:
+            heading = f"最近活跃的错词共{len(lines)}个"
+        else:
+            heading = f"累计高频错词共{len(lines)}个"
+        return prefix + f"{heading}：\n" + "\n".join(lines)
 
     return handler
 
@@ -198,7 +218,12 @@ def build_tool_status_message(tool_name: str, tool_input: dict | None = None) ->
             return 'AI 正在记录你的学习进展...'
         return 'AI 正在记录你的学习信息...'
     if tool_name == 'get_wrong_words':
-        return 'AI 正在分析你的错词记录...'
+        query = str(safe_input.get('query', '') or '').strip()
+        if query:
+            return f'AI 正在检索与你提问相关的错词：{query}...'
+        if safe_input.get('recent_first', True):
+            return 'AI 正在读取你最近产生的错词...'
+        return 'AI 正在分析你的高频错词记录...'
     if tool_name == 'get_chapter_words':
         chapter_id = safe_input.get('chapter_id')
         if chapter_id not in (None, ''):

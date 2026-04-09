@@ -16,9 +16,10 @@ def build_context_data(
 ) -> dict:
     book_progress = learning_stats_repository.list_user_book_progress_rows(user_id)
     chapter_progress = learning_stats_repository.list_user_chapter_progress_rows(user_id)
-    wrong_words = learning_stats_repository.list_user_wrong_words_for_stats(
+    wrong_words = learning_stats_repository.list_user_wrong_words_for_ai(
         user_id,
-        limit=50,
+        limit=8,
+        recent_first=True,
     )
     recent_sessions = learning_stats_repository.list_user_study_sessions_with_words(
         user_id,
@@ -200,6 +201,7 @@ def build_context_data(
                 'pos': word.pos,
                 'definition': word.definition,
                 'wrongCount': word.wrong_count,
+                'updatedAt': word.updated_at.isoformat() if word.updated_at else None,
             }
             for word in wrong_words
         ],

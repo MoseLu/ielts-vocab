@@ -1,5 +1,3 @@
-// ── Tests for src/hooks/useAIChat.ts ──────────────────────────────────────────
-
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import {
@@ -13,14 +11,14 @@ import { STORAGE_KEYS } from '../constants'
 
 const QUICK_MEMORY_KEY = 'quick_memory_records'
 const MODE_PERF_KEY = 'mode_performance'
+const greetingAudioMocks = vi.hoisted(() => ({ play: vi.fn(() => Promise.resolve(true)), stop: vi.fn(), warmup: vi.fn(() => Promise.resolve()) }))
+vi.mock('../composables/ai-chat/greetingAudio', () => ({ playAIGreetingAudio: greetingAudioMocks.play, stopAIGreetingAudio: greetingAudioMocks.stop, warmupAIGreetingAudio: greetingAudioMocks.warmup }))
 
 beforeEach(() => {
   localStorage.clear()
   clearGlobalLearningContext()
   vi.clearAllMocks()
 })
-
-// ── recordModeAnswer ──────────────────────────────────────────────────────────
 
 describe('recordModeAnswer', () => {
   it('creates a new mode entry on first call', () => {
@@ -49,8 +47,6 @@ describe('recordModeAnswer', () => {
     expect(() => recordModeAnswer('test', true)).not.toThrow()
   })
 })
-
-// ── logSession ───────────────────────────────────────────────────────────────
 
 describe('logSession', () => {
   it('sends POST with cookie credentials (HttpOnly session)', async () => {
@@ -114,7 +110,6 @@ describe('logSession', () => {
     const mockFetch = vi.fn(() => Promise.reject(new Error('network error')))
     vi.stubGlobal('fetch', mockFetch)
 
-    // Should not throw
     await expect(logSession({
       mode: 'smart',
       wordsStudied: 5,
@@ -187,6 +182,30 @@ describe('startSession recovery', () => {
     const nextSnapshot = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVE_STUDY_SESSION) || '{}')
     expect(nextSnapshot.sessionId).toBe(99)
     expect(nextSnapshot.mode).toBe('smart')
+    vi.restoreAllMocks()
+  })
+})
+
+describe('useAIChat panel open', () => {
+  it('loads the greeting without eagerly syncing all wrong words', async () => {
+    const mockFetch = vi.fn((url: string) => {
+      if (url === '/api/ai/greet') {
+        return Promise.resolve(new Response(JSON.stringify({ reply: '你好，我会优先关注你最近的新错词。' }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      }
+      return Promise.reject(new Error(`unexpected request: ${url}`))
+    })
+    vi.stubGlobal('fetch', mockFetch)
+    const { result } = renderHook(() => useAIChat())
+    await act(async () => {
+      await result.current.openPanel()
+    })
+    expect(result.current.isOpen).toBe(true)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockFetch.mock.calls[0][0]).toBe('/api/ai/greet')
+    expect(mockFetch.mock.calls.some(([url]) => url === '/api/ai/wrong-words/sync')).toBe(false)
+    expect(result.current.messages[0]?.content).toContain('最近的新错词')
+    expect(greetingAudioMocks.warmup).toHaveBeenCalledTimes(1)
+    expect(greetingAudioMocks.play).toHaveBeenCalledWith('你好，我会优先关注你最近的新错词。')
     vi.restoreAllMocks()
   })
 })

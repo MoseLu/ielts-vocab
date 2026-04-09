@@ -208,10 +208,10 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
             )
 
     if wrong_words:
-        words_list = '、'.join(word['word'] for word in wrong_words[:20])
-        parts.append(f"\n错词列表（最近50条）：{words_list}")
+        words_list = '、'.join(word['word'] for word in wrong_words[:8])
+        parts.append(f"\n近期错词提示（最近更新优先，仅展示少量）：{words_list}")
     else:
-        parts.append("\n错词列表：暂无")
+        parts.append("\n近期错词提示：暂无")
 
     if learner_profile and isinstance(learner_profile, dict):
         summary = learner_profile.get('summary') or {}

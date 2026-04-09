@@ -61,7 +61,8 @@ def test_ask_stream_returns_sse_text_options_and_done(client, monkeypatch):
 
 def test_build_tool_status_message_returns_tool_specific_copy():
     assert ai_routes._build_tool_status_message('web_search') == 'AI 正在检索相关资料...'
-    assert ai_routes._build_tool_status_message('get_wrong_words') == 'AI 正在分析你的错词记录...'
+    assert ai_routes._build_tool_status_message('get_wrong_words') == 'AI 正在读取你最近产生的错词...'
+    assert ai_routes._build_tool_status_message('get_wrong_words', {'query': 'abandon'}) == 'AI 正在检索与你提问相关的错词：abandon...'
     assert ai_routes._build_tool_status_message('get_chapter_words', {'chapter_id': 3}) == 'AI 正在读取第 3 章词表...'
     assert ai_routes._build_tool_status_message('get_book_chapters') == 'AI 正在读取词书章节结构...'
     assert ai_routes._build_tool_status_message('remember_user_note', {'category': 'preference'}) == 'AI 正在记录你的学习偏好...'

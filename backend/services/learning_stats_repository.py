@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import text
+from sqlalchemy import func, or_, text
 
 from models import (
     UserBookProgress,
@@ -108,6 +108,43 @@ def list_user_wrong_words_for_stats(user_id: int, *, limit: int | None = None):
     if limit is not None:
         query = query.limit(limit)
     return query.all()
+
+
+def list_user_wrong_words_for_ai(
+    user_id: int,
+    *,
+    limit: int | None = None,
+    query: str | None = None,
+    recent_first: bool = True,
+):
+    normalized_query = ' '.join(str(query or '').strip().lower().split())
+    query_builder = UserWrongWord.query.filter_by(user_id=user_id)
+
+    if normalized_query:
+        pattern = f"%{normalized_query}%"
+        query_builder = query_builder.filter(or_(
+            func.lower(func.coalesce(UserWrongWord.word, '')).like(pattern),
+            func.lower(func.coalesce(UserWrongWord.phonetic, '')).like(pattern),
+            func.lower(func.coalesce(UserWrongWord.pos, '')).like(pattern),
+            func.lower(func.coalesce(UserWrongWord.definition, '')).like(pattern),
+        ))
+
+    if recent_first:
+        query_builder = query_builder.order_by(
+            UserWrongWord.updated_at.desc(),
+            UserWrongWord.wrong_count.desc(),
+            UserWrongWord.word.asc(),
+        )
+    else:
+        query_builder = query_builder.order_by(
+            UserWrongWord.wrong_count.desc(),
+            UserWrongWord.updated_at.desc(),
+            UserWrongWord.word.asc(),
+        )
+
+    if limit is not None:
+        query_builder = query_builder.limit(limit)
+    return query_builder.all()
 
 
 def count_user_wrong_words(user_id: int) -> int:

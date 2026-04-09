@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { AIMessage, LearningContext } from '../../types'
 import { getWrongWordDimensionModeLabel, normalizeModeText } from '../../constants/practiceModes'
 import {
@@ -9,7 +9,7 @@ import {
   apiFetch,
   safeParse,
 } from '../../lib'
-import { buildAIChatContext, syncWrongWords } from './context'
+import { buildAIChatContext } from './context'
 import {
   buildPendingPronunciationPayload,
   buildPendingSpeakingPayload,
@@ -18,6 +18,7 @@ import {
   type PendingPronunciationState,
   type PendingSpeakingState,
 } from './commands'
+import { playAIGreetingAudio, stopAIGreetingAudio, warmupAIGreetingAudio } from './greetingAudio'
 import { resolveStreamStatusMessage, streamAIReply } from './streaming'
 
 interface UseAIChatOptions {
@@ -41,10 +42,11 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
   const [contextLoaded, setContextLoaded] = useState(false)
   const [pendingPronunciation, setPendingPronunciation] = useState<PendingPronunciationState | null>(null)
   const [pendingSpeaking, setPendingSpeaking] = useState<PendingSpeakingState | null>(null)
+  const greetingSessionRef = useRef(0)
 
   const buildContext = useCallback(() => buildAIChatContext(), [])
 
-  const fetchGreeting = useCallback(async () => {
+  const fetchGreeting = useCallback(async (sessionId: number) => {
     setIsGreeting(true)
     try {
       const raw = await apiFetch('/api/ai/greet', {
@@ -63,13 +65,20 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
         options: options ?? undefined,
         timestamp: Date.now(),
       }])
+      if (greetingSessionRef.current === sessionId) {
+        void playAIGreetingAudio(content)
+      }
     } catch {
+      const content = '你好！我是雅思小助手 👋\n\n我可以帮你分析学习进度、找出薄弱单词、制定复习计划，或者生成专属词书。有什么我可以帮你的吗？'
       setMessages([{
         id: 'greet',
         role: 'assistant',
-        content: '你好！我是雅思小助手 👋\n\n我可以帮你分析学习进度、找出薄弱单词、制定复习计划，或者生成专属词书。有什么我可以帮你的吗？',
+        content,
         timestamp: Date.now(),
       }])
+      if (greetingSessionRef.current === sessionId) {
+        void playAIGreetingAudio(content)
+      }
     } finally {
       setIsGreeting(false)
       setGreetingDone(true)
@@ -78,13 +87,22 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
 
   const openPanel = useCallback(async () => {
     setIsOpen(true)
-    if (contextLoaded) return
+    void warmupAIGreetingAudio()
+    if (contextLoaded) {
+      const hasUserMessages = messages.some(message => message.role === 'user')
+      const greetingMessage = messages.find(message => message.id === 'greet')
+      if (!hasUserMessages && greetingMessage?.content.trim()) {
+        void playAIGreetingAudio(greetingMessage.content)
+      }
+      return
+    }
+    const sessionId = greetingSessionRef.current + 1
+    greetingSessionRef.current = sessionId
     setContextLoaded(true)
-    await syncWrongWords()
-    await fetchGreeting()
-  }, [contextLoaded, fetchGreeting])
+    await fetchGreeting(sessionId)
+  }, [contextLoaded, fetchGreeting, messages])
 
-  const closePanel = useCallback(() => setIsOpen(false), [])
+  const closePanel = useCallback(() => { greetingSessionRef.current += 1; stopAIGreetingAudio(); setIsOpen(false) }, [])
 
   const sendMessage = useCallback(async (text: string) => {
     const userMsg: AIMessage = {
