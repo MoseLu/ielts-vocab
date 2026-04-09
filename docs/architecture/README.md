@@ -18,3 +18,5 @@ Use this folder for documents that describe the system structure itself.
 ## Current Specs
 
 - `backend-layered-architecture.md`: backend layer map, capability modules, data flow, and dependency rules.
+- `service-ownership-matrix.md`: first-pass authoritative write ownership and service decomposition matrix.
+- `gateway-service-contracts.md`: gateway-to-service contract skeleton for the first extraction wave.

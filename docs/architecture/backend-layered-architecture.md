@@ -1,6 +1,6 @@
 # Backend Layered Architecture
 
-Last updated: 2026-04-08
+Last updated: 2026-04-09
 
 ## Positioning
 
@@ -193,3 +193,5 @@ If a new endpoint needs a database query and provider call, do not place both di
 
 - Backend overview: [backend/README.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/README.md)
 - API contracts: [backend/API.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/API.md)
+- Service ownership matrix: [service-ownership-matrix.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/service-ownership-matrix.md)
+- Gateway service contracts: [gateway-service-contracts.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/gateway-service-contracts.md)

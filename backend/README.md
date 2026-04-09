@@ -3,7 +3,7 @@
 ## Current Position
 
 The backend is no longer a flat file layout.
-It is best described as a **microservice-inspired layered modular monolith**:
+It is best described as a **microservice-inspired layered modular monolith in transition**:
 
 - One deployable Flask backend process for HTTP APIs
 - One dedicated speech process for long-lived realtime audio sessions
@@ -12,6 +12,7 @@ It is best described as a **microservice-inspired layered modular monolith**:
 - Current runtime path no longer relies on direct route-to-route imports or route-level ORM queries
 
 It is **not** a full microservice system yet because storage, deployment, and most business logic still live in one codebase and mostly one database.
+The current backend is the migration source architecture for the planned microservice split, not the final long-term runtime shape.
 
 ## Layer Map
 
@@ -111,3 +112,5 @@ Rules:
 
 - API reference: [API.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/API.md)
 - Detailed layer architecture: [backend-layered-architecture.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/backend-layered-architecture.md)
+- Service ownership matrix: [service-ownership-matrix.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/service-ownership-matrix.md)
+- Gateway service contracts: [gateway-service-contracts.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/gateway-service-contracts.md)
