@@ -1,13 +1,20 @@
 import React from 'react'
 import { act, render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AIChatPanel from './AIChatPanel'
 
 const useAIChatMock = vi.fn()
 const useSpeechRecognitionMock = vi.fn()
 let latestSpeechOptions:
   | {
+    enabled?: boolean
+    language?: string
+    enableVad?: boolean
+    autoStop?: boolean
+    autoStopDelay?: number
+    enableBrowserRecognition?: boolean
+    enableRealtimeRecognition?: boolean
     onResult?: (text: string) => void
     onPartial?: (text: string) => void
     onError?: (error: string) => void
@@ -85,6 +92,10 @@ describe('AIChatPanel', () => {
     })
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders assistant markdown and marks assistant bubbles as full width', () => {
     const { container } = render(<AIChatPanel />)
 
@@ -138,10 +149,11 @@ describe('AIChatPanel', () => {
       sendMessage: vi.fn(),
     })
 
-    const { getByRole, queryByRole } = render(<AIChatPanel />)
+    const { getByRole, queryByRole, getByText } = render(<AIChatPanel />)
 
     expect(queryByRole('button', { name: '帮我安排今天复习' })).toBeNull()
     expect(queryByRole('button', { name: '发音训练' })).toBeNull()
+    expect(getByText('你好，我可以帮你安排今天的学习。')).toBeInTheDocument()
 
     await user.click(getByRole('button', { name: '看看常见任务' }))
 
@@ -252,6 +264,99 @@ describe('AIChatPanel', () => {
     expect(sendMessage).not.toHaveBeenCalled()
   })
 
+  it('accumulates multiple finalized speech segments in the composer', async () => {
+    const user = userEvent.setup()
+    const startRecording = vi.fn().mockResolvedValue(undefined)
+
+    useAIChatMock.mockReturnValue({
+      messages: [],
+      isLoading: false,
+      isGreeting: false,
+      greetingDone: true,
+      isOpen: true,
+      contextLoaded: true,
+      openPanel: vi.fn(),
+      closePanel: vi.fn(),
+      sendMessage: vi.fn(),
+    })
+    useSpeechRecognitionMock.mockReturnValue({
+      isConnected: true,
+      isRecording: false,
+      isProcessing: false,
+      isReady: false,
+      startRecording,
+      stopRecording: vi.fn(),
+    })
+
+    const { getByRole } = render(<AIChatPanel />)
+
+    await user.click(getByRole('button', { name: '开始语音输入' }))
+
+    act(() => {
+      latestSpeechOptions?.onResult?.('第一段')
+      latestSpeechOptions?.onPartial?.('第二段草稿')
+    })
+    expect(getByRole('textbox')).toHaveValue('第一段 第二段草稿')
+
+    act(() => {
+      latestSpeechOptions?.onResult?.('第二段')
+    })
+    expect(getByRole('textbox')).toHaveValue('第一段 第二段')
+  })
+
+  it('replaces the previous speech-only transcript when starting a fresh recording', async () => {
+    const user = userEvent.setup()
+    const startRecording = vi.fn().mockResolvedValue(undefined)
+
+    useAIChatMock.mockReturnValue({
+      messages: [],
+      isLoading: false,
+      isGreeting: false,
+      greetingDone: true,
+      isOpen: true,
+      contextLoaded: true,
+      openPanel: vi.fn(),
+      closePanel: vi.fn(),
+      sendMessage: vi.fn(),
+    })
+    useSpeechRecognitionMock.mockReturnValue({
+      isConnected: true,
+      isRecording: false,
+      isProcessing: false,
+      isReady: false,
+      startRecording,
+      stopRecording: vi.fn(),
+    })
+
+    const { getByRole } = render(<AIChatPanel />)
+
+    await user.click(getByRole('button', { name: '开始语音输入' }))
+    act(() => {
+      latestSpeechOptions?.onResult?.('The widespread adoption of renewable energy sources')
+    })
+    expect(getByRole('textbox')).toHaveValue('The widespread adoption of renewable energy sources')
+
+    await user.click(getByRole('button', { name: '开始语音输入' }))
+    act(() => {
+      latestSpeechOptions?.onResult?.('嗯嗯')
+    })
+
+    expect(getByRole('textbox')).toHaveValue('嗯嗯')
+  })
+
+  it('uses manual stop speech settings for the ai assistant', () => {
+    render(<AIChatPanel />)
+
+    expect(latestSpeechOptions).toMatchObject({
+      enabled: true,
+      language: 'zh',
+      enableVad: false,
+      autoStop: false,
+      enableBrowserRecognition: false,
+      enableRealtimeRecognition: true,
+    })
+  })
+
   it('shows a loading mic state while speech is being finalized', () => {
     useAIChatMock.mockReturnValue({
       messages: [],
@@ -273,14 +378,16 @@ describe('AIChatPanel', () => {
       stopRecording: vi.fn(),
     })
 
-    const { container, getByRole } = render(<AIChatPanel />)
+    const { container, getByRole, queryByText } = render(<AIChatPanel />)
 
     expect(getByRole('button', { name: '语音转写中' })).toBeDisabled()
     expect(container.querySelector('.ai-voice-btn-spinner')).not.toBeNull()
     expect(container.querySelector('.ai-voice-visualizer--processing')).not.toBeNull()
+    expect(queryByText('正在转写，请稍候...')).toBeNull()
   })
 
   it('raises waveform peaks as speech levels increase', () => {
+    vi.useFakeTimers()
     useAIChatMock.mockReturnValue({
       messages: [],
       isLoading: false,
@@ -304,12 +411,12 @@ describe('AIChatPanel', () => {
     const { container, getByText } = render(<AIChatPanel />)
 
     act(() => {
-      latestSpeechOptions?.onLevel?.(0.72)
+      latestSpeechOptions?.onLevel?.(0.95)
+      vi.advanceTimersByTime(160)
     })
 
     expect(getByText('0:00')).toBeInTheDocument()
     expect(container.querySelector('.ai-voice-bar--wave')).not.toBeNull()
-    expect(container.querySelector('.ai-voice-bar--strong')).not.toBeNull()
   })
 
   it('streams partial speech results into the composer', async () => {

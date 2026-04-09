@@ -17,36 +17,36 @@ import {
   useAIChatPanel,
 } from '../../../composables/ai-chat/page/useAIChatPanel'
 
-const VOICE_BAR_HEIGHT_PROFILE = [0.12, 0.26, 0.64, 1, 0.72, 0.24, 0.08, 0.58]
-const VOICE_BAR_WIDTH_PROFILE = [0.56, 0.72, 0.9, 1.08, 0.86, 0.66, 0.52, 0.82]
-const VOICE_BAR_ACTIVE_THRESHOLD = 0.08
-const VOICE_BAR_STRONG_THRESHOLD = 0.52
+const VOICE_BAR_ACTIVE_THRESHOLD = 0.03
+const VOICE_BAR_STRONG_THRESHOLD = 0.64
+const VOICE_BAR_MIN_HEIGHT = 3
+const VOICE_BAR_MAX_HEIGHT = 28
 
-function getVoiceBarAppearance(level: number, index: number, total: number): {
+function getVoiceBarAppearance(level: number): {
   className: string
   style: CSSProperties
 } {
-  const shape = VOICE_BAR_HEIGHT_PROFILE[index % VOICE_BAR_HEIGHT_PROFILE.length] ?? 0.5
-  const width = VOICE_BAR_WIDTH_PROFILE[index % VOICE_BAR_WIDTH_PROFILE.length] ?? 1
-  const age = total > 1 ? index / (total - 1) : 1
   const normalizedLevel = Math.max(0, Math.min(1, level))
   const intensity = normalizedLevel <= VOICE_BAR_ACTIVE_THRESHOLD
     ? 0
-    : Math.pow((normalizedLevel - VOICE_BAR_ACTIVE_THRESHOLD) / (1 - VOICE_BAR_ACTIVE_THRESHOLD), 0.78)
-  const visualHeight = intensity <= 0
+    : Math.pow((normalizedLevel - VOICE_BAR_ACTIVE_THRESHOLD) / (1 - VOICE_BAR_ACTIVE_THRESHOLD), 0.92)
+  const visualHeight = intensity <= 0.015
     ? 0
-    : Math.min(1, intensity * 0.92 + shape * 0.08)
-  const variant = intensity <= 0.02 ? 'dot' : 'wave'
+    : Math.min(1, Math.pow(intensity, 0.82))
+  const barHeightPx = visualHeight <= 0
+    ? 0
+    : Math.max(
+      VOICE_BAR_MIN_HEIGHT,
+      Math.round(VOICE_BAR_MIN_HEIGHT + visualHeight * (VOICE_BAR_MAX_HEIGHT - VOICE_BAR_MIN_HEIGHT)),
+    )
+  const variant = barHeightPx === 0 ? 'silent' : 'wave'
   const emphasis = intensity >= VOICE_BAR_STRONG_THRESHOLD ? ' ai-voice-bar--strong' : ''
 
   return {
     className: `ai-voice-bar ai-voice-bar--${variant}${emphasis}`,
     style: {
-      ['--ai-voice-age' as string]: age.toFixed(3),
-      ['--ai-voice-index' as string]: index,
       ['--ai-voice-intensity' as string]: intensity.toFixed(3),
-      ['--ai-voice-height' as string]: visualHeight.toFixed(3),
-      ['--ai-voice-width' as string]: width.toFixed(3),
+      ['--ai-voice-height-px' as string]: `${barHeightPx}px`,
     } as CSSProperties,
   }
 }
@@ -105,6 +105,11 @@ function AIChatPanel() {
   const showVoiceVisualizer = speechRecording || speechProcessing
   const showSpeechStatus = Boolean(speechStatus)
   const showSpeechDuration = speechRecording || speechProcessing
+  const voiceVisualizerClassName = [
+    'ai-voice-visualizer',
+    speechRecording ? 'ai-voice-visualizer--recording' : '',
+    speechProcessing ? 'ai-voice-visualizer--processing' : '',
+  ].filter(Boolean).join(' ')
   const voiceButtonClassName = [
     'ai-voice-btn',
     speechRecording ? 'ai-voice-btn--recording' : '',
@@ -265,12 +270,12 @@ function AIChatPanel() {
                 <div className="ai-input-footer-main">
                   {showVoiceVisualizer && (
                     <div
-                      className={`ai-voice-visualizer ${speechProcessing ? 'ai-voice-visualizer--processing' : ''}`.trim()}
+                      className={voiceVisualizerClassName}
                       aria-hidden="true"
                     >
                       <span className="ai-voice-visualizer__line" />
                       {speechWaveform.map((level, index) => {
-                        const appearance = getVoiceBarAppearance(level, index, speechWaveform.length)
+                        const appearance = getVoiceBarAppearance(level)
 
                         return (
                           <span
