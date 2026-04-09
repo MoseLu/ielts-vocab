@@ -1,4 +1,5 @@
 import { PageSkeleton } from '../../ui'
+import { PracticeRoundSummary } from '../page/PracticeRoundSummary'
 
 export function ConfusableMatchLoadingState() {
   return (
@@ -40,18 +41,25 @@ export function ConfusableMatchCompletedState({
   onReplay: () => void
   onBack: () => void
 }) {
+  const totalAttempts = correctCount + wrongCount
+  const accuracy = totalAttempts > 0 ? `${Math.round((correctCount / totalAttempts) * 100)}%` : '0%'
+
   return (
     <div className="practice-session-layout confusable-shell">
-      <div className="practice-complete confusable-empty">
-        <div className="complete-emoji" aria-hidden="true">✓</div>
-        <h2>{chapterTitle || '本章'}已完成</h2>
-        <div className="complete-stats-row">
-          <span className="stat-correct">配对成功 {correctCount}</span>
-          <span className="stat-wrong">误连 {wrongCount}</span>
-        </div>
-        <button className="complete-btn" onClick={onReplay}>再来一轮</button>
-        <button className="complete-btn" onClick={onBack}>返回词书</button>
-      </div>
+      <PracticeRoundSummary
+        contextLabel={chapterTitle || '本章辨析'}
+        stats={[
+          { value: correctCount, label: '配对成功', tone: 'accent' },
+          { value: wrongCount, label: '误连', tone: 'error' },
+          { value: accuracy, label: '正确率', tone: 'warning' },
+        ]}
+        note="当前章节的辨析配对已经完成。"
+        actions={[
+          { label: '再来一轮', onClick: onReplay, tone: 'primary' },
+          { label: '返回词书', onClick: onBack, tone: 'secondary' },
+        ]}
+        className="practice-round-summary--confusable"
+      />
     </div>
   )
 }

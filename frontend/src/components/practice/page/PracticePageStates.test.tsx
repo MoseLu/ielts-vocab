@@ -24,8 +24,9 @@ describe('PracticePageCompletedState session duration', () => {
       />,
     )
 
-    expect(screen.getByText('错词复习完成')).toBeInTheDocument()
-    expect(screen.getByText(/本次用时 2分5秒/)).toBeInTheDocument()
+    expect(screen.getByText('本轮完成')).toBeInTheDocument()
+    expect(screen.getByText('错词复习')).toBeInTheDocument()
+    expect(screen.getByText('2分5秒')).toBeInTheDocument()
   })
 
   it('shows session duration for non-chapter error review completion', () => {
@@ -49,7 +50,8 @@ describe('PracticePageCompletedState session duration', () => {
       />,
     )
 
-    expect(screen.getByText('错词复习完成')).toBeInTheDocument()
-    expect(screen.getByText(/本次用时 2分5秒/)).toBeInTheDocument()
+    expect(screen.getByText('本轮完成')).toBeInTheDocument()
+    expect(screen.getByText('错词复习')).toBeInTheDocument()
+    expect(screen.getByText('2分5秒')).toBeInTheDocument()
   })
 })

@@ -8,6 +8,7 @@ import QuickMemoryMode from '../QuickMemoryMode'
 import SettingsPanel from '../../settings/SettingsPanel'
 import { PageSkeleton } from '../../ui'
 import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../errorReviewSession'
+import { PracticeRoundSummary } from './PracticeRoundSummary'
 
 function formatSessionDuration(seconds: number): string {
   const safeSeconds = Math.max(0, Math.round(seconds))
@@ -125,39 +126,61 @@ export function PracticePageCompletedState({
   const sessionDurationText = sessionDurationSeconds != null
     ? formatSessionDuration(sessionDurationSeconds)
     : null
+  const totalAnswered = correctCount + wrongCount
+  const accuracy = totalAnswered > 0 ? `${Math.round((correctCount / totalAnswered) * 100)}%` : '0%'
+  const contextLabel = errorMode
+    ? '错词复习'
+    : reviewMode
+      ? '到期复习'
+      : bookId
+        ? '本章练习'
+        : currentDay != null
+          ? `Day ${currentDay}`
+          : '本轮练习'
+  const note = errorMode
+    ? `第 ${errorReviewRound} 轮已完成，剩余 ${nextErrorRoundWords.length} 个单词需要继续巩固。`
+    : reviewMode
+      ? (reviewSummary?.has_more
+          ? `当前批次已完成，还可以继续复习 ${Math.max(reviewRemaining, 0)} 个到期单词。`
+          : '当前批次的到期单词已经清完。')
+      : null
+  const actions = []
+
+  if (errorMode && nextErrorRoundWords.length > 0) {
+    actions.push({
+      label: `继续第${errorReviewRound + 1}轮`,
+      onClick: onContinueErrorReview,
+      tone: 'primary' as const,
+    })
+  } else if (reviewMode && reviewSummary?.has_more) {
+    actions.push({
+      label: `继续复习${reviewRemaining > 0 ? `（还有 ${reviewRemaining} 个）` : ''}`,
+      onClick: onContinueReview,
+      tone: 'primary' as const,
+    })
+  }
+
+  actions.push({
+    label: '返回主页',
+    onClick: () => navigate('/plan'),
+    tone: actions.length > 0 ? 'secondary' as const : 'primary' as const,
+  })
 
   return (
     <div className="practice-session-layout">
-      <div className="practice-complete">
-        <div className="complete-emoji" aria-hidden="true">Completed</div>
-        <h2>
-          {errorMode ? '错词复习完成'
-            : reviewMode ? '本批复习完成'
-            : bookId ? '本章完成'
-            : `Day ${currentDay} 完成`}
-        </h2>
-        <div className="complete-stats-row">
-          <span className="stat-correct">正确 {correctCount}</span>
-          <span className="stat-wrong">错误 {wrongCount}</span>
-          {sessionDurationText && <span className="stat-duration">本次用时 {sessionDurationText}</span>}
-        </div>
-        {errorMode && (
-          <p className="practice-complete-copy practice-complete-copy--compact">
-            第 {errorReviewRound} 轮已完成，剩余 {nextErrorRoundWords.length} 个单词需要继续巩固。
-          </p>
-        )}
-        {errorMode && nextErrorRoundWords.length > 0 && (
-          <button className="complete-btn" onClick={onContinueErrorReview}>
-            继续第{errorReviewRound + 1}轮（{nextErrorRoundWords.length}词）
-          </button>
-        )}
-        {reviewMode && reviewSummary?.has_more && (
-          <button className="complete-btn" onClick={onContinueReview}>
-            继续复习{reviewRemaining > 0 ? `（还有 ${reviewRemaining} 个）` : ''}
-          </button>
-        )}
-        <button className="complete-btn" onClick={() => navigate('/plan')}>返回主页</button>
-      </div>
+      <PracticeRoundSummary
+        contextLabel={contextLabel}
+        stats={[
+          { value: correctCount, label: '正确', tone: 'accent' },
+          { value: wrongCount, label: '错误', tone: 'error' },
+          { value: accuracy, label: '正确率', tone: 'warning' },
+          ...(sessionDurationText ? [{ value: sessionDurationText, label: '本次用时', tone: 'neutral' as const }] : []),
+        ]}
+        note={note}
+        chipTitle={errorMode && nextErrorRoundWords.length > 0 ? '继续巩固' : undefined}
+        chips={errorMode ? nextErrorRoundWords.slice(0, 18).map(word => word.word) : undefined}
+        actions={actions}
+      />
     </div>
   )
 }

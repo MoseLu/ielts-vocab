@@ -1,0 +1,147 @@
+.practice-round-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: min(100%, 760px);
+    min-height: 70vh;
+    margin: 0 auto;
+    padding: clamp(48px, 9vh, 84px) var(--space-lg) var(--space-2xl);
+    text-align: center;
+}
+
+.practice-round-summary__eyebrow {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+}
+
+.practice-round-summary__title {
+    font-size: clamp(32px, 4vw, 44px);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--text-primary);
+}
+
+.practice-round-summary__stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px 40px;
+}
+
+.practice-round-summary__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 92px;
+}
+
+.practice-round-summary__stat-value {
+    font-size: clamp(34px, 4vw, 48px);
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.practice-round-summary__stat-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.practice-round-summary__stat--accent .practice-round-summary__stat-value { color: var(--accent); }
+.practice-round-summary__stat--error .practice-round-summary__stat-value { color: var(--error); }
+.practice-round-summary__stat--warning .practice-round-summary__stat-value { color: var(--warning); }
+.practice-round-summary__stat--success .practice-round-summary__stat-value { color: var(--success); }
+
+.practice-round-summary__note {
+    max-width: 540px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+
+.practice-round-summary__section {
+    width: 100%;
+    max-width: 540px;
+    text-align: left;
+}
+
+.practice-round-summary__section-title {
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+}
+
+.practice-round-summary__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.practice-round-summary__chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-color);
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.practice-round-summary__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.practice-round-summary__action {
+    min-width: 148px;
+    padding: 12px 24px;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--accent);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.practice-round-summary__action--primary {
+    background: var(--accent);
+    color: var(--text-inverse);
+}
+
+.practice-round-summary__action--primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.practice-round-summary__action--secondary {
+    background: transparent;
+    color: var(--accent);
+}
+
+.practice-round-summary__action--secondary:hover {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+@media (max-width: 640px) {
+    .practice-round-summary {
+        gap: 20px;
+        padding-inline: var(--space-md);
+    }
+
+    .practice-round-summary__stats {
+        gap: 20px 24px;
+    }
+
+    .practice-round-summary__action {
+        width: 100%;
+    }
+}

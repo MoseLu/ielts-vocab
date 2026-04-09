@@ -428,8 +428,9 @@ describe('PracticePage listening options loading', () => {
       await Promise.resolve()
     })
 
-    expect(screen.getByText('本章完成')).toBeInTheDocument()
-    expect(screen.getByText(/本次用时 1分5秒/)).toBeInTheDocument()
+    expect(screen.getByText('本轮完成')).toBeInTheDocument()
+    expect(screen.getByText('本章练习')).toBeInTheDocument()
+    expect(screen.getByText('1分5秒')).toBeInTheDocument()
     expect(logSessionMock).toHaveBeenCalledWith(expect.objectContaining({
       chapterId: '1',
       durationSeconds: 65,
