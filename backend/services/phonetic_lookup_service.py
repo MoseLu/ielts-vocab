@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 from flask import has_app_context
 
-from models import WordCatalogEntry, WordDerivativeEntry, db
+from service_models.catalog_content_models import WordCatalogEntry, WordDerivativeEntry, db
 
 
 _DICT_API_BASE_URL = 'https://api.dictionaryapi.dev/api/v2/entries/en/'
