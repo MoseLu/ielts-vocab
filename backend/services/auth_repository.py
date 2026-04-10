@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, db
+from service_models.identity_models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, db
 
 
 def get_user(user_id: int | None) -> User | None:
