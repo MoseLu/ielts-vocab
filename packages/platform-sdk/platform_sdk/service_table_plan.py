@@ -42,6 +42,12 @@ CATALOG_CONTENT_SERVICE_TABLES = frozenset({
     'word_catalog_book_refs',
 })
 
+CUSTOM_BOOK_SHADOW_TABLES = frozenset({
+    'custom_books',
+    'custom_book_chapters',
+    'custom_book_words',
+})
+
 NOTES_SERVICE_TABLES = frozenset({
     'user_learning_notes',
     'user_daily_summaries',
@@ -72,7 +78,7 @@ SERVICE_TABLE_PLANS: dict[str, ServiceTablePlan] = {
     ),
     'learning-core-service': ServiceTablePlan(
         owned_tables=LEARNING_CORE_SERVICE_TABLES,
-        shadow_tables=AUTH_CONTEXT_TABLES,
+        shadow_tables=AUTH_CONTEXT_TABLES | CUSTOM_BOOK_SHADOW_TABLES,
     ),
     'catalog-content-service': ServiceTablePlan(
         owned_tables=CATALOG_CONTENT_SERVICE_TABLES,
