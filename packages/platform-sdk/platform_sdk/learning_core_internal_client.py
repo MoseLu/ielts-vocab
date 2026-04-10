@@ -92,6 +92,33 @@ def fetch_learning_core_learning_stats_response(
     return _request_json('GET', '/internal/learning/stats', user_id=user_id, params=params)
 
 
+def start_learning_core_study_session_response(user_id: int, data: dict | None) -> tuple[dict, int]:
+    return _request_json(
+        'POST',
+        '/internal/learning/study-sessions/start',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+
+
+def log_learning_core_study_session_response(user_id: int, data: dict | None) -> tuple[dict, int]:
+    return _request_json(
+        'POST',
+        '/internal/learning/study-sessions/log',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+
+
+def cancel_learning_core_study_session_response(user_id: int, session_id) -> tuple[dict, int]:
+    return _request_json(
+        'POST',
+        '/internal/learning/study-sessions/cancel',
+        user_id=user_id,
+        json_body={'sessionId': session_id},
+    )
+
+
 def record_learning_core_event(
     user_id: int,
     *,
@@ -130,3 +157,157 @@ def record_learning_core_event(
     if status != 201:
         raise RuntimeError(f'learning-core event request failed: {status}')
     return response_payload.get('event') if isinstance(response_payload.get('event'), dict) else response_payload
+
+
+def fetch_learning_core_wrong_words_for_ai(
+    user_id: int,
+    *,
+    limit: int,
+    query: str,
+    recent_first: bool,
+) -> list[dict]:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/ai-tool/wrong-words',
+        user_id=user_id,
+        params={
+            'limit': max(1, min(300, int(limit or 12))),
+            'query': query,
+            'recent_first': 'true' if recent_first else 'false',
+        },
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core wrong-words request failed: {status}')
+    return [item for item in (payload.get('words') or []) if isinstance(item, dict)]
+
+
+def fetch_learning_core_chapter_progress_for_ai(user_id: int, *, book_id: str) -> list[dict]:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/ai-tool/chapter-progress',
+        user_id=user_id,
+        params={'book_id': book_id},
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core chapter-progress request failed: {status}')
+    return [item for item in (payload.get('progress') or []) if isinstance(item, dict)]
+
+
+def fetch_learning_core_wrong_word_count(user_id: int) -> int:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/ai-tool/wrong-word-count',
+        user_id=user_id,
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core wrong-word-count request failed: {status}')
+    return int(payload.get('count') or 0)
+
+
+def fetch_learning_core_quick_memory_records_response(user_id: int) -> dict:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/quick-memory',
+        user_id=user_id,
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core quick-memory request failed: {status}')
+    return payload
+
+
+def fetch_learning_core_quick_memory_review_queue_response(user_id: int, args) -> dict:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/quick-memory/review-queue',
+        user_id=user_id,
+        params={
+            'limit': args.get('limit'),
+            'offset': args.get('offset'),
+            'within_days': args.get('within_days'),
+            'scope': args.get('scope'),
+            'book_id': args.get('book_id'),
+            'chapter_id': args.get('chapter_id'),
+        },
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core quick-memory review queue request failed: {status}')
+    return payload
+
+
+def sync_learning_core_quick_memory(user_id: int, data: dict | None) -> dict:
+    payload, status = _request_json(
+        'POST',
+        '/internal/learning/quick-memory/sync',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core quick-memory sync request failed: {status}')
+    return payload
+
+
+def fetch_learning_core_smart_stats_response(user_id: int) -> dict:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/smart-stats',
+        user_id=user_id,
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core smart-stats request failed: {status}')
+    return payload
+
+
+def sync_learning_core_smart_stats(user_id: int, data: dict | None) -> dict:
+    payload, status = _request_json(
+        'POST',
+        '/internal/learning/smart-stats/sync',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core smart-stats sync request failed: {status}')
+    return payload
+
+
+def fetch_learning_core_wrong_words_response(
+    user_id: int,
+    *,
+    search_value=None,
+    detail_mode=None,
+) -> dict:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/wrong-words',
+        user_id=user_id,
+        params={
+            'search': search_value,
+            'details': detail_mode,
+        },
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core wrong-words request failed: {status}')
+    return payload
+
+
+def sync_learning_core_wrong_words(user_id: int, data: dict | None) -> dict:
+    payload, status = _request_json(
+        'POST',
+        '/internal/learning/wrong-words/sync',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core wrong-words sync request failed: {status}')
+    return payload
+
+
+def clear_learning_core_wrong_words(user_id: int, *, word: str | None = None) -> dict:
+    payload, status = _request_json(
+        'POST',
+        '/internal/learning/wrong-words/clear',
+        user_id=user_id,
+        json_body={'word': word} if word else {},
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core wrong-words clear request failed: {status}')
+    return payload
