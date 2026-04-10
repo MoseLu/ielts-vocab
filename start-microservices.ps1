@@ -1,6 +1,8 @@
 param(
     [string]$ProjectRoot,
-    [switch]$SkipFrontendChecks
+    [switch]$SkipFrontendChecks,
+    [switch]$SkipRedis,
+    [switch]$SkipRabbit
 )
 
 $ErrorActionPreference = 'Stop'
@@ -30,6 +32,26 @@ $postgresLog = Join-Path $root 'logs\\runtime\\postgres-microservices\\postgres.
 $postgresBin = 'D:\sorfware\PostgreSQL\bin'
 $backendEnv = Join-Path $root 'backend\\.env'
 $microservicesEnv = Join-Path $root 'backend\\.env.microservices.local'
+$redisHost = '127.0.0.1'
+$redisPort = 56379
+$redisKeyPrefix = 'ielts-vocab-local'
+$redisDbAssignments = @{
+    'GATEWAY_BFF_REDIS_DB' = '0'
+    'IDENTITY_SERVICE_REDIS_DB' = '1'
+    'LEARNING_CORE_SERVICE_REDIS_DB' = '2'
+    'CATALOG_CONTENT_SERVICE_REDIS_DB' = '3'
+    'AI_EXECUTION_SERVICE_REDIS_DB' = '4'
+    'NOTES_SERVICE_REDIS_DB' = '5'
+    'TTS_MEDIA_SERVICE_REDIS_DB' = '6'
+    'ASR_SERVICE_REDIS_DB' = '7'
+    'ADMIN_OPS_SERVICE_REDIS_DB' = '8'
+}
+$rabbitMqHost = '127.0.0.1'
+$rabbitMqPort = 5679
+$rabbitMqUser = 'guest'
+$rabbitMqPassword = 'guest'
+$rabbitMqVhost = '/'
+$rabbitMqDomainExchange = 'ielts-vocab.domain'
 
 function Require-Command {
     param([string]$Name)
@@ -156,6 +178,37 @@ function Start-LoggedProcess {
     Start-Process -FilePath 'cmd.exe' -ArgumentList '/d', '/c', "cd /d `"$WorkingDirectory`" && $CommandLine" -WindowStyle Hidden | Out-Null
 }
 
+function Set-DefaultEnvValue {
+    param(
+        [string]$Name,
+        [string]$Value
+    )
+
+    $currentValue = [Environment]::GetEnvironmentVariable($Name)
+    if ([string]::IsNullOrWhiteSpace($currentValue)) {
+        [Environment]::SetEnvironmentVariable($Name, $Value)
+    }
+}
+
+function Set-DefaultRedisEnv {
+    Set-DefaultEnvValue -Name 'REDIS_HOST' -Value $redisHost
+    Set-DefaultEnvValue -Name 'REDIS_PORT' -Value $redisPort.ToString()
+    Set-DefaultEnvValue -Name 'REDIS_KEY_PREFIX' -Value $redisKeyPrefix
+
+    foreach ($assignment in $redisDbAssignments.GetEnumerator()) {
+        Set-DefaultEnvValue -Name $assignment.Key -Value $assignment.Value
+    }
+}
+
+function Set-DefaultRabbitEnv {
+    Set-DefaultEnvValue -Name 'RABBITMQ_HOST' -Value $rabbitMqHost
+    Set-DefaultEnvValue -Name 'RABBITMQ_PORT' -Value $rabbitMqPort.ToString()
+    Set-DefaultEnvValue -Name 'RABBITMQ_USER' -Value $rabbitMqUser
+    Set-DefaultEnvValue -Name 'RABBITMQ_PASSWORD' -Value $rabbitMqPassword
+    Set-DefaultEnvValue -Name 'RABBITMQ_VHOST' -Value $rabbitMqVhost
+    Set-DefaultEnvValue -Name 'RABBITMQ_DOMAIN_EXCHANGE' -Value $rabbitMqDomainExchange
+}
+
 function Ensure-ProjectPostgres {
     $pgCtl = Join-Path $postgresBin 'pg_ctl.exe'
     $pgIsReady = Join-Path $postgresBin 'pg_isready.exe'
@@ -192,6 +245,22 @@ try {
 
     if (-not (Test-Path $runtimeDir)) {
         New-Item -ItemType Directory -Path $runtimeDir | Out-Null
+    }
+
+    if (-not $SkipRedis) {
+        & (Join-Path $root 'scripts\start-local-redis-microservices.ps1') -ProjectRoot $root -BindHost $redisHost -Port $redisPort
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Failed to start local Redis runtime.'
+        }
+        Set-DefaultRedisEnv
+    }
+
+    if (-not $SkipRabbit) {
+        & (Join-Path $root 'scripts\start-local-rabbitmq-microservices.ps1') -ProjectRoot $root -BindHost $rabbitMqHost -Port $rabbitMqPort
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Failed to start local RabbitMQ runtime.'
+        }
+        Set-DefaultRabbitEnv
     }
 
     Ensure-ProjectPostgres
@@ -232,9 +301,21 @@ try {
     Write-Host '       Notes:             http://127.0.0.1:8107'
     Write-Host '       Admin ops:         http://127.0.0.1:8108'
     Write-Host '       ASR Socket.IO:     http://127.0.0.1:5001'
+    if (-not $SkipRedis) {
+        Write-Host "       Redis:             redis://$redisHost`:$redisPort/0"
+    }
+    if (-not $SkipRabbit) {
+        Write-Host "       RabbitMQ:          amqp://$rabbitMqUser`:$rabbitMqPassword@$rabbitMqHost`:$rabbitMqPort/%2F"
+    }
     Write-Host "       Runtime logs:      $runtimeDir"
     exit 0
 } catch {
     Write-Host "[ERROR] $($_.Exception.Message)"
     exit 1
 }
+
+
+
+
+
+
