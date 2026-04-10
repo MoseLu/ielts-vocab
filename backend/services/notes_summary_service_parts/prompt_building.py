@@ -1,3 +1,4 @@
+from services.local_time import format_event_time_for_ai
 from services.notes_summary_service_parts.base import format_duration
 from services.notes_summary_runtime import SUMMARY_MODE_LABELS
 
@@ -137,8 +138,14 @@ def build_summary_prompt(
             if recent_activity:
                 prompt_parts.append("- 近期关键动作：")
                 for item in recent_activity[:8]:
-                    stamp = str(item.get('occurred_at') or '')[11:16]
+                    stamp = format_event_time_for_ai(
+                        item.get('occurred_at'),
+                        reference_date=target_date,
+                    )
                     title = item.get('title') or item.get('label') or '学习行为'
-                    prompt_parts.append(f"  - {stamp} {title}".strip())
+                    if stamp:
+                        prompt_parts.append(f"  - {stamp} {title}")
+                    else:
+                        prompt_parts.append(f"  - {title}")
 
     return '\n'.join(prompt_parts)

@@ -1,0 +1,188 @@
+from __future__ import annotations
+
+from services import books_personalization_repository
+from services.books_user_state_repository import (
+    create_user_added_book,
+    delete_row as delete_user_state_row,
+    get_user_added_book,
+)
+
+
+FAVORITES_BOOK_ID = 'ielts_auto_favorites'
+FAVORITES_BOOK_TITLE = '收藏词书'
+FAVORITES_CHAPTER_ID = 1
+FAVORITES_CHAPTER_TITLE = '全部收藏'
+
+
+class _FavoriteWordsQueryCompat:
+    def __init__(self, rows: list):
+        self._rows = list(rows)
+
+    def all(self):
+        return list(self._rows)
+
+
+def _is_favorites_book(book_id: str | None) -> bool:
+    return str(book_id or '') == FAVORITES_BOOK_ID
+
+
+def _normalize_favorite_word(value) -> str:
+    if not isinstance(value, str):
+        return ''
+    return value.strip().lower()
+
+
+def _favorite_word_count(user_id: int | None) -> int:
+    if not user_id:
+        return 0
+    return books_personalization_repository.count_user_favorite_words(user_id)
+
+
+def _favorite_words_query(user_id: int):
+    return _FavoriteWordsQueryCompat(
+        books_personalization_repository.list_user_favorite_words(user_id)
+    )
+
+
+def _build_favorites_book_payload(user_id: int | None) -> dict | None:
+    count = _favorite_word_count(user_id)
+    if count <= 0:
+        return None
+
+    return {
+        'id': FAVORITES_BOOK_ID,
+        'title': FAVORITES_BOOK_TITLE,
+        'description': '自动收纳你在各练习模式里收藏的单词',
+        'icon': 'heart',
+        'color': '#E85D6D',
+        'category': 'comprehensive',
+        'level': 'intermediate',
+        'study_type': 'ielts',
+        'word_count': count,
+        'chapter_count': 1,
+        'has_chapters': True,
+        'is_auto_favorites': True,
+    }
+
+
+def _serialize_favorite_words(user_id: int | None) -> list[dict]:
+    if not user_id:
+        return []
+
+    words: list[dict] = []
+    for record in books_personalization_repository.list_user_favorite_words(user_id):
+        words.append({
+            'word': record.word,
+            'phonetic': record.phonetic or '',
+            'pos': record.pos or '',
+            'definition': record.definition or '',
+            'book_id': FAVORITES_BOOK_ID,
+            'book_title': FAVORITES_BOOK_TITLE,
+            'chapter_id': FAVORITES_CHAPTER_ID,
+            'chapter_title': FAVORITES_CHAPTER_TITLE,
+            'is_favorite': True,
+        })
+    return words
+
+
+def _ensure_favorites_book_membership(user_id: int) -> None:
+    existing = get_user_added_book(user_id, FAVORITES_BOOK_ID)
+    if existing:
+        return
+    create_user_added_book(user_id, FAVORITES_BOOK_ID)
+
+
+def _cleanup_favorites_book_membership(user_id: int) -> None:
+    if _favorite_word_count(user_id) > 0:
+        return
+
+    record = get_user_added_book(user_id, FAVORITES_BOOK_ID)
+    if record:
+        delete_user_state_row(record)
+
+
+def _upsert_favorite_record(user_id: int, payload: dict) -> tuple[object, bool]:
+    normalized_word = _normalize_favorite_word(payload.get('word'))
+    if not normalized_word:
+        raise ValueError('缺少有效的 word')
+
+    record = books_personalization_repository.get_user_favorite_word(user_id, normalized_word)
+    created = record is None
+    if created:
+        record = books_personalization_repository.create_user_favorite_word(user_id, normalized_word)
+
+    record.word = str(payload.get('word') or '').strip() or normalized_word
+    for attr, payload_key in (
+        ('phonetic', 'phonetic'),
+        ('pos', 'pos'),
+        ('definition', 'definition'),
+    ):
+        value = str(payload.get(payload_key) or '').strip()
+        if value or not getattr(record, attr):
+            setattr(record, attr, value)
+
+    for attr, payload_key in (
+        ('source_book_id', 'book_id'),
+        ('source_book_title', 'book_title'),
+        ('source_chapter_id', 'chapter_id'),
+        ('source_chapter_title', 'chapter_title'),
+    ):
+        value = str(payload.get(payload_key) or '').strip()
+        if value or not getattr(record, attr):
+            setattr(record, attr, value or None)
+
+    return record, created
+
+
+def get_favorite_status_words(user_id: int, raw_words) -> list[str]:
+    if not isinstance(raw_words, list) or not raw_words:
+        return []
+
+    normalized_words: list[str] = []
+    seen: set[str] = set()
+    for value in raw_words:
+        normalized = _normalize_favorite_word(value)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        normalized_words.append(normalized)
+
+    if not normalized_words:
+        return []
+
+    rows = books_personalization_repository.list_user_favorite_words_by_normalized(
+        user_id,
+        normalized_words,
+    )
+    return [row.normalized_word for row in rows]
+
+
+def add_favorite_word(user_id: int, payload: dict | None) -> dict:
+    record, created = _upsert_favorite_record(user_id, payload or {})
+    _ensure_favorites_book_membership(user_id)
+    books_personalization_repository.commit()
+    return {
+        'favorite': record.to_dict(),
+        'created': created,
+        'book': _build_favorites_book_payload(user_id),
+    }
+
+
+def remove_favorite_word(user_id: int, word) -> dict:
+    normalized_word = _normalize_favorite_word(word)
+    if not normalized_word:
+        raise ValueError('缺少有效的 word')
+
+    record = books_personalization_repository.get_user_favorite_word(user_id, normalized_word)
+    if record:
+        books_personalization_repository.delete_row(record)
+
+    books_personalization_repository.flush()
+    _cleanup_favorites_book_membership(user_id)
+    books_personalization_repository.commit()
+
+    return {
+        'removed': record is not None,
+        'book': _build_favorites_book_payload(user_id),
+        'is_empty': _favorite_word_count(user_id) == 0,
+    }

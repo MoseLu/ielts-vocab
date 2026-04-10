@@ -2,12 +2,16 @@ def get_active_session_count() -> int:
     return len(active_sessions)
 
 
-def _create_session_state(enable_vad: bool) -> RealtimeSessionState:
+def _create_session_state(
+    enable_vad: bool,
+    recognition_id: int | None,
+) -> RealtimeSessionState:
     return {
         'ws': None,
         'ready': False,
         'closing': False,
         'enable_vad': enable_vad,
+        'recognition_id': recognition_id,
         'bytes_since_commit': 0,
         'audio_queue': [],
         'lock': threading.Lock(),
@@ -127,10 +131,19 @@ def _build_finish_event() -> dict[str, str]:
     }
 
 
-def _emit_socketio_event(socketio, session_id: str, event_name: str, payload=None) -> None:
+def _emit_socketio_event(
+    socketio,
+    session_id: str,
+    event_name: str,
+    payload=None,
+    recognition_id: int | None = None,
+) -> None:
+    event_payload = dict(payload or {})
+    if recognition_id is not None:
+        event_payload['recognition_id'] = recognition_id
     socketio.emit(
         event_name,
-        payload or {},
+        event_payload,
         namespace=SOCKET_NAMESPACE,
         to=session_id,
     )
@@ -193,6 +206,7 @@ def stop_realtime_session(socketio, session_id: str) -> None:
 
     ws = session_state.get('ws')
     enable_vad = session_state.get('enable_vad', True)
+    recognition_id = session_state.get('recognition_id')
 
     print(f"[Speech] Stopping: {session_id}")
     _mark_session_inactive(session_state)
@@ -211,7 +225,12 @@ def stop_realtime_session(socketio, session_id: str) -> None:
             if not _is_benign_ws_error(error):
                 raise
 
-    _emit_socketio_event(socketio, session_id, 'recognition_stopped')
+    _emit_socketio_event(
+        socketio,
+        session_id,
+        'recognition_stopped',
+        recognition_id=recognition_id,
+    )
 
 
 def commit_realtime_session_audio(session_id: str) -> None:

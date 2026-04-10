@@ -34,16 +34,20 @@ export interface ConnectedPayload {
 
 export interface RecognitionStartedPayload {
   session_id?: string
+  recognition_id?: number
 }
 
 export interface PartialResultPayload {
   text: string
+  recognition_id?: number
 }
 
 export interface FinalResultPayload {
   text: string
+  recognition_id?: number
 }
 
 export interface RecognitionErrorPayload {
   error: string
+  recognition_id?: number
 }

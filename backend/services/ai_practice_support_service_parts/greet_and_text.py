@@ -4,7 +4,6 @@ import logging
 
 from flask import jsonify
 
-from services.ai_assistant_memory_service import save_turn
 from services.ai_assistant_tool_service import chat_with_tools
 from services.ai_learning_context_service import GREET_SYSTEM_PROMPT_V2, build_learning_context_msg
 from services.ai_prompt_context_service import parse_options, strip_options
@@ -102,6 +101,8 @@ def greet_response(current_user, body):
             "content": (
                 "补充要求：如果画像已经显示明显弱点、重复困惑主题或重点突破词，优先围绕这些点自然开场。"
                 "不要默认输出选项；只有当下一步动作非常明确时，才补 1-2 个简短选项。"
+                "不要臆造具体钟点或分钟，不要写“16:11”这类时间；除非上下文里明确给出了时刻且你是逐字引用。"
+                "同一份画像不要每次都用同一句式复述，优先换一个切入口，只抓 1-2 个最强信号开场。"
             ),
         })
         messages.append({
@@ -124,12 +125,10 @@ def greet_response(current_user, body):
         final_text = response.get("text", str(response))
         options = parse_options(final_text) or []
         clean_reply = strip_options(final_text).strip()
-        save_turn(current_user.id, '[用户打开了AI助手]', clean_reply)
         return jsonify({'reply': clean_reply, 'options': options})
     except Exception as exc:
         logging.warning("[AI] greet failed for user=%s: %s", current_user.id, exc)
         fallback_reply = build_greet_fallback(current_user, ctx_data)
-        save_turn(current_user.id, '[用户打开了AI助手]', fallback_reply)
         return jsonify({'reply': fallback_reply, 'options': []}), 200
 
 

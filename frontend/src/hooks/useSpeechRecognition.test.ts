@@ -1,8 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
-
 type SocketHandler = (...args: unknown[]) => void
-
 const { mockSocket, ioMock } = vi.hoisted(() => {
   const socket = {
     connected: true,
@@ -31,19 +29,15 @@ const { mockSocket, ioMock } = vi.hoisted(() => {
       }
     },
   }
-
   return {
     mockSocket: socket,
     ioMock: vi.fn(() => socket),
   }
 })
-
 vi.mock('socket.io-client', () => ({
   io: ioMock,
 }))
-
 const { useSpeechRecognition } = await import('./useSpeechRecognition')
-
 function createMockGainNode() {
   return {
     connect: vi.fn(),
@@ -60,7 +54,6 @@ describe('useSpeechRecognition', () => {
     window as Window & typeof globalThis & { webkitSpeechRecognition?: unknown }
   ).webkitSpeechRecognition
   let consoleLogSpy: ReturnType<typeof vi.spyOn>
-
   beforeEach(() => {
     vi.useFakeTimers()
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -72,7 +65,6 @@ describe('useSpeechRecognition', () => {
     mockSocket.anyHandlers = []
     mockSocket.connected = true
     mockSocket.id = 'socket-1'
-
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: {
@@ -83,7 +75,6 @@ describe('useSpeechRecognition', () => {
       },
     })
   })
-
   afterEach(() => {
     vi.runOnlyPendingTimers()
     vi.useRealTimers()
@@ -105,9 +96,9 @@ describe('useSpeechRecognition', () => {
       value: originalWebkitSpeechRecognition,
     })
   })
-
   it('releases microphone resources when recognition completes', async () => {
     const trackStop = vi.fn()
+    const getUserMedia = vi.fn()
     const stream = {
       getTracks: () => [{ stop: trackStop }],
     }
@@ -141,32 +132,30 @@ describe('useSpeechRecognition', () => {
     Object.defineProperty(navigator, 'mediaDevices', {
       configurable: true,
       value: {
-        getUserMedia: vi.fn(() => Promise.resolve(stream)),
+        getUserMedia: getUserMedia.mockResolvedValue(stream),
       },
     })
-
     const { result } = renderHook(() => useSpeechRecognition({}))
     vi.runAllTimers()
-
     act(() => {
       mockSocket.trigger('connect')
     })
-
     await act(async () => {
       await result.current.startRecording()
     })
-
     expect(mockSocket.emit).toHaveBeenCalledWith('start_recognition', {
       language: 'zh',
       enable_vad: true,
+      recognition_id: 1,
+    })
+    expect(getUserMedia).toHaveBeenCalledWith({
+      audio: { channelCount: 1, autoGainControl: true, echoCancellation: true, noiseSuppression: true },
     })
     expect(sourceConnect).toHaveBeenCalledTimes(1)
     expect(processorConnect).toHaveBeenCalledTimes(1)
-
     act(() => {
-      mockSocket.trigger('recognition_complete')
+      mockSocket.trigger('recognition_complete', { recognition_id: 1 })
     })
-
     expect(result.current.isRecording).toBe(false)
     expect(processorDisconnect).toHaveBeenCalledTimes(1)
     expect(audioContextClose).toHaveBeenCalledTimes(1)
@@ -182,7 +171,6 @@ describe('useSpeechRecognition', () => {
       disconnect: vi.fn(),
       onaudioprocess: null as ((event: AudioProcessingEvent) => void) | null,
     }
-
     class MockAudioContext {
       destination = {}
       sampleRate = 48000
@@ -206,34 +194,33 @@ describe('useSpeechRecognition', () => {
         getUserMedia: vi.fn(() => Promise.resolve(stream)),
       },
     })
-
     const { result } = renderHook(() => useSpeechRecognition({}))
     vi.runAllTimers()
-
     act(() => {
       mockSocket.trigger('connect')
     })
-
     await act(async () => {
       await result.current.startRecording()
     })
-
+    act(() => {
+      const speechEvent = { inputBuffer: { getChannelData: () => new Float32Array(1024).fill(0.12) } } as AudioProcessingEvent
+      processor.onaudioprocess?.(speechEvent)
+      processor.onaudioprocess?.(speechEvent)
+    })
     act(() => {
       result.current.stopRecording()
     })
-
     expect(result.current.isRecording).toBe(false)
     expect(result.current.isProcessing).toBe(true)
+    expect(mockSocket.emit).toHaveBeenCalledWith('commit_audio_buffer')
     expect(mockSocket.emit).toHaveBeenCalledWith('stop_recognition')
 
     act(() => {
-      mockSocket.trigger('recognition_stopped')
+      mockSocket.trigger('recognition_stopped', { recognition_id: 1 })
     })
-
     expect(result.current.isProcessing).toBe(true)
-
     act(() => {
-      mockSocket.trigger('final_result', { text: '你好' })
+      mockSocket.trigger('final_result', { text: '你好', recognition_id: 1 })
     })
 
     expect(result.current.isProcessing).toBe(false)
@@ -286,14 +273,77 @@ describe('useSpeechRecognition', () => {
 
     act(() => {
       result.current.stopRecording()
-      mockSocket.trigger('recognition_complete')
+      mockSocket.trigger('recognition_complete', { recognition_id: 1 })
     })
 
     expect(onError).toHaveBeenCalledWith('未检测到麦克风输入，请检查系统麦克风和浏览器权限')
     expect(result.current.isProcessing).toBe(false)
   })
 
-  it('falls back to browser speech recognition when it produces a transcript first', async () => {
+  it('ignores late backend transcript events while idle', () => {
+    const onPartial = vi.fn()
+    const onResult = vi.fn()
+    renderHook(() => useSpeechRecognition({ onPartial, onResult }))
+    vi.runAllTimers()
+
+    act(() => {
+      mockSocket.trigger('connect')
+      mockSocket.trigger('partial_result', { text: '嗯' })
+      mockSocket.trigger('final_result', { text: '嗯。' })
+    })
+
+    expect(onPartial).not.toHaveBeenCalled()
+    expect(onResult).not.toHaveBeenCalled()
+  })
+
+  it('ignores stale backend transcript events from an older recording session', async () => {
+    const stream = {
+      getTracks: () => [{ stop: vi.fn() }],
+    }
+    const onResult = vi.fn()
+
+    class MockAudioContext {
+      destination = {}
+      sampleRate = 48000
+      state: AudioContextState = 'running'
+      resume = vi.fn(() => Promise.resolve())
+      close = vi.fn(() => Promise.resolve())
+      createGain = vi.fn(() => createMockGainNode())
+      createMediaStreamSource = vi.fn(() => ({ connect: vi.fn() }))
+      createScriptProcessor = vi.fn(() => ({ connect: vi.fn(), disconnect: vi.fn(), onaudioprocess: null }))
+    }
+
+    Object.defineProperty(globalThis, 'AudioContext', {
+      configurable: true,
+      value: MockAudioContext,
+    })
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn(() => Promise.resolve(stream)),
+      },
+    })
+
+    const { result } = renderHook(() => useSpeechRecognition({ onResult }))
+    vi.runAllTimers()
+
+    act(() => {
+      mockSocket.trigger('connect')
+    })
+
+    await act(async () => {
+      await result.current.startRecording()
+    })
+
+    act(() => {
+      mockSocket.trigger('final_result', { text: '旧会话结果', recognition_id: 999 })
+    })
+
+    expect(onResult).not.toHaveBeenCalled()
+    expect(result.current.isRecording).toBe(true)
+  })
+
+  it('falls back to browser speech recognition in browser-only mode', async () => {
     const stream = {
       getTracks: () => [{ stop: vi.fn() }],
     }
@@ -345,7 +395,11 @@ describe('useSpeechRecognition', () => {
       },
     })
 
-    const { result } = renderHook(() => useSpeechRecognition({ onResult }))
+    const { result } = renderHook(() => useSpeechRecognition({
+      onResult,
+      enableBrowserRecognition: true,
+      enableRealtimeRecognition: false,
+    }))
     vi.runAllTimers()
 
     act(() => {

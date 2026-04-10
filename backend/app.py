@@ -5,6 +5,7 @@ patch_standard_library()
 from dotenv import load_dotenv
 import os
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+os.environ.setdefault('CURRENT_SERVICE_NAME', 'backend-monolith')
 
 import sqlite3
 import secrets

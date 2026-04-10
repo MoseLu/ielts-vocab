@@ -163,61 +163,14 @@
 }
 .ai-voice-visualizer {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0;
   min-height: 28px;
   padding: 0;
   overflow: hidden;
 }
-.ai-voice-visualizer__line {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  left: 0;
-  height: 1px;
-  background: repeating-linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--text-secondary) 42%, transparent) 0 1px,
-    transparent 1px 3px
-  );
-  background-size: 4px 1px;
-  opacity: 0.68;
-  transform: translateY(-50%);
-}
-.ai-voice-bar {
-  position: relative;
-  z-index: 1;
-  flex: 1 1 0;
-  min-width: 0;
+.ai-voice-visualizer__canvas {
+  display: block;
+  width: 100%;
   height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.ai-voice-bar::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 1.2px;
-  height: 0;
-  border-radius: 0;
-  background: color-mix(in srgb, var(--text-primary) 97%, black 3%);
-  opacity: 0;
-  transform: translate(-50%, -50%);
-}
-.ai-voice-bar--wave::before {
-  height: var(--ai-voice-height-px);
-  opacity: 0.98;
-}
-.ai-voice-bar--silent::before {
-  height: 0;
-  opacity: 0;
-}
-.ai-voice-bar--strong::before {
-  width: 2px;
-  background: color-mix(in srgb, var(--text-primary) 99%, black 1%);
 }
 
 .ai-send-btn {

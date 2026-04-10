@@ -31,13 +31,25 @@ def test_resolve_realtime_asr_model_falls_back_from_incompatible_model(monkeypat
     )
 
 
+def test_resolve_file_asr_model_falls_back_from_incompatible_model(monkeypatch):
+    monkeypatch.setenv('ASR_MODEL', 'paraformer-realtime-v2')
+
+    assert (
+        asr_service.resolve_file_asr_model()
+        == asr_service.DEFAULT_FILE_ASR_MODEL
+    )
+
+
 def test_resolve_socketio_async_mode_prefers_websocket_capable_runtimes(monkeypatch):
     def fake_find_spec(name):
         if name in {'gevent', 'geventwebsocket'}:
             return object()
         return None
 
-    monkeypatch.setattr('speech_service.importlib.util.find_spec', fake_find_spec)
+    monkeypatch.setattr(
+        'platform_sdk.asr_runtime.socketio_service.importlib.util.find_spec',
+        fake_find_spec,
+    )
 
     assert resolve_socketio_async_mode() == 'gevent'
 
@@ -65,6 +77,8 @@ def test_stop_recognition_ignores_closed_connection_errors():
         'ready': True,
         'closing': False,
         'enable_vad': True,
+        'recognition_id': 3,
+        'bytes_since_commit': 0,
         'audio_queue': [],
         'lock': threading.Lock(),
     }
@@ -73,9 +87,11 @@ def test_stop_recognition_ignores_closed_connection_errors():
 
     received = client.get_received('/speech')
     names = [event['name'] for event in received]
+    stopped_event = next(event for event in received if event['name'] == 'recognition_stopped')
 
     assert 'recognition_stopped' in names
     assert 'recognition_error' not in names
+    assert stopped_event['args'][0]['recognition_id'] == 3
     assert asr_service.active_sessions[sid]['ready'] is False
     assert asr_service.active_sessions[sid]['closing'] is True
 
@@ -111,7 +127,10 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
         return ws
 
     monkeypatch.setattr(websocket, 'WebSocketApp', fake_websocket_app)
-    monkeypatch.setattr(asr_service, 'spawn_background', lambda target: spawn_calls.append(target))
+    monkeypatch.setattr(
+        'platform_sdk.asr_runtime.realtime_socketio.spawn_background',
+        lambda target: spawn_calls.append(target),
+    )
     monkeypatch.setenv('DASHSCOPE_API_KEY', 'test-key')
 
     client = socketio.test_client(app, namespace='/speech')
@@ -123,6 +142,8 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
         'ready': True,
         'closing': False,
         'enable_vad': True,
+        'recognition_id': 2,
+        'bytes_since_commit': 0,
         'audio_queue': [b'old-audio'],
         'lock': threading.Lock(),
     }
@@ -130,7 +151,17 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
     client.emit('start_recognition', {
         'language': 'en',
         'enable_vad': False,
+        'recognition_id': 7,
     }, namespace='/speech')
+
+    created_ws[0].kwargs['on_message'](
+        created_ws[0],
+        '{"type":"session.created","session":{"id":"dashscope-1"}}',
+    )
+    started_event = next(
+        event for event in client.get_received('/speech')
+        if event['name'] == 'recognition_started'
+    )
 
     assert old_ws.close_calls == 1
     assert len(created_ws) == 1
@@ -138,6 +169,8 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
     assert spawn_calls[0].__self__ is created_ws[0]
     assert asr_service.active_sessions[sid]['ws'] is created_ws[0]
     assert asr_service.active_sessions[sid]['enable_vad'] is False
+    assert asr_service.active_sessions[sid]['recognition_id'] == 7
     assert asr_service.active_sessions[sid]['audio_queue'] == []
+    assert started_event['args'][0]['recognition_id'] == 7
 
     client.disconnect(namespace='/speech')

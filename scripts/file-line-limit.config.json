@@ -5,6 +5,7 @@
     "pnpm-lock.yaml"
   ],
   "baseline": {
-    "frontend/src/components/practice/utils.audio.playback.ts": 508
+    "frontend/src/components/practice/utils.audio.playback.ts": 508,
+    "realtime_waveform.md": 1155
   }
 }

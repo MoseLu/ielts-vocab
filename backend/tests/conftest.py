@@ -9,6 +9,10 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ['PYTEST_RUNNING'] = '1'
 
+from runtime_paths import ensure_shared_package_paths
+
+ensure_shared_package_paths()
+
 from app import create_app
 from models import db as _db
 

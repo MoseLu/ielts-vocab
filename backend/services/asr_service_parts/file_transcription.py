@@ -1,6 +1,8 @@
-def _configure_dashscope_file_client() -> None:
-    dashscope.api_key = get_dashscope_api_key()
-    dashscope.base_websocket_api_url = DASHSCOPE_FILE_WS_URL
+import os
+import tempfile
+from pathlib import Path
+
+import dashscope
 
 
 def _detect_uploaded_audio_suffix(audio_file) -> tuple[str, str]:
@@ -17,108 +19,70 @@ def _detect_uploaded_audio_suffix(audio_file) -> tuple[str, str]:
     return suffix, content_type
 
 
-def _convert_uploaded_audio_to_pcm(source_path: str, source_suffix: str) -> str:
-    pcm_path = source_path.replace(source_suffix, '.pcm')
-    result = subprocess.run(
-        [
-            FFMPEG_EXE,
-            '-i',
-            source_path,
-            '-ar',
-            '16000',
-            '-ac',
-            '1',
-            '-f',
-            's16le',
-            pcm_path,
-            '-y',
-        ],
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    if result.returncode != 0:
-        print(f"FFmpeg error: {result.stderr}")
-        raise ASRServiceError(f'音频转换失败: {result.stderr}')
-    return pcm_path
+def _configure_dashscope_file_client() -> None:
+    dashscope.api_key = get_dashscope_api_key()
+    dashscope.base_http_api_url = 'https://dashscope.aliyuncs.com/api/v1'
 
 
-def _create_file_recognition_callback(
-    result_text: list[str],
-    recognition_error: list[str],
-    recognition_complete,
-):
-    latest_text = ['']
-
-    class FileRecognitionCallback(RecognitionCallback):
-        def on_event(self, result: RecognitionResult):
-            sentence = result.get_sentence()
-            text = sentence.get('text', '').strip()
-            if text:
-                latest_text[0] = text
-                if RecognitionResult.is_sentence_end(sentence):
-                    result_text.append(text)
-                    print(f"Final result: {text}")
-
-        def on_complete(self):
-            if not result_text and latest_text[0]:
-                result_text.append(latest_text[0])
-                print(f"Fallback final result: {latest_text[0]}")
-            print("Recognition complete")
-            recognition_complete.set()
-
-        def on_error(self, message):
-            print(f"Recognition error: {message}")
-            recognition_error.append(str(message))
-            recognition_complete.set()
-
-    return FileRecognitionCallback()
+def _save_uploaded_audio(audio_file, suffix: str) -> str:
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
+        audio_file.save(temp_file.name)
+        return temp_file.name
 
 
-def _recognize_pcm_audio(pcm_path: str, model: str) -> str:
+def _extract_multimodal_text(response) -> str:
+    output = getattr(response, 'output', None)
+    if output is None and isinstance(response, dict):
+        output = response.get('output')
+    choices = getattr(output, 'choices', None)
+    if choices is None and isinstance(output, dict):
+        choices = output.get('choices', [])
+    if not choices:
+        return ''
+
+    first_choice = choices[0]
+    message = getattr(first_choice, 'message', None)
+    if message is None and isinstance(first_choice, dict):
+        message = first_choice.get('message', {})
+    content = getattr(message, 'content', None)
+    if content is None and isinstance(message, dict):
+        content = message.get('content', [])
+    if not isinstance(content, list) or not content:
+        return ''
+
+    first_content = content[0]
+    text = getattr(first_content, 'text', None)
+    if text is None and isinstance(first_content, dict):
+        text = first_content.get('text')
+    return text.strip() if isinstance(text, str) else ''
+
+
+def _transcribe_via_qwen_flash(audio_path: str, model: str) -> str:
     _configure_dashscope_file_client()
-
-    result_text: list[str] = []
-    recognition_error: list[str] = []
-    recognition_complete = threading.Event()
-    callback = _create_file_recognition_callback(
-        result_text,
-        recognition_error,
-        recognition_complete,
-    )
-    recognition = Recognition(
+    response = dashscope.MultiModalConversation.call(
         model=model,
-        callback=callback,
-        format='pcm',
-        sample_rate=16000,
-        language_hints=['en', 'zh'],
+        messages=[
+            {
+                'role': 'user',
+                'content': [
+                    {'audio': str(Path(audio_path).resolve())},
+                ],
+            },
+        ],
+        result_format='message',
     )
-
-    with open(pcm_path, 'rb') as pcm_file:
-        audio_data = pcm_file.read()
-
-    print(f"PCM file size: {len(audio_data)} bytes")
-
-    recognition.start()
-    chunk_size = 3200
-    offset = 0
-    while offset < len(audio_data):
-        chunk = audio_data[offset:offset + chunk_size]
-        recognition.send_audio_frame(chunk)
-        offset += chunk_size
-    recognition.stop()
-
-    if not recognition_complete.wait(timeout=20):
-        raise ASRServiceError('语音识别超时，请重试')
-    if recognition_error and not result_text:
-        raise ASRServiceError(recognition_error[0])
-
-    return ' '.join(result_text).strip()
+    status_code = getattr(response, 'status_code', 200)
+    if status_code and status_code >= 400:
+        message = getattr(response, 'message', '') or ''
+        raise ASRServiceError(str(message).strip() or '语音识别失败，请重试', status_code=status_code)
+    return _extract_multimodal_text(response)
 
 
 def transcribe_uploaded_audio(audio_file) -> str:
     if audio_file is None:
         raise ASRServiceError('未收到音频文件', status_code=400)
+    if not get_dashscope_api_key():
+        raise ASRServiceError('API密钥未配置', status_code=500)
 
     suffix, content_type = _detect_uploaded_audio_suffix(audio_file)
     model = resolve_file_asr_model()
@@ -127,22 +91,15 @@ def transcribe_uploaded_audio(audio_file) -> str:
     print(f"Model: {model}")
     print(f"File suffix: {suffix}, Content-Type: {content_type}")
 
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        audio_file.save(tmp.name)
-        tmp_path = tmp.name
-
-    pcm_path = None
+    temp_path = _save_uploaded_audio(audio_file, suffix)
     try:
-        pcm_path = _convert_uploaded_audio_to_pcm(tmp_path, suffix)
-        print("Converted to PCM (16kHz mono)")
-        return _recognize_pcm_audio(pcm_path, model)
+        text = _transcribe_via_qwen_flash(temp_path, model)
+        print("Recognition complete")
+        if text:
+            print(f"Recognized text: '{text}'")
+        return text
     finally:
         try:
-            os.unlink(tmp_path)
+            os.unlink(temp_path)
         except OSError:
             pass
-        if pcm_path:
-            try:
-                os.unlink(pcm_path)
-            except OSError:
-                pass

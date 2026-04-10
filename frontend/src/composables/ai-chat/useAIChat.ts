@@ -88,10 +88,10 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
   const openPanel = useCallback(async () => {
     setIsOpen(true)
     void warmupAIGreetingAudio()
-    if (contextLoaded) {
-      const hasUserMessages = messages.some(message => message.role === 'user')
+    const hasUserMessages = messages.some(message => message.role === 'user')
+    if (contextLoaded && hasUserMessages) {
       const greetingMessage = messages.find(message => message.id === 'greet')
-      if (!hasUserMessages && greetingMessage?.content.trim()) {
+      if (greetingMessage?.content.trim()) {
         void playAIGreetingAudio(greetingMessage.content)
       }
       return

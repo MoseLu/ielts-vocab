@@ -24,7 +24,7 @@ SOCKET_NAMESPACE = '/speech'
 DASHSCOPE_REALTIME_WS_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/realtime'
 DASHSCOPE_FILE_WS_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/inference'
 DEFAULT_REALTIME_ASR_MODEL = 'qwen3-asr-flash-realtime'
-DEFAULT_FILE_ASR_MODEL = 'paraformer-realtime-v2'
+DEFAULT_FILE_ASR_MODEL = 'qwen3-asr-flash'
 
 BENIGN_WS_ERROR_SNIPPETS = (
     'already closed',
@@ -49,6 +49,7 @@ class RealtimeSessionState(TypedDict):
     ready: bool
     closing: bool
     enable_vad: bool
+    recognition_id: int | None
     bytes_since_commit: int
     audio_queue: list[bytes]
     lock: Any
@@ -60,7 +61,15 @@ def get_dashscope_api_key() -> str:
 
 def resolve_file_asr_model() -> str:
     configured_model = os.environ.get('ASR_MODEL', DEFAULT_FILE_ASR_MODEL).strip()
-    return configured_model or DEFAULT_FILE_ASR_MODEL
+    if not configured_model:
+        return DEFAULT_FILE_ASR_MODEL
+    if configured_model.startswith('qwen3-asr-flash'):
+        return configured_model
+    print(
+        f"[Speech] ASR_MODEL={configured_model} is incompatible with the file transcription "
+        f"endpoint; falling back to {DEFAULT_FILE_ASR_MODEL}"
+    )
+    return DEFAULT_FILE_ASR_MODEL
 
 
 def _resolve_realtime_asr_model() -> str:

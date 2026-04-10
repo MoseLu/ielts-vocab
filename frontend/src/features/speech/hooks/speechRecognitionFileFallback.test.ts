@@ -14,15 +14,15 @@ describe('speechRecognitionFileFallback', () => {
     })
   })
 
-  it('uploads browser-recorded audio before the wav pcm fallback', async () => {
+  it('uploads wav pcm fallback audio before the browser-recorded blob', async () => {
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const formData = init?.body as FormData
       const audio = formData.get('audio')
       expect(audio).toBeInstanceOf(File)
-      expect((audio as File).name).toBe('speech-input.webm')
-      expect((audio as File).type).toBe('audio/webm')
+      expect((audio as File).name).toBe('speech-input.wav')
+      expect((audio as File).type).toBe('audio/wav')
 
-      return new Response(JSON.stringify({ text: 'browser blob transcript' }), {
+      return new Response(JSON.stringify({ text: 'pcm wav transcript' }), {
         headers: { 'Content-Type': 'application/json' },
         status: 200,
       })
@@ -50,7 +50,7 @@ describe('speechRecognitionFileFallback', () => {
     })
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(onResult).toHaveBeenCalledWith('browser blob transcript')
+    expect(onResult).toHaveBeenCalledWith('pcm wav transcript')
     expect(onError).not.toHaveBeenCalled()
     expect(onFinish).toHaveBeenCalledTimes(1)
   })

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAIChat } from '../../../hooks/useAIChat'
 import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition'
+import { useSpeechWaveform } from './useSpeechWaveform'
 
 export const QUICK_ACTIONS: Array<{ label: string; value: string; autoSend: boolean }> = [
   { label: '分析我的学习数据', value: '分析我的学习数据', autoSend: true },
@@ -22,11 +23,6 @@ const SPEECH_DISCONNECTED_STATUS = ''
 const SPEECH_RECORDING_STATUS = ''
 const SPEECH_PROCESSING_STATUS = ''
 const SPEECH_COMPLETED_STATUS = ''
-const SPEECH_WAVEFORM_SLOTS = 224
-const SPEECH_WAVEFORM_IDLE_LEVEL = 0
-const SPEECH_WAVEFORM_ACTIVE_THRESHOLD = 0.035
-const SPEECH_WAVEFORM_QUEUE_LIMIT = 48
-const SPEECH_WAVEFORM_TICK_MS = 52
 
 type LauncherAction = { label: string; value: string; autoSend: boolean }
 
@@ -41,40 +37,6 @@ function resizeComposer(textarea: HTMLTextAreaElement | null) {
   if (!textarea) return
   textarea.style.height = 'auto'
   textarea.style.height = `${Math.min(textarea.scrollHeight, AI_INPUT_MAX_HEIGHT)}px`
-}
-
-function createSpeechWaveform(seed = SPEECH_WAVEFORM_IDLE_LEVEL) {
-  return Array.from({ length: SPEECH_WAVEFORM_SLOTS }, () => seed)
-}
-
-function normalizeSpeechWaveLevel(level: number) {
-  if (!Number.isFinite(level)) return SPEECH_WAVEFORM_IDLE_LEVEL
-  return Math.min(1, Math.max(SPEECH_WAVEFORM_IDLE_LEVEL, level))
-}
-
-function shapeSpeechWaveSample(levels: number[], previousSample: number) {
-  if (!levels.length) {
-    const fadedSample = previousSample * 0.48
-    return fadedSample < 0.01 ? SPEECH_WAVEFORM_IDLE_LEVEL : fadedSample
-  }
-
-  const recentLevel = levels[levels.length - 1] ?? SPEECH_WAVEFORM_IDLE_LEVEL
-  const peakLevel = Math.max(...levels)
-  const minLevel = Math.min(...levels)
-  const averageLevel = levels.reduce((sum, value) => sum + value, 0) / levels.length
-  const activeLevel = peakLevel <= SPEECH_WAVEFORM_ACTIVE_THRESHOLD
-    ? SPEECH_WAVEFORM_IDLE_LEVEL
-    : Math.pow((peakLevel - SPEECH_WAVEFORM_ACTIVE_THRESHOLD) / (1 - SPEECH_WAVEFORM_ACTIVE_THRESHOLD), 0.88)
-  const articulation = Math.max(0, peakLevel - averageLevel)
-  const volatility = Math.max(0, peakLevel - minLevel)
-  const rawSample = activeLevel <= 0.01
-    ? SPEECH_WAVEFORM_IDLE_LEVEL
-    : Math.min(1, activeLevel * 0.58 + recentLevel * 0.26 + articulation * 1.45 + volatility * 0.32)
-  const smoothedSample = rawSample >= previousSample
-    ? rawSample * 0.94 + previousSample * 0.06
-    : rawSample * 0.84 + previousSample * 0.16
-
-  return smoothedSample < 0.01 ? SPEECH_WAVEFORM_IDLE_LEVEL : smoothedSample
 }
 
 export function useAIChatPanel() {
@@ -96,7 +58,6 @@ export function useAIChatPanel() {
   const [speechError, setSpeechError] = useState<string | null>(null)
   const [speechStatus, setSpeechStatus] = useState(SPEECH_READY_STATUS)
   const [speechDurationSeconds, setSpeechDurationSeconds] = useState(0)
-  const [speechWaveform, setSpeechWaveform] = useState<number[]>(() => createSpeechWaveform())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -104,8 +65,12 @@ export function useAIChatPanel() {
   const speechCommittedTranscriptRef = useRef('')
   const lastAppliedSpeechValueRef = useRef('')
   const speechStartedAtRef = useRef<number | null>(null)
-  const speechLevelQueueRef = useRef<number[]>([])
-  const speechLastWaveSampleRef = useRef(SPEECH_WAVEFORM_IDLE_LEVEL)
+  const {
+    attachCanvas: attachSpeechWaveformCanvas,
+    pushAmplitude: registerSpeechLevel,
+    resetWaveform: resetSpeechWaveform,
+    setWaveformRecordingState,
+  } = useSpeechWaveform()
 
   const visibleMessages = messages.filter(message => (
     message.role === 'user' || Boolean(message.content.trim()) || Boolean(message.options?.length)
@@ -121,38 +86,9 @@ export function useAIChatPanel() {
   const lastMessage = messages[messages.length - 1]
   const shouldShowLoadingBubble = isLoading && !(lastMessage?.role === 'assistant' && lastMessage.content.trim())
 
-  const resetSpeechWaveform = useCallback((seed = SPEECH_WAVEFORM_IDLE_LEVEL) => {
-    setSpeechWaveform(createSpeechWaveform(seed))
-  }, [])
-
-  const clearSpeechLevelQueue = useCallback(() => {
-    speechLevelQueueRef.current = []
-    speechLastWaveSampleRef.current = SPEECH_WAVEFORM_IDLE_LEVEL
-  }, [])
-
-  const registerSpeechLevel = useCallback((level: number) => {
-    const normalizedLevel = normalizeSpeechWaveLevel(level)
-    const nextQueue = speechLevelQueueRef.current
-    nextQueue.push(normalizedLevel)
-    if (nextQueue.length > SPEECH_WAVEFORM_QUEUE_LIMIT) {
-      nextQueue.splice(0, nextQueue.length - SPEECH_WAVEFORM_QUEUE_LIMIT)
-    }
-  }, [])
-
-  const stepSpeechWaveform = useCallback(() => {
-    setSpeechWaveform(previous => {
-      const queue = speechLevelQueueRef.current
-      const consumeCount = queue.length >= 6 ? 3 : queue.length >= 3 ? 2 : queue.length >= 1 ? 1 : 0
-      const levels = consumeCount ? queue.splice(0, consumeCount) : []
-      const shapedSample = shapeSpeechWaveSample(levels, speechLastWaveSampleRef.current)
-      speechLastWaveSampleRef.current = shapedSample
-
-      return [
-        ...previous.slice(-(SPEECH_WAVEFORM_SLOTS - 1)),
-        shapedSample,
-      ]
-    })
-  }, [])
+  const clearSpeechWaveState = useCallback(() => {
+    resetSpeechWaveform()
+  }, [resetSpeechWaveform])
 
   const syncComposer = useCallback((nextValue: string) => {
     setInput(nextValue)
@@ -178,6 +114,7 @@ export function useAIChatPanel() {
 
   const applySpeechTranscript = useCallback((spokenText: string, isFinal = false) => {
     const transcript = spokenText.trim()
+    if (!transcript) return buildSpeechValue()
     if (isFinal && transcript) {
       speechCommittedTranscriptRef.current = [speechCommittedTranscriptRef.current.trim(), transcript]
         .filter(Boolean)
@@ -205,7 +142,7 @@ export function useAIChatPanel() {
     enableVad: false,
     autoStop: false,
     autoStopDelay: 800,
-    enableBrowserRecognition: false,
+    enableBrowserRecognition: true,
     enableRealtimeRecognition: true,
     onPartial: (text: string) => {
       applySpeechTranscript(text)
@@ -217,8 +154,7 @@ export function useAIChatPanel() {
     onError: (error: string) => {
       setSpeechError(error)
       setSpeechStatus(`语音输入不可用：${error}`)
-      clearSpeechLevelQueue()
-      resetSpeechWaveform()
+      clearSpeechWaveState()
     },
     onLevel: (level: number) => {
       registerSpeechLevel(level)
@@ -305,26 +241,21 @@ export function useAIChatPanel() {
   }, [speechProcessing, speechRecording])
 
   useEffect(() => {
-    clearSpeechLevelQueue()
-    if (!speechRecording) return
-
-    const intervalId = window.setInterval(stepSpeechWaveform, SPEECH_WAVEFORM_TICK_MS)
-    return () => window.clearInterval(intervalId)
-  }, [clearSpeechLevelQueue, speechRecording, stepSpeechWaveform])
+    setWaveformRecordingState(speechRecording)
+  }, [setWaveformRecordingState, speechRecording])
 
   useEffect(() => {
     if (isOpen) return
     speechPrefixRef.current = ''
     speechCommittedTranscriptRef.current = ''
     lastAppliedSpeechValueRef.current = ''
-    clearSpeechLevelQueue()
+    clearSpeechWaveState()
     setIsQuickActionsExpanded(false)
     setSpeechError(null)
     setSpeechStatus(SPEECH_READY_STATUS)
     speechStartedAtRef.current = null
     setSpeechDurationSeconds(0)
-    resetSpeechWaveform()
-  }, [clearSpeechLevelQueue, isOpen, resetSpeechWaveform])
+  }, [clearSpeechWaveState, isOpen])
 
   useEffect(() => {
     if (!hasUserMessages) return
@@ -368,16 +299,14 @@ export function useAIChatPanel() {
       : currentInput
     speechStartedAtRef.current = Date.now()
     speechCommittedTranscriptRef.current = ''
-    clearSpeechLevelQueue()
+    clearSpeechWaveState()
     setSpeechDurationSeconds(0)
     setSpeechError(null)
     setSpeechStatus(SPEECH_RECORDING_STATUS)
-    resetSpeechWaveform()
     await startSpeechRecording()
   }, [
-    clearSpeechLevelQueue,
+    clearSpeechWaveState,
     input,
-    resetSpeechWaveform,
     speechProcessing,
     speechRecording,
     startSpeechRecording,
@@ -429,7 +358,7 @@ export function useAIChatPanel() {
     speechError,
     speechStatus,
     speechDurationLabel: formatSpeechDuration(speechDurationSeconds),
-    speechWaveform,
+    speechWaveformCanvasRef: attachSpeechWaveformCanvas,
     messagesEndRef,
     inputRef,
     panelRef,

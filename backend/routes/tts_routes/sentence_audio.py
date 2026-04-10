@@ -47,7 +47,7 @@ from services.word_tts import (
     write_bytes_atomically,
 )
 
-env_path = Path(__file__).parent.parent / '.env'
+env_path = Path(__file__).resolve().parents[2] / '.env'
 load_dotenv(env_path)
 
 tts_bp = Blueprint('tts', __name__)
@@ -127,6 +127,23 @@ def _get_api_key():
     )
     _use_secondary_key = next_use_secondary_key
     return api_key
+
+
+def _get_api_keys():
+    first_key = _get_api_key()
+    keys = [first_key] if first_key else []
+    fallback_key = ''
+
+    if first_key == MINIMAX_API_KEY and MINIMAX_API_KEY_2:
+        fallback_key = MINIMAX_API_KEY_2
+    elif first_key == MINIMAX_API_KEY_2 and MINIMAX_API_KEY:
+        fallback_key = MINIMAX_API_KEY
+    elif not first_key:
+        fallback_key = MINIMAX_API_KEY or MINIMAX_API_KEY_2
+
+    if fallback_key and fallback_key not in keys:
+        keys.append(fallback_key)
+    return keys
 
 
 def _select_voice_for_sentence(sentence: str) -> str:
@@ -317,6 +334,7 @@ def generate_speech():
         is_probably_valid_mp3_file=is_probably_valid_mp3_file,
         remove_invalid_cached_audio=remove_invalid_cached_audio,
         get_api_key=_get_api_key,
+        get_api_keys=_get_api_keys,
         minimax_base_url=MINIMAX_BASE_URL,
         requests_module=requests,
         is_probably_valid_mp3_bytes=is_probably_valid_mp3_bytes,

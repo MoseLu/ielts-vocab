@@ -22,7 +22,9 @@ interface UploadRecordedAudioOptions {
   pcmChunks: Int16Array[]
   getCurrentCaptureId: () => number
   getCurrentTranscriptSource: () => string | null
+  getDeferredTranscript?: () => string
   onFinish: () => void
+  onDeferredTranscript?: (text: string) => void
   onResult: (text: string) => void
   onError: (message: string) => void
 }
@@ -73,7 +75,9 @@ export async function uploadRecordedAudio({
   pcmChunks,
   getCurrentCaptureId,
   getCurrentTranscriptSource,
+  getDeferredTranscript,
   onFinish,
+  onDeferredTranscript,
   onResult,
   onError,
 }: UploadRecordedAudioOptions) {
@@ -81,14 +85,6 @@ export async function uploadRecordedAudio({
 
   const audioChunks = chunks.filter(chunk => chunk.size > 0)
   const uploadAttempts: UploadAudioAttempt[] = []
-
-  if (audioChunks.length) {
-    const audioBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' })
-    uploadAttempts.push({
-      audioBlob,
-      filename: buildRecordedAudioFilename(audioBlob.type),
-    })
-  }
 
   if (pcmChunks.some(chunk => chunk.length > 0)) {
     const wavBlob = buildWavBlobFromPcmChunks(pcmChunks)
@@ -100,8 +96,21 @@ export async function uploadRecordedAudio({
     }
   }
 
+  if (audioChunks.length) {
+    const audioBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' })
+    uploadAttempts.push({
+      audioBlob,
+      filename: buildRecordedAudioFilename(audioBlob.type),
+    })
+  }
+
   if (!uploadAttempts.length) {
-    onError(SPEECH_EMPTY_RESULT_MESSAGE)
+    const deferredTranscript = getDeferredTranscript?.().trim()
+    if (deferredTranscript) {
+      onDeferredTranscript?.(deferredTranscript)
+    } else {
+      onError(SPEECH_EMPTY_RESULT_MESSAGE)
+    }
     onFinish()
     return
   }
@@ -130,14 +139,24 @@ export async function uploadRecordedAudio({
       }
     }
 
-    onError(lastError ?? SPEECH_EMPTY_RESULT_MESSAGE)
+    const deferredTranscript = getDeferredTranscript?.().trim()
+    if (deferredTranscript) {
+      onDeferredTranscript?.(deferredTranscript)
+    } else {
+      onError(lastError ?? SPEECH_EMPTY_RESULT_MESSAGE)
+    }
   } catch (error: unknown) {
     if (captureId !== getCurrentCaptureId() || getCurrentTranscriptSource()) return
-    onError(
-      error instanceof Error && error.message.trim()
-        ? error.message
-        : '语音转写失败，请重试'
-    )
+    const deferredTranscript = getDeferredTranscript?.().trim()
+    if (deferredTranscript) {
+      onDeferredTranscript?.(deferredTranscript)
+    } else {
+      onError(
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : '语音转写失败，请重试'
+      )
+    }
   }
 
   onFinish()

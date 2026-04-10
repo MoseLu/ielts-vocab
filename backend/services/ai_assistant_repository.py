@@ -55,16 +55,20 @@ def list_conversation_history(
     offset: int = 0,
     descending: bool = True,
 ):
-    order_clause = (
-        UserConversationHistory.created_at.desc()
-        if descending
-        else UserConversationHistory.created_at.asc()
-    )
     query = (
         UserConversationHistory.query
         .filter_by(user_id=user_id)
-        .order_by(order_clause)
     )
+    if descending:
+        query = query.order_by(
+            UserConversationHistory.created_at.desc(),
+            UserConversationHistory.id.desc(),
+        )
+    else:
+        query = query.order_by(
+            UserConversationHistory.created_at.asc(),
+            UserConversationHistory.id.asc(),
+        )
     if offset > 0:
         query = query.offset(offset)
     if limit is not None:

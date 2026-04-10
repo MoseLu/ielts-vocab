@@ -90,6 +90,23 @@ describe('AIChatPanel', () => {
       configurable: true,
       value: vi.fn(),
     })
+    Object.defineProperty(window.HTMLCanvasElement.prototype, 'getContext', {
+      configurable: true,
+      value: vi.fn(() => ({
+        beginPath: vi.fn(),
+        clearRect: vi.fn(),
+        fill: vi.fn(),
+        lineTo: vi.fn(),
+        moveTo: vi.fn(),
+        rect: vi.fn(),
+        restore: vi.fn(),
+        roundRect: vi.fn(),
+        save: vi.fn(),
+        setLineDash: vi.fn(),
+        setTransform: vi.fn(),
+        stroke: vi.fn(),
+      })),
+    })
   })
 
   afterEach(() => {
@@ -352,7 +369,7 @@ describe('AIChatPanel', () => {
       language: 'zh',
       enableVad: false,
       autoStop: false,
-      enableBrowserRecognition: false,
+      enableBrowserRecognition: true,
       enableRealtimeRecognition: true,
     })
   })
@@ -416,7 +433,7 @@ describe('AIChatPanel', () => {
     })
 
     expect(getByText('0:00')).toBeInTheDocument()
-    expect(container.querySelector('.ai-voice-bar--wave')).not.toBeNull()
+    expect(container.querySelector('.ai-voice-visualizer__canvas')).not.toBeNull()
   })
 
   it('streams partial speech results into the composer', async () => {

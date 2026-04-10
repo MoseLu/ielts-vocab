@@ -2,14 +2,12 @@ export const LOCAL_VITE_DEV_PORTS = new Set(['3000', '3020', '5173'])
 export const DEFAULT_SPEECH_SOCKET_PATH = '/socket.io'
 export const SPEECH_TARGET_SAMPLE_RATE = 16000
 export const SPEECH_IDLE_LEVEL = 0
-export const SPEECH_MIN_ACTIVE_LEVEL = 0.02
+export const SPEECH_MIN_ACTIVE_LEVEL = 0
 export const SPEECH_REALTIME_PCM_BATCH_BYTES = 3200
 export const SPEECH_EMPTY_RESULT_MESSAGE = '未识别到清晰语音，请重试'
 export const SPEECH_NO_SIGNAL_MESSAGE = '未检测到麦克风输入，请检查系统麦克风和浏览器权限'
 const REMOTE_SPEECH_TRANSPORTS: Array<'polling' | 'websocket'> = ['websocket', 'polling']
-const SPEECH_LEVEL_SILENCE_FLOOR = 0.0018
-const SPEECH_LEVEL_DB_FLOOR = -54
-const SPEECH_LEVEL_DB_CEILING = -10
+const SPEECH_LEVEL_SILENCE_FLOOR = 0.001
 
 export interface SpeechSocketConfig {
   path: string
@@ -69,28 +67,25 @@ export function resolveSpeechSocketConfig(location: Location): SpeechSocketConfi
 export function normalizeAudioLevel(inputData: Float32Array) {
   if (!inputData.length) return SPEECH_IDLE_LEVEL
 
-  let energy = 0
-  let peak = 0
-  for (let i = 0; i < inputData.length; i += 1) {
-    const sample = inputData[i]
-    const absoluteSample = Math.abs(sample)
-    if (absoluteSample > peak) peak = absoluteSample
-    energy += sample * sample
-  }
-
-  const rms = Math.sqrt(energy / inputData.length)
-  if (peak < SPEECH_LEVEL_SILENCE_FLOOR && rms < SPEECH_LEVEL_SILENCE_FLOOR) {
+  const amplitude = calculateMeanAmplitude(inputData)
+  if (amplitude <= SPEECH_LEVEL_SILENCE_FLOOR) {
     return SPEECH_IDLE_LEVEL
   }
 
-  const rmsDb = 20 * Math.log10(Math.max(rms, 0.00001))
-  const normalizedDb = Math.min(1, Math.max(0, (rmsDb - SPEECH_LEVEL_DB_FLOOR) / (SPEECH_LEVEL_DB_CEILING - SPEECH_LEVEL_DB_FLOOR)))
-  const normalizedPeak = Math.min(1, Math.max(0, peak * 8.6))
-  const combinedLevel = normalizedDb * 0.58 + normalizedPeak * 0.42
-  const boostedLevel = Math.pow(combinedLevel, 0.54)
+  return amplitude
+}
 
-  if (boostedLevel <= 0.01) return SPEECH_IDLE_LEVEL
-  return Math.min(1, Math.max(SPEECH_MIN_ACTIVE_LEVEL, boostedLevel))
+export function calculateMeanAmplitude(inputData: Float32Array) {
+  let sum = 0
+  for (let i = 0; i < inputData.length; i += 1) {
+    sum += Math.abs(inputData[i])
+  }
+  return sum / inputData.length
+}
+
+export function amplifyLinear(amplitude: number, factor = 3) {
+  if (!Number.isFinite(amplitude) || amplitude <= 0) return SPEECH_IDLE_LEVEL
+  return Math.min(1, amplitude * factor)
 }
 
 export function encodePcm16(inputData: Float32Array, sourceSampleRate: number) {

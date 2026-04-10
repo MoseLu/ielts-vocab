@@ -34,6 +34,9 @@ def register_socketio_events(socketio) -> None:
         session_id = request.sid
         language = payload.get('language', 'zh')
         enable_vad = payload.get('enable_vad', True)
+        recognition_id = payload.get('recognition_id')
+        if not isinstance(recognition_id, int):
+            recognition_id = None
 
         print(
             f"[Speech] Starting recognition: session_id={session_id}, "
@@ -50,6 +53,7 @@ def register_socketio_events(socketio) -> None:
                 session_id,
                 'recognition_error',
                 {'error': 'API密钥未配置'},
+                recognition_id=recognition_id,
             )
             return
 
@@ -58,7 +62,7 @@ def register_socketio_events(socketio) -> None:
             print(f"[Speech] Replacing stale session: {session_id}")
             close_realtime_session(session_id)
 
-        session_state = _create_session_state(enable_vad)
+        session_state = _create_session_state(enable_vad, recognition_id)
         active_sessions[session_id] = session_state
 
         def on_ws_open(ws):
@@ -95,6 +99,7 @@ def register_socketio_events(socketio) -> None:
                             'session_id': session_id,
                             'dashscope_session_id': ds_session_id,
                         },
+                        recognition_id=recognition_id,
                     )
 
                 elif event_type == 'session.updated':
@@ -112,6 +117,7 @@ def register_socketio_events(socketio) -> None:
                                 'text': text,
                                 'is_final': False,
                             },
+                            recognition_id=recognition_id,
                         )
 
                 elif event_type == 'conversation.item.input_audio_transcription.completed':
@@ -124,11 +130,17 @@ def register_socketio_events(socketio) -> None:
                             session_id,
                             'final_result',
                             {'text': text},
+                            recognition_id=recognition_id,
                         )
 
                 elif event_type == 'input_audio_buffer.speech_started':
                     print(f"[{session_id}] VAD: Speech started")
-                    _emit_socketio_event(socketio, session_id, 'speech_started')
+                    _emit_socketio_event(
+                        socketio,
+                        session_id,
+                        'speech_started',
+                        recognition_id=recognition_id,
+                    )
 
                 elif event_type == 'input_audio_buffer.speech_stopped':
                     print(f"[{session_id}] VAD: Speech stopped")
@@ -136,7 +148,12 @@ def register_socketio_events(socketio) -> None:
                 elif event_type == 'session.finished':
                     print(f"[{session_id}] Session finished")
                     _mark_session_inactive(session_state)
-                    _emit_socketio_event(socketio, session_id, 'recognition_complete')
+                    _emit_socketio_event(
+                        socketio,
+                        session_id,
+                        'recognition_complete',
+                        recognition_id=recognition_id,
+                    )
 
                 elif event_type == 'error':
                     error_msg = data.get('error', {}).get('message', 'Unknown error')
@@ -147,6 +164,7 @@ def register_socketio_events(socketio) -> None:
                         session_id,
                         'recognition_error',
                         {'error': error_msg},
+                        recognition_id=recognition_id,
                     )
 
             except Exception as error:
@@ -165,6 +183,7 @@ def register_socketio_events(socketio) -> None:
                 session_id,
                 'recognition_error',
                 {'error': str(error)},
+                recognition_id=recognition_id,
             )
 
         def on_ws_close(_ws, close_status_code, close_msg):
@@ -204,6 +223,7 @@ def register_socketio_events(socketio) -> None:
                 session_id,
                 'recognition_error',
                 {'error': str(error)},
+                recognition_id=recognition_id,
             )
 
     @socketio.on('audio_data', namespace=SOCKET_NAMESPACE)
@@ -225,12 +245,14 @@ def register_socketio_events(socketio) -> None:
         try:
             stop_realtime_session(socketio, request.sid)
         except Exception as error:
+            session_state = active_sessions.get(request.sid)
             print(f"[Speech] Error stopping: {error}")
             _emit_socketio_event(
                 socketio,
                 request.sid,
                 'recognition_error',
                 {'error': str(error)},
+                recognition_id=session_state.get('recognition_id') if session_state else None,
             )
 
     @socketio.on('commit_audio_buffer', namespace=SOCKET_NAMESPACE)
@@ -240,10 +262,12 @@ def register_socketio_events(socketio) -> None:
         try:
             commit_realtime_session_audio(request.sid)
         except Exception as error:
+            session_state = active_sessions.get(request.sid)
             print(f"[Speech] Error committing audio buffer: {error}")
             _emit_socketio_event(
                 socketio,
                 request.sid,
                 'recognition_error',
                 {'error': str(error)},
+                recognition_id=session_state.get('recognition_id') if session_state else None,
             )

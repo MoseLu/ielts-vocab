@@ -8,19 +8,21 @@ describe('normalizeAudioLevel', () => {
     expect(normalizeAudioLevel(input)).toBe(SPEECH_IDLE_LEVEL)
   })
 
-  it('boosts normal speech into a clearly visible waveform range', () => {
+  it('keeps normal speech in a visible waveform range without flattening it', () => {
     const input = Float32Array.from({ length: 2048 }, (_, index) => (
-      Math.sin(index / 9) * 0.035
+      Math.sin(index / 9) * 0.12
     ))
 
-    expect(normalizeAudioLevel(input)).toBeGreaterThan(0.45)
+    expect(normalizeAudioLevel(input)).toBeGreaterThan(0.07)
+    expect(normalizeAudioLevel(input)).toBeLessThan(0.1)
   })
 
-  it('clamps weak but audible input above the active floor', () => {
+  it('still detects weak but audible input', () => {
     const input = Float32Array.from({ length: 2048 }, (_, index) => (
-      Math.sin(index / 7) * 0.008
+      Math.sin(index / 7) * 0.05
     ))
 
-    expect(normalizeAudioLevel(input)).toBeGreaterThanOrEqual(SPEECH_MIN_ACTIVE_LEVEL)
+    expect(normalizeAudioLevel(input)).toBeGreaterThan(0.03)
+    expect(normalizeAudioLevel(input)).toBeGreaterThan(SPEECH_MIN_ACTIVE_LEVEL)
   })
 })

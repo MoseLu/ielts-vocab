@@ -403,6 +403,7 @@ def test_greet_allows_profile_aware_freeform_reply_without_options(client, monke
 
     serialized = '\n'.join(str(message.get('content')) for message in captured['messages'])
     assert '不要默认输出选项' in serialized
+    assert '不要臆造具体钟点或分钟' in serialized
     assert '重复困惑主题' in serialized
     assert 'kind of 和 a kind of' in serialized
     assert '四维记忆系统' in serialized

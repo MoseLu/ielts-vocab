@@ -4,6 +4,13 @@ from datetime import datetime
 
 import jwt
 
+from platform_sdk.internal_service_auth import (
+    INTERNAL_SERVICE_AUTH_HEADER,
+    InternalServiceUser,
+    SERVICE_NAME_HEADER,
+    decode_internal_service_token,
+    internal_user_from_payload,
+)
 from services import auth_repository
 
 AuthError = tuple[dict, int]
@@ -40,7 +47,66 @@ def decode_token(app, token: str) -> dict:
     )
 
 
+def _resolve_internal_current_user(app, request, *, allow_missing: bool):
+    token = request.headers.get(INTERNAL_SERVICE_AUTH_HEADER) or ''
+    if not token:
+        return None, None
+
+    try:
+        payload = decode_internal_service_token(
+            token,
+            secret=app.config['INTERNAL_SERVICE_JWT_SECRET_KEY'],
+        )
+    except jwt.ExpiredSignatureError:
+        return None, _auth_error(
+            allow_missing=allow_missing,
+            error='内部服务凭证已过期',
+            code='INTERNAL_TOKEN_EXPIRED',
+        )
+    except jwt.InvalidTokenError:
+        return None, _auth_error(
+            allow_missing=allow_missing,
+            error='内部服务凭证无效',
+            code='INVALID_INTERNAL_TOKEN',
+        )
+
+    if payload.get('type') != 'internal-access':
+        return None, _auth_error(
+            allow_missing=allow_missing,
+            error='内部服务凭证类型错误',
+            code='WRONG_INTERNAL_TOKEN_TYPE',
+        )
+
+    header_service_name = (request.headers.get(SERVICE_NAME_HEADER) or '').strip()
+    payload_service_name = str(payload.get('iss') or '').strip()
+    if header_service_name and payload_service_name and header_service_name != payload_service_name:
+        return None, _auth_error(
+            allow_missing=allow_missing,
+            error='内部服务来源不匹配',
+            code='INTERNAL_SERVICE_MISMATCH',
+        )
+
+    try:
+        return internal_user_from_payload(payload), None
+    except Exception:
+        return None, _auth_error(
+            allow_missing=allow_missing,
+            error='内部服务用户上下文无效',
+            code='INVALID_INTERNAL_USER',
+        )
+
+
 def resolve_current_user(app, request, *, allow_missing: bool):
+    internal_user, internal_error = _resolve_internal_current_user(
+        app,
+        request,
+        allow_missing=allow_missing,
+    )
+    if internal_error is not None:
+        return None, internal_error
+    if internal_user is not None:
+        return internal_user, None
+
     token = extract_access_token(request)
     if not token:
         return None, _auth_error(allow_missing=allow_missing, error='请先登录', code='NO_TOKEN')
@@ -96,7 +162,7 @@ def resolve_current_user(app, request, *, allow_missing: bool):
     return current_user, None
 
 
-def resolve_admin_user(app, request) -> tuple[User | None, AuthError | None]:
+def resolve_admin_user(app, request) -> tuple[InternalServiceUser | object | None, AuthError | None]:
     current_user, error_response = resolve_current_user(app, request, allow_missing=False)
     if error_response is not None:
         return None, error_response

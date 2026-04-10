@@ -125,8 +125,20 @@ def make_access_token(app, user_id: int) -> tuple[str, str, datetime]:
     jti = str(uuid.uuid4())
     now = datetime.utcnow()
     expires_at = now + timedelta(seconds=app.config['JWT_ACCESS_TOKEN_EXPIRES'])
+    user = auth_repository.get_user(user_id)
+    scopes = ['admin', 'user'] if user and user.is_admin else ['user']
     token = jwt.encode(
-        {'user_id': user_id, 'type': 'access', 'jti': jti, 'exp': expires_at, 'iat': now},
+        {
+            'user_id': user_id,
+            'type': 'access',
+            'jti': jti,
+            'exp': expires_at,
+            'iat': now,
+            'username': user.username if user else '',
+            'email': (user.email if user and user.email else ''),
+            'is_admin': bool(user.is_admin) if user else False,
+            'scopes': scopes,
+        },
         app.config['JWT_SECRET_KEY'],
         algorithm='HS256',
     )

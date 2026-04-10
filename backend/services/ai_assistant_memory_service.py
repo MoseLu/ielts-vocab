@@ -14,6 +14,7 @@ HISTORY_LIMIT = 20
 HISTORY_PRUNE_DAYS = 90
 SUMMARIZE_THRESHOLD = 40
 SUMMARIZE_CHUNK = 20
+GREET_TURN_MARKER = '[用户打开了AI助手]'
 
 
 def save_turn(user_id: int, user_message: str, assistant_reply: str) -> None:
@@ -97,9 +98,16 @@ def maybe_summarize_history(user_id: int) -> None:
         if not old_rows:
             return
 
+        filtered_rows = _filter_greet_turn_rows(old_rows)
+        if not filtered_rows:
+            memory = get_or_create_memory(user_id)
+            memory.summary_turn_count = summarized_count + len(old_rows)
+            ai_assistant_repository.commit()
+            return
+
         snippet = '\n'.join(
             f"{'用户' if row.role == 'user' else 'AI'}：{row.content[:300]}"
-            for row in old_rows
+            for row in filtered_rows
         )
         existing_summary = memory.conversation_summary if memory else ''
         summary_prompt = [
@@ -138,4 +146,24 @@ def load_history(user_id: int) -> list[dict]:
         limit=HISTORY_LIMIT,
         descending=True,
     )
-    return [{"role": row.role, "content": row.content} for row in reversed(rows)]
+    filtered_rows = _filter_greet_turn_rows(reversed(rows))
+    return [{"role": row.role, "content": row.content} for row in filtered_rows]
+
+
+def _filter_greet_turn_rows(rows) -> list:
+    filtered = []
+    skip_next_assistant = False
+
+    for row in rows:
+        if skip_next_assistant and row.role == 'assistant':
+            skip_next_assistant = False
+            continue
+
+        if row.role == 'user' and row.content == GREET_TURN_MARKER:
+            skip_next_assistant = True
+            continue
+
+        skip_next_assistant = False
+        filtered.append(row)
+
+    return filtered

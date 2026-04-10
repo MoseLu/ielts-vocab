@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react'
 import {
   AIRobotSVG,
   AssistantBubble,
@@ -17,40 +16,6 @@ import {
   useAIChatPanel,
 } from '../../../composables/ai-chat/page/useAIChatPanel'
 
-const VOICE_BAR_ACTIVE_THRESHOLD = 0.03
-const VOICE_BAR_STRONG_THRESHOLD = 0.64
-const VOICE_BAR_MIN_HEIGHT = 3
-const VOICE_BAR_MAX_HEIGHT = 28
-
-function getVoiceBarAppearance(level: number): {
-  className: string
-  style: CSSProperties
-} {
-  const normalizedLevel = Math.max(0, Math.min(1, level))
-  const intensity = normalizedLevel <= VOICE_BAR_ACTIVE_THRESHOLD
-    ? 0
-    : Math.pow((normalizedLevel - VOICE_BAR_ACTIVE_THRESHOLD) / (1 - VOICE_BAR_ACTIVE_THRESHOLD), 0.92)
-  const visualHeight = intensity <= 0.015
-    ? 0
-    : Math.min(1, Math.pow(intensity, 0.82))
-  const barHeightPx = visualHeight <= 0
-    ? 0
-    : Math.max(
-      VOICE_BAR_MIN_HEIGHT,
-      Math.round(VOICE_BAR_MIN_HEIGHT + visualHeight * (VOICE_BAR_MAX_HEIGHT - VOICE_BAR_MIN_HEIGHT)),
-    )
-  const variant = barHeightPx === 0 ? 'silent' : 'wave'
-  const emphasis = intensity >= VOICE_BAR_STRONG_THRESHOLD ? ' ai-voice-bar--strong' : ''
-
-  return {
-    className: `ai-voice-bar ai-voice-bar--${variant}${emphasis}`,
-    style: {
-      ['--ai-voice-intensity' as string]: intensity.toFixed(3),
-      ['--ai-voice-height-px' as string]: `${barHeightPx}px`,
-    } as CSSProperties,
-  }
-}
-
 function AIChatPanel() {
   const {
     isOpen,
@@ -66,7 +31,7 @@ function AIChatPanel() {
     speechError,
     speechStatus,
     speechDurationLabel,
-    speechWaveform,
+    speechWaveformCanvasRef,
     messagesEndRef,
     inputRef,
     panelRef,
@@ -87,21 +52,6 @@ function AIChatPanel() {
     toggleQuickActions,
     toggleFullscreen,
   } = useAIChatPanel()
-
-  if (!isOpen) {
-    return (
-      <button
-        className="ai-fab"
-        onClick={openPanel}
-        title="雅思 AI 助手"
-        aria-label="打开 AI 助手"
-        type="button"
-      >
-        <AIRobotSVG />
-      </button>
-    )
-  }
-
   const showVoiceVisualizer = speechRecording || speechProcessing
   const showSpeechStatus = Boolean(speechStatus)
   const showSpeechDuration = speechRecording || speechProcessing
@@ -121,6 +71,20 @@ function AIChatPanel() {
     speechProcessing ? 'ai-input-shell--processing' : '',
     speechError ? 'ai-input-shell--error' : '',
   ].filter(Boolean).join(' ')
+
+  if (!isOpen) {
+    return (
+      <button
+        className="ai-fab"
+        onClick={openPanel}
+        title="雅思 AI 助手"
+        aria-label="打开 AI 助手"
+        type="button"
+      >
+        <AIRobotSVG />
+      </button>
+    )
+  }
 
   return (
     <div className={`ai-panel ${isFullscreen ? 'ai-panel--fullscreen' : ''}`} ref={panelRef}>
@@ -273,18 +237,10 @@ function AIChatPanel() {
                       className={voiceVisualizerClassName}
                       aria-hidden="true"
                     >
-                      <span className="ai-voice-visualizer__line" />
-                      {speechWaveform.map((level, index) => {
-                        const appearance = getVoiceBarAppearance(level)
-
-                        return (
-                          <span
-                            key={`voice-bar-${index}`}
-                            className={appearance.className}
-                            style={appearance.style}
-                          />
-                        )
-                      })}
+                      <canvas
+                        ref={speechWaveformCanvasRef}
+                        className="ai-voice-visualizer__canvas"
+                      />
                     </div>
                   )}
                   {showSpeechStatus && (
