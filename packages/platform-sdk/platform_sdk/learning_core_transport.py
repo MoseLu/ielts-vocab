@@ -10,7 +10,32 @@ from platform_sdk.learning_core_library_application import (
     remove_my_book_response,
     save_chapter_mode_progress_response,
 )
+from platform_sdk.learning_core_progress_sync_application import (
+    build_learning_core_smart_stats_response,
+    sync_learning_core_quick_memory_response,
+    sync_learning_core_smart_stats_response,
+)
+from platform_sdk.learning_core_quick_memory_application import (
+    build_learning_core_quick_memory_response,
+    build_learning_core_quick_memory_review_queue_response,
+)
 from platform_sdk.learning_core_stats_application import build_learning_core_learning_stats_response
+from platform_sdk.learning_core_study_session_application import (
+    cancel_learning_core_session_response,
+    log_learning_core_session_response,
+    start_learning_core_session_response,
+)
+from platform_sdk.learning_core_tool_data_application import (
+    count_internal_wrong_words_for_ai_response,
+    list_internal_chapter_progress_for_ai_response,
+    list_internal_wrong_words_for_ai_response,
+)
+from platform_sdk.learning_core_wrong_words_application import (
+    build_learning_core_wrong_words_response,
+    clear_learning_core_wrong_word_response,
+    clear_learning_core_wrong_words_response,
+    sync_learning_core_wrong_words_response,
+)
 from platform_sdk.learning_core_personalization_application import (
     FAVORITES_BOOK_ID,
     add_familiar_word,
@@ -54,6 +79,36 @@ def get_internal_learning_stats(current_user):
     return jsonify(payload), status
 
 
+@learning_core_bp.route('/internal/learning/study-sessions/start', methods=['POST'])
+@token_required
+def post_internal_study_session_start(current_user):
+    payload, status = start_learning_core_session_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/study-sessions/log', methods=['POST'])
+@token_required
+def post_internal_study_session_log(current_user):
+    payload, status = log_learning_core_session_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/study-sessions/cancel', methods=['POST'])
+@token_required
+def post_internal_study_session_cancel(current_user):
+    payload, status = cancel_learning_core_session_response(
+        current_user.id,
+        (request.get_json(silent=True) or {}).get('sessionId'),
+    )
+    return jsonify(payload), status
+
+
 @learning_core_bp.route('/internal/learning/events', methods=['POST'])
 @token_required
 def create_internal_learning_event(current_user):
@@ -61,6 +116,103 @@ def create_internal_learning_event(current_user):
         current_user.id,
         request.get_json(silent=True),
     )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/ai-tool/wrong-words', methods=['GET'])
+@token_required
+def get_internal_ai_tool_wrong_words(current_user):
+    payload, status = list_internal_wrong_words_for_ai_response(current_user.id, request.args)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/ai-tool/chapter-progress', methods=['GET'])
+@token_required
+def get_internal_ai_tool_chapter_progress(current_user):
+    payload, status = list_internal_chapter_progress_for_ai_response(current_user.id, request.args)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/ai-tool/wrong-word-count', methods=['GET'])
+@token_required
+def get_internal_ai_tool_wrong_word_count(current_user):
+    payload, status = count_internal_wrong_words_for_ai_response(current_user.id)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/quick-memory', methods=['GET'])
+@token_required
+def get_internal_quick_memory(current_user):
+    payload, status = build_learning_core_quick_memory_response(current_user.id)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/quick-memory/review-queue', methods=['GET'])
+@token_required
+def get_internal_quick_memory_review_queue(current_user):
+    payload, status = build_learning_core_quick_memory_review_queue_response(
+        current_user.id,
+        request.args,
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/quick-memory/sync', methods=['POST'])
+@token_required
+def post_internal_quick_memory_sync(current_user):
+    payload, status = sync_learning_core_quick_memory_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/smart-stats', methods=['GET'])
+@token_required
+def get_internal_smart_stats(current_user):
+    payload, status = build_learning_core_smart_stats_response(current_user.id)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/smart-stats/sync', methods=['POST'])
+@token_required
+def post_internal_smart_stats_sync(current_user):
+    payload, status = sync_learning_core_smart_stats_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/wrong-words', methods=['GET'])
+@token_required
+def get_internal_wrong_words(current_user):
+    payload, status = build_learning_core_wrong_words_response(
+        current_user.id,
+        search_value=request.args.get('search'),
+        detail_mode=request.args.get('details'),
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/wrong-words/sync', methods=['POST'])
+@token_required
+def post_internal_wrong_words_sync(current_user):
+    payload, status = sync_learning_core_wrong_words_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/wrong-words/clear', methods=['POST'])
+@token_required
+def post_internal_wrong_words_clear(current_user):
+    word = (request.get_json(silent=True) or {}).get('word')
+    if isinstance(word, str) and word.strip():
+        payload, status = clear_learning_core_wrong_word_response(current_user.id, word.strip())
+    else:
+        payload, status = clear_learning_core_wrong_words_response(current_user.id)
     return jsonify(payload), status
 
 

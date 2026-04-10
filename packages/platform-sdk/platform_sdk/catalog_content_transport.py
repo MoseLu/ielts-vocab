@@ -15,6 +15,11 @@ from platform_sdk.catalog_content_catalog_application import (
     build_word_details_response,
     build_word_examples_response,
 )
+from platform_sdk.catalog_content_custom_books_application import (
+    create_catalog_content_custom_book_response,
+    get_catalog_content_custom_book_response,
+    list_catalog_content_custom_books_response,
+)
 from platform_sdk.catalog_content_confusable_application import (
     CONFUSABLE_MATCH_BOOK_ID,
     create_confusable_custom_chapters_response,
@@ -107,6 +112,30 @@ def get_book_words(book_id):
         page=request.args.get('page', 1, type=int),
         per_page=request.args.get('per_page', 100, type=int),
     )
+    return jsonify(payload), status
+
+
+@catalog_content_bp.route('/internal/catalog/custom-books', methods=['POST'])
+@token_required
+def create_internal_custom_book(current_user):
+    payload, status = create_catalog_content_custom_book_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
+@catalog_content_bp.route('/internal/catalog/custom-books', methods=['GET'])
+@token_required
+def list_internal_custom_books(current_user):
+    payload, status = list_catalog_content_custom_books_response(current_user.id)
+    return jsonify(payload), status
+
+
+@catalog_content_bp.route('/internal/catalog/custom-books/<book_id>', methods=['GET'])
+@token_required
+def get_internal_custom_book(current_user, book_id):
+    payload, status = get_catalog_content_custom_book_response(current_user.id, book_id)
     return jsonify(payload), status
 
 
