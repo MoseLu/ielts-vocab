@@ -46,13 +46,30 @@ ensure_release_directories() {
   mkdir -p "${APP_HOME}" "${RELEASES_ROOT}" "${WEB_ROOT}"
 }
 
+sync_repository_origin() {
+  local source_origin=""
+  if [[ -d "${CURRENT_LINK}/.git" ]]; then
+    source_origin="$(git -C "${CURRENT_LINK}" remote get-url origin 2>/dev/null || true)"
+  fi
+  if [[ -z "${source_origin}" ]]; then
+    return 0
+  fi
+  if git -C "${REPOSITORY_ROOT}" remote get-url origin >/dev/null 2>&1; then
+    git -C "${REPOSITORY_ROOT}" remote set-url origin "${source_origin}"
+  else
+    git -C "${REPOSITORY_ROOT}" remote add origin "${source_origin}"
+  fi
+}
+
 prepare_repository_root() {
   if [[ -d "${REPOSITORY_ROOT}/.git" ]]; then
+    sync_repository_origin
     return 0
   fi
   if [[ -d "${CURRENT_LINK}/.git" ]]; then
     log "Bootstrapping repository cache from ${CURRENT_LINK}"
     git clone --no-hardlinks "${CURRENT_LINK}" "${REPOSITORY_ROOT}"
+    sync_repository_origin
     return 0
   fi
   fail "Repository cache missing and ${CURRENT_LINK} is not a git checkout"
