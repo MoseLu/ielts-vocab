@@ -28,7 +28,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.git_ref }}" ]]; then
             echo "git_ref=${{ inputs.git_ref }}" >> "$GITHUB_OUTPUT"
           else
-            echo "git_ref=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+            echo "git_ref=main" >> "$GITHUB_OUTPUT"
           fi
 
   deploy:
