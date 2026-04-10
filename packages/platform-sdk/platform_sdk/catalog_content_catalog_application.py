@@ -1,18 +1,23 @@
 from __future__ import annotations
 
-from services import (
-    books_personalization_repository,
-    books_registry_service,
+from platform_sdk import catalog_content_confusable_support as confusable_support
+from platform_sdk import notes_word_note_repository_adapter as word_note_repository
+from platform_sdk.catalog_runtime_adapters import (
     books_vocabulary_loader_service,
     phonetic_lookup_service,
     word_catalog_repository,
 )
-from platform_sdk import catalog_content_confusable_support as confusable_support
-from services.books_catalog_query_service import (
+from platform_sdk.catalog_provider_adapter import (
     build_book_response,
+    build_book_chapters_response,
     build_books_response,
     build_search_words_response,
+    ensure_word_catalog_entry,
+    get_vocab_book,
+    list_vocab_books,
     load_book_vocabulary,
+    load_book_chapters,
+    normalize_word_key,
 )
 from platform_sdk.learning_core_favorites_support import (
     FAVORITES_CHAPTER_ID,
@@ -20,15 +25,13 @@ from platform_sdk.learning_core_favorites_support import (
     _is_favorites_book,
     _serialize_favorite_words,
 )
-from services.books_structure_service import build_book_chapters_response, load_book_chapters
-from services.word_catalog_service import ensure_word_catalog_entry, normalize_word_key
 
 
 WORD_NOTE_LIMIT = 500
 
 
 def _find_book(book_id):
-    return books_registry_service.get_vocab_book(book_id)
+    return get_vocab_book(book_id)
 
 
 def _paginate_items(items, page, per_page):
@@ -70,7 +73,7 @@ def build_categories_response():
         'confusable': '易混辨析',
         'phrases': '短语搭配',
     }
-    categories = list(set(book['category'] for book in books_registry_service.list_vocab_books()))
+    categories = list(set(book['category'] for book in list_vocab_books()))
     return {
         'categories': [
             {'id': category, 'name': category_names.get(category, category)}
@@ -85,7 +88,7 @@ def build_levels_response():
         'intermediate': '中级',
         'advanced': '高级',
     }
-    levels = list(set(book['level'] for book in books_registry_service.list_vocab_books()))
+    levels = list(set(book['level'] for book in list_vocab_books()))
     return {
         'levels': [
             {'id': level, 'name': level_names.get(level, level)}
@@ -95,7 +98,7 @@ def build_levels_response():
 
 
 def build_books_stats_response():
-    books = books_registry_service.list_vocab_books()
+    books = list_vocab_books()
     total_words = sum(book['word_count'] for book in books)
     return {
         'total_books': len(books),
@@ -270,7 +273,7 @@ def _empty_note(word: str) -> dict:
 
 
 def _word_note_record(user_id: int, normalized_word: str):
-    return books_personalization_repository.get_user_word_note(user_id, normalized_word)
+    return word_note_repository.get_user_word_note(user_id, normalized_word)
 
 
 def serialize_note_for_user(user, word: str, normalized_word: str) -> dict:

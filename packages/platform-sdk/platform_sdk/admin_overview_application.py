@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from services import (
+from platform_sdk.admin_repository_adapters import (
     admin_overview_repository,
     admin_user_detail_repository,
     admin_user_directory_repository,
     admin_user_session_repository,
 )
-from services.books_structure_service import serialize_effective_book_progress
+from platform_sdk.catalog_provider_adapter import serialize_effective_book_progress
 
 
 EXCLUDED_ADMIN_PROGRESS_BOOK_IDS = {'ielts_confusable_match'}
