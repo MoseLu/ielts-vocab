@@ -26,6 +26,7 @@ previous_release="$(current_target_path)"
 log "Preparing release ${release_dir} from ${commit_sha}"
 mkdir -p "${release_dir}"
 git -C "${REPOSITORY_ROOT}" archive "${commit_sha}" | tar -xf - -C "${release_dir}"
+hydrate_release_git_index "${release_dir}"
 find "${release_dir}/scripts/cloud-deploy" -maxdepth 1 -type f -name '*.sh' -exec chmod +x {} +
 install_release_dependencies "${release_dir}"
 
