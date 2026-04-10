@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
-from services import ai_assistant_repository
-from services.llm import chat
+from platform_sdk.ai_repository_adapters import ai_assistant_repository
+from platform_sdk.llm_provider_adapter import chat
 
 
 HISTORY_LIMIT = 20

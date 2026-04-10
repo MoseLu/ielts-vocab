@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from models import WordDerivativeEntry, WordEnglishMeaning, WordExampleEntry, WordRootDetail
+from service_models.catalog_content_models import (
+    WordDerivativeEntry,
+    WordEnglishMeaning,
+    WordExampleEntry,
+    WordRootDetail,
+)
 
 
 def list_root_details():

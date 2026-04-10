@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from models import UserSmartWordStat, db
+from service_models.learning_core_models import UserSmartWordStat, db
 
 
 def list_user_smart_word_stats(user_id: int):

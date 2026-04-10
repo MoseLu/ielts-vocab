@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 
-from services import learning_event_repository
-from services.learning_events import record_learning_event
+from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
+from platform_sdk.learning_core_internal_client import record_learning_core_event
+from platform_sdk.learning_repository_adapters import learning_event_repository
 
 
 def record_smart_dimension_delta_event(
@@ -27,7 +28,8 @@ def record_smart_dimension_delta_event(
 
     total_delta = delta_correct + delta_wrong
     passed = delta_correct > delta_wrong or (delta_correct > 0 and delta_wrong == 0)
-    record_learning_event(
+    queue_learning_event(
+        add_learning_event=learning_event_repository.add_learning_event,
         user_id=user_id,
         event_type=event_type,
         source='practice',
@@ -83,7 +85,7 @@ def track_metric(user_id: int, metric: str, payload: dict | None = None):
         mode = 'speaking'
 
     try:
-        record_learning_event(
+        record_learning_core_event(
             user_id=user_id,
             event_type=metric,
             source='assistant_tool',
@@ -92,9 +94,7 @@ def track_metric(user_id: int, metric: str, payload: dict | None = None):
             item_count=item_count,
             payload=safe_payload,
         )
-        learning_event_repository.commit()
     except Exception as exc:
-        learning_event_repository.rollback()
         logging.warning(
             '[AI_METRIC] failed to persist metric user=%s metric=%s err=%s',
             user_id,

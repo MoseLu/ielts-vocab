@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import UserDailySummary, db
+from service_models.notes_models import UserDailySummary, db
 
 
 def get_daily_summary(user_id: int, target_date: str):

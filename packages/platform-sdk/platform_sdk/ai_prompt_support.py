@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from services import books_registry_service
+from platform_sdk.books_registry_adapter import books_registry_service
 
 
 def build_context_msg(ctx: dict) -> str:

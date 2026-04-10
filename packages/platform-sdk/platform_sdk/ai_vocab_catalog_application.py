@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import functools
 
-from services import books_registry_service
-from services.books_catalog_query_service import load_book_vocabulary
-from services.study_sessions import normalize_chapter_id
+from platform_sdk.catalog_provider_adapter import list_vocab_books, load_book_vocabulary
+from platform_sdk.study_session_support import normalize_chapter_id
 
 
 def _clone_vocab_examples(value) -> list[dict]:
@@ -53,7 +52,7 @@ def _copy_vocab_entry(word: dict, **extra_fields) -> dict:
 @functools.lru_cache(maxsize=1)
 def get_global_vocab_pool() -> list:
     seen: dict[str, dict] = {}
-    for book in books_registry_service.list_vocab_books():
+    for book in list_vocab_books():
         words = load_book_vocabulary(book['id']) or []
         for word in words:
             key = word.get('word', '').strip().lower()
@@ -65,7 +64,7 @@ def get_global_vocab_pool() -> list:
 @functools.lru_cache(maxsize=1)
 def get_quick_memory_vocab_lookup() -> dict[str, list[dict]]:
     lookup: dict[str, list[dict]] = {}
-    for book in books_registry_service.list_vocab_books():
+    for book in list_vocab_books():
         book_id = book['id']
         book_title = book.get('title') or book_id
         words = load_book_vocabulary(book_id) or []

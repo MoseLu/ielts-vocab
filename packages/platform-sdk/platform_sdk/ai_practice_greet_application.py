@@ -4,13 +4,12 @@ import logging
 
 from flask import jsonify
 
-from services.llm import correct_text
-
 from platform_sdk.ai_assistant_prompts import GREET_SYSTEM_PROMPT_V2
 from platform_sdk.ai_assistant_tool_support import chat_with_tools
 from platform_sdk.ai_context_application import build_context_payload
 from platform_sdk.ai_learning_context_support import build_learning_context_msg
 from platform_sdk.ai_metric_support import track_metric
+from platform_sdk.llm_provider_adapter import correct_text
 from platform_sdk.ai_prompt_support import parse_options, strip_options
 
 

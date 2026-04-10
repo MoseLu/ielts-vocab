@@ -3,19 +3,24 @@ from __future__ import annotations
 from datetime import datetime
 
 from platform_sdk.local_time_support import utc_naive_to_epoch_ms, utc_now_naive
-from services.quick_memory_schedule import load_user_quick_memory_records
-from services.study_session_repository import (
+from platform_sdk.quick_memory_schedule_support import load_and_normalize_quick_memory_records
+from platform_sdk.study_session_repository_adapter import (
     commit as commit_study_session,
     create_study_session,
     delete_study_session,
+    find_pending_session_in_window,
     flush as flush_study_session,
     get_user_study_session,
     rollback as rollback_study_session,
 )
-from services.learning_events import record_learning_event
-from services.study_sessions import find_pending_session, normalize_chapter_id
 
 from platform_sdk.ai_text_support import parse_client_epoch_ms
+from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
+from platform_sdk.learning_repository_adapters import (
+    learning_event_repository,
+    quick_memory_record_repository,
+)
+from platform_sdk.study_session_support import find_pending_session, normalize_chapter_id
 from platform_sdk.ai_vocab_catalog_application import (
     get_global_vocab_pool,
     resolve_quick_memory_vocab_entry,
@@ -94,7 +99,15 @@ def _build_review_queue_payload(
     upcoming_words = []
     context_map: dict[tuple[str, str], dict] = {}
     rows = sorted(
-        [row for row in load_user_quick_memory_records(user_id) if (row.next_review or 0) > 0],
+        [
+            row
+            for row in load_and_normalize_quick_memory_records(
+                user_id,
+                list_records=quick_memory_record_repository.list_user_quick_memory_records,
+                commit=quick_memory_record_repository.commit,
+            )
+            if (row.next_review or 0) > 0
+        ],
         key=lambda row: row.next_review or 0,
     )
 
@@ -248,7 +261,8 @@ def _coerce_non_negative_int(value) -> int:
 
 
 def _record_study_session_event(*, user_id: int, session, occurred_at: datetime | None) -> None:
-    record_learning_event(
+    queue_learning_event(
+        add_learning_event=learning_event_repository.add_learning_event,
         user_id=user_id,
         event_type='study_session',
         source='practice',
@@ -361,6 +375,7 @@ def log_session_response(user_id: int, body: dict | None) -> tuple[dict, int]:
             mode=mode,
             book_id=book_id,
             chapter_id=chapter_id,
+            find_pending_session_in_window=find_pending_session_in_window,
             started_at=started_at,
         )
         if pending:
@@ -419,7 +434,11 @@ def log_session_response(user_id: int, body: dict | None) -> tuple[dict, int]:
 
 
 def build_quick_memory_response(user_id: int) -> tuple[dict, int]:
-    records = load_user_quick_memory_records(user_id)
+    records = load_and_normalize_quick_memory_records(
+        user_id,
+        list_records=quick_memory_record_repository.list_user_quick_memory_records,
+        commit=quick_memory_record_repository.commit,
+    )
     return {'records': [record.to_dict() for record in records]}, 200
 
 

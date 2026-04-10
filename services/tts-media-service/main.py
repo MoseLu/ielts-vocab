@@ -168,22 +168,24 @@ def get_example_audio_content(payload: dict = Body(...)):
     sentence = str((payload or {}).get('sentence') or '').strip()
     if not sentence:
         raise HTTPException(status_code=400, detail='sentence is required')
-    model, voice = runtime.example_tts_identity(sentence)
-    cache_file = runtime.example_cache_file(sentence, model, voice)
-    if not (cache_file.exists() and runtime.is_probably_valid_mp3_file(cache_file)):
-        runtime.remove_invalid_cached_audio(cache_file)
-        try:
-            audio_bytes = runtime.synthesize_example_audio(sentence, model, voice)
-            runtime.write_bytes_atomically(cache_file, audio_bytes)
-        except Exception as exc:
-            status_code = getattr(exc, 'status_code', 502)
-            if not isinstance(status_code, int) or status_code < 400 or status_code >= 600:
-                status_code = 502
-            raise HTTPException(status_code=status_code, detail='example audio generation failed') from exc
-    response = Response(cache_file.read_bytes(), media_type=runtime.DEFAULT_EXAMPLE_AUDIO_CONTENT_TYPE)
-    response.headers[_AUDIO_BYTES_HEADER] = str(cache_file.stat().st_size)
-    response.headers[_AUDIO_CACHE_KEY_HEADER] = runtime.local_cache_key(cache_file)
-    response.headers[_MEDIA_ID_HEADER] = cache_file.name
+    try:
+        audio_payload = runtime.example_audio_content_payload(sentence)
+    except Exception as exc:
+        status_code = getattr(exc, 'status_code', 502)
+        if not isinstance(status_code, int) or status_code < 400 or status_code >= 600:
+            status_code = 502
+        raise HTTPException(status_code=status_code, detail='example audio generation failed') from exc
+    response = Response(
+        audio_payload['body'],
+        media_type=audio_payload.get('content_type') or runtime.DEFAULT_EXAMPLE_AUDIO_CONTENT_TYPE,
+    )
+    response.headers[_AUDIO_BYTES_HEADER] = str(audio_payload['byte_length'])
+    if audio_payload.get('cache_key'):
+        response.headers[_AUDIO_CACHE_KEY_HEADER] = str(audio_payload['cache_key'])
+    if audio_payload.get('signed_url'):
+        response.headers[_AUDIO_OSS_URL_HEADER] = str(audio_payload['signed_url'])
+    if audio_payload.get('media_id'):
+        response.headers[_MEDIA_ID_HEADER] = str(audio_payload['media_id'])
     return response
 
 

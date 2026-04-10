@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from services import ai_quick_memory_repository, ai_smart_word_stat_repository
-from services.learning_events import record_learning_event
-from services.quick_memory_schedule import resolve_quick_memory_next_review_ms
-from services.study_sessions import normalize_chapter_id
-
 from platform_sdk.ai_metric_support import record_smart_dimension_delta_event
+from platform_sdk.ai_repository_adapters import (
+    ai_quick_memory_repository,
+    ai_smart_word_stat_repository,
+)
+from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
+from platform_sdk.learning_repository_adapters import learning_event_repository
+from platform_sdk.quick_memory_schedule_support import resolve_quick_memory_next_review_ms
+from platform_sdk.study_session_support import normalize_chapter_id
 
 if TYPE_CHECKING:
     from models import UserQuickMemoryRecord
@@ -108,7 +111,8 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
             current_snapshot = _quick_memory_snapshot(existing)
             if previous_snapshot != current_snapshot:
                 status = current_snapshot['status']
-                record_learning_event(
+                queue_learning_event(
+                    add_learning_event=learning_event_repository.add_learning_event,
                     user_id=user_id,
                     event_type='quick_memory_review',
                     source=source,

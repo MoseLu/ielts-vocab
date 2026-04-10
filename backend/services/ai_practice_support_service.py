@@ -3,7 +3,7 @@ from services.ai_practice_support_service_parts import greet_and_text as _greet_
 from services.ai_practice_support_service_parts import lexical_tools as _lexical_tools
 from services.ai_practice_support_service_parts import speaking_and_plans as _speaking_and_plans
 from services.ai_route_support_service import _get_context_data
-from services.learner_profile import build_learner_profile
+from platform_sdk.learner_profile_builder_adapter import build_learner_profile
 from services.llm import correct_text
 
 

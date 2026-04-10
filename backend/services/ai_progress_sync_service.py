@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from platform_sdk.quick_memory_schedule_support import resolve_quick_memory_next_review_ms
 from services import ai_quick_memory_repository, ai_smart_word_stat_repository
 from services.ai_metric_tracking_service import record_smart_dimension_delta_event
-from services.quick_memory_schedule import resolve_quick_memory_next_review_ms
 from services.study_sessions import normalize_chapter_id
 
 if TYPE_CHECKING:
-    from models import UserQuickMemoryRecord
+    from service_models.learning_core_models import UserQuickMemoryRecord
 
 
 def _normalize_record_word(value) -> str:

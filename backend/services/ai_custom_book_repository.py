@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from models import CustomBook, CustomBookChapter, CustomBookWord, db
+from service_models.catalog_content_models import CustomBook, CustomBookChapter, CustomBookWord, db
 
 
 def create_custom_book(

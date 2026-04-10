@@ -4,7 +4,7 @@ import json
 from typing import TYPE_CHECKING
 from datetime import datetime
 
-from models import (
+from service_models.ai_route_models import (
     WRONG_WORD_DIMENSIONS,
     WRONG_WORD_PENDING_REVIEW_TARGET,
     _build_wrong_word_dimension_states,
@@ -23,7 +23,7 @@ from services.learning_events import record_learning_event
 from services.study_sessions import normalize_chapter_id
 
 if TYPE_CHECKING:
-    from models import UserWrongWord
+    from service_models.ai_route_models import UserWrongWord
 
 
 def _apply_wrong_word_snapshot(record: UserWrongWord, payload: dict) -> tuple[int, int]:

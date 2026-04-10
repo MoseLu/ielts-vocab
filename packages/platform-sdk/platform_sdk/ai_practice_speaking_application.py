@@ -5,13 +5,16 @@ import random
 
 from flask import jsonify
 
-from services import learning_event_repository, learning_stats_repository
-from services.learner_profile import build_learner_profile
-from services.learning_events import record_learning_event
-from services.study_sessions import normalize_chapter_id
+from platform_sdk.learner_profile_application_support import build_learner_profile_payload
 
+from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
 from platform_sdk.ai_metric_support import track_metric
+from platform_sdk.learning_repository_adapters import (
+    learning_event_repository,
+    learning_stats_repository,
+)
 from platform_sdk.ai_text_support import normalize_word_list
+from platform_sdk.study_session_support import normalize_chapter_id
 from platform_sdk.ai_vocab_catalog_application import get_global_vocab_pool
 
 
@@ -36,7 +39,8 @@ def pronunciation_check_response(current_user, body: dict | None):
         'speed_feedback': '语速可接受，注意词尾清晰度。',
     }
     try:
-        record_learning_event(
+        queue_learning_event(
+            add_learning_event=learning_event_repository.add_learning_event,
             user_id=current_user.id,
             event_type='pronunciation_check',
             source='assistant',
@@ -87,7 +91,8 @@ def speaking_simulate_response(current_user, body: dict | None):
     }
     question = question_map.get(part, question_map[1])
     try:
-        record_learning_event(
+        queue_learning_event(
+            add_learning_event=learning_event_repository.add_learning_event,
             user_id=current_user.id,
             event_type='speaking_simulation',
             source='assistant',
@@ -120,7 +125,7 @@ def speaking_simulate_response(current_user, body: dict | None):
 
 
 def review_plan_response(current_user):
-    profile = build_learner_profile(current_user.id)
+    profile = build_learner_profile_payload(current_user.id)
     memory_system = profile.get('memory_system') or {}
     dimensions = memory_system.get('dimensions') or []
     plan = profile.get('next_actions') or []

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from platform_sdk.identity_session_support import check_rate_limit, validate_email, verification_code_message
-from services import auth_repository
+from platform_sdk.identity_repository_adapter import auth_repository
 
 
 def _delivery_mode(app) -> str:

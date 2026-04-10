@@ -3,8 +3,8 @@ from __future__ import annotations
 import re
 from datetime import datetime
 
-from services import learner_profile_repository
 from platform_sdk.memory_topics_support import build_memory_topics
+from platform_sdk.notes_internal_client import list_recent_learning_notes
 
 
 _QUERY_STOPWORDS = {
@@ -44,11 +44,10 @@ def collect_related_learning_notes(
     normalized_message = _normalize_question_signature(user_message)
     current_word = ((frontend_context or {}).get('currentWord') or '').strip().lower()
 
-    recent_notes = learner_profile_repository.list_user_learning_notes(
-        user_id,
-        limit=80,
-        descending=True,
-    )
+    try:
+        recent_notes = list_recent_learning_notes(user_id, limit=80)
+    except Exception:
+        return None
     if not recent_notes:
         return None
 
