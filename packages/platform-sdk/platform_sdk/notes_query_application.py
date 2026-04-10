@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 
 from flask import jsonify
 
+from platform_sdk.memory_topics_support import build_memory_topics
 from services import daily_summary_repository, learning_note_repository
-from services.memory_topics import build_memory_topics
 from services.notes_summary_service import parse_date_param, parse_int_param
 
 

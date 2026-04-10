@@ -7,10 +7,10 @@ from datetime import date as date_type
 
 from flask import jsonify
 
+from platform_sdk.memory_topics_support import build_memory_topics
 from services import daily_summary_repository
 from services.learner_profile import build_learner_profile
 from services.llm import chat
-from services.memory_topics import build_memory_topics
 import services.notes_summary_runtime as summary_runtime
 from services.notes_summary_service import (
     build_learning_snapshot,

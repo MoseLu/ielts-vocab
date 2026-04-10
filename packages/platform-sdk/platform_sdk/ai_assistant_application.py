@@ -7,7 +7,7 @@ from flask import Response, current_app, jsonify, stream_with_context
 from services import ai_assistant_repository
 from services.learning_events import record_learning_event
 from services.llm import TOOLS, web_search
-from services.runtime_async import maybe_timeout, spawn_background
+from platform_sdk.runtime_async_support import maybe_timeout, spawn_background
 
 from platform_sdk.ai_assistant_memory_support import (
     add_memory_note,

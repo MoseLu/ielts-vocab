@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 
 from services import learner_profile_repository
-from services.memory_topics import build_memory_topics
+from platform_sdk.memory_topics_support import build_memory_topics
 
 
 _QUERY_STOPWORDS = {
