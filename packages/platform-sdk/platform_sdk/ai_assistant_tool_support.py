@@ -5,14 +5,12 @@ import logging
 import re
 
 from platform_sdk.catalog_provider_adapter import list_vocab_books, load_book_chapters, load_book_vocabulary
-from platform_sdk.ai_learning_summary_support import decorate_wrong_words_with_quick_memory_progress
-from platform_sdk.llm_provider_adapter import TOOL_HANDLERS, chat, stream_chat_events
-from platform_sdk.learning_repository_adapters import learning_stats_repository
-from platform_sdk.ai_tool_input_support import validate_tool_input
-from platform_sdk.ai_vocab_catalog_application import (
-    get_global_vocab_pool,
-    resolve_quick_memory_vocab_entry,
+from platform_sdk.learning_core_internal_client import (
+    fetch_learning_core_chapter_progress_for_ai,
+    fetch_learning_core_wrong_words_for_ai,
 )
+from platform_sdk.llm_provider_adapter import TOOL_HANDLERS, chat, stream_chat_events
+from platform_sdk.ai_tool_input_support import validate_tool_input
 from platform_sdk.quick_memory_schedule_support import QUICK_MEMORY_MASTERY_TARGET
 
 
@@ -24,15 +22,6 @@ def _format_wrong_word_result(word: dict) -> str:
         f"{word.get('definition') or ''}  错误{word.get('wrong_count', 0)}次"
         f"  艾宾浩斯{word.get('ebbinghaus_streak', 0)}/{word.get('ebbinghaus_target', QUICK_MEMORY_MASTERY_TARGET)}"
         f'{updated_suffix}'
-    )
-
-
-def _decorate_wrong_words(user_id: int, words) -> list[dict]:
-    return decorate_wrong_words_with_quick_memory_progress(
-        user_id,
-        words,
-        get_global_vocab_pool=get_global_vocab_pool,
-        resolve_quick_memory_vocab_entry=resolve_quick_memory_vocab_entry,
     )
 
 
@@ -49,7 +38,7 @@ def make_get_wrong_words(user_id: int):
     ) -> str:
         limit_value = max(1, min(int(limit), 300))
         normalized_query = ' '.join(str(query or '').strip().split())
-        words = learning_stats_repository.list_user_wrong_words_for_ai(
+        words = fetch_learning_core_wrong_words_for_ai(
             user_id,
             limit=limit_value,
             query=normalized_query,
@@ -60,11 +49,10 @@ def make_get_wrong_words(user_id: int):
         if not words:
             return '暂无错词记录。'
 
-        decorated = _decorate_wrong_words(user_id, words)
         prefix = ''
         if book_id:
             prefix = '当前错词记录暂不支持按词书过滤，以下返回全部错词。\n'
-        lines = [_format_wrong_word_result(word) for word in decorated]
+        lines = [_format_wrong_word_result(word) for word in words]
         if normalized_query:
             heading = f"与“{normalized_query}”相关的错词共{len(lines)}个"
         elif recent_first:
@@ -111,20 +99,19 @@ def make_get_book_chapters(user_id: int):
             return f"词书 '{book['title']}' 的章节数据加载失败。"
 
         chapter_progress = {
-            str(record.chapter_id): record
-            for record in learning_stats_repository.list_user_chapter_progress_rows(
-                user_id,
-                book_id=book_id,
-            )
+            str(record.get('chapter_id')): record
+            for record in fetch_learning_core_chapter_progress_for_ai(user_id, book_id=book_id)
         }
         lines = []
         for chapter in structure.get('chapters', []):
             chapter_id = str(chapter.get('id', ''))
             progress = chapter_progress.get(chapter_id)
             if progress:
-                total = progress.correct_count + progress.wrong_count
-                accuracy = round(progress.correct_count / total * 100) if total > 0 else 0
-                if progress.is_completed:
+                correct_count = int(progress.get('correct_count') or 0)
+                wrong_count = int(progress.get('wrong_count') or 0)
+                total = correct_count + wrong_count
+                accuracy = int(progress.get('accuracy') or round(correct_count / total * 100)) if total > 0 else 0
+                if progress.get('is_completed'):
                     status = f'已完成 正确率{accuracy}%'
                 else:
                     status = f'进行中 已答{total}题 正确率{accuracy}%'
@@ -136,7 +123,7 @@ def make_get_book_chapters(user_id: int):
 
         total_words = structure.get('total_words', 0)
         total_chapters = structure.get('total_chapters', len(lines))
-        done_count = sum(1 for record in chapter_progress.values() if record.is_completed)
+        done_count = sum(1 for record in chapter_progress.values() if record.get('is_completed'))
         return (
             f"{book['title']}（共{total_chapters}章、{total_words}词，已完成{done_count}章）：\n"
             + '\n'.join(lines)

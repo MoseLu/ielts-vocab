@@ -31,6 +31,40 @@ PLATFORM_AI_BOUNDARY_FILES = {
         'platform_sdk.notes_repository_adapters',
         'platform_sdk.ai_repository_adapters import learner_profile_repository',
     ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_custom_books_application.py': (
+        'platform_sdk.ai_repository_adapters',
+    ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_assistant_tool_support.py': (
+        'platform_sdk.learning_repository_adapters',
+    ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_learning_stats_application.py': (
+        'platform_sdk.study_session_repository_adapter',
+    ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_metric_support.py': (
+        'platform_sdk.learning_repository_adapters',
+    ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_progress_sync_application.py': (
+        'platform_sdk.learning_repository_adapters',
+        'platform_sdk.learning_event_support',
+        'platform_sdk.ai_repository_adapters',
+    ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_wrong_words_application.py': (
+        'platform_sdk.learning_repository_adapters',
+        'platform_sdk.learning_event_support',
+        'platform_sdk.ai_repository_adapters',
+    ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_practice_speaking_application.py': (
+        'platform_sdk.learning_repository_adapters',
+        'platform_sdk.learning_event_support',
+    ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_assistant_application.py': (
+        'platform_sdk.learning_event_support',
+    ),
+    PROJECT_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk' / 'ai_session_application.py': (
+        'platform_sdk.learning_event_support',
+        'platform_sdk.learning_repository_adapters',
+        'platform_sdk.study_session_repository_adapter',
+    ),
 }
 
 

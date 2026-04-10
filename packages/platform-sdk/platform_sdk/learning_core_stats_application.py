@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from platform_sdk.ai_learning_summary_support import (
+from platform_sdk.learning_core_learning_summary_support import (
     alltime_words_display,
     calc_streak_days,
     chapter_title_map,

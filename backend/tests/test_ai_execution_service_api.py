@@ -235,6 +235,44 @@ def test_ai_execution_service_quick_memory_sync_round_trip(monkeypatch, tmp_path
     assert get_response.json()['records'][0]['word'] == 'kind'
 
 
+def test_ai_execution_service_study_session_round_trip(monkeypatch, tmp_path):
+    _configure_ai_env(monkeypatch, tmp_path)
+    module = _load_ai_execution_service_module('ai_execution_service_study_session')
+    client = TestClient(module.app)
+    token = _create_user_and_token(module.ai_flask_app, username='ai-study-session-runtime-user')
+
+    start_response = client.post(
+        '/api/ai/start-session',
+        json={'mode': 'smart', 'bookId': 'ielts_reading_premium', 'chapterId': '3'},
+        headers=_auth_headers(token),
+    )
+    session_id = start_response.json()['sessionId']
+    log_response = client.post(
+        '/api/ai/log-session',
+        json={
+            'sessionId': session_id,
+            'mode': 'smart',
+            'bookId': 'ielts_reading_premium',
+            'chapterId': '3',
+            'wordsStudied': 5,
+            'correctCount': 4,
+            'wrongCount': 1,
+            'durationSeconds': 60,
+        },
+        headers=_auth_headers(token),
+    )
+    cancel_response = client.post(
+        '/api/ai/cancel-session',
+        json={'sessionId': session_id},
+        headers=_auth_headers(token),
+    )
+
+    assert start_response.status_code == 201
+    assert log_response.status_code == 200
+    assert log_response.json()['id'] == session_id
+    assert cancel_response.status_code == 409
+
+
 def test_ai_execution_service_wrong_words_sync_round_trip(monkeypatch, tmp_path):
     _configure_ai_env(monkeypatch, tmp_path)
     module = _load_ai_execution_service_module('ai_execution_service_wrong_words')

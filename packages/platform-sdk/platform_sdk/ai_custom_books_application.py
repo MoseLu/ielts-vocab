@@ -2,12 +2,20 @@ from __future__ import annotations
 
 import json
 import re
-import uuid
 
 from flask import jsonify
 
 from platform_sdk.ai_context_application import build_context_payload
-from platform_sdk.ai_repository_adapters import ai_custom_book_repository
+from platform_sdk.catalog_content_custom_books_application import (
+    create_catalog_content_custom_book_response as build_catalog_content_custom_book_response,
+    get_catalog_content_custom_book_response as build_catalog_content_get_custom_book_response,
+    list_catalog_content_custom_books_response as build_catalog_content_list_custom_books_response,
+)
+from platform_sdk.catalog_content_internal_client import (
+    create_catalog_content_custom_book_internal_response,
+    get_catalog_content_custom_book_internal_response,
+    list_catalog_content_custom_books_internal_response,
+)
 from platform_sdk.llm_provider_adapter import chat
 
 
@@ -74,58 +82,28 @@ def generate_book_response(current_user, body: dict | None):
             return jsonify({'error': 'Failed to parse generated book data'}), 500
 
         data = json.loads(json_match.group())
-        book_id = f'custom_{uuid.uuid4().hex[:12]}'
-        book = ai_custom_book_repository.create_custom_book(
-            book_id=book_id,
-            user_id=current_user.id,
-            title=data.get('title', '自定义词书'),
-            description=data.get('description', ''),
-            word_count=len(data.get('words', [])),
-        )
-
-        chapter_ids: list[str] = []
-        for index, chapter_data in enumerate(data.get('chapters', [])):
-            chapter = ai_custom_book_repository.create_custom_book_chapter(
-                chapter_id=chapter_data.get('id', f'ch_{uuid.uuid4().hex[:6]}'),
-                book_id=book_id,
-                title=chapter_data.get('title', '未命名章节'),
-                word_count=chapter_data.get('wordCount', 0),
-                sort_order=index,
-            )
-            chapter_ids.append(chapter.id)
-
-        for word_data in data.get('words', []):
-            ai_custom_book_repository.create_custom_book_word(
-                chapter_id=word_data.get('chapterId', chapter_ids[0] if chapter_ids else 'ch1'),
-                word=word_data.get('word', ''),
-                phonetic=word_data.get('phonetic', ''),
-                pos=word_data.get('pos', ''),
-                definition=word_data.get('definition', ''),
-            )
-
-        ai_custom_book_repository.commit()
-        words = ai_custom_book_repository.list_custom_book_words_for_chapter_ids(chapter_ids)
-        return jsonify({
-            'bookId': book_id,
-            'title': book.title,
-            'description': book.description,
-            'chapters': [chapter.to_dict() for chapter in book.chapters],
-            'words': [word.to_dict() for word in words],
-        })
+        try:
+            payload, status = create_catalog_content_custom_book_internal_response(current_user.id, data)
+        except Exception:
+            payload, status = build_catalog_content_custom_book_response(current_user.id, data)
+        return jsonify(payload), 200 if status == 201 else status
     except json.JSONDecodeError as exc:
         return jsonify({'error': f'Failed to parse generated book: {exc}'}), 500
     except Exception as exc:
-        ai_custom_book_repository.rollback()
         return jsonify({'error': f'Book generation failed: {exc}'}), 500
 
 
 def list_custom_books_response(current_user):
-    books = ai_custom_book_repository.list_custom_books(current_user.id)
-    return jsonify({'books': [book.to_dict() for book in books]})
+    try:
+        payload, status = list_catalog_content_custom_books_internal_response(current_user.id)
+    except Exception:
+        payload, status = build_catalog_content_list_custom_books_response(current_user.id)
+    return jsonify(payload), status
 
 
 def get_custom_book_response(current_user, book_id: str):
-    book = ai_custom_book_repository.get_custom_book(current_user.id, book_id)
-    if not book:
-        return jsonify({'error': 'Book not found'}), 404
-    return jsonify(book.to_dict())
+    try:
+        payload, status = get_catalog_content_custom_book_internal_response(current_user.id, book_id)
+    except Exception:
+        payload, status = build_catalog_content_get_custom_book_response(current_user.id, book_id)
+    return jsonify(payload), status

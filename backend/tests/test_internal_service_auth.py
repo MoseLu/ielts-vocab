@@ -4,7 +4,15 @@ import importlib.util
 from pathlib import Path
 
 from fastapi.testclient import TestClient
-from models import User, UserLearningEvent, UserLearningNote, db
+from models import (
+    User,
+    UserChapterProgress,
+    UserLearningEvent,
+    UserLearningNote,
+    UserQuickMemoryRecord,
+    UserWrongWord,
+    db,
+)
 
 from platform_sdk.internal_service_auth import (
     INTERNAL_SERVICE_AUTH_HEADER,
@@ -29,6 +37,12 @@ NOTES_SERVICE_PATH = (
     Path(__file__).resolve().parents[2]
     / 'services'
     / 'notes-service'
+    / 'main.py'
+)
+CATALOG_CONTENT_SERVICE_PATH = (
+    Path(__file__).resolve().parents[2]
+    / 'services'
+    / 'catalog-content-service'
     / 'main.py'
 )
 IDENTITY_SERVICE_PATH = (
@@ -161,6 +175,179 @@ def test_learning_core_internal_event_route_accepts_internal_service_user(monkey
         assert UserLearningEvent.query.filter_by(user_id=user_id, word='abandon').count() == 1
 
 
+def test_learning_core_internal_ai_tool_routes_accept_internal_service_user(monkeypatch, tmp_path):
+    _configure_env(monkeypatch, tmp_path, 'learning-core-internal-ai-tool')
+    module = _load_module('learning_core_service_internal_ai_tool', LEARNING_CORE_SERVICE_PATH)
+    user_id = _create_user(module.learning_core_flask_app, 'learning-core-internal-ai-tool-user')
+    client = TestClient(module.app)
+
+    with module.learning_core_flask_app.app_context():
+        db.session.add(UserWrongWord(user_id=user_id, word='alpha', wrong_count=2))
+        db.session.add(UserQuickMemoryRecord(
+            user_id=user_id,
+            word='alpha',
+            status='known',
+            first_seen=1000,
+            last_seen=2000,
+            known_count=2,
+            unknown_count=0,
+            next_review=3000,
+        ))
+        db.session.add(UserChapterProgress(
+            user_id=user_id,
+            book_id='ielts_reading_premium',
+            chapter_id=2,
+            correct_count=7,
+            wrong_count=3,
+            is_completed=True,
+        ))
+        db.session.commit()
+
+    headers = _internal_headers(user_id=user_id)
+    wrong_words_response = client.get(
+        '/internal/learning/ai-tool/wrong-words?limit=5&query=alp',
+        headers=headers,
+    )
+    chapter_progress_response = client.get(
+        '/internal/learning/ai-tool/chapter-progress?book_id=ielts_reading_premium',
+        headers=headers,
+    )
+    count_response = client.get(
+        '/internal/learning/ai-tool/wrong-word-count',
+        headers=headers,
+    )
+    quick_memory_response = client.get(
+        '/internal/learning/quick-memory',
+        headers=headers,
+    )
+    review_queue_response = client.get(
+        '/internal/learning/quick-memory/review-queue?limit=5',
+        headers=headers,
+    )
+
+    assert wrong_words_response.status_code == 200
+    assert wrong_words_response.json()['words'][0]['word'] == 'alpha'
+    assert chapter_progress_response.status_code == 200
+    assert chapter_progress_response.json()['progress'][0]['chapter_id'] == 2
+    assert chapter_progress_response.json()['progress'][0]['accuracy'] == 70
+    assert count_response.status_code == 200
+    assert count_response.json()['count'] == 1
+    assert quick_memory_response.status_code == 200
+    assert quick_memory_response.json()['records'][0]['word'] == 'alpha'
+    assert review_queue_response.status_code == 200
+    assert 'summary' in review_queue_response.json()
+
+
+def test_learning_core_internal_sync_routes_accept_internal_service_user(monkeypatch, tmp_path):
+    _configure_env(monkeypatch, tmp_path, 'learning-core-internal-sync')
+    module = _load_module('learning_core_service_internal_sync', LEARNING_CORE_SERVICE_PATH)
+    user_id = _create_user(module.learning_core_flask_app, 'learning-core-internal-sync-user')
+    client = TestClient(module.app)
+    headers = _internal_headers(user_id=user_id)
+
+    quick_memory_response = client.post(
+        '/internal/learning/quick-memory/sync',
+        headers=headers,
+        json={
+            'source': 'internal-sync',
+            'records': [{
+                'word': 'kind',
+                'status': 'known',
+                'firstSeen': 1000,
+                'lastSeen': 2000,
+                'knownCount': 2,
+                'unknownCount': 0,
+                'nextReview': 3000,
+            }],
+        },
+    )
+    smart_stats_response = client.post(
+        '/internal/learning/smart-stats/sync',
+        headers=headers,
+        json={
+            'context': {'bookId': 'ielts_listening_premium', 'chapterId': '4', 'mode': 'smart'},
+            'stats': [{
+                'word': 'kind',
+                'listening': {'correct': 2, 'wrong': 1},
+                'meaning': {'correct': 0, 'wrong': 0},
+                'dictation': {'correct': 1, 'wrong': 0},
+            }],
+        },
+    )
+    wrong_words_sync_response = client.post(
+        '/internal/learning/wrong-words/sync',
+        headers=headers,
+        json={
+            'sourceMode': 'smart',
+            'words': [{
+                'word': 'abandon',
+                'definition': 'leave behind',
+                'wrongCount': 1,
+                'recognitionWrong': 1,
+            }],
+        },
+    )
+    wrong_words_list_response = client.get(
+        '/internal/learning/wrong-words?details=compact',
+        headers=headers,
+    )
+    wrong_words_clear_response = client.post(
+        '/internal/learning/wrong-words/clear',
+        headers=headers,
+        json={'word': 'abandon'},
+    )
+
+    assert quick_memory_response.status_code == 200
+    assert quick_memory_response.json()['ok'] is True
+    assert smart_stats_response.status_code == 200
+    assert smart_stats_response.json()['ok'] is True
+    assert wrong_words_sync_response.status_code == 200
+    assert wrong_words_sync_response.json()['updated'] == 1
+    assert wrong_words_list_response.status_code == 200
+    assert wrong_words_list_response.json()['words'][0]['word'] == 'abandon'
+    assert wrong_words_clear_response.status_code == 200
+    assert wrong_words_clear_response.json()['message']
+
+
+def test_learning_core_internal_study_session_routes_accept_internal_service_user(monkeypatch, tmp_path):
+    _configure_env(monkeypatch, tmp_path, 'learning-core-internal-study-sessions')
+    module = _load_module('learning_core_service_internal_study_sessions', LEARNING_CORE_SERVICE_PATH)
+    user_id = _create_user(module.learning_core_flask_app, 'learning-core-internal-study-user')
+    client = TestClient(module.app)
+    headers = _internal_headers(user_id=user_id)
+
+    start_response = client.post(
+        '/internal/learning/study-sessions/start',
+        headers=headers,
+        json={'mode': 'smart', 'bookId': 'ielts_reading_premium', 'chapterId': '3'},
+    )
+    session_id = start_response.json()['sessionId']
+    log_response = client.post(
+        '/internal/learning/study-sessions/log',
+        headers=headers,
+        json={
+            'sessionId': session_id,
+            'mode': 'smart',
+            'bookId': 'ielts_reading_premium',
+            'chapterId': '3',
+            'wordsStudied': 5,
+            'correctCount': 4,
+            'wrongCount': 1,
+            'durationSeconds': 60,
+        },
+    )
+    cancel_response = client.post(
+        '/internal/learning/study-sessions/cancel',
+        headers=headers,
+        json={'sessionId': session_id},
+    )
+
+    assert start_response.status_code == 201
+    assert log_response.status_code == 200
+    assert log_response.json()['id'] == session_id
+    assert cancel_response.status_code == 409
+
+
 def test_notes_internal_learning_note_routes_accept_internal_service_user(monkeypatch, tmp_path):
     _configure_env(monkeypatch, tmp_path, 'notes-internal-routes')
     module = _load_module('notes_service_internal_routes', NOTES_SERVICE_PATH)
@@ -196,6 +383,41 @@ def test_notes_internal_learning_note_routes_accept_internal_service_user(monkey
     assert create_response.json()['note']['word_context'] == 'abandon'
     with module.notes_flask_app.app_context():
         assert UserLearningNote.query.filter_by(user_id=user_id).count() == 2
+
+
+def test_catalog_content_internal_custom_book_routes_accept_internal_service_user(monkeypatch, tmp_path):
+    _configure_env(monkeypatch, tmp_path, 'catalog-content-internal-routes')
+    module = _load_module('catalog_content_service_internal_routes', CATALOG_CONTENT_SERVICE_PATH)
+    user_id = _create_user(module.catalog_content_flask_app, 'catalog-content-internal-user')
+    client = TestClient(module.app)
+    headers = _internal_headers(user_id=user_id)
+
+    create_response = client.post(
+        '/internal/catalog/custom-books',
+        headers=headers,
+        json={
+            'title': 'Band 7',
+            'description': 'desc',
+            'chapters': [{'id': 'ch1', 'title': 'One', 'wordCount': 1}],
+            'words': [{
+                'chapterId': 'ch1',
+                'word': 'abandon',
+                'phonetic': '/əˈbændən/',
+                'pos': 'v.',
+                'definition': '放弃',
+            }],
+        },
+    )
+    created_book_id = create_response.json()['bookId']
+    list_response = client.get('/internal/catalog/custom-books', headers=headers)
+    get_response = client.get(f'/internal/catalog/custom-books/{created_book_id}', headers=headers)
+
+    assert create_response.status_code == 201
+    assert create_response.json()['title'] == 'Band 7'
+    assert list_response.status_code == 200
+    assert list_response.json()['books'][0]['id'] == created_book_id
+    assert get_response.status_code == 200
+    assert get_response.json()['id'] == created_book_id
 
 
 def test_admin_ops_accepts_internal_admin_user_without_local_user_row(monkeypatch, tmp_path):

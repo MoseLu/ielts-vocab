@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
 from platform_sdk.learning_core_internal_client import record_learning_core_event
-from platform_sdk.learning_repository_adapters import learning_event_repository
 
 
 def record_smart_dimension_delta_event(
@@ -28,25 +26,27 @@ def record_smart_dimension_delta_event(
 
     total_delta = delta_correct + delta_wrong
     passed = delta_correct > delta_wrong or (delta_correct > 0 and delta_wrong == 0)
-    queue_learning_event(
-        add_learning_event=learning_event_repository.add_learning_event,
-        user_id=user_id,
-        event_type=event_type,
-        source='practice',
-        mode=mode,
-        book_id=book_id,
-        chapter_id=chapter_id,
-        word=word,
-        item_count=max(1, total_delta),
-        correct_count=delta_correct,
-        wrong_count=delta_wrong,
-        payload={
-            'passed': passed,
-            'source_mode': source_mode,
-            'total_correct': current_correct,
-            'total_wrong': current_wrong,
-        },
-    )
+    try:
+        record_learning_core_event(
+            user_id=user_id,
+            event_type=event_type,
+            source='practice',
+            mode=mode,
+            book_id=book_id,
+            chapter_id=chapter_id,
+            word=word,
+            item_count=max(1, total_delta),
+            correct_count=delta_correct,
+            wrong_count=delta_wrong,
+            payload={
+                'passed': passed,
+                'source_mode': source_mode,
+                'total_correct': current_correct,
+                'total_wrong': current_wrong,
+            },
+        )
+    except Exception as exc:
+        logging.warning('[AI_METRIC] failed to record dimension delta event: %s', exc)
 
 
 def track_metric(user_id: int, metric: str, payload: dict | None = None):

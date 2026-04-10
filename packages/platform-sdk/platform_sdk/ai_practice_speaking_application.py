@@ -7,11 +7,10 @@ from flask import jsonify
 
 from platform_sdk.learner_profile_application_support import build_learner_profile_payload
 
-from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
 from platform_sdk.ai_metric_support import track_metric
-from platform_sdk.learning_repository_adapters import (
-    learning_event_repository,
-    learning_stats_repository,
+from platform_sdk.learning_core_internal_client import (
+    fetch_learning_core_wrong_word_count,
+    record_learning_core_event,
 )
 from platform_sdk.ai_text_support import normalize_word_list
 from platform_sdk.study_session_support import normalize_chapter_id
@@ -39,8 +38,7 @@ def pronunciation_check_response(current_user, body: dict | None):
         'speed_feedback': '语速可接受，注意词尾清晰度。',
     }
     try:
-        queue_learning_event(
-            add_learning_event=learning_event_repository.add_learning_event,
+        record_learning_core_event(
             user_id=current_user.id,
             event_type='pronunciation_check',
             source='assistant',
@@ -58,9 +56,7 @@ def pronunciation_check_response(current_user, body: dict | None):
                 'sentence': sentence[:300] if sentence else None,
             },
         )
-        learning_event_repository.commit()
     except Exception as exc:
-        learning_event_repository.rollback()
         logging.warning('[AI] Failed to record pronunciation check: %s', exc)
     track_metric(current_user.id, 'pronunciation_check_used', {'word': word, 'score': score})
     return jsonify(result), 200
@@ -91,8 +87,7 @@ def speaking_simulate_response(current_user, body: dict | None):
     }
     question = question_map.get(part, question_map[1])
     try:
-        queue_learning_event(
-            add_learning_event=learning_event_repository.add_learning_event,
+        record_learning_core_event(
             user_id=current_user.id,
             event_type='speaking_simulation',
             source='assistant',
@@ -111,9 +106,7 @@ def speaking_simulate_response(current_user, body: dict | None):
                 'response_text': response_text[:500] if response_text else None,
             },
         )
-        learning_event_repository.commit()
     except Exception as exc:
-        learning_event_repository.rollback()
         logging.warning('[AI] Failed to record speaking simulation: %s', exc)
     track_metric(current_user.id, 'speaking_simulation_used', {'part': part, 'topic': topic})
     return jsonify({
@@ -134,7 +127,7 @@ def review_plan_response(current_user):
 
     response = {
         'level': 'four-dimensional',
-        'wrong_words': learning_stats_repository.count_user_wrong_words(current_user.id),
+        'wrong_words': _count_wrong_words(current_user.id),
         'mastery_rule': memory_system.get('mastery_rule'),
         'priority_dimension': memory_system.get('priority_dimension_label'),
         'priority_reason': memory_system.get('priority_reason'),
@@ -160,6 +153,14 @@ def review_plan_response(current_user):
         },
     )
     return jsonify(response), 200
+
+
+def _count_wrong_words(user_id: int) -> int:
+    try:
+        return fetch_learning_core_wrong_word_count(user_id)
+    except Exception as exc:
+        logging.warning('[AI] Failed to fetch wrong-word count: %s', exc)
+        return 0
 
 
 def vocab_assessment_response(current_user, args):
