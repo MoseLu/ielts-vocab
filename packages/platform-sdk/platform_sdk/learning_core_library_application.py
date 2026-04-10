@@ -5,7 +5,7 @@ from platform_sdk.learning_core_favorites_support import (
     _favorite_word_count,
     _is_favorites_book,
 )
-from services.books_user_state_repository import (
+from platform_sdk.books_user_state_repository_adapter import (
     commit as _commit_user_state,
     create_user_added_book,
     create_user_chapter_mode_progress,
@@ -14,7 +14,8 @@ from services.books_user_state_repository import (
     get_user_chapter_mode_progress,
     list_user_added_books,
 )
-from services.learning_events import record_learning_event
+from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
+from platform_sdk.learning_repository_adapters import learning_event_repository
 
 
 def _mode_progress_snapshot(record) -> dict:
@@ -50,7 +51,8 @@ def save_chapter_mode_progress_response(
 
     after_snapshot = _mode_progress_snapshot(record)
     if after_snapshot != before_snapshot:
-        record_learning_event(
+        queue_learning_event(
+            add_learning_event=learning_event_repository.add_learning_event,
             user_id=user_id,
             event_type='chapter_mode_progress_updated',
             source='chapter_mode_progress',

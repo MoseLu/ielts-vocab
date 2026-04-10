@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from services import legacy_progress_repository
-from services.books_structure_service import serialize_effective_book_progress
-from services.books_user_state_repository import (
+from platform_sdk.books_user_state_repository_adapter import (
     commit as _commit_user_state,
     create_user_book_progress,
     create_user_chapter_progress,
@@ -14,7 +12,12 @@ from services.books_user_state_repository import (
     list_user_chapter_mode_progress_rows,
     list_user_chapter_progress_rows,
 )
-from services.learning_events import record_learning_event
+from platform_sdk.catalog_provider_adapter import serialize_effective_book_progress
+from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
+from platform_sdk.learning_repository_adapters import (
+    learning_event_repository,
+    legacy_progress_repository,
+)
 
 
 def list_legacy_progress(user_id: int) -> list[dict]:
@@ -117,7 +120,8 @@ def save_book_progress_response(user_id: int, data: dict | None):
         'is_completed': bool(progress.is_completed),
     }
     if after_snapshot != before_snapshot:
-        record_learning_event(
+        queue_learning_event(
+            add_learning_event=learning_event_repository.add_learning_event,
             user_id=user_id,
             event_type='book_progress_updated',
             source='book_progress',
@@ -188,7 +192,8 @@ def save_chapter_progress_response(user_id: int, book_id, chapter_id, data: dict
         'is_completed': bool(progress.is_completed),
     }
     if after_snapshot != before_snapshot:
-        record_learning_event(
+        queue_learning_event(
+            add_learning_event=learning_event_repository.add_learning_event,
             user_id=user_id,
             event_type='chapter_progress_updated',
             source='chapter_progress',
