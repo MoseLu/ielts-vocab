@@ -81,7 +81,11 @@ def _learning_core_database_url() -> str:
 
 def _should_read_from_learning_core_database() -> bool:
     service_name = _current_service_name()
-    return service_name not in ('', 'backend-monolith', 'learning-core-service')
+    return bool(_learning_core_database_url()) and service_name not in (
+        '',
+        'backend-monolith',
+        'learning-core-service',
+    )
 
 
 @lru_cache(maxsize=4)
