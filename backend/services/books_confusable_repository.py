@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-from models import CustomBook, CustomBookChapter, CustomBookWord, UserChapterModeProgress, UserChapterProgress, db
+from service_models.catalog_content_models import (
+    CustomBook,
+    CustomBookChapter,
+    CustomBookWord,
+    UserChapterModeProgress,
+    UserChapterProgress,
+    db,
+)
 
 
 def get_custom_book(*, user_id: int, book_id: str):
