@@ -245,11 +245,51 @@ def test_tts_media_service_example_audio_metadata_contract(monkeypatch):
     }
 
 
+def test_tts_media_service_example_audio_metadata_prefers_oss(monkeypatch):
+    module = _load_tts_media_service_module()
+    client = TestClient(module.app)
+
+    monkeypatch.setattr(module.runtime, 'bucket_is_configured', lambda: True)
+    monkeypatch.setattr(module.runtime, 'example_tts_identity', lambda sentence: ('qwen-tts-2025-05-22', 'Cherry'))
+    monkeypatch.setattr(module.runtime, 'example_audio_signed_url_expires_seconds', lambda: 3600)
+    monkeypatch.setattr(
+        module.runtime,
+        'resolve_example_audio_oss_metadata',
+        lambda sentence, model, voice: SimpleNamespace(
+            provider='aliyun-oss',
+            bucket_name='bucket',
+            object_key='tts-media-service/example-audio/qwen-tts-2025-05-22/cherry/example.mp3',
+            byte_length=803,
+            content_type='audio/mpeg',
+            cache_key='oss:example.mp3:803:etag-1',
+            signed_url='https://oss.example.com/example.mp3?signature=1',
+        ),
+    )
+
+    response = client.post('/v1/media/example-audio/metadata', json={'sentence': 'Hello, world!'})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        'media_id': 'tts-media-service/example-audio/qwen-tts-2025-05-22/cherry/example.mp3',
+        'cache_hit': True,
+        'provider': 'aliyun-oss',
+        'bucket_name': 'bucket',
+        'object_key': 'tts-media-service/example-audio/qwen-tts-2025-05-22/cherry/example.mp3',
+        'content_type': 'audio/mpeg',
+        'byte_length': 803,
+        'cache_key': 'oss:example.mp3:803:etag-1',
+        'signed_url': 'https://oss.example.com/example.mp3?signature=1',
+        'signed_url_expires_at': response.json()['signed_url_expires_at'],
+    }
+    assert response.json()['signed_url_expires_at'].endswith('+00:00')
+
+
 def test_tts_media_service_example_audio_content_generates_and_returns_audio(monkeypatch, tmp_path):
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
     target = tmp_path / 'example.mp3'
 
+    monkeypatch.setattr(module.runtime, 'bucket_is_configured', lambda: False)
     monkeypatch.setattr(module.runtime, 'example_cache_file', lambda sentence, model, voice: target)
     monkeypatch.setattr(module.runtime, 'example_tts_identity', lambda sentence: ('qwen-tts-2025-05-22', 'Cherry'))
     monkeypatch.setattr(module.runtime, 'synthesize_example_audio', lambda sentence, model, voice: VALID_MP3)
@@ -264,3 +304,45 @@ def test_tts_media_service_example_audio_content_generates_and_returns_audio(mon
     assert response.headers['x-audio-cache-key'].startswith('example:')
     assert response.headers['x-media-id'] == 'example.mp3'
     assert target.read_bytes() == VALID_MP3
+
+
+def test_tts_media_service_example_audio_content_uploads_to_oss_without_local_write(monkeypatch, tmp_path):
+    module = _load_tts_media_service_module()
+    client = TestClient(module.app)
+    target = tmp_path / 'example.mp3'
+
+    monkeypatch.setattr(module.runtime, 'bucket_is_configured', lambda: True)
+    monkeypatch.setattr(module.runtime, 'example_cache_file', lambda sentence, model, voice: target)
+    monkeypatch.setattr(module.runtime, 'example_tts_identity', lambda sentence: ('qwen-tts-2025-05-22', 'Cherry'))
+    monkeypatch.setattr(module.runtime, 'fetch_example_audio_oss_payload', lambda sentence, model, voice: None)
+    monkeypatch.setattr(module.runtime, 'remove_invalid_cached_audio', lambda path: None)
+    monkeypatch.setattr(module.runtime, 'synthesize_example_audio', lambda sentence, model, voice: VALID_MP3)
+    monkeypatch.setattr(
+        module.runtime,
+        'put_example_audio_oss_bytes',
+        lambda sentence, model, voice, audio_bytes: SimpleNamespace(
+            provider='aliyun-oss',
+            bucket_name='bucket',
+            object_key='tts-media-service/example-audio/qwen-tts-2025-05-22/cherry/example.mp3',
+            byte_length=len(audio_bytes),
+            content_type='audio/mpeg',
+            cache_key='oss:example.mp3:803:etag-1',
+            signed_url='https://oss.example.com/example.mp3?signature=1',
+        ),
+    )
+    monkeypatch.setattr(
+        module.runtime,
+        'write_bytes_atomically',
+        lambda path, body: (_ for _ in ()).throw(AssertionError('local cache write should not happen')),
+    )
+
+    response = client.post('/v1/media/example-audio/content', json={'sentence': 'Hello, world!'})
+
+    assert response.status_code == 200
+    assert response.content == VALID_MP3
+    assert response.headers['content-type'].startswith('audio/mpeg')
+    assert response.headers['x-audio-bytes'] == str(len(VALID_MP3))
+    assert response.headers['x-audio-cache-key'] == 'oss:example.mp3:803:etag-1'
+    assert response.headers['x-audio-oss-url'] == 'https://oss.example.com/example.mp3?signature=1'
+    assert response.headers['x-media-id'] == 'tts-media-service/example-audio/qwen-tts-2025-05-22/cherry/example.mp3'
+    assert not target.exists()
