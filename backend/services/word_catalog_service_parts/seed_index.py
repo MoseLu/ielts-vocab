@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections import OrderedDict, defaultdict
 
-from models import WordCatalogEntry
+from service_models.catalog_content_models import WordCatalogEntry
 from services import books_catalog_service, word_catalog_repository
 from services.word_catalog_defaults import (
     build_default_root_payload,
