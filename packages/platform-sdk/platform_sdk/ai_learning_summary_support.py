@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+from models import db
 from platform_sdk.local_time_support import (
     current_local_date,
     local_day_window_ms,
@@ -89,6 +90,7 @@ def alltime_distinct_practiced_words(user_id: int) -> int:
     try:
         return learning_stats_repository.count_alltime_distinct_practiced_words(user_id)
     except Exception:
+        db.session.rollback()
         return 0
 
 

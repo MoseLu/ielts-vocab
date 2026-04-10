@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+from models import db
 from services import quick_memory_record_repository, learning_stats_repository
 from services.ai_text_support import normalize_word_key
 from services.local_time import (
@@ -88,6 +89,7 @@ def alltime_distinct_practiced_words(user_id: int) -> int:
     try:
         return learning_stats_repository.count_alltime_distinct_practiced_words(user_id)
     except Exception:
+        db.session.rollback()
         return 0
 
 

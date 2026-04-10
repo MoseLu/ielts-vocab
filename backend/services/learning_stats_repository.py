@@ -164,7 +164,7 @@ def count_alltime_distinct_practiced_words(user_id: int) -> int:
                 UNION
                 SELECT LOWER(TRIM(word)) FROM user_wrong_words
                 WHERE user_id = :uid AND word IS NOT NULL AND TRIM(word) != ''
-            )
+            ) AS distinct_words
             """
         ),
         {'uid': user_id},
