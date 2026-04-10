@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import (
+from service_models.learner_profile_models import (
     CustomBook,
     UserAddedBook,
     UserBookProgress,
