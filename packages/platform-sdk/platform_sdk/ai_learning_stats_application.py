@@ -3,7 +3,7 @@ from __future__ import annotations
 from services.books_registry_service import get_vocab_book_title_map
 from services.books_structure_service import load_book_chapters
 from services.learning_stats_service import build_learning_stats_payload
-from services.local_time import utc_now_naive
+from platform_sdk.local_time_support import utc_now_naive
 from services.study_sessions import normalize_chapter_id, start_or_reuse_study_session
 
 from platform_sdk.ai_learning_summary_support import (

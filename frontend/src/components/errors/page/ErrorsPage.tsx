@@ -12,6 +12,7 @@ import { useErrorsPage, type WrongCountRange } from '../../../composables/errors
 import { ErrorsFAQCard } from './ErrorsFAQCard'
 import { ErrorsSearchWordItem } from './ErrorsSearchWordItem'
 import { ErrorsWordItem } from './ErrorsWordItem'
+import { downloadWrongWordsCsvExport } from './errorsWordExport'
 
 const WRONG_COUNT_RANGE_OPTIONS: Array<{ value: WrongCountRange; label: string }> = [
   { value: 'all', label: '全部' },
@@ -44,6 +45,7 @@ export default function ErrorsPage() {
     dimCounts,
     filteredWords,
     selectedWordKeySet,
+    selectedWords,
     selectedWordCount,
     allFilteredSelected,
     allPaginatedSelected,
@@ -120,6 +122,13 @@ export default function ErrorsPage() {
             onClick={selectPaginatedWords}
           >
             全选当前页
+          </button>
+          <button
+            className="errors-clear-btn"
+            disabled={selectedWords.length === 0}
+            onClick={() => downloadWrongWordsCsvExport(selectedWords)}
+          >
+            导出已勾选 CSV
           </button>
           <button
             className="errors-clear-btn"

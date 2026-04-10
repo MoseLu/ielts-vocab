@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import calendar
 
-from services.local_time import current_local_datetime, format_event_time_for_ai
+from platform_sdk.local_time_support import current_local_datetime, format_event_time_for_ai
 
 from platform_sdk.ai_prompt_support import build_context_msg
 
