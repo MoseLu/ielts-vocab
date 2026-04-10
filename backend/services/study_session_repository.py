@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import UserStudySession, db
+from service_models.learning_core_models import UserStudySession, db
 
 
 def get_user_study_session(user_id: int, session_id):
