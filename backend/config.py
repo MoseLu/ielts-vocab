@@ -2,6 +2,11 @@ import os
 import re
 from urllib.parse import quote_plus
 
+from services.storage_boundary_guard import (
+    current_service_name,
+    validate_split_service_storage_boundary,
+)
+
 
 DEFAULT_CORS_ORIGINS = (
     'https://axiomaticworld.com',
@@ -109,8 +114,14 @@ class Config:
 
     # Database
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    CURRENT_SERVICE_NAME = current_service_name()
     SQLITE_DB_PATH = _resolve_sqlite_db_path(BASE_DIR)
     SQLALCHEMY_DATABASE_URI = _resolve_database_uri(BASE_DIR)
+    validate_split_service_storage_boundary(
+        service_name=CURRENT_SERVICE_NAME,
+        database_uri=SQLALCHEMY_DATABASE_URI,
+        base_dir=BASE_DIR,
+    )
     DATABASE_BACKEND = 'postgresql' if SQLALCHEMY_DATABASE_URI.startswith('postgresql://') else 'sqlite'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ALLOW_DESTRUCTIVE_DB_OPERATIONS = os.environ.get('ALLOW_DESTRUCTIVE_DB_OPERATIONS', 'false').lower() == 'true'
