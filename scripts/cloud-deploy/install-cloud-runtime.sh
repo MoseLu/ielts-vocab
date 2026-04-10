@@ -9,6 +9,10 @@ env_dir="${ENV_DIR:-/etc/ielts-vocab}"
 dnf install -y git nginx postgresql-server postgresql-contrib python3 python3-pip \
   python3-devel gcc gcc-c++ make openssl-devel libffi-devel tar curl cronie
 
+if ! dnf install -y certbot python3-certbot-nginx; then
+  dnf install -y certbot
+fi
+
 if ! command -v node >/dev/null 2>&1 || [[ "$(node -p 'Number(process.versions.node.split(`.`)[0])' 2>/dev/null || echo 0)" -lt 20 ]]; then
   curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
   dnf install -y nodejs
