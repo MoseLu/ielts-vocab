@@ -60,6 +60,10 @@ prepare_repository_root() {
 
 fetch_git_commit() {
   local git_ref="${1:?git ref is required}"
+  if git -C "${REPOSITORY_ROOT}" fetch --tags origin "${git_ref}" >/dev/null 2>&1; then
+    git -C "${REPOSITORY_ROOT}" rev-parse --verify "FETCH_HEAD^{commit}"
+    return 0
+  fi
   git -C "${REPOSITORY_ROOT}" fetch --tags origin
   git -C "${REPOSITORY_ROOT}" rev-parse --verify "${git_ref}^{commit}"
 }
