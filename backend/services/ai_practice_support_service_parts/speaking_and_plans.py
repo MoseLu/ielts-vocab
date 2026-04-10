@@ -2,10 +2,13 @@ import logging
 
 from flask import jsonify
 
-from services import learning_event_repository, learning_stats_repository
+from platform_sdk.learning_repository_adapters import (
+    learning_event_repository,
+    learning_stats_repository,
+)
+from platform_sdk.learner_profile_builder_adapter import build_learner_profile
 from services.ai_route_support_service import _normalize_chapter_id, _normalize_word_list, _track_metric
 from services.ai_vocab_catalog_service import _get_global_vocab_pool
-from services.learner_profile import build_learner_profile
 from services.learning_events import record_learning_event
 
 
