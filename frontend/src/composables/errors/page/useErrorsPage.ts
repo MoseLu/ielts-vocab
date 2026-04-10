@@ -168,10 +168,13 @@ export function useErrorsPage() {
   }, [appliedSearch, dimFilter, endDate, maxWrongCount, minWrongCount, scope, searchMode, startDate, visibleWords])
 
   const selectedWordKeySet = useMemo(() => new Set(selectedWordKeys), [selectedWordKeys])
+  const selectedWords = useMemo(() => {
+    return words.filter(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
+  }, [selectedWordKeySet, words])
   const selectedFilteredWordCount = useMemo(() => {
     return filteredWords.filter(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word))).length
   }, [filteredWords, selectedWordKeySet])
-  const selectedWordCount = selectedWordKeys.length
+  const selectedWordCount = selectedWords.length
   const selectedOutsideFilterCount = Math.max(0, selectedWordCount - selectedFilteredWordCount)
   const allFilteredSelected = filteredWords.length > 0
     && filteredWords.every(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
@@ -339,6 +342,7 @@ export function useErrorsPage() {
     dimCounts: dimStats.counts,
     filteredWords,
     selectedWordKeySet,
+    selectedWords,
     selectedWordCount,
     selectedFilteredWordCount,
     selectedOutsideFilterCount,

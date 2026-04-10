@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from services import learning_stats_repository, quick_memory_record_repository
-from services.local_time import (
+from platform_sdk.local_time_support import (
     current_local_date,
     local_day_window_ms,
     utc_naive_to_epoch_ms,
     utc_naive_to_local_date_key,
     utc_now_naive,
 )
+from services import learning_stats_repository, quick_memory_record_repository
 from services.quick_memory_schedule import (
     QUICK_MEMORY_MASTERY_TARGET,
     load_user_quick_memory_records,

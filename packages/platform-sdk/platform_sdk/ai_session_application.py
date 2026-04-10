@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from services.local_time import utc_naive_to_epoch_ms, utc_now_naive
+from platform_sdk.local_time_support import utc_naive_to_epoch_ms, utc_now_naive
 from services.quick_memory_schedule import load_user_quick_memory_records
 from services.study_session_repository import (
     commit as commit_study_session,
