@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import SearchCache, db
+from service_models.ai_execution_models import SearchCache, db
 
 
 def prune_search_cache_older_than(cutoff: datetime) -> None:
