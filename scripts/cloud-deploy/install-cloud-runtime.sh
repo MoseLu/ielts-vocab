@@ -6,6 +6,42 @@ venv_dir="${VENV_DIR:-/opt/ielts-vocab/venv}"
 web_root="${WEB_ROOT:-/var/www/ielts-vocab}"
 env_dir="${ENV_DIR:-/etc/ielts-vocab}"
 
+install_node20_from_tarball() {
+  local node_arch=""
+  case "$(uname -m)" in
+    x86_64) node_arch="x64" ;;
+    aarch64) node_arch="arm64" ;;
+    *)
+      echo "Unsupported architecture for Node.js 20: $(uname -m)" >&2
+      return 1
+      ;;
+  esac
+
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local base_url="https://nodejs.org/dist/latest-v20.x"
+  local archive_name
+  archive_name="$(
+    curl -fsSL "${base_url}/SHASUMS256.txt" \
+      | awk "/node-v[0-9.]+-linux-${node_arch}\\.tar\\.xz/ { print \$2; exit }"
+  )"
+  if [[ -z "${archive_name}" ]]; then
+    echo "Could not determine latest Node.js 20 archive for ${node_arch}" >&2
+    rm -rf "${tmpdir}"
+    return 1
+  fi
+
+  curl -fsSL "${base_url}/${archive_name}" -o "${tmpdir}/${archive_name}"
+  rm -rf /opt/node20
+  mkdir -p /opt/node20
+  tar -xJf "${tmpdir}/${archive_name}" -C /opt/node20 --strip-components=1
+  ln -sf /opt/node20/bin/node /usr/local/bin/node
+  ln -sf /opt/node20/bin/npm /usr/local/bin/npm
+  ln -sf /opt/node20/bin/npx /usr/local/bin/npx
+  ln -sf /opt/node20/bin/corepack /usr/local/bin/corepack
+  rm -rf "${tmpdir}"
+}
+
 dnf install -y git postgresql-server postgresql-contrib python3 python3-pip \
   python3-devel gcc gcc-c++ make openssl-devel libffi-devel tar curl cronie
 dnf install -y --disableexcludes=all nginx
@@ -15,8 +51,11 @@ if ! dnf install -y certbot python3-certbot-nginx; then
 fi
 
 if ! command -v node >/dev/null 2>&1 || [[ "$(node -p 'Number(process.versions.node.split(`.`)[0])' 2>/dev/null || echo 0)" -lt 20 ]]; then
-  curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-  dnf install -y nodejs
+  if ! curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -; then
+    install_node20_from_tarball
+  else
+    dnf install -y nodejs || install_node20_from_tarball
+  fi
 fi
 
 if [[ ! -d /var/lib/pgsql/data/base ]]; then
