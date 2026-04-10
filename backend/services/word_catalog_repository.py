@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from models import WordCatalogBookRef, WordCatalogEntry, db
+from service_models.catalog_content_models import WordCatalogBookRef, WordCatalogEntry, db
 
 
 def get_word_catalog_entry(normalized_word: str):
