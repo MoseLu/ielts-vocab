@@ -42,6 +42,18 @@ install_node20_from_tarball() {
   rm -rf "${tmpdir}"
 }
 
+configure_postgres_hba() {
+  local hba_file="/var/lib/pgsql/data/pg_hba.conf"
+  if [[ ! -f "${hba_file}" ]]; then
+    return 0
+  fi
+
+  sed -ri 's/^host\s+all\s+all\s+127\.0\.0\.1\/32\s+\S+/host    all             all             127.0.0.1\/32            scram-sha-256/' "${hba_file}"
+  sed -ri 's/^host\s+all\s+all\s+::1\/128\s+\S+/host    all             all             ::1\/128                 scram-sha-256/' "${hba_file}"
+  sed -ri 's/^host\s+replication\s+all\s+127\.0\.0\.1\/32\s+\S+/host    replication     all             127.0.0.1\/32            scram-sha-256/' "${hba_file}"
+  sed -ri 's/^host\s+replication\s+all\s+::1\/128\s+\S+/host    replication     all             ::1\/128                 scram-sha-256/' "${hba_file}"
+}
+
 dnf install -y git postgresql-server postgresql-contrib python3 python3-pip \
   python3-devel gcc gcc-c++ make openssl-devel libffi-devel tar curl cronie
 dnf install -y --disableexcludes=all nginx
@@ -61,8 +73,10 @@ fi
 if [[ ! -d /var/lib/pgsql/data/base ]]; then
   postgresql-setup --initdb
 fi
+configure_postgres_hba
 
 systemctl enable --now postgresql nginx crond
+systemctl restart postgresql
 
 mkdir -p "${env_dir}" "${web_root}" /var/backups/ielts-vocab/postgres
 chmod 700 "${env_dir}" /var/backups/ielts-vocab
