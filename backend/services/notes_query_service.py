@@ -5,9 +5,14 @@ from datetime import datetime, timedelta
 
 from flask import jsonify
 
+from runtime_paths import ensure_shared_package_paths
 from services import daily_summary_repository, learning_note_repository
 from services.memory_topics import build_memory_topics
 from services.notes_summary_service import parse_date_param, parse_int_param
+
+ensure_shared_package_paths()
+
+from platform_sdk.notes_export_storage import store_notes_export
 
 
 def get_notes_response(user_id: int, args):
@@ -153,8 +158,15 @@ def export_notes_response(user_id: int, args):
 
     date_range = f"{start_date or 'all'}_{end_date or 'all'}"
     filename = f"ielts_notes_{date_range}.{'md' if fmt != 'txt' else 'txt'}"
+    export_storage = store_notes_export(
+        user_id=user_id,
+        filename=filename,
+        fmt=fmt,
+        content=content,
+    )
     return jsonify({
         'content': content,
         'filename': filename,
         'format': fmt,
+        **export_storage,
     })
