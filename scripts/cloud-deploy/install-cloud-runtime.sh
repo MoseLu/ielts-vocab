@@ -95,7 +95,11 @@ cp -a "${app_root}/dist/." "${web_root}/"
 
 chmod +x "${app_root}/scripts/cloud-deploy/"*.sh
 cp "${app_root}/scripts/cloud-deploy/ielts-service@.service" /etc/systemd/system/
-cp "${app_root}/scripts/cloud-deploy/ielts-vocab.nginx.conf" /etc/nginx/conf.d/ielts-vocab.conf
+if [[ -f /etc/nginx/conf.d/ielts-vocab.conf ]] && grep -q 'managed by Certbot' /etc/nginx/conf.d/ielts-vocab.conf; then
+  echo "Preserving existing Certbot-managed nginx site config."
+else
+  cp "${app_root}/scripts/cloud-deploy/ielts-vocab.nginx.conf" /etc/nginx/conf.d/ielts-vocab.conf
+fi
 
 systemctl daemon-reload
 nginx -t
