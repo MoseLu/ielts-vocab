@@ -2,6 +2,9 @@
 set -euo pipefail
 
 app_root="${APP_ROOT:-/opt/ielts-vocab/current}"
+app_home="${APP_HOME:-$(dirname "${app_root}")}"
+repository_root="${REPOSITORY_ROOT:-${app_home}/repository}"
+releases_root="${RELEASES_ROOT:-${app_home}/releases}"
 venv_dir="${VENV_DIR:-/opt/ielts-vocab/venv}"
 web_root="${WEB_ROOT:-/var/www/ielts-vocab}"
 env_dir="${ENV_DIR:-/etc/ielts-vocab}"
@@ -78,8 +81,12 @@ configure_postgres_hba
 systemctl enable --now postgresql nginx crond
 systemctl restart postgresql
 
-mkdir -p "${env_dir}" "${web_root}" /var/backups/ielts-vocab/postgres
+mkdir -p "${env_dir}" "${web_root}" "${releases_root}" /var/backups/ielts-vocab/postgres
 chmod 700 "${env_dir}" /var/backups/ielts-vocab
+
+if [[ ! -d "${repository_root}/.git" && -d "${app_root}/.git" ]]; then
+  git clone --no-hardlinks "${app_root}" "${repository_root}"
+fi
 
 python3 -m venv "${venv_dir}"
 "${venv_dir}/bin/pip" install --upgrade pip wheel
