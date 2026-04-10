@@ -1,0 +1,102 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: Commit SHA, branch, or tag to deploy
+        required: false
+        default: main
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  resolve-ref:
+    runs-on: ubuntu-latest
+    outputs:
+      git_ref: ${{ steps.resolve.outputs.git_ref }}
+    steps:
+      - name: Resolve deployment ref
+        id: resolve
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.git_ref }}" ]]; then
+            echo "git_ref=${{ inputs.git_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "git_ref=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: resolve-ref
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: production
+      url: https://axiomaticworld.com
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout deployment scripts
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-ref.outputs.git_ref }}
+
+      - name: Configure SSH access
+        shell: bash
+        env:
+          PROD_SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${PROD_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${PROD_SSH_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Upload deployment scripts
+        shell: bash
+        env:
+          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+        run: |
+          remote_tmp="/tmp/ielts-vocab-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "rm -rf '${remote_tmp}' && mkdir -p '${remote_tmp}'"
+          scp \
+            scripts/cloud-deploy/deploy-release.sh \
+            scripts/cloud-deploy/preflight-check.sh \
+            scripts/cloud-deploy/release-common.sh \
+            scripts/cloud-deploy/rollback-release.sh \
+            scripts/cloud-deploy/smoke-check.sh \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/"
+          echo "REMOTE_TMP=${remote_tmp}" >> "$GITHUB_ENV"
+
+      - name: Run remote preflight
+        shell: bash
+        env:
+          GIT_REF: ${{ needs.resolve-ref.outputs.git_ref }}
+          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          PROD_APP_HOME: ${{ vars.PROD_APP_HOME }}
+        run: |
+          app_home="${PROD_APP_HOME:-/opt/ielts-vocab}"
+          remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' bash '${REMOTE_TMP}/preflight-check.sh' '${GIT_REF}'"
+          ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "${remote_cmd}"
+
+      - name: Run production deployment
+        shell: bash
+        env:
+          GIT_REF: ${{ needs.resolve-ref.outputs.git_ref }}
+          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          PROD_APP_HOME: ${{ vars.PROD_APP_HOME }}
+          PROD_SMOKE_HOST: ${{ vars.PROD_SMOKE_HOST }}
+        run: |
+          app_home="${PROD_APP_HOME:-/opt/ielts-vocab}"
+          smoke_host="${PROD_SMOKE_HOST:-axiomaticworld.com}"
+          remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; cleanup(){ run_privileged rm -rf '${REMOTE_TMP}'; }; trap cleanup EXIT; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' SMOKE_HOST='${smoke_host}' bash '${REMOTE_TMP}/deploy-release.sh' '${GIT_REF}'"
+          ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "${remote_cmd}"
