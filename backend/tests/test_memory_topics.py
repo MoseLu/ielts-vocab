@@ -6,14 +6,16 @@ from models import User, UserLearningNote, db
 
 
 def _make_user_and_token(app, username: str):
-    user = User(username=username, email=f'{username}@example.com')
-    user.set_password('password123')
-    db.session.add(user)
-    db.session.commit()
+    with app.app_context():
+        user = User(username=username, email=f'{username}@example.com')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
 
     token = jwt.encode(
         {
-            'user_id': user.id,
+            'user_id': user_id,
             'type': 'access',
             'jti': f'jti-{username}',
             'iat': int(datetime.utcnow().timestamp()),
@@ -22,36 +24,37 @@ def _make_user_and_token(app, username: str):
         app.config['JWT_SECRET_KEY'],
         algorithm='HS256',
     )
-    return token, user.id
+    return token, user_id
 
 
 def test_notes_endpoint_returns_memory_topics(client, app):
     token, user_id = _make_user_and_token(app, 'memory-topics-user')
 
-    db.session.add_all([
-        UserLearningNote(
-            user_id=user_id,
-            question='kind of 和 a kind of 有什么区别？',
-            answer='第一次解释',
-            word_context='kind',
-            created_at=datetime(2026, 3, 30, 8, 0, 0),
-        ),
-        UserLearningNote(
-            user_id=user_id,
-            question='kind of 和 a kind of 还是分不清',
-            answer='第二次解释',
-            word_context='kind',
-            created_at=datetime(2026, 3, 30, 9, 0, 0),
-        ),
-        UserLearningNote(
-            user_id=user_id,
-            question='evidence 和 proof 的区别？',
-            answer='另一个主题',
-            word_context='evidence',
-            created_at=datetime(2026, 3, 30, 10, 0, 0),
-        ),
-    ])
-    db.session.commit()
+    with app.app_context():
+        db.session.add_all([
+            UserLearningNote(
+                user_id=user_id,
+                question='kind of 和 a kind of 有什么区别？',
+                answer='第一次解释',
+                word_context='kind',
+                created_at=datetime(2026, 3, 30, 8, 0, 0),
+            ),
+            UserLearningNote(
+                user_id=user_id,
+                question='kind of 和 a kind of 还是分不清',
+                answer='第二次解释',
+                word_context='kind',
+                created_at=datetime(2026, 3, 30, 9, 0, 0),
+            ),
+            UserLearningNote(
+                user_id=user_id,
+                question='evidence 和 proof 的区别？',
+                answer='另一个主题',
+                word_context='evidence',
+                created_at=datetime(2026, 3, 30, 10, 0, 0),
+            ),
+        ])
+        db.session.commit()
 
     response = client.get('/api/notes', headers={'Authorization': f'Bearer {token}'})
 
