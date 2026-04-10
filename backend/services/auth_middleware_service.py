@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime
 
 import jwt
@@ -97,17 +98,22 @@ def _resolve_internal_current_user(app, request, *, allow_missing: bool):
 
 
 def resolve_current_user(app, request, *, allow_missing: bool):
-    internal_user, internal_error = _resolve_internal_current_user(
-        app,
-        request,
-        allow_missing=allow_missing,
-    )
-    if internal_error is not None:
-        return None, internal_error
-    if internal_user is not None:
-        return internal_user, None
-
     token = extract_access_token(request)
+    prefer_cookie_user = (
+        (os.environ.get('CURRENT_SERVICE_NAME') or '').strip() == 'identity-service'
+        and bool(token)
+    )
+    if not prefer_cookie_user:
+        internal_user, internal_error = _resolve_internal_current_user(
+            app,
+            request,
+            allow_missing=allow_missing,
+        )
+        if internal_error is not None:
+            return None, internal_error
+        if internal_user is not None:
+            return internal_user, None
+
     if not token:
         return None, _auth_error(allow_missing=allow_missing, error='请先登录', code='NO_TOKEN')
 

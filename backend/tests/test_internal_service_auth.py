@@ -31,6 +31,12 @@ NOTES_SERVICE_PATH = (
     / 'notes-service'
     / 'main.py'
 )
+IDENTITY_SERVICE_PATH = (
+    Path(__file__).resolve().parents[2]
+    / 'services'
+    / 'identity-service'
+    / 'main.py'
+)
 
 
 def _load_module(module_name: str, path: Path):
@@ -89,6 +95,29 @@ def test_learning_core_accepts_internal_service_user_without_local_user_row(monk
 
     assert response.status_code == 200
     assert response.json() == {'progress': {}}
+
+
+def test_identity_service_prefers_cookie_user_over_gateway_internal_snapshot(monkeypatch, tmp_path):
+    _configure_env(monkeypatch, tmp_path, 'identity-cookie-priority')
+    module = _load_module('identity_service_cookie_priority', IDENTITY_SERVICE_PATH)
+    _create_user(module.identity_flask_app, 'identity-cookie-priority-user')
+    client = TestClient(module.app)
+
+    login_response = client.post('/api/auth/login', json={
+        'email': 'identity-cookie-priority-user',
+        'password': 'password123',
+    })
+    assert login_response.status_code == 200
+
+    response = client.get(
+        '/api/auth/me',
+        headers=_internal_headers(user_id=90210),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()['user']
+    assert payload['username'] == 'identity-cookie-priority-user'
+    assert payload['created_at']
 
 
 def test_learning_core_internal_read_routes_accept_internal_service_user(monkeypatch, tmp_path):

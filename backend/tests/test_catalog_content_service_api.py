@@ -7,6 +7,7 @@ from pathlib import Path
 
 import jwt
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, text
 
 import services.books_catalog_service as books_catalog_service
 import services.books_vocabulary_loader_service as books_vocabulary_loader_service
@@ -64,6 +65,58 @@ def _auth_headers(token: str) -> dict[str, str]:
     return {'Authorization': f'Bearer {token}'}
 
 
+def _create_learning_core_favorites_db(db_url: str, user_id: int) -> None:
+    engine = create_engine(db_url)
+    with engine.begin() as connection:
+        connection.execute(text("""
+            CREATE TABLE user_favorite_words (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                word VARCHAR(160) NOT NULL,
+                normalized_word VARCHAR(160) NOT NULL,
+                phonetic VARCHAR(100),
+                pos VARCHAR(50),
+                definition TEXT,
+                source_book_id VARCHAR(100),
+                source_book_title VARCHAR(200),
+                source_chapter_id VARCHAR(100),
+                source_chapter_title VARCHAR(200),
+                created_at DATETIME,
+                updated_at DATETIME
+            )
+        """))
+        connection.execute(text("""
+            INSERT INTO user_favorite_words (
+                user_id,
+                word,
+                normalized_word,
+                phonetic,
+                pos,
+                definition,
+                source_book_id,
+                source_book_title,
+                source_chapter_id,
+                source_chapter_title,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                :user_id,
+                'Abandon',
+                'abandon',
+                '/əˈbændən/',
+                'v.',
+                '放弃',
+                'ielts_reading_premium',
+                'IELTS Reading Premium',
+                '1',
+                'Chapter 1',
+                '2026-04-10 10:00:00',
+                '2026-04-10 10:00:00'
+            )
+        """), {'user_id': user_id})
+
+
 def test_catalog_content_service_health_endpoint(monkeypatch, tmp_path):
     _configure_catalog_env(monkeypatch, tmp_path)
     module = _load_catalog_content_service_module('catalog_content_service_health')
@@ -88,6 +141,38 @@ def test_catalog_content_service_lists_books_and_vocabulary_stats(monkeypatch, t
     assert len(books_response.json()['books']) > 0
     assert vocabulary_response.status_code == 200
     assert vocabulary_response.json()['days'] == 30
+
+
+def test_catalog_content_service_reads_favorites_from_learning_core_database(
+    monkeypatch,
+    tmp_path,
+):
+    learning_core_url = 'sqlite:///' + str(tmp_path / 'learning-core-service.sqlite')
+    _configure_catalog_env(monkeypatch, tmp_path)
+    monkeypatch.setenv('LEARNING_CORE_SERVICE_DATABASE_URL', learning_core_url)
+    module = _load_catalog_content_service_module('catalog_content_service_favorites')
+    client = TestClient(module.app)
+    token = _create_user_and_token(module.catalog_content_flask_app, username='catalog-favorite-user')
+
+    with module.catalog_content_flask_app.app_context():
+        user_id = User.query.filter_by(username='catalog-favorite-user').first().id
+    _create_learning_core_favorites_db(learning_core_url, user_id)
+
+    books_response = client.get('/api/books', headers=_auth_headers(token))
+    chapter_response = client.get(
+        '/api/books/ielts_auto_favorites/chapters/1',
+        headers=_auth_headers(token),
+    )
+
+    assert books_response.status_code == 200
+    favorite_book = next(
+        book
+        for book in books_response.json()['books']
+        if book['id'] == 'ielts_auto_favorites'
+    )
+    assert favorite_book['word_count'] == 1
+    assert chapter_response.status_code == 200
+    assert chapter_response.json()['words'][0]['word'] == 'Abandon'
 
 
 def test_catalog_content_service_word_details(monkeypatch, tmp_path):

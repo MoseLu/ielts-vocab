@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import os
+from functools import lru_cache
+from types import SimpleNamespace
+
+from sqlalchemy import bindparam, create_engine, text
+
 from platform_sdk import learning_core_personalization_repository_adapter as personalization_repository
 from platform_sdk.books_user_state_repository_adapter import (
     create_user_added_book,
@@ -22,6 +28,23 @@ class _FavoriteWordsQueryCompat:
         return list(self._rows)
 
 
+class _FavoriteWordSnapshot(SimpleNamespace):
+    def to_dict(self):
+        return {
+            'word': self.word,
+            'normalized_word': self.normalized_word,
+            'phonetic': self.phonetic,
+            'pos': self.pos,
+            'definition': self.definition,
+            'source_book_id': self.source_book_id,
+            'source_book_title': self.source_book_title,
+            'source_chapter_id': self.source_chapter_id,
+            'source_chapter_title': self.source_chapter_title,
+            'created_at': _iso_timestamp(self.created_at),
+            'updated_at': _iso_timestamp(self.updated_at),
+        }
+
+
 def _is_favorites_book(book_id: str | None) -> bool:
     return str(book_id or '') == FAVORITES_BOOK_ID
 
@@ -32,16 +55,166 @@ def _normalize_favorite_word(value) -> str:
     return value.strip().lower()
 
 
-def _favorite_word_count(user_id: int | None) -> int:
-    if not user_id:
+def _iso_timestamp(value):
+    if value is None:
+        return None
+    if hasattr(value, 'isoformat'):
+        return value.isoformat()
+    return str(value)
+
+
+def _normalize_database_uri(uri: str) -> str:
+    if uri.startswith('postgres://'):
+        return 'postgresql://' + uri[len('postgres://'):]
+    return uri
+
+
+def _current_service_name() -> str:
+    return (os.environ.get('CURRENT_SERVICE_NAME') or '').strip()
+
+
+def _learning_core_database_url() -> str:
+    return _normalize_database_uri(
+        (os.environ.get('LEARNING_CORE_SERVICE_DATABASE_URL') or '').strip()
+    )
+
+
+def _should_read_from_learning_core_database() -> bool:
+    service_name = _current_service_name()
+    return service_name not in ('', 'backend-monolith', 'learning-core-service')
+
+
+@lru_cache(maxsize=4)
+def _learning_core_read_engine(database_url: str):
+    return create_engine(database_url, pool_pre_ping=True)
+
+
+def _external_learning_core_engine():
+    database_url = _learning_core_database_url()
+    if not database_url:
+        return None
+    return _learning_core_read_engine(database_url)
+
+
+def _favorite_snapshot_from_row(row) -> _FavoriteWordSnapshot:
+    data = row._mapping
+    return _FavoriteWordSnapshot(
+        word=data.get('word') or '',
+        normalized_word=data.get('normalized_word') or '',
+        phonetic=data.get('phonetic'),
+        pos=data.get('pos'),
+        definition=data.get('definition'),
+        source_book_id=data.get('source_book_id'),
+        source_book_title=data.get('source_book_title'),
+        source_chapter_id=data.get('source_chapter_id'),
+        source_chapter_title=data.get('source_chapter_title'),
+        created_at=data.get('created_at'),
+        updated_at=data.get('updated_at'),
+    )
+
+
+def _external_favorite_word_count(user_id: int) -> int:
+    engine = _external_learning_core_engine()
+    if engine is None:
         return 0
+
+    with engine.connect() as connection:
+        value = connection.execute(
+            text('SELECT COUNT(*) FROM user_favorite_words WHERE user_id = :user_id'),
+            {'user_id': user_id},
+        ).scalar()
+    return int(value or 0)
+
+
+def _external_favorite_words(user_id: int) -> list[_FavoriteWordSnapshot]:
+    engine = _external_learning_core_engine()
+    if engine is None:
+        return []
+
+    statement = text("""
+        SELECT
+            word,
+            normalized_word,
+            phonetic,
+            pos,
+            definition,
+            source_book_id,
+            source_book_title,
+            source_chapter_id,
+            source_chapter_title,
+            created_at,
+            updated_at
+        FROM user_favorite_words
+        WHERE user_id = :user_id
+        ORDER BY updated_at DESC, created_at DESC, LOWER(word) ASC
+    """)
+    with engine.connect() as connection:
+        rows = connection.execute(statement, {'user_id': user_id}).all()
+    return [_favorite_snapshot_from_row(row) for row in rows]
+
+
+def _external_favorite_words_by_normalized(
+    user_id: int,
+    normalized_words: list[str],
+) -> list[_FavoriteWordSnapshot]:
+    engine = _external_learning_core_engine()
+    if engine is None or not normalized_words:
+        return []
+
+    statement = text("""
+        SELECT
+            word,
+            normalized_word,
+            phonetic,
+            pos,
+            definition,
+            source_book_id,
+            source_book_title,
+            source_chapter_id,
+            source_chapter_title,
+            created_at,
+            updated_at
+        FROM user_favorite_words
+        WHERE user_id = :user_id
+          AND normalized_word IN :normalized_words
+    """).bindparams(bindparam('normalized_words', expanding=True))
+    with engine.connect() as connection:
+        rows = connection.execute(statement, {
+            'user_id': user_id,
+            'normalized_words': normalized_words,
+        }).all()
+    return [_favorite_snapshot_from_row(row) for row in rows]
+
+
+def _read_favorite_word_count(user_id: int) -> int:
+    if _should_read_from_learning_core_database():
+        return _external_favorite_word_count(user_id)
     return personalization_repository.count_user_favorite_words(user_id)
 
 
-def _favorite_words_query(user_id: int):
-    return _FavoriteWordsQueryCompat(
-        personalization_repository.list_user_favorite_words(user_id)
+def _read_favorite_words(user_id: int):
+    if _should_read_from_learning_core_database():
+        return _external_favorite_words(user_id)
+    return personalization_repository.list_user_favorite_words(user_id)
+
+
+def _read_favorite_words_by_normalized(user_id: int, normalized_words: list[str]):
+    if _should_read_from_learning_core_database():
+        return _external_favorite_words_by_normalized(user_id, normalized_words)
+    return personalization_repository.list_user_favorite_words_by_normalized(
+        user_id,
+        normalized_words,
     )
+
+
+def _favorite_word_count(user_id: int | None) -> int:
+    if not user_id:
+        return 0
+    return _read_favorite_word_count(user_id)
+
+
+def _favorite_words_query(user_id: int):
+    return _FavoriteWordsQueryCompat(_read_favorite_words(user_id))
 
 
 def _build_favorites_book_payload(user_id: int | None) -> dict | None:
@@ -70,7 +243,7 @@ def _serialize_favorite_words(user_id: int | None) -> list[dict]:
         return []
 
     words: list[dict] = []
-    for record in personalization_repository.list_user_favorite_words(user_id):
+    for record in _read_favorite_words(user_id):
         words.append({
             'word': record.word,
             'phonetic': record.phonetic or '',
@@ -150,10 +323,7 @@ def get_favorite_status_words(user_id: int, raw_words) -> list[str]:
     if not normalized_words:
         return []
 
-    rows = personalization_repository.list_user_favorite_words_by_normalized(
-        user_id,
-        normalized_words,
-    )
+    rows = _read_favorite_words_by_normalized(user_id, normalized_words)
     return [row.normalized_word for row in rows]
 
 
