@@ -112,6 +112,12 @@ install_release_dependencies() {
   pnpm --dir "${release_dir}" build
 }
 
+hydrate_release_git_index() {
+  local release_dir="${1:?release dir is required}"
+  git -C "${release_dir}" init -q
+  git -C "${release_dir}" add -A
+}
+
 copy_frontend_dist() {
   local release_dir="${1:?release dir is required}"
   [[ -d "${release_dir}/dist" ]] || fail "Missing frontend build output in ${release_dir}/dist"
