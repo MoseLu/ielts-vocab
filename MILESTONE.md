@@ -106,4 +106,3 @@ Last updated: 2026-04-10 21:01:21 +08:00
 - The remote deployment is a single-server production baseline rather than the final Kubernetes form, so every remaining migration step needs backward-compatible rollout and rollback discipline before the architecture evolves again.
 - `platform-sdk` is now adapterized, but the adapters still point at shared repositories and shared ORM ownership, so the backend is not yet a classical microservice system until repository ownership and model ownership are split in Wave 3.
 
-
