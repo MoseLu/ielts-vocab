@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import UserStudySession
+from service_models.learning_core_models import UserStudySession
 from services import study_session_repository
 from services.learning_events import record_learning_event
 

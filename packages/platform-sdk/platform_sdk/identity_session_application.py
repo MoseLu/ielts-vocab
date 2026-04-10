@@ -14,7 +14,7 @@ from platform_sdk.identity_session_support import (
     validate_avatar_value,
     validate_email,
 )
-from services import auth_repository
+from platform_sdk.identity_repository_adapter import auth_repository
 
 
 def perform_register(app, request, data: dict) -> tuple[dict, int, int | None]:

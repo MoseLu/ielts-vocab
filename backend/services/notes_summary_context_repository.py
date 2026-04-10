@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import UserStudySession, UserWrongWord
+from service_models.learning_core_models import UserStudySession, UserWrongWord
 
 
 def list_study_sessions_in_window(

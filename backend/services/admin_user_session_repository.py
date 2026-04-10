@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import desc, func
 
-from models import UserStudySession, db
+from service_models.admin_ops_models import UserStudySession, db
 
 
 def _apply_session_filters(query, *, date_from, date_to, mode, book_id):

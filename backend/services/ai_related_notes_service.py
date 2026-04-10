@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 
-from services import learner_profile_repository
+from platform_sdk.notes_repository_adapters import learning_note_repository
 from services.memory_topics import build_memory_topics
 
 
@@ -44,7 +44,7 @@ def collect_related_learning_notes(
     normalized_message = _normalize_question_signature(user_message)
     current_word = ((frontend_context or {}).get('currentWord') or '').strip().lower()
 
-    recent_notes = learner_profile_repository.list_user_learning_notes(
+    recent_notes = learning_note_repository.list_learning_notes(
         user_id,
         limit=80,
         descending=True,

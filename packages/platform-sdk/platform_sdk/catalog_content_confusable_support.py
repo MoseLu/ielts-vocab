@@ -5,9 +5,8 @@ from typing import TYPE_CHECKING
 
 from flask import current_app, request
 
-from services import books_confusable_repository
-from services.auth_middleware_service import resolve_current_user
-from services.books_catalog_query_service import load_book_vocabulary
+from platform_sdk.catalog_runtime_adapters import books_confusable_repository
+from platform_sdk.catalog_provider_adapter import load_book_vocabulary, resolve_current_user
 
 if TYPE_CHECKING:
     from models import User
@@ -107,6 +106,10 @@ def build_confusable_lookup() -> dict[str, dict]:
 
     _confusable_lookup_cache = lookup
     return lookup
+
+
+def list_vocab_books():
+    return list_vocab_books()
 
 
 def normalize_confusable_custom_groups(raw_groups) -> list[list[str]]:

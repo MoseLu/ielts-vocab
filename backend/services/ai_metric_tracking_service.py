@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from services import learning_event_repository
+from platform_sdk.learning_repository_adapters import learning_event_repository
 from services.learning_events import record_learning_event
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from models import UserWrongWord, db
+from service_models.learning_core_models import UserWrongWord, db
 
 
 def get_user_wrong_word(user_id: int, word: str):

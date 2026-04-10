@@ -6,10 +6,9 @@ import uuid
 
 from flask import jsonify
 
-from services import ai_custom_book_repository
-from services.llm import chat
-
 from platform_sdk.ai_context_application import build_context_payload
+from platform_sdk.ai_repository_adapters import ai_custom_book_repository
+from platform_sdk.llm_provider_adapter import chat
 
 
 GENERATE_BOOK_PROMPT = """你是一个 IELTS 词汇专家。用户希望生成一份自定义词汇书，请根据以下信息生成词表。

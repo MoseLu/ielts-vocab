@@ -15,10 +15,10 @@ if str(BACKEND_PATH) not in sys.path:
     sys.path.insert(0, str(BACKEND_PATH))
 
 import config as backend_config
-from models import db
-from platform_sdk.notes_transport import books_notes_bp, notes_bp
+from platform_sdk.notes_transport import books_notes_bp, notes_bp, notes_internal_bp
 from platform_sdk.service_schema import bootstrap_service_schema
 from routes.middleware import init_middleware
+from service_models.notes_models import db
 
 
 def _resolve_config_class(config_class):
@@ -48,6 +48,7 @@ def create_notes_flask_app(config_class=None) -> Flask:
     init_middleware(app)
     app.register_blueprint(notes_bp, url_prefix='/api/notes')
     app.register_blueprint(books_notes_bp)
+    app.register_blueprint(notes_internal_bp)
 
     with app.app_context():
         bootstrap_service_schema('notes-service')

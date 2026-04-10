@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import books_personalization_repository
+from services import learning_core_personalization_repository
 
 
 def _normalize_familiar_word(value) -> str:
@@ -25,7 +25,7 @@ def get_familiar_status_words(user_id: int, raw_words) -> list[str]:
     if not normalized_words:
         return []
 
-    rows = books_personalization_repository.list_user_familiar_words_by_normalized(
+    rows = learning_core_personalization_repository.list_user_familiar_words_by_normalized(
         user_id,
         normalized_words,
     )
@@ -37,10 +37,10 @@ def _upsert_familiar_record(user_id: int, payload: dict) -> tuple[UserFamiliarWo
     if not normalized_word:
         raise ValueError('缺少有效的 word')
 
-    record = books_personalization_repository.get_user_familiar_word(user_id, normalized_word)
+    record = learning_core_personalization_repository.get_user_familiar_word(user_id, normalized_word)
     created = record is None
     if created:
-        record = books_personalization_repository.create_user_familiar_word(user_id, normalized_word)
+        record = learning_core_personalization_repository.create_user_familiar_word(user_id, normalized_word)
 
     word_text = str(payload.get('word') or '').strip()
     phonetic = str(payload.get('phonetic') or '').strip()
@@ -72,7 +72,7 @@ def _upsert_familiar_record(user_id: int, payload: dict) -> tuple[UserFamiliarWo
 
 def add_familiar_word(user_id: int, payload: dict | None) -> dict:
     record, created = _upsert_familiar_record(user_id, payload or {})
-    books_personalization_repository.commit()
+    learning_core_personalization_repository.commit()
     return {
         'familiar': record.to_dict(),
         'created': created,
@@ -84,11 +84,11 @@ def remove_familiar_word(user_id: int, word) -> dict:
     if not normalized_word:
         raise ValueError('缺少有效的 word')
 
-    record = books_personalization_repository.get_user_familiar_word(user_id, normalized_word)
+    record = learning_core_personalization_repository.get_user_familiar_word(user_id, normalized_word)
     if record:
-        books_personalization_repository.delete_row(record)
+        learning_core_personalization_repository.delete_row(record)
 
-    books_personalization_repository.commit()
+    learning_core_personalization_repository.commit()
     return {
         'removed': record is not None,
     }

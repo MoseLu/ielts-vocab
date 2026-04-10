@@ -89,7 +89,7 @@ def test_gateway_tts_generate_proxy_returns_audio_bytes(monkeypatch):
         content = b'ID3DATA'
         headers = {'content-type': 'audio/mpeg', 'X-Audio-Bytes': '7', 'X-Audio-Cache-Key': 'gen:7:1'}
 
-    monkeypatch.setattr(module, 'generate_tts_audio', lambda payload: FakeResponse())
+    monkeypatch.setattr(module, 'generate_tts_audio', lambda payload, **kwargs: FakeResponse())
 
     response = client.post('/api/tts/generate', json={'text': 'Hello', 'provider': 'minimax'})
 
@@ -98,6 +98,39 @@ def test_gateway_tts_generate_proxy_returns_audio_bytes(monkeypatch):
     assert response.headers['content-type'].startswith('audio/mpeg')
     assert response.headers['x-audio-bytes'] == '7'
     assert response.headers['x-audio-cache-key'] == 'gen:7:1'
+
+
+def test_gateway_tts_generate_proxy_forwards_gateway_headers(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app, base_url='https://axiomaticworld.com')
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        status_code = 200
+        content = b'ID3DATA'
+        headers = {'content-type': 'audio/mpeg'}
+
+    def fake_generate_tts_audio(payload, **kwargs):
+        captured['payload'] = payload
+        captured.update(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr(module, 'generate_tts_audio', fake_generate_tts_audio)
+
+    response = client.post(
+        '/api/tts/generate',
+        json={'text': 'Hello', 'provider': 'minimax'},
+        headers={
+            'Authorization': 'Bearer tts-token',
+            'Idempotency-Key': 'tts-generate-1',
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured['payload'] == {'text': 'Hello', 'provider': 'minimax'}
+    assert captured['headers']['authorization'] == 'Bearer tts-token'
+    assert captured['headers']['idempotency-key'] == 'tts-generate-1'
+    assert captured['headers']['x-service-name'] == 'gateway-bff'
 
 
 def test_gateway_tts_generate_proxy_passthrough_json_error(monkeypatch):
@@ -112,7 +145,7 @@ def test_gateway_tts_generate_proxy_passthrough_json_error(monkeypatch):
         def json():
             return {'error': 'quota exceeded'}
 
-    monkeypatch.setattr(module, 'generate_tts_audio', lambda payload: FakeResponse())
+    monkeypatch.setattr(module, 'generate_tts_audio', lambda payload, **kwargs: FakeResponse())
 
     response = client.post('/api/tts/generate', json={'text': 'Hello', 'provider': 'minimax'})
 
@@ -308,6 +341,33 @@ def test_gateway_post_example_audio_metadata_only_proxy(monkeypatch):
     assert response.headers['x-audio-source'] == 'local'
 
 
+def test_gateway_head_example_audio_proxy_maps_oss_headers(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app)
+
+    monkeypatch.setattr(
+        module,
+        'fetch_example_audio_metadata',
+        lambda **kwargs: {
+            'media_id': 'tts-media-service/example-audio/example.mp3',
+            'cache_hit': True,
+            'provider': 'aliyun-oss',
+            'byte_length': 803,
+            'cache_key': 'oss:example.mp3:803:etag-1',
+            'signed_url': 'https://oss.example.com/example.mp3?signature=1',
+        },
+    )
+
+    response = client.head('/api/tts/example-audio', params={'sentence': 'Hello, world!', 'word': 'hello'})
+
+    assert response.status_code == 204
+    assert response.headers['x-audio-bytes'] == '803'
+    assert response.headers['x-audio-cache-key'] == 'oss:example.mp3:803:etag-1'
+    assert response.headers['x-audio-oss-url'] == 'https://oss.example.com/example.mp3?signature=1'
+    assert response.headers['x-audio-source'] == 'oss'
+    assert response.headers['x-media-id'] == 'tts-media-service/example-audio/example.mp3'
+
+
 def test_gateway_get_example_audio_proxy_returns_audio_bytes(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
@@ -333,6 +393,36 @@ def test_gateway_get_example_audio_proxy_returns_audio_bytes(monkeypatch):
     assert response.headers['x-audio-bytes'] == '803'
     assert response.headers['x-audio-cache-key'] == 'example:803:1'
     assert response.headers['x-audio-source'] == 'local'
+
+
+def test_gateway_get_example_audio_proxy_maps_oss_headers(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app)
+
+    monkeypatch.setattr(
+        module,
+        'fetch_example_audio_content',
+        lambda **kwargs: {
+            'body': b'ID3' + (b'\x00' * 800),
+            'content_type': 'audio/mpeg',
+            'byte_length': '803',
+            'cache_key': 'oss:example.mp3:803:etag-1',
+            'signed_url': 'https://oss.example.com/example.mp3?signature=1',
+            'media_id': 'tts-media-service/example-audio/example.mp3',
+            'provider': 'aliyun-oss',
+        },
+    )
+
+    response = client.get('/api/tts/example-audio', params={'sentence': 'Hello, world!', 'word': 'hello'})
+
+    assert response.status_code == 200
+    assert response.content == b'ID3' + (b'\x00' * 800)
+    assert response.headers['content-type'].startswith('audio/mpeg')
+    assert response.headers['x-audio-bytes'] == '803'
+    assert response.headers['x-audio-cache-key'] == 'oss:example.mp3:803:etag-1'
+    assert response.headers['x-audio-oss-url'] == 'https://oss.example.com/example.mp3?signature=1'
+    assert response.headers['x-audio-source'] == 'oss'
+    assert response.headers['x-media-id'] == 'tts-media-service/example-audio/example.mp3'
 
 
 def test_gateway_post_example_audio_proxy_requires_sentence():

@@ -17,11 +17,11 @@ if str(SDK_PATH) not in sys.path:
     sys.path.insert(0, str(SDK_PATH))
 
 from models import db
+from platform_sdk.service_migration_plan import iter_service_migration_service_names
 from platform_sdk.service_schema import resolve_service_tables
 from platform_sdk.service_table_plan import (
     get_service_bootstrap_table_names,
     get_service_owned_table_names,
-    iter_stateful_service_names,
 )
 
 
@@ -94,7 +94,7 @@ def load_target_database_url(service_name: str, env_file: Path) -> str:
 def resolve_service_names(raw_services: list[str] | None) -> list[str]:
     if raw_services:
         return raw_services
-    return iter_stateful_service_names()
+    return iter_service_migration_service_names()
 
 
 def resolve_table_names(service_name: str, scope: str) -> frozenset[str]:

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, request
 
+from platform_sdk.notes_internal_application import (
+    create_internal_learning_note_response,
+    list_internal_learning_notes_response,
+)
 from platform_sdk.notes_query_application import (
     export_notes_response,
     get_notes_response,
@@ -18,6 +22,24 @@ from routes.middleware import token_required
 
 notes_bp = Blueprint('notes', __name__)
 books_notes_bp = Blueprint('books_notes', __name__)
+notes_internal_bp = Blueprint('notes_internal', __name__)
+
+
+@notes_internal_bp.route('/internal/notes/learning-notes', methods=['GET'])
+@token_required
+def get_internal_learning_notes(current_user):
+    payload, status = list_internal_learning_notes_response(current_user.id, request.args)
+    return jsonify(payload), status
+
+
+@notes_internal_bp.route('/internal/notes/learning-notes', methods=['POST'])
+@token_required
+def create_internal_learning_note(current_user):
+    payload, status = create_internal_learning_note_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
 
 
 @notes_bp.route('', methods=['GET'])

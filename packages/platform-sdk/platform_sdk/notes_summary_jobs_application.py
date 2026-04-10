@@ -8,11 +8,13 @@ from datetime import date as date_type
 from flask import jsonify
 
 from platform_sdk.memory_topics_support import build_memory_topics
-from services import daily_summary_repository
-from services.learner_profile import build_learner_profile
-from services.llm import chat
-import services.notes_summary_runtime as summary_runtime
-from services.notes_summary_service import (
+from platform_sdk.notes_summary_runtime_support import (
+    SUMMARY_SYSTEM_PROMPT,
+    _summary_jobs,
+    _summary_jobs_lock,
+    stream_summary_text,
+)
+from platform_sdk.notes_summary_service_support import (
     build_learning_snapshot,
     build_summary_prompt,
     check_generate_cooldown,
@@ -25,6 +27,9 @@ from services.notes_summary_service import (
     serialize_summary_job,
     utc_now,
 )
+from platform_sdk.learner_profile_application_support import build_learner_profile_payload
+from platform_sdk.llm_provider_adapter import chat
+from platform_sdk.notes_repository_adapters import daily_summary_repository
 
 
 def _validate_target_date(raw_target_date):
@@ -41,7 +46,7 @@ def _build_summary_context(user_id: int, target_date: str) -> dict:
     learning_notes, sessions, wrong_words = collect_summary_source_data(user_id, target_date)
     learning_snapshot = build_learning_snapshot(user_id, target_date, sessions, wrong_words)
     topic_insights = build_memory_topics(learning_notes, limit=5, include_singletons=True)
-    learner_profile = build_learner_profile(user_id, target_date)
+    learner_profile = build_learner_profile_payload(user_id, target_date=target_date)
     estimated_chars = estimate_summary_target_chars(learning_notes, sessions, wrong_words)
     user_content = build_summary_prompt(
         target_date,
@@ -63,14 +68,14 @@ def _build_summary_context(user_id: int, target_date: str) -> dict:
 
 def get_summary_job(job_id: str):
     prune_summary_jobs()
-    with summary_runtime._summary_jobs_lock:
-        job = summary_runtime._summary_jobs.get(job_id)
+    with _summary_jobs_lock:
+        job = _summary_jobs.get(job_id)
         return dict(job) if job else None
 
 
 def update_summary_job(job_id: str, **fields):
-    with summary_runtime._summary_jobs_lock:
-        job = summary_runtime._summary_jobs.get(job_id)
+    with _summary_jobs_lock:
+        job = _summary_jobs.get(job_id)
         if not job:
             return None
         job.update(fields)
@@ -80,8 +85,8 @@ def update_summary_job(job_id: str, **fields):
 
 def find_running_summary_job(user_id: int, target_date: str):
     prune_summary_jobs()
-    with summary_runtime._summary_jobs_lock:
-        for job in summary_runtime._summary_jobs.values():
+    with _summary_jobs_lock:
+        for job in _summary_jobs.values():
             if (
                 job['user_id'] == user_id and
                 job['date'] == target_date and
@@ -106,8 +111,8 @@ def create_summary_job(user_id: int, target_date: str):
         'created_at': utc_now(),
         'updated_at': utc_now(),
     }
-    with summary_runtime._summary_jobs_lock:
-        summary_runtime._summary_jobs[job['job_id']] = job
+    with _summary_jobs_lock:
+        _summary_jobs[job['job_id']] = job
     return dict(job)
 
 
@@ -127,7 +132,7 @@ def run_summary_job(app, job_id: str, user_id: int, target_date: str) -> None:
 
             chunks = []
             generated_chars = 0
-            for chunk in summary_runtime.stream_summary_text(context['user_content']):
+            for chunk in stream_summary_text(context['user_content']):
                 if not chunk:
                     continue
                 chunks.append(chunk)
@@ -182,7 +187,7 @@ def generate_summary_response(user_id: int, body):
     try:
         response = chat(
             [
-                {"role": "system", "content": summary_runtime.SUMMARY_SYSTEM_PROMPT},
+                {"role": "system", "content": SUMMARY_SYSTEM_PROMPT},
                 {"role": "user", "content": context['user_content']},
             ],
             max_tokens=2000,

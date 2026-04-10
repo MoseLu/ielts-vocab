@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import UserConversationHistory, UserLearningNote, UserMemory, db
+from service_models.ai_execution_models import UserConversationHistory, UserMemory, db
 
 
 def add_conversation_turn(
@@ -74,23 +74,6 @@ def list_conversation_history(
     if limit is not None:
         query = query.limit(limit)
     return query.all()
-
-
-def create_learning_note(
-    user_id: int,
-    *,
-    question: str,
-    answer: str,
-    word_context: str | None,
-):
-    note = UserLearningNote(
-        user_id=user_id,
-        question=question,
-        answer=answer,
-        word_context=word_context,
-    )
-    db.session.add(note)
-    return note
 
 
 def commit() -> None:

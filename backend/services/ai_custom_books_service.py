@@ -7,7 +7,7 @@ from datetime import datetime
 
 from flask import jsonify
 
-from models import (
+from service_models.ai_route_models import (
     WRONG_WORD_DIMENSIONS,
     WRONG_WORD_PENDING_REVIEW_TARGET,
     _empty_wrong_word_dimension_state,

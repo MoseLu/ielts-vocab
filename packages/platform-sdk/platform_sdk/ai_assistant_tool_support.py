@@ -4,18 +4,16 @@ import json
 import logging
 import re
 
-from services import books_registry_service, learning_stats_repository
-from services.books_catalog_query_service import load_book_vocabulary
-from services.books_structure_service import load_book_chapters
-from services.llm import TOOL_HANDLERS, chat, stream_chat_events
-from services.quick_memory_schedule import QUICK_MEMORY_MASTERY_TARGET
-
+from platform_sdk.catalog_provider_adapter import list_vocab_books, load_book_chapters, load_book_vocabulary
 from platform_sdk.ai_learning_summary_support import decorate_wrong_words_with_quick_memory_progress
+from platform_sdk.llm_provider_adapter import TOOL_HANDLERS, chat, stream_chat_events
+from platform_sdk.learning_repository_adapters import learning_stats_repository
 from platform_sdk.ai_tool_input_support import validate_tool_input
 from platform_sdk.ai_vocab_catalog_application import (
     get_global_vocab_pool,
     resolve_quick_memory_vocab_entry,
 )
+from platform_sdk.quick_memory_schedule_support import QUICK_MEMORY_MASTERY_TARGET
 
 
 def _format_wrong_word_result(word: dict) -> str:
@@ -39,7 +37,7 @@ def _decorate_wrong_words(user_id: int, words) -> list[dict]:
 
 
 def _load_vocab_books():
-    return books_registry_service.list_vocab_books()
+    return list_vocab_books()
 
 
 def make_get_wrong_words(user_id: int):

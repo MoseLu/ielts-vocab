@@ -4,7 +4,8 @@ import json
 import logging
 import re
 
-from services import learning_stats_repository
+from platform_sdk.learning_repository_adapters import learning_stats_repository
+from platform_sdk.learner_profile_builder_adapter import build_learner_profile
 from services.ai_route_support_service import (
     _QUICK_MEMORY_MASTERY_TARGET,
     _decorate_wrong_words_with_quick_memory_progress,

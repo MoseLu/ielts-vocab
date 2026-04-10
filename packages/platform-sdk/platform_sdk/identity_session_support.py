@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import jwt
 from flask import has_request_context, request
 
-from services import auth_repository
+from platform_sdk.identity_repository_adapter import auth_repository
 
 
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$')

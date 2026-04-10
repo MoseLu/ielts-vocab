@@ -4,16 +4,16 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Callable
 
-from models import UserStudySession
+from service_models.learning_core_models import UserStudySession
 from services import learning_stats_repository
-from services.learning_stats_breakdowns import (
+from platform_sdk.learning_stats_breakdowns_support import (
     build_chapter_breakdowns,
     build_mode_breakdown,
     build_wrong_top_lists,
     resolve_trend_direction,
     resolve_weakest_mode,
 )
-from services.learning_stats_modes import normalize_stats_mode, stats_mode_candidates
+from platform_sdk.learning_stats_modes_support import normalize_stats_mode, stats_mode_candidates
 from services.learning_stats_service_parts.helpers import (
     _accuracy,
     _append_live_pending_duration,

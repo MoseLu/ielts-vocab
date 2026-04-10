@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+from models import db
 from platform_sdk.local_time_support import (
     current_local_date,
     local_day_window_ms,
@@ -9,13 +10,15 @@ from platform_sdk.local_time_support import (
     utc_naive_to_local_date_key,
     utc_now_naive,
 )
-from services import learning_stats_repository, quick_memory_record_repository
-from services.quick_memory_schedule import (
+from platform_sdk.quick_memory_schedule_support import (
     QUICK_MEMORY_MASTERY_TARGET,
-    load_user_quick_memory_records,
+    load_and_normalize_quick_memory_records,
 )
-
 from platform_sdk.ai_text_support import normalize_word_key
+from platform_sdk.learning_repository_adapters import (
+    learning_stats_repository,
+    quick_memory_record_repository,
+)
 
 
 def decorate_wrong_words_with_quick_memory_progress(
@@ -89,6 +92,7 @@ def alltime_distinct_practiced_words(user_id: int) -> int:
     try:
         return learning_stats_repository.count_alltime_distinct_practiced_words(user_id)
     except Exception:
+        db.session.rollback()
         return 0
 
 
@@ -167,7 +171,11 @@ def quick_memory_word_stats(user_id: int, *, now_utc: datetime | None = None) ->
     _, today_start_ms, tomorrow_ms = local_day_window_ms(now_utc=resolved_now_utc)
     now_ms = utc_naive_to_epoch_ms(resolved_now_utc)
 
-    qm_rows = load_user_quick_memory_records(user_id)
+    qm_rows = load_and_normalize_quick_memory_records(
+        user_id,
+        list_records=quick_memory_record_repository.list_user_quick_memory_records,
+        commit=quick_memory_record_repository.commit,
+    )
     today_new = 0
     today_review = 0
     alltime_review_words = 0

@@ -4,6 +4,7 @@ import logging
 
 from flask import Response, current_app, jsonify, stream_with_context
 
+from platform_sdk.notes_repository_adapters import learning_note_repository
 from services import ai_assistant_repository
 from services.ai_assistant_memory_service import (
     add_memory_note,
@@ -93,7 +94,7 @@ def persist_ask_response(current_user, user_message: str, frontend_context: dict
     save_turn(current_user.id, user_message, clean_reply)
     try:
         word_context = frontend_context.get('currentWord') if frontend_context else None
-        ai_assistant_repository.create_learning_note(
+        learning_note_repository.create_learning_note(
             current_user.id,
             question=user_message,
             answer=clean_reply,

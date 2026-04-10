@@ -4,9 +4,7 @@ import logging
 
 from flask import Response, current_app, jsonify, stream_with_context
 
-from services import ai_assistant_repository
-from services.learning_events import record_learning_event
-from services.llm import TOOLS, web_search
+from platform_sdk.ai_repository_adapters import ai_assistant_repository
 from platform_sdk.runtime_async_support import maybe_timeout, spawn_background
 
 from platform_sdk.ai_assistant_memory_support import (
@@ -15,6 +13,10 @@ from platform_sdk.ai_assistant_memory_support import (
     maybe_summarize_history,
     save_turn,
 )
+from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
+from platform_sdk.learning_core_internal_client import record_learning_core_event
+from platform_sdk.llm_provider_adapter import TOOLS, web_search
+from platform_sdk.notes_internal_client import create_learning_note
 from platform_sdk.ai_assistant_prompts import SYSTEM_PROMPT
 from platform_sdk.ai_assistant_tool_support import (
     chat_with_tools,
@@ -98,15 +100,20 @@ def build_ask_extra_handlers(current_user) -> dict[str, callable]:
 
 def persist_ask_response(current_user, user_message: str, frontend_context: dict, clean_reply: str) -> None:
     save_turn(current_user.id, user_message, clean_reply)
+    word_context = frontend_context.get('currentWord') if frontend_context else None
     try:
-        word_context = frontend_context.get('currentWord') if frontend_context else None
-        ai_assistant_repository.create_learning_note(
+        create_learning_note(
             current_user.id,
             question=user_message,
             answer=clean_reply,
             word_context=word_context,
         )
-        record_learning_event(
+    except Exception as exc:
+        logging.warning('[AI] Failed to save learning note: %s', exc)
+
+    try:
+        event = queue_learning_event(
+            add_learning_event=lambda record: record,
             user_id=current_user.id,
             event_type='assistant_question',
             source='assistant',
@@ -117,10 +124,23 @@ def persist_ask_response(current_user, user_message: str, frontend_context: dict
                 'answer_excerpt': clean_reply[:500],
             },
         )
-        ai_assistant_repository.commit()
+        record_learning_core_event(
+            current_user.id,
+            event_type=event.event_type,
+            source=event.source,
+            mode=event.mode,
+            book_id=event.book_id,
+            chapter_id=event.chapter_id,
+            word=event.word,
+            item_count=event.item_count,
+            correct_count=event.correct_count,
+            wrong_count=event.wrong_count,
+            duration_seconds=event.duration_seconds,
+            payload=event.payload_dict(),
+            occurred_at=event.occurred_at.isoformat() if event.occurred_at else None,
+        )
     except Exception as exc:
-        ai_assistant_repository.rollback()
-        logging.warning('[AI] Failed to save learning note: %s', exc)
+        logging.warning('[AI] Failed to record assistant learning event: %s', exc)
 
     try:
         app = current_app._get_current_object()

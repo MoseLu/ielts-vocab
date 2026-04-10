@@ -9,7 +9,7 @@ from platform_sdk.admin_overview_application import (
     resolve_session_end,
     user_summary,
 )
-from services import (
+from platform_sdk.admin_repository_adapters import (
     admin_user_detail_repository,
     admin_user_directory_repository,
     admin_user_session_repository,

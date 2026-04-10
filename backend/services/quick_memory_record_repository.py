@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from models import UserQuickMemoryRecord, db
+from service_models.learning_core_models import UserQuickMemoryRecord, db
 
 
 def list_user_quick_memory_records(user_id: int):

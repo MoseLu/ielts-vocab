@@ -5,9 +5,8 @@ from pathlib import Path
 
 from flask import jsonify
 
-from services.llm import differentiate_synonyms, web_search
-
 from platform_sdk.ai_metric_support import track_metric
+from platform_sdk.llm_provider_adapter import differentiate_synonyms, web_search
 from platform_sdk.ai_text_support import load_json_data
 
 

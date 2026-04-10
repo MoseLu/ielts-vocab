@@ -149,6 +149,46 @@ def test_notes_service_exports_notes_and_summaries(monkeypatch, tmp_path):
     assert 'What is vivid?' in response.json()['content']
 
 
+def test_notes_service_export_returns_oss_reference_when_configured(monkeypatch, tmp_path):
+    _configure_notes_env(monkeypatch, tmp_path)
+    module = _load_notes_service_module('notes_service_export_oss')
+    client = TestClient(module.app)
+    user_id, token = _create_user_and_token(module.notes_flask_app, username='notes-export-oss-user')
+
+    with module.notes_flask_app.app_context():
+        db.session.add(UserDailySummary(
+            user_id=user_id,
+            date='2026-03-30',
+            content='# summary body',
+            generated_at=datetime.utcnow(),
+        ))
+        db.session.commit()
+
+    monkeypatch.setattr(
+        'platform_sdk.notes_query_application.store_notes_export',
+        lambda **kwargs: {
+            'provider': 'aliyun-oss',
+            'bucket_name': 'bucket',
+            'object_key': 'exports/notes-service/user-1/ielts_notes_2026-03-30_2026-03-30.md',
+            'byte_length': 123,
+            'cache_key': 'oss:ielts_notes.md:123:etag-1',
+            'signed_url': 'https://oss.example.com/notes-export.md?signature=1',
+            'signed_url_expires_at': '2026-04-10T16:00:00+00:00',
+        },
+    )
+
+    response = client.get(
+        '/api/notes/export?start_date=2026-03-30&end_date=2026-03-30',
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 200
+    assert response.json()['provider'] == 'aliyun-oss'
+    assert response.json()['bucket_name'] == 'bucket'
+    assert response.json()['object_key'] == 'exports/notes-service/user-1/ielts_notes_2026-03-30_2026-03-30.md'
+    assert response.json()['signed_url'] == 'https://oss.example.com/notes-export.md?signature=1'
+
+
 def test_notes_service_saves_word_detail_note(monkeypatch, tmp_path):
     _configure_notes_env(monkeypatch, tmp_path)
     module = _load_notes_service_module('notes_service_word_note')

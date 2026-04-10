@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import books_personalization_repository
+from services import learning_core_personalization_repository
 from services.books_user_state_repository import (
     create_user_added_book,
     delete_row as delete_user_state_row,
@@ -35,12 +35,12 @@ def _normalize_favorite_word(value) -> str:
 def _favorite_word_count(user_id: int | None) -> int:
     if not user_id:
         return 0
-    return books_personalization_repository.count_user_favorite_words(user_id)
+    return learning_core_personalization_repository.count_user_favorite_words(user_id)
 
 
 def _favorite_words_query(user_id: int):
     return _FavoriteWordsQueryCompat(
-        books_personalization_repository.list_user_favorite_words(user_id)
+        learning_core_personalization_repository.list_user_favorite_words(user_id)
     )
 
 
@@ -87,7 +87,7 @@ def _serialize_favorite_words(user_id: int | None) -> list[dict]:
         return []
 
     words: list[dict] = []
-    for record in books_personalization_repository.list_user_favorite_words(user_id):
+    for record in learning_core_personalization_repository.list_user_favorite_words(user_id):
         words.append({
             'word': record.word,
             'phonetic': record.phonetic or '',
@@ -123,10 +123,10 @@ def _upsert_favorite_record(user_id: int, payload: dict) -> tuple[UserFavoriteWo
     if not normalized_word:
         raise ValueError('缺少有效的 word')
 
-    record = books_personalization_repository.get_user_favorite_word(user_id, normalized_word)
+    record = learning_core_personalization_repository.get_user_favorite_word(user_id, normalized_word)
     created = record is None
     if created:
-        record = books_personalization_repository.create_user_favorite_word(user_id, normalized_word)
+        record = learning_core_personalization_repository.create_user_favorite_word(user_id, normalized_word)
 
     word_text = str(payload.get('word') or '').strip()
     phonetic = str(payload.get('phonetic') or '').strip()
@@ -172,7 +172,7 @@ def get_favorite_status_words(user_id: int, raw_words) -> list[str]:
     if not normalized_words:
         return []
 
-    rows = books_personalization_repository.list_user_favorite_words_by_normalized(
+    rows = learning_core_personalization_repository.list_user_favorite_words_by_normalized(
         user_id,
         normalized_words,
     )
@@ -182,7 +182,7 @@ def get_favorite_status_words(user_id: int, raw_words) -> list[str]:
 def add_favorite_word(user_id: int, payload: dict | None) -> dict:
     record, created = _upsert_favorite_record(user_id, payload or {})
     _ensure_favorites_book_membership(user_id)
-    books_personalization_repository.commit()
+    learning_core_personalization_repository.commit()
     return {
         'favorite': record.to_dict(),
         'created': created,
@@ -195,13 +195,13 @@ def remove_favorite_word(user_id: int, word) -> dict:
     if not normalized_word:
         raise ValueError('缺少有效的 word')
 
-    record = books_personalization_repository.get_user_favorite_word(user_id, normalized_word)
+    record = learning_core_personalization_repository.get_user_favorite_word(user_id, normalized_word)
     if record:
-        books_personalization_repository.delete_row(record)
+        learning_core_personalization_repository.delete_row(record)
 
-    books_personalization_repository.flush()
+    learning_core_personalization_repository.flush()
     _cleanup_favorites_book_membership(user_id)
-    books_personalization_repository.commit()
+    learning_core_personalization_repository.commit()
 
     return {
         'removed': record is not None,

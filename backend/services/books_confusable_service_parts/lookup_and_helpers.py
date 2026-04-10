@@ -9,7 +9,7 @@ from services import books_confusable_repository
 from services.auth_middleware_service import resolve_current_user
 
 if TYPE_CHECKING:
-    from models import User
+    from service_models.identity_models import User
 
 
 CONFUSABLE_MATCH_BOOK_ID = 'ielts_confusable_match'

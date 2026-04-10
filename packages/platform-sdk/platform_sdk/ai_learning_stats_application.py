@@ -1,31 +1,15 @@
 from __future__ import annotations
 
-from services.books_registry_service import get_vocab_book_title_map
-from services.books_structure_service import load_book_chapters
-from services.learning_stats_service import build_learning_stats_payload
-from platform_sdk.local_time_support import utc_now_naive
-from services.study_sessions import normalize_chapter_id, start_or_reuse_study_session
-
-from platform_sdk.ai_learning_summary_support import (
-    alltime_words_display,
-    calc_streak_days,
-    chapter_title_map,
-    quick_memory_word_stats,
+from platform_sdk.learning_core_internal_client import fetch_learning_core_learning_stats_response
+from platform_sdk.learning_core_stats_application import build_learning_core_learning_stats_response
+from platform_sdk.study_session_repository_adapter import (
+    commit as commit_study_session,
+    create_study_session,
+    find_pending_session_in_window,
 )
+from platform_sdk.study_session_support import normalize_chapter_id, start_or_reuse_study_session
 
 _PENDING_SESSION_REUSE_WINDOW_SECONDS = 5
-
-
-def _resolve_book_title_map() -> dict[str, str]:
-    return get_vocab_book_title_map()
-
-
-def _resolve_chapter_title_map(book_id: str) -> dict:
-    return chapter_title_map(book_id, load_book_chapters=load_book_chapters)
-
-
-def _resolve_quick_memory_word_stats(user_id: int) -> dict:
-    return quick_memory_word_stats(user_id, now_utc=utc_now_naive())
 
 
 def _normalize_start_session_mode(value) -> str:
@@ -41,19 +25,20 @@ def build_learning_stats_response(
     book_id_filter: str | None,
     mode_filter_raw: str | None,
 ) -> tuple[dict, int]:
-    payload = build_learning_stats_payload(
-        user_id=user_id,
-        days=days,
-        book_id_filter=book_id_filter,
-        mode_filter_raw=mode_filter_raw,
-        now_utc=utc_now_naive(),
-        book_title_map=_resolve_book_title_map(),
-        chapter_title_map_resolver=_resolve_chapter_title_map,
-        alltime_words_display_resolver=alltime_words_display,
-        quick_memory_word_stats_resolver=_resolve_quick_memory_word_stats,
-        streak_days_resolver=calc_streak_days,
-    )
-    return payload, 200
+    try:
+        return fetch_learning_core_learning_stats_response(
+            user_id,
+            days=days,
+            book_id_filter=book_id_filter,
+            mode_filter_raw=mode_filter_raw,
+        )
+    except Exception:
+        return build_learning_core_learning_stats_response(
+            user_id,
+            days=days,
+            book_id_filter=book_id_filter,
+            mode_filter_raw=mode_filter_raw,
+        )
 
 
 def start_session_response(user_id: int, body: dict | None) -> tuple[dict, int]:
@@ -64,5 +49,8 @@ def start_session_response(user_id: int, body: dict | None) -> tuple[dict, int]:
         book_id=payload.get('bookId') or None,
         chapter_id=normalize_chapter_id(payload.get('chapterId')),
         reuse_window_seconds=_PENDING_SESSION_REUSE_WINDOW_SECONDS,
+        find_pending_session_in_window=find_pending_session_in_window,
+        create_study_session=create_study_session,
+        commit=commit_study_session,
     )
     return {'sessionId': session.id}, 201

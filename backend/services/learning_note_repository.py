@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import UserLearningNote
+from service_models.notes_models import UserLearningNote, db
 
 
 def _apply_learning_note_window_filters(
@@ -61,3 +61,28 @@ def count_learning_notes(
         end_before=end_before,
     )
     return query.count()
+
+
+def create_learning_note(
+    user_id: int,
+    *,
+    question: str,
+    answer: str,
+    word_context: str | None,
+):
+    note = UserLearningNote(
+        user_id=user_id,
+        question=question,
+        answer=answer,
+        word_context=word_context,
+    )
+    db.session.add(note)
+    return note
+
+
+def commit() -> None:
+    db.session.commit()
+
+
+def rollback() -> None:
+    db.session.rollback()

@@ -1,6 +1,6 @@
 # Gateway Service Contracts
 
-Last updated: 2026-04-09
+Last updated: 2026-04-10
 
 ## Purpose
 
@@ -86,6 +86,15 @@ Every extracted service must expose:
 | `ai-execution-service` non-streaming prompt run | 30s | retry only if provider call did not start |
 | `ai-execution-service` streaming run | connect timeout 5s, stream budget 90s | no transparent retry mid-stream |
 
+## Gateway Enforcement Baseline
+
+- `gateway-bff` now applies one explicit upstream policy per downstream service instead of one shared timeout for every call.
+- Safe reads (`GET`, `HEAD`, `OPTIONS`) retry once on transport errors or `502/503/504`.
+- Mutating requests retry only when the browser supplied `Idempotency-Key` and the downstream contract accepts replay.
+- Streaming routes such as `POST /api/ai/ask/stream` do not transparently retry after the stream request starts.
+- The gateway opens an in-process circuit breaker per downstream service after 3 consecutive transport or `5xx` failures, and it keeps that service open for 30 seconds before probing again.
+- Direct gateway-owned TTS and ASR proxy routes use the same request ID, trace ID, auth forwarding, timeout, retry, and circuit-breaker rules as the generic browser compatibility proxy.
+
 ## Contract Skeletons
 
 ### `asr-service`
@@ -109,6 +118,12 @@ Every extracted service must expose:
 - `DELETE /v1/realtime-sessions/{session_id}`
   - close a realtime ASR session
 - Socket.IO namespace or equivalent realtime channel for transcript events
+
+#### Deployment split
+
+- Browser file transcription stays on the HTTP path: browser `POST /api/speech/transcribe` -> `gateway-bff` -> `asr-service` HTTP on `127.0.0.1:8106`.
+- Browser realtime speech stays on the Socket.IO path: browser `/socket.io/*` -> reverse proxy -> `asr-socketio` on `127.0.0.1:5001`.
+- The realtime Socket.IO channel is not routed through `gateway-bff`; gateway only owns the HTTP upload contract.
 
 #### Response shape notes
 
@@ -222,4 +237,5 @@ Every extracted service must expose:
 
 - Service ownership matrix: [service-ownership-matrix.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/service-ownership-matrix.md)
 - Layered source architecture: [backend-layered-architecture.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/backend-layered-architecture.md)
+- ASR runtime contract: [asr-http-socketio-contract.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/asr-http-socketio-contract.md)
 - Backend migration TODO: [backend/TODO.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/TODO.md)

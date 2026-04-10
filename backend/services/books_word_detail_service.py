@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from services import (
-    books_personalization_repository,
     books_vocabulary_loader_service,
+    notes_word_note_repository,
     phonetic_lookup_service,
     word_catalog_repository,
 )
@@ -15,7 +15,7 @@ def _empty_note(word: str) -> dict:
 
 
 def _word_note_record(user_id: int, normalized_word: str) -> UserWordNote | None:
-    return books_personalization_repository.get_user_word_note(user_id, normalized_word)
+    return notes_word_note_repository.get_user_word_note(user_id, normalized_word)
 
 
 def serialize_note_for_user(user, word: str, normalized_word: str) -> dict:
@@ -78,12 +78,12 @@ def save_word_detail_note_response(user_id: int, data: dict | None) -> tuple[dic
 
     if not content.strip():
         if record:
-            books_personalization_repository.delete_row(record)
-            books_personalization_repository.commit()
+            notes_word_note_repository.delete_row(record)
+            notes_word_note_repository.commit()
         return {'note': _empty_note(word)}, 200
 
     if not record:
-        record = books_personalization_repository.create_user_word_note(
+        record = notes_word_note_repository.create_user_word_note(
             user_id,
             word=word,
             normalized_word=normalized_word,
@@ -91,5 +91,5 @@ def save_word_detail_note_response(user_id: int, data: dict | None) -> tuple[dic
 
     record.word = word
     record.content = content
-    books_personalization_repository.commit()
+    notes_word_note_repository.commit()
     return {'note': record.to_dict()}, 200

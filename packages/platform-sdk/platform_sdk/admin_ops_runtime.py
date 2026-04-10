@@ -15,10 +15,10 @@ if str(BACKEND_PATH) not in sys.path:
     sys.path.insert(0, str(BACKEND_PATH))
 
 import config as backend_config
-from models import db
 from platform_sdk.admin_ops_transport import admin_bp
 from platform_sdk.service_schema import bootstrap_service_schema
 from routes.middleware import init_middleware
+from service_models.admin_ops_models import db
 
 
 def _resolve_config_class(config_class):

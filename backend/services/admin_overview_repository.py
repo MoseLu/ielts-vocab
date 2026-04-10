@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from sqlalchemy import desc, func
 
-from models import User, UserStudySession, db
+from service_models.admin_ops_models import User, UserStudySession, db
 
 
 def count_total_users() -> int:

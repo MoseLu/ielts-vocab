@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from services import learning_stats_repository
-from services.learner_profile import build_learner_profile
+from platform_sdk.learning_repository_adapters import learning_stats_repository
+from platform_sdk.learner_profile_builder_adapter import build_learner_profile
 
 
 def build_context_data(

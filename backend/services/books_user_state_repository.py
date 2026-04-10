@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from models import UserAddedBook, UserBookProgress, UserChapterModeProgress, UserChapterProgress, db
+from service_models.learning_core_models import (
+    UserAddedBook,
+    UserBookProgress,
+    UserChapterModeProgress,
+    UserChapterProgress,
+    db,
+)
 
 
 def list_user_added_books(user_id: int):

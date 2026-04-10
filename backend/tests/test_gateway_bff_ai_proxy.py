@@ -40,6 +40,7 @@ def test_gateway_ai_context_proxy_routes_to_ai_execution_service(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()['books'] == []
+    assert captured['service_name'] == 'ai-execution-service'
     assert captured['base_url'] == browser_routes.ai_execution_service_url()
     assert captured['path'] == '/api/ai/context'
     assert build_forward_headers(captured['request'])['authorization'] == 'Bearer ai-token'
@@ -69,5 +70,6 @@ def test_gateway_ai_stream_proxy_routes_to_ai_execution_service(monkeypatch):
     assert response.status_code == 200
     assert response.headers['content-type'].startswith('text/event-stream')
     assert 'data: {"type": "done"}' in response.text
+    assert captured['service_name'] == 'ai-execution-service'
     assert captured['path'] == '/api/ai/ask/stream'
     assert build_forward_headers(captured['request'])['cookie'] == 'access_token=abc'

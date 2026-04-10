@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import text
 
-from models import (
+from service_models.ai_route_models import (
     WRONG_WORD_DIMENSIONS,
     WRONG_WORD_PENDING_REVIEW_TARGET,
     CustomBook,
@@ -47,8 +47,14 @@ from services.ai_shared_support import (
     record_smart_dimension_delta_event as _shared_record_smart_delta,
     track_metric as _shared_track_metric,
 )
+from platform_sdk.quick_memory_schedule_support import (
+    QUICK_MEMORY_MASTERY_TARGET,
+    load_and_normalize_quick_memory_records,
+    resolve_quick_memory_next_review_ms,
+)
+from platform_sdk.learning_repository_adapters import quick_memory_record_repository
+from platform_sdk.learner_profile_builder_adapter import build_learner_profile
 from services import ai_vocab_catalog_service, books_catalog_service, books_registry_service
-from services.learner_profile import build_learner_profile
 from services.learning_events import record_learning_event
 from services.listening_confusables import get_preset_listening_confusables
 from services.llm import (
@@ -70,10 +76,6 @@ from services.local_time import (
     utc_now_naive,
 )
 from services.memory_topics import build_memory_topics
-from services.quick_memory_schedule import (
-    load_user_quick_memory_records,
-    resolve_quick_memory_next_review_ms,
-)
 from services.runtime_async import maybe_timeout, spawn_background
 from services.study_sessions import (
     find_pending_session,
@@ -85,7 +87,7 @@ from services.study_sessions import (
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'routes', 'ai_routes', 'data')
 _PENDING_SESSION_REUSE_WINDOW_SECONDS = 5
 _PENDING_SESSION_MATCH_WINDOW_SECONDS = 15
-_QUICK_MEMORY_MASTERY_TARGET = 6
+_QUICK_MEMORY_MASTERY_TARGET = QUICK_MEMORY_MASTERY_TARGET
 
 SYSTEM_PROMPT = """你是一个 IELTS 英语词汇学习规划助手，名叫"雅思小助手"。请用中文回复用户。
 
@@ -254,6 +256,14 @@ def _calc_streak_days(user_id: int, reference_date: str | None = None) -> int:
 def _quick_memory_word_stats(user_id: int):
     now_utc = utc_now_naive()
     return _shared_quick_memory_word_stats(user_id, now_utc=now_utc)
+
+
+def load_user_quick_memory_records(user_id: int):
+    return load_and_normalize_quick_memory_records(
+        user_id,
+        list_records=quick_memory_record_repository.list_user_quick_memory_records,
+        commit=quick_memory_record_repository.commit,
+    )
 
 
 def _load_vocab_books():

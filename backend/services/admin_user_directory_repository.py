@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import desc
 
-from models import User, db
+from service_models.admin_ops_models import User, db
 
 
 def get_user(user_id: int) -> User | None:

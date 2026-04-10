@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 
-from models import UserQuickMemoryRecord
-from services import learner_profile_repository
+from service_models.learning_core_models import UserQuickMemoryRecord
+from platform_sdk.quick_memory_schedule_support import load_and_normalize_quick_memory_records
+from services import learner_profile_repository, quick_memory_record_repository
 from services.learning_events import build_learning_activity_timeline
 from services.local_time import resolve_local_day_window, utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 from services.memory_topics import build_memory_topics
-from services.quick_memory_schedule import load_user_quick_memory_records
 from services.study_sessions import get_live_pending_session_snapshot, get_session_window_metrics
 
 MODE_LABELS = {
@@ -63,6 +63,14 @@ DIMENSION_STATUS_LABELS = {
     'not_started': '尚未开始',
     'needs_setup': '证据不足',
 }
+
+
+def load_user_quick_memory_records(user_id: int):
+    return load_and_normalize_quick_memory_records(
+        user_id,
+        list_records=quick_memory_record_repository.list_user_quick_memory_records,
+        commit=quick_memory_record_repository.commit,
+    )
 
 def _resolve_target_date(target_date: str | None) -> tuple[str, datetime, datetime]:
     return resolve_local_day_window(target_date)

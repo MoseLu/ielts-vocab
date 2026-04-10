@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import UserLearningEvent, db
+from service_models.learning_core_models import UserLearningEvent, db
 
 
 def list_user_learning_events_in_window(

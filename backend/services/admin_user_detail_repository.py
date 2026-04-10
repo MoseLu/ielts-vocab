@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from models import UserBookProgress, UserChapterProgress, UserLearningEvent, UserWrongWord
+from service_models.admin_ops_models import (
+    UserBookProgress,
+    UserChapterProgress,
+    UserLearningEvent,
+    UserWrongWord,
+)
 
 
 def list_user_book_progress_rows(user_id: int):

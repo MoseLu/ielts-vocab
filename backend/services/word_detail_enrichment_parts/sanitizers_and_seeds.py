@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 import time
 
-from models import WordCatalogEntry
+from service_models.catalog_content_models import WordCatalogEntry
 from services import word_catalog_repository
 from services.word_detail_llm_client import (
     DEFAULT_PROVIDER,

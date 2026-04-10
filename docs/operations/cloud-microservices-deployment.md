@@ -49,9 +49,22 @@ The install script now prepares `/opt/ielts-vocab/releases` and bootstraps `/opt
 Run from the repository root after copying `backend/database.sqlite` from the final local snapshot:
 
 ```bash
+/opt/ielts-vocab/venv/bin/python scripts/describe-service-migration-plan.py --json
+/opt/ielts-vocab/venv/bin/python scripts/migrate-sqlite-to-microservice-postgres.py --bootstrap-only --scope owned --env-file /etc/ielts-vocab/microservices.env
 /opt/ielts-vocab/venv/bin/python scripts/migrate-sqlite-to-microservice-postgres.py --plan --env-file /etc/ielts-vocab/microservices.env
 /opt/ielts-vocab/venv/bin/python scripts/migrate-sqlite-to-microservice-postgres.py --scope bootstrap --replace --env-file /etc/ielts-vocab/microservices.env
+/opt/ielts-vocab/venv/bin/python scripts/validate_microservice_storage_parity.py --scope owned --env-file /etc/ielts-vocab/microservices.env
 ```
+
+The current write-owning migration baseline covers:
+
+- `identity-service`
+- `learning-core-service`
+- `catalog-content-service`
+- `notes-service`
+- `ai-execution-service`
+
+`describe-service-migration-plan.py` prints the canonical `baseline_revision`, `version_table`, and owned-table list for each service so rollout and rollback can reference the same baseline metadata.
 
 ## Service Control
 

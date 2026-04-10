@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
+from platform_sdk.learning_core_context_application import build_learning_core_context_payload
+from platform_sdk.learning_core_events_application import record_internal_learning_event_response
 from platform_sdk.learning_core_library_application import (
     add_my_book_response,
     build_my_books_response,
     remove_my_book_response,
     save_chapter_mode_progress_response,
 )
+from platform_sdk.learning_core_stats_application import build_learning_core_learning_stats_response
 from platform_sdk.learning_core_personalization_application import (
     FAVORITES_BOOK_ID,
     add_familiar_word,
@@ -31,6 +34,34 @@ from routes.middleware import token_required
 
 
 learning_core_bp = Blueprint('learning_core', __name__)
+
+
+@learning_core_bp.route('/internal/learning/context', methods=['GET'])
+@token_required
+def get_internal_learning_context(current_user):
+    return jsonify(build_learning_core_context_payload(current_user.id)), 200
+
+
+@learning_core_bp.route('/internal/learning/stats', methods=['GET'])
+@token_required
+def get_internal_learning_stats(current_user):
+    payload, status = build_learning_core_learning_stats_response(
+        current_user.id,
+        days=min(int(request.args.get('days', 30)), 90),
+        book_id_filter=request.args.get('book_id') or None,
+        mode_filter_raw=request.args.get('mode') or None,
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/events', methods=['POST'])
+@token_required
+def create_internal_learning_event(current_user):
+    payload, status = record_internal_learning_event_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
 
 
 @learning_core_bp.route('/api/progress', methods=['GET'])
