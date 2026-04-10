@@ -36,6 +36,18 @@ Word TTS keeps its current compatibility prefix knobs:
 - `WORD_TTS_OSS_SIGNED_URL_EXPIRES_SECONDS`
 - `WORD_TTS_OSS_METADATA_CACHE_TTL_SECONDS`
 
+Example-audio now has service-owned OSS knobs:
+
+- `EXAMPLE_AUDIO_OSS_PREFIX`
+- `EXAMPLE_AUDIO_OSS_SIGNED_URL_EXPIRES_SECONDS`
+- `EXAMPLE_AUDIO_OSS_METADATA_CACHE_TTL_SECONDS`
+
+Notes export now has service-owned OSS knobs:
+
+- `NOTES_EXPORT_OSS_PREFIX`
+- `NOTES_EXPORT_OSS_SIGNED_URL_EXPIRES_SECONDS`
+- `NOTES_EXPORT_OSS_METADATA_CACHE_TTL_SECONDS`
+
 ## Object Rules
 
 - Browser-facing media should continue to use signed URLs for private bucket access.
@@ -61,6 +73,10 @@ New service-owned object keys should use service-prefixed namespaces:
 Current word-TTS cache keeps its legacy prefix for compatibility:
 
 - default prefix: `projects/ielts-vocab/word-tts-cache/...`
+
+Example-audio now uses the service namespace by default:
+
+- default prefix: `tts-media-service/example-audio/...`
 
 ## Current Service Skeletons
 
@@ -190,3 +206,15 @@ Gateway browser-compatible proxy routes are now centralized in:
 - [platform_sdk/gateway_browser_routes.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/gateway_browser_routes.py)
 
 The shared gateway proxy now preserves streaming `text/event-stream` responses so `/api/ai/ask/stream` can pass through `gateway-bff` without collapsing into a buffered JSON-style response.
+
+`tts-media-service` example-audio now prefers OSS-backed object references on the split-service path:
+
+- `/v1/media/example-audio/metadata` checks OSS first, then legacy local cache if needed
+- `/v1/media/example-audio/content` serves OSS payloads when present and writes newly generated audio to OSS instead of treating local disk as the primary store
+- [backfill_example_audio_to_oss.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/backfill_example_audio_to_oss.py) uploads legacy `backend/tts_cache/*.mp3` files into the service-owned OSS namespace
+
+`notes-service` export responses now also emit object references when OSS is configured:
+
+- `/api/notes/export` still returns inline `content`, `filename`, and `format`
+- the same response now includes `provider`, `bucket_name`, `object_key`, `byte_length`, `cache_key`, `signed_url`, and `signed_url_expires_at` when the export text is written to OSS
+- default export namespace: `exports/notes-service/user-<id>/...`

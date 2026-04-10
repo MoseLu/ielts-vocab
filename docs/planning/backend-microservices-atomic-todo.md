@@ -1,6 +1,6 @@
 # Backend Microservices Atomic TODO
 
-Last updated: 2026-04-10
+Last updated: 2026-04-10 20:59:04 +08:00
 
 ## Goal
 
@@ -21,8 +21,8 @@ Upgrade the current split-compatible backend into a standard microservice backen
 - [已完成] Add shared split-service env loading from `backend/.env` plus `backend/.env.microservices.local`.
 - [已完成] Add one-command local startup for `gateway-bff + all backend services`, with target-port reservation during boot to avoid Windows dynamic-port collisions.
 - [已完成] Add database-backed `/ready` checks for every stateful service.
-- [待完成] Add Redis local runtime and shared config.
-- [待完成] Add RabbitMQ local runtime and shared config.
+- [已完成] Add Redis local runtime and shared config: [start-local-redis-microservices.ps1](/F:/enterprise-workspace/projects/ielts-vocab/scripts/start-local-redis-microservices.ps1), [local-redis-microservices.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/local-redis-microservices.md), and [redis_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/redis_runtime.py).
+- [已完成] Add RabbitMQ local runtime and shared config: [start-local-rabbitmq-microservices.ps1](/F:/enterprise-workspace/projects/ielts-vocab/scripts/start-local-rabbitmq-microservices.ps1), [local-rabbitmq-microservices.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/local-rabbitmq-microservices.md), and [rabbitmq_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/rabbitmq_runtime.py).
 - [已完成] Standardize internal request headers: `X-Request-Id`, `X-Trace-Id`, `X-User-Id`, `X-User-Scopes`, `X-Service-Name`.
 - [已完成] Add shared internal service auth/JWT package for gateway-to-service calls.
 
@@ -32,9 +32,10 @@ Upgrade the current split-compatible backend into a standard microservice backen
 - [已完成] Move `identity`, `learning-core`, `catalog-content`, `notes`, `ai-execution`, `tts-media`, `asr`, `admin-ops` into dedicated service entrypoints.
 - [进行中] Remove service boot dependence on manually exported shell env.
 - [已完成] Replace remaining service imports of monolith route modules with service-local transport layers.
-- [进行中] Replace remaining service imports of mixed backend service modules with service-local application modules or shared SDKs. `identity / notes / admin-ops / learning-core / catalog-content` are already on service-local application modules; `identity` session/cookie/email helpers, `catalog-content` read/word pagination/confusable wrappers, `learning-core` library/progress/favorites/familiar wrappers, and `notes` word-note writes now live in `platform-sdk` instead of high-level backend service modules. `ai-execution` now uses service-local route files, a local module loader, and service-local application/support modules for `context/profile`, `assistant`, `custom-books`, and `practice`, with local implementations for `prompt/text/metric/summary helpers`, `learning context composition`, `assistant memory`, `related-note recall`, `tool input validation`, `tool execution helpers`, `session logging/review queue`, `wrong-words`, `quick-memory/smart-stats` sync flows, vocabulary-pool lookup, and listening-confusables indexing. `platform-sdk` no longer directly imports `services.ai_*`, `services.auth_session_helpers`, `services.books_catalog_service`, `services.books_confusable_service`, `services.books_progress_service`, `services.books_favorites_service`, or `services.books_familiar_service`. Remaining coupling is now concentrated in lower-level repositories, shared learner-profile/stat services, and provider/LLM adapters.
-- [待完成] Separate `asr-service` HTTP and Socket.IO deployment contracts into explicit ports and config docs.
+- [已完成] Replace remaining service imports of mixed backend service modules with service-local application modules or shared SDKs. `identity / notes / admin-ops / learning-core / catalog-content` are already on service-local application modules; `identity` session/cookie/email helpers, `catalog-content` read/word pagination/confusable wrappers, `learning-core` library/progress/favorites/familiar wrappers, and `notes` word-note writes now live in `platform-sdk` instead of high-level backend service modules. `ai-execution` now uses service-local route files, a local module loader, and service-local application/support modules for `context/profile`, `assistant`, `custom-books`, and `practice`, with local implementations for `prompt/text/metric/summary helpers`, `learning context composition`, `assistant memory`, `related-note recall`, `tool input validation`, `tool execution helpers`, `session logging/review queue`, `wrong-words`, `quick-memory/smart-stats` sync flows, vocabulary-pool lookup, and listening-confusables indexing. `platform-sdk` no longer directly imports mixed high-level `services.*` modules outside explicit adapter and service-repository boundaries, and [test_platform_sdk_service_import_boundaries.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/tests/test_platform_sdk_service_import_boundaries.py) now locks that constraint in regression coverage.
+- [已完成] Separate `asr-service` HTTP and Socket.IO deployment contracts into explicit ports and config docs in [asr-http-socketio-contract.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/asr-http-socketio-contract.md) and [gateway-service-contracts.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/gateway-service-contracts.md).
 - [已完成] Add gateway readiness checks for critical downstream services.
+- [已完成] Re-run the Wave 2 closeout verification pack: `python -m compileall packages/platform-sdk/platform_sdk backend/services`, `pnpm check:file-lines`, `pnpm lint`, `pytest backend/tests -q` (`432 passed`), plus the read-only remote smoke flow for homepage, `GET /api/books`, `GET /api/tts/voices`, `GET /api/tts/word-audio/metadata?w=hello`, and Socket.IO polling on `/socket.io/?EIO=4&transport=polling`, all returning `200` on `2026-04-10`.
 
 ## Phase C: Storage Separation
 
@@ -43,21 +44,23 @@ Upgrade the current split-compatible backend into a standard microservice backen
 - [进行中] Split shared SQLAlchemy model set into service-owned model modules.
 - [已完成] Create service bootstrap/migration commands instead of global `db.create_all()`.
 - [待完成] Add initial schema migration baseline per service.
-- [待完成] Disable new writes to shared SQLite from split services after parity checks pass.
+- [已完成] Add Wave 4 owned-table parity validation script and runbook: [validate_microservice_storage_parity.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/validate_microservice_storage_parity.py) and [wave4-storage-parity-runbook.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/wave4-storage-parity-runbook.md).
+- [进行中] Disable new writes to shared SQLite from split services after parity checks pass. Write-owning split services now reject the implicit shared fallback `backend/database.sqlite` unless `ALLOW_SHARED_SPLIT_SERVICE_SQLITE=true` is set for a controlled drill.
 - [已完成] Migrate `identity-service` data from SQLite to `ielts_identity_service`.
 - [已完成] Migrate `learning-core-service` data from SQLite to `ielts_learning_core_service`.
 - [已完成] Migrate `catalog-content-service` data from SQLite/content files into `ielts_catalog_content_service` metadata tables where needed.
 - [已完成] Migrate `ai-execution-service` current SQLite-backed runtime tables into `ielts_ai_execution_service`.
 - [已完成] Migrate `notes-service` data into `ielts_notes_service`.
 - [进行中] Migrate `admin-ops-service` transitional read-side shadow tables into `ielts_admin_ops_service`.
+- [进行中] Move media and export artifacts onto service-owned OSS keys. `tts-media-service` example-audio now does OSS-first reads/writes in the split runtime with a local-cache backfill script at [backfill_example_audio_to_oss.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/backfill_example_audio_to_oss.py), and `notes-service` exports now emit OSS object references on `/api/notes/export` when object storage is configured.
 
 ## Phase D: Messaging and Caching
 
 - [待完成] Introduce Redis-backed rate limits, ephemeral speech session state, and cache keys.
-- [待完成] Introduce RabbitMQ-backed outbox/event dispatch.
-- [待完成] Add shared outbox table pattern for every write-owning service.
-- [待完成] Add shared inbox/idempotency handling for event consumers.
-- [待完成] Publish first event set:
+- [进行中] Introduce RabbitMQ-backed outbox/event dispatch. Local broker startup, contract resolution, and durable queue/inbox helpers are landed, but live publisher and consumer workers are still pending.
+- [已完成] Add shared outbox table pattern for every write-owning service via [eventing_models.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/model_definitions/eventing_models.py) and [service_table_plan.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/service_table_plan.py).
+- [已完成] Add shared inbox/idempotency handling for event consumers via [outbox_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/outbox_runtime.py).
+- [进行中] Publish first event set. The contract registry is checked in at [domain_event_contracts.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/domain_event_contracts.py), but service-local emit and consume wiring is still pending:
   - `identity.user.registered`
   - `learning.session.logged`
   - `learning.wrong_word.updated`
@@ -68,14 +71,18 @@ Upgrade the current split-compatible backend into a standard microservice backen
 
 ## Phase E: Gateway Narrowing
 
+Wave 6 is split here into two delivery seams: Wave 6A closes edge hardening at the gateway and ASR boundary, and Wave 6B promotes the split-service startup path into the canonical runtime contract.
+
 - [已完成] Browser `/api/*` compatibility now routes through `gateway-bff`.
 - [待完成] Remove direct browser access assumptions from backend monolith startup.
 - [进行中] Move auth context validation to gateway-issued internal headers/JWT.
-- [待完成] Add timeout, retry, and circuit-breaker policy per downstream service.
-- [待完成] Add streaming pass-through tests for AI and media endpoints under gateway.
-- [待完成] Add `/socket.io` reverse-proxy story for the split ASR service in the microservice startup chain.
+- [已完成] Add timeout, retry, and circuit-breaker policy per downstream service in [gateway_upstream.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/gateway_upstream.py), [http_proxy.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/http_proxy.py), and [gateway_browser_routes.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/gateway_browser_routes.py).
+- [已完成] Add streaming pass-through tests for AI and media endpoints under gateway in [test_http_proxy.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/tests/test_http_proxy.py), [test_gateway_bff_ai_proxy.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/tests/test_gateway_bff_ai_proxy.py), and [test_gateway_bff_tts_proxy.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/tests/test_gateway_bff_tts_proxy.py).
+- [已完成] Add `/socket.io` reverse-proxy story for the split ASR service in the microservice startup chain, with the browser `POST /api/speech/transcribe -> asr-service:8106` and `/socket.io/* -> asr-socketio:5001` contract documented in [asr-http-socketio-contract.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/asr-http-socketio-contract.md).
 
 ## Phase F: Monolith Exit
+
+Wave 6C starts only after Wave 6A and Wave 6B are green and the Wave 4/5 storage and infrastructure prerequisites are stable enough to retire the monolith safely.
 
 - [待完成] Stop using `backend/app.py` as the primary runtime in local development.
 - [待完成] Keep `backend/app.py` only as a compatibility reference until all write paths leave SQLite.
@@ -92,5 +99,9 @@ Upgrade the current split-compatible backend into a standard microservice backen
 - [已完成] C1. Stateful service readiness checks against PostgreSQL.
 - [已完成] C2. Service-local schema bootstrap/migration command.
 - [已完成] C3. SQLite-to-PostgreSQL data export/import scripts per service.
-- [待完成] D1. Redis local runtime and shared cache/session adapter.
-- [待完成] D2. RabbitMQ local runtime and outbox/inbox base implementation.
+- [已完成] D1. Redis local runtime and shared cache/session adapter.
+- [进行中] D2. RabbitMQ local runtime and outbox/inbox base implementation.
+- [已完成] E1. Close Wave 6A edge hardening: gateway timeout/retry/circuit-breaker policy, streaming pass-through coverage, and ASR HTTP plus Socket.IO contract docs. Targeted verification is green: `pytest backend/tests/test_http_proxy.py backend/tests/test_gateway_bff_ai_proxy.py backend/tests/test_gateway_bff_tts_proxy.py backend/tests/test_gateway_bff_readiness.py backend/tests/test_asr_service_api.py backend/tests/test_asr_socketio_service.py -q` (`28 passed`), `python -m compileall apps/gateway-bff packages/platform-sdk/platform_sdk services/asr-service`, `pnpm check:file-lines`, and `pnpm lint`.
+- [待完成] E2. Close Wave 6B canonical runtime cutover: remove legacy browser-ingress assumptions and make split-service startup plus remote rollout the default path.
+- [待完成] F1. Close Wave 6C monolith retirement: remove monolith-only runtime paths, validate rollback, and run the final cutover pack.
+
