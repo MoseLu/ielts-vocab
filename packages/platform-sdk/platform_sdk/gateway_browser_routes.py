@@ -13,7 +13,6 @@ DEFAULT_CATALOG_CONTENT_SERVICE_URL = 'http://127.0.0.1:8103'
 DEFAULT_AI_EXECUTION_SERVICE_URL = 'http://127.0.0.1:8104'
 DEFAULT_NOTES_SERVICE_URL = 'http://127.0.0.1:8107'
 DEFAULT_ADMIN_OPS_SERVICE_URL = 'http://127.0.0.1:8108'
-DEFAULT_UPSTREAM_TIMEOUT_SECONDS = 10.0
 
 browser_compat_router = APIRouter()
 
@@ -42,14 +41,20 @@ def admin_ops_service_url() -> str:
     return (os.environ.get('ADMIN_OPS_SERVICE_URL') or DEFAULT_ADMIN_OPS_SERVICE_URL).rstrip('/')
 
 
-def upstream_timeout_seconds() -> float:
-    raw = (os.environ.get('GATEWAY_UPSTREAM_TIMEOUT_SECONDS') or '').strip()
-    if not raw:
-        return DEFAULT_UPSTREAM_TIMEOUT_SECONDS
-    try:
-        return max(0.1, float(raw))
-    except ValueError:
-        return DEFAULT_UPSTREAM_TIMEOUT_SECONDS
+def resolve_browser_service_name(base_url: str) -> str:
+    normalized_base_url = base_url.rstrip('/')
+    service_urls = (
+        ('identity-service', identity_service_url()),
+        ('learning-core-service', learning_core_service_url()),
+        ('catalog-content-service', catalog_content_service_url()),
+        ('ai-execution-service', ai_execution_service_url()),
+        ('notes-service', notes_service_url()),
+        ('admin-ops-service', admin_ops_service_url()),
+    )
+    for service_name, service_url in service_urls:
+        if normalized_base_url == service_url:
+            return service_name
+    return 'gateway-upstream'
 
 
 async def _proxy_service_request(
@@ -61,9 +66,9 @@ async def _proxy_service_request(
 ) -> Response:
     return await proxy_browser_request(
         request=request,
+        service_name=resolve_browser_service_name(base_url),
         base_url=base_url,
         path=path,
-        timeout_seconds=upstream_timeout_seconds(),
         unavailable_detail=unavailable_detail,
     )
 
