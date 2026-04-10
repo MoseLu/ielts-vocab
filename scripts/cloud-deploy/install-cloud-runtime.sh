@@ -6,8 +6,9 @@ venv_dir="${VENV_DIR:-/opt/ielts-vocab/venv}"
 web_root="${WEB_ROOT:-/var/www/ielts-vocab}"
 env_dir="${ENV_DIR:-/etc/ielts-vocab}"
 
-dnf install -y git nginx postgresql-server postgresql-contrib python3 python3-pip \
+dnf install -y git postgresql-server postgresql-contrib python3 python3-pip \
   python3-devel gcc gcc-c++ make openssl-devel libffi-devel tar curl cronie
+dnf install -y --disableexcludes=all nginx
 
 if ! dnf install -y certbot python3-certbot-nginx; then
   dnf install -y certbot
