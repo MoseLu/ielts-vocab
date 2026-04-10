@@ -146,7 +146,7 @@ describe('PracticePage error mode profile and persistence', () => {
           },
           dimensions: [
             { dimension: 'listening', label: '听音辨义', correct: 2, wrong: 5, attempts: 7, accuracy: 29, weakness: 0.71 },
-            { dimension: 'meaning', label: '释义拼词（会想）', correct: 6, wrong: 3, attempts: 9, accuracy: 67, weakness: 0.33 },
+            { dimension: 'meaning', label: '默写模式', correct: 6, wrong: 3, attempts: 9, accuracy: 67, weakness: 0.33 },
             { dimension: 'dictation', label: '拼写默写', correct: 4, wrong: 2, attempts: 6, accuracy: 67, weakness: 0.33 },
           ],
           focus_words: [{

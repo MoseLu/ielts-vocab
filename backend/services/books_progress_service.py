@@ -1,16 +1,29 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from importlib import import_module
 
-
-def _books_module():
-    return import_module('routes.books')
+from services import books_confusable_service, books_favorites_service
+from services.books_catalog_query_service import load_book_vocabulary
+from services.books_structure_service import (
+    load_book_chapters,
+    serialize_effective_book_progress,
+)
+from services.books_user_state_repository import (
+    commit as _commit_user_state,
+    create_user_book_progress,
+    create_user_chapter_progress,
+    get_user_book_progress,
+    get_user_chapter_progress,
+    list_user_book_progress_rows,
+    list_user_chapter_mode_progress_rows,
+    list_user_chapter_progress_rows,
+)
+from services.learning_events import record_learning_event
 
 
 def _find_book(book_id):
-    books = _books_module()
-    return next((book for book in books.VOCAB_BOOKS if book['id'] == book_id), None)
+    from services import books_registry_service
+    return books_registry_service.get_vocab_book(book_id)
 
 
 def _paginate_items(items, page, per_page):
@@ -42,17 +55,16 @@ def _strip_chapter_fields(word_entry):
 
 
 def build_chapter_words_response(book_id, chapter_id):
-    books = _books_module()
-    if books._is_favorites_book(book_id):
-        return _build_favorites_chapter_words_response(books, chapter_id)
+    if books_favorites_service._is_favorites_book(book_id):
+        return _build_favorites_chapter_words_response(chapter_id)
 
     book = _find_book(book_id)
     if not book:
         return {'error': 'Book not found'}, 404
 
-    if books._is_confusable_match_book(book_id):
-        current_user = books._resolve_optional_current_user()
-        custom_chapter = books._get_confusable_custom_chapter(
+    if books_confusable_service.is_confusable_match_book(book_id):
+        current_user = books_confusable_service.resolve_optional_current_user()
+        custom_chapter = books_confusable_service.get_confusable_custom_chapter(
             current_user.id if current_user else None,
             chapter_id,
         )
@@ -65,21 +77,25 @@ def build_chapter_words_response(book_id, chapter_id):
                     'group_count': 1,
                     'is_custom': True,
                 },
-                'words': books._serialize_confusable_custom_words(custom_chapter),
+                'words': books_confusable_service.serialize_confusable_custom_words(custom_chapter),
             }, 200
 
-    chapters_data = books.load_book_chapters(book_id)
+    chapters_data = load_book_chapters(book_id)
     if not chapters_data:
         return {'error': 'Chapters not available for this book'}, 404
 
     chapter = next(
-        (entry for entry in chapters_data.get('chapters', []) if _chapter_id_matches(entry.get('id'), chapter_id)),
+        (
+            entry
+            for entry in chapters_data.get('chapters', [])
+            if _chapter_id_matches(entry.get('id'), chapter_id)
+        ),
         None,
     )
     if not chapter:
         return {'error': 'Chapter not found'}, 404
 
-    words = books.load_book_vocabulary(book_id)
+    words = load_book_vocabulary(book_id)
     if words is None:
         return {'error': 'Failed to load chapter'}, 500
 
@@ -88,28 +104,25 @@ def build_chapter_words_response(book_id, chapter_id):
         for word in words
         if _chapter_id_matches(word.get('chapter_id'), chapter_id)
     ]
-    return {
-        'chapter': chapter,
-        'words': chapter_words,
-    }, 200
+    return {'chapter': chapter, 'words': chapter_words}, 200
 
 
-def _build_favorites_chapter_words_response(books, chapter_id):
-    if chapter_id != books.FAVORITES_CHAPTER_ID:
+def _build_favorites_chapter_words_response(chapter_id):
+    if chapter_id != books_favorites_service.FAVORITES_CHAPTER_ID:
         return {'error': 'Chapter not found'}, 404
 
-    current_user = books._resolve_optional_current_user()
+    current_user = books_confusable_service.resolve_optional_current_user()
     if not current_user:
         return {'error': 'Book not found'}, 404
 
-    words = books._serialize_favorite_words(current_user.id)
+    words = books_favorites_service._serialize_favorite_words(current_user.id)
     if not words:
         return {'error': 'Chapter not found'}, 404
 
     return {
         'chapter': {
-            'id': books.FAVORITES_CHAPTER_ID,
-            'title': books.FAVORITES_CHAPTER_TITLE,
+            'id': books_favorites_service.FAVORITES_CHAPTER_ID,
+            'title': books_favorites_service.FAVORITES_CHAPTER_TITLE,
             'word_count': len(words),
             'is_custom': True,
         },
@@ -118,13 +131,12 @@ def _build_favorites_chapter_words_response(books, chapter_id):
 
 
 def build_book_words_response(book_id, page=1, per_page=100):
-    books = _books_module()
-    if books._is_favorites_book(book_id):
-        current_user = books._resolve_optional_current_user()
+    if books_favorites_service._is_favorites_book(book_id):
+        current_user = books_confusable_service.resolve_optional_current_user()
         if not current_user:
             return {'error': 'Book not found'}, 404
 
-        words = books._serialize_favorite_words(current_user.id)
+        words = books_favorites_service._serialize_favorite_words(current_user.id)
         if not words:
             return {'error': 'Book not found'}, 404
         paginated = _paginate_items(words, page, per_page)
@@ -140,13 +152,16 @@ def build_book_words_response(book_id, page=1, per_page=100):
     if not book:
         return {'error': 'Book not found'}, 404
 
-    words = books.load_book_vocabulary(book_id)
+    words = load_book_vocabulary(book_id)
     if words is None:
         return {'error': 'Failed to load vocabulary'}, 500
 
-    if books._is_confusable_match_book(book_id):
-        current_user = books._resolve_optional_current_user()
-        custom_book = books._get_confusable_custom_book(current_user.id) if current_user else None
+    if books_confusable_service.is_confusable_match_book(book_id):
+        current_user = books_confusable_service.resolve_optional_current_user()
+        custom_book = (
+            books_confusable_service.get_confusable_custom_book(current_user.id)
+            if current_user else None
+        )
         if custom_book:
             custom_words = []
             for chapter in custom_book.chapters:
@@ -154,7 +169,7 @@ def build_book_words_response(book_id, page=1, per_page=100):
                     custom_chapter_id = int(str(chapter.id))
                 except (TypeError, ValueError):
                     continue
-                for word in books._serialize_confusable_custom_words(chapter):
+                for word in books_confusable_service.serialize_confusable_custom_words(chapter):
                     custom_words.append({
                         **word,
                         'chapter_id': custom_chapter_id,
@@ -174,9 +189,8 @@ def build_book_words_response(book_id, page=1, per_page=100):
 
 
 def build_user_progress_response(user_id):
-    books = _books_module()
-    progress_records = books.UserBookProgress.query.filter_by(user_id=user_id).all()
-    chapter_records = books.UserChapterProgress.query.filter_by(user_id=user_id).all()
+    progress_records = list_user_book_progress_rows(user_id)
+    chapter_records = list_user_chapter_progress_rows(user_id)
 
     progress_by_book = {record.book_id: record for record in progress_records}
     chapters_by_book = defaultdict(list)
@@ -185,7 +199,7 @@ def build_user_progress_response(user_id):
 
     progress_dict = {}
     for book_id in sorted(set(progress_by_book) | set(chapters_by_book)):
-        effective_progress = books._serialize_effective_book_progress(
+        effective_progress = serialize_effective_book_progress(
             book_id,
             progress_record=progress_by_book.get(book_id),
             chapter_records=chapters_by_book.get(book_id, []),
@@ -193,15 +207,13 @@ def build_user_progress_response(user_id):
         )
         if effective_progress:
             progress_dict[book_id] = effective_progress
-
     return {'progress': progress_dict}, 200
 
 
 def build_book_progress_response(user_id, book_id):
-    books = _books_module()
-    progress = books.UserBookProgress.query.filter_by(user_id=user_id, book_id=book_id).first()
-    chapter_records = books.UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
-    effective_progress = books._serialize_effective_book_progress(
+    progress = get_user_book_progress(user_id, book_id)
+    chapter_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
+    effective_progress = serialize_effective_book_progress(
         book_id,
         progress_record=progress,
         chapter_records=chapter_records,
@@ -211,16 +223,14 @@ def build_book_progress_response(user_id, book_id):
 
 
 def save_book_progress_response(user_id, data):
-    books = _books_module()
     payload = data or {}
     book_id = payload.get('book_id')
     if not book_id:
         return {'error': 'book_id is required'}, 400
 
-    progress = books.UserBookProgress.query.filter_by(user_id=user_id, book_id=book_id).first()
+    progress = get_user_book_progress(user_id, book_id)
     if not progress:
-        progress = books.UserBookProgress(user_id=user_id, book_id=book_id)
-        books.db.session.add(progress)
+        progress = create_user_book_progress(user_id, book_id)
 
     before_snapshot = {
         'current_index': progress.current_index or 0,
@@ -245,7 +255,7 @@ def save_book_progress_response(user_id, data):
         'is_completed': bool(progress.is_completed),
     }
     if after_snapshot != before_snapshot:
-        books.record_learning_event(
+        record_learning_event(
             user_id=user_id,
             event_type='book_progress_updated',
             source='book_progress',
@@ -256,10 +266,10 @@ def save_book_progress_response(user_id, data):
             payload={'is_completed': after_snapshot['is_completed']},
         )
 
-    books.db.session.commit()
+    _commit_user_state()
 
-    chapter_records = books.UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
-    effective_progress = books._serialize_effective_book_progress(
+    chapter_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
+    effective_progress = serialize_effective_book_progress(
         book_id,
         progress_record=progress,
         chapter_records=chapter_records,
@@ -269,9 +279,8 @@ def save_book_progress_response(user_id, data):
 
 
 def build_chapter_progress_response(user_id, book_id):
-    books = _books_module()
-    progress_records = books.UserChapterProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
-    mode_records = books.UserChapterModeProgress.query.filter_by(user_id=user_id, book_id=book_id).all()
+    progress_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
+    mode_records = list_user_chapter_mode_progress_rows(user_id, book_id=book_id)
 
     progress_dict = {}
     for record in progress_records:
@@ -289,20 +298,10 @@ def build_chapter_progress_response(user_id, book_id):
 
 
 def save_chapter_progress_response(user_id, book_id, chapter_id, data):
-    books = _books_module()
     payload = data or {}
-    progress = books.UserChapterProgress.query.filter_by(
-        user_id=user_id,
-        book_id=book_id,
-        chapter_id=chapter_id,
-    ).first()
+    progress = get_user_chapter_progress(user_id, book_id, chapter_id)
     if not progress:
-        progress = books.UserChapterProgress(
-            user_id=user_id,
-            book_id=book_id,
-            chapter_id=chapter_id,
-        )
-        books.db.session.add(progress)
+        progress = create_user_chapter_progress(user_id, book_id, chapter_id)
 
     before_snapshot = {
         'words_learned': progress.words_learned or 0,
@@ -327,7 +326,7 @@ def save_chapter_progress_response(user_id, book_id, chapter_id, data):
         'is_completed': bool(progress.is_completed),
     }
     if after_snapshot != before_snapshot:
-        books.record_learning_event(
+        record_learning_event(
             user_id=user_id,
             event_type='chapter_progress_updated',
             source='chapter_progress',
@@ -339,5 +338,5 @@ def save_chapter_progress_response(user_id, book_id, chapter_id, data):
             payload={'is_completed': after_snapshot['is_completed']},
         )
 
-    books.db.session.commit()
+    _commit_user_state()
     return {'progress': progress.to_dict()}, 200

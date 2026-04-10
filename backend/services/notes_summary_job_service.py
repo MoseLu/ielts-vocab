@@ -1,48 +1,87 @@
 from __future__ import annotations
 
+import logging
+import threading
+import uuid
 from datetime import date as date_type
-from importlib import import_module
 
+from flask import jsonify
 
-def _notes_module():
-    return import_module('routes.notes')
+from services import daily_summary_repository
+from services.learner_profile import build_learner_profile
+from services.llm import chat
+from services.memory_topics import build_memory_topics
+import services.notes_summary_runtime as summary_runtime
+from services.notes_summary_service import (
+    build_learning_snapshot,
+    build_summary_prompt,
+    check_generate_cooldown,
+    collect_summary_source_data,
+    estimate_summary_target_chars,
+    fallback_summary_content,
+    parse_date_param,
+    prune_summary_jobs,
+    save_summary,
+    serialize_summary_job,
+    utc_now,
+)
 
 
 def _validate_target_date(raw_target_date):
-    notes = _notes_module()
     target_date = raw_target_date or date_type.today().strftime('%Y-%m-%d')
-    target_date, err = notes._parse_date_param(target_date, 'date')
-    if err or not target_date:
-        return None, (notes.jsonify({'error': err or '日期格式错误'}), 400)
+    target_date, error = parse_date_param(target_date, 'date')
+    if error or not target_date:
+        return None, (jsonify({'error': error or '日期格式错误'}), 400)
     if target_date > date_type.today().strftime('%Y-%m-%d'):
-        return None, (notes.jsonify({'error': '不能为未来日期生成总结'}), 400)
+        return None, (jsonify({'error': '不能为未来日期生成总结'}), 400)
     return target_date, None
 
 
+def _build_summary_context(user_id: int, target_date: str) -> dict:
+    learning_notes, sessions, wrong_words = collect_summary_source_data(user_id, target_date)
+    learning_snapshot = build_learning_snapshot(user_id, target_date, sessions, wrong_words)
+    topic_insights = build_memory_topics(learning_notes, limit=5, include_singletons=True)
+    learner_profile = build_learner_profile(user_id, target_date)
+    estimated_chars = estimate_summary_target_chars(learning_notes, sessions, wrong_words)
+    user_content = build_summary_prompt(
+        target_date,
+        learning_notes,
+        sessions,
+        wrong_words,
+        learning_snapshot=learning_snapshot,
+        topic_insights=topic_insights,
+        learner_profile=learner_profile,
+    )
+    return {
+        'learning_notes': learning_notes,
+        'sessions': sessions,
+        'wrong_words': wrong_words,
+        'estimated_chars': estimated_chars,
+        'user_content': user_content,
+    }
+
+
 def get_summary_job(job_id: str):
-    notes = _notes_module()
-    notes._prune_summary_jobs()
-    with notes._summary_jobs_lock:
-        job = notes._summary_jobs.get(job_id)
+    prune_summary_jobs()
+    with summary_runtime._summary_jobs_lock:
+        job = summary_runtime._summary_jobs.get(job_id)
         return dict(job) if job else None
 
 
 def update_summary_job(job_id: str, **fields):
-    notes = _notes_module()
-    with notes._summary_jobs_lock:
-        job = notes._summary_jobs.get(job_id)
+    with summary_runtime._summary_jobs_lock:
+        job = summary_runtime._summary_jobs.get(job_id)
         if not job:
             return None
         job.update(fields)
-        job['updated_at'] = notes._utc_now()
+        job['updated_at'] = utc_now()
         return dict(job)
 
 
 def find_running_summary_job(user_id: int, target_date: str):
-    notes = _notes_module()
-    notes._prune_summary_jobs()
-    with notes._summary_jobs_lock:
-        for job in notes._summary_jobs.values():
+    prune_summary_jobs()
+    with summary_runtime._summary_jobs_lock:
+        for job in summary_runtime._summary_jobs.values():
             if (
                 job['user_id'] == user_id and
                 job['date'] == target_date and
@@ -53,9 +92,8 @@ def find_running_summary_job(user_id: int, target_date: str):
 
 
 def create_summary_job(user_id: int, target_date: str):
-    notes = _notes_module()
     job = {
-        'job_id': notes.uuid.uuid4().hex,
+        'job_id': uuid.uuid4().hex,
         'user_id': user_id,
         'date': target_date,
         'status': 'queued',
@@ -65,51 +103,36 @@ def create_summary_job(user_id: int, target_date: str):
         'generated_chars': 0,
         'summary': None,
         'error': None,
-        'created_at': notes._utc_now(),
-        'updated_at': notes._utc_now(),
+        'created_at': utc_now(),
+        'updated_at': utc_now(),
     }
-    with notes._summary_jobs_lock:
-        notes._summary_jobs[job['job_id']] = job
+    with summary_runtime._summary_jobs_lock:
+        summary_runtime._summary_jobs[job['job_id']] = job
     return dict(job)
 
 
 def run_summary_job(app, job_id: str, user_id: int, target_date: str) -> None:
-    notes = _notes_module()
     try:
         with app.app_context():
             update_summary_job(job_id, status='running', progress=8, message='正在收集学习记录...')
-            existing = notes.UserDailySummary.query.filter_by(user_id=user_id, date=target_date).first()
-            learning_notes, sessions, wrong_words = notes._collect_summary_source_data(user_id, target_date)
-            learning_snapshot = notes._build_learning_snapshot(user_id, target_date, sessions, wrong_words)
-            topic_insights = notes.build_memory_topics(learning_notes, limit=5, include_singletons=True)
-            learner_profile = notes.build_learner_profile(user_id, target_date)
-            estimated_chars = notes._estimate_summary_target_chars(learning_notes, sessions, wrong_words)
+            existing = daily_summary_repository.get_daily_summary(user_id, target_date)
+            context = _build_summary_context(user_id, target_date)
             update_summary_job(
                 job_id,
                 progress=18,
                 message='正在整理总结结构...',
-                estimated_chars=estimated_chars,
-            )
-
-            user_content = notes._build_summary_prompt(
-                target_date,
-                learning_notes,
-                sessions,
-                wrong_words,
-                learning_snapshot=learning_snapshot,
-                topic_insights=topic_insights,
-                learner_profile=learner_profile,
+                estimated_chars=context['estimated_chars'],
             )
             update_summary_job(job_id, progress=26, message='AI 正在生成正文...')
 
             chunks = []
             generated_chars = 0
-            for chunk in notes._stream_summary_text(user_content):
+            for chunk in summary_runtime.stream_summary_text(context['user_content']):
                 if not chunk:
                     continue
                 chunks.append(chunk)
                 generated_chars += len(chunk)
-                ratio = min(generated_chars / max(estimated_chars, 1), 1.0)
+                ratio = min(generated_chars / max(context['estimated_chars'], 1), 1.0)
                 progress = min(94, 26 + int(ratio * 64))
                 update_summary_job(
                     job_id,
@@ -118,14 +141,14 @@ def run_summary_job(app, job_id: str, user_id: int, target_date: str) -> None:
                     generated_chars=generated_chars,
                 )
 
-            summary_content = ''.join(chunks).strip() or notes._fallback_summary_content(target_date)
+            summary_content = ''.join(chunks).strip() or fallback_summary_content(target_date)
             update_summary_job(
                 job_id,
                 progress=96,
                 message='正在保存总结...',
                 generated_chars=max(generated_chars, len(summary_content)),
             )
-            saved_summary = notes._save_summary(existing, user_id, target_date, summary_content)
+            saved_summary = save_summary(existing, user_id, target_date, summary_content)
             update_summary_job(
                 job_id,
                 status='completed',
@@ -136,7 +159,8 @@ def run_summary_job(app, job_id: str, user_id: int, target_date: str) -> None:
                 error=None,
             )
     except Exception as exc:
-        notes.logging.exception("[Notes] Summary job failed for user=%s date=%s", user_id, target_date)
+        daily_summary_repository.rollback()
+        logging.exception("[Notes] Summary job failed for user=%s date=%s", user_id, target_date)
         update_summary_job(
             job_id,
             status='failed',
@@ -146,77 +170,61 @@ def run_summary_job(app, job_id: str, user_id: int, target_date: str) -> None:
 
 
 def generate_summary_response(user_id: int, body):
-    notes = _notes_module()
     target_date, error_response = _validate_target_date((body or {}).get('date'))
     if error_response:
         return error_response
 
-    existing, cooldown_response = notes._check_generate_cooldown(user_id, target_date)
+    existing, cooldown_response = check_generate_cooldown(user_id, target_date)
     if cooldown_response:
         return cooldown_response
 
-    learning_notes, sessions, wrong_words = notes._collect_summary_source_data(user_id, target_date)
-    learning_snapshot = notes._build_learning_snapshot(user_id, target_date, sessions, wrong_words)
-    topic_insights = notes.build_memory_topics(learning_notes, limit=5, include_singletons=True)
-    learner_profile = notes.build_learner_profile(user_id, target_date)
-    user_content = notes._build_summary_prompt(
-        target_date,
-        learning_notes,
-        sessions,
-        wrong_words,
-        learning_snapshot=learning_snapshot,
-        topic_insights=topic_insights,
-        learner_profile=learner_profile,
-    )
-
+    context = _build_summary_context(user_id, target_date)
     try:
-        response = notes.chat(
+        response = chat(
             [
-                {"role": "system", "content": notes.SUMMARY_SYSTEM_PROMPT},
-                {"role": "user", "content": user_content},
+                {"role": "system", "content": summary_runtime.SUMMARY_SYSTEM_PROMPT},
+                {"role": "user", "content": context['user_content']},
             ],
             max_tokens=2000,
         )
-        summary_content = (response or {}).get('text', '').strip() or notes._fallback_summary_content(target_date)
+        summary_content = (response or {}).get('text', '').strip() or fallback_summary_content(target_date)
     except Exception as exc:
-        notes.logging.warning("[Notes] LLM summary generation failed for user=%s: %s", user_id, exc)
-        return notes.jsonify({'error': 'AI 生成失败，请稍后重试'}), 500
+        logging.warning("[Notes] LLM summary generation failed for user=%s: %s", user_id, exc)
+        return jsonify({'error': 'AI 生成失败，请稍后重试'}), 500
 
     try:
-        saved_summary = notes._save_summary(existing, user_id, target_date, summary_content)
-        return notes.jsonify({'summary': saved_summary.to_dict()})
+        saved_summary = save_summary(existing, user_id, target_date, summary_content)
+        return jsonify({'summary': saved_summary.to_dict()})
     except Exception as exc:
-        notes.db.session.rollback()
-        notes.logging.error("[Notes] Failed to save summary for user=%s: %s", user_id, exc)
-        return notes.jsonify({'error': '保存失败，请重试'}), 500
+        daily_summary_repository.rollback()
+        logging.error("[Notes] Failed to save summary for user=%s: %s", user_id, exc)
+        return jsonify({'error': '保存失败，请重试'}), 500
 
 
 def start_generate_summary_job_response(user_id: int, body, app):
-    notes = _notes_module()
     target_date, error_response = _validate_target_date((body or {}).get('date'))
     if error_response:
         return error_response
 
     running_job = find_running_summary_job(user_id, target_date)
     if running_job:
-        return notes.jsonify(notes._serialize_summary_job(running_job)), 202
+        return jsonify(serialize_summary_job(running_job)), 202
 
-    _existing, cooldown_response = notes._check_generate_cooldown(user_id, target_date)
+    _existing, cooldown_response = check_generate_cooldown(user_id, target_date)
     if cooldown_response:
         return cooldown_response
 
     job = create_summary_job(user_id, target_date)
-    notes.threading.Thread(
+    threading.Thread(
         target=run_summary_job,
         args=(app, job['job_id'], user_id, target_date),
         daemon=True,
     ).start()
-    return notes.jsonify(notes._serialize_summary_job(job)), 202
+    return jsonify(serialize_summary_job(job)), 202
 
 
 def get_generate_summary_job_response(user_id: int, job_id: str):
-    notes = _notes_module()
     job = get_summary_job(job_id)
     if not job or job['user_id'] != user_id:
-        return notes.jsonify({'error': '任务不存在'}), 404
-    return notes.jsonify(notes._serialize_summary_job(job))
+        return jsonify({'error': '任务不存在'}), 404
+    return jsonify(serialize_summary_job(job))

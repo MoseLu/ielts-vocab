@@ -8,10 +8,11 @@ from models import (
     UserChapterProgress,
     UserStudySession,
 )
+from services import learning_stats_repository
 from services.learning_stats_breakdowns import (
     build_chapter_breakdowns,
     build_mode_breakdown,
-    build_wrong_top10,
+    build_wrong_top_lists,
     resolve_trend_direction,
     resolve_weakest_mode,
 )
@@ -100,14 +101,11 @@ def _build_fallback_daily_series(
     since: datetime,
     book_id_filter: str | None,
 ) -> list[dict]:
-    chapter_query = UserChapterProgress.query.filter(
-        UserChapterProgress.user_id == user_id,
-        UserChapterProgress.updated_at >= since,
+    chapter_rows = learning_stats_repository.list_user_chapter_progress_rows(
+        user_id,
+        book_id=book_id_filter,
+        updated_since=since,
     )
-    if book_id_filter:
-        chapter_query = chapter_query.filter(UserChapterProgress.book_id == book_id_filter)
-
-    chapter_rows = chapter_query.all()
     chapter_daily = defaultdict(lambda: {
         'words_studied': 0,
         'correct_count': 0,
@@ -145,10 +143,8 @@ def _build_filter_options(
     book_title_map: dict[str, str],
     global_live_pending: dict | None,
 ) -> tuple[list[dict], list[str], list[UserStudySession], list[UserChapterProgress]]:
-    all_sessions = UserStudySession.query.filter_by(user_id=user_id).filter(
-        UserStudySession.analytics_clause()
-    ).all()
-    all_chapters = UserChapterProgress.query.filter_by(user_id=user_id).all()
+    all_sessions = learning_stats_repository.list_user_analytics_sessions(user_id)
+    all_chapters = learning_stats_repository.list_user_chapter_progress_rows(user_id)
 
     book_ids_from_sessions = {session.book_id for session in all_sessions if session.book_id}
     book_ids_from_chapters = {chapter.book_id for chapter in all_chapters if chapter.book_id}

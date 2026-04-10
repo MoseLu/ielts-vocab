@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { AIMessage, LearningContext } from '../../types'
+import { getWrongWordDimensionModeLabel, normalizeModeText } from '../../constants/practiceModes'
 import {
   AIAskResponseSchema,
   AIPronunciationCheckResponseSchema,
@@ -8,7 +9,7 @@ import {
   apiFetch,
   safeParse,
 } from '../../lib'
-import { buildAIChatContext, syncWrongWords } from './context'
+import { buildAIChatContext } from './context'
 import {
   buildPendingPronunciationPayload,
   buildPendingSpeakingPayload,
@@ -17,6 +18,7 @@ import {
   type PendingPronunciationState,
   type PendingSpeakingState,
 } from './commands'
+import { playAIGreetingAudio, stopAIGreetingAudio, warmupAIGreetingAudio } from './greetingAudio'
 import { resolveStreamStatusMessage, streamAIReply } from './streaming'
 
 interface UseAIChatOptions {
@@ -40,10 +42,11 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
   const [contextLoaded, setContextLoaded] = useState(false)
   const [pendingPronunciation, setPendingPronunciation] = useState<PendingPronunciationState | null>(null)
   const [pendingSpeaking, setPendingSpeaking] = useState<PendingSpeakingState | null>(null)
+  const greetingSessionRef = useRef(0)
 
   const buildContext = useCallback(() => buildAIChatContext(), [])
 
-  const fetchGreeting = useCallback(async () => {
+  const fetchGreeting = useCallback(async (sessionId: number) => {
     setIsGreeting(true)
     try {
       const raw = await apiFetch('/api/ai/greet', {
@@ -62,13 +65,20 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
         options: options ?? undefined,
         timestamp: Date.now(),
       }])
+      if (greetingSessionRef.current === sessionId) {
+        void playAIGreetingAudio(content)
+      }
     } catch {
+      const content = '你好！我是雅思小助手 👋\n\n我可以帮你分析学习进度、找出薄弱单词、制定复习计划，或者生成专属词书。有什么我可以帮你的吗？'
       setMessages([{
         id: 'greet',
         role: 'assistant',
-        content: '你好！我是雅思小助手 👋\n\n我可以帮你分析学习进度、找出薄弱单词、制定复习计划，或者生成专属词书。有什么我可以帮你的吗？',
+        content,
         timestamp: Date.now(),
       }])
+      if (greetingSessionRef.current === sessionId) {
+        void playAIGreetingAudio(content)
+      }
     } finally {
       setIsGreeting(false)
       setGreetingDone(true)
@@ -77,13 +87,22 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
 
   const openPanel = useCallback(async () => {
     setIsOpen(true)
-    if (contextLoaded) return
+    void warmupAIGreetingAudio()
+    const hasUserMessages = messages.some(message => message.role === 'user')
+    if (contextLoaded && hasUserMessages) {
+      const greetingMessage = messages.find(message => message.id === 'greet')
+      if (greetingMessage?.content.trim()) {
+        void playAIGreetingAudio(greetingMessage.content)
+      }
+      return
+    }
+    const sessionId = greetingSessionRef.current + 1
+    greetingSessionRef.current = sessionId
     setContextLoaded(true)
-    await syncWrongWords()
-    await fetchGreeting()
-  }, [contextLoaded, fetchGreeting])
+    await fetchGreeting(sessionId)
+  }, [contextLoaded, fetchGreeting, messages])
 
-  const closePanel = useCallback(() => setIsOpen(false), [])
+  const closePanel = useCallback(() => { greetingSessionRef.current += 1; stopAIGreetingAudio(); setIsOpen(false) }, [])
 
   const sendMessage = useCallback(async (text: string) => {
     const userMsg: AIMessage = {
@@ -316,21 +335,23 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
         if (!result.success) throw new Error('复习计划响应格式错误')
 
         const lines = [`今日复习计划（${result.data.level}）：`]
-        if (result.data.mastery_rule) lines.push(result.data.mastery_rule)
+        if (result.data.mastery_rule) lines.push(normalizeModeText(result.data.mastery_rule))
         if (result.data.priority_dimension) {
           const reason = result.data.priority_reason ? `，原因：${result.data.priority_reason}` : ''
-          lines.push(`当前优先维度：${result.data.priority_dimension}${reason}`)
+          const priorityLabel = getWrongWordDimensionModeLabel(result.data.priority_dimension, result.data.priority_dimension)
+          lines.push(`当前优先维度：${priorityLabel || result.data.priority_dimension}${reason}`)
         }
         if (result.data.dimensions.length > 0) {
           lines.push('四维安排：')
           result.data.dimensions.forEach(item => {
             const schedule = item.schedule_label ? `，周期 ${item.schedule_label}` : ''
-            lines.push(`- ${item.label || '维度'}：${item.status_label || '待安排'}${schedule}`)
+            const label = getWrongWordDimensionModeLabel(item.key, item.label) || item.label || '维度'
+            lines.push(`- ${label}：${normalizeModeText(item.status_label || '待安排')}${schedule}`)
           })
         }
         if (result.data.plan.length > 0) {
           lines.push('建议动作：')
-          lines.push(...result.data.plan.map(item => `- ${item}`))
+          lines.push(...result.data.plan.map(item => `- ${normalizeModeText(item)}`))
         }
         appendAssistantMessage(lines.join('\n'))
         return

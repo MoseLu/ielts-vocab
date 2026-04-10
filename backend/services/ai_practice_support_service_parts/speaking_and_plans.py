@@ -1,15 +1,23 @@
-def pronunciation_check_response(current_user, body):
-    ai = _ai_module()
-    import logging
+import logging
 
+from flask import jsonify
+
+from services import learning_event_repository, learning_stats_repository
+from services.ai_route_support_service import _normalize_chapter_id, _normalize_word_list, _track_metric
+from services.ai_vocab_catalog_service import _get_global_vocab_pool
+from services.learner_profile import build_learner_profile
+from services.learning_events import record_learning_event
+
+
+def pronunciation_check_response(current_user, body):
     body = body or {}
     word = str(body.get('word') or '').strip()
     transcript = str(body.get('transcript') or '').strip()
     sentence = str(body.get('sentence') or '').strip()
     book_id = str(body.get('bookId') or '').strip() or None
-    chapter_id = ai._normalize_chapter_id(body.get('chapterId'))
+    chapter_id = _normalize_chapter_id(body.get('chapterId'))
     if not word:
-        return ai.jsonify({'error': 'word is required'}), 400
+        return jsonify({'error': 'word is required'}), 400
 
     score = 85 if transcript.lower() == word.lower() else 65
     passed = score >= 80
@@ -22,7 +30,7 @@ def pronunciation_check_response(current_user, body):
         'speed_feedback': '语速可接受，注意词尾清晰度。',
     }
     try:
-        ai.record_learning_event(
+        record_learning_event(
             user_id=current_user.id,
             event_type='pronunciation_check',
             source='assistant',
@@ -40,22 +48,19 @@ def pronunciation_check_response(current_user, body):
                 'sentence': sentence[:300] if sentence else None,
             },
         )
-        ai.db.session.commit()
+        learning_event_repository.commit()
     except Exception as exc:
-        ai.db.session.rollback()
+        learning_event_repository.rollback()
         logging.warning("[AI] Failed to record pronunciation check: %s", exc)
-    ai._track_metric(current_user.id, 'pronunciation_check_used', {'word': word, 'score': score})
-    return ai.jsonify(result), 200
+    _track_metric(current_user.id, 'pronunciation_check_used', {'word': word, 'score': score})
+    return jsonify(result), 200
 
 
 def speaking_simulate_response(current_user, body):
-    ai = _ai_module()
-    import logging
-
     body = body or {}
     part = int(body.get('part', 1))
     topic = str(body.get('topic') or 'education').strip()
-    target_words = ai._normalize_word_list(
+    target_words = _normalize_word_list(
         body.get('targetWords')
         or body.get('target_words')
         or body.get('words')
@@ -68,7 +73,7 @@ def speaking_simulate_response(current_user, body):
         or ''
     ).strip()
     book_id = str(body.get('bookId') or '').strip() or None
-    chapter_id = ai._normalize_chapter_id(body.get('chapterId'))
+    chapter_id = _normalize_chapter_id(body.get('chapterId'))
     question_map = {
         1: f"Part 1: Do you enjoy learning vocabulary about {topic}?",
         2: f"Part 2: Describe a time when {topic} vocabulary helped your IELTS performance.",
@@ -76,7 +81,7 @@ def speaking_simulate_response(current_user, body):
     }
     question = question_map.get(part, question_map[1])
     try:
-        ai.record_learning_event(
+        record_learning_event(
             user_id=current_user.id,
             event_type='speaking_simulation',
             source='assistant',
@@ -95,12 +100,12 @@ def speaking_simulate_response(current_user, body):
                 'response_text': response_text[:500] if response_text else None,
             },
         )
-        ai.db.session.commit()
+        learning_event_repository.commit()
     except Exception as exc:
-        ai.db.session.rollback()
+        learning_event_repository.rollback()
         logging.warning("[AI] Failed to record speaking simulation: %s", exc)
-    ai._track_metric(current_user.id, 'speaking_simulation_used', {'part': part, 'topic': topic})
-    return ai.jsonify({
+    _track_metric(current_user.id, 'speaking_simulation_used', {'part': part, 'topic': topic})
+    return jsonify({
         'part': part,
         'topic': topic,
         'question': question,
@@ -109,8 +114,7 @@ def speaking_simulate_response(current_user, body):
 
 
 def review_plan_response(current_user):
-    ai = _ai_module()
-    profile = ai.build_learner_profile(current_user.id)
+    profile = build_learner_profile(current_user.id)
     memory_system = profile.get('memory_system') or {}
     dimensions = memory_system.get('dimensions') or []
     plan = profile.get('next_actions') or []
@@ -119,7 +123,7 @@ def review_plan_response(current_user):
 
     response = {
         'level': 'four-dimensional',
-        'wrong_words': ai.UserWrongWord.query.filter_by(user_id=current_user.id).count(),
+        'wrong_words': learning_stats_repository.count_user_wrong_words(current_user.id),
         'mastery_rule': memory_system.get('mastery_rule'),
         'priority_dimension': memory_system.get('priority_dimension_label'),
         'priority_reason': memory_system.get('priority_reason'),
@@ -136,7 +140,7 @@ def review_plan_response(current_user):
             for item in dimensions
         ],
     }
-    ai._track_metric(
+    _track_metric(
         current_user.id,
         'adaptive_plan_generated',
         {
@@ -144,18 +148,19 @@ def review_plan_response(current_user):
             'priority_dimension': memory_system.get('priority_dimension'),
         },
     )
-    return ai.jsonify(response), 200
+    return jsonify(response), 200
 
 
 def vocab_assessment_response(current_user, args):
-    ai = _ai_module()
     count = min(max(int(args.get('count', 20)), 5), 50)
-    pool = ai._get_global_vocab_pool()
-    ai.random.shuffle(pool)
+    pool = _get_global_vocab_pool()
+    import random
+
+    random.shuffle(pool)
     questions = [{
         'word': word.get('word'),
         'definition': word.get('definition'),
         'pos': word.get('pos'),
     } for word in pool[:count]]
-    ai._track_metric(current_user.id, 'vocab_assessment_generated', {'count': count})
-    return ai.jsonify({'count': len(questions), 'questions': questions}), 200
+    _track_metric(current_user.id, 'vocab_assessment_generated', {'count': count})
+    return jsonify({'count': len(questions), 'questions': questions}), 200

@@ -1,9 +1,9 @@
 import Popover from '../../ui/Popover'
 import { Scrollbar } from '../../ui/Scrollbar'
+import { PRACTICE_WORD_LIST_ICON_PATH } from '../controlIcons'
 import type { Chapter } from '../types'
 
 const HOME_ICON_PATH = 'M3 10.5 12 3l9 7.5M5 9.5V21h5.5v-6.5h3V21H19V9.5'
-const LIST_ICON_PATH = 'M5 7.5h14M5 12h14M5 16.5h14'
 
 function formatCustomConfusableTitle(title: string): string {
   const trimmed = title.trim()
@@ -106,8 +106,8 @@ export function ConfusableMatchHeader({
             title="单词列表"
             aria-label="单词列表"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
-              <path d={LIST_ICON_PATH} strokeLinecap="round" />
+            <svg viewBox="0 0 1024 1024" fill="currentColor" width="18" height="18" aria-hidden="true">
+              <path d={PRACTICE_WORD_LIST_ICON_PATH} />
             </svg>
           </button>
 

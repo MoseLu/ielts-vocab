@@ -1,5 +1,10 @@
 # IELTS Vocabulary API 文档
 
+## 架构索引
+
+- 后端总览: [README.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/README.md)
+- 后端分层架构: [backend-layered-architecture.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/backend-layered-architecture.md)
+
 ## 基础信息
 
 - **Base URL**: `http://localhost:5000/api`

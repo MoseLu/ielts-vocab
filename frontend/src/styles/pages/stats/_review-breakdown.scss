@@ -117,12 +117,13 @@
 .stats-wrong-pie-block .stats-pie-wrap--wrong-top {
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .stats-wrong-pie-block .stats-pie-svg--lg {
     width: 140px;
     height: 140px;
+    align-self: center;
 }
 
 .stats-wrong-table-block {
@@ -379,4 +380,3 @@
         grid-template-columns: 1fr;
     }
 }
-

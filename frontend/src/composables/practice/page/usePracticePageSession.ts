@@ -33,6 +33,7 @@ interface UsePracticePageSessionResult {
   sessionWrongRef: MutableRefObject<number>
   correctCountRef: MutableRefObject<number>
   wrongCountRef: MutableRefObject<number>
+  completedSessionDurationSecondsRef: MutableRefObject<number | null>
   sessionLoggedRef: MutableRefObject<boolean>
   currentModeRef: MutableRefObject<PracticeMode | undefined>
   effectiveSessionModeRef: MutableRefObject<string>
@@ -68,6 +69,7 @@ export function usePracticePageSession({
   const sessionWrongRef = useRef(0)
   const correctCountRef = useRef(0)
   const wrongCountRef = useRef(0)
+  const completedSessionDurationSecondsRef = useRef<number | null>(null)
   const sessionLoggedRef = useRef(false)
   const radioInteractionRef = useRef(false)
   const radioWordsStudiedRef = useRef(0)
@@ -194,6 +196,7 @@ export function usePracticePageSession({
       sessionCorrectRef.current = 0
       sessionWrongRef.current = 0
       sessionUniqueWordsRef.current = new Set()
+      completedSessionDurationSecondsRef.current = null
       sessionLoggedRef.current = false
       radioInteractionRef.current = false
       radioWordsStudiedRef.current = 0
@@ -205,6 +208,7 @@ export function usePracticePageSession({
     sessionCorrectRef.current = 0
     sessionWrongRef.current = 0
     sessionUniqueWordsRef.current = new Set()
+    completedSessionDurationSecondsRef.current = null
     sessionLoggedRef.current = false
     radioInteractionRef.current = false
     radioWordsStudiedRef.current = 0
@@ -272,7 +276,7 @@ export function usePracticePageSession({
   return {
     settings,
     radioQuickSettings: {
-      playbackSpeed: String(settings.playbackSpeed ?? '0.8'),
+      playbackSpeed: String(settings.playbackSpeed ?? '1.0'),
       playbackCount: String(settings.playbackCount ?? '1'),
       loopMode: Boolean(settings.loopMode ?? false),
       interval: String(settings.interval ?? '2'),
@@ -284,6 +288,7 @@ export function usePracticePageSession({
     sessionWrongRef,
     correctCountRef,
     wrongCountRef,
+    completedSessionDurationSecondsRef,
     sessionLoggedRef,
     currentModeRef,
     effectiveSessionModeRef,

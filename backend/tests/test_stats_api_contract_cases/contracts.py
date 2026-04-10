@@ -120,6 +120,7 @@ def test_learning_stats_contract_matches_mixed_data_aggregation(client, app, mon
             'wrong_count': 5,
             'phonetic': '/kaɪnd/',
             'pos': 'n.',
+            'recognition_wrong': 0,
             'listening_wrong': 1,
             'meaning_wrong': 4,
             'dictation_wrong': 0,
@@ -129,6 +130,7 @@ def test_learning_stats_contract_matches_mixed_data_aggregation(client, app, mon
             'wrong_count': 4,
             'phonetic': '/ɪˈfekt/',
             'pos': 'n.',
+            'recognition_wrong': 0,
             'listening_wrong': 2,
             'meaning_wrong': 2,
             'dictation_wrong': 0,
@@ -289,7 +291,7 @@ def test_learner_profile_contract_matches_summary_modes_and_activity_counts(clie
         'today_sessions': 2,
         'streak_days': 14,
         'weakest_mode': 'meaning',
-        'weakest_mode_label': '释义拼词',
+        'weakest_mode_label': '默写模式',
         'weakest_mode_accuracy': 50,
         'due_reviews': 2,
         'trend_direction': 'improving',
@@ -379,7 +381,7 @@ def test_learner_profile_contract_matches_summary_modes_and_activity_counts(clie
 def test_due_review_counts_stay_consistent_between_stats_profile_and_queue(client, app, monkeypatch):
     patch_stats_environment(monkeypatch)
     register_and_login(client, username='stats-due-consistency-user')
-    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {
+    monkeypatch.setattr(vocab_catalog_service, '_get_quick_memory_vocab_lookup', lambda: {
         'alpha': [{
             'word': 'alpha',
             'phonetic': '/a/',

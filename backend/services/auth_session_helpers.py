@@ -6,8 +6,9 @@ import uuid
 from datetime import datetime, timedelta
 
 import jwt
+from flask import has_request_context, request
 
-from models import RateLimitBucket, RevokedToken, User
+from services import auth_repository
 
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$')
 _AVATAR_DATA_URL_RE = re.compile(
@@ -15,7 +16,6 @@ _AVATAR_DATA_URL_RE = re.compile(
     re.IGNORECASE,
 )
 _AVATAR_HTTP_URL_RE = re.compile(r'^https?://', re.IGNORECASE)
-
 
 def rate_limit_bucket_key(ip: str, purpose: str, subject: str | None = None) -> str:
     normalized_ip = (ip or '0.0.0.0').strip() or '0.0.0.0'
@@ -28,7 +28,7 @@ def rate_limit_bucket_key(ip: str, purpose: str, subject: str | None = None) -> 
 
 
 def check_rate_limit(app, ip: str, purpose: str = 'login', subject: str | None = None) -> tuple[bool, int]:
-    return RateLimitBucket.check_and_increment(
+    return auth_repository.check_rate_limit(
         ip_address=rate_limit_bucket_key(ip, purpose, subject),
         purpose=purpose,
         max_attempts=app.config['LOGIN_MAX_ATTEMPTS'],
@@ -37,22 +37,17 @@ def check_rate_limit(app, ip: str, purpose: str = 'login', subject: str | None =
 
 
 def reset_rate_limit(ip: str, purpose: str = 'login', subject: str | None = None):
-    RateLimitBucket.reset(
+    auth_repository.reset_rate_limit(
         ip_address=rate_limit_bucket_key(ip, purpose, subject),
         purpose=purpose,
     )
 
 
 def find_user_by_identifier(identifier: str):
-    if '@' in identifier:
-        return User.query.filter_by(email=identifier).first()
-    user = User.query.filter_by(username=identifier).first()
-    if not user:
-        user = User.query.filter_by(email=identifier).first()
-    return user
+    return auth_repository.find_user_by_identifier(identifier)
 
 
-def login_rate_limit_subject(identifier: str, user: User | None) -> str:
+def login_rate_limit_subject(identifier: str, user) -> str:
     if user is not None:
         return f'user:{user.id}'
     return f'identifier:{identifier.strip().casefold()}'
@@ -130,8 +125,20 @@ def make_access_token(app, user_id: int) -> tuple[str, str, datetime]:
     jti = str(uuid.uuid4())
     now = datetime.utcnow()
     expires_at = now + timedelta(seconds=app.config['JWT_ACCESS_TOKEN_EXPIRES'])
+    user = auth_repository.get_user(user_id)
+    scopes = ['admin', 'user'] if user and user.is_admin else ['user']
     token = jwt.encode(
-        {'user_id': user_id, 'type': 'access', 'jti': jti, 'exp': expires_at, 'iat': now},
+        {
+            'user_id': user_id,
+            'type': 'access',
+            'jti': jti,
+            'exp': expires_at,
+            'iat': now,
+            'username': user.username if user else '',
+            'email': (user.email if user and user.email else ''),
+            'is_admin': bool(user.is_admin) if user else False,
+            'scopes': scopes,
+        },
         app.config['JWT_SECRET_KEY'],
         algorithm='HS256',
     )
@@ -150,14 +157,29 @@ def make_refresh_token(app, user_id: int) -> tuple[str, str, datetime]:
     return token, jti, expires_at
 
 
+def _should_use_secure_cookies(app) -> bool:
+    if not app.config['COOKIE_SECURE']:
+        return False
+
+    if not has_request_context():
+        return True
+
+    if request.is_secure:
+        return True
+
+    forwarded_proto = (request.headers.get('X-Forwarded-Proto') or '').split(',')[0].strip().lower()
+    return forwarded_proto == 'https'
+
+
 def set_auth_cookies(app, response, user_id: int) -> dict:
     access_token, access_jti, access_exp = make_access_token(app, user_id)
     refresh_token, refresh_jti, refresh_exp = make_refresh_token(app, user_id)
+    secure_cookie = _should_use_secure_cookies(app)
     response.set_cookie(
         'access_token',
         access_token,
         httponly=True,
-        secure=app.config['COOKIE_SECURE'],
+        secure=secure_cookie,
         samesite=app.config['COOKIE_SAMESITE'],
         max_age=app.config['JWT_ACCESS_TOKEN_EXPIRES'],
         path='/',
@@ -166,7 +188,7 @@ def set_auth_cookies(app, response, user_id: int) -> dict:
         'refresh_token',
         refresh_token,
         httponly=True,
-        secure=app.config['COOKIE_SECURE'],
+        secure=secure_cookie,
         samesite=app.config['COOKIE_SAMESITE'],
         max_age=app.config['JWT_REFRESH_TOKEN_EXPIRES'],
         path='/api/auth/refresh',
@@ -181,12 +203,13 @@ def set_auth_cookies(app, response, user_id: int) -> dict:
 
 
 def clear_auth_cookies(app, response):
+    secure_cookie = _should_use_secure_cookies(app)
     for name, path in [('access_token', '/'), ('refresh_token', '/api/auth/refresh')]:
         response.set_cookie(
             name,
             '',
             httponly=True,
-            secure=app.config['COOKIE_SECURE'],
+            secure=secure_cookie,
             samesite=app.config['COOKIE_SAMESITE'],
             max_age=0,
             expires=0,
@@ -201,6 +224,9 @@ def revoke_token_if_present(app, token: str | None):
         payload = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
         jti = payload.get('jti')
         if jti:
-            RevokedToken.revoke(jti, datetime.utcfromtimestamp(payload['exp']))
+            auth_repository.revoke_token(
+                jti,
+                expires_at=datetime.utcfromtimestamp(payload['exp']),
+            )
     except Exception:
         pass

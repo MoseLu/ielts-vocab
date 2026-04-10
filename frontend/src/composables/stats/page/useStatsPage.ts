@@ -1,10 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useLearningStats, useWrongWords, type MetricKey, type RangeKey } from '../../../features/vocabulary/hooks'
-import { hasWrongWordHistory, hasWrongWordPending } from '../../../features/vocabulary/wrongWordsStore'
+import { useLearningStats, type MetricKey, type RangeKey } from '../../../features/vocabulary/hooks'
 import { requestPracticeMode } from '../../practice/page/practiceModeEvents'
 import {
-  buildWrongTopItems,
   ebbinghausRateCaption,
   ebbinghausSummaryHelp,
   fmtDuration,
@@ -17,11 +15,12 @@ import {
 
 const STATS_REFRESH_OPTIONS = {
   pollIntervalMs: 0,
+  blockInitialQuickMemoryReconcile: false,
+  blockOnLearnerProfile: false,
 } as const
 
 export function useStatsPage() {
   const navigate = useNavigate()
-  const { words: wrongWords } = useWrongWords()
 
   const [range, setRange] = useState<RangeKey>(30)
   const [metric, setMetric] = useState<MetricKey>('words')
@@ -36,31 +35,19 @@ export function useStatsPage() {
     alltime,
     modeBreakdown,
     pieChart,
+    historyWrongTop10,
+    pendingWrongTop10,
     learnerProfile,
     useFallback,
     loading: chartLoading,
+    learnerProfileLoading,
   } = useLearningStats(range, bookId, mode, STATS_REFRESH_OPTIONS)
-
-  const historyWrongWords = useMemo(
-    () => wrongWords.filter(word => hasWrongWordHistory(word)),
-    [wrongWords],
-  )
-  const pendingWrongWords = useMemo(
-    () => wrongWords.filter(word => hasWrongWordPending(word)),
-    [wrongWords],
-  )
-  const historyWrongTop10 = useMemo(
-    () => buildWrongTopItems(historyWrongWords, 'history'),
-    [historyWrongWords],
-  )
-  const pendingWrongTop10 = useMemo(
-    () => buildWrongTopItems(pendingWrongWords, 'pending'),
-    [pendingWrongWords],
-  )
 
   const displayTodayNewWords = alltime?.today_new_words ?? (chartLoading ? '…' : '--')
   const displayTodayReviewWords = alltime?.today_review_words ?? (chartLoading ? '…' : '--')
-  const displayTodayWords = learnerProfile?.summary.today_words ?? (chartLoading ? '…' : '--')
+  const displayTodayWords = alltime
+    ? alltime.today_new_words + alltime.today_review_words
+    : (chartLoading ? '…' : '--')
   const displayTodayDuration = alltime && alltime.today_duration_seconds > 0
     ? fmtDuration(alltime.today_duration_seconds)
     : '--'
@@ -124,6 +111,7 @@ export function useStatsPage() {
     learnerProfile,
     useFallback,
     chartLoading,
+    learnerProfileLoading,
     historyWrongTop10,
     pendingWrongTop10,
     displayTodayNewWords,

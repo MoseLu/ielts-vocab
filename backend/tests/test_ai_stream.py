@@ -1,4 +1,5 @@
 from routes import ai as ai_routes
+from services import ai_assistant_ask_service as ask_service
 
 
 def register_and_login(client, username='ai-stream-user', password='password123'):
@@ -19,11 +20,11 @@ def test_ask_stream_returns_sse_text_options_and_done(client, monkeypatch):
 
     persisted = {}
 
-    monkeypatch.setattr(ai_routes, '_build_ask_messages', lambda *args, **kwargs: [{'role': 'system', 'content': 'test'}])
-    monkeypatch.setattr(ai_routes, '_build_ask_extra_handlers', lambda *args, **kwargs: {})
+    monkeypatch.setattr(ask_service, 'build_ask_messages', lambda *args, **kwargs: [{'role': 'system', 'content': 'test'}])
+    monkeypatch.setattr(ask_service, 'build_ask_extra_handlers', lambda *args, **kwargs: {})
     monkeypatch.setattr(
-        ai_routes,
-        '_persist_ask_response',
+        ask_service,
+        'persist_ask_response',
         lambda current_user, user_message, frontend_context, clean_reply: persisted.update({
             'message': user_message,
             'reply': clean_reply,
@@ -35,7 +36,7 @@ def test_ask_stream_returns_sse_text_options_and_done(client, monkeypatch):
         yield {'type': 'text_delta', 'text': '先复习错词。'}
         yield {'type': 'text_delta', 'text': '\n[options]\nA. 开始复习\nB. 先看计划\n[/options]'}
 
-    monkeypatch.setattr(ai_routes, '_stream_chat_with_tools', fake_stream)
+    monkeypatch.setattr(ask_service, 'stream_chat_with_tools', fake_stream)
 
     response = client.post('/api/ai/ask/stream', json={
         'message': '今天怎么复习？',
@@ -60,7 +61,8 @@ def test_ask_stream_returns_sse_text_options_and_done(client, monkeypatch):
 
 def test_build_tool_status_message_returns_tool_specific_copy():
     assert ai_routes._build_tool_status_message('web_search') == 'AI 正在检索相关资料...'
-    assert ai_routes._build_tool_status_message('get_wrong_words') == 'AI 正在分析你的错词记录...'
+    assert ai_routes._build_tool_status_message('get_wrong_words') == 'AI 正在读取你最近产生的错词...'
+    assert ai_routes._build_tool_status_message('get_wrong_words', {'query': 'abandon'}) == 'AI 正在检索与你提问相关的错词：abandon...'
     assert ai_routes._build_tool_status_message('get_chapter_words', {'chapter_id': 3}) == 'AI 正在读取第 3 章词表...'
     assert ai_routes._build_tool_status_message('get_book_chapters') == 'AI 正在读取词书章节结构...'
     assert ai_routes._build_tool_status_message('remember_user_note', {'category': 'preference'}) == 'AI 正在记录你的学习偏好...'

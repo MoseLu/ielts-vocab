@@ -6,6 +6,16 @@ export interface QuickMemorySessionResult {
   wasFuzzy: boolean
 }
 
+function formatSessionDuration(seconds: number): string {
+  const safeSeconds = Math.max(0, Math.round(seconds))
+  const hours = Math.floor(safeSeconds / 3600)
+  const minutes = Math.floor((safeSeconds % 3600) / 60)
+  const remainingSeconds = safeSeconds % 60
+  if (hours > 0) return minutes > 0 ? `${hours}小时${minutes}分` : `${hours}小时`
+  if (minutes > 0) return remainingSeconds > 0 ? `${minutes}分${remainingSeconds}秒` : `${minutes}分`
+  return `${remainingSeconds}秒`
+}
+
 interface QuickMemorySummaryProps {
   results: QuickMemorySessionResult[]
   vocabulary: Word[]
@@ -17,6 +27,7 @@ interface QuickMemorySummaryProps {
   reviewHasMore?: boolean
   onContinueReview?: () => void
   buildChapterPath?: (chapterId: string | number) => string
+  sessionDurationSeconds?: number | null
   onRestart: () => void
   onModeChange: (mode: string) => void
   onNavigate: (path: string) => void
@@ -33,6 +44,7 @@ export function QuickMemorySummary({
   reviewHasMore,
   onContinueReview,
   buildChapterPath,
+  sessionDurationSeconds,
   onRestart,
   onModeChange,
   onNavigate,
@@ -45,6 +57,9 @@ export function QuickMemorySummary({
     ? bookChapters[currentChapterIndex + 1]
     : null
   const accuracy = results.length > 0 ? Math.round((known.length / results.length) * 100) : 0
+  const sessionDurationText = sessionDurationSeconds != null
+    ? formatSessionDuration(sessionDurationSeconds)
+    : null
 
   return (
     <div className="qm-summary">
@@ -68,6 +83,12 @@ export function QuickMemorySummary({
           <span className="qm-stat-num">{accuracy}%</span>
           <span className="qm-stat-label">正确率</span>
         </div>
+        {sessionDurationText && (
+          <div className="qm-stat">
+            <span className="qm-stat-num">{sessionDurationText}</span>
+            <span className="qm-stat-label">本次用时</span>
+          </div>
+        )}
       </div>
 
       {fuzzy.length > 0 && (

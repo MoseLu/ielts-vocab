@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from models import UserBookProgress, UserChapterProgress, UserStudySession, UserWrongWord
+from services import learning_stats_repository
 from services.learner_profile import build_learner_profile
 
 
@@ -14,30 +14,22 @@ def build_context_data(
     load_vocab_books,
     serialize_effective_book_progress,
 ) -> dict:
-    book_progress = UserBookProgress.query.filter_by(user_id=user_id).all()
-    chapter_progress = UserChapterProgress.query.filter_by(user_id=user_id).all()
-    wrong_words = (
-        UserWrongWord.query
-        .filter_by(user_id=user_id)
-        .order_by(UserWrongWord.wrong_count.desc())
-        .limit(50)
-        .all()
+    book_progress = learning_stats_repository.list_user_book_progress_rows(user_id)
+    chapter_progress = learning_stats_repository.list_user_chapter_progress_rows(user_id)
+    wrong_words = learning_stats_repository.list_user_wrong_words_for_ai(
+        user_id,
+        limit=8,
+        recent_first=True,
     )
-    recent_sessions = (
-        UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(UserStudySession.words_studied > 0)
-        .order_by(UserStudySession.started_at.desc())
-        .limit(20)
-        .all()
+    recent_sessions = learning_stats_repository.list_user_study_sessions_with_words(
+        user_id,
+        descending=True,
+        limit=20,
     )
-    chapter_session_rows = (
-        UserStudySession.query
-        .filter_by(user_id=user_id)
-        .filter(UserStudySession.words_studied > 0)
-        .order_by(UserStudySession.started_at.desc())
-        .limit(200)
-        .all()
+    chapter_session_rows = learning_stats_repository.list_user_study_sessions_with_words(
+        user_id,
+        descending=True,
+        limit=200,
     )
 
     chapter_sessions: dict[str, list[UserStudySession]] = defaultdict(list)
@@ -153,12 +145,11 @@ def build_context_data(
     elif recent_sessions:
         trend = 'stable'
     else:
-        recent_chapter_progress = (
-            UserChapterProgress.query
-            .filter_by(user_id=user_id)
-            .order_by(UserChapterProgress.updated_at.desc())
-            .limit(5)
-            .all()
+        recent_chapter_progress = learning_stats_repository.list_user_chapter_progress_rows(
+            user_id,
+            order_by_updated=True,
+            descending=True,
+            limit=5,
         )
         if len(recent_chapter_progress) >= 2:
             first_half = sum(
@@ -210,6 +201,7 @@ def build_context_data(
                 'pos': word.pos,
                 'definition': word.definition,
                 'wrongCount': word.wrong_count,
+                'updatedAt': word.updated_at.isoformat() if word.updated_at else None,
             }
             for word in wrong_words
         ],

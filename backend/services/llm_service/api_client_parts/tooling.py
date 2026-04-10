@@ -44,17 +44,26 @@ REMEMBER_TOOL_DEF = {
 GET_WRONG_WORDS_TOOL_DEF = {
     "name": "get_wrong_words",
     "description": (
-        "Fetch the user's wrong words from the database. "
-        "Use this when the user asks about their mistakes, wants to review error-prone words, "
-        "or when you need to analyse which words they struggle with. "
-        "Returns word, phonetic, part-of-speech, definition and wrong_count."
+        "Fetch relevant wrong words from the database. "
+        "Use this when the user asks about recent mistakes, error-prone words, or mentions a specific word "
+        "that should be checked against their wrong-word history. "
+        "Prefer query-based retrieval for specific questions and recent_first=true for broad review. "
+        "Returns word, phonetic, part-of-speech, definition, wrong_count, and recency info."
     ),
     "parameters": {
         "type": "object",
         "properties": {
             "limit": {
                 "type": "integer",
-                "description": "Maximum number of wrong words to return (default 100, max 300)."
+                "description": "Maximum number of wrong words to return (default 12, max 300)."
+            },
+            "query": {
+                "type": "string",
+                "description": "Optional keyword or word fragment to match against the wrong-word database."
+            },
+            "recent_first": {
+                "type": "boolean",
+                "description": "When true, return the most recently updated matching wrong words first."
             }
         },
         "required": []
@@ -116,18 +125,18 @@ def web_search(query: str) -> str:
     Results are cached in the database for up to 7 days.
     """
     from datetime import datetime, timedelta
-    from models import db, SearchCache
+    from services import search_cache_repository
 
     # Prune expired cache entries (opportunistic, non-blocking on failure)
     try:
         cutoff = datetime.utcnow() - timedelta(days=_SEARCH_CACHE_TTL_DAYS)
-        SearchCache.query.filter(SearchCache.created_at < cutoff).delete(synchronize_session=False)
-        db.session.commit()
+        search_cache_repository.prune_search_cache_older_than(cutoff)
+        search_cache_repository.commit()
     except Exception:
-        db.session.rollback()
+        search_cache_repository.rollback()
 
     # Check cache (only fresh entries remain after prune above)
-    cached = SearchCache.query.filter_by(query=query).first()
+    cached = search_cache_repository.get_search_cache(query)
     if cached:
         return f"[Cached]\n{cached.result}"
 
@@ -151,11 +160,10 @@ def web_search(query: str) -> str:
 
     # Cache result
     try:
-        cache_entry = SearchCache(query=query, result=summary)
-        db.session.add(cache_entry)
-        db.session.commit()
+        search_cache_repository.create_search_cache(query, summary)
+        search_cache_repository.commit()
     except Exception:
-        pass
+        search_cache_repository.rollback()
 
     return summary
 

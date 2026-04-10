@@ -38,9 +38,15 @@ def utc_naive_to_local_date_key(dt: datetime | None) -> str | None:
     return local_dt.strftime('%Y-%m-%d') if local_dt else None
 
 
-def current_local_date(now_utc: datetime | None = None) -> date_type:
+def current_local_datetime(now_utc: datetime | None = None) -> datetime:
     local_now = utc_naive_to_local(now_utc or utc_now_naive())
-    return local_now.date()
+    if local_now is not None:
+        return local_now
+    return datetime.now(get_app_timezone())
+
+
+def current_local_date(now_utc: datetime | None = None) -> date_type:
+    return current_local_datetime(now_utc).date()
 
 
 def local_date_to_utc_naive(local_day: date_type) -> datetime:
@@ -87,3 +93,48 @@ def utc_naive_to_epoch_ms(dt: datetime) -> int:
     """Convert a UTC-naive datetime to epoch milliseconds without local-time skew."""
     utc_dt = dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
     return int(utc_dt.timestamp() * 1000)
+
+
+def parse_utc_datetime(value: str | None) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+    except Exception:
+        return None
+    if parsed.tzinfo is None:
+        return parsed
+    return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def format_event_time_for_ai(
+    value: datetime | str | None,
+    *,
+    now_utc: datetime | None = None,
+    reference_date: date_type | str | None = None,
+) -> str:
+    if isinstance(value, datetime):
+        event_utc = value.astimezone(timezone.utc).replace(tzinfo=None) if value.tzinfo else value
+    else:
+        event_utc = parse_utc_datetime(value)
+    if event_utc is None:
+        return ''
+
+    event_local = utc_naive_to_local(event_utc)
+    if event_local is None:
+        return ''
+
+    reference_local_date: date_type | None = None
+    if isinstance(reference_date, str) and reference_date.strip():
+        try:
+            reference_local_date = datetime.strptime(reference_date.strip(), '%Y-%m-%d').date()
+        except ValueError:
+            reference_local_date = None
+    elif isinstance(reference_date, date_type):
+        reference_local_date = reference_date
+
+    effective_reference_date = reference_local_date or current_local_datetime(now_utc).date()
+    if event_local.date() == effective_reference_date:
+        return event_local.strftime('%H:%M')
+
+    return event_local.strftime('%m-%d %H:%M')

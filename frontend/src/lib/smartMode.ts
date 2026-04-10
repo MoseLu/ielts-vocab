@@ -4,7 +4,7 @@ import { STORAGE_KEYS } from '../constants'
 import { apiFetch } from './index'
 // Tracks per-word proficiency across three dimensions:
 //   音 (listening)  - 听音选义
-//   意 (meaning)    - 释义拼词
+//   意 (meaning)    - 默写模式
 //   形 (dictation)  - 听写拼写
 // Smart mode uses these stats to auto-weight which dimension to test next.
 

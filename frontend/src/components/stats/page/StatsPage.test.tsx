@@ -5,10 +5,6 @@ import { vi } from 'vitest'
 import StatsPage from './StatsPage'
 
 const hooksState = vi.hoisted(() => ({
-  wrongWords: {
-    words: [],
-    loading: false,
-  },
   learningStats: {
     daily: [],
     books: [],
@@ -18,18 +14,20 @@ const hooksState = vi.hoisted(() => ({
     modeBreakdown: [],
     pieChart: [],
     wrongTop10: [],
+    historyWrongTop10: [],
+    pendingWrongTop10: [],
     chapterBreakdown: [],
     chapterModeStats: [],
     learnerProfile: null,
     useFallback: false,
     loading: true,
+    learnerProfileLoading: true,
     refreshing: false,
     refetch: vi.fn(),
   },
 }))
 
 vi.mock('../../../features/vocabulary/hooks', () => ({
-  useWrongWords: () => hooksState.wrongWords,
   useLearningStats: () => hooksState.learningStats,
 }))
 
@@ -62,8 +60,6 @@ describe('StatsPage', () => {
   })
 
   beforeEach(() => {
-    hooksState.wrongWords.words = []
-    hooksState.wrongWords.loading = false
     hooksState.learningStats.daily = []
     hooksState.learningStats.books = []
     hooksState.learningStats.modes = []
@@ -72,11 +68,14 @@ describe('StatsPage', () => {
     hooksState.learningStats.modeBreakdown = []
     hooksState.learningStats.pieChart = []
     hooksState.learningStats.wrongTop10 = []
+    hooksState.learningStats.historyWrongTop10 = []
+    hooksState.learningStats.pendingWrongTop10 = []
     hooksState.learningStats.chapterBreakdown = []
     hooksState.learningStats.chapterModeStats = []
     hooksState.learningStats.learnerProfile = null
     hooksState.learningStats.useFallback = false
     hooksState.learningStats.loading = true
+    hooksState.learningStats.learnerProfileLoading = true
     hooksState.learningStats.refreshing = false
     hooksState.learningStats.refetch.mockReset()
   })
@@ -149,6 +148,12 @@ describe('StatsPage', () => {
       { mode: 'radio', value: 18, sessions: 2 },
       { mode: 'smart', value: 24, sessions: 3 },
     ]
+    hooksState.learningStats.historyWrongTop10 = [
+      { word: 'alpha', wrong_count: 5, phonetic: '/ˈalfə/', pos: 'n.', meaning_wrong: 5 },
+    ]
+    hooksState.learningStats.pendingWrongTop10 = [
+      { word: 'beta', wrong_count: 3, phonetic: '/ˈbeɪtə/', pos: 'n.', listening_wrong: 3 },
+    ]
     hooksState.learningStats.learnerProfile = {
       date: '2026-03-31',
       summary: {
@@ -165,10 +170,10 @@ describe('StatsPage', () => {
         trend_direction: 'improving',
       },
       dimensions: [
-        { dimension: 'meaning', label: '释义拼词（会想）', correct: 12, wrong: 8, attempts: 20, accuracy: 60, weakness: 0.4 },
+        { dimension: 'meaning', label: '默写模式', correct: 12, wrong: 8, attempts: 20, accuracy: 60, weakness: 0.4 },
       ],
       focus_words: [
-        { word: 'kind', definition: 'type', wrong_count: 4, dominant_dimension: 'meaning', dominant_dimension_label: '释义拼词（会想）', dominant_wrong: 3, focus_score: 11 },
+        { word: 'kind', definition: 'type', wrong_count: 4, dominant_dimension: 'meaning', dominant_dimension_label: '默写模式', dominant_wrong: 3, focus_score: 11 },
       ],
       repeated_topics: [
         { title: 'kind of vs a kind of', count: 2, word_context: 'kind', latest_answer: '...', latest_at: null },
@@ -197,6 +202,7 @@ describe('StatsPage', () => {
       },
     }
     hooksState.learningStats.loading = false
+    hooksState.learningStats.learnerProfileLoading = false
 
     const { container } = render(
       <MemoryRouter>
@@ -212,7 +218,10 @@ describe('StatsPage', () => {
     expect(screen.getByText('今日学习新词')).toBeInTheDocument()
     expect(screen.getByText('今日复习旧词')).toBeInTheDocument()
     expect(screen.getByText('累计学习新词')).toBeInTheDocument()
-    expect(screen.getByText('今日学习词数')).toBeInTheDocument()
+    expect(screen.getByText('今日学过单词')).toBeInTheDocument()
+    expect(
+      screen.getByText('今日学过单词').closest('.stats-card')?.querySelector('.stats-card-value')?.textContent,
+    ).toBe('25')
     expect(screen.getByText('累计复习旧词')).toBeInTheDocument()
     expect(screen.getByText('总学习时长')).toBeInTheDocument()
     expect(screen.getAllByText('2小时').length).toBeGreaterThan(0)
@@ -266,6 +275,7 @@ describe('StatsPage', () => {
       accuracy: 90,
     }
     hooksState.learningStats.loading = false
+    hooksState.learningStats.learnerProfileLoading = false
 
     render(
       <MemoryRouter>
@@ -306,6 +316,7 @@ describe('StatsPage', () => {
       accuracy: 90,
     }
     hooksState.learningStats.loading = false
+    hooksState.learningStats.learnerProfileLoading = false
     hooksState.learningStats.refreshing = true
 
     const { container } = render(

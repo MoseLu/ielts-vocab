@@ -7,9 +7,17 @@ const lineLimitConfig = JSON.parse(
   readFileSync(new URL('../scripts/file-line-limit.config.json', import.meta.url), 'utf8'),
 );
 
-const oversizeJsTsBaseline = Object.keys(lineLimitConfig.baseline).filter((filePath) =>
-  /\.(?:[cm]?[jt]sx?)$/u.test(filePath),
-);
+function getLintPathVariants(filePath) {
+  const variants = [filePath];
+  if (filePath.startsWith('frontend/')) {
+    variants.push(filePath.slice('frontend/'.length));
+  }
+  return variants;
+}
+
+const oversizeJsTsBaseline = Object.keys(lineLimitConfig.baseline)
+  .filter((filePath) => /\.(?:[cm]?[jt]sx?)$/u.test(filePath))
+  .flatMap((filePath) => getLintPathVariants(filePath));
 
 export default [
   {

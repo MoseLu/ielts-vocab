@@ -70,6 +70,7 @@ export interface UsePracticePageActionsParams {
   sessionStartRef: MutableRefObject<number>
   sessionIdRef: MutableRefObject<number | null>
   sessionLoggedRef: MutableRefObject<boolean>
+  completedSessionDurationSecondsRef: MutableRefObject<number | null>
   sessionUniqueWordsRef: MutableRefObject<Set<string>>
   sessionBookIdRef: MutableRefObject<string | null>
   sessionChapterIdRef: MutableRefObject<string | null>

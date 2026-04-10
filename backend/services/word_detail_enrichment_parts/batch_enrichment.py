@@ -35,11 +35,11 @@ def _enrich_batch(
             )
             for word_seed in word_seeds:
                 _persist_llm_item(word_seed, raw_items[word_seed['normalized_word']])
-            db.session.commit()
+            word_catalog_repository.commit()
             stats['enriched'] += len(word_seeds)
             return
         except Exception as exc:
-            db.session.rollback()
+            word_catalog_repository.rollback()
             if 'database is locked' in str(exc).lower() and attempt < 3:
                 time.sleep(0.5 * (attempt + 1))
                 continue
@@ -85,7 +85,7 @@ def enrich_word_seeds(
             if sleep_seconds > 0:
                 time.sleep(sleep_seconds)
         except Exception as exc:
-            db.session.rollback()
+            word_catalog_repository.rollback()
             if is_quota_exhausted_error(exc):
                 stats['failed'] += len(batch)
                 stats['failed_words'].extend(

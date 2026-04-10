@@ -10,6 +10,7 @@ import {
 } from './wrongWordsStore'
 
 export type WrongWordDimensionFilter = 'all' | WrongWordDimension
+export type WrongWordSearchMode = 'prefix' | 'suffix'
 
 export interface WrongWordFilters {
   scope?: WrongWordCollectionScope
@@ -18,6 +19,49 @@ export interface WrongWordFilters {
   maxWrongCount?: number
   startDate?: string
   endDate?: string
+}
+
+export function normalizeWrongWordSearchTerm(value?: string): string {
+  if (typeof value !== 'string') return ''
+  return value.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function normalizeWrongWordSearchMode(value?: WrongWordSearchMode): WrongWordSearchMode {
+  return value === 'suffix' ? 'suffix' : 'prefix'
+}
+
+function getWrongWordSearchRank<T extends Partial<WrongWordRecord>>(
+  word: T,
+  searchTerm?: string,
+  searchMode?: WrongWordSearchMode | null,
+): number {
+  const normalizedSearch = normalizeWrongWordSearchTerm(searchTerm)
+  if (!normalizedSearch) return Number.MAX_SAFE_INTEGER
+
+  const normalizedWord = normalizeWrongWordSearchTerm(word.word)
+  if (!normalizedWord) return Number.MAX_SAFE_INTEGER
+  if (normalizedWord === normalizedSearch) return 0
+
+  if (!searchMode) {
+    if (normalizedWord.startsWith(normalizedSearch)) {
+      return 100 + normalizedWord.length
+    }
+
+    const matchIndex = normalizedWord.indexOf(normalizedSearch)
+    if (matchIndex >= 0) {
+      return 200 + (matchIndex * 100) + normalizedWord.length
+    }
+
+    return Number.MAX_SAFE_INTEGER
+  }
+
+  const mode = normalizeWrongWordSearchMode(searchMode)
+  const matches = mode === 'suffix'
+    ? normalizedWord.endsWith(normalizedSearch)
+    : normalizedWord.startsWith(normalizedSearch)
+  if (matches) return 100 + normalizedWord.length
+
+  return Number.MAX_SAFE_INTEGER
 }
 
 function normalizeDateInput(value?: string): string | undefined {
@@ -57,6 +101,42 @@ function normalizeDimensionFilter(value?: WrongWordDimensionFilter): WrongWordDi
 
 function normalizeScope(value?: WrongWordCollectionScope): WrongWordCollectionScope {
   return value === 'history' ? 'history' : 'pending'
+}
+
+export function matchesWrongWordSearchTerm<T extends Partial<WrongWordRecord>>(
+  word: T,
+  searchTerm?: string,
+  searchMode?: WrongWordSearchMode | null,
+): boolean {
+  const normalizedSearch = normalizeWrongWordSearchTerm(searchTerm)
+  if (!normalizedSearch) return true
+
+  const normalizedWord = normalizeWrongWordSearchTerm(word.word)
+  if (!normalizedWord) return false
+
+  if (!searchMode) {
+    return normalizedWord.includes(normalizedSearch)
+  }
+
+  const mode = normalizeWrongWordSearchMode(searchMode)
+  return mode === 'suffix'
+    ? normalizedWord.endsWith(normalizedSearch)
+    : normalizedWord.startsWith(normalizedSearch)
+}
+
+export function compareWrongWordSearchResults<T extends Partial<WrongWordRecord>>(
+  left: T,
+  right: T,
+  searchTerm?: string,
+  searchMode?: WrongWordSearchMode | null,
+): number {
+  const leftRank = getWrongWordSearchRank(left, searchTerm, searchMode)
+  const rightRank = getWrongWordSearchRank(right, searchTerm, searchMode)
+  if (leftRank !== rightRank) return leftRank - rightRank
+
+  const leftWord = normalizeWrongWordSearchTerm(left.word)
+  const rightWord = normalizeWrongWordSearchTerm(right.word)
+  return leftWord.localeCompare(rightWord, 'en')
 }
 
 export function getWrongWordOccurrenceAt(word: Partial<WrongWordRecord>): string | null {

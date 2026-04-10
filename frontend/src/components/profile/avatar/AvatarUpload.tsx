@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { apiFetch } from '../../../lib'
 import { MicroLoading } from '../../ui'
 
@@ -88,7 +89,7 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  return (
+  const modal = (
     <div className="avatar-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="avatar-modal">
         <div className="avatar-modal-header">
@@ -157,6 +158,12 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return null
+  }
+
+  return createPortal(modal, document.body)
 }
 
 export default AvatarUpload

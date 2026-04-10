@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../../contexts'
+import {
+  CHAPTER_PRACTICE_MODE_META,
+  SPECIAL_BOOK_MODE_META,
+} from '../../../constants/practiceModes'
 import { useResponsiveChapterSkeletonCount } from '../../../hooks/useResponsiveSkeletonCount'
 import { apiFetch, buildApiUrl } from '../../../lib'
 import { Skeleton } from '../../ui'
@@ -9,12 +13,8 @@ import ConfusableCustomGroupsModal, {
 } from '../../practice/ConfusableCustomGroupsModal'
 
 const MODE_META: Record<string, { label: string; title: string }> = {
-  quickmemory: { label: '记', title: '速记模式' },
-  listening: { label: '听', title: '听音选义' },
-  meaning: { label: '想', title: '释义拼词' },
-  dictation: { label: '默', title: '听写模式' },
-  smart: { label: '智', title: '智能模式' },
-  match: { label: '连', title: '易混消消乐' },
+  ...CHAPTER_PRACTICE_MODE_META,
+  ...SPECIAL_BOOK_MODE_META,
 }
 
 interface Book {

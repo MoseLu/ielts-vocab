@@ -96,44 +96,8 @@ def add_leading_silence_to_mp3_bytes(
     audio: bytes,
     milliseconds: int = _WORD_TTS_LEADING_SILENCE_MS,
 ) -> bytes:
-    if milliseconds <= 0:
-        return ensure_mp3_bytes(audio)
-
-    import imageio_ffmpeg
-
-    normalized_audio = ensure_mp3_bytes(audio)
-    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
-    result = subprocess.run(
-        [
-            ffmpeg_exe,
-            '-hide_banner',
-            '-loglevel',
-            'error',
-            '-f',
-            'mp3',
-            '-i',
-            'pipe:0',
-            '-af',
-            f'adelay={milliseconds}:all=1',
-            '-f',
-            'mp3',
-            '-codec:a',
-            'libmp3lame',
-            '-b:a',
-            '128k',
-            'pipe:1',
-        ],
-        input=normalized_audio,
-        capture_output=True,
-        timeout=30,
-        check=False,
-    )
-    if result.returncode != 0:
-        return normalized_audio
-    mp3 = result.stdout
-    if not is_probably_valid_mp3_bytes(mp3):
-        return normalized_audio
-    return mp3
+    del milliseconds
+    return ensure_mp3_bytes(audio)
 
 
 def ensure_mp3_bytes(audio: bytes) -> bytes:

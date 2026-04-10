@@ -160,7 +160,7 @@ describe('PracticePage backend learner profile', () => {
             },
             {
               dimension: 'meaning',
-              label: '释义拼词（会想）',
+              label: '默写模式',
               correct: 6,
               wrong: 3,
               attempts: 9,

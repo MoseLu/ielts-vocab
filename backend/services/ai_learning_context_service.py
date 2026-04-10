@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import calendar
-from datetime import datetime
-from importlib import import_module
+
+from services.ai_prompt_context_service import build_context_msg
+from services.local_time import current_local_datetime, format_event_time_for_ai
 
 
 GREET_SYSTEM_PROMPT = """你是一个 IELTS 英语词汇学习规划助手，名叫"雅思小助手"。请用中文回复用户。
@@ -41,6 +42,8 @@ GREET_SYSTEM_PROMPT_V2 = """你是一个 IELTS 英语词汇学习规划助手，
 - 默认输出自然问候，不要默认输出选项，也不要把问候强行写成选择题。
 - 只有当用户下一步动作非常明确时，才在末尾附 1-2 个简短选项。
 - 如果提供选项，选项必须紧扣用户画像，而不是通用话术。
+- 不要臆造具体钟点、分钟或次数；如果上下文没有明确给出，就只说“今天”“刚才”“最近”。
+- 不要每次都重复同一个开场模板；同样的画像也要尽量换切入口，只抓最强的 1-2 个信号。
 
 ## 允许的选项格式
 [options]
@@ -50,15 +53,10 @@ B. 选项B
 """
 
 
-def _ai_module():
-    return import_module('routes.ai')
-
-
 def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
-    ai = _ai_module()
     parts = []
     weekday_zh = ['一', '二', '三', '四', '五', '六', '日']
-    now = datetime.now()
+    now = current_local_datetime()
     days_in_month = calendar.monthrange(now.year, now.month)[1]
     days_left = days_in_month - now.day
     parts.append(
@@ -171,7 +169,7 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
         mode_zh = {
             'smart': '智能',
             'listening': '听音选义',
-            'meaning': '释义拼词',
+            'meaning': '默写模式',
             'dictation': '听写',
             'radio': '随身听',
             'quickmemory': '速记',
@@ -212,10 +210,10 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
             )
 
     if wrong_words:
-        words_list = '、'.join(word['word'] for word in wrong_words[:20])
-        parts.append(f"\n错词列表（最近50条）：{words_list}")
+        words_list = '、'.join(word['word'] for word in wrong_words[:8])
+        parts.append(f"\n近期错词提示（最近更新优先，仅展示少量）：{words_list}")
     else:
-        parts.append("\n错词列表：暂无")
+        parts.append("\n近期错词提示：暂无")
 
     if learner_profile and isinstance(learner_profile, dict):
         summary = learner_profile.get('summary') or {}
@@ -288,7 +286,7 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
             if recent_activity:
                 parts.append("  - 最近关键动作：")
                 for item in recent_activity[:6]:
-                    stamp = str(item.get('occurred_at') or '')[11:16]
+                    stamp = format_event_time_for_ai(item.get('occurred_at'))
                     title = item.get('title') or item.get('label') or '学习行为'
                     if stamp:
                         parts.append(f"    {stamp} {title}")
@@ -296,7 +294,7 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
                         parts.append(f"    {title}")
 
     if frontend_context:
-        context_text = ai._build_context_msg(frontend_context)
+        context_text = build_context_msg(frontend_context)
         if context_text and context_text != '暂无':
             parts.append(f"\n[当前学习状态]\n{context_text}")
 

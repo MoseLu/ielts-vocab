@@ -1,60 +1,33 @@
 def _call_tts_api(sentence: str, voice_id: str, save_path: Path):
-    """调用 MiniMax TTS 并保存到 save_path。
-    遇到 429 先切换 API key，再指数退避重试（最多 3 次）。
-    """
-    import requests
-    sentence_with_pauses = add_pause_tags(sentence, pause_seconds=0.4)
-    payload = {
-        "model": "speech-2.8-hd",
-        "text": sentence_with_pauses,
-        "stream": False,
-        "voice_setting": {
-            "voice_id": voice_id,
-            "speed": 0.9,
-            "vol": 1.0,
-            "pitch": 0,
-            "emotion": "neutral"
-        },
-        "audio_setting": {
-            "sample_rate": 32000,
-            "bitrate": 128000,
-            "format": "mp3",
-            "channel": 1
-        }
-    }
-    url = f"{MINIMAX_BASE_URL}/v1/t2a_v2"
+    """调用当前 TTS provider 并保存到 save_path，遇到 429 时做退避重试。"""
+    from services.word_tts import _is_rate_limit_error, synthesize_word_to_bytes
 
-    # 遇到 429 时的退避时长（秒）
-    backoff_delays = [30, 60, 120]
+    provider = _current_tts_provider()
+    model, _ = default_cache_identity()
+    text_for_tts = add_pause_tags(sentence, pause_seconds=0.4) if provider == 'minimax' else sentence
+    backoff_delays = [10, 20, 40] if provider == 'azure' else [30, 60, 120]
 
     for attempt in range(len(backoff_delays) + 1):
-        api_key = _get_api_key()
-        headers = {
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json'
-        }
-        resp = requests.post(url, headers=headers, json=payload, timeout=30)
-
-        if resp.status_code == 200:
-            resp_data = resp.json()
-            audio_hex = resp_data.get('data', {}).get('audio')
-            if not audio_hex:
-                raise Exception("No audio in response")
-            audio_bytes = bytes.fromhex(audio_hex)
-            if not is_probably_valid_mp3_bytes(audio_bytes):
-                raise Exception('Invalid MP3 payload returned by TTS provider')
+        try:
+            audio_bytes = synthesize_word_to_bytes(
+                text_for_tts,
+                model,
+                voice_id,
+                provider=provider,
+                content_mode='sentence' if provider == 'azure' else None,
+            )
             write_bytes_atomically(save_path, audio_bytes)
             return
-
-        if resp.status_code == 429:
-            if attempt < len(backoff_delays):
+        except Exception as exc:
+            if _is_rate_limit_error(exc) and attempt < len(backoff_delays):
                 delay = backoff_delays[attempt]
-                print(f'[TTS 429] 退避 {delay}s (第{attempt + 1}次重试, voice={voice_id})')
+                print(
+                    f'[TTS 429] 退避 {delay}s '
+                    f'(第{attempt + 1}次重试, provider={provider}, voice={voice_id})'
+                )
                 runtime_sleep(delay)
                 continue
-            raise Exception(f"TTS 429: quota exceeded after {attempt + 1} attempts")
-
-        raise Exception(f"TTS API error: {resp.status_code} {resp.text[:200]}")
+            raise
 
 
 def _book_status(book_id: str, generating: bool) -> str:
@@ -74,7 +47,7 @@ def _book_status(book_id: str, generating: bool) -> str:
 @admin_required
 def admin_books_summary(current_user):
     """所有词书 TTS 进度摘要."""
-    from routes.books import VOCAB_BOOKS
+    from services.books_registry_service import VOCAB_BOOKS
     result = []
     for book in VOCAB_BOOKS:
         examples = _get_book_examples(book['id'])
@@ -97,7 +70,7 @@ def admin_books_summary(current_user):
 @admin_required
 def admin_generate_book(current_user, book_id):
     """触发后台生成任务（interrupted/error 状态可重新触发）."""
-    from routes.books import VOCAB_BOOKS
+    from services.books_registry_service import VOCAB_BOOKS
     if not any(b['id'] == book_id for b in VOCAB_BOOKS):
         return jsonify({'error': 'Book not found'}), 404
     examples = _get_book_examples(book_id)
@@ -131,6 +104,8 @@ def admin_tts_status(current_user, book_id):
 # ── MiniMax 单词离线 TTS ───────────────────────────────────────────────────────
 
 _generating_words: bool = False
+_AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
+_AUDIO_SOURCE_HEADER = 'X-Audio-Source'
 
 
 def _word_tts_dir() -> Path:
@@ -175,7 +150,7 @@ def _write_word_progress(
 
 
 def _generate_words_worker(book_ids: list[str] | None):
-    """eventlet: 批量生成单词 MP3（MiniMax）."""
+    """eventlet: 批量生成单词 MP3。"""
     global _generating_words
     from services.word_tts import run_batch_generate_missing
 
@@ -210,29 +185,64 @@ def get_word_audio():
     """
     from services.word_tts import (
         _strip_word_tts_strategy_tag,
-        add_leading_silence_to_mp3_bytes,
         normalize_word_key,
         synthesize_word_to_bytes,
         word_tts_cache_path,
+    )
+    from services.word_tts_oss import (
+        fetch_word_audio_oss_payload,
+        resolve_word_audio_oss_metadata,
     )
 
     raw = (request.args.get('w') or '').strip()
     if not raw or len(raw) > 160:
         return jsonify({'error': 'invalid w'}), 400
+    cache_only = request.args.get('cache_only') == '1' or request.headers.get('X-Audio-Cache-Only') == '1'
 
     key = normalize_word_key(raw)
     provider, model, voice = default_word_tts_identity()
     path = word_tts_cache_path(_word_tts_dir(), key, model, voice)
     if path.exists() and not is_probably_valid_mp3_file(path):
         remove_invalid_cached_audio(path)
+    oss_metadata = resolve_word_audio_oss_metadata(file_name=path.name, model=model, voice=voice)
     if request.method == 'HEAD':
+        if oss_metadata is not None:
+            response = _audio_metadata_response(
+                oss_metadata.byte_length,
+                cache_key=oss_metadata.cache_key,
+            )
+            response.headers[_AUDIO_OSS_URL_HEADER] = oss_metadata.signed_url
+            response.headers[_AUDIO_SOURCE_HEADER] = 'oss'
+            return response
         byte_length = path.stat().st_size if path.exists() else None
-        return _audio_metadata_response(byte_length)
+        cache_key = _audio_cache_key(path) if path.exists() else None
+        response = _audio_metadata_response(byte_length, cache_key=cache_key)
+        response.headers[_AUDIO_SOURCE_HEADER] = 'local' if path.exists() else 'missing'
+        return response
+    if oss_metadata is not None:
+        oss_payload = fetch_word_audio_oss_payload(file_name=path.name, model=model, voice=voice)
+        if oss_payload is not None:
+            response = Response(oss_payload.audio_bytes, mimetype=oss_payload.content_type or 'audio/mpeg')
+            response = _apply_audio_headers(
+                response,
+                byte_length=oss_payload.byte_length,
+                cache_key=oss_payload.cache_key,
+            )
+            response.headers[_AUDIO_OSS_URL_HEADER] = oss_payload.signed_url
+            response.headers[_AUDIO_SOURCE_HEADER] = 'oss'
+            return response
     if not path.exists():
+        if cache_only:
+            return jsonify({'error': 'word audio cache miss'}), 404
         try:
             synthesis_model = _strip_word_tts_strategy_tag(model)
-            audio_bytes = synthesize_word_to_bytes(raw, synthesis_model, voice, provider=provider)
-            audio_bytes = add_leading_silence_to_mp3_bytes(audio_bytes)
+            audio_bytes = synthesize_word_to_bytes(
+                raw,
+                synthesis_model,
+                voice,
+                provider=provider,
+                content_mode='word',
+            )
             write_bytes_atomically(path, audio_bytes)
         except Exception as exc:
             current_app.logger.exception('Word audio generation failed for "%s"', raw)
@@ -246,19 +256,28 @@ def get_word_audio():
         mimetype='audio/mpeg',
         as_attachment=False,
         download_name=f'{key}.mp3',
+        conditional=False,
     )
-    return _apply_audio_headers(response, byte_length=path.stat().st_size)
+    response = _apply_audio_headers(
+        response,
+        byte_length=path.stat().st_size,
+        cache_key=_audio_cache_key(path),
+    )
+    if oss_metadata is not None:
+        response.headers[_AUDIO_OSS_URL_HEADER] = oss_metadata.signed_url
+    response.headers[_AUDIO_SOURCE_HEADER] = 'local'
+    return response
 
 
 @tts_bp.route('/admin/generate-words', methods=['POST'])
 @admin_required
 def admin_generate_words(current_user):
     """
-    后台批量生成所有词书单词的 MiniMax TTS（去重）。
+    后台批量生成所有词书单词的 TTS（去重）。
     Body 可选: { "book_id": "ielts_ultimate" } 限制单本书；省略则全词书。
     """
     global _generating_words
-    from routes.books import VOCAB_BOOKS
+    from services.books_registry_service import VOCAB_BOOKS
 
     data = request.get_json() or {}
     book_id = (data.get('book_id') or '').strip() or None
@@ -299,7 +318,7 @@ def admin_word_audio_status(current_user):
     prog = _read_word_progress()
     words = collect_unique_words(None)
     total = len(words)
-    model, voice = default_cache_identity()
+    _, model, voice = default_word_tts_identity()
     cached = count_cached_words(words, _word_tts_dir(), model, voice)
 
     status = 'idle'

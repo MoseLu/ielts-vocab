@@ -1,30 +1,29 @@
-let currentAudio: HTMLAudioElement | null = null
+import {
+  __resetManagedAudioStateForTests,
+  playManagedAudioUrl,
+  prepareManagedAudioBuffer,
+  playManagedAudioBuffer,
+  stopManagedAudio,
+  warmupManagedAudio,
+} from './utils.audio.playback'
+
 let audioGeneration = 0
 let audioStopped = false
-let htmlAudioWarmupPromise: Promise<void> | null = null
 
-const SILENT_WAV_DATA_URI =
-  'data:audio/wav;base64,UklGRlYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YTIAAACA'
 const AUDIO_BYTES_HEADER = 'x-audio-bytes'
+const AUDIO_CACHE_KEY_HEADER = 'x-audio-cache-key'
 const CACHE_METADATA_TTL_MS = 5_000
+const MAX_WORD_AUDIO_CACHE_ENTRIES = 12
 
-type AudioCacheEntry = {
-  buffer: ArrayBuffer
-  byteLength: number
-  validatedAt: number
-}
+type AudioCacheEntry = { buffer: ArrayBuffer; byteLength: number; cacheKey: string | null; validatedAt: number }
+type AudioMetadata = { byteLength: number | null; cacheKey: string | null }
 
 const wordAudioCache = new Map<string, AudioCacheEntry>()
-const wordAudioInFlight = new Map<string, Promise<AudioCacheEntry | null>>()
+const wordAudioRequestCache = new Map<string, Promise<AudioCacheEntry | null>>()
 const exampleAudioCache = new Map<string, AudioCacheEntry>()
 
-function wordAudioCacheKey(word: string): string {
-  return word.trim().toLowerCase()
-}
-
-function exampleAudioCacheKey(sentence: string): string {
-  return sentence.trim()
-}
+function wordAudioCacheKey(word: string): string { return word.trim().toLowerCase() }
+function exampleAudioCacheKey(sentence: string): string { return sentence.trim() }
 
 function isCacheEntryIntact(entry: AudioCacheEntry | undefined): entry is AudioCacheEntry {
   return !!entry && entry.byteLength > 0 && entry.byteLength === entry.buffer.byteLength
@@ -39,9 +38,21 @@ function getCachedEntry(cache: Map<string, AudioCacheEntry>, key: string): Audio
   return entry
 }
 
-function rememberEntry(cache: Map<string, AudioCacheEntry>, key: string, entry: AudioCacheEntry): AudioCacheEntry {
+function rememberEntry(
+  cache: Map<string, AudioCacheEntry>,
+  key: string,
+  entry: AudioCacheEntry,
+  options?: { maxEntries?: number },
+): AudioCacheEntry {
   const saved = { ...entry, validatedAt: Date.now() }
+  cache.delete(key)
   cache.set(key, saved)
+  const maxEntries = options?.maxEntries ?? Number.POSITIVE_INFINITY
+  while (cache.size > maxEntries) {
+    const oldestKey = cache.keys().next().value
+    if (!oldestKey) break
+    cache.delete(oldestKey)
+  }
   return saved
 }
 
@@ -52,15 +63,20 @@ function readExpectedAudioBytes(headers: Headers): number | null {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
+function readAudioCacheKey(headers: Headers): string | null { const raw = headers.get(AUDIO_CACHE_KEY_HEADER); return raw && raw.trim() ? raw.trim() : null }
+function readAudioMetadata(headers: Headers): AudioMetadata { return { byteLength: readExpectedAudioBytes(headers), cacheKey: readAudioCacheKey(headers) } }
+
 async function decodeValidatedAudioResponse(response: Response): Promise<AudioCacheEntry | null> {
   if (!response.ok) return null
-  const expectedBytes = readExpectedAudioBytes(response.headers)
+  const metadata = readAudioMetadata(response.headers)
+  const expectedBytes = metadata.byteLength
   const buffer = await response.arrayBuffer()
   if (buffer.byteLength <= 0) return null
   if (expectedBytes !== null && buffer.byteLength !== expectedBytes) return null
   return {
     buffer,
     byteLength: buffer.byteLength,
+    cacheKey: metadata.cacheKey,
     validatedAt: Date.now(),
   }
 }
@@ -78,20 +94,20 @@ async function fetchValidatedAudioEntry(requestAudio: () => Promise<Response>): 
   return null
 }
 
-async function fetchWordAudioMetadataBytes(word: string): Promise<number | null> {
+async function fetchWordAudioMetadata(word: string): Promise<AudioMetadata> {
   try {
-    const response = await fetch(`/api/tts/word-audio?w=${encodeURIComponent(word.trim())}`, {
+    const response = await fetch(`/api/tts/word-audio?w=${encodeURIComponent(word.trim())}&cache_only=1`, {
       method: 'HEAD',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
     })
-    return response.ok ? readExpectedAudioBytes(response.headers) : null
+    return response.ok ? readAudioMetadata(response.headers) : { byteLength: null, cacheKey: null }
   } catch {
-    return null
+    return { byteLength: null, cacheKey: null }
   }
 }
 
-async function fetchExampleAudioMetadataBytes(sentence: string, word: string): Promise<number | null> {
+async function fetchExampleAudioMetadata(sentence: string, word: string): Promise<AudioMetadata> {
   try {
     const response = await fetch('/api/tts/example-audio', {
       method: 'POST',
@@ -103,30 +119,29 @@ async function fetchExampleAudioMetadataBytes(sentence: string, word: string): P
       },
       body: JSON.stringify({ sentence, word }),
     })
-    return response.ok ? readExpectedAudioBytes(response.headers) : null
+    return response.ok ? readAudioMetadata(response.headers) : { byteLength: null, cacheKey: null }
   } catch {
-    return null
+    return { byteLength: null, cacheKey: null }
   }
+}
+
+function isMetadataMatch(entry: AudioCacheEntry, metadata: AudioMetadata): boolean {
+  if (metadata.byteLength === null || metadata.byteLength !== entry.byteLength) return false
+  if (!metadata.cacheKey) return true
+  return entry.cacheKey === metadata.cacheKey
 }
 
 async function validateCachedEntry(
   entry: AudioCacheEntry,
-  requestMetadataBytes: () => Promise<number | null>,
+  requestMetadata: () => Promise<AudioMetadata>,
+  options?: { force?: boolean },
 ): Promise<boolean> {
-  if (Date.now() - entry.validatedAt <= CACHE_METADATA_TTL_MS) return true
-  const expectedBytes = await requestMetadataBytes()
-  if (expectedBytes === null || expectedBytes !== entry.byteLength) return false
+  if (!options?.force && Date.now() - entry.validatedAt <= CACHE_METADATA_TTL_MS) return true
+  const metadata = await requestMetadata()
+  if (!isMetadataMatch(entry, metadata)) return false
+  if (metadata.cacheKey) entry.cacheKey = metadata.cacheKey
   entry.validatedAt = Date.now()
   return true
-}
-
-async function requestWordAudioEntry(word: string): Promise<AudioCacheEntry | null> {
-  return fetchValidatedAudioEntry(async () =>
-    fetch(`/api/tts/word-audio?w=${encodeURIComponent(word.trim())}`, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    }),
-  )
 }
 
 async function requestExampleAudioEntry(sentence: string, word: string): Promise<AudioCacheEntry | null> {
@@ -143,44 +158,45 @@ async function requestExampleAudioEntry(sentence: string, word: string): Promise
   )
 }
 
-async function fetchWordAudioBuffer(word: string): Promise<AudioCacheEntry | null> {
-  const key = wordAudioCacheKey(word)
-  if (!key) return null
-  const cached = getCachedEntry(wordAudioCache, key)
-  if (cached) return cached
-  if (wordAudioInFlight.has(key)) return wordAudioInFlight.get(key) ?? null
-
-  const request = (async () => {
-    try {
-      const entry = await requestWordAudioEntry(word)
-      return entry ? rememberEntry(wordAudioCache, key, entry) : null
-    } finally {
-      wordAudioInFlight.delete(key)
-    }
-  })()
-
-  wordAudioInFlight.set(key, request)
-  return request
+async function requestWordAudioEntry(word: string, cacheKey: string | null): Promise<AudioCacheEntry | null> {
+  return fetchValidatedAudioEntry(async () =>
+    fetch(buildWordAudioUrl(word, cacheKey), {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    }),
+  )
 }
 
-async function ensureWordAudioEntryForPlayback(word: string): Promise<AudioCacheEntry | null> {
-  const key = wordAudioCacheKey(word)
-  if (!key) return null
-  const cached = getCachedEntry(wordAudioCache, key)
-  if (cached) {
-    const isValid = await validateCachedEntry(cached, () => fetchWordAudioMetadataBytes(word))
-    if (isValid) return cached
-    wordAudioCache.delete(key)
-  }
-  return fetchWordAudioBuffer(word)
+function buildWordAudioUrl(word: string, cacheKey: string | null): string {
+  const params = new URLSearchParams({ w: word.trim() })
+  params.set('cache_only', '1')
+  if (cacheKey) params.set('v', cacheKey)
+  return `/api/tts/word-audio?${params.toString()}`
 }
 
-async function ensureExampleAudioEntryForPlayback(sentence: string, word: string): Promise<AudioCacheEntry | null> {
+function buildExampleAudioUrl(sentence: string, word: string, cacheKey: string | null): string {
+  const params = new URLSearchParams({ sentence: sentence.trim() })
+  const trimmedWord = word.trim()
+  if (trimmedWord) params.set('word', trimmedWord)
+  if (cacheKey) params.set('v', cacheKey)
+  return `/api/tts/example-audio?${params.toString()}`
+}
+
+async function ensureExampleAudioEntryForPlayback(
+  sentence: string,
+  word: string,
+  options?: { forceMetadataCheck?: boolean },
+): Promise<AudioCacheEntry | null> {
   const key = exampleAudioCacheKey(sentence)
   if (!key) return null
   const cached = getCachedEntry(exampleAudioCache, key)
   if (cached) {
-    const isValid = await validateCachedEntry(cached, () => fetchExampleAudioMetadataBytes(sentence, word))
+    const isValid = await validateCachedEntry(
+      cached,
+      () => fetchExampleAudioMetadata(sentence, word),
+      { force: options?.forceMetadataCheck ?? false },
+    )
     if (isValid) return cached
     exampleAudioCache.delete(key)
   }
@@ -188,122 +204,38 @@ async function ensureExampleAudioEntryForPlayback(sentence: string, word: string
   return entry ? rememberEntry(exampleAudioCache, key, entry) : null
 }
 
-function warmupHtmlAudio(): Promise<void> {
-  if (htmlAudioWarmupPromise) return htmlAudioWarmupPromise
-  htmlAudioWarmupPromise = new Promise(resolve => {
-    try {
-      const audio = new Audio(SILENT_WAV_DATA_URI)
-      audio.volume = 0
-      let settled = false
-      const finish = () => {
-        if (settled) return
-        settled = true
-        resolve()
-      }
-      audio.onended = finish
-      audio.onerror = finish
-      setTimeout(finish, 1200)
-      audio.play().catch(finish)
-    } catch {
-      resolve()
-    }
-  })
-  return htmlAudioWarmupPromise
-}
-
-async function playAudioBuffer(
-  generation: number,
-  buffer: ArrayBuffer,
-  volume: number,
-  rate: number,
-  onEnd?: () => void,
-): Promise<boolean> {
-  const blobUrl = URL.createObjectURL(new Blob([buffer], { type: 'audio/mpeg' }))
-  const audio = new Audio(blobUrl)
-  audio.volume = volume
-  audio.playbackRate = rate
-  currentAudio = audio
-
-  let settled = false
-  let started = false
-  const cleanup = () => URL.revokeObjectURL(blobUrl)
-  const cancel = (resolve: (value: boolean) => void) => {
-    if (settled) return
-    settled = true
-    cleanup()
-    if (currentAudio === audio) currentAudio = null
-    resolve(started)
+async function ensureWordAudioEntryForPlayback(
+  word: string,
+  options?: { forceMetadataCheck?: boolean },
+): Promise<AudioCacheEntry | null> {
+  const key = wordAudioCacheKey(word)
+  if (!key) return null
+  const cached = getCachedEntry(wordAudioCache, key)
+  if (cached) {
+    const isValid = await validateCachedEntry(
+      cached,
+      () => fetchWordAudioMetadata(word),
+      { force: options?.forceMetadataCheck ?? false },
+    )
+    if (isValid) return cached
+    wordAudioCache.delete(key)
   }
 
-  return new Promise(resolve => {
-    const markStarted = () => {
-      if (audioGeneration !== generation) {
-        cancel(resolve)
-        return
-      }
-      if (started || settled) return
-      started = true
-      resolve(true)
-    }
+  const metadata = await fetchWordAudioMetadata(word)
+  if (metadata.byteLength === null && !metadata.cacheKey) return null
+  const requestKey = `${key}|${metadata.cacheKey ?? ''}`
+  const existingRequest = wordAudioRequestCache.get(requestKey)
+  if (existingRequest) return existingRequest
 
-    const fail = () => {
-      if (audioGeneration !== generation) {
-        cancel(resolve)
-        return
+  const nextRequest = requestWordAudioEntry(word, metadata.cacheKey)
+    .then(entry => (entry ? rememberEntry(wordAudioCache, key, entry, { maxEntries: MAX_WORD_AUDIO_CACHE_ENTRIES }) : null))
+    .finally(() => {
+      if (wordAudioRequestCache.get(requestKey) === nextRequest) {
+        wordAudioRequestCache.delete(requestKey)
       }
-      if (settled) return
-      settled = true
-      cleanup()
-      if (currentAudio === audio) currentAudio = null
-      resolve(started)
-      onEnd?.()
-    }
-
-    audio.onerror = fail
-    audio.onended = () => {
-      if (audioGeneration !== generation) {
-        cancel(resolve)
-        return
-      }
-      if (settled) return
-      settled = true
-      cleanup()
-      if (currentAudio === audio) currentAudio = null
-      resolve(started)
-      if (!audioStopped) onEnd?.()
-    }
-
-    const start = () => {
-      if (audioGeneration !== generation) {
-        cancel(resolve)
-        return
-      }
-      if (settled) return
-      try {
-        const result = audio.play()
-        if (result && typeof result.then === 'function') {
-          void result.then(markStarted).catch(fail)
-        } else {
-          markStarted()
-        }
-      } catch {
-        fail()
-      }
-    }
-
-    if (typeof audio.addEventListener === 'function') {
-      audio.addEventListener('playing', markStarted, { once: true })
-    }
-
-    if (audio.readyState >= 2) {
-      start()
-    } else if (typeof audio.addEventListener === 'function') {
-      audio.addEventListener('canplaythrough', start, { once: true })
-      audio.load()
-    } else {
-      start()
-    }
-  })
+    })
+  wordAudioRequestCache.set(requestKey, nextRequest)
+  return nextRequest
 }
 
 export function playWord(word: string, settings: { playbackSpeed?: string; volume?: string }): void {
@@ -311,12 +243,34 @@ export function playWord(word: string, settings: { playbackSpeed?: string; volum
 }
 
 export async function preloadWordAudio(word: string): Promise<boolean> {
-  return (await fetchWordAudioBuffer(word)) != null
+  const entry = await ensureWordAudioEntryForPlayback(word)
+  if (!entry) return false
+  const [prepared] = await Promise.all([
+    prepareManagedAudioBuffer(entry.buffer),
+    warmupManagedAudio(),
+  ])
+  return prepared
+}
+
+export async function preloadWordAudioBatch(words: string[], lookahead = words.length): Promise<void> {
+  const uniqueWords = Array.from(new Set(
+    words
+      .map(word => word.trim())
+      .filter(Boolean),
+  )).slice(0, Math.max(0, lookahead))
+  await Promise.allSettled(uniqueWords.map(word => preloadWordAudio(word)))
 }
 
 export async function prepareWordAudioPlayback(word: string): Promise<boolean> {
-  const [entry] = await Promise.all([ensureWordAudioEntryForPlayback(word), warmupHtmlAudio()])
-  return entry != null
+  const trimmed = word.trim()
+  if (!trimmed) return false
+  const entry = await ensureWordAudioEntryForPlayback(trimmed)
+  if (!entry) return false
+  const [prepared] = await Promise.all([
+    prepareManagedAudioBuffer(entry.buffer),
+    warmupManagedAudio(),
+  ])
+  return prepared
 }
 
 export function playWordAudio(
@@ -334,16 +288,32 @@ export function playWordAudio(
   }
 
   const volume = parseFloat(settings.volume || '100') / 100
-  const rate = Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '0.8')))
+  const rate = Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '1.0')))
 
   return (async () => {
     try {
-      const [entry] = await Promise.all([ensureWordAudioEntryForPlayback(trimmed), warmupHtmlAudio()])
-      if (audioGeneration !== generation || !entry) {
-        if (audioGeneration === generation && !entry) onEnd?.()
+      const entry = await ensureWordAudioEntryForPlayback(trimmed)
+      if (audioGeneration !== generation) {
         return false
       }
-      return playAudioBuffer(generation, entry.buffer, volume, rate, onEnd)
+      if (!entry) {
+        onEnd?.()
+        return false
+      }
+      await Promise.all([
+        prepareManagedAudioBuffer(entry.buffer),
+        warmupManagedAudio(),
+      ])
+      if (audioGeneration !== generation) {
+        return false
+      }
+      return playManagedAudioBuffer(entry.buffer, {
+        isCurrent: () => audioGeneration === generation,
+        isStopped: () => audioStopped,
+        volume,
+        rate,
+        onEnd,
+      })
     } catch {
       if (audioGeneration === generation) onEnd?.()
       return false
@@ -354,11 +324,16 @@ export function playWordAudio(
 export function stopAudio(): void {
   audioStopped = true
   audioGeneration += 1
-  if (!currentAudio) return
-  currentAudio.onended = null
-  currentAudio.onerror = null
-  currentAudio.pause()
-  currentAudio = null
+  stopManagedAudio()
+}
+
+export function __resetAudioStateForTests(): void {
+  wordAudioCache.clear()
+  wordAudioRequestCache.clear()
+  exampleAudioCache.clear()
+  audioGeneration = 0
+  audioStopped = false
+  __resetManagedAudioStateForTests()
 }
 
 export function playExampleAudio(
@@ -376,14 +351,33 @@ export function playExampleAudio(
   void (async () => {
     try {
       const [entry] = await Promise.all([
-        ensureExampleAudioEntryForPlayback(sentence, word),
-        warmupHtmlAudio(),
+        ensureExampleAudioEntryForPlayback(sentence, word, { forceMetadataCheck: true }),
+        warmupManagedAudio(),
       ])
-      if (audioGeneration !== generation || !entry) {
-        if (audioGeneration === generation && !entry) onEnd?.()
+      if (audioGeneration !== generation) {
         return
       }
-      void playAudioBuffer(generation, entry.buffer, volume, rate, onEnd)
+      if (entry) {
+        const startedFromEntry = await playManagedAudioBuffer(entry.buffer, {
+          isCurrent: () => audioGeneration === generation,
+          isStopped: () => audioStopped,
+          volume,
+          rate,
+          onEnd,
+        })
+        if (startedFromEntry || audioGeneration !== generation) return
+      }
+      const playbackUrl = buildExampleAudioUrl(sentence, word, entry?.cacheKey ?? null)
+      if (audioGeneration !== generation) {
+        return
+      }
+      void playManagedAudioUrl(playbackUrl, {
+        isCurrent: () => audioGeneration === generation,
+        isStopped: () => audioStopped,
+        volume,
+        rate,
+        onEnd,
+      })
     } catch {
       if (audioGeneration === generation) onEnd?.()
     }

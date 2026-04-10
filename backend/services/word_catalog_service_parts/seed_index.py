@@ -3,8 +3,8 @@ from __future__ import annotations
 import os
 from collections import OrderedDict, defaultdict
 
-import routes.books as books_routes
-from models import WordCatalogBookRef, WordCatalogEntry, db
+from models import WordCatalogEntry
+from services import books_catalog_service, word_catalog_repository
 from services.word_catalog_defaults import (
     build_default_root_payload,
     generate_derivative_candidates,
@@ -30,7 +30,7 @@ def _seed_cache_key(book_ids: tuple[str, ...] | None) -> tuple[str, ...]:
 
 def _iter_catalog_entries(book_ids: tuple[str, ...] | None = None):
     selected_books = set(book_ids or [])
-    for entry in books_routes._build_global_word_search_catalog():
+    for entry in books_catalog_service._build_global_word_search_catalog():
         book_id = str(entry.get('book_id') or '').strip()
         if selected_books and book_id not in selected_books:
             continue
@@ -232,12 +232,4 @@ def build_default_derivative_payload(
 
 
 def _replace_book_refs(entry: WordCatalogEntry, refs: list[dict]) -> None:
-    WordCatalogBookRef.query.filter_by(catalog_entry_id=entry.id).delete()
-    for item in refs:
-        db.session.add(WordCatalogBookRef(
-            catalog_entry_id=entry.id,
-            book_id=item.get('book_id', ''),
-            book_title=item.get('book_title', ''),
-            chapter_id=item.get('chapter_id') or None,
-            chapter_title=item.get('chapter_title') or None,
-        ))
+    word_catalog_repository.replace_word_catalog_book_refs(entry, refs)

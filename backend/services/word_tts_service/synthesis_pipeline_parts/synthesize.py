@@ -3,9 +3,12 @@ def synthesize_word_to_bytes(
     model: str | None = None,
     voice: str | None = None,
     provider: str | None = None,
+    speed: float | None = None,
+    content_mode: str | None = None,
+    phonetic: str | None = None,
 ) -> bytes:
     """
-    Call MiniMax, CosyVoice or Qwen HTTP REST API and return MP3 bytes.
+    Call MiniMax, DashScope, or Azure TTS and return MP3 bytes.
     Automatically dispatches based on _TTS_PROVIDER setting.
     Raises on any API failure.
     """
@@ -18,18 +21,146 @@ def synthesize_word_to_bytes(
         if dictionary_audio is not None:
             return dictionary_audio
 
-        fallback_provider = 'minimax' if _MINIMAX_API_KEYS else _TTS_PROVIDER
+        fallback_provider = _word_tts_fallback_provider()
         fallback_model = _strip_word_tts_strategy_tag(model)
         fallback_voice = (
             (voice or '').strip()
-            or (_MINIMAX_VOICE if fallback_provider == 'minimax' else DEFAULT_VOICE)
+            or _provider_default_voice(fallback_provider)
         )
         return synthesize_word_to_bytes(
             text,
             fallback_model,
             fallback_voice,
             provider=fallback_provider,
+            speed=speed,
+            content_mode=content_mode,
+            phonetic=phonetic,
         )
+
+    if resolved_provider == 'azure':
+        resolved_mode = detect_azure_content_mode(text, content_mode)
+        requested_voice = (
+            (voice or azure_voice_for_mode(text, content_mode=resolved_mode)).strip()
+            or azure_voice_for_mode(text, content_mode=resolved_mode)
+        )
+        headers = {
+            'Ocp-Apim-Subscription-Key': azure_speech_key(),
+            'Ocp-Apim-Subscription-Region': azure_speech_region(),
+            'Content-Type': 'application/ssml+xml; charset=utf-8',
+            'X-Microsoft-OutputFormat': azure_output_format(),
+            'User-Agent': 'ielts-vocab-backend',
+        }
+        ssml = build_azure_ssml(
+            text,
+            requested_voice,
+            rate=azure_rate_for_mode(text, content_mode=resolved_mode, speed=speed),
+            content_mode=resolved_mode,
+            phonetic=phonetic,
+        )
+        resp = requests.post(
+            azure_speech_endpoint(),
+            headers=headers,
+            data=ssml,
+            timeout=30,
+        )
+        if (
+            resp.status_code == 400
+            and resolved_mode == 'word'
+            and "<phoneme alphabet='ipa'" in ssml
+        ):
+            resp = requests.post(
+                azure_speech_endpoint(),
+                headers=headers,
+                data=build_azure_ssml(
+                    text,
+                    requested_voice,
+                    rate=azure_rate_for_mode(text, content_mode=resolved_mode, speed=speed),
+                    content_mode=resolved_mode,
+                    phonetic='',
+                    use_lookup_phonetic=False,
+                ),
+                timeout=30,
+            )
+        if resp.status_code == 200:
+            return ensure_mp3_bytes(resp.content)
+        if resp.status_code == 429:
+            raise DashScopeHTTPError('Azure TTS 429 rate limit exceeded', 429)
+        raise DashScopeHTTPError(
+            f'Azure TTS HTTP {resp.status_code}: {resp.text[:300]}',
+            resp.status_code,
+        )
+
+    if resolved_provider in {'volcengine', 'doubao', 'bytedance', 'seedtts'}:
+        import base64
+
+        requested_voice = (voice or volcengine_default_voice()).strip() or volcengine_default_voice()
+        payload = build_volcengine_tts_request(text, requested_voice, speed=speed)
+        response = requests.post(
+            volcengine_tts_endpoint(),
+            headers={
+                'Accept': 'text/event-stream',
+                'Content-Type': 'application/json',
+                'User-Agent': 'ielts-vocab-backend',
+                'X-Api-App-Id': volcengine_tts_app_id(),
+                'X-Api-Access-Key': volcengine_tts_access_key(),
+                'X-Api-Request-Id': uuid.uuid4().hex,
+                'X-Api-Resource-Id': volcengine_tts_resource_id(),
+                'X-Control-Require-Usage-Tokens-Return': 'text_words',
+            },
+            json=payload,
+            stream=True,
+            timeout=(10, 60),
+        )
+        try:
+            if response.status_code == 429:
+                raise DashScopeHTTPError('Volcengine TTS 429 rate limit exceeded', 429)
+            if response.status_code != 200:
+                raise DashScopeHTTPError(
+                    f'Volcengine TTS HTTP {response.status_code}: {response.text[:300]}',
+                    response.status_code,
+                )
+
+            chunks: list[bytes] = []
+            pending = ''
+            for raw_line in response.iter_lines(decode_unicode=True):
+                if raw_line is None:
+                    continue
+                line = raw_line.strip()
+                if not line or line.startswith(':') or line.startswith('event:'):
+                    continue
+                if line.startswith('data:'):
+                    line = line[5:].strip()
+                pending = f'{pending}{line}' if pending else line
+                try:
+                    event = json.loads(pending)
+                except json.JSONDecodeError:
+                    continue
+                pending = ''
+
+                code = event.get('code')
+                if code == 20000000:
+                    break
+                if code != 0:
+                    message = (event.get('message') or 'unknown error').strip()
+                    normalized = message.lower()
+                    status_code = 429 if 'rate' in normalized or 'quota' in normalized else 502
+                    raise DashScopeHTTPError(
+                        f'Volcengine TTS error {code}: {message}',
+                        status_code,
+                    )
+
+                data = event.get('data')
+                if isinstance(data, dict):
+                    data = data.get('audio') or data.get('data')
+                if not data:
+                    continue
+                chunks.append(base64.b64decode(data))
+
+            if not chunks:
+                raise RuntimeError('Volcengine TTS response missing audio chunks')
+            return ensure_mp3_bytes(b''.join(chunks))
+        finally:
+            response.close()
 
     # ── MiniMax (fastest: direct hex in response, no second request) ───────────
     if resolved_provider == 'minimax':

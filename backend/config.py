@@ -1,4 +1,6 @@
 import os
+import re
+from urllib.parse import quote_plus
 
 
 DEFAULT_CORS_ORIGINS = (
@@ -19,6 +21,23 @@ DEFAULT_CORS_ORIGINS = (
 )
 
 
+def _service_env_prefix() -> str:
+    raw_name = (os.environ.get('CURRENT_SERVICE_NAME') or '').strip()
+    if not raw_name:
+        return ''
+    normalized = re.sub(r'[^A-Za-z0-9]+', '_', raw_name).strip('_')
+    return normalized.upper()
+
+
+def _getenv(name: str, default: str = '') -> str:
+    service_prefix = _service_env_prefix()
+    if service_prefix:
+        service_value = (os.environ.get(f'{service_prefix}_{name}') or '').strip()
+        if service_value:
+            return service_value
+    return (os.environ.get(name) or default).strip()
+
+
 def _build_cors_origins() -> list[str]:
     raw_value = os.environ.get('CORS_ORIGINS', '')
     configured = [origin.strip() for origin in raw_value.split(',') if origin.strip()]
@@ -35,17 +54,50 @@ def _build_cors_origins() -> list[str]:
 
 
 def _resolve_sqlite_db_path(base_dir: str) -> str:
-    configured = (os.environ.get('SQLITE_DB_PATH') or '').strip()
+    configured = _getenv('SQLITE_DB_PATH')
     if configured:
         return os.path.abspath(configured)
     return os.path.join(base_dir, 'database.sqlite')
 
 
 def _resolve_backup_dir(base_dir: str, sqlite_db_path: str) -> str:
-    configured = (os.environ.get('DB_BACKUP_DIR') or '').strip()
+    configured = _getenv('DB_BACKUP_DIR')
     if configured:
         return os.path.abspath(configured)
     return os.path.join(os.path.dirname(sqlite_db_path), 'backups')
+
+
+def _normalize_database_uri(uri: str) -> str:
+    if uri.startswith('postgres://'):
+        return 'postgresql://' + uri[len('postgres://'):]
+    return uri
+
+
+def _build_postgres_database_uri() -> str:
+    host = _getenv('POSTGRES_HOST')
+    database = _getenv('POSTGRES_DB') or _getenv('POSTGRES_DATABASE')
+    user = _getenv('POSTGRES_USER')
+    password = _getenv('POSTGRES_PASSWORD')
+    if not (host and database and user and password):
+        return ''
+
+    port = _getenv('POSTGRES_PORT', '5432') or '5432'
+    sslmode = _getenv('POSTGRES_SSLMODE')
+    auth = f'{quote_plus(user)}:{quote_plus(password)}'
+    query = f'?sslmode={quote_plus(sslmode)}' if sslmode else ''
+    return f'postgresql://{auth}@{host}:{port}/{database}{query}'
+
+
+def _resolve_database_uri(base_dir: str) -> str:
+    explicit_uri = _getenv('SQLALCHEMY_DATABASE_URI') or _getenv('DATABASE_URL')
+    if explicit_uri:
+        return _normalize_database_uri(explicit_uri)
+
+    postgres_uri = _build_postgres_database_uri()
+    if postgres_uri:
+        return postgres_uri
+
+    return 'sqlite:///' + _resolve_sqlite_db_path(base_dir)
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -58,7 +110,8 @@ class Config:
     # Database
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     SQLITE_DB_PATH = _resolve_sqlite_db_path(BASE_DIR)
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + SQLITE_DB_PATH
+    SQLALCHEMY_DATABASE_URI = _resolve_database_uri(BASE_DIR)
+    DATABASE_BACKEND = 'postgresql' if SQLALCHEMY_DATABASE_URI.startswith('postgresql://') else 'sqlite'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ALLOW_DESTRUCTIVE_DB_OPERATIONS = os.environ.get('ALLOW_DESTRUCTIVE_DB_OPERATIONS', 'false').lower() == 'true'
     DB_BACKUP_ENABLED = os.environ.get('DB_BACKUP_ENABLED', 'true').lower() == 'true'
@@ -77,6 +130,14 @@ class Config:
         )
     JWT_ACCESS_TOKEN_EXPIRES = 60 * 30           # 30 min — short window, proactive refresh handles UX
     JWT_REFRESH_TOKEN_EXPIRES = 86400 * 30      # 30 days
+    INTERNAL_SERVICE_JWT_SECRET_KEY = (
+        os.environ.get('INTERNAL_SERVICE_JWT_SECRET_KEY')
+        or JWT_SECRET_KEY
+    )
+    INTERNAL_SERVICE_TOKEN_TTL_SECONDS = max(
+        10,
+        int(os.environ.get('INTERNAL_SERVICE_TOKEN_TTL_SECONDS', '60')),
+    )
 
     # Cookie security (set COOKIE_SECURE=true in production behind HTTPS)
     COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'false').lower() == 'true'
@@ -102,4 +163,4 @@ class Config:
     LOGIN_LOCKOUT_MINUTES = 15
 
     # Request body size limit (DoS protection)
-    MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH_BYTES', str(10 * 1024 * 1024)))

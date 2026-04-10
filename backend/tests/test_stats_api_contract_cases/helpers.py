@@ -3,6 +3,9 @@ from datetime import datetime, timedelta, timezone
 
 import routes.ai as ai_routes
 import routes.books as books_routes
+import services.ai_route_support_service as route_support_service
+import services.ai_vocab_catalog_service as vocab_catalog_service
+import services.books_registry_service as books_registry_service
 import services.learner_profile as learner_profile_service
 from models import (
     User,
@@ -44,11 +47,14 @@ def epoch_ms(dt: datetime) -> int:
 
 def patch_stats_environment(monkeypatch):
     monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: FIXED_NOW)
+    monkeypatch.setattr(route_support_service, 'utc_now_naive', lambda: FIXED_NOW)
     monkeypatch.setattr(learner_profile_service, 'utc_now_naive', lambda: FIXED_NOW)
-    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
-        {'id': 'book-a', 'title': 'Book A', 'word_count': 100},
-        {'id': 'book-b', 'title': 'Book B', 'word_count': 80},
-    ], raising=False)
+    vocab_books = [
+        {'id': 'book-a', 'title': 'Book A', 'word_count': 100, 'file': 'book-a.json'},
+        {'id': 'book-b', 'title': 'Book B', 'word_count': 80, 'file': 'book-b.json'},
+    ]
+    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', vocab_books, raising=False)
+    monkeypatch.setattr(books_registry_service, 'VOCAB_BOOKS', vocab_books, raising=False)
     monkeypatch.setattr(ai_routes, '_chapter_title_map', lambda book_id: {
         'book-a': {'1': 'Chapter A1'},
         'book-b': {'2': 'Chapter B2'},

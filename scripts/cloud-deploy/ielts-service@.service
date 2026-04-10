@@ -1,0 +1,23 @@
+[Unit]
+Description=IELTS Vocab microservice %i
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ielts-vocab/current
+Environment=IELTS_APP_ROOT=/opt/ielts-vocab/current
+Environment=IELTS_VENV=/opt/ielts-vocab/venv
+Environment=IELTS_SERVICE_HOST=127.0.0.1
+Environment=MICROSERVICES_ENV_FILE=/etc/ielts-vocab/microservices.env
+EnvironmentFile=/etc/ielts-vocab/backend.env
+EnvironmentFile=/etc/ielts-vocab/microservices.env
+ExecStart=/opt/ielts-vocab/current/scripts/cloud-deploy/run-service.sh %i
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

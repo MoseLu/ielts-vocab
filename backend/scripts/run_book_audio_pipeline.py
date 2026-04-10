@@ -36,13 +36,34 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-def main() -> int:
-    if not os.environ.get('DASHSCOPE_API_KEY', '').strip():
+def _provider() -> str:
+    return os.environ.get('BAILIAN_TTS_PROVIDER', 'minimax').strip().lower()
+
+
+def _require_provider_credentials(provider: str) -> bool:
+    if provider == 'azure':
+        if not os.environ.get('AZURE_SPEECH_KEY', '').strip():
+            print('ERROR: 请在 backend/.env 中设置 AZURE_SPEECH_KEY', file=sys.stderr)
+            return False
+        if not os.environ.get('AZURE_SPEECH_REGION', '').strip():
+            print('ERROR: 请在 backend/.env 中设置 AZURE_SPEECH_REGION', file=sys.stderr)
+            return False
+        return True
+
+    if provider != 'minimax' and not os.environ.get('DASHSCOPE_API_KEY', '').strip():
         print('ERROR: 请在 backend/.env 中设置 DASHSCOPE_API_KEY', file=sys.stderr)
+        return False
+    return True
+
+
+def main() -> int:
+    provider = _provider()
+    if not _require_provider_credentials(provider):
         return 1
 
     from services.word_tts import (
-        default_cache_identity,
+        _strip_word_tts_strategy_tag,
+        default_word_tts_identity,
         recommended_batch_backoff_delays,
         recommended_batch_concurrency,
         recommended_batch_rate_interval,
@@ -51,16 +72,17 @@ def main() -> int:
     )
 
     book_ids = args.book or None
-    model, voice = default_cache_identity()
+    _, cache_model, voice = default_word_tts_identity()
+    model = _strip_word_tts_strategy_tag(cache_model)
     rate_interval = (
         args.rate_interval
         if args.rate_interval is not None
-        else recommended_batch_rate_interval(model)
+        else recommended_batch_rate_interval(model, provider=provider)
     )
     backoff = recommended_batch_backoff_delays(rate_interval)
-    jobs = recommended_batch_concurrency(model)
+    jobs = recommended_batch_concurrency(model, provider=provider)
 
-    print(f'[Audio Pipeline] model={model} voice={voice}')
+    print(f'[Audio Pipeline] provider={provider} model={model} voice={voice}')
     print(f'[Audio Pipeline] book_ids={book_ids or "ALL"}')
     print(f'[Audio Pipeline] word-stage jobs={jobs} rate_interval={rate_interval:.1f}s')
 

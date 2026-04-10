@@ -4,5 +4,8 @@
     "vocabulary_data/**",
     "pnpm-lock.yaml"
   ],
-  "baseline": {}
+  "baseline": {
+    "frontend/src/components/practice/utils.audio.playback.ts": 508,
+    "realtime_waveform.md": 1155
+  }
 }

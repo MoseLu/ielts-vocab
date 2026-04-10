@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from models import UserLearningEvent, db
-from routes import ai as ai_routes
+from services import ai_assistant_ask_service as ask_service
+from services import ai_practice_support_service as practice_support_service
 
 
 def register_and_login(client, username='event-user', password='password123'):
@@ -71,7 +72,7 @@ def test_learner_profile_activity_summary_merges_events_from_multiple_sources(cl
     })
     assert wrong_res.status_code == 200
 
-    monkeypatch.setattr(ai_routes, '_chat_with_tools', lambda *args, **kwargs: {'text': '已回答'})
+    monkeypatch.setattr(ask_service, 'chat_with_tools', lambda *args, **kwargs: {'text': '已回答'})
     ask_res = client.post('/api/ai/ask', json={
         'message': 'kind 和 effect 有什么区别？',
         'context': {
@@ -195,7 +196,7 @@ def test_smart_stats_sync_records_listening_and_writing_events(client, app):
 def test_ai_tool_metrics_are_exposed_via_profile_and_context(client, monkeypatch):
     register_and_login(client, username='ai-tool-event-user')
 
-    monkeypatch.setattr(ai_routes, 'correct_text', lambda text: {
+    monkeypatch.setattr(practice_support_service, 'correct_text', lambda text: {
         'is_valid_english': True,
         'original_text': text,
         'corrected_text': text,

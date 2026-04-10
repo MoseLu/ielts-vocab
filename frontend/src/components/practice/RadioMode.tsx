@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { RadioModeProps, Word } from './types'
-import { playWordAudio, stopAudio } from './utils'
+import { playWordAudio, preloadWordAudioBatch, stopAudio } from './utils'
 import SettingsPanel from '../settings/SettingsPanel'
 import {
   PRACTICE_GLOBAL_SHORTCUT_NEXT_EVENT,
@@ -70,6 +70,13 @@ export default function RadioMode({
     setCurrentIndex(idx)
     const word = vocab[q[idx]]
     if (!word) { radioPlayFrom(idx + 1, 0); return }
+    const upcomingWords = q
+      .slice(idx + 1, idx + 4)
+      .map(queueIndex => vocab[queueIndex]?.word?.trim())
+      .filter((nextWord): nextWord is string => Boolean(nextWord))
+    if (upcomingWords.length) {
+      void preloadWordAudioBatch(upcomingWords)
+    }
 
     const nextIdx = idx + 1
     // Capture the current generation — any callbacks from a previous word that

@@ -88,7 +88,7 @@ describe('quickMemorySync', () => {
       return Promise.reject(new Error(`Unexpected url: ${url}`))
     })
 
-    await reconcileQuickMemoryRecordsWithBackend()
+    const result = await reconcileQuickMemoryRecordsWithBackend()
 
     expect(apiFetchMock).toHaveBeenNthCalledWith(
       1,
@@ -114,11 +114,13 @@ describe('quickMemorySync', () => {
       alpha: expect.objectContaining({ lastSeen: 5000, knownCount: 2 }),
       beta: expect.objectContaining({ lastSeen: 7000, knownCount: 1, nextReview: 12000 }),
     })
+    expect(result).toEqual({ uploadedCount: 1 })
   })
 
   it('skips reconciliation when stats pages have no local quick-memory data yet', async () => {
-    await reconcileQuickMemoryRecordsWithBackend({ skipIfLocalEmpty: true })
+    const result = await reconcileQuickMemoryRecordsWithBackend({ skipIfLocalEmpty: true })
 
     expect(apiFetchMock).not.toHaveBeenCalled()
+    expect(result).toEqual({ uploadedCount: 0 })
   })
 })

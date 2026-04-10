@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 
 import routes.books as books_routes
+import services.books_registry_service as books_registry_service
 import services.learner_profile as learner_profile_service
 from models import (
     User,
@@ -15,8 +16,6 @@ from models import (
     UserWrongWord,
     db,
 )
-
-
 def register_and_login(client, username='profile-user', password='password123'):
     client.post('/api/auth/register', json={
         'username': username,
@@ -28,6 +27,13 @@ def register_and_login(client, username='profile-user', password='password123'):
         'password': password,
     })
     assert res.status_code == 200
+def patch_vocab_books(monkeypatch, books):
+    normalized_books = [
+        {'file': f'test-book-{index}.json', 'has_chapters': True, **book}
+        for index, book in enumerate(books, start=1)
+    ]
+    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', normalized_books, raising=False)
+    monkeypatch.setattr(books_registry_service, 'VOCAB_BOOKS', normalized_books, raising=False)
 
 
 def test_learner_profile_endpoint_returns_focus_words_dimensions_and_topics(client, app):
@@ -145,6 +151,51 @@ def test_learner_profile_endpoint_returns_focus_words_dimensions_and_topics(clie
     assert any(item['key'] == 'speaking' and item['status'] == 'needs_setup' for item in data['memory_system']['dimensions'])
     assert data['repeated_topics'][0]['word_context'] == 'kind'
     assert any('复习' in item for item in data['next_actions'])
+
+
+def test_learner_profile_stats_view_skips_full_activity_and_memory_sections(client, app, monkeypatch):
+    register_and_login(client, username='profile-stats-view-user')
+
+    with app.app_context():
+        user = User.query.filter_by(username='profile-stats-view-user').first()
+        assert user is not None
+
+        db.session.add(UserStudySession(
+            user_id=user.id,
+            mode='listening',
+            words_studied=12,
+            correct_count=4,
+            wrong_count=8,
+            duration_seconds=480,
+            started_at=datetime(2026, 3, 30, 9, 0, 0),
+        ))
+        db.session.add(UserWrongWord(
+            user_id=user.id,
+            word='kind',
+            phonetic='/kaɪnd/',
+            pos='n.',
+            definition='type',
+            wrong_count=4,
+            meaning_wrong=4,
+        ))
+        db.session.commit()
+
+    def fail_if_called(*_args, **_kwargs):
+        raise AssertionError('stats view should skip full learner-profile sections')
+
+    monkeypatch.setattr(learner_profile_service, '_build_memory_system', fail_if_called)
+    monkeypatch.setattr(learner_profile_service, 'build_learning_activity_timeline', fail_if_called)
+
+    response = client.get('/api/ai/learner-profile?date=2026-03-30&view=stats')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['summary']['weakest_mode'] == 'listening'
+    assert data['focus_words'][0]['word'] == 'kind'
+    assert 'memory_system' not in data
+    assert 'daily_plan' not in data
+    assert 'activity_summary' not in data
+    assert 'recent_activity' not in data
 
 
 def test_learner_profile_includes_recent_live_pending_session_duration(client, app, monkeypatch):
@@ -392,9 +443,9 @@ def test_learner_profile_daily_plan_marks_due_error_and_focus_book_pending(clien
 
     now = datetime(2026, 4, 4, 4, 0, 0)
     monkeypatch.setattr(learner_profile_service, 'utc_now_naive', lambda: now)
-    monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
+    patch_vocab_books(monkeypatch, [
         {'id': 'book-a', 'title': 'Book A', 'word_count': 100},
-    ], raising=False)
+    ])
 
     with app.app_context():
         user = User.query.filter_by(username='daily-plan-pending-user').first()

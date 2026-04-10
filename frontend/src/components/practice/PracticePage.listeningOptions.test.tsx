@@ -10,6 +10,8 @@ const fetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const logSessionMock = vi.fn()
 const playWordAudioMock = vi.fn()
+const prepareWordAudioPlaybackMock = vi.fn(() => Promise.resolve(true))
+const preloadWordAudioMock = vi.fn(() => Promise.resolve(true))
 const stopAudioMock = vi.fn()
 const useFavoriteWordsMock = vi.fn(() => ({
   isFavorite: () => false,
@@ -74,6 +76,9 @@ vi.mock('./utils', async () => {
   return {
     ...actual,
     playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
+    prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
+    preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
+    preloadWordAudioBatch: (...args: unknown[]) => preloadWordAudioMock(...args),
     stopAudio: (...args: unknown[]) => stopAudioMock(...args),
   }
 })
@@ -156,6 +161,8 @@ describe('PracticePage listening options loading', () => {
     startSessionMock.mockClear()
     logSessionMock.mockClear()
     playWordAudioMock.mockClear()
+    prepareWordAudioPlaybackMock.mockClear()
+    preloadWordAudioMock.mockClear()
     stopAudioMock.mockClear()
     vi.mocked(chooseSmartDimension).mockReturnValue('meaning')
     localStorage.clear()
@@ -307,6 +314,7 @@ describe('PracticePage listening options loading', () => {
     act(() => {
       vi.advanceTimersByTime(300)
     })
+    await flushRender()
 
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
     const stopCallsAfterFirstPlayback = stopAudioMock.mock.calls.length
@@ -367,5 +375,65 @@ describe('PracticePage listening options loading', () => {
       expect(screen.getByTestId('options-mode')).toHaveAttribute('data-mode', 'smart')
       expect(screen.getByTestId('options-mode')).toHaveAttribute('data-smart-dimension', 'listening')
     })
+  })
+
+  it('shows chapter completion summary with session duration after finishing a chapter', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-04-07T00:00:00.000Z'))
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
+
+    const vocabulary = [{
+      word: 'guide',
+      phonetic: '/gaid/',
+      pos: 'n.',
+      definition: '向导',
+      listening_confusables: [
+        { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+        { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+        { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+      ],
+    }]
+
+    fetchMock.mockImplementation((url: string) => Promise.resolve({
+      json: async () => (url === '/api/books/book-1/chapters'
+        ? { chapters: [{ id: '1', title: 'Chapter 1' }] }
+        : { words: vocabulary }),
+    }))
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/books/book-1/chapters/progress') return Promise.resolve({})
+      if (url === '/api/books/book-1/chapters/1/progress') return Promise.resolve({})
+      if (url === '/api/books/book-1/chapters/1/mode-progress') return Promise.resolve({})
+      throw new Error(`Unexpected url: ${url}`)
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?book=book-1&chapter=1']}>
+        <PracticePage
+          currentDay={1}
+          mode="listening"
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await flushRender()
+    expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:')
+    fireEvent.click(screen.getByRole('button', { name: 'answer-correct' }))
+    vi.setSystemTime(new Date('2026-04-07T00:01:04.000Z'))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1300)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('本轮完成')).toBeInTheDocument()
+    expect(screen.getByText('本章练习')).toBeInTheDocument()
+    expect(screen.getByText('1分5秒')).toBeInTheDocument()
+    expect(logSessionMock).toHaveBeenCalledWith(expect.objectContaining({
+      chapterId: '1',
+      durationSeconds: 65,
+    }))
   })
 })

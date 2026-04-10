@@ -7,6 +7,10 @@ import type {
   RangeKey,
 } from '../../features/vocabulary/hooks'
 import {
+  PRACTICE_MODE_LABELS,
+  STATS_MODE_ORDER,
+} from '../../constants/practiceModes'
+import {
   type WrongWordCollectionScope,
   type WrongWordDimension,
   type WrongWordRecord,
@@ -17,30 +21,12 @@ import {
   isWrongWordPendingInDimension,
 } from '../../features/vocabulary/wrongWordsStore'
 
-export const STATS_MODE_ORDER = [
-  'smart',
-  'quickmemory',
-  'listening',
-  'meaning',
-  'dictation',
-  'radio',
-  'errors',
-] as const
-
 const STATS_MODE_RANK: Record<string, number> = STATS_MODE_ORDER.reduce<Record<string, number>>((acc, mode, index) => {
   acc[mode] = index
   return acc
 }, {})
 
-export const MODE_LABELS: Record<string, string> = {
-  smart: '智能模式',
-  quickmemory: '速记模式',
-  listening: '听音选义',
-  meaning: '释义拼词',
-  dictation: '听写模式',
-  radio: '随身听',
-  errors: '错词强化',
-}
+export const MODE_LABELS: Record<string, string> = PRACTICE_MODE_LABELS
 
 export function isKnownStatsMode(mode: string): boolean {
   return mode in STATS_MODE_RANK

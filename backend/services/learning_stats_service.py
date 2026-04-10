@@ -1,11 +1,4 @@
-from services._module_loader import load_split_module_files
+from services.learning_stats_service_parts.payload import build_learning_stats_payload
 
 
-load_split_module_files(
-    __file__,
-    (
-        'learning_stats_service_parts/helpers.py',
-    'learning_stats_service_parts/payload.py',
-    ),
-    globals(),
-)
+__all__ = ['build_learning_stats_payload']

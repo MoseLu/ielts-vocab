@@ -102,7 +102,7 @@ def test_generate_summary_prompt_includes_unified_learner_profile(client, app, m
         captured['messages'] = messages
         return {'text': '# refreshed summary'}
 
-    monkeypatch.setattr('routes.notes.chat', fake_chat)
+    monkeypatch.setattr('services.notes_summary_job_service.chat', fake_chat)
 
     response = client.post(
         '/api/notes/summaries/generate',

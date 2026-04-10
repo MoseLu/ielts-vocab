@@ -81,7 +81,7 @@ export function StatsSummaryCards({
     },
     {
       value: todayWords,
-      label: '今日学习词数',
+      label: '今日学过单词',
       variant: 'simple',
     },
     {

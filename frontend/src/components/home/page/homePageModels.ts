@@ -1,4 +1,5 @@
 import type { LearningAlltime, LearnerProfile } from '../../../features/vocabulary/hooks'
+import { getPracticeModeLabel, PRACTICE_MODE_LABELS } from '../../../constants/practiceModes'
 import {
   getWrongWordDimensionLabel,
   WRONG_WORD_DIMENSION_LABELS,
@@ -192,7 +193,10 @@ export function buildStudyGuidanceSection({
   focusBookRemainingWords?: number | null
 }): StudyGuidanceSection {
   const weakestDimension = getWeakestDimension(learnerProfile)
-  const weakestModeLabel = learnerProfile?.summary.weakest_mode_label?.trim() || '当前最弱模式'
+  const weakestModeLabel = getPracticeModeLabel(
+    learnerProfile?.summary.weakest_mode ?? alltime?.weakest_mode,
+    learnerProfile?.summary.weakest_mode_label,
+  ) || '当前最弱模式'
   const weakestModeAccuracy = learnerProfile?.summary.weakest_mode_accuracy ?? alltime?.weakest_mode_accuracy
   const streakDays = learnerProfile?.summary.streak_days ?? alltime?.streak_days ?? 0
   const dueReviewCount = Math.max(
@@ -227,7 +231,7 @@ export function buildStudyGuidanceSection({
           {
             label: '怎么记入',
             items: [
-              `${allWrongDimensionLabels} 这四类问题会分开记录，不会互相抵消。`,
+              `${allWrongDimensionLabels} 这四个模式维度会分开记录，不会互相抵消。`,
               `只要某一项还没连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次，这一项就还算“没清掉”。`,
             ],
           },
@@ -283,7 +287,7 @@ export function buildStudyGuidanceSection({
           {
             label: '还要注意',
             items: [
-              '艾宾浩斯主要检查你还能不能认出这个词、回想出意思，不会替你检查中文想英文、听音辨义和听音拼写。',
+              `艾宾浩斯主要检查你还能不能认出这个词、回想出意思，不会替你检查 ${PRACTICE_MODE_LABELS.meaning}、${PRACTICE_MODE_LABELS.listening} 和 ${PRACTICE_MODE_LABELS.dictation}。`,
               '所以“今日复习完成”只代表今天这一步做完了，不代表这个词已经没有漏洞。',
             ],
           },
@@ -352,7 +356,7 @@ export function buildStudyGuidanceSection({
           {
             label: '现在还缺什么',
             items: [
-              `现在还没有一场专门的“总检查”，去把${allWrongDimensionLabels}这四类问题一起复核一遍。`,
+              `现在还没有一场专门的“总检查”，去把${allWrongDimensionLabels}这四个模式维度一起复核一遍。`,
               '所以你现在看到的“今日完成”“章节完成”“模式完成”，都只能理解为阶段过关。',
             ],
           },

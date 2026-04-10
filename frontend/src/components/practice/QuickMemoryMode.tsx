@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
-import { playWordAudio, prepareWordAudioPlayback, preloadWordAudio, stopAudio } from './utils'
+import { playWordAudio, prepareWordAudioPlayback, preloadWordAudioBatch, stopAudio } from './utils'
 import { updateStudySessionSnapshot } from '../../hooks/useAIChat'
 import { useToast } from '../../contexts/ToastContext'
 import {
@@ -55,21 +55,21 @@ export default function QuickMemoryMode({
 }: QuickMemoryModeProps) {
   const { showToast } = useToast()
   const [index, setIndex]         = useState(0)
-  // Tracks whether we've applied initialIndex once (only on first vocabulary load)
   const hasRestoredIndexRef = useRef(false)
   const [phase, setPhase]         = useState<'question' | 'reveal'>('question')
   const [countdown, setCountdown] = useState(TIMER_SECONDS)
   const [choice, setChoice]       = useState<'known' | 'unknown' | null>(null)
   const [results, setResults]     = useState<SessionResult[]>([])
   const [done, setDone]           = useState(false)
-  // Set of queue indices the user navigated back to (= uncertain/fuzzy about)
+  const [questionReplayNonce, setQuestionReplayNonce] = useState(0)
   const [revisitedSet, setRevisitedSet] = useState<Set<number>>(new Set())
   const resultsRef = useRef<SessionResult[]>([])
   const timerRef        = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
   const revealTimerRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const chosenRef       = useRef(false)   // guard against double-fire
-  const wordRef         = useRef<Word | undefined>(undefined)  // always holds current word for setTimeout
+  const chosenRef       = useRef(false)
+  const wordRef         = useRef<Word | undefined>(undefined)
   const sessionStartRef = useRef(Date.now())
+  const completedSessionDurationSecondsRef = useRef<number | null>(null)
   const bookIdRef       = useRef<string | null>(bookId)
   const chapterIdRef    = useRef<string | null>(chapterId)
   const sessionIdRef    = useRef<number | null>(null)
@@ -80,7 +80,6 @@ export default function QuickMemoryMode({
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
   const nextWord: Word | undefined = vocabulary[queue[index + 1]]
-  // Keep ref in sync so setTimeout always uses the latest word
   wordRef.current = currentWord
 
   useEffect(() => {
@@ -152,9 +151,6 @@ export default function QuickMemoryMode({
     showSaveError: () => showToast('进度保存失败，请检查网络连接', 'error'),
   })
 
-  // Reset session-scoped state when practice context changes.
-  // On the very first load (queue going from empty to populated), restore
-  // the saved position from initialIndex instead of resetting to 0.
   useEffect(() => {
     if (queue.length === 0) return  // vocabulary not loaded yet; nothing to reset
     stopAudio()
@@ -174,22 +170,22 @@ export default function QuickMemoryMode({
     resultsRef.current = []
     setDone(false)
     setRevisitedSet(new Set())
+    completedSessionDurationSecondsRef.current = null
     sessionLoggedRef.current = false
     pendingSessionCancelRef.current = false
   }, [bookId, chapterId, onIndexChange, queue.length])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Reveal helper ──────────────────────────────────────────────────────────
   const reveal = useCallback((picked: 'known' | 'unknown') => {
     if (chosenRef.current) return
     chosenRef.current = true
     clearInterval(timerRef.current)
+    stopAudio()
 
     const isFuzzy = revisitedSet.has(index)
 
     setChoice(picked)
     setPhase('reveal')
 
-    // Update persistent records
     const { records, record } = updateQuickMemoryRecord(
       readQuickMemoryRecordsFromStorage(),
       currentWord?.word ?? '',
@@ -210,9 +206,6 @@ export default function QuickMemoryMode({
       onQuickMemoryRecordChange?.(currentWord, record)
     }
 
-    // Replace existing result if user went back and re-answered; else append.
-    // Keep the ref in sync immediately so a fast "查看结果" click does not miss
-    // the last answered word while React state is still committing.
     const prevResults = resultsRef.current
     const existing = prevResults.findIndex(r => r.wordIdx === index)
     const entry: SessionResult = { wordIdx: index, choice: picked, wasFuzzy: isFuzzy }
@@ -228,19 +221,15 @@ export default function QuickMemoryMode({
       wrongCount: nextResults.filter(result => result.choice === 'unknown').length,
     })
 
-    // Report wrong words to the error book
     if (picked === 'unknown' && currentWord) {
       onWrongWord(currentWord)
     }
 
-    // Auto-play pronunciation after brief delay.
-    // Use wordRef so this always plays the CURRENT word (not the closure-captured one).
     revealTimerRef.current = setTimeout(() => {
       if (wordRef.current) void playWordAudio(wordRef.current.word, settings, () => {})
     }, 350)
   }, [currentWord, index, onQuickMemoryRecordChange, onWrongWord, revisitedSet, settings])
 
-  // ── Question audio + countdown tick ───────────────────────────────────────
   useEffect(() => {
     if (phase !== 'question' || !currentWord) return
     const activeWord = currentWord.word
@@ -250,8 +239,12 @@ export default function QuickMemoryMode({
     setCountdown(TIMER_SECONDS)
     clearInterval(timerRef.current)
 
-    if (nextWord?.word) {
-      void preloadWordAudio(nextWord.word)
+    const upcomingWords = queue
+      .slice(index + 1, index + 4)
+      .map(queueIndex => vocabulary[queueIndex]?.word?.trim())
+      .filter((word): word is string => Boolean(word))
+    if (upcomingWords.length) {
+      void preloadWordAudioBatch(upcomingWords)
     }
 
     const startCountdown = () => {
@@ -273,8 +266,11 @@ export default function QuickMemoryMode({
       const audioReady = await prepareWordAudioPlayback(activeWord)
       if (cancelled || wordRef.current?.word !== activeWord) return
       if (audioReady) {
-        await playWordAudio(activeWord, settings, () => {})
+        const started = await playWordAudio(activeWord, settings, () => {
+          if (!cancelled && wordRef.current?.word === activeWord) startCountdown()
+        })
         if (cancelled || wordRef.current?.word !== activeWord) return
+        if (started) return
       }
       startCountdown()
     })()
@@ -283,9 +279,8 @@ export default function QuickMemoryMode({
       cancelled = true
       clearInterval(timerRef.current)
     }
-  }, [currentWord?.word, nextWord?.word, phase, index, reveal, settings])   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentWord?.word, nextWord?.word, phase, index, questionReplayNonce, reveal, settings])   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Load records from backend on mount (merge into localStorage) ──────────
   useEffect(() => {
     void reconcileQuickMemoryRecordsWithBackend().catch(() => {})
   }, [])
@@ -296,12 +291,12 @@ export default function QuickMemoryMode({
     clearTimeout(revealTimerRef.current)
   }, [])
 
-  // ── Advance to next word ───────────────────────────────────────────────────
   const handleNext = useCallback(() => {
     clearTimeout(revealTimerRef.current)
     stopAudio()
     const next = index + 1
     if (next >= queue.length) {
+      completedSessionDurationSecondsRef.current = Math.max(0, Math.round((Date.now() - sessionStartRef.current) / 1000))
       setDone(true)
       return
     }
@@ -311,7 +306,6 @@ export default function QuickMemoryMode({
     setChoice(null)
   }, [index, queue.length, onIndexChange])
 
-  // ── Go back to previous word ───────────────────────────────────────────────
   const handlePrev = useCallback(() => {
     if (index === 0) return
     clearTimeout(revealTimerRef.current)
@@ -326,8 +320,17 @@ export default function QuickMemoryMode({
   }, [index, onIndexChange])
 
   const replayCurrentWord = useCallback(() => {
-    if (wordRef.current) void playWordAudio(wordRef.current.word, settings, () => {})
-  }, [settings])
+    if (!wordRef.current) return
+    clearTimeout(revealTimerRef.current)
+    clearInterval(timerRef.current)
+    setCountdown(TIMER_SECONDS)
+    if (phase === 'question') {
+      stopAudio()
+      setQuestionReplayNonce(value => value + 1)
+      return
+    }
+    void playWordAudio(wordRef.current.word, settings, () => {})
+  }, [phase, settings])
 
   useEffect(() => {
     const handlePreviousShortcut = () => { handlePrev() }
@@ -348,7 +351,6 @@ export default function QuickMemoryMode({
     }
   }, [phase, reveal, handlePrev, handleNext, replayCurrentWord])
 
-  // ── Restart ────────────────────────────────────────────────────────────────
   const handleRestart = useCallback(() => {
     stopAudio()
     setIndex(0)
@@ -358,15 +360,14 @@ export default function QuickMemoryMode({
     setResults([])
     resultsRef.current = []
     setRevisitedSet(new Set())
+    completedSessionDurationSecondsRef.current = null
     setDone(false)
   }, [onIndexChange])
 
-  // ── Guard: no words ────────────────────────────────────────────────────────
   if (!currentWord && !done) {
     return <div className="qm-empty">暂无单词</div>
   }
 
-  // ── Summary screen ─────────────────────────────────────────────────────────
   if (done) {
     return (
       <QuickMemorySummary
@@ -380,6 +381,7 @@ export default function QuickMemoryMode({
         reviewHasMore={reviewHasMore}
         onContinueReview={onContinueReview}
         buildChapterPath={buildChapterPath}
+        sessionDurationSeconds={completedSessionDurationSecondsRef.current}
         onRestart={handleRestart}
         onModeChange={onModeChange}
         onNavigate={onNavigate}
@@ -391,13 +393,11 @@ export default function QuickMemoryMode({
 
   return (
     <div className="qm-root">
-      {/* Progress bar */}
       <div className="qm-progress-track">
         <div className="qm-progress-fill" style={{ width: `${progress}%` }} />
       </div>
       <div className="qm-progress-label">{index + 1} / {queue.length}</div>
 
-      {/* Card */}
       <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
         {favoriteSlot ? (
           <div className={`qm-card-toolbar${phase === 'question' ? ' qm-card-toolbar--question' : ''}`}>
@@ -405,7 +405,6 @@ export default function QuickMemoryMode({
             <div className="qm-card-toolbar__action">{favoriteSlot}</div>
           </div>
         ) : null}
-        {/* ── Question phase ── */}
         {phase === 'question' && (
           <>
             <div className="qm-countdown-ring">
@@ -440,10 +439,8 @@ export default function QuickMemoryMode({
           </>
         )}
 
-        {/* ── Reveal phase ── */}
         {phase === 'reveal' && currentWord && (
           <>
-            {/* Result badge — show fuzzy indicator if this was a revisit */}
             <div className={`qm-result-badge ${choice === 'known' ? 'qm-badge--known' : 'qm-badge--unknown'}${revisitedSet.has(index) ? ' qm-badge--fuzzy' : ''}`}>
               {choice === 'known' ? '✓ 认识' : '✗ 不认识'}
               {revisitedSet.has(index) && <span className="qm-badge-fuzzy-tag">模糊</span>}

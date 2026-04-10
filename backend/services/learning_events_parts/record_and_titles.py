@@ -3,12 +3,13 @@ from collections import Counter
 from datetime import datetime
 
 from models import UserLearningEvent
+from services import learning_event_repository
 from services.local_time import resolve_local_day_window
 
 MODE_LABELS = {
     'smart': '智能练习',
     'listening': '听音选义',
-    'meaning': '释义拼词',
+    'meaning': '默写模式',
     'dictation': '听写',
     'speaking': '口语',
     'radio': '随身听',
@@ -115,8 +116,7 @@ def record_learning_event(
         payload=_json_dumps(payload),
         occurred_at=occurred_at or datetime.utcnow(),
     )
-    from models import db
-    db.session.add(event)
+    learning_event_repository.add_learning_event(event)
     return event
 
 

@@ -35,7 +35,7 @@ describe('practiceStageGuide', () => {
 
     expect(guide.laneLabel).toBe('错词攻坚')
     expect(guide.title).toBe('别急着跳关，先看清错在哪里')
-    expect(guide.rows[1]?.value).toContain('听音辨义')
+    expect(guide.rows[1]?.value).toContain('听音选义')
   })
 
   it('builds quick-memory review guidance around the user choice', () => {
@@ -58,7 +58,7 @@ describe('practiceStageGuide', () => {
       choice: null,
     })
 
-    expect(guide.context).toContain('看词认义')
-    expect(guide.rows[1]?.value).toContain('看词认义')
+    expect(guide.context).toContain('速记模式')
+    expect(guide.rows[1]?.value).toContain('速记模式')
   })
 })

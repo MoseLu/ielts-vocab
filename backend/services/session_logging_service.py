@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import UserStudySession, db
+from models import UserStudySession
+from services import study_session_repository
 from services.learning_events import record_learning_event
 
 
@@ -104,18 +105,15 @@ def cancel_empty_session(*, user_id: int, session_id) -> tuple[dict, int]:
     if not session_id:
         return {'error': 'sessionId is required'}, 400
 
-    session = UserStudySession.query.filter_by(
-        id=session_id,
-        user_id=user_id,
-    ).first()
+    session = study_session_repository.get_user_study_session(user_id, session_id)
     if not session:
         return {'error': 'Session not found'}, 404
 
     if session.has_activity():
         return {'error': 'Session already contains learning data'}, 409
 
-    db.session.delete(session)
-    db.session.commit()
+    study_session_repository.delete_study_session(session)
+    study_session_repository.commit()
     return {'deleted': True}, 200
 
 
@@ -138,7 +136,7 @@ def persist_study_session(
     wrong_count = _coerce_non_negative_int(body.get('wrongCount', 0))
 
     if session_id:
-        session = UserStudySession.query.filter_by(id=session_id, user_id=user_id).first()
+        session = study_session_repository.get_user_study_session(user_id, session_id)
         if session:
             if session.ended_at is not None and session.has_activity():
                 return {'id': session.id}, 200
@@ -167,7 +165,7 @@ def persist_study_session(
                 session=session,
                 occurred_at=session.ended_at or ended_at,
             )
-            db.session.commit()
+            study_session_repository.commit()
             return {'id': session.id}, 200
 
     started_at = parse_client_epoch_ms(body.get('startedAt'))
@@ -209,32 +207,51 @@ def persist_study_session(
             session=pending,
             occurred_at=pending.ended_at,
         )
-        db.session.commit()
+        study_session_repository.commit()
         return {'id': pending.id}, 200
 
-    session = UserStudySession(
+    session = study_session_repository.create_study_session(
         user_id=user_id,
         mode=mode,
         book_id=book_id,
         chapter_id=chapter_id,
-        words_studied=words_studied,
-        correct_count=correct_count,
-        wrong_count=wrong_count,
-        duration_seconds=duration_seconds,
+        started_at=started_at or datetime.utcnow(),
     )
-    if started_at:
-        session.started_at = started_at
+    session.words_studied = words_studied
+    session.correct_count = correct_count
+    session.wrong_count = wrong_count
+    session.duration_seconds = duration_seconds
     if duration_seconds > 0:
         session.ended_at = _resolve_client_end(
             started_at=session.started_at,
             client_ended_at=client_ended_at,
         )
-    db.session.add(session)
-    db.session.flush()
+    study_session_repository.flush()
     _record_study_session_event(
         user_id=user_id,
         session=session,
         occurred_at=session.ended_at or session.started_at,
     )
-    db.session.commit()
+    study_session_repository.commit()
     return {'id': session.id}, 201
+
+
+def persist_study_session_response(
+    *,
+    user_id: int,
+    body: dict,
+    parse_client_epoch_ms,
+    normalize_chapter_id,
+    find_pending_session,
+) -> tuple[dict, int]:
+    try:
+        return persist_study_session(
+            user_id=user_id,
+            body=body,
+            parse_client_epoch_ms=parse_client_epoch_ms,
+            normalize_chapter_id=normalize_chapter_id,
+            find_pending_session=find_pending_session,
+        )
+    except Exception as exc:
+        study_session_repository.rollback()
+        return {'error': str(exc)}, 500

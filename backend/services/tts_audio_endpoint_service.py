@@ -5,11 +5,21 @@ import io
 import re
 
 
-def apply_audio_headers(response, *, audio_bytes_header: str, byte_length: int | None = None):
+def apply_audio_headers(
+    response,
+    *,
+    audio_bytes_header: str,
+    byte_length: int | None = None,
+    audio_cache_key_header: str | None = None,
+    cache_key: str | None = None,
+):
     response.headers['Cache-Control'] = 'no-store, max-age=0'
     response.headers['Pragma'] = 'no-cache'
+    response.headers['Accept-Ranges'] = 'none'
     if isinstance(byte_length, int) and byte_length > 0:
         response.headers[audio_bytes_header] = str(byte_length)
+    if audio_cache_key_header and cache_key:
+        response.headers[audio_cache_key_header] = cache_key
     return response
 
 
@@ -64,6 +74,31 @@ def list_voices_payload(english_voices: dict, recommended_voices: list[str]) -> 
     }
 
 
+def _is_usage_limited_payload(payload: dict | None) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    base_resp = payload.get('base_resp')
+    if not isinstance(base_resp, dict):
+        return False
+    status_code = str(base_resp.get('status_code', '')).strip()
+    status_msg = str(base_resp.get('status_msg', '')).strip().lower()
+    return status_code == '2056' or 'usage limit exceeded' in status_msg
+
+
+def _resolve_api_key_candidates(get_api_keys, get_api_key) -> list[str]:
+    keys: list[str] = []
+    if callable(get_api_keys):
+        for key in get_api_keys() or []:
+            candidate = (key or '').strip()
+            if candidate and candidate not in keys:
+                keys.append(candidate)
+    if not keys and callable(get_api_key):
+        candidate = (get_api_key() or '').strip()
+        if candidate:
+            keys.append(candidate)
+    return keys
+
+
 def generate_speech_response(
     data: dict,
     *,
@@ -71,7 +106,8 @@ def generate_speech_response(
     cache_path_resolver,
     is_probably_valid_mp3_file,
     remove_invalid_cached_audio,
-    get_api_key,
+    get_api_key=None,
+    get_api_keys=None,
     minimax_base_url: str,
     requests_module,
     is_probably_valid_mp3_bytes,
@@ -102,59 +138,74 @@ def generate_speech_response(
             mimetype='audio/mpeg',
             as_attachment=False,
             download_name=f'tts_{cache_key}.mp3',
+            conditional=False,
         )
     remove_invalid_cached_audio(cached_file)
 
     try:
-        response = requests_module.post(
-            f'{minimax_base_url}/v1/t2a_v2',
-            headers={
-                'Authorization': f'Bearer {get_api_key()}',
-                'Content-Type': 'application/json',
+        api_keys = _resolve_api_key_candidates(get_api_keys, get_api_key)
+        request_payload = {
+            'model': model,
+            'text': text,
+            'stream': False,
+            'voice_setting': {
+                'voice_id': voice_id,
+                'speed': speed,
+                'vol': 1.0,
+                'pitch': 0,
+                'emotion': emotion,
             },
-            json={
-                'model': model,
-                'text': text,
-                'stream': False,
-                'voice_setting': {
-                    'voice_id': voice_id,
-                    'speed': speed,
-                    'vol': 1.0,
-                    'pitch': 0,
-                    'emotion': emotion,
-                },
-                'audio_setting': {
-                    'sample_rate': 32000,
-                    'bitrate': 128000,
-                    'format': 'mp3',
-                    'channel': 1,
-                },
+            'audio_setting': {
+                'sample_rate': 32000,
+                'bitrate': 128000,
+                'format': 'mp3',
+                'channel': 1,
             },
-            timeout=30,
-        )
-        if response.status_code == 200:
-            response_data = response.json()
-            audio_hex = response_data.get('data', {}).get('audio')
-            if not audio_hex:
-                return jsonify({'error': 'No audio in response', 'response': response_data}), 500
-            audio_bytes = bytes.fromhex(audio_hex)
-            if not is_probably_valid_mp3_bytes(audio_bytes):
-                return jsonify({'error': 'Invalid MP3 payload returned by TTS provider'}), 502
-            write_bytes_atomically(cached_file, audio_bytes)
-            audio_data = io.BytesIO(audio_bytes)
-            audio_data.seek(0)
-            return send_file(
-                audio_data,
-                mimetype='audio/mpeg',
-                as_attachment=False,
-                download_name=f'tts_{cache_key}.mp3',
+        }
+        last_usage_limit_payload = None
+
+        for api_key in api_keys:
+            response = requests_module.post(
+                f'{minimax_base_url}/v1/t2a_v2',
+                headers={
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json',
+                },
+                json=request_payload,
+                timeout=30,
             )
-        if response.status_code == 429:
+            if response.status_code == 200:
+                response_data = response.json()
+                audio_hex = response_data.get('data', {}).get('audio')
+                if audio_hex:
+                    audio_bytes = bytes.fromhex(audio_hex)
+                    if not is_probably_valid_mp3_bytes(audio_bytes):
+                        return jsonify({'error': 'Invalid MP3 payload returned by TTS provider'}), 502
+                    write_bytes_atomically(cached_file, audio_bytes)
+                    audio_data = io.BytesIO(audio_bytes)
+                    audio_data.seek(0)
+                    return send_file(
+                        audio_data,
+                        mimetype='audio/mpeg',
+                        as_attachment=False,
+                        download_name=f'tts_{cache_key}.mp3',
+                        conditional=False,
+                    )
+                if _is_usage_limited_payload(response_data):
+                    last_usage_limit_payload = response_data
+                    continue
+                return jsonify({'error': 'No audio in response', 'response': response_data}), 500
+            if response.status_code == 429:
+                last_usage_limit_payload = {'details': response.text}
+                continue
+            return jsonify({'error': f'TTS generation failed: {response.text}'}), response.status_code
+
+        if last_usage_limit_payload is not None:
             return jsonify({
-                'error': 'TTS quota exceeded. Please try again later.',
-                'details': response.text,
+                'error': 'TTS quota exceeded on all configured MiniMax accounts.',
+                'response': last_usage_limit_payload,
             }), 429
-        return jsonify({'error': f'TTS generation failed: {response.text}'}), response.status_code
+        return jsonify({'error': 'TTS API key is not configured'}), 500
     except requests_module.exceptions.Timeout:
         return jsonify({'error': 'TTS request timeout'}), 504
     except Exception as exc:
@@ -181,6 +232,10 @@ def generate_example_audio_response(
     if not sentence:
         return {'error': 'sentence is required'}, 400
 
+    def _cache_key_for_file(path):
+        stat = path.stat()
+        return f'{path.stem}:{stat.st_size}:{stat.st_mtime_ns}'
+
     provider = current_tts_provider()
     model, voice_id = example_tts_identity_resolver(sentence)
     text_for_tts = (
@@ -192,15 +247,21 @@ def generate_example_audio_response(
     cached_file = cache_dir_resolver() / f'{cache_key}.mp3'
 
     if cached_file.exists() and is_probably_valid_mp3_file(cached_file):
+        cache_key_value = _cache_key_for_file(cached_file)
         if metadata_only:
-            return audio_metadata_response(cached_file.stat().st_size)
+            return audio_metadata_response(cached_file.stat().st_size, cache_key=cache_key_value)
         response = send_file(
             cached_file,
             mimetype='audio/mpeg',
             as_attachment=False,
             download_name=f'example_{cache_key}.mp3',
+            conditional=False,
         )
-        return apply_audio_headers_resolver(response, byte_length=cached_file.stat().st_size)
+        return apply_audio_headers_resolver(
+            response,
+            byte_length=cached_file.stat().st_size,
+            cache_key=cache_key_value,
+        )
 
     remove_invalid_cached_audio(cached_file)
     if metadata_only:
@@ -209,6 +270,7 @@ def generate_example_audio_response(
     try:
         audio_bytes = synthesize_word_to_bytes(text_for_tts, model, voice_id)
         write_bytes_atomically(cached_file, audio_bytes)
+        cache_key_value = _cache_key_for_file(cached_file)
         audio_data = io.BytesIO(audio_bytes)
         audio_data.seek(0)
         response = send_file(
@@ -216,8 +278,13 @@ def generate_example_audio_response(
             mimetype='audio/mpeg',
             as_attachment=False,
             download_name=f'example_{cache_key}.mp3',
+            conditional=False,
         )
-        return apply_audio_headers_resolver(response, byte_length=len(audio_bytes))
+        return apply_audio_headers_resolver(
+            response,
+            byte_length=len(audio_bytes),
+            cache_key=cache_key_value,
+        )
     except Exception as exc:
         current_app.logger.exception('Example audio generation failed for "%s"', sentence)
         status_code = getattr(exc, 'status_code', 502)

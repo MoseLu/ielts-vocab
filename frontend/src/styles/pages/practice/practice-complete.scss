@@ -91,13 +91,15 @@
 /* Previous word panel - top-left of practice page */
 /* Previous word inline — no card, blends with background */
 .prev-word-inline {
+    --practice-prev-word-top-offset: clamp(40px, 7vh, 68px);
+    --practice-prev-word-gap-trim: clamp(12px, 2.2vh, 20px);
     display: flex;
     align-items: flex-start;
     gap: var(--space-sm);
-    padding: 12px 18px 0;
+    padding: var(--practice-prev-word-top-offset) 18px 0;
     animation: fadeInDown 0.18s ease;
     width: min(100%, 920px);
-    margin: 0 auto;
+    margin: 0 auto calc(-1 * var(--practice-prev-word-gap-trim));
 }
 
 @keyframes fadeInDown {
@@ -138,6 +140,14 @@
     background: color-mix(in srgb, var(--surface-elevated) 95%, transparent);
     border: 1px solid var(--surface-border-strong);
     box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 768px) {
+    .prev-word-inline {
+        --practice-prev-word-top-offset: 22px;
+        --practice-prev-word-gap-trim: 8px;
+        padding-inline: 14px;
+    }
 }
 
 .prev-word-text {
@@ -235,6 +245,8 @@
 .complete-stats-row {
     display: flex;
     gap: var(--space-xl);
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .complete-stats-row .stat-correct {
@@ -245,6 +257,12 @@
 
 .complete-stats-row .stat-wrong {
     color: var(--error);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.complete-stats-row .stat-duration {
+    color: var(--accent);
     font-weight: 600;
     font-size: 16px;
 }

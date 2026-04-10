@@ -14,12 +14,17 @@ import {
   clearWrongWordPendingFromList,
   loadWrongWords,
   mergeWrongWordLists,
+  readWrongWordsFromStorage,
   type WrongWordDimension,
   type WrongWordRecord,
   writeWrongWordsToStorage,
 } from '../wrongWordsStore'
 
 export type WrongWord = WrongWordRecord
+
+export interface UseWrongWordsOptions {
+  includeDetails?: boolean
+}
 
 function decorateWrongWords(words: WrongWord[]): WrongWord[] {
   const records = readQuickMemoryRecordsFromStorage()
@@ -65,16 +70,21 @@ function decorateWrongWords(words: WrongWord[]): WrongWord[] {
   })
 }
 
-export function useWrongWords() {
+export function useWrongWords(options: UseWrongWordsOptions = {}) {
   const { user } = useAuth()
-  const [words, setWords] = useState<WrongWord[]>([])
+  const { includeDetails = true } = options
+  const [words, setWords] = useState<WrongWord[]>(() => decorateWrongWords(readWrongWordsFromStorage()))
   const [loading, setLoading] = useState(true)
 
   const fetchWords = useCallback(async () => {
+    setLoading(true)
     try {
+      const endpoint = includeDetails
+        ? '/api/ai/wrong-words'
+        : '/api/ai/wrong-words?details=compact'
       const nextWords = await loadWrongWords({
         user,
-        fetchRemote: () => apiFetch<{ words?: WrongWord[] }>('/api/ai/wrong-words'),
+        fetchRemote: () => apiFetch<{ words?: WrongWord[] }>(endpoint),
       })
       setWords(decorateWrongWords(nextWords))
     } catch {
@@ -82,7 +92,7 @@ export function useWrongWords() {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [includeDetails, user])
 
   useEffect(() => {
     fetchWords()

@@ -1,288 +1,333 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
-
-/**
- * Custom hook for real-time speech recognition using DashScope qwen3-asr
- */
-
-// ============================================================================
-// Type Definitions
-// ============================================================================
-
-export interface SpeechRecognitionOptions {
-  /** Whether the socket connection should be active */
-  enabled?: boolean
-  /** Language code (default: 'zh') */
-  language?: string
-  /** Enable voice activity detection (default: true) */
-  enableVad?: boolean
-  /** Auto-stop after final result (default: true) */
-  autoStop?: boolean
-  /** Delay before auto-stop in ms (default: 1500) */
-  autoStopDelay?: number
-  /** Callback when final recognition result is available */
-  onResult?: (text: string) => void
-  /** Callback when partial recognition result is available */
-  onPartial?: (text: string) => void
-  /** Callback when an error occurs */
-  onError?: (error: string) => void
-}
-
-export interface UseSpeechRecognitionReturn {
-  /** Whether the socket is connected to the server */
-  isConnected: boolean
-  /** Whether audio is currently being recorded and sent */
-  isRecording: boolean
-  /** Whether the recognition session is ready to receive audio */
-  isReady: boolean
-  /** Start recording and speech recognition */
-  startRecording: () => Promise<void>
-  /** Stop recording and speech recognition */
-  stopRecording: () => void
-}
-
-// Internal callback container stored in a ref to avoid stale closures
-interface CallbacksRef {
-  onResult?: (text: string) => void
-  onPartial?: (text: string) => void
-  onError?: (error: string) => void
-}
-
-// Socket event payload types
-interface ConnectedPayload {
-  api_configured: boolean
-}
-
-interface RecognitionStartedPayload {
-  session_id?: string
-}
-
-interface PartialResultPayload {
-  text: string
-}
-
-interface FinalResultPayload {
-  text: string
-}
-
-interface RecognitionErrorPayload {
-  error: string
-}
-
-const LOCAL_VITE_DEV_PORTS = new Set(['3000', '3020', '5173'])
-const DEFAULT_SPEECH_SOCKET_PATH = '/socket.io'
-const PROXIED_SPEECH_SOCKET_PATH = '/speech-socket.io'
-
-interface SpeechSocketConfig {
-  path: string
-  url: string
-}
-
-function resolveSpeechSocketConfig(location: Location): SpeechSocketConfig {
-  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const isLocalViteDevServer =
-    location.protocol === 'http:' && LOCAL_VITE_DEV_PORTS.has(location.port)
-
-  if (isLocalViteDevServer) {
-    return {
-      path: DEFAULT_SPEECH_SOCKET_PATH,
-      url: `${protocol}//${location.hostname}:5001/speech`,
-    }
-  }
-
-  return {
-    path: PROXIED_SPEECH_SOCKET_PATH,
-    url: `${protocol}//${location.host}/speech`,
-  }
-}
-
-// ============================================================================
-// Hook Implementation
-// ============================================================================
-
+import type {
+  CallbacksRef,
+  ConnectedPayload,
+  FinalResultPayload,
+  PartialResultPayload,
+  RecognitionErrorPayload,
+  RecognitionStartedPayload,
+  SpeechRecognitionOptions,
+  UseSpeechRecognitionReturn,
+} from './speechRecognitionTypes'
+import {
+  resolveSpeechSocketConfig,
+  SPEECH_EMPTY_RESULT_MESSAGE,
+  SPEECH_IDLE_LEVEL,
+  SPEECH_NO_SIGNAL_MESSAGE,
+  type BrowserSpeechRecognitionInstance,
+} from './speechRecognitionUtils'
+import { startBrowserRecognitionSession } from './speechRecognitionBrowserSession'
+import { startSpeechAudioCapture } from './speechRecognitionAudioCapture'
+import {
+  requestRecordedAudioFallback as requestRecordedAudioFallbackTask,
+  startMediaRecorderCapture,
+  uploadRecordedAudio as uploadRecordedAudioTask,
+} from './speechRecognitionFileFallback'
+import { detectSpeechLikePcmFrame, flushBufferedSocketAudio, hasBufferedSocketSpeech, queueBufferedSocketAudio, resetBufferedSocketAudio, type BufferedSocketAudioState } from './speechRecognitionSocketAudioBuffer'
 export function useSpeechRecognition({
   enabled = true,
   language = 'zh',
   enableVad = true,
   autoStop = true,
   autoStopDelay = 1500,
+  enableBrowserRecognition = true,
+  enableRealtimeRecognition = true,
   onResult,
   onPartial,
   onError,
+  onLevel,
 }: SpeechRecognitionOptions): UseSpeechRecognitionReturn {
   const [isConnected, setIsConnected] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [isReady, setIsReady] = useState(false)
-
   const socketRef = useRef<Socket | null>(null)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const processorRef = useRef<ScriptProcessorNode | null>(null)
+  const audioCaptureStopRef = useRef<(() => Promise<void>) | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const browserRecognitionRef = useRef<BrowserSpeechRecognitionInstance | null>(null)
+  const captureIdRef = useRef(0)
+  const browserDeferredTranscriptRef = useRef('')
+  const lastBackendResultRef = useRef('')
+  const recordedChunksRef = useRef<Blob[]>([])
+  const recordedMimeTypeRef = useRef('')
+  const recordedPcmChunksRef = useRef<Int16Array[]>([])
+  const bufferedSocketAudioRef = useRef<BufferedSocketAudioState>({ bytes: 0, chunks: [], gateOpen: false, hasSpeech: false, preRollChunks: [], silenceFrames: 0, speechFrames: 0 })
   const streamRef = useRef<MediaStream | null>(null)
   const isRecordingRef = useRef(false)
+  const isProcessingRef = useRef(false)
+  const hasMicSignalRef = useRef(false)
+  const hasTranscriptRef = useRef(false)
+  const transcriptSourceRef = useRef<'backend' | 'browser' | 'upload' | null>(null)
+  const uploadRequestedCaptureRef = useRef<number | null>(null)
   const autoStopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Use refs to keep callbacks fresh without triggering re-renders
-  const callbacksRef = useRef<CallbacksRef>({ onResult, onPartial, onError })
+  const callbacksRef = useRef<CallbacksRef>({ onResult, onPartial, onError, onLevel })
   const autoStopRef = useRef(autoStop)
   const autoStopDelayRef = useRef(autoStopDelay)
-
+  const browserRecognitionPrimary = enableBrowserRecognition && !enableRealtimeRecognition
+  const isCurrentRecognitionEvent = useCallback((data?: { recognition_id?: number }) => data?.recognition_id === captureIdRef.current, [])
+  const syncProcessingState = useCallback((nextValue: boolean) => { isProcessingRef.current = nextValue; setIsProcessing(nextValue) }, [])
+  const clearAutoStopTimeout = useCallback(() => {
+    if (!autoStopTimeoutRef.current) return
+    clearTimeout(autoStopTimeoutRef.current); autoStopTimeoutRef.current = null
+  }, [])
+  const resetAudioLevel = useCallback(() => { callbacksRef.current.onLevel?.(SPEECH_IDLE_LEVEL) }, [])
+  const stopBrowserRecognition = useCallback((abort = false) => {
+    const recognition = browserRecognitionRef.current
+    if (!recognition) return
+    try {
+      if (abort) recognition.abort()
+      else recognition.stop()
+    } catch {}
+  }, [])
+  const cleanupAudioResources = useCallback(() => {
+    if (audioCaptureStopRef.current) {
+      const stopAudioCapture = audioCaptureStopRef.current
+      audioCaptureStopRef.current = null
+      void stopAudioCapture().catch(() => {})
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+  }, [])
+  const stopAudioCapture = useCallback(() => {
+    isRecordingRef.current = false
+    clearAutoStopTimeout()
+    cleanupAudioResources()
+    resetBufferedSocketAudio(bufferedSocketAudioRef)
+    setIsRecording(false)
+    setIsReady(false)
+  }, [cleanupAudioResources, clearAutoStopTimeout])
+  const finishRecognitionSession = useCallback(() => {
+    stopBrowserRecognition(true)
+    stopAudioCapture()
+    resetAudioLevel()
+    syncProcessingState(false)
+  }, [resetAudioLevel, stopAudioCapture, stopBrowserRecognition, syncProcessingState])
+  const applyDeferredBrowserTranscript = useCallback(() => {
+    const text = browserDeferredTranscriptRef.current.trim()
+    if (!text || hasTranscriptRef.current || transcriptSourceRef.current) return false
+    transcriptSourceRef.current = 'browser'
+    hasTranscriptRef.current = true
+    callbacksRef.current.onResult?.(text)
+    finishRecognitionSession()
+    return true
+  }, [finishRecognitionSession])
+  const setupBrowserRecognition = useCallback((nextLanguage: string) => {
+    browserRecognitionRef.current = startBrowserRecognitionSession(window, {
+      language: nextLanguage,
+      onEnd: recognition => { if (browserRecognitionRef.current === recognition) browserRecognitionRef.current = null },
+      onFinal: text => {
+        if (browserRecognitionPrimary) {
+          if (transcriptSourceRef.current && transcriptSourceRef.current !== 'browser') return
+          transcriptSourceRef.current = 'browser'
+          hasTranscriptRef.current = true
+          callbacksRef.current.onResult?.(text)
+          return
+        }
+        browserDeferredTranscriptRef.current = text
+        if (isProcessingRef.current) applyDeferredBrowserTranscript()
+      },
+      onPartial: text => {
+        if (!browserRecognitionPrimary) return
+        if (transcriptSourceRef.current && transcriptSourceRef.current !== 'browser') return
+        transcriptSourceRef.current = 'browser'
+        hasTranscriptRef.current = true
+        callbacksRef.current.onPartial?.(text)
+      },
+    })
+  }, [applyDeferredBrowserTranscript, browserRecognitionPrimary])
+  const uploadRecordedAudio = useCallback((captureId: number) => {
+    void uploadRecordedAudioTask({
+      captureId,
+      chunks: recordedChunksRef.current,
+      mimeType: recordedMimeTypeRef.current,
+      pcmChunks: recordedPcmChunksRef.current,
+      getCurrentCaptureId: () => captureIdRef.current,
+      getCurrentTranscriptSource: () => transcriptSourceRef.current,
+      getDeferredTranscript: () => browserDeferredTranscriptRef.current,
+      onFinish: finishRecognitionSession,
+      onDeferredTranscript: text => { transcriptSourceRef.current = 'browser'; hasTranscriptRef.current = true; callbacksRef.current.onResult?.(text) },
+      onResult: text => {
+        transcriptSourceRef.current = 'upload'
+        hasTranscriptRef.current = true
+        callbacksRef.current.onResult?.(text)
+      },
+      onError: message => {
+        callbacksRef.current.onError?.(message)
+      },
+    })
+  }, [finishRecognitionSession])
+  const requestRecordedAudioFallback = useCallback((captureId: number) => (
+    requestRecordedAudioFallbackTask({
+      captureId,
+      requestedCaptureId: uploadRequestedCaptureRef.current,
+      setRequestedCaptureId: nextCaptureId => { uploadRequestedCaptureRef.current = nextCaptureId },
+      recorder: mediaRecorderRef.current,
+      chunks: recordedChunksRef.current,
+      pcmChunks: recordedPcmChunksRef.current,
+      upload: uploadRecordedAudio,
+    })
+  ), [uploadRecordedAudio])
+  const finalizeBrowserOnlyStop = useCallback((captureId: number) => {
+    if (captureId !== captureIdRef.current || !isProcessingRef.current) return
+    if (hasTranscriptRef.current && transcriptSourceRef.current === 'browser') return finishRecognitionSession()
+    if (hasMicSignalRef.current && requestRecordedAudioFallback(captureId)) return
+    callbacksRef.current.onError?.(hasMicSignalRef.current ? SPEECH_EMPTY_RESULT_MESSAGE : SPEECH_NO_SIGNAL_MESSAGE)
+    finishRecognitionSession()
+  }, [finishRecognitionSession, requestRecordedAudioFallback])
   useEffect(() => {
     autoStopRef.current = autoStop
     autoStopDelayRef.current = autoStopDelay
   }, [autoStop, autoStopDelay])
-
   useEffect(() => {
-    callbacksRef.current = { onResult, onPartial, onError }
-  }, [onResult, onPartial, onError])
-
-  // Initialize socket once on mount
+    callbacksRef.current = { onResult, onPartial, onError, onLevel }
+  }, [onError, onLevel, onPartial, onResult])
   useEffect(() => {
     if (!enabled) {
-      setIsConnected(false)
-      setIsRecording(false)
-      setIsReady(false)
+      clearAutoStopTimeout(); cleanupAudioResources(); setIsConnected(false); setIsRecording(false); syncProcessingState(false); setIsReady(false)
       isRecordingRef.current = false
+      resetAudioLevel()
+      resetBufferedSocketAudio(bufferedSocketAudioRef)
       return
     }
-
-    // Local Vite dev mode talks to the speech service directly because the
-    // dev proxy intermittently corrupts websocket frames on browser clients.
-    // Preview/prod stay same-origin, but use a custom proxy path so speech
-    // traffic goes through the preview server instead of a stale system nginx
-    // /socket.io route that may still point at the main Flask app.
+    if (!enableRealtimeRecognition) {
+      setIsConnected(true)
+      return () => {
+        clearAutoStopTimeout(); cleanupAudioResources(); syncProcessingState(false); resetAudioLevel(); resetBufferedSocketAudio(bufferedSocketAudioRef)
+        setIsConnected(false); setIsRecording(false); setIsProcessing(false); setIsReady(false)
+        isRecordingRef.current = false; isProcessingRef.current = false
+      }
+    }
     const speechSocket = resolveSpeechSocketConfig(window.location)
     const socket = io(speechSocket.url, {
       autoConnect: false,
       path: speechSocket.path,
-      transports: ['websocket'],  // 优先 WebSocket，减少轮询开销
+      transports: speechSocket.transports,
       reconnection: true,
-      reconnectionAttempts: 3,    // 减少重连次数
-      reconnectionDelay: 1000,    // 初始延迟 1s
-      reconnectionDelayMax: 3000, // 最大延迟 3s
-      timeout: 5000,             // 5秒超时
-      rememberUpgrade: true,      // 记住上次的传输方式
+      reconnectionAttempts: 3,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 3000,
+      timeout: 5000,
+      rememberUpgrade: speechSocket.rememberUpgrade,
     })
-
     socket.on('connect', () => {
       setIsConnected(true)
     })
-
     socket.on('disconnect', (_reason: string) => {
       setIsConnected(false)
-      setIsReady(false)
+      finishRecognitionSession()
     })
-
     socket.on('connected', (data: ConnectedPayload) => {
       if (!data.api_configured) {
         callbacksRef.current.onError?.('API密钥未配置')
       }
     })
-
-    socket.on('recognition_started', (_data: RecognitionStartedPayload) => {
+    socket.on('recognition_started', (data: RecognitionStartedPayload) => {
+      if (!isCurrentRecognitionEvent(data)) return
       setIsReady(true)
     })
-
-
     socket.on('partial_result', (data: PartialResultPayload) => {
-      if (data.text) {
-        callbacksRef.current.onPartial?.(data.text)
-      }
+      if (!isCurrentRecognitionEvent(data) || !data.text || (!isRecordingRef.current && !isProcessingRef.current)) return
+      if (transcriptSourceRef.current && transcriptSourceRef.current !== 'backend') return
+      transcriptSourceRef.current = 'backend'
+      hasTranscriptRef.current = true
+      callbacksRef.current.onPartial?.(data.text)
     })
-
     socket.on('final_result', (data: FinalResultPayload) => {
-      if (data.text) {
-        callbacksRef.current.onResult?.(data.text)
-      }
-      // Auto-stop after final result if enabled
-      if (autoStopRef.current && isRecordingRef.current) {
-        // Clear any existing timeout
-        if (autoStopTimeoutRef.current) {
-          clearTimeout(autoStopTimeoutRef.current)
+      if (!isCurrentRecognitionEvent(data) || (!isRecordingRef.current && !isProcessingRef.current)) return
+      const nextText = data.text?.trim()
+      if (nextText) {
+        if (transcriptSourceRef.current && transcriptSourceRef.current !== 'backend') return
+        if (isProcessingRef.current && hasTranscriptRef.current && nextText.length <= lastBackendResultRef.current.length) {
+          finishRecognitionSession()
+          return
         }
-        // Stop after a short delay
+        lastBackendResultRef.current = nextText
+        transcriptSourceRef.current = 'backend'
+        hasTranscriptRef.current = true
+        callbacksRef.current.onResult?.(nextText)
+      }
+      if (isProcessingRef.current) {
+        finishRecognitionSession()
+        return
+      }
+      if (autoStopRef.current && isRecordingRef.current) {
+        clearAutoStopTimeout()
         autoStopTimeoutRef.current = setTimeout(() => {
           if (isRecordingRef.current && socketRef.current?.connected) {
+            if (enableVad && hasBufferedSocketSpeech(bufferedSocketAudioRef)) socketRef.current.emit('commit_audio_buffer')
             socketRef.current.emit('stop_recognition')
           }
         }, autoStopDelayRef.current)
       }
     })
-
-    socket.on('speech_started', () => {
-      // Cancel any pending auto-stop if user starts speaking again
-      if (autoStopTimeoutRef.current) {
-        clearTimeout(autoStopTimeoutRef.current)
-        autoStopTimeoutRef.current = null
+    socket.on('speech_started', (data: { recognition_id?: number }) => {
+      if (!isCurrentRecognitionEvent(data)) return
+      clearAutoStopTimeout()
+    })
+    socket.on('recognition_complete', (data: { recognition_id?: number }) => {
+      if (!isCurrentRecognitionEvent(data)) return
+      if (isProcessingRef.current && !hasTranscriptRef.current) {
+        if (!hasMicSignalRef.current) {
+          callbacksRef.current.onError?.(SPEECH_NO_SIGNAL_MESSAGE)
+          finishRecognitionSession()
+          return
+        }
+        if (applyDeferredBrowserTranscript()) return
+        if (requestRecordedAudioFallback(captureIdRef.current)) return
+        callbacksRef.current.onError?.(SPEECH_EMPTY_RESULT_MESSAGE)
       }
+      finishRecognitionSession()
     })
-
-    socket.on('recognition_complete', () => {
-      setIsRecording(false)
-      setIsReady(false)
-      isRecordingRef.current = false
-    })
-
     socket.on('recognition_error', (data: RecognitionErrorPayload) => {
+      if (!isCurrentRecognitionEvent(data)) return
       console.error('[Speech] Error:', data.error)
+      if (isProcessingRef.current && !hasTranscriptRef.current && !hasMicSignalRef.current) {
+        callbacksRef.current.onError?.(SPEECH_NO_SIGNAL_MESSAGE)
+        finishRecognitionSession()
+        return
+      }
+      if (isProcessingRef.current && !hasTranscriptRef.current && applyDeferredBrowserTranscript()) return
+      if (isProcessingRef.current && !hasTranscriptRef.current && requestRecordedAudioFallback(captureIdRef.current)) {
+        return
+      }
       callbacksRef.current.onError?.(data.error)
-      setIsRecording(false)
-      isRecordingRef.current = false
+      finishRecognitionSession()
     })
-
-    socket.on('recognition_stopped', () => {
-      setIsRecording(false)
-      setIsReady(false)
-      isRecordingRef.current = false
+    socket.on('recognition_stopped', (data: { recognition_id?: number }) => {
+      if (!isCurrentRecognitionEvent(data)) return
+      if (isProcessingRef.current) return
+      finishRecognitionSession()
     })
-
     socketRef.current = socket
-    // Defer the first connect by one task so React StrictMode's dev-only
-    // mount/unmount cycle does not start a websocket that is immediately closed.
     const connectTimer = setTimeout(() => {
       socket.connect()
     }, 0)
-
-    // Cleanup on unmount
     return () => {
-      clearTimeout(connectTimer)
-      // Clear auto-stop timeout
-      if (autoStopTimeoutRef.current) {
-        clearTimeout(autoStopTimeoutRef.current)
-        autoStopTimeoutRef.current = null
-      }
-      // Stop audio
-      if (processorRef.current) {
-        processorRef.current.disconnect()
-        processorRef.current = null
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close()
-        audioContextRef.current = null
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop())
-        streamRef.current = null
-      }
-      // Disconnect socket
-      if (socketRef.current) {
-        socketRef.current.disconnect()
-        socketRef.current = null
-      }
-      setIsConnected(false)
-      setIsRecording(false)
-      setIsReady(false)
-      isRecordingRef.current = false
+      clearTimeout(connectTimer); clearAutoStopTimeout(); cleanupAudioResources(); syncProcessingState(false); resetAudioLevel(); resetBufferedSocketAudio(bufferedSocketAudioRef)
+      if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null }
+      setIsConnected(false); setIsRecording(false); setIsProcessing(false); setIsReady(false)
+      isRecordingRef.current = false; isProcessingRef.current = false
     }
-  }, [enabled])
-
-  // Start recording
+  }, [
+    cleanupAudioResources,
+    clearAutoStopTimeout,
+    enabled,
+    enableBrowserRecognition,
+    finishRecognitionSession,
+    applyDeferredBrowserTranscript,
+    resetAudioLevel,
+    syncProcessingState,
+    enableRealtimeRecognition,
+    isCurrentRecognitionEvent,
+  ])
   const startRecording = useCallback(async () => {
-    if (!socketRef.current?.connected) {
+    if (enableRealtimeRecognition && !socketRef.current?.connected) {
       callbacksRef.current.onError?.('未连接到语音服务')
       return
     }
-
-    // Check for secure context (HTTPS required for microphone access)
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       const isSecure =
         window.location.protocol === 'https:' ||
@@ -297,58 +342,79 @@ export function useSpeechRecognition({
       }
       return
     }
-
     try {
+      clearAutoStopTimeout()
+      cleanupAudioResources()
+      syncProcessingState(false)
+      resetAudioLevel()
+      browserDeferredTranscriptRef.current = ''
+      lastBackendResultRef.current = ''
+      hasMicSignalRef.current = false
+      hasTranscriptRef.current = false
+      transcriptSourceRef.current = null
+      captureIdRef.current += 1
+      uploadRequestedCaptureRef.current = null
+      recordedChunksRef.current = []
+      recordedMimeTypeRef.current = ''
+      recordedPcmChunksRef.current = []
+      resetBufferedSocketAudio(bufferedSocketAudioRef)
+      if (enableBrowserRecognition) setupBrowserRecognition(language)
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 16000,
           channelCount: 1,
+          autoGainControl: true,
           echoCancellation: true,
           noiseSuppression: true,
         },
       })
-
       streamRef.current = stream
-
-      const audioContext = new AudioContext({ sampleRate: 16000 })
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume()
-      }
-      audioContextRef.current = audioContext
-
-      const source = audioContext.createMediaStreamSource(stream)
-      const processor = audioContext.createScriptProcessor(4096, 1, 1)
-      processorRef.current = processor
-
-      // Start recognition session
-      socketRef.current.emit('start_recognition', {
-        language,
-        enable_vad: enableVad,
-      })
-
-      // Handle audio data
-      processor.onaudioprocess = (event: AudioProcessingEvent) => {
-        if (isRecordingRef.current && socketRef.current?.connected) {
-          const inputData = event.inputBuffer.getChannelData(0)
-          // Convert float32 to int16 PCM
-          const pcmData = new Int16Array(inputData.length)
-          for (let i = 0; i < inputData.length; i++) {
-            const s = Math.max(-1, Math.min(1, inputData[i]))
-            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff
+      const startedRecorder = startMediaRecorderCapture(
+        window,
+        stream,
+        captureIdRef.current,
+        chunk => {
+          recordedChunksRef.current = [...recordedChunksRef.current, chunk]
+        },
+        (activeCaptureId, recorder) => {
+          if (uploadRequestedCaptureRef.current === activeCaptureId) {
+            uploadRecordedAudio(activeCaptureId)
           }
-          // Send as Uint8Array for proper binary transfer
-          const uint8Data = new Uint8Array(pcmData.buffer)
-          socketRef.current.emit('audio_data', uint8Data)
-        }
+          if (mediaRecorderRef.current === recorder) {
+            mediaRecorderRef.current = null
+          }
+        },
+      )
+      if (startedRecorder) {
+        mediaRecorderRef.current = startedRecorder.recorder
+        recordedMimeTypeRef.current = startedRecorder.mimeType
       }
-
-      source.connect(processor)
-      processor.connect(audioContext.destination)
-
-      setIsRecording(true)
+      if (enableRealtimeRecognition) {
+        socketRef.current?.emit('start_recognition', {
+          language,
+          enable_vad: enableVad,
+          recognition_id: captureIdRef.current,
+        })
+      }
       isRecordingRef.current = true
+      const audioCapture = await startSpeechAudioCapture({
+        stream,
+        onLevel: level => { callbacksRef.current.onLevel?.(level) },
+        onPcmFrame: pcmData => {
+          recordedPcmChunksRef.current.push(pcmData.slice())
+          if (!hasMicSignalRef.current && detectSpeechLikePcmFrame(pcmData)) hasMicSignalRef.current = true
+          if (!enableRealtimeRecognition || !isRecordingRef.current || !socketRef.current?.connected) return
+          queueBufferedSocketAudio(socketRef, bufferedSocketAudioRef, pcmData)
+        },
+      })
+      audioCaptureStopRef.current = audioCapture.stop
+      callbacksRef.current.onLevel?.(SPEECH_IDLE_LEVEL)
+      setIsRecording(true)
     } catch (error: unknown) {
       console.error('[Speech] Error:', error)
+      isRecordingRef.current = false
+      cleanupAudioResources()
+      syncProcessingState(false)
+      resetAudioLevel()
       const err = error as Error & { name?: string }
       if (err.name === 'NotAllowedError') {
         callbacksRef.current.onError?.('麦克风权限被拒绝')
@@ -358,47 +424,69 @@ export function useSpeechRecognition({
         callbacksRef.current.onError?.('无法访问麦克风: ' + err.message)
       }
     }
-  }, [language, enableVad])
-
-  // Stop recording
+  }, [
+    cleanupAudioResources,
+    clearAutoStopTimeout,
+    enableVad,
+    enableBrowserRecognition,
+    enableRealtimeRecognition,
+    language,
+    resetAudioLevel,
+    setupBrowserRecognition,
+    syncProcessingState,
+  ])
   const stopRecording = useCallback(() => {
-    isRecordingRef.current = false
-
-    // Clear auto-stop timeout
-    if (autoStopTimeoutRef.current) {
-      clearTimeout(autoStopTimeoutRef.current)
-      autoStopTimeoutRef.current = null
+    if (!isRecordingRef.current && !isProcessingRef.current) return
+    const captureId = captureIdRef.current
+    const hasRealtimeSpeech = hasBufferedSocketSpeech(bufferedSocketAudioRef)
+    if (!enableRealtimeRecognition && enableBrowserRecognition) {
+      stopAudioCapture()
+      syncProcessingState(true)
+      callbacksRef.current.onLevel?.(0.2)
+      stopBrowserRecognition()
+      clearAutoStopTimeout()
+      autoStopTimeoutRef.current = setTimeout(() => finalizeBrowserOnlyStop(captureId), 900)
+      return
     }
-
-    if (processorRef.current) {
-      processorRef.current.disconnect()
-      processorRef.current = null
+    const hasRecordedAudioFallback = hasMicSignalRef.current && requestRecordedAudioFallback(captureId)
+    if (enableRealtimeRecognition) flushBufferedSocketAudio(socketRef, bufferedSocketAudioRef)
+    stopAudioCapture()
+    if (browserRecognitionPrimary && hasTranscriptRef.current && transcriptSourceRef.current === 'browser') {
+      finishRecognitionSession()
+      return
     }
-
-    if (audioContextRef.current) {
-      audioContextRef.current.close()
-      audioContextRef.current = null
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop())
-      streamRef.current = null
-    }
-
-    if (socketRef.current?.connected) {
+    if (enableRealtimeRecognition && socketRef.current?.connected) {
+      syncProcessingState(true)
+      callbacksRef.current.onLevel?.(0.2)
+      stopBrowserRecognition()
+      if (enableVad && hasRealtimeSpeech) socketRef.current.emit('commit_audio_buffer')
       socketRef.current.emit('stop_recognition')
+      return
     }
-
-    setIsRecording(false)
-  }, [])
-
-  return {
-    isConnected,
-    isRecording,
-    isReady,
-    startRecording,
-    stopRecording,
-  }
+    if (hasRecordedAudioFallback) {
+      syncProcessingState(true)
+      callbacksRef.current.onLevel?.(0.2)
+      stopBrowserRecognition()
+      return
+    }
+    if (!hasMicSignalRef.current) {
+      callbacksRef.current.onError?.(SPEECH_NO_SIGNAL_MESSAGE)
+      finishRecognitionSession()
+      return
+    }
+    finishRecognitionSession()
+  }, [
+    finishRecognitionSession,
+    finalizeBrowserOnlyStop,
+    requestRecordedAudioFallback,
+    stopAudioCapture,
+    stopBrowserRecognition,
+    syncProcessingState,
+    browserRecognitionPrimary,
+    enableVad,
+    enableBrowserRecognition,
+    enableRealtimeRecognition,
+  ])
+  return { isConnected, isRecording, isProcessing, isReady, startRecording, stopRecording }
 }
-
 export default useSpeechRecognition

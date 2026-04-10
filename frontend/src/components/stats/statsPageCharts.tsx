@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import type { EbbinghausStagePoint, PieSegment } from '../../features/vocabulary/hooks'
 import { fmtDate, fmtDuration, MODE_LABELS, type ChartProps, type WrongTopDisplayItem } from './statsPageCore'
 
@@ -238,18 +238,52 @@ export function EbbinghausDualChart({ stages, compact }: { stages: EbbinghausSta
 }
 
 export function LearningChart({ data, metric, range, compact }: ChartProps) {
+  const wrapRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<{ idx: number; x: number; y: number } | null>(null)
+  const [chartSize, setChartSize] = useState<{ width: number; height: number }>({
+    width: 560,
+    height: compact ? 180 : 160,
+  })
 
-  const W = 560
-  const H = compact ? 118 : 160
+  const W = chartSize.width
+  const H = chartSize.height
   const padL = 44
   const padR = 12
   const padT = compact ? 8 : 12
   const padB = compact ? 24 : 32
   const innerW = W - padL - padR
   const innerH = H - padT - padB
+
+  useLayoutEffect(() => {
+    const wrapEl = wrapRef.current
+    if (!wrapEl) return
+
+    const syncChartSize = () => {
+      const nextWidth = Math.max(Math.round(wrapEl.clientWidth), 320)
+      const nextHeight = compact
+        ? Math.max(Math.round(wrapEl.clientHeight), 180)
+        : 160
+
+      setChartSize(prev => (
+        prev.width === nextWidth && prev.height === nextHeight
+          ? prev
+          : { width: nextWidth, height: nextHeight }
+      ))
+    }
+
+    syncChartSize()
+
+    const resizeObserver = new ResizeObserver(syncChartSize)
+    resizeObserver.observe(wrapEl)
+    window.addEventListener('resize', syncChartSize)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', syncChartSize)
+    }
+  }, [compact])
 
   const getValue = (item: any): number | null => {
     if (metric === 'words') return item.words_studied
@@ -347,7 +381,7 @@ export function LearningChart({ data, metric, range, compact }: ChartProps) {
   }, [tooltip, W, H, padT, padB])
 
   return (
-    <div className={`lc-wrap${compact ? ' lc-wrap--compact' : ''}`} onMouseLeave={() => setTooltip(null)}>
+    <div ref={wrapRef} className={`lc-wrap${compact ? ' lc-wrap--compact' : ''}`} onMouseLeave={() => setTooltip(null)}>
       <svg ref={svgRef} className="lc-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" onMouseMove={handleMouseMove}>
         {Array.from({ length: ySteps + 1 }, (_, index) => {
           const ratio = index / ySteps

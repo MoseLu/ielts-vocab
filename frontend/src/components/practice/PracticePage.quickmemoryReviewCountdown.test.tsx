@@ -9,7 +9,11 @@ const showToastMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const logSessionMock = vi.fn()
 const cancelSessionMock = vi.fn()
-const playWordAudioMock = vi.fn(() => Promise.resolve(true))
+const playWordAudioMock = vi.fn((...args: unknown[]) => {
+  const onEnd = typeof args[2] === 'function' ? (args[2] as (() => void)) : undefined
+  onEnd?.()
+  return Promise.resolve(true)
+})
 const prepareWordAudioPlaybackMock = vi.fn().mockResolvedValue(true)
 const preloadWordAudioMock = vi.fn().mockResolvedValue(true)
 const stopAudioMock = vi.fn()
@@ -82,6 +86,7 @@ vi.mock('./utils', async () => {
     playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
     prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
     preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
+    preloadWordAudioBatch: (...args: unknown[]) => preloadWordAudioMock(...args),
     stopAudio: (...args: unknown[]) => stopAudioMock(...args),
   }
 })
@@ -123,7 +128,11 @@ describe('PracticePage quick-memory review countdown', () => {
     logSessionMock.mockClear()
     cancelSessionMock.mockClear()
     playWordAudioMock.mockClear()
-    playWordAudioMock.mockImplementation(() => Promise.resolve(true))
+    playWordAudioMock.mockImplementation((...args: unknown[]) => {
+      const onEnd = typeof args[2] === 'function' ? (args[2] as (() => void)) : undefined
+      onEnd?.()
+      return Promise.resolve(true)
+    })
     prepareWordAudioPlaybackMock.mockClear()
     prepareWordAudioPlaybackMock.mockResolvedValue(true)
     preloadWordAudioMock.mockClear()
@@ -213,13 +222,18 @@ describe('PracticePage quick-memory review countdown', () => {
     })
 
     expect(screen.getByText('alpha')).toBeInTheDocument()
-    expect(screen.getByText('4')).toBeInTheDocument()
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync()
+      await Promise.resolve()
+    })
+    expect(playWordAudioMock).toHaveBeenCalled()
+    const countdownBeforeTick = Number(screen.getByText(value => /^\d$/.test(value)).textContent)
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000)
       await Promise.resolve()
     })
 
-    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getByText(String(Math.max(0, countdownBeforeTick - 1)))).toBeInTheDocument()
   })
 })

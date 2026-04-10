@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from datetime import datetime
+
+from services import learner_profile_repository
+
+
 def _count_pending_wrong_words(wrong_words) -> int:
     pending_count = 0
     for row in wrong_words:
@@ -83,16 +90,13 @@ def _has_book_progress_today(
         if _mode_counts_as_focus_book_progress(getattr(session, 'mode', None)) and _session_has_learning_progress(session):
             return True
 
-    book_events = (
-        UserLearningEvent.query
-        .filter_by(user_id=user_id, book_id=book_id)
-        .filter(
-            UserLearningEvent.occurred_at >= day_start,
-            UserLearningEvent.occurred_at < day_end,
-            UserLearningEvent.event_type.in_(['study_session', 'book_progress_updated']),
-        )
-        .order_by(UserLearningEvent.occurred_at.desc(), UserLearningEvent.id.desc())
-        .all()
+    book_events = learner_profile_repository.list_user_learning_events(
+        user_id,
+        book_id=book_id,
+        after=day_start,
+        before=day_end,
+        event_types=('study_session', 'book_progress_updated'),
+        descending=True,
     )
     for event in book_events:
         if event.event_type == 'study_session':

@@ -1,4 +1,9 @@
 import { Skeleton } from '../../ui'
+import {
+  getPracticeModeLabel,
+  getWrongWordDimensionModeLabel,
+  normalizeModeText,
+} from '../../../constants/practiceModes'
 import { renderJournalMarkdown } from '../../../lib/journalMarkdown'
 import type { DailySummary, LearnerProfile, SummaryGenerationJob } from '../../../lib/schemas'
 
@@ -79,9 +84,10 @@ function formatEventTime(iso: string | null): string {
 
 function buildActivityDetail(event: LearnerProfile['recent_activity'][number]): string {
   const parts: string[] = []
+  const modeLabel = getPracticeModeLabel(event.mode, event.mode_label)
 
-  if (event.mode_label) {
-    parts.push(event.mode_label)
+  if (modeLabel) {
+    parts.push(modeLabel)
   }
 
   if (event.word) {
@@ -164,8 +170,9 @@ function SummaryProfilePanel({
     activity_source_breakdown: activitySourceBreakdown,
     recent_activity: recentActivity,
   } = learnerProfile
-  const weakestModeText = summary.weakest_mode_label
-    ? `${summary.weakest_mode_label}${summary.weakest_mode_accuracy != null ? ` · ${summary.weakest_mode_accuracy}%` : ''}`
+  const weakestModeLabel = getPracticeModeLabel(summary.weakest_mode, summary.weakest_mode_label)
+  const weakestModeText = weakestModeLabel
+    ? `${weakestModeLabel}${summary.weakest_mode_accuracy != null ? ` · ${summary.weakest_mode_accuracy}%` : ''}`
     : '待继续积累样本'
   const activityAttempts = activitySummary.correct_count + activitySummary.wrong_count
   const activityAccuracy = activityAttempts > 0
@@ -234,7 +241,7 @@ function SummaryProfilePanel({
                   return (
                     <li key={event.id} className="journal-summary-profile__timeline-item">
                       <div className="journal-summary-profile__timeline-main">
-                        <strong className="journal-summary-profile__timeline-title">{event.title}</strong>
+                        <strong className="journal-summary-profile__timeline-title">{normalizeModeText(event.title)}</strong>
                         <span className="journal-summary-profile__timeline-meta">
                           {formatEventTime(event.occurred_at)} · {event.source_label}
                         </span>
@@ -258,7 +265,7 @@ function SummaryProfilePanel({
             <div className="journal-summary-profile__chips">
               {dimensions.slice(0, 4).map(item => (
                 <span key={item.dimension} className="journal-summary-profile__chip">
-                  {item.label} {item.accuracy ?? '--'}%
+                  {getWrongWordDimensionModeLabel(item.dimension, item.label) ?? item.label} {item.accuracy ?? '--'}%
                 </span>
               ))}
             </div>
@@ -274,7 +281,7 @@ function SummaryProfilePanel({
               {focusWords.slice(0, 4).map(item => (
                 <li key={item.word}>
                   <strong>{item.word}</strong>
-                  <span>{item.dominant_dimension_label}</span>
+                  <span>{getWrongWordDimensionModeLabel(item.dominant_dimension, item.dominant_dimension_label) ?? item.dominant_dimension_label}</span>
                 </li>
               ))}
             </ul>
@@ -304,7 +311,7 @@ function SummaryProfilePanel({
           {nextActions.length > 0 ? (
             <ul className="journal-summary-profile__actions">
               {nextActions.slice(0, 4).map(action => (
-                <li key={action}>{action}</li>
+                <li key={action}>{normalizeModeText(action)}</li>
               ))}
             </ul>
           ) : (

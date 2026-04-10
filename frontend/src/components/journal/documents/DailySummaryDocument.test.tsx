@@ -44,7 +44,7 @@ describe('DailySummaryDocument', () => {
             today_sessions: 3,
             streak_days: 7,
             weakest_mode: 'meaning',
-            weakest_mode_label: '释义拼词',
+            weakest_mode_label: '默写模式',
             weakest_mode_accuracy: 68,
             due_reviews: 5,
             trend_direction: 'improving',
@@ -52,7 +52,7 @@ describe('DailySummaryDocument', () => {
           dimensions: [
             {
               dimension: 'meaning',
-              label: '释义拼词（会想）',
+              label: '默写模式',
               correct: 9,
               wrong: 5,
               attempts: 14,
@@ -66,7 +66,7 @@ describe('DailySummaryDocument', () => {
               definition: 'type',
               wrong_count: 3,
               dominant_dimension: 'meaning',
-              dominant_dimension_label: '释义拼词（会想）',
+              dominant_dimension_label: '默写模式',
               dominant_wrong: 2,
               focus_score: 8,
             },
@@ -160,7 +160,7 @@ describe('DailySummaryDocument', () => {
     expect(screen.getByText('统一学习画像')).toBeInTheDocument()
     expect(screen.getByText('今日行为流')).toBeInTheDocument()
     expect(screen.getByText('今日共追踪 5 条学习动作，覆盖 1 本词书、2 个章节、4 个单词，累计 25分钟，动作口径答题正确率 82%。')).toBeInTheDocument()
-    expect(screen.getByText('智能练习 第2章')).toBeInTheDocument()
+    expect(screen.getByText('智能模式 第2章')).toBeInTheDocument()
     expect(screen.getByText('kind of vs a kind of')).toBeInTheDocument()
     expect(screen.getByText('优先复习 5 个已到期的速记单词。')).toBeInTheDocument()
   })

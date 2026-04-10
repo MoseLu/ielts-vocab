@@ -1,29 +1,23 @@
+from flask import jsonify, request
+
+from routes.middleware import token_required
 from services.books_catalog_service import (
-    _build_global_word_search_catalog as _build_global_word_search_catalog_service,
+    _build_global_word_search_catalog,
     build_book_chapters_response,
     build_book_response,
     build_books_response,
     build_search_words_response,
-    get_book_chapter_count as _get_book_chapter_count_service,
-    get_book_group_count as _get_book_group_count_service,
-    get_book_word_count as _get_book_word_count_service,
-    load_book_chapters as _load_book_chapters_service,
-    load_book_vocabulary as _load_book_vocabulary_service,
-    serialize_effective_book_progress as _serialize_effective_book_progress_service,
+    get_book_chapter_count as _get_book_chapter_count,
+    get_book_group_count as _get_book_group_count,
+    get_book_word_count as _get_book_word_count,
+    load_book_chapters,
+    load_book_vocabulary,
+    serialize_effective_book_progress as _serialize_effective_book_progress,
 )
 from services.books_confusable_service import (
+    CONFUSABLE_MATCH_BOOK_ID,
     create_confusable_custom_chapters_response as _create_confusable_custom_chapters,
 )
-
-_global_word_search_catalog = None
-
-
-def load_book_vocabulary(book_id):
-    return _load_book_vocabulary_service(book_id)
-
-
-def _build_global_word_search_catalog():
-    return _build_global_word_search_catalog_service()
 
 
 @books_bp.route('', methods=['GET'])
@@ -49,36 +43,6 @@ def search_words():
 def get_book(book_id):
     payload, status = build_book_response(book_id)
     return jsonify(payload), status
-
-
-def load_book_chapters(book_id):
-    return _load_book_chapters_service(book_id)
-
-
-def _get_book_word_count(book_id, user_id: int | None = None):
-    return _get_book_word_count_service(book_id, user_id=user_id)
-
-
-def _get_book_chapter_count(book_id, user_id: int | None = None):
-    return _get_book_chapter_count_service(book_id, user_id=user_id)
-
-
-def _get_book_group_count(book_id, user_id: int | None = None):
-    return _get_book_group_count_service(book_id, user_id=user_id)
-
-
-def _serialize_effective_book_progress(
-    book_id,
-    progress_record=None,
-    chapter_records=None,
-    user_id: int | None = None,
-):
-    return _serialize_effective_book_progress_service(
-        book_id,
-        progress_record=progress_record,
-        chapter_records=chapter_records,
-        user_id=user_id,
-    )
 
 
 @books_bp.route(f'/{CONFUSABLE_MATCH_BOOK_ID}/custom-chapters', methods=['POST'])

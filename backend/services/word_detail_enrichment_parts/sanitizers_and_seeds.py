@@ -3,7 +3,8 @@ from __future__ import annotations
 import sys
 import time
 
-from models import WordCatalogEntry, db
+from models import WordCatalogEntry
+from services import word_catalog_repository
 from services.word_detail_llm_client import (
     DEFAULT_PROVIDER,
     is_quota_exhausted_error,
@@ -184,9 +185,9 @@ def _build_record_index(word_seeds: list[dict]) -> dict[str, WordCatalogEntry]:
     if not normalized_words:
         return {}
 
-    records = WordCatalogEntry.query.filter(
-        WordCatalogEntry.normalized_word.in_(normalized_words),
-    ).all()
+    records = word_catalog_repository.list_word_catalog_entries_by_normalized_words(
+        normalized_words,
+    )
     return {record.normalized_word: record for record in records}
 
 

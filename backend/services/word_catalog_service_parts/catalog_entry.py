@@ -5,14 +5,16 @@ def ensure_word_catalog_entry(
 ) -> tuple[WordCatalogEntry, bool]:
     seed = get_word_seed(word, book_ids=book_ids)
     normalized = seed['normalized_word']
-    record = WordCatalogEntry.query.filter_by(normalized_word=normalized).first()
+    record = word_catalog_repository.get_word_catalog_entry(normalized)
     created = record is None
     changed = created
 
     if not record:
-        record = WordCatalogEntry(word=seed['display_word'], normalized_word=normalized)
-        db.session.add(record)
-        db.session.flush()
+        record = word_catalog_repository.create_word_catalog_entry(
+            word=seed['display_word'],
+            normalized_word=normalized,
+        )
+        word_catalog_repository.flush()
 
     if seed['display_word'] and record.word != seed['display_word']:
         record.word = seed['display_word']
@@ -50,7 +52,7 @@ def ensure_word_catalog_entry(
     if created and not record.source:
         record.source = 'catalog'
 
-    db.session.flush()
+    word_catalog_repository.flush()
     if seed['book_refs'] and (created or book_refs_changed):
         _replace_book_refs(record, seed['book_refs'])
 
@@ -67,14 +69,13 @@ def upsert_word_catalog_entry(
     source: str,
 ) -> WordCatalogEntry:
     normalized = word_seed['normalized_word']
-    record = WordCatalogEntry.query.filter_by(normalized_word=normalized).first()
+    record = word_catalog_repository.get_word_catalog_entry(normalized)
     if not record:
-        record = WordCatalogEntry(
+        record = word_catalog_repository.create_word_catalog_entry(
             word=word_seed['display_word'],
             normalized_word=normalized,
         )
-        db.session.add(record)
-        db.session.flush()
+        word_catalog_repository.flush()
 
     record.word = word_seed['display_word']
     record.phonetic = word_seed.get('phonetic', '')
@@ -87,7 +88,7 @@ def upsert_word_catalog_entry(
     record.set_examples(example_entries)
     record.set_book_refs(word_seed.get('book_refs', []))
     record.source = source
-    db.session.flush()
+    word_catalog_repository.flush()
 
     _replace_book_refs(record, word_seed.get('book_refs', []))
     return record
@@ -108,9 +109,7 @@ def materialize_word_catalog(
 
     stats = {'total': len(seeds), 'created': 0, 'updated': 0}
     for index, seed in enumerate(seeds, start=1):
-        existed = WordCatalogEntry.query.filter_by(
-            normalized_word=seed['normalized_word'],
-        ).first() is not None
+        existed = word_catalog_repository.get_word_catalog_entry(seed['normalized_word']) is not None
         _record, changed = ensure_word_catalog_entry(seed['normalized_word'], book_ids=book_ids)
         if not existed:
             stats['created'] += 1
@@ -118,7 +117,7 @@ def materialize_word_catalog(
             stats['updated'] += 1
 
         if index % commit_interval == 0:
-            db.session.commit()
+            word_catalog_repository.commit()
 
-    db.session.commit()
+    word_catalog_repository.commit()
     return stats

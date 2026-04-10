@@ -1,7 +1,12 @@
 import json
+from datetime import datetime, timedelta
 
 from models import UserQuickMemoryRecord, UserWrongWord, db
 from routes import ai as ai_routes
+from services import ai_assistant_ask_service as ask_service
+from services import ai_assistant_tool_service as tool_service
+from services import ai_custom_books_service as custom_books_service
+from services import ai_vocab_catalog_service as vocab_catalog_service
 
 
 def register_and_login(client, username='ai-tools-user', password='password123'):
@@ -18,6 +23,15 @@ def register_and_login(client, username='ai-tools-user', password='password123')
 
 
 def test_validate_tool_input_accepts_chapter_tools():
+    assert ai_routes._validate_tool_input(
+        'get_wrong_words',
+        {'limit': 8, 'query': 'alpha', 'recent_first': True},
+    ) == {
+        'limit': 8,
+        'query': 'alpha',
+        'recent_first': True,
+    }
+
     assert ai_routes._validate_tool_input(
         'get_chapter_words',
         {'book_id': 'ielts_reading_premium', 'chapter_id': 2},
@@ -49,6 +63,52 @@ def test_get_wrong_words_handler_tolerates_unsupported_book_filter(app):
         result = handler(limit=10, book_id='ielts_ultimate')
 
     assert 'alpha' in result
+
+
+def test_get_wrong_words_handler_supports_query_search_and_recent_order(app):
+    with app.app_context():
+        from models import User
+
+        user = User(username='handler-query-user', email='handler-query@example.com')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.commit()
+
+        older = UserWrongWord(
+            user_id=user.id,
+            word='alpha',
+            definition='old alpha item',
+            wrong_count=5,
+        )
+        newer = UserWrongWord(
+            user_id=user.id,
+            word='alphabet',
+            definition='new alphabet item',
+            wrong_count=1,
+        )
+        unrelated = UserWrongWord(
+            user_id=user.id,
+            word='zeta',
+            definition='unrelated entry',
+            wrong_count=9,
+        )
+        db.session.add_all([older, newer, unrelated])
+        db.session.commit()
+
+        older.updated_at = datetime.utcnow() - timedelta(days=2)
+        newer.updated_at = datetime.utcnow() - timedelta(hours=1)
+        unrelated.updated_at = datetime.utcnow() - timedelta(minutes=10)
+        db.session.commit()
+
+        handler = ai_routes._make_get_wrong_words(user.id)
+        result = handler(limit=10, query='alp', recent_first=True)
+
+    assert 'alphabet' in result
+    assert 'alpha' in result
+    assert 'zeta' not in result
+    result_lines = result.splitlines()
+    assert result_lines[1].startswith('alphabet')
+    assert result_lines[2].startswith('alpha')
 
 
 def test_ask_executes_get_wrong_words_tool_call(client, app, monkeypatch):
@@ -84,8 +144,8 @@ def test_ask_executes_get_wrong_words_tool_call(client, app, monkeypatch):
             'text': '已根据你的错词记录整理出复习建议。',
         }
 
-    monkeypatch.setattr(ai_routes, 'chat', fake_chat)
-    monkeypatch.setattr(ai_routes, '_maybe_summarize_history', lambda user_id: None)
+    monkeypatch.setattr(tool_service, 'chat', fake_chat)
+    monkeypatch.setattr(ask_service, 'maybe_summarize_history', lambda user_id: None)
 
     res = client.post('/api/ai/ask', json={
         'message': '帮我复习错词',
@@ -105,9 +165,9 @@ def test_ask_executes_get_wrong_words_tool_call(client, app, monkeypatch):
 def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app, monkeypatch):
     register_and_login(client, username='wrong-words-progress-user')
 
-    ai_routes._get_global_vocab_pool.cache_clear()
-    ai_routes._get_quick_memory_vocab_lookup.cache_clear()
-    monkeypatch.setattr(ai_routes, '_get_global_vocab_pool', lambda: [{
+    vocab_catalog_service._get_global_vocab_pool.cache_clear()
+    vocab_catalog_service._get_quick_memory_vocab_lookup.cache_clear()
+    monkeypatch.setattr(vocab_catalog_service, '_get_global_vocab_pool', lambda: [{
         'word': 'alpha',
         'phonetic': '/a/',
         'pos': 'n.',
@@ -125,7 +185,7 @@ def test_get_wrong_words_api_includes_ebbinghaus_progress(client, app, monkeypat
             'zh': 'alpha 出现在例句里。',
         }],
     }])
-    monkeypatch.setattr(ai_routes, '_get_quick_memory_vocab_lookup', lambda: {})
+    monkeypatch.setattr(vocab_catalog_service, '_get_quick_memory_vocab_lookup', lambda: {})
 
     with app.app_context():
         from models import User
@@ -309,7 +369,7 @@ def test_generate_book_accepts_text_response_payload(client, monkeypatch):
         ],
     }
 
-    monkeypatch.setattr(ai_routes, 'chat', lambda messages, max_tokens=8192: {
+    monkeypatch.setattr(custom_books_service, 'chat', lambda messages, max_tokens=8192: {
         'type': 'text',
         'text': json.dumps(payload, ensure_ascii=False),
     })

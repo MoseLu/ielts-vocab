@@ -8,6 +8,9 @@ import os
 import re
 from datetime import datetime, timedelta
 from routes import books as books_routes
+import services.books_catalog_query_service as books_catalog_query_service
+import services.books_registry_service as books_registry_service
+import services.books_vocabulary_loader_service as books_vocabulary_loader_service
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -106,12 +109,12 @@ class TestGetBook:
 
 class TestSearchWords:
     def test_search_words_prioritizes_exact_matches_and_returns_detail_fields(self, client, monkeypatch):
-        monkeypatch.setattr(books_routes, '_global_word_search_catalog', None)
-        monkeypatch.setattr(books_routes, 'VOCAB_BOOKS', [
-            {'id': 'book-a', 'title': 'Book A'},
-            {'id': 'book-b', 'title': 'Book B'},
+        monkeypatch.setattr(books_catalog_query_service, '_global_word_search_catalog', None)
+        monkeypatch.setattr(books_registry_service, 'VOCAB_BOOKS', [
+            {'id': 'book-a', 'title': 'Book A', 'file': 'book-a.json'},
+            {'id': 'book-b', 'title': 'Book B', 'file': 'book-b.json'},
         ])
-        monkeypatch.setattr(books_routes, 'load_book_vocabulary', lambda book_id: {
+        monkeypatch.setattr(books_catalog_query_service, 'load_book_vocabulary', lambda book_id: {
             'book-a': [
                 {
                     'word': 'quit',
@@ -359,7 +362,7 @@ class TestBookChapters:
                 }],
             }
 
-        monkeypatch.setattr(books_routes, 'attach_preset_listening_confusables', attach_mock)
+        monkeypatch.setattr(books_vocabulary_loader_service, 'attach_preset_listening_confusables', attach_mock)
 
         res = client.get('/api/books/ielts_confusable_match/chapters/1')
         assert res.status_code == 200

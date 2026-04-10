@@ -96,5 +96,5 @@ def _build_recognition_dimension(recognition_rows, qm_rows, now_ms: int) -> dict
         'accuracy': accuracy,
         'focus_words': focus_words,
         'next_action': next_action,
-        'evidence_note': '当前认读维度优先依据速记复习状态与释义拼词（会想）记录判断。',
+        'evidence_note': '当前认读维度优先依据速记复习状态与默写模式记录判断。',
     }

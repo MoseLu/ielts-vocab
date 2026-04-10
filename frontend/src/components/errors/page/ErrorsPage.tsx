@@ -3,20 +3,15 @@ import {
   WRONG_WORD_DIMENSIONS,
   WRONG_WORD_DIMENSION_LABELS,
   WRONG_WORD_DIMENSION_TITLES,
-  WRONG_WORD_PENDING_REVIEW_TARGET,
   WRONG_WORD_SCOPE_LABELS,
-  getWrongWordActiveCount,
-  getWrongWordDimensionHistoryWrong,
-  isWrongWordPendingInDimension,
 } from '../../../features/vocabulary/wrongWordsStore'
-import { formatWrongWordOccurrenceDate } from '../../../features/vocabulary/wrongWordsFilters'
-import {
-  describeWrongWordDimension,
-  normalizeWrongWordKey,
-} from './errorsPageHelpers'
+import type { WrongWordSearchMode } from '../../../features/vocabulary/wrongWordsFilters'
 import { Page, PageContent, PageHeader } from '../../layout'
-import { EmptyState, SegmentedControl, UnderlineTabs } from '../../ui'
+import { EmptyState, PageSkeleton, SegmentedControl, UnderlineTabs } from '../../ui'
 import { useErrorsPage, type WrongCountRange } from '../../../composables/errors/page/useErrorsPage'
+import { ErrorsFAQCard } from './ErrorsFAQCard'
+import { ErrorsSearchWordItem } from './ErrorsSearchWordItem'
+import { ErrorsWordItem } from './ErrorsWordItem'
 
 const WRONG_COUNT_RANGE_OPTIONS: Array<{ value: WrongCountRange; label: string }> = [
   { value: 'all', label: '全部' },
@@ -24,6 +19,11 @@ const WRONG_COUNT_RANGE_OPTIONS: Array<{ value: WrongCountRange; label: string }
   { value: '6-10', label: '6~10 次' },
   { value: '11-20', label: '11~20 次' },
   { value: '20+', label: '20 次以上' },
+]
+
+const SEARCH_MODE_OPTIONS: Array<{ value: WrongWordSearchMode; label: string }> = [
+  { value: 'prefix', label: '词头' },
+  { value: 'suffix', label: '词尾' },
 ]
 
 export default function ErrorsPage() {
@@ -34,32 +34,56 @@ export default function ErrorsPage() {
     startDate,
     endDate,
     wrongCountRange,
+    searchText,
+    searchMode,
+    appliedSearch,
     words,
     historyWords,
     pendingWords,
     scopeWords,
-    dimStats,
     dimCounts,
     filteredWords,
     selectedWordKeySet,
     selectedWordCount,
-    selectedFilteredWordCount,
-    selectedOutsideFilterCount,
     allFilteredSelected,
+    allPaginatedSelected,
     hasActiveFilters,
+    canResetFilters,
+    loading,
+    searchLoading,
+    page,
+    totalPages,
+    pageStartIndex,
+    pageEndIndex,
+    paginatedWords,
     setActiveTab,
     setScope,
     setDimFilter,
     setStartDate,
     setEndDate,
     setWrongCountRange,
+    setSearchText,
+    setSearchMode,
+    setPage,
+    applySearch,
+    applyTodayDateRange,
+    applyRecentDaysDateRange,
     toggleWordSelection,
     selectFilteredWords,
+    selectPaginatedWords,
     clearSelectedWords,
     resetFilters,
     startSelectedPractice,
     goToPlan,
   } = useErrorsPage()
+  const isSearchMode = Boolean(appliedSearch)
+  const searchStatusLabel = !isSearchMode
+    ? ''
+    : searchMode === 'prefix'
+      ? `词头匹配“${appliedSearch}”`
+      : searchMode === 'suffix'
+        ? `词尾匹配“${appliedSearch}”`
+        : `搜索“${appliedSearch}”`
 
   const toolbar = (
     <div className="errors-toolbar">
@@ -81,21 +105,28 @@ export default function ErrorsPage() {
             disabled={selectedWordCount === 0}
             onClick={startSelectedPractice}
           >
-            复习已选（{selectedWordCount}词）
+            开始复习（{selectedWordCount}词）
           </button>
           <button
             className="errors-clear-btn"
             disabled={filteredWords.length === 0 || allFilteredSelected}
             onClick={selectFilteredWords}
           >
-            勾选当前筛选
+            全选结果
+          </button>
+          <button
+            className="errors-clear-btn"
+            disabled={paginatedWords.length === 0 || allPaginatedSelected}
+            onClick={selectPaginatedWords}
+          >
+            全选当前页
           </button>
           <button
             className="errors-clear-btn"
             disabled={selectedWordCount === 0}
             onClick={clearSelectedWords}
           >
-            清空勾选
+            清空选择
           </button>
         </div>
       )}
@@ -119,6 +150,8 @@ export default function ErrorsPage() {
             title="真题错题功能"
             description="敬请期待"
           />
+        ) : loading && words.length === 0 ? (
+          <PageSkeleton variant="books" itemCount={4} />
         ) : words.length === 0 ? (
           <EmptyState
             page
@@ -137,187 +170,238 @@ export default function ErrorsPage() {
           />
         ) : (
           <div className="errors-content-scroll">
-            <div className="errors-review-rule">
-              一个词只要答错过，就会进入“累计错词”。如果某一类问题还没连续答对 {WRONG_WORD_PENDING_REVIEW_TARGET} 次，它也会继续留在“待清错词”里，方便你按问题类型集中清理。
-            </div>
+            {!isSearchMode && <ErrorsFAQCard />}
 
-            <SegmentedControl
-              className="errors-dim-filter"
-              ariaLabel="错词集合筛选"
-              value={scope}
-              onChange={value => setScope(value as 'pending' | 'history')}
-              options={[
-                { value: 'pending', label: WRONG_WORD_SCOPE_LABELS.pending, badge: pendingWords.length > 0 ? pendingWords.length : undefined },
-                { value: 'history', label: WRONG_WORD_SCOPE_LABELS.history, badge: historyWords.length > 0 ? historyWords.length : undefined },
-              ]}
-            />
-
-            <div className="errors-filter-panel">
-              <label className="errors-filter-field">
-                <span className="errors-filter-label">起始日期</span>
-                <input
-                  aria-label="起始日期"
-                  className="errors-filter-input"
-                  type="date"
-                  value={startDate}
-                  onChange={event => setStartDate(event.target.value)}
-                />
-              </label>
-
-              <label className="errors-filter-field">
-                <span className="errors-filter-label">结束日期</span>
-                <input
-                  aria-label="结束日期"
-                  className="errors-filter-input"
-                  type="date"
-                  value={endDate}
-                  onChange={event => setEndDate(event.target.value)}
-                />
-              </label>
-
-              <label className="errors-filter-field errors-filter-field--compact">
-                <span className="errors-filter-label">{scope === 'pending' ? '待清错次' : '累计错次'}</span>
-                <select
-                  aria-label="错次区间"
-                  className="errors-filter-select"
-                  value={wrongCountRange}
-                  onChange={event => setWrongCountRange(event.target.value as WrongCountRange)}
-                >
-                  {WRONG_COUNT_RANGE_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <button
-                type="button"
-                className="errors-filter-reset"
-                disabled={!hasActiveFilters}
-                onClick={resetFilters}
-              >
-                重置筛选
-              </button>
-            </div>
-
-            {hasActiveFilters && (
-              <div className="errors-filter-summary">
-                当前筛选命中 {filteredWords.length} 个{scope === 'pending' ? '待清错词' : '累计错词'}
-              </div>
-            )}
-
-            <div className="errors-selection-summary">
-              错词不会被删除；勾选后只加入复习。已勾选 {selectedWordCount} 词，当前筛选中 {selectedFilteredWordCount} 词
-              {selectedOutsideFilterCount > 0 ? `，另外 ${selectedOutsideFilterCount} 词来自其他筛选` : ''}
-              。
-            </div>
-
-            {scopeWords.length > 0 && (
-              <div className="errors-dim-summary" role="note">
-                一个词可能同时属于多类问题，所以这里的标签数量会重复计算。当前 {scopeWords.length} 个{WRONG_WORD_SCOPE_LABELS[scope]}对应了 {dimStats.hitCount} 个问题标签
-                {dimStats.overlappingWordCount > 0
-                  ? `，其中 ${dimStats.overlappingWordCount} 个词同时落在多个问题类型里`
-                  : ''}
-                ，这些数字不是互斥拆分。
-              </div>
-            )}
-
-            <div className="errors-dim-filter-row">
+            <div className="errors-scope-row">
               <SegmentedControl
                 className="errors-dim-filter"
-                ariaLabel="错词维度筛选"
-                value={dimFilter}
-                onChange={value => setDimFilter(value as 'all' | WrongWordDimension)}
+                ariaLabel="错词集合筛选"
+                value={scope}
+                onChange={value => setScope(value as 'pending' | 'history')}
                 options={[
-                  { value: 'all', label: '全部', badge: scopeWords.length },
-                  ...WRONG_WORD_DIMENSIONS.map(dimension => ({
-                    value: dimension,
-                    label: WRONG_WORD_DIMENSION_LABELS[dimension],
-                    badge: dimCounts[dimension] > 0 ? dimCounts[dimension] : undefined,
-                    disabled: dimCounts[dimension] === 0,
-                    title: WRONG_WORD_DIMENSION_TITLES[dimension],
-                  })),
+                  { value: 'pending', label: WRONG_WORD_SCOPE_LABELS.pending, badge: pendingWords.length > 0 ? pendingWords.length : undefined },
+                  { value: 'history', label: WRONG_WORD_SCOPE_LABELS.history, badge: historyWords.length > 0 ? historyWords.length : undefined },
                 ]}
               />
-              <div className="errors-select-heading">加入复习</div>
+
+              {filteredWords.length > 0 && (
+                <div className="errors-scope-tools">
+                  <span className="errors-summary-pill">
+                    {pageStartIndex}-{pageEndIndex}/{filteredWords.length}
+                  </span>
+                  {totalPages > 1 && (
+                    <div className="errors-inline-pagination" role="navigation" aria-label="错词分页">
+                      <button
+                        type="button"
+                        className="errors-clear-btn"
+                        disabled={page <= 1}
+                        onClick={() => setPage(page - 1)}
+                      >
+                        上一页
+                      </button>
+                      <span className="errors-inline-pagination-status">
+                        {page}/{totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        className="errors-clear-btn"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage(page + 1)}
+                      >
+                        下一页
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="errors-filter-panel">
+              <div className="errors-filter-panel-main">
+                <label className="errors-filter-field">
+                  <span className="errors-filter-label">起始日期</span>
+                  <input
+                    aria-label="起始日期"
+                    className="errors-filter-input"
+                    type="date"
+                    value={startDate}
+                    onChange={event => setStartDate(event.target.value)}
+                  />
+                </label>
+
+                <label className="errors-filter-field">
+                  <span className="errors-filter-label">结束日期</span>
+                  <input
+                    aria-label="结束日期"
+                    className="errors-filter-input"
+                    type="date"
+                    value={endDate}
+                    onChange={event => setEndDate(event.target.value)}
+                  />
+                </label>
+
+                <label className="errors-filter-field errors-filter-field--compact errors-filter-field--inline">
+                  <span className="errors-filter-label">{scope === 'pending' ? '待清错次' : '累计错次'}</span>
+                  <select
+                    aria-label="错次区间"
+                    className="errors-filter-select"
+                    value={wrongCountRange}
+                    onChange={event => setWrongCountRange(event.target.value as WrongCountRange)}
+                  >
+                    {WRONG_COUNT_RANGE_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="errors-filter-panel-actions">
+                <div className="errors-filter-shortcuts" role="group" aria-label="日期快捷筛选">
+                  <button
+                    type="button"
+                    className="errors-clear-btn"
+                    onClick={applyTodayDateRange}
+                  >
+                    只看今天新错词
+                  </button>
+                  <button
+                    type="button"
+                    className="errors-clear-btn"
+                    onClick={() => applyRecentDaysDateRange(7)}
+                  >
+                    最近 7 天
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="errors-filter-reset"
+                  disabled={!canResetFilters}
+                  onClick={resetFilters}
+                >
+                  重置筛选
+                </button>
+              </div>
+            </div>
+
+            <div className="errors-dim-filter-row">
+              <div className="errors-dim-filter-shell">
+                <SegmentedControl
+                  className="errors-dim-filter"
+                  ariaLabel="错词维度筛选"
+                  value={dimFilter}
+                  onChange={value => setDimFilter(value as 'all' | WrongWordDimension)}
+                  options={[
+                    { value: 'all', label: '全部', badge: scopeWords.length },
+                    ...WRONG_WORD_DIMENSIONS.map(dimension => ({
+                      value: dimension,
+                      label: WRONG_WORD_DIMENSION_LABELS[dimension],
+                      badge: dimCounts[dimension] > 0 ? dimCounts[dimension] : undefined,
+                      disabled: dimCounts[dimension] === 0,
+                      title: WRONG_WORD_DIMENSION_TITLES[dimension],
+                    })),
+                  ]}
+                />
+
+                <div className="errors-dim-filter-tools">
+                  <form
+                    className="errors-search-form"
+                    onSubmit={event => {
+                      event.preventDefault()
+                      void applySearch()
+                    }}
+                  >
+                    <div className="errors-search-input-wrap">
+                      <input
+                        aria-label="搜索错词"
+                        className="errors-filter-input errors-search-input"
+                        type="search"
+                        value={searchText}
+                        placeholder="搜索单词"
+                        onChange={event => setSearchText(event.target.value)}
+                      />
+                      <button
+                        type="submit"
+                        className="errors-search-submit"
+                        aria-label="执行搜索"
+                        disabled={searchLoading}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                          <circle cx="11" cy="11" r="6.5" />
+                          <path d="M16 16l4.5 4.5" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  </form>
+
+                  <div className="errors-search-mode-group" role="radiogroup" aria-label="搜索匹配方式">
+                    {SEARCH_MODE_OPTIONS.map(option => (
+                      <label
+                        key={option.value}
+                        className={`errors-search-mode-option${searchMode === option.value ? ' is-active' : ''}${!isSearchMode ? ' is-disabled' : ''}`}
+                      >
+                        <input
+                          className="errors-search-mode-radio"
+                          type="radio"
+                          name="errors-search-mode"
+                          value={option.value}
+                          checked={searchMode === option.value}
+                          disabled={!isSearchMode}
+                          onClick={event => {
+                            if (searchMode !== option.value) return
+                            event.preventDefault()
+                            setSearchMode(null)
+                          }}
+                          onChange={() => setSearchMode(option.value)}
+                        />
+                        <span className="errors-search-mode-marker" aria-hidden="true" />
+                        <span className="errors-search-mode-text">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {filteredWords.length === 0 ? (
               <EmptyState
                 page
                 className="errors-empty"
-                title={hasActiveFilters ? '当前筛选暂无错词' : `${WRONG_WORD_SCOPE_LABELS[scope]}为空`}
-                description={hasActiveFilters ? '调整日期、错次或问题类型后再试' : (scope === 'pending' ? '当前没有待继续攻克的错词' : '继续练习，累计错词会自动增加')}
+                title={hasActiveFilters ? '暂无匹配错词' : `${WRONG_WORD_SCOPE_LABELS[scope]}为空`}
+                description={hasActiveFilters ? '调整搜索词、日期、错次或问题类型后再试' : (scope === 'pending' ? '当前没有待继续攻克的错词' : '继续练习，累计错词会自动增加')}
               />
             ) : (
-              <div className="errors-list">
-                {filteredWords.map(word => {
-                  const collectedOn = formatWrongWordOccurrenceDate(word)
-                  const historyDims = WRONG_WORD_DIMENSIONS.filter(dimension => getWrongWordDimensionHistoryWrong(word, dimension) > 0)
-                  const pendingDimensionCount = WRONG_WORD_DIMENSIONS.filter(dimension => isWrongWordPendingInDimension(word, dimension)).length
-                  const wordKey = normalizeWrongWordKey(word.word)
-                  const checked = selectedWordKeySet.has(wordKey)
+              <>
+                {isSearchMode && (
+                  <div className="errors-search-status">
+                    {searchStatusLabel} · {filteredWords.length} 个结果
+                  </div>
+                )}
 
-                  return (
-                    <div key={word.word} className="errors-item">
-                      <div className="errors-item-main">
-                        <div className="errors-item-word-row">
-                          <span className="errors-item-word">{word.word}</span>
-                          <span className="errors-item-total-count">
-                            {scope === 'pending'
-                              ? `待清错次×${getWrongWordActiveCount(word, 'pending')}`
-                              : `累计错次×${getWrongWordActiveCount(word, 'history')}`}
-                          </span>
-                        </div>
-                        {(word.phonetic || collectedOn) && (
-                          <div className="errors-item-meta">
-                            {word.phonetic && <div className="errors-item-phonetic">{word.phonetic}</div>}
-                            {collectedOn && <span className="errors-item-date">收录于 {collectedOn}</span>}
-                          </div>
-                        )}
-                        <div className="errors-item-definition">
-                          {word.pos && <span className="word-pos-tag">{word.pos}</span>}
-                          {word.definition}
-                        </div>
-                        <div className="errors-item-dims">
-                          <span className="errors-dim-badge errors-dim-progress">
-                            出现过 {historyDims.length} 类问题
-                          </span>
-                          <span className={`errors-dim-badge ${pendingDimensionCount > 0 ? 'errors-dim-progress' : 'errors-dim-ok'}`}>
-                            待清 {pendingDimensionCount} 类问题
-                          </span>
-                          {historyDims.map(dimension => {
-                            const dimensionCopy = describeWrongWordDimension(word, dimension)
-                            const highlighted = dimFilter === dimension
-
-                            return (
-                              <span
-                                key={dimension}
-                                title={dimensionCopy.title}
-                                className={`errors-dim-badge ${dimensionCopy.pending ? 'errors-dim-progress' : 'errors-dim-ok'}${highlighted ? ' errors-dim-highlight' : ''}`}
-                              >
-                                {dimensionCopy.label}
-                                <span className="errors-dim-wrong"> {dimensionCopy.detail}</span>
-                                <span className="errors-dim-correct"> {dimensionCopy.status}</span>
-                              </span>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      <label className={`errors-item-select${checked ? ' errors-item-select--checked' : ''}`}>
-                        <input
-                          className="errors-item-checkbox"
-                          type="checkbox"
-                          aria-label={`选择 ${word.word}`}
-                          checked={checked}
-                          onChange={() => toggleWordSelection(word.word)}
-                        />
-                      </label>
-                    </div>
-                  )
-                })}
-              </div>
+                <div className={isSearchMode ? 'errors-search-results' : 'errors-list'}>
+                  {paginatedWords.map(word => (
+                    isSearchMode ? (
+                      <ErrorsSearchWordItem
+                        key={word.word}
+                        word={word}
+                        selectedWordKeySet={selectedWordKeySet}
+                        toggleWordSelection={toggleWordSelection}
+                      />
+                    ) : (
+                      <ErrorsWordItem
+                        key={word.word}
+                        word={word}
+                        scope={scope}
+                        dimFilter={dimFilter}
+                        selectedWordKeySet={selectedWordKeySet}
+                        toggleWordSelection={toggleWordSelection}
+                      />
+                    )
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
