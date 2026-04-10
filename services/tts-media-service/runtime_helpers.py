@@ -12,8 +12,10 @@ from fastapi.responses import JSONResponse, Response
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_PATH = REPO_ROOT / 'backend'
-if str(BACKEND_PATH) not in sys.path:
-    sys.path.insert(0, str(BACKEND_PATH))
+SDK_PATH = REPO_ROOT / 'packages' / 'platform-sdk'
+for candidate in (BACKEND_PATH, SDK_PATH):
+    if str(candidate) not in sys.path:
+        sys.path.insert(0, str(candidate))
 
 from services.tts_audio_endpoint_service import (
     add_pause_tags,
@@ -34,6 +36,21 @@ from services.word_tts import (
     remove_invalid_cached_audio,
     synthesize_word_to_bytes,
     write_bytes_atomically,
+)
+from platform_sdk.storage import (
+    bucket_is_configured,
+)
+from example_audio_storage import (
+    example_audio_object_key as shared_example_audio_object_key,
+    example_audio_signed_url_expires_seconds as shared_example_audio_signed_url_expires_seconds,
+    fetch_example_audio_oss_payload as shared_fetch_example_audio_oss_payload,
+    put_example_audio_oss_bytes as shared_put_example_audio_oss_bytes,
+    resolve_example_audio_oss_metadata as shared_resolve_example_audio_oss_metadata,
+    signed_url_expires_at as shared_signed_url_expires_at,
+)
+from example_audio_runtime import (
+    build_example_audio_content_payload,
+    build_example_audio_metadata,
 )
 
 
@@ -174,6 +191,47 @@ def example_tts_identity(sentence: str) -> tuple[str, str]:
 def example_cache_file(sentence: str, model: str, voice: str) -> Path:
     cache_key = hashlib.md5(f'ex:{sentence}:{model}:{voice}'.encode()).hexdigest()[:16]
     return tts_cache_dir() / f'{cache_key}.mp3'
+
+
+def example_audio_signed_url_expires_seconds() -> int:
+    return shared_example_audio_signed_url_expires_seconds()
+
+
+def example_audio_object_key(sentence: str, model: str, voice: str) -> str:
+    return shared_example_audio_object_key(
+        sentence,
+        model,
+        voice,
+        example_cache_file=example_cache_file,
+    )
+
+
+def resolve_example_audio_oss_metadata(sentence: str, model: str, voice: str):
+    return shared_resolve_example_audio_oss_metadata(
+        sentence,
+        model,
+        voice,
+        example_cache_file=example_cache_file,
+    )
+
+
+def fetch_example_audio_oss_payload(sentence: str, model: str, voice: str):
+    return shared_fetch_example_audio_oss_payload(
+        sentence,
+        model,
+        voice,
+        example_cache_file=example_cache_file,
+    )
+
+
+def put_example_audio_oss_bytes(sentence: str, model: str, voice: str, audio_bytes: bytes):
+    return shared_put_example_audio_oss_bytes(
+        sentence,
+        model,
+        voice,
+        audio_bytes,
+        example_cache_file=example_cache_file,
+    )
 
 
 def get_api_key():
@@ -350,31 +408,35 @@ def synthesize_example_audio(sentence: str, model: str, voice: str) -> bytes:
 
 
 def example_audio_metadata(sentence: str) -> dict:
-    model, voice = example_tts_identity(sentence)
-    cache_file = example_cache_file(sentence, model, voice)
-    if cache_file.exists() and is_probably_valid_mp3_file(cache_file):
-        return {
-            'media_id': cache_file.name,
-            'cache_hit': True,
-            'provider': 'local-cache',
-            'bucket_name': None,
-            'object_key': None,
-            'content_type': DEFAULT_EXAMPLE_AUDIO_CONTENT_TYPE,
-            'byte_length': cache_file.stat().st_size,
-            'cache_key': local_cache_key(cache_file),
-            'signed_url': None,
-            'signed_url_expires_at': None,
-        }
-    remove_invalid_cached_audio(cache_file)
-    return {
-        'media_id': cache_file.name,
-        'cache_hit': False,
-        'provider': 'local-cache',
-        'bucket_name': None,
-        'object_key': None,
-        'content_type': DEFAULT_EXAMPLE_AUDIO_CONTENT_TYPE,
-        'byte_length': None,
-        'cache_key': None,
-        'signed_url': None,
-        'signed_url_expires_at': None,
-    }
+    return build_example_audio_metadata(
+        sentence,
+        example_tts_identity=example_tts_identity,
+        example_cache_file=example_cache_file,
+        bucket_is_configured=bucket_is_configured,
+        resolve_example_audio_oss_metadata=resolve_example_audio_oss_metadata,
+        example_audio_signed_url_expires_seconds=example_audio_signed_url_expires_seconds,
+        signed_url_expires_at=shared_signed_url_expires_at,
+        is_probably_valid_mp3_file=is_probably_valid_mp3_file,
+        local_cache_key=local_cache_key,
+        remove_invalid_cached_audio=remove_invalid_cached_audio,
+        example_audio_object_key=example_audio_object_key,
+        default_example_audio_content_type=DEFAULT_EXAMPLE_AUDIO_CONTENT_TYPE,
+    )
+
+
+def example_audio_content_payload(sentence: str) -> dict:
+    return build_example_audio_content_payload(
+        sentence,
+        example_tts_identity=example_tts_identity,
+        example_cache_file=example_cache_file,
+        bucket_is_configured=bucket_is_configured,
+        fetch_example_audio_oss_payload=fetch_example_audio_oss_payload,
+        is_probably_valid_mp3_file=is_probably_valid_mp3_file,
+        local_cache_key=local_cache_key,
+        remove_invalid_cached_audio=remove_invalid_cached_audio,
+        synthesize_example_audio=synthesize_example_audio,
+        put_example_audio_oss_bytes=put_example_audio_oss_bytes,
+        example_audio_object_key=example_audio_object_key,
+        default_example_audio_content_type=DEFAULT_EXAMPLE_AUDIO_CONTENT_TYPE,
+        write_bytes_atomically=write_bytes_atomically,
+    )
