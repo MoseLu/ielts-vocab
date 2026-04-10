@@ -2,7 +2,7 @@ import json
 from collections import Counter
 from datetime import datetime
 
-from models import UserLearningEvent
+from service_models.learning_core_models import UserLearningEvent
 from services import learning_event_repository
 from services.local_time import resolve_local_day_window
 
