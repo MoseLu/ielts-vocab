@@ -16,7 +16,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
-from models import db
+from platform_sdk.service_schema import bootstrap_monolith_schema
 from routes.auth import auth_bp, init_auth
 from routes.progress import progress_bp
 from routes.vocabulary import vocabulary_bp
@@ -27,6 +27,7 @@ from routes.admin import admin_bp, init_admin
 from routes.notes import notes_bp
 from routes.tts import tts_bp
 from routes.middleware import init_middleware
+from service_models.identity_models import User, db
 from services.db_backup import initialize_sqlite_backup_runtime
 
 # SQLite WAL mode
@@ -92,8 +93,6 @@ def _ensure_wrong_word_dimension_state_column():
 
 def _ensure_admin_user():
     """Create an admin user if not exists. Credentials must be set via environment variables."""
-    import os
-    from models import User
 
     admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
     admin_password = os.environ.get('ADMIN_INITIAL_PASSWORD')
@@ -158,13 +157,10 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     init_admin(app)
 
-    # Create database tables and ensure admin user.
-    # db.create_all() is idempotent and safe to call on every startup.
-    # For schema changes going forward, use Flask-Migrate:
-    #   flask db migrate -m "description"
-    #   flask db upgrade
+    # Create planned compatibility tables and ensure admin user.
+    # Monolith startup now uses the same explicit table plan as the split runtime.
     with app.app_context():
-        db.create_all()
+        bootstrap_monolith_schema(bind=db.engine, metadata=db.metadata)
         _ensure_quick_memory_context_columns()
         _ensure_wrong_word_dimension_state_column()
         _ensure_admin_user()
