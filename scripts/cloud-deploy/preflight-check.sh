@@ -26,7 +26,7 @@ fi
 [[ -f /etc/systemd/system/ielts-service@.service ]] || fail "Missing systemd template: /etc/systemd/system/ielts-service@.service"
 
 log "Checking git access for ${git_ref}"
-git -C "${probe_repo}" ls-remote --exit-code origin "${git_ref}" >/dev/null
+git -C "${probe_repo}" ls-remote --exit-code origin HEAD >/dev/null
 
 log "Checking nginx configuration"
 nginx -t >/dev/null
