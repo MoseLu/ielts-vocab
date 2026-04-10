@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from models import UserProgress, db
+from service_models.learning_core_models import UserProgress, db
 
 
 def list_user_progress_rows(user_id: int):
