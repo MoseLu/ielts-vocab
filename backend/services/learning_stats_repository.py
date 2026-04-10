@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import func, or_, text
 
-from models import (
+from service_models.learning_core_models import (
     UserBookProgress,
     UserChapterModeProgress,
     UserChapterProgress,
