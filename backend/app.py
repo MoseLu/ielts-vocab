@@ -2,33 +2,27 @@ from services.runtime_async import patch_standard_library
 
 patch_standard_library()
 
+from runtime_paths import ensure_shared_package_paths
+
+
+ensure_shared_package_paths()
+
 from dotenv import load_dotenv
 import os
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 os.environ.setdefault('CURRENT_SERVICE_NAME', 'backend-monolith')
 
 import sqlite3
-import secrets
-from sqlalchemy import event, inspect, text
+from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
+from compat_runtime_guard import require_explicit_monolith_compat_runtime
+from monolith_compat_runtime import configure_monolith_compat_runtime
 from config import Config
-from platform_sdk.service_schema import bootstrap_monolith_schema
-from routes.auth import auth_bp, init_auth
-from routes.progress import progress_bp
-from routes.vocabulary import vocabulary_bp
-from routes.speech import speech_bp
-from routes.books import books_bp, init_books
-from routes.ai import ai_bp
-from routes.admin import admin_bp, init_admin
-from routes.notes import notes_bp
-from routes.tts import tts_bp
-from routes.middleware import init_middleware
-from service_models.identity_models import User, db
-from services.db_backup import initialize_sqlite_backup_runtime
+from service_models.identity_models import db
 
 # SQLite WAL mode
 # Runs once per new connection. WAL allows concurrent reads during writes,
@@ -45,83 +39,6 @@ def _set_sqlite_pragmas(dbapi_conn, _record):
 migrate = Migrate()
 
 
-def _ensure_quick_memory_context_columns():
-    """Backfill newly added quick-memory context columns on existing SQLite files."""
-    inspector = inspect(db.engine)
-    try:
-        columns = {column['name'] for column in inspector.get_columns('user_quick_memory_records')}
-    except Exception:
-        return
-
-    statements: list[str] = []
-    if 'book_id' not in columns:
-        statements.append('ALTER TABLE user_quick_memory_records ADD COLUMN book_id VARCHAR(100)')
-    if 'chapter_id' not in columns:
-        statements.append('ALTER TABLE user_quick_memory_records ADD COLUMN chapter_id VARCHAR(100)')
-
-    if not statements:
-        return
-
-    for statement in statements:
-        db.session.execute(text(statement))
-
-    db.session.execute(text(
-        'CREATE INDEX IF NOT EXISTS ix_user_quick_memory_records_book_id '
-        'ON user_quick_memory_records (book_id)'
-    ))
-    db.session.execute(text(
-        'CREATE INDEX IF NOT EXISTS ix_user_quick_memory_records_chapter_id '
-        'ON user_quick_memory_records (chapter_id)'
-    ))
-    db.session.commit()
-
-
-def _ensure_wrong_word_dimension_state_column():
-    """Backfill wrong-word per-dimension state column on existing SQLite files."""
-    inspector = inspect(db.engine)
-    try:
-        columns = {column['name'] for column in inspector.get_columns('user_wrong_words')}
-    except Exception:
-        return
-
-    if 'dimension_state' in columns:
-        return
-
-    db.session.execute(text('ALTER TABLE user_wrong_words ADD COLUMN dimension_state TEXT'))
-    db.session.commit()
-
-
-def _ensure_admin_user():
-    """Create an admin user if not exists. Credentials must be set via environment variables."""
-
-    admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
-    admin_password = os.environ.get('ADMIN_INITIAL_PASSWORD')
-
-    admin = User.query.filter_by(username=admin_username).first()
-    if not admin:
-        # Generate a secure random password if none was provided. Startup is no longer blocked.
-        if not admin_password:
-            admin_password = secrets.token_urlsafe(24)
-            print(
-                f"[Admin] ADMIN_INITIAL_PASSWORD not set - generated random password.\n"
-                f"         Save this NOW: ADMIN_USERNAME={admin_username} ADMIN_INITIAL_PASSWORD={admin_password}\n"
-                f"         Or set env var and re-run: export ADMIN_INITIAL_PASSWORD=your_secure_password"
-            )
-        else:
-            print(f"[Admin] Using password from ADMIN_INITIAL_PASSWORD env var.")
-        admin = User(username=admin_username, email=None)
-        admin.set_password(admin_password)
-        admin.is_admin = True
-        db.session.add(admin)
-        db.session.commit()
-        print(f"[Admin] User '{admin_username}' created.")
-    else:
-        if not admin.is_admin:
-            admin.is_admin = True
-            db.session.commit()
-            print(f"[Admin] Existing user '{admin_username}' updated to admin flag.")
-
-
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -133,40 +50,11 @@ def create_app(config_class=Config):
             x_proto=app.config.get('PROXY_FIX_X_PROTO', 1),
         )
 
-    # Initialize extensions
-    db.init_app(app)
-    migrate.init_app(app, db, render_as_batch=True)
+    # Initialize compatibility runtime shell around the archived monolith routes.
     CORS(app,
          resources={r"/api/*": {"origins": app.config['CORS_ORIGINS']}},
          supports_credentials=True)
-
-    # Initialize auth + shared middleware with app reference
-    init_auth(app)
-    init_middleware(app)
-
-    # Register blueprints
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(progress_bp, url_prefix='/api/progress')
-    app.register_blueprint(vocabulary_bp, url_prefix='/api/vocabulary')
-    app.register_blueprint(speech_bp, url_prefix='/api/speech')
-    app.register_blueprint(books_bp, url_prefix='/api/books')
-    init_books(app)
-    app.register_blueprint(ai_bp, url_prefix='/api/ai')
-    app.register_blueprint(notes_bp, url_prefix='/api/notes')
-    app.register_blueprint(tts_bp, url_prefix='/api/tts')
-    app.register_blueprint(admin_bp, url_prefix='/api/admin')
-    init_admin(app)
-
-    # Create planned compatibility tables and ensure admin user.
-    # Monolith startup now uses the same explicit table plan as the split runtime.
-    with app.app_context():
-        bootstrap_monolith_schema(bind=db.engine, metadata=db.metadata)
-        _ensure_quick_memory_context_columns()
-        _ensure_wrong_word_dimension_state_column()
-        _ensure_admin_user()
-
-    if os.environ.get('PYTEST_RUNNING') != '1':
-        initialize_sqlite_backup_runtime(app)
+    configure_monolith_compat_runtime(app, migrate=migrate)
 
     return app
 
@@ -217,6 +105,11 @@ def _print_banner(host: str, port: int) -> None:
     print("=" * 50)
 
 
+def _print_compatibility_notice() -> None:
+    print("[Compat] backend/app.py is a rollback and compatibility runtime.")
+    print("         Preferred local backend path is start-project.ps1 -> gateway-bff (:8000).")
+
+
 def _run_backend_server(flask_app: Flask, host: str, port: int) -> None:
     preferred_server = (os.environ.get('BACKEND_SERVER') or 'waitress').strip().lower()
 
@@ -237,8 +130,13 @@ def _run_backend_server(flask_app: Flask, host: str, port: int) -> None:
 
 
 if __name__ == '__main__':
+    require_explicit_monolith_compat_runtime(
+        runtime_label='backend/app.py',
+        startup_hint='start-monolith-compat.ps1',
+    )
     backend_host = _get_backend_host()
     backend_port = _get_backend_port()
 
     _print_banner(backend_host, backend_port)
+    _print_compatibility_notice()
     _run_backend_server(app, backend_host, backend_port)

@@ -43,7 +43,10 @@ def _book_status(book_id: str, generating: bool) -> str:
     return progress['status']  # 'done' | 'error' | 'idle'
 
 
-@tts_bp.route('/books-summary', methods=['GET'])
+tts_admin_bp = Blueprint('tts_admin_legacy', __name__)
+
+
+@tts_admin_bp.route('/books-summary', methods=['GET'])
 @admin_required
 def admin_books_summary(current_user):
     """所有词书 TTS 进度摘要."""
@@ -66,7 +69,7 @@ def admin_books_summary(current_user):
     return jsonify({'books': result}), 200
 
 
-@tts_bp.route('/generate/<book_id>', methods=['POST'])
+@tts_admin_bp.route('/generate/<book_id>', methods=['POST'])
 @admin_required
 def admin_generate_book(current_user, book_id):
     """触发后台生成任务（interrupted/error 状态可重新触发）."""
@@ -84,7 +87,7 @@ def admin_generate_book(current_user, book_id):
     return jsonify({'message': 'Generation started', 'total': total}), 202
 
 
-@tts_bp.route('/status/<book_id>', methods=['GET'])
+@tts_admin_bp.route('/status/<book_id>', methods=['GET'])
 @admin_required
 def admin_tts_status(current_user, book_id):
     """查询单个词书进度."""
@@ -269,7 +272,7 @@ def get_word_audio():
     return response
 
 
-@tts_bp.route('/admin/generate-words', methods=['POST'])
+@tts_admin_bp.route('/admin/generate-words', methods=['POST'])
 @admin_required
 def admin_generate_words(current_user):
     """
@@ -306,7 +309,7 @@ def admin_generate_words(current_user):
     }), 202
 
 
-@tts_bp.route('/admin/word-audio-status', methods=['GET'])
+@tts_admin_bp.route('/admin/word-audio-status', methods=['GET'])
 @admin_required
 def admin_word_audio_status(current_user):
     """单词离线 TTS 批量进度。"""

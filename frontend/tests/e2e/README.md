@@ -12,11 +12,9 @@
    pnpm --dir frontend exec playwright install chromium
    ```
 
-3. **Start backend server:**
+3. **Start split backend:**
    ```bash
-   cd backend
-   pip install -r requirements.txt
-   python app.py
+   powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
    ```
 
 4. **Start frontend server:**
@@ -30,6 +28,8 @@
 ```bash
 pnpm test:e2e
 ```
+
+`frontend/playwright.config.ts` now auto-starts only the frontend dev server. Keep the split backend running on `gateway-bff:8000` before launching the suite.
 
 ### Run specific test file:
 ```bash

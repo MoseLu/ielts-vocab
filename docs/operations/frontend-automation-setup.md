@@ -45,11 +45,10 @@ pnpm exec playwright test --ui
 
 ## Local Prerequisites
 
-1. Start the backend:
+1. Start the split backend:
 
 ```bash
-cd backend
-python app.py
+powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
 ```
 
 2. Start the frontend:
@@ -58,7 +57,7 @@ python app.py
 pnpm dev
 ```
 
-3. If needed, also verify the proxy path:
+3. If needed, also verify the production-style proxy path:
 
 ```text
 https://axiomaticworld.com -> natapp -> local :80 -> nginx -> local :3002

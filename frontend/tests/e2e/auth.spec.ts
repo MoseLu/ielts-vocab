@@ -1,12 +1,12 @@
 // ── E2E Tests: Auth Flow ───────────────────────────────────────────────────────
 //
 // Prerequisites (run once):
-//   cd backend && pip install -r requirements.txt
+//   pip install -r backend/requirements.txt
 //   pnpm exec playwright install chromium
 //
 // Start servers (two terminals):
 //   Terminal 1: pnpm run dev          # frontend at http://localhost:3020
-//   Terminal 2: cd backend && python app.py  # backend at http://localhost:5000
+//   Terminal 2: powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
 //
 // Run tests:
 //   pnpm exec playwright test

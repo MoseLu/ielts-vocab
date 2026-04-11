@@ -5,6 +5,7 @@ from runtime_paths import ensure_shared_package_paths
 
 ensure_shared_package_paths()
 
+from compat_runtime_guard import require_explicit_monolith_compat_runtime  # noqa: E402
 from platform_sdk.asr_runtime import (  # noqa: E402
     create_socketio_service,
     print_socketio_banner,
@@ -37,5 +38,9 @@ def run_server():
 
 
 if __name__ == '__main__':
+    require_explicit_monolith_compat_runtime(
+        runtime_label='backend/speech_service.py',
+        startup_hint='start-monolith-compat.ps1',
+    )
     print_banner()
     run_server()

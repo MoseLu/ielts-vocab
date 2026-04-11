@@ -7,6 +7,7 @@
   "baseline": {
     "frontend/src/components/practice/utils.audio.playback.ts": 508,
     "realtime_waveform.md": 1155,
-    "scripts/merge-learning-core-from-sqlite.py": 577
+    "scripts/merge-learning-core-from-sqlite.py": 577,
+    "start-project.ps1": 517
   }
 }
