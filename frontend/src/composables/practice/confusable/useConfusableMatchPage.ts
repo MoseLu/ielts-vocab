@@ -413,6 +413,7 @@ export function useConfusableMatchPage() {
   }, [bookId, chapterId, resetBoardForWords, showToast])
 
   const buildChapterPath = useCallback((nextChapterId: string | number) => {
+    if (!bookId) return '/practice?mode=match'
     return buildBookPracticePath({ id: bookId, practice_mode: 'match' }, nextChapterId)
   }, [bookId])
 

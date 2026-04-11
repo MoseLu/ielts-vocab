@@ -1,6 +1,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import type {
   LastState,
+  OptionItem,
   PracticeMode,
   QuickMemoryRecordState,
   SmartDimension,
@@ -25,7 +26,7 @@ export interface UsePracticePageActionsParams {
   correctCount: number
   wrongCount: number
   correctIndex: number
-  options: Array<{ text: string }>
+  options: OptionItem[]
   wrongSelections: number[]
   choiceOptionsReady: boolean
   showResult: boolean

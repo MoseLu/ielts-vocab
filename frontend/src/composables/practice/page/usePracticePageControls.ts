@@ -7,6 +7,7 @@ import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../../.
 import { persistWrongWordsProgress } from '../../../components/practice/page/practicePageHelpers'
 import type {
   LastState,
+  AppSettings,
   PracticeMode,
   Word,
   WordStatuses,
@@ -26,9 +27,7 @@ interface UsePracticePageControlsParams {
   correctCount: number
   wrongCount: number
   errorReviewRound: number
-  settings: {
-    repeatWrong?: boolean
-  }
+  settings: AppSettings
   practiceBookId: string | null
   reviewSummary: {
     has_more: boolean
@@ -85,13 +84,10 @@ export function usePracticePageControls({
   queue,
   queueIndex,
   vocabulary,
-  correctCount,
-  wrongCount,
   errorReviewRound,
   settings,
   practiceBookId,
   reviewSummary,
-  navigate,
   showToast,
   beginSession,
   computeChapterWordsLearned,

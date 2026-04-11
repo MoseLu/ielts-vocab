@@ -5,7 +5,6 @@ import type {
   LastState,
   PracticeMode,
   ProgressData,
-  SmartDimension,
   Word,
   WordStatuses,
 } from '../../../components/practice/types'
@@ -22,7 +21,6 @@ import {
   createResetProgressState,
   filterVocabularyForMode,
   normalizeOptionWordKey,
-  persistWrongWordsProgress,
   readWrongWordsProgress,
   type ReviewQueueContext,
   type ReviewQueueSummary,
@@ -89,9 +87,6 @@ export function usePracticePageData({
   settings,
   navigate,
   showToast,
-  vocabulary,
-  queue,
-  queueIndex,
   setVocabulary,
   setQueue,
   setQueueIndex,
@@ -351,7 +346,7 @@ export function usePracticePageData({
           const words = filterVocabularyForMode(rawWords, mode)
           setNoListeningPresets(mode === 'listening' && words.length === 0 && rawWords.length > 0)
           const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-          let progress = saved[`${bookId}_${chapterId}`] ?? null
+          let progress: ProgressData | null = saved[`${bookId}_${chapterId}`] ?? null
           if (!progress) {
             try {
               const remote = await apiFetch<{ chapter_progress?: Record<string, ProgressData> }>(
@@ -374,7 +369,7 @@ export function usePracticePageData({
           const words = filterVocabularyForMode(rawWords, mode)
           setNoListeningPresets(mode === 'listening' && words.length === 0 && rawWords.length > 0)
           const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('book_progress') || '{}')
-          let progress = saved[bookId] ?? null
+          let progress: ProgressData | null = saved[bookId] ?? null
           if (!progress) {
             try {
               const remote = await apiFetch<{ progress?: ProgressData }>(`/api/books/progress/${bookId}`)
@@ -399,7 +394,7 @@ export function usePracticePageData({
         const words = filterVocabularyForMode(rawWords, mode)
         setNoListeningPresets(mode === 'listening' && words.length === 0 && rawWords.length > 0)
         const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('day_progress') || '{}')
-        let progress = saved[String(currentDay)] ?? null
+        let progress: ProgressData | null = saved[String(currentDay)] ?? null
         if (!progress) {
           try {
             const remote = await apiFetch<{ progress?: Array<{ day: number; current_index: number; correct_count: number; wrong_count: number; is_completed?: boolean }> }>('/api/progress')

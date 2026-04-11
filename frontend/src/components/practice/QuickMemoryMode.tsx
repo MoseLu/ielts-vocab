@@ -41,7 +41,6 @@ export default function QuickMemoryMode({
   chapterId,
   bookChapters,
   reviewMode,
-  errorMode = false,
   reviewHasMore,
   onContinueReview,
   buildChapterPath,

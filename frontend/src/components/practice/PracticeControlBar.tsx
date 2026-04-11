@@ -145,7 +145,7 @@ export default function PracticeControlBar({
                     <button
                       key={i + 1}
                       className={`popover-option ${currentDay === i + 1 ? 'active' : ''}`}
-                      onClick={() => onDayChange(i + 1)}
+                      onClick={() => onDayChange?.(i + 1)}
                     >
                       <span className={`ctx-radio ${currentDay === i + 1 ? 'checked' : ''}`} />
                       <span className="ctx-opt-label">Day {i + 1}</span>

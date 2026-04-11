@@ -5,6 +5,7 @@ import type {
   AppSettings,
   Chapter,
   LastState,
+  OptionItem,
   PracticeMode,
   QuickMemoryRecordState,
   RadioQuickSettings,
@@ -46,7 +47,7 @@ interface PracticePageContentProps {
   wordStatuses: WordStatuses
   settings: AppSettings
   radioQuickSettings: RadioQuickSettings
-  handleRadioSettingChange: (key: string, value: boolean) => void
+  handleRadioSettingChange: (key: keyof RadioQuickSettings, value: string | boolean) => void
   markRadioSessionInteraction: () => void
   handleRadioProgressChange: (correctDelta: number, wrongDelta?: number) => void
   reviewMode: boolean
@@ -77,7 +78,7 @@ interface PracticePageContentProps {
   stopRecording: () => void
   playWord: (word: string) => void
   smartDimension: SmartDimension
-  options: Array<{ text: string }>
+  options: OptionItem[]
   choiceOptionsReady: boolean
   selectedAnswer: number | null
   wrongSelections: number[]

@@ -1,6 +1,6 @@
 // ── Options Mode Component (Listening / Meaning / Smart) ───────────────────────
 
-import type { OptionsModeProps, SmartDimension } from './types'
+import type { OptionsModeProps } from './types'
 import { playExampleAudio } from './utils'
 import {
   BottomBar,

@@ -1,4 +1,4 @@
-import type { Word } from '../types'
+import type { PracticeMode, Word } from '../types'
 
 export interface QuickMemorySessionResult {
   wordIdx: number
@@ -29,7 +29,7 @@ interface QuickMemorySummaryProps {
   buildChapterPath?: (chapterId: string | number) => string
   sessionDurationSeconds?: number | null
   onRestart: () => void
-  onModeChange: (mode: string) => void
+  onModeChange: (mode: PracticeMode) => void
   onNavigate: (path: string) => void
 }
 

@@ -87,7 +87,7 @@ export default function HomePage() {
         <ChapterModal
           key={`chapter-${selectedBook.id}-${showChapterModal}`}
           book={selectedBook}
-          progress={selectedBookProgress}
+          progress={selectedBookProgress ?? null}
           onClose={closeChapterModal}
           onSelectChapter={handleSelectChapter}
         />

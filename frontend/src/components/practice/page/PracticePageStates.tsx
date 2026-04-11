@@ -105,7 +105,6 @@ interface PracticePageCompletedStateProps {
 export function PracticePageCompletedState({
   navigate,
   bookId,
-  chapterId,
   currentDay,
   correctCount,
   wrongCount,

@@ -95,6 +95,7 @@ export function buildStudyBookCards(
       const progressPercent = Math.min(100, Math.round(progressRatio * 100))
       const remainingWords = Math.max(0, safeWordCount - currentIndex)
       const isConfusable = String(book.id) === 'ielts_confusable_match' && Number(book.group_count) > 0
+      const displayUnit: '词' | '组' = isConfusable ? '组' : '词'
       const displayTotalCount = isConfusable ? Number(book.group_count) || 0 : safeWordCount
       const displayCurrentCount = isConfusable
         ? Math.min(displayTotalCount, Math.max(currentIndex > 0 ? 1 : 0, Math.round(progressRatio * displayTotalCount)))
@@ -109,7 +110,7 @@ export function buildStudyBookCards(
         displayCurrentCount,
         displayTotalCount,
         displayRemainingCount,
-        displayUnit: isConfusable ? '组' : '词',
+        displayUnit,
         isActive: currentIndex > 0 && progressPercent < 100,
         isComplete: progressPercent >= 100,
       }

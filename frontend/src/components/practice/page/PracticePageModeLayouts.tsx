@@ -9,6 +9,7 @@ import type {
   AppSettings,
   Chapter,
   LastState,
+  OptionItem,
   PracticeMode,
   SmartDimension,
   SpellingSubmitSource,
@@ -180,7 +181,7 @@ interface PracticePageOptionsLayoutProps extends SharedModeLayoutProps {
   lastState: LastState | null
   smartDimension: SmartDimension
   reviewMode: boolean
-  options: Array<{ text: string }>
+  options: OptionItem[]
   optionsLoading: boolean
   selectedAnswer: number | null
   wrongSelections: number[]

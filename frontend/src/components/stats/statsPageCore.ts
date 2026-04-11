@@ -123,7 +123,7 @@ export function fmtDuration(secs: number): string {
   return `${Math.floor(minutes / 60)}小时${minutes % 60 ? `${minutes % 60}分钟` : ''}`
 }
 
-export function fmtDate(dateStr: string, range: RangeKey): string {
+export function fmtDate(dateStr: string, _range: RangeKey): string {
   const date = new Date(dateStr)
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
