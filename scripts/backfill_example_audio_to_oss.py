@@ -5,22 +5,11 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-BACKEND_PATH = REPO_ROOT / 'backend'
-SDK_PATH = REPO_ROOT / 'packages' / 'platform-sdk'
-TTS_MEDIA_SERVICE_PATH = REPO_ROOT / 'services' / 'tts-media-service'
-for candidate in (BACKEND_PATH, SDK_PATH, TTS_MEDIA_SERVICE_PATH):
-    if str(candidate) not in sys.path:
-        sys.path.insert(0, str(candidate))
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-from platform_sdk.runtime_env import load_split_service_env
-
-load_split_service_env(service_name='tts-media-service')
-
-import runtime_helpers as runtime
-from services.books_catalog_service import load_book_vocabulary
-from services.books_registry_service import VOCAB_BOOKS
-from services.tts_batch_generation_service import get_book_examples
+import example_audio_oss_support as support
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,107 +33,168 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help='Stop after processing N distinct example-audio objects. 0 means no limit.',
     )
+    parser.add_argument(
+        '--repair-size-mismatch',
+        action='store_true',
+        help='Also overwrite OSS objects whose byte length no longer matches the valid local cache file.',
+    )
+    parser.add_argument(
+        '--repair-content-type-mismatch',
+        action='store_true',
+        help='Also rewrite OSS objects whose content type metadata drifted from audio/mpeg.',
+    )
+    parser.add_argument(
+        '--generate-missing',
+        action='store_true',
+        help='Synthesize and upload missing example-audio objects when neither OSS nor the local cache has bytes.',
+    )
     return parser.parse_args()
 
 
-def resolve_book_ids(selected: list[str] | None) -> list[str]:
-    available = {book['id'] for book in VOCAB_BOOKS}
-    if not selected:
-        return [book['id'] for book in VOCAB_BOOKS]
-    missing = [book_id for book_id in selected if book_id not in available]
-    if missing:
-        raise ValueError(f'Unknown book ids: {missing}')
-    return selected
+def _print_summary(stats: dict[str, int]) -> None:
+    print('Summary:')
+    for key, value in stats.items():
+        print(f'  {key}: {value}')
 
 
-def iter_example_audio_records(book_ids: list[str]):
-    seen_object_keys: set[str] = set()
-    processed = 0
-    for book_id in book_ids:
-        examples = get_book_examples(book_id, load_book_vocabulary=load_book_vocabulary)
-        for example in examples:
-            sentence = str(example.get('sentence') or '').strip()
-            if not sentence:
-                continue
-            model, voice = runtime.example_tts_identity(sentence)
-            cache_file = runtime.example_cache_file(sentence, model, voice)
-            object_key = runtime.example_audio_object_key(sentence, model, voice)
-            if object_key in seen_object_keys:
-                continue
-            seen_object_keys.add(object_key)
-            processed += 1
-            yield {
-                'index': processed,
-                'book_id': book_id,
-                'sentence': sentence,
-                'model': model,
-                'voice': voice,
-                'cache_file': cache_file,
-                'object_key': object_key,
-            }
+def _upload_record(
+    record,
+    *,
+    audio_bytes: bytes,
+    source_label: str,
+    dry_run: bool,
+    reason: str,
+    stats: dict[str, int],
+) -> None:
+    if dry_run:
+        print(f'[dry-run] {reason} {record.object_key} from {source_label}')
+        stats['would_upload'] += 1
+        return
+
+    metadata = support.runtime.put_example_audio_oss_bytes(
+        record.sentence,
+        record.model,
+        record.voice,
+        audio_bytes,
+    )
+    if metadata is None:
+        print(f'[failed] {record.object_key} from {source_label}')
+        stats['upload_failed'] += 1
+        return
+
+    print(f'[uploaded] {metadata.object_key} ({metadata.byte_length} bytes)')
+    stats['uploaded'] += 1
+
+
+def _repair_source_for_result(result, *, generate_missing: bool) -> tuple[bytes, str] | None:
+    record = result.record
+    if record.cache_file.exists() and support.runtime.is_probably_valid_mp3_file(record.cache_file):
+        return record.cache_file.read_bytes(), str(record.cache_file)
+    if result.status == support.CONTENT_TYPE_MISMATCH:
+        payload = support.runtime.fetch_example_audio_oss_payload(
+            record.sentence,
+            record.model,
+            record.voice,
+        )
+        if payload is not None and payload.body:
+            return payload.body, f'oss:{record.object_key}'
+    if (
+        generate_missing
+        and result.status in {
+            support.MISSING_EVERYWHERE,
+            support.MISSING_IN_OSS,
+            support.INVALID_LOCAL_MISSING_IN_OSS,
+        }
+    ):
+        audio_bytes = support.runtime.synthesize_example_audio(
+            record.sentence,
+            record.model,
+            record.voice,
+        )
+        if audio_bytes:
+            return audio_bytes, f'generated:{record.object_key}'
+    return None
 
 
 def main() -> int:
     args = parse_args()
-    if not runtime.bucket_is_configured():
+    if not support.runtime.bucket_is_configured():
         raise RuntimeError('Aliyun OSS is not configured for tts-media-service.')
 
-    book_ids = resolve_book_ids(args.book_ids)
+    book_ids = support.resolve_book_ids(args.book_ids)
     stats = {
         'already_in_oss': 0,
         'uploaded': 0,
         'would_upload': 0,
         'missing_local': 0,
         'invalid_local': 0,
+        'size_mismatch': 0,
+        'content_type_mismatch': 0,
         'upload_failed': 0,
     }
 
-    for record in iter_example_audio_records(book_ids):
-        if args.limit > 0 and record['index'] > args.limit:
+    for result in support.iter_example_audio_audit_results(book_ids):
+        record = result.record
+        if args.limit > 0 and record.index > args.limit:
             break
 
-        sentence = record['sentence']
-        model = record['model']
-        voice = record['voice']
-        cache_file = record['cache_file']
-        object_key = record['object_key']
-
-        if runtime.resolve_example_audio_oss_metadata(sentence, model, voice) is not None:
+        if result.status == support.OSS_PRESENT:
             stats['already_in_oss'] += 1
             continue
 
-        if not cache_file.exists():
+        if result.status == support.MISSING_EVERYWHERE and not args.generate_missing:
             stats['missing_local'] += 1
             continue
 
-        if not runtime.is_probably_valid_mp3_file(cache_file):
-            runtime.remove_invalid_cached_audio(cache_file)
-            stats['invalid_local'] += 1
+        if result.status == support.INVALID_LOCAL_MISSING_IN_OSS:
+            support.runtime.remove_invalid_cached_audio(record.cache_file)
+            if not args.generate_missing:
+                stats['invalid_local'] += 1
+                continue
+
+        if result.status == support.SIZE_MISMATCH and not args.repair_size_mismatch:
+            print(
+                f'[mismatch] {record.object_key} '
+                f'local={result.local_byte_length} oss={result.oss_byte_length}'
+            )
+            stats['size_mismatch'] += 1
             continue
 
-        if args.dry_run:
-            print(f'[dry-run] upload {object_key} from {cache_file}')
-            stats['would_upload'] += 1
+        if result.status == support.CONTENT_TYPE_MISMATCH and not args.repair_content_type_mismatch:
+            print(
+                f'[content-type-mismatch] {record.object_key} '
+                f'expected={support.runtime.DEFAULT_EXAMPLE_AUDIO_CONTENT_TYPE} '
+                f'oss={result.oss_content_type}'
+            )
+            stats['content_type_mismatch'] += 1
             continue
 
-        metadata = runtime.put_example_audio_oss_bytes(
-            sentence,
-            model,
-            voice,
-            cache_file.read_bytes(),
-        )
-        if metadata is None:
-            print(f'[failed] {object_key} from {cache_file}')
+        try:
+            repair_source = _repair_source_for_result(result, generate_missing=args.generate_missing)
+        except Exception as exc:
+            print(f'[failed] {record.object_key} repair source error: {exc}')
+            stats['upload_failed'] += 1
+            continue
+        if repair_source is None:
+            print(f'[failed] {record.object_key} missing repair source bytes')
             stats['upload_failed'] += 1
             continue
 
-        print(f'[uploaded] {metadata.object_key} ({metadata.byte_length} bytes)')
-        stats['uploaded'] += 1
+        reason = 'repair' if result.status in {support.SIZE_MISMATCH, support.CONTENT_TYPE_MISMATCH} else 'upload'
+        audio_bytes, source_label = repair_source
+        if source_label.startswith('generated:'):
+            reason = 'generate'
+        _upload_record(
+            record,
+            audio_bytes=audio_bytes,
+            source_label=source_label,
+            dry_run=args.dry_run,
+            reason=reason,
+            stats=stats,
+        )
 
-    print('Summary:')
-    for key, value in stats.items():
-        print(f'  {key}: {value}')
-    return 1 if stats['upload_failed'] else 0
+    _print_summary(stats)
+    return 1 if stats['upload_failed'] or stats['size_mismatch'] or stats['content_type_mismatch'] else 0
 
 
 if __name__ == '__main__':
