@@ -116,17 +116,12 @@ const quitWordDetails = {
   },
 }
 
-const baseStyles = readFileSync(
-  new URL('../../../styles/base.scss', import.meta.url),
-  'utf-8',
-)
-
+const baseStyles = readFileSync(new URL('../../../styles/base.scss', import.meta.url), 'utf-8')
 const readRootLayerToken = (tokenName: string) => {
   const escapedName = tokenName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = baseStyles.match(new RegExp(`${escapedName}:\\s*(\\d+)`, 'u'))
   return Number(match?.[1] ?? 0)
 }
-
 describe('GlobalWordSearch', () => {
   beforeEach(() => {
     apiFetchMock.mockReset()
