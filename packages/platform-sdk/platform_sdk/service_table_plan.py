@@ -29,6 +29,7 @@ AI_EXECUTION_EVENTING_TABLES = frozenset({
     'ai_execution_inbox_events',
 })
 TTS_MEDIA_EVENTING_TABLES = frozenset({
+    'tts_media_assets',
     'tts_media_outbox_events',
     'tts_media_inbox_events',
 })
@@ -40,6 +41,12 @@ ADMIN_OPS_EVENTING_TABLES = frozenset({
     'admin_ops_outbox_events',
     'admin_ops_inbox_events',
     'admin_projection_cursors',
+    'admin_projected_daily_summaries',
+    'admin_projected_prompt_runs',
+    'admin_projected_tts_media',
+    'admin_projected_wrong_words',
+    'admin_projected_study_sessions',
+    'admin_projected_users',
 })
 
 IDENTITY_SERVICE_TABLES = frozenset({
@@ -83,12 +90,18 @@ CUSTOM_BOOK_SHADOW_TABLES = frozenset({
 })
 
 NOTES_SERVICE_TABLES = frozenset({
+    'notes_projected_prompt_runs',
+    'notes_projected_study_sessions',
+    'notes_projected_wrong_words',
     'user_learning_notes',
     'user_daily_summaries',
     'user_word_notes',
 }) | NOTES_EVENTING_TABLES
 
 AI_EXECUTION_SERVICE_TABLES = frozenset({
+    'ai_projected_daily_summaries',
+    'ai_projected_wrong_words',
+    'ai_prompt_runs',
     'user_conversation_history',
     'user_memory',
     'search_cache',
@@ -102,11 +115,35 @@ ASR_SERVICE_TABLES = ASR_EVENTING_TABLES
 @dataclass(frozen=True)
 class ServiceTablePlan:
     owned_tables: frozenset[str]
-    shadow_tables: frozenset[str] = frozenset()
+    read_only_tables: frozenset[str] = frozenset()
+    transitional_tables: frozenset[str] = frozenset()
+
+    @property
+    def non_owned_tables(self) -> frozenset[str]:
+        return self.read_only_tables | self.transitional_tables
+
+    @property
+    def shadow_tables(self) -> frozenset[str]:
+        # Compatibility alias for callers that still consume the old Wave 3 term.
+        return self.non_owned_tables
 
     @property
     def bootstrap_tables(self) -> frozenset[str]:
-        return self.owned_tables | self.shadow_tables
+        return self.owned_tables | self.non_owned_tables
+
+
+@dataclass(frozen=True)
+class TableBoundaryAuditRow:
+    table_name: str
+    owner_services: tuple[str, ...]
+    read_only_services: tuple[str, ...] = ()
+    transitional_services: tuple[str, ...] = ()
+
+    @property
+    def owner_service(self) -> str | None:
+        if len(self.owner_services) == 1:
+            return self.owner_services[0]
+        return None
 
 
 SERVICE_TABLE_PLANS: dict[str, ServiceTablePlan] = {
@@ -116,28 +153,31 @@ SERVICE_TABLE_PLANS: dict[str, ServiceTablePlan] = {
     ),
     'learning-core-service': ServiceTablePlan(
         owned_tables=LEARNING_CORE_SERVICE_TABLES,
-        shadow_tables=AUTH_CONTEXT_TABLES | CUSTOM_BOOK_SHADOW_TABLES,
+        read_only_tables=AUTH_CONTEXT_TABLES,
+        transitional_tables=CUSTOM_BOOK_SHADOW_TABLES,
     ),
     'catalog-content-service': ServiceTablePlan(
         owned_tables=CATALOG_CONTENT_SERVICE_TABLES,
-        shadow_tables=AUTH_CONTEXT_TABLES | {'user_word_notes'},
+        read_only_tables=AUTH_CONTEXT_TABLES,
+        transitional_tables={'user_word_notes'},
     ),
     'notes-service': ServiceTablePlan(
         owned_tables=NOTES_SERVICE_TABLES,
-        shadow_tables=AUTH_CONTEXT_TABLES | LEARNING_CORE_SERVICE_TABLES | {'custom_books'},
+        read_only_tables=AUTH_CONTEXT_TABLES | {'custom_books'},
+        transitional_tables=LEARNING_CORE_SERVICE_TABLES,
     ),
     'ai-execution-service': ServiceTablePlan(
         owned_tables=AI_EXECUTION_SERVICE_TABLES,
-        shadow_tables=AUTH_CONTEXT_TABLES | LEARNING_CORE_SERVICE_TABLES | NOTES_SERVICE_TABLES | CATALOG_CONTENT_SERVICE_TABLES,
+        read_only_tables=AUTH_CONTEXT_TABLES,
+        transitional_tables=LEARNING_CORE_SERVICE_TABLES | NOTES_SERVICE_TABLES | CATALOG_CONTENT_SERVICE_TABLES,
     ),
     'admin-ops-service': ServiceTablePlan(
         owned_tables=ADMIN_OPS_SERVICE_TABLES,
-        shadow_tables=AUTH_CONTEXT_TABLES | LEARNING_CORE_SERVICE_TABLES | CATALOG_CONTENT_SERVICE_TABLES,
+        transitional_tables=AUTH_CONTEXT_TABLES | LEARNING_CORE_SERVICE_TABLES | CATALOG_CONTENT_SERVICE_TABLES,
     ),
     'tts-media-service': ServiceTablePlan(owned_tables=TTS_MEDIA_SERVICE_TABLES),
     'asr-service': ServiceTablePlan(owned_tables=ASR_SERVICE_TABLES),
 }
-
 
 
 def get_service_table_plan(service_name: str) -> ServiceTablePlan:
@@ -147,37 +187,112 @@ def get_service_table_plan(service_name: str) -> ServiceTablePlan:
         raise KeyError(f'Unknown microservice table plan: {service_name}') from exc
 
 
-
 def get_service_owned_table_names(service_name: str) -> frozenset[str]:
     return get_service_table_plan(service_name).owned_tables
 
+
+def get_service_read_only_table_names(service_name: str) -> frozenset[str]:
+    return get_service_table_plan(service_name).read_only_tables
+
+
+def get_service_transitional_table_names(service_name: str) -> frozenset[str]:
+    return get_service_table_plan(service_name).transitional_tables
 
 
 def get_service_bootstrap_table_names(service_name: str) -> frozenset[str]:
     return get_service_table_plan(service_name).bootstrap_tables
 
 
-
 def iter_stateful_service_names(*, include_shadow_only: bool = True) -> list[str]:
     names: list[str] = []
     for service_name, plan in SERVICE_TABLE_PLANS.items():
-        if plan.owned_tables or (include_shadow_only and plan.shadow_tables):
+        if plan.owned_tables or (include_shadow_only and plan.non_owned_tables):
             names.append(service_name)
     return names
 
 
+def iter_table_boundary_audit_rows() -> list[TableBoundaryAuditRow]:
+    owner_by_table: dict[str, list[str]] = {}
+    read_only_by_table: dict[str, list[str]] = {}
+    transitional_by_table: dict[str, list[str]] = {}
+    planned_tables: set[str] = set()
+
+    for service_name, plan in SERVICE_TABLE_PLANS.items():
+        planned_tables.update(plan.bootstrap_tables)
+
+        for table_name in plan.owned_tables:
+            owner_by_table.setdefault(table_name, []).append(service_name)
+
+        for table_name in plan.read_only_tables:
+            read_only_by_table.setdefault(table_name, []).append(service_name)
+
+        for table_name in plan.transitional_tables:
+            transitional_by_table.setdefault(table_name, []).append(service_name)
+
+    return [
+        TableBoundaryAuditRow(
+            table_name=table_name,
+            owner_services=tuple(sorted(owner_by_table.get(table_name, ()))),
+            read_only_services=tuple(sorted(read_only_by_table.get(table_name, ()))),
+            transitional_services=tuple(sorted(transitional_by_table.get(table_name, ()))),
+        )
+        for table_name in sorted(planned_tables)
+    ]
+
 
 def validate_service_table_plans(available_table_names: set[str]) -> list[str]:
     errors: list[str] = []
+    owner_by_table: dict[str, str] = {}
+
     for service_name, plan in SERVICE_TABLE_PLANS.items():
-        overlap = plan.owned_tables & plan.shadow_tables
-        if overlap:
+        overlap_owned_read_only = plan.owned_tables & plan.read_only_tables
+        if overlap_owned_read_only:
             errors.append(
-                f'{service_name} declares the same tables as owned and shadow: {sorted(overlap)}'
+                f'{service_name} declares the same tables as owned and read-only: {sorted(overlap_owned_read_only)}'
             )
+
+        overlap_owned_transitional = plan.owned_tables & plan.transitional_tables
+        if overlap_owned_transitional:
+            errors.append(
+                f'{service_name} declares the same tables as owned and transitional: {sorted(overlap_owned_transitional)}'
+            )
+
+        overlap_read_only_transitional = plan.read_only_tables & plan.transitional_tables
+        if overlap_read_only_transitional:
+            errors.append(
+                f'{service_name} declares the same tables as read-only and transitional: {sorted(overlap_read_only_transitional)}'
+            )
+
         unknown = plan.bootstrap_tables - available_table_names
         if unknown:
             errors.append(
                 f'{service_name} references unknown tables: {sorted(unknown)}'
             )
+
+        for table_name in sorted(plan.owned_tables):
+            previous_owner = owner_by_table.get(table_name)
+            if previous_owner is not None:
+                errors.append(
+                    f'table {table_name} is owned by both {previous_owner} and {service_name}'
+                )
+            else:
+                owner_by_table[table_name] = service_name
+
+    for service_name, plan in SERVICE_TABLE_PLANS.items():
+        unowned_non_owned = sorted(
+            table_name
+            for table_name in plan.non_owned_tables
+            if table_name not in owner_by_table
+        )
+        if unowned_non_owned:
+            errors.append(
+                f'{service_name} references non-owned tables without an owning service: {unowned_non_owned}'
+            )
+
+    unowned_tables = sorted(available_table_names - set(owner_by_table))
+    if unowned_tables:
+        errors.append(
+            f'tables missing an owning service assignment: {unowned_tables}'
+        )
+
     return errors
