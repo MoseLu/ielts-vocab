@@ -8,7 +8,10 @@ from platform_sdk.admin_tts_media_projection_application import (
     drain_tts_media_generated_queue,
 )
 from platform_sdk.domain_event_publisher import publish_outbox_batch
-from platform_sdk.tts_media_event_application import record_tts_media_materialization
+from platform_sdk.tts_media_event_application import (
+    build_tts_media_aggregate_id,
+    record_tts_media_materialization,
+)
 
 from models import (
     AdminOpsInboxEvent,
@@ -109,6 +112,37 @@ def test_tts_media_materialization_queues_outbox_event(app):
         assert event is not None
         assert event.topic == 'tts.media.generated'
         assert event.aggregate_id == 'example-audio:example-asset.mp3'
+
+
+def test_tts_media_materialization_hashes_long_outbox_aggregate_id(app):
+    with app.app_context():
+        user = _create_user(username='wave5-tts-media-long-id-user')
+        media_id = (
+            'tts-media-service/example-audio/'
+            'azure-rest-audio-24khz-48kbitrate-mono-mp3-azure-sentence-v4-ielts-rp-female/'
+            'en-gb-libbyneural/72af16e5e983a2fe.mp3'
+        )
+
+        asset, created = record_tts_media_materialization(
+            media_kind='example-audio',
+            media_id=media_id,
+            user_id=user.id,
+            tts_provider='azure',
+            storage_provider='aliyun-oss',
+            model='azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-sentence-v4-ielts-rp-female',
+            voice='en-GB-LibbyNeural',
+            byte_length=17856,
+            generated_at=datetime(2026, 4, 11, 14, 26, 30),
+            headers={'request_id': 'req-tts-long-1', 'trace_id': 'trace-tts-long-1'},
+        )
+        event = TTSMediaOutboxEvent.query.order_by(TTSMediaOutboxEvent.id.desc()).first()
+
+        assert created is True
+        assert asset.media_id == media_id
+        assert event is not None
+        assert event.aggregate_id == build_tts_media_aggregate_id('example-audio', media_id)
+        assert event.aggregate_id.startswith('example-audio:sha1:')
+        assert len(event.aggregate_id) <= 160
 
 
 def test_tts_media_outbox_publish_and_admin_projection_consume_flow(app):
