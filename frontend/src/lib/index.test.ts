@@ -30,6 +30,20 @@ describe('apiFetch', () => {
     expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent))
   })
 
+  it('keeps the local session when token refresh is temporarily unavailable', async () => {
+    const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent')
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'busy' }), { status: 503 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'busy' }), { status: 503 }))
+
+    await expect(apiFetch('/api/books/my')).rejects.toThrow('服务暂时不可用，请稍后重试')
+
+    expect(global.fetch).toHaveBeenCalledTimes(3)
+    expect(dispatchEventSpy).not.toHaveBeenCalled()
+  })
+
   it('formats retry_after responses into readable lockout messages', async () => {
     setAuthSessionActive(false)
     vi.mocked(global.fetch).mockResolvedValueOnce(

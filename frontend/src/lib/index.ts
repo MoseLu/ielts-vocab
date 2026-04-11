@@ -33,10 +33,13 @@ export function buildApiUrl(path: string): string {
 // • Always sends credentials (cookies) so the HttpOnly access_token is included
 // • On 401, attempts one silent token refresh via POST /api/auth/refresh
 // • If refresh succeeds, retries the original request once
-// • If refresh fails, fires 'auth:session-expired' so AuthContext can clear state
+// • If refresh fails with 401, fires 'auth:session-expired' so AuthContext can clear state
+// • If refresh fails because the backend is temporarily unavailable, keeps local session state
 
 let _refreshing: Promise<void> | null = null
 let _authSessionActive = false
+const AUTH_REFRESH_AUTH_FAILED = 'auth_failed'
+const AUTH_REFRESH_TEMPORARILY_UNAVAILABLE = 'temporarily_unavailable'
 
 export function setAuthSessionActive(active: boolean): void {
   _authSessionActive = active
@@ -93,15 +96,27 @@ async function _doRefresh(): Promise<void> {
       })
       if (r.ok) return
       // A real 401 means the token is genuinely expired — don't retry
-      if (r.status === 401) throw new Error('auth_failed')
+      if (r.status === 401) throw new Error(AUTH_REFRESH_AUTH_FAILED)
       // Any other HTTP error: fall through to retry
       throw new Error(`refresh_http_${r.status}`)
     } catch (err) {
-      const isAuthFailure = err instanceof Error && err.message === 'auth_failed'
+      const isAuthFailure = err instanceof Error && err.message === AUTH_REFRESH_AUTH_FAILED
       if (isAuthFailure || attempt === 1) throw err
       // Wait 1.5 s then retry (covers brief tunnel reconnection)
       await new Promise(res => setTimeout(res, 1500))
     }
+  }
+}
+
+export async function refreshAuthSession(): Promise<'success' | 'auth_failed' | 'temporarily_unavailable'> {
+  try {
+    await _attemptRefresh()
+    return 'success'
+  } catch (error) {
+    if (error instanceof Error && error.message === AUTH_REFRESH_AUTH_FAILED) {
+      return 'auth_failed'
+    }
+    return AUTH_REFRESH_TEMPORARILY_UNAVAILABLE
   }
 }
 
@@ -172,22 +187,30 @@ export async function apiFetch<T>(
     !url.includes('/api/auth/refresh') &&
     !url.includes('/api/auth/logout')
   ) {
-    try {
-      await _attemptRefresh()
-      // Retry original request — cookies now carry the new access_token
+    const refreshResult = await refreshAuthSession()
+    if (refreshResult === 'success') {
       const retry = await fetch(url, init)
+      if (retry.status === 401) {
+        if (_authSessionActive) {
+          window.dispatchEvent(new CustomEvent('auth:session-expired'))
+        }
+        throw new Error('登录已过期，请重新登录')
+      }
       if (!retry.ok) {
         const err = await retry.json().catch(() => ({ error: '请求失败，请稍后重试' }))
         throw new Error(_buildApiErrorMessage(retry.status, err))
       }
       return retry.json() as Promise<T>
-    } catch {
-      // Refresh failed — session truly expired
+    }
+
+    if (refreshResult === 'auth_failed') {
       if (_authSessionActive) {
         window.dispatchEvent(new CustomEvent('auth:session-expired'))
       }
       throw new Error('登录已过期，请重新登录')
     }
+
+    throw new Error('服务暂时不可用，请稍后重试')
   }
 
   if (!response.ok) {
