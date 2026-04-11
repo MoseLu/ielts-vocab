@@ -169,7 +169,7 @@ export function useCreateCustomBookPage() {
           : '词书已创建',
         'success',
       )
-      navigate('/books')
+      navigate('/plan')
     } catch (error) {
       setFormError(error instanceof Error ? error.message : '词书保存失败')
     } finally {
@@ -221,6 +221,6 @@ export function useCreateCustomBookPage() {
     handleDrop,
     handleCsvFile,
     saveBook,
-    cancel: () => navigate('/books'),
+    cancel: () => navigate('/plan'),
   }
 }

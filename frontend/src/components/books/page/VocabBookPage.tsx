@@ -120,7 +120,6 @@ function VocabBookPage() {
     closeChapterModal,
     fallbackToPlanModal,
     closePlanModal,
-    navigateToCreateBook,
   } = useVocabBookPage()
 
   return (
@@ -164,9 +163,6 @@ function VocabBookPage() {
               ))}
             </div>
           </div>
-          <button type="button" className="vb-create-btn" onClick={navigateToCreateBook}>
-            创建词书
-          </button>
         </div>
       </PageHeader>
 
