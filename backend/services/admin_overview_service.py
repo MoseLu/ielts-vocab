@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+from platform_sdk.cross_service_boundary import build_strict_internal_contract_error
 from services import (
     admin_overview_repository,
     admin_user_detail_repository,
@@ -277,7 +278,13 @@ def build_users_response(
     order: str,
 ) -> tuple[dict, int]:
     total, users = admin_user_directory_repository.search_users(search=search, order=order)
-    summaries = [user_summary(user) for user in users]
+    try:
+        summaries = [user_summary(user) for user in users]
+    except admin_user_detail_repository.LearningCoreAdminDetailUnavailable as exc:
+        return build_strict_internal_contract_error(
+            upstream_name='learning-core-service',
+            action=exc.action,
+        )
 
     stat_sort_keys = {
         'study_time': lambda summary: summary['stats']['total_study_seconds'],

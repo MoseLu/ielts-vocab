@@ -12,6 +12,7 @@ from models import (
     UserWrongWord,
     db,
 )
+from services import admin_user_detail_repository
 from services.books_structure_service import get_book_chapter_count, get_book_word_count
 
 
@@ -361,3 +362,47 @@ def test_admin_user_detail_includes_projected_recent_summaries(client, app):
     payload = response.get_json()
     assert [item['date'] for item in payload['recent_summaries']] == ['2026-04-11', '2026-04-10']
     assert payload['recent_summaries'][0]['content'].startswith('# 2026-04-11 学习总结')
+
+
+def test_admin_user_detail_returns_strict_boundary_error_when_learning_core_fallback_is_disabled(
+    client,
+    app,
+    monkeypatch,
+):
+    register_user(client, 'admin-detail-boundary-admin')
+    register_user(client, 'admin-detail-boundary-learner')
+
+    with app.app_context():
+        admin = User.query.filter_by(username='admin-detail-boundary-admin').first()
+        learner = User.query.filter_by(username='admin-detail-boundary-learner').first()
+        assert admin is not None and learner is not None
+        admin.is_admin = True
+        db.session.add(UserBookProgress(
+            user_id=learner.id,
+            book_id='ielts_listening_premium',
+            current_index=7,
+            correct_count=5,
+            wrong_count=2,
+            is_completed=False,
+        ))
+        db.session.commit()
+        learner_id = learner.id
+
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'admin-ops-service')
+    monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'false')
+
+    def _raise(*args, **kwargs):
+        raise RuntimeError('learning-core unavailable')
+
+    monkeypatch.setattr(admin_user_detail_repository, 'fetch_learning_core_admin_book_progress_rows', _raise)
+
+    login_user(client, 'admin-detail-boundary-admin')
+    response = client.get(f'/api/admin/users/{learner_id}')
+
+    assert response.status_code == 503
+    assert response.get_json() == {
+        'error': 'learning-core-service unavailable',
+        'boundary': 'strict-internal-contract',
+        'action': 'admin-detail-book-progress-read',
+        'upstream': 'learning-core-service',
+    }
