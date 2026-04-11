@@ -46,6 +46,24 @@ This document freezes the current remote production baseline on `119.29.182.134`
 - Release root: `/opt/ielts-vocab/current`
 - Git fetch root for deploys: `/opt/ielts-vocab/repository`
 
+## GitHub access baseline
+
+- `/root/.ssh/config` maps `github.com` to `ssh.github.com:443`, so remote git traffic does not depend on port `22`
+- `/root/.ssh/ielts-vocab-github` is the remote GitHub SSH key used for deploy fetches and direct repository pulls
+- Global git rewrite now maps `https://github.com/*`, `http://github.com/*`, and `git://github.com/*` to `git@github.com:*`, so ad-hoc `git clone https://github.com/...` commands still use SSH on the wire
+- Deploy-critical GitHub paths are git over SSH `443`, `raw.githubusercontent.com`, source archives through `codeload.github.com`, and release assets through `release-assets.githubusercontent.com`
+- `https://github.com` HTML reachability is useful for operator browsing, but it is not required for the current CI/CD deploy chain or for direct remote `git clone` / `git fetch` flows
+
+Remote GitHub baseline commands:
+
+```bash
+sudo bash /opt/ielts-vocab/current/scripts/cloud-deploy/configure-github-access.sh --repo /opt/ielts-vocab/repository
+sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/validate-github-access.sh --repo /opt/ielts-vocab/repository
+sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/validate-github-access.sh --repo /opt/ielts-vocab/repository --critical-only
+```
+
+Status snapshot on `2026-04-11`: `119.29.182.134` now reaches GitHub SSH on `ssh.github.com:443`, public repository refs, `raw.githubusercontent.com`, source archives, and release assets directly from the remote host. The HTML `https://github.com` entrypoint may still be less stable than the git/download endpoints, but that does not block the current deploy contract or direct remote repository pulls.
+
 ## Broker runtime baseline
 
 - `redis` runs locally on `127.0.0.1:6379`
