@@ -19,8 +19,16 @@ _STATS_MODE_ALIASES = {
 }
 
 
+def _raw_mode_text(value) -> str:
+    if value is None:
+        return ''
+    if isinstance(value, str):
+        return value.strip().lower()
+    return str(value).strip().lower()
+
+
 def normalize_stats_mode(value) -> str:
-    mode = (value or '').strip().lower()
+    mode = _raw_mode_text(value)
     if not mode:
         return ''
     normalized = _STATS_MODE_ALIASES.get(mode, mode)
@@ -34,7 +42,8 @@ def sort_stats_modes(values) -> list[str]:
 def stats_mode_candidates(value) -> list[str]:
     normalized = normalize_stats_mode(value)
     if not normalized:
-        return [value] if value else []
+        raw_mode = _raw_mode_text(value) if isinstance(value, str) else ''
+        return [raw_mode] if raw_mode else []
 
     candidates = {
         normalized,

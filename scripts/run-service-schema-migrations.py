@@ -208,7 +208,7 @@ def _apply_learning_core_chapter_id_patch(connection: sa.engine.Connection) -> l
     return changes
 
 
-def _apply_catalog_content_custom_book_patch(connection: sa.engine.Connection) -> list[str]:
+def _apply_custom_book_metadata_patch(connection: sa.engine.Connection) -> list[str]:
     inspector = sa.inspect(connection)
     ops = _migration_ops(connection)
     bool_default = _bool_server_default(connection)
@@ -255,12 +255,17 @@ SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
             description='Store chapter progress ids as strings.',
             apply=_apply_learning_core_chapter_id_patch,
         ),
+        SchemaPatch(
+            revision='learning_core_service_0003',
+            description='Add shadow custom book metadata and incomplete-word flags.',
+            apply=_apply_custom_book_metadata_patch,
+        ),
     ),
     'catalog-content-service': (
         SchemaPatch(
             revision='catalog_content_service_0002',
             description='Add custom book metadata and incomplete-word flags.',
-            apply=_apply_catalog_content_custom_book_patch,
+            apply=_apply_custom_book_metadata_patch,
         ),
     ),
 }
