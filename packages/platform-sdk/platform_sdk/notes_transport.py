@@ -4,6 +4,7 @@ from flask import Blueprint, current_app, jsonify, request
 
 from platform_sdk.notes_internal_application import (
     create_internal_learning_note_response,
+    list_internal_daily_summaries_response,
     list_internal_learning_notes_response,
 )
 from platform_sdk.notes_query_application import (
@@ -39,6 +40,13 @@ def create_internal_learning_note(current_user):
         current_user.id,
         request.get_json(silent=True),
     )
+    return jsonify(payload), status
+
+
+@notes_internal_bp.route('/internal/notes/summaries', methods=['GET'])
+@token_required
+def get_internal_daily_summaries(current_user):
+    payload, status = list_internal_daily_summaries_response(current_user.id, request.args)
     return jsonify(payload), status
 
 

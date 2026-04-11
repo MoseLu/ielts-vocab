@@ -77,6 +77,13 @@ def get_favorite_words(user_id: int) -> list[dict]:
     return [row.to_dict() for row in _favorite_words_query(user_id).all()]
 
 
+def get_recent_summaries(user_id: int, *, limit: int = 5) -> list[dict]:
+    return [
+        row.to_dict()
+        for row in admin_user_detail_repository.list_user_recent_summary_rows(user_id, limit=limit)
+    ]
+
+
 def build_user_detail_response(
     user_id: int,
     *,
@@ -99,6 +106,7 @@ def build_user_detail_response(
     ]
     wrong_words = get_sorted_wrong_words(user_id, sort_mode)
     favorite_words = get_favorite_words(user_id)
+    recent_summaries = get_recent_summaries(user_id)
 
     raw_sessions = admin_user_session_repository.list_user_filtered_analytics_sessions(
         user_id,
@@ -168,6 +176,7 @@ def build_user_detail_response(
         'chapter_progress': chapter_progress,
         'wrong_words': wrong_words,
         'favorite_words': favorite_words,
+        'recent_summaries': recent_summaries,
         'sessions': sessions,
         'daily_study': daily_study,
         'chapter_daily': chapter_daily,

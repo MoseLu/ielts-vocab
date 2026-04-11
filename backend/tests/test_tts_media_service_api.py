@@ -12,6 +12,17 @@ SERVICE_PATH = Path(__file__).resolve().parents[2] / 'services' / 'tts-media-ser
 VALID_MP3 = b'ID3' + (b'\x00' * 800)
 
 
+def _configure_tts_media_env(monkeypatch, tmp_path: Path) -> None:
+    sqlite_uri = f"sqlite:///{tmp_path / 'tts-media-service.sqlite'}"
+    monkeypatch.setenv('SECRET_KEY', 'test-secret')
+    monkeypatch.setenv('JWT_SECRET_KEY', 'test-jwt-secret')
+    monkeypatch.setenv('COOKIE_SECURE', 'false')
+    monkeypatch.setenv('SQLITE_DB_PATH', str(tmp_path / 'tts-media-service.sqlite'))
+    monkeypatch.setenv('SQLALCHEMY_DATABASE_URI', sqlite_uri)
+    monkeypatch.setenv('TTS_MEDIA_SERVICE_SQLALCHEMY_DATABASE_URI', sqlite_uri)
+    monkeypatch.setenv('DB_BACKUP_ENABLED', 'false')
+
+
 def _load_tts_media_service_module():
     spec = importlib.util.spec_from_file_location('tts_media_service_main', SERVICE_PATH)
     module = importlib.util.module_from_spec(spec)
@@ -21,7 +32,8 @@ def _load_tts_media_service_module():
     return module
 
 
-def test_tts_media_service_ready_uses_oss_configuration(monkeypatch):
+def test_tts_media_service_ready_uses_oss_configuration(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     monkeypatch.setenv('AXI_ALIYUN_OSS_ACCESS_KEY_ID', 'id')
     monkeypatch.setenv('AXI_ALIYUN_OSS_ACCESS_KEY_SECRET', 'secret')
     monkeypatch.setenv('AXI_ALIYUN_OSS_PRIVATE_BUCKET', 'bucket')
@@ -37,11 +49,12 @@ def test_tts_media_service_ready_uses_oss_configuration(monkeypatch):
         'status': 'ready',
         'service': 'tts-media-service',
         'version': '0.1.0',
-        'dependencies': {'aliyun_oss': True},
+        'dependencies': {'database': True, 'aliyun_oss': True},
     }
 
 
-def test_tts_media_service_voices_contract(monkeypatch):
+def test_tts_media_service_voices_contract(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
 
@@ -58,6 +71,7 @@ def test_tts_media_service_voices_contract(monkeypatch):
 
 
 def test_tts_media_service_generate_uses_azure_provider_branch(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
     seen = {}
@@ -79,6 +93,11 @@ def test_tts_media_service_generate_uses_azure_provider_branch(monkeypatch, tmp_
         return VALID_MP3
 
     monkeypatch.setattr(module.runtime, 'synthesize_word_to_bytes', fake_synthesize)
+    monkeypatch.setattr(
+        module,
+        '_record_tts_media_materialization',
+        lambda request, **payload: seen.setdefault('materialization', payload),
+    )
 
     response = client.post(
         '/v1/tts/generate',
@@ -88,7 +107,10 @@ def test_tts_media_service_generate_uses_azure_provider_branch(monkeypatch, tmp_
     assert response.status_code == 200
     assert response.headers['content-type'].startswith('audio/mpeg')
     assert response.headers['x-audio-bytes'] == str(len(VALID_MP3))
-    assert seen == {
+    assert {
+        key: seen[key]
+        for key in ('text', 'model', 'voice', 'provider', 'speed', 'content_mode', 'phonetic')
+    } == {
         'text': 'Hello from service',
         'model': 'azure-rest:audio-24khz-48kbitrate-mono-mp3',
         'voice': 'en-US-AndrewMultilingualNeural',
@@ -97,19 +119,30 @@ def test_tts_media_service_generate_uses_azure_provider_branch(monkeypatch, tmp_
         'content_mode': 'sentence',
         'phonetic': None,
     }
+    assert seen['materialization']['media_kind'] == 'tts-generate'
+    assert seen['materialization']['tts_provider'] == 'azure'
+    assert seen['materialization']['storage_provider'] == 'local-cache'
+    assert seen['materialization']['voice'] == 'en-US-AndrewMultilingualNeural'
+    assert seen['materialization']['byte_length'] == len(VALID_MP3)
 
 
-def test_tts_media_service_generate_uses_minimax_adapter(monkeypatch):
+def test_tts_media_service_generate_uses_minimax_adapter(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
+    seen: dict[str, object] = {}
+
+    def fake_generate(payload, **kwargs):
+        seen['kwargs'] = kwargs
+        return module.runtime.send_audio_file(
+            io.BytesIO(VALID_MP3),
+            mimetype='audio/mpeg',
+        )
 
     monkeypatch.setattr(
         module.runtime,
         'shared_generate_speech_response',
-        lambda payload, **kwargs: module.runtime.send_audio_file(
-            io.BytesIO(VALID_MP3),
-            mimetype='audio/mpeg',
-        ),
+        fake_generate,
     )
 
     response = client.post(
@@ -121,9 +154,11 @@ def test_tts_media_service_generate_uses_minimax_adapter(monkeypatch):
     assert response.content == VALID_MP3
     assert response.headers['content-type'].startswith('audio/mpeg')
     assert response.headers['x-audio-bytes'] == str(len(VALID_MP3))
+    assert 'on_materialized' in seen['kwargs']
 
 
-def test_tts_media_service_word_audio_metadata_contract(monkeypatch):
+def test_tts_media_service_word_audio_metadata_contract(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
 
@@ -167,7 +202,8 @@ def test_tts_media_service_word_audio_metadata_contract(monkeypatch):
     assert body['signed_url_expires_at'].endswith('+00:00')
 
 
-def test_tts_media_service_word_audio_content_contract(monkeypatch):
+def test_tts_media_service_word_audio_content_contract(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
 
@@ -207,7 +243,8 @@ def test_tts_media_service_word_audio_content_contract(monkeypatch):
     )
 
 
-def test_tts_media_service_example_audio_metadata_contract(monkeypatch):
+def test_tts_media_service_example_audio_metadata_contract(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
 
@@ -245,7 +282,8 @@ def test_tts_media_service_example_audio_metadata_contract(monkeypatch):
     }
 
 
-def test_tts_media_service_example_audio_metadata_prefers_oss(monkeypatch):
+def test_tts_media_service_example_audio_metadata_prefers_oss(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
 
@@ -285,15 +323,22 @@ def test_tts_media_service_example_audio_metadata_prefers_oss(monkeypatch):
 
 
 def test_tts_media_service_example_audio_content_generates_and_returns_audio(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
     target = tmp_path / 'example.mp3'
+    seen: dict[str, object] = {}
 
     monkeypatch.setattr(module.runtime, 'bucket_is_configured', lambda: False)
     monkeypatch.setattr(module.runtime, 'example_cache_file', lambda sentence, model, voice: target)
     monkeypatch.setattr(module.runtime, 'example_tts_identity', lambda sentence: ('qwen-tts-2025-05-22', 'Cherry'))
     monkeypatch.setattr(module.runtime, 'synthesize_example_audio', lambda sentence, model, voice: VALID_MP3)
     monkeypatch.setattr(module.runtime, 'remove_invalid_cached_audio', lambda path: None)
+    monkeypatch.setattr(
+        module,
+        '_record_tts_media_materialization',
+        lambda request, **payload: seen.setdefault('materialization', payload),
+    )
 
     response = client.post('/v1/media/example-audio/content', json={'sentence': 'Hello, world!'})
 
@@ -304,12 +349,19 @@ def test_tts_media_service_example_audio_content_generates_and_returns_audio(mon
     assert response.headers['x-audio-cache-key'].startswith('example:')
     assert response.headers['x-media-id'] == 'example.mp3'
     assert target.read_bytes() == VALID_MP3
+    assert seen['materialization']['media_kind'] == 'example-audio'
+    assert seen['materialization']['tts_provider'] in {'minimax', 'azure', 'volcengine'}
+    assert seen['materialization']['storage_provider'] == 'local-cache'
+    assert seen['materialization']['voice'] == 'Cherry'
+    assert seen['materialization']['byte_length'] == len(VALID_MP3)
 
 
 def test_tts_media_service_example_audio_content_uploads_to_oss_without_local_write(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()
     client = TestClient(module.app)
     target = tmp_path / 'example.mp3'
+    seen: dict[str, object] = {}
 
     monkeypatch.setattr(module.runtime, 'bucket_is_configured', lambda: True)
     monkeypatch.setattr(module.runtime, 'example_cache_file', lambda sentence, model, voice: target)
@@ -335,6 +387,11 @@ def test_tts_media_service_example_audio_content_uploads_to_oss_without_local_wr
         'write_bytes_atomically',
         lambda path, body: (_ for _ in ()).throw(AssertionError('local cache write should not happen')),
     )
+    monkeypatch.setattr(
+        module,
+        '_record_tts_media_materialization',
+        lambda request, **payload: seen.setdefault('materialization', payload),
+    )
 
     response = client.post('/v1/media/example-audio/content', json={'sentence': 'Hello, world!'})
 
@@ -346,3 +403,6 @@ def test_tts_media_service_example_audio_content_uploads_to_oss_without_local_wr
     assert response.headers['x-audio-oss-url'] == 'https://oss.example.com/example.mp3?signature=1'
     assert response.headers['x-media-id'] == 'tts-media-service/example-audio/qwen-tts-2025-05-22/cherry/example.mp3'
     assert not target.exists()
+    assert seen['materialization']['media_kind'] == 'example-audio'
+    assert seen['materialization']['storage_provider'] == 'aliyun-oss'
+    assert seen['materialization']['media_id'] == 'tts-media-service/example-audio/qwen-tts-2025-05-22/cherry/example.mp3'

@@ -5,7 +5,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from fastapi import Body, HTTPException, Query
+from fastapi import Body, HTTPException, Query, Request
 from fastapi.responses import Response
 
 
@@ -18,6 +18,16 @@ for candidate in (SERVICE_DIR, SDK_PATH, BACKEND_PATH):
         sys.path.insert(0, str(candidate))
 
 from platform_sdk.runtime_env import load_split_service_env
+
+load_split_service_env(service_name='tts-media-service')
+
+from platform_sdk.database_readiness import make_sqlalchemy_readiness_check
+from platform_sdk.internal_service_auth import (
+    REQUEST_ID_HEADER,
+    SERVICE_NAME_HEADER,
+    TRACE_ID_HEADER,
+    USER_ID_HEADER,
+)
 from platform_sdk.service_app import create_service_app
 from platform_sdk.storage import (
     DEFAULT_METADATA_CACHE_TTL_SECONDS,
@@ -29,15 +39,48 @@ from platform_sdk.storage import (
     join_object_key,
     resolve_object_metadata,
 )
+from platform_sdk.tts_media_event_application import record_tts_media_materialization
+from platform_sdk.tts_media_runtime import create_tts_media_flask_app
 import runtime_helpers as runtime
-
-load_split_service_env(service_name='tts-media-service')
 
 DEFAULT_WORD_TTS_OSS_PREFIX = 'projects/ielts-vocab/word-tts-cache'
 _AUDIO_BYTES_HEADER = 'X-Audio-Bytes'
 _AUDIO_CACHE_KEY_HEADER = 'X-Audio-Cache-Key'
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _MEDIA_ID_HEADER = 'X-Media-Id'
+tts_media_flask_app = create_tts_media_flask_app()
+
+
+def _event_headers(request: Request) -> dict[str, str]:
+    headers: dict[str, str] = {}
+    for name in (REQUEST_ID_HEADER, TRACE_ID_HEADER, SERVICE_NAME_HEADER):
+        value = (request.headers.get(name) or request.headers.get(name.title()) or '').strip()
+        if value:
+            headers[name] = value
+    return headers
+
+
+def _request_user_id(request: Request) -> int | None:
+    raw_value = (request.headers.get(USER_ID_HEADER) or request.headers.get(USER_ID_HEADER.title()) or '').strip()
+    if not raw_value:
+        return None
+    try:
+        return int(raw_value)
+    except ValueError:
+        return None
+
+
+def _record_tts_media_materialization(request: Request, **payload) -> None:
+    with tts_media_flask_app.app_context():
+        record_tts_media_materialization(
+            user_id=_request_user_id(request),
+            headers=_event_headers(request),
+            **payload,
+        )
+
+
+def _materialization_callback(request: Request):
+    return lambda **payload: _record_tts_media_materialization(request, **payload)
 
 
 def _word_tts_oss_prefix() -> str:
@@ -83,7 +126,10 @@ def _resolve_word_audio_metadata(*, file_name: str, model: str, voice: str):
 app = create_service_app(
     service_name='tts-media-service',
     version='0.1.0',
-    readiness_checks={'aliyun_oss': bucket_is_configured},
+    readiness_checks={
+        'database': make_sqlalchemy_readiness_check(tts_media_flask_app.config['SQLALCHEMY_DATABASE_URI']),
+        'aliyun_oss': bucket_is_configured,
+    },
     extra_health={'object_storage': 'aliyun-oss'},
 )
 
@@ -98,11 +144,18 @@ def get_tts_voices(provider: str | None = Query(default=None)) -> dict:
 
 
 @app.post('/v1/tts/generate')
-def generate_tts_audio(payload: dict = Body(...)):
+def generate_tts_audio(request: Request, payload: dict = Body(...)):
     provider = runtime.requested_tts_provider(payload)
     if provider != 'minimax':
-        return runtime.generate_non_minimax_speech(payload, provider_override=provider)
-    return runtime.generate_minimax_speech(payload)
+        return runtime.generate_non_minimax_speech(
+            payload,
+            provider_override=provider,
+            on_materialized=_materialization_callback(request),
+        )
+    return runtime.generate_minimax_speech(
+        payload,
+        on_materialized=_materialization_callback(request),
+    )
 
 
 @app.get('/v1/media/word-audio')
@@ -164,12 +217,15 @@ def get_example_audio_metadata(payload: dict = Body(...)) -> dict:
 
 
 @app.post('/v1/media/example-audio/content')
-def get_example_audio_content(payload: dict = Body(...)):
+def get_example_audio_content(request: Request, payload: dict = Body(...)):
     sentence = str((payload or {}).get('sentence') or '').strip()
     if not sentence:
         raise HTTPException(status_code=400, detail='sentence is required')
     try:
-        audio_payload = runtime.example_audio_content_payload(sentence)
+        audio_payload = runtime.example_audio_content_payload(
+            sentence,
+            on_materialized=_materialization_callback(request),
+        )
     except Exception as exc:
         status_code = getattr(exc, 'status_code', 502)
         if not isinstance(status_code, int) or status_code < 400 or status_code >= 600:

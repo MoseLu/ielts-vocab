@@ -161,6 +161,7 @@ def build_overview_response() -> tuple[dict, int]:
     total_users = admin_overview_repository.count_total_users()
 
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    one_day_ago = datetime.utcnow() - timedelta(days=1)
     active_users_7d = admin_overview_repository.count_distinct_active_users_since(seven_days_ago)
 
     today = datetime.utcnow().date()
@@ -205,10 +206,44 @@ def build_overview_response() -> tuple[dict, int]:
     ]
 
     book_rows = admin_overview_repository.list_top_book_rows(limit=5)
+    recent_prompt_rows = admin_overview_repository.list_recent_prompt_run_rows(limit=5)
+    recent_tts_rows = admin_overview_repository.list_recent_tts_media_rows(limit=5)
 
     top_books = [
         {'book_id': row.book_id, 'sessions': row.sessions, 'users': row.users}
         for row in book_rows
+    ]
+
+    recent_prompt_runs = [
+        {
+            'id': row.id,
+            'event_id': row.event_id,
+            'user_id': row.user_id,
+            'run_kind': row.run_kind,
+            'provider': row.provider,
+            'model': row.model,
+            'prompt_excerpt': row.prompt_excerpt,
+            'response_excerpt': row.response_excerpt,
+            'result_ref': row.result_ref,
+            'completed_at': iso_utc(row.completed_at),
+        }
+        for row in recent_prompt_rows
+    ]
+
+    recent_tts_media = [
+        {
+            'event_id': row.event_id,
+            'user_id': row.user_id,
+            'media_kind': row.media_kind,
+            'media_id': row.media_id,
+            'tts_provider': row.tts_provider,
+            'storage_provider': row.storage_provider,
+            'model': row.model,
+            'voice': row.voice,
+            'byte_length': int(row.byte_length or 0),
+            'generated_at': iso_utc(row.generated_at),
+        }
+        for row in recent_tts_rows
     ]
 
     return {
@@ -221,9 +256,15 @@ def build_overview_response() -> tuple[dict, int]:
         'total_study_seconds': int(total_study_seconds),
         'total_words_studied': int(total_words_studied),
         'avg_accuracy': avg_accuracy,
+        'prompt_run_events_today': admin_overview_repository.count_prompt_run_events_since(one_day_ago),
+        'prompt_run_events_7d': admin_overview_repository.count_prompt_run_events_since(seven_days_ago),
+        'tts_media_events_today': admin_overview_repository.count_tts_media_events_since(one_day_ago),
+        'tts_media_events_7d': admin_overview_repository.count_tts_media_events_since(seven_days_ago),
         'daily_activity': daily_activity,
         'mode_stats': mode_stats,
         'top_books': top_books,
+        'recent_prompt_runs': recent_prompt_runs,
+        'recent_tts_media': recent_tts_media,
     }, 200
 
 

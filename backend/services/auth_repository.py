@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from platform_sdk.identity_event_application import queue_user_registered_event
 from service_models.identity_models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, db
 
 
@@ -32,6 +33,8 @@ def create_user(*, username: str, email: str | None, password: str):
     user = User(email=email or None, username=username)
     user.set_password(password)
     db.session.add(user)
+    db.session.flush()
+    queue_user_registered_event(user, session=db.session)
     db.session.commit()
     return user
 

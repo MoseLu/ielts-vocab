@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 import hashlib
 import io
 import os
@@ -314,85 +315,6 @@ def synthesize_azure_bytes(text: str, voice_id: str, *, speed: float = 1.0) -> b
     )
 
 
-def generate_non_minimax_speech(payload: dict, *, provider_override: str | None = None):
-    text = str(payload.get('text') or '').strip()
-    if not text:
-        return JSONResponse(status_code=400, content={'error': 'text is required'})
-    provider = normalize_tts_provider(provider_override) or current_tts_provider()
-    english_voices = current_english_voices(provider)
-    default_model, default_voice = default_cache_identity()
-    if provider == 'azure':
-        default_model = azure_default_model()
-        default_voice = azure_sentence_voice()
-    voice_id = str(payload.get('voice_id') or default_voice).strip() or default_voice
-    try:
-        speed = float(payload.get('speed', 1.0))
-    except (TypeError, ValueError):
-        return JSONResponse(status_code=400, content={'error': 'invalid speed'})
-    emotion = payload.get('emotion', 'neutral')
-    model = str(payload.get('model') or default_model).strip() or default_model
-    if provider != 'volcengine' and voice_id not in english_voices:
-        return JSONResponse(
-            status_code=400,
-            content={'error': f'Invalid voice_id. Available: {list(english_voices.keys())}'},
-        )
-    cache_id = hashlib.md5(
-        f'{provider}:{text}:{voice_id}:{speed}:{emotion}:{model}'.encode()
-    ).hexdigest()[:16]
-    cached_file = cache_path(f'{provider}:{text}:{speed}:{emotion}:{model}', voice_id)
-    if cached_file.exists() and is_probably_valid_mp3_file(cached_file):
-        return send_audio_file(
-            cached_file,
-            mimetype=DEFAULT_GENERIC_AUDIO_CONTENT_TYPE,
-            download_name=f'tts_{cache_id}.mp3',
-        )
-    remove_invalid_cached_audio(cached_file)
-    try:
-        if provider == 'azure':
-            audio_bytes = synthesize_azure_bytes(text, voice_id, speed=speed)
-        else:
-            audio_bytes = synthesize_word_to_bytes(
-                text,
-                model,
-                voice_id,
-                provider=provider,
-                speed=speed,
-            )
-        write_bytes_atomically(cached_file, audio_bytes)
-        return send_audio_file(
-            cached_file,
-            mimetype=DEFAULT_GENERIC_AUDIO_CONTENT_TYPE,
-            download_name=f'tts_{cache_id}.mp3',
-        )
-    except requests.exceptions.Timeout:
-        return JSONResponse(status_code=504, content={'error': 'TTS request timeout'})
-    except Exception as exc:
-        status_code = getattr(exc, 'status_code', 500)
-        if not isinstance(status_code, int) or status_code < 400 or status_code >= 600:
-            status_code = 500
-        return JSONResponse(status_code=status_code, content={'error': f'TTS error: {exc}'})
-
-
-def generate_minimax_speech(payload: dict):
-    return to_fastapi_response(
-        shared_generate_speech_response(
-            payload,
-            english_voices=current_english_voices('minimax'),
-            cache_path_resolver=cache_path,
-            is_probably_valid_mp3_file=is_probably_valid_mp3_file,
-            remove_invalid_cached_audio=remove_invalid_cached_audio,
-            get_api_key=get_api_key,
-            get_api_keys=get_api_keys,
-            minimax_base_url=MINIMAX_BASE_URL,
-            requests_module=requests,
-            is_probably_valid_mp3_bytes=is_probably_valid_mp3_bytes,
-            write_bytes_atomically=write_bytes_atomically,
-            send_file=send_audio_file,
-            jsonify=jsonify,
-        )
-    )
-
-
 def synthesize_example_audio(sentence: str, model: str, voice: str) -> bytes:
     provider = current_tts_provider()
     text_for_tts = add_pause_tags(sentence, pause_seconds=0.4) if provider == 'minimax' else sentence
@@ -424,8 +346,125 @@ def example_audio_metadata(sentence: str) -> dict:
     )
 
 
-def example_audio_content_payload(sentence: str) -> dict:
-    return build_example_audio_content_payload(
+def _generated_at_for_file(path: Path) -> datetime:
+    return datetime.utcfromtimestamp(path.stat().st_mtime)
+
+
+def _notify_materialization(callback, **payload):
+    if callable(callback):
+        callback(**payload)
+
+
+def generate_non_minimax_speech(
+    payload: dict,
+    *,
+    provider_override: str | None = None,
+    on_materialized=None,
+):
+    text = str(payload.get('text') or '').strip()
+    if not text:
+        return JSONResponse(status_code=400, content={'error': 'text is required'})
+    provider = normalize_tts_provider(provider_override) or current_tts_provider()
+    english_voices = current_english_voices(provider)
+    default_model, default_voice = default_cache_identity()
+    if provider == 'azure':
+        default_model = azure_default_model()
+        default_voice = azure_sentence_voice()
+    voice_id = str(payload.get('voice_id') or default_voice).strip() or default_voice
+    try:
+        speed = float(payload.get('speed', 1.0))
+    except (TypeError, ValueError):
+        return JSONResponse(status_code=400, content={'error': 'invalid speed'})
+    emotion = payload.get('emotion', 'neutral')
+    model = str(payload.get('model') or default_model).strip() or default_model
+    if provider != 'volcengine' and voice_id not in english_voices:
+        return JSONResponse(
+            status_code=400,
+            content={'error': f'Invalid voice_id. Available: {list(english_voices.keys())}'},
+        )
+    cache_id = hashlib.md5(
+        f'{provider}:{text}:{voice_id}:{speed}:{emotion}:{model}'.encode()
+    ).hexdigest()[:16]
+    cached_file = cache_path(f'{provider}:{text}:{speed}:{emotion}:{model}', voice_id)
+    if cached_file.exists() and is_probably_valid_mp3_file(cached_file):
+        _notify_materialization(
+            on_materialized,
+            media_kind='tts-generate',
+            media_id=cached_file.name,
+            tts_provider=provider,
+            storage_provider='local-cache',
+            model=model,
+            voice=voice_id,
+            byte_length=cached_file.stat().st_size,
+            generated_at=_generated_at_for_file(cached_file),
+        )
+        return send_audio_file(
+            cached_file,
+            mimetype=DEFAULT_GENERIC_AUDIO_CONTENT_TYPE,
+            download_name=f'tts_{cache_id}.mp3',
+        )
+    remove_invalid_cached_audio(cached_file)
+    try:
+        if provider == 'azure':
+            audio_bytes = synthesize_azure_bytes(text, voice_id, speed=speed)
+        else:
+            audio_bytes = synthesize_word_to_bytes(
+                text,
+                model,
+                voice_id,
+                provider=provider,
+                speed=speed,
+            )
+        write_bytes_atomically(cached_file, audio_bytes)
+        _notify_materialization(
+            on_materialized,
+            media_kind='tts-generate',
+            media_id=cached_file.name,
+            tts_provider=provider,
+            storage_provider='local-cache',
+            model=model,
+            voice=voice_id,
+            byte_length=len(audio_bytes),
+            generated_at=_generated_at_for_file(cached_file),
+        )
+        return send_audio_file(
+            cached_file,
+            mimetype=DEFAULT_GENERIC_AUDIO_CONTENT_TYPE,
+            download_name=f'tts_{cache_id}.mp3',
+        )
+    except requests.exceptions.Timeout:
+        return JSONResponse(status_code=504, content={'error': 'TTS request timeout'})
+    except Exception as exc:
+        status_code = getattr(exc, 'status_code', 500)
+        if not isinstance(status_code, int) or status_code < 400 or status_code >= 600:
+            status_code = 500
+        return JSONResponse(status_code=status_code, content={'error': f'TTS error: {exc}'})
+
+
+def generate_minimax_speech(payload: dict, *, on_materialized=None):
+    return to_fastapi_response(
+        shared_generate_speech_response(
+            payload,
+            english_voices=current_english_voices('minimax'),
+            cache_path_resolver=cache_path,
+            is_probably_valid_mp3_file=is_probably_valid_mp3_file,
+            remove_invalid_cached_audio=remove_invalid_cached_audio,
+            get_api_key=get_api_key,
+            get_api_keys=get_api_keys,
+            minimax_base_url=MINIMAX_BASE_URL,
+            requests_module=requests,
+            is_probably_valid_mp3_bytes=is_probably_valid_mp3_bytes,
+            write_bytes_atomically=write_bytes_atomically,
+            send_file=send_audio_file,
+            jsonify=jsonify,
+            on_materialized=on_materialized,
+        )
+    )
+
+
+def example_audio_content_payload(sentence: str, *, on_materialized=None) -> dict:
+    model, voice = example_tts_identity(sentence)
+    payload = build_example_audio_content_payload(
         sentence,
         example_tts_identity=example_tts_identity,
         example_cache_file=example_cache_file,
@@ -440,3 +479,20 @@ def example_audio_content_payload(sentence: str) -> dict:
         default_example_audio_content_type=DEFAULT_EXAMPLE_AUDIO_CONTENT_TYPE,
         write_bytes_atomically=write_bytes_atomically,
     )
+    generated_at = None
+    if payload.get('media_id') and (payload.get('storage_provider') or payload.get('provider')) != 'aliyun-oss':
+        cache_file = example_cache_file(sentence, model, voice)
+        if cache_file.exists():
+            generated_at = _generated_at_for_file(cache_file)
+    _notify_materialization(
+        on_materialized,
+        media_kind='example-audio',
+        media_id=payload.get('media_id'),
+        tts_provider=current_tts_provider(),
+        storage_provider=payload.get('provider'),
+        model=model,
+        voice=voice,
+        byte_length=payload.get('byte_length'),
+        generated_at=generated_at,
+    )
+    return payload

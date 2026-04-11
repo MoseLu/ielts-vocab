@@ -6,6 +6,8 @@ import re
 from flask import jsonify
 
 from platform_sdk.ai_context_application import build_context_payload
+from platform_sdk.ai_prompt_run_event_application import record_ai_prompt_run_completion
+from platform_sdk.cross_service_boundary import run_with_legacy_cross_service_fallback
 from platform_sdk.catalog_content_custom_books_application import (
     create_catalog_content_custom_book_response as build_catalog_content_custom_book_response,
     get_catalog_content_custom_book_response as build_catalog_content_get_custom_book_response,
@@ -82,10 +84,29 @@ def generate_book_response(current_user, body: dict | None):
             return jsonify({'error': 'Failed to parse generated book data'}), 500
 
         data = json.loads(json_match.group())
-        try:
-            payload, status = create_catalog_content_custom_book_internal_response(current_user.id, data)
-        except Exception:
-            payload, status = build_catalog_content_custom_book_response(current_user.id, data)
+        payload, status = run_with_legacy_cross_service_fallback(
+            upstream_name='catalog-content-service',
+            action='custom-book-create',
+            primary=lambda: create_catalog_content_custom_book_internal_response(current_user.id, data),
+            fallback=lambda: build_catalog_content_custom_book_response(current_user.id, data),
+        )
+        if status in (200, 201):
+            try:
+                record_ai_prompt_run_completion(
+                    user_id=current_user.id,
+                    run_kind='custom-book.generate',
+                    provider='minimax',
+                    prompt_excerpt=user_message,
+                    response_excerpt=raw_text,
+                    result_ref=str(payload.get('bookId') or ''),
+                    metadata={
+                        'target_words': int(target_words or 0),
+                        'focus_area_count': len(focus_areas or []),
+                        'user_level': str(user_level or '').strip() or None,
+                    },
+                )
+            except Exception:
+                pass
         return jsonify(payload), 200 if status == 201 else status
     except json.JSONDecodeError as exc:
         return jsonify({'error': f'Failed to parse generated book: {exc}'}), 500
@@ -94,16 +115,20 @@ def generate_book_response(current_user, body: dict | None):
 
 
 def list_custom_books_response(current_user):
-    try:
-        payload, status = list_catalog_content_custom_books_internal_response(current_user.id)
-    except Exception:
-        payload, status = build_catalog_content_list_custom_books_response(current_user.id)
+    payload, status = run_with_legacy_cross_service_fallback(
+        upstream_name='catalog-content-service',
+        action='custom-book-list',
+        primary=lambda: list_catalog_content_custom_books_internal_response(current_user.id),
+        fallback=lambda: build_catalog_content_list_custom_books_response(current_user.id),
+    )
     return jsonify(payload), status
 
 
 def get_custom_book_response(current_user, book_id: str):
-    try:
-        payload, status = get_catalog_content_custom_book_internal_response(current_user.id, book_id)
-    except Exception:
-        payload, status = build_catalog_content_get_custom_book_response(current_user.id, book_id)
+    payload, status = run_with_legacy_cross_service_fallback(
+        upstream_name='catalog-content-service',
+        action='custom-book-read',
+        primary=lambda: get_catalog_content_custom_book_internal_response(current_user.id, book_id),
+        fallback=lambda: build_catalog_content_get_custom_book_response(current_user.id, book_id),
+    )
     return jsonify(payload), status

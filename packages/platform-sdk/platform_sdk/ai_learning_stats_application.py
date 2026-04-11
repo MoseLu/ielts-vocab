@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from platform_sdk.cross_service_boundary import run_with_legacy_cross_service_fallback
 from platform_sdk.learning_core_internal_client import (
     fetch_learning_core_learning_stats_response,
     start_learning_core_study_session_response,
@@ -17,25 +18,29 @@ def build_learning_stats_response(
     book_id_filter: str | None,
     mode_filter_raw: str | None,
 ) -> tuple[dict, int]:
-    try:
-        return fetch_learning_core_learning_stats_response(
+    return run_with_legacy_cross_service_fallback(
+        upstream_name='learning-core-service',
+        action='learning-stats-read',
+        primary=lambda: fetch_learning_core_learning_stats_response(
             user_id,
             days=days,
             book_id_filter=book_id_filter,
             mode_filter_raw=mode_filter_raw,
-        )
-    except Exception:
-        return build_learning_core_learning_stats_response(
+        ),
+        fallback=lambda: build_learning_core_learning_stats_response(
             user_id,
             days=days,
             book_id_filter=book_id_filter,
             mode_filter_raw=mode_filter_raw,
-        )
+        ),
+    )
 
 
 def start_session_response(user_id: int, body: dict | None) -> tuple[dict, int]:
     payload = body or {}
-    try:
-        return start_learning_core_study_session_response(user_id, payload)
-    except Exception:
-        return build_learning_core_start_session_response(user_id, payload)
+    return run_with_legacy_cross_service_fallback(
+        upstream_name='learning-core-service',
+        action='study-session-start',
+        primary=lambda: start_learning_core_study_session_response(user_id, payload),
+        fallback=lambda: build_learning_core_start_session_response(user_id, payload),
+    )

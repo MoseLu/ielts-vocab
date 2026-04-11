@@ -4,41 +4,45 @@ from datetime import datetime
 
 from sqlalchemy import desc, func
 
-from service_models.admin_ops_models import UserStudySession, db
+from services.admin_projection_repository_support import study_session_model
+from service_models.admin_ops_models import db
 
 
-def _apply_session_filters(query, *, date_from, date_to, mode, book_id):
+def _apply_session_filters(query, session_model, *, date_from, date_to, mode, book_id):
     if date_from:
-        query = query.filter(UserStudySession.started_at >= date_from)
+        query = query.filter(session_model.started_at >= date_from)
     if date_to:
-        query = query.filter(UserStudySession.started_at <= date_to + ' 23:59:59')
+        query = query.filter(session_model.started_at <= date_to + ' 23:59:59')
     if mode:
-        query = query.filter(UserStudySession.mode == mode)
+        query = query.filter(session_model.mode == mode)
     if book_id:
-        query = query.filter(UserStudySession.book_id == book_id)
+        query = query.filter(session_model.book_id == book_id)
     return query
 
 
 def list_user_analytics_sessions(user_id: int):
-    return UserStudySession.query.filter_by(user_id=user_id).filter(
-        UserStudySession.analytics_clause()
+    session_model = study_session_model()
+    return session_model.query.filter_by(user_id=user_id).filter(
+        session_model.analytics_clause()
     ).all()
 
 
 def get_user_last_analytics_session(user_id: int):
+    session_model = study_session_model()
     return (
-        UserStudySession.query.filter_by(user_id=user_id)
-        .filter(UserStudySession.analytics_clause())
-        .order_by(desc(UserStudySession.started_at))
+        session_model.query.filter_by(user_id=user_id)
+        .filter(session_model.analytics_clause())
+        .order_by(desc(session_model.started_at))
         .first()
     )
 
 
 def count_user_recent_analytics_sessions(user_id: int, *, since: datetime) -> int:
-    return UserStudySession.query.filter(
-        UserStudySession.user_id == user_id,
-        UserStudySession.started_at >= since,
-        UserStudySession.analytics_clause(),
+    session_model = study_session_model()
+    return session_model.query.filter(
+        session_model.user_id == user_id,
+        session_model.started_at >= since,
+        session_model.analytics_clause(),
     ).count()
 
 
@@ -51,16 +55,18 @@ def list_user_filtered_analytics_sessions(
     book_id: str | None,
     limit: int = 100,
 ):
+    session_model = study_session_model()
     query = _apply_session_filters(
-        UserStudySession.query.filter_by(user_id=user_id).filter(
-            UserStudySession.analytics_clause()
+        session_model.query.filter_by(user_id=user_id).filter(
+            session_model.analytics_clause()
         ),
+        session_model,
         date_from=date_from,
         date_to=date_to,
         mode=mode,
         book_id=book_id,
     )
-    return query.order_by(desc(UserStudySession.started_at)).limit(limit).all()
+    return query.order_by(desc(session_model.started_at)).limit(limit).all()
 
 
 def list_user_daily_study_rows(
@@ -71,24 +77,25 @@ def list_user_daily_study_rows(
     mode: str | None,
     book_id: str | None,
 ):
+    session_model = study_session_model()
     query = db.session.query(
-        func.date(UserStudySession.started_at).label('day'),
-        func.sum(UserStudySession.duration_seconds).label('seconds'),
-        func.sum(UserStudySession.words_studied).label('words'),
-        func.sum(UserStudySession.correct_count).label('correct'),
-        func.sum(UserStudySession.wrong_count).label('wrong'),
+        func.date(session_model.started_at).label('day'),
+        func.sum(session_model.duration_seconds).label('seconds'),
+        func.sum(session_model.words_studied).label('words'),
+        func.sum(session_model.correct_count).label('correct'),
+        func.sum(session_model.wrong_count).label('wrong'),
     ).filter(
-        UserStudySession.user_id == user_id,
-        UserStudySession.started_at >= daily_base,
-        UserStudySession.analytics_clause(),
+        session_model.user_id == user_id,
+        session_model.started_at >= daily_base,
+        session_model.analytics_clause(),
     )
     if date_to:
-        query = query.filter(UserStudySession.started_at <= date_to + ' 23:59:59')
+        query = query.filter(session_model.started_at <= date_to + ' 23:59:59')
     if mode:
-        query = query.filter(UserStudySession.mode == mode)
+        query = query.filter(session_model.mode == mode)
     if book_id:
-        query = query.filter(UserStudySession.book_id == book_id)
-    return query.group_by(func.date(UserStudySession.started_at)).order_by('day').all()
+        query = query.filter(session_model.book_id == book_id)
+    return query.group_by(func.date(session_model.started_at)).order_by('day').all()
 
 
 def list_user_chapter_daily_rows(
@@ -101,34 +108,36 @@ def list_user_chapter_daily_rows(
     default_since: str | None,
     limit: int = 500,
 ):
+    session_model = study_session_model()
     query = db.session.query(
-        UserStudySession.book_id,
-        UserStudySession.chapter_id,
-        func.date(UserStudySession.started_at).label('day'),
-        UserStudySession.mode,
-        func.count(UserStudySession.id).label('sessions'),
-        func.sum(UserStudySession.words_studied).label('words'),
-        func.sum(UserStudySession.correct_count).label('correct'),
-        func.sum(UserStudySession.wrong_count).label('wrong'),
-        func.sum(UserStudySession.duration_seconds).label('seconds'),
+        session_model.book_id,
+        session_model.chapter_id,
+        func.date(session_model.started_at).label('day'),
+        session_model.mode,
+        func.count(session_model.id).label('sessions'),
+        func.sum(session_model.words_studied).label('words'),
+        func.sum(session_model.correct_count).label('correct'),
+        func.sum(session_model.wrong_count).label('wrong'),
+        func.sum(session_model.duration_seconds).label('seconds'),
     ).filter(
-        UserStudySession.user_id == user_id,
-        UserStudySession.chapter_id.isnot(None),
-        UserStudySession.chapter_id != '',
-        UserStudySession.analytics_clause(),
+        session_model.user_id == user_id,
+        session_model.chapter_id.isnot(None),
+        session_model.chapter_id != '',
+        session_model.analytics_clause(),
     )
     query = _apply_session_filters(
         query,
+        session_model,
         date_from=date_from,
         date_to=date_to,
         mode=mode,
         book_id=book_id,
     )
     if default_since and not date_from:
-        query = query.filter(UserStudySession.started_at >= default_since)
+        query = query.filter(session_model.started_at >= default_since)
     return query.group_by(
-        UserStudySession.book_id,
-        UserStudySession.chapter_id,
-        func.date(UserStudySession.started_at),
-        UserStudySession.mode,
-    ).order_by(desc(func.date(UserStudySession.started_at))).limit(limit).all()
+        session_model.book_id,
+        session_model.chapter_id,
+        func.date(session_model.started_at),
+        session_model.mode,
+    ).order_by(desc(func.date(session_model.started_at))).limit(limit).all()

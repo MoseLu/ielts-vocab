@@ -4,87 +4,128 @@ from datetime import date, datetime
 
 from sqlalchemy import desc, func
 
-from service_models.admin_ops_models import User, UserStudySession, db
+from services.admin_projection_repository_support import study_session_model, user_count_model
+from service_models.eventing_models import AdminProjectedPromptRun, AdminProjectedTTSMedia
+from service_models.admin_ops_models import db
 
 
 def count_total_users() -> int:
-    return User.query.count()
+    return user_count_model().query.count()
 
 
 def count_distinct_active_users_since(since: datetime) -> int:
-    return db.session.query(func.count(func.distinct(UserStudySession.user_id))).filter(
-        UserStudySession.started_at >= since,
-        UserStudySession.analytics_clause(),
+    session_model = study_session_model()
+    return db.session.query(func.count(func.distinct(session_model.user_id))).filter(
+        session_model.started_at >= since,
+        session_model.analytics_clause(),
     ).scalar() or 0
 
 
 def count_distinct_active_users_on(target_day: date) -> int:
-    return db.session.query(func.count(func.distinct(UserStudySession.user_id))).filter(
-        func.date(UserStudySession.started_at) == target_day,
-        UserStudySession.analytics_clause(),
+    session_model = study_session_model()
+    return db.session.query(func.count(func.distinct(session_model.user_id))).filter(
+        func.date(session_model.started_at) == target_day,
+        session_model.analytics_clause(),
     ).scalar() or 0
 
 
 def count_total_analytics_sessions() -> int:
-    return UserStudySession.query.filter(UserStudySession.analytics_clause()).count()
+    session_model = study_session_model()
+    return session_model.query.filter(session_model.analytics_clause()).count()
 
 
 def get_analytics_totals() -> dict[str, int]:
+    session_model = study_session_model()
     return {
-        'study_seconds': db.session.query(func.sum(UserStudySession.duration_seconds)).filter(
-            UserStudySession.analytics_clause()
+        'study_seconds': db.session.query(func.sum(session_model.duration_seconds)).filter(
+            session_model.analytics_clause()
         ).scalar() or 0,
-        'words_studied': db.session.query(func.sum(UserStudySession.words_studied)).filter(
-            UserStudySession.analytics_clause()
+        'words_studied': db.session.query(func.sum(session_model.words_studied)).filter(
+            session_model.analytics_clause()
         ).scalar() or 0,
-        'correct': db.session.query(func.sum(UserStudySession.correct_count)).filter(
-            UserStudySession.analytics_clause()
+        'correct': db.session.query(func.sum(session_model.correct_count)).filter(
+            session_model.analytics_clause()
         ).scalar() or 0,
-        'wrong': db.session.query(func.sum(UserStudySession.wrong_count)).filter(
-            UserStudySession.analytics_clause()
+        'wrong': db.session.query(func.sum(session_model.wrong_count)).filter(
+            session_model.analytics_clause()
         ).scalar() or 0,
     }
 
 
 def count_new_users_on(target_day: date) -> int:
-    return User.query.filter(func.date(User.created_at) == target_day).count()
+    user_model = user_count_model()
+    return user_model.query.filter(func.date(user_model.created_at) == target_day).count()
 
 
 def count_new_users_since(since: datetime) -> int:
-    return User.query.filter(User.created_at >= since).count()
+    user_model = user_count_model()
+    return user_model.query.filter(user_model.created_at >= since).count()
 
 
 def list_daily_activity_rows(*, since: datetime):
+    session_model = study_session_model()
     return db.session.query(
-        func.date(UserStudySession.started_at).label('day'),
-        func.count(UserStudySession.id).label('sessions'),
-        func.count(func.distinct(UserStudySession.user_id)).label('users'),
-        func.sum(UserStudySession.duration_seconds).label('study_seconds'),
-        func.sum(UserStudySession.words_studied).label('words'),
+        func.date(session_model.started_at).label('day'),
+        func.count(session_model.id).label('sessions'),
+        func.count(func.distinct(session_model.user_id)).label('users'),
+        func.sum(session_model.duration_seconds).label('study_seconds'),
+        func.sum(session_model.words_studied).label('words'),
     ).filter(
-        UserStudySession.started_at >= since,
-        UserStudySession.analytics_clause(),
-    ).group_by(func.date(UserStudySession.started_at)).order_by('day').all()
+        session_model.started_at >= since,
+        session_model.analytics_clause(),
+    ).group_by(func.date(session_model.started_at)).order_by('day').all()
 
 
 def list_mode_stats_rows():
+    session_model = study_session_model()
     return db.session.query(
-        UserStudySession.mode,
-        func.count(UserStudySession.id).label('count'),
-        func.sum(UserStudySession.words_studied).label('words'),
+        session_model.mode,
+        func.count(session_model.id).label('count'),
+        func.sum(session_model.words_studied).label('words'),
     ).filter(
-        UserStudySession.analytics_clause()
-    ).group_by(UserStudySession.mode).all()
+        session_model.analytics_clause()
+    ).group_by(session_model.mode).all()
 
 
 def list_top_book_rows(*, limit: int = 5):
+    session_model = study_session_model()
     return db.session.query(
-        UserStudySession.book_id,
-        func.count(UserStudySession.id).label('sessions'),
-        func.count(func.distinct(UserStudySession.user_id)).label('users'),
+        session_model.book_id,
+        func.count(session_model.id).label('sessions'),
+        func.count(func.distinct(session_model.user_id)).label('users'),
     ).filter(
-        UserStudySession.book_id.isnot(None),
-        UserStudySession.analytics_clause(),
+        session_model.book_id.isnot(None),
+        session_model.analytics_clause(),
     ).group_by(
-        UserStudySession.book_id
+        session_model.book_id
     ).order_by(desc('sessions')).limit(limit).all()
+
+
+def count_tts_media_events_since(since: datetime) -> int:
+    return AdminProjectedTTSMedia.query.filter(
+        AdminProjectedTTSMedia.generated_at >= since,
+    ).count()
+
+
+def count_prompt_run_events_since(since: datetime) -> int:
+    return AdminProjectedPromptRun.query.filter(
+        AdminProjectedPromptRun.completed_at >= since,
+    ).count()
+
+
+def list_recent_tts_media_rows(*, limit: int = 5):
+    return (
+        AdminProjectedTTSMedia.query
+        .order_by(AdminProjectedTTSMedia.generated_at.desc(), AdminProjectedTTSMedia.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+def list_recent_prompt_run_rows(*, limit: int = 5):
+    return (
+        AdminProjectedPromptRun.query
+        .order_by(AdminProjectedPromptRun.completed_at.desc(), AdminProjectedPromptRun.id.desc())
+        .limit(limit)
+        .all()
+    )

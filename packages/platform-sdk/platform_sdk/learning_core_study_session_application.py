@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from platform_sdk.ai_text_support import parse_client_epoch_ms
+from platform_sdk.learning_core_event_application import queue_study_session_logged_event
 from platform_sdk.learning_core_service_repositories import (
     learning_event_repository,
     study_session_repository,
@@ -100,6 +101,12 @@ def _record_study_session_event_locally(*, user_id: int, session, occurred_at: d
         pass
 
 
+def _queue_study_session_logged_event_if_needed(session) -> None:
+    if session is None or not session.has_activity():
+        return
+    queue_study_session_logged_event(session)
+
+
 def _apply_session_stats(
     session,
     *,
@@ -191,6 +198,7 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                     session=session,
                     occurred_at=session.ended_at or ended_at,
                 )
+                _queue_study_session_logged_event_if_needed(session)
                 study_session_repository.commit()
                 return {'id': session.id}, 200
 
@@ -234,6 +242,7 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                 session=pending,
                 occurred_at=pending.ended_at,
             )
+            _queue_study_session_logged_event_if_needed(pending)
             study_session_repository.commit()
             return {'id': pending.id}, 200
 
@@ -259,6 +268,7 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
             session=session,
             occurred_at=session.ended_at or session.started_at,
         )
+        _queue_study_session_logged_event_if_needed(session)
         study_session_repository.commit()
         return {'id': session.id}, 201
     except Exception as exc:

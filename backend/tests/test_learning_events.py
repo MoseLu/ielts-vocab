@@ -3,6 +3,7 @@ from datetime import datetime
 from models import UserLearningEvent, db
 from services import ai_assistant_ask_service as ask_service
 from services import ai_practice_support_service as practice_support_service
+from services.local_time import current_local_date
 
 
 def register_and_login(client, username='event-user', password='password123'):
@@ -82,7 +83,7 @@ def test_learner_profile_activity_summary_merges_events_from_multiple_sources(cl
     })
     assert ask_res.status_code == 200
 
-    today = datetime.utcnow().strftime('%Y-%m-%d')
+    today = current_local_date().isoformat()
     profile_res = client.get(f'/api/ai/learner-profile?date={today}')
     assert profile_res.status_code == 200
     data = profile_res.get_json()
@@ -136,7 +137,7 @@ def test_speaking_routes_record_learning_events_and_timeline_titles(client, app)
         assert simulation_event.payload_dict()['target_words'] == ['dynamic', 'coherent']
         assert simulation_event.payload_dict()['response_text'] == 'Dynamic activities need coherent planning.'
 
-    today = datetime.utcnow().strftime('%Y-%m-%d')
+    today = current_local_date().isoformat()
     profile_res = client.get(f'/api/ai/learner-profile?date={today}')
     assert profile_res.status_code == 200
     data = profile_res.get_json()
@@ -182,7 +183,7 @@ def test_smart_stats_sync_records_listening_and_writing_events(client, app):
         assert writing_event.correct_count == 1
         assert writing_event.wrong_count == 1
 
-    today = datetime.utcnow().strftime('%Y-%m-%d')
+    today = current_local_date().isoformat()
     profile_res = client.get(f'/api/ai/learner-profile?date={today}')
     assert profile_res.status_code == 200
     data = profile_res.get_json()
@@ -209,7 +210,7 @@ def test_ai_tool_metrics_are_exposed_via_profile_and_context(client, monkeypatch
     feedback_res = client.post('/api/ai/correction-feedback', json={'adopted': True})
     assert feedback_res.status_code == 200
 
-    today = datetime.utcnow().strftime('%Y-%m-%d')
+    today = current_local_date().isoformat()
     profile_res = client.get(f'/api/ai/learner-profile?date={today}')
     assert profile_res.status_code == 200
     profile = profile_res.get_json()

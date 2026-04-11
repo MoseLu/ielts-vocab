@@ -20,6 +20,7 @@ from platform_sdk.ai_vocab_catalog_application import (
 from platform_sdk.learning_core_learning_summary_support import (
     decorate_wrong_words_with_quick_memory_progress,
 )
+from platform_sdk.learning_core_wrong_word_event_application import queue_wrong_word_updated_event
 from platform_sdk.learning_core_service_repositories import (
     ai_wrong_word_repository,
     learning_event_repository,
@@ -211,7 +212,26 @@ def _record_learning_core_event_locally(
     )
 
 
-def _apply_wrong_word_snapshot(record: UserWrongWord, payload: dict) -> tuple[int, int]:
+def _snapshot_wrong_word_state(record: UserWrongWord) -> tuple:
+    return (
+        int(record.user_id or 0),
+        (record.word or '').strip(),
+        record.phonetic or '',
+        record.pos or '',
+        record.definition or '',
+        int(record.wrong_count or 0),
+        int(record.listening_correct or 0),
+        int(record.listening_wrong or 0),
+        int(record.meaning_correct or 0),
+        int(record.meaning_wrong or 0),
+        int(record.dictation_correct or 0),
+        int(record.dictation_wrong or 0),
+        record.dimension_state or '',
+    )
+
+
+def _apply_wrong_word_snapshot(record: UserWrongWord, payload: dict) -> tuple[int, int, bool]:
+    previous_record_state = _snapshot_wrong_word_state(record)
     previous_states = _build_wrong_word_dimension_states(record)
     previous_summary = _summarize_wrong_word_dimension_states(previous_states)
     incoming_states = build_incoming_wrong_word_dimension_states(payload)
@@ -245,8 +265,11 @@ def _apply_wrong_word_snapshot(record: UserWrongWord, payload: dict) -> tuple[in
     record.meaning_wrong = merged_states['meaning']['history_wrong']
     record.dictation_wrong = merged_states['dictation']['history_wrong']
     record.dimension_state = json.dumps(merged_states, ensure_ascii=False)
+    state_changed = _snapshot_wrong_word_state(record) != previous_record_state
+    if state_changed:
+        record.updated_at = datetime.utcnow()
 
-    return previous_summary['wrong_count'], merged_summary['wrong_count']
+    return previous_summary['wrong_count'], merged_summary['wrong_count'], state_changed
 
 
 def _clear_wrong_word_pending_states(states: dict) -> dict:
@@ -326,7 +349,8 @@ def _decorate_wrong_words(user_id: int, words: list[UserWrongWord]) -> list[dict
     )
 
 
-def _clear_pending_state_for_record(record: UserWrongWord) -> None:
+def _clear_pending_state_for_record(record: UserWrongWord) -> bool:
+    previous_record_state = _snapshot_wrong_word_state(record)
     cleared_states = _clear_wrong_word_pending_states(_build_wrong_word_dimension_states(record))
     summary = _summarize_wrong_word_dimension_states(cleared_states)
     record.wrong_count = summary['wrong_count']
@@ -334,6 +358,10 @@ def _clear_pending_state_for_record(record: UserWrongWord) -> None:
     record.meaning_wrong = cleared_states['meaning']['history_wrong']
     record.dictation_wrong = cleared_states['dictation']['history_wrong']
     record.dimension_state = json.dumps(cleared_states, ensure_ascii=False)
+    state_changed = _snapshot_wrong_word_state(record) != previous_record_state
+    if state_changed:
+        record.updated_at = datetime.utcnow()
+    return state_changed
 
 
 def build_learning_core_wrong_words_response(
@@ -375,7 +403,7 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
             continue
 
         record = _get_or_create_wrong_word_record(user_id, word_value, word_payload, record_cache)
-        previous_wrong_count, current_wrong_count = _apply_wrong_word_snapshot(record, word_payload)
+        previous_wrong_count, current_wrong_count, state_changed = _apply_wrong_word_snapshot(record, word_payload)
         wrong_delta = max(0, current_wrong_count - previous_wrong_count)
         if source_mode and wrong_delta > 0:
             try:
@@ -397,6 +425,8 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
                 )
             except Exception as exc:
                 logging.warning('[LEARNING_CORE] failed to record wrong-word event: %s', exc)
+        if state_changed:
+            queue_wrong_word_updated_event(record)
         if word_value not in processed_words:
             processed_words.add(word_value)
             updated += 1
@@ -411,8 +441,8 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
 
 def clear_learning_core_wrong_word_response(user_id: int, word: str) -> tuple[dict, int]:
     record = ai_wrong_word_repository.get_user_wrong_word(user_id, word)
-    if record:
-        _clear_pending_state_for_record(record)
+    if record and _clear_pending_state_for_record(record):
+        queue_wrong_word_updated_event(record)
         ai_wrong_word_repository.commit()
     return {'message': '已移出未过错词'}, 200
 
@@ -420,6 +450,7 @@ def clear_learning_core_wrong_word_response(user_id: int, word: str) -> tuple[di
 def clear_learning_core_wrong_words_response(user_id: int) -> tuple[dict, int]:
     records = ai_wrong_word_repository.list_user_wrong_words(user_id)
     for record in records:
-        _clear_pending_state_for_record(record)
+        if _clear_pending_state_for_record(record):
+            queue_wrong_word_updated_event(record)
     ai_wrong_word_repository.commit()
     return {'message': '已清空未过错词'}, 200

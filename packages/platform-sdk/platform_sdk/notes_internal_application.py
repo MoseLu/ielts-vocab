@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from platform_sdk.notes_repository_adapters import learning_note_repository
+from platform_sdk.notes_repository_adapters import daily_summary_repository, learning_note_repository
 
 
 _DEFAULT_LIMIT = 80
@@ -26,6 +26,15 @@ def list_internal_learning_notes_response(user_id: int, args) -> tuple[dict, int
         descending=_parse_descending(args.get('descending')),
     )
     return {'notes': [note.to_dict() for note in notes]}, 200
+
+
+def list_internal_daily_summaries_response(user_id: int, args) -> tuple[dict, int]:
+    summaries = daily_summary_repository.list_daily_summaries(
+        user_id,
+        descending=_parse_descending(args.get('descending')),
+    )
+    limit = _parse_limit(args.get('limit'))
+    return {'summaries': [summary.to_dict() for summary in summaries[:limit]]}, 200
 
 
 def create_internal_learning_note_response(user_id: int, data: dict | None) -> tuple[dict, int]:

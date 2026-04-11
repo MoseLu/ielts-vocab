@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from models import User, UserBookProgress, UserStudySession, db
+from models import AdminProjectedPromptRun, AdminProjectedTTSMedia, User, UserBookProgress, UserStudySession, db
 
 
 def register_user(client, username, password='password123'):
@@ -57,8 +57,115 @@ def test_admin_overview_returns_platform_stats(client, app):
     assert payload['total_study_seconds'] == 600
     assert payload['total_words_studied'] == 10
     assert payload['avg_accuracy'] == 70
+    assert payload['prompt_run_events_today'] == 0
+    assert payload['prompt_run_events_7d'] == 0
+    assert payload['recent_prompt_runs'] == []
+    assert payload['tts_media_events_today'] == 0
+    assert payload['tts_media_events_7d'] == 0
+    assert payload['recent_tts_media'] == []
     assert payload['mode_stats'][0]['mode'] == 'listening'
     assert payload['top_books'][0]['book_id'] == 'ielts_listening_premium'
+
+
+def test_admin_overview_includes_recent_projected_tts_media(client, app):
+    register_user(client, 'admin-overview-tts-admin')
+    register_user(client, 'admin-overview-tts-learner')
+
+    with app.app_context():
+        admin = User.query.filter_by(username='admin-overview-tts-admin').first()
+        learner = User.query.filter_by(username='admin-overview-tts-learner').first()
+        assert admin is not None and learner is not None
+        admin.is_admin = True
+
+        now = datetime.utcnow()
+        db.session.add_all([
+            AdminProjectedTTSMedia(
+                event_id='evt-tts-1',
+                user_id=learner.id,
+                media_kind='example-audio',
+                media_id='example-1.mp3',
+                tts_provider='minimax',
+                storage_provider='local-cache',
+                model='qwen-tts-2025-05-22',
+                voice='Cherry',
+                byte_length=803,
+                generated_at=now - timedelta(hours=2),
+            ),
+            AdminProjectedTTSMedia(
+                event_id='evt-tts-2',
+                user_id=learner.id,
+                media_kind='tts-generate',
+                media_id='generate-2.mp3',
+                tts_provider='azure',
+                storage_provider='local-cache',
+                model='azure-rest:audio-24khz-48kbitrate-mono-mp3',
+                voice='en-US-AndrewMultilingualNeural',
+                byte_length=912,
+                generated_at=now - timedelta(minutes=30),
+            ),
+        ])
+        db.session.commit()
+
+    login_user(client, 'admin-overview-tts-admin')
+    response = client.get('/api/admin/overview')
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload['tts_media_events_today'] == 2
+    assert payload['tts_media_events_7d'] == 2
+    assert [row['event_id'] for row in payload['recent_tts_media']] == ['evt-tts-2', 'evt-tts-1']
+    assert payload['recent_tts_media'][0]['media_kind'] == 'tts-generate'
+    assert payload['recent_tts_media'][0]['byte_length'] == 912
+
+
+def test_admin_overview_includes_recent_projected_prompt_runs(client, app):
+    register_user(client, 'admin-overview-prompt-admin')
+    register_user(client, 'admin-overview-prompt-learner')
+
+    with app.app_context():
+        admin = User.query.filter_by(username='admin-overview-prompt-admin').first()
+        learner = User.query.filter_by(username='admin-overview-prompt-learner').first()
+        assert admin is not None and learner is not None
+        admin.is_admin = True
+
+        now = datetime.utcnow()
+        db.session.add_all([
+            AdminProjectedPromptRun(
+                id=101,
+                event_id='evt-prompt-1',
+                user_id=learner.id,
+                run_kind='assistant.ask',
+                provider='minimax',
+                model='MiniMax-M2.7-highspeed',
+                prompt_excerpt='今天怎么复习？',
+                response_excerpt='先复习今天到期的错词。',
+                completed_at=now - timedelta(hours=1),
+            ),
+            AdminProjectedPromptRun(
+                id=102,
+                event_id='evt-prompt-2',
+                user_id=learner.id,
+                run_kind='custom-book.generate',
+                provider='minimax',
+                model='MiniMax-M2.7-highspeed',
+                prompt_excerpt='请生成一份学术高频词书。',
+                response_excerpt='{\"title\":\"学术高频词\"}',
+                result_ref='custom_book_102',
+                completed_at=now - timedelta(minutes=20),
+            ),
+        ])
+        db.session.commit()
+
+    login_user(client, 'admin-overview-prompt-admin')
+    response = client.get('/api/admin/overview')
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload['prompt_run_events_today'] == 2
+    assert payload['prompt_run_events_7d'] == 2
+    assert [row['event_id'] for row in payload['recent_prompt_runs']] == ['evt-prompt-2', 'evt-prompt-1']
+    assert payload['recent_prompt_runs'][0]['run_kind'] == 'custom-book.generate'
+    assert payload['recent_prompt_runs'][0]['result_ref'] == 'custom_book_102'
 
 
 def test_admin_users_supports_stat_sorting(client, app):
