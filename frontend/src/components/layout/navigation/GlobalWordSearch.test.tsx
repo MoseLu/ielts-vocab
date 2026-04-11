@@ -2,7 +2,7 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import GlobalWordSearch from './GlobalWordSearch'
-import '../../../styles/base.scss'
+import baseStyles from '../../../styles/base.scss?raw'
 
 const { useAuthMock, useToastMock, useFavoriteWordsMock, toggleFavoriteMock } = vi.hoisted(() => {
   const toggleFavoriteMock = vi.fn()
@@ -116,6 +116,12 @@ const quitWordDetails = {
   },
 }
 
+const readRootLayerToken = (tokenName: string) => {
+  const escapedName = tokenName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = baseStyles.match(new RegExp(`${escapedName}:\\s*(\\d+)`, 'u'))
+  return Number(match?.[1] ?? 0)
+}
+
 describe('GlobalWordSearch', () => {
   beforeEach(() => {
     apiFetchMock.mockReset()
@@ -140,10 +146,8 @@ describe('GlobalWordSearch', () => {
   })
 
   it('keeps the global search overlay layer above the fixed header layer', () => {
-    const rootStyles = getComputedStyle(document.documentElement)
-
-    expect(Number(rootStyles.getPropertyValue('--layer-global-search').trim())).toBeGreaterThan(
-      Number(rootStyles.getPropertyValue('--layer-header').trim()),
+    expect(readRootLayerToken('--layer-global-search')).toBeGreaterThan(
+      readRootLayerToken('--layer-header'),
     )
   })
 
