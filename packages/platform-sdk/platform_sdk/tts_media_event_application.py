@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime
 
 from platform_sdk.outbox_runtime import queue_outbox_event
@@ -8,6 +9,7 @@ from service_models.eventing_models import TTSMediaAsset, TTSMediaOutboxEvent
 
 TTS_MEDIA_SERVICE_NAME = 'tts-media-service'
 TTS_MEDIA_GENERATED_TOPIC = 'tts.media.generated'
+_MAX_OUTBOX_AGGREGATE_ID_LENGTH = 160
 
 
 def _query_session(model):
@@ -34,6 +36,14 @@ def _normalize_dt(value):
     if isinstance(value, str) and value.strip():
         return datetime.fromisoformat(value.replace('Z', '+00:00')).replace(tzinfo=None)
     return datetime.utcnow()
+
+
+def build_tts_media_aggregate_id(media_kind: str, media_id: str) -> str:
+    aggregate_id = f'{media_kind}:{media_id}'
+    if len(aggregate_id) <= _MAX_OUTBOX_AGGREGATE_ID_LENGTH:
+        return aggregate_id
+    digest = hashlib.sha1(aggregate_id.encode('utf-8')).hexdigest()
+    return f'{media_kind}:sha1:{digest}'
 
 
 def build_tts_media_generated_payload(asset: TTSMediaAsset) -> dict:
@@ -141,7 +151,7 @@ def record_tts_media_materialization(
             TTSMediaOutboxEvent,
             producer_service=TTS_MEDIA_SERVICE_NAME,
             topic=TTS_MEDIA_GENERATED_TOPIC,
-            aggregate_id=f'{resolved_media_kind}:{resolved_media_id}',
+            aggregate_id=build_tts_media_aggregate_id(resolved_media_kind, resolved_media_id),
             payload=build_tts_media_generated_payload(asset),
             headers=headers,
             event_id=event_id,
