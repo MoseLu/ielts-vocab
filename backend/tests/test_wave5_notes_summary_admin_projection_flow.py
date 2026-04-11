@@ -87,6 +87,7 @@ def _create_user(*, username: str) -> User:
 
 def test_generate_summary_queues_notes_outbox_event(app, monkeypatch):
     with app.app_context():
+        monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
         user = _create_user(username='wave5-notes-summary-outbox-user')
         monkeypatch.setattr(
             'platform_sdk.notes_summary_jobs_application.build_learner_profile_payload',
@@ -117,6 +118,7 @@ def test_generate_summary_queues_notes_outbox_event(app, monkeypatch):
 
 def test_notes_summary_outbox_publish_and_admin_projection_consume_flow(app, monkeypatch):
     with app.app_context():
+        monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
         user = _create_user(username='wave5-notes-summary-projection-user')
         monkeypatch.setattr(
             'platform_sdk.notes_summary_jobs_application.build_learner_profile_payload',

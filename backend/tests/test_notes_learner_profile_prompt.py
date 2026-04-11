@@ -32,6 +32,7 @@ def _auth_header(token: str):
 
 
 def test_generate_summary_prompt_includes_unified_learner_profile(client, app, monkeypatch):
+    monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
     token, user_id = _make_user_and_token(app, 'notes_profile_prompt_user')
 
     with app.app_context():

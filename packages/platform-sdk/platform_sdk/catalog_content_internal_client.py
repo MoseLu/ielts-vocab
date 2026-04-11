@@ -70,29 +70,42 @@ def _request_json(
     return payload, response.status_code
 
 
+def _is_boundary_error_status(status: int) -> bool:
+    return status in {401, 403, 404} or status >= 500
+
+
 def create_catalog_content_custom_book_internal_response(
     user_id: int,
     data: dict | None,
 ) -> tuple[dict, int]:
-    return _request_json(
+    payload, status = _request_json(
         'POST',
         '/internal/catalog/custom-books',
         user_id=user_id,
         json_body=data if isinstance(data, dict) else {},
     )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'catalog-content custom-book create request failed: {status}')
+    return payload, status
 
 
 def list_catalog_content_custom_books_internal_response(user_id: int) -> tuple[dict, int]:
-    return _request_json(
+    payload, status = _request_json(
         'GET',
         '/internal/catalog/custom-books',
         user_id=user_id,
     )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'catalog-content custom-book list request failed: {status}')
+    return payload, status
 
 
 def get_catalog_content_custom_book_internal_response(user_id: int, book_id: str) -> tuple[dict, int]:
-    return _request_json(
+    payload, status = _request_json(
         'GET',
         f'/internal/catalog/custom-books/{book_id}',
         user_id=user_id,
     )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'catalog-content custom-book read request failed: {status}')
+    return payload, status

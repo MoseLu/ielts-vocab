@@ -105,6 +105,14 @@ def test_notes_service_generates_summary(monkeypatch, tmp_path):
         'platform_sdk.notes_summary_jobs_application.chat',
         lambda *args, **kwargs: {'text': '# generated summary'},
     )
+    monkeypatch.setattr(
+        'services.notes_summary_context_repository.fetch_learning_core_notes_study_sessions',
+        lambda *args, **kwargs: [],
+    )
+    monkeypatch.setattr(
+        'services.notes_summary_context_repository.fetch_learning_core_notes_wrong_words',
+        lambda *args, **kwargs: [],
+    )
 
     response = client.post(
         '/api/notes/summaries/generate',
@@ -114,6 +122,56 @@ def test_notes_service_generates_summary(monkeypatch, tmp_path):
 
     assert response.status_code == 200
     assert response.json()['summary']['content'] == '# generated summary'
+
+
+def test_notes_service_generate_summary_returns_strict_boundary_when_learning_context_is_unavailable(
+    monkeypatch,
+    tmp_path,
+):
+    _configure_notes_env(monkeypatch, tmp_path)
+    module = _load_notes_service_module('notes_service_generate_boundary')
+    client = TestClient(module.app)
+    _user_id, token = _create_user_and_token(module.notes_flask_app, username='notes-boundary-user')
+
+    monkeypatch.setattr(
+        'services.notes_summary_context_repository.fetch_learning_core_notes_study_sessions',
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError('learning-core unavailable')),
+    )
+
+    response = client.post(
+        '/api/notes/summaries/generate',
+        json={'date': '2026-03-30'},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 503
+    assert response.json()['boundary'] == 'strict-internal-contract'
+    assert response.json()['action'] == 'notes-summary-study-sessions-read'
+
+
+def test_notes_service_generate_summary_job_returns_strict_boundary_when_learning_context_is_unavailable(
+    monkeypatch,
+    tmp_path,
+):
+    _configure_notes_env(monkeypatch, tmp_path)
+    module = _load_notes_service_module('notes_service_generate_job_boundary')
+    client = TestClient(module.app)
+    _user_id, token = _create_user_and_token(module.notes_flask_app, username='notes-job-boundary-user')
+
+    monkeypatch.setattr(
+        'services.notes_summary_context_repository.fetch_learning_core_notes_study_sessions',
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError('learning-core unavailable')),
+    )
+
+    response = client.post(
+        '/api/notes/summaries/generate-jobs',
+        json={'date': '2026-03-30'},
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 503
+    assert response.json()['boundary'] == 'strict-internal-contract'
+    assert response.json()['action'] == 'notes-summary-study-sessions-read'
 
 
 def test_notes_service_lists_internal_summaries(monkeypatch, tmp_path):
