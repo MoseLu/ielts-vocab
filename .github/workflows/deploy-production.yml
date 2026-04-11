@@ -42,7 +42,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout deployment scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.resolve-ref.outputs.git_ref }}
 
