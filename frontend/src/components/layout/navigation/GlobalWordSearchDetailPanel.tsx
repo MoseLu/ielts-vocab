@@ -88,6 +88,7 @@ export default function GlobalWordSearchDetailPanel({
   const resolvedPhonetic = detailData?.phonetic || result.phonetic || '/暂无音标/'
   const resolvedPos = detailData?.pos || result.pos
   const resolvedDefinition = detailData?.definition || summaryDefinition
+  const primaryExampleText = detailExamples[0]?.en?.trim() ?? ''
 
   const noteStatusLabel = useMemo(() => buildNoteStatusLabel(noteStatus), [noteStatus])
   const exampleAudioSettings = useMemo(() => {
@@ -148,6 +149,30 @@ export default function GlobalWordSearchDetailPanel({
   useEffect(() => () => {
     stopAudio()
   }, [result.word])
+
+  useEffect(() => {
+    if (activeTab !== 'examples' || !primaryExampleText) return
+
+    const handlePlayExampleShortcut = (event: KeyboardEvent) => {
+      if (
+        event.repeat
+        || event.key !== 'Alt'
+        || !event.altKey
+        || event.shiftKey
+        || event.ctrlKey
+        || event.metaKey
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      playExampleAudio(primaryExampleText, result.word, exampleAudioSettings)
+    }
+
+    window.addEventListener('keydown', handlePlayExampleShortcut, true)
+    return () => window.removeEventListener('keydown', handlePlayExampleShortcut, true)
+  }, [activeTab, exampleAudioSettings, primaryExampleText, result.word])
 
   useEffect(() => {
     if (!detailData) return
@@ -279,7 +304,7 @@ export default function GlobalWordSearchDetailPanel({
                         type="button"
                         className="global-word-search-audio global-word-search-audio--icon global-word-search-audio--example"
                         aria-label={`朗读例句 ${index + 1}`}
-                        title={`朗读例句 ${index + 1}`}
+                        title={`朗读例句 ${index + 1}（快捷键 Alt）`}
                         onClick={() => playExampleAudio(example.en, result.word, exampleAudioSettings)}
                       >
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
