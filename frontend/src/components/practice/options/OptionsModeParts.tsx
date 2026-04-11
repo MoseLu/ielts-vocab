@@ -164,13 +164,32 @@ export function WordDisplay({ currentWord, displayMode, onPlayWord }: WordDispla
 interface ListeningExamplePromptProps {
   sentence: string
   targetWord: string
+  onPlayAudio?: () => void
 }
 
-export function ListeningExamplePrompt({ sentence, targetWord }: ListeningExamplePromptProps) {
+export function ListeningExamplePrompt({
+  sentence,
+  targetWord,
+  onPlayAudio,
+}: ListeningExamplePromptProps) {
   if (!sentence.trim()) return null
 
   return (
     <div className="listening-example-prompt">
+      {onPlayAudio ? (
+        <button
+          type="button"
+          className="play-btn-mini listening-example-audio-btn"
+          aria-label="播放例句"
+          title="播放例句"
+          onClick={onPlayAudio}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+        </button>
+      ) : null}
       <div className="listening-example-sentence">
         {buildBlankSentence(sentence, targetWord)}
       </div>
