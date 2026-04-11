@@ -1,6 +1,6 @@
 # Remote Production Baseline
 
-Last updated: 2026-04-10
+Last updated: 2026-04-11 15:39:26 +08:00
 
 ## Scope
 
@@ -18,6 +18,8 @@ This document freezes the current remote production baseline on `119.29.182.134`
 - `ielts-service@notes-service`
 - `ielts-service@admin-ops-service`
 - `ielts-service@asr-socketio`
+- `redis`
+- `rabbitmq-server`
 
 ## Runtime routing
 
@@ -40,9 +42,28 @@ This document freezes the current remote production baseline on `119.29.182.134`
 ## Env-file locations
 
 - Shared production secrets: `/etc/ielts-vocab/backend.env`
-- Service PostgreSQL URLs and split-service ports: `/etc/ielts-vocab/microservices.env`
+- Service PostgreSQL URLs, split-service ports, and Wave 5 Redis/RabbitMQ settings: `/etc/ielts-vocab/microservices.env`
 - Release root: `/opt/ielts-vocab/current`
 - Git fetch root for deploys: `/opt/ielts-vocab/repository`
+
+## Broker runtime baseline
+
+- `redis` runs locally on `127.0.0.1:6379`
+- `rabbitmq-server` runs locally on `127.0.0.1:5672`
+- `/etc/ielts-vocab/microservices.env` must carry `REDIS_HOST`, `REDIS_PORT`, `REDIS_KEY_PREFIX`, per-service Redis DB assignments, `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST`, and `RABBITMQ_DOMAIN_EXCHANGE`
+- `scripts/cloud-deploy/preflight-check.sh` now fails fast if the broker env keys or broker systemd units are missing
+- `scripts/cloud-deploy/smoke-check.sh` now runs `scripts/cloud-deploy/validate-broker-runtime.sh` before the HTTP readiness probes
+
+Remote broker provisioning and validation commands:
+
+```bash
+sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/provision-broker-runtime.sh /etc/ielts-vocab/microservices.env
+sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/validate-broker-runtime.sh
+```
+
+Status snapshot on `2026-04-11`: the broker baseline was provisioned successfully on `119.29.182.134`, and both the updated `preflight-check.sh` and `smoke-check.sh` passed with broker validation enabled.
+
+The current deployed release on `119.29.182.134` still predates the Wave 5 worker entrypoint files, so worker units are not part of the active baseline yet. The next release that contains the worker-aware [run-service.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/run-service.sh) contract will let deploy/rollback/smoke manage those worker units automatically.
 
 ## PostgreSQL backup path
 
@@ -61,10 +82,42 @@ Use these commands from `/opt/ielts-vocab/current` before any Wave 3 schema cuto
 /opt/ielts-vocab/venv/bin/python scripts/validate_microservice_storage_parity.py --scope owned --env-file /etc/ielts-vocab/microservices.env
 ```
 
+Wave 4 remote storage drill command:
+
+```bash
+sudo APP_HOME=/opt/ielts-vocab SMOKE_HOST=axiomaticworld.com bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
+sudo APP_HOME=/opt/ielts-vocab DRILL_RECORD_PATH=/var/log/ielts-vocab/wave4/storage-drill-$(date -u +%Y%m%dT%H%M%SZ).log bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
+sudo APP_HOME=/opt/ielts-vocab DRILL_RUN_NOTES_EXPORT_REPAIR=true DRILL_NOTES_USER_ID=1 DRILL_NOTES_START_DATE=2026-03-30 DRILL_NOTES_END_DATE=2026-03-30 bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
+sudo APP_HOME=/opt/ielts-vocab DRILL_RUN_WORD_AUDIO_REPAIR=true DRILL_WORD_AUDIO_BOOK_ID=ielts_reading_premium DRILL_WORD_AUDIO_LIMIT=200 bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
+```
+
+Wave 4 service-scoped shared SQLite override command:
+
+```bash
+sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/restart-services-with-shared-sqlite-override.sh notes-service
+sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/restart-services-with-shared-sqlite-override.sh notes-service asr-service
+sudo APP_HOME=/opt/ielts-vocab SHARED_SQLITE_OVERRIDE_RECORD_PATH=/var/log/ielts-vocab/wave4/shared-sqlite-override-$(date -u +%Y%m%dT%H%M%SZ).log bash /opt/ielts-vocab/current/scripts/cloud-deploy/restart-services-with-shared-sqlite-override.sh notes-service
+```
+
+Wave 4 rollback rehearsal command:
+
+```bash
+sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-rollback-rehearsal.sh
+sudo APP_HOME=/opt/ielts-vocab REHEARSAL_RECORD_PATH=/var/log/ielts-vocab/wave4/rollback-rehearsal-$(date -u +%Y%m%dT%H%M%SZ).log bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-rollback-rehearsal.sh
+```
+
+Wave 4 record generation command:
+
+```bash
+/opt/ielts-vocab/venv/bin/python /opt/ielts-vocab/current/scripts/create-wave4-remote-record.py --log-path /var/log/ielts-vocab/wave4/<captured-log>.log --host 119.29.182.134
+/opt/ielts-vocab/venv/bin/python /opt/ielts-vocab/current/scripts/create-wave4-remote-record.py --log-path /var/log/ielts-vocab/wave4/shared-sqlite-override-<timestamp>.log --host 119.29.182.134 --command "sudo APP_HOME=/opt/ielts-vocab SHARED_SQLITE_OVERRIDE_RECORD_PATH=/var/log/ielts-vocab/wave4/shared-sqlite-override-<timestamp>.log bash /opt/ielts-vocab/current/scripts/cloud-deploy/restart-services-with-shared-sqlite-override.sh notes-service"
+```
+
 ## Mandatory smoke checks
 
 Every remote rollout must keep these checks green:
 
+- broker env plus Redis/RabbitMQ connectivity through `validate-broker-runtime.sh`
 - `http://127.0.0.1:8000/ready`
 - `http://127.0.0.1:8101/ready`
 - `http://127.0.0.1:8102/ready`

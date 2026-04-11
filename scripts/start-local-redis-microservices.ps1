@@ -18,12 +18,85 @@ $dataDir = Join-Path $runtimeDir 'data'
 $logPath = Join-Path $runtimeDir 'redis.log'
 $configPath = Join-Path $runtimeDir 'redis.local.conf'
 
-function Resolve-RedisServerPath {
+function Get-RedisSearchRoots {
+    $configured = $env:REDIS_SEARCH_ROOTS
+    if ($null -eq $configured) {
+        $configured = ''
+    }
+    $configured = $configured.Trim()
+    if ($configured) {
+        return @(
+            $configured -split ';' |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                ForEach-Object { $_.Trim() } |
+                Select-Object -Unique
+        )
+    }
+
+    return @(
+        'F:\software',
+        'D:\software',
+        'C:\software'
+    )
+}
+
+function Find-RedisLauncherFromSearchRoots {
+    $candidatePaths = @()
+    foreach ($searchRoot in @(Get-RedisSearchRoots)) {
+        if (-not (Test-Path $searchRoot)) {
+            continue
+        }
+
+        $redisDirs = @(Get-ChildItem -Path $searchRoot -Directory -Filter 'Redis-*' -ErrorAction SilentlyContinue)
+        foreach ($redisDir in $redisDirs | Sort-Object FullName -Descending) {
+            foreach ($fileName in @('RedisService.exe', 'redis-server.exe')) {
+                $candidatePath = Join-Path $redisDir.FullName $fileName
+                if (Test-Path $candidatePath) {
+                    $candidatePaths += $candidatePath
+                }
+            }
+        }
+    }
+
+    foreach ($candidatePath in ($candidatePaths | Select-Object -Unique)) {
+        return New-RedisLauncher -CandidatePath $candidatePath
+    }
+
+    return $null
+}
+
+function New-RedisLauncher {
+    param([string]$CandidatePath)
+
+    $resolvedPath = (Resolve-Path $CandidatePath).Path
+    $leafName = [System.IO.Path]::GetFileName($resolvedPath)
+    if ($leafName -ieq 'RedisService.exe') {
+        return [pscustomobject]@{
+            FilePath = $resolvedPath
+            Mode = 'service'
+        }
+    }
+
+    $serviceWrapperPath = Join-Path (Split-Path -Parent $resolvedPath) 'RedisService.exe'
+    if (Test-Path $serviceWrapperPath) {
+        return [pscustomobject]@{
+            FilePath = (Resolve-Path $serviceWrapperPath).Path
+            Mode = 'service'
+        }
+    }
+
+    return [pscustomobject]@{
+        FilePath = $resolvedPath
+        Mode = 'server'
+    }
+}
+
+function Resolve-RedisLauncher {
     if ($RedisServerPath) {
         if (-not (Test-Path $RedisServerPath)) {
             throw "Configured Redis server path does not exist: $RedisServerPath"
         }
-        return (Resolve-Path $RedisServerPath).Path
+        return New-RedisLauncher -CandidatePath $RedisServerPath
     }
 
     $configured = $env:REDIS_SERVER_PATH
@@ -35,15 +108,31 @@ function Resolve-RedisServerPath {
         if (-not (Test-Path $configured)) {
             throw "REDIS_SERVER_PATH does not exist: $configured"
         }
-        return (Resolve-Path $configured).Path
+        return New-RedisLauncher -CandidatePath $configured
+    }
+
+    $serviceCommand = Get-Command RedisService -ErrorAction SilentlyContinue
+    if ($serviceCommand) {
+        return New-RedisLauncher -CandidatePath $serviceCommand.Source
+    }
+
+    $searchRootLauncher = Find-RedisLauncherFromSearchRoots
+    if ($searchRootLauncher) {
+        return $searchRootLauncher
     }
 
     $command = Get-Command redis-server -ErrorAction SilentlyContinue
     if ($command) {
-        return $command.Source
+        return New-RedisLauncher -CandidatePath $command.Source
     }
 
-    throw 'Redis server binary not found. Install redis-server or set REDIS_SERVER_PATH.'
+    throw 'Redis server binary not found. Install redis-server / RedisService, set REDIS_SERVER_PATH, or set REDIS_SEARCH_ROOTS.'
+}
+
+function Convert-ToRedisConfigPath {
+    param([string]$Path)
+
+    return ([System.IO.Path]::GetFullPath($Path)).Replace('\', '/')
 }
 
 function Test-RedisReady {
@@ -114,7 +203,7 @@ try {
         throw "Port $Port is already in use but does not respond as Redis."
     }
 
-    $serverPath = Resolve-RedisServerPath
+    $launcher = Resolve-RedisLauncher
 
     foreach ($directory in @($runtimeDir, $dataDir)) {
         if (-not (Test-Path $directory)) {
@@ -125,15 +214,21 @@ try {
     $configLines = @(
         "bind $BindHost",
         "port $Port",
-        "dir $dataDir",
+        "dir $(Convert-ToRedisConfigPath $dataDir)",
         'dbfilename dump.rdb',
         'save ""',
         'appendonly no',
-        "logfile $logPath"
+        "logfile $(Convert-ToRedisConfigPath $logPath)"
     )
     Set-Content -Path $configPath -Value $configLines -Encoding ASCII
 
-    Start-Process -FilePath $serverPath -ArgumentList $configPath -WindowStyle Hidden | Out-Null
+    $argumentList = if ($launcher.Mode -eq 'service') {
+        @('run', '--foreground', '--config', $configPath, '--port', "$Port", '--dir', $dataDir)
+    } else {
+        @('redis.local.conf')
+    }
+
+    Start-Process -FilePath $launcher.FilePath -ArgumentList $argumentList -WorkingDirectory $runtimeDir -WindowStyle Hidden | Out-Null
     Wait-RedisReady -TargetHost $BindHost -TargetPort $Port -TimeoutSeconds 30
 
     Write-Host "[DONE] Local Redis ready on redis://$BindHost`:$Port/0"
@@ -143,4 +238,3 @@ try {
     Write-Host "[ERROR] $($_.Exception.Message)"
     exit 1
 }
-

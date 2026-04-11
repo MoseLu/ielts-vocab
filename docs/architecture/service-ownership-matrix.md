@@ -65,5 +65,6 @@ Before a row in the matrix is treated as a true service, all of the following mu
 ## Related Docs
 
 - Layered source architecture: [backend-layered-architecture.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/backend-layered-architecture.md)
+- Table-level Wave 4 audit: [service-table-boundary-audit.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/service-table-boundary-audit.md)
 - Gateway contract skeleton: [gateway-service-contracts.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/gateway-service-contracts.md)
 - Backend migration TODO: [backend/TODO.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/TODO.md)

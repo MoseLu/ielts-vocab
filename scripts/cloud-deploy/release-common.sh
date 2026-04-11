@@ -12,7 +12,7 @@ MICROSERVICES_ENV_FILE="${MICROSERVICES_ENV_FILE:-/etc/ielts-vocab/microservices
 SMOKE_HOST="${SMOKE_HOST:-axiomaticworld.com}"
 RELEASE_RETENTION_COUNT="${RELEASE_RETENTION_COUNT:-5}"
 
-SERVICE_UNITS=(
+CORE_SERVICE_UNITS=(
   "gateway-bff"
   "identity-service"
   "learning-core-service"
@@ -23,6 +23,24 @@ SERVICE_UNITS=(
   "notes-service"
   "admin-ops-service"
   "asr-socketio"
+)
+WAVE5_WORKER_UNITS=(
+  "identity-outbox-publisher"
+  "learning-core-outbox-publisher"
+  "ai-execution-outbox-publisher"
+  "ai-wrong-word-projection-worker"
+  "ai-daily-summary-projection-worker"
+  "notes-outbox-publisher"
+  "notes-study-session-projection-worker"
+  "notes-wrong-word-projection-worker"
+  "notes-prompt-run-projection-worker"
+  "tts-media-outbox-publisher"
+  "admin-user-projection-worker"
+  "admin-study-session-projection-worker"
+  "admin-daily-summary-projection-worker"
+  "admin-prompt-run-projection-worker"
+  "admin-tts-media-projection-worker"
+  "admin-wrong-word-projection-worker"
 )
 
 log() {
@@ -166,13 +184,6 @@ run_backup_script() {
   "${backup_script}" "${MICROSERVICES_ENV_FILE}"
 }
 
-restart_service_units() {
-  systemctl daemon-reload
-  for service in "${SERVICE_UNITS[@]}"; do
-    systemctl restart "ielts-service@${service}"
-  done
-}
-
 cleanup_old_releases() {
   local keep_primary="${1:-}"
   local keep_secondary="${2:-}"
@@ -194,4 +205,36 @@ cleanup_old_releases() {
 
 list_release_dirs() {
   find "${RELEASES_ROOT}" -mindepth 1 -maxdepth 1 -type d | sort -r
+}
+
+release_supports_wave5_workers() {
+  local release_dir="${1:?release dir is required}"
+  local run_service="${release_dir}/scripts/cloud-deploy/run-service.sh"
+  [[ -f "${run_service}" ]] || return 1
+
+  for worker in "${WAVE5_WORKER_UNITS[@]}"; do
+    grep -Fq "  ${worker})" "${run_service}" || return 1
+  done
+}
+
+restart_service_units() {
+  local target_release=""
+  systemctl daemon-reload
+
+  for service in "${CORE_SERVICE_UNITS[@]}"; do
+    systemctl restart "ielts-service@${service}"
+  done
+
+  target_release="$(current_target_path)"
+  if [[ -n "${target_release}" && -d "${target_release}" ]] && release_supports_wave5_workers "${target_release}"; then
+    for worker in "${WAVE5_WORKER_UNITS[@]}"; do
+      systemctl enable "ielts-service@${worker}" >/dev/null 2>&1 || true
+      systemctl restart "ielts-service@${worker}"
+    done
+    return 0
+  fi
+
+  for worker in "${WAVE5_WORKER_UNITS[@]}"; do
+    systemctl disable --now "ielts-service@${worker}" >/dev/null 2>&1 || true
+  done
 }

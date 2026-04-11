@@ -12,6 +12,7 @@ require_command curl
 require_command python3
 require_command node
 require_command corepack
+require_command nginx
 require_file "${BACKEND_ENV_FILE}"
 require_file "${MICROSERVICES_ENV_FILE}"
 
@@ -27,6 +28,16 @@ fi
 
 log "Checking git access for ${git_ref}"
 git -C "${probe_repo}" ls-remote --exit-code origin HEAD >/dev/null
+
+log "Checking broker env baseline"
+grep -q '^REDIS_HOST=' "${MICROSERVICES_ENV_FILE}" || fail "Missing REDIS_HOST in ${MICROSERVICES_ENV_FILE}"
+grep -q '^RABBITMQ_HOST=' "${MICROSERVICES_ENV_FILE}" || fail "Missing RABBITMQ_HOST in ${MICROSERVICES_ENV_FILE}"
+grep -q '^RABBITMQ_USER=' "${MICROSERVICES_ENV_FILE}" || fail "Missing RABBITMQ_USER in ${MICROSERVICES_ENV_FILE}"
+grep -q '^RABBITMQ_VHOST=' "${MICROSERVICES_ENV_FILE}" || fail "Missing RABBITMQ_VHOST in ${MICROSERVICES_ENV_FILE}"
+
+log "Checking broker systemd units"
+systemctl is-active --quiet redis
+systemctl is-active --quiet rabbitmq-server
 
 log "Checking nginx configuration"
 nginx -t >/dev/null
