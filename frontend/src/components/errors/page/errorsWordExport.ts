@@ -17,10 +17,10 @@ function formatDateStamp(date: Date) {
 }
 
 export function buildWrongWordsCsvExportContent(words: WrongWordRecord[]) {
-  const header = ['序号', '错词', '中文意思']
-  const rows = words.map((word, index) => [
-    String(index + 1),
+  const header = ['单词', '音标', '释义']
+  const rows = words.map(word => [
     stringifyValue(word.word),
+    stringifyValue(word.phonetic) || '—',
     stringifyValue(word.definition) || '—',
   ].map(escapeCsvValue).join(','))
 
