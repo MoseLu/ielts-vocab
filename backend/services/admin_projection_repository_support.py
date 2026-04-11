@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+from platform_sdk.admin_projection_bootstrap import (
+    projection_bootstrap_ready,
+)
+from platform_sdk.admin_study_session_projection_application import (
+    STUDY_SESSION_ANALYTICS_PROJECTION,
+)
+from platform_sdk.admin_user_projection_application import USER_DIRECTORY_PROJECTION
+from platform_sdk.admin_wrong_word_projection_application import (
+    WRONG_WORD_DIRECTORY_PROJECTION,
+)
 from service_models.admin_ops_models import User, UserStudySession, UserWrongWord
 from service_models.eventing_models import (
     AdminProjectedStudySession,
@@ -8,25 +18,24 @@ from service_models.eventing_models import (
 )
 
 
+def user_directory_projection_ready() -> bool:
+    return projection_bootstrap_ready(USER_DIRECTORY_PROJECTION)
+
+
+def user_directory_model():
+    return AdminProjectedUser if user_directory_projection_ready() else User
+
+
 def _use_projected_user_counts() -> bool:
-    projected_total = AdminProjectedUser.query.count()
-    if projected_total <= 0:
-        return False
-    return projected_total >= User.query.count()
+    return user_directory_projection_ready()
 
 
 def user_count_model():
-    return AdminProjectedUser if _use_projected_user_counts() else User
+    return user_directory_model()
 
 
 def _use_projected_study_sessions() -> bool:
-    projected_total = AdminProjectedStudySession.query.filter(
-        AdminProjectedStudySession.analytics_clause()
-    ).count()
-    if projected_total <= 0:
-        return False
-    shared_total = UserStudySession.query.filter(UserStudySession.analytics_clause()).count()
-    return projected_total >= shared_total
+    return projection_bootstrap_ready(STUDY_SESSION_ANALYTICS_PROJECTION)
 
 
 def study_session_model():
@@ -34,10 +43,7 @@ def study_session_model():
 
 
 def _use_projected_wrong_words() -> bool:
-    projected_total = AdminProjectedWrongWord.query.count()
-    if projected_total <= 0:
-        return False
-    return projected_total >= UserWrongWord.query.count()
+    return projection_bootstrap_ready(WRONG_WORD_DIRECTORY_PROJECTION)
 
 
 def wrong_word_model():

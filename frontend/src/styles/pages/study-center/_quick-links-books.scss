@@ -176,7 +176,17 @@
 }
 
 .study-book-badge {
-    @include pill-badge(24px, 4px 8px, 999px, rgba(var(--accent-rgb), 0.12), var(--accent), 11px, 700);
+    @include pill-badge(24px, 4px 8px, 999px, var(--surface-inset), var(--text-secondary), 11px, 700);
+}
+
+.study-book-badge--neutral {
+    background: var(--surface-inset);
+    color: var(--text-secondary);
+}
+
+.study-book-badge--success {
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    color: var(--success);
 }
 
 .study-book-state {

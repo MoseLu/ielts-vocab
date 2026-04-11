@@ -1,4 +1,5 @@
 from models import (
+    AdminWordFeedback,
     User,
     UserBookProgress,
     UserChapterProgress,
@@ -10,6 +11,7 @@ from models import (
 
 
 __all__ = [
+    'AdminWordFeedback',
     'User',
     'UserBookProgress',
     'UserChapterProgress',

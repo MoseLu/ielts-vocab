@@ -1,4 +1,5 @@
 from models import (
+    NotesProjectionCursor,
     NotesProjectedPromptRun,
     NotesProjectedStudySession,
     NotesProjectedWrongWord,
@@ -10,6 +11,7 @@ from models import (
 
 
 __all__ = [
+    'NotesProjectionCursor',
     'NotesProjectedPromptRun',
     'NotesProjectedStudySession',
     'NotesProjectedWrongWord',

@@ -341,3 +341,66 @@ class AdminProjectedTTSMedia(db.Model):
             'byte_length': int(self.byte_length or 0),
             'generated_at': self.generated_at.isoformat() if self.generated_at else None,
         }
+
+
+class AdminWordFeedback(db.Model):
+    __tablename__ = 'admin_word_feedback'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False, index=True)
+    username_snapshot = db.Column(db.String(100), nullable=False)
+    email_snapshot = db.Column(db.String(255), nullable=True)
+    word = db.Column(db.String(100), nullable=False)
+    normalized_word = db.Column(db.String(100), nullable=False, index=True)
+    phonetic = db.Column(db.String(100), nullable=True)
+    pos = db.Column(db.String(50), nullable=True)
+    definition = db.Column(db.Text, nullable=True)
+    example_en = db.Column(db.Text, nullable=True)
+    example_zh = db.Column(db.Text, nullable=True)
+    source_book_id = db.Column(db.String(100), nullable=True)
+    source_book_title = db.Column(db.String(200), nullable=True)
+    source_chapter_id = db.Column(db.String(100), nullable=True)
+    source_chapter_title = db.Column(db.String(200), nullable=True)
+    feedback_types_json = db.Column(db.Text, nullable=False)
+    source = db.Column(db.String(40), nullable=False, default='global_search', index=True)
+    status = db.Column(db.String(20), nullable=False, default='open', index=True)
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, onupdate=datetime.utcnow)
+
+    def get_feedback_types(self) -> list[str]:
+        try:
+            payload = json.loads(self.feedback_types_json or '[]')
+        except Exception:
+            return []
+        if not isinstance(payload, list):
+            return []
+        return [
+            str(value).strip()
+            for value in payload
+            if str(value).strip()
+        ]
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'username': self.username_snapshot,
+            'email': self.email_snapshot or '',
+            'word': self.word,
+            'phonetic': self.phonetic or '',
+            'pos': self.pos or '',
+            'definition': self.definition or '',
+            'example_en': self.example_en or '',
+            'example_zh': self.example_zh or '',
+            'source_book_id': self.source_book_id,
+            'source_book_title': self.source_book_title or '',
+            'source_chapter_id': self.source_chapter_id,
+            'source_chapter_title': self.source_chapter_title or '',
+            'feedback_types': self.get_feedback_types(),
+            'source': self.source,
+            'status': self.status,
+            'comment': self.comment or '',
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }

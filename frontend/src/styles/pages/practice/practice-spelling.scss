@@ -135,6 +135,11 @@
     color: var(--accent);
 }
 
+.listening-example-audio-btn .example-audio-icon {
+    width: 17px;
+    height: 17px;
+}
+
 .listening-example-sentence {
     max-width: 560px;
     font-size: clamp(1.05rem, 1.9vw, 1.32rem);

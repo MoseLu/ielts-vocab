@@ -8,6 +8,7 @@ from platform_sdk.admin_user_projection_application import (
     USER_DIRECTORY_PROJECTION,
     drain_identity_user_registered_queue,
 )
+from platform_sdk.admin_projection_bootstrap import bootstrap_projection_marker_name
 from platform_sdk.domain_event_publisher import publish_outbox_batch
 
 from models import (
@@ -17,7 +18,7 @@ from models import (
     IdentityOutboxEvent,
     User,
 )
-from services import admin_overview_repository, auth_repository
+from services import admin_overview_repository, admin_user_directory_repository, auth_repository
 
 
 class FakePublisherChannel:
@@ -152,6 +153,11 @@ def test_admin_overview_counts_prefer_projected_users_when_projection_is_complet
     with app.app_context():
         admin = User.query.filter_by(username='admin').first()
         assert admin is not None
+        shared_only_user = auth_repository.create_user(
+            username='shared-only-admin-user',
+            email='shared-only-admin-user@example.com',
+            password='password123',
+        )
 
         now = datetime.utcnow()
         projected_admin = AdminProjectedUser(
@@ -170,9 +176,103 @@ def test_admin_overview_counts_prefer_projected_users_when_projection_is_complet
             is_admin=False,
             created_at=now - timedelta(minutes=5),
         )
+        marker = AdminProjectionCursor(
+            projection_name=bootstrap_projection_marker_name(USER_DIRECTORY_PROJECTION),
+            last_event_id='bootstrap:admin.user-directory:test',
+            last_topic='__bootstrap__',
+            last_processed_at=now,
+        )
         db_session = AdminProjectedUser.query.session
-        db_session.add_all([projected_admin, projected_learner])
+        db_session.add_all([projected_admin, projected_learner, marker])
         db_session.commit()
 
         assert admin_overview_repository.count_total_users() == 2
         assert admin_overview_repository.count_new_users_since(now - timedelta(days=1)) == 2
+        assert shared_only_user.id > 0
+
+
+def test_admin_user_directory_reads_prefer_projection_after_bootstrap_marker(app):
+    with app.app_context():
+        shared_only_user = auth_repository.create_user(
+            username='shared-only-directory-user',
+            email='shared-only-directory-user@example.com',
+            password='password123',
+        )
+        now = datetime.utcnow()
+        db_session = AdminProjectedUser.query.session
+        db_session.add_all([
+            AdminProjectedUser(
+                id=201,
+                username='projected-alpha',
+                email='projected-alpha@example.com',
+                avatar_url='https://example.com/a.png',
+                is_admin=False,
+                created_at=now - timedelta(hours=2),
+            ),
+            AdminProjectedUser(
+                id=202,
+                username='projected-beta',
+                email='projected-beta@example.com',
+                avatar_url=None,
+                is_admin=False,
+                created_at=now - timedelta(hours=1),
+            ),
+            AdminProjectionCursor(
+                projection_name=bootstrap_projection_marker_name(USER_DIRECTORY_PROJECTION),
+                last_event_id='bootstrap:admin.user-directory:directory',
+                last_topic='__bootstrap__',
+                last_processed_at=now,
+            ),
+        ])
+        db_session.commit()
+
+        total, users = admin_user_directory_repository.search_users(search='projected', order='desc')
+        projected_user = admin_user_directory_repository.get_user(202)
+        fallback_user = admin_user_directory_repository.get_user(shared_only_user.id)
+
+        assert total == 2
+        assert [user.username for user in users] == ['projected-beta', 'projected-alpha']
+        assert projected_user is not None
+        assert projected_user.__class__.__name__ == 'AdminProjectedUser'
+        assert fallback_user is not None
+        assert fallback_user.__class__.__name__ == 'User'
+
+
+def test_commit_user_and_admin_toggle_refresh_projected_user_snapshot(app):
+    with app.app_context():
+        user = auth_repository.create_user(
+            username='projected-sync-user',
+            email='projected-sync-user@example.com',
+            password='password123',
+        )
+        now = datetime.utcnow()
+        db_session = AdminProjectedUser.query.session
+        db_session.add_all([
+            AdminProjectedUser(
+                id=user.id,
+                username=user.username,
+                email=user.email,
+                avatar_url=None,
+                is_admin=False,
+                created_at=user.created_at,
+            ),
+            AdminProjectionCursor(
+                projection_name=bootstrap_projection_marker_name(USER_DIRECTORY_PROJECTION),
+                last_event_id='bootstrap:admin.user-directory:sync',
+                last_topic='__bootstrap__',
+                last_processed_at=now,
+            ),
+        ])
+        db_session.commit()
+
+        user.avatar_url = 'https://example.com/projected.png'
+        user.email = 'projected-sync-updated@example.com'
+        auth_repository.commit_user(user)
+        admin_user_directory_repository.set_user_admin(user, is_admin=True)
+
+        projected_user = AdminProjectedUser.query.session.get(AdminProjectedUser, user.id)
+
+        assert projected_user is not None
+        assert projected_user.avatar_url == 'https://example.com/projected.png'
+        assert projected_user.email == 'projected-sync-updated@example.com'
+        assert projected_user.is_admin is True

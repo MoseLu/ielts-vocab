@@ -68,6 +68,7 @@ def test_notes_and_ai_ownership_stays_split():
     ai_owned = get_service_owned_table_names('ai-execution-service')
 
     assert notes_owned == {
+        'notes_projection_cursors',
         'notes_projected_prompt_runs',
         'notes_projected_study_sessions',
         'notes_projected_wrong_words',
@@ -78,6 +79,7 @@ def test_notes_and_ai_ownership_stays_split():
         'notes_inbox_events',
     }
     assert ai_owned == {
+        'ai_projection_cursors',
         'ai_projected_daily_summaries',
         'ai_projected_wrong_words',
         'ai_prompt_runs',

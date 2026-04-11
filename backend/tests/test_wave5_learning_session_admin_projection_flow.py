@@ -8,6 +8,7 @@ from platform_sdk.admin_study_session_projection_application import (
     STUDY_SESSION_ANALYTICS_PROJECTION,
     drain_learning_session_logged_queue,
 )
+from platform_sdk.admin_projection_bootstrap import bootstrap_projection_marker_name
 from platform_sdk.domain_event_publisher import publish_outbox_batch
 from platform_sdk.learning_core_study_session_application import log_learning_core_session_response
 
@@ -17,6 +18,7 @@ from models import (
     AdminProjectionCursor,
     LearningCoreOutboxEvent,
     User,
+    UserStudySession,
     db,
 )
 from services import admin_overview_repository, admin_user_session_repository
@@ -176,6 +178,19 @@ def test_admin_session_stats_prefer_projected_sessions_when_projection_is_comple
     with app.app_context():
         now = datetime.utcnow()
         db.session.add_all([
+            UserStudySession(
+                id=700,
+                user_id=10,
+                mode='listening',
+                book_id='shared-only-book',
+                chapter_id='0',
+                words_studied=6,
+                correct_count=4,
+                wrong_count=2,
+                duration_seconds=240,
+                started_at=now - timedelta(hours=4),
+                ended_at=now - timedelta(hours=4) + timedelta(minutes=4),
+            ),
             AdminProjectedStudySession(
                 id=701,
                 user_id=11,
@@ -201,6 +216,12 @@ def test_admin_session_stats_prefer_projected_sessions_when_projection_is_comple
                 duration_seconds=600,
                 started_at=now - timedelta(hours=1),
                 ended_at=now - timedelta(hours=1) + timedelta(minutes=10),
+            ),
+            AdminProjectionCursor(
+                projection_name=bootstrap_projection_marker_name(STUDY_SESSION_ANALYTICS_PROJECTION),
+                last_event_id='bootstrap:admin.study-session-analytics:test',
+                last_topic='__bootstrap__',
+                last_processed_at=now,
             ),
         ])
         db.session.commit()

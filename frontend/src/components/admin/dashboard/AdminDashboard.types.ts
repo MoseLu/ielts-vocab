@@ -44,6 +44,30 @@ export interface TopBook {
   users: number
 }
 
+export interface AdminWordFeedback {
+  id: number
+  user_id: number
+  username: string
+  email: string
+  word: string
+  phonetic: string
+  pos: string
+  definition: string
+  example_en: string
+  example_zh: string
+  source_book_id: string | null
+  source_book_title: string
+  source_chapter_id: string | null
+  source_chapter_title: string
+  feedback_types: string[]
+  feedback_type_labels: string[]
+  source: string
+  status: string
+  comment: string
+  created_at: string | null
+  updated_at: string | null
+}
+
 export interface Overview {
   total_users: number
   active_users_today: number
@@ -130,7 +154,7 @@ export interface UserDetail {
   }>
 }
 
-export type AdminTab = 'overview' | 'users'
+export type AdminTab = 'overview' | 'users' | 'feedback'
 export type AdminDetailTab = 'progress' | 'favorite_words' | 'wrong_words' | 'sessions' | 'chart' | 'chapter_daily'
 export type WrongWordsSort = 'last_error' | 'wrong_count'
 
@@ -143,6 +167,11 @@ export const bookLabels: Record<string, string> = {
   ielts_comprehensive: '雅思全面词汇',
   ielts_ultimate: '雅思核心词汇',
   awl_academic: '学术词汇表',
+}
+
+export const wordFeedbackSourceLabels: Record<string, string> = {
+  global_search: '单词搜索卡片',
+  word_detail: '单词详情卡片',
 }
 
 export function fmtChapterId(chapterId: string | null | undefined): string {

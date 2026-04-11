@@ -124,3 +124,13 @@ class AIProjectedDailySummary(db.Model):
             'content': self.content,
             'generated_at': _iso_utc(self.generated_at),
         }
+
+
+class AIProjectionCursor(db.Model):
+    __tablename__ = 'ai_projection_cursors'
+
+    id = db.Column(db.Integer, primary_key=True)
+    projection_name = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    last_event_id = db.Column(db.String(64), nullable=True)
+    last_topic = db.Column(db.String(120), nullable=True)
+    last_processed_at = db.Column(db.DateTime, nullable=True)

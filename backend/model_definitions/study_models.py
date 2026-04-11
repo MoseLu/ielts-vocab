@@ -255,11 +255,11 @@ class UserMemory(db.Model):
 
 
 class RateLimitBucket(db.Model):
-    """Database-backed rate limiting state per IP address.
+    """Fallback database-backed rate limiting state per IP address.
 
-    Replaces the in-memory dict in routes/auth.py to support multi-process
-    deployments (gunicorn/uwsgi workers). Each worker shares the same SQLite DB,
-    ensuring consistent rate limiting across all processes.
+    Wave 5 moves auth throttling onto Redis first so split services can share
+    counters without leaning on one SQL database. This table stays as the
+    safety-net path when Redis is unavailable.
     """
     __tablename__ = 'rate_limit_buckets'
 
@@ -281,8 +281,8 @@ class RateLimitBucket(db.Model):
         Atomically check if IP is within rate limit and increment if not.
         Returns (allowed: bool, seconds_until_reset: int).
         Uses SELECT ... FOR UPDATE pattern for safety, but SQLite serialization
-        provides sufficient safety for single-instance deployments.
-        For multi-instance (multiple app servers), use Redis instead.
+        provides sufficient safety for the fallback path in single-instance
+        deployments.
         """
         now = datetime.utcnow()
         bucket = cls.query.filter_by(ip_address=ip_address, purpose=purpose).with_for_update().first()

@@ -1,15 +1,14 @@
 from __future__ import annotations
 
+from platform_sdk.ai_daily_summary_projection_application import (
+    AI_DAILY_SUMMARY_CONTEXT_PROJECTION,
+)
+from platform_sdk.ai_projection_bootstrap import ai_projection_bootstrap_ready
 from service_models.ai_execution_models import AIProjectedDailySummary
-from service_models.notes_models import UserDailySummary
 
 
 def projected_daily_summaries_ready(user_id: int) -> bool:
-    projected_total = AIProjectedDailySummary.query.filter_by(user_id=user_id).count()
-    shared_total = UserDailySummary.query.filter_by(user_id=user_id).count()
-    if shared_total <= 0:
-        return True
-    return projected_total >= shared_total
+    return ai_projection_bootstrap_ready(AI_DAILY_SUMMARY_CONTEXT_PROJECTION)
 
 
 def list_projected_daily_summaries_for_ai(

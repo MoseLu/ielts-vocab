@@ -192,6 +192,99 @@ describe('PracticePage quick-memory review mode', () => {
     expect(startSessionMock).not.toHaveBeenCalled()
   })
 
+  it('loads the inferred chapter list for review context and keeps the selected chapter title aligned', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      reviewInterval: '3',
+      reviewLimit: '10',
+      reviewLimitCustomized: true,
+      shuffle: true,
+    }))
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due') {
+        return Promise.resolve({
+          words: [
+            {
+              word: 'evidence',
+              phonetic: '/ˈevɪdəns/',
+              pos: 'n.',
+              definition: '证据',
+              book_id: 'book-a',
+              book_title: '雅思核心词',
+              chapter_id: '66',
+              chapter_title: '第66章',
+            },
+          ],
+          summary: {
+            due_count: 1,
+            upcoming_count: 0,
+            returned_count: 1,
+            review_window_days: 3,
+            offset: 0,
+            limit: 10,
+            total_count: 1,
+            has_more: false,
+            next_offset: null,
+            selected_context: {
+              book_id: 'book-a',
+              book_title: '雅思核心词',
+              chapter_id: '66',
+              chapter_title: '第66章',
+              due_count: 1,
+              upcoming_count: 0,
+              total_count: 1,
+              next_review: 123456,
+            },
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    fetchMock.mockImplementation((url: string) => {
+      if (url === '/api/books/book-a/chapters') {
+        return Promise.resolve({
+          json: () => Promise.resolve({
+            chapters: [
+              { id: '65', title: '第65章', word_count: 64 },
+              { id: '66', title: '第66章', word_count: 66 },
+            ],
+          }),
+        })
+      }
+      return Promise.reject(new Error(`Unexpected fetch url: ${url}`))
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?review=due']}>
+        <PracticePage user={{ id: 42 }} currentDay={1} mode="quickmemory" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/books/book-a/chapters')
+    })
+
+    await waitFor(() => {
+      const props = practiceControlBarMock.mock.calls.at(-1)?.[0] as {
+        bookId: string | null
+        chapterId: string | null
+        currentChapterTitle: string
+        bookChapters: Array<{ id: string; title: string }>
+      }
+
+      expect(props).toMatchObject({
+        bookId: 'book-a',
+        chapterId: '66',
+        currentChapterTitle: '第66章',
+      })
+      expect(props.bookChapters).toEqual([
+        expect.objectContaining({ id: '65', title: '第65章' }),
+        expect.objectContaining({ id: '66', title: '第66章' }),
+      ])
+    })
+  })
+
   it('migrates legacy uncustomized review batches back to the default unlimited limit', async () => {
     localStorage.setItem('app_settings', JSON.stringify({
       reviewInterval: '3',

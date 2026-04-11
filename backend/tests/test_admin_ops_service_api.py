@@ -73,6 +73,23 @@ def _create_admin_token(flask_app, username='admin-ops-admin') -> tuple[int, str
     return learner_id, token
 
 
+def _create_access_token(flask_app, *, user_id: int, is_admin: bool, username: str, email: str) -> str:
+    return jwt.encode(
+        {
+            'user_id': user_id,
+            'type': 'access',
+            'is_admin': is_admin,
+            'username': username,
+            'email': email,
+            'jti': str(uuid.uuid4()),
+            'iat': int(datetime.utcnow().timestamp()),
+            'exp': datetime.utcnow() + timedelta(seconds=flask_app.config['JWT_ACCESS_TOKEN_EXPIRES']),
+        },
+        flask_app.config['JWT_SECRET_KEY'],
+        algorithm='HS256',
+    )
+
+
 def _auth_headers(token: str) -> dict[str, str]:
     return {'Authorization': f'Bearer {token}'}
 
@@ -91,6 +108,7 @@ def test_admin_ops_service_health_endpoint(monkeypatch, tmp_path):
 
 def test_admin_ops_service_overview_and_detail(monkeypatch, tmp_path):
     _configure_admin_env(monkeypatch, tmp_path)
+    monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
     module = _load_admin_ops_service_module('admin_ops_service_routes')
     client = TestClient(module.app)
     learner_id, token = _create_admin_token(module.admin_ops_flask_app)
@@ -102,3 +120,45 @@ def test_admin_ops_service_overview_and_detail(monkeypatch, tmp_path):
     assert overview_response.json()['total_sessions'] == 1
     assert detail_response.status_code == 200
     assert detail_response.json()['user']['id'] == learner_id
+
+
+def test_admin_ops_service_submits_and_lists_word_feedback(monkeypatch, tmp_path):
+    _configure_admin_env(monkeypatch, tmp_path)
+    module = _load_admin_ops_service_module('admin_ops_service_feedback_routes')
+    client = TestClient(module.app)
+    learner_id, admin_token = _create_admin_token(module.admin_ops_flask_app)
+    learner_token = _create_access_token(
+        module.admin_ops_flask_app,
+        user_id=learner_id,
+        is_admin=False,
+        username='admin-ops-learner',
+        email='learner@example.com',
+    )
+
+    submit_response = client.post(
+        '/api/books/word-feedback',
+        headers=_auth_headers(learner_token),
+        json={
+            'word': 'quit',
+            'phonetic': '/kwɪt/',
+            'pos': 'v.',
+            'definition': '停止；离开',
+            'book_id': 'ielts_listening_premium',
+            'book_title': '雅思听力高频词汇',
+            'chapter_id': '2',
+            'chapter_title': '第2章',
+            'example_en': 'He decided to quit last year.',
+            'example_zh': '他去年决定辞职。',
+            'feedback_types': ['translation', 'audio_pronunciation'],
+            'source': 'global_search',
+        },
+    )
+    list_response = client.get('/api/admin/word-feedback?limit=50', headers=_auth_headers(admin_token))
+
+    assert submit_response.status_code == 201
+    assert submit_response.json()['feedback']['word'] == 'quit'
+    assert submit_response.json()['feedback']['feedback_types'] == ['translation', 'audio_pronunciation']
+    assert list_response.status_code == 200
+    assert list_response.json()['total'] == 1
+    assert list_response.json()['items'][0]['username'] == 'admin-ops-learner'
+    assert list_response.json()['items'][0]['feedback_type_labels'] == ['翻译不准', '音频发音问题']

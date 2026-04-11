@@ -4,7 +4,9 @@ from datetime import datetime
 from types import SimpleNamespace
 
 from platform_sdk import ai_context_application
+from platform_sdk.ai_projection_bootstrap import ai_bootstrap_marker_name
 from platform_sdk.ai_daily_summary_projection_application import (
+    AI_DAILY_SUMMARY_CONTEXT_PROJECTION,
     drain_notes_summary_generated_queue,
 )
 from platform_sdk.domain_event_publisher import publish_outbox_batch
@@ -12,6 +14,7 @@ from platform_sdk.notes_summary_jobs_application import generate_summary_respons
 
 from models import (
     AIExecutionInboxEvent,
+    AIProjectionCursor,
     AIProjectedDailySummary,
     NotesOutboxEvent,
     User,
@@ -85,6 +88,7 @@ def _create_user(*, username: str) -> User:
 
 def test_notes_summary_outbox_publish_and_ai_projection_consume_flow(app, monkeypatch):
     with app.app_context():
+        monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
         user = _create_user(username='wave5-notes-summary-ai-projection-user')
         monkeypatch.setattr(
             'platform_sdk.notes_summary_jobs_application.build_learner_profile_payload',
@@ -124,6 +128,9 @@ def test_notes_summary_outbox_publish_and_ai_projection_consume_flow(app, monkey
         inbox_record = AIExecutionInboxEvent.query.filter_by(
             event_id=message['properties'].message_id
         ).first()
+        cursor = AIProjectionCursor.query.filter_by(
+            projection_name=AI_DAILY_SUMMARY_CONTEXT_PROJECTION
+        ).first()
 
         assert processed == 1
         assert projected_summary is not None
@@ -132,6 +139,9 @@ def test_notes_summary_outbox_publish_and_ai_projection_consume_flow(app, monkey
         assert projected_summary.content.startswith('# 2026-04-11 学习总结')
         assert inbox_record is not None
         assert inbox_record.status == 'processed'
+        assert cursor is not None
+        assert cursor.last_event_id == message['properties'].message_id
+        assert cursor.last_topic == 'notes.summary.generated'
         assert consumer_channel.acks == [707]
         assert consumer_channel.nacks == []
 
@@ -144,6 +154,12 @@ def test_ai_context_uses_projected_summaries_when_notes_service_is_unavailable(a
             date='2026-04-11',
             content='# 2026-04-11 学习总结 今天优先复盘了错词和 AI 问答。',
             generated_at=datetime(2026, 4, 11, 9, 0, 0),
+        ))
+        db.session.add(AIProjectionCursor(
+            projection_name=ai_bootstrap_marker_name(AI_DAILY_SUMMARY_CONTEXT_PROJECTION),
+            last_event_id='bootstrap:ai.daily-summary-context:test',
+            last_topic='__bootstrap__',
+            last_processed_at=datetime.utcnow(),
         ))
         db.session.commit()
 

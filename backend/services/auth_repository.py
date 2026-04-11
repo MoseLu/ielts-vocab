@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from platform_sdk.admin_projection_bootstrap import sync_admin_projected_user_snapshot
 from platform_sdk.identity_event_application import queue_user_registered_event
+from platform_sdk.identity_rate_limit_runtime import (
+    check_rate_limit_with_redis,
+    reset_rate_limit_with_redis,
+)
 from service_models.identity_models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, db
 
 
@@ -41,6 +46,7 @@ def create_user(*, username: str, email: str | None, password: str):
 
 def commit_user(user) -> None:
     db.session.add(user)
+    sync_admin_projected_user_snapshot(user, session=db.session)
     db.session.commit()
 
 
@@ -51,6 +57,15 @@ def check_rate_limit(
     max_attempts: int,
     window_minutes: int,
 ) -> tuple[bool, int]:
+    redis_result = check_rate_limit_with_redis(
+        ip_address=ip_address,
+        purpose=purpose,
+        max_attempts=max_attempts,
+        window_minutes=window_minutes,
+    )
+    if redis_result is not None:
+        return redis_result
+
     return RateLimitBucket.check_and_increment(
         ip_address=ip_address,
         purpose=purpose,
@@ -60,6 +75,12 @@ def check_rate_limit(
 
 
 def reset_rate_limit(*, ip_address: str, purpose: str) -> None:
+    if reset_rate_limit_with_redis(
+        ip_address=ip_address,
+        purpose=purpose,
+    ):
+        return
+
     RateLimitBucket.reset(
         ip_address=ip_address,
         purpose=purpose,

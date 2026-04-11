@@ -22,9 +22,11 @@ from .realtime_sessions import (
     commit_realtime_session_audio,
     extract_partial_transcript,
     get_active_session_count,
+    get_live_session_snapshot,
     normalize_audio_payload,
     send_audio_chunk,
     stop_realtime_session,
+    update_session_transcript_state,
 )
 from .realtime_socketio import register_socketio_events
 from .socketio_service import (
@@ -52,6 +54,7 @@ __all__ = [
     'extract_partial_transcript',
     'get_active_session_count',
     'get_dashscope_api_key',
+    'get_live_session_snapshot',
     'normalize_audio_payload',
     'print_socketio_banner',
     'register_socketio_events',
@@ -64,4 +67,5 @@ __all__ = [
     'spawn_background',
     'stop_realtime_session',
     'transcribe_uploaded_audio',
+    'update_session_transcript_state',
 ]

@@ -20,21 +20,28 @@ from platform_sdk.internal_service_auth import (
 DEFAULT_LEARNING_CORE_SERVICE_URL = 'http://127.0.0.1:8102'
 DEFAULT_TIMEOUT_SECONDS = 5.0
 AI_EXECUTION_SERVICE_NAME = 'ai-execution-service'
+ADMIN_OPS_SERVICE_NAME = 'admin-ops-service'
 
 
 def learning_core_service_url() -> str:
     return (os.environ.get('LEARNING_CORE_SERVICE_URL') or DEFAULT_LEARNING_CORE_SERVICE_URL).rstrip('/')
 
 
-def _internal_headers_for_user(user_id: int) -> dict[str, str]:
+def _internal_headers_for_user(
+    user_id: int,
+    *,
+    source_service_name: str = AI_EXECUTION_SERVICE_NAME,
+    is_admin: bool = False,
+) -> dict[str, str]:
     app = current_app._get_current_object()
     request_id = uuid.uuid4().hex
     trace_id = request_id
     secret = internal_service_secret(env=app.config)
     token = create_internal_service_token(
         secret=secret,
-        source_service_name=AI_EXECUTION_SERVICE_NAME,
+        source_service_name=source_service_name,
         user_id=user_id,
+        is_admin=is_admin,
         request_id=request_id,
         trace_id=trace_id,
         ttl_seconds=internal_service_token_ttl_seconds(env=app.config),
@@ -43,7 +50,7 @@ def _internal_headers_for_user(user_id: int) -> dict[str, str]:
         INTERNAL_SERVICE_AUTH_HEADER: token,
         REQUEST_ID_HEADER: request_id,
         TRACE_ID_HEADER: trace_id,
-        SERVICE_NAME_HEADER: AI_EXECUTION_SERVICE_NAME,
+        SERVICE_NAME_HEADER: source_service_name,
     }
 
 
@@ -54,13 +61,19 @@ def _request_json(
     user_id: int,
     params: dict | None = None,
     json_body: dict | None = None,
+    source_service_name: str = AI_EXECUTION_SERVICE_NAME,
+    is_admin: bool = False,
 ) -> tuple[dict, int]:
     response = requests.request(
         method,
         f'{learning_core_service_url()}{path}',
         params=params,
         json=json_body,
-        headers=_internal_headers_for_user(user_id),
+        headers=_internal_headers_for_user(
+            user_id,
+            source_service_name=source_service_name,
+            is_admin=is_admin,
+        ),
         timeout=DEFAULT_TIMEOUT_SECONDS,
     )
     try:
@@ -68,6 +81,21 @@ def _request_json(
     except ValueError:
         payload = {'error': response.text or 'invalid upstream response'}
     return payload, response.status_code
+
+
+def _parse_optional_datetime(value) -> datetime | None:
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str) and value:
+        try:
+            return datetime.fromisoformat(value.replace('Z', '+00:00'))
+        except ValueError:
+            return None
+    return None
+
+
+def _is_boundary_error_status(status: int) -> bool:
+    return status in {401, 403, 404} or status >= 500
 
 
 def fetch_learning_core_context_payload(user_id: int) -> dict:
@@ -89,34 +117,46 @@ def fetch_learning_core_learning_stats_response(
         params['book_id'] = book_id_filter
     if mode_filter_raw:
         params['mode'] = mode_filter_raw
-    return _request_json('GET', '/internal/learning/stats', user_id=user_id, params=params)
+    payload, status = _request_json('GET', '/internal/learning/stats', user_id=user_id, params=params)
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'learning-core stats request failed: {status}')
+    return payload, status
 
 
 def start_learning_core_study_session_response(user_id: int, data: dict | None) -> tuple[dict, int]:
-    return _request_json(
+    payload, status = _request_json(
         'POST',
         '/internal/learning/study-sessions/start',
         user_id=user_id,
         json_body=data if isinstance(data, dict) else {},
     )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'learning-core study-session start request failed: {status}')
+    return payload, status
 
 
 def log_learning_core_study_session_response(user_id: int, data: dict | None) -> tuple[dict, int]:
-    return _request_json(
+    payload, status = _request_json(
         'POST',
         '/internal/learning/study-sessions/log',
         user_id=user_id,
         json_body=data if isinstance(data, dict) else {},
     )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'learning-core study-session log request failed: {status}')
+    return payload, status
 
 
 def cancel_learning_core_study_session_response(user_id: int, session_id) -> tuple[dict, int]:
-    return _request_json(
+    payload, status = _request_json(
         'POST',
         '/internal/learning/study-sessions/cancel',
         user_id=user_id,
         json_body={'sessionId': session_id},
     )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'learning-core study-session cancel request failed: {status}')
+    return payload, status
 
 
 def record_learning_core_event(

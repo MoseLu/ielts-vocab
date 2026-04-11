@@ -5,7 +5,9 @@ from datetime import datetime
 from types import SimpleNamespace
 
 from platform_sdk import ai_assistant_tool_support, ai_wrong_words_application
+from platform_sdk.ai_projection_bootstrap import ai_bootstrap_marker_name
 from platform_sdk.ai_wrong_word_projection_application import (
+    AI_WRONG_WORD_CONTEXT_PROJECTION,
     drain_learning_wrong_word_updated_queue,
 )
 from platform_sdk.domain_event_publisher import publish_outbox_batch
@@ -13,6 +15,7 @@ from platform_sdk.learning_core_wrong_words_application import sync_learning_cor
 
 from models import (
     AIExecutionInboxEvent,
+    AIProjectionCursor,
     AIProjectedWrongWord,
     LearningCoreOutboxEvent,
     User,
@@ -142,6 +145,9 @@ def test_learning_wrong_word_outbox_publish_and_ai_projection_consume_flow(app):
         inbox_record = AIExecutionInboxEvent.query.filter_by(
             event_id=message['properties'].message_id
         ).first()
+        cursor = AIProjectionCursor.query.filter_by(
+            projection_name=AI_WRONG_WORD_CONTEXT_PROJECTION
+        ).first()
 
         assert processed == 1
         assert projected_wrong_word is not None
@@ -150,6 +156,9 @@ def test_learning_wrong_word_outbox_publish_and_ai_projection_consume_flow(app):
         assert json.loads(projected_wrong_word.dimension_state)['recognition']['history_wrong'] == 4
         assert inbox_record is not None
         assert inbox_record.status == 'processed'
+        assert cursor is not None
+        assert cursor.last_event_id == message['properties'].message_id
+        assert cursor.last_topic == 'learning.wrong_word.updated'
         assert consumer_channel.acks == [909]
         assert consumer_channel.nacks == []
 
@@ -169,6 +178,12 @@ def test_ai_wrong_words_read_uses_projection_when_learning_core_is_unavailable(a
                 last_wrong_at='2026-04-10T09:30:00+00:00',
             ), ensure_ascii=False),
             updated_at=datetime(2026, 4, 10, 9, 30, 0),
+        ))
+        db.session.add(AIProjectionCursor(
+            projection_name=ai_bootstrap_marker_name(AI_WRONG_WORD_CONTEXT_PROJECTION),
+            last_event_id='bootstrap:ai.wrong-word-context:test',
+            last_topic='__bootstrap__',
+            last_processed_at=datetime.utcnow(),
         ))
         db.session.commit()
 
@@ -206,6 +221,12 @@ def test_get_wrong_words_tool_uses_projection_when_learning_core_is_unavailable(
                 last_wrong_at='2026-04-10T10:00:00+00:00',
             ), ensure_ascii=False),
             updated_at=datetime(2026, 4, 10, 10, 0, 0),
+        ))
+        db.session.add(AIProjectionCursor(
+            projection_name=ai_bootstrap_marker_name(AI_WRONG_WORD_CONTEXT_PROJECTION),
+            last_event_id='bootstrap:ai.wrong-word-context:test',
+            last_topic='__bootstrap__',
+            last_processed_at=datetime.utcnow(),
         ))
         db.session.commit()
 

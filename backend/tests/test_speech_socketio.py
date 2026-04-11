@@ -80,6 +80,11 @@ def test_stop_recognition_ignores_closed_connection_errors():
         'recognition_id': 3,
         'bytes_since_commit': 0,
         'audio_queue': [],
+        'partial_transcript': '',
+        'final_transcript': '',
+        'transcript_updated_at': None,
+        'updated_at': None,
+        'last_event': '',
         'lock': threading.Lock(),
     }
 
@@ -145,6 +150,11 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
         'recognition_id': 2,
         'bytes_since_commit': 0,
         'audio_queue': [b'old-audio'],
+        'partial_transcript': '',
+        'final_transcript': '',
+        'transcript_updated_at': None,
+        'updated_at': None,
+        'last_event': '',
         'lock': threading.Lock(),
     }
 
@@ -157,6 +167,14 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
     created_ws[0].kwargs['on_message'](
         created_ws[0],
         '{"type":"session.created","session":{"id":"dashscope-1"}}',
+    )
+    created_ws[0].kwargs['on_message'](
+        created_ws[0],
+        '{"type":"conversation.item.input_audio_transcription.text","text":"partial hello"}',
+    )
+    created_ws[0].kwargs['on_message'](
+        created_ws[0],
+        '{"type":"conversation.item.input_audio_transcription.completed","transcript":"final hello world"}',
     )
     started_event = next(
         event for event in client.get_received('/speech')
@@ -171,6 +189,8 @@ def test_start_recognition_replaces_existing_session(monkeypatch):
     assert asr_service.active_sessions[sid]['enable_vad'] is False
     assert asr_service.active_sessions[sid]['recognition_id'] == 7
     assert asr_service.active_sessions[sid]['audio_queue'] == []
+    assert asr_service.active_sessions[sid]['partial_transcript'] == ''
+    assert asr_service.active_sessions[sid]['final_transcript'] == 'final hello world'
     assert started_event['args'][0]['recognition_id'] == 7
 
     client.disconnect(namespace='/speech')

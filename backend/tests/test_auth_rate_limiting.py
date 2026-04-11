@@ -2,7 +2,65 @@
 
 from datetime import datetime, timedelta
 
+import pytest
+
 from models import RateLimitBucket, db
+from platform_sdk import identity_rate_limit_runtime
+
+
+class FakeRedisRateLimitClient:
+    def __init__(self):
+        self._values: dict[str, int] = {}
+        self._expires_at: dict[str, int] = {}
+        self._now = 0
+
+    def _prune(self, key: str) -> None:
+        expires_at = self._expires_at.get(key)
+        if expires_at is None:
+            return
+        if self._now < expires_at:
+            return
+        self._values.pop(key, None)
+        self._expires_at.pop(key, None)
+
+    def incr(self, key: str) -> int:
+        self._prune(key)
+        value = int(self._values.get(key, 0)) + 1
+        self._values[key] = value
+        return value
+
+    def expire(self, key: str, seconds: int) -> bool:
+        self._prune(key)
+        if key not in self._values:
+            return False
+        self._expires_at[key] = self._now + int(seconds)
+        return True
+
+    def ttl(self, key: str) -> int:
+        self._prune(key)
+        if key not in self._values:
+            return -2
+        expires_at = self._expires_at.get(key)
+        if expires_at is None:
+            return -1
+        return max(expires_at - self._now, 0)
+
+    def delete(self, key: str) -> int:
+        existed = key in self._values
+        self._values.pop(key, None)
+        self._expires_at.pop(key, None)
+        return 1 if existed else 0
+
+    def advance(self, seconds: int) -> None:
+        self._now += int(seconds)
+
+
+@pytest.fixture(autouse=True)
+def disable_redis_rate_limit(monkeypatch):
+    def _raise_unavailable(*args, **kwargs):
+        raise RuntimeError('redis unavailable in this test')
+
+    monkeypatch.setattr(identity_rate_limit_runtime, 'build_redis_client', _raise_unavailable)
 
 
 class TestLoginRateLimiting:
@@ -56,6 +114,88 @@ class TestLoginRateLimiting:
             'password': 'correctpassword',
         })
         assert res.status_code == 200
+
+    def test_rate_limit_falls_back_to_database_when_redis_is_unavailable(self, client, app):
+        client.post('/api/auth/register', json={
+            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+        })
+
+        for _ in range(10):
+            res = client.post('/api/auth/login', json={
+                'email': 'alice@example.com',
+                'password': 'wrongpassword',
+            })
+            assert res.status_code == 401
+
+        blocked = client.post('/api/auth/login', json={
+            'email': 'alice@example.com',
+            'password': 'wrongpassword',
+        })
+        assert blocked.status_code == 429
+
+        with app.app_context():
+            assert RateLimitBucket.query.filter_by(purpose='login').count() == 1
+
+    def test_rate_limit_uses_redis_when_available(self, client, app, monkeypatch):
+        fake_redis = FakeRedisRateLimitClient()
+        monkeypatch.setattr(
+            identity_rate_limit_runtime,
+            'build_redis_client',
+            lambda service_name=None: fake_redis,
+        )
+
+        client.post('/api/auth/register', json={
+            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+        })
+
+        for _ in range(10):
+            res = client.post('/api/auth/login', json={
+                'email': 'alice@example.com',
+                'password': 'wrongpassword',
+            })
+            assert res.status_code == 401
+
+        blocked = client.post('/api/auth/login', json={
+            'email': 'alice@example.com',
+            'password': 'wrongpassword',
+        })
+        assert blocked.status_code == 429
+
+        with app.app_context():
+            assert RateLimitBucket.query.filter_by(purpose='login').count() == 0
+
+    def test_successful_login_resets_redis_bucket(self, client, monkeypatch, app):
+        fake_redis = FakeRedisRateLimitClient()
+        monkeypatch.setattr(
+            identity_rate_limit_runtime,
+            'build_redis_client',
+            lambda service_name=None: fake_redis,
+        )
+        app.config['LOGIN_MAX_ATTEMPTS'] = 2
+
+        client.post('/api/auth/register', json={
+            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+        })
+
+        wrong_once = client.post('/api/auth/login', json={
+            'email': 'alice@example.com',
+            'password': 'wrongpassword',
+        })
+        assert wrong_once.status_code == 401
+        assert fake_redis._values
+
+        success = client.post('/api/auth/login', json={
+            'email': 'alice@example.com',
+            'password': 'correctpassword',
+        })
+        assert success.status_code == 200
+        assert fake_redis._values == {}
+
+        next_wrong = client.post('/api/auth/login', json={
+            'email': 'alice@example.com',
+            'password': 'wrongpassword',
+        })
+        assert next_wrong.status_code == 401
 
     def test_rate_limit_is_scoped_by_login_identifier(self, client, app):
         client.post('/api/auth/register', json={

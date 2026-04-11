@@ -103,3 +103,13 @@ class NotesProjectedWrongWord(db.Model):
             'dictation_wrong': int(self.dictation_wrong or 0),
             'updated_at': _iso_utc(self.updated_at),
         }
+
+
+class NotesProjectionCursor(db.Model):
+    __tablename__ = 'notes_projection_cursors'
+
+    id = db.Column(db.Integer, primary_key=True)
+    projection_name = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    last_event_id = db.Column(db.String(64), nullable=True)
+    last_topic = db.Column(db.String(120), nullable=True)
+    last_processed_at = db.Column(db.DateTime, nullable=True)

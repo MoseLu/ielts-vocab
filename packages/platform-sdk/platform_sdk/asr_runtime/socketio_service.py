@@ -7,7 +7,7 @@ from flask import Flask, jsonify
 from flask_socketio import SocketIO
 
 from .base import SOCKET_NAMESPACE, get_dashscope_api_key
-from .realtime_sessions import get_active_session_count
+from .realtime_sessions import get_active_session_count, get_live_session_snapshot
 from .realtime_socketio import register_socketio_events
 
 
@@ -76,6 +76,19 @@ def create_socketio_service(
             'service': service_name,
             'version': version,
             'transport': 'socketio',
+        }), 200
+
+    @app.get('/internal/sessions/<session_id>')
+    def session_snapshot(session_id: str):
+        snapshot = get_live_session_snapshot(session_id)
+        if snapshot is None:
+            return jsonify({
+                'error': 'session not found',
+                'session_id': session_id,
+            }), 404
+        return jsonify({
+            'session_id': session_id,
+            'snapshot': snapshot,
         }), 200
 
     return app, socketio, host, port

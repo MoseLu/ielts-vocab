@@ -38,6 +38,7 @@ ASR_EVENTING_TABLES = frozenset({
     'asr_inbox_events',
 })
 ADMIN_OPS_EVENTING_TABLES = frozenset({
+    'admin_word_feedback',
     'admin_ops_outbox_events',
     'admin_ops_inbox_events',
     'admin_projection_cursors',
@@ -90,6 +91,7 @@ CUSTOM_BOOK_SHADOW_TABLES = frozenset({
 })
 
 NOTES_SERVICE_TABLES = frozenset({
+    'notes_projection_cursors',
     'notes_projected_prompt_runs',
     'notes_projected_study_sessions',
     'notes_projected_wrong_words',
@@ -99,6 +101,7 @@ NOTES_SERVICE_TABLES = frozenset({
 }) | NOTES_EVENTING_TABLES
 
 AI_EXECUTION_SERVICE_TABLES = frozenset({
+    'ai_projection_cursors',
     'ai_projected_daily_summaries',
     'ai_projected_wrong_words',
     'ai_prompt_runs',

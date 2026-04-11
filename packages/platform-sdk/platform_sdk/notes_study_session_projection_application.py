@@ -14,12 +14,13 @@ from platform_sdk.rabbitmq_runtime import (
     resolve_domain_exchange_name,
 )
 from service_models.eventing_models import NotesInboxEvent
-from service_models.notes_models import NotesProjectedStudySession
+from service_models.notes_models import NotesProjectedStudySession, NotesProjectionCursor
 
 
 NOTES_SERVICE_NAME = 'notes-service'
 LEARNING_SESSION_LOGGED_TOPIC = 'learning.session.logged'
 NOTES_STUDY_SESSION_QUEUE = f'{NOTES_SERVICE_NAME}.{LEARNING_SESSION_LOGGED_TOPIC}'
+NOTES_STUDY_SESSION_CONTEXT_PROJECTION = 'notes.study-session-context'
 
 
 def _query_session(model):
@@ -42,6 +43,16 @@ def _parse_dt(value) -> datetime:
     if isinstance(value, str) and value.strip():
         return datetime.fromisoformat(value.replace('Z', '+00:00')).replace(tzinfo=None)
     return datetime.utcnow()
+
+
+def _projection_cursor(session) -> NotesProjectionCursor:
+    cursor = session.query(NotesProjectionCursor).filter_by(
+        projection_name=NOTES_STUDY_SESSION_CONTEXT_PROJECTION
+    ).first()
+    if cursor is None:
+        cursor = NotesProjectionCursor(projection_name=NOTES_STUDY_SESSION_CONTEXT_PROJECTION)
+        session.add(cursor)
+    return cursor
 
 
 def upsert_notes_projected_study_session(payload: dict, *, session=None) -> NotesProjectedStudySession:
@@ -105,6 +116,10 @@ def consume_notes_learning_session_logged_event(
     try:
         projected_session = upsert_notes_projected_study_session(payload, session=session)
         mark_inbox_event_processed(inbox_record)
+        cursor = _projection_cursor(session)
+        cursor.last_event_id = event_id
+        cursor.last_topic = LEARNING_SESSION_LOGGED_TOPIC
+        cursor.last_processed_at = datetime.utcnow()
         session.commit()
         return projected_session, created
     except Exception as exc:

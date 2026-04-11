@@ -213,8 +213,8 @@
     --layer-global-loading: 60;
     --layer-modal: 80;
     --layer-toast: 100;
-    --layer-global-search: 110;
     --layer-header: 120;
+    --layer-global-search: 130;
     --layer-tooltip: 140;
     --layer-topmost: 160;
 }
@@ -375,5 +375,4 @@ body::-webkit-scrollbar,
     min-height: 17px;   /* reserves space so layout never shifts */
     /* non-breaking space placeholder keeps the line without height = 0 */
 }
-
 

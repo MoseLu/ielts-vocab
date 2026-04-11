@@ -11,6 +11,8 @@ export default function AdminDashboard() {
     tab,
     overview,
     users,
+    feedbackItems,
+    feedbackTotal,
     total,
     page,
     pages,
@@ -25,6 +27,7 @@ export default function AdminDashboard() {
     detailMode,
     detailWrongWordsSort,
     loading,
+    feedbackLoading,
     overviewLoading,
     error,
     setTab,
@@ -52,6 +55,8 @@ export default function AdminDashboard() {
         overview={overview}
         overviewLoading={overviewLoading}
         users={users}
+        feedbackItems={feedbackItems}
+        feedbackTotal={feedbackTotal}
         total={total}
         page={page}
         pages={pages}
@@ -61,6 +66,7 @@ export default function AdminDashboard() {
         currentUserId={currentUserId}
         currentUserAvatarUrl={currentUser?.avatar_url ?? null}
         loading={loading}
+        feedbackLoading={feedbackLoading}
         error={error}
         onDismissError={dismissError}
         onTabChange={setTab}

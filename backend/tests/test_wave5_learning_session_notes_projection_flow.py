@@ -5,13 +5,16 @@ from types import SimpleNamespace
 
 from platform_sdk.domain_event_publisher import publish_outbox_batch
 from platform_sdk.learning_core_study_session_application import log_learning_core_session_response
+from platform_sdk.notes_projection_bootstrap import notes_bootstrap_marker_name
 from platform_sdk.notes_study_session_projection_application import (
+    NOTES_STUDY_SESSION_CONTEXT_PROJECTION,
     drain_notes_learning_session_logged_queue,
 )
 
 from models import (
     LearningCoreOutboxEvent,
     NotesInboxEvent,
+    NotesProjectionCursor,
     NotesProjectedStudySession,
     User,
     UserStudySession,
@@ -120,6 +123,9 @@ def test_learning_session_outbox_publish_and_notes_projection_consume_flow(app):
         inbox_record = NotesInboxEvent.query.filter_by(
             event_id=message['properties'].message_id
         ).first()
+        cursor = NotesProjectionCursor.query.filter_by(
+            projection_name=NOTES_STUDY_SESSION_CONTEXT_PROJECTION
+        ).first()
 
         assert processed == 1
         assert projected_session is not None
@@ -128,6 +134,9 @@ def test_learning_session_outbox_publish_and_notes_projection_consume_flow(app):
         assert projected_session.duration_seconds == 540
         assert inbox_record is not None
         assert inbox_record.status == 'processed'
+        assert cursor is not None
+        assert cursor.last_event_id == message['properties'].message_id
+        assert cursor.last_topic == 'learning.session.logged'
         assert consumer_channel.acks == [201]
         assert consumer_channel.nacks == []
 
@@ -162,6 +171,12 @@ def test_notes_summary_context_prefers_projected_sessions_when_projection_is_com
             started_at=now - timedelta(hours=2),
             ended_at=now - timedelta(hours=2) + timedelta(minutes=7),
         ))
+        db.session.add(NotesProjectionCursor(
+            projection_name=notes_bootstrap_marker_name(NOTES_STUDY_SESSION_CONTEXT_PROJECTION),
+            last_event_id='bootstrap:notes.study-session-context:test',
+            last_topic='__bootstrap__',
+            last_processed_at=now,
+        ))
         db.session.commit()
 
         in_window = notes_summary_context_repository.list_study_sessions_in_window(
@@ -181,3 +196,147 @@ def test_notes_summary_context_prefers_projected_sessions_when_projection_is_com
         assert in_window[0].book_id == 'projected-book'
         assert before_rows[0].__class__.__name__ == 'NotesProjectedStudySession'
         assert before_rows[0].mode == 'meaning'
+
+
+def test_notes_summary_context_prefers_learning_core_internal_sessions_before_shared_fallback(
+    app,
+    monkeypatch,
+):
+    with app.app_context():
+        user = _create_user(username='notes-internal-study-session-context-user')
+        now = datetime.utcnow()
+        db.session.add(UserStudySession(
+            id=902,
+            user_id=user.id,
+            mode='legacy',
+            book_id='legacy-book',
+            chapter_id='1',
+            words_studied=3,
+            correct_count=1,
+            wrong_count=2,
+            duration_seconds=180,
+            started_at=now - timedelta(hours=1),
+        ))
+        db.session.commit()
+
+        monkeypatch.setattr(notes_summary_context_repository, 'current_service_name', lambda: 'notes-service')
+        monkeypatch.setattr(
+            notes_summary_context_repository,
+            'fetch_learning_core_notes_study_sessions',
+            lambda *args, **kwargs: [
+                SimpleNamespace(
+                    id=902,
+                    user_id=user.id,
+                    mode='internal',
+                    book_id='internal-book',
+                    chapter_id='7',
+                    words_studied=8,
+                    correct_count=6,
+                    wrong_count=2,
+                    duration_seconds=420,
+                    started_at=now - timedelta(hours=1),
+                    ended_at=now - timedelta(hours=1) + timedelta(minutes=7),
+                ),
+            ],
+        )
+
+        rows = notes_summary_context_repository.list_study_sessions_in_window(
+            user.id,
+            start_at=now - timedelta(days=1),
+            end_before=now + timedelta(days=1),
+        )
+
+        assert len(rows) == 1
+        assert rows[0].book_id == 'internal-book'
+        assert rows[0].mode == 'internal'
+
+
+def test_notes_summary_context_blocks_shared_session_fallback_when_internal_read_fails(
+    app,
+    monkeypatch,
+):
+    with app.app_context():
+        user = _create_user(username='notes-shared-study-session-fallback-user')
+        now = datetime.utcnow()
+        db.session.add(UserStudySession(
+            id=903,
+            user_id=user.id,
+            mode='legacy',
+            book_id='legacy-book',
+            chapter_id='5',
+            words_studied=6,
+            correct_count=4,
+            wrong_count=2,
+            duration_seconds=360,
+            started_at=now - timedelta(hours=1),
+        ))
+        db.session.commit()
+
+        monkeypatch.setattr(notes_summary_context_repository, 'current_service_name', lambda: 'notes-service')
+        monkeypatch.setattr(
+            notes_summary_context_repository,
+            'legacy_cross_service_fallback_enabled',
+            lambda: False,
+        )
+        monkeypatch.setattr(
+            notes_summary_context_repository,
+            'fetch_learning_core_notes_study_sessions',
+            lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError('learning-core unavailable')),
+        )
+
+        try:
+            notes_summary_context_repository.list_study_sessions_before(
+                user.id,
+                end_before=now + timedelta(days=1),
+                descending=True,
+                require_words_studied=True,
+            )
+        except notes_summary_context_repository.LearningCoreNotesContextUnavailable as exc:
+            assert exc.action == 'notes-summary-study-sessions-read'
+        else:
+            raise AssertionError('expected strict boundary error when internal read fails')
+
+
+def test_notes_summary_context_keeps_legacy_shared_session_fallback_when_enabled(
+    app,
+    monkeypatch,
+):
+    with app.app_context():
+        user = _create_user(username='notes-legacy-study-session-fallback-user')
+        now = datetime.utcnow()
+        db.session.add(UserStudySession(
+            id=904,
+            user_id=user.id,
+            mode='legacy',
+            book_id='legacy-book',
+            chapter_id='6',
+            words_studied=7,
+            correct_count=5,
+            wrong_count=2,
+            duration_seconds=420,
+            started_at=now - timedelta(hours=1),
+        ))
+        db.session.commit()
+
+        monkeypatch.setattr(notes_summary_context_repository, 'current_service_name', lambda: 'notes-service')
+        monkeypatch.setattr(
+            notes_summary_context_repository,
+            'legacy_cross_service_fallback_enabled',
+            lambda: True,
+        )
+        monkeypatch.setattr(
+            notes_summary_context_repository,
+            'fetch_learning_core_notes_study_sessions',
+            lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError('learning-core unavailable')),
+        )
+
+        rows = notes_summary_context_repository.list_study_sessions_before(
+            user.id,
+            end_before=now + timedelta(days=1),
+            descending=True,
+            require_words_studied=True,
+        )
+
+        assert len(rows) == 1
+        assert rows[0].__class__.__name__ == 'UserStudySession'
+        assert rows[0].book_id == 'legacy-book'

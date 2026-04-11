@@ -31,6 +31,58 @@ def _empty_learning_core_context_payload() -> dict:
     }
 
 
+def _empty_learner_profile_payload(*, target_date: str | None, view: str) -> dict:
+    payload = {
+        'date': target_date,
+        'summary': {
+            'date': target_date,
+            'today_words': 0,
+            'today_accuracy': 0,
+            'today_duration_seconds': 0,
+            'today_sessions': 0,
+            'streak_days': 0,
+            'weakest_mode': None,
+            'weakest_mode_label': None,
+            'weakest_mode_accuracy': None,
+            'due_reviews': 0,
+            'trend_direction': 'flat',
+        },
+        'dimensions': [],
+        'focus_words': [],
+        'repeated_topics': [],
+        'next_actions': [],
+        'mode_breakdown': [],
+    }
+    if view == 'stats':
+        return payload
+    return {
+        **payload,
+        'memory_system': {},
+        'daily_plan': None,
+        'activity_summary': {},
+        'activity_source_breakdown': [],
+        'activity_event_breakdown': [],
+        'recent_activity': [],
+    }
+
+
+def _safe_local_learner_profile_response(
+    user_id: int,
+    *,
+    target_date: str | None,
+    view: str,
+) -> tuple[dict, int]:
+    try:
+        return build_local_learner_profile_response(
+            user_id,
+            target_date=target_date,
+            view=view,
+        )
+    except Exception as exc:
+        logging.warning('[Boundary] local learner-profile build failed, using empty snapshot: %s', exc)
+        return _empty_learner_profile_payload(target_date=target_date, view=view), 200
+
+
 def _serialize_daily_summary(summary) -> dict:
     generated_at = getattr(summary, 'generated_at', None)
     return {
@@ -66,7 +118,7 @@ def build_context_payload(user_id: int) -> dict:
         else:
             logging.warning('[Boundary] learning-core unavailable for AI context, using empty snapshot: %s', exc)
             core_payload = _empty_learning_core_context_payload()
-    learner_profile, _status = build_local_learner_profile_response(
+    learner_profile, _status = _safe_local_learner_profile_response(
         user_id,
         target_date=None,
         view='full',
@@ -92,7 +144,7 @@ def build_learner_profile_response(
     target_date: str | None,
     view: str,
 ) -> tuple[dict, int]:
-    return build_local_learner_profile_response(
+    return _safe_local_learner_profile_response(
         user_id,
         target_date=target_date,
         view=view,

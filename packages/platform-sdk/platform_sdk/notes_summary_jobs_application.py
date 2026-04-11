@@ -7,6 +7,7 @@ from datetime import date as date_type
 
 from flask import jsonify
 
+from platform_sdk.cross_service_boundary import build_strict_internal_contract_error
 from platform_sdk.memory_topics_support import build_memory_topics
 from platform_sdk.notes_summary_runtime_support import (
     SUMMARY_SYSTEM_PROMPT,
@@ -29,7 +30,10 @@ from platform_sdk.notes_summary_service_support import (
 )
 from platform_sdk.learner_profile_application_support import build_learner_profile_payload
 from platform_sdk.llm_provider_adapter import chat
-from platform_sdk.notes_repository_adapters import daily_summary_repository
+from platform_sdk.notes_repository_adapters import (
+    daily_summary_repository,
+    notes_summary_context_repository,
+)
 
 
 def _validate_target_date(raw_target_date):
@@ -72,6 +76,13 @@ def _build_summary_context(user_id: int, target_date: str) -> dict:
         'estimated_chars': estimated_chars,
         'user_content': user_content,
     }
+
+
+def _build_notes_summary_boundary_error(action: str):
+    return build_strict_internal_contract_error(
+        upstream_name='learning-core-service',
+        action=action,
+    )
 
 
 def get_summary_job(job_id: str):
@@ -191,7 +202,10 @@ def generate_summary_response(user_id: int, body):
     if cooldown_response:
         return cooldown_response
 
-    context = _build_summary_context(user_id, target_date)
+    try:
+        context = _build_summary_context(user_id, target_date)
+    except notes_summary_context_repository.LearningCoreNotesContextUnavailable as exc:
+        return _build_notes_summary_boundary_error(exc.action)
     try:
         response = chat(
             [
@@ -226,6 +240,11 @@ def start_generate_summary_job_response(user_id: int, body, app):
     _existing, cooldown_response = check_generate_cooldown(user_id, target_date)
     if cooldown_response:
         return cooldown_response
+
+    try:
+        collect_summary_source_data(user_id, target_date)
+    except notes_summary_context_repository.LearningCoreNotesContextUnavailable as exc:
+        return _build_notes_summary_boundary_error(exc.action)
 
     job = create_summary_job(user_id, target_date)
     threading.Thread(

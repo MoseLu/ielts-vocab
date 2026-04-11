@@ -1,6 +1,6 @@
 # Remote Production Baseline
 
-Last updated: 2026-04-11 15:39:26 +08:00
+Last updated: 2026-04-11 20:32:06 +08:00
 
 ## Scope
 
@@ -81,7 +81,7 @@ sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deplo
 
 Status snapshot on `2026-04-11`: the broker baseline was provisioned successfully on `119.29.182.134`, and both the updated `preflight-check.sh` and `smoke-check.sh` passed with broker validation enabled.
 
-The current deployed release on `119.29.182.134` still predates the Wave 5 worker entrypoint files, so worker units are not part of the active baseline yet. The next release that contains the worker-aware [run-service.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/run-service.sh) contract will let deploy/rollback/smoke manage those worker units automatically.
+The deployed release path on `119.29.182.134` now includes the worker-aware [run-service.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/run-service.sh) contract, so deploy/rollback/smoke can manage worker units when the target release contains those entrypoints. This baseline freezes the always-on browser-path units above; Wave 5 worker activity should still be verified from the deploy and smoke evidence for each release instead of assumed from this static list alone.
 
 ## PostgreSQL backup path
 

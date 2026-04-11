@@ -3,6 +3,16 @@ from __future__ import annotations
 from flask import Blueprint, jsonify, request
 
 from platform_sdk.learning_core_context_application import build_learning_core_context_payload
+from platform_sdk.learning_core_admin_detail_application import (
+    list_internal_admin_book_progress_response,
+    list_internal_admin_chapter_progress_response,
+    list_internal_admin_favorite_words_response,
+    list_internal_admin_session_word_events_response,
+)
+from platform_sdk.learning_core_notes_context_application import (
+    list_internal_notes_study_sessions_response,
+    list_internal_notes_wrong_words_response,
+)
 from platform_sdk.learning_core_events_application import record_internal_learning_event_response
 from platform_sdk.learning_core_library_application import (
     add_my_book_response,
@@ -67,6 +77,20 @@ def get_internal_learning_context(current_user):
     return jsonify(build_learning_core_context_payload(current_user.id)), 200
 
 
+@learning_core_bp.route('/internal/learning/notes-context/study-sessions', methods=['GET'])
+@token_required
+def get_internal_notes_context_study_sessions(current_user):
+    payload, status = list_internal_notes_study_sessions_response(current_user.id, request.args)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/notes-context/wrong-words', methods=['GET'])
+@token_required
+def get_internal_notes_context_wrong_words(current_user):
+    payload, status = list_internal_notes_wrong_words_response(current_user.id, request.args)
+    return jsonify(payload), status
+
+
 @learning_core_bp.route('/internal/learning/stats', methods=['GET'])
 @token_required
 def get_internal_learning_stats(current_user):
@@ -116,6 +140,34 @@ def create_internal_learning_event(current_user):
         current_user.id,
         request.get_json(silent=True),
     )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/admin/book-progress', methods=['GET'])
+@token_required
+def get_internal_admin_book_progress(current_user):
+    payload, status = list_internal_admin_book_progress_response(current_user.id)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/admin/favorite-words', methods=['GET'])
+@token_required
+def get_internal_admin_favorite_words(current_user):
+    payload, status = list_internal_admin_favorite_words_response(current_user.id)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/admin/chapter-progress', methods=['GET'])
+@token_required
+def get_internal_admin_chapter_progress(current_user):
+    payload, status = list_internal_admin_chapter_progress_response(current_user.id, request.args)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/admin/session-word-events', methods=['GET'])
+@token_required
+def get_internal_admin_session_word_events(current_user):
+    payload, status = list_internal_admin_session_word_events_response(current_user.id, request.args)
     return jsonify(payload), status
 
 

@@ -54,6 +54,11 @@ class RealtimeSessionState(TypedDict):
     recognition_id: int | None
     bytes_since_commit: int
     audio_queue: list[bytes]
+    partial_transcript: str
+    final_transcript: str
+    transcript_updated_at: int | None
+    updated_at: int | None
+    last_event: str
     lock: Any
 
 

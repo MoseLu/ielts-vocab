@@ -13,13 +13,14 @@ from platform_sdk.rabbitmq_runtime import (
     build_blocking_connection,
     resolve_domain_exchange_name,
 )
-from service_models.ai_execution_models import AIProjectedDailySummary
+from service_models.ai_execution_models import AIProjectedDailySummary, AIProjectionCursor
 from service_models.eventing_models import AIExecutionInboxEvent
 
 
 AI_EXECUTION_SERVICE_NAME = 'ai-execution-service'
 NOTES_SUMMARY_GENERATED_TOPIC = 'notes.summary.generated'
 AI_DAILY_SUMMARY_QUEUE = f'{AI_EXECUTION_SERVICE_NAME}.{NOTES_SUMMARY_GENERATED_TOPIC}'
+AI_DAILY_SUMMARY_CONTEXT_PROJECTION = 'ai.daily-summary-context'
 
 
 def _query_session(model):
@@ -42,6 +43,16 @@ def _parse_dt(value) -> datetime:
     if isinstance(value, str) and value.strip():
         return datetime.fromisoformat(value.replace('Z', '+00:00')).replace(tzinfo=None)
     return datetime.utcnow()
+
+
+def _projection_cursor(session) -> AIProjectionCursor:
+    cursor = session.query(AIProjectionCursor).filter_by(
+        projection_name=AI_DAILY_SUMMARY_CONTEXT_PROJECTION
+    ).first()
+    if cursor is None:
+        cursor = AIProjectionCursor(projection_name=AI_DAILY_SUMMARY_CONTEXT_PROJECTION)
+        session.add(cursor)
+    return cursor
 
 
 def upsert_ai_projected_daily_summary(payload: dict, *, session=None) -> AIProjectedDailySummary:
@@ -103,6 +114,10 @@ def consume_notes_summary_generated_event(
     try:
         projected_summary = upsert_ai_projected_daily_summary(payload, session=session)
         mark_inbox_event_processed(inbox_record)
+        cursor = _projection_cursor(session)
+        cursor.last_event_id = event_id
+        cursor.last_topic = NOTES_SUMMARY_GENERATED_TOPIC
+        cursor.last_processed_at = datetime.utcnow()
         session.commit()
         return projected_summary, created
     except Exception as exc:
