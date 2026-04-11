@@ -60,7 +60,7 @@ describe('AuthProvider', () => {
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
-    })
+    }, { timeout: 3000 })
 
     expect(apiFetchMock).not.toHaveBeenCalled()
     expect(result.current.isAuthenticated).toBe(false)
@@ -81,7 +81,7 @@ describe('AuthProvider', () => {
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
-    })
+    }, { timeout: 3000 })
 
     expect(result.current.isAuthenticated).toBe(true)
     expect(result.current.user).toMatchObject(mockUser)
@@ -90,6 +90,9 @@ describe('AuthProvider', () => {
   it('clears a cached user when /api/auth/me reports no active session', async () => {
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
     apiFetchMock.mockResolvedValueOnce({ user: null, authenticated: false, access_expires_in: 0 })
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'auth failed' }), { status: 401 }),
+    )
 
     const { result } = renderHook(() => useAuth(), { wrapper })
 
@@ -103,6 +106,48 @@ describe('AuthProvider', () => {
     expect(result.current.user).toBeNull()
     expect(localStorage.getItem(STORAGE_KEYS.AUTH_USER)).toBeNull()
     expect(showToastMock).not.toHaveBeenCalled()
+  })
+
+  it('restores the cached session when /api/auth/me needs a refresh token round-trip', async () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
+    apiFetchMock
+      .mockResolvedValueOnce({ user: null, authenticated: false, access_expires_in: 0 })
+      .mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
+    vi.mocked(global.fetch).mockResolvedValueOnce(new Response(null, { status: 200 }))
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    }, { timeout: 3000 })
+
+    expect(vi.mocked(global.fetch)).toHaveBeenCalledWith('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+      signal: expect.any(AbortSignal),
+    })
+    expect(apiFetchMock).toHaveBeenNthCalledWith(1, '/api/auth/me')
+    expect(apiFetchMock).toHaveBeenNthCalledWith(2, '/api/auth/me')
+    expect(result.current.isAuthenticated).toBe(true)
+    expect(result.current.user).toMatchObject(mockUser)
+  })
+
+  it('keeps the cached session when refresh is temporarily unavailable', async () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
+    apiFetchMock.mockResolvedValueOnce({ user: null, authenticated: false, access_expires_in: 0 })
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'temporarily unavailable' }), { status: 503 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'temporarily unavailable' }), { status: 503 }))
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    }, { timeout: 3000 })
+
+    expect(result.current.isAuthenticated).toBe(true)
+    expect(result.current.user).toMatchObject(mockUser)
+    expect(localStorage.getItem(STORAGE_KEYS.AUTH_USER)).not.toBeNull()
   })
 
   it('clears the session when the refresh event is fired', async () => {

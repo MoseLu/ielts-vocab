@@ -6,7 +6,15 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import type { User } from '../types'
 import { STORAGE_KEYS } from '../constants'
-import { apiFetch, safeParse, LoginSchema, RegisterSchema, UserSchema, setAuthSessionActive } from '../lib'
+import {
+  apiFetch,
+  refreshAuthSession,
+  safeParse,
+  LoginSchema,
+  RegisterSchema,
+  UserSchema,
+  setAuthSessionActive,
+} from '../lib'
 import { useToast } from './ToastContext'
 
 interface AuthContextValue {
@@ -77,6 +85,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('my_books')
   }
 
+  const _applySessionProbe = useCallback((data: AuthSessionProbeResponse) => {
+    if (!data.user) {
+      return false
+    }
+    const parsed = safeParse(UserSchema, data.user)
+    if (!parsed.success) {
+      return false
+    }
+    _saveUser(parsed.data)
+    if (data.access_expires_in) _scheduleRefresh(data.access_expires_in)
+    return true
+  }, [_scheduleRefresh])
+
   // On mount: validate cookie with the server; fall back to cached user while loading
   useEffect(() => {
     const cached = localStorage.getItem(STORAGE_KEYS.AUTH_USER)
@@ -101,18 +122,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Verify the cookie is still valid and pull fresh user data
     apiFetch<AuthSessionProbeResponse>('/api/auth/me')
-      .then(data => {
-        if (!data.user) {
+      .then(async data => {
+        if (_applySessionProbe(data)) {
+          return
+        }
+
+        const refreshResult = await refreshAuthSession()
+        if (refreshResult === 'auth_failed') {
           _clearUser()
           return
         }
-        const parsed = safeParse(UserSchema, data.user)
-        if (!parsed.success) {
-          _clearUser()
+
+        if (refreshResult === 'temporarily_unavailable') {
           return
         }
-        _saveUser(parsed.data)
-        if (data.access_expires_in) _scheduleRefresh(data.access_expires_in)
+
+        const recovered = await apiFetch<AuthSessionProbeResponse>('/api/auth/me')
+        if (!_applySessionProbe(recovered)) {
+          _clearUser()
+        }
       })
       .catch((err: Error) => {
         // Only clear session on explicit auth failure (401 / token expired).
@@ -128,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .finally(() => setIsLoading(false))
-  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [_applySessionProbe])  // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for session-expired events fired by apiFetch after a failed refresh
   useEffect(() => {
