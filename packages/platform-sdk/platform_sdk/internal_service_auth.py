@@ -41,14 +41,25 @@ class InternalServiceUser:
 
 
 def internal_service_secret(*, env=os.environ) -> str:
+    def _text(value) -> str:
+        if value is None:
+            return ''
+        if isinstance(value, str):
+            return value.strip()
+        return str(value).strip()
+
     return (
-        (env.get('INTERNAL_SERVICE_JWT_SECRET_KEY') or '').strip()
-        or (env.get('JWT_SECRET_KEY') or '').strip()
+        _text(env.get('INTERNAL_SERVICE_JWT_SECRET_KEY'))
+        or _text(env.get('JWT_SECRET_KEY'))
     )
 
 
 def internal_service_token_ttl_seconds(*, env=os.environ) -> int:
-    raw = (env.get('INTERNAL_SERVICE_TOKEN_TTL_SECONDS') or '').strip()
+    raw_value = env.get('INTERNAL_SERVICE_TOKEN_TTL_SECONDS')
+    if isinstance(raw_value, int):
+        return max(10, raw_value)
+
+    raw = (raw_value or '').strip() if isinstance(raw_value, str) else str(raw_value or '').strip()
     if not raw:
         return DEFAULT_INTERNAL_TOKEN_TTL_SECONDS
     try:

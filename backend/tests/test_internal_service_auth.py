@@ -18,6 +18,8 @@ from platform_sdk.internal_service_auth import (
     INTERNAL_SERVICE_AUTH_HEADER,
     SERVICE_NAME_HEADER,
     create_internal_service_token,
+    internal_service_secret,
+    internal_service_token_ttl_seconds,
 )
 
 
@@ -458,3 +460,13 @@ def test_admin_ops_accepts_internal_admin_user_without_local_user_row(monkeypatc
 
     assert response.status_code == 200
     assert 'total_users' in response.json()
+
+
+def test_internal_service_secret_accepts_config_mapping_values():
+    assert internal_service_secret(env={'JWT_SECRET_KEY': ' test-jwt '}) == 'test-jwt'
+    assert internal_service_secret(env={'JWT_SECRET_KEY': 123456}) == '123456'
+
+
+def test_internal_service_token_ttl_seconds_accepts_integer_config_values():
+    assert internal_service_token_ttl_seconds(env={'INTERNAL_SERVICE_TOKEN_TTL_SECONDS': 120}) == 120
+    assert internal_service_token_ttl_seconds(env={'INTERNAL_SERVICE_TOKEN_TTL_SECONDS': 5}) == 10
