@@ -184,6 +184,12 @@
     border-bottom: 1px solid var(--border-subtle);
 }
 
+.global-word-search-example-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
 .global-word-search-example:last-child {
     padding-bottom: 0;
     border-bottom: none;
@@ -196,6 +202,7 @@
 }
 
 .global-word-search-example-en {
+    flex: 1;
     color: var(--text-primary);
 }
 
@@ -203,6 +210,13 @@
     margin-top: 4px;
     color: var(--text-secondary);
     font-size: 14px;
+}
+
+.global-word-search-audio--example {
+    width: 34px;
+    height: 34px;
+    margin-top: 2px;
+    box-shadow: none;
 }
 
 .global-word-search-root-card {

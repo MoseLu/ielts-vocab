@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import GlobalWordSearch from './GlobalWordSearch'
 
 const apiFetchMock = vi.fn()
+const playExampleAudioMock = vi.fn()
+const stopAudioMock = vi.fn()
 
 vi.mock('../../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../../lib')>('../../../lib')
@@ -12,6 +14,11 @@ vi.mock('../../../lib', async () => {
     apiFetch: (...args: unknown[]) => apiFetchMock(...args),
   }
 })
+
+vi.mock('../../practice/utils', () => ({
+  playExampleAudio: (...args: unknown[]) => playExampleAudioMock(...args),
+  stopAudio: (...args: unknown[]) => stopAudioMock(...args),
+}))
 
 const quitSearchResult = {
   query: 'quit',
@@ -88,6 +95,9 @@ const quitWordDetails = {
 describe('GlobalWordSearch', () => {
   beforeEach(() => {
     apiFetchMock.mockReset()
+    playExampleAudioMock.mockReset()
+    stopAudioMock.mockReset()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -290,9 +300,7 @@ describe('GlobalWordSearch', () => {
     fireEvent.submit(container.querySelector('.global-word-search-form') as HTMLFormElement)
 
     await screen.findByText('v. 停止；离开')
-    await screen.findByText((_content, node) =>
-      node?.textContent === 'She decided to quit her job before the exam season.'
-    )
+    await screen.findByRole('button', { name: '朗读例句 1' })
 
     fireEvent.click(screen.getByRole('tab', { name: '派生' }))
     await screen.findByText('v. · 退出；辞职')
@@ -318,5 +326,42 @@ describe('GlobalWordSearch', () => {
     })
 
     expect(screen.getByText('已保存到账号')).toBeInTheDocument()
+  })
+
+  it('plays example audio from the examples tab with the stored playback settings', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      playbackSpeed: '1.25',
+      volume: '80',
+    }))
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/books/search?q=quit&limit=12') {
+        return Promise.resolve(quitSearchResult)
+      }
+      if (url === '/api/books/word-details?word=quit') {
+        return Promise.resolve(quitWordDetails)
+      }
+      return Promise.resolve({ query: 'other', total: 0, results: [] })
+    })
+
+    const { container } = render(<GlobalWordSearch />)
+
+    fireEvent.keyDown(window, { key: 'Q', shiftKey: true })
+
+    const input = await screen.findByRole('searchbox', { name: '全局单词搜索' })
+    fireEvent.change(input, { target: { value: 'quit' } })
+    fireEvent.submit(container.querySelector('.global-word-search-form') as HTMLFormElement)
+
+    await screen.findByText('她决定在考试季前辞职。')
+
+    fireEvent.click(screen.getByRole('button', { name: '朗读例句 1' }))
+
+    expect(playExampleAudioMock).toHaveBeenCalledWith(
+      'She decided to quit her job before the exam season.',
+      'quit',
+      {
+        playbackSpeed: '1.25',
+        volume: '80',
+      },
+    )
   })
 })
