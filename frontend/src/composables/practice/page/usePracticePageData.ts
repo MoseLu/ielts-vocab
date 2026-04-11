@@ -34,6 +34,8 @@ interface UsePracticePageDataParams {
   mode?: PracticeMode
   bookId: string | null
   chapterId: string | null
+  resolvedPracticeBookId: string | null
+  resolvedPracticeChapterId: string | null
   reviewMode: boolean
   errorMode: boolean
   searchParams: URLSearchParams
@@ -81,6 +83,8 @@ export function usePracticePageData({
   mode,
   bookId,
   chapterId,
+  resolvedPracticeBookId,
+  resolvedPracticeChapterId,
   reviewMode,
   errorMode,
   searchParams,
@@ -114,17 +118,37 @@ export function usePracticePageData({
   beginSession,
 }: UsePracticePageDataParams) {
   useEffect(() => {
-    if (!bookId) return
-    fetch(buildApiUrl(`/api/books/${bookId}/chapters`))
+    if (!resolvedPracticeBookId) {
+      setBookChapters([])
+      return
+    }
+
+    let cancelled = false
+
+    fetch(buildApiUrl(`/api/books/${resolvedPracticeBookId}/chapters`))
       .then(r => r.json())
       .then((d: { chapters?: Chapter[] }) => {
+        if (cancelled) return
         const chapters = d.chapters || []
         setBookChapters(chapters)
-        const current = chapters.find(ch => String(ch.id) === String(chapterId)) || chapters[0]
+        const current = chapters.find(ch => String(ch.id) === String(resolvedPracticeChapterId)) || chapters[0]
         if (current) setCurrentChapterTitle(current.title)
       })
-      .catch(() => {})
-  }, [bookId, chapterId, setBookChapters, setCurrentChapterTitle])
+      .catch(() => {
+        if (!cancelled) {
+          setBookChapters([])
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    resolvedPracticeBookId,
+    resolvedPracticeChapterId,
+    setBookChapters,
+    setCurrentChapterTitle,
+  ])
 
   useEffect(() => {
     if (!bookId) return

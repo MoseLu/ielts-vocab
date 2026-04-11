@@ -128,6 +128,9 @@ function PracticePage({
     spellingFeedbackDismissTimerRef.current = null
   }, [])
 
+  const resolvedPracticeBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId
+  const resolvedPracticeChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
+
   const handleSpellingInputChange = useCallback((value: string) => {
     if (spellingFeedbackLocked && spellingResult === 'wrong' && !spellingFeedbackDismissing) {
       clearSpellingRetryTimer()
@@ -162,6 +165,8 @@ function PracticePage({
     mode,
     bookId,
     chapterId,
+    resolvedPracticeBookId,
+    resolvedPracticeChapterId,
     reviewMode,
     errorMode,
     searchParams,
@@ -197,9 +202,6 @@ function PracticePage({
     errorRoundResultsRef,
     beginSession,
   })
-
-  const resolvedPracticeBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId
-  const resolvedPracticeChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
   const currentWord = vocabulary[queue[queueIndex]]
 
   useEffect(() => {
