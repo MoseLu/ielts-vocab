@@ -79,6 +79,7 @@ export default function GlobalWordSearchDetailPanel({
   const detailAbortRef = useRef<AbortController | null>(null)
   const noteAbortRef = useRef<AbortController | null>(null)
   const lastSyncedNoteRef = useRef('')
+  const primaryExampleTextRef = useRef('')
 
   const summaryDefinition = result.definition || '暂无释义'
   const rootDetail = detailData?.root
@@ -151,9 +152,14 @@ export default function GlobalWordSearchDetailPanel({
   }, [result.word])
 
   useEffect(() => {
-    if (activeTab !== 'examples' || !primaryExampleText) return
+    primaryExampleTextRef.current = primaryExampleText
+  }, [primaryExampleText])
+
+  useEffect(() => {
+    if (activeTab !== 'examples') return
 
     const handlePlayExampleShortcut = (event: KeyboardEvent) => {
+      const visiblePrimaryExampleText = primaryExampleTextRef.current
       if (
         event.repeat
         || event.key !== 'Alt'
@@ -161,18 +167,19 @@ export default function GlobalWordSearchDetailPanel({
         || event.shiftKey
         || event.ctrlKey
         || event.metaKey
+        || !visiblePrimaryExampleText
       ) {
         return
       }
 
       event.preventDefault()
       event.stopImmediatePropagation()
-      playExampleAudio(primaryExampleText, result.word, exampleAudioSettings)
+      playExampleAudio(visiblePrimaryExampleText, result.word, exampleAudioSettings)
     }
 
     window.addEventListener('keydown', handlePlayExampleShortcut, true)
     return () => window.removeEventListener('keydown', handlePlayExampleShortcut, true)
-  }, [activeTab, exampleAudioSettings, primaryExampleText, result.word])
+  }, [activeTab, exampleAudioSettings, result.word])
 
   useEffect(() => {
     if (!detailData) return

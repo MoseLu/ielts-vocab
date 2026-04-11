@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from platform_sdk import catalog_content_runtime
+from platform_sdk import catalog_search_runtime_adapter
 
 
 def test_prime_global_word_search_catalog_builds_catalog(monkeypatch):
@@ -11,12 +11,12 @@ def test_prime_global_word_search_catalog_builds_catalog(monkeypatch):
         return []
 
     monkeypatch.setattr(
-        catalog_content_runtime.books_catalog_query_service,
+        catalog_search_runtime_adapter.books_catalog_query_service,
         '_build_global_word_search_catalog',
         prime_catalog,
     )
 
-    catalog_content_runtime._prime_global_word_search_catalog()
+    catalog_search_runtime_adapter.prime_global_word_search_catalog()
 
     assert called['count'] == 1
 
@@ -28,16 +28,16 @@ def test_prime_global_word_search_catalog_swallows_failures(monkeypatch):
         raise RuntimeError('boom')
 
     monkeypatch.setattr(
-        catalog_content_runtime.books_catalog_query_service,
+        catalog_search_runtime_adapter.books_catalog_query_service,
         '_build_global_word_search_catalog',
         fail_catalog,
     )
     monkeypatch.setattr(
-        catalog_content_runtime.logging,
+        catalog_search_runtime_adapter.logging,
         'warning',
         lambda message, *args: messages.append(message % args),
     )
 
-    catalog_content_runtime._prime_global_word_search_catalog()
+    catalog_search_runtime_adapter.prime_global_word_search_catalog()
 
     assert messages == ['[Catalog] Failed to prime global word search catalog: boom']
