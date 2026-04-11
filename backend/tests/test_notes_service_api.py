@@ -116,6 +116,27 @@ def test_notes_service_generates_summary(monkeypatch, tmp_path):
     assert response.json()['summary']['content'] == '# generated summary'
 
 
+def test_notes_service_lists_internal_summaries(monkeypatch, tmp_path):
+    _configure_notes_env(monkeypatch, tmp_path)
+    module = _load_notes_service_module('notes_service_internal_summaries')
+    client = TestClient(module.app)
+    user_id, token = _create_user_and_token(module.notes_flask_app, username='notes-internal-summary-user')
+
+    with module.notes_flask_app.app_context():
+        db.session.add(UserDailySummary(
+            user_id=user_id,
+            date='2026-04-11',
+            content='# 2026-04-11 学习总结',
+            generated_at=datetime(2026, 4, 11, 8, 0, 0),
+        ))
+        db.session.commit()
+
+    response = client.get('/internal/notes/summaries?limit=5', headers=_auth_headers(token))
+
+    assert response.status_code == 200
+    assert response.json()['summaries'][0]['date'] == '2026-04-11'
+
+
 def test_notes_service_exports_notes_and_summaries(monkeypatch, tmp_path):
     _configure_notes_env(monkeypatch, tmp_path)
     module = _load_notes_service_module('notes_service_export')

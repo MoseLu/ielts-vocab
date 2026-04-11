@@ -58,7 +58,8 @@ configure_postgres_hba() {
 }
 
 dnf install -y git postgresql-server postgresql-contrib python3 python3-pip \
-  python3-devel gcc gcc-c++ make openssl-devel libffi-devel tar curl cronie
+  python3-devel gcc gcc-c++ make openssl-devel libffi-devel tar curl cronie \
+  redis rabbitmq-server
 dnf install -y --disableexcludes=all nginx
 
 if ! dnf install -y certbot python3-certbot-nginx; then
@@ -78,7 +79,7 @@ if [[ ! -d /var/lib/pgsql/data/base ]]; then
 fi
 configure_postgres_hba
 
-systemctl enable --now postgresql nginx crond
+systemctl enable --now postgresql nginx crond redis rabbitmq-server
 systemctl restart postgresql
 
 mkdir -p "${env_dir}" "${web_root}" "${releases_root}" /var/backups/ielts-vocab/postgres
@@ -101,6 +102,9 @@ rm -rf "${web_root:?}/"*
 cp -a "${app_root}/dist/." "${web_root}/"
 
 chmod +x "${app_root}/scripts/cloud-deploy/"*.sh
+if [[ -f "${env_dir}/microservices.env" ]]; then
+  "${app_root}/scripts/cloud-deploy/provision-broker-runtime.sh" "${env_dir}/microservices.env"
+fi
 cp "${app_root}/scripts/cloud-deploy/ielts-service@.service" /etc/systemd/system/
 if [[ -f /etc/nginx/conf.d/ielts-vocab.conf ]] && grep -q 'managed by Certbot' /etc/nginx/conf.d/ielts-vocab.conf; then
   echo "Preserving existing Certbot-managed nginx site config."
@@ -115,4 +119,4 @@ cat >/etc/cron.d/ielts-vocab-postgres-backup <<'CRON'
 17 3 * * * root /opt/ielts-vocab/current/scripts/cloud-deploy/backup-postgres.sh >/var/log/ielts-vocab-postgres-backup.log 2>&1
 CRON
 
-echo "Runtime installed. Ensure ${env_dir}/backend.env and ${env_dir}/microservices.env exist before starting services."
+echo "Runtime installed. Ensure ${env_dir}/backend.env exists, then run provision-postgres.sh and provision-broker-runtime.sh if ${env_dir}/microservices.env was not ready during install."

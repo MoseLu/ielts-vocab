@@ -35,7 +35,7 @@ DOMAIN_EVENT_CONTRACTS: tuple[DomainEventContract, ...] = (
     DomainEventContract(
         topic='learning.wrong_word.updated',
         publisher_service='learning-core-service',
-        consumer_services=('admin-ops-service', 'ai-execution-service'),
+        consumer_services=('admin-ops-service', 'ai-execution-service', 'notes-service'),
         aggregate_type='wrong-word',
         description='Published after wrong-word state changes to keep projections and AI remediation flows current.',
     ),

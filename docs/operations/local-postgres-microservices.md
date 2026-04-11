@@ -77,6 +77,18 @@ This will:
 - start the ASR Socket.IO process on `5001`
 - wait for `/ready` or `/health` checks before returning
 
+For a controlled Wave 4 repair or rollback drill that must temporarily allow one guarded split service to reuse the shared SQLite fallback, use the service-scoped startup flag instead of the global env override:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1 -AllowSharedSplitServiceSqliteServices notes-service
+```
+
+`start-project.ps1` forwards the same flag to the split runtime path:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start-project.ps1 -AllowSharedSplitServiceSqliteServices notes-service
+```
+
 ## Schema Bootstrap And Data Migration
 
 The repository now includes [migrate-sqlite-to-microservice-postgres.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/migrate-sqlite-to-microservice-postgres.py).

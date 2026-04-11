@@ -1,6 +1,6 @@
 # Domain Event Contracts
 
-Last updated: 2026-04-10
+Last updated: 2026-04-11 13:48:35 +08:00
 
 ## Purpose
 
@@ -14,7 +14,7 @@ The checked-in contract registry lives in [domain_event_contracts.py](/F:/enterp
 | --- | --- | --- | --- |
 | `identity.user.registered` | `identity-service` | `admin-ops-service` | `user` |
 | `learning.session.logged` | `learning-core-service` | `admin-ops-service`, `notes-service` | `study-session` |
-| `learning.wrong_word.updated` | `learning-core-service` | `admin-ops-service`, `ai-execution-service` | `wrong-word` |
+| `learning.wrong_word.updated` | `learning-core-service` | `admin-ops-service`, `ai-execution-service`, `notes-service` | `wrong-word` |
 | `notes.summary.generated` | `notes-service` | `admin-ops-service`, `ai-execution-service` | `daily-summary` |
 | `tts.media.generated` | `tts-media-service` | `admin-ops-service` | `tts-media` |
 | `ai.prompt_run.completed` | `ai-execution-service` | `admin-ops-service`, `notes-service` | `prompt-run` |
@@ -29,12 +29,14 @@ Each service now has dedicated event tables in its own schema boundary:
 
 The model declarations live in [eventing_models.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/model_definitions/eventing_models.py), and the service bootstrap plan is extended in [service_table_plan.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/service_table_plan.py).
 
+Some publishers also materialize a service-owned write fact before queueing the event, such as `tts_media_assets` for TTS cache/materialization state and `ai_prompt_runs` for completed AI prompt executions. Some consumers also materialize service-owned read facts from subscribed events, such as `notes_projected_study_sessions`, `notes_projected_wrong_words`, and `notes_projected_prompt_runs` inside `notes-service`, and `ai_projected_wrong_words` plus `ai_projected_daily_summaries` inside `ai-execution-service`.
+
 ## Current Scope
 
-This landing slice adds the durable table shape, contract registry, and helper functions for queueing, claiming, and idempotent inbox registration.
+The current local Wave 5 slice now includes live publisher workers for `identity`, `learning-core`, `notes`, `tts-media`, and `ai-execution`, plus `admin-ops-service` consumer workers that project user, study-session, wrong-word, daily-summary, prompt-run, and TTS-media read models from events. `notes-service` now consumes `learning.session.logged` into `notes_projected_study_sessions`, `learning.wrong_word.updated` into `notes_projected_wrong_words`, and `ai.prompt_run.completed` into `notes_projected_prompt_runs`, while `ai-execution-service` consumes `learning.wrong_word.updated` into `ai_projected_wrong_words` and `notes.summary.generated` into `ai_projected_daily_summaries`; notes summary prompt building, notes summary wrong-word context, AI wrong-word reads, and AI context summary fallback now all use those local projections.
 
 Still pending in the next slice:
 
-- service-local publisher loops that drain outbox rows into RabbitMQ
-- consumer workers that write inbox rows and advance service-local projections
-- admin read-model rebuilds that stop reading shared learning and identity shadow tables directly
+- remote RabbitMQ rollout and supervised worker startup in the deployed environment
+- more shared-read retirement behind the now-landed local projections and internal contracts
+- the remaining admin read-model rebuilds that still read shared learning, catalog, or identity shadow tables directly

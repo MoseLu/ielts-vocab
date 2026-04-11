@@ -1,6 +1,6 @@
 # Backend Microservices Atomic TODO
 
-Last updated: 2026-04-10 20:59:04 +08:00
+Last updated: 2026-04-11 15:29:44 +08:00
 
 ## Goal
 
@@ -45,7 +45,7 @@ Upgrade the current split-compatible backend into a standard microservice backen
 - [已完成] Create service bootstrap/migration commands instead of global `db.create_all()`.
 - [待完成] Add initial schema migration baseline per service.
 - [已完成] Add Wave 4 owned-table parity validation script and runbook: [validate_microservice_storage_parity.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/validate_microservice_storage_parity.py) and [wave4-storage-parity-runbook.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/wave4-storage-parity-runbook.md).
-- [进行中] Disable new writes to shared SQLite from split services after parity checks pass. Write-owning split services now reject the implicit shared fallback `backend/database.sqlite` unless `ALLOW_SHARED_SPLIT_SERVICE_SQLITE=true` is set for a controlled drill.
+- [进行中] Disable new writes to shared SQLite from split services after parity checks pass. Guarded split services now reject the implicit shared fallback `backend/database.sqlite`; use `ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES=<service>` for a service-scoped drill, and reserve `ALLOW_SHARED_SPLIT_SERVICE_SQLITE=true` for an emergency global override only.
 - [已完成] Migrate `identity-service` data from SQLite to `ielts_identity_service`.
 - [已完成] Migrate `learning-core-service` data from SQLite to `ielts_learning_core_service`.
 - [已完成] Migrate `catalog-content-service` data from SQLite/content files into `ielts_catalog_content_service` metadata tables where needed.
@@ -57,24 +57,18 @@ Upgrade the current split-compatible backend into a standard microservice backen
 ## Phase D: Messaging and Caching
 
 - [待完成] Introduce Redis-backed rate limits, ephemeral speech session state, and cache keys.
-- [进行中] Introduce RabbitMQ-backed outbox/event dispatch. Local broker startup, contract resolution, and durable queue/inbox helpers are landed, but live publisher and consumer workers are still pending.
+- [进行中] Introduce RabbitMQ-backed outbox/event dispatch. Local broker startup, contract resolution, durable queue/inbox helpers, live publisher workers, admin projection consumers, and the first non-admin consumers (`notes-service <- learning.session.logged`, `notes-service <- learning.wrong_word.updated`, `notes-service <- ai.prompt_run.completed`, `ai-execution-service <- learning.wrong_word.updated`, `ai-execution-service <- notes.summary.generated`) are landed; remote `microservices.env` broker seeding, `install/provision` scripts, and `preflight/smoke` broker validation are landed and have been executed successfully on `119.29.182.134`, and the deploy/restart/smoke code now supports remote worker units too, but the current deployed release still predates those worker entrypoints and broader shared-read retirement is still pending.
 - [已完成] Add shared outbox table pattern for every write-owning service via [eventing_models.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/model_definitions/eventing_models.py) and [service_table_plan.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/service_table_plan.py).
 - [已完成] Add shared inbox/idempotency handling for event consumers via [outbox_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/outbox_runtime.py).
-- [进行中] Publish first event set. The contract registry is checked in at [domain_event_contracts.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/domain_event_contracts.py), but service-local emit and consume wiring is still pending:
-  - `identity.user.registered`
-  - `learning.session.logged`
-  - `learning.wrong_word.updated`
-  - `notes.summary.generated`
-  - `tts.media.generated`
-  - `ai.prompt_run.completed`
-- [待完成] Build admin read models from events instead of shared table reads.
+- [进行中] Publish first event set. The contract registry is checked in at [domain_event_contracts.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/domain_event_contracts.py), and local emit plus `admin-ops-service` consume wiring is now landed for `identity.user.registered`, `learning.session.logged`, `learning.wrong_word.updated`, `notes.summary.generated`, `tts.media.generated`, and `ai.prompt_run.completed`; `notes-service` now also consumes `learning.session.logged`, `learning.wrong_word.updated`, and `ai.prompt_run.completed`, and `ai-execution-service` now consumes both `learning.wrong_word.updated` and `notes.summary.generated`, so the first contract consumer set is complete locally and the next closure step is a real remote rollout.
+- [进行中] Build admin read models from events instead of shared table reads. User, study-session, wrong-word, daily-summary, prompt-run, and TTS-media projections now have local event-driven rebuild paths, but the remaining admin shared reads still need to be retired.
 
 ## Phase E: Gateway Narrowing
 
 Wave 6 is split here into two delivery seams: Wave 6A closes edge hardening at the gateway and ASR boundary, and Wave 6B promotes the split-service startup path into the canonical runtime contract.
 
 - [已完成] Browser `/api/*` compatibility now routes through `gateway-bff`.
-- [待完成] Remove direct browser access assumptions from backend monolith startup.
+- [已完成] Remove direct browser access assumptions from backend monolith startup by switching `start-project.ps1`, `frontend/vite.config.ts`, `frontend/playwright.config.ts`, `nginx.conf.example`, and the runtime docs to the `gateway-bff :8000 -> services` contract, with static regression coverage in [test_split_runtime_contract.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/tests/test_split_runtime_contract.py).
 - [进行中] Move auth context validation to gateway-issued internal headers/JWT.
 - [已完成] Add timeout, retry, and circuit-breaker policy per downstream service in [gateway_upstream.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/gateway_upstream.py), [http_proxy.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/http_proxy.py), and [gateway_browser_routes.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/gateway_browser_routes.py).
 - [已完成] Add streaming pass-through tests for AI and media endpoints under gateway in [test_http_proxy.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/tests/test_http_proxy.py), [test_gateway_bff_ai_proxy.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/tests/test_gateway_bff_ai_proxy.py), and [test_gateway_bff_tts_proxy.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/tests/test_gateway_bff_tts_proxy.py).
@@ -100,8 +94,7 @@ Wave 6C starts only after Wave 6A and Wave 6B are green and the Wave 4/5 storage
 - [已完成] C2. Service-local schema bootstrap/migration command.
 - [已完成] C3. SQLite-to-PostgreSQL data export/import scripts per service.
 - [已完成] D1. Redis local runtime and shared cache/session adapter.
-- [进行中] D2. RabbitMQ local runtime and outbox/inbox base implementation.
+- [进行中] D2. RabbitMQ local runtime, remote broker rollout, and outbox/inbox base implementation. The remote broker baseline is active on `119.29.182.134`, and deploy/restart/smoke code now supports worker units; remaining work is shipping a release that actually carries those worker entrypoints onto the host.
 - [已完成] E1. Close Wave 6A edge hardening: gateway timeout/retry/circuit-breaker policy, streaming pass-through coverage, and ASR HTTP plus Socket.IO contract docs. Targeted verification is green: `pytest backend/tests/test_http_proxy.py backend/tests/test_gateway_bff_ai_proxy.py backend/tests/test_gateway_bff_tts_proxy.py backend/tests/test_gateway_bff_readiness.py backend/tests/test_asr_service_api.py backend/tests/test_asr_socketio_service.py -q` (`28 passed`), `python -m compileall apps/gateway-bff packages/platform-sdk/platform_sdk services/asr-service`, `pnpm check:file-lines`, and `pnpm lint`.
-- [待完成] E2. Close Wave 6B canonical runtime cutover: remove legacy browser-ingress assumptions and make split-service startup plus remote rollout the default path.
+- [已完成] E2. Close Wave 6B canonical runtime cutover: local startup, browser proxy defaults, e2e instructions, and remote rollout docs now all converge on the split-service runtime contract. Verification is green: `pytest backend/tests/test_split_runtime_contract.py backend/tests/test_source_text_integrity.py -q` (`5 passed`), `pnpm check:file-lines`, `pnpm lint`, and `pnpm build`.
 - [待完成] F1. Close Wave 6C monolith retirement: remove monolith-only runtime paths, validate rollback, and run the final cutover pack.
-

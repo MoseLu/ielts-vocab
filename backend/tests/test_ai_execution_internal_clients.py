@@ -313,6 +313,48 @@ def test_quick_memory_sync_uses_learning_core_internal_client(monkeypatch):
     assert response == {'ok': True, 'user_id': 61, 'records': 1}
 
 
+def test_quick_memory_sync_returns_503_when_strict_boundary_blocks_local_fallback(monkeypatch):
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
+    monkeypatch.delenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', raising=False)
+    monkeypatch.setattr(
+        ai_progress_sync_application,
+        'sync_learning_core_quick_memory',
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError('learning-core unavailable')),
+    )
+    monkeypatch.setattr(
+        ai_progress_sync_application,
+        'build_learning_core_quick_memory_sync_response',
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('fallback should stay disabled')),
+    )
+
+    response, status = ai_progress_sync_application.sync_quick_memory_response(61, {'records': [{'word': 'alpha'}]})
+
+    assert status == 503
+    assert response['boundary'] == 'strict-internal-contract'
+    assert response['upstream'] == 'learning-core-service'
+    assert response['action'] == 'quick-memory-sync'
+
+
+def test_quick_memory_sync_uses_local_fallback_only_when_explicitly_enabled(monkeypatch):
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
+    monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
+    monkeypatch.setattr(
+        ai_progress_sync_application,
+        'sync_learning_core_quick_memory',
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError('learning-core unavailable')),
+    )
+    monkeypatch.setattr(
+        ai_progress_sync_application,
+        'build_learning_core_quick_memory_sync_response',
+        lambda user_id, payload: ({'ok': True, 'source': 'legacy-fallback', 'user_id': user_id}, 200),
+    )
+
+    response, status = ai_progress_sync_application.sync_quick_memory_response(61, {'records': [{'word': 'alpha'}]})
+
+    assert status == 200
+    assert response == {'ok': True, 'source': 'legacy-fallback', 'user_id': 61}
+
+
 def test_smart_stats_routes_use_learning_core_internal_client(monkeypatch):
     monkeypatch.setattr(
         ai_progress_sync_application,

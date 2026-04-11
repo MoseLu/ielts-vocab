@@ -33,6 +33,14 @@ class LearningNoteSnapshot:
     created_at: datetime | None
 
 
+@dataclass(frozen=True)
+class DailySummarySnapshot:
+    id: int
+    date: str
+    content: str
+    generated_at: datetime | None
+
+
 def notes_service_url() -> str:
     return (os.environ.get('NOTES_SERVICE_URL') or DEFAULT_NOTES_SERVICE_URL).rstrip('/')
 
@@ -102,6 +110,15 @@ def _deserialize_learning_note(payload: dict) -> LearningNoteSnapshot:
     )
 
 
+def _deserialize_daily_summary(payload: dict) -> DailySummarySnapshot:
+    return DailySummarySnapshot(
+        id=int(payload.get('id') or 0),
+        date=str(payload.get('date') or ''),
+        content=str(payload.get('content') or ''),
+        generated_at=_parse_optional_datetime(payload.get('generated_at')),
+    )
+
+
 def list_recent_learning_notes(user_id: int, *, limit: int = 80) -> list[LearningNoteSnapshot]:
     payload, status = _request_json(
         'GET',
@@ -114,6 +131,22 @@ def list_recent_learning_notes(user_id: int, *, limit: int = 80) -> list[Learnin
     return [
         _deserialize_learning_note(item)
         for item in (payload.get('notes') or [])
+        if isinstance(item, dict)
+    ]
+
+
+def list_recent_daily_summaries(user_id: int, *, limit: int = 14) -> list[DailySummarySnapshot]:
+    payload, status = _request_json(
+        'GET',
+        '/internal/notes/summaries',
+        user_id=user_id,
+        params={'limit': max(1, min(60, int(limit or 14))), 'descending': 'true'},
+    )
+    if status != 200:
+        raise RuntimeError(f'notes summaries request failed: {status}')
+    return [
+        _deserialize_daily_summary(item)
+        for item in (payload.get('summaries') or [])
         if isinstance(item, dict)
     ]
 

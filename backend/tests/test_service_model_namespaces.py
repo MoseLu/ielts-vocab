@@ -21,6 +21,9 @@ def test_learning_core_models_expose_learning_owned_models():
 
 
 def test_notes_models_expose_notes_owned_models():
+    assert hasattr(notes_models, 'NotesProjectedPromptRun')
+    assert hasattr(notes_models, 'NotesProjectedStudySession')
+    assert hasattr(notes_models, 'NotesProjectedWrongWord')
     assert hasattr(notes_models, 'UserWordNote')
     assert hasattr(notes_models, 'UserLearningNote')
     assert hasattr(notes_models, 'UserDailySummary')
@@ -37,6 +40,9 @@ def test_identity_models_expose_identity_owned_models():
 
 
 def test_ai_execution_models_expose_ai_owned_models():
+    assert hasattr(ai_execution_models, 'AIProjectedDailySummary')
+    assert hasattr(ai_execution_models, 'AIProjectedWrongWord')
+    assert hasattr(ai_execution_models, 'AIPromptRun')
     assert hasattr(ai_execution_models, 'UserConversationHistory')
     assert hasattr(ai_execution_models, 'UserMemory')
     assert hasattr(ai_execution_models, 'SearchCache')
@@ -56,6 +62,13 @@ def test_eventing_models_expose_outbox_and_inbox_state():
     assert hasattr(eventing_models, 'IdentityOutboxEvent')
     assert hasattr(eventing_models, 'LearningCoreInboxEvent')
     assert hasattr(eventing_models, 'AdminProjectionCursor')
+    assert hasattr(eventing_models, 'AdminProjectedDailySummary')
+    assert hasattr(eventing_models, 'AdminProjectedPromptRun')
+    assert hasattr(eventing_models, 'AdminProjectedTTSMedia')
+    assert hasattr(eventing_models, 'AdminProjectedWrongWord')
+    assert hasattr(eventing_models, 'AdminProjectedStudySession')
+    assert hasattr(eventing_models, 'AdminProjectedUser')
+    assert hasattr(eventing_models, 'TTSMediaAsset')
 
 
 

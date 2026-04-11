@@ -1,4 +1,4 @@
-# ── 推荐 nginx 配置（适用于 natapp + vite preview + Flask 架构）──
+# ── 推荐 nginx 配置（适用于 natapp + vite preview + split backend 架构）──
 # 参考此文件配置你本机的 nginx
 
 server {
@@ -8,9 +8,9 @@ server {
     # 增大请求体上限（头像上传等）
     client_max_body_size 10m;
 
-    # ── API → Flask:5000 ──────────────────────────────────────────
+    # ── API → gateway-bff:8000 ────────────────────────────────────
     location /api/ {
-        proxy_pass         http://127.0.0.1:5000;
+        proxy_pass         http://127.0.0.1:8000;
         proxy_http_version 1.1;
         proxy_set_header   Host              $host;
         proxy_set_header   X-Real-IP         $remote_addr;
@@ -26,7 +26,7 @@ server {
         proxy_buffering off;
     }
 
-    # ── Socket.IO → speech_service:5001（独立语音识别进程）───────
+    # ── Socket.IO → asr-socketio:5001（独立实时语音进程）─────────
     location /socket.io/ {
         proxy_pass         http://127.0.0.1:5001/socket.io/;
         proxy_http_version 1.1;

@@ -7,6 +7,11 @@ from platform_sdk.local_time_support import current_local_datetime, format_event
 from platform_sdk.ai_prompt_support import build_context_msg
 
 
+def _summary_excerpt(content: str, *, limit: int = 160) -> str:
+    compact = ' '.join(str(content or '').split())
+    return compact[:limit]
+
+
 def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     parts = []
     weekday_zh = ['一', '二', '三', '四', '五', '六', '日']
@@ -59,6 +64,7 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
     books = ctx_data.get('books', [])
     wrong_words = ctx_data.get('wrongWords', [])
     recent_sessions = ctx_data.get('recentSessions', [])
+    recent_summaries = ctx_data.get('recentSummaries', [])
     chapter_stats = ctx_data.get('chapterSessionStats', [])
     learner_profile = ctx_data.get('learnerProfile', {})
     memory_system = learner_profile.get('memory_system') or {}
@@ -145,6 +151,13 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
             )
     else:
         parts.append('\n【最近练习记录】暂无')
+
+    if recent_summaries:
+        parts.append('\n【最近学习总结（最新3条）】')
+        for summary in recent_summaries[:3]:
+            date_text = summary.get('date') or '未知日期'
+            excerpt = _summary_excerpt(summary.get('content'))
+            parts.append(f'  {date_text} | {excerpt}')
 
     repeated = [item for item in chapter_stats if item.get('session_count', 0) >= 2]
     if repeated:

@@ -39,6 +39,8 @@ def _configure_ai_env(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv('EMAIL_CODE_DELIVERY_MODE', 'mock')
     monkeypatch.setenv('SQLITE_DB_PATH', str(tmp_path / 'ai-execution-service.sqlite'))
     monkeypatch.setenv('DB_BACKUP_ENABLED', 'false')
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
+    monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
 
 
 def _create_user_and_token(flask_app, username='ai-execution-user') -> str:
@@ -98,6 +100,7 @@ def test_ai_execution_service_ask_route(monkeypatch, tmp_path):
     token = _create_user_and_token(module.ai_flask_app, username='ai-ask-runtime-user')
 
     persisted = {}
+    prompt_run = {}
     monkeypatch.setattr(
         ai_assistant_application,
         'build_ask_messages',
@@ -111,6 +114,11 @@ def test_ai_execution_service_ask_route(monkeypatch, tmp_path):
             'message': user_message,
             'reply': clean_reply,
         }),
+    )
+    monkeypatch.setattr(
+        ai_assistant_application,
+        'record_ai_prompt_run_completion',
+        lambda **kwargs: prompt_run.update(kwargs),
     )
     monkeypatch.setattr(
         ai_assistant_application,
@@ -130,6 +138,11 @@ def test_ai_execution_service_ask_route(monkeypatch, tmp_path):
         'message': '今天怎么复习？',
         'reply': '先复习今天到期的错词。',
     }
+    assert prompt_run['user_id'] > 0
+    assert prompt_run['run_kind'] == 'assistant.ask'
+    assert prompt_run['provider'] == 'minimax'
+    assert prompt_run['prompt_excerpt'] == '今天怎么复习？'
+    assert prompt_run['response_excerpt'] == '先复习今天到期的错词。'
 
 
 def test_ai_execution_service_ask_stream_route(monkeypatch, tmp_path):
@@ -138,6 +151,7 @@ def test_ai_execution_service_ask_stream_route(monkeypatch, tmp_path):
     client = TestClient(module.app)
     token = _create_user_and_token(module.ai_flask_app, username='ai-stream-runtime-user')
 
+    prompt_run = {}
     monkeypatch.setattr(
         'platform_sdk.ai_assistant_application.build_ask_messages',
         lambda *args, **kwargs: [{'role': 'system', 'content': 'test'}],
@@ -149,6 +163,10 @@ def test_ai_execution_service_ask_stream_route(monkeypatch, tmp_path):
     monkeypatch.setattr(
         'platform_sdk.ai_assistant_application.persist_ask_response',
         lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        'platform_sdk.ai_assistant_application.record_ai_prompt_run_completion',
+        lambda **kwargs: prompt_run.update(kwargs),
     )
 
     def fake_stream(*args, **kwargs):
@@ -166,6 +184,8 @@ def test_ai_execution_service_ask_stream_route(monkeypatch, tmp_path):
     assert response.headers['content-type'].startswith('text/event-stream')
     assert '"type": "text"' in response.text
     assert '"type": "done"' in response.text
+    assert prompt_run['run_kind'] == 'assistant.ask_stream'
+    assert prompt_run['response_excerpt'] == '先复习错词。'
 
 
 def test_ai_execution_service_generate_book_route(monkeypatch, tmp_path):
@@ -174,6 +194,7 @@ def test_ai_execution_service_generate_book_route(monkeypatch, tmp_path):
     client = TestClient(module.app)
     token = _create_user_and_token(module.ai_flask_app, username='ai-generate-book-runtime-user')
 
+    prompt_run = {}
     payload = {
         'title': '学术高频词',
         'description': '聚焦常见学术场景',
@@ -191,6 +212,11 @@ def test_ai_execution_service_generate_book_route(monkeypatch, tmp_path):
         'chat',
         lambda messages, max_tokens=8192: {'type': 'text', 'text': json.dumps(payload, ensure_ascii=False)},
     )
+    monkeypatch.setattr(
+        ai_custom_books_application,
+        'record_ai_prompt_run_completion',
+        lambda **kwargs: prompt_run.update(kwargs),
+    )
 
     response = client.post(
         '/api/ai/generate-book',
@@ -203,6 +229,9 @@ def test_ai_execution_service_generate_book_route(monkeypatch, tmp_path):
     assert data['title'] == '学术高频词'
     assert len(data['chapters']) == 1
     assert len(data['words']) == 1
+    assert prompt_run['run_kind'] == 'custom-book.generate'
+    assert prompt_run['provider'] == 'minimax'
+    assert prompt_run['result_ref'] == data['bookId']
 
 
 def test_ai_execution_service_quick_memory_sync_round_trip(monkeypatch, tmp_path):

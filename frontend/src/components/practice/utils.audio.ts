@@ -21,6 +21,7 @@ type AudioMetadata = { byteLength: number | null; cacheKey: string | null }
 const wordAudioCache = new Map<string, AudioCacheEntry>()
 const wordAudioRequestCache = new Map<string, Promise<AudioCacheEntry | null>>()
 const exampleAudioCache = new Map<string, AudioCacheEntry>()
+const exampleAudioRequestCache = new Map<string, Promise<AudioCacheEntry | null>>()
 
 function wordAudioCacheKey(word: string): string { return word.trim().toLowerCase() }
 function exampleAudioCacheKey(sentence: string): string { return sentence.trim() }
@@ -200,8 +201,19 @@ async function ensureExampleAudioEntryForPlayback(
     if (isValid) return cached
     exampleAudioCache.delete(key)
   }
-  const entry = await requestExampleAudioEntry(sentence, word)
-  return entry ? rememberEntry(exampleAudioCache, key, entry) : null
+
+  const existingRequest = exampleAudioRequestCache.get(key)
+  if (existingRequest) return existingRequest
+
+  const nextRequest = requestExampleAudioEntry(sentence, word)
+    .then(entry => (entry ? rememberEntry(exampleAudioCache, key, entry) : null))
+    .finally(() => {
+      if (exampleAudioRequestCache.get(key) === nextRequest) {
+        exampleAudioRequestCache.delete(key)
+      }
+    })
+  exampleAudioRequestCache.set(key, nextRequest)
+  return nextRequest
 }
 
 async function ensureWordAudioEntryForPlayback(
@@ -244,6 +256,16 @@ export function playWord(word: string, settings: { playbackSpeed?: string; volum
 
 export async function preloadWordAudio(word: string): Promise<boolean> {
   const entry = await ensureWordAudioEntryForPlayback(word)
+  if (!entry) return false
+  const [prepared] = await Promise.all([
+    prepareManagedAudioBuffer(entry.buffer),
+    warmupManagedAudio(),
+  ])
+  return prepared
+}
+
+export async function preloadExampleAudio(sentence: string, word: string): Promise<boolean> {
+  const entry = await ensureExampleAudioEntryForPlayback(sentence, word)
   if (!entry) return false
   const [prepared] = await Promise.all([
     prepareManagedAudioBuffer(entry.buffer),
@@ -331,6 +353,7 @@ export function __resetAudioStateForTests(): void {
   wordAudioCache.clear()
   wordAudioRequestCache.clear()
   exampleAudioCache.clear()
+  exampleAudioRequestCache.clear()
   audioGeneration = 0
   audioStopped = false
   __resetManagedAudioStateForTests()

@@ -1,4 +1,5 @@
 from datetime import datetime
+from types import SimpleNamespace
 
 from services.ai_learning_context_service import build_learning_context_msg
 from services.local_time import format_event_time_for_ai
@@ -61,3 +62,25 @@ def test_summary_prompt_uses_local_event_stamp():
     )
 
     assert '16:11 听力检查 thus 待强化' in prompt
+
+
+def test_summary_prompt_uses_local_prompt_run_stamp():
+    prompt = build_summary_prompt(
+        target_date='2026-04-09',
+        notes_list=[],
+        sessions=[],
+        wrong_words=[],
+        prompt_runs=[
+            SimpleNamespace(
+                completed_at='2026-04-09T08:11:00',
+                run_kind='assistant.ask',
+                provider='minimax',
+                model='MiniMax-M2.7-highspeed',
+                prompt_excerpt='今天怎么安排复习？',
+                response_excerpt='先复习错词。',
+                result_ref=None,
+            )
+        ],
+    )
+
+    assert '16:11 AI 助手问答' in prompt

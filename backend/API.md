@@ -7,10 +7,12 @@
 
 ## 基础信息
 
-- **Base URL**: `http://localhost:5000/api`
+- **Base URL**: `http://localhost:8000/api`
 - **认证方式**: JWT Token (Bearer Token)
 - **请求格式**: JSON
 - **响应格式**: JSON
+
+浏览器兼容入口默认通过 `gateway-bff` 暴露；`backend/app.py` 的 `5000` 端口只保留为兼容 monolith 参考路径。
 
 ## 认证接口
 

@@ -36,7 +36,7 @@ def save_daily_summary(
     if existing:
         existing.content = summary_content
         existing.generated_at = generated_at
-        db.session.commit()
+        db.session.flush()
         return existing
 
     summary = UserDailySummary(
@@ -46,8 +46,12 @@ def save_daily_summary(
         generated_at=generated_at,
     )
     db.session.add(summary)
-    db.session.commit()
+    db.session.flush()
     return summary
+
+
+def commit() -> None:
+    db.session.commit()
 
 
 def rollback() -> None:

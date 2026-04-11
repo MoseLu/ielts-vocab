@@ -81,3 +81,54 @@ def test_put_fetch_and_delete_object_lifecycle(monkeypatch):
 
     assert aliyun_oss.delete_object(object_key='tts/cache/sample.mp3') is True
     assert 'tts/cache/sample.mp3' not in stored
+
+
+def test_resolve_object_metadata_falls_back_to_get_object_headers_when_head_omits_content_type(monkeypatch):
+    seen = {'closed': False}
+
+    class FakeMeta:
+        headers = {
+            'Content-Length': '7',
+            'ETag': '"etag-1"',
+        }
+
+    class FakeObject:
+        headers = {
+            'Content-Length': '7',
+            'ETag': '"etag-1"',
+            'Content-Type': 'audio/mpeg',
+        }
+
+        def close(self):
+            seen['closed'] = True
+
+    class FakeBucket:
+        bucket_name = 'bucket'
+
+        def sign_url(self, method, object_key, expires, slash_safe=True):
+            assert method == 'GET'
+            assert expires > 0
+            assert slash_safe is True
+            return f'https://oss.example.com/{object_key}?signature=1'
+
+        def get_object_meta(self, object_key):
+            assert object_key == 'tts/cache/sample.mp3'
+            return FakeMeta()
+
+        def get_object(self, object_key):
+            assert object_key == 'tts/cache/sample.mp3'
+            return FakeObject()
+
+    monkeypatch.setattr(aliyun_oss, 'get_bucket', lambda **kwargs: FakeBucket())
+    aliyun_oss.clear_cached_metadata()
+
+    metadata = aliyun_oss.resolve_object_metadata(
+        object_key='tts/cache/sample.mp3',
+        file_name='sample.mp3',
+    )
+
+    assert metadata is not None
+    assert metadata.byte_length == 7
+    assert metadata.content_type == 'audio/mpeg'
+    assert metadata.cache_key == 'oss:sample.mp3:7:etag-1'
+    assert seen['closed'] is True

@@ -18,6 +18,14 @@ from platform_sdk.notes_repository_adapters import (
     learning_note_repository,
     notes_summary_context_repository,
 )
+from platform_sdk.notes_summary_event_application import queue_summary_generated_event
+
+
+AI_PROMPT_RUN_KIND_LABELS = {
+    'assistant.ask': 'AI 助手问答',
+    'assistant.ask_stream': 'AI 流式问答',
+    'custom-book.generate': '自定义词书生成',
+}
 
 
 def parse_int_param(value: str | None, default: int, min_val: int, max_val: int) -> tuple[int, str | None]:
@@ -84,8 +92,14 @@ def collect_summary_source_data(user_id: int, target_date: str):
         end_before=end_dt,
         descending=False,
     )
+    prompt_runs = notes_summary_context_repository.list_prompt_runs_in_window(
+        user_id,
+        start_at=start_dt,
+        end_before=end_dt,
+        descending=False,
+    )
     wrong_words = notes_summary_context_repository.list_wrong_words(user_id, limit=50)
-    return learning_notes, sessions, wrong_words
+    return learning_notes, sessions, wrong_words, prompt_runs
 
 
 def format_duration(seconds: int) -> str:
@@ -128,8 +142,28 @@ def summary_streak_days(user_id: int, target_date: str) -> int:
     return streak
 
 
-def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_words) -> dict:
+def _prompt_run_label(run_kind: str | None) -> str:
+    normalized = str(run_kind or '').strip()
+    return AI_PROMPT_RUN_KIND_LABELS.get(normalized, normalized or 'AI 调用')
+
+
+def _format_prompt_run_summary(prompt_run, *, target_date: str) -> str:
+    stamp = format_event_time_for_ai(prompt_run.completed_at, reference_date=target_date)
+    model_bits = [value for value in (prompt_run.provider, prompt_run.model) if value]
+    model_text = f"（{' / '.join(model_bits)}）" if model_bits else ''
+    prompt_text = f"；提示：{prompt_run.prompt_excerpt[:120]}" if prompt_run.prompt_excerpt else ''
+    response_text = f"；结果：{prompt_run.response_excerpt[:120]}" if prompt_run.response_excerpt else ''
+    result_ref_text = f"；结果引用：{prompt_run.result_ref}" if prompt_run.result_ref else ''
+    prefix = f"{stamp} " if stamp else ''
+    return (
+        f"- {prefix}{_prompt_run_label(prompt_run.run_kind)}{model_text}"
+        f"{prompt_text}{response_text}{result_ref_text}"
+    )
+
+
+def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_words, prompt_runs=None) -> dict:
     _start_dt, end_dt = date_bounds(target_date)
+    prompt_runs = list(prompt_runs or [])
     today_words = sum(session.words_studied or 0 for session in sessions)
     today_duration = sum(session.duration_seconds or 0 for session in sessions)
     today_correct = sum(session.correct_count or 0 for session in sessions)
@@ -191,6 +225,7 @@ def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_word
         'today_duration': today_duration,
         'today_accuracy': today_accuracy,
         'today_sessions': len(sessions),
+        'today_prompt_runs': len(prompt_runs),
         'today_mode_breakdown': today_mode_breakdown,
         'streak_days': summary_streak_days(user_id, target_date),
         'weakest_mode': weakest_mode,
@@ -198,8 +233,15 @@ def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_word
     }
 
 
-def estimate_summary_target_chars(notes_list, sessions, wrong_words) -> int:
-    estimate = 420 + len(notes_list) * 150 + len(sessions) * 110 + min(len(wrong_words), 20) * 18
+def estimate_summary_target_chars(notes_list, sessions, wrong_words, prompt_runs=None) -> int:
+    prompt_runs = list(prompt_runs or [])
+    estimate = (
+        420
+        + len(notes_list) * 150
+        + len(sessions) * 110
+        + min(len(wrong_words), 20) * 18
+        + len(prompt_runs) * 70
+    )
     return max(480, min(1800, estimate))
 
 
@@ -214,13 +256,16 @@ def fallback_summary_content(target_date: str) -> str:
 
 
 def save_summary(existing, user_id: int, target_date: str, summary_content: str):
-    return daily_summary_repository.save_daily_summary(
+    summary = daily_summary_repository.save_daily_summary(
         existing,
         user_id=user_id,
         target_date=target_date,
         summary_content=summary_content,
         generated_at=utc_now(),
     )
+    queue_summary_generated_event(summary)
+    daily_summary_repository.commit()
+    return summary
 
 
 def prune_summary_jobs() -> None:
@@ -257,13 +302,16 @@ def build_summary_prompt(
     learning_snapshot: dict | None = None,
     topic_insights: list[dict] | None = None,
     learner_profile: dict | None = None,
+    prompt_runs=None,
 ) -> str:
+    prompt_runs = list(prompt_runs or [])
     prompt_parts = [f"请为 {target_date} 生成学习总结。", ""]
 
     if learning_snapshot:
         prompt_parts.append("### 学习指标总览")
         prompt_parts.append(f"- 今日学习词数：{learning_snapshot['today_words']}")
         prompt_parts.append(f"- 今日练习次数：{learning_snapshot['today_sessions']}")
+        prompt_parts.append(f"- 今日 AI 运行次数：{learning_snapshot.get('today_prompt_runs', 0)}")
         prompt_parts.append(f"- 今日用时：{format_duration(learning_snapshot['today_duration'])}")
         prompt_parts.append(f"- 今日准确率：{learning_snapshot['today_accuracy']}%")
         prompt_parts.append(f"- 连续学习：{learning_snapshot['streak_days']} 天")
@@ -318,6 +366,12 @@ def build_summary_prompt(
             prompt_parts.append(
                 f"- {topic['title']}：今天相关提问 {topic['count']} 次；最近一次回答重点：{topic['latest_answer']}"
             )
+
+    if prompt_runs:
+        prompt_parts.append("")
+        prompt_parts.append("### 当天 AI 使用痕迹")
+        for prompt_run in prompt_runs[:12]:
+            prompt_parts.append(_format_prompt_run_summary(prompt_run, target_date=target_date))
 
     if wrong_words:
         prompt_parts.append("")

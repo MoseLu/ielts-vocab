@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 import hashlib
 import io
 import re
@@ -114,6 +115,7 @@ def generate_speech_response(
     write_bytes_atomically,
     send_file,
     jsonify,
+    on_materialized=None,
 ):
     text = (data.get('text') or '').strip()
     if not text:
@@ -132,7 +134,22 @@ def generate_speech_response(
         f'{text}:{voice_id}:{speed}:{emotion}:{model}'.encode()
     ).hexdigest()[:16]
     cached_file = cache_path_resolver(f'{text}:{speed}:{emotion}:{model}', voice_id)
+
+    def _generated_at_for_file(path):
+        return datetime.utcfromtimestamp(path.stat().st_mtime)
+
     if cached_file.exists() and is_probably_valid_mp3_file(cached_file):
+        if callable(on_materialized):
+            on_materialized(
+                media_kind='tts-generate',
+                media_id=cached_file.name,
+                tts_provider='minimax',
+                storage_provider='local-cache',
+                model=model,
+                voice=voice_id,
+                byte_length=cached_file.stat().st_size,
+                generated_at=_generated_at_for_file(cached_file),
+            )
         return send_file(
             cached_file,
             mimetype='audio/mpeg',
@@ -182,6 +199,17 @@ def generate_speech_response(
                     if not is_probably_valid_mp3_bytes(audio_bytes):
                         return jsonify({'error': 'Invalid MP3 payload returned by TTS provider'}), 502
                     write_bytes_atomically(cached_file, audio_bytes)
+                    if callable(on_materialized):
+                        on_materialized(
+                            media_kind='tts-generate',
+                            media_id=cached_file.name,
+                            tts_provider='minimax',
+                            storage_provider='local-cache',
+                            model=model,
+                            voice=voice_id,
+                            byte_length=len(audio_bytes),
+                            generated_at=_generated_at_for_file(cached_file),
+                        )
                     audio_data = io.BytesIO(audio_bytes)
                     audio_data.seek(0)
                     return send_file(

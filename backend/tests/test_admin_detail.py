@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 
 from models import (
+    AdminProjectedDailySummary,
     User,
     UserBookProgress,
     UserChapterProgress,
@@ -323,3 +324,40 @@ def test_admin_user_detail_includes_favorite_words(client, app):
     assert [item['word'] for item in payload['favorite_words']] == ['compile', 'abandon']
     assert payload['favorite_words'][0]['source_book_title'] == '雅思阅读精讲'
     assert payload['favorite_words'][1]['source_chapter_title'] == '第12章'
+
+
+def test_admin_user_detail_includes_projected_recent_summaries(client, app):
+    register_user(client, 'admin-detail-summary-admin')
+    register_user(client, 'admin-detail-summary-learner')
+
+    with app.app_context():
+        admin = User.query.filter_by(username='admin-detail-summary-admin').first()
+        learner = User.query.filter_by(username='admin-detail-summary-learner').first()
+        admin.is_admin = True
+
+        db.session.add_all([
+            AdminProjectedDailySummary(
+                id=801,
+                user_id=learner.id,
+                date='2026-04-10',
+                content='# 2026-04-10 学习总结\n\n今天完成了阅读复盘。',
+                generated_at=datetime(2026, 4, 10, 20, 0, 0),
+            ),
+            AdminProjectedDailySummary(
+                id=802,
+                user_id=learner.id,
+                date='2026-04-11',
+                content='# 2026-04-11 学习总结\n\n今天完成了错词复盘。',
+                generated_at=datetime(2026, 4, 11, 20, 0, 0),
+            ),
+        ])
+        db.session.commit()
+        learner_id = learner.id
+
+    login_user(client, 'admin-detail-summary-admin')
+    response = client.get(f'/api/admin/users/{learner_id}')
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert [item['date'] for item in payload['recent_summaries']] == ['2026-04-11', '2026-04-10']
+    assert payload['recent_summaries'][0]['content'].startswith('# 2026-04-11 学习总结')

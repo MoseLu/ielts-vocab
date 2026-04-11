@@ -38,11 +38,17 @@ def _validate_target_date(raw_target_date):
 
 
 def _build_summary_context(user_id: int, target_date: str) -> dict:
-    learning_notes, sessions, wrong_words = collect_summary_source_data(user_id, target_date)
-    learning_snapshot = build_learning_snapshot(user_id, target_date, sessions, wrong_words)
+    learning_notes, sessions, wrong_words, prompt_runs = collect_summary_source_data(user_id, target_date)
+    learning_snapshot = build_learning_snapshot(
+        user_id,
+        target_date,
+        sessions,
+        wrong_words,
+        prompt_runs=prompt_runs,
+    )
     topic_insights = build_memory_topics(learning_notes, limit=5, include_singletons=True)
     learner_profile = build_learner_profile(user_id, target_date)
-    estimated_chars = estimate_summary_target_chars(learning_notes, sessions, wrong_words)
+    estimated_chars = estimate_summary_target_chars(learning_notes, sessions, wrong_words, prompt_runs=prompt_runs)
     user_content = build_summary_prompt(
         target_date,
         learning_notes,
@@ -51,11 +57,13 @@ def _build_summary_context(user_id: int, target_date: str) -> dict:
         learning_snapshot=learning_snapshot,
         topic_insights=topic_insights,
         learner_profile=learner_profile,
+        prompt_runs=prompt_runs,
     )
     return {
         'learning_notes': learning_notes,
         'sessions': sessions,
         'wrong_words': wrong_words,
+        'prompt_runs': prompt_runs,
         'estimated_chars': estimated_chars,
         'user_content': user_content,
     }

@@ -2,7 +2,8 @@ param(
     [string]$ProjectRoot,
     [switch]$SkipFrontendChecks,
     [switch]$SkipRedis,
-    [switch]$SkipRabbit
+    [switch]$SkipRabbit,
+    [string[]]$AllowSharedSplitServiceSqliteServices
 )
 
 $ErrorActionPreference = 'Stop'
@@ -24,6 +25,24 @@ $serviceDefinitions = @(
     @{ Name = 'notes-service'; Port = 8107; Workdir = (Join-Path $root 'services\\notes-service'); Command = 'python -u main.py'; Health = 'http://127.0.0.1:8107/ready' },
     @{ Name = 'admin-ops-service'; Port = 8108; Workdir = (Join-Path $root 'services\\admin-ops-service'); Command = 'python -u main.py'; Health = 'http://127.0.0.1:8108/ready' },
     @{ Name = 'asr-socketio'; Port = 5001; Workdir = (Join-Path $root 'services\\asr-service'); Command = 'python -u socketio_main.py'; Health = 'http://127.0.0.1:5001/ready' }
+)
+$workerDefinitions = @(
+    @{ Name = 'identity-outbox-publisher'; Workdir = (Join-Path $root 'services\\identity-service'); Command = 'python -u outbox_publisher.py' },
+    @{ Name = 'learning-core-outbox-publisher'; Workdir = (Join-Path $root 'services\\learning-core-service'); Command = 'python -u outbox_publisher.py' },
+    @{ Name = 'ai-execution-outbox-publisher'; Workdir = (Join-Path $root 'services\\ai-execution-service'); Command = 'python -u outbox_publisher.py' },
+    @{ Name = 'ai-wrong-word-projection-worker'; Workdir = (Join-Path $root 'services\\ai-execution-service'); Command = 'python -u wrong_word_projection_worker.py' },
+    @{ Name = 'ai-daily-summary-projection-worker'; Workdir = (Join-Path $root 'services\\ai-execution-service'); Command = 'python -u daily_summary_projection_worker.py' },
+    @{ Name = 'notes-outbox-publisher'; Workdir = (Join-Path $root 'services\\notes-service'); Command = 'python -u outbox_publisher.py' },
+    @{ Name = 'notes-study-session-projection-worker'; Workdir = (Join-Path $root 'services\\notes-service'); Command = 'python -u study_session_projection_worker.py' },
+    @{ Name = 'notes-wrong-word-projection-worker'; Workdir = (Join-Path $root 'services\\notes-service'); Command = 'python -u wrong_word_projection_worker.py' },
+    @{ Name = 'notes-prompt-run-projection-worker'; Workdir = (Join-Path $root 'services\\notes-service'); Command = 'python -u prompt_run_projection_worker.py' },
+    @{ Name = 'tts-media-outbox-publisher'; Workdir = (Join-Path $root 'services\\tts-media-service'); Command = 'python -u outbox_publisher.py' },
+    @{ Name = 'admin-user-projection-worker'; Workdir = (Join-Path $root 'services\\admin-ops-service'); Command = 'python -u user_projection_worker.py' },
+    @{ Name = 'admin-study-session-projection-worker'; Workdir = (Join-Path $root 'services\\admin-ops-service'); Command = 'python -u study_session_projection_worker.py' },
+    @{ Name = 'admin-daily-summary-projection-worker'; Workdir = (Join-Path $root 'services\\admin-ops-service'); Command = 'python -u daily_summary_projection_worker.py' },
+    @{ Name = 'admin-prompt-run-projection-worker'; Workdir = (Join-Path $root 'services\\admin-ops-service'); Command = 'python -u prompt_run_projection_worker.py' },
+    @{ Name = 'admin-tts-media-projection-worker'; Workdir = (Join-Path $root 'services\\admin-ops-service'); Command = 'python -u tts_media_projection_worker.py' },
+    @{ Name = 'admin-wrong-word-projection-worker'; Workdir = (Join-Path $root 'services\\admin-ops-service'); Command = 'python -u wrong_word_projection_worker.py' }
 )
 
 $runtimeDir = Join-Path $root 'logs\\runtime\\microservices'
@@ -175,7 +194,54 @@ function Start-LoggedProcess {
         [string]$CommandLine
     )
 
-    Start-Process -FilePath 'cmd.exe' -ArgumentList '/d', '/c', "cd /d `"$WorkingDirectory`" && $CommandLine" -WindowStyle Hidden | Out-Null
+    return Start-Process -FilePath 'cmd.exe' -ArgumentList '/d', '/c', "cd /d `"$WorkingDirectory`" && $CommandLine" -WindowStyle Hidden -PassThru
+}
+
+function Stop-WorkerCommandTrees {
+    param([object[]]$Definitions)
+
+    $repoMatchRoot = $root.ToLowerInvariant()
+    $cmdProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'cmd.exe'" -ErrorAction SilentlyContinue)
+    if ($cmdProcesses.Count -eq 0) {
+        return
+    }
+
+    foreach ($definition in $Definitions) {
+        $commandFragment = ($definition.Command -replace '^python -u\s+', '').Trim().ToLowerInvariant()
+        $workdirFragment = $definition.Workdir.ToLowerInvariant()
+        $matchingProcesses = @(
+            $cmdProcesses |
+                Where-Object {
+                    $_.CommandLine `
+                    -and $_.CommandLine.ToLowerInvariant().Contains($repoMatchRoot) `
+                    -and $_.CommandLine.ToLowerInvariant().Contains($workdirFragment) `
+                    -and $_.CommandLine.ToLowerInvariant().Contains($commandFragment)
+                }
+        )
+
+        foreach ($process in $matchingProcesses) {
+            & taskkill.exe /PID $process.ProcessId /T /F | Out-Null
+        }
+    }
+}
+
+function Get-SharedSqliteOverrideEnvPrefix {
+    if (-not $AllowSharedSplitServiceSqliteServices -or $AllowSharedSplitServiceSqliteServices.Count -eq 0) {
+        return ''
+    }
+
+    $serviceNames = @(
+        $AllowSharedSplitServiceSqliteServices |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            ForEach-Object { $_.Trim() } |
+            Select-Object -Unique
+    )
+    if ($serviceNames.Count -eq 0) {
+        return ''
+    }
+
+    $joined = [string]::Join(',', $serviceNames)
+    return "set `"ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES=$joined`" && "
 }
 
 function Set-DefaultEnvValue {
@@ -268,6 +334,7 @@ try {
     foreach ($definition in $serviceDefinitions) {
         Stop-PortListeners -Port $definition.Port -Label $definition.Name
     }
+    Stop-WorkerCommandTrees -Definitions $workerDefinitions
 
     $portReservations = Start-PortReservations -Ports ($serviceDefinitions | ForEach-Object { $_.Port })
 
@@ -280,14 +347,43 @@ try {
         Add-Content -Path $stderrLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
 
         $envPrefix = "set `"MICROSERVICES_ENV_FILE=$microservicesEnv`" && "
+        $envPrefix += Get-SharedSqliteOverrideEnvPrefix
         Release-PortReservation -Reservations $portReservations -Port $definition.Port
         Start-LoggedProcess -WorkingDirectory $definition.Workdir -CommandLine ($envPrefix + $definition.Command + " 1>>`"$stdoutLog`" 2>>`"$stderrLog`"")
         Wait-PortState -Port $definition.Port -Listening $true -TimeoutSeconds 45
         Wait-HttpReady -Url $definition.Health -TimeoutSeconds 45
     }
 
+    foreach ($definition in $workerDefinitions) {
+        $stdoutLog = Join-Path $runtimeDir "$($definition.Name).out.log"
+        $stderrLog = Join-Path $runtimeDir "$($definition.Name).err.log"
+        Set-Content -Path $stdoutLog -Value ''
+        Set-Content -Path $stderrLog -Value ''
+        Add-Content -Path $stdoutLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
+        Add-Content -Path $stderrLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
+
+        $envPrefix = "set `"MICROSERVICES_ENV_FILE=$microservicesEnv`" && "
+        $envPrefix += Get-SharedSqliteOverrideEnvPrefix
+        $process = Start-LoggedProcess -WorkingDirectory $definition.Workdir -CommandLine ($envPrefix + $definition.Command + " 1>>`"$stdoutLog`" 2>>`"$stderrLog`"")
+        Start-Sleep -Seconds 2
+        if ($process.HasExited) {
+            throw "$($definition.Name) exited during startup. Check $stdoutLog and $stderrLog."
+        }
+    }
+
     if (-not $SkipFrontendChecks) {
         Write-Host "Gateway ready at http://127.0.0.1:8000"
+    }
+    if ($AllowSharedSplitServiceSqliteServices -and $AllowSharedSplitServiceSqliteServices.Count -gt 0) {
+        $joinedOverrides = [string]::Join(', ', @(
+            $AllowSharedSplitServiceSqliteServices |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                ForEach-Object { $_.Trim() } |
+                Select-Object -Unique
+        ))
+        if (-not [string]::IsNullOrWhiteSpace($joinedOverrides)) {
+            Write-Host "       Shared SQLite override services: $joinedOverrides"
+        }
     }
 
     Write-Host '[DONE] Microservice backend started successfully.'
@@ -301,6 +397,22 @@ try {
     Write-Host '       Notes:             http://127.0.0.1:8107'
     Write-Host '       Admin ops:         http://127.0.0.1:8108'
     Write-Host '       ASR Socket.IO:     http://127.0.0.1:5001'
+    Write-Host '       Identity worker:   identity-outbox-publisher'
+    Write-Host '       Learning worker:   learning-core-outbox-publisher'
+    Write-Host '       AI worker:         ai-execution-outbox-publisher'
+    Write-Host '       AI wrong worker:   ai-wrong-word-projection-worker'
+    Write-Host '       AI summary worker: ai-daily-summary-projection-worker'
+    Write-Host '       Notes worker:      notes-outbox-publisher'
+    Write-Host '       Notes session worker: notes-study-session-projection-worker'
+    Write-Host '       Notes wrong worker: notes-wrong-word-projection-worker'
+    Write-Host '       Notes prompt worker: notes-prompt-run-projection-worker'
+    Write-Host '       TTS worker:        tts-media-outbox-publisher'
+    Write-Host '       Admin user worker: admin-user-projection-worker'
+    Write-Host '       Admin stat worker: admin-study-session-projection-worker'
+    Write-Host '       Admin note worker: admin-daily-summary-projection-worker'
+    Write-Host '       Admin prompt worker: admin-prompt-run-projection-worker'
+    Write-Host '       Admin media worker: admin-tts-media-projection-worker'
+    Write-Host '       Admin wrong worker: admin-wrong-word-projection-worker'
     if (-not $SkipRedis) {
         Write-Host "       Redis:             redis://$redisHost`:$redisPort/0"
     }
@@ -313,9 +425,3 @@ try {
     Write-Host "[ERROR] $($_.Exception.Message)"
     exit 1
 }
-
-
-
-
-
-

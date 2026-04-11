@@ -29,6 +29,7 @@ def test_learning_wrong_word_contract_keeps_learning_core_as_publisher():
 
     assert contract.publisher_service == 'learning-core-service'
     assert 'ai-execution-service' in contract.consumer_services
+    assert 'notes-service' in contract.consumer_services
     assert contract.routing_key == 'learning.wrong_word.updated'
 
 

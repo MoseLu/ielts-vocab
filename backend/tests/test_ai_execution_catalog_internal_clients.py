@@ -64,3 +64,29 @@ def test_custom_book_routes_use_catalog_content_internal_client(app, monkeypatch
     assert list_response.get_json()['user_id'] == 71
     assert get_status == 200
     assert get_response.get_json() == {'id': 'custom-71', 'user_id': 71}
+
+
+def test_custom_book_routes_return_503_when_strict_boundary_blocks_catalog_fallback(app, monkeypatch):
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
+    monkeypatch.delenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', raising=False)
+    monkeypatch.setattr(
+        ai_custom_books_application,
+        'list_catalog_content_custom_books_internal_response',
+        lambda user_id: (_ for _ in ()).throw(RuntimeError('catalog-content unavailable')),
+    )
+    monkeypatch.setattr(
+        ai_custom_books_application,
+        'build_catalog_content_list_custom_books_response',
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('fallback should stay disabled')),
+    )
+
+    with app.app_context():
+        response, status = ai_custom_books_application.list_custom_books_response(SimpleNamespace(id=71))
+
+    assert status == 503
+    assert response.get_json() == {
+        'error': 'catalog-content-service unavailable',
+        'boundary': 'strict-internal-contract',
+        'action': 'custom-book-list',
+        'upstream': 'catalog-content-service',
+    }

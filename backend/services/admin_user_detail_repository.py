@@ -6,8 +6,9 @@ from service_models.admin_ops_models import (
     UserBookProgress,
     UserChapterProgress,
     UserLearningEvent,
-    UserWrongWord,
 )
+from service_models.eventing_models import AdminProjectedDailySummary
+from services.admin_projection_repository_support import wrong_word_model
 
 
 def list_user_book_progress_rows(user_id: int):
@@ -30,11 +31,23 @@ def list_user_chapter_progress_rows(
 
 
 def list_user_wrong_word_rows(user_id: int):
-    return UserWrongWord.query.filter_by(user_id=user_id).all()
+    model = wrong_word_model()
+    return model.query.filter_by(user_id=user_id).all()
 
 
 def count_user_wrong_words(user_id: int) -> int:
-    return UserWrongWord.query.filter_by(user_id=user_id).count()
+    model = wrong_word_model()
+    return model.query.filter_by(user_id=user_id).count()
+
+
+def list_user_recent_summary_rows(user_id: int, *, limit: int = 5):
+    return (
+        AdminProjectedDailySummary.query
+        .filter_by(user_id=user_id)
+        .order_by(AdminProjectedDailySummary.generated_at.desc(), AdminProjectedDailySummary.id.desc())
+        .limit(limit)
+        .all()
+    )
 
 
 def list_learning_events_for_sessions(

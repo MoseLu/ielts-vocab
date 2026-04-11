@@ -78,3 +78,42 @@ def test_fetch_word_audio_oss_payload_reads_object_bytes(monkeypatch):
     assert payload.cache_key == 'oss:file.mp3:7:etag-1'
     assert payload.content_type == 'audio/mpeg'
     assert payload.signed_url == 'https://oss.example.com/file.mp3?signature=1'
+
+
+def test_put_word_audio_oss_bytes_writes_audio_mpeg(monkeypatch):
+    captured = {}
+
+    def fake_put_object_bytes(**kwargs):
+        captured['kwargs'] = kwargs
+        return word_tts_oss.shared_oss.StoredObjectMetadata(
+            provider='aliyun-oss',
+            bucket_name='bucket',
+            object_key=kwargs['object_key'],
+            byte_length=len(kwargs['body']),
+            content_type=kwargs['content_type'],
+            cache_key='oss:file.mp3:7:etag-1',
+            signed_url='https://oss.example.com/file.mp3?signature=1',
+        )
+
+    monkeypatch.setattr(
+        word_tts_oss.shared_oss,
+        'put_object_bytes',
+        fake_put_object_bytes,
+    )
+    monkeypatch.setattr(word_tts_oss, '_oss_bucket', lambda: object())
+    monkeypatch.setattr(
+        word_tts_oss,
+        'word_audio_oss_object_key',
+        lambda **kwargs: 'prefix/model-voice/file.mp3',
+    )
+
+    metadata = word_tts_oss.put_word_audio_oss_bytes(
+        file_name='file.mp3',
+        model='model',
+        voice='voice',
+        audio_bytes=b'ID3DATA',
+    )
+
+    assert captured['kwargs']['content_type'] == 'audio/mpeg'
+    assert metadata is not None
+    assert metadata.object_key == 'prefix/model-voice/file.mp3'

@@ -5,6 +5,15 @@ env_file="${1:-/etc/ielts-vocab/microservices.env}"
 db_host="${POSTGRES_HOST:-127.0.0.1}"
 db_port="${POSTGRES_PORT:-5432}"
 sslmode="${POSTGRES_SSLMODE:-disable}"
+redis_host="${REDIS_HOST:-127.0.0.1}"
+redis_port="${REDIS_PORT:-6379}"
+redis_key_prefix="${REDIS_KEY_PREFIX:-ielts-vocab}"
+rabbitmq_host="${RABBITMQ_HOST:-127.0.0.1}"
+rabbitmq_port="${RABBITMQ_PORT:-5672}"
+rabbitmq_user="${RABBITMQ_USER:-ielts_vocab}"
+rabbitmq_password="${RABBITMQ_PASSWORD:-$(openssl rand -hex 24)}"
+rabbitmq_vhost="${RABBITMQ_VHOST:-/ielts-vocab}"
+rabbitmq_domain_exchange="${RABBITMQ_DOMAIN_EXCHANGE:-ielts-vocab.domain}"
 
 services=(
   "IDENTITY_SERVICE:ielts_identity_service"
@@ -15,6 +24,17 @@ services=(
   "TTS_MEDIA_SERVICE:ielts_tts_media_service"
   "ASR_SERVICE:ielts_asr_service"
   "ADMIN_OPS_SERVICE:ielts_admin_ops_service"
+)
+redis_db_assignments=(
+  "GATEWAY_BFF_REDIS_DB=0"
+  "IDENTITY_SERVICE_REDIS_DB=1"
+  "LEARNING_CORE_SERVICE_REDIS_DB=2"
+  "CATALOG_CONTENT_SERVICE_REDIS_DB=3"
+  "AI_EXECUTION_SERVICE_REDIS_DB=4"
+  "NOTES_SERVICE_REDIS_DB=5"
+  "TTS_MEDIA_SERVICE_REDIS_DB=6"
+  "ASR_SERVICE_REDIS_DB=7"
+  "ADMIN_OPS_SERVICE_REDIS_DB=8"
 )
 
 psql_as_postgres() {
@@ -33,6 +53,18 @@ chmod 700 "$(dirname "${env_file}")"
   echo "POSTGRES_PORT=${db_port}"
   echo "POSTGRES_SSLMODE=${sslmode}"
   echo "DB_BACKUP_ENABLED=false"
+  echo "REDIS_HOST=${redis_host}"
+  echo "REDIS_PORT=${redis_port}"
+  echo "REDIS_KEY_PREFIX=${redis_key_prefix}"
+  for assignment in "${redis_db_assignments[@]}"; do
+    echo "${assignment}"
+  done
+  echo "RABBITMQ_HOST=${rabbitmq_host}"
+  echo "RABBITMQ_PORT=${rabbitmq_port}"
+  echo "RABBITMQ_USER=${rabbitmq_user}"
+  echo "RABBITMQ_PASSWORD=${rabbitmq_password}"
+  echo "RABBITMQ_VHOST=${rabbitmq_vhost}"
+  echo "RABBITMQ_DOMAIN_EXCHANGE=${rabbitmq_domain_exchange}"
   echo
 } > "${env_file}"
 

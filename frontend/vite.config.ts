@@ -5,7 +5,34 @@ import react from '@vitejs/plugin-react'
 const DEV_SERVER_PORT = 3020
 const PREVIEW_PORT = 3002
 const SPEECH_PROXY_PATH = '/speech-socket.io'
+const API_PROXY_TARGET = process.env.VITE_API_PROXY_TARGET?.trim() || 'http://localhost:8000'
+const SPEECH_PROXY_TARGET =
+  process.env.VITE_SPEECH_PROXY_TARGET?.trim() || 'http://localhost:5001'
 const rewriteSpeechSocketPath = (path: string) => path.replace(SPEECH_PROXY_PATH, '/socket.io')
+
+function buildProxyConfig() {
+  return {
+    '/api': {
+      target: API_PROXY_TARGET,
+      changeOrigin: true,
+      secure: false,
+      timeout: 180000,
+    },
+    '/socket.io': {
+      target: SPEECH_PROXY_TARGET,
+      changeOrigin: true,
+      secure: false,
+      ws: true,
+    },
+    [SPEECH_PROXY_PATH]: {
+      target: SPEECH_PROXY_TARGET,
+      changeOrigin: true,
+      secure: false,
+      ws: true,
+      rewrite: rewriteSpeechSocketPath,
+    },
+  }
+}
 
 export default defineConfig({
   plugins: [react()],
@@ -29,27 +56,7 @@ export default defineConfig({
       // Prevent full-page reload on HMR WebSocket reconnection
       timeout: 30000,
     },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-        timeout: 180000,
-      },
-      '/socket.io': {
-        target: 'http://localhost:5001',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-      },
-      [SPEECH_PROXY_PATH]: {
-        target: 'http://localhost:5001',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-        rewrite: rewriteSpeechSocketPath,
-      },
-    }
+    proxy: buildProxyConfig(),
   },
   build: {
     outDir: '../dist',
@@ -66,27 +73,7 @@ export default defineConfig({
     // Disable HMR overlay in preview mode
     hmr: false,
     // Preview mode needs the same proxy rules, or /api requests hit Vite directly and 404.
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-        timeout: 180000,
-      },
-      '/socket.io': {
-        target: 'http://localhost:5001',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-      },
-      [SPEECH_PROXY_PATH]: {
-        target: 'http://localhost:5001',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-        rewrite: rewriteSpeechSocketPath,
-      },
-    },
+    proxy: buildProxyConfig(),
   },
   resolve: {
     alias: {

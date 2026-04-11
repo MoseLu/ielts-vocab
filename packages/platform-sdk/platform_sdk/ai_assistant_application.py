@@ -5,6 +5,7 @@ import logging
 from flask import Response, current_app, jsonify, stream_with_context
 
 from platform_sdk.ai_repository_adapters import ai_assistant_repository
+from platform_sdk.ai_prompt_run_event_application import record_ai_prompt_run_completion
 from platform_sdk.runtime_async_support import maybe_timeout, spawn_background
 
 from platform_sdk.ai_assistant_memory_support import (
@@ -38,6 +39,8 @@ from platform_sdk.ai_related_notes_support import (
     build_related_notes_msg,
     collect_related_learning_notes,
 )
+
+DEFAULT_AI_PROMPT_PROVIDER = 'minimax'
 
 
 def build_ask_messages(current_user, user_message: str, frontend_context: dict) -> list[dict]:
@@ -138,6 +141,27 @@ def persist_ask_response(current_user, user_message: str, frontend_context: dict
         pass
 
 
+def _record_prompt_run_safely(
+    *,
+    current_user,
+    run_kind: str,
+    prompt_excerpt: str,
+    response_excerpt: str,
+    metadata: dict | None = None,
+) -> None:
+    try:
+        record_ai_prompt_run_completion(
+            user_id=current_user.id,
+            run_kind=run_kind,
+            provider=DEFAULT_AI_PROMPT_PROVIDER,
+            prompt_excerpt=prompt_excerpt,
+            response_excerpt=response_excerpt,
+            metadata=metadata,
+        )
+    except Exception as exc:
+        logging.warning('[AI] Failed to record prompt run completion: %s', exc)
+
+
 def ask_api_response(current_user, body: dict | None):
     body = body or {}
     user_message = str(body.get('message', '') or '').strip()
@@ -161,6 +185,13 @@ def ask_api_response(current_user, body: dict | None):
         options = parse_options(final_text)
         clean_reply = strip_options(final_text)
         persist_ask_response(current_user, user_message, frontend_context, clean_reply)
+        _record_prompt_run_safely(
+            current_user=current_user,
+            run_kind='assistant.ask',
+            prompt_excerpt=user_message,
+            response_excerpt=clean_reply,
+            metadata={'option_count': len(options or [])},
+        )
         return jsonify({'reply': clean_reply, 'options': options})
     except Exception as exc:
         logging.error('[AI] /ask error for user=%s: %s', current_user.id, exc, exc_info=True)
@@ -211,6 +242,13 @@ def ask_stream_api_response(current_user, body: dict | None):
             clean_reply = strip_options(raw_reply)
             options = parse_options(raw_reply) or []
             persist_ask_response(current_user, user_message, frontend_context, clean_reply)
+            _record_prompt_run_safely(
+                current_user=current_user,
+                run_kind='assistant.ask_stream',
+                prompt_excerpt=user_message,
+                response_excerpt=clean_reply,
+                metadata={'option_count': len(options)},
+            )
             if options:
                 yield encode_sse_event({'type': 'options', 'options': options})
             yield encode_sse_event({'type': 'done', 'reply': clean_reply, 'options': options})

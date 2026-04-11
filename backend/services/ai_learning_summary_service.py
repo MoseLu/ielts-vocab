@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from models import db
 from platform_sdk.learning_repository_adapters import (
     learning_stats_repository,
     quick_memory_record_repository,
 )
+from platform_sdk.quick_memory_schedule_support import (
+    QUICK_MEMORY_MASTERY_TARGET,
+    load_and_normalize_quick_memory_records,
+)
+from service_models.learning_core_models import db
 from services.ai_text_support import normalize_word_key
 from services.local_time import (
     current_local_date,
@@ -14,10 +18,6 @@ from services.local_time import (
     utc_naive_to_epoch_ms,
     utc_naive_to_local_date_key,
     utc_now_naive,
-)
-from platform_sdk.quick_memory_schedule_support import (
-    QUICK_MEMORY_MASTERY_TARGET,
-    load_and_normalize_quick_memory_records,
 )
 
 

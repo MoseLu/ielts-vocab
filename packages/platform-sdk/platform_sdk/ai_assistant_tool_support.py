@@ -4,6 +4,9 @@ import json
 import logging
 import re
 
+from platform_sdk.ai_wrong_word_projection_support import (
+    list_projected_wrong_words_for_ai,
+)
 from platform_sdk.catalog_provider_adapter import list_vocab_books, load_book_chapters, load_book_vocabulary
 from platform_sdk.learning_core_internal_client import (
     fetch_learning_core_chapter_progress_for_ai,
@@ -38,12 +41,24 @@ def make_get_wrong_words(user_id: int):
     ) -> str:
         limit_value = max(1, min(int(limit), 300))
         normalized_query = ' '.join(str(query or '').strip().split())
-        words = fetch_learning_core_wrong_words_for_ai(
-            user_id,
-            limit=limit_value,
-            query=normalized_query,
-            recent_first=recent_first,
-        )
+        try:
+            words = fetch_learning_core_wrong_words_for_ai(
+                user_id,
+                limit=limit_value,
+                query=normalized_query,
+                recent_first=recent_first,
+            )
+        except Exception:
+            projection_ready, projected_words = list_projected_wrong_words_for_ai(
+                user_id,
+                limit=limit_value,
+                query=normalized_query,
+                recent_first=recent_first,
+                decorate=True,
+            )
+            if not projection_ready:
+                raise
+            words = projected_words
         if not words and normalized_query:
             return f"错词库中暂无与“{normalized_query}”相关的记录。"
         if not words:

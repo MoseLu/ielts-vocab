@@ -8,10 +8,11 @@ from runtime_paths import ensure_shared_package_paths
 
 ensure_shared_package_paths()
 
-from platform_sdk.service_table_plan import get_service_owned_table_names
-
-
-ALLOW_SHARED_SPLIT_SERVICE_SQLITE_ENV = 'ALLOW_SHARED_SPLIT_SERVICE_SQLITE'
+from platform_sdk.service_storage_boundary_plan import (
+    ALLOW_SHARED_SPLIT_SERVICE_SQLITE_ENV,
+    ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES_ENV,
+    shared_sqlite_fallback_locked_for_service,
+)
 
 
 def current_service_name() -> str:
@@ -19,12 +20,7 @@ def current_service_name() -> str:
 
 
 def is_write_owning_split_service(service_name: str | None) -> bool:
-    if not service_name or service_name in {'backend-monolith', 'gateway-bff'}:
-        return False
-    try:
-        return bool(get_service_owned_table_names(service_name))
-    except KeyError:
-        return False
+    return shared_sqlite_fallback_locked_for_service(service_name)
 
 
 def resolve_sqlite_uri_path(database_uri: str | None) -> Path | None:
@@ -54,11 +50,21 @@ def uses_shared_sqlite_fallback(
     return sqlite_path == resolve_shared_sqlite_fallback_path(base_dir)
 
 
-def shared_sqlite_override_enabled() -> bool:
-    return (
-        os.environ.get(ALLOW_SHARED_SPLIT_SERVICE_SQLITE_ENV, 'false').strip().lower()
-        == 'true'
-    )
+def _configured_shared_sqlite_override_services() -> set[str]:
+    raw_value = os.environ.get(ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES_ENV, '')
+    return {
+        item.strip()
+        for item in raw_value.split(',')
+        if item.strip()
+    }
+
+
+def shared_sqlite_override_enabled(service_name: str | None) -> bool:
+    if os.environ.get(ALLOW_SHARED_SPLIT_SERVICE_SQLITE_ENV, 'false').strip().lower() == 'true':
+        return True
+    if not service_name:
+        return False
+    return service_name in _configured_shared_sqlite_override_services()
 
 
 def validate_split_service_storage_boundary(
@@ -67,7 +73,7 @@ def validate_split_service_storage_boundary(
     database_uri: str | None,
     base_dir: str | Path,
 ) -> None:
-    if shared_sqlite_override_enabled():
+    if shared_sqlite_override_enabled(service_name):
         return
     if not uses_shared_sqlite_fallback(
         service_name=service_name,
@@ -81,5 +87,7 @@ def validate_split_service_storage_boundary(
         f'{service_name} resolved to the shared SQLite fallback at {shared_path}. '
         'Write-owning split services must use service-owned PostgreSQL or an explicit '
         'service-local SQLite path. Set '
-        f'{ALLOW_SHARED_SPLIT_SERVICE_SQLITE_ENV}=true only for a controlled rollback or repair drill.'
+        f'{ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES_ENV}={service_name} for a service-scoped '
+        'rollback or repair drill, or use '
+        f'{ALLOW_SHARED_SPLIT_SERVICE_SQLITE_ENV}=true only for an emergency global override.'
     )
