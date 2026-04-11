@@ -21,6 +21,14 @@ bool_is_true() {
 }
 
 
+run_child_script() {
+  local child_script="${1:?child script is required}"
+  shift
+  require_file "${child_script}"
+  bash "${child_script}" "$@"
+}
+
+
 enable_recording_if_requested() {
   if [[ -z "${REHEARSAL_RECORD_PATH}" ]] || bool_is_true "${REHEARSAL_RECORD_ACTIVE}"; then
     return 0
@@ -106,7 +114,7 @@ run_storage_drill_after_restore() {
   local drill_script="${script_dir}/wave4-storage-drill.sh"
   require_file "${drill_script}"
   log "Running Wave 4 storage drill after restore"
-  "${drill_script}"
+  run_child_script "${drill_script}"
 }
 
 
@@ -115,7 +123,7 @@ attempt_best_effort_restore() {
     return 0
   fi
   log "Rehearsal did not finish cleanly; attempting best-effort restore to ${restore_release}"
-  if "${script_dir}/rollback-release.sh" "${restore_release}"; then
+  if run_child_script "${script_dir}/rollback-release.sh" "${restore_release}"; then
     log "Best-effort restore succeeded"
     return 0
   fi
@@ -169,10 +177,10 @@ main() {
   fi
 
   log "Executing rollback rehearsal to ${target_release}"
-  "${script_dir}/rollback-release.sh" "${target_release}"
+  run_child_script "${script_dir}/rollback-release.sh" "${target_release}"
 
   log "Restoring original release ${restore_release}"
-  "${script_dir}/rollback-release.sh" "${restore_release}"
+  run_child_script "${script_dir}/rollback-release.sh" "${restore_release}"
   restored="true"
 
   run_storage_drill_after_restore
