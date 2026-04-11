@@ -20,17 +20,23 @@ def _load_script_module():
     return module
 
 
-def _write_env_file(tmp_path: Path, *, service_name: str, database_path: Path) -> Path:
+def _write_env_file(
+    tmp_path: Path,
+    *,
+    service_name: str,
+    database_path: Path,
+    include_secrets: bool = True,
+) -> Path:
     prefix = service_name.replace('-', '_').upper()
-    env_path = tmp_path / f'{prefix.lower()}.env'
-    env_path.write_text(
-        '\n'.join([
+    lines = [f'{prefix}_SQLALCHEMY_DATABASE_URI=sqlite:///{database_path.as_posix()}']
+    if include_secrets:
+        lines = [
             'SECRET_KEY=test-secret-key',
             'JWT_SECRET_KEY=test-jwt-secret-key',
-            f'{prefix}_SQLALCHEMY_DATABASE_URI=sqlite:///{database_path.as_posix()}',
-        ]),
-        encoding='utf-8',
-    )
+            *lines,
+        ]
+    env_path = tmp_path / f'{prefix.lower()}.env'
+    env_path.write_text('\n'.join(lines), encoding='utf-8')
     return env_path
 
 
@@ -222,6 +228,36 @@ def test_catalog_content_migration_runner_adds_custom_book_metadata_columns(tmp_
         assert int(share_enabled or 0) == 0
         assert int(chapter_word_target or 0) == 15
         assert int(is_incomplete or 0) == 0
+        assert version_value == 'catalog_content_service_0002'
+    finally:
+        engine.dispose()
+
+
+def test_migration_runner_uses_database_env_without_loading_app_secrets(tmp_path, monkeypatch):
+    module = _load_script_module()
+    database_path = tmp_path / 'catalog-content-no-secret.sqlite'
+    env_path = _write_env_file(
+        tmp_path,
+        service_name='catalog-content-service',
+        database_path=database_path,
+        include_secrets=False,
+    )
+
+    monkeypatch.setenv('PYTEST_RUNNING', '1')
+    monkeypatch.setenv('MICROSERVICES_ENV_FILE', str(env_path))
+    monkeypatch.delenv('SECRET_KEY', raising=False)
+    monkeypatch.delenv('JWT_SECRET_KEY', raising=False)
+
+    result = module.migrate_service_schema('catalog-content-service', env_file=env_path)
+
+    assert result['version_after'] == 'catalog_content_service_0002'
+    engine, inspector = _sqlite_inspector(database_path)
+    try:
+        assert 'custom_books' in inspector.get_table_names()
+        with engine.connect() as connection:
+            version_value = connection.execute(
+                sa.text('SELECT version_num FROM alembic_version_catalog_content_service')
+            ).scalar_one()
         assert version_value == 'catalog_content_service_0002'
     finally:
         engine.dispose()
