@@ -67,13 +67,13 @@ describe('ErrorsPage export', () => {
     anchorClickSpy.mockRestore()
   })
 
-  it('builds csv content with only index, word, and chinese meaning columns', () => {
+  it('builds csv content with word, phonetic, and definition columns', () => {
     expect(buildWrongWordsCsvExportContent(hooksState.wrongWords.words as WrongWordRecord[])).toBe(
-      '序号,错词,中文意思\n1,alpha,阿尔法\n2,beta,贝塔',
+      '单词,音标,释义\nalpha,/a/,阿尔法\nbeta,/b/,贝塔',
     )
   })
 
-  it('exports checked wrong words as a three-column csv download', () => {
+  it('exports checked wrong words as a word-phonetic-definition csv download', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
