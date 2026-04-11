@@ -241,8 +241,8 @@ describe('ErrorsPage', () => {
     expect(screen.queryByTitle('移出未过错词')).not.toBeInTheDocument()
     expect(screen.getByLabelText('选择 alpha')).toBeInTheDocument()
     expect(screen.queryByText('加入复习')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('词头')).not.toBeChecked()
-    expect(screen.getByLabelText('词尾')).not.toBeChecked()
+    expect(screen.getByRole('button', { name: '词头' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: '词尾' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getAllByText('错词本进度').length).toBeGreaterThan(0)
     expect(screen.getAllByText('长期复习').length).toBeGreaterThan(0)
     expect(screen.getByText('今天移出 2 项')).toBeInTheDocument()
@@ -312,40 +312,42 @@ describe('ErrorsPage', () => {
     expect(within(filterActions as HTMLElement).getByRole('button', { name: '重置筛选' })).toBeInTheDocument()
     expect(within(dimShell as HTMLElement).getByRole('searchbox', { name: '搜索错词' })).toBeInTheDocument()
     expect(within(dimShell as HTMLElement).getByRole('button', { name: '执行搜索' })).toBeInTheDocument()
-    expect(within(dimShell as HTMLElement).getByLabelText('词头')).not.toBeChecked()
-    expect(within(dimShell as HTMLElement).getByLabelText('词尾')).not.toBeChecked()
-    expect(within(dimShell as HTMLElement).getByLabelText('词头')).toBeDisabled()
-    expect(within(dimShell as HTMLElement).getByLabelText('词尾')).toBeDisabled()
+    expect(within(dimShell as HTMLElement).getByRole('button', { name: '词头' })).toHaveAttribute('aria-pressed', 'false')
+    expect(within(dimShell as HTMLElement).getByRole('button', { name: '词尾' })).toHaveAttribute('aria-pressed', 'false')
+    expect(within(dimShell as HTMLElement).getByRole('button', { name: '词头' })).toBeDisabled()
+    expect(within(dimShell as HTMLElement).getByRole('button', { name: '词尾' })).toBeDisabled()
 
     fireEvent.change(screen.getByRole('searchbox', { name: '搜索错词' }), {
       target: { value: 'st' },
     })
+
+    expect(screen.getByRole('button', { name: '词头' })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: '词尾' })).not.toBeDisabled()
+
     await act(async () => {
-      fireEvent.submit(container.querySelector('.errors-search-form') as HTMLFormElement)
+      fireEvent.click(screen.getByRole('button', { name: '词头' }))
       await Promise.resolve()
     })
 
     expect(apiFetchMock).toHaveBeenLastCalledWith('/api/ai/wrong-words?details=compact&search=st')
     expect(container.querySelector('.errors-search-results')).not.toBeNull()
-    expect(screen.getByText('搜索“st” · 3 个结果')).toBeInTheDocument()
-    expect(screen.getByLabelText('词头')).not.toBeDisabled()
-    expect(screen.getByLabelText('词尾')).not.toBeDisabled()
-    expect(screen.getByLabelText('选择 start')).toBeInTheDocument()
-    expect(screen.getByLabelText('选择 mist')).toBeInTheDocument()
-    expect(screen.getByLabelText('选择 toast')).toBeInTheDocument()
-    expect(screen.queryByText('错词按这个顺序推进')).not.toBeInTheDocument()
-    expect(screen.queryByText('错词本进度')).not.toBeInTheDocument()
- 
-    fireEvent.click(screen.getByLabelText('词头'))
-
     expect(screen.getByText('词头匹配“st” · 1 个结果')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '词头' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '词尾' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByLabelText('选择 start')).toBeInTheDocument()
     expect(screen.queryByLabelText('选择 mist')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('选择 toast')).not.toBeInTheDocument()
+    expect(screen.queryByText('错词按这个顺序推进')).not.toBeInTheDocument()
+    expect(screen.queryByText('错词本进度')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByLabelText('词尾'))
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '词尾' }))
+      await Promise.resolve()
+    })
 
     expect(screen.getByText('词尾匹配“st” · 2 个结果')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '词头' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: '词尾' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByLabelText('选择 mist')).toBeInTheDocument()
     expect(screen.getByLabelText('选择 toast')).toBeInTheDocument()
     expect(screen.queryByLabelText('选择 start')).not.toBeInTheDocument()

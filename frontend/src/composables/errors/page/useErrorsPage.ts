@@ -36,6 +36,11 @@ export type ActiveTab = 'words' | 'real'
 export type DimFilter = 'all' | WrongWordDimension
 export type WrongCountRange = 'all' | '0-5' | '6-10' | '11-20' | '20+'
 
+interface ApplySearchOptions {
+  mode?: WrongWordSearchMode | null
+  searchText?: string
+}
+
 const ERRORS_PAGE_SIZE = 10
 
 function formatDateInput(date: Date): string {
@@ -86,6 +91,7 @@ export function useErrorsPage() {
     () => readWrongWordsReviewSelectionFromStorage(),
   )
   const searchRequestIdRef = useRef(0)
+  const remoteSearchTermRef = useRef('')
   const { words, loading } = useWrongWords({ includeDetails: false })
   const { minWrongCount, maxWrongCount } = getWrongCountBounds(wrongCountRange)
 
@@ -195,6 +201,9 @@ export function useErrorsPage() {
     || wrongCountRange !== 'all'
     || Boolean(appliedSearch)
   const canResetFilters = hasActiveFilters || Boolean(searchText) || searchMode != null
+  const normalizedSearchText = useMemo(() => normalizeWrongWordSearchTerm(searchText), [searchText])
+  const searchModeActionText = normalizedSearchText || appliedSearch
+  const canApplySearchMode = Boolean(searchModeActionText)
   const practiceQuery = buildWrongWordsPracticeQuery({
     scope,
     dimFilter,
@@ -249,20 +258,33 @@ export function useErrorsPage() {
     updateSelectedWordKeys(() => [])
   }, [updateSelectedWordKeys])
 
-  const applySearch = useCallback(async () => {
-    const nextSearch = normalizeWrongWordSearchTerm(searchText)
-    const requestId = searchRequestIdRef.current + 1
+  const applySearch = useCallback(async (options: ApplySearchOptions = {}) => {
+    const nextSearch = normalizeWrongWordSearchTerm(options.searchText ?? searchText)
+    const nextMode = nextSearch
+      ? (options.mode === undefined ? searchMode : options.mode)
+      : null
 
-    searchRequestIdRef.current = requestId
+    setSearchMode(nextMode)
     setAppliedSearch(nextSearch)
-    setRemoteSearchWords([])
 
     if (!nextSearch) {
-      setSearchMode(null)
+      searchRequestIdRef.current += 1
+      remoteSearchTermRef.current = ''
+      setRemoteSearchWords([])
       setSearchLoading(false)
       return
     }
 
+    if (remoteSearchTermRef.current === nextSearch) {
+      setSearchLoading(false)
+      return
+    }
+
+    const requestId = searchRequestIdRef.current + 1
+
+    searchRequestIdRef.current = requestId
+    remoteSearchTermRef.current = ''
+    setRemoteSearchWords([])
     setSearchLoading(true)
 
     try {
@@ -274,6 +296,7 @@ export function useErrorsPage() {
       if (searchRequestIdRef.current !== requestId) return
 
       const nextRemoteWords = Array.isArray(response.words) ? response.words : []
+      remoteSearchTermRef.current = nextSearch
       setRemoteSearchWords(nextRemoteWords)
     } catch {
       if (searchRequestIdRef.current !== requestId) return
@@ -283,10 +306,22 @@ export function useErrorsPage() {
         setSearchLoading(false)
       }
     }
-  }, [searchText])
+  }, [searchMode, searchText])
+
+  const applySearchMode = useCallback((mode: WrongWordSearchMode) => {
+    if (!searchModeActionText) return
+
+    const shouldToggleModeOff = searchMode === mode && (!normalizedSearchText || normalizedSearchText === appliedSearch)
+    const nextMode = shouldToggleModeOff ? null : mode
+    void applySearch({
+      mode: nextMode,
+      searchText: searchModeActionText,
+    })
+  }, [appliedSearch, applySearch, normalizedSearchText, searchMode, searchModeActionText])
 
   const resetFilters = useCallback(() => {
     searchRequestIdRef.current += 1
+    remoteSearchTermRef.current = ''
     setDimFilter('all')
     setStartDate('')
     setEndDate('')
@@ -350,6 +385,7 @@ export function useErrorsPage() {
     allPaginatedSelected,
     hasActiveFilters,
     canResetFilters,
+    canApplySearchMode,
     loading,
     searchLoading,
     page: currentPage,
@@ -367,6 +403,7 @@ export function useErrorsPage() {
     setSearchMode,
     setPage,
     applySearch,
+    applySearchMode,
     applyTodayDateRange,
     applyRecentDaysDateRange,
     toggleWordSelection,

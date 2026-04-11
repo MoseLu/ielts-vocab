@@ -51,6 +51,7 @@ export default function ErrorsPage() {
     allPaginatedSelected,
     hasActiveFilters,
     canResetFilters,
+    canApplySearchMode,
     loading,
     searchLoading,
     page,
@@ -65,9 +66,9 @@ export default function ErrorsPage() {
     setEndDate,
     setWrongCountRange,
     setSearchText,
-    setSearchMode,
     setPage,
     applySearch,
+    applySearchMode,
     applyTodayDateRange,
     applyRecentDaysDateRange,
     toggleWordSelection,
@@ -345,30 +346,24 @@ export default function ErrorsPage() {
                     </div>
                   </form>
 
-                  <div className="errors-search-mode-group" role="radiogroup" aria-label="搜索匹配方式">
-                    {SEARCH_MODE_OPTIONS.map(option => (
-                      <label
-                        key={option.value}
-                        className={`errors-search-mode-option${searchMode === option.value ? ' is-active' : ''}${!isSearchMode ? ' is-disabled' : ''}`}
-                      >
-                        <input
-                          className="errors-search-mode-radio"
-                          type="radio"
-                          name="errors-search-mode"
-                          value={option.value}
-                          checked={searchMode === option.value}
-                          disabled={!isSearchMode}
-                          onClick={event => {
-                            if (searchMode !== option.value) return
-                            event.preventDefault()
-                            setSearchMode(null)
-                          }}
-                          onChange={() => setSearchMode(option.value)}
-                        />
-                        <span className="errors-search-mode-marker" aria-hidden="true" />
-                        <span className="errors-search-mode-text">{option.label}</span>
-                      </label>
-                    ))}
+                  <div className="errors-search-mode-group" role="group" aria-label="搜索匹配方式">
+                    {SEARCH_MODE_OPTIONS.map(option => {
+                      const active = searchMode === option.value
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={`errors-search-mode-option${active ? ' is-active' : ''}${!canApplySearchMode ? ' is-disabled' : ''}`}
+                          aria-pressed={active}
+                          disabled={!canApplySearchMode}
+                          onClick={() => applySearchMode(option.value)}
+                        >
+                          <span className="errors-search-mode-marker" aria-hidden="true" />
+                          <span className="errors-search-mode-text">{option.label}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               </div>
