@@ -104,3 +104,54 @@ def test_build_context_payload_uses_projected_daily_summaries_when_notes_service
 
     assert payload['recentSummaries'][0]['date'] == '2026-04-11'
     assert '错词' in payload['recentSummaries'][0]['content']
+
+
+def test_build_learner_profile_response_returns_empty_snapshot_when_local_builder_crashes(monkeypatch):
+    monkeypatch.setattr(
+        ai_context_application,
+        'build_local_learner_profile_response',
+        lambda user_id, *, target_date, view: (_ for _ in ()).throw(RuntimeError('profile failed')),
+    )
+
+    payload, status = ai_context_application.build_learner_profile_response(
+        12,
+        target_date='2026-04-11',
+        view='full',
+    )
+
+    assert status == 200
+    assert payload['date'] == '2026-04-11'
+    assert payload['summary']['due_reviews'] == 0
+    assert payload['dimensions'] == []
+    assert payload['daily_plan'] is None
+    assert payload['recent_activity'] == []
+
+
+def test_build_context_payload_uses_empty_learner_profile_snapshot_when_local_builder_crashes(monkeypatch):
+    monkeypatch.setattr(
+        ai_context_application,
+        'fetch_learning_core_context_payload',
+        lambda user_id: {'books': [], 'wrongWords': [], 'recentSessions': [], 'totalSessions': 0},
+    )
+    monkeypatch.setattr(
+        ai_context_application,
+        'build_local_learner_profile_response',
+        lambda user_id, *, target_date, view: (_ for _ in ()).throw(RuntimeError('profile failed')),
+    )
+    monkeypatch.setattr(
+        ai_context_application,
+        'load_memory',
+        lambda user_id: {'goals': ['7.0']},
+    )
+    monkeypatch.setattr(
+        ai_context_application,
+        'list_recent_daily_summaries',
+        lambda user_id, limit=7: [],
+    )
+
+    payload = ai_context_application.build_context_payload(12)
+
+    assert payload['learnerProfile']['summary']['due_reviews'] == 0
+    assert payload['learnerProfile']['daily_plan'] is None
+    assert payload['activityTimeline']['recent_events'] == []
+    assert payload['memory'] == {'goals': ['7.0']}
