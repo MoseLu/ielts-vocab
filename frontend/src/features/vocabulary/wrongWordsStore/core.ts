@@ -1,7 +1,6 @@
 import {
   WRONG_WORD_DIMENSIONS,
   WRONG_WORD_PENDING_REVIEW_TARGET,
-  type ScopedUserId,
   type WrongWordDimension,
   type WrongWordDimensionState,
   type WrongWordDimensionStateMap,
@@ -441,15 +440,6 @@ function mergeWrongWord(base: WrongWordRecord, incoming: WrongWordRecord): Wrong
     ebbinghaus_completed: Boolean(base.ebbinghaus_completed || incoming.ebbinghaus_completed),
     dimension_states: mergedStates,
   })
-}
-
-function normalizeWrongWords(words: WrongWordInput[]): WrongWordRecord[] {
-  const normalized: WrongWordRecord[] = []
-  for (const word of words) {
-    const item = normalizeWrongWord(word)
-    if (item) normalized.push(item)
-  }
-  return normalized
 }
 
 export function mergeWrongWordLists(...lists: WrongWordInput[][]): WrongWordRecord[] {

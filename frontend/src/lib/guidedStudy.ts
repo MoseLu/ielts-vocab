@@ -271,7 +271,7 @@ export function buildGuidedStudySummary({
         : '开始清错词',
       badge: `${pendingWrongWordCount} 个待清理`,
       mode: recommendedWrongDimension?.dimension
-        ? normalizeWeakestMode(recommendedWrongDimension.dimension)
+        ? normalizeWeakestMode(recommendedWrongDimension.dimension) ?? undefined
         : undefined,
       dimension: recommendedWrongDimension?.count ? recommendedWrongDimension.dimension : undefined,
       tone: 'error',
@@ -294,7 +294,7 @@ export function buildGuidedStudySummary({
       title: `主线已清空，今天做一轮${weakestModeLabel ?? getGuidedPracticeModeLabel(weakestMode)}巩固`,
       description: '当复习、错词、新词都没有积压时，再做专项模式加练，用户会更容易理解自己下一步为什么这样学。',
       ctaLabel: '开始专项巩固',
-      badge: weakestModeLabel ?? getGuidedPracticeModeLabel(weakestMode),
+      badge: weakestModeLabel ?? getGuidedPracticeModeLabel(weakestMode) ?? undefined,
       mode: weakestMode,
       bookId: activeBook.book.id,
       tone: 'success',
@@ -348,7 +348,7 @@ export function buildGuidedStudySummary({
           ? `清${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}`
           : '开始清错',
         mode: recommendedWrongDimension?.count
-          ? normalizeWeakestMode(recommendedWrongDimension.dimension)
+          ? normalizeWeakestMode(recommendedWrongDimension.dimension) ?? undefined
           : undefined,
         dimension: recommendedWrongDimension?.count ? recommendedWrongDimension.dimension : undefined,
         disabled: pendingWrongWordCount <= 0,

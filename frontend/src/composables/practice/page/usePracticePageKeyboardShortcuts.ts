@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import type { PracticeMode, SmartDimension, Word } from '../../../components/practice/types'
+import { playExampleAudio } from '../../../components/practice/utils'
+import type { AppSettings, PracticeMode, SmartDimension, Word } from '../../../components/practice/types'
 import { openGlobalWordSearch } from '../../../components/layout/navigation/globalWordSearchEvents'
 import {
   dispatchPracticeGlobalShortcutNext,
@@ -17,6 +18,7 @@ interface UsePracticePageKeyboardShortcutsParams {
   spellingResult: 'correct' | 'wrong' | null
   currentWord: Word | undefined
   optionsLength: number
+  settings: AppSettings
   playWord: (word: string) => void
   handleOptionSelect: (index: number) => void
   handleSkip: () => void
@@ -35,6 +37,7 @@ export function usePracticePageKeyboardShortcuts({
   spellingResult,
   currentWord,
   optionsLength,
+  settings,
   playWord,
   handleOptionSelect,
   handleSkip,
@@ -51,8 +54,15 @@ export function usePracticePageKeyboardShortcuts({
       const usesModeShortcutBridge = mode === 'quickmemory' || mode === 'radio'
       const supportsChoiceShortcuts =
         mode === 'listening' || (mode === 'smart' && smartDimension === 'listening')
+      const exampleSentence = currentWord?.examples?.[0]?.en?.trim() ?? ''
       const supportsReplayShortcut = Boolean(currentWord)
-      const navigationLocked = showWordList || showPracticeSettings || showResult || Boolean(spellingResult)
+      const supportsExampleShortcut = Boolean(exampleSentence) && (
+        mode === 'dictation'
+        || mode === 'listening'
+        || (mode === 'smart' && smartDimension === 'listening')
+      )
+      const overlayLocked = showWordList || showPracticeSettings
+      const navigationLocked = overlayLocked || showResult || Boolean(spellingResult)
 
       if (event.repeat) return
 
@@ -75,6 +85,27 @@ export function usePracticePageKeyboardShortcuts({
           handleFavoriteToggle()
           return
         }
+      }
+
+      if (overlayLocked) {
+        if (event.key === 'Escape') onExitHome()
+        return
+      }
+
+      if (
+        supportsExampleShortcut
+        && event.key === 'Alt'
+        && event.altKey
+        && !event.shiftKey
+        && !event.ctrlKey
+        && !event.metaKey
+      ) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        if (currentWord?.word && exampleSentence) {
+          playExampleAudio(exampleSentence, currentWord.word, settings)
+        }
+        return
       }
 
       if (navigationLocked) {
@@ -143,6 +174,7 @@ export function usePracticePageKeyboardShortcuts({
     handleSkip,
     mode,
     optionsLength,
+    settings,
     playWord,
     onExitHome,
     showPracticeSettings,

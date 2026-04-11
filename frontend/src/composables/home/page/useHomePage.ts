@@ -6,7 +6,7 @@ import {
   useMyBooks,
   useVocabBooks,
 } from '../../../features/vocabulary/hooks'
-import { buildWrongWordsPracticeQuery } from '../../../features/vocabulary/wrongWordsFilters'
+import { buildWrongWordsPracticeQuery, type WrongWordDimensionFilter } from '../../../features/vocabulary/wrongWordsFilters'
 import { useResponsivePageSkeletonCount } from '../../../hooks/useResponsiveSkeletonCount'
 import { buildBookPracticePath } from '../../../lib'
 import { requestPracticeMode } from '../../practice/page/practiceModeEvents'
@@ -130,7 +130,7 @@ export function useHomePage() {
 
     switch (action.kind) {
       case 'add-book':
-        navigate('/books')
+        navigate('/books/create')
         return
       case 'due-review':
         requestPracticeMode(action.mode ?? 'quickmemory')
@@ -138,9 +138,15 @@ export function useHomePage() {
         return
       case 'error-review': {
         requestPracticeMode(action.mode)
+        const dimFilter: WrongWordDimensionFilter = (
+          action.dimension === 'recognition'
+          || action.dimension === 'listening'
+          || action.dimension === 'meaning'
+          || action.dimension === 'dictation'
+        ) ? action.dimension : 'all'
         const query = buildWrongWordsPracticeQuery({
           scope: 'pending',
-          dimFilter: action.dimension ?? 'all',
+          dimFilter,
         })
         navigate(query ? `/practice?mode=errors&${query}` : '/practice?mode=errors')
         return
@@ -182,7 +188,7 @@ export function useHomePage() {
     handleSelectChapter,
     handleStartStudy,
     runDailyPlanAction,
-    navigateToBooks: () => navigate('/books'),
+    navigateToBooks: () => navigate('/books/create'),
     closeChapterModal,
     closePlanModal,
   }

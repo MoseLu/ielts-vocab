@@ -9,6 +9,7 @@ const dispatchPreviousMock = vi.fn()
 const dispatchNextMock = vi.fn()
 const dispatchReplayMock = vi.fn()
 const playWordMock = vi.fn()
+const playExampleAudioMock = vi.fn()
 const handleOptionSelectMock = vi.fn()
 const handleSkipMock = vi.fn()
 const handleGoBackMock = vi.fn()
@@ -25,6 +26,10 @@ vi.mock('../../../components/practice/page/practiceGlobalShortcutEvents', () => 
   dispatchPracticeGlobalShortcutReplay: (...args: unknown[]) => dispatchReplayMock(...args),
 }))
 
+vi.mock('../../../components/practice/utils', () => ({
+  playExampleAudio: (...args: unknown[]) => playExampleAudioMock(...args),
+}))
+
 type HarnessProps = {
   mode?: PracticeMode
 }
@@ -38,8 +43,15 @@ function ShortcutHarness({ mode = 'listening' }: HarnessProps) {
     showPracticeSettings: false,
     showResult: false,
     spellingResult: null,
-    currentWord: { word: 'apple', phonetic: '/a/', pos: 'n.', definition: 'fruit' },
+    currentWord: {
+      word: 'apple',
+      phonetic: '/a/',
+      pos: 'n.',
+      definition: 'fruit',
+      examples: [{ en: 'Apple trees grow well here.', zh: '苹果树在这里长得很好。' }],
+    },
     optionsLength: 4,
+    settings: { playbackSpeed: '1', volume: '100' },
     playWord: playWordMock,
     handleOptionSelect: handleOptionSelectMock,
     handleSkip: handleSkipMock,
@@ -64,6 +76,7 @@ describe('usePracticePageKeyboardShortcuts', () => {
     dispatchNextMock.mockReset()
     dispatchReplayMock.mockReset()
     playWordMock.mockReset()
+    playExampleAudioMock.mockReset()
     handleOptionSelectMock.mockReset()
     handleSkipMock.mockReset()
     handleGoBackMock.mockReset()
@@ -91,6 +104,22 @@ describe('usePracticePageKeyboardShortcuts', () => {
     fireEvent.keyDown(screen.getByLabelText('spelling-input'), { key: 'Tab', code: 'Tab' })
 
     expect(playWordMock).toHaveBeenCalledWith('apple')
+  })
+
+  it('plays example audio when Alt is pressed in an example-enabled mode', () => {
+    render(<ShortcutHarness mode="dictation" />)
+
+    fireEvent.keyDown(screen.getByLabelText('spelling-input'), {
+      key: 'Alt',
+      code: 'AltLeft',
+      altKey: true,
+    })
+
+    expect(playExampleAudioMock).toHaveBeenCalledWith(
+      'Apple trees grow well here.',
+      'apple',
+      { playbackSpeed: '1', volume: '100' },
+    )
   })
 
   it('dispatches shared bridge events for quick-memory shortcuts', () => {

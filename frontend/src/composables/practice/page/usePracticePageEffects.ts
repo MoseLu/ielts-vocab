@@ -14,7 +14,7 @@ import {
 } from '../../../components/practice/utils'
 import { normalizeOptionWordKey } from '../../../components/practice/page/practicePageHelpers'
 import type {
-  LastState,
+  AppSettings,
   OptionItem,
   PracticeMode,
   SmartDimension,
@@ -31,10 +31,7 @@ interface UsePracticePageEffectsParams {
   queue: number[]
   queueIndex: number
   currentWord: Word | undefined
-  settings: {
-    playbackSpeed?: string | number
-    volume?: string | number
-  }
+  settings: AppSettings
   backendLearnerProfile: BackendLearnerProfile | null
   setOptions: Dispatch<SetStateAction<OptionItem[]>>
   setCorrectIndex: Dispatch<SetStateAction<number>>

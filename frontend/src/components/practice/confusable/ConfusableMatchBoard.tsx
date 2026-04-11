@@ -110,7 +110,7 @@ export function ConfusableMatchBoard({
             }}>
               <svg className="confusable-lines" aria-hidden="true">
                 {showActiveLine ? (
-                  <path d={activeLinePath} className="confusable-line confusable-line--success" />
+                  <path d={activeLinePath ?? undefined} className="confusable-line confusable-line--success" />
                 ) : null}
               </svg>
 

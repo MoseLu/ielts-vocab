@@ -6,6 +6,7 @@ import { normalizeAppSettings, readAppSettingsFromStorage, writeAppSettingsToSto
 type TabType = 'answer' | 'sound' | 'display' | 'review'
 
 interface AppSettings {
+  [key: string]: unknown
   repeatWrong: boolean
   showAnswer: boolean
   shuffle: boolean

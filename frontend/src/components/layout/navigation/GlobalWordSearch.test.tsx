@@ -364,4 +364,41 @@ describe('GlobalWordSearch', () => {
       },
     )
   })
+
+  it('plays the first visible example audio when Alt is pressed', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      playbackSpeed: '1.25',
+      volume: '80',
+    }))
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/books/search?q=quit&limit=12') {
+        return Promise.resolve(quitSearchResult)
+      }
+      if (url === '/api/books/word-details?word=quit') {
+        return Promise.resolve(quitWordDetails)
+      }
+      return Promise.resolve({ query: 'other', total: 0, results: [] })
+    })
+
+    const { container } = render(<GlobalWordSearch />)
+
+    fireEvent.keyDown(window, { key: 'Q', shiftKey: true })
+
+    const input = await screen.findByRole('searchbox', { name: '全局单词搜索' })
+    fireEvent.change(input, { target: { value: 'quit' } })
+    fireEvent.submit(container.querySelector('.global-word-search-form') as HTMLFormElement)
+
+    await screen.findByText('她决定在考试季前辞职。')
+
+    fireEvent.keyDown(window, { key: 'Alt', code: 'AltLeft', altKey: true })
+
+    expect(playExampleAudioMock).toHaveBeenCalledWith(
+      'She decided to quit her job before the exam season.',
+      'quit',
+      {
+        playbackSpeed: '1.25',
+        volume: '80',
+      },
+    )
+  })
 })

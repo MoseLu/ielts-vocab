@@ -5,6 +5,8 @@ import { AdminDashboardView } from '../dashboard/AdminDashboardView'
 
 export default function AdminDashboard() {
   const { user: currentUser } = useAuth()
+  const numericCurrentUserId = Number(currentUser?.id)
+  const currentUserId = Number.isFinite(numericCurrentUserId) ? numericCurrentUserId : undefined
   const {
     tab,
     overview,
@@ -56,7 +58,7 @@ export default function AdminDashboard() {
         search={search}
         sort={sort}
         order={order}
-        currentUserId={currentUser?.id}
+        currentUserId={currentUserId}
         currentUserAvatarUrl={currentUser?.avatar_url ?? null}
         loading={loading}
         error={error}
@@ -79,7 +81,7 @@ export default function AdminDashboard() {
           detailDateTo={detailDateTo}
           detailMode={detailMode}
           detailWrongWordsSort={detailWrongWordsSort}
-          currentUserId={currentUser?.id}
+          currentUserId={currentUserId}
           currentUserAvatarUrl={currentUser?.avatar_url ?? null}
           onClose={closeDetail}
           onToggleFullscreen={() => setIsFullscreen(flag => !flag)}

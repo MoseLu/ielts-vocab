@@ -120,6 +120,7 @@ function VocabBookPage() {
     closeChapterModal,
     fallbackToPlanModal,
     closePlanModal,
+    navigateToCreateBook,
   } = useVocabBookPage()
 
   return (
@@ -163,6 +164,9 @@ function VocabBookPage() {
               ))}
             </div>
           </div>
+          <button type="button" className="vb-create-btn" onClick={navigateToCreateBook}>
+            创建词书
+          </button>
         </div>
       </PageHeader>
 
@@ -200,7 +204,7 @@ function VocabBookPage() {
         <ChapterModal
           key={`chapter-${selectedBook.id}-${showChapterModal}`}
           book={selectedBook}
-          progress={selectedBookProgress}
+          progress={selectedBookProgress ?? null}
           onClose={closeChapterModal}
           onSelectChapter={handleSelectChapter}
           onFallback={fallbackToPlanModal}

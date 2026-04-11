@@ -18,6 +18,11 @@ from services.books_confusable_service import (
     CONFUSABLE_MATCH_BOOK_ID,
     create_confusable_custom_chapters_response as _create_confusable_custom_chapters,
 )
+from services.custom_book_catalog_service import (
+    create_custom_book_response as _create_custom_book_response,
+    get_custom_book_response as _get_custom_book_response,
+    list_custom_books_response as _list_custom_books_response,
+)
 
 
 @books_bp.route('', methods=['GET'])
@@ -36,6 +41,27 @@ def search_words():
         raw_query=request.args.get('q'),
         limit_value=request.args.get('limit'),
     )
+    return jsonify(payload), status
+
+
+@books_bp.route('/custom-books', methods=['POST'])
+@token_required
+def create_custom_book(current_user):
+    payload, status = _create_custom_book_response(current_user.id, request.get_json())
+    return jsonify(payload), status
+
+
+@books_bp.route('/custom-books', methods=['GET'])
+@token_required
+def list_custom_books(current_user):
+    payload, status = _list_custom_books_response(current_user.id)
+    return jsonify(payload), status
+
+
+@books_bp.route('/custom-books/<book_id>', methods=['GET'])
+@token_required
+def get_custom_book(current_user, book_id):
+    payload, status = _get_custom_book_response(current_user.id, book_id)
     return jsonify(payload), status
 
 

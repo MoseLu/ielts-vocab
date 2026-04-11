@@ -269,7 +269,7 @@ def get_chapter_progress(current_user, book_id):
     return jsonify(payload), status
 
 
-@learning_core_bp.route('/api/books/<book_id>/chapters/<int:chapter_id>/progress', methods=['POST'])
+@learning_core_bp.route('/api/books/<book_id>/chapters/<chapter_id>/progress', methods=['POST'])
 @token_required
 def save_chapter_progress(current_user, book_id, chapter_id):
     payload, status = save_chapter_progress_response(
@@ -281,7 +281,7 @@ def save_chapter_progress(current_user, book_id, chapter_id):
     return jsonify(payload), status
 
 
-@learning_core_bp.route('/api/books/<book_id>/chapters/<int:chapter_id>/mode-progress', methods=['POST'])
+@learning_core_bp.route('/api/books/<book_id>/chapters/<chapter_id>/mode-progress', methods=['POST'])
 @token_required
 def save_chapter_mode_progress(current_user, book_id, chapter_id):
     payload, status = save_chapter_mode_progress_response(

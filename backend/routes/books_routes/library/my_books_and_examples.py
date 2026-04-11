@@ -14,7 +14,7 @@ from services.books_library_service import (
 )
 
 
-@books_bp.route('/<book_id>/chapters/<int:chapter_id>/mode-progress', methods=['POST'])
+@books_bp.route('/<book_id>/chapters/<chapter_id>/mode-progress', methods=['POST'])
 @token_required
 def save_chapter_mode_progress(current_user, book_id, chapter_id):
     """Save per-mode accuracy for a specific chapter. Each mode is stored independently."""

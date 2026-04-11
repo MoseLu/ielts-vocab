@@ -398,6 +398,11 @@ def test_catalog_content_internal_custom_book_routes_accept_internal_service_use
         json={
             'title': 'Band 7',
             'description': 'desc',
+            'education_stage': 'abroad',
+            'exam_type': 'ielts',
+            'ielts_skill': 'listening',
+            'share_enabled': True,
+            'chapter_word_target': 30,
             'chapters': [{'id': 'ch1', 'title': 'One', 'wordCount': 1}],
             'words': [{
                 'chapterId': 'ch1',
@@ -411,13 +416,34 @@ def test_catalog_content_internal_custom_book_routes_accept_internal_service_use
     created_book_id = create_response.json()['bookId']
     list_response = client.get('/internal/catalog/custom-books', headers=headers)
     get_response = client.get(f'/internal/catalog/custom-books/{created_book_id}', headers=headers)
+    public_get_response = client.get(f'/api/books/custom-books/{created_book_id}', headers=headers)
+    books_response = client.get('/api/books', headers=headers)
+    chapters_response = client.get(f'/api/books/{created_book_id}/chapters', headers=headers)
 
     assert create_response.status_code == 201
     assert create_response.json()['title'] == 'Band 7'
+    assert create_response.json()['book']['education_stage'] == 'abroad'
+    assert create_response.json()['book']['exam_type'] == 'ielts'
+    assert create_response.json()['book']['ielts_skill'] == 'listening'
+    assert create_response.json()['book']['share_enabled'] is True
+    assert create_response.json()['book']['chapter_word_target'] == 30
     assert list_response.status_code == 200
     assert list_response.json()['books'][0]['id'] == created_book_id
     assert get_response.status_code == 200
     assert get_response.json()['id'] == created_book_id
+    assert public_get_response.status_code == 200
+    assert public_get_response.json()['id'] == created_book_id
+    assert books_response.status_code == 200
+    assert books_response.json()['books'][0]['id'] == created_book_id
+    assert chapters_response.status_code == 200
+    created_chapter_id = chapters_response.json()['chapters'][0]['id']
+    assert created_chapter_id.startswith(f'{created_book_id}_')
+    chapter_words_response = client.get(
+        f'/api/books/{created_book_id}/chapters/{created_chapter_id}',
+        headers=headers,
+    )
+    assert chapter_words_response.status_code == 200
+    assert chapter_words_response.json()['words'][0]['word'] == 'abandon'
 
 
 def test_admin_ops_accepts_internal_admin_user_without_local_user_row(monkeypatch, tmp_path):

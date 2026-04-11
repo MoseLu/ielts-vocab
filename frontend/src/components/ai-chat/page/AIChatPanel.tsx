@@ -21,7 +21,6 @@ function AIChatPanel() {
     isOpen,
     isLoading,
     isGreeting,
-    greetingDone,
     contextLoaded,
     openPanel,
     closePanel,

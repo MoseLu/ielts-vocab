@@ -73,7 +73,7 @@ export async function loadConfusableMatchPageData({
       if (!response.ok) throw new Error('加载辨析词汇失败')
       return response.json() as Promise<ChapterWordsResponse>
     }),
-    apiFetch<ChapterProgressResponse>(`/api/books/${bookId}/chapters/progress`).catch(() => ({})),
+    apiFetch<ChapterProgressResponse>(`/api/books/${bookId}/chapters/progress`).catch((): ChapterProgressResponse => ({})),
   ])
 
   const words = chapterWordsData.words ?? []

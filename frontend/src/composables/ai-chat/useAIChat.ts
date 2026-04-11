@@ -341,9 +341,10 @@ export function useAIChat(_options: UseAIChatOptions = {}) {
           const priorityLabel = getWrongWordDimensionModeLabel(result.data.priority_dimension, result.data.priority_dimension)
           lines.push(`当前优先维度：${priorityLabel || result.data.priority_dimension}${reason}`)
         }
-        if (result.data.dimensions.length > 0) {
+        const dimensions = result.data.dimensions ?? []
+        if (dimensions.length > 0) {
           lines.push('四维安排：')
-          result.data.dimensions.forEach(item => {
+          dimensions.forEach(item => {
             const schedule = item.schedule_label ? `，周期 ${item.schedule_label}` : ''
             const label = getWrongWordDimensionModeLabel(item.key, item.label) || item.label || '维度'
             lines.push(`- ${label}：${normalizeModeText(item.status_label || '待安排')}${schedule}`)

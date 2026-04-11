@@ -36,6 +36,7 @@ export interface Word {
   }>
   chapter_id?: number | string
   chapter_title?: string
+  is_incomplete?: boolean
 }
 
 export interface ProgressData {
@@ -77,6 +78,13 @@ export interface Book {
   is_paid?: boolean
   has_chapters?: boolean
   is_auto_favorites?: boolean
+  is_custom_book?: boolean
+  education_stage?: string | null
+  exam_type?: string | null
+  ielts_skill?: string | null
+  share_enabled?: boolean
+  chapter_word_target?: number
+  incomplete_word_count?: number
   study_type?: string
   file?: string
   practice_mode?: string

@@ -105,12 +105,12 @@ def test_learning_core_service_book_progress_and_mode_round_trip(monkeypatch, tm
         headers=_auth_headers(token),
     )
     save_chapter = client.post(
-        '/api/books/ielts_reading_premium/chapters/2/progress',
+        '/api/books/ielts_reading_premium/chapters/chapter-a/progress',
         json={'words_learned': 30, 'correct_count': 22, 'wrong_count': 8, 'is_completed': False},
         headers=_auth_headers(token),
     )
     save_mode = client.post(
-        '/api/books/ielts_reading_premium/chapters/2/mode-progress',
+        '/api/books/ielts_reading_premium/chapters/chapter-a/mode-progress',
         json={'mode': 'meaning', 'correct_count': 6, 'wrong_count': 2, 'is_completed': True},
         headers=_auth_headers(token),
     )
@@ -126,7 +126,7 @@ def test_learning_core_service_book_progress_and_mode_round_trip(monkeypatch, tm
     assert get_book.status_code == 200
     assert get_book.json()['progress']['current_index'] == 30
     assert get_chapter.status_code == 200
-    assert get_chapter.json()['chapter_progress']['2']['modes']['meaning']['accuracy'] == 75
+    assert get_chapter.json()['chapter_progress']['chapter-a']['modes']['meaning']['accuracy'] == 75
 
 
 def test_learning_core_service_my_books_round_trip(monkeypatch, tmp_path):

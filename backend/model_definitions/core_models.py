@@ -32,6 +32,13 @@ def _iso_utc(dt: datetime | None) -> str | None:
     return dt.strftime('%Y-%m-%dT%H:%M:%S') + '+00:00'
 
 
+def _serialize_chapter_id(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return value
+
+
 def _normalize_wrong_word_iso(value) -> str | None:
     if not isinstance(value, str):
         return None
@@ -264,7 +271,7 @@ class UserChapterProgress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     book_id = db.Column(db.String(50), nullable=False)
-    chapter_id = db.Column(db.Integer, nullable=False)
+    chapter_id = db.Column(db.String(50), nullable=False)
     words_learned = db.Column(db.Integer, default=0)
     correct_count = db.Column(db.Integer, default=0)
     wrong_count = db.Column(db.Integer, default=0)
@@ -282,7 +289,7 @@ class UserChapterProgress(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'book_id': self.book_id,
-            'chapter_id': self.chapter_id,
+            'chapter_id': _serialize_chapter_id(self.chapter_id),
             'words_learned': self.words_learned,
             'correct_count': self.correct_count,
             'wrong_count': self.wrong_count,
@@ -299,7 +306,7 @@ class UserChapterModeProgress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     book_id = db.Column(db.String(50), nullable=False)
-    chapter_id = db.Column(db.Integer, nullable=False)
+    chapter_id = db.Column(db.String(50), nullable=False)
     mode = db.Column(db.String(30), nullable=False)  # smart | listening | meaning | dictation | quickmemory
     correct_count = db.Column(db.Integer, default=0)
     wrong_count = db.Column(db.Integer, default=0)
@@ -326,7 +333,7 @@ class UserChapterModeProgress(db.Model):
 # ── Custom Books (AI-generated) ──────────────────────────────────────────────
 
 class CustomBook(db.Model):
-    """AI-generated custom vocabulary book"""
+    """User-owned custom vocabulary book."""
     __tablename__ = 'custom_books'
 
     id = db.Column(db.String(50), primary_key=True)
@@ -334,6 +341,11 @@ class CustomBook(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     word_count = db.Column(db.Integer, default=0)
+    education_stage = db.Column(db.String(50), nullable=True)
+    exam_type = db.Column(db.String(50), nullable=True)
+    ielts_skill = db.Column(db.String(50), nullable=True)
+    share_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    chapter_word_target = db.Column(db.Integer, nullable=False, default=15)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     chapters = db.relationship('CustomBookChapter', backref='book', lazy=True,
@@ -346,6 +358,12 @@ class CustomBook(db.Model):
             'title': self.title,
             'description': self.description,
             'word_count': self.word_count,
+            'education_stage': self.education_stage,
+            'exam_type': self.exam_type,
+            'ielts_skill': self.ielts_skill,
+            'share_enabled': bool(self.share_enabled),
+            'chapter_word_target': int(self.chapter_word_target or 15),
+            'is_custom_book': True,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'chapters': [c.to_dict() for c in self.chapters]
         }
@@ -385,6 +403,7 @@ class CustomBookWord(db.Model):
     phonetic = db.Column(db.String(100), nullable=True)
     pos = db.Column(db.String(50), nullable=True)
     definition = db.Column(db.Text, nullable=False)
+    is_incomplete = db.Column(db.Boolean, nullable=False, default=False)
 
     def to_dict(self):
         return {
@@ -393,7 +412,8 @@ class CustomBookWord(db.Model):
             'word': self.word,
             'phonetic': self.phonetic,
             'pos': self.pos,
-            'definition': self.definition
+            'definition': self.definition,
+            'is_incomplete': bool(self.is_incomplete),
         }
 
 

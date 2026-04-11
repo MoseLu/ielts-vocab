@@ -10,6 +10,11 @@ def create_custom_book(
     title: str,
     description: str,
     word_count: int,
+    education_stage: str = '',
+    exam_type: str = '',
+    ielts_skill: str = '',
+    share_enabled: bool = False,
+    chapter_word_target: int = 15,
 ):
     book = CustomBook(
         id=book_id,
@@ -17,6 +22,11 @@ def create_custom_book(
         title=title,
         description=description,
         word_count=word_count,
+        education_stage=education_stage or None,
+        exam_type=exam_type or None,
+        ielts_skill=ielts_skill or None,
+        share_enabled=share_enabled,
+        chapter_word_target=chapter_word_target,
     )
     db.session.add(book)
     return book
@@ -48,6 +58,7 @@ def create_custom_book_word(
     phonetic: str,
     pos: str,
     definition: str,
+    is_incomplete: bool = False,
 ):
     record = CustomBookWord(
         chapter_id=chapter_id,
@@ -55,6 +66,7 @@ def create_custom_book_word(
         phonetic=phonetic,
         pos=pos,
         definition=definition,
+        is_incomplete=is_incomplete,
     )
     db.session.add(record)
     return record

@@ -10,6 +10,12 @@ from services import (
     books_vocabulary_loader_service,
     phonetic_lookup_service,
 )
+from services.custom_book_catalog_service import (
+    build_custom_book_vocabulary_entries,
+    get_custom_book_for_user,
+    list_custom_books_for_user,
+    serialize_custom_book_summary,
+)
 
 
 _global_word_search_catalog = None
@@ -17,6 +23,13 @@ _global_word_search_catalog = None
 
 def _find_book(book_id):
     return books_registry_service.get_vocab_book(book_id)
+
+
+def _build_optional_favorite_book(user_id: int | None):
+    try:
+        return books_favorites_service._build_favorites_book_payload(user_id)
+    except Exception:
+        return None
 
 
 def _hydrate_missing_phonetics(words):
@@ -42,6 +55,11 @@ def _hydrate_primary_result_phonetic(results):
 
 
 def load_book_vocabulary(book_id):
+    current_user = books_confusable_service.resolve_optional_current_user()
+    custom_book = get_custom_book_for_user(current_user.id if current_user else None, book_id)
+    if custom_book:
+        return build_custom_book_vocabulary_entries(custom_book)
+
     if book_id in books_vocabulary_loader_service._vocabulary_cache:
         return books_vocabulary_loader_service._vocabulary_cache[book_id]
 
@@ -177,9 +195,14 @@ def build_books_response(category=None, level=None, study_type=None):
         books_confusable_service.augment_book_for_user(book, user_id)
         for book in books_registry_service.list_vocab_books()
     ]
-    favorite_book = books_favorites_service._build_favorites_book_payload(user_id)
+    favorite_book = _build_optional_favorite_book(user_id)
     if favorite_book:
         payload_books = [favorite_book, *payload_books]
+    if user_id is not None:
+        payload_books = [
+            *[serialize_custom_book_summary(book) for book in list_custom_books_for_user(user_id)],
+            *payload_books,
+        ]
 
     if study_type and study_type != 'ielts':
         payload_books = [book for book in payload_books if book.get('study_type') == study_type]
@@ -275,17 +298,21 @@ def build_search_words_response(raw_query, limit_value=None):
 def build_book_response(book_id):
     if books_favorites_service._is_favorites_book(book_id):
         current_user = books_confusable_service.resolve_optional_current_user()
-        favorite_book = books_favorites_service._build_favorites_book_payload(
+        favorite_book = _build_optional_favorite_book(
             current_user.id if current_user else None
         )
         if not favorite_book:
             return {'error': 'Book not found'}, 404
         return {'book': favorite_book}, 200
 
+    current_user = books_confusable_service.resolve_optional_current_user()
+    custom_book = get_custom_book_for_user(current_user.id if current_user else None, book_id)
+    if custom_book:
+        return {'book': serialize_custom_book_summary(custom_book)}, 200
+
     book = _find_book(book_id)
     if not book:
         return {'error': 'Book not found'}, 404
 
-    current_user = books_confusable_service.resolve_optional_current_user()
     user_id = current_user.id if current_user else None
     return {'book': books_confusable_service.augment_book_for_user(book, user_id)}, 200

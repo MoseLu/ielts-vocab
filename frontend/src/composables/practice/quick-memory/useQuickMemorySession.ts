@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { apiFetch } from '../../../lib'
 import {
   PASSIVE_STUDY_SESSION_MIN_SECONDS,

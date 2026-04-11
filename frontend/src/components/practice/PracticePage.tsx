@@ -385,6 +385,7 @@ function PracticePage({
     spellingResult,
     currentWord,
     optionsLength: options.length,
+    settings,
     playWord,
     handleOptionSelect,
     handleSkip,

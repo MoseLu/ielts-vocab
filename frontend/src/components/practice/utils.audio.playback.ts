@@ -303,7 +303,7 @@ async function playWebAudioBuffer(buffer: AudioBuffer, options: PlaybackOptions)
     cleanupPlayback()
   }
   const finalize = (notifyEnd: boolean) => {
-    if (settled) return
+    if (settled) return false
     settled = true
     source.onended = null
     clearCurrent()

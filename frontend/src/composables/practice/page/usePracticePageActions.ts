@@ -8,13 +8,9 @@ import {
   recordModeAnswer,
 } from '../../../hooks/useAIChat'
 import type {
-  LastState,
   PracticeMode,
-  QuickMemoryRecordState,
   SmartDimension,
   SpellingSubmitSource,
-  Word,
-  WordStatuses,
 } from '../../../components/practice/types'
 import {
   normalizeWordAnswer,
@@ -32,15 +28,12 @@ export function usePracticePageActions({
   smartDimension,
   bookId,
   chapterId,
-  currentDay,
   currentWord,
   queue,
   queueIndex,
-  vocabulary,
   correctCount,
   wrongCount,
   correctIndex,
-  options,
   wrongSelections,
   choiceOptionsReady,
   showResult,

@@ -181,7 +181,7 @@ export function ListeningExamplePrompt({
           type="button"
           className="play-btn-mini listening-example-audio-btn"
           aria-label="播放例句"
-          title="播放例句"
+          title="播放例句（快捷键 Alt）"
           onClick={onPlayAudio}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">

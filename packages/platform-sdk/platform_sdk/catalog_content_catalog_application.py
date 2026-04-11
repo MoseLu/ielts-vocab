@@ -25,6 +25,7 @@ from platform_sdk.learning_core_favorites_support import (
     _is_favorites_book,
     _serialize_favorite_words,
 )
+from platform_sdk.catalog_content_service_repositories import custom_book_catalog_service
 
 
 WORD_NOTE_LIMIT = 500
@@ -108,7 +109,7 @@ def build_books_stats_response():
 
 
 def _build_favorites_chapter_words_response(chapter_id):
-    if chapter_id != FAVORITES_CHAPTER_ID:
+    if not _chapter_id_matches(chapter_id, FAVORITES_CHAPTER_ID):
         return {'error': 'Chapter not found'}, 404
 
     current_user = confusable_support.resolve_optional_current_user()
@@ -134,12 +135,15 @@ def build_chapter_words_response(book_id, chapter_id):
     if _is_favorites_book(book_id):
         return _build_favorites_chapter_words_response(chapter_id)
 
-    book = _find_book(book_id)
-    if not book:
+    current_user = confusable_support.resolve_optional_current_user()
+    custom_book = custom_book_catalog_service.get_custom_book_for_user(
+        current_user.id if current_user else None,
+        book_id,
+    )
+    if not custom_book and not _find_book(book_id):
         return {'error': 'Book not found'}, 404
 
     if confusable_support.is_confusable_match_book(book_id):
-        current_user = confusable_support.resolve_optional_current_user()
         custom_chapter = confusable_support.get_confusable_custom_chapter(
             current_user.id if current_user else None,
             chapter_id,
@@ -201,8 +205,11 @@ def build_book_words_response(book_id, page=1, per_page=100):
             'total_pages': paginated['total_pages'],
         }, 200
 
-    book = _find_book(book_id)
-    if not book:
+    current_user = confusable_support.resolve_optional_current_user()
+    if (
+        not custom_book_catalog_service.get_custom_book_for_user(current_user.id if current_user else None, book_id)
+        and not _find_book(book_id)
+    ):
         return {'error': 'Book not found'}, 404
 
     words = load_book_vocabulary(book_id)
@@ -210,7 +217,6 @@ def build_book_words_response(book_id, page=1, per_page=100):
         return {'error': 'Failed to load vocabulary'}, 500
 
     if confusable_support.is_confusable_match_book(book_id):
-        current_user = confusable_support.resolve_optional_current_user()
         custom_book = (
             confusable_support.get_confusable_custom_book(current_user.id)
             if current_user else None

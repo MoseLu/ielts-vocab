@@ -1,6 +1,6 @@
 // ── Dictation Mode Component ───────────────────────────────────────────────────
 
-import React, { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import type { DictationModeProps, LastState } from './types'
 import { buildBlankSentence } from './exampleSentence'
 import { playExampleAudio, stopAudio } from './utils'
@@ -186,8 +186,8 @@ export default function DictationMode({
           <button
             className="play-btn-large"
             onClick={handleReplayClick}
-            title={isExampleMode ? '重播例句，快捷键 Tab' : '重播发音，快捷键 Tab'}
-            aria-label={isExampleMode ? '重播例句，快捷键 Tab' : '重播发音，快捷键 Tab'}
+            title={isExampleMode ? '重播例句，快捷键 Tab / Alt' : '重播发音，快捷键 Tab'}
+            aria-label={isExampleMode ? '重播例句，快捷键 Tab / Alt' : '重播发音，快捷键 Tab'}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>

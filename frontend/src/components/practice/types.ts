@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import type { QuickMemoryRecordState } from '../../lib/quickMemory'
 
+export type { QuickMemoryRecordState } from '../../lib/quickMemory'
+
 // ── Types for Practice Components ────────────────────────────────────────────────
 
 export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'quickmemory'
@@ -32,7 +34,7 @@ export interface QuickMemoryModeProps {
   reviewHasMore?: boolean
   onContinueReview?: () => void
   buildChapterPath?: (chapterId: string | number) => string
-  onModeChange: (mode: string) => void
+  onModeChange: (mode: PracticeMode) => void
   onNavigate: (path: string) => void
   /** Called with each word the user marks as "unknown" — adds it to the error book */
   onWrongWord: (word: Word) => void
@@ -164,7 +166,7 @@ export interface PracticeControlBarProps {
   onWordListToggle: () => void
   onSettingsToggle: () => void
   onModeChange: (mode: PracticeMode) => void
-  onDayChange: (day: number) => void
+  onDayChange?: (day: number) => void
   onNavigate: (path: string) => void
   buildChapterPath?: (chapterId: string | number) => string
   onExitHome?: () => void
@@ -206,7 +208,7 @@ export interface RadioModeProps {
   onRadioStop: () => void
   onNavigate: (path: string) => void
   onCloseSettings: () => void
-  onModeChange: (mode: string) => void
+  onModeChange: (mode: PracticeMode) => void
   onIndexChange?: (index: number) => void
   onSessionInteraction?: () => void
   onProgressChange?: (wordsStudied: number) => void

@@ -134,7 +134,7 @@ async def chapter_progress_proxy(book_id: str, request: Request):
 
 
 @browser_compat_router.post('/api/books/{book_id}/chapters/{chapter_id}/progress')
-async def save_chapter_progress_proxy(book_id: str, chapter_id: int, request: Request):
+async def save_chapter_progress_proxy(book_id: str, chapter_id: str, request: Request):
     return await _proxy_service_request(
         request=request,
         base_url=learning_core_service_url(),
@@ -144,7 +144,7 @@ async def save_chapter_progress_proxy(book_id: str, chapter_id: int, request: Re
 
 
 @browser_compat_router.post('/api/books/{book_id}/chapters/{chapter_id}/mode-progress')
-async def save_chapter_mode_progress_proxy(book_id: str, chapter_id: int, request: Request):
+async def save_chapter_mode_progress_proxy(book_id: str, chapter_id: str, request: Request):
     return await _proxy_service_request(
         request=request,
         base_url=learning_core_service_url(),

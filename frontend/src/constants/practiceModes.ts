@@ -242,6 +242,6 @@ export function normalizeModeText(text?: string | null): string {
 
   return MODE_COPY_ALIASES.reduce((result, alias) => {
     const replacement = PRACTICE_MODE_LABELS[MODE_ALIAS_TO_KEY[alias]]
-    return result.replaceAll(alias, replacement)
+    return result.split(alias).join(replacement)
   }, normalized)
 }
