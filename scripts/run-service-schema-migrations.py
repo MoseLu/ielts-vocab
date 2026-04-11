@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import argparse
-import importlib
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
 import os
+from pathlib import Path
+from urllib.parse import quote_plus
 
 import sqlalchemy as sa
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
+from dotenv import load_dotenv
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +29,7 @@ from platform_sdk.service_migration_plan import (
 )
 from platform_sdk.service_model_registry import resolve_service_db
 from platform_sdk.service_schema import bootstrap_service_schema
+from services.storage_boundary_guard import validate_split_service_storage_boundary
 
 
 @dataclass(frozen=True)
@@ -65,7 +67,52 @@ def resolve_service_names(raw_services: list[str] | None) -> list[str]:
     return iter_service_migration_service_names()
 
 
-def _reload_config_class(*, service_name: str, env_file: Path | None):
+def _service_env_prefix(service_name: str) -> str:
+    return ''.join(char if char.isalnum() else '_' for char in service_name).strip('_').upper()
+
+
+def _getenv(name: str, *, service_name: str, default: str = '') -> str:
+    service_prefix = _service_env_prefix(service_name)
+    if service_prefix:
+        service_value = (os.environ.get(f'{service_prefix}_{name}') or '').strip()
+        if service_value:
+            return service_value
+    return (os.environ.get(name) or default).strip()
+
+
+def _normalize_database_uri(uri: str) -> str:
+    if uri.startswith('postgres://'):
+        return 'postgresql://' + uri[len('postgres://'):]
+    return uri
+
+
+def _resolve_sqlite_db_path(*, service_name: str) -> str:
+    configured = _getenv('SQLITE_DB_PATH', service_name=service_name)
+    if configured:
+        return os.path.abspath(configured)
+    return os.path.join(BACKEND_PATH, 'database.sqlite')
+
+
+def _build_postgres_database_uri(*, service_name: str) -> str:
+    host = _getenv('POSTGRES_HOST', service_name=service_name)
+    database = _getenv('POSTGRES_DB', service_name=service_name) or _getenv(
+        'POSTGRES_DATABASE',
+        service_name=service_name,
+    )
+    user = _getenv('POSTGRES_USER', service_name=service_name)
+    password = _getenv('POSTGRES_PASSWORD', service_name=service_name)
+    if not (host and database and user and password):
+        return ''
+
+    port = _getenv('POSTGRES_PORT', service_name=service_name, default='5432') or '5432'
+    sslmode = _getenv('POSTGRES_SSLMODE', service_name=service_name)
+    auth = f'{quote_plus(user)}:{quote_plus(password)}'
+    query = f'?sslmode={quote_plus(sslmode)}' if sslmode else ''
+    return f'postgresql://{auth}@{host}:{port}/{database}{query}'
+
+
+def _prepare_env(*, service_name: str, env_file: Path | None) -> None:
+    env_path: Path | None = None
     if env_file is not None:
         env_path = env_file.resolve()
         if not env_path.exists():
@@ -73,15 +120,32 @@ def _reload_config_class(*, service_name: str, env_file: Path | None):
         os.environ['MICROSERVICES_ENV_FILE'] = str(env_path)
 
     load_split_service_env(service_name=service_name)
+    if env_path is not None:
+        load_dotenv(env_path, override=True)
     os.environ['CURRENT_SERVICE_NAME'] = service_name
-    import config as backend_config
-
-    return importlib.reload(backend_config).Config
 
 
 def resolve_database_uri(*, service_name: str, env_file: Path | None) -> str:
-    config_class = _reload_config_class(service_name=service_name, env_file=env_file)
-    return str(config_class.SQLALCHEMY_DATABASE_URI)
+    _prepare_env(service_name=service_name, env_file=env_file)
+    explicit_uri = _getenv('SQLALCHEMY_DATABASE_URI', service_name=service_name) or _getenv(
+        'DATABASE_URL',
+        service_name=service_name,
+    )
+    if explicit_uri:
+        database_uri = _normalize_database_uri(explicit_uri)
+    else:
+        postgres_uri = _build_postgres_database_uri(service_name=service_name)
+        if postgres_uri:
+            database_uri = postgres_uri
+        else:
+            database_uri = 'sqlite:///' + _resolve_sqlite_db_path(service_name=service_name)
+
+    validate_split_service_storage_boundary(
+        service_name=service_name,
+        database_uri=database_uri,
+        base_dir=BACKEND_PATH,
+    )
+    return database_uri
 
 
 def _bool_server_default(connection: sa.engine.Connection):
