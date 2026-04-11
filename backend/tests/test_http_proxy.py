@@ -114,6 +114,34 @@ def test_proxy_browser_request_retries_safe_get_timeout_then_succeeds(monkeypatc
     assert captured_timeouts[0].read == 5.0
 
 
+def test_proxy_browser_request_uses_extended_timeout_for_books_search(monkeypatch):
+    reset_gateway_upstream_state()
+    outcomes = [
+        FakeResponse(
+            status_code=200,
+            headers={'content-type': 'application/json'},
+            content=b'{"query":"test","results":[],"total":0}',
+        ),
+    ]
+    captured_calls: list[dict[str, object]] = []
+    captured_timeouts: list[object] = []
+    monkeypatch.setattr(
+        http_proxy.httpx,
+        'AsyncClient',
+        _make_async_client(outcomes, captured_calls, captured_timeouts),
+    )
+
+    app = _build_proxy_app(service_name='catalog-content-service', upstream_path='/api/books/search')
+    client = TestClient(app, base_url='https://axiomaticworld.com')
+
+    response = client.get('/proxy?q=test&limit=12')
+
+    assert response.status_code == 200
+    assert response.json() == {'query': 'test', 'results': [], 'total': 0}
+    assert len(captured_calls) == 1
+    assert captured_timeouts[0].read == 15.0
+
+
 def test_proxy_browser_request_preserves_event_stream_headers(monkeypatch):
     reset_gateway_upstream_state()
     outcomes = [

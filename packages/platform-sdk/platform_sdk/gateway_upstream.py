@@ -97,6 +97,19 @@ def resolve_gateway_upstream_policy(
             circuit_breaker_reset_seconds=30.0,
         )
 
+    if service_name == 'catalog-content-service':
+        read_timeout_seconds = 5.0
+        if normalized_path == '/api/books/search':
+            read_timeout_seconds = 15.0
+        return GatewayUpstreamPolicy(
+            service_name=service_name,
+            connect_timeout_seconds=5.0,
+            read_timeout_seconds=read_timeout_seconds,
+            retry_attempts=1,
+            circuit_breaker_failures=3,
+            circuit_breaker_reset_seconds=30.0,
+        )
+
     return GatewayUpstreamPolicy(
         service_name=service_name,
         connect_timeout_seconds=5.0,
