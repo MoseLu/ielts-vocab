@@ -16,6 +16,7 @@ SAFE_OSS_SEGMENT_RE = shared_oss.SAFE_OSS_SEGMENT_RE
 DEFAULT_SIGNED_URL_EXPIRES_SECONDS = shared_oss.DEFAULT_SIGNED_URL_EXPIRES_SECONDS
 DEFAULT_METADATA_CACHE_TTL_SECONDS = shared_oss.DEFAULT_METADATA_CACHE_TTL_SECONDS
 DEFAULT_WORD_TTS_OSS_PREFIX = 'projects/ielts-vocab/word-tts-cache'
+DEFAULT_WORD_AUDIO_CONTENT_TYPE = 'audio/mpeg'
 
 
 @dataclass(frozen=True)
@@ -170,6 +171,25 @@ def fetch_word_audio_oss_payload(
         shared_oss.fetch_object_payload(
             object_key=word_audio_oss_object_key(file_name=file_name, model=model, voice=voice),
             file_name=file_name,
+            bucket=_oss_bucket(),
+            signed_url_expires_seconds=_signed_url_expires_seconds(),
+            metadata_cache_ttl_seconds=_metadata_cache_ttl_seconds(),
+        )
+    )
+
+
+def put_word_audio_oss_bytes(
+    *,
+    file_name: str,
+    model: str,
+    voice: str,
+    audio_bytes: bytes,
+) -> WordAudioOssMetadata | None:
+    return _metadata_from_shared(
+        shared_oss.put_object_bytes(
+            object_key=word_audio_oss_object_key(file_name=file_name, model=model, voice=voice),
+            body=audio_bytes,
+            content_type=DEFAULT_WORD_AUDIO_CONTENT_TYPE,
             bucket=_oss_bucket(),
             signed_url_expires_seconds=_signed_url_expires_seconds(),
             metadata_cache_ttl_seconds=_metadata_cache_ttl_seconds(),
