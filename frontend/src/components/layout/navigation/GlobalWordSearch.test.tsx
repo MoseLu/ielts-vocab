@@ -2,6 +2,7 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import GlobalWordSearch from './GlobalWordSearch'
+import '../../../styles/base.scss'
 
 const { useAuthMock, useToastMock, useFavoriteWordsMock, toggleFavoriteMock } = vi.hoisted(() => {
   const toggleFavoriteMock = vi.fn()
@@ -136,6 +137,14 @@ describe('GlobalWordSearch', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+  })
+
+  it('keeps the global search overlay layer above the fixed header layer', () => {
+    const rootStyles = getComputedStyle(document.documentElement)
+
+    expect(Number(rootStyles.getPropertyValue('--layer-global-search').trim())).toBeGreaterThan(
+      Number(rootStyles.getPropertyValue('--layer-header').trim()),
+    )
   })
 
   it('does not query the backend until the user explicitly submits', async () => {
