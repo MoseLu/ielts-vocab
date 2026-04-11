@@ -3,6 +3,7 @@ import { useAuth, useToast } from '../contexts'
 import AdminDashboard from '../components/admin/page/AdminDashboard'
 import AIChatPanel from '../components/ai-chat/page/AIChatPanel'
 import AuthPage from '../components/auth/page/AuthPage'
+import CreateCustomBookPage from '../components/books/page/CreateCustomBookPage'
 import VocabBookPage from '../components/books/page/VocabBookPage'
 import ErrorsPage from '../components/errors/page/ErrorsPage'
 import HomePage from '../components/home/page/HomePage'
@@ -132,6 +133,14 @@ export function AppRoutes({
                 element={(
                   <AuthenticatedRoute isAuthenticated={Boolean(user)}>
                     <VocabBookPage />
+                  </AuthenticatedRoute>
+                )}
+              />
+              <Route
+                path="/books/create"
+                element={(
+                  <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                    <CreateCustomBookPage />
                   </AuthenticatedRoute>
                 )}
               />

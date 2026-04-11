@@ -105,5 +105,6 @@ export function useVocabBookPage() {
     closeChapterModal,
     fallbackToPlanModal,
     closePlanModal,
+    navigateToCreateBook: () => navigate('/books/create'),
   }
 }
