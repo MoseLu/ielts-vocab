@@ -1,8 +1,8 @@
+import { readFileSync } from 'node:fs'
 import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import GlobalWordSearch from './GlobalWordSearch'
-import baseStyles from '../../../styles/base.scss?raw'
 
 const { useAuthMock, useToastMock, useFavoriteWordsMock, toggleFavoriteMock } = vi.hoisted(() => {
   const toggleFavoriteMock = vi.fn()
@@ -115,6 +115,11 @@ const quitWordDetails = {
     updated_at: null,
   },
 }
+
+const baseStyles = readFileSync(
+  new URL('../../../styles/base.scss', import.meta.url),
+  'utf-8',
+)
 
 const readRootLayerToken = (tokenName: string) => {
   const escapedName = tokenName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
