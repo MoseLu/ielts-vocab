@@ -100,6 +100,8 @@ Use these commands from `/opt/ielts-vocab/current` before any Wave 3 schema cuto
 /opt/ielts-vocab/venv/bin/python scripts/validate_microservice_storage_parity.py --scope owned --env-file /etc/ielts-vocab/microservices.env
 ```
 
+The production release path now also runs `/opt/ielts-vocab/current/scripts/run-service-schema-migrations.py` before the `current` symlink switches, so split-service schema repairs ship with the same immutable release that restarts the services.
+
 Wave 4 remote storage drill command:
 
 ```bash

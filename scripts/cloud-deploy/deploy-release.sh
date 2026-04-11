@@ -22,6 +22,7 @@ prepare_repository_root
 commit_sha="$(fetch_git_commit "${git_ref}")"
 release_dir="${RELEASES_ROOT}/${timestamp}-$(printf '%s' "${commit_sha}" | cut -c1-12)"
 previous_release="$(current_target_path)"
+schema_migration_script="${release_dir}/scripts/run-service-schema-migrations.py"
 
 log "Preparing release ${release_dir} from ${commit_sha}"
 mkdir -p "${release_dir}"
@@ -29,8 +30,11 @@ git -C "${REPOSITORY_ROOT}" archive "${commit_sha}" | tar -xf - -C "${release_di
 hydrate_release_git_index "${release_dir}"
 find "${release_dir}/scripts/cloud-deploy" -maxdepth 1 -type f -name '*.sh' -exec chmod +x {} +
 install_release_dependencies "${release_dir}"
+require_file "${schema_migration_script}"
 
 run_backup_script
+log "Applying split-service schema migrations"
+"${VENV_DIR}/bin/python" "${schema_migration_script}" --env-file "${MICROSERVICES_ENV_FILE}"
 if [[ -e "${CURRENT_LINK}" && ! -L "${CURRENT_LINK}" ]]; then
   previous_release="$(stage_current_directory_as_legacy_release "${timestamp}")"
 fi

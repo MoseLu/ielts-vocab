@@ -136,9 +136,10 @@ The production workflow does this on each `main` release:
 5. The server fetches the target commit from `/opt/ielts-vocab/repository`.
 6. A new immutable release directory is created under `/opt/ielts-vocab/releases`.
 7. PostgreSQL backup runs before traffic switches.
-8. `current` is pointed to the new release, frontend assets are copied, and all services restart.
-9. `smoke-check.sh` validates broker runtime first, then verifies internal readiness plus nginx proxy routing.
-10. If restart or smoke verification fails, `rollback-release.sh` switches back to the previous release.
+8. The release runs `scripts/run-service-schema-migrations.py` against the split-service databases before `current` changes.
+9. `current` is pointed to the new release, frontend assets are copied, and all services restart.
+10. `smoke-check.sh` validates broker runtime first, then verifies internal readiness plus nginx proxy routing.
+11. If restart or smoke verification fails, `rollback-release.sh` switches back to the previous release.
 
 ## Manual Deploy and Rollback
 
@@ -146,6 +147,12 @@ Manual production deploy:
 
 ```bash
 sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/deploy-release.sh main
+```
+
+Manual service-schema migration run:
+
+```bash
+sudo APP_HOME=/opt/ielts-vocab /opt/ielts-vocab/venv/bin/python /opt/ielts-vocab/current/scripts/run-service-schema-migrations.py --env-file /etc/ielts-vocab/microservices.env
 ```
 
 Manual preflight:
