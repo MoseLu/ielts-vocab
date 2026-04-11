@@ -7,6 +7,9 @@ import {
   type WordDetailResponse,
   type WordSearchResult,
 } from '../../../lib'
+import { DEFAULT_SETTINGS } from '../../../constants'
+import { readAppSettingsFromStorage } from '../../../lib/appSettings'
+import { playExampleAudio, stopAudio } from '../../practice/utils'
 import { WORD_NOTE_LIMIT } from './globalWordSearchDetailUtils'
 
 type DetailTab = 'examples' | 'root' | 'english' | 'derivatives' | 'notes'
@@ -87,6 +90,15 @@ export default function GlobalWordSearchDetailPanel({
   const resolvedDefinition = detailData?.definition || summaryDefinition
 
   const noteStatusLabel = useMemo(() => buildNoteStatusLabel(noteStatus), [noteStatus])
+  const exampleAudioSettings = useMemo(() => {
+    const settings = typeof window === 'undefined'
+      ? DEFAULT_SETTINGS
+      : readAppSettingsFromStorage()
+    return {
+      playbackSpeed: String(settings.playbackSpeed ?? DEFAULT_SETTINGS.playbackSpeed),
+      volume: String(settings.volume ?? DEFAULT_SETTINGS.volume),
+    }
+  }, [])
 
   useEffect(() => {
     detailAbortRef.current?.abort()
@@ -131,6 +143,10 @@ export default function GlobalWordSearchDetailPanel({
     void loadWordDetails()
 
     return () => controller.abort()
+  }, [result.word])
+
+  useEffect(() => () => {
+    stopAudio()
   }, [result.word])
 
   useEffect(() => {
@@ -254,9 +270,39 @@ export default function GlobalWordSearchDetailPanel({
             <div className="global-word-search-examples">
               {detailExamples.slice(0, 5).map((example, index) => (
                 <article key={`${result.word}-${index}`} className="global-word-search-example">
-                  <p className="global-word-search-example-en">
-                    {renderHighlightedText(example.en || '暂无英文例句', query)}
-                  </p>
+                  <div className="global-word-search-example-header">
+                    <p className="global-word-search-example-en">
+                      {renderHighlightedText(example.en || '暂无英文例句', query)}
+                    </p>
+                    {example.en ? (
+                      <button
+                        type="button"
+                        className="global-word-search-audio global-word-search-audio--icon global-word-search-audio--example"
+                        aria-label={`朗读例句 ${index + 1}`}
+                        title={`朗读例句 ${index + 1}`}
+                        onClick={() => playExampleAudio(example.en, result.word, exampleAudioSettings)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path
+                            d="M10.78 5.88a.9.9 0 0 1 1.47.7v10.84a.9.9 0 0 1-1.47.7l-3.8-3.05H4.9A1.4 1.4 0 0 1 3.5 13.67v-3.34a1.4 1.4 0 0 1 1.4-1.4h2.08l3.8-3.05Z"
+                            fill="currentColor"
+                          />
+                          <path
+                            d="M15.2 9.12a4.35 4.35 0 0 1 0 5.76"
+                            stroke="currentColor"
+                            strokeWidth="1.9"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M17.9 6.95a7.2 7.2 0 0 1 0 10.1"
+                            stroke="currentColor"
+                            strokeWidth="1.9"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                    ) : null}
+                  </div>
                   <p className="global-word-search-example-zh">
                     {renderHighlightedText(example.zh || '暂无中文释义', query)}
                   </p>

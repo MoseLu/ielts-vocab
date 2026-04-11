@@ -114,8 +114,25 @@
 .listening-example-prompt {
     width: min(100%, 760px);
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
     justify-content: center;
     padding: 0 12px;
+}
+
+.listening-example-audio-btn {
+    width: 38px;
+    height: 38px;
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--accent);
+    border-color: rgba(var(--accent-rgb), 0.18);
+}
+
+.listening-example-audio-btn:hover {
+    background: rgba(var(--accent-rgb), 0.14);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    color: var(--accent);
 }
 
 .listening-example-sentence {

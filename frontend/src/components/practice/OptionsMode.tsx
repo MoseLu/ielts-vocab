@@ -1,6 +1,7 @@
 // ── Options Mode Component (Listening / Meaning / Smart) ───────────────────────
 
 import type { OptionsModeProps, SmartDimension } from './types'
+import { playExampleAudio } from './utils'
 import {
   BottomBar,
   ListeningExamplePrompt,
@@ -32,6 +33,7 @@ export default function OptionsMode({
   spellingResult,
   speechConnected,
   speechRecording,
+  settings,
   progressValue,
   total,
   queueIndex,
@@ -54,6 +56,10 @@ export default function OptionsMode({
   const showListeningExample = displayMode === 'audio'
     && !optionsLoading
     && Boolean(listeningExample)
+  const handlePlayExample = () => {
+    if (!listeningExample) return
+    playExampleAudio(listeningExample, currentWord.word, settings)
+  }
 
   return (
     <div className="practice-page">
@@ -80,7 +86,11 @@ export default function OptionsMode({
         )}
 
         {showListeningExample && (
-          <ListeningExamplePrompt sentence={listeningExample} targetWord={currentWord.word} />
+          <ListeningExamplePrompt
+            sentence={listeningExample}
+            targetWord={currentWord.word}
+            onPlayAudio={handlePlayExample}
+          />
         )}
 
         {isSmartDictation ? (
