@@ -4,7 +4,7 @@ import os
 from collections import OrderedDict, defaultdict
 
 from service_models.catalog_content_models import WordCatalogEntry
-from services import books_catalog_service, word_catalog_repository
+from services import word_catalog_repository
 from services.word_catalog_defaults import (
     build_default_root_payload,
     generate_derivative_candidates,
@@ -29,6 +29,8 @@ def _seed_cache_key(book_ids: tuple[str, ...] | None) -> tuple[str, ...]:
 
 
 def _iter_catalog_entries(book_ids: tuple[str, ...] | None = None):
+    from services import books_catalog_service
+
     selected_books = set(book_ids or [])
     for entry in books_catalog_service._build_global_word_search_catalog():
         book_id = str(entry.get('book_id') or '').strip()
