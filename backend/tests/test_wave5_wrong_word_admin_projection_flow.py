@@ -8,6 +8,7 @@ from platform_sdk.admin_wrong_word_projection_application import (
     WRONG_WORD_DIRECTORY_PROJECTION,
     drain_learning_wrong_word_updated_queue,
 )
+from platform_sdk.admin_projection_bootstrap import bootstrap_projection_marker_name
 from platform_sdk.domain_event_publisher import publish_outbox_batch
 from platform_sdk.learning_core_wrong_words_application import sync_learning_core_wrong_words_response
 
@@ -242,6 +243,19 @@ def test_admin_user_detail_wrong_words_prefer_projection_when_projection_is_comp
             ), ensure_ascii=False),
             updated_at=datetime(2026, 4, 1, 8, 0, 0),
         )
+        shared_only_row = UserWrongWord(
+            user_id=user.id,
+            word='shared-only-word',
+            phonetic='/only/',
+            pos='adj.',
+            definition='shared only definition',
+            wrong_count=2,
+            dimension_state=json.dumps(_dimension_states(
+                wrong_count=2,
+                last_wrong_at='2026-04-02T08:00:00+00:00',
+            ), ensure_ascii=False),
+            updated_at=datetime(2026, 4, 2, 8, 0, 0),
+        )
         projected_row = AdminProjectedWrongWord(
             user_id=user.id,
             word='projected-word',
@@ -255,7 +269,13 @@ def test_admin_user_detail_wrong_words_prefer_projection_when_projection_is_comp
             ), ensure_ascii=False),
             updated_at=datetime(2026, 4, 10, 8, 0, 0),
         )
-        db.session.add_all([shared_row, projected_row])
+        marker = AdminProjectionCursor(
+            projection_name=bootstrap_projection_marker_name(WRONG_WORD_DIRECTORY_PROJECTION),
+            last_event_id='bootstrap:admin.wrong-word-directory:test',
+            last_topic='__bootstrap__',
+            last_processed_at=datetime(2026, 4, 10, 8, 0, 0),
+        )
+        db.session.add_all([shared_row, shared_only_row, projected_row, marker])
         db.session.commit()
 
         rows = admin_user_detail_repository.list_user_wrong_word_rows(user.id)
