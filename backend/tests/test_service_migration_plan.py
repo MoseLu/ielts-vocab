@@ -77,6 +77,9 @@ def test_describe_service_migration_plan_json_output_round_trips(capsys):
         'owned_tables': [
             'notes_inbox_events',
             'notes_outbox_events',
+            'notes_projected_prompt_runs',
+            'notes_projected_study_sessions',
+            'notes_projected_wrong_words',
             'user_daily_summaries',
             'user_learning_notes',
             'user_word_notes',
