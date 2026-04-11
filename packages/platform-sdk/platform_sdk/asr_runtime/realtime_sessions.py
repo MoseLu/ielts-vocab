@@ -5,6 +5,13 @@ import json
 import threading
 import time
 
+from .realtime_session_state_runtime import (
+    build_realtime_session_snapshot_payload,
+    get_active_realtime_session_count_from_redis,
+    get_realtime_session_snapshot,
+    remove_realtime_session_snapshot,
+    sync_realtime_session_snapshot,
+)
 from .base import (
     BENIGN_WS_ERROR_SNIPPETS,
     IDLE_TIMEOUT_CLOSE_SNIPPETS,
@@ -15,7 +22,21 @@ from .base import (
 
 
 def get_active_session_count() -> int:
+    redis_count = get_active_realtime_session_count_from_redis()
+    if redis_count is not None:
+        return redis_count
     return len(active_sessions)
+
+
+def get_live_session_snapshot(session_id: str) -> dict[str, object] | None:
+    snapshot = get_realtime_session_snapshot(session_id)
+    if snapshot is not None:
+        return snapshot
+
+    session_state = active_sessions.get(session_id)
+    if session_state is None:
+        return None
+    return build_realtime_session_snapshot_payload(session_state)
 
 
 def _create_session_state(
@@ -30,6 +51,11 @@ def _create_session_state(
         'recognition_id': recognition_id,
         'bytes_since_commit': 0,
         'audio_queue': [],
+        'partial_transcript': '',
+        'final_transcript': '',
+        'transcript_updated_at': None,
+        'updated_at': None,
+        'last_event': '',
         'lock': threading.Lock(),
     }
 
@@ -58,6 +84,24 @@ def _mark_session_inactive(session_state: RealtimeSessionState) -> None:
         session_state['audio_queue'].clear()
 
 
+def update_session_transcript_state(
+    session_state: RealtimeSessionState,
+    *,
+    partial_transcript: str | None = None,
+    final_transcript: str | None = None,
+) -> None:
+    if partial_transcript is None and final_transcript is None:
+        return
+
+    with session_state['lock']:
+        if partial_transcript is not None:
+            session_state['partial_transcript'] = partial_transcript
+        if final_transcript is not None:
+            session_state['final_transcript'] = final_transcript
+            session_state['partial_transcript'] = ''
+        session_state['transcript_updated_at'] = int(time.time())
+
+
 def _close_session_ws(session_id: str, session_state: RealtimeSessionState) -> None:
     ws = session_state.get('ws')
     session_state['ws'] = None
@@ -75,6 +119,8 @@ def _close_session_ws(session_id: str, session_state: RealtimeSessionState) -> N
 def close_realtime_session(session_id: str, *, remove: bool = False):
     session_state = active_sessions.get(session_id)
     if not session_state:
+        if remove:
+            remove_realtime_session_snapshot(session_id)
         return None
 
     _mark_session_inactive(session_state)
@@ -82,6 +128,13 @@ def close_realtime_session(session_id: str, *, remove: bool = False):
 
     if remove:
         active_sessions.pop(session_id, None)
+        remove_realtime_session_snapshot(session_id)
+    else:
+        sync_realtime_session_snapshot(
+            session_id,
+            session_state,
+            last_event='session.closed',
+        )
 
     return session_state
 
@@ -206,6 +259,11 @@ def send_audio_chunk(session_id: str, audio_data: bytes) -> None:
                     print(f"[{session_id}] Dropped audio after DashScope session closed")
                     session_state['ready'] = False
                     session_state['closing'] = True
+                    sync_realtime_session_snapshot(
+                        session_id,
+                        session_state,
+                        last_event='audio.closed',
+                    )
                 else:
                     print(f"[{session_id}] Error sending audio: {error}")
         elif session_state.get('closing'):
@@ -226,6 +284,11 @@ def stop_realtime_session(socketio, session_id: str) -> None:
 
     print(f"[Speech] Stopping: {session_id}")
     _mark_session_inactive(session_state)
+    sync_realtime_session_snapshot(
+        session_id,
+        session_state,
+        last_event='recognition.stopped',
+    )
 
     if ws:
         if not enable_vad:

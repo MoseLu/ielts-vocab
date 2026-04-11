@@ -47,3 +47,32 @@ def test_asr_socketio_service_ready_uses_dashscope_configuration(monkeypatch):
         'version': '0.1.0',
         'dependencies': {'dashscope_api_key': True},
     }
+
+
+def test_asr_socketio_service_exposes_session_snapshot(monkeypatch):
+    module = _load_asr_socketio_module()
+    client = module.app.test_client()
+
+    monkeypatch.setattr(
+        'platform_sdk.asr_runtime.socketio_service.get_live_session_snapshot',
+        lambda session_id: {
+            'ready': True,
+            'closing': False,
+            'enable_vad': True,
+            'recognition_id': 5,
+            'has_ws': True,
+            'queue_length': 0,
+            'bytes_since_commit': 0,
+            'updated_at': 123,
+            'last_event': 'transcript.final',
+            'partial_transcript': '',
+            'final_transcript': 'hello world',
+            'transcript_updated_at': 122,
+        } if session_id == 'speech-1' else None,
+    )
+
+    response = client.get('/internal/sessions/speech-1')
+
+    assert response.status_code == 200
+    assert response.get_json()['session_id'] == 'speech-1'
+    assert response.get_json()['snapshot']['final_transcript'] == 'hello world'

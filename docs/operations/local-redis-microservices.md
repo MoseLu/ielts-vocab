@@ -1,6 +1,6 @@
 # Local Redis for Microservices
 
-Last updated: 2026-04-10
+Last updated: 2026-04-11 23:51:32 +08:00
 
 ## Purpose
 
@@ -22,6 +22,14 @@ The checked-in example file [backend/.env.microservices.local.example](/F:/enter
 - shared host and port for the local Redis runtime
 - one logical Redis DB index per split service
 - a shared `REDIS_KEY_PREFIX`
+
+## Current Workloads
+
+The local Redis baseline is no longer only infrastructure scaffolding.
+
+- `identity-service` auth/email throttling now uses `Redis-first` counters with database fallback for login, bind-email code, and forgot-password rate limits.
+- `asr-service` now mirrors realtime session metadata into Redis with TTL-backed snapshots and active-session counting, while keeping WebSocket handles and queued audio in process-local memory.
+- Those ASR snapshots now also carry bounded `partial_transcript` and `final_transcript` excerpts plus `last_event` / `transcript_updated_at`, and the Socket.IO runtime exposes `/internal/sessions/<session_id>` so operators can read the current Redis-first session snapshot during local debugging.
 
 ## Startup
 

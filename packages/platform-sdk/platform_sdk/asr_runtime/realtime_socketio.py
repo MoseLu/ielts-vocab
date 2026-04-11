@@ -24,6 +24,11 @@ from .realtime_sessions import (
     normalize_audio_payload,
     send_audio_chunk,
     stop_realtime_session,
+    update_session_transcript_state,
+)
+from .realtime_session_state_runtime import (
+    remove_realtime_session_snapshot,
+    sync_realtime_session_snapshot,
 )
 from platform_sdk.socketio_async import spawn_background
 
@@ -93,6 +98,11 @@ def register_socketio_events(socketio) -> None:
 
         session_state = _create_session_state(enable_vad, recognition_id)
         active_sessions[session_id] = session_state
+        sync_realtime_session_snapshot(
+            session_id,
+            session_state,
+            last_event='recognition.start_requested',
+        )
 
         def on_ws_open(ws):
             print(f"[{session_id}] DashScope WS opened")
@@ -120,6 +130,11 @@ def register_socketio_events(socketio) -> None:
                         for audio_data in queued_audio:
                             _send_audio_to_ws(session_id, ws, audio_data)
 
+                    sync_realtime_session_snapshot(
+                        session_id,
+                        session_state,
+                        last_event='session.created',
+                    )
                     _emit_socketio_event(
                         socketio,
                         session_id,
@@ -138,6 +153,15 @@ def register_socketio_events(socketio) -> None:
                     text = _extract_partial_transcript(data)
                     if text:
                         print(f"[{session_id}] Partial: {text}")
+                        update_session_transcript_state(
+                            session_state,
+                            partial_transcript=text,
+                        )
+                        sync_realtime_session_snapshot(
+                            session_id,
+                            session_state,
+                            last_event='transcript.partial',
+                        )
                         _emit_socketio_event(
                             socketio,
                             session_id,
@@ -154,6 +178,15 @@ def register_socketio_events(socketio) -> None:
                     if text:
                         print(f"[{session_id}] Final: {text}")
                         print(f"[{session_id}] Emitting final_result to={session_id}")
+                        update_session_transcript_state(
+                            session_state,
+                            final_transcript=text,
+                        )
+                        sync_realtime_session_snapshot(
+                            session_id,
+                            session_state,
+                            last_event='transcript.final',
+                        )
                         _emit_socketio_event(
                             socketio,
                             session_id,
@@ -177,6 +210,11 @@ def register_socketio_events(socketio) -> None:
                 elif event_type == 'session.finished':
                     print(f"[{session_id}] Session finished")
                     _mark_session_inactive(session_state)
+                    sync_realtime_session_snapshot(
+                        session_id,
+                        session_state,
+                        last_event='session.finished',
+                    )
                     _emit_socketio_event(
                         socketio,
                         session_id,
@@ -188,6 +226,11 @@ def register_socketio_events(socketio) -> None:
                     error_msg = data.get('error', {}).get('message', 'Unknown error')
                     print(f"[{session_id}] DashScope error: {error_msg}")
                     _mark_session_inactive(session_state)
+                    sync_realtime_session_snapshot(
+                        session_id,
+                        session_state,
+                        last_event='session.error',
+                    )
                     _emit_socketio_event(
                         socketio,
                         session_id,
@@ -203,10 +246,20 @@ def register_socketio_events(socketio) -> None:
             if _is_benign_ws_error(error):
                 print(f"[{session_id}] DashScope WS already closed: {error}")
                 _mark_session_inactive(session_state)
+                sync_realtime_session_snapshot(
+                    session_id,
+                    session_state,
+                    last_event='ws.closed_benign',
+                )
                 return
 
             print(f"[{session_id}] DashScope WS error: {error}")
             _mark_session_inactive(session_state)
+            sync_realtime_session_snapshot(
+                session_id,
+                session_state,
+                last_event='ws.error',
+            )
             _emit_socketio_event(
                 socketio,
                 session_id,
@@ -219,6 +272,11 @@ def register_socketio_events(socketio) -> None:
             print(f"[{session_id}] DashScope WS closed: {close_status_code} - {close_msg}")
             _mark_session_inactive(session_state)
             session_state['ws'] = None
+            sync_realtime_session_snapshot(
+                session_id,
+                session_state,
+                last_event='ws.closed',
+            )
 
             if close_status_code in (1000, 1001) or _is_idle_timeout_close(
                 close_status_code,
@@ -247,6 +305,7 @@ def register_socketio_events(socketio) -> None:
             print(f"[Speech] Error starting recognition: {error}")
             traceback.print_exc()
             active_sessions.pop(session_id, None)
+            remove_realtime_session_snapshot(session_id)
             _emit_socketio_event(
                 socketio,
                 session_id,
