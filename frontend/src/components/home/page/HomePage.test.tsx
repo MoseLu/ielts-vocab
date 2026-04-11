@@ -443,4 +443,25 @@ describe('HomePage', () => {
     expect(screen.getByText('剩余 535 组')).toBeInTheDocument()
     expect(screen.queryByText('24 / 2031 词')).toBeNull()
   })
+
+  it('shows purchased books with the purchased badge copy on the home card', () => {
+    hooksState.vocabBooks.books = [
+      {
+        id: 'book-1',
+        title: '测试词书',
+        word_count: 100,
+        is_paid: true,
+      },
+    ]
+    hooksState.myBooks.myBookIds = new Set(['book-1'])
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('已购')).toBeInTheDocument()
+    expect(screen.queryByText('付费')).not.toBeInTheDocument()
+  })
 })

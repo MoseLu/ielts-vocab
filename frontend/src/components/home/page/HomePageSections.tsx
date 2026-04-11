@@ -178,8 +178,12 @@ export function MyBookCard({
         <div className="study-book-header">
           <h3 className="study-book-title" title={displayTitle}>{displayTitle}</h3>
           <div className="study-book-badges">
-            {card.book.is_paid && <span className="study-book-badge">付费</span>}
-            {card.book.is_auto_favorites && <span className="study-book-badge">系统</span>}
+            {card.book.is_paid && (
+              <span className="study-book-badge study-book-badge--success">已购</span>
+            )}
+            {card.book.is_auto_favorites && (
+              <span className="study-book-badge study-book-badge--neutral">系统</span>
+            )}
             {card.isActive && <span className="study-book-state study-book-state--active">进行中</span>}
             {card.isComplete && <span className="study-book-state study-book-state--complete">已完成</span>}
           </div>

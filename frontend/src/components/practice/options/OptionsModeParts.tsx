@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import smartDictationIcon from '../../../assets/icons/smart-dictation.svg'
 import smartListeningIcon from '../../../assets/icons/smart-listening.svg'
 import smartMeaningIcon from '../../../assets/icons/smart-meaning.svg'
+import ExampleAudioIcon from '../../ui/ExampleAudioIcon'
 import { WRONG_WORD_DIMENSION_LABELS } from '../../../features/vocabulary/wrongWordsStore'
 import type {
   LastState,
@@ -184,10 +185,7 @@ export function ListeningExamplePrompt({
           title="播放例句（快捷键 Alt）"
           onClick={onPlayAudio}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-          </svg>
+          <ExampleAudioIcon className="example-audio-icon" />
         </button>
       ) : null}
       <div className="listening-example-sentence">
