@@ -3,11 +3,14 @@ import { AdminTableSkeleton, MiniBarChart, StatCard } from './AdminDashboardPrim
 import {
   bookLabels,
   fmtDate,
+  fmtDateTime,
   fmtSeconds,
   modeLabels,
   type AdminTab,
   type AdminUser,
+  type AdminWordFeedback,
   type Overview,
+  wordFeedbackSourceLabels,
 } from './AdminDashboard.types'
 
 interface AdminDashboardViewProps {
@@ -15,6 +18,8 @@ interface AdminDashboardViewProps {
   overview: Overview | null
   overviewLoading: boolean
   users: AdminUser[]
+  feedbackItems: AdminWordFeedback[]
+  feedbackTotal: number
   total: number
   page: number
   pages: number
@@ -24,6 +29,7 @@ interface AdminDashboardViewProps {
   currentUserId?: number
   currentUserAvatarUrl?: string | null
   loading: boolean
+  feedbackLoading: boolean
   error: string
   onDismissError: () => void
   onTabChange: (value: AdminTab) => void
@@ -64,6 +70,8 @@ export function AdminDashboardView({
   overview,
   overviewLoading,
   users,
+  feedbackItems,
+  feedbackTotal,
   total,
   page,
   pages,
@@ -73,6 +81,7 @@ export function AdminDashboardView({
   currentUserId,
   currentUserAvatarUrl,
   loading,
+  feedbackLoading,
   error,
   onDismissError,
   onTabChange,
@@ -99,6 +108,7 @@ export function AdminDashboardView({
         options={[
           { value: 'overview', label: '平台概览' },
           { value: 'users', label: '用户管理', badge: total },
+          { value: 'feedback', label: '问题反馈' },
         ]}
       />
 
@@ -278,6 +288,72 @@ export function AdminDashboardView({
               <button disabled={page >= pages} onClick={() => onPageChange(page + 1)}>下一页</button>
             </div>
           )}
+        </div>
+      )}
+
+      {tab === 'feedback' && (
+        <div className="admin-feedback">
+          <div className="admin-feedback-header">
+            <div className="admin-section-title">最近单词卡片反馈</div>
+            <span className="admin-total-hint">共 {feedbackTotal} 条</span>
+          </div>
+
+          <div className="admin-table-wrap">
+            {feedbackLoading ? (
+              <div className="admin-loading">正在加载反馈...</div>
+            ) : (
+              <table className="admin-table admin-feedback-table">
+                <thead>
+                  <tr>
+                    <th>词汇</th>
+                    <th>问题类型</th>
+                    <th>用户</th>
+                    <th>来源</th>
+                    <th>上下文</th>
+                    <th>提交时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {feedbackItems.length === 0 ? (
+                    <tr><td colSpan={6} className="admin-empty-cell">暂无反馈</td></tr>
+                  ) : feedbackItems.map(item => (
+                    <tr key={item.id}>
+                      <td data-label="词汇">
+                        <div className="admin-feedback-word">
+                          <strong>{item.word}</strong>
+                          <span>{[item.phonetic, item.pos].filter(Boolean).join(' ') || '—'}</span>
+                          <em>{item.definition || '暂无释义'}</em>
+                        </div>
+                      </td>
+                      <td data-label="问题类型">
+                        <div className="admin-feedback-tags">
+                          {(item.feedback_type_labels.length ? item.feedback_type_labels : item.feedback_types).map(label => (
+                            <span key={`${item.id}-${label}`} className="admin-feedback-tag">{label}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td data-label="用户">
+                        <div className="admin-feedback-user">
+                          <strong>{item.username}</strong>
+                          <span>{item.email || '—'}</span>
+                        </div>
+                      </td>
+                      <td data-label="来源">
+                        {wordFeedbackSourceLabels[item.source] || item.source}
+                      </td>
+                      <td data-label="上下文">
+                        <div className="admin-feedback-context">
+                          <strong>{[item.source_book_title, item.source_chapter_title].filter(Boolean).join(' · ') || '未标注词书来源'}</strong>
+                          <span>{item.example_en || item.comment || item.example_zh || '未附带例句'}</span>
+                        </div>
+                      </td>
+                      <td className="admin-cell-muted" data-label="提交时间">{fmtDateTime(item.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
     </div>

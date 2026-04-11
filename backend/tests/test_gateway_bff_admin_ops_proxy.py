@@ -86,3 +86,31 @@ def test_gateway_builds_internal_admin_context_headers(monkeypatch):
 
     assert response.status_code == 200
     assert INTERNAL_SERVICE_AUTH_HEADER in forwarded
+
+
+def test_gateway_word_feedback_proxy_routes_to_admin_ops_service(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app, base_url='https://axiomaticworld.com')
+    captured: dict[str, object] = {}
+
+    async def fake_proxy_browser_request(**kwargs):
+        captured.update(kwargs)
+        return browser_routes.Response(
+            b'{"message":"ok"}',
+            status_code=201,
+            media_type='application/json',
+        )
+
+    monkeypatch.setattr(browser_routes, 'proxy_browser_request', fake_proxy_browser_request)
+
+    response = client.post(
+        '/api/books/word-feedback',
+        headers={'Authorization': 'Bearer learner-token'},
+        json={'word': 'quit', 'feedback_types': ['translation']},
+    )
+
+    assert response.status_code == 201
+    assert response.json()['message'] == 'ok'
+    assert captured['base_url'] == browser_routes.admin_ops_service_url()
+    assert captured['path'] == '/api/books/word-feedback'
+    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer learner-token'

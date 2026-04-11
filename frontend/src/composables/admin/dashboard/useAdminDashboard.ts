@@ -4,6 +4,7 @@ import type {
   AdminDetailTab,
   AdminTab,
   AdminUser,
+  AdminWordFeedback,
   Overview,
   UserDetail,
   WrongWordsSort,
@@ -25,6 +26,11 @@ interface UsersResponse {
   pages: number
 }
 
+interface WordFeedbackResponse {
+  items: AdminWordFeedback[]
+  total: number
+}
+
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : '加载失败'
 }
@@ -33,6 +39,8 @@ export function useAdminDashboard() {
   const [tab, setTab] = useState<AdminTab>('overview')
   const [overview, setOverview] = useState<Overview | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [feedbackItems, setFeedbackItems] = useState<AdminWordFeedback[]>([])
+  const [feedbackTotal, setFeedbackTotal] = useState(0)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
@@ -47,6 +55,7 @@ export function useAdminDashboard() {
   const [detailMode, setDetailMode] = useState('')
   const [detailWrongWordsSort, setDetailWrongWordsSort] = useState<WrongWordsSort>('last_error')
   const [loading, setLoading] = useState(false)
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [overviewLoading, setOverviewLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -91,6 +100,20 @@ export function useAdminDashboard() {
     }
   }, [])
 
+  const fetchFeedback = useCallback(async () => {
+    setFeedbackLoading(true)
+
+    try {
+      const data = await apiFetch<WordFeedbackResponse>('/api/admin/word-feedback?limit=50')
+      setFeedbackItems(data.items)
+      setFeedbackTotal(data.total)
+    } catch (feedbackError) {
+      setError(getErrorMessage(feedbackError))
+    } finally {
+      setFeedbackLoading(false)
+    }
+  }, [])
+
   const fetchUserDetail = useCallback(async (userId: number, filters?: UserDetailFilters) => {
     try {
       const params = new URLSearchParams()
@@ -114,9 +137,19 @@ export function useAdminDashboard() {
   }, [fetchOverview, fetchUsers])
 
   useEffect(() => {
+    if (tab !== 'feedback') return
+    void fetchFeedback()
+  }, [fetchFeedback, tab])
+
+  useEffect(() => {
     refreshTimer.current = setInterval(() => {
       if (tab === 'overview') {
         void fetchOverview()
+        return
+      }
+
+      if (tab === 'feedback') {
+        void fetchFeedback()
         return
       }
 
@@ -129,7 +162,7 @@ export function useAdminDashboard() {
         refreshTimer.current = null
       }
     }
-  }, [fetchOverview, fetchUsers, order, page, search, sort, tab])
+  }, [fetchFeedback, fetchOverview, fetchUsers, order, page, search, sort, tab])
 
   const handleSearchSubmit = useCallback(() => {
     setPage(1)
@@ -173,6 +206,8 @@ export function useAdminDashboard() {
     tab,
     overview,
     users,
+    feedbackItems,
+    feedbackTotal,
     total,
     page,
     pages,
@@ -187,6 +222,7 @@ export function useAdminDashboard() {
     detailMode,
     detailWrongWordsSort,
     loading,
+    feedbackLoading,
     overviewLoading,
     error,
     setTab,

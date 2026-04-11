@@ -213,6 +213,16 @@ async def familiar_proxy(request: Request):
     )
 
 
+@browser_compat_router.post('/api/books/word-feedback')
+async def word_feedback_proxy(request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path='/api/books/word-feedback',
+        unavailable_detail='admin ops service unavailable',
+    )
+
+
 @browser_compat_router.put('/api/books/word-details/note')
 async def word_detail_note_proxy(request: Request):
     return await _proxy_service_request(

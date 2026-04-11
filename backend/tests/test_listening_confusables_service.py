@@ -85,3 +85,35 @@ def test_get_preset_listening_confusables_skips_legacy_when_high_value_is_comple
         'seminars',
         'segment',
     ]
+
+
+def test_get_preset_listening_confusables_filters_out_non_ielts_candidates(monkeypatch):
+    monkeypatch.setattr(
+        listening_service,
+        'load_allowed_ielts_word_keys',
+        lambda: {'quiet', 'quits'},
+    )
+    monkeypatch.setattr(
+        listening_service,
+        'load_high_value_listening_confusable_index',
+        lambda: {
+            'quit': [
+                {'word': 'quiet', 'phonetic': '/ˈkwaɪət/', 'pos': 'adj.', 'definition': '安静的'},
+                {'word': 'quota', 'phonetic': '/ˈkwəʊtə/', 'pos': 'n.', 'definition': '配额'},
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        listening_service,
+        'load_listening_confusable_index',
+        lambda: {
+            'quit': [
+                {'word': 'quits', 'phonetic': '/kwɪts/', 'pos': 'v.', 'definition': '退出'},
+                {'word': 'quite', 'phonetic': '/kwaɪt/', 'pos': 'adv.', 'definition': '相当'},
+            ]
+        },
+    )
+
+    result = listening_service.get_preset_listening_confusables('quit', limit=4)
+
+    assert [candidate['word'] for candidate in result] == ['quiet', 'quits']

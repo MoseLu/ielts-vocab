@@ -10,10 +10,15 @@ from platform_sdk.admin_user_management_application import (
     build_user_detail_response,
     set_admin_response,
 )
-from routes.middleware import admin_required
+from platform_sdk.admin_word_feedback_application import (
+    build_word_feedback_list_response,
+    submit_word_feedback_response,
+)
+from routes.middleware import admin_required, token_required
 
 
 admin_bp = Blueprint('admin', __name__)
+books_feedback_bp = Blueprint('books_feedback', __name__)
 
 
 @admin_bp.route('/overview', methods=['GET'])
@@ -61,4 +66,21 @@ def set_admin(current_user, user_id):
         user_id,
         request.get_json() or {},
     )
+    return jsonify(payload), status
+
+
+@admin_bp.route('/word-feedback', methods=['GET'])
+@admin_required
+def get_word_feedback(current_user):
+    del current_user
+    payload, status = build_word_feedback_list_response(
+        limit=min(int(request.args.get('limit', 50)), 100),
+    )
+    return jsonify(payload), status
+
+
+@books_feedback_bp.route('/word-feedback', methods=['POST'])
+@token_required
+def submit_word_feedback(current_user):
+    payload, status = submit_word_feedback_response(current_user, request.get_json() or {})
     return jsonify(payload), status

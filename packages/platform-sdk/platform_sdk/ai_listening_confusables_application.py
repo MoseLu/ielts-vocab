@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import csv as csv_module
 import json
 import re
 from pathlib import Path
 
+from services import books_registry_service
+
 
 _listening_confusable_index_cache: dict[str, list[dict]] | None = None
 _high_value_listening_confusable_index_cache: dict[str, list[dict]] | None = None
+_allowed_ielts_word_keys_cache: set[str] | None = None
 _HIGH_VALUE_ONLY_THRESHOLD = 3
+_EXCLUDED_IELTS_CONFUSABLE_BOOK_IDS = {'ielts_confusable_match'}
 
 
 def _repo_root() -> Path:
@@ -121,18 +126,101 @@ def _merge_confusable_candidates(*candidate_groups: list[dict]) -> list[dict]:
     return merged
 
 
+def _iter_payload_words(payload):
+    if isinstance(payload, list):
+        for item in payload:
+            if isinstance(item, dict):
+                yield item
+        return
+
+    if not isinstance(payload, dict):
+        return
+
+    chapters = payload.get('chapters')
+    if isinstance(chapters, list):
+        for chapter in chapters:
+            if not isinstance(chapter, dict):
+                continue
+            words = chapter.get('words')
+            if not isinstance(words, list):
+                continue
+            for item in words:
+                if isinstance(item, dict):
+                    yield item
+
+    words = payload.get('words')
+    if isinstance(words, list):
+        for item in words:
+            if isinstance(item, dict):
+                yield item
+
+
+def load_allowed_ielts_word_keys() -> set[str]:
+    global _allowed_ielts_word_keys_cache
+    if _allowed_ielts_word_keys_cache is not None:
+        return _allowed_ielts_word_keys_cache
+
+    allowed: set[str] = set()
+    vocabulary_root = _repo_root() / 'vocabulary_data'
+    for book in books_registry_service.list_vocab_books():
+        if book.get('study_type') != 'ielts':
+            continue
+        book_id = str(book.get('id') or '').strip()
+        if book_id in _EXCLUDED_IELTS_CONFUSABLE_BOOK_IDS:
+            continue
+
+        file_name = str(book.get('file') or '').strip()
+        if not file_name:
+            continue
+        file_path = vocabulary_root / file_name
+
+        try:
+            if file_name.endswith('.csv'):
+                with file_path.open('r', encoding='utf-8-sig') as file_obj:
+                    for row in csv_module.DictReader(file_obj):
+                        key = normalize_listening_confusable_key(row.get('word'))
+                        if key:
+                            allowed.add(key)
+                continue
+
+            if file_name.endswith('.json'):
+                payload = json.loads(file_path.read_text(encoding='utf-8'))
+                for item in _iter_payload_words(payload):
+                    key = normalize_listening_confusable_key(item.get('word'))
+                    if key:
+                        allowed.add(key)
+        except Exception:
+            continue
+
+    _allowed_ielts_word_keys_cache = allowed
+    return _allowed_ielts_word_keys_cache
+
+
+def _filter_candidates_to_ielts_vocab(candidates: list[dict]) -> list[dict]:
+    allowed = load_allowed_ielts_word_keys()
+    if not allowed:
+        return candidates
+    return [
+        dict(candidate)
+        for candidate in candidates
+        if normalize_listening_confusable_key(candidate.get('word')) in allowed
+    ]
+
+
 def get_preset_listening_confusables(word: str | None, limit: int | None = None) -> list[dict]:
     key = normalize_listening_confusable_key(word)
     if not key:
         return []
 
-    high_value_candidates = load_high_value_listening_confusable_index().get(key, [])
+    high_value_candidates = _filter_candidates_to_ielts_vocab(
+        load_high_value_listening_confusable_index().get(key, []),
+    )
     if len(high_value_candidates) >= _HIGH_VALUE_ONLY_THRESHOLD:
         candidates = _merge_confusable_candidates(high_value_candidates)
     else:
         candidates = _merge_confusable_candidates(
             high_value_candidates,
-            load_listening_confusable_index().get(key, []),
+            _filter_candidates_to_ielts_vocab(load_listening_confusable_index().get(key, [])),
         )
     if limit is not None:
         candidates = candidates[:max(0, int(limit))]

@@ -3,6 +3,20 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import GlobalWordSearch from './GlobalWordSearch'
 
+const { useAuthMock, useToastMock, useFavoriteWordsMock, toggleFavoriteMock } = vi.hoisted(() => {
+  const toggleFavoriteMock = vi.fn()
+  return {
+    useAuthMock: vi.fn(() => ({ user: { id: 1, username: 'admin' } })),
+    useToastMock: vi.fn(() => ({ showToast: vi.fn() })),
+    useFavoriteWordsMock: vi.fn(() => ({
+      isFavorite: () => false,
+      isPending: () => false,
+      toggleFavorite: toggleFavoriteMock,
+    })),
+    toggleFavoriteMock,
+  }
+})
+
 const apiFetchMock = vi.fn()
 const playExampleAudioMock = vi.fn()
 const stopAudioMock = vi.fn()
@@ -18,6 +32,15 @@ vi.mock('../../../lib', async () => {
 vi.mock('../../practice/utils', () => ({
   playExampleAudio: (...args: unknown[]) => playExampleAudioMock(...args),
   stopAudio: (...args: unknown[]) => stopAudioMock(...args),
+}))
+
+vi.mock('../../../contexts', () => ({
+  useAuth: () => useAuthMock(),
+  useToast: () => useToastMock(),
+}))
+
+vi.mock('../../../features/vocabulary/hooks', () => ({
+  useFavoriteWords: (...args: unknown[]) => useFavoriteWordsMock(...args),
 }))
 
 const quitSearchResult = {
@@ -97,6 +120,17 @@ describe('GlobalWordSearch', () => {
     apiFetchMock.mockReset()
     playExampleAudioMock.mockReset()
     stopAudioMock.mockReset()
+    toggleFavoriteMock.mockReset()
+    useAuthMock.mockReset()
+    useToastMock.mockReset()
+    useFavoriteWordsMock.mockReset()
+    useAuthMock.mockReturnValue({ user: { id: 1, username: 'admin' } })
+    useToastMock.mockReturnValue({ showToast: vi.fn() })
+    useFavoriteWordsMock.mockReturnValue({
+      isFavorite: () => false,
+      isPending: () => false,
+      toggleFavorite: toggleFavoriteMock,
+    })
     localStorage.clear()
   })
 
@@ -400,5 +434,51 @@ describe('GlobalWordSearch', () => {
         volume: '80',
       },
     )
+  })
+
+  it('renders favorite, play, and feedback actions and submits word feedback', async () => {
+    apiFetchMock.mockImplementation((url: string, options?: RequestInit) => {
+      if (url === '/api/books/search?q=quit&limit=12') {
+        return Promise.resolve(quitSearchResult)
+      }
+      if (url === '/api/books/word-details?word=quit') {
+        return Promise.resolve(quitWordDetails)
+      }
+      if (url === '/api/books/word-feedback' && options?.method === 'POST') {
+        return Promise.resolve({ message: '反馈已提交' })
+      }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+
+    const { container } = render(<GlobalWordSearch />)
+
+    fireEvent.keyDown(window, { key: 'Q', shiftKey: true })
+
+    const input = await screen.findByRole('searchbox', { name: '全局单词搜索' })
+    fireEvent.change(input, { target: { value: 'quit' } })
+    fireEvent.submit(container.querySelector('.global-word-search-form') as HTMLFormElement)
+
+    await screen.findByText('v. 停止；离开')
+
+    expect(screen.getByRole('button', { name: '收藏到收藏词书' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '朗读单词 quit' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '反馈 quit 的问题' }))
+
+    await screen.findByText('报告问题')
+    fireEvent.click(screen.getByLabelText('翻译不准'))
+    fireEvent.click(screen.getByRole('button', { name: '提交反馈' }))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith(
+        '/api/books/word-feedback',
+        expect.objectContaining({ method: 'POST' }),
+      )
+    })
+
+    const feedbackCall = apiFetchMock.mock.calls.find(([url]) => url === '/api/books/word-feedback')
+    const feedbackBody = JSON.parse(String(feedbackCall?.[1]?.body || '{}'))
+    expect(feedbackBody.word).toBe('quit')
+    expect(feedbackBody.feedback_types).toEqual(['translation'])
+    expect(feedbackBody.source).toBe('global_search')
   })
 })
