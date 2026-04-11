@@ -86,6 +86,15 @@ describe('CreateCustomBookPage', () => {
       method: 'POST',
       body: JSON.stringify({ book_id: 'custom_1' }),
     }))
-    expect(navigateMock).toHaveBeenCalledWith('/books')
+    expect(navigateMock).toHaveBeenCalledWith('/plan')
+  })
+
+  it('returns to the study center when canceled', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '取消' }))
+
+    expect(navigateMock).toHaveBeenCalledWith('/plan')
   })
 })
