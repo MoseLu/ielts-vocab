@@ -139,8 +139,9 @@ def test_learning_stats_skips_implausible_legacy_short_sessions(client, app):
     assert listening['sessions'] == 1
 
 
-def test_learning_stats_skips_epoch_sized_broken_duration_rows(client, app):
+def test_learning_stats_skips_epoch_sized_broken_duration_rows(client, app, monkeypatch):
     register_and_login(client, username='broken-duration-stats-user')
+    fixed_now = datetime(2026, 4, 4, 12, 0, 0)
 
     with app.app_context():
         user = User.query.filter_by(username='broken-duration-stats-user').first()
@@ -170,6 +171,8 @@ def test_learning_stats_skips_epoch_sized_broken_duration_rows(client, app):
         ])
         db.session.commit()
 
+    monkeypatch.setattr(ai_routes, 'utc_now_naive', lambda: fixed_now)
+    monkeypatch.setattr(route_support_service, 'utc_now_naive', lambda: fixed_now)
     response = client.get('/api/ai/learning-stats?days=7')
 
     assert response.status_code == 200
