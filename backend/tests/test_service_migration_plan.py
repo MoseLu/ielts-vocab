@@ -40,6 +40,7 @@ def test_service_migration_plan_covers_write_owning_services():
         'catalog-content-service',
         'notes-service',
         'ai-execution-service',
+        'admin-ops-service',
     ]
 
 
@@ -80,6 +81,7 @@ def test_describe_service_migration_plan_json_output_round_trips(capsys):
             'notes_projected_prompt_runs',
             'notes_projected_study_sessions',
             'notes_projected_wrong_words',
+            'notes_projection_cursors',
             'user_daily_summaries',
             'user_learning_notes',
             'user_word_notes',

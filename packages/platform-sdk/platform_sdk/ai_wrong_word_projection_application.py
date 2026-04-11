@@ -13,13 +13,14 @@ from platform_sdk.rabbitmq_runtime import (
     build_blocking_connection,
     resolve_domain_exchange_name,
 )
-from service_models.ai_execution_models import AIProjectedWrongWord
+from service_models.ai_execution_models import AIProjectedWrongWord, AIProjectionCursor
 from service_models.eventing_models import AIExecutionInboxEvent
 
 
 AI_EXECUTION_SERVICE_NAME = 'ai-execution-service'
 LEARNING_WRONG_WORD_UPDATED_TOPIC = 'learning.wrong_word.updated'
 AI_WRONG_WORD_QUEUE = f'{AI_EXECUTION_SERVICE_NAME}.{LEARNING_WRONG_WORD_UPDATED_TOPIC}'
+AI_WRONG_WORD_CONTEXT_PROJECTION = 'ai.wrong-word-context'
 
 
 def _query_session(model):
@@ -50,6 +51,16 @@ def _parse_dt(value) -> datetime:
     if isinstance(value, str) and value.strip():
         return datetime.fromisoformat(value.replace('Z', '+00:00')).replace(tzinfo=None)
     return datetime.utcnow()
+
+
+def _projection_cursor(session) -> AIProjectionCursor:
+    cursor = session.query(AIProjectionCursor).filter_by(
+        projection_name=AI_WRONG_WORD_CONTEXT_PROJECTION
+    ).first()
+    if cursor is None:
+        cursor = AIProjectionCursor(projection_name=AI_WRONG_WORD_CONTEXT_PROJECTION)
+        session.add(cursor)
+    return cursor
 
 
 def _get_projected_wrong_word(session, *, user_id: int, word: str) -> AIProjectedWrongWord | None:
@@ -125,6 +136,10 @@ def consume_learning_wrong_word_updated_event(
     try:
         projected_wrong_word = upsert_ai_projected_wrong_word(payload, session=session)
         mark_inbox_event_processed(inbox_record)
+        cursor = _projection_cursor(session)
+        cursor.last_event_id = event_id
+        cursor.last_topic = LEARNING_WRONG_WORD_UPDATED_TOPIC
+        cursor.last_processed_at = datetime.utcnow()
         session.commit()
         return projected_wrong_word, created
     except Exception as exc:

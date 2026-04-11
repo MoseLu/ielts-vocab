@@ -14,12 +14,13 @@ from platform_sdk.rabbitmq_runtime import (
     resolve_domain_exchange_name,
 )
 from service_models.eventing_models import NotesInboxEvent
-from service_models.notes_models import NotesProjectedWrongWord
+from service_models.notes_models import NotesProjectedWrongWord, NotesProjectionCursor
 
 
 NOTES_SERVICE_NAME = 'notes-service'
 LEARNING_WRONG_WORD_UPDATED_TOPIC = 'learning.wrong_word.updated'
 NOTES_WRONG_WORD_QUEUE = f'{NOTES_SERVICE_NAME}.{LEARNING_WRONG_WORD_UPDATED_TOPIC}'
+NOTES_WRONG_WORD_CONTEXT_PROJECTION = 'notes.wrong-word-context'
 
 
 def _query_session(model):
@@ -50,6 +51,16 @@ def _parse_dt(value) -> datetime:
     if isinstance(value, str) and value.strip():
         return datetime.fromisoformat(value.replace('Z', '+00:00')).replace(tzinfo=None)
     return datetime.utcnow()
+
+
+def _projection_cursor(session) -> NotesProjectionCursor:
+    cursor = session.query(NotesProjectionCursor).filter_by(
+        projection_name=NOTES_WRONG_WORD_CONTEXT_PROJECTION
+    ).first()
+    if cursor is None:
+        cursor = NotesProjectionCursor(projection_name=NOTES_WRONG_WORD_CONTEXT_PROJECTION)
+        session.add(cursor)
+    return cursor
 
 
 def _get_projected_wrong_word(session, *, user_id: int, word: str) -> NotesProjectedWrongWord | None:
@@ -125,6 +136,10 @@ def consume_notes_learning_wrong_word_updated_event(
     try:
         projected_wrong_word = upsert_notes_projected_wrong_word(payload, session=session)
         mark_inbox_event_processed(inbox_record)
+        cursor = _projection_cursor(session)
+        cursor.last_event_id = event_id
+        cursor.last_topic = LEARNING_WRONG_WORD_UPDATED_TOPIC
+        cursor.last_processed_at = datetime.utcnow()
         session.commit()
         return projected_wrong_word, created
     except Exception as exc:

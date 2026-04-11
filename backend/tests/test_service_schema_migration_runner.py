@@ -360,3 +360,26 @@ def test_migration_runner_uses_database_env_without_loading_app_secrets(tmp_path
         assert version_value == 'catalog_content_service_0002'
     finally:
         engine.dispose()
+
+
+def test_admin_ops_migration_runner_bootstraps_word_feedback_table(tmp_path, monkeypatch):
+    module = _load_script_module()
+    database_path = tmp_path / 'admin-ops.sqlite'
+    env_path = _write_env_file(tmp_path, service_name='admin-ops-service', database_path=database_path)
+
+    monkeypatch.setenv('PYTEST_RUNNING', '1')
+    monkeypatch.setenv('MICROSERVICES_ENV_FILE', str(env_path))
+
+    result = module.migrate_service_schema('admin-ops-service', env_file=env_path)
+
+    assert result['version_after'] == 'admin_ops_service_0001'
+    engine, inspector = _sqlite_inspector(database_path)
+    try:
+        assert 'admin_word_feedback' in inspector.get_table_names()
+        with engine.connect() as connection:
+            version_value = connection.execute(
+                sa.text('SELECT version_num FROM alembic_version_admin_ops_service')
+            ).scalar_one()
+        assert version_value == 'admin_ops_service_0001'
+    finally:
+        engine.dispose()

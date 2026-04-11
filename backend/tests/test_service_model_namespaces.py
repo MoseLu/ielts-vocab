@@ -21,6 +21,7 @@ def test_learning_core_models_expose_learning_owned_models():
 
 
 def test_notes_models_expose_notes_owned_models():
+    assert hasattr(notes_models, 'NotesProjectionCursor')
     assert hasattr(notes_models, 'NotesProjectedPromptRun')
     assert hasattr(notes_models, 'NotesProjectedStudySession')
     assert hasattr(notes_models, 'NotesProjectedWrongWord')
@@ -40,6 +41,7 @@ def test_identity_models_expose_identity_owned_models():
 
 
 def test_ai_execution_models_expose_ai_owned_models():
+    assert hasattr(ai_execution_models, 'AIProjectionCursor')
     assert hasattr(ai_execution_models, 'AIProjectedDailySummary')
     assert hasattr(ai_execution_models, 'AIProjectedWrongWord')
     assert hasattr(ai_execution_models, 'AIPromptRun')

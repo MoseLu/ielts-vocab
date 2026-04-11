@@ -2,23 +2,22 @@ from __future__ import annotations
 
 from sqlalchemy import func, or_
 
+from platform_sdk.ai_projection_bootstrap import ai_projection_bootstrap_ready
 from platform_sdk.ai_vocab_catalog_application import (
     get_global_vocab_pool,
     resolve_quick_memory_vocab_entry,
+)
+from platform_sdk.ai_wrong_word_projection_application import (
+    AI_WRONG_WORD_CONTEXT_PROJECTION,
 )
 from platform_sdk.learning_core_learning_summary_support import (
     decorate_wrong_words_with_quick_memory_progress,
 )
 from service_models.ai_execution_models import AIProjectedWrongWord
-from service_models.learning_core_models import UserWrongWord
 
 
 def projected_wrong_words_ready(user_id: int) -> bool:
-    projected_total = AIProjectedWrongWord.query.filter_by(user_id=user_id).count()
-    if projected_total <= 0:
-        return False
-    shared_total = UserWrongWord.query.filter_by(user_id=user_id).count()
-    return projected_total >= shared_total
+    return ai_projection_bootstrap_ready(AI_WRONG_WORD_CONTEXT_PROJECTION)
 
 
 def list_projected_wrong_words_for_ai(
