@@ -497,5 +497,4 @@ function PracticePage({
     />
   )
 }
-
 export default PracticePage
