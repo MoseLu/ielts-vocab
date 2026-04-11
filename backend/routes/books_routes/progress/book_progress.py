@@ -14,7 +14,7 @@ from services.books_progress_service import (
 )
 
 
-@books_bp.route('/<book_id>/chapters/<int:chapter_id>', methods=['GET'])
+@books_bp.route('/<book_id>/chapters/<chapter_id>', methods=['GET'])
 def get_chapter_words(book_id, chapter_id):
     payload, status = build_chapter_words_response(book_id, chapter_id)
     return jsonify(payload), status
@@ -76,7 +76,7 @@ def get_chapter_progress(current_user, book_id):
     return jsonify(payload), status
 
 
-@books_bp.route('/<book_id>/chapters/<int:chapter_id>/progress', methods=['POST'])
+@books_bp.route('/<book_id>/chapters/<chapter_id>/progress', methods=['POST'])
 @token_required
 def save_chapter_progress(current_user, book_id, chapter_id):
     payload, status = save_chapter_progress_response(

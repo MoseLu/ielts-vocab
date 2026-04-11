@@ -87,6 +87,30 @@ def get_word_details():
     return jsonify(payload), status
 
 
+@catalog_content_bp.route('/api/books/custom-books', methods=['POST'])
+@token_required
+def create_custom_book(current_user):
+    payload, status = create_catalog_content_custom_book_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
+@catalog_content_bp.route('/api/books/custom-books', methods=['GET'])
+@token_required
+def list_custom_books(current_user):
+    payload, status = list_catalog_content_custom_books_response(current_user.id)
+    return jsonify(payload), status
+
+
+@catalog_content_bp.route('/api/books/custom-books/<book_id>', methods=['GET'])
+@token_required
+def get_custom_book(current_user, book_id):
+    payload, status = get_catalog_content_custom_book_response(current_user.id, book_id)
+    return jsonify(payload), status
+
+
 @catalog_content_bp.route('/api/books/<book_id>', methods=['GET'])
 def get_book(book_id):
     payload, status = build_book_response(book_id)
@@ -99,7 +123,7 @@ def get_book_chapters(book_id):
     return jsonify(payload), status
 
 
-@catalog_content_bp.route('/api/books/<book_id>/chapters/<int:chapter_id>', methods=['GET'])
+@catalog_content_bp.route('/api/books/<book_id>/chapters/<chapter_id>', methods=['GET'])
 def get_chapter_words(book_id, chapter_id):
     payload, status = build_chapter_words_response(book_id, chapter_id)
     return jsonify(payload), status

@@ -12,6 +12,13 @@ def _accuracy(correct_count: int, wrong_count: int) -> int | None:
     return round(correct_count / attempted * 100) if attempted > 0 else None
 
 
+def _serialize_chapter_id(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return value
+
+
 def _serialize_wrong_top_item(
     record: UserWrongWord,
     *,
@@ -177,7 +184,7 @@ def build_chapter_breakdowns(
         chapter_breakdown.append({
             'book_id': book_id,
             'book_title': book_title_map.get(book_id, book_id),
-            'chapter_id': chapter_progress.chapter_id,
+            'chapter_id': _serialize_chapter_id(chapter_progress.chapter_id),
             'chapter_title': chapter_titles.get(chapter_key, f'Chapter {chapter_progress.chapter_id}'),
             'words_learned': chapter_progress.words_learned or 0,
             'correct': chapter_progress.correct_count or 0,
@@ -188,7 +195,7 @@ def build_chapter_breakdowns(
             ),
         })
 
-    chapter_breakdown.sort(key=lambda item: (item['book_id'], item['chapter_id']))
+    chapter_breakdown.sort(key=lambda item: (item['book_id'], str(item['chapter_id'])))
 
     chapter_mode_stats = []
     for chapter_mode_progress in learning_stats_repository.list_user_chapter_mode_progress_rows(user_id):
@@ -204,7 +211,7 @@ def build_chapter_breakdowns(
         chapter_mode_stats.append({
             'book_id': book_id,
             'book_title': book_title_map.get(book_id, book_id),
-            'chapter_id': chapter_mode_progress.chapter_id,
+            'chapter_id': _serialize_chapter_id(chapter_mode_progress.chapter_id),
             'chapter_title': chapter_titles.get(
                 str(chapter_mode_progress.chapter_id),
                 f'Chapter {chapter_mode_progress.chapter_id}',
@@ -218,7 +225,7 @@ def build_chapter_breakdowns(
             ),
         })
 
-    chapter_mode_stats.sort(key=lambda item: (item['book_id'], item['chapter_id'], item['mode']))
+    chapter_mode_stats.sort(key=lambda item: (item['book_id'], str(item['chapter_id']), item['mode']))
     return chapter_breakdown, chapter_mode_stats
 
 

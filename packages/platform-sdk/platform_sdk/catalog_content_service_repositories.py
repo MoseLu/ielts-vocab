@@ -1,6 +1,7 @@
 from services import (
     ai_custom_book_repository,
     books_confusable_repository,
+    custom_book_catalog_service,
     notes_word_note_repository,
     word_catalog_repository,
 )
@@ -9,6 +10,7 @@ from services import (
 __all__ = [
     'ai_custom_book_repository',
     'books_confusable_repository',
+    'custom_book_catalog_service',
     'notes_word_note_repository',
     'word_catalog_repository',
 ]

@@ -9,6 +9,10 @@ from services import (
     books_registry_service,
     books_vocabulary_loader_service,
 )
+from services.custom_book_catalog_service import (
+    build_custom_book_chapters_payload,
+    get_custom_book_for_user,
+)
 
 
 def _find_book(book_id):
@@ -21,6 +25,11 @@ def load_book_chapters(book_id):
         return books_favorites_service._build_favorites_chapters_payload(
             current_user.id if current_user else None
         )
+
+    current_user = books_confusable_service.resolve_optional_current_user()
+    custom_book = get_custom_book_for_user(current_user.id if current_user else None, book_id)
+    if custom_book:
+        return build_custom_book_chapters_payload(custom_book)
 
     book = _find_book(book_id)
     file_name = str((book or {}).get('file') or '').strip()
@@ -106,6 +115,10 @@ def get_book_word_count(book_id, user_id: int | None = None):
     if books_favorites_service._is_favorites_book(book_id):
         return books_favorites_service._favorite_word_count(user_id)
 
+    custom_book = get_custom_book_for_user(user_id, book_id)
+    if custom_book:
+        return max(0, int(custom_book.word_count or 0))
+
     book = _find_book(book_id)
     if not book:
         return 0
@@ -120,6 +133,10 @@ def get_book_chapter_count(book_id, user_id: int | None = None):
     if books_favorites_service._is_favorites_book(book_id):
         return 1 if books_favorites_service._favorite_word_count(user_id) > 0 else 0
 
+    custom_book = get_custom_book_for_user(user_id, book_id)
+    if custom_book:
+        return len(custom_book.chapters)
+
     chapters_data = load_book_chapters(book_id)
     if not chapters_data:
         return 0
@@ -131,6 +148,9 @@ def get_book_chapter_count(book_id, user_id: int | None = None):
 
 
 def get_book_group_count(book_id, user_id: int | None = None):
+    if get_custom_book_for_user(user_id, book_id):
+        return 0
+
     chapters_data = load_book_chapters(book_id)
     if not chapters_data:
         return 0

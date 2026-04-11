@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from services import books_confusable_service, books_favorites_service
 from services.books_catalog_query_service import load_book_vocabulary
+from services.custom_book_catalog_service import get_custom_book_for_user
 from services.books_structure_service import (
     load_book_chapters,
     serialize_effective_book_progress,
@@ -58,12 +59,12 @@ def build_chapter_words_response(book_id, chapter_id):
     if books_favorites_service._is_favorites_book(book_id):
         return _build_favorites_chapter_words_response(chapter_id)
 
-    book = _find_book(book_id)
-    if not book:
+    current_user = books_confusable_service.resolve_optional_current_user()
+    custom_book = get_custom_book_for_user(current_user.id if current_user else None, book_id)
+    if not custom_book and not _find_book(book_id):
         return {'error': 'Book not found'}, 404
 
     if books_confusable_service.is_confusable_match_book(book_id):
-        current_user = books_confusable_service.resolve_optional_current_user()
         custom_chapter = books_confusable_service.get_confusable_custom_chapter(
             current_user.id if current_user else None,
             chapter_id,
@@ -108,7 +109,7 @@ def build_chapter_words_response(book_id, chapter_id):
 
 
 def _build_favorites_chapter_words_response(chapter_id):
-    if chapter_id != books_favorites_service.FAVORITES_CHAPTER_ID:
+    if not _chapter_id_matches(chapter_id, books_favorites_service.FAVORITES_CHAPTER_ID):
         return {'error': 'Chapter not found'}, 404
 
     current_user = books_confusable_service.resolve_optional_current_user()
@@ -148,8 +149,8 @@ def build_book_words_response(book_id, page=1, per_page=100):
             'total_pages': paginated['total_pages'],
         }, 200
 
-    book = _find_book(book_id)
-    if not book:
+    current_user = books_confusable_service.resolve_optional_current_user()
+    if not get_custom_book_for_user(current_user.id if current_user else None, book_id) and not _find_book(book_id):
         return {'error': 'Book not found'}, 404
 
     words = load_book_vocabulary(book_id)
@@ -157,7 +158,6 @@ def build_book_words_response(book_id, page=1, per_page=100):
         return {'error': 'Failed to load vocabulary'}, 500
 
     if books_confusable_service.is_confusable_match_book(book_id):
-        current_user = books_confusable_service.resolve_optional_current_user()
         custom_book = (
             books_confusable_service.get_confusable_custom_book(current_user.id)
             if current_user else None
