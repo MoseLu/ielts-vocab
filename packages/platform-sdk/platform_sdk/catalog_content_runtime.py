@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import logging
 import sys
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from platform_sdk.catalog_content_transport import catalog_content_bp
 from routes.middleware import init_middleware
 from platform_sdk.service_schema import bootstrap_service_schema
 from platform_sdk.vocabulary_transport import vocabulary_bp
+from services import books_catalog_query_service
 from service_models.catalog_content_models import db
 
 
@@ -26,6 +28,13 @@ def _resolve_config_class(config_class):
     if config_class is not None:
         return config_class
     return importlib.reload(backend_config).Config
+
+
+def _prime_global_word_search_catalog() -> None:
+    try:
+        books_catalog_query_service._build_global_word_search_catalog()
+    except Exception as exc:
+        logging.warning('[Catalog] Failed to prime global word search catalog: %s', exc)
 
 
 def create_catalog_content_flask_app(config_class=None) -> Flask:
@@ -52,5 +61,6 @@ def create_catalog_content_flask_app(config_class=None) -> Flask:
 
     with app.app_context():
         bootstrap_service_schema('catalog-content-service')
+        _prime_global_word_search_catalog()
 
     return app
