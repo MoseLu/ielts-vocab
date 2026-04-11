@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -116,7 +117,7 @@ const quitWordDetails = {
   },
 }
 
-const baseStyles = readFileSync(new URL('../../../styles/base.scss', import.meta.url), 'utf-8')
+const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.scss'), 'utf-8')
 const readRootLayerToken = (tokenName: string) => {
   const escapedName = tokenName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = baseStyles.match(new RegExp(`${escapedName}:\\s*(\\d+)`, 'u'))
