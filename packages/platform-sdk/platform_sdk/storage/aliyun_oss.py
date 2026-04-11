@@ -261,6 +261,33 @@ def resolve_object_metadata(
         content_type = (headers.get('Content-Type') or headers.get('content-type') or '').strip() or None
         etag = (headers.get('ETag') or headers.get('etag') or '').strip('"') or None
         last_modified = headers.get('Last-Modified') or headers.get('last-modified')
+        object_missing = False
+        if content_type is None:
+            get_object_result = None
+            try:
+                get_object_result = bucket.get_object(object_key)
+            except (oss_exceptions.NoSuchKey, oss_exceptions.NotFound):
+                object_missing = True
+            except Exception:
+                get_object_result = None
+            else:
+                get_headers = getattr(get_object_result, 'headers', {}) or {}
+                get_raw_length = get_headers.get('Content-Length') or get_headers.get('content-length')
+                try:
+                    byte_length = int(get_raw_length) if get_raw_length else byte_length
+                except (TypeError, ValueError):
+                    pass
+                content_type = (get_headers.get('Content-Type') or get_headers.get('content-type') or '').strip() or None
+                etag = etag or (get_headers.get('ETag') or get_headers.get('etag') or '').strip('"') or None
+                last_modified = last_modified or get_headers.get('Last-Modified') or get_headers.get('last-modified')
+            finally:
+                close = getattr(get_object_result, 'close', None)
+                if callable(close):
+                    close()
+        if object_missing:
+            with _METADATA_CACHE_LOCK:
+                _OBJECT_METADATA_CACHE[cache_key] = (now + metadata_cache_ttl_seconds, None)
+            return None
         metadata = StoredObjectMetadata(
             provider='aliyun-oss',
             bucket_name=_resolved_bucket_name(bucket, bucket_env),

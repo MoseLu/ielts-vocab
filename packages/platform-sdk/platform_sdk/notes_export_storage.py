@@ -9,7 +9,9 @@ from platform_sdk.storage import (
     bucket_is_configured,
     build_service_object_key,
     env_int,
+    fetch_object_payload,
     put_object_bytes,
+    resolve_object_metadata,
 )
 
 
@@ -55,6 +57,24 @@ def notes_export_content_type(fmt: str) -> str:
 
 def _signed_url_expires_at(seconds: int) -> str:
     return (datetime.now(timezone.utc) + timedelta(seconds=seconds)).isoformat()
+
+
+def resolve_notes_export_metadata(*, user_id: int, filename: str):
+    return resolve_object_metadata(
+        object_key=notes_export_object_key(user_id=user_id, filename=filename),
+        file_name=filename,
+        signed_url_expires_seconds=notes_export_signed_url_expires_seconds(),
+        metadata_cache_ttl_seconds=notes_export_metadata_cache_ttl_seconds(),
+    )
+
+
+def fetch_notes_export_payload(*, user_id: int, filename: str):
+    return fetch_object_payload(
+        object_key=notes_export_object_key(user_id=user_id, filename=filename),
+        file_name=filename,
+        signed_url_expires_seconds=notes_export_signed_url_expires_seconds(),
+        metadata_cache_ttl_seconds=notes_export_metadata_cache_ttl_seconds(),
+    )
 
 
 def store_notes_export(*, user_id: int, filename: str, fmt: str, content: str) -> dict:
