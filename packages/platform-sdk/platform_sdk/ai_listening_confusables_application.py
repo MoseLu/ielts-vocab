@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-from services import books_registry_service
+from platform_sdk.books_registry_adapter import books_registry_service
 
 
 _listening_confusable_index_cache: dict[str, list[dict]] | None = None

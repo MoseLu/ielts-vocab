@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import admin_word_feedback_repository
+from platform_sdk.admin_word_feedback_adapter import admin_word_feedback_repository
 
 
 WORD_FEEDBACK_TYPE_LABELS = {

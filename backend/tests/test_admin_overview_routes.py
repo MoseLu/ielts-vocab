@@ -169,7 +169,8 @@ def test_admin_overview_includes_recent_projected_prompt_runs(client, app):
     assert payload['recent_prompt_runs'][0]['result_ref'] == 'custom_book_102'
 
 
-def test_admin_users_supports_stat_sorting(client, app):
+def test_admin_users_supports_stat_sorting(client, app, monkeypatch):
+    monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
     register_user(client, 'admin-users-admin')
     register_user(client, 'admin-users-fast')
     register_user(client, 'admin-users-accurate')

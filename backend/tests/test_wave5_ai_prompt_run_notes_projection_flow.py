@@ -146,6 +146,7 @@ def test_ai_prompt_outbox_publish_and_notes_projection_consume_flow(app):
 
 
 def test_notes_summary_prompt_includes_projected_prompt_runs(client, app, monkeypatch):
+    monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
     with app.app_context():
         user = _create_user(username='notes-summary-prompt-run-user')
         db.session.add(NotesProjectedPromptRun(

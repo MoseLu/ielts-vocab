@@ -108,6 +108,7 @@ def test_admin_ops_service_health_endpoint(monkeypatch, tmp_path):
 
 def test_admin_ops_service_overview_and_detail(monkeypatch, tmp_path):
     _configure_admin_env(monkeypatch, tmp_path)
+    monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
     module = _load_admin_ops_service_module('admin_ops_service_routes')
     client = TestClient(module.app)
     learner_id, token = _create_admin_token(module.admin_ops_flask_app)
