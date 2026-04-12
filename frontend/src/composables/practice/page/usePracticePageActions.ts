@@ -35,6 +35,7 @@ export function usePracticePageActions({
   correctCount,
   wrongCount,
   correctIndex,
+  options,
   wrongSelections,
   choiceOptionsReady,
   showResult,
@@ -284,6 +285,7 @@ export function usePracticePageActions({
       currentWord
       && (mode === 'listening' || (mode === 'smart' && smartDimension === 'listening')),
     )
+    const selectedOptionWord = options[idx]?.word?.trim()
 
     if (idx !== correctIndex) {
       if (wrongSelections.includes(idx)) return
@@ -296,8 +298,8 @@ export function usePracticePageActions({
           advanceToNext: false,
         })
       }
-      if (shouldReplayListeningPrompt) {
-        playWord(currentWord.word)
+      if (shouldReplayListeningPrompt && currentWord) {
+        playWord(selectedOptionWord || currentWord.word)
       }
       return
     }
@@ -314,6 +316,7 @@ export function usePracticePageActions({
     correctIndex,
     mode,
     currentWord,
+    options,
     playWord,
     showResult,
     smartDimension,

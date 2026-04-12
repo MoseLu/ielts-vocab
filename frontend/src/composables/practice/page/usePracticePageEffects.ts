@@ -132,29 +132,16 @@ export function usePracticePageEffects({
     if (!currentWord || !vocabulary.length) return
 
     let cancelled = false
-    const smartStats = loadSmartStats()
-    const subMode: SmartDimension = mode === 'smart'
+    const smartStats = mode === 'smart' || mode === 'listening'
+      ? loadSmartStats()
+      : null
+    const subMode: SmartDimension = mode === 'smart' && smartStats
       ? chooseSmartDimension(currentWord.word, smartStats)
       : smartDimension
     if (mode === 'smart') {
       setSmartDimension(prev => (prev === subMode ? prev : subMode))
     }
 
-    const wrongWords = readWrongWordsFromStorage(userId)
-    const localLearnerProfile = buildLearnerProfile({
-      vocabulary,
-      currentWord,
-      mode,
-      smartDimension: subMode,
-      smartStats,
-      wrongWords,
-    })
-    const learnerProfile = mergeLearnerProfileWithBackend({
-      localProfile: localLearnerProfile,
-      backendProfile: backendLearnerProfile,
-      vocabulary,
-      wrongWords,
-    })
     const needsOptions = mode === 'listening' || (mode === 'smart' && subMode === 'listening')
     const currentWordKey = normalizeOptionWordKey(currentWord.word)
 
@@ -172,6 +159,22 @@ export function usePracticePageEffects({
     }
 
     if (needsOptions) {
+      const resolvedSmartStats = smartStats ?? loadSmartStats()
+      const wrongWords = readWrongWordsFromStorage(userId)
+      const localLearnerProfile = buildLearnerProfile({
+        vocabulary,
+        currentWord,
+        mode,
+        smartDimension: subMode,
+        smartStats: resolvedSmartStats,
+        wrongWords,
+      })
+      const learnerProfile = mergeLearnerProfileWithBackend({
+        localProfile: localLearnerProfile,
+        backendProfile: backendLearnerProfile,
+        vocabulary,
+        wrongWords,
+      })
       const localPool = [currentWord, ...vocabulary, ...learnerProfile.priorityWords]
       const localGeneratedOptions = generateOptions(currentWord, localPool, {
         mode: 'listening',
@@ -236,6 +239,8 @@ export function usePracticePageEffects({
   ])
 
   useEffect(() => {
+    if (mode === 'quickmemory') return
+
     const activeWord = currentWord?.word?.trim()
     if (!activeWord) return
 
@@ -243,7 +248,7 @@ export function usePracticePageEffects({
     if (upcomingWords.length) {
       void preloadWordAudioBatch(upcomingWords).catch(() => {})
     }
-  }, [currentWord?.word, upcomingWordsKey])
+  }, [currentWord?.word, mode, upcomingWordsKey, upcomingWords.length])
 
   useEffect(() => {
     if (!currentWord) return

@@ -86,23 +86,27 @@ vi.mock('./OptionsMode', () => ({
     onOptionSelect,
   }: {
     currentWord: { word: string }
-    options: Array<{ definition: string }>
+    options: Array<{ definition: string; word?: string }>
     optionsLoading?: boolean
     correctIndex: number
     onOptionSelect: (idx: number) => void
-  }) => (
-    <div data-testid="options-mode">
-      <div data-testid="options-state">
-        {optionsLoading ? `loading:${currentWord.word}` : `ready:${currentWord.word}:${options.length}`}
+  }) => {
+    const findOptionIndex = (word: string) => options.findIndex(option => option.word === word)
+
+    return (
+      <div data-testid="options-mode">
+        <div data-testid="options-state">
+          {optionsLoading ? `loading:${currentWord.word}` : `ready:${currentWord.word}:${options.length}`}
+        </div>
+        <button type="button" data-testid="answer-guy" onClick={() => onOptionSelect(findOptionIndex('guy'))}>
+          answer-guy
+        </button>
+        <button type="button" data-testid="answer-guise" onClick={() => onOptionSelect(findOptionIndex('guise'))}>
+          answer-guise
+        </button>
       </div>
-      <button type="button" data-testid="answer-wrong-1" onClick={() => onOptionSelect(correctIndex === 0 ? 1 : 0)}>
-        answer-wrong-1
-      </button>
-      <button type="button" data-testid="answer-wrong-2" onClick={() => onOptionSelect(correctIndex <= 1 ? 2 : 1)}>
-        answer-wrong-2
-      </button>
-    </div>
-  ),
+    )
+  },
 }))
 
 describe('PracticePage listening replay', () => {
@@ -128,7 +132,7 @@ describe('PracticePage listening replay', () => {
     vi.useRealTimers()
   })
 
-  it('replays word audio after each distinct wrong listening choice', async () => {
+  it('plays the clicked option word after each distinct wrong listening choice', async () => {
     vi.useFakeTimers()
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
 
@@ -172,10 +176,10 @@ describe('PracticePage listening replay', () => {
     await flushRender()
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
 
-    fireEvent.click(screen.getByTestId('answer-wrong-1'))
-    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guide'])
+    fireEvent.click(screen.getByTestId('answer-guy'))
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guy'])
 
-    fireEvent.click(screen.getByTestId('answer-wrong-2'))
-    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guide', 'guide'])
+    fireEvent.click(screen.getByTestId('answer-guise'))
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guy', 'guise'])
   })
 })

@@ -161,6 +161,11 @@ export function usePracticePageData({
   }, [bookId, chapterId, mode, reviewMode, settings.reviewInterval, settings.reviewLimit, setQuickMemoryReviewQueueResolved, setReviewOffset])
 
   useEffect(() => {
+    if (reviewMode) {
+      setBackendLearnerProfile(null)
+      return
+    }
+
     let cancelled = false
 
     void (async () => {
@@ -180,7 +185,7 @@ export function usePracticePageData({
     return () => {
       cancelled = true
     }
-  }, [currentDay, setBackendLearnerProfile, userId])
+  }, [currentDay, reviewMode, setBackendLearnerProfile, userId])
 
   useEffect(() => {
     let cancelled = false
@@ -188,8 +193,8 @@ export function usePracticePageData({
     setNoListeningPresets(false)
     setReviewQueueError(null)
 
-    if (Object.keys(loadSmartStats()).length === 0) {
-      loadSmartStatsFromBackend()
+    if (!reviewMode && Object.keys(loadSmartStats()).length === 0) {
+      void loadSmartStatsFromBackend()
     }
 
     if (reviewMode && mode === 'quickmemory') {
@@ -197,9 +202,7 @@ export function usePracticePageData({
       void (async () => {
         try {
           const reviewWindowDays = Math.max(1, parseInt(String(settings.reviewInterval ?? '1'), 10) || 1)
-          const configuredLimit = settings.reviewLimit === 'unlimited'
-            ? 0
-            : (parseInt(String(settings.reviewLimit ?? DEFAULT_SETTINGS.reviewLimit), 10) || parseInt(DEFAULT_SETTINGS.reviewLimit, 10))
+          const configuredLimit = settings.reviewLimit === 'unlimited' ? 0 : (parseInt(String(settings.reviewLimit ?? DEFAULT_SETTINGS.reviewLimit), 10) || parseInt(DEFAULT_SETTINGS.reviewLimit, 10))
           const reviewLimit = configuredLimit === 0
             ? QUICK_MEMORY_REVIEW_BATCH_SIZE
             : Math.max(1, configuredLimit)
@@ -277,7 +280,6 @@ export function usePracticePageData({
       if (mode === 'smart') return buildSmartQueue(words.map(word => word.word), loadSmartStats())
       return settings.shuffle !== false ? shuffleArray(indices) : indices
     }
-
     const resetProgress = (progress: ProgressData | null, words: Word[]) => {
       if (!progress) {
         setQueueIndex(0)

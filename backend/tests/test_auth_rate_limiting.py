@@ -3,9 +3,11 @@
 from datetime import datetime, timedelta
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from models import RateLimitBucket, db
 from platform_sdk import identity_rate_limit_runtime
+from services import auth_repository
 
 
 class FakeRedisRateLimitClient:
@@ -135,6 +137,31 @@ class TestLoginRateLimiting:
 
         with app.app_context():
             assert RateLimitBucket.query.filter_by(purpose='login').count() == 1
+
+    def test_rate_limit_retries_database_bucket_insert_after_unique_conflict(self, monkeypatch):
+        attempts = {'count': 0}
+        rollback_calls: list[str] = []
+
+        def fake_check_and_increment(**kwargs):
+            attempts['count'] += 1
+            if attempts['count'] == 1:
+                raise IntegrityError('INSERT', {}, Exception('unique_ip_purpose'))
+            return True, 0
+
+        monkeypatch.setattr(auth_repository, 'check_rate_limit_with_redis', lambda **kwargs: None)
+        monkeypatch.setattr(auth_repository.RateLimitBucket, 'check_and_increment', fake_check_and_increment)
+        monkeypatch.setattr(auth_repository.db.session, 'rollback', lambda: rollback_calls.append('rollback'))
+
+        allowed, wait = auth_repository.check_rate_limit(
+            ip_address='203.0.113.10',
+            purpose='login',
+            max_attempts=10,
+            window_minutes=15,
+        )
+
+        assert (allowed, wait) == (True, 0)
+        assert attempts['count'] == 2
+        assert rollback_calls == ['rollback']
 
     def test_rate_limit_uses_redis_when_available(self, client, app, monkeypatch):
         fake_redis = FakeRedisRateLimitClient()

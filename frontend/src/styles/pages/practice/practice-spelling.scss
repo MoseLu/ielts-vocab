@@ -58,6 +58,19 @@
     min-height: 100%;
 }
 
+.practice-page--choice {
+    --practice-main-max-width: 1180px;
+    --practice-header-max-width: 980px;
+    --practice-shell-max-width: 860px;
+    --practice-choice-grid-max-width: 980px;
+}
+
+.practice-page.practice-page--choice .practice-main {
+    max-width: min(100%, var(--practice-main-max-width, 1180px));
+    padding-top: clamp(20px, 3vw, 30px);
+    gap: 20px;
+}
+
 .word-display-area {
     display: flex;
     flex-direction: column;
@@ -250,6 +263,10 @@
     max-width: var(--practice-choice-grid-max-width, var(--practice-shell-max-width, 760px));
 }
 
+.practice-page.practice-page--choice .options-grid {
+    gap: clamp(12px, 1vw, 16px);
+}
+
 .option-btn {
     padding: 26px 26px 24px;
     background: color-mix(in srgb, var(--surface-elevated) 97%, transparent);
@@ -267,6 +284,12 @@
     min-height: clamp(146px, 19vw, 162px);
     justify-content: flex-start;
     box-shadow: var(--shadow-soft);
+}
+
+.practice-page.practice-page--choice .option-btn {
+    min-height: clamp(112px, 10vw, 126px);
+    padding: 20px 22px 18px;
+    border-radius: 18px;
 }
 
 .option-btn:hover:not(:disabled) {
@@ -354,6 +377,11 @@
     font-size: 20px;
     color: var(--text-primary);
     line-height: 1.5;
+}
+
+.practice-page.practice-page--choice .option-text {
+    font-size: clamp(1.42rem, 1.5vw, 1.72rem);
+    line-height: 1.42;
 }
 
 .option-text-wrap {

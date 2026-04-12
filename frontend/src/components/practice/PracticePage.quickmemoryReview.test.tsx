@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import PracticePage from './PracticePage'
 import { QUICK_MEMORY_MASTERY_TARGET } from '../../lib/quickMemory'
+import { loadSmartStatsFromBackend } from '../../lib/smartMode'
 import { STORAGE_KEYS } from '../../constants'
 
 const apiFetchMock = vi.fn()
@@ -146,6 +147,7 @@ describe('PracticePage quick-memory review mode', () => {
     practiceControlBarMock.mockClear()
     fetchMock.mockReset()
     toggleFavoriteMock.mockReset()
+    vi.mocked(loadSmartStatsFromBackend).mockClear()
     localStorage.clear()
   })
 
@@ -180,17 +182,12 @@ describe('PracticePage quick-memory review mode', () => {
       return Promise.reject(new Error(`Unexpected url: ${url}`))
     })
 
-    render(
-      <MemoryRouter initialEntries={['/practice?review=due']}>
-        <PracticePage user={{ id: 42 }} currentDay={1} mode="quickmemory" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
-      </MemoryRouter>,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:alpha,beta')
-    })
+    render(<MemoryRouter initialEntries={['/practice?review=due']}><PracticePage user={{ id: 42 }} currentDay={1} mode="quickmemory" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} /></MemoryRouter>)
+    await waitFor(() => { expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:alpha,beta') })
 
     expect(apiFetchMock).toHaveBeenCalledWith('/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due')
+    expect(apiFetchMock).not.toHaveBeenCalledWith('/api/ai/learner-profile')
+    expect(loadSmartStatsFromBackend).not.toHaveBeenCalled()
     expect(startSessionMock).not.toHaveBeenCalled()
   })
 
