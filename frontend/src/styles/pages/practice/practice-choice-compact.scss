@@ -1,0 +1,66 @@
+.practice-page.practice-page--choice .practice-main {
+    max-width: min(100%, var(--practice-main-max-width, 1180px));
+    padding-top: clamp(16px, 2.6vw, 24px);
+    gap: 18px;
+}
+
+.practice-page.practice-page--choice .listening-example-prompt {
+    gap: 12px;
+}
+
+.practice-page.practice-page--choice .options-footer {
+    margin-top: 0;
+}
+
+@media (max-height: 700px) and (min-width: 768px) {
+    .practice-page.practice-page--choice .practice-main {
+        padding-top: 10px;
+        gap: 14px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-prompt {
+        gap: 10px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-audio-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-sentence {
+        font-size: clamp(1rem, 1.7vw, 1.18rem);
+        line-height: 1.55;
+    }
+
+    .practice-page.practice-page--choice .options-grid {
+        gap: 10px;
+    }
+
+    .practice-page.practice-page--choice .option-btn {
+        min-height: clamp(104px, 12vw, 116px);
+        padding: 18px 20px 16px;
+    }
+
+    .practice-page.practice-page--choice .option-text {
+        font-size: clamp(1.28rem, 1.42vw, 1.52rem);
+        line-height: 1.32;
+    }
+
+    .practice-page.practice-page--choice .options-footer {
+        margin-top: -4px;
+    }
+
+    .practice-page.practice-page--choice .skip-btn {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    .practice-page.practice-page--choice .shortcut-hint {
+        font-size: 13px;
+    }
+
+    .practice-page.practice-page--choice .replay-btn {
+        width: 44px;
+        height: 44px;
+    }
+}

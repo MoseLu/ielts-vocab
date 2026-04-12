@@ -91,6 +91,46 @@ describe('OptionsMode listening feedback', () => {
     expect(screen.queryByText('这一步干什么')).not.toBeInTheDocument()
   })
 
+  it('marks the listening favorite action header for compact choice layout spacing', () => {
+    const { container } = render(
+      <OptionsMode
+        currentWord={makeWord()}
+        previousWord={null}
+        lastState={null}
+        mode="listening"
+        options={[
+          makeDefinitionOption('guide', 'vt.', '向导'),
+          makeDefinitionOption('guy', 'n.', '家伙'),
+          makeDefinitionOption('quietly', 'adv.', '安静地'),
+          makeDefinitionOption('quick', 'adj.', '快的'),
+        ]}
+        selectedAnswer={null}
+        wrongSelections={[]}
+        showResult={false}
+        correctIndex={1}
+        spellingInput=""
+        spellingResult={null}
+        speechConnected
+        speechRecording={false}
+        settings={{}}
+        progressValue={0.25}
+        total={4}
+        queueIndex={0}
+        favoriteSlot={<button type="button">fav</button>}
+        onOptionSelect={vi.fn()}
+        onSkip={vi.fn()}
+        onGoBack={vi.fn()}
+        onSpellingSubmit={vi.fn()}
+        onSpellingInputChange={vi.fn()}
+        onStartRecording={vi.fn()}
+        onStopRecording={vi.fn()}
+        onPlayWord={vi.fn()}
+      />,
+    )
+
+    expect(container.querySelector('.practice-main-header--choice-action')).not.toBeNull()
+  })
+
   it('shows a blanked example sentence when the listening word includes an example', () => {
     const { container } = render(
       <OptionsMode

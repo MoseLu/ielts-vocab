@@ -68,8 +68,6 @@
 
 .practice-page.practice-page--choice .practice-main {
     max-width: min(100%, var(--practice-main-max-width, 1180px));
-    padding-top: clamp(20px, 3vw, 30px);
-    gap: 20px;
 }
 
 .word-display-area {

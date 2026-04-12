@@ -164,6 +164,32 @@
     }
 }
 
+@media (max-height: 700px) and (min-width: 768px) {
+    .practice-page.practice-page--choice .prev-word-inline--choice {
+        top: 14px;
+    }
+
+    .practice-page.practice-page--choice .practice-bottom-bar {
+        gap: 12px;
+        padding: 8px 18px 10px;
+    }
+
+    .practice-page.practice-page--choice .bottom-progress-track {
+        height: 9px;
+    }
+
+    .practice-page.practice-page--choice .bottom-progress-dot {
+        width: 14px;
+        height: 14px;
+        border-width: 2px;
+    }
+
+    .practice-page.practice-page--choice .bottom-progress-count {
+        font-size: 13px;
+        padding: 8px 11px;
+    }
+}
+
 @media (max-width: 768px) {
     .prev-word-inline {
         --practice-prev-word-top-offset: 22px;

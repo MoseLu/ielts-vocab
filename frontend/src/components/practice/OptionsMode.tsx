@@ -53,6 +53,7 @@ export default function OptionsMode({
   const isSmartDictation = mode === 'smart' && smartDimension === 'dictation'
   const isMeaningRecall = mode === 'meaning' || (mode === 'smart' && smartDimension === 'meaning')
   const isChoiceLayout = !isSmartDictation && !isMeaningRecall
+  const hasChoiceActionHeader = isChoiceLayout && mode !== 'smart' && Boolean(favoriteSlot)
   const listeningExample = currentWord.examples?.[0]?.en ?? ''
   const showListeningExample = displayMode === 'audio'
     && !optionsLoading
@@ -73,7 +74,7 @@ export default function OptionsMode({
 
       <div className="practice-main">
         {(mode === 'smart' || favoriteSlot) && (
-          <div className="practice-main-header">
+          <div className={`practice-main-header${hasChoiceActionHeader ? ' practice-main-header--choice-action' : ''}`}>
             <div className="practice-main-header__meta">
               {mode === 'smart' && <SmartDimBadge dimension={smartDimension} />}
             </div>
