@@ -142,7 +142,7 @@
     box-shadow: var(--shadow-soft);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
     .practice-page.practice-page--choice .prev-word-inline--choice {
         position: absolute;
         top: clamp(20px, 3vw, 36px);
