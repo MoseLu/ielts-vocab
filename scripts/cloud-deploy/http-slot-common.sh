@@ -1,0 +1,323 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_HOME="${APP_HOME:-/opt/ielts-vocab}"
+HTTP_SLOTS_ROOT="${HTTP_SLOTS_ROOT:-${APP_HOME}/http-slots}"
+DEPLOY_STATE_DIR="${DEPLOY_STATE_DIR:-${APP_HOME}/deploy-state}"
+HTTP_SLOT_ENV_DIR="${HTTP_SLOT_ENV_DIR:-/etc/ielts-vocab/http-slots}"
+NGINX_UPSTREAM_INCLUDE="${NGINX_UPSTREAM_INCLUDE:-/etc/nginx/conf.d/ielts-vocab-upstream.inc}"
+WEB_ROOT="${WEB_ROOT:-/var/www/ielts-vocab}"
+WEB_CURRENT_LINK="${WEB_CURRENT_LINK:-${WEB_ROOT}/current}"
+ACTIVE_HTTP_SLOT_FILE="${ACTIVE_HTTP_SLOT_FILE:-${DEPLOY_STATE_DIR}/active-http-slot}"
+ACTIVE_HTTP_RELEASE_FILE="${ACTIVE_HTTP_RELEASE_FILE:-${DEPLOY_STATE_DIR}/active-http-release}"
+LAST_GOOD_RELEASE_FILE="${LAST_GOOD_RELEASE_FILE:-${DEPLOY_STATE_DIR}/last-good-release}"
+LAST_GOOD_SLOT_FILE="${LAST_GOOD_SLOT_FILE:-${DEPLOY_STATE_DIR}/last-good-slot}"
+
+if ! declare -p HTTP_SERVICE_UNITS >/dev/null 2>&1; then
+  HTTP_SERVICE_UNITS=(
+    "gateway-bff"
+    "identity-service"
+    "learning-core-service"
+    "catalog-content-service"
+    "ai-execution-service"
+    "tts-media-service"
+    "asr-service"
+    "notes-service"
+    "admin-ops-service"
+  )
+fi
+
+require_http_slot() {
+  local slot="${1:?slot is required}"
+  case "${slot}" in
+    blue|green) ;;
+    *) fail "Unknown HTTP slot: ${slot}" ;;
+  esac
+}
+
+http_slot_prefix() {
+  local slot="${1:?slot is required}"
+  require_http_slot "${slot}"
+  case "${slot}" in
+    blue) printf '1' ;;
+    green) printf '2' ;;
+  esac
+}
+
+http_slot_port() {
+  local slot="${1:?slot is required}"
+  local service="${2:?service is required}"
+  local prefix
+  prefix="$(http_slot_prefix "${slot}")"
+  case "${service}" in
+    gateway-bff) printf '%s8000\n' "${prefix}" ;;
+    identity-service) printf '%s8101\n' "${prefix}" ;;
+    learning-core-service) printf '%s8102\n' "${prefix}" ;;
+    catalog-content-service) printf '%s8103\n' "${prefix}" ;;
+    ai-execution-service) printf '%s8104\n' "${prefix}" ;;
+    tts-media-service) printf '%s8105\n' "${prefix}" ;;
+    asr-service) printf '%s8106\n' "${prefix}" ;;
+    notes-service) printf '%s8107\n' "${prefix}" ;;
+    admin-ops-service) printf '%s8108\n' "${prefix}" ;;
+    *) fail "Unknown HTTP service: ${service}" ;;
+  esac
+}
+
+http_slot_port_var() {
+  local service="${1:?service is required}"
+  case "${service}" in
+    gateway-bff) printf 'GATEWAY_BFF_PORT\n' ;;
+    identity-service) printf 'IDENTITY_SERVICE_PORT\n' ;;
+    learning-core-service) printf 'LEARNING_CORE_SERVICE_PORT\n' ;;
+    catalog-content-service) printf 'CATALOG_CONTENT_SERVICE_PORT\n' ;;
+    ai-execution-service) printf 'AI_EXECUTION_SERVICE_PORT\n' ;;
+    tts-media-service) printf 'TTS_MEDIA_SERVICE_PORT\n' ;;
+    asr-service) printf 'ASR_SERVICE_PORT\n' ;;
+    notes-service) printf 'NOTES_SERVICE_PORT\n' ;;
+    admin-ops-service) printf 'ADMIN_OPS_SERVICE_PORT\n' ;;
+    *) fail "Unknown HTTP service: ${service}" ;;
+  esac
+}
+
+http_slot_url_var() {
+  local service="${1:?service is required}"
+  case "${service}" in
+    identity-service) printf 'IDENTITY_SERVICE_URL\n' ;;
+    learning-core-service) printf 'LEARNING_CORE_SERVICE_URL\n' ;;
+    catalog-content-service) printf 'CATALOG_CONTENT_SERVICE_URL\n' ;;
+    ai-execution-service) printf 'AI_EXECUTION_SERVICE_URL\n' ;;
+    tts-media-service) printf 'TTS_MEDIA_SERVICE_URL\n' ;;
+    asr-service) printf 'ASR_SERVICE_URL\n' ;;
+    notes-service) printf 'NOTES_SERVICE_URL\n' ;;
+    admin-ops-service) printf 'ADMIN_OPS_SERVICE_URL\n' ;;
+    *) return 1 ;;
+  esac
+}
+
+ensure_http_slot_directories() {
+  mkdir -p "${HTTP_SLOTS_ROOT}/blue" "${HTTP_SLOTS_ROOT}/green" \
+    "${DEPLOY_STATE_DIR}" "${HTTP_SLOT_ENV_DIR}" "${WEB_ROOT}" \
+    "$(dirname "${NGINX_UPSTREAM_INCLUDE}")"
+}
+
+http_slot_release_link() {
+  local slot="${1:?slot is required}"
+  require_http_slot "${slot}"
+  printf '%s/%s/current\n' "${HTTP_SLOTS_ROOT}" "${slot}"
+}
+
+http_slot_release_path() {
+  local slot="${1:?slot is required}"
+  local link
+  link="$(http_slot_release_link "${slot}")"
+  if [[ -e "${link}" ]]; then
+    readlink -f "${link}"
+    return 0
+  fi
+  printf '\n'
+}
+
+http_slot_env_file() {
+  local slot="${1:?slot is required}"
+  require_http_slot "${slot}"
+  printf '%s/%s.env\n' "${HTTP_SLOT_ENV_DIR}" "${slot}"
+}
+
+set_http_slot_release() {
+  local slot="${1:?slot is required}"
+  local release_dir="${2:?release dir is required}"
+  local link
+  require_http_slot "${slot}"
+  [[ -d "${release_dir}" ]] || fail "HTTP slot release does not exist: ${release_dir}"
+  mkdir -p "${HTTP_SLOTS_ROOT}/${slot}"
+  link="$(http_slot_release_link "${slot}")"
+  ln -sfn "${release_dir}" "${link}.tmp"
+  mv -Tf "${link}.tmp" "${link}"
+}
+
+write_http_slot_env() {
+  local slot="${1:?slot is required}"
+  local env_file
+  local temp_file
+  local service
+  local port_var
+  local url_var
+  require_http_slot "${slot}"
+  ensure_http_slot_directories
+  env_file="$(http_slot_env_file "${slot}")"
+  temp_file="${env_file}.tmp"
+  {
+    printf '# Generated by http-slot-common.sh for the %s HTTP slot.\n' "${slot}"
+    printf 'IELTS_HTTP_SLOT=%s\n' "${slot}"
+    printf 'IELTS_HTTP_SLOT_ENV_FILE=%s\n' "${env_file}"
+    for service in "${HTTP_SERVICE_UNITS[@]}"; do
+      port_var="$(http_slot_port_var "${service}")"
+      printf '%s=%s\n' "${port_var}" "$(http_slot_port "${slot}" "${service}")"
+    done
+    for service in "${HTTP_SERVICE_UNITS[@]}"; do
+      if url_var="$(http_slot_url_var "${service}")"; then
+        printf '%s=http://127.0.0.1:%s\n' "${url_var}" "$(http_slot_port "${slot}" "${service}")"
+      fi
+    done
+  } > "${temp_file}"
+  chmod 600 "${temp_file}"
+  mv -f "${temp_file}" "${env_file}"
+}
+
+active_http_slot() {
+  if [[ -f "${ACTIVE_HTTP_SLOT_FILE}" ]]; then
+    tr -d '[:space:]' < "${ACTIVE_HTTP_SLOT_FILE}"
+    return 0
+  fi
+  printf '\n'
+}
+
+inactive_http_slot() {
+  local active="${1:-$(active_http_slot)}"
+  case "${active}" in
+    blue) printf 'green\n' ;;
+    green) printf 'blue\n' ;;
+    *) printf 'blue\n' ;;
+  esac
+}
+
+http_slot_unit_name() {
+  local slot="${1:?slot is required}"
+  local service="${2:?service is required}"
+  require_http_slot "${slot}"
+  printf 'ielts-http-slot@%s.%s\n' "${slot}" "${service}"
+}
+
+start_http_slot_services() {
+  local slot="${1:?slot is required}"
+  local service
+  require_http_slot "${slot}"
+  systemctl daemon-reload
+  for service in "${HTTP_SERVICE_UNITS[@]}"; do
+    systemctl enable "$(http_slot_unit_name "${slot}" "${service}")" >/dev/null 2>&1 || true
+    systemctl restart "$(http_slot_unit_name "${slot}" "${service}")"
+  done
+}
+
+stop_http_slot_services() {
+  local slot="${1:-}"
+  local service
+  [[ -n "${slot}" ]] || return 0
+  require_http_slot "${slot}"
+  for service in "${HTTP_SERVICE_UNITS[@]}"; do
+    systemctl disable --now "$(http_slot_unit_name "${slot}" "${service}")" >/dev/null 2>&1 || true
+  done
+}
+
+stop_legacy_http_units() {
+  local service
+  for service in "${HTTP_SERVICE_UNITS[@]}"; do
+    systemctl disable --now "ielts-service@${service}" >/dev/null 2>&1 || true
+  done
+}
+
+write_nginx_gateway_upstream_for_port() {
+  local port="${1:?port is required}"
+  local temp_file="${NGINX_UPSTREAM_INCLUDE}.tmp"
+  mkdir -p "$(dirname "${NGINX_UPSTREAM_INCLUDE}")"
+  cat > "${temp_file}" <<NGINX
+# Generated by IELTS Vocab deployment scripts. Do not edit manually.
+upstream ielts_gateway_bff {
+    server 127.0.0.1:${port};
+    keepalive 32;
+}
+NGINX
+  mv -f "${temp_file}" "${NGINX_UPSTREAM_INCLUDE}"
+}
+
+write_nginx_gateway_upstream() {
+  local slot="${1:?slot is required}"
+  write_nginx_gateway_upstream_for_port "$(http_slot_port "${slot}" "gateway-bff")"
+}
+
+ensure_nginx_gateway_upstream() {
+  if [[ ! -f "${NGINX_UPSTREAM_INCLUDE}" ]]; then
+    write_nginx_gateway_upstream_for_port "8000"
+  fi
+}
+
+nginx_uses_http_slot_upstream() {
+  local rendered_config
+  if ! rendered_config="$(nginx -T 2>/dev/null)"; then
+    return 0
+  fi
+  grep -Eq 'proxy_pass[[:space:]]+http://ielts_gateway_bff' <<< "${rendered_config}"
+}
+
+switch_nginx_to_http_slot() {
+  local slot="${1:?slot is required}"
+  local backup_file="${NGINX_UPSTREAM_INCLUDE}.bak"
+  [[ -f "${NGINX_UPSTREAM_INCLUDE}" ]] && cp -f "${NGINX_UPSTREAM_INCLUDE}" "${backup_file}" || true
+  write_nginx_gateway_upstream "${slot}"
+  if ! nginx_uses_http_slot_upstream; then
+    [[ -f "${backup_file}" ]] && mv -f "${backup_file}" "${NGINX_UPSTREAM_INCLUDE}" || true
+    fail "nginx is not wired to ielts_gateway_bff; update the site config before HTTP slot cutover"
+  fi
+  if ! nginx -t >/dev/null; then
+    [[ -f "${backup_file}" ]] && mv -f "${backup_file}" "${NGINX_UPSTREAM_INCLUDE}" || true
+    nginx -t >/dev/null || true
+    fail "nginx configuration failed after switching HTTP slot ${slot}"
+  fi
+  systemctl reload nginx
+  rm -f "${backup_file}"
+}
+
+switch_frontend_to_release() {
+  local release_dir="${1:?release dir is required}"
+  local temp_link="${WEB_CURRENT_LINK}.tmp"
+  [[ -d "${release_dir}/dist" ]] || fail "Missing frontend dist: ${release_dir}/dist"
+  mkdir -p "${WEB_ROOT}"
+  rm -f "${temp_link}"
+  ln -s "${release_dir}/dist" "${temp_link}"
+  mv -Tf "${temp_link}" "${WEB_CURRENT_LINK}"
+}
+
+record_http_slot_activation() {
+  local slot="${1:?slot is required}"
+  local release_dir="${2:?release dir is required}"
+  local previous_slot="${3:-}"
+  local previous_release="${4:-}"
+  local last_good_mode="${5:-previous}"
+  mkdir -p "${DEPLOY_STATE_DIR}"
+  case "${last_good_mode}" in
+    previous)
+      if [[ -n "${previous_release}" && "${previous_release}" != "${release_dir}" ]]; then
+        printf '%s\n' "${previous_release}" > "${LAST_GOOD_RELEASE_FILE}"
+        printf '%s\n' "${previous_slot}" > "${LAST_GOOD_SLOT_FILE}"
+      fi
+      ;;
+    current)
+      printf '%s\n' "${release_dir}" > "${LAST_GOOD_RELEASE_FILE}"
+      printf '%s\n' "${slot}" > "${LAST_GOOD_SLOT_FILE}"
+      ;;
+    skip) ;;
+    *) fail "Unknown last-good recording mode: ${last_good_mode}" ;;
+  esac
+  printf '%s\n' "${slot}" > "${ACTIVE_HTTP_SLOT_FILE}"
+  printf '%s\n' "${release_dir}" > "${ACTIVE_HTTP_RELEASE_FILE}"
+}
+
+record_legacy_http_activation() {
+  local release_dir="${1:?release dir is required}"
+  mkdir -p "${DEPLOY_STATE_DIR}"
+  rm -f "${ACTIVE_HTTP_SLOT_FILE}"
+  printf '%s\n' "${release_dir}" > "${ACTIVE_HTTP_RELEASE_FILE}"
+  printf '%s\n' "${release_dir}" > "${LAST_GOOD_RELEASE_FILE}"
+  : > "${LAST_GOOD_SLOT_FILE}"
+}
+
+activate_http_slot_release() {
+  local slot="${1:?slot is required}"
+  local release_dir="${2:?release dir is required}"
+  local previous_slot="${3:-}"
+  local previous_release="${4:-}"
+  local last_good_mode="${5:-previous}"
+  switch_frontend_to_release "${release_dir}"
+  switch_nginx_to_http_slot "${slot}"
+  record_http_slot_activation "${slot}" "${release_dir}" "${previous_slot}" "${previous_release}" "${last_good_mode}"
+}

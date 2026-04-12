@@ -6,22 +6,25 @@ Last updated: 2026-04-11 15:39:26 +08:00
 
 Deploy `ielts-vocab` to `119.29.182.134` as a single-server production baseline:
 
-- nginx serves the Vite build from `/var/www/ielts-vocab`
-- `/api/*` proxies to `gateway-bff` on `127.0.0.1:8000`
+- nginx serves the Vite build through `/var/www/ielts-vocab/current`
+- `/api/*` proxies to the active HTTP blue/green slot gateway upstream
 - `/socket.io/*` proxies to ASR Socket.IO on `127.0.0.1:5001`
-- domain services run on `127.0.0.1:8101-8108`
+- domain HTTP services run in either the `blue` slot (`18000`, `18101-18108`) or the `green` slot (`28000`, `28101-28108`)
 - PostgreSQL stores service-owned and bootstrap shadow tables
 - GitHub Actions deploys `main` by SSHing into the server and running a release-based rollout
 
 ## Runtime Layout
 
 - `/opt/ielts-vocab/current`: current active release symlink
+- `/opt/ielts-vocab/http-slots/<blue|green>/current`: per-slot HTTP release symlink
+- `/opt/ielts-vocab/deploy-state`: active slot and last-good rollback records
 - `/opt/ielts-vocab/releases/<timestamp>-<sha>`: immutable release directories
 - `/opt/ielts-vocab/repository`: persistent git checkout used for `git fetch origin`
 - `/opt/ielts-vocab/venv`: shared Python virtual environment
 - `/etc/ielts-vocab/backend.env`: shared app secrets and production flags
 - `/etc/ielts-vocab/microservices.env`: service-specific PostgreSQL URLs plus Redis/RabbitMQ runtime settings
-- `/var/www/ielts-vocab`: active frontend assets served by nginx
+- `/etc/ielts-vocab/http-slots/<blue|green>.env`: generated per-slot ports and same-slot service URLs
+- `/var/www/ielts-vocab/current`: symlink to the active release `dist`
 
 ## Bootstrap
 
@@ -93,19 +96,11 @@ The current write-owning migration baseline covers:
 ## Service Control
 
 ```bash
-systemctl enable --now ielts-service@gateway-bff
-systemctl enable --now ielts-service@identity-service
-systemctl enable --now ielts-service@learning-core-service
-systemctl enable --now ielts-service@catalog-content-service
-systemctl enable --now ielts-service@ai-execution-service
-systemctl enable --now ielts-service@tts-media-service
-systemctl enable --now ielts-service@asr-service
-systemctl enable --now ielts-service@notes-service
-systemctl enable --now ielts-service@admin-ops-service
+systemctl list-units 'ielts-http-slot@*'
 systemctl enable --now ielts-service@asr-socketio
 ```
 
-Wave 5 worker units are now part of the release restart path when the target release contains worker-aware [run-service.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/run-service.sh) entries. [release-common.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/release-common.sh) enables those worker instances automatically for worker-aware releases and disables them again when rolling back to an older release that does not support them. [smoke-check.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/smoke-check.sh) also verifies worker unit health in that case.
+The HTTP browser path now uses `ielts-http-slot@<slot>.<service>` units for `gateway-bff` and `8101-8108` services, and `deploy-release.sh` starts/stops those slot units automatically. `asr-socketio` and Wave 5 worker units remain on `ielts-service@...`; they restart after HTTP traffic has switched, so they are not covered by the first no-downtime HTTP cutover.
 
 ## GitHub Actions Production Deploy
 
@@ -136,10 +131,11 @@ The production workflow does this on each `main` release:
 5. The server fetches the target commit from `/opt/ielts-vocab/repository`.
 6. A new immutable release directory is created under `/opt/ielts-vocab/releases`.
 7. PostgreSQL backup runs before traffic switches.
-8. The release runs `scripts/run-service-schema-migrations.py` against the split-service databases before `current` changes.
-9. `current` is pointed to the new release, frontend assets are copied, and all services restart.
-10. `smoke-check.sh` validates broker runtime first, then verifies internal readiness plus nginx proxy routing.
-11. If restart or smoke verification fails, `rollback-release.sh` switches back to the previous release.
+8. The release runs `scripts/run-service-schema-migrations.py` against the split-service databases before traffic changes.
+9. The inactive HTTP slot is pointed to the new release, started, and smoke-tested directly on its slot ports.
+10. If the slot smoke passes, nginx API upstream and `/var/www/ielts-vocab/current` switch atomically to the new slot.
+11. `current` is pointed to the new release, `asr-socketio` and worker units restart, and the old HTTP slot is stopped.
+12. If pre-switch verification fails, the active slot remains untouched; if post-switch verification fails, deploy attempts to reactivate the previous slot.
 
 ## Manual Deploy and Rollback
 
@@ -165,6 +161,12 @@ Manual smoke check:
 
 ```bash
 sudo APP_HOME=/opt/ielts-vocab SMOKE_HOST=axiomaticworld.com bash /opt/ielts-vocab/current/scripts/cloud-deploy/smoke-check.sh
+```
+
+Pre-switch slot smoke check:
+
+```bash
+sudo APP_HOME=/opt/ielts-vocab SMOKE_HTTP_SLOT=blue SMOKE_SKIP_NGINX=true SMOKE_SKIP_WORKERS=true bash /opt/ielts-vocab/current/scripts/cloud-deploy/smoke-check.sh
 ```
 
 Manual broker validation:
@@ -216,6 +218,7 @@ Manual rollback:
 
 ```bash
 sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/rollback-release.sh /opt/ielts-vocab/releases/<timestamp>-<sha>
+sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/rollback-release.sh --last-good
 ```
 
 ## Verification
@@ -223,15 +226,9 @@ sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deplo
 The release smoke script checks:
 
 - broker env plus Redis/RabbitMQ connectivity through `validate-broker-runtime.sh`
-- `http://127.0.0.1:8000/ready`
-- `http://127.0.0.1:8101/ready`
-- `http://127.0.0.1:8102/ready`
-- `http://127.0.0.1:8103/ready`
-- `http://127.0.0.1:8104/ready`
-- `http://127.0.0.1:8105/ready`
-- `http://127.0.0.1:8106/ready`
-- `http://127.0.0.1:8107/ready`
-- `http://127.0.0.1:8108/ready`
+- active-slot `gateway-bff` and HTTP service `/ready` checks from `/etc/ielts-vocab/http-slots/<slot>.env`
+- slot gateway `/api/books`
+- AI dependency probe on `/internal/ops/ai-dependencies`
 - `http://127.0.0.1:5001/ready`
 - `http://127.0.0.1/` with `Host: axiomaticworld.com`
 - `http://127.0.0.1/api/books` with `Host: axiomaticworld.com`

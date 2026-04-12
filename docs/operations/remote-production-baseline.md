@@ -8,42 +8,38 @@ This document freezes the current remote production baseline on `119.29.182.134`
 
 ## Active systemd units
 
-- `ielts-service@gateway-bff`
-- `ielts-service@identity-service`
-- `ielts-service@learning-core-service`
-- `ielts-service@catalog-content-service`
-- `ielts-service@ai-execution-service`
-- `ielts-service@tts-media-service`
-- `ielts-service@asr-service`
-- `ielts-service@notes-service`
-- `ielts-service@admin-ops-service`
+- `ielts-http-slot@<active-slot>.gateway-bff`
+- `ielts-http-slot@<active-slot>.identity-service`
+- `ielts-http-slot@<active-slot>.learning-core-service`
+- `ielts-http-slot@<active-slot>.catalog-content-service`
+- `ielts-http-slot@<active-slot>.ai-execution-service`
+- `ielts-http-slot@<active-slot>.tts-media-service`
+- `ielts-http-slot@<active-slot>.asr-service`
+- `ielts-http-slot@<active-slot>.notes-service`
+- `ielts-http-slot@<active-slot>.admin-ops-service`
 - `ielts-service@asr-socketio`
 - `redis`
 - `rabbitmq-server`
 
 ## Runtime routing
 
-- nginx serves frontend assets from `/var/www/ielts-vocab`
-- `https://axiomaticworld.com/` -> nginx `:80` -> static frontend
-- `https://axiomaticworld.com/api/*` -> nginx -> `gateway-bff` on `127.0.0.1:8000`
+- nginx serves frontend assets from `/var/www/ielts-vocab/current`
+- `https://axiomaticworld.com/` -> nginx `:80` -> active release `dist` symlink
+- `https://axiomaticworld.com/api/*` -> nginx -> active HTTP slot `gateway-bff`
 - `https://axiomaticworld.com/socket.io/*` -> nginx -> ASR Socket.IO on `127.0.0.1:5001`
-- Internal service readiness ports:
-  - `gateway-bff`: `8000`
-  - `identity-service`: `8101`
-  - `learning-core-service`: `8102`
-  - `catalog-content-service`: `8103`
-  - `ai-execution-service`: `8104`
-  - `tts-media-service`: `8105`
-  - `asr-service`: `8106`
-  - `notes-service`: `8107`
-  - `admin-ops-service`: `8108`
+- Active HTTP slot readiness ports:
+  - `blue`: `gateway-bff` `18000`, services `18101-18108`
+  - `green`: `gateway-bff` `28000`, services `28101-28108`
   - `asr-socketio`: `5001`
 
 ## Env-file locations
 
 - Shared production secrets: `/etc/ielts-vocab/backend.env`
 - Service PostgreSQL URLs, split-service ports, and Wave 5 Redis/RabbitMQ settings: `/etc/ielts-vocab/microservices.env`
+- HTTP slot port and same-slot URL overlays: `/etc/ielts-vocab/http-slots/<blue|green>.env`
 - Release root: `/opt/ielts-vocab/current`
+- HTTP slot release roots: `/opt/ielts-vocab/http-slots/<blue|green>/current`
+- Deploy state records: `/opt/ielts-vocab/deploy-state/active-http-slot`, `last-good-release`, and `last-good-slot`
 - Git fetch root for deploys: `/opt/ielts-vocab/repository`
 
 ## GitHub access baseline
@@ -138,18 +134,12 @@ Wave 4 record generation command:
 Every remote rollout must keep these checks green:
 
 - broker env plus Redis/RabbitMQ connectivity through `validate-broker-runtime.sh`
-- `http://127.0.0.1:8000/ready`
-- `http://127.0.0.1:8101/ready`
-- `http://127.0.0.1:8102/ready`
-- `http://127.0.0.1:8103/ready`
-- `http://127.0.0.1:8104/ready`
-- `http://127.0.0.1:8105/ready`
-- `http://127.0.0.1:8106/ready`
-- `http://127.0.0.1:8107/ready`
-- `http://127.0.0.1:8108/ready`
+- active-slot `gateway-bff` and HTTP service `/ready` checks from `/etc/ielts-vocab/http-slots/<slot>.env`
 - `http://127.0.0.1:5001/ready`
 - `http://127.0.0.1/` with `Host: axiomaticworld.com`
 - `http://127.0.0.1/api/books` with `Host: axiomaticworld.com`
+- `smoke-check.sh` reads the active HTTP slot and substitutes its generated port assignments when `/opt/ielts-vocab/deploy-state/active-http-slot` exists.
+- Pre-switch slot validation uses `SMOKE_HTTP_SLOT=<slot> SMOKE_SKIP_NGINX=true SMOKE_SKIP_WORKERS=true` and must include the AI dependency probe.
 
 ## External smoke flow
 
