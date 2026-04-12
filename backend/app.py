@@ -42,6 +42,7 @@ migrate = Migrate()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    app.config.setdefault('CURRENT_SERVICE_NAME', 'backend-monolith')
 
     if app.config.get('TRUST_PROXY_HEADERS'):
         app.wsgi_app = ProxyFix(

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import auth_repository
+from platform_sdk.identity_repository_adapter import auth_repository
 
 
 def set_internal_identity_admin_response(

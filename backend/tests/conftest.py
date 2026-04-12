@@ -20,6 +20,7 @@ from models import db as _db
 class TestConfig:
     """In-memory SQLite config for tests — no file pollution."""
     TESTING = True
+    CURRENT_SERVICE_NAME = 'backend-monolith'
     SECRET_KEY = 'test-secret'
     JWT_SECRET_KEY = 'test-jwt-secret'
     JWT_ACCESS_TOKEN_EXPIRES = 3600
@@ -60,3 +61,14 @@ def db(app):
     with app.app_context():
         yield _db
         _db.session.rollback()
+
+
+@pytest.fixture(autouse=True)
+def reset_runtime_env(monkeypatch):
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'backend-monolith')
+    for name in (
+        'BACKEND_ENV_FILE',
+        'MICROSERVICES_ENV_FILE',
+        'IELTS_HTTP_SLOT_ENV_FILE',
+    ):
+        monkeypatch.delenv(name, raising=False)

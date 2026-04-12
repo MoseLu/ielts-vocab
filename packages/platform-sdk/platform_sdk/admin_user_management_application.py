@@ -11,13 +11,13 @@ from platform_sdk.admin_overview_application import (
 )
 from platform_sdk.cross_service_boundary import build_strict_internal_contract_error
 from platform_sdk.cross_service_boundary import run_with_legacy_cross_service_fallback
+from platform_sdk.admin_projection_boundary import AdminProjectionUnavailable
 from platform_sdk.identity_admin_internal_client import set_identity_user_admin
 from platform_sdk.admin_repository_adapters import (
     admin_user_detail_repository,
     admin_user_directory_repository,
     admin_user_session_repository,
 )
-from services.admin_projection_repository_support import AdminProjectionUnavailable
 
 
 def _parse_wrong_word_iso_timestamp(value) -> float:

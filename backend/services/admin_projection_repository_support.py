@@ -10,6 +10,7 @@ from platform_sdk.admin_user_projection_application import USER_DIRECTORY_PROJEC
 from platform_sdk.admin_wrong_word_projection_application import (
     WRONG_WORD_DIRECTORY_PROJECTION,
 )
+from platform_sdk.admin_projection_boundary import AdminProjectionUnavailable
 from platform_sdk.cross_service_boundary import legacy_cross_service_fallback_enabled
 from service_models.admin_ops_models import User, UserStudySession, UserWrongWord
 from service_models.eventing_models import (
@@ -17,13 +18,6 @@ from service_models.eventing_models import (
     AdminProjectedUser,
     AdminProjectedWrongWord,
 )
-
-
-class AdminProjectionUnavailable(RuntimeError):
-    def __init__(self, action: str, projection_name: str):
-        super().__init__(f'{projection_name} projection is not bootstrapped for {action}')
-        self.action = action
-        self.projection_name = projection_name
 
 
 def _projection_model_or_legacy(projection_name: str, projected_model, legacy_model, *, action: str):

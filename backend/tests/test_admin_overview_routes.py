@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 
 from models import AdminProjectedPromptRun, AdminProjectedTTSMedia, User, UserBookProgress, UserStudySession, db
+from platform_sdk.admin_projection_bootstrap import bootstrap_admin_projection_snapshots
+from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 from services import admin_user_detail_repository
 
 
@@ -266,9 +268,11 @@ def test_admin_users_return_strict_boundary_error_when_learning_core_fallback_is
             current_index=6,
             correct_count=4,
             wrong_count=2,
-            is_completed=False,
+                is_completed=False,
         ))
         db.session.commit()
+        bootstrap_admin_projection_snapshots()
+        admin_id = admin.id
 
     monkeypatch.setenv('CURRENT_SERVICE_NAME', 'admin-ops-service')
     monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'false')
@@ -278,8 +282,15 @@ def test_admin_users_return_strict_boundary_error_when_learning_core_fallback_is
 
     monkeypatch.setattr(admin_user_detail_repository, 'fetch_learning_core_admin_book_progress_rows', _raise)
 
-    login_user(client, 'admin-users-boundary-admin')
-    response = client.get('/api/admin/users')
+    headers = create_internal_auth_headers_for_user(
+        user_id=admin_id,
+        source_service_name='gateway-bff',
+        is_admin=True,
+        username='admin-users-boundary-admin',
+        email='admin-users-boundary-admin@example.com',
+        env=app.config,
+    )
+    response = client.get('/api/admin/users', headers=headers)
 
     assert response.status_code == 503
     assert response.get_json() == {

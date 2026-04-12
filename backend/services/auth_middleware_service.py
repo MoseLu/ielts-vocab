@@ -100,7 +100,11 @@ def _resolve_internal_current_user(app, request, *, allow_missing: bool):
 
 def resolve_current_user(app, request, *, allow_missing: bool):
     token = extract_access_token(request)
-    service_name = (os.environ.get('CURRENT_SERVICE_NAME') or '').strip()
+    service_name = str(
+        app.config.get('CURRENT_SERVICE_NAME')
+        or os.environ.get('CURRENT_SERVICE_NAME')
+        or ''
+    ).strip()
     prefer_cookie_user = (
         service_name == 'identity-service'
         and bool(token)
