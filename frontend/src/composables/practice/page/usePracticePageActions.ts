@@ -44,6 +44,7 @@ export function usePracticePageActions({
   settings,
   navigate,
   showToast,
+  playWord,
   saveProgress,
   clearSpellingRetryTimer,
   clearSpellingFeedbackDismissTimer,
@@ -279,6 +280,10 @@ export function usePracticePageActions({
   const handleOptionSelect = useCallback((idx: number) => {
     if (!choiceOptionsReady || showResult) return
     const dimension: SmartDimension = mode === 'smart' ? smartDimension : 'listening'
+    const shouldReplayListeningPrompt = Boolean(
+      currentWord
+      && (mode === 'listening' || (mode === 'smart' && smartDimension === 'listening')),
+    )
 
     if (idx !== correctIndex) {
       if (wrongSelections.includes(idx)) return
@@ -290,6 +295,9 @@ export function usePracticePageActions({
           analyticsMode: mode ?? 'smart',
           advanceToNext: false,
         })
+      }
+      if (shouldReplayListeningPrompt) {
+        playWord(currentWord.word)
       }
       return
     }
@@ -305,6 +313,8 @@ export function usePracticePageActions({
     commitAnswerResult,
     correctIndex,
     mode,
+    currentWord,
+    playWord,
     showResult,
     smartDimension,
     wrongSelections,

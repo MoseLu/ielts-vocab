@@ -1,12 +1,12 @@
 .practice-stage-guide {
     --guide-color: var(--accent);
-    width: min(100%, 760px);
+    width: min(100%, var(--practice-shell-max-width, 760px));
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 20px 22px;
+    gap: 19px;
+    padding: 23px 25px;
     border-radius: 28px;
     border: 1px solid color-mix(in srgb, var(--guide-color) 18%, var(--surface-border-strong));
     background:
@@ -85,7 +85,7 @@
 }
 
 .practice-stage-guide__title {
-    font-size: clamp(1.1rem, 2vw, 1.42rem);
+    font-size: clamp(1.24rem, 2.25vw, 1.6rem);
     line-height: 1.35;
     font-weight: 800;
     color: var(--text-primary);
@@ -94,7 +94,7 @@
 
 .practice-stage-guide__context {
     margin: 0;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.6;
     color: var(--text-secondary);
 }
@@ -102,16 +102,16 @@
 .practice-stage-guide__rows {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    gap: 13px;
     margin: 0;
 }
 
 .practice-stage-guide__row {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     min-height: 100%;
-    padding: 14px 14px 15px;
+    padding: 17px 17px 18px;
     border-radius: 20px;
     background: color-mix(in srgb, var(--guide-color) 5%, var(--surface-base));
     border: 1px solid color-mix(in srgb, var(--guide-color) 12%, var(--surface-border-strong));
@@ -128,8 +128,8 @@
 
 .practice-stage-guide__value {
     margin: 0;
-    font-size: 13px;
-    line-height: 1.65;
+    font-size: 15px;
+    line-height: 1.7;
     color: var(--text-primary);
 }
 

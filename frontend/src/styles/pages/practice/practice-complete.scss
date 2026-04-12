@@ -187,17 +187,17 @@
 .practice-bottom-bar {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: 8px 20px 12px;
+    gap: calc(var(--space-lg) + 2px);
+    padding: 11px 25px 15px;
     background: transparent;
     margin-top: 0;
-    width: min(100%, 920px);
+    width: min(100%, var(--practice-main-max-width, 920px));
     margin-inline: auto;
 }
 
 .bottom-progress-track {
     flex: 1;
-    height: 8px;
+    height: 11px;
     background: var(--surface-inset);
     border-radius: var(--radius-full);
     position: relative;
@@ -214,11 +214,11 @@
 
 .bottom-progress-dot {
     position: absolute;
-    right: -4px;
+    right: -6px;
     top: 50%;
     transform: translateY(-50%);
-    width: 14px;
-    height: 14px;
+    width: 17px;
+    height: 17px;
     background: var(--accent);
     border-radius: var(--radius-full);
     border: 3px solid color-mix(in srgb, var(--text-inverse) 94%, transparent);
@@ -226,11 +226,11 @@
 }
 
 .bottom-progress-count {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-secondary);
     font-weight: 700;
     white-space: nowrap;
-    padding: 9px 12px;
+    padding: 10px 14px;
     border-radius: 999px;
     background: color-mix(in srgb, var(--surface-elevated) 95%, transparent);
     border: 1px solid var(--surface-border-strong);

@@ -22,7 +22,6 @@ import { PracticePageContent } from './page/PracticePageContent'
 import type { ErrorReviewRoundResults } from './errorReviewSession'
 import { PracticePageCompletedState, PracticePageLoadingState } from './page/PracticePageStates'
 import { readUserId, type ReviewQueueContext, type ReviewQueueSummary } from './page/practicePageHelpers'
-
 export type { PracticeMode, Word, AppSettings, Chapter }
 function PracticePage({
   user,
@@ -341,6 +340,7 @@ function PracticePage({
     settings,
     navigate,
     showToast,
+    playWord,
     saveProgress,
     clearSpellingRetryTimer,
     clearSpellingFeedbackDismissTimer,

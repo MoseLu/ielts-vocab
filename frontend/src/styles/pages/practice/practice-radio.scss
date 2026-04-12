@@ -8,22 +8,22 @@
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 56px);
-    padding: clamp(28px, 6vh, 64px) 16px 24px;
-    gap: 18px;
+    padding: clamp(36px, 6.2vh, 80px) 22px 32px;
+    gap: 24px;
 }
 
 .radio-stage {
-    width: min(100%, 760px);
+    width: min(100%, var(--practice-shell-max-width, 760px));
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 19px;
 }
 
 .radio-stage-word {
     margin: 0;
-    font-size: clamp(2.2rem, 7vw, 4.4rem);
+    font-size: clamp(2.5rem, 7.6vw, 5rem);
     line-height: 1.05;
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -32,16 +32,16 @@
 
 .radio-stage-phonetic {
     margin: 0;
-    font-size: clamp(1.15rem, 3vw, 1.7rem);
+    font-size: clamp(1.24rem, 3.3vw, 1.94rem);
     font-weight: 500;
     color: var(--text-secondary);
 }
 
 .radio-stage-definition {
-    margin: 10px 0 0;
-    max-width: 720px;
-    font-size: clamp(1.05rem, 2.4vw, 1.45rem);
-    line-height: 1.7;
+    margin: 13px 0 0;
+    max-width: min(100%, var(--practice-header-max-width, 720px));
+    font-size: clamp(1.17rem, 2.65vw, 1.64rem);
+    line-height: 1.72;
     color: var(--text-primary);
 }
 
@@ -53,16 +53,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: clamp(8px, 2.2vw, 20px);
-    margin-top: 14px;
+    gap: clamp(11px, 2.5vw, 25px);
+    margin-top: 20px;
 }
 
 .radio-ctrl-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     border-radius: 999px;
     border: none;
     background: transparent;
@@ -78,13 +78,13 @@
 }
 
 .radio-ctrl-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 23px;
+    height: 23px;
 }
 
 .radio-play-btn {
-    width: 58px;
-    height: 58px;
+    width: 67px;
+    height: 67px;
     background: var(--accent);
     color: var(--text-inverse);
     box-shadow: var(--glow-accent);
@@ -96,12 +96,12 @@
 }
 
 .radio-progress-track {
-    width: min(72vw, 640px);
-    height: 4px;
+    width: min(78vw, 756px);
+    height: 6px;
     border-radius: 999px;
     background: var(--border-subtle);
     overflow: hidden;
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
 .radio-progress-fill {
@@ -112,22 +112,22 @@
 }
 
 .radio-progress-label {
-    font-size: 14px;
+    font-size: 16px;
     color: var(--text-tertiary);
 }
 
 .radio-bottom-btns {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 6px;
+    gap: 13px;
+    margin-top: 12px;
 }
 
 .radio-stop-btn,
 .radio-home-btn {
-    padding: 8px 14px;
-    border-radius: 12px;
-    font-size: 13px;
+    padding: 11px 17px;
+    border-radius: 14px;
+    font-size: 15px;
     font-weight: 600;
     border: 1px solid var(--border-subtle);
     background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
@@ -163,8 +163,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 56px;
+    width: 55px;
+    height: 65px;
     border: none;
     background: transparent;
     color: var(--text-tertiary);
@@ -206,8 +206,8 @@
 }
 
 .mic-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 23px;
+    height: 23px;
 }
 
 .spin {
