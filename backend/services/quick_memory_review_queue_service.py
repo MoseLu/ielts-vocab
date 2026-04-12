@@ -44,12 +44,7 @@ def build_review_queue_payload(
     get_global_vocab_pool,
 ) -> dict:
     window_end_ms = now_ms + within_days * 86400000
-    pool = get_global_vocab_pool()
-    pool_by_word = {
-        (item.get('word') or '').strip().lower(): item
-        for item in pool
-        if (item.get('word') or '').strip()
-    }
+    pool_by_word: dict[str, dict] | None = None
 
     due_words = []
     upcoming_words = []
@@ -68,7 +63,15 @@ def build_review_queue_payload(
             book_id=stored_book_id,
             chapter_id=stored_chapter_id,
         )
-        fallback_item = pool_by_word.get(word_key)
+        fallback_item = None
+        if not vocab_item:
+            if pool_by_word is None:
+                pool_by_word = {
+                    (item.get('word') or '').strip().lower(): item
+                    for item in get_global_vocab_pool()
+                    if (item.get('word') or '').strip()
+                }
+            fallback_item = pool_by_word.get(word_key)
         if not vocab_item and not fallback_item:
             continue
 

@@ -29,6 +29,7 @@ def _normalize_client_duration_seconds(
     *,
     started_at: datetime | None = None,
     ended_at: datetime | None = None,
+    trust_client_activity_cap: bool = False,
 ) -> int:
     try:
         duration_seconds = max(0, int(raw_duration or 0))
@@ -39,6 +40,8 @@ def _normalize_client_duration_seconds(
         elapsed_seconds = max(0, int((ended_at - started_at).total_seconds()))
         if duration_seconds <= 0:
             return elapsed_seconds
+        if trust_client_activity_cap:
+            return min(duration_seconds, elapsed_seconds)
         if duration_seconds > 86400 and elapsed_seconds <= 86400:
             return elapsed_seconds
         return max(duration_seconds, elapsed_seconds)
@@ -166,6 +169,7 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
         chapter_id = normalize_chapter_id(payload.get('chapterId'))
         session_id = payload.get('sessionId')
         client_ended_at = parse_client_epoch_ms(payload.get('endedAt'))
+        duration_capped_by_activity = bool(payload.get('durationCappedByActivity'))
 
         words_studied = _coerce_non_negative_int(payload.get('wordsStudied', 0))
         correct_count = _coerce_non_negative_int(payload.get('correctCount', 0))
@@ -182,7 +186,12 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                     client_ended_at=client_ended_at,
                 )
                 session.ended_at = ended_at
-                computed_duration = max(0, int((ended_at - session.started_at).total_seconds()))
+                duration_seconds = _normalize_client_duration_seconds(
+                    payload.get('durationSeconds', 0),
+                    started_at=session.started_at,
+                    ended_at=ended_at,
+                    trust_client_activity_cap=duration_capped_by_activity,
+                )
                 _apply_session_stats(
                     session,
                     mode=mode,
@@ -192,7 +201,9 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                     correct_count=correct_count,
                     wrong_count=wrong_count,
                 )
-                session.duration_seconds = 1 if computed_duration == 0 and session.has_activity() else computed_duration
+                session.duration_seconds = (
+                    1 if duration_seconds == 0 and session.has_activity() else duration_seconds
+                )
                 _record_study_session_event_locally(
                     user_id=user_id,
                     session=session,
@@ -207,6 +218,7 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
             payload.get('durationSeconds', 0),
             started_at=started_at,
             ended_at=client_ended_at,
+            trust_client_activity_cap=duration_capped_by_activity,
         )
         if duration_seconds == 0 and (words_studied > 0 or correct_count > 0 or wrong_count > 0):
             duration_seconds = 1
@@ -234,7 +246,11 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                 wrong_count=wrong_count,
             )
             computed_duration = max(0, int((pending.ended_at - pending.started_at).total_seconds()))
-            pending.duration_seconds = max(duration_seconds, computed_duration)
+            pending.duration_seconds = (
+                min(duration_seconds, computed_duration)
+                if duration_capped_by_activity and duration_seconds > 0
+                else max(duration_seconds, computed_duration)
+            )
             if pending.duration_seconds == 0 and pending.has_activity():
                 pending.duration_seconds = 1
             _record_study_session_event_locally(

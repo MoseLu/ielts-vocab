@@ -124,6 +124,39 @@ def test_log_learning_session_queues_learning_outbox_event(app):
         }
 
 
+def test_log_learning_session_honors_activity_capped_duration_for_started_session(app):
+    with app.app_context():
+        user = _create_user(username='wave5-session-activity-cap-user')
+        ended_at = datetime.utcnow().replace(microsecond=0)
+        started_at = ended_at - timedelta(hours=7, minutes=10, seconds=46)
+        session = UserStudySession(
+            user_id=user.id,
+            mode='quickmemory',
+            book_id='ielts_listening_premium',
+            chapter_id='55',
+            started_at=started_at,
+        )
+        db.session.add(session)
+        db.session.commit()
+
+        payload, status = log_learning_core_session_response(user.id, {
+            'sessionId': session.id,
+            'mode': 'quickmemory',
+            'bookId': 'ielts_listening_premium',
+            'chapterId': '55',
+            'wordsStudied': 1,
+            'wrongCount': 1,
+            'durationSeconds': 20 * 60 + 8,
+            'durationCappedByActivity': True,
+            'endedAt': int(ended_at.timestamp() * 1000),
+        })
+
+        db.session.refresh(session)
+        assert status == 200
+        assert payload['id'] == session.id
+        assert session.duration_seconds == 20 * 60 + 8
+
+
 def test_learning_session_outbox_publish_and_admin_projection_consume_flow(app):
     with app.app_context():
         user = _create_user(username='wave5-session-projection-user')

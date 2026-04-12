@@ -50,41 +50,50 @@ def _copy_vocab_entry(word: dict, **extra_fields) -> dict:
 
 
 @functools.lru_cache(maxsize=1)
-def get_global_vocab_pool() -> list:
-    seen: dict[str, dict] = {}
-    for book in list_vocab_books():
-        words = load_book_vocabulary(book['id']) or []
-        for word in words:
-            key = word.get('word', '').strip().lower()
-            if key and key not in seen:
-                seen[key] = _copy_vocab_entry(word)
-    return list(seen.values())
-
-
-@functools.lru_cache(maxsize=1)
-def get_quick_memory_vocab_lookup() -> dict[str, list[dict]]:
+def _build_quick_memory_vocab_catalog_snapshot() -> tuple[list[dict], dict[str, list[dict]]]:
+    pool_by_word: dict[str, dict] = {}
     lookup: dict[str, list[dict]] = {}
     for book in list_vocab_books():
         book_id = book['id']
         book_title = book.get('title') or book_id
         words = load_book_vocabulary(book_id) or []
         for word in words:
-            text = (word.get('word') or '').strip()
-            if not text:
+            word_text = (word.get('word') or '').strip()
+            if not word_text:
                 continue
 
             chapter_id = normalize_chapter_id(word.get('chapter_id'))
             chapter_title = word.get('chapter_title') or (
                 f"第{chapter_id}章" if chapter_id is not None else ''
             )
-            lookup.setdefault(text.lower(), []).append(_copy_vocab_entry(
+            word_key = word_text.lower()
+            lookup.setdefault(word_key, []).append(_copy_vocab_entry(
                 word,
                 book_id=book_id,
                 book_title=book_title,
                 chapter_id=chapter_id,
                 chapter_title=chapter_title,
             ))
+            pool_by_word.setdefault(word_key, _copy_vocab_entry(word))
+    return list(pool_by_word.values()), lookup
+
+
+def _clear_quick_memory_vocab_catalog_cache() -> None:
+    _build_quick_memory_vocab_catalog_snapshot.cache_clear()
+
+
+def get_global_vocab_pool() -> list:
+    pool, _ = _build_quick_memory_vocab_catalog_snapshot()
+    return pool
+
+
+def get_quick_memory_vocab_lookup() -> dict[str, list[dict]]:
+    _, lookup = _build_quick_memory_vocab_catalog_snapshot()
     return lookup
+
+
+get_global_vocab_pool.cache_clear = _clear_quick_memory_vocab_catalog_cache
+get_quick_memory_vocab_lookup.cache_clear = _clear_quick_memory_vocab_catalog_cache
 
 
 def resolve_quick_memory_vocab_entry(

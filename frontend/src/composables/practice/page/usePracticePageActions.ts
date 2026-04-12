@@ -6,6 +6,7 @@ import {
 import {
   logSession,
   recordModeAnswer,
+  resolveStudySessionDurationSeconds,
 } from '../../../hooks/useAIChat'
 import type {
   PracticeMode,
@@ -114,7 +115,10 @@ export function usePracticePageActions({
       const finalSessionCorrect = wasCorrect ? sessionCorrectRef.current + 1 : sessionCorrectRef.current
       const finalSessionWrong = wasCorrect ? sessionWrongRef.current : sessionWrongRef.current + 1
       const sessionStart = sessionStartRef.current
-      const durationSeconds = sessionStart > 0 ? Math.round((Date.now() - sessionStart) / 1000) : 0
+      const durationSeconds = resolveStudySessionDurationSeconds({
+        sessionId: sessionIdRef.current,
+        startedAt: sessionStart,
+      })
       completedSessionDurationSecondsRef.current = durationSeconds
       sessionLoggedRef.current = true
       syncCurrentSessionSnapshot()
@@ -239,7 +243,7 @@ export function usePracticePageActions({
     if (currentWord) {
       registerAnsweredWord(currentWord.word)
     }
-    syncCurrentSessionSnapshot()
+    syncCurrentSessionSnapshot(Date.now())
     saveProgress(nextCorrect, nextWrong, { advanceToNext })
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
 
@@ -398,7 +402,7 @@ export function usePracticePageActions({
     setWrongCount(nextWrong)
     saveProgress(correctCount, nextWrong)
     sessionWrongRef.current += 1
-    syncCurrentSessionSnapshot()
+    syncCurrentSessionSnapshot(Date.now())
     recordModeAnswer(mode ?? 'smart', false)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: 'wrong' }))
     goNext(false)

@@ -76,6 +76,48 @@ function resolveSnapshotEndAt(snapshot: ActiveStudySessionSnapshot, now = Date.n
   return Math.max(snapshot.startedAt, Math.min(now, graceDeadline))
 }
 
+function normalizeEpochMs(value: unknown, fallback = Date.now()): number {
+  const timestamp = Number(value)
+  return Number.isFinite(timestamp) ? Math.max(0, Math.trunc(timestamp)) : fallback
+}
+
+function resolveStudySessionTiming(data: {
+  sessionId?: number | null
+  startedAt: number
+  endedAt?: number
+  durationSeconds?: number
+}) {
+  const startedAt = normalizeEpochMs(data.startedAt, 0)
+  const requestedEndedAt = normalizeEpochMs(data.endedAt)
+  const snapshot = data.sessionId != null ? readActiveStudySessionSnapshot() : null
+  const shouldApplyIdleCap = Boolean(
+    snapshot
+    && snapshot.sessionId === data.sessionId
+    && startedAt > 0
+  )
+  const endedAt = shouldApplyIdleCap
+    ? resolveSnapshotEndAt(snapshot as ActiveStudySessionSnapshot, requestedEndedAt)
+    : requestedEndedAt
+  const derivedDuration = startedAt > 0 && endedAt >= startedAt
+    ? Math.max(0, Math.round((endedAt - startedAt) / 1000))
+    : 0
+  const rawDuration = Math.max(0, Math.trunc(Number(data.durationSeconds ?? 0) || 0))
+  const durationSeconds = shouldApplyIdleCap && derivedDuration > 0
+    ? derivedDuration
+    : Math.max(rawDuration, derivedDuration)
+
+  return { startedAt, endedAt, durationSeconds, cappedByActivity: shouldApplyIdleCap && endedAt < requestedEndedAt }
+}
+
+export function resolveStudySessionDurationSeconds(data: {
+  sessionId?: number | null
+  startedAt: number
+  endedAt?: number
+  durationSeconds?: number
+}): number {
+  return resolveStudySessionTiming(data).durationSeconds
+}
+
 function buildSessionPayload(data: {
   sessionId?: number | null
   mode: string
@@ -88,9 +130,12 @@ function buildSessionPayload(data: {
   startedAt: number
   endedAt?: number
 }) {
-  const startedAt = Number.isFinite(data.startedAt) ? Math.max(0, Math.trunc(data.startedAt)) : 0
-  const endedAtInput = data.endedAt ?? Date.now()
-  const endedAt = Number.isFinite(endedAtInput) ? Math.max(0, Math.trunc(endedAtInput)) : Date.now()
+  const timing = resolveStudySessionTiming({
+    sessionId: data.sessionId,
+    startedAt: data.startedAt,
+    endedAt: data.endedAt,
+    durationSeconds: data.durationSeconds,
+  })
   const payload = {
     sessionId: data.sessionId ?? undefined,
     mode: data.mode,
@@ -99,26 +144,12 @@ function buildSessionPayload(data: {
     wordsStudied: Math.max(0, Math.trunc(data.wordsStudied)),
     correctCount: Math.max(0, Math.trunc(data.correctCount)),
     wrongCount: Math.max(0, Math.trunc(data.wrongCount)),
-    durationSeconds: Math.max(0, Math.trunc(data.durationSeconds)),
-    startedAt,
-    endedAt,
+    durationSeconds: timing.durationSeconds,
+    startedAt: timing.startedAt,
+    endedAt: timing.endedAt,
+    durationCappedByActivity: timing.cappedByActivity || undefined,
   }
-
-  const derivedDuration = (
-    payload.startedAt > 0
-    && payload.endedAt >= payload.startedAt
-  )
-    ? Math.round((payload.endedAt - payload.startedAt) / 1000)
-    : 0
-  const normalizedDuration = Math.max(
-    payload.durationSeconds,
-    derivedDuration,
-  )
-
-  return {
-    ...payload,
-    durationSeconds: Math.max(0, normalizedDuration),
-  }
+  return payload
 }
 
 function shouldDiscardPassiveSession(payload: ReturnType<typeof buildSessionPayload>) {
@@ -256,7 +287,9 @@ export function updateStudySessionSnapshot(patch: SessionSnapshotPatch): void {
     bookId: patch.bookId !== undefined ? (patch.bookId ?? null) : snapshot.bookId,
     chapterId: patch.chapterId !== undefined ? normalizeChapterId(patch.chapterId) : snapshot.chapterId,
     startedAt: patch.startedAt ?? snapshot.startedAt,
-    lastActiveAt: Math.max(snapshot.lastActiveAt, patch.activeAt ?? Date.now()),
+    lastActiveAt: patch.activeAt == null
+      ? snapshot.lastActiveAt
+      : Math.max(snapshot.lastActiveAt, patch.activeAt),
     wordsStudied: patch.wordsStudied ?? snapshot.wordsStudied,
     correctCount: patch.correctCount ?? snapshot.correctCount,
     wrongCount: patch.wrongCount ?? snapshot.wrongCount,
@@ -279,6 +312,11 @@ export function flushStudySessionOnPageHide(data: {
 }): void {
   const sessionId = data.sessionId ?? null
   const endedAt = Date.now()
+  const durationSeconds = resolveStudySessionDurationSeconds({
+    sessionId,
+    startedAt: data.startedAt,
+    endedAt,
+  })
 
   if (sessionId) {
     updateStudySessionSnapshot({
@@ -287,7 +325,6 @@ export function flushStudySessionOnPageHide(data: {
       bookId: data.bookId,
       chapterId: data.chapterId,
       startedAt: data.startedAt,
-      activeAt: endedAt,
       wordsStudied: data.wordsStudied,
       correctCount: data.correctCount,
       wrongCount: data.wrongCount,
@@ -302,7 +339,7 @@ export function flushStudySessionOnPageHide(data: {
     wordsStudied: data.wordsStudied,
     correctCount: data.correctCount,
     wrongCount: data.wrongCount,
-    durationSeconds: Math.max(0, Math.round((endedAt - data.startedAt) / 1000)),
+    durationSeconds,
     startedAt: data.startedAt,
     endedAt,
   })
@@ -353,7 +390,6 @@ export async function logSession(data: {
       bookId: data.bookId,
       chapterId: data.chapterId,
       startedAt: data.startedAt,
-      activeAt: data.endedAt ?? Date.now(),
       wordsStudied: data.wordsStudied,
       correctCount: data.correctCount,
       wrongCount: data.wrongCount,

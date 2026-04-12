@@ -6,6 +6,7 @@ export {
   flushStudySessionOnPageHide,
   logSession,
   recordModeAnswer,
+  resolveStudySessionDurationSeconds,
   startSession,
   touchStudySessionActivity,
   updateStudySessionSnapshot,
