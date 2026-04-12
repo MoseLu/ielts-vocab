@@ -47,7 +47,7 @@ describe('OptionsMode listening feedback', () => {
     const { container } = render(
       <OptionsMode
         currentWord={makeWord()}
-        previousWord={null}
+        previousWord={{ ...makeWord(), word: 'rate', phonetic: '/reɪt/', definition: '率；速度；比率；价格；费用；' }}
         lastState={null}
         mode="listening"
         options={[
@@ -81,6 +81,7 @@ describe('OptionsMode listening feedback', () => {
 
     const posLabels = Array.from(container.querySelectorAll('.option-pos')).map(node => node.textContent)
     expect(posLabels).toEqual(['v', 'n', 'adv', 'adj'])
+    expect(container.querySelector('.prev-word-inline--choice')).not.toBeNull()
 
     const revealedWords = Array.from(container.querySelectorAll('.option-word-reveal')).map(node => node.textContent)
     expect(revealedWords).toEqual(['guide', 'guy'])

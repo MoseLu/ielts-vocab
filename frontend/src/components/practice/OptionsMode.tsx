@@ -64,7 +64,12 @@ export default function OptionsMode({
 
   return (
     <div className={`practice-page${isChoiceLayout ? ' practice-page--choice' : ''}`}>
-      <PrevWordBlock previousWord={previousWord} lastState={lastState} onGoBack={onGoBack} />
+      <PrevWordBlock
+        previousWord={previousWord}
+        lastState={lastState}
+        onGoBack={onGoBack}
+        className={isChoiceLayout ? 'prev-word-inline--choice' : undefined}
+      />
 
       <div className="practice-main">
         {(mode === 'smart' || favoriteSlot) && (

@@ -18,12 +18,14 @@ interface PrevWordBlockProps {
   previousWord: LastState['prevWord']
   lastState: LastState | null
   onGoBack: () => void
+  className?: string
 }
 
-export function PrevWordBlock({ previousWord, lastState, onGoBack }: PrevWordBlockProps) {
+export function PrevWordBlock({ previousWord, lastState, onGoBack, className }: PrevWordBlockProps) {
   if (!previousWord) return null
+  const rootClassName = className ? `prev-word-inline ${className}` : 'prev-word-inline'
   return (
-    <div className="prev-word-inline">
+    <div className={rootClassName}>
       <button className="prev-back-btn" onClick={onGoBack} disabled={!lastState} title="返回上一个词">←</button>
       <div className="prev-word-info">
         <div className="prev-word-text">{previousWord.word}</div>
