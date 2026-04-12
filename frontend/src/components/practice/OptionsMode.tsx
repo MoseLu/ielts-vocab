@@ -54,6 +54,8 @@ export default function OptionsMode({
   const isSmartDictation = mode === 'smart' && smartDimension === 'dictation'
   const isMeaningRecall = mode === 'meaning' || (mode === 'smart' && smartDimension === 'meaning')
   const isChoiceLayout = !isSmartDictation && !isMeaningRecall
+  const hasChoicePrevWord = Boolean(previousWord)
+  const hasChoiceTopRail = isChoiceLayout && (hasChoicePrevWord || Boolean(favoriteSlot))
   const listeningExample = currentWord.examples?.[0]?.en ?? ''
   const showListeningExample = displayMode === 'audio'
     && !optionsLoading
@@ -89,16 +91,18 @@ export default function OptionsMode({
       )}
 
       <div className="practice-main">
-        {isChoiceLayout && (
-          <div className="practice-choice-top-rail">
-            <div className="practice-choice-top-rail__left">
+        {hasChoiceTopRail && (
+          <div className={`practice-choice-top-rail${hasChoicePrevWord ? '' : ' practice-choice-top-rail--action-only'}`}>
+            {hasChoicePrevWord ? (
+              <div className="practice-choice-top-rail__left">
               <PrevWordBlock
                 previousWord={previousWord}
                 lastState={lastState}
                 onGoBack={onGoBack}
                 className="prev-word-inline--choice"
               />
-            </div>
+              </div>
+            ) : null}
             {favoriteSlot ? (
               <div className="practice-choice-top-rail__right">{favoriteSlot}</div>
             ) : null}

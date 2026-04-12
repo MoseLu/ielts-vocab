@@ -48,6 +48,8 @@ describe('DictationMode', () => {
     const { container } = render(<DictationMode {...baseProps} />)
 
     expect(container.querySelector('.dictation-card')).not.toBeNull()
+    expect(container.querySelector('.dictation-card-header__center .dictation-submode-toggle')).not.toBeNull()
+    expect(container.querySelector('.dictation-card-header__side--action')).not.toBeNull()
     expect(container.querySelector('.dictation-stage')).not.toBeNull()
     expect(container.querySelector('.dictation-content-card')).not.toBeNull()
     expect(container.querySelector('.dictation-progress')).not.toBeNull()

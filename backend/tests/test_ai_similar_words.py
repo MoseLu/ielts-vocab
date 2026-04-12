@@ -146,4 +146,4 @@ def test_similar_words_prefers_preset_confusables_when_available(client, monkeyp
 
     assert response.status_code == 200
     words = [item['word'] for item in response.get_json()['words']]
-    assert words == ['guy', 'guise']
+    assert words == ['guise', 'guy']

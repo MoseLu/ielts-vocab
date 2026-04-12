@@ -167,29 +167,34 @@ export default function DictationMode({
         <div className="dictation-card">
           {showHeader ? (
             <div className="dictation-card-header">
-              {hasExamples ? (
-                <div className="dictation-submode-toggle">
-                  <button
-                    className={`submode-btn ${activeSubMode === 'word' ? 'active' : ''}`}
-                    onClick={() => setDictationSubMode('word')}
-                    disabled={spellingResult !== null}
-                  >
-                    单词拼写
-                  </button>
-                  <button
-                    className={`submode-btn ${activeSubMode === 'example' ? 'active' : ''}`}
-                    onClick={() => setDictationSubMode('example')}
-                    disabled={spellingResult !== null}
-                  >
-                    例句填空
-                  </button>
-                </div>
-              ) : (
-                <div className="dictation-card-header__spacer" />
-              )}
-              {favoriteSlot ? (
-                <div className="dictation-card-header__action">{favoriteSlot}</div>
-              ) : null}
+              <div className="dictation-card-header__side" aria-hidden="true" />
+              <div className="dictation-card-header__center">
+                {hasExamples ? (
+                  <div className="dictation-submode-toggle">
+                    <button
+                      className={`submode-btn ${activeSubMode === 'word' ? 'active' : ''}`}
+                      onClick={() => setDictationSubMode('word')}
+                      disabled={spellingResult !== null}
+                    >
+                      单词拼写
+                    </button>
+                    <button
+                      className={`submode-btn ${activeSubMode === 'example' ? 'active' : ''}`}
+                      onClick={() => setDictationSubMode('example')}
+                      disabled={spellingResult !== null}
+                    >
+                      例句填空
+                    </button>
+                  </div>
+                ) : (
+                  <div className="dictation-card-header__spacer" />
+                )}
+              </div>
+              <div className="dictation-card-header__side dictation-card-header__side--action">
+                {favoriteSlot ? (
+                  <div className="dictation-card-header__action">{favoriteSlot}</div>
+                ) : null}
+              </div>
             </div>
           ) : null}
 

@@ -1,5 +1,6 @@
 export type { GenerateOptionsConfig } from './utils.options'
 export {
+  buildPresetListeningOptions,
   countPhoneticSyllables,
   generateOptions,
   normalizeWordAnswer,

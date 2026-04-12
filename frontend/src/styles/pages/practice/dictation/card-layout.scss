@@ -28,20 +28,41 @@
 }
 
 .dictation-card-header {
-    display: flex;
+    --dictation-header-side-size: 54px;
+    display: grid;
+    grid-template-columns: var(--dictation-header-side-size) minmax(0, 1fr) var(--dictation-header-side-size);
     align-items: center;
-    justify-content: space-between;
     gap: 16px;
     min-height: 44px;
+    width: 100%;
+}
+
+.dictation-card-header__side {
+    width: var(--dictation-header-side-size);
+    min-width: 0;
+    min-height: 1px;
+    display: flex;
+    align-items: center;
+}
+
+.dictation-card-header__side--action {
+    justify-content: flex-end;
+}
+
+.dictation-card-header__center {
+    min-width: 0;
+    display: flex;
+    justify-content: center;
 }
 
 .dictation-card-header__spacer {
-    flex: 1;
+    min-height: 1px;
 }
 
 .dictation-card-header__action {
     display: inline-flex;
     align-items: center;
+    justify-content: flex-end;
     flex-shrink: 0;
 }
 

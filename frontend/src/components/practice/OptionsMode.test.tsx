@@ -91,7 +91,7 @@ describe('OptionsMode listening feedback', () => {
     expect(screen.queryByText('这一步干什么')).not.toBeInTheDocument()
   })
 
-  it('renders the listening top rail so choice content keeps a stable position', () => {
+  it('renders a compact choice top rail when only the favorite action is present', () => {
     const { container } = render(
       <OptionsMode
         currentWord={makeWord()}
@@ -128,7 +128,8 @@ describe('OptionsMode listening feedback', () => {
       />,
     )
 
-    expect(container.querySelector('.practice-choice-top-rail')).not.toBeNull()
+    expect(container.querySelector('.practice-choice-top-rail.practice-choice-top-rail--action-only')).not.toBeNull()
+    expect(container.querySelector('.practice-choice-top-rail__left')).toBeNull()
     expect(container.querySelector('.practice-choice-top-rail__right button')).not.toBeNull()
     expect(container.querySelector('.practice-main-header__action')).toBeNull()
   })
