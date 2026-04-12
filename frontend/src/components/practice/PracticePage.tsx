@@ -38,9 +38,8 @@ function PracticePage({
   const chapterId = searchParams.get('chapter')
   const errorMode = searchParams.get('mode') === 'errors'
   const reviewMode = searchParams.get('review') === 'due'
-  const practiceBookId = reviewMode ? (bookId ?? null) : bookId
-  const practiceChapterId = reviewMode ? (chapterId ?? null) : chapterId
-
+  const practiceMode: PracticeMode = reviewMode ? 'quickmemory' : mode
+  const practiceBookId = reviewMode ? (bookId ?? null) : bookId, practiceChapterId = reviewMode ? (chapterId ?? null) : chapterId
   const [vocabulary, setVocabulary] = useState<Word[]>([])
   const [queue, setQueue] = useState<number[]>([])
   const [queueIndex, setQueueIndex] = useState(0)
@@ -69,18 +68,17 @@ function PracticePage({
   const [reviewOffset, setReviewOffset] = useState(0)
   const [reviewSummary, setReviewSummary] = useState<ReviewQueueSummary | null>(null)
   const [reviewContext, setReviewContext] = useState<ReviewQueueContext | null>(null)
+  const [reviewQueueError, setReviewQueueError] = useState<string | null>(null)
   const [quickMemoryReviewQueueResolved, setQuickMemoryReviewQueueResolved] = useState(false)
   const [noListeningPresets, setNoListeningPresets] = useState(false)
   const [errorReviewRound, setErrorReviewRound] = useState(1)
   const [smartDimension, setSmartDimension] = useState<SmartDimension>('meaning')
-
   const vocabRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
   const errorProgressHydratedRef = useRef(false)
   const errorRoundResultsRef = useRef<ErrorReviewRoundResults>({})
   const spellingRetryTimerRef = useRef<number | null>(null)
   const spellingFeedbackDismissTimerRef = useRef<number | null>(null)
-
   const {
     settings,
     radioQuickSettings,
@@ -106,7 +104,7 @@ function PracticePage({
     handleRadioProgressChange,
     syncCurrentSessionSnapshot,
   } = usePracticePageSession({
-    mode,
+    mode: practiceMode,
     errorMode,
     chapterId,
     practiceBookId,
@@ -161,7 +159,7 @@ function PracticePage({
     user,
     userId,
     currentDay,
-    mode,
+    mode: practiceMode,
     bookId,
     chapterId,
     resolvedPracticeBookId,
@@ -190,6 +188,7 @@ function PracticePage({
     reviewOffset,
     setReviewSummary,
     setReviewContext,
+    setReviewQueueError,
     setQuickMemoryReviewQueueResolved,
     setNoListeningPresets,
     setErrorReviewRound,
@@ -206,10 +205,10 @@ function PracticePage({
   useEffect(() => {
     const nextIndex = queue.length > 0 ? Math.min(queueIndex, queue.length - 1) : 0
     setFavoriteQueueIndex(nextIndex)
-  }, [bookId, chapterId, errorMode, mode, queue.length, queueIndex, reviewMode])
+  }, [bookId, chapterId, errorMode, practiceMode, queue.length, queueIndex, reviewMode])
 
   const { favoriteActive, favoriteBusy, handleFavoriteToggle, wordListActionControls } = usePracticePageWordActions({
-    userId, mode, vocabulary, queue, queueIndex, favoriteQueueIndex, currentWord,
+    userId, mode: practiceMode, vocabulary, queue, queueIndex, favoriteQueueIndex, currentWord,
     practiceBookId: resolvedPracticeBookId,
     practiceChapterId: resolvedPracticeChapterId,
     currentChapterTitle,
@@ -224,7 +223,7 @@ function PracticePage({
     choiceOptionsReady,
   } = usePracticePageEffects({
     userId,
-    mode,
+    mode: practiceMode,
     smartDimension,
     setSmartDimension,
     vocabulary,
@@ -264,7 +263,7 @@ function PracticePage({
     buildChapterPath,
     handleContinueErrorReview,
   } = usePracticePageControls({
-    mode,
+    mode: practiceMode,
     currentDay,
     userId,
     bookId,
@@ -317,7 +316,7 @@ function PracticePage({
   } = usePracticePageActions({
     user,
     userId,
-    mode,
+    mode: practiceMode,
     smartDimension,
     bookId,
     chapterId,
@@ -378,7 +377,7 @@ function PracticePage({
   })
 
   usePracticePageKeyboardShortcuts({
-    mode,
+    mode: practiceMode,
     smartDimension,
     choiceOptionsReady,
     showWordList,
@@ -400,9 +399,10 @@ function PracticePage({
     return (
       <PracticePageLoadingState
         navigate={navigate}
-        mode={mode}
+        mode={practiceMode}
         noListeningPresets={noListeningPresets}
         reviewMode={reviewMode}
+        reviewQueueError={reviewQueueError}
         quickMemoryReviewQueueResolved={quickMemoryReviewQueueResolved}
       />
     )
@@ -432,7 +432,7 @@ function PracticePage({
 
   return (
     <PracticePageContent
-      mode={mode}
+      mode={practiceMode}
       currentDay={currentDay}
       resolvedPracticeBookId={resolvedPracticeBookId}
       resolvedPracticeChapterId={resolvedPracticeChapterId}

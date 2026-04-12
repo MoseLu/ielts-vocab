@@ -295,7 +295,7 @@ describe('PracticePage quick-memory review mode', () => {
     }))
 
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/ai/quick-memory/review-queue?limit=0&within_days=3&offset=0&scope=due') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=100&within_days=3&offset=0&scope=due') {
         return Promise.resolve({
           words: [{ word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' }],
           summary: {
@@ -304,7 +304,7 @@ describe('PracticePage quick-memory review mode', () => {
             returned_count: 1,
             review_window_days: 3,
             offset: 0,
-            limit: null,
+            limit: 100,
             total_count: 1,
             has_more: false,
             next_offset: null,
@@ -378,7 +378,7 @@ describe('PracticePage quick-memory review mode', () => {
     }))
 
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/ai/quick-memory/review-queue?limit=0&within_days=3&offset=0&scope=due') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=100&within_days=3&offset=0&scope=due') {
         return Promise.resolve({
           words: [
             { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
@@ -390,7 +390,7 @@ describe('PracticePage quick-memory review mode', () => {
             returned_count: 2,
             review_window_days: 3,
             offset: 0,
-            limit: null,
+            limit: 100,
             total_count: 2,
             has_more: false,
             next_offset: null,
@@ -453,7 +453,7 @@ describe('PracticePage quick-memory review mode', () => {
   it('routes the Shift+W favorite shortcut to the currently displayed quick-memory word', async () => {
     const user = userEvent.setup()
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/ai/quick-memory/review-queue?limit=0&within_days=1&offset=0&scope=due') {
+      if (url === '/api/ai/quick-memory/review-queue?limit=100&within_days=1&offset=0&scope=due') {
         return Promise.resolve({
           words: [
             { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
@@ -465,7 +465,7 @@ describe('PracticePage quick-memory review mode', () => {
             returned_count: 2,
             review_window_days: 1,
             offset: 0,
-            limit: null,
+            limit: 100,
             total_count: 2,
             has_more: false,
             next_offset: null,

@@ -37,6 +37,7 @@ interface PracticePageLoadingStateProps {
   mode?: PracticeMode
   noListeningPresets: boolean
   reviewMode: boolean
+  reviewQueueError: string | null
   quickMemoryReviewQueueResolved: boolean
 }
 
@@ -45,6 +46,7 @@ export function PracticePageLoadingState({
   mode,
   noListeningPresets,
   reviewMode,
+  reviewQueueError,
   quickMemoryReviewQueueResolved,
 }: PracticePageLoadingStateProps) {
   if (mode === 'listening' && noListeningPresets) {
@@ -61,7 +63,18 @@ export function PracticePageLoadingState({
       </div>
     )
   }
-
+  if (reviewMode && mode === 'quickmemory' && reviewQueueError) {
+    return (
+      <div className="practice-session-layout">
+        <div className="practice-complete">
+          <div className="complete-emoji" aria-hidden="true">!</div>
+          <h2>到期复习暂时打不开</h2>
+          <p className="practice-complete-copy">{reviewQueueError}</p>
+          <button className="complete-btn" onClick={() => window.location.reload()}>重新加载</button>
+        </div>
+      </div>
+    )
+  }
   if (reviewMode && mode === 'quickmemory' && quickMemoryReviewQueueResolved) {
     return (
       <div className="practice-session-layout">

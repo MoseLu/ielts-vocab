@@ -27,6 +27,8 @@ import {
 } from '../../../components/practice/page/practicePageHelpers'
 import type { ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
 
+const QUICK_MEMORY_REVIEW_BATCH_SIZE = 100
+
 interface UsePracticePageDataParams {
   user: unknown
   userId: string | number | null
@@ -64,6 +66,7 @@ interface UsePracticePageDataParams {
   reviewOffset: number
   setReviewSummary: Dispatch<SetStateAction<ReviewQueueSummary | null>>
   setReviewContext: Dispatch<SetStateAction<ReviewQueueContext | null>>
+  setReviewQueueError: Dispatch<SetStateAction<string | null>>
   setQuickMemoryReviewQueueResolved: Dispatch<SetStateAction<boolean>>
   setNoListeningPresets: Dispatch<SetStateAction<boolean>>
   setErrorReviewRound: Dispatch<SetStateAction<number>>
@@ -106,6 +109,7 @@ export function usePracticePageData({
   reviewOffset,
   setReviewSummary,
   setReviewContext,
+  setReviewQueueError,
   setQuickMemoryReviewQueueResolved,
   setNoListeningPresets,
   setErrorReviewRound,
@@ -182,6 +186,7 @@ export function usePracticePageData({
     let cancelled = false
     errorProgressHydratedRef.current = false
     setNoListeningPresets(false)
+    setReviewQueueError(null)
 
     if (Object.keys(loadSmartStats()).length === 0) {
       loadSmartStatsFromBackend()
@@ -192,10 +197,12 @@ export function usePracticePageData({
       void (async () => {
         try {
           const reviewWindowDays = Math.max(1, parseInt(String(settings.reviewInterval ?? '1'), 10) || 1)
-          const rawLimit = settings.reviewLimit === 'unlimited'
+          const configuredLimit = settings.reviewLimit === 'unlimited'
             ? 0
             : (parseInt(String(settings.reviewLimit ?? DEFAULT_SETTINGS.reviewLimit), 10) || parseInt(DEFAULT_SETTINGS.reviewLimit, 10))
-          const reviewLimit = rawLimit === 0 ? 0 : Math.max(1, rawLimit)
+          const reviewLimit = configuredLimit === 0
+            ? QUICK_MEMORY_REVIEW_BATCH_SIZE
+            : Math.max(1, configuredLimit)
           const params = new URLSearchParams({
             limit: String(reviewLimit),
             within_days: String(reviewWindowDays),
@@ -239,6 +246,7 @@ export function usePracticePageData({
           setWordStatuses({})
           setReviewSummary(data.summary ?? null)
           setReviewContext(fallbackContext)
+          setReviewQueueError(null)
           setQuickMemoryReviewQueueResolved(true)
 
           if (fallbackContext?.chapter_title) {
@@ -247,7 +255,13 @@ export function usePracticePageData({
             setCurrentChapterTitle('艾宾浩斯复习')
           }
         } catch {
-          if (!cancelled) showToast?.('加载复习队列失败', 'error')
+          if (!cancelled) {
+            setReviewSummary(null)
+            setReviewContext(null)
+            setReviewQueueError('加载到期复习失败，请刷新后重试。')
+            setQuickMemoryReviewQueueResolved(true)
+            showToast?.('加载复习队列失败', 'error')
+          }
         }
       })()
 
@@ -463,6 +477,7 @@ export function usePracticePageData({
     setQueue,
     setQueueIndex,
     setQuickMemoryReviewQueueResolved,
+    setReviewQueueError,
     setReviewContext,
     setReviewSummary,
     setVocabulary,
