@@ -112,6 +112,8 @@ export function usePracticePageControls({
   setReviewOffset,
   setErrorReviewRound,
 }: UsePracticePageControlsParams): UsePracticePageControlsResult {
+  const hasValidCurrentDay = Number.isInteger(currentDay) && currentDay > 0
+
   const saveProgress = useCallback((
     correct: number,
     wrong: number,
@@ -189,6 +191,10 @@ export function usePracticePageControls({
       return
     }
 
+    if (!hasValidCurrentDay) {
+      return
+    }
+
     const dayProgress: Record<string, Record<string, unknown>> = JSON.parse(localStorage.getItem('day_progress') || '{}')
     dayProgress[String(currentDay)] = {
       ...progressData,
@@ -208,6 +214,7 @@ export function usePracticePageControls({
     currentDay,
     errorMode,
     errorReviewRound,
+    hasValidCurrentDay,
     mode,
     queue,
     queueIndex,

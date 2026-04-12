@@ -1,8 +1,26 @@
 import { useCallback, useEffect, useState } from 'react'
 
+export function normalizePracticeDay(value: number | string | null | undefined): number | null {
+  const numericValue = typeof value === 'number'
+    ? value
+    : value == null
+      ? Number.NaN
+      : Number.parseInt(value, 10)
+
+  return Number.isInteger(numericValue) && numericValue > 0
+    ? numericValue
+    : null
+}
+
 function readStoredDay() {
   const saved = localStorage.getItem('current_day')
-  return saved ? parseInt(saved, 10) : null
+  const normalizedDay = normalizePracticeDay(saved)
+
+  if (saved != null && normalizedDay == null) {
+    localStorage.removeItem('current_day')
+  }
+
+  return normalizedDay
 }
 
 export function usePracticeRuntimeState() {
@@ -17,8 +35,16 @@ export function usePracticeRuntimeState() {
   }, [])
 
   const handleDayChange = useCallback((day: number) => {
-    setCurrentDay(day)
-    localStorage.setItem('current_day', day.toString())
+    const normalizedDay = normalizePracticeDay(day)
+
+    if (normalizedDay == null) {
+      setCurrentDay(null)
+      localStorage.removeItem('current_day')
+      return
+    }
+
+    setCurrentDay(normalizedDay)
+    localStorage.setItem('current_day', normalizedDay.toString())
   }, [])
 
   useEffect(() => {
