@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+from platform_sdk.admin_projection_boundary import AdminProjectionUnavailable
 from platform_sdk.cross_service_boundary import build_strict_internal_contract_error
 from platform_sdk.admin_repository_adapters import (
     admin_overview_repository,
@@ -10,7 +11,6 @@ from platform_sdk.admin_repository_adapters import (
     admin_user_session_repository,
 )
 from platform_sdk.catalog_provider_adapter import serialize_effective_book_progress
-from services.admin_projection_repository_support import AdminProjectionUnavailable
 
 
 EXCLUDED_ADMIN_PROGRESS_BOOK_IDS = {'ielts_confusable_match'}
