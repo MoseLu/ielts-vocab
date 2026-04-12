@@ -11,6 +11,7 @@
     max-width: min(100%, var(--practice-compact-max-width, 540px));
     margin: 0 auto;
     padding: clamp(26px, 4.2vw, 42px) clamp(26px, 4.2vw, 38px) calc(var(--space-2xl) + 4px);
+    min-height: 100%;
 }
 
 .dictation-play-area {

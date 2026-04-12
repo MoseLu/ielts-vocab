@@ -189,10 +189,21 @@
     align-items: center;
     gap: calc(var(--space-lg) + 2px);
     padding: 11px 25px 15px;
-    background: transparent;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(var(--bg-color-rgb, 255, 255, 255), 0) 0%,
+            color-mix(in srgb, var(--bg-color) 82%, transparent) 24%,
+            color-mix(in srgb, var(--bg-color) 96%, transparent) 100%
+        );
     margin-top: 0;
     width: min(100%, var(--practice-main-max-width, 920px));
     margin-inline: auto;
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    backdrop-filter: blur(10px);
 }
 
 .bottom-progress-track {
@@ -235,6 +246,12 @@
     background: color-mix(in srgb, var(--surface-elevated) 95%, transparent);
     border: 1px solid var(--surface-border-strong);
     box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+    .practice-bottom-bar {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
 }
 
 /* Completion screen updates */
