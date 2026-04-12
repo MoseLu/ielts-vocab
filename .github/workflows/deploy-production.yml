@@ -68,6 +68,7 @@ jobs:
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "rm -rf '${remote_tmp}' && mkdir -p '${remote_tmp}'"
           scp \
             scripts/cloud-deploy/deploy-release.sh \
+            scripts/cloud-deploy/http-slot-common.sh \
             scripts/cloud-deploy/preflight-check.sh \
             scripts/cloud-deploy/release-common.sh \
             scripts/cloud-deploy/rollback-release.sh \
