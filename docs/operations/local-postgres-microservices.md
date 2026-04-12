@@ -77,17 +77,10 @@ This will:
 - start the ASR Socket.IO process on `5001`
 - wait for `/ready` or `/health` checks before returning
 
-For a controlled Wave 4 repair or rollback drill that must temporarily allow one guarded split service to reuse the shared SQLite fallback, use the service-scoped startup flag instead of the global env override:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1 -AllowSharedSplitServiceSqliteServices notes-service
-```
-
-`start-project.ps1` forwards the same flag to the split runtime path:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\start-project.ps1 -AllowSharedSplitServiceSqliteServices notes-service
-```
+The normal local split runtime no longer exposes shared SQLite override flags.
+For a controlled rollback or repair drill, use the dedicated cloud wrapper
+`scripts/cloud-deploy/restart-services-with-shared-sqlite-override.sh` and
+record the drill output instead of treating the fallback as a daily startup path.
 
 ## Schema Bootstrap And Data Migration
 

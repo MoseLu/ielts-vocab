@@ -21,9 +21,7 @@ from platform_sdk.internal_service_auth import (
 _HOP_BY_HOP_HEADERS = {'connection', 'content-length', 'host', 'transfer-encoding'}
 _SERVICE_FORWARD_HEADERS = {
     'accept',
-    'authorization',
     'content-type',
-    'cookie',
     'idempotency-key',
     'origin',
     'referer',
@@ -32,11 +30,16 @@ _SERVICE_FORWARD_HEADERS = {
     'x-forwarded-proto',
     'x-real-ip',
 }
+_IDENTITY_BROWSER_CONTEXT_HEADERS = {'authorization', 'cookie'}
 
 
-def build_forward_headers(request: Request) -> dict[str, str]:
+def build_forward_headers(request: Request, *, target_service_name: str | None = None) -> dict[str, str]:
     headers: dict[str, str] = {}
-    for name in _SERVICE_FORWARD_HEADERS:
+    forward_header_names = set(_SERVICE_FORWARD_HEADERS)
+    if target_service_name == 'identity-service':
+        forward_header_names.update(_IDENTITY_BROWSER_CONTEXT_HEADERS)
+
+    for name in forward_header_names:
         value = request.headers.get(name)
         if value:
             headers[name] = value
@@ -94,7 +97,7 @@ async def proxy_browser_request(
     path: str,
     unavailable_detail: str,
 ) -> Response:
-    request_headers = build_forward_headers(request)
+    request_headers = build_forward_headers(request, target_service_name=service_name)
     request_body = await request.body()
     streaming_request = _is_streaming_request(request, path)
     policy = resolve_gateway_upstream_policy(

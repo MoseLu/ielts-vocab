@@ -383,3 +383,48 @@ def test_admin_ops_migration_runner_bootstraps_word_feedback_table(tmp_path, mon
         assert version_value == 'admin_ops_service_0001'
     finally:
         engine.dispose()
+
+
+def test_event_only_service_migration_runner_writes_baseline_versions(tmp_path, monkeypatch):
+    module = _load_script_module()
+    tts_database_path = tmp_path / 'tts-media.sqlite'
+    asr_database_path = tmp_path / 'asr.sqlite'
+    tts_env_path = _write_env_file(
+        tmp_path,
+        service_name='tts-media-service',
+        database_path=tts_database_path,
+    )
+    asr_env_path = _write_env_file(
+        tmp_path,
+        service_name='asr-service',
+        database_path=asr_database_path,
+    )
+
+    monkeypatch.setenv('PYTEST_RUNNING', '1')
+
+    tts_result = module.migrate_service_schema('tts-media-service', env_file=tts_env_path)
+    asr_result = module.migrate_service_schema('asr-service', env_file=asr_env_path)
+
+    assert tts_result['version_after'] == 'tts_media_service_0001'
+    assert asr_result['version_after'] == 'asr_service_0001'
+
+    tts_engine, tts_inspector = _sqlite_inspector(tts_database_path)
+    asr_engine, asr_inspector = _sqlite_inspector(asr_database_path)
+    try:
+        assert {'tts_media_assets', 'tts_media_outbox_events', 'tts_media_inbox_events'}.issubset(
+            set(tts_inspector.get_table_names())
+        )
+        assert {'asr_outbox_events', 'asr_inbox_events'}.issubset(set(asr_inspector.get_table_names()))
+        with tts_engine.connect() as connection:
+            tts_version = connection.execute(
+                sa.text('SELECT version_num FROM alembic_version_tts_media_service')
+            ).scalar_one()
+        with asr_engine.connect() as connection:
+            asr_version = connection.execute(
+                sa.text('SELECT version_num FROM alembic_version_asr_service')
+            ).scalar_one()
+        assert tts_version == 'tts_media_service_0001'
+        assert asr_version == 'asr_service_0001'
+    finally:
+        tts_engine.dispose()
+        asr_engine.dispose()

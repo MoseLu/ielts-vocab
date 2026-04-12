@@ -40,6 +40,8 @@ def test_service_migration_plan_covers_write_owning_services():
         'catalog-content-service',
         'notes-service',
         'ai-execution-service',
+        'tts-media-service',
+        'asr-service',
         'admin-ops-service',
     ]
 
@@ -52,6 +54,12 @@ def test_service_migration_plan_exposes_unique_baseline_metadata():
     assert identity_plan.version_table == 'alembic_version_identity_service'
     assert ai_plan.baseline_revision == 'ai_execution_service_0001'
     assert ai_plan.version_table == 'alembic_version_ai_execution_service'
+    tts_plan = get_service_migration_plan('tts-media-service')
+    asr_plan = get_service_migration_plan('asr-service')
+    assert tts_plan.baseline_revision == 'tts_media_service_0001'
+    assert tts_plan.version_table == 'alembic_version_tts_media_service'
+    assert asr_plan.baseline_revision == 'asr_service_0001'
+    assert asr_plan.version_table == 'alembic_version_asr_service'
 
 
 def test_describe_service_migration_plan_json_output_round_trips(capsys):

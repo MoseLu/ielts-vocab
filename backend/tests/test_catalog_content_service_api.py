@@ -13,6 +13,7 @@ import services.books_catalog_service as books_catalog_service
 import services.books_vocabulary_loader_service as books_vocabulary_loader_service
 import services.phonetic_lookup_service as phonetic_lookup_service
 from models import User, db
+from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 
 
 SERVICE_PATH = (
@@ -33,11 +34,16 @@ def _load_catalog_content_service_module(module_name: str):
 
 
 def _configure_catalog_env(monkeypatch, tmp_path: Path) -> None:
+    database_path = tmp_path / 'catalog-content-service.sqlite'
+    database_uri = f'sqlite:///{database_path.as_posix()}'
     monkeypatch.setenv('SECRET_KEY', 'test-secret')
     monkeypatch.setenv('JWT_SECRET_KEY', 'test-jwt-secret')
     monkeypatch.setenv('COOKIE_SECURE', 'false')
     monkeypatch.setenv('EMAIL_CODE_DELIVERY_MODE', 'mock')
-    monkeypatch.setenv('SQLITE_DB_PATH', str(tmp_path / 'catalog-content-service.sqlite'))
+    monkeypatch.setenv('SQLITE_DB_PATH', str(database_path))
+    monkeypatch.setenv('SQLALCHEMY_DATABASE_URI', database_uri)
+    monkeypatch.setenv('CATALOG_CONTENT_SERVICE_SQLITE_DB_PATH', str(database_path))
+    monkeypatch.setenv('CATALOG_CONTENT_SERVICE_SQLALCHEMY_DATABASE_URI', database_uri)
     monkeypatch.setenv('DB_BACKUP_ENABLED', 'false')
 
 
@@ -62,7 +68,12 @@ def _create_user_and_token(flask_app, username='catalog-user') -> str:
 
 
 def _auth_headers(token: str) -> dict[str, str]:
-    return {'Authorization': f'Bearer {token}'}
+    payload = jwt.decode(token, options={'verify_signature': False})
+    return create_internal_auth_headers_for_user(
+        user_id=int(payload['user_id']),
+        source_service_name='gateway-bff',
+        env={'INTERNAL_SERVICE_JWT_SECRET_KEY': 'test-jwt-secret'},
+    )
 
 
 def _create_learning_core_favorites_db(db_url: str, user_id: int) -> None:

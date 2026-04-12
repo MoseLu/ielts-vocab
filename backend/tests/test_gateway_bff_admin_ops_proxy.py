@@ -44,7 +44,8 @@ def test_gateway_admin_overview_proxy_routes_to_admin_ops_service(monkeypatch):
     assert response.json()['total_sessions'] == 1
     assert captured['base_url'] == browser_routes.admin_ops_service_url()
     assert captured['path'] == '/api/admin/overview'
-    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer admin-token'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded
 
 
 def test_gateway_builds_internal_admin_context_headers(monkeypatch):
@@ -82,10 +83,11 @@ def test_gateway_builds_internal_admin_context_headers(monkeypatch):
         headers={'Authorization': f'Bearer {access_token}'},
     )
 
-    forwarded = build_forward_headers(captured['request'])
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
 
     assert response.status_code == 200
     assert INTERNAL_SERVICE_AUTH_HEADER in forwarded
+    assert 'authorization' not in forwarded
 
 
 def test_gateway_word_feedback_proxy_routes_to_admin_ops_service(monkeypatch):
@@ -113,4 +115,5 @@ def test_gateway_word_feedback_proxy_routes_to_admin_ops_service(monkeypatch):
     assert response.json()['message'] == 'ok'
     assert captured['base_url'] == browser_routes.admin_ops_service_url()
     assert captured['path'] == '/api/books/word-feedback'
-    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer learner-token'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded

@@ -56,7 +56,11 @@ def _build_summary_context(user_id: int, target_date: str) -> dict:
         prompt_runs=prompt_runs,
     )
     topic_insights = build_memory_topics(learning_notes, limit=5, include_singletons=True)
-    learner_profile = build_learner_profile_payload(user_id, target_date=target_date)
+    learner_profile = None
+    try:
+        learner_profile = build_learner_profile_payload(user_id, target_date=target_date)
+    except Exception as exc:
+        logging.warning('[Boundary] notes summary skipped local learner-profile context: %s', exc)
     estimated_chars = estimate_summary_target_chars(learning_notes, sessions, wrong_words, prompt_runs=prompt_runs)
     user_content = build_summary_prompt(
         target_date,

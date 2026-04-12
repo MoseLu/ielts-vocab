@@ -68,4 +68,5 @@ def test_gateway_confusable_custom_chapter_proxy_routes_to_catalog_content_servi
     assert response.status_code == 201
     assert response.json()['created_chapters'][0]['id'] == 1001
     assert captured['path'] == '/api/books/ielts_confusable_match/custom-chapters'
-    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer catalog-token'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded

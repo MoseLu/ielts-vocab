@@ -71,7 +71,7 @@ def test_gateway_auth_proxy_forwards_browser_context_headers(monkeypatch):
     assert response.status_code == 200
     assert response.json() == {'user': None, 'authenticated': False}
     assert captured['path'] == '/api/auth/me'
-    forwarded = build_forward_headers(captured['request'])
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
     assert captured['request'].method == 'GET'
     assert forwarded['authorization'] == 'Bearer test-token'
     assert forwarded['cookie'] == 'access_token=abc; refresh_token=def'

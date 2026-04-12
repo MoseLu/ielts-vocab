@@ -52,7 +52,8 @@ def test_gateway_progress_proxy_uses_learning_core_service(monkeypatch):
     assert response.json()['progress']['day'] == 3
     assert captured['base_url'] == browser_routes.learning_core_service_url()
     assert captured['path'] == '/api/progress'
-    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer learning-token'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded
 
 
 def test_gateway_my_books_delete_proxy_routes_to_learning_core(monkeypatch):
@@ -78,7 +79,8 @@ def test_gateway_my_books_delete_proxy_routes_to_learning_core(monkeypatch):
     assert response.status_code == 200
     assert response.json() == {'message': '已移除'}
     assert captured['path'] == '/api/books/my/ielts_reading_premium'
-    assert build_forward_headers(captured['request'])['cookie'] == 'access_token=abc'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'cookie' not in forwarded
 
 
 def test_gateway_favorites_proxy_routes_to_learning_core(monkeypatch):
@@ -105,7 +107,8 @@ def test_gateway_favorites_proxy_routes_to_learning_core(monkeypatch):
     assert response.status_code == 200
     assert response.json()['book_id'] == 'favorites'
     assert captured['path'] == '/api/books/favorites/status'
-    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer favorite-token'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded
 
 
 def test_gateway_builds_internal_auth_headers_for_valid_browser_access_token(monkeypatch):
@@ -143,10 +146,10 @@ def test_gateway_builds_internal_auth_headers_for_valid_browser_access_token(mon
         headers={'Authorization': f'Bearer {access_token}'},
     )
 
-    forwarded = build_forward_headers(captured['request'])
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
 
     assert response.status_code == 200
-    assert forwarded['authorization'] == f'Bearer {access_token}'
+    assert 'authorization' not in forwarded
     assert forwarded[SERVICE_NAME_HEADER] == 'gateway-bff'
     assert forwarded[REQUEST_ID_HEADER]
     assert INTERNAL_SERVICE_AUTH_HEADER in forwarded
