@@ -61,6 +61,16 @@ SERVICE_MIGRATION_PLANS: dict[str, ServiceMigrationPlan] = {
         baseline_suffix='0001',
         baseline_label='ai execution baseline',
     ),
+    'tts-media-service': _build_plan(
+        'tts-media-service',
+        baseline_suffix='0001',
+        baseline_label='tts media baseline',
+    ),
+    'asr-service': _build_plan(
+        'asr-service',
+        baseline_suffix='0001',
+        baseline_label='asr baseline',
+    ),
     'admin-ops-service': _build_plan(
         'admin-ops-service',
         baseline_suffix='0001',

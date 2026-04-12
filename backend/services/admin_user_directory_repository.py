@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import desc
 
 from platform_sdk.admin_projection_bootstrap import sync_admin_projected_user_snapshot
+from platform_sdk.cross_service_boundary import legacy_cross_service_fallback_enabled
 from service_models.admin_ops_models import User, db
 from services.admin_projection_repository_support import user_directory_model
 
@@ -10,7 +11,7 @@ from services.admin_projection_repository_support import user_directory_model
 def get_user(user_id: int):
     model = user_directory_model()
     user = db.session.get(model, user_id)
-    if user is None and model is not User:
+    if user is None and model is not User and legacy_cross_service_fallback_enabled():
         return db.session.get(User, user_id)
     return user
 

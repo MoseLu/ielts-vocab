@@ -8,6 +8,7 @@ from platform_sdk.identity_email_application import (
     reset_password_response,
     send_bind_email_code_response,
 )
+from platform_sdk.identity_admin_application import set_internal_identity_admin_response
 from platform_sdk.identity_session_application import (
     get_current_user_payload,
     perform_login,
@@ -17,10 +18,11 @@ from platform_sdk.identity_session_application import (
     update_avatar,
 )
 from platform_sdk.identity_session_support import clear_auth_cookies, set_auth_cookies
-from routes.middleware import optional_token_required, token_required
+from routes.middleware import admin_required, optional_token_required, token_required
 
 
 identity_auth_bp = Blueprint('identity_auth', __name__)
+identity_internal_bp = Blueprint('identity_internal', __name__)
 
 
 def _app():
@@ -116,4 +118,15 @@ def forgot_password():
 @identity_auth_bp.route('/reset-password', methods=['POST'])
 def reset_password():
     payload, status = reset_password_response(request.get_json() or {})
+    return jsonify(payload), status
+
+
+@identity_internal_bp.route('/internal/identity/admin/users/<int:user_id>/set-admin', methods=['POST'])
+@admin_required
+def set_internal_admin_user(current_user, user_id):
+    payload, status = set_internal_identity_admin_response(
+        current_user.id,
+        user_id,
+        request.get_json() or {},
+    )
     return jsonify(payload), status

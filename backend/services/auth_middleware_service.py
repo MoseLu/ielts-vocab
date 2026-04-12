@@ -15,6 +15,7 @@ from platform_sdk.internal_service_auth import (
 from services import auth_repository
 
 AuthError = tuple[dict, int]
+_BROWSER_TOKEN_SERVICES = {'', 'backend-monolith', 'identity-service'}
 
 
 def _auth_error(
@@ -56,7 +57,7 @@ def _resolve_internal_current_user(app, request, *, allow_missing: bool):
     try:
         payload = decode_internal_service_token(
             token,
-            secret=app.config['INTERNAL_SERVICE_JWT_SECRET_KEY'],
+            secret=app.config.get('INTERNAL_SERVICE_JWT_SECRET_KEY') or app.config['JWT_SECRET_KEY'],
         )
     except jwt.ExpiredSignatureError:
         return None, _auth_error(
@@ -99,8 +100,9 @@ def _resolve_internal_current_user(app, request, *, allow_missing: bool):
 
 def resolve_current_user(app, request, *, allow_missing: bool):
     token = extract_access_token(request)
+    service_name = (os.environ.get('CURRENT_SERVICE_NAME') or '').strip()
     prefer_cookie_user = (
-        (os.environ.get('CURRENT_SERVICE_NAME') or '').strip() == 'identity-service'
+        service_name == 'identity-service'
         and bool(token)
     )
     if not prefer_cookie_user:
@@ -116,6 +118,12 @@ def resolve_current_user(app, request, *, allow_missing: bool):
 
     if not token:
         return None, _auth_error(allow_missing=allow_missing, error='请先登录', code='NO_TOKEN')
+    if service_name not in _BROWSER_TOKEN_SERVICES:
+        return None, _auth_error(
+            allow_missing=allow_missing,
+            error='内部服务必须使用网关注入的内部鉴权上下文',
+            code='INTERNAL_AUTH_REQUIRED',
+        )
 
     try:
         payload = decode_token(app, token)

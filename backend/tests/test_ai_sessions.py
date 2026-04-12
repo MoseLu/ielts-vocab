@@ -157,13 +157,55 @@ def test_log_session_accepts_client_ended_at_for_recovered_session(client, app):
     })
 
     assert log_res.status_code == 200
-
     with app.app_context():
         session = UserStudySession.query.get(session_id)
         assert session is not None
         assert session.ended_at is not None
         assert session.duration_seconds >= 28 * 60
         assert session.duration_seconds < 28 * 60 + 20
+
+
+def test_log_session_honors_activity_capped_duration_for_started_session(client, app):
+    register_and_login(client, username='session-user-activity-cap')
+
+    base_now_utc = datetime.now(timezone.utc).replace(microsecond=0)
+    recovered_start_utc = base_now_utc - timedelta(hours=7, minutes=10, seconds=46)
+    capped_duration_seconds = 20 * 60 + 8
+
+    start_res = client.post('/api/ai/start-session', json={
+        'mode': 'quickmemory',
+        'bookId': 'ielts_listening_premium',
+        'chapterId': '55',
+    })
+    assert start_res.status_code == 201
+    session_id = start_res.get_json()['sessionId']
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        session.started_at = recovered_start_utc.replace(tzinfo=None)
+        db.session.commit()
+
+    log_res = client.post('/api/ai/log-session', json={
+        'sessionId': session_id,
+        'mode': 'quickmemory',
+        'bookId': 'ielts_listening_premium',
+        'chapterId': '55',
+        'wordsStudied': 1,
+        'correctCount': 0,
+        'wrongCount': 1,
+        'durationSeconds': capped_duration_seconds,
+        'durationCappedByActivity': True,
+        'startedAt': int(recovered_start_utc.timestamp() * 1000),
+        'endedAt': int(base_now_utc.timestamp() * 1000),
+    })
+
+    assert log_res.status_code == 200
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        assert session.duration_seconds == capped_duration_seconds
 
 
 def test_log_session_is_idempotent_for_completed_session(client, app):

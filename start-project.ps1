@@ -7,7 +7,7 @@ param(
     [ValidateSet('browser', 'rollback', 'all')][string]$MonolithCompatSurface = 'all',
     [switch]$SkipRedis,
     [switch]$SkipRabbit,
-    [string[]]$AllowSharedSplitServiceSqliteServices, [int]$MonolithCompatBackendPort = 5000
+    [int]$MonolithCompatBackendPort = 5000
 )
 $ErrorActionPreference = 'Stop'
 $root = if ($ProjectRoot) {
@@ -458,16 +458,6 @@ try {
         if ($SkipRabbit) {
             $microserviceArgs += '-SkipRabbit'
         }
-        foreach ($serviceName in @(
-            $AllowSharedSplitServiceSqliteServices |
-                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-                ForEach-Object { $_.Trim() } |
-                Select-Object -Unique
-        )) {
-            $microserviceArgs += '-AllowSharedSplitServiceSqliteServices'
-            $microserviceArgs += $serviceName
-        }
-
         & $powerShellPath @microserviceArgs
         if ($LASTEXITCODE -ne 0) {
             throw 'start-microservices.ps1 failed.'

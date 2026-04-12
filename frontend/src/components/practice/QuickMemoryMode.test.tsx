@@ -27,6 +27,8 @@ vi.mock('./utils', () => ({
 }))
 vi.mock('../../hooks/useAIChat', () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
+  resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
+    data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
   logSession: (...args: unknown[]) => logSessionMock(...args),
   startSession: (...args: unknown[]) => startSessionMock(...args),
   cancelSession: (...args: unknown[]) => cancelSessionMock(...args),
@@ -86,12 +88,10 @@ describe('QuickMemoryMode', () => {
       />,
     )
     expect(screen.getByText('你认识这个单词吗？')).toBeInTheDocument()
-
     await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
     expect(screen.getByText('✓ 认识')).toBeInTheDocument()
     expect(screen.getByText('fruit')).toBeInTheDocument()
     await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
-
     await waitFor(() => {
       expect(container.querySelector('.qm-summary')).not.toBeNull()
     })

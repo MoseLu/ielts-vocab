@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+from datetime import datetime
 from pathlib import Path
 
+import jwt
 from fastapi.testclient import TestClient
 from models import (
+    AdminProjectionCursor,
     User,
     UserChapterProgress,
     UserLearningEvent,
@@ -14,6 +17,9 @@ from models import (
     db,
 )
 
+from platform_sdk.admin_projection_bootstrap import bootstrap_projection_marker_name
+from platform_sdk.admin_study_session_projection_application import STUDY_SESSION_ANALYTICS_PROJECTION
+from platform_sdk.admin_user_projection_application import USER_DIRECTORY_PROJECTION
 from platform_sdk.internal_service_auth import (
     INTERNAL_SERVICE_AUTH_HEADER,
     SERVICE_NAME_HEADER,
@@ -23,36 +29,12 @@ from platform_sdk.internal_service_auth import (
 )
 
 
-LEARNING_CORE_SERVICE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / 'services'
-    / 'learning-core-service'
-    / 'main.py'
-)
-ADMIN_OPS_SERVICE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / 'services'
-    / 'admin-ops-service'
-    / 'main.py'
-)
-NOTES_SERVICE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / 'services'
-    / 'notes-service'
-    / 'main.py'
-)
-CATALOG_CONTENT_SERVICE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / 'services'
-    / 'catalog-content-service'
-    / 'main.py'
-)
-IDENTITY_SERVICE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / 'services'
-    / 'identity-service'
-    / 'main.py'
-)
+SERVICES_DIR = Path(__file__).resolve().parents[2] / 'services'
+LEARNING_CORE_SERVICE_PATH = SERVICES_DIR / 'learning-core-service' / 'main.py'
+ADMIN_OPS_SERVICE_PATH = SERVICES_DIR / 'admin-ops-service' / 'main.py'
+NOTES_SERVICE_PATH = SERVICES_DIR / 'notes-service' / 'main.py'
+CATALOG_CONTENT_SERVICE_PATH = SERVICES_DIR / 'catalog-content-service' / 'main.py'
+IDENTITY_SERVICE_PATH = SERVICES_DIR / 'identity-service' / 'main.py'
 
 
 def _load_module(module_name: str, path: Path):
@@ -65,13 +47,27 @@ def _load_module(module_name: str, path: Path):
 
 
 def _configure_env(monkeypatch, tmp_path: Path, service_name: str) -> None:
+    sqlite_path = tmp_path / f'{service_name}.sqlite'
+    sqlite_uri = f'sqlite:///{sqlite_path.as_posix()}'
     monkeypatch.setenv('SECRET_KEY', 'test-secret')
     monkeypatch.setenv('JWT_SECRET_KEY', 'test-jwt-secret')
     monkeypatch.setenv('INTERNAL_SERVICE_JWT_SECRET_KEY', 'test-jwt-secret')
     monkeypatch.setenv('COOKIE_SECURE', 'false')
     monkeypatch.setenv('EMAIL_CODE_DELIVERY_MODE', 'mock')
-    monkeypatch.setenv('SQLITE_DB_PATH', str(tmp_path / f'{service_name}.sqlite'))
+    monkeypatch.setenv('SQLITE_DB_PATH', str(sqlite_path))
+    monkeypatch.setenv('SQLALCHEMY_DATABASE_URI', sqlite_uri)
+    for prefix in (
+        'IDENTITY_SERVICE',
+        'LEARNING_CORE_SERVICE',
+        'CATALOG_CONTENT_SERVICE',
+        'AI_EXECUTION_SERVICE',
+        'NOTES_SERVICE',
+        'ADMIN_OPS_SERVICE',
+    ):
+        monkeypatch.setenv(f'{prefix}_SQLITE_DB_PATH', str(sqlite_path))
+        monkeypatch.setenv(f'{prefix}_SQLALCHEMY_DATABASE_URI', sqlite_uri)
     monkeypatch.setenv('DB_BACKUP_ENABLED', 'false')
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', '')
 
 
 def _internal_headers(*, user_id: int, is_admin: bool = False) -> dict[str, str]:
@@ -134,6 +130,23 @@ def test_identity_service_prefers_cookie_user_over_gateway_internal_snapshot(mon
     payload = response.json()['user']
     assert payload['username'] == 'identity-cookie-priority-user'
     assert payload['created_at']
+
+
+def test_split_service_rejects_browser_token_without_internal_context(monkeypatch, tmp_path):
+    _configure_env(monkeypatch, tmp_path, 'learning-core-browser-token-blocked')
+    module = _load_module('learning_core_service_browser_token_blocked', LEARNING_CORE_SERVICE_PATH)
+    user_id = 90211
+    client = TestClient(module.app)
+
+    token = jwt.encode(
+        {'user_id': user_id, 'type': 'access'},
+        'test-jwt-secret',
+        algorithm='HS256',
+    )
+    response = client.get('/api/books/progress', headers={'Authorization': f'Bearer {token}'})
+
+    assert response.status_code == 401
+    assert response.json()['code'] == 'INTERNAL_AUTH_REQUIRED'
 
 
 def test_learning_core_internal_read_routes_accept_internal_service_user(monkeypatch, tmp_path):
@@ -452,6 +465,19 @@ def test_admin_ops_accepts_internal_admin_user_without_local_user_row(monkeypatc
     _configure_env(monkeypatch, tmp_path, 'admin-ops-internal')
     module = _load_module('admin_ops_service_internal_auth', ADMIN_OPS_SERVICE_PATH)
     client = TestClient(module.app)
+    with module.admin_ops_flask_app.app_context():
+        now = datetime.utcnow()
+        for projection_name, event_id in (
+            (USER_DIRECTORY_PROJECTION, 'bootstrap:admin.user-directory:auth'),
+            (STUDY_SESSION_ANALYTICS_PROJECTION, 'bootstrap:admin.study-session-analytics:auth'),
+        ):
+            db.session.add(AdminProjectionCursor(
+                projection_name=bootstrap_projection_marker_name(projection_name),
+                last_event_id=event_id,
+                last_topic='__bootstrap__',
+                last_processed_at=now,
+            ))
+        db.session.commit()
 
     response = client.get(
         '/api/admin/overview',

@@ -6,7 +6,7 @@ from platform_sdk.ai_assistant_memory_support import load_memory
 from platform_sdk.ai_daily_summary_projection_support import (
     list_projected_daily_summaries_for_ai,
 )
-from platform_sdk.cross_service_boundary import legacy_cross_service_fallback_enabled
+from platform_sdk.cross_service_boundary import current_service_name, legacy_cross_service_fallback_enabled
 from platform_sdk.learner_profile_application_support import build_learner_profile_response as build_local_learner_profile_response
 from platform_sdk.learning_core_context_application import (
     build_learning_core_context_payload,
@@ -72,6 +72,9 @@ def _safe_local_learner_profile_response(
     target_date: str | None,
     view: str,
 ) -> tuple[dict, int]:
+    if current_service_name() == 'ai-execution-service' and not legacy_cross_service_fallback_enabled():
+        logging.warning('[Boundary] strict AI runtime blocked local learner-profile fallback')
+        return _empty_learner_profile_payload(target_date=target_date, view=view), 200
     try:
         return build_local_learner_profile_response(
             user_id,

@@ -1,0 +1,23 @@
+[Unit]
+Description=IELTS Vocab HTTP slot %i
+After=network-online.target postgresql.service redis.service rabbitmq-server.service
+Wants=network-online.target postgresql.service redis.service rabbitmq-server.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ielts-vocab
+Environment=APP_HOME=/opt/ielts-vocab
+Environment=IELTS_VENV=/opt/ielts-vocab/venv
+Environment=IELTS_SERVICE_HOST=127.0.0.1
+Environment=BACKEND_ENV_FILE=/etc/ielts-vocab/backend.env
+Environment=MICROSERVICES_ENV_FILE=/etc/ielts-vocab/microservices.env
+Environment=HTTP_SLOT_ENV_DIR=/etc/ielts-vocab/http-slots
+ExecStart=/opt/ielts-vocab/bin/run-http-slot-service.sh %i
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

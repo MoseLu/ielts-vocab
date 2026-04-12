@@ -16,7 +16,7 @@ if str(BACKEND_PATH) not in sys.path:
 
 import config as backend_config
 from routes.middleware import init_middleware
-from platform_sdk.identity_transport import identity_auth_bp
+from platform_sdk.identity_transport import identity_auth_bp, identity_internal_bp
 from platform_sdk.service_schema import bootstrap_service_schema
 from service_models.identity_models import db
 
@@ -47,6 +47,7 @@ def create_identity_flask_app(config_class=None) -> Flask:
 
     init_middleware(app)
     app.register_blueprint(identity_auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(identity_internal_bp)
 
     with app.app_context():
         bootstrap_service_schema('identity-service')

@@ -27,6 +27,8 @@ vi.mock('./utils', () => ({
 
 vi.mock('../../hooks/useAIChat', () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
+  resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
+    data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
   logSession: (...args: unknown[]) => logSessionMock(...args),
   startSession: (...args: unknown[]) => startSessionMock(...args),
   cancelSession: (...args: unknown[]) => cancelSessionMock(...args),

@@ -43,7 +43,8 @@ def test_gateway_ai_context_proxy_routes_to_ai_execution_service(monkeypatch):
     assert captured['service_name'] == 'ai-execution-service'
     assert captured['base_url'] == browser_routes.ai_execution_service_url()
     assert captured['path'] == '/api/ai/context'
-    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer ai-token'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded
 
 
 def test_gateway_ai_stream_proxy_routes_to_ai_execution_service(monkeypatch):
@@ -72,4 +73,5 @@ def test_gateway_ai_stream_proxy_routes_to_ai_execution_service(monkeypatch):
     assert 'data: {"type": "done"}' in response.text
     assert captured['service_name'] == 'ai-execution-service'
     assert captured['path'] == '/api/ai/ask/stream'
-    assert build_forward_headers(captured['request'])['cookie'] == 'access_token=abc'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'cookie' not in forwarded

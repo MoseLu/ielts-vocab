@@ -1,19 +1,12 @@
 from __future__ import annotations
 
 import os
-import uuid
 
 import requests
 from flask import current_app
 
 from platform_sdk.internal_service_auth import (
-    INTERNAL_SERVICE_AUTH_HEADER,
-    REQUEST_ID_HEADER,
-    SERVICE_NAME_HEADER,
-    TRACE_ID_HEADER,
-    create_internal_service_token,
-    internal_service_secret,
-    internal_service_token_ttl_seconds,
+    create_internal_auth_headers_for_user,
 )
 
 
@@ -28,23 +21,11 @@ def catalog_content_service_url() -> str:
 
 def _internal_headers_for_user(user_id: int) -> dict[str, str]:
     app = current_app._get_current_object()
-    request_id = uuid.uuid4().hex
-    trace_id = request_id
-    secret = internal_service_secret(env=app.config)
-    token = create_internal_service_token(
-        secret=secret,
+    return create_internal_auth_headers_for_user(
         source_service_name=AI_EXECUTION_SERVICE_NAME,
         user_id=user_id,
-        request_id=request_id,
-        trace_id=trace_id,
-        ttl_seconds=internal_service_token_ttl_seconds(env=app.config),
+        env=app.config,
     )
-    return {
-        INTERNAL_SERVICE_AUTH_HEADER: token,
-        REQUEST_ID_HEADER: request_id,
-        TRACE_ID_HEADER: trace_id,
-        SERVICE_NAME_HEADER: AI_EXECUTION_SERVICE_NAME,
-    }
 
 
 def _request_json(

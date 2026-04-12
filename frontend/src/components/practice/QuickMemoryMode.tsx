@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
 import { playWordAudio, prepareWordAudioPlayback, preloadWordAudioBatch, stopAudio } from './utils'
-import { updateStudySessionSnapshot } from '../../hooks/useAIChat'
+import { resolveStudySessionDurationSeconds, updateStudySessionSnapshot } from '../../hooks/useAIChat'
 import { useToast } from '../../contexts/ToastContext'
 import {
   readQuickMemoryRecordsFromStorage,
@@ -101,7 +101,7 @@ export default function QuickMemoryMode({
       bookId: bookIdRef.current,
       chapterId: chapterIdRef.current,
       startedAt: sessionStartRef.current,
-      activeAt: patch.activeAt ?? Date.now(),
+      ...(patch.activeAt != null ? { activeAt: patch.activeAt } : {}),
       wordsStudied: patch.wordsStudied,
       correctCount: patch.correctCount,
       wrongCount: patch.wrongCount,
@@ -174,7 +174,7 @@ export default function QuickMemoryMode({
     pendingSessionCancelRef.current = false
   }, [bookId, chapterId, onIndexChange, queue.length])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reveal = useCallback((picked: 'known' | 'unknown') => {
+  const reveal = useCallback((picked: 'known' | 'unknown', countAsActivity = true) => {
     if (chosenRef.current) return
     chosenRef.current = true
     clearInterval(timerRef.current)
@@ -214,7 +214,7 @@ export default function QuickMemoryMode({
     resultsRef.current = nextResults
     setResults(nextResults)
     syncSessionSnapshot({
-      activeAt: Date.now(),
+      ...(countAsActivity ? { activeAt: Date.now() } : {}),
       wordsStudied: nextResults.length,
       correctCount: nextResults.filter(result => result.choice === 'known').length,
       wrongCount: nextResults.filter(result => result.choice === 'unknown').length,
@@ -253,7 +253,7 @@ export default function QuickMemoryMode({
         setCountdown(prev => {
           if (prev <= 1) {
             clearInterval(timerRef.current)
-            reveal('unknown')
+            reveal('unknown', false)
             return 0
           }
           return prev - 1
@@ -295,7 +295,10 @@ export default function QuickMemoryMode({
     stopAudio()
     const next = index + 1
     if (next >= queue.length) {
-      completedSessionDurationSecondsRef.current = Math.max(0, Math.round((Date.now() - sessionStartRef.current) / 1000))
+      completedSessionDurationSecondsRef.current = resolveStudySessionDurationSeconds({
+        sessionId: sessionIdRef.current,
+        startedAt: sessionStartRef.current,
+      })
       setDone(true)
       return
     }

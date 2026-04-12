@@ -6,6 +6,7 @@ import {
   cancelSession,
   flushStudySessionOnPageHide,
   logSession,
+  resolveStudySessionDurationSeconds,
   startSession,
   touchStudySessionActivity,
   updateStudySessionSnapshot,
@@ -97,7 +98,10 @@ export function usePracticePageSession({
       const sessionUnique = sessionUniqueWordsRef.current.size
       const isRadio = currentModeRef.current === 'radio'
       const sessionStart = sessionStartRef.current
-      const durationSeconds = sessionStart > 0 ? Math.round((Date.now() - sessionStart) / 1000) : 0
+      const durationSeconds = resolveStudySessionDurationSeconds({
+        sessionId: sessionIdRef.current,
+        startedAt: sessionStart,
+      })
       const passiveDurationEnough = durationSeconds >= PASSIVE_STUDY_SESSION_MIN_SECONDS
       const shouldCancelSession = isRadio
         ? (!radioInteractionRef.current && radioWordsStudiedRef.current <= 0 && !passiveDurationEnough)
@@ -115,7 +119,6 @@ export function usePracticePageSession({
         bookId: sessionBookIdRef.current,
         chapterId: sessionChapterIdRef.current,
         startedAt: sessionStartRef.current,
-        activeAt: Date.now(),
         wordsStudied: isRadio ? radioWordsStudiedRef.current : sessionUniqueWordsRef.current.size,
         correctCount: sessionCorrectRef.current,
         wrongCount: sessionWrongRef.current,
@@ -258,7 +261,7 @@ export function usePracticePageSession({
     })
   }, [])
 
-  const syncCurrentSessionSnapshot = useCallback((activeAt = Date.now()) => {
+  const syncCurrentSessionSnapshot = useCallback((activeAt?: number) => {
     const isRadio = currentModeRef.current === 'radio'
     updateStudySessionSnapshot({
       sessionId: sessionIdRef.current,
@@ -266,7 +269,7 @@ export function usePracticePageSession({
       bookId: sessionBookIdRef.current,
       chapterId: sessionChapterIdRef.current,
       startedAt: sessionStartRef.current,
-      activeAt,
+      ...(activeAt != null ? { activeAt } : {}),
       wordsStudied: isRadio ? radioWordsStudiedRef.current : sessionUniqueWordsRef.current.size,
       correctCount: sessionCorrectRef.current,
       wrongCount: sessionWrongRef.current,

@@ -13,6 +13,7 @@ from models import User, db
 import platform_sdk.ai_assistant_application as ai_assistant_application
 import platform_sdk.ai_custom_books_application as ai_custom_books_application
 import platform_sdk.ai_similarity_application as ai_similarity_application
+from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 
 
 SERVICE_PATH = (
@@ -33,11 +34,16 @@ def _load_ai_execution_service_module(module_name: str):
 
 
 def _configure_ai_env(monkeypatch, tmp_path: Path) -> None:
+    database_path = tmp_path / 'ai-execution-service.sqlite'
+    database_uri = f'sqlite:///{database_path.as_posix()}'
     monkeypatch.setenv('SECRET_KEY', 'test-secret')
     monkeypatch.setenv('JWT_SECRET_KEY', 'test-jwt-secret')
     monkeypatch.setenv('COOKIE_SECURE', 'false')
     monkeypatch.setenv('EMAIL_CODE_DELIVERY_MODE', 'mock')
-    monkeypatch.setenv('SQLITE_DB_PATH', str(tmp_path / 'ai-execution-service.sqlite'))
+    monkeypatch.setenv('SQLITE_DB_PATH', str(database_path))
+    monkeypatch.setenv('SQLALCHEMY_DATABASE_URI', database_uri)
+    monkeypatch.setenv('AI_EXECUTION_SERVICE_SQLITE_DB_PATH', str(database_path))
+    monkeypatch.setenv('AI_EXECUTION_SERVICE_SQLALCHEMY_DATABASE_URI', database_uri)
     monkeypatch.setenv('DB_BACKUP_ENABLED', 'false')
     monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
     monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
@@ -45,6 +51,7 @@ def _configure_ai_env(monkeypatch, tmp_path: Path) -> None:
 
 def _create_user_and_token(flask_app, username='ai-execution-user') -> str:
     with flask_app.app_context():
+        db.create_all()
         user = User(username=username, email=f'{username}@example.com')
         user.set_password('password123')
         db.session.add(user)
@@ -64,7 +71,12 @@ def _create_user_and_token(flask_app, username='ai-execution-user') -> str:
 
 
 def _auth_headers(token: str) -> dict[str, str]:
-    return {'Authorization': f'Bearer {token}'}
+    payload = jwt.decode(token, options={'verify_signature': False})
+    return create_internal_auth_headers_for_user(
+        user_id=int(payload['user_id']),
+        source_service_name='gateway-bff',
+        env={'INTERNAL_SERVICE_JWT_SECRET_KEY': 'test-jwt-secret'},
+    )
 
 
 def test_ai_execution_service_health_endpoint(monkeypatch, tmp_path):

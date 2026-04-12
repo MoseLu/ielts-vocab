@@ -9,6 +9,7 @@ import jwt
 from fastapi.testclient import TestClient
 
 from models import User, UserDailySummary, UserLearningNote, db
+from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 
 
 SERVICE_PATH = (
@@ -29,11 +30,16 @@ def _load_notes_service_module(module_name: str):
 
 
 def _configure_notes_env(monkeypatch, tmp_path: Path) -> None:
+    database_path = tmp_path / 'notes-service.sqlite'
+    database_uri = f'sqlite:///{database_path.as_posix()}'
     monkeypatch.setenv('SECRET_KEY', 'test-secret')
     monkeypatch.setenv('JWT_SECRET_KEY', 'test-jwt-secret')
     monkeypatch.setenv('COOKIE_SECURE', 'false')
     monkeypatch.setenv('EMAIL_CODE_DELIVERY_MODE', 'mock')
-    monkeypatch.setenv('SQLITE_DB_PATH', str(tmp_path / 'notes-service.sqlite'))
+    monkeypatch.setenv('SQLITE_DB_PATH', str(database_path))
+    monkeypatch.setenv('SQLALCHEMY_DATABASE_URI', database_uri)
+    monkeypatch.setenv('NOTES_SERVICE_SQLITE_DB_PATH', str(database_path))
+    monkeypatch.setenv('NOTES_SERVICE_SQLALCHEMY_DATABASE_URI', database_uri)
     monkeypatch.setenv('DB_BACKUP_ENABLED', 'false')
 
 
@@ -58,7 +64,12 @@ def _create_user_and_token(flask_app, username='notes-service-user') -> tuple[in
 
 
 def _auth_headers(token: str) -> dict[str, str]:
-    return {'Authorization': f'Bearer {token}'}
+    payload = jwt.decode(token, options={'verify_signature': False})
+    return create_internal_auth_headers_for_user(
+        user_id=int(payload['user_id']),
+        source_service_name='gateway-bff',
+        env={'INTERNAL_SERVICE_JWT_SECRET_KEY': 'test-jwt-secret'},
+    )
 
 
 def test_notes_service_health_endpoint(monkeypatch, tmp_path):

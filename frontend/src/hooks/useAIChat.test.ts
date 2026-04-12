@@ -141,6 +141,7 @@ describe('logSession', () => {
     expect(body.durationSeconds).toBe(1)
     vi.restoreAllMocks()
   })
+
 })
 
 describe('startSession recovery', () => {

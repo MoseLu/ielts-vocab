@@ -34,11 +34,25 @@ def _has_explicit_database_env(service_name: str | None) -> bool:
     return any((os.environ.get(name) or '').strip() for name in names)
 
 
+def resolve_backend_env_file() -> Path:
+    configured = (os.environ.get('BACKEND_ENV_FILE') or '').strip()
+    if configured:
+        return Path(configured).resolve()
+    return BACKEND_ENV_FILE
+
+
 def resolve_microservices_env_file() -> Path:
     configured = (os.environ.get('MICROSERVICES_ENV_FILE') or '').strip()
     if configured:
         return Path(configured).resolve()
     return DEFAULT_MICROSERVICES_ENV_FILE
+
+
+def resolve_http_slot_env_file() -> Path | None:
+    configured = (os.environ.get('IELTS_HTTP_SLOT_ENV_FILE') or '').strip()
+    if not configured:
+        return None
+    return Path(configured).resolve()
 
 
 def _should_load_microservices_env_file() -> bool:
@@ -52,9 +66,10 @@ def load_split_service_env(*, service_name: str | None = None) -> dict[str, str]
         os.environ['CURRENT_SERVICE_NAME'] = service_name
 
     loaded: dict[str, str] = {}
-    if BACKEND_ENV_FILE.exists():
-        load_dotenv(BACKEND_ENV_FILE, override=False)
-        loaded['backend_env'] = str(BACKEND_ENV_FILE)
+    backend_env = resolve_backend_env_file()
+    if backend_env.exists():
+        load_dotenv(backend_env, override=False)
+        loaded['backend_env'] = str(backend_env)
 
     microservices_env = resolve_microservices_env_file()
     if (
@@ -64,5 +79,10 @@ def load_split_service_env(*, service_name: str | None = None) -> dict[str, str]
     ):
         load_dotenv(microservices_env, override=True)
         loaded['microservices_env'] = str(microservices_env)
+
+    slot_env = resolve_http_slot_env_file()
+    if slot_env and slot_env.exists():
+        load_dotenv(slot_env, override=True)
+        loaded['http_slot_env'] = str(slot_env)
 
     return loaded

@@ -1,23 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 source "${script_dir}/release-common.sh"
 
-GATEWAY_BFF_PORT="${GATEWAY_BFF_PORT:-8000}"
-IDENTITY_SERVICE_PORT="${IDENTITY_SERVICE_PORT:-8101}"
-LEARNING_CORE_SERVICE_PORT="${LEARNING_CORE_SERVICE_PORT:-8102}"
-CATALOG_CONTENT_SERVICE_PORT="${CATALOG_CONTENT_SERVICE_PORT:-8103}"
-AI_EXECUTION_SERVICE_PORT="${AI_EXECUTION_SERVICE_PORT:-8104}"
-TTS_MEDIA_SERVICE_PORT="${TTS_MEDIA_SERVICE_PORT:-8105}"
-ASR_SERVICE_PORT="${ASR_SERVICE_PORT:-8106}"
-NOTES_SERVICE_PORT="${NOTES_SERVICE_PORT:-8107}"
-ADMIN_OPS_SERVICE_PORT="${ADMIN_OPS_SERVICE_PORT:-8108}"
-SPEECH_SERVICE_PORT="${SPEECH_SERVICE_PORT:-5001}"
+SMOKE_HTTP_SLOT="${SMOKE_HTTP_SLOT:-}"
+SMOKE_SKIP_NGINX="${SMOKE_SKIP_NGINX:-false}"
+SMOKE_SKIP_WORKERS="${SMOKE_SKIP_WORKERS:-false}"
+SMOKE_AI_PROBE_USER_ID="${SMOKE_AI_PROBE_USER_ID:-1}"
 SMOKE_MAX_WAIT_SECONDS="${SMOKE_MAX_WAIT_SECONDS:-90}"
 SMOKE_RETRY_DELAY_SECONDS="${SMOKE_RETRY_DELAY_SECONDS:-2}"
 CURL_MAX_TIME_SECONDS="${CURL_MAX_TIME_SECONDS:-5}"
-VALIDATE_BROKER_SCRIPT="${VALIDATE_BROKER_SCRIPT:-${CURRENT_LINK}/scripts/cloud-deploy/validate-broker-runtime.sh}"
+VALIDATE_BROKER_SCRIPT="${VALIDATE_BROKER_SCRIPT:-${script_dir}/validate-broker-runtime.sh}"
+
+load_smoke_slot_env() {
+  local slot="${1:-}"
+  local env_file
+  [[ -n "${slot}" ]] || return 0
+  require_http_slot "${slot}"
+  env_file="$(http_slot_env_file "${slot}")"
+  require_file "${env_file}"
+  set -a
+  source "${env_file}"
+  set +a
+}
+
+release_supports_ai_dependency_probe() {
+  local release_dir="${1:-}"
+  [[ -n "${release_dir}" ]] || return 1
+  grep -Fq "/internal/ops/ai-dependencies" "${release_dir}/services/ai-execution-service/main.py" 2>/dev/null
+}
 
 wait_for_curl() {
   local label="${1:?label is required}"
@@ -81,6 +93,27 @@ require_command curl
 require_command systemctl
 require_file "${VALIDATE_BROKER_SCRIPT}"
 
+if [[ -z "${SMOKE_HTTP_SLOT}" ]]; then
+  SMOKE_HTTP_SLOT="$(active_http_slot)"
+fi
+load_smoke_slot_env "${SMOKE_HTTP_SLOT}"
+
+GATEWAY_BFF_PORT="${GATEWAY_BFF_PORT:-8000}"
+IDENTITY_SERVICE_PORT="${IDENTITY_SERVICE_PORT:-8101}"
+LEARNING_CORE_SERVICE_PORT="${LEARNING_CORE_SERVICE_PORT:-8102}"
+CATALOG_CONTENT_SERVICE_PORT="${CATALOG_CONTENT_SERVICE_PORT:-8103}"
+AI_EXECUTION_SERVICE_PORT="${AI_EXECUTION_SERVICE_PORT:-8104}"
+TTS_MEDIA_SERVICE_PORT="${TTS_MEDIA_SERVICE_PORT:-8105}"
+ASR_SERVICE_PORT="${ASR_SERVICE_PORT:-8106}"
+NOTES_SERVICE_PORT="${NOTES_SERVICE_PORT:-8107}"
+ADMIN_OPS_SERVICE_PORT="${ADMIN_OPS_SERVICE_PORT:-8108}"
+SPEECH_SERVICE_PORT="${SPEECH_SERVICE_PORT:-5001}"
+
+smoke_release="$(current_target_path)"
+if [[ -n "${SMOKE_HTTP_SLOT}" ]]; then
+  smoke_release="$(http_slot_release_path "${SMOKE_HTTP_SLOT}")"
+fi
+
 log "Smoke check: wave5 broker runtime"
 "${VALIDATE_BROKER_SCRIPT}"
 
@@ -93,18 +126,31 @@ check_url "http://127.0.0.1:${TTS_MEDIA_SERVICE_PORT}/ready" "tts-media-service 
 check_url "http://127.0.0.1:${ASR_SERVICE_PORT}/ready" "asr-service ready"
 check_url "http://127.0.0.1:${NOTES_SERVICE_PORT}/ready" "notes-service ready"
 check_url "http://127.0.0.1:${ADMIN_OPS_SERVICE_PORT}/ready" "admin-ops-service ready"
-check_url "http://127.0.0.1:${SPEECH_SERVICE_PORT}/ready" "asr-socketio ready"
-check_host_url "/" "nginx frontend"
-check_host_url "/api/books" "nginx api proxy"
+
+if [[ "${SMOKE_SKIP_NGINX}" != "true" ]]; then
+  check_url "http://127.0.0.1:${SPEECH_SERVICE_PORT}/ready" "asr-socketio ready"
+  check_host_url "/" "nginx frontend"
+  check_host_url "/api/books" "nginx api proxy"
+else
+  check_url "http://127.0.0.1:${GATEWAY_BFF_PORT}/api/books" "slot gateway books proxy"
+fi
+
+if release_supports_ai_dependency_probe "${smoke_release}"; then
+  check_url "http://127.0.0.1:${AI_EXECUTION_SERVICE_PORT}/internal/ops/ai-dependencies?user_id=${SMOKE_AI_PROBE_USER_ID}" "ai dependency probe"
+else
+  log "Skipping AI dependency probe because target release does not support it"
+fi
 
 current_release="$(current_target_path)"
-if [[ -n "${current_release}" && -d "${current_release}" ]] && release_supports_wave5_workers "${current_release}"; then
+if [[ "${SMOKE_SKIP_WORKERS}" != "true" ]] && [[ -n "${current_release}" && -d "${current_release}" ]] && release_supports_wave5_workers "${current_release}"; then
   for worker in "${WAVE5_WORKER_UNITS[@]}"; do
     log "Smoke check: ${worker} active"
     wait_for_systemd_unit "ielts-service@${worker}" "${worker} active"
   done
-else
+elif [[ "${SMOKE_SKIP_WORKERS}" != "true" ]]; then
   log "Skipping Wave 5 worker unit smoke because current release does not support worker units"
+else
+  log "Skipping Wave 5 worker unit smoke for pre-switch HTTP slot validation"
 fi
 
 log "Smoke checks passed"

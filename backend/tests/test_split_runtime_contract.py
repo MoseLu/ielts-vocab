@@ -21,7 +21,7 @@ def test_start_project_uses_split_runtime_as_default_backend_path():
     start_microservices = _read('start-microservices.ps1')
 
     assert 'start-microservices.ps1' in start_project
-    assert 'AllowSharedSplitServiceSqliteServices' in start_project
+    assert 'AllowSharedSplitServiceSqliteServices' not in start_project
     assert 'UseMonolithCompatibility' in start_project
     assert 'MonolithCompatSurface' in start_project
     assert 'ALLOW_MONOLITH_COMPAT_RUNTIME=1' in start_project
@@ -44,14 +44,14 @@ def test_start_project_uses_split_runtime_as_default_backend_path():
     assert '$gatewayPort = 8000' in start_project
     assert 'http://127.0.0.1:$gatewayPort' in start_project
     assert 'start-microservices.ps1 failed.' in start_project
-    assert "'-AllowSharedSplitServiceSqliteServices'" in start_project
+    assert "'-AllowSharedSplitServiceSqliteServices'" not in start_project
     assert 'MonolithCompatSurface' in start_monolith_compat
     assert 'AllowDirtyCompatibilityDrill' in start_monolith_compat
     assert 'MonolithCompatBackendPort = 5000' in start_monolith_compat
     assert '-AllowDirtyCompatibilityDrill:$AllowDirtyCompatibilityDrill' in start_monolith_compat
     assert '-MonolithCompatBackendPort $MonolithCompatBackendPort' in start_monolith_compat
-    assert 'ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES' in start_microservices
-    assert 'Shared SQLite override services:' in start_microservices
+    assert 'ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES' not in start_microservices
+    assert 'Shared SQLite override services:' not in start_microservices
     assert 'function Stop-WorkerCommandTrees' in start_microservices
     assert "Get-CimInstance Win32_Process -Filter \"Name = 'cmd.exe'\"" in start_microservices
     assert 'Stop-WorkerCommandTrees -Definitions $workerDefinitions' in start_microservices
@@ -92,7 +92,10 @@ def test_vite_and_nginx_proxy_api_traffic_through_gateway_bff():
     assert 'function buildProxyConfig()' in vite_config
     assert 'proxy: buildProxyConfig()' in vite_config
     assert 'http://localhost:5000' not in vite_config
-    assert 'http://127.0.0.1:8000' in nginx_config
+    assert (
+        'proxy_pass         http://127.0.0.1:8000;' in nginx_config
+        or 'proxy_pass         http://ielts_gateway_bff;' in nginx_config
+    )
     assert 'http://127.0.0.1:5000' not in nginx_config
 
 

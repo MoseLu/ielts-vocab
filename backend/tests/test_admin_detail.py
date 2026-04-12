@@ -12,6 +12,8 @@ from models import (
     UserWrongWord,
     db,
 )
+from platform_sdk.admin_projection_bootstrap import bootstrap_admin_projection_snapshots
+from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 from services import admin_user_detail_repository
 from services.books_structure_service import get_book_chapter_count, get_book_word_count
 
@@ -386,6 +388,8 @@ def test_admin_user_detail_returns_strict_boundary_error_when_learning_core_fall
             is_completed=False,
         ))
         db.session.commit()
+        bootstrap_admin_projection_snapshots()
+        admin_id = admin.id
         learner_id = learner.id
 
     monkeypatch.setenv('CURRENT_SERVICE_NAME', 'admin-ops-service')
@@ -396,8 +400,15 @@ def test_admin_user_detail_returns_strict_boundary_error_when_learning_core_fall
 
     monkeypatch.setattr(admin_user_detail_repository, 'fetch_learning_core_admin_book_progress_rows', _raise)
 
-    login_user(client, 'admin-detail-boundary-admin')
-    response = client.get(f'/api/admin/users/{learner_id}')
+    headers = create_internal_auth_headers_for_user(
+        user_id=admin_id,
+        source_service_name='gateway-bff',
+        is_admin=True,
+        username='admin-detail-boundary-admin',
+        email='admin-detail-boundary-admin@example.com',
+        env=app.config,
+    )
+    response = client.get(f'/api/admin/users/{learner_id}', headers=headers)
 
     assert response.status_code == 503
     assert response.get_json() == {

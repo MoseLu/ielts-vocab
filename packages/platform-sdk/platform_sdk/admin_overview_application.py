@@ -10,6 +10,7 @@ from platform_sdk.admin_repository_adapters import (
     admin_user_session_repository,
 )
 from platform_sdk.catalog_provider_adapter import serialize_effective_book_progress
+from services.admin_projection_repository_support import AdminProjectionUnavailable
 
 
 EXCLUDED_ADMIN_PROGRESS_BOOK_IDS = {'ielts_confusable_match'}
@@ -155,7 +156,21 @@ def user_summary(user) -> dict:
     }
 
 
+def _admin_projection_boundary_error(exc: AdminProjectionUnavailable) -> tuple[dict, int]:
+    return build_strict_internal_contract_error(
+        upstream_name='admin-projection',
+        action=exc.action,
+    )
+
+
 def build_overview_response() -> tuple[dict, int]:
+    try:
+        return _build_overview_response()
+    except AdminProjectionUnavailable as exc:
+        return _admin_projection_boundary_error(exc)
+
+
+def _build_overview_response() -> tuple[dict, int]:
     total_users = admin_overview_repository.count_total_users()
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     one_day_ago = datetime.utcnow() - timedelta(days=1)
@@ -243,6 +258,26 @@ def build_overview_response() -> tuple[dict, int]:
 
 
 def build_users_response(
+    *,
+    page: int,
+    per_page: int,
+    search: str,
+    sort: str,
+    order: str,
+) -> tuple[dict, int]:
+    try:
+        return _build_users_response(
+            page=page,
+            per_page=per_page,
+            search=search,
+            sort=sort,
+            order=order,
+        )
+    except AdminProjectionUnavailable as exc:
+        return _admin_projection_boundary_error(exc)
+
+
+def _build_users_response(
     *,
     page: int,
     per_page: int,

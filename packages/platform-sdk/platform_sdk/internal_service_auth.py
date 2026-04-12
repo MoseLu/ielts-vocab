@@ -142,6 +142,40 @@ def create_internal_service_token(
     return jwt.encode(payload, secret, algorithm='HS256')
 
 
+def create_internal_auth_headers_for_user(
+    *,
+    user_id: int,
+    source_service_name: str = DEFAULT_SOURCE_SERVICE_NAME,
+    is_admin: bool = False,
+    username: str = '',
+    email: str = '',
+    scopes: tuple[str, ...] | list[str] = (),
+    request_id: str | None = None,
+    trace_id: str | None = None,
+    env=os.environ,
+) -> dict[str, str]:
+    resolved_request_id = request_id or uuid.uuid4().hex
+    resolved_trace_id = trace_id or resolved_request_id
+    token = create_internal_service_token(
+        secret=internal_service_secret(env=env),
+        source_service_name=source_service_name,
+        user_id=user_id,
+        is_admin=is_admin,
+        username=username,
+        email=email,
+        scopes=scopes,
+        request_id=resolved_request_id,
+        trace_id=resolved_trace_id,
+        ttl_seconds=internal_service_token_ttl_seconds(env=env),
+    )
+    return {
+        INTERNAL_SERVICE_AUTH_HEADER: token,
+        REQUEST_ID_HEADER: resolved_request_id,
+        TRACE_ID_HEADER: resolved_trace_id,
+        SERVICE_NAME_HEADER: source_service_name,
+    }
+
+
 def decode_internal_service_token(token: str, *, secret: str) -> dict:
     return jwt.decode(token, secret, algorithms=['HS256'])
 

@@ -42,7 +42,8 @@ def test_gateway_notes_list_proxy_routes_to_notes_service(monkeypatch):
     assert response.json()['notes'] == []
     assert captured['base_url'] == browser_routes.notes_service_url()
     assert captured['path'] == '/api/notes'
-    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer notes-token'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded
 
 
 def test_gateway_notes_job_proxy_routes_to_notes_service(monkeypatch):
@@ -68,7 +69,8 @@ def test_gateway_notes_job_proxy_routes_to_notes_service(monkeypatch):
     assert response.status_code == 200
     assert response.json()['job_id'] == 'job-123'
     assert captured['path'] == '/api/notes/summaries/generate-jobs/job-123'
-    assert build_forward_headers(captured['request'])['cookie'] == 'access_token=abc'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'cookie' not in forwarded
 
 
 def test_gateway_word_detail_note_proxy_routes_to_notes_service(monkeypatch):
@@ -95,4 +97,5 @@ def test_gateway_word_detail_note_proxy_routes_to_notes_service(monkeypatch):
     assert response.status_code == 200
     assert response.json()['note']['word'] == 'quit'
     assert captured['path'] == '/api/books/word-details/note'
-    assert build_forward_headers(captured['request'])['authorization'] == 'Bearer note-token'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded

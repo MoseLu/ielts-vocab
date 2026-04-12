@@ -12,7 +12,7 @@ MICROSERVICES_ENV_FILE="${MICROSERVICES_ENV_FILE:-/etc/ielts-vocab/microservices
 SMOKE_HOST="${SMOKE_HOST:-axiomaticworld.com}"
 RELEASE_RETENTION_COUNT="${RELEASE_RETENTION_COUNT:-5}"
 
-CORE_SERVICE_UNITS=(
+HTTP_SERVICE_UNITS=(
   "gateway-bff"
   "identity-service"
   "learning-core-service"
@@ -22,8 +22,11 @@ CORE_SERVICE_UNITS=(
   "asr-service"
   "notes-service"
   "admin-ops-service"
+)
+SINGLE_INSTANCE_CORE_UNITS=(
   "asr-socketio"
 )
+CORE_SERVICE_UNITS=("${HTTP_SERVICE_UNITS[@]}" "${SINGLE_INSTANCE_CORE_UNITS[@]}")
 WAVE5_WORKER_UNITS=(
   "identity-outbox-publisher"
   "learning-core-outbox-publisher"
@@ -60,8 +63,11 @@ require_file() {
   [[ -f "$1" ]] || fail "Missing required file: $1"
 }
 
+source "${BASH_SOURCE[0]%/*}/http-slot-common.sh"
+
 ensure_release_directories() {
   mkdir -p "${APP_HOME}" "${RELEASES_ROOT}" "${WEB_ROOT}"
+  ensure_http_slot_directories
 }
 
 sync_repository_origin() {
@@ -142,6 +148,11 @@ copy_frontend_dist() {
   mkdir -p "${WEB_ROOT}"
   find "${WEB_ROOT}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   cp -a "${release_dir}/dist/." "${WEB_ROOT}/"
+}
+
+link_frontend_dist() {
+  local release_dir="${1:?release dir is required}"
+  switch_frontend_to_release "${release_dir}"
 }
 
 current_target_path() {
@@ -237,4 +248,48 @@ restart_service_units() {
   for worker in "${WAVE5_WORKER_UNITS[@]}"; do
     systemctl disable --now "ielts-service@${worker}" >/dev/null 2>&1 || true
   done
+}
+
+restart_single_instance_units() {
+  local target_release=""
+  local service
+  systemctl daemon-reload
+
+  for service in "${SINGLE_INSTANCE_CORE_UNITS[@]}"; do
+    systemctl restart "ielts-service@${service}"
+  done
+
+  target_release="$(current_target_path)"
+  if [[ -n "${target_release}" && -d "${target_release}" ]] && release_supports_wave5_workers "${target_release}"; then
+    for service in "${WAVE5_WORKER_UNITS[@]}"; do
+      systemctl enable "ielts-service@${service}" >/dev/null 2>&1 || true
+      systemctl restart "ielts-service@${service}"
+    done
+    return 0
+  fi
+
+  for service in "${WAVE5_WORKER_UNITS[@]}"; do
+    systemctl disable --now "ielts-service@${service}" >/dev/null 2>&1 || true
+  done
+}
+
+install_http_slot_systemd_template() {
+  local release_dir="${1:?release dir is required}"
+  local template_path="${release_dir}/scripts/cloud-deploy/ielts-http-slot@.service"
+  local wrapper_path="${release_dir}/scripts/cloud-deploy/run-http-slot-service.sh"
+  local fallback_template="${BASH_SOURCE[0]%/*}/ielts-http-slot@.service"
+  local fallback_wrapper="${BASH_SOURCE[0]%/*}/run-http-slot-service.sh"
+  if [[ ! -f "${template_path}" ]]; then
+    template_path="${fallback_template}"
+  fi
+  if [[ ! -f "${wrapper_path}" ]]; then
+    wrapper_path="${fallback_wrapper}"
+  fi
+  require_file "${template_path}"
+  require_file "${wrapper_path}"
+  mkdir -p "${APP_HOME}/bin"
+  cp "${wrapper_path}" "${APP_HOME}/bin/run-http-slot-service.sh"
+  chmod +x "${APP_HOME}/bin/run-http-slot-service.sh"
+  cp "${template_path}" /etc/systemd/system/
+  systemctl daemon-reload
 }

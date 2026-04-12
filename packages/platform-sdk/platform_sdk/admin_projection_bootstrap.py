@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from datetime import datetime
 
+from sqlalchemy.exc import SQLAlchemyError
+
 from platform_sdk.admin_study_session_projection_application import (
     STUDY_SESSION_ANALYTICS_PROJECTION,
     upsert_projected_study_session,
@@ -53,7 +55,12 @@ def _user_payload(user) -> dict:
 
 
 def sync_admin_projected_user_snapshot(user, *, session=None) -> bool:
-    if user is None or not projection_bootstrap_ready(USER_DIRECTORY_PROJECTION):
+    if user is None:
+        return False
+    try:
+        if not projection_bootstrap_ready(USER_DIRECTORY_PROJECTION):
+            return False
+    except SQLAlchemyError:
         return False
     upsert_projected_user(_user_payload(user), session=session)
     return True

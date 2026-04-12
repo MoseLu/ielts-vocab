@@ -128,7 +128,7 @@ def test_gateway_tts_generate_proxy_forwards_gateway_headers(monkeypatch):
 
     assert response.status_code == 200
     assert captured['payload'] == {'text': 'Hello', 'provider': 'minimax'}
-    assert captured['headers']['authorization'] == 'Bearer tts-token'
+    assert 'authorization' not in captured['headers']
     assert captured['headers']['idempotency-key'] == 'tts-generate-1'
     assert captured['headers']['x-service-name'] == 'gateway-bff'
 

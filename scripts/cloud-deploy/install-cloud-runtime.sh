@@ -8,6 +8,15 @@ releases_root="${RELEASES_ROOT:-${app_home}/releases}"
 venv_dir="${VENV_DIR:-/opt/ielts-vocab/venv}"
 web_root="${WEB_ROOT:-/var/www/ielts-vocab}"
 env_dir="${ENV_DIR:-/etc/ielts-vocab}"
+script_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+export APP_HOME="${app_home}"
+export CURRENT_LINK="${app_root}"
+export RELEASES_ROOT="${releases_root}"
+export REPOSITORY_ROOT="${repository_root}"
+export VENV_DIR="${venv_dir}"
+export WEB_ROOT="${web_root}"
+source "${script_dir}/release-common.sh"
 
 install_node20_from_tarball() {
   local node_arch=""
@@ -83,6 +92,7 @@ systemctl enable --now postgresql nginx crond redis rabbitmq-server
 systemctl restart postgresql
 
 mkdir -p "${env_dir}" "${web_root}" "${releases_root}" /var/backups/ielts-vocab/postgres
+ensure_http_slot_directories
 chmod 700 "${env_dir}" /var/backups/ielts-vocab
 
 if [[ ! -d "${repository_root}/.git" && -d "${app_root}/.git" ]]; then
@@ -98,14 +108,17 @@ corepack enable
 corepack prepare pnpm@9.0.0 --activate
 pnpm --dir "${app_root}" install --frozen-lockfile
 pnpm --dir "${app_root}" build
-rm -rf "${web_root:?}/"*
-cp -a "${app_root}/dist/." "${web_root}/"
+switch_frontend_to_release "${app_root}"
 
 chmod +x "${app_root}/scripts/cloud-deploy/"*.sh
 if [[ -f "${env_dir}/microservices.env" ]]; then
   "${app_root}/scripts/cloud-deploy/provision-broker-runtime.sh" "${env_dir}/microservices.env"
 fi
 cp "${app_root}/scripts/cloud-deploy/ielts-service@.service" /etc/systemd/system/
+install_http_slot_systemd_template "${app_root}"
+write_http_slot_env blue
+write_http_slot_env green
+ensure_nginx_gateway_upstream
 if [[ -f /etc/nginx/conf.d/ielts-vocab.conf ]] && grep -q 'managed by Certbot' /etc/nginx/conf.d/ielts-vocab.conf; then
   echo "Preserving existing Certbot-managed nginx site config."
 else

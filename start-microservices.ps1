@@ -2,8 +2,7 @@ param(
     [string]$ProjectRoot,
     [switch]$SkipFrontendChecks,
     [switch]$SkipRedis,
-    [switch]$SkipRabbit,
-    [string[]]$AllowSharedSplitServiceSqliteServices
+    [switch]$SkipRabbit
 )
 
 $ErrorActionPreference = 'Stop'
@@ -225,25 +224,6 @@ function Stop-WorkerCommandTrees {
     }
 }
 
-function Get-SharedSqliteOverrideEnvPrefix {
-    if (-not $AllowSharedSplitServiceSqliteServices -or $AllowSharedSplitServiceSqliteServices.Count -eq 0) {
-        return ''
-    }
-
-    $serviceNames = @(
-        $AllowSharedSplitServiceSqliteServices |
-            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-            ForEach-Object { $_.Trim() } |
-            Select-Object -Unique
-    )
-    if ($serviceNames.Count -eq 0) {
-        return ''
-    }
-
-    $joined = [string]::Join(',', $serviceNames)
-    return "set `"ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES=$joined`" && "
-}
-
 function Set-DefaultEnvValue {
     param(
         [string]$Name,
@@ -347,7 +327,6 @@ try {
         Add-Content -Path $stderrLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
 
         $envPrefix = "set `"MICROSERVICES_ENV_FILE=$microservicesEnv`" && "
-        $envPrefix += Get-SharedSqliteOverrideEnvPrefix
         Release-PortReservation -Reservations $portReservations -Port $definition.Port
         Start-LoggedProcess -WorkingDirectory $definition.Workdir -CommandLine ($envPrefix + $definition.Command + " 1>>`"$stdoutLog`" 2>>`"$stderrLog`"")
         Wait-PortState -Port $definition.Port -Listening $true -TimeoutSeconds 45
@@ -363,7 +342,6 @@ try {
         Add-Content -Path $stderrLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
 
         $envPrefix = "set `"MICROSERVICES_ENV_FILE=$microservicesEnv`" && "
-        $envPrefix += Get-SharedSqliteOverrideEnvPrefix
         $process = Start-LoggedProcess -WorkingDirectory $definition.Workdir -CommandLine ($envPrefix + $definition.Command + " 1>>`"$stdoutLog`" 2>>`"$stderrLog`"")
         Start-Sleep -Seconds 2
         if ($process.HasExited) {
@@ -374,18 +352,6 @@ try {
     if (-not $SkipFrontendChecks) {
         Write-Host "Gateway ready at http://127.0.0.1:8000"
     }
-    if ($AllowSharedSplitServiceSqliteServices -and $AllowSharedSplitServiceSqliteServices.Count -gt 0) {
-        $joinedOverrides = [string]::Join(', ', @(
-            $AllowSharedSplitServiceSqliteServices |
-                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-                ForEach-Object { $_.Trim() } |
-                Select-Object -Unique
-        ))
-        if (-not [string]::IsNullOrWhiteSpace($joinedOverrides)) {
-            Write-Host "       Shared SQLite override services: $joinedOverrides"
-        }
-    }
-
     Write-Host '[DONE] Microservice backend started successfully.'
     Write-Host '       Gateway:           http://127.0.0.1:8000'
     Write-Host '       Identity:          http://127.0.0.1:8101'

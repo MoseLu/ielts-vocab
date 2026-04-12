@@ -1,8 +1,8 @@
 # Milestone
-Last updated: 2026-04-12 00:14:22 +08:00
+Last updated: 2026-04-12 11:18:00 +08:00
 
 ## Current Milestone
-- Keep the now-canonical microservice runtime stable after Wave 1-6 closure while finishing the remaining post-cutover cleanup: retire rollback-only shared-`SQLite` backup/runtime tails, remove hand-managed env/bootstrap assumptions, add per-service migration baselines, finish `admin-ops` and OSS convergence cleanup, close the gateway-issued auth-context tail, and restore repo-summary automation without reopening shared-read or broker-boundary regressions.
+- Keep the now-canonical microservice runtime stable after Wave 1-6 closure while finishing the last operational closeout: run the final remote release/deploy/preflight/smoke/storage drill pack without reopening shared-read, broker-boundary, or auth-context regressions.
 
 ## Wave Status
 - Wave 1-4: completed.
@@ -10,6 +10,7 @@ Last updated: 2026-04-12 00:14:22 +08:00
 - Wave 6A-6C: completed.
 
 ## Completed
+- Closed the remaining code-side post-Wave shared-read tails for the normal split runtime: `admin-ops-service` now sends `set-admin` through an `identity-service` internal endpoint, admin user/session/wrong-word projections now fail fast with an explicit `admin-projection` boundary when bootstrap markers are missing under strict mode, `ai-execution-service` now returns an empty learner-profile snapshot instead of silently reading local shared tables in strict mode, and the table-boundary audit for `admin-ops-service`, `notes-service`, and `ai-execution-service` now reports `transitional_tables: []`.
 - Established local microservice entrypoints for `gateway-bff`, `identity-service`, `learning-core-service`, `catalog-content-service`, `ai-execution-service`, `tts-media-service`, `asr-service`, `notes-service`, and `admin-ops-service`, plus dedicated ASR Socket.IO runtime on `5001`.
 - Provisioned one local PostgreSQL database and one role per service on `127.0.0.1:55432`, and aligned split-service env loading with `backend/.env` plus `backend/.env.microservices.local`.
 - Added shared readiness checks and a one-command backend orchestration path via [start-microservices.ps1](/F:/enterprise-workspace/projects/ielts-vocab/start-microservices.ps1), including port reservation and forced process cleanup to avoid Windows port-collision regressions.
@@ -96,15 +97,11 @@ Last updated: 2026-04-12 00:14:22 +08:00
 ## In Progress
 - Keeping the canonical split runtime path stable across local startup, nginx proxy behavior, and systemd-managed remote rollout after Wave 1-6 closure.
 - Converging the backend onto a real microservice delivery target rather than a service-shaped monolith with shared persistence internals, without breaking the already deployed remote single-server production baseline.
-- Stabilizing the post-Wave-5 runtime after the broker rollout, worker-aware remote release path, strict split-runtime read boundaries, and Redis-backed workloads all landed on the same branch.
-- Finishing the remaining storage/runtime cleanup tails: shared-`SQLite` backup runtime retirement, service-boot env simplification, per-service migration baselines, `admin-ops-service` transitional read-side cleanup, and the remaining service-owned OSS convergence work.
-- Finishing the remaining edge/tooling cleanup tails: gateway-issued internal auth-context completion and restoration of automated repo-summary sync.
+- Stabilizing the post-Wave runtime after the broker rollout, worker-aware remote release path, strict split-runtime read boundaries, Redis-backed workloads, migration baselines, auth-context tightening, OSS validation, and repo-summary tooling all landed on the same branch.
+- Finishing the last operational tail: execute the final remote release, preflight, smoke, bounded storage drill, and post-cutover evidence sync.
 
 ## Next
-- Retire the shared-`SQLite` backup/runtime fallback from normal split-service operations first, because it is the biggest remaining architectural tail.
-- Land per-service migration baselines and remove the remaining hand-managed service boot env assumptions so startup/bootstrap behavior stops depending on operator memory.
-- Finish `admin-ops-service` transitional shadow-table cleanup plus the remaining service-owned OSS artifact convergence.
-- Close the gateway-issued internal auth-context tail and restore `scripts/repo_summary.py` or replace it with a supported doc-sync path.
+- Run the final release closeout on the remote host: deploy, preflight, smoke, bounded storage drill, and post-cutover verification commands.
 
 ## 30-Step Plan
 ### Wave 1: Remove Remaining Shared Helper Coupling

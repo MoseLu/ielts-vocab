@@ -5,6 +5,7 @@ import {
   cancelSession,
   flushStudySessionOnPageHide,
   logSession,
+  resolveStudySessionDurationSeconds,
   startSession,
   touchStudySessionActivity,
 } from '../../../hooks/useAIChat'
@@ -158,10 +159,13 @@ export function useQuickMemorySession({
     sessionLoggedRef.current = true
     flushPendingRecordSync()
     syncSessionSnapshot({
-      activeAt: Date.now(),
       wordsStudied: queueLength,
       correctCount: summary.correctCount,
       wrongCount: summary.wrongCount,
+    })
+    const durationSeconds = resolveStudySessionDurationSeconds({
+      sessionId: sessionIdRef.current,
+      startedAt: sessionStartRef.current,
     })
     logSession({
       mode: 'quickmemory',
@@ -170,7 +174,7 @@ export function useQuickMemorySession({
       wordsStudied: queueLength,
       correctCount: summary.correctCount,
       wrongCount: summary.wrongCount,
-      durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000),
+      durationSeconds,
       startedAt: sessionStartRef.current,
       sessionId: sessionIdRef.current,
     })
@@ -227,7 +231,10 @@ export function useQuickMemorySession({
       if (sessionLoggedRef.current) return
 
       const summary = summarizeResults(resultsRef.current)
-      const durationSeconds = Math.round((Date.now() - sessionStartRef.current) / 1000)
+      const durationSeconds = resolveStudySessionDurationSeconds({
+        sessionId: sessionIdRef.current,
+        startedAt: sessionStartRef.current,
+      })
       if (summary.wordsStudied <= 0 && durationSeconds < PASSIVE_STUDY_SESSION_MIN_SECONDS) {
         pendingSessionCancelRef.current = true
         cancelSession(sessionIdRef.current)
@@ -236,7 +243,6 @@ export function useQuickMemorySession({
 
       sessionLoggedRef.current = true
       syncSessionSnapshot({
-        activeAt: Date.now(),
         wordsStudied: summary.wordsStudied,
         correctCount: summary.correctCount,
         wrongCount: summary.wrongCount,
