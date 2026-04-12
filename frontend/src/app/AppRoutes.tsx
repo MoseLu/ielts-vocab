@@ -79,6 +79,7 @@ export function AppRoutes({
   const location = useLocation()
   const isPractice = location.pathname.startsWith('/practice')
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
+  const shouldShowBottomNav = Boolean(user) && !isPractice && !isSpecialPage
   const [chromeReady, setChromeReady] = useState(false)
 
   useEffect(() => {
@@ -275,14 +276,14 @@ export function AppRoutes({
           <GlobalWordSearch />
         </ChromeSlot>
       )}
-      {user && !isPractice && !isSpecialPage && (
+      {shouldShowBottomNav && (
         <ChromeSlot>
           <BottomNav />
         </ChromeSlot>
       )}
       {user && !isSpecialPage && chromeReady && (
         <ChromeSlot>
-          <AIChatPanel />
+          <AIChatPanel avoidBottomNav={shouldShowBottomNav} />
         </ChromeSlot>
       )}
     </div>

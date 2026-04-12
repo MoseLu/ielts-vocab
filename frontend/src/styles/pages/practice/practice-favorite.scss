@@ -55,33 +55,8 @@
     margin-bottom: calc(var(--space-md) + 4px);
 }
 
-@media (min-width: 768px) {
-    .practice-page.practice-page--choice .practice-main-header--choice-action {
-        position: absolute;
-        top: clamp(168px, 28vh, 214px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(calc(100% - 40px), calc(var(--practice-choice-grid-max-width, 980px) + 180px));
-        justify-content: flex-end;
-        margin-bottom: 0;
-        padding: 0 12px;
-        z-index: 2;
-        pointer-events: none;
-    }
-
-    .practice-page.practice-page--choice .practice-main-header--choice-action > * {
-        pointer-events: auto;
-    }
-
-    .practice-page.practice-page--choice .practice-main-header--choice-action .practice-main-header__meta {
-        display: none;
-    }
-}
-
-@media (max-height: 700px) and (min-width: 768px) {
-    .practice-page.practice-page--choice .practice-main-header--choice-action {
-        top: clamp(138px, 24vh, 176px);
-    }
+.practice-choice-top-rail__right .practice-favorite-btn {
+    margin-top: 2px;
 }
 
 .practice-main-header__meta {

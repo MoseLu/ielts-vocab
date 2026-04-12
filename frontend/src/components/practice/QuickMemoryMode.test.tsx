@@ -66,9 +66,7 @@ describe('QuickMemoryMode', () => {
     localStorage.clear()
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 1 }))
   })
-  afterEach(() => {
-    vi.useRealTimers()
-  })
+  afterEach(() => { vi.useRealTimers() })
   it('resets out of the summary screen when chapter context changes', async () => {
     const user = userEvent.setup()
     const { container, rerender } = render(

@@ -153,7 +153,7 @@ export function PracticePageContent({
   handleMeaningRecallSubmit,
   handleContinueReview,
 }: PracticePageContentProps) {
-  const progress = queueIndex / Math.max(vocabulary.length, 1)
+  const progress = Math.min((queueIndex + 1) / Math.max(queue.length, 1), 1)
   const favoriteSlot = (
     <FavoriteToggleButton
       active={favoriteActive}

@@ -44,6 +44,18 @@ describe('DictationMode', () => {
     vi.clearAllMocks()
   })
 
+  it('groups dictation controls, prompt panel and progress inside one card', () => {
+    const { container } = render(<DictationMode {...baseProps} />)
+
+    expect(container.querySelector('.dictation-card')).not.toBeNull()
+    expect(container.querySelector('.dictation-stage')).not.toBeNull()
+    expect(container.querySelector('.dictation-content-card')).not.toBeNull()
+    expect(container.querySelector('.dictation-progress')).not.toBeNull()
+    expect(container.querySelector('.practice-bottom-bar')).toBeNull()
+    expect(screen.getByText('练习进度')).toBeInTheDocument()
+    expect(screen.getByText('2/10')).toBeInTheDocument()
+  })
+
   it('auto-plays example audio when example mode is active', async () => {
     render(<DictationMode {...baseProps} />)
 

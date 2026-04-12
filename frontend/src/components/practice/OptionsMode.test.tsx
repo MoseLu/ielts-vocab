@@ -91,7 +91,7 @@ describe('OptionsMode listening feedback', () => {
     expect(screen.queryByText('这一步干什么')).not.toBeInTheDocument()
   })
 
-  it('marks the listening favorite action header for compact choice layout spacing', () => {
+  it('renders the listening top rail so choice content keeps a stable position', () => {
     const { container } = render(
       <OptionsMode
         currentWord={makeWord()}
@@ -128,7 +128,9 @@ describe('OptionsMode listening feedback', () => {
       />,
     )
 
-    expect(container.querySelector('.practice-main-header--choice-action')).not.toBeNull()
+    expect(container.querySelector('.practice-choice-top-rail')).not.toBeNull()
+    expect(container.querySelector('.practice-choice-top-rail__right button')).not.toBeNull()
+    expect(container.querySelector('.practice-main-header__action')).toBeNull()
   })
 
   it('shows a blanked example sentence when the listening word includes an example', () => {

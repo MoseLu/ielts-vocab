@@ -153,7 +153,7 @@ export function PracticePageDictationLayout(props: PracticePageDictationLayoutPr
         speechRecording={speechRecording}
         settings={settings}
         progressValue={progressValue}
-        total={vocabulary.length}
+        total={queue.length}
         queueIndex={queueIndex}
         previousWord={previousWord}
         lastState={lastState}
@@ -307,7 +307,7 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
         speechRecording={speechRecording}
         settings={settings}
         progressValue={progressValue}
-        total={vocabulary.length}
+        total={queue.length}
         queueIndex={queueIndex}
         onOptionSelect={onOptionSelect}
         onSkip={onSkip}

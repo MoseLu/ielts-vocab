@@ -1,5 +1,6 @@
 // ── Options Mode Component (Listening / Meaning / Smart) ───────────────────────
 
+import { useLayoutEffect, useRef } from 'react'
 import type { OptionsModeProps } from './types'
 import { playExampleAudio } from './utils'
 import {
@@ -53,32 +54,63 @@ export default function OptionsMode({
   const isSmartDictation = mode === 'smart' && smartDimension === 'dictation'
   const isMeaningRecall = mode === 'meaning' || (mode === 'smart' && smartDimension === 'meaning')
   const isChoiceLayout = !isSmartDictation && !isMeaningRecall
-  const hasChoiceActionHeader = isChoiceLayout && mode !== 'smart' && Boolean(favoriteSlot)
   const listeningExample = currentWord.examples?.[0]?.en ?? ''
   const showListeningExample = displayMode === 'audio'
     && !optionsLoading
     && Boolean(listeningExample)
+  const pageRef = useRef<HTMLDivElement | null>(null)
   const handlePlayExample = () => {
     if (!listeningExample) return
     playExampleAudio(listeningExample, currentWord.word, settings)
   }
 
+  useLayoutEffect(() => {
+    if (!isChoiceLayout) return
+    const pageElement = pageRef.current
+    if (!pageElement) return
+    if (typeof pageElement.scrollTo === 'function') {
+      pageElement.scrollTo({ top: 0, behavior: 'auto' })
+      return
+    }
+    pageElement.scrollTop = 0
+  }, [currentWord.word, isChoiceLayout, queueIndex])
+
   return (
-    <div className={`practice-page${isChoiceLayout ? ' practice-page--choice' : ''}`}>
-      <PrevWordBlock
-        previousWord={previousWord}
-        lastState={lastState}
-        onGoBack={onGoBack}
-        className={isChoiceLayout ? 'prev-word-inline--choice' : undefined}
-      />
+    <div
+      ref={pageRef}
+      className={`practice-page${isChoiceLayout ? ' practice-page--choice' : ''}`}
+    >
+      {!isChoiceLayout && (
+        <PrevWordBlock
+          previousWord={previousWord}
+          lastState={lastState}
+          onGoBack={onGoBack}
+        />
+      )}
 
       <div className="practice-main">
-        {(mode === 'smart' || favoriteSlot) && (
-          <div className={`practice-main-header${hasChoiceActionHeader ? ' practice-main-header--choice-action' : ''}`}>
+        {isChoiceLayout && (
+          <div className="practice-choice-top-rail">
+            <div className="practice-choice-top-rail__left">
+              <PrevWordBlock
+                previousWord={previousWord}
+                lastState={lastState}
+                onGoBack={onGoBack}
+                className="prev-word-inline--choice"
+              />
+            </div>
+            {favoriteSlot ? (
+              <div className="practice-choice-top-rail__right">{favoriteSlot}</div>
+            ) : null}
+          </div>
+        )}
+
+        {(mode === 'smart' || (favoriteSlot && !isChoiceLayout)) && (
+          <div className="practice-main-header">
             <div className="practice-main-header__meta">
               {mode === 'smart' && <SmartDimBadge dimension={smartDimension} />}
             </div>
-            {favoriteSlot ? (
+            {favoriteSlot && !isChoiceLayout ? (
               <div className="practice-main-header__action">{favoriteSlot}</div>
             ) : null}
           </div>

@@ -395,98 +395,100 @@ export default function QuickMemoryMode({
 
   return (
     <div className="qm-root">
-      <div className="qm-progress-track">
-        <div className="qm-progress-fill" style={{ width: `${progress}%` }} />
-      </div>
-      <div className="qm-progress-label">{index + 1} / {queue.length}</div>
+      <div className="qm-stage">
+        <div className="qm-progress-track">
+          <div className="qm-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <div className="qm-progress-label">{index + 1} / {queue.length}</div>
 
-      <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
-        {favoriteSlot ? (
-          <div className={`qm-card-toolbar${phase === 'question' ? ' qm-card-toolbar--question' : ''}`}>
-            {phase === 'question' ? <div className="qm-card-toolbar__spacer" /> : null}
-            <div className="qm-card-toolbar__action">{favoriteSlot}</div>
-          </div>
-        ) : null}
-        {phase === 'question' && (
-          <>
-            <div className="qm-countdown-ring">
-              <QuickMemoryCountdownRing seconds={countdown} total={TIMER_SECONDS} />
+        <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
+          {favoriteSlot ? (
+            <div className={`qm-card-toolbar${phase === 'question' ? ' qm-card-toolbar--question' : ''}`}>
+              {phase === 'question' ? <div className="qm-card-toolbar__spacer" /> : null}
+              <div className="qm-card-toolbar__action">{favoriteSlot}</div>
             </div>
+          ) : null}
+          {phase === 'question' && (
+            <>
+              <div className="qm-countdown-ring">
+                <QuickMemoryCountdownRing seconds={countdown} total={TIMER_SECONDS} />
+              </div>
 
-            <div className="qm-word">{currentWord.word}</div>
+              <div className="qm-word">{currentWord.word}</div>
 
-            <p className="qm-hint">你认识这个单词吗？</p>
+              <p className="qm-hint">你认识这个单词吗？</p>
 
-            <div className="qm-choice-row">
-              <button
-                className="qm-btn qm-btn--unknown"
-                onClick={() => reveal('unknown')}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                不认识
-              </button>
-              <button
-                className="qm-btn qm-btn--known"
-                onClick={() => reveal('known')}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                认识
-              </button>
-            </div>
-            <div className="qm-key-hints">
-              {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
-              <span className="qm-key-hint"><kbd>→</kbd> 认识</span>
-              <span className="qm-key-hint"><kbd>Tab</kbd> 重播发音</span>
-            </div>
-          </>
-        )}
-
-        {phase === 'reveal' && currentWord && (
-          <>
-            <div className={`qm-result-badge ${choice === 'known' ? 'qm-badge--known' : 'qm-badge--unknown'}${revisitedSet.has(index) ? ' qm-badge--fuzzy' : ''}`}>
-              {choice === 'known' ? '✓ 认识' : '✗ 不认识'}
-              {revisitedSet.has(index) && <span className="qm-badge-fuzzy-tag">模糊</span>}
-            </div>
-
-            <div className="qm-word">{currentWord.word}</div>
-
-            {currentWord.phonetic && (
-              <div className="qm-phonetic">{currentWord.phonetic}</div>
-            )}
-
-            {currentWord.pos && (
-              <span className="qm-pos">{currentWord.pos}</span>
-            )}
-
-            <div className="qm-definition">{currentWord.definition}</div>
-
-            <div className="qm-nav-row">
-              {index > 0 && (
-                <button className="qm-btn-prev" onClick={handlePrev}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M15 18l-6-6 6-6"/>
-                  </svg>
-                  上一个
+              <div className="qm-choice-row">
+                <button
+                  className="qm-btn qm-btn--unknown"
+                  onClick={() => reveal('unknown')}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  不认识
                 </button>
+                <button
+                  className="qm-btn qm-btn--known"
+                  onClick={() => reveal('known')}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  认识
+                </button>
+              </div>
+              <div className="qm-key-hints">
+                {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
+                <span className="qm-key-hint"><kbd>→</kbd> 认识</span>
+                <span className="qm-key-hint"><kbd>Tab</kbd> 重播发音</span>
+              </div>
+            </>
+          )}
+
+          {phase === 'reveal' && currentWord && (
+            <>
+              <div className={`qm-result-badge ${choice === 'known' ? 'qm-badge--known' : 'qm-badge--unknown'}${revisitedSet.has(index) ? ' qm-badge--fuzzy' : ''}`}>
+                {choice === 'known' ? '✓ 认识' : '✗ 不认识'}
+                {revisitedSet.has(index) && <span className="qm-badge-fuzzy-tag">模糊</span>}
+              </div>
+
+              <div className="qm-word">{currentWord.word}</div>
+
+              {currentWord.phonetic && (
+                <div className="qm-phonetic">{currentWord.phonetic}</div>
               )}
-              <button className="qm-btn-next" onClick={handleNext}>
-                {index + 1 < queue.length ? (
-                  <span className="qm-btn-next-inner">
-                    下一个
+
+              {currentWord.pos && (
+                <span className="qm-pos">{currentWord.pos}</span>
+              )}
+
+              <div className="qm-definition">{currentWord.definition}</div>
+
+              <div className="qm-nav-row">
+                {index > 0 && (
+                  <button className="qm-btn-prev" onClick={handlePrev}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M9 18l6-6-6-6"/>
+                      <path d="M15 18l-6-6 6-6"/>
                     </svg>
-                  </span>
-                ) : '查看结果'}
-              </button>
-            </div>
-            <div className="qm-key-hints">
-              {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
-              <span className="qm-key-hint"><kbd>→</kbd> 下一个</span>
-              <span className="qm-key-hint"><kbd>Tab</kbd> 重播发音</span>
-            </div>
-          </>
-        )}
+                    上一个
+                  </button>
+                )}
+                <button className="qm-btn-next" onClick={handleNext}>
+                  {index + 1 < queue.length ? (
+                    <span className="qm-btn-next-inner">
+                      下一个
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                    </span>
+                  ) : '查看结果'}
+                </button>
+              </div>
+              <div className="qm-key-hints">
+                {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
+                <span className="qm-key-hint"><kbd>→</kbd> 下一个</span>
+                <span className="qm-key-hint"><kbd>Tab</kbd> 重播发音</span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

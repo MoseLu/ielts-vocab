@@ -16,7 +16,11 @@ import {
   useAIChatPanel,
 } from '../../../composables/ai-chat/page/useAIChatPanel'
 
-function AIChatPanel() {
+interface AIChatPanelProps {
+  avoidBottomNav?: boolean
+}
+
+function AIChatPanel({ avoidBottomNav = false }: AIChatPanelProps) {
   const {
     isOpen,
     isLoading,
@@ -74,7 +78,7 @@ function AIChatPanel() {
   if (!isOpen) {
     return (
       <button
-        className="ai-fab"
+        className={`ai-fab${avoidBottomNav ? ' ai-fab--nav-offset' : ''}`}
         onClick={openPanel}
         title="雅思 AI 助手"
         aria-label="打开 AI 助手"
@@ -86,7 +90,10 @@ function AIChatPanel() {
   }
 
   return (
-    <div className={`ai-panel ${isFullscreen ? 'ai-panel--fullscreen' : ''}`} ref={panelRef}>
+    <div
+      className={`ai-panel ${isFullscreen ? 'ai-panel--fullscreen' : ''}${avoidBottomNav ? ' ai-panel--nav-offset' : ''}`}
+      ref={panelRef}
+    >
       <div className="ai-panel-header">
         <div className="ai-panel-title">
           <div className="ai-panel-avatar">
