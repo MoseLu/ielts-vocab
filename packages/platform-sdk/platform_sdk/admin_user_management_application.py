@@ -10,11 +10,14 @@ from platform_sdk.admin_overview_application import (
     user_summary,
 )
 from platform_sdk.cross_service_boundary import build_strict_internal_contract_error
+from platform_sdk.cross_service_boundary import run_with_legacy_cross_service_fallback
+from platform_sdk.identity_admin_internal_client import set_identity_user_admin
 from platform_sdk.admin_repository_adapters import (
     admin_user_detail_repository,
     admin_user_directory_repository,
     admin_user_session_repository,
 )
+from services.admin_projection_repository_support import AdminProjectionUnavailable
 
 
 def _parse_wrong_word_iso_timestamp(value) -> float:
@@ -80,7 +83,13 @@ def build_user_detail_response(
     book_id: str | None,
     wrong_words_sort: str | None,
 ) -> tuple[dict, int]:
-    user = admin_user_directory_repository.get_user(user_id)
+    try:
+        user = admin_user_directory_repository.get_user(user_id)
+    except AdminProjectionUnavailable as exc:
+        return build_strict_internal_contract_error(
+            upstream_name='admin-projection',
+            action=exc.action,
+        )
     if user is None:
         return {'error': '用户不存在'}, 404
 
@@ -164,18 +173,37 @@ def build_user_detail_response(
             upstream_name='learning-core-service',
             action=exc.action,
         )
+    except AdminProjectionUnavailable as exc:
+        return build_strict_internal_contract_error(
+            upstream_name='admin-projection',
+            action=exc.action,
+        )
 
 
 def set_admin_response(current_admin_id: int, target_user_id: int, data: dict | None) -> tuple[dict, int]:
     if current_admin_id == target_user_id:
         return {'error': '不能修改自己的管理员状态'}, 400
 
-    user = admin_user_directory_repository.get_user(target_user_id)
+    target_is_admin = bool((data or {}).get('is_admin', False))
+    return run_with_legacy_cross_service_fallback(
+        upstream_name='identity-service',
+        action='admin-user-admin-toggle',
+        primary=lambda: set_identity_user_admin(
+            admin_user_id=current_admin_id,
+            target_user_id=target_user_id,
+            is_admin=target_is_admin,
+        ),
+        fallback=lambda: _set_admin_response_legacy(target_user_id, target_is_admin),
+    )
+
+
+def _set_admin_response_legacy(target_user_id: int, is_admin: bool) -> tuple[dict, int]:
+    user = admin_user_directory_repository.get_writable_user(target_user_id)
     if user is None:
         return {'error': '用户不存在'}, 404
 
     updated = admin_user_directory_repository.set_user_admin(
         user,
-        is_admin=bool((data or {}).get('is_admin', False)),
+        is_admin=is_admin,
     )
     return {'message': '已更新', 'user': updated.to_dict()}, 200

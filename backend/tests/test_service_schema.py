@@ -36,7 +36,7 @@ def test_learning_core_bootstrap_includes_non_owned_tables():
     table_names = get_service_bootstrap_table_names('learning-core-service')
 
     assert 'users' in table_names
-    assert 'revoked_tokens' in table_names
+    assert 'revoked_tokens' not in table_names
     assert 'user_progress' in table_names
     assert 'custom_books' in table_names
     assert 'custom_book_chapters' in table_names
@@ -52,15 +52,14 @@ def test_wave4_table_audit_splits_read_only_and_transitional_access():
     notes_read_only = get_service_read_only_table_names('notes-service')
     admin_transitional = get_service_transitional_table_names('admin-ops-service')
 
-    assert learning_core_read_only == {'users', 'revoked_tokens'}
+    assert learning_core_read_only == frozenset()
     assert learning_core_transitional == {
         'custom_books',
         'custom_book_chapters',
         'custom_book_words',
     }
-    assert notes_read_only == {'users', 'revoked_tokens', 'custom_books'}
-    assert 'users' in admin_transitional
-    assert 'user_progress' in admin_transitional
+    assert notes_read_only == frozenset()
+    assert admin_transitional == frozenset()
 
 
 def test_notes_and_ai_ownership_stays_split():
@@ -119,16 +118,13 @@ def test_table_boundary_audit_rows_keep_single_owner_and_access_labels():
 
     users_row = rows['users']
     assert users_row.owner_service == 'identity-service'
-    assert 'learning-core-service' in users_row.read_only_services
-    assert 'catalog-content-service' in users_row.read_only_services
-    assert 'admin-ops-service' in users_row.transitional_services
+    assert users_row.read_only_services == ()
+    assert 'admin-ops-service' not in users_row.transitional_services
 
     custom_books_row = rows['custom_books']
     assert custom_books_row.owner_service == 'catalog-content-service'
-    assert custom_books_row.read_only_services == ('notes-service',)
+    assert custom_books_row.read_only_services == ()
     assert set(custom_books_row.transitional_services) == {
-        'admin-ops-service',
-        'ai-execution-service',
         'learning-core-service',
     }
 

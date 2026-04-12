@@ -64,7 +64,8 @@ def test_build_context_payload_uses_empty_learning_core_snapshot_in_strict_mode(
     assert payload['books'] == []
     assert payload['totalLearned'] == 0
     assert payload['totalSessions'] == 0
-    assert payload['learnerProfile'] == {'activity_summary': {'today_words': 0}}
+    assert payload['learnerProfile']['summary']['due_reviews'] == 0
+    assert payload['activityTimeline']['summary'] == {}
     assert payload['memory'] == {'goals': ['7.5']}
 
 

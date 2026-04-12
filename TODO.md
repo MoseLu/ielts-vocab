@@ -1,20 +1,21 @@
 # TODO
-Last updated: 2026-04-12 00:14:22 +08:00
+Last updated: 2026-04-12 11:18:00 +08:00
 
 ## 进行中
 - [进行中] 维持远程已部署 split backend 稳定，后续重构继续以 `gateway-bff -> services` 的线上链路、自动部署和 smoke check 为验收基线。
-- [进行中] 做 post-cutover 收尾：逐项清掉 shared-`SQLite`、手工 env、migration baseline、transitional shadow tables、剩余 OSS 聚合物、gateway auth context 和文档自动化这些尾项，同时保持当前 split runtime 与线上链路稳定。
+- [进行中] 做 post-cutover 最后收尾：准备远端正式 release/preflight/smoke/bounded storage drill，并完成发布后的文档与 closeout 记录归档。
 
 ## 待完成
-- [待完成] 归档或退役 split services 的 shared-`SQLite` backup runtime，把 rollback-only 数据兜底从日常运行面拿掉，并继续收紧 shared SQLite 的应急写入/回退面。
-- [待完成] 去掉 service boot 对手工导出 shell env 的依赖，把 split services 的启动前置条件继续收口到稳定的 env/autoload 合同。
-- [待完成] 为各服务补齐初始 migration baseline，避免 schema 仍部分依赖 `create_all` / bootstrap 语义。
-- [待完成] 继续把 `admin-ops-service` 的 transitional read-side shadow tables 收口到真正 service-owned 的 PostgreSQL 读模型形态。
-- [待完成] 继续把 media / export artifacts 收到 service-owned OSS keys，把仍带本地缓存或过渡路径的对象流彻底收口。
-- [待完成] 完成 gateway-issued internal headers / JWT 的 auth context 收口，消除这条边界上的剩余过渡实现。
-- [待完成] 补回或替换 `scripts/repo_summary.py`，恢复仓库总结文档的自动同步流程。
+- [待完成] 在远端执行最终正式 release：deploy、preflight、smoke、bounded storage drill、`run-wave5-projection-cutover --verify-only` 和 post-cutover 文档同步。
 
 ## 已完成
+- [已完成] 完成 post-wave shared-`SQLite` 常态路径收口：`start-microservices.ps1` / `start-project.ps1` 不再暴露 `ALLOW_SHARED_SPLIT_SERVICE_SQLITE*` 正常入口，shared SQLite override 只保留 rollback/repair 专用路径。
+- [已完成] 完成 service boot env 合同收口：`runtime_env.py` 支持 `BACKEND_ENV_FILE` + `MICROSERVICES_ENV_FILE` 两文件模型，测试覆盖本地/远端 env-file 加载约定。
+- [已完成] 补齐 per-service migration baseline：`tts-media-service` 与 `asr-service` 已进入 `describe-service-migration-plan.py --json` 和 `run-service-schema-migrations.py --plan` 输出。
+- [已完成] 完成 gateway/internal auth-context 收口第一阶段：非 `identity-service` 下游不再接收浏览器 `Authorization` / `cookie` 作为常态输入，internal clients 复用统一 header builder。
+- [已完成] 完成 post-cutover `admin / notes / ai` 读侧收口：`admin-ops-service` 的 `set-admin` 已改走 `identity-service` 内部契约，`admin` user/session/wrong-word projections 缺失时在 strict split runtime 下改为明确边界错误，`ai-execution-service` 的 strict learner-profile 路径改为返回空快照而不是本地 shared-table fallback，表边界审计对 `admin / notes / ai` 现已清到 `transitional_tables: []`。
+- [已完成] 完成 OSS 收口验证：notes export、example audio、word audio 的 validate/repair/API 测试通过，canonical object reference 路径保持 service-owned object key 约定。
+- [已完成] 恢复 `scripts/repo_summary.py`，`bootstrap` 与 `changes --json` 已有回归测试并可继续作为 AGENTS/MILESTONE/TODO 同步入口。
 - [已完成] 完成 Wave 1，共享 helper coupling 第一轮抽离、远程生产基线冻结和剩余 `platform-sdk -> services.*` 耦合清单固化已经落地。
 - [已完成] 完成 Wave 2，`learner_profile`、`learning_stats`、`notes_summary` 和 `llm provider adapter` 等共享支持层边界化已完成。
 - [已完成] 完成 Wave 3：service-owned repositories、service-owned models、按服务 bootstrap、迁移基线，以及 AI 到 learning / notes / catalog 的 internal contracts 已落地；split runtime 默认也已切到 strict internal contract，backend 回归 `506 passed`。

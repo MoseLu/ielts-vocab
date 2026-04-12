@@ -113,6 +113,8 @@ def test_admin_detail_learning_events_fall_back_to_shared_rows_when_internal_cli
         def _raise(*args, **kwargs):
             raise RuntimeError('learning-core unavailable')
 
+        monkeypatch.setenv('CURRENT_SERVICE_NAME', 'admin-ops-service')
+        monkeypatch.setenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', 'true')
         monkeypatch.setattr(repository, 'fetch_learning_core_admin_session_word_events', _raise)
 
         rows = repository.list_learning_events_for_sessions(

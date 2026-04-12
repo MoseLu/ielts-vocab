@@ -90,6 +90,25 @@ CUSTOM_BOOK_SHADOW_TABLES = frozenset({
     'custom_book_words',
 })
 
+USER_SCHEMA_SUPPORT_TABLES = frozenset({'users'})
+NOTES_LEGACY_CONTEXT_TABLES = frozenset({
+    'user_study_sessions',
+    'user_wrong_words',
+})
+ADMIN_LEGACY_DETAIL_TABLES = frozenset({
+    'users',
+    'user_book_progress',
+    'user_chapter_progress',
+    'user_favorite_words',
+    'user_learning_events',
+    'user_study_sessions',
+    'user_wrong_words',
+})
+AI_LEGACY_NOTES_TABLES = frozenset({
+    'user_daily_summaries',
+    'user_learning_notes',
+})
+
 NOTES_SERVICE_TABLES = frozenset({
     'notes_projection_cursors',
     'notes_projected_prompt_runs',
@@ -120,6 +139,7 @@ class ServiceTablePlan:
     owned_tables: frozenset[str]
     read_only_tables: frozenset[str] = frozenset()
     transitional_tables: frozenset[str] = frozenset()
+    schema_support_tables: frozenset[str] = frozenset()
 
     @property
     def non_owned_tables(self) -> frozenset[str]:
@@ -132,7 +152,7 @@ class ServiceTablePlan:
 
     @property
     def bootstrap_tables(self) -> frozenset[str]:
-        return self.owned_tables | self.non_owned_tables
+        return self.owned_tables | self.non_owned_tables | self.schema_support_tables
 
 
 @dataclass(frozen=True)
@@ -156,27 +176,24 @@ SERVICE_TABLE_PLANS: dict[str, ServiceTablePlan] = {
     ),
     'learning-core-service': ServiceTablePlan(
         owned_tables=LEARNING_CORE_SERVICE_TABLES,
-        read_only_tables=AUTH_CONTEXT_TABLES,
         transitional_tables=CUSTOM_BOOK_SHADOW_TABLES,
+        schema_support_tables=USER_SCHEMA_SUPPORT_TABLES,
     ),
     'catalog-content-service': ServiceTablePlan(
         owned_tables=CATALOG_CONTENT_SERVICE_TABLES,
-        read_only_tables=AUTH_CONTEXT_TABLES,
         transitional_tables={'user_word_notes'},
+        schema_support_tables=USER_SCHEMA_SUPPORT_TABLES,
     ),
     'notes-service': ServiceTablePlan(
         owned_tables=NOTES_SERVICE_TABLES,
-        read_only_tables=AUTH_CONTEXT_TABLES | {'custom_books'},
-        transitional_tables=LEARNING_CORE_SERVICE_TABLES,
+        schema_support_tables=USER_SCHEMA_SUPPORT_TABLES,
     ),
     'ai-execution-service': ServiceTablePlan(
         owned_tables=AI_EXECUTION_SERVICE_TABLES,
-        read_only_tables=AUTH_CONTEXT_TABLES,
-        transitional_tables=LEARNING_CORE_SERVICE_TABLES | NOTES_SERVICE_TABLES | CATALOG_CONTENT_SERVICE_TABLES,
+        schema_support_tables=USER_SCHEMA_SUPPORT_TABLES,
     ),
     'admin-ops-service': ServiceTablePlan(
         owned_tables=ADMIN_OPS_SERVICE_TABLES,
-        transitional_tables=AUTH_CONTEXT_TABLES | LEARNING_CORE_SERVICE_TABLES | CATALOG_CONTENT_SERVICE_TABLES,
     ),
     'tts-media-service': ServiceTablePlan(owned_tables=TTS_MEDIA_SERVICE_TABLES),
     'asr-service': ServiceTablePlan(owned_tables=ASR_SERVICE_TABLES),

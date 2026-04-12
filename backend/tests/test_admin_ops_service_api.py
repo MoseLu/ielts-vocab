@@ -9,6 +9,7 @@ import jwt
 from fastapi.testclient import TestClient
 
 from models import User, UserStudySession, db
+from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 
 
 SERVICE_PATH = (
@@ -29,16 +30,23 @@ def _load_admin_ops_service_module(module_name: str):
 
 
 def _configure_admin_env(monkeypatch, tmp_path: Path) -> None:
+    database_path = tmp_path / 'admin-ops-service.sqlite'
+    database_uri = f'sqlite:///{database_path.as_posix()}'
     monkeypatch.setenv('SECRET_KEY', 'test-secret')
     monkeypatch.setenv('JWT_SECRET_KEY', 'test-jwt-secret')
     monkeypatch.setenv('COOKIE_SECURE', 'false')
     monkeypatch.setenv('EMAIL_CODE_DELIVERY_MODE', 'mock')
-    monkeypatch.setenv('SQLITE_DB_PATH', str(tmp_path / 'admin-ops-service.sqlite'))
+    monkeypatch.setenv('SQLITE_DB_PATH', str(database_path))
+    monkeypatch.setenv('SQLALCHEMY_DATABASE_URI', database_uri)
+    monkeypatch.setenv('ADMIN_OPS_SERVICE_SQLITE_DB_PATH', str(database_path))
+    monkeypatch.setenv('ADMIN_OPS_SERVICE_SQLALCHEMY_DATABASE_URI', database_uri)
     monkeypatch.setenv('DB_BACKUP_ENABLED', 'false')
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'admin-ops-service')
 
 
 def _create_admin_token(flask_app, username='admin-ops-admin') -> tuple[int, str]:
     with flask_app.app_context():
+        db.create_all()
         admin = User(username=username, email=f'{username}@example.com', is_admin=True)
         admin.set_password('password123')
         learner = User(username='admin-ops-learner', email='learner@example.com')
@@ -63,6 +71,9 @@ def _create_admin_token(flask_app, username='admin-ops-admin') -> tuple[int, str
             {
                 'user_id': admin.id,
                 'type': 'access',
+                'is_admin': True,
+                'username': admin.username,
+                'email': admin.email,
                 'jti': str(uuid.uuid4()),
                 'iat': int(datetime.utcnow().timestamp()),
                 'exp': datetime.utcnow() + timedelta(seconds=flask_app.config['JWT_ACCESS_TOKEN_EXPIRES']),
@@ -91,7 +102,15 @@ def _create_access_token(flask_app, *, user_id: int, is_admin: bool, username: s
 
 
 def _auth_headers(token: str) -> dict[str, str]:
-    return {'Authorization': f'Bearer {token}'}
+    payload = jwt.decode(token, options={'verify_signature': False})
+    return create_internal_auth_headers_for_user(
+        user_id=int(payload['user_id']),
+        source_service_name='gateway-bff',
+        is_admin=bool(payload.get('is_admin')),
+        username=str(payload.get('username') or ''),
+        email=str(payload.get('email') or ''),
+        env={'INTERNAL_SERVICE_JWT_SECRET_KEY': 'test-jwt-secret'},
+    )
 
 
 def test_admin_ops_service_health_endpoint(monkeypatch, tmp_path):

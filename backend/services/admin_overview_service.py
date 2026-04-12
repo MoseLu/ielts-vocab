@@ -9,6 +9,7 @@ from services import (
     admin_user_directory_repository,
     admin_user_session_repository,
 )
+from services.admin_projection_repository_support import AdminProjectionUnavailable
 from services.books_catalog_service import serialize_effective_book_progress
 
 
@@ -158,7 +159,21 @@ def user_summary(user) -> dict:
     }
 
 
+def _admin_projection_boundary_error(exc: AdminProjectionUnavailable) -> tuple[dict, int]:
+    return build_strict_internal_contract_error(
+        upstream_name='admin-projection',
+        action=exc.action,
+    )
+
+
 def build_overview_response() -> tuple[dict, int]:
+    try:
+        return _build_overview_response()
+    except AdminProjectionUnavailable as exc:
+        return _admin_projection_boundary_error(exc)
+
+
+def _build_overview_response() -> tuple[dict, int]:
     total_users = admin_overview_repository.count_total_users()
 
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
@@ -270,6 +285,26 @@ def build_overview_response() -> tuple[dict, int]:
 
 
 def build_users_response(
+    *,
+    page: int,
+    per_page: int,
+    search: str,
+    sort: str,
+    order: str,
+) -> tuple[dict, int]:
+    try:
+        return _build_users_response(
+            page=page,
+            per_page=per_page,
+            search=search,
+            sort=sort,
+            order=order,
+        )
+    except AdminProjectionUnavailable as exc:
+        return _admin_projection_boundary_error(exc)
+
+
+def _build_users_response(
     *,
     page: int,
     per_page: int,
