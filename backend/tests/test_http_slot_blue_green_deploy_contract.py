@@ -106,4 +106,6 @@ def test_ai_execution_service_exposes_internal_dependency_probe():
     assert "@app.get('/internal/ops/ai-dependencies')" in main
     assert 'fetch_learning_core_learning_stats_response' in main
     assert 'fetch_learning_core_context_payload' in main
+    assert 'build_quick_memory_review_queue_response' in main
+    assert "'quick_memory_review_queue'" in main
     assert 'build_local_learner_profile_response' in main

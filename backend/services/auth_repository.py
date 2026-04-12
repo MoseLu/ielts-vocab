@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from sqlalchemy.exc import IntegrityError
+
 from platform_sdk.admin_projection_bootstrap import sync_admin_projected_user_snapshot
 from platform_sdk.identity_event_application import queue_user_registered_event
 from platform_sdk.identity_rate_limit_runtime import (
@@ -66,12 +68,22 @@ def check_rate_limit(
     if redis_result is not None:
         return redis_result
 
-    return RateLimitBucket.check_and_increment(
-        ip_address=ip_address,
-        purpose=purpose,
-        max_attempts=max_attempts,
-        window_minutes=window_minutes,
-    )
+    try:
+        return RateLimitBucket.check_and_increment(
+            ip_address=ip_address,
+            purpose=purpose,
+            max_attempts=max_attempts,
+            window_minutes=window_minutes,
+        )
+    except IntegrityError:
+        # Another request won the insert race for the same (ip, purpose) bucket.
+        db.session.rollback()
+        return RateLimitBucket.check_and_increment(
+            ip_address=ip_address,
+            purpose=purpose,
+            max_attempts=max_attempts,
+            window_minutes=window_minutes,
+        )
 
 
 def reset_rate_limit(*, ip_address: str, purpose: str) -> None:

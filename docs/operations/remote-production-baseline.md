@@ -139,7 +139,7 @@ Every remote rollout must keep these checks green:
 - `http://127.0.0.1/` with `Host: axiomaticworld.com`
 - `http://127.0.0.1/api/books` with `Host: axiomaticworld.com`
 - `smoke-check.sh` reads the active HTTP slot and substitutes its generated port assignments when `/opt/ielts-vocab/deploy-state/active-http-slot` exists.
-- Pre-switch slot validation uses `SMOKE_HTTP_SLOT=<slot> SMOKE_SKIP_NGINX=true SMOKE_SKIP_WORKERS=true` and must include the AI dependency probe.
+- Pre-switch slot validation uses `SMOKE_HTTP_SLOT=<slot> SMOKE_SKIP_NGINX=true SMOKE_SKIP_WORKERS=true` and must include the AI dependency probe, including the quick-memory review-queue chain.
 
 ## External smoke flow
 
@@ -148,6 +148,7 @@ After internal smoke passes, the deployed domain must still verify:
 - `https://axiomaticworld.com/`
 - `https://axiomaticworld.com/api/books`
 - login refresh flow
+- `GET /api/ai/quick-memory/review-queue?limit=0&within_days=1&offset=0&scope=due`
 - AI streaming through `gateway-bff`
 - TTS media fetch through signed URLs
 - realtime speech connection on `/socket.io`

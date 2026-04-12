@@ -39,6 +39,7 @@ export interface UsePracticePageActionsParams {
   }
   navigate: (to: string) => void
   showToast?: (message: string, type?: 'success' | 'error' | 'info') => void
+  playWord: (word: string) => void
   saveProgress: (
     correct: number,
     wrong: number,

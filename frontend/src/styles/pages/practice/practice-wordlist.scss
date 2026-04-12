@@ -4,14 +4,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 14px;
-    min-height: 48px;
+    padding: 11px 17px;
+    min-height: 56px;
     background: transparent;
     border-bottom: none;
     position: sticky;
     top: 0;
     z-index: var(--layer-sticky);
-    gap: 10px;
+    gap: 13px;
     backdrop-filter: none;
     box-shadow: none;
 }
@@ -19,8 +19,8 @@
 .practice-ctrl-brand {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 6px 4px 6px 0;
+    gap: 12px;
+    padding: 8px 4px 8px 0;
     border: none;
     background: transparent;
     color: var(--text-primary);
@@ -29,14 +29,14 @@
 }
 
 .practice-ctrl-brand-logo {
-    width: 28px;
-    height: 28px;
+    width: 31px;
+    height: 31px;
     object-fit: contain;
     border-radius: 8px;
 }
 
 .practice-ctrl-brand-text {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 800;
     letter-spacing: -0.03em;
 }
@@ -45,20 +45,20 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
-    padding: 9px 12px;
+    padding: 11px 15px;
     border-radius: 999px;
     background: var(--surface-hover);
 }
 
 .practice-ctrl-count {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-secondary);
     background: color-mix(in srgb, var(--surface-elevated) 78%, transparent);
-    padding: 4px 8px;
+    padding: 4px 10px;
     border-radius: var(--radius-full);
     white-space: nowrap;
 }
@@ -74,7 +74,7 @@
 .practice-ctrl-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 11px;
     flex-shrink: 1;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -90,10 +90,10 @@
     background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
     border: 1px solid color-mix(in srgb, var(--surface-border-strong) 86%, var(--text-inverse) 14%);
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
-    padding: 9px 12px;
-    border-radius: 14px;
+    padding: 11px 14px;
+    border-radius: 16px;
     cursor: pointer;
     transition: all var(--transition-fast);
     box-shadow: var(--shadow-sm);
@@ -101,8 +101,8 @@
 }
 
 .practice-ctrl-icon-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
 }
 
@@ -121,11 +121,11 @@
 }
 
 .practice-mode-btn {
-    padding-inline: 14px;
+    padding-inline: 16px;
 }
 
 .practice-mode-label {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
 }
 
@@ -153,10 +153,10 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: 10px 14px;
+    padding: 12px 16px;
     background: none;
     border: none;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
     cursor: pointer;
@@ -183,8 +183,8 @@
 }
 
 .ctx-radio {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     border: 2px solid var(--border);
     flex-shrink: 0;
@@ -198,8 +198,8 @@
 }
 
 .popover-loading {
-    padding: 20px 14px;
-    font-size: 13px;
+    padding: 23px 16px;
+    font-size: 15px;
     color: var(--text-tertiary);
     text-align: center;
 }

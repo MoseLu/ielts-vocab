@@ -238,4 +238,59 @@ describe('PracticePage quick-memory review countdown', () => {
 
     expect(screen.getByText(String(Math.max(0, countdownBeforeTick - 1)))).toBeInTheDocument()
   })
+
+  it('skips lookahead audio preloading on the first due-review word', async () => {
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due') {
+        return Promise.resolve({
+          words: [
+            { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
+            { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
+          ],
+          summary: {
+            due_count: 2,
+            upcoming_count: 0,
+            returned_count: 2,
+            review_window_days: 3,
+            offset: 0,
+            limit: 10,
+            total_count: 2,
+            has_more: false,
+            next_offset: null,
+          },
+        })
+      }
+
+      if (url === '/api/ai/quick-memory') {
+        return Promise.resolve({ records: [] })
+      }
+
+      if (url === '/api/ai/quick-memory/sync') {
+        return Promise.resolve({})
+      }
+
+      throw new Error(`Unexpected url: ${url}`)
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?review=due']}>
+        <PracticePage
+          user={{ id: 42 }}
+          currentDay={1}
+          mode="quickmemory"
+          showToast={() => {}}
+          onModeChange={() => {}}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('alpha')).toBeInTheDocument()
+    expect(preloadWordAudioMock).not.toHaveBeenCalled()
+  })
 })

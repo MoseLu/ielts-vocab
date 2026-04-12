@@ -52,6 +52,7 @@ export default function OptionsMode({
     : (mode === 'meaning' ? 'definition' : 'audio')
   const isSmartDictation = mode === 'smart' && smartDimension === 'dictation'
   const isMeaningRecall = mode === 'meaning' || (mode === 'smart' && smartDimension === 'meaning')
+  const isChoiceLayout = !isSmartDictation && !isMeaningRecall
   const listeningExample = currentWord.examples?.[0]?.en ?? ''
   const showListeningExample = displayMode === 'audio'
     && !optionsLoading
@@ -62,7 +63,7 @@ export default function OptionsMode({
   }
 
   return (
-    <div className="practice-page">
+    <div className={`practice-page${isChoiceLayout ? ' practice-page--choice' : ''}`}>
       <PrevWordBlock previousWord={previousWord} lastState={lastState} onGoBack={onGoBack} />
 
       <div className="practice-main">

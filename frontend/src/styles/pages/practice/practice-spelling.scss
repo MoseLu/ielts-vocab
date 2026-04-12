@@ -3,7 +3,13 @@
 .practice-page {
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - var(--header-height));
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable both-edges;
+    scroll-padding-bottom: 112px;
   background: var(--bg-color);
 }
 
@@ -44,21 +50,35 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: clamp(20px, 3.6vw, 32px) clamp(24px, 4vw, 40px) clamp(28px, 5vw, 40px);
-    gap: 22px;
-    max-width: 920px;
+    padding: clamp(26px, 4.2vw, 42px) clamp(30px, 5vw, 56px) clamp(36px, 6.2vw, 50px);
+    gap: 28px;
+    max-width: min(100%, var(--practice-main-max-width, 920px));
     margin: 0 auto;
     width: 100%;
+    min-height: 100%;
+}
+
+.practice-page--choice {
+    --practice-main-max-width: 1180px;
+    --practice-header-max-width: 980px;
+    --practice-shell-max-width: 860px;
+    --practice-choice-grid-max-width: 980px;
+}
+
+.practice-page.practice-page--choice .practice-main {
+    max-width: min(100%, var(--practice-main-max-width, 1180px));
+    padding-top: clamp(20px, 3vw, 30px);
+    gap: 20px;
 }
 
 .word-display-area {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 18px;
-    width: min(100%, 760px);
-    padding: 28px 26px;
-    border-radius: 30px;
+    gap: 21px;
+    width: min(100%, var(--practice-shell-max-width, 760px));
+    padding: clamp(32px, 4.2vw, 36px) clamp(28px, 4vw, 34px);
+    border-radius: 36px;
     background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
     border: 1px solid var(--surface-border-strong);
     box-shadow: var(--shadow-panel);
@@ -68,27 +88,27 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
     align-items: flex-start;
 }
 
 .meaning-prompt-label {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 0.04em;
 }
 
 .meaning-prompt-definition {
-    font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+    font-size: clamp(1.4rem, 2.45vw, 1.92rem);
     font-weight: 700;
     color: var(--text-primary);
-    line-height: 1.6;
+    line-height: 1.65;
 }
 
 .play-btn-large {
-    width: 86px;
-    height: 86px;
+    width: clamp(92px, 10.4vw, 100px);
+    height: clamp(92px, 10.4vw, 100px);
     border-radius: var(--radius-full);
   background: var(--accent);
     border: none;
@@ -107,23 +127,23 @@
 }
 
 .play-btn-large svg {
-    width: 32px;
-    height: 32px;
+    width: 35px;
+    height: 35px;
 }
 
 .listening-example-prompt {
-    width: min(100%, 760px);
+    width: min(100%, var(--practice-shell-max-width, 760px));
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
     justify-content: center;
-    padding: 0 12px;
+    padding: 0 18px;
 }
 
 .listening-example-audio-btn {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     background: rgba(var(--accent-rgb), 0.08);
     color: var(--accent);
     border-color: rgba(var(--accent-rgb), 0.18);
@@ -136,14 +156,14 @@
 }
 
 .listening-example-audio-btn .example-audio-icon {
-    width: 17px;
-    height: 17px;
+    width: 19px;
+    height: 19px;
 }
 
 .listening-example-sentence {
-    max-width: 560px;
-    font-size: clamp(1.05rem, 1.9vw, 1.32rem);
-    line-height: 1.8;
+    max-width: 650px;
+    font-size: clamp(1.16rem, 2.15vw, 1.48rem);
+    line-height: 1.82;
     color: var(--text-primary);
     text-align: center;
     letter-spacing: 0.01em;
@@ -155,7 +175,7 @@
 }
 
 .word-text {
-    font-size: clamp(2.25rem, 5vw, 3.6rem);
+    font-size: clamp(2.5rem, 5.6vw, 4.2rem);
     font-weight: 800;
     color: var(--text-primary);
     margin-bottom: var(--space-xs);
@@ -163,7 +183,7 @@
 }
 
 .word-phonetic {
-    font-size: 17px;
+    font-size: 19px;
     color: var(--text-secondary);
     font-weight: 500;
 }
@@ -180,8 +200,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: var(--radius-full);
     border: 1.5px solid var(--border);
     background: rgba(var(--accent-rgb), 0.06);
@@ -198,8 +218,8 @@
 }
 
 .play-btn-mini svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
 }
 
 /* Dictation letter-count hint */
@@ -207,13 +227,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    margin: 4px 0 16px;
+    gap: 7px;
+    margin: 7px 0 20px;
     flex-wrap: wrap;
 }
 
 .letter-hint-blank {
-    font-size: 20px;
+    font-size: 23px;
     font-weight: 700;
     color: var(--text-tertiary);
     line-height: 1;
@@ -227,10 +247,10 @@
 }
 
 .word-pos {
-    font-size: 11px;
+    font-size: 13px;
     background: var(--bg-tertiary);
     border-radius: var(--radius-sm);
-    padding: 2px 7px;
+    padding: 3px 9px;
     color: var(--text-tertiary);
     margin-right: var(--space-xs);
 }
@@ -238,28 +258,38 @@
 .options-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 22px;
     width: 100%;
-    max-width: 760px;
+    max-width: var(--practice-choice-grid-max-width, var(--practice-shell-max-width, 760px));
+}
+
+.practice-page.practice-page--choice .options-grid {
+    gap: clamp(12px, 1vw, 16px);
 }
 
 .option-btn {
-    padding: 18px 18px 16px;
+    padding: 26px 26px 24px;
     background: color-mix(in srgb, var(--surface-elevated) 97%, transparent);
     border: 1px solid var(--surface-border-strong);
-    border-radius: 24px;
+    border-radius: 28px;
     cursor: pointer;
     text-align: left;
-    font-size: 15px;
+    font-size: 17px;
     color: var(--text-primary);
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
     transition: all var(--transition-fast);
     line-height: 1.5;
-    min-height: 120px;
+    min-height: clamp(146px, 19vw, 162px);
     justify-content: flex-start;
     box-shadow: var(--shadow-soft);
+}
+
+.practice-page.practice-page--choice .option-btn {
+    min-height: clamp(112px, 10vw, 126px);
+    padding: 20px 22px 18px;
+    border-radius: 18px;
 }
 
 .option-btn:hover:not(:disabled) {
@@ -313,12 +343,12 @@
 .option-pos-group {
     display: inline-flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 11px;
     min-width: 0;
 }
 
 .option-pos {
-    font-size: 12px;
+    font-size: 15px;
     color: var(--text-tertiary);
     font-style: italic;
     font-weight: 600;
@@ -326,7 +356,7 @@
 }
 
 .option-word-reveal {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-secondary);
     letter-spacing: 0.01em;
@@ -336,7 +366,7 @@
 }
 
 .option-key {
-    font-size: 11px;
+    font-size: 14px;
     color: var(--text-tertiary);
     opacity: 0.7;
     font-weight: 400;
@@ -344,25 +374,30 @@
 }
 
 .option-text {
-    font-size: 16px;
+    font-size: 20px;
     color: var(--text-primary);
-    line-height: 1.4;
+    line-height: 1.5;
+}
+
+.practice-page.practice-page--choice .option-text {
+    font-size: clamp(1.42rem, 1.5vw, 1.72rem);
+    line-height: 1.42;
 }
 
 .option-text-wrap {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 9px;
 }
 
 .option-text--word {
-    font-size: 22px;
+    font-size: 27px;
     font-weight: 700;
     letter-spacing: -0.01em;
 }
 
 .option-subtext {
-    font-size: 13px;
+    font-size: 16px;
     color: var(--text-secondary);
     line-height: 1.4;
 }
@@ -373,8 +408,18 @@
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     width: 100%;
-    max-width: 760px;
-    margin-top: var(--space-xs);
+    max-width: var(--practice-choice-grid-max-width, var(--practice-shell-max-width, 760px));
+    margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+    .options-grid {
+        max-width: min(100%, var(--practice-shell-max-width, 760px));
+    }
+
+    .options-footer {
+        max-width: min(100%, var(--practice-shell-max-width, 760px));
+    }
 }
 
 .skip-btn {
@@ -382,9 +427,9 @@
     justify-self: start;
     background: color-mix(in srgb, var(--surface-elevated) 76%, transparent);
     border: 1px solid var(--surface-border-strong);
-    border-radius: 16px;
-    padding: 11px 16px;
-    font-size: 13px;
+    border-radius: 19px;
+    padding: 14px 19px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--text-secondary);
     cursor: pointer;
@@ -400,7 +445,7 @@
 
 .shortcut-hint {
     opacity: 0.55;
-    font-size: 12px;
+    font-size: 14px;
     margin-left: var(--space-xs);
 }
 
@@ -411,8 +456,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 50px;
+    height: 50px;
     border-radius: var(--radius-full);
     border: 1px solid var(--surface-border-strong);
     background: color-mix(in srgb, var(--surface-elevated) 76%, transparent);
@@ -446,6 +491,6 @@
 }
 
 .replay-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 21px;
+    height: 21px;
 }

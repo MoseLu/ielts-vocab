@@ -58,7 +58,7 @@
     width: 100%;
     gap: 0;
     border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 21px;
     overflow: hidden;
     transition: border-color var(--transition-fast);
 }
@@ -96,13 +96,13 @@
     flex: 1;
     border: none;
     outline: none;
-    padding: var(--space-md) var(--space-lg);
-    font-size: 18px;
+    padding: 0 21px;
+    font-size: 21px;
     font-weight: 600;
     background: transparent;
     color: var(--text-primary);
     letter-spacing: 0.05em;
-    height: 56px;
+    height: 65px;
     box-sizing: border-box;
     text-align: left;
 }
@@ -111,8 +111,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 56px;
+    width: 55px;
+    height: 65px;
     background: transparent;
     border: none;
     border-left: 1px solid var(--border);
@@ -140,26 +140,26 @@
 }
 
 .spelling-submit-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
 }
 
 /* Sub-mode toggle buttons (单词拼写 / 例句填空) */
 .dictation-submode-toggle {
     display: flex;
-    gap: 4px;
+    gap: 7px;
     background: var(--bg-secondary);
     border: 1.5px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 4px;
+    padding: 6px;
 }
 
 .submode-btn {
     flex: 1;
-    padding: 6px 16px;
+    padding: 9px 19px;
     border: none;
     border-radius: var(--radius-md);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--text-secondary);
     background: transparent;
@@ -193,7 +193,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 13px;
     width: 100%;
 }
 
@@ -202,27 +202,27 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-md);
+    gap: calc(var(--space-md) + 6px);
     width: 100%;
 }
 
 .dictation-example-sentence {
-    font-size: 17px;
-    line-height: 1.8;
+    font-size: 19px;
+    line-height: 1.88;
     color: var(--text-primary);
     text-align: center;
-    max-width: 480px;
+    max-width: 590px;
     background: var(--bg-secondary);
     border: 1.5px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: var(--space-lg) var(--space-xl);
+    padding: 22px 28px;
 }
 
 .example-blank-word {
     display: inline-flex;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     margin: 0 2px;
     vertical-align: baseline;
 }
@@ -230,20 +230,20 @@
 .example-blank-segment {
     display: inline-flex;
     height: 0.95em;
-    min-width: 2.8em;
+    min-width: 3.2em;
     border-bottom: 2px solid rgba(var(--accent-rgb), 0.32);
 }
 
 .dictation-example-definition {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    font-size: 13px;
+    gap: 11px;
+    font-size: 15px;
     color: var(--text-secondary);
 }
 
 .spelling-answer-sentence {
-    font-size: 13px;
+    font-size: 15px;
     color: var(--text-tertiary);
 }
 
@@ -319,7 +319,7 @@
 
 @media (max-width: 600px) {
     .dictation-response-stage {
-        height: 172px;
+        height: 180px;
     }
 
     .dictation-error-feedback {

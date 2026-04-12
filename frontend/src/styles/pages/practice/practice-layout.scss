@@ -5,6 +5,32 @@
 /* Page: Practice Session */
 
 
+.practice-session-layout,
+.practice-page,
+.qm-root,
+.qm-summary {
+    --practice-main-max-width: 970px;
+    --practice-shell-max-width: 800px;
+    --practice-header-max-width: 760px;
+    --practice-compact-max-width: 570px;
+    --practice-inline-max-width: 370px;
+    --practice-choice-grid-max-width: 940px;
+}
+
+@media (min-width: 1024px) {
+    .practice-session-layout,
+    .practice-page,
+    .qm-root,
+    .qm-summary {
+        --practice-main-max-width: 1050px;
+        --practice-shell-max-width: 860px;
+        --practice-header-max-width: 820px;
+        --practice-compact-max-width: 630px;
+        --practice-inline-max-width: 410px;
+        --practice-choice-grid-max-width: 1040px;
+    }
+}
+
 .practice-page.active {
     display: block;
 }
@@ -16,13 +42,14 @@
     min-height: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
 /* Practice Container */
 .practice-container {
-    max-width: 680px;
+    max-width: var(--practice-header-max-width, 680px);
     margin: 0 auto;
-    padding-top: var(--space-xl);
+    padding-top: calc(var(--space-xl) + 4px);
 }
 
 /* Practice Header */
@@ -138,7 +165,7 @@
 /* Word Display */
 
 .current-word {
-    font-size: 52px;
+    font-size: clamp(3.55rem, 6vw, 4rem);
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: var(--space-sm);
@@ -155,8 +182,8 @@
 
 /* Play Button - Centered Large */
 .play-btn {
-    width: 72px;
-    height: 72px;
+    width: 82px;
+    height: 82px;
   background: var(--accent);
     border: none;
     border-radius: var(--radius-full);
@@ -193,6 +220,6 @@
 }
 
 .play-btn svg {
-    width: 28px;
-    height: 28px;
+    width: 31px;
+    height: 31px;
 }

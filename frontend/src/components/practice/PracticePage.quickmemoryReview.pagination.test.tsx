@@ -212,6 +212,45 @@ describe('PracticePage quick-memory review mode pagination', () => {
     })
   })
 
+  it('forces quick-memory mode for direct due-review links and pages unlimited batches at 100 words', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      reviewInterval: '1',
+      reviewLimit: 'unlimited',
+      reviewLimitCustomized: true,
+      shuffle: true,
+    }))
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory/review-queue?limit=100&within_days=1&offset=0&scope=due') {
+        return Promise.resolve({
+          words: [{ word: 'anchor', phonetic: '/a/', pos: 'n.', definition: 'anchor def' }],
+          summary: {
+            due_count: 1,
+            upcoming_count: 0,
+            returned_count: 1,
+            review_window_days: 1,
+            offset: 0,
+            limit: 100,
+            total_count: 1,
+            has_more: false,
+            next_offset: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?review=due']}>
+        <PracticePage user={{ id: 42 }} currentDay={1} mode="listening" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:anchor')
+    })
+  })
+
   it('filters the review queue by the selected book chapter and keeps chapter context in the toolbar', async () => {
     localStorage.setItem('app_settings', JSON.stringify({
       reviewInterval: '3',

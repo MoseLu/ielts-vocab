@@ -23,6 +23,9 @@ from platform_sdk.database_readiness import make_sqlalchemy_readiness_check
 from platform_sdk.learner_profile_application_support import (
     build_learner_profile_response as build_local_learner_profile_response,
 )
+from platform_sdk.learning_core_quick_memory_read_adapter import (
+    build_quick_memory_review_queue_response,
+)
 from platform_sdk.learning_core_internal_client import (
     fetch_learning_core_context_payload,
     fetch_learning_core_learning_stats_response,
@@ -63,6 +66,22 @@ def get_ai_dependency_probe(user_id: int = Query(default=1, ge=1)):
         except Exception as exc:
             checks['learner_profile_context'] = False
             errors['learner_profile_context'] = str(exc)
+        try:
+            review_queue_payload, review_queue_status = build_quick_memory_review_queue_response(
+                user_id,
+                {
+                    'limit': '0',
+                    'within_days': '1',
+                    'offset': '0',
+                    'scope': 'due',
+                },
+            )
+            checks['quick_memory_review_queue'] = (
+                review_queue_status == 200 and isinstance(review_queue_payload, dict)
+            )
+        except Exception as exc:
+            checks['quick_memory_review_queue'] = False
+            errors['quick_memory_review_queue'] = str(exc)
         try:
             profile_payload, profile_status = build_local_learner_profile_response(
                 user_id,

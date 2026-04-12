@@ -228,9 +228,9 @@ The release smoke script checks:
 - broker env plus Redis/RabbitMQ connectivity through `validate-broker-runtime.sh`
 - active-slot `gateway-bff` and HTTP service `/ready` checks from `/etc/ielts-vocab/http-slots/<slot>.env`
 - slot gateway `/api/books`
-- AI dependency probe on `/internal/ops/ai-dependencies`
+- AI dependency probe on `/internal/ops/ai-dependencies`, including the quick-memory review-queue chain
 - `http://127.0.0.1:5001/ready`
 - `http://127.0.0.1/` with `Host: axiomaticworld.com`
 - `http://127.0.0.1/api/books` with `Host: axiomaticworld.com`
 
-After DNS points to `119.29.182.134`, verify `https://axiomaticworld.com/`, `/api/books`, login refresh, AI streaming, TTS media, and realtime speech.
+After DNS points to `119.29.182.134`, verify `https://axiomaticworld.com/`, `/api/books`, login refresh, `GET /api/ai/quick-memory/review-queue?limit=0&within_days=1&offset=0&scope=due`, AI streaming, TTS media, and realtime speech.

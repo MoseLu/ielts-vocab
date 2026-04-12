@@ -242,7 +242,7 @@ export default function QuickMemoryMode({
       .slice(index + 1, index + 4)
       .map(queueIndex => vocabulary[queueIndex]?.word?.trim())
       .filter((word): word is string => Boolean(word))
-    if (upcomingWords.length) {
+    if (upcomingWords.length && (!reviewMode || index > 0)) {
       void preloadWordAudioBatch(upcomingWords)
     }
 

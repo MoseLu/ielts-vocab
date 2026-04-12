@@ -44,15 +44,15 @@
 .practice-main-header,
 .dictation-topbar,
 .radio-stage-toolbar {
-    width: min(100%, 720px);
+    width: min(100%, var(--practice-header-max-width, 720px));
 }
 
 .practice-main-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
-    margin-bottom: var(--space-md);
+    gap: 15px;
+    margin-bottom: calc(var(--space-md) + 4px);
 }
 
 .practice-main-header__meta {

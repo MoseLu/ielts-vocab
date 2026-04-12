@@ -278,6 +278,18 @@ function Ensure-ProjectPostgres {
     }
 }
 
+function Invoke-ServiceSchemaMigrations {
+    $migrationScript = Join-Path $root 'scripts\run-service-schema-migrations.py'
+    if (-not (Test-Path $migrationScript)) {
+        throw "Missing schema migration script: $migrationScript"
+    }
+
+    & python $migrationScript --env-file $microservicesEnv
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Failed to apply split-service schema migrations.'
+    }
+}
+
 try {
     Set-Location $root
     Require-Command python
@@ -310,6 +322,9 @@ try {
     }
 
     Ensure-ProjectPostgres
+    Invoke-ServiceSchemaMigrations
+
+    $runtimePythonPath = "$(Join-Path $root 'backend');$(Join-Path $root 'packages\platform-sdk')"
 
     foreach ($definition in $serviceDefinitions) {
         Stop-PortListeners -Port $definition.Port -Label $definition.Name
@@ -326,7 +341,7 @@ try {
         Add-Content -Path $stdoutLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
         Add-Content -Path $stderrLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
 
-        $envPrefix = "set `"MICROSERVICES_ENV_FILE=$microservicesEnv`" && "
+        $envPrefix = "set `"MICROSERVICES_ENV_FILE=$microservicesEnv`" && set `"PYTHONPATH=$runtimePythonPath;%PYTHONPATH%`" && "
         Release-PortReservation -Reservations $portReservations -Port $definition.Port
         Start-LoggedProcess -WorkingDirectory $definition.Workdir -CommandLine ($envPrefix + $definition.Command + " 1>>`"$stdoutLog`" 2>>`"$stderrLog`"")
         Wait-PortState -Port $definition.Port -Listening $true -TimeoutSeconds 45
@@ -341,7 +356,7 @@ try {
         Add-Content -Path $stdoutLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
         Add-Content -Path $stderrLog -Value "===== [$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($definition.Name) start ====="
 
-        $envPrefix = "set `"MICROSERVICES_ENV_FILE=$microservicesEnv`" && "
+        $envPrefix = "set `"MICROSERVICES_ENV_FILE=$microservicesEnv`" && set `"PYTHONPATH=$runtimePythonPath;%PYTHONPATH%`" && "
         $process = Start-LoggedProcess -WorkingDirectory $definition.Workdir -CommandLine ($envPrefix + $definition.Command + " 1>>`"$stdoutLog`" 2>>`"$stderrLog`"")
         Start-Sleep -Seconds 2
         if ($process.HasExited) {
