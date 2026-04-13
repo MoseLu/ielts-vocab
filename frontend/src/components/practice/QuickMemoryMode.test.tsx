@@ -15,12 +15,10 @@ const cancelSessionMock = vi.fn(() => Promise.resolve())
 const flushStudySessionOnPageHideMock = vi.fn()
 const touchStudySessionActivityMock = vi.fn()
 const updateStudySessionSnapshotMock = vi.fn(); const playWordAudioMock = vi.fn(() => Promise.resolve(true))
-const prepareWordAudioPlaybackMock = vi.fn(() => Promise.resolve(true))
 const preloadWordAudioMock = vi.fn(() => Promise.resolve(true))
 const stopAudioMock = vi.fn()
 vi.mock('./utils', () => ({
   playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
-  prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
   preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
   preloadWordAudioBatch: (...args: unknown[]) => preloadWordAudioMock(...args),
   stopAudio: (...args: unknown[]) => stopAudioMock(...args),
@@ -58,8 +56,6 @@ describe('QuickMemoryMode', () => {
     updateStudySessionSnapshotMock.mockClear()
     playWordAudioMock.mockClear()
     playWordAudioMock.mockImplementation(() => Promise.resolve(true))
-    prepareWordAudioPlaybackMock.mockClear()
-    prepareWordAudioPlaybackMock.mockImplementation(() => Promise.resolve(true))
     preloadWordAudioMock.mockClear()
     preloadWordAudioMock.mockImplementation(() => Promise.resolve(true))
     stopAudioMock.mockClear()
@@ -399,22 +395,8 @@ describe('QuickMemoryMode', () => {
     })
   })
 
-  it('waits for the question audio to finish before starting the 4-second countdown', async () => {
+  it('starts the countdown immediately and only plays audio after the user answers', async () => {
     vi.useFakeTimers()
-    const resolvePreparation: Array<(ready: boolean) => void> = []
-    const resolvePlaybackStart: Array<(started: boolean) => void> = []
-    let playbackEnd: (() => void) | undefined
-    prepareWordAudioPlaybackMock.mockImplementation(
-      () => new Promise<boolean>(resolve => {
-        resolvePreparation.push(resolve)
-      }),
-    )
-    playWordAudioMock.mockImplementation(
-      (_word: string, _settings: AppSettings, onEnd?: () => void) => new Promise<boolean>(resolve => {
-        playbackEnd = onEnd
-        resolvePlaybackStart.push(resolve)
-      }),
-    )
 
     render(
       <QuickMemoryMode
@@ -430,40 +412,21 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    await act(async () => {
-      vi.advanceTimersByTime(2500)
-    })
-
     expect(playWordAudioMock).not.toHaveBeenCalled()
     expect(screen.getByText('4')).toBeInTheDocument()
 
     await act(async () => {
-      resolvePreparation.forEach(resolve => resolve(true))
-      await Promise.resolve()
-      await Promise.resolve()
-    })
-
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function))
-    expect(screen.getByText('4')).toBeInTheDocument()
-
-    await act(async () => {
-      resolvePlaybackStart.forEach(resolve => resolve(true))
-      await Promise.resolve()
-      await Promise.resolve()
-    })
-
-    await act(async () => {
-      vi.advanceTimersByTime(1000)
-    })
-    expect(screen.getByText('4')).toBeInTheDocument()
-    await act(async () => {
-      playbackEnd?.()
-      await Promise.resolve()
-    })
-    await act(async () => {
       vi.advanceTimersByTime(1000)
     })
     expect(screen.getByText('3')).toBeInTheDocument()
+
+    await act(async () => {
+      screen.getByRole('button', { name: '认识' }).click()
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(350)
+    })
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function))
   })
 
   it('replays the current word audio when the shared replay shortcut event is dispatched', async () => {
@@ -481,10 +444,6 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    await waitFor(() => {
-      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
-    })
-    playWordAudioMock.mockClear()
     stopAudioMock.mockClear()
     await act(async () => {
       window.dispatchEvent(new Event(PRACTICE_GLOBAL_SHORTCUT_REPLAY_EVENT))

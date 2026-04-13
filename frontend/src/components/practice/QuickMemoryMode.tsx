@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
-import { playWordAudio, prepareWordAudioPlayback, preloadWordAudioBatch, stopAudio } from './utils'
+import { playWordAudio, preloadWordAudioBatch, stopAudio } from './utils'
 import { resolveStudySessionDurationSeconds, updateStudySessionSnapshot } from '../../hooks/useAIChat'
 import { useToast } from '../../contexts/ToastContext'
 import {
@@ -60,7 +60,6 @@ export default function QuickMemoryMode({
   const [choice, setChoice]       = useState<'known' | 'unknown' | null>(null)
   const [results, setResults]     = useState<SessionResult[]>([])
   const [done, setDone]           = useState(false)
-  const [questionReplayNonce, setQuestionReplayNonce] = useState(0)
   const [revisitedSet, setRevisitedSet] = useState<Set<number>>(new Set())
   const resultsRef = useRef<SessionResult[]>([])
   const timerRef        = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
@@ -78,7 +77,6 @@ export default function QuickMemoryMode({
   const recordSyncInFlightRef = useRef(false)
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
-  const nextWord: Word | undefined = vocabulary[queue[index + 1]]
   wordRef.current = currentWord
 
   useEffect(() => {
@@ -174,7 +172,11 @@ export default function QuickMemoryMode({
     pendingSessionCancelRef.current = false
   }, [bookId, chapterId, onIndexChange, queue.length])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reveal = useCallback((picked: 'known' | 'unknown', countAsActivity = true) => {
+  const reveal = useCallback((
+    picked: 'known' | 'unknown',
+    countAsActivity = true,
+    shouldPlayRevealAudio = countAsActivity,
+  ) => {
     if (chosenRef.current) return
     chosenRef.current = true
     clearInterval(timerRef.current)
@@ -224,15 +226,29 @@ export default function QuickMemoryMode({
       onWrongWord(currentWord)
     }
 
-    revealTimerRef.current = setTimeout(() => {
-      if (wordRef.current) void playWordAudio(wordRef.current.word, settings, () => {})
-    }, 350)
+    if (shouldPlayRevealAudio) {
+      revealTimerRef.current = setTimeout(() => {
+        if (wordRef.current) void playWordAudio(wordRef.current.word, settings, () => {})
+      }, 350)
+    }
   }, [currentWord, index, onQuickMemoryRecordChange, onWrongWord, revisitedSet, settings])
+
+  const startQuestionCountdown = useCallback(() => {
+    clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current)
+          reveal('unknown', false, false)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }, [reveal])
 
   useEffect(() => {
     if (phase !== 'question' || !currentWord) return
-    const activeWord = currentWord.word
-    let cancelled = false
 
     chosenRef.current = false
     setCountdown(TIMER_SECONDS)
@@ -246,39 +262,12 @@ export default function QuickMemoryMode({
       void preloadWordAudioBatch(upcomingWords)
     }
 
-    const startCountdown = () => {
-      if (cancelled) return
-      clearInterval(timerRef.current)
-      timerRef.current = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current)
-            reveal('unknown', false)
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
-    }
-
-    void (async () => {
-      const audioReady = await prepareWordAudioPlayback(activeWord)
-      if (cancelled || wordRef.current?.word !== activeWord) return
-      if (audioReady) {
-        const started = await playWordAudio(activeWord, settings, () => {
-          if (!cancelled && wordRef.current?.word === activeWord) startCountdown()
-        })
-        if (cancelled || wordRef.current?.word !== activeWord) return
-        if (started) return
-      }
-      startCountdown()
-    })()
+    startQuestionCountdown()
 
     return () => {
-      cancelled = true
       clearInterval(timerRef.current)
     }
-  }, [currentWord?.word, nextWord?.word, phase, index, questionReplayNonce, reveal, settings])   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentWord?.word, phase, index, reviewMode, queue, vocabulary, startQuestionCountdown])
 
   useEffect(() => {
     void reconcileQuickMemoryRecordsWithBackend().catch(() => {})
@@ -328,11 +317,20 @@ export default function QuickMemoryMode({
     setCountdown(TIMER_SECONDS)
     if (phase === 'question') {
       stopAudio()
-      setQuestionReplayNonce(value => value + 1)
+      const replayWord = wordRef.current.word
+      void playWordAudio(replayWord, settings, () => {
+        if (!chosenRef.current && wordRef.current?.word === replayWord) {
+          startQuestionCountdown()
+        }
+      }).then(started => {
+        if (!started && !chosenRef.current && wordRef.current?.word === replayWord) {
+          startQuestionCountdown()
+        }
+      })
       return
     }
     void playWordAudio(wordRef.current.word, settings, () => {})
-  }, [phase, settings])
+  }, [phase, settings, startQuestionCountdown])
 
   useEffect(() => {
     const handlePreviousShortcut = () => { handlePrev() }
