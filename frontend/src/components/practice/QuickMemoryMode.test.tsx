@@ -25,6 +25,9 @@ vi.mock('./utils', () => ({
 }))
 vi.mock('../../hooks/useAIChat', () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
+  prepareStudySessionForLearningAction: undefined,
+  finalizeStudySessionSegment: undefined,
+  isStudySessionActive: undefined,
   resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
     data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
   logSession: (...args: unknown[]) => logSessionMock(...args),
@@ -40,6 +43,21 @@ vi.mock('../../lib', () => ({
 vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({ showToast: showToastMock }),
 }))
+
+async function clickKnown(user: ReturnType<typeof userEvent.setup>, container: HTMLElement) {
+  await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+  await waitFor(() => {
+    expect(container.querySelector('.qm-card--reveal')).not.toBeNull()
+  })
+}
+
+async function clickNext(user: ReturnType<typeof userEvent.setup>, container: HTMLElement) {
+  await waitFor(() => {
+    expect(container.querySelector('.qm-btn-next')).not.toBeNull()
+  })
+  await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+}
+
 describe('QuickMemoryMode', () => {
   const vocabulary: Word[] = [
     { word: 'apple', phonetic: '/ˈæpəl/', pos: 'n.', definition: 'fruit' },
@@ -82,10 +100,10 @@ describe('QuickMemoryMode', () => {
       />,
     )
     expect(screen.getByText('你认识这个单词吗？')).toBeInTheDocument()
-    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await clickKnown(user, container)
     expect(screen.getByText('✓ 认识')).toBeInTheDocument()
     expect(screen.getByText('fruit')).toBeInTheDocument()
-    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+    await clickNext(user, container)
     await waitFor(() => {
       expect(container.querySelector('.qm-summary')).not.toBeNull()
     })
@@ -113,7 +131,7 @@ describe('QuickMemoryMode', () => {
     })
   })
 
-  it('cancels empty sessions when the user leaves before answering a word', async () => {
+  it('does not open or cancel a session when the user leaves before any learning action', async () => {
     const { unmount } = render(
       <QuickMemoryMode
         vocabulary={vocabulary}
@@ -128,15 +146,10 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    await waitFor(() => {
-      expect(startSessionMock).toHaveBeenCalled()
-    })
     unmount()
-
-    await waitFor(() => {
-      expect(cancelSessionMock).toHaveBeenCalledWith(1)
-      expect(logSessionMock).not.toHaveBeenCalled()
-    })
+    expect(startSessionMock).not.toHaveBeenCalled()
+    expect(cancelSessionMock).not.toHaveBeenCalled()
+    expect(logSessionMock).not.toHaveBeenCalled()
   })
 
   it('logs a partial session when the user answered at least one word before leaving', async () => {
@@ -158,7 +171,7 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await clickKnown(user, container)
     unmount()
 
     await waitFor(() => {
@@ -192,10 +205,13 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
-    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
-    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
-    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+    await clickKnown(user, container)
+    await clickNext(user, container)
+    await waitFor(() => {
+      expect(screen.getByText('banana')).toBeInTheDocument()
+    })
+    await clickKnown(user, container)
+    await clickNext(user, container)
 
     await waitFor(() => {
       expect(container.querySelector('.qm-summary')).not.toBeNull()
@@ -234,19 +250,25 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
-    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
-    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
-    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+    await clickKnown(user, container)
+    await clickNext(user, container)
+    await waitFor(() => {
+      expect(screen.getByText('banana')).toBeInTheDocument()
+    })
+    await clickKnown(user, container)
+    await clickNext(user, container)
 
     await waitFor(() => {
-      const batchSyncCall = apiFetchMock.mock.calls.find(([url, options]) => {
-        if (url !== '/api/ai/quick-memory/sync') return false
-        const body = JSON.parse(String((options as { body?: string })?.body ?? '{}'))
-        return Array.isArray(body.records) && body.records.length === 2
-      })
+      const syncedWords = apiFetchMock.mock.calls
+        .filter(([url]) => url === '/api/ai/quick-memory/sync')
+        .flatMap(([, options]) => {
+          const body = JSON.parse(String((options as { body?: string })?.body ?? '{}'))
+          return Array.isArray(body.records)
+            ? body.records.map((record: { word?: string }) => record.word).filter(Boolean)
+            : []
+        })
 
-      expect(batchSyncCall).toBeTruthy()
+      expect(syncedWords).toEqual(expect.arrayContaining(['apple', 'banana']))
     })
   })
 
@@ -267,8 +289,8 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
-    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+    await clickKnown(user, container)
+    await clickNext(user, container)
 
     await waitFor(() => {
       expect(container.querySelector('.qm-summary')).not.toBeNull()
@@ -371,8 +393,8 @@ describe('QuickMemoryMode', () => {
       />,
     )
 
-    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
-    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+    await clickKnown(user, container)
+    await clickNext(user, container)
 
     await waitFor(() => {
       expect(container.querySelector('.qm-summary')).not.toBeNull()
@@ -393,7 +415,7 @@ describe('QuickMemoryMode', () => {
     })
   })
 
-  it('starts the countdown immediately and only plays audio after the user answers', async () => {
+  it('does not auto reveal after the countdown expires without an active learning segment', async () => {
     vi.useFakeTimers()
 
     render(
@@ -419,12 +441,16 @@ describe('QuickMemoryMode', () => {
     expect(screen.getByText('3')).toBeInTheDocument()
 
     await act(async () => {
-      screen.getByRole('button', { name: '认识' }).click()
+      vi.advanceTimersByTime(3000)
     })
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.queryByText('✗ 不认识')).not.toBeInTheDocument()
+    expect(playWordAudioMock).not.toHaveBeenCalled()
+
     await act(async () => {
       vi.advanceTimersByTime(350)
     })
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function))
+    expect(playWordAudioMock).not.toHaveBeenCalled()
   })
 
   it('replays the current word audio when the shared replay shortcut event is dispatched', async () => {

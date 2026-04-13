@@ -9,7 +9,6 @@ import SettingsPanel from '../../settings/SettingsPanel'
 import { PageSkeleton } from '../../ui'
 import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../errorReviewSession'
 import { PracticeRoundSummary } from './PracticeRoundSummary'
-
 function formatSessionDuration(seconds: number): string {
   const safeSeconds = Math.max(0, Math.round(seconds))
   const hours = Math.floor(safeSeconds / 3600)
@@ -19,7 +18,6 @@ function formatSessionDuration(seconds: number): string {
   if (minutes > 0) return remainingSeconds > 0 ? `${minutes}分${remainingSeconds}秒` : `${minutes}分`
   return `${remainingSeconds}秒`
 }
-
 interface ReviewQueueSummary {
   due_count: number
   upcoming_count: number
@@ -31,7 +29,6 @@ interface ReviewQueueSummary {
   has_more: boolean
   next_offset: number | null
 }
-
 interface PracticePageLoadingStateProps {
   navigate: NavigateFunction
   mode?: PracticeMode
@@ -288,8 +285,9 @@ interface PracticePageRadioLayoutProps extends SharedLayoutProps {
   }
   onRadioSettingChange: (key: 'playbackSpeed' | 'playbackCount' | 'loopMode' | 'interval', value: string | boolean) => void
   onIndexChange: (index: number) => void
-  markRadioSessionInteraction: () => void
+  markRadioSessionInteraction: () => Promise<void>
   handleRadioProgressChange: (wordsStudied: number) => void
+  isCurrentSessionActive: (at?: number) => boolean
 }
 
 export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
@@ -322,6 +320,7 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
     onIndexChange,
     markRadioSessionInteraction,
     handleRadioProgressChange,
+    isCurrentSessionActive,
   } = props
 
   return (
@@ -377,6 +376,7 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
         onIndexChange={onIndexChange}
         onSessionInteraction={markRadioSessionInteraction}
         onProgressChange={handleRadioProgressChange}
+        isSessionActive={isCurrentSessionActive}
         favoriteSlot={favoriteSlot}
       />
     </div>

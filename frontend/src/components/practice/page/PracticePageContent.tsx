@@ -48,8 +48,9 @@ interface PracticePageContentProps {
   settings: AppSettings
   radioQuickSettings: RadioQuickSettings
   handleRadioSettingChange: (key: keyof RadioQuickSettings, value: string | boolean) => void
-  markRadioSessionInteraction: () => void
+  markRadioSessionInteraction: () => Promise<void>
   handleRadioProgressChange: (correctDelta: number, wrongDelta?: number) => void
+  isCurrentSessionActive: (at?: number) => boolean
   reviewMode: boolean
   reviewSummary: { has_more?: boolean } | null
   reviewOffset: number
@@ -115,6 +116,7 @@ export function PracticePageContent({
   handleRadioSettingChange,
   markRadioSessionInteraction,
   handleRadioProgressChange,
+  isCurrentSessionActive,
   reviewMode,
   reviewSummary,
   reviewOffset,
@@ -195,6 +197,7 @@ export function PracticePageContent({
         onRadioSettingChange={handleRadioSettingChange}
         markRadioSessionInteraction={markRadioSessionInteraction}
         handleRadioProgressChange={handleRadioProgressChange}
+        isCurrentSessionActive={isCurrentSessionActive}
         onIndexChange={onFavoriteWordIndexChange}
         favoriteSlot={favoriteSlot}
       />

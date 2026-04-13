@@ -1,235 +1,56 @@
 import { z } from 'zod'
 import { apiFetch, safeParse } from '../../lib'
-
-const ActiveStudySessionSchema = z.object({
-  version: z.literal(1),
-  sessionId: z.number().int().positive(),
-  mode: z.string(),
-  bookId: z.string().nullable(),
-  chapterId: z.string().nullable(),
-  startedAt: z.number().int().nonnegative(),
-  lastActiveAt: z.number().int().nonnegative(),
-  wordsStudied: z.number().int().nonnegative(),
-  correctCount: z.number().int().nonnegative(),
-  wrongCount: z.number().int().nonnegative(),
-}).passthrough()
+import {
+  buildSessionPayload,
+  clearActiveStudySessionSnapshot,
+  consumeStudySessionRecoverySkip,
+  markStudySessionRecoveryHandled,
+  matchesStudySessionContext,
+  normalizeChapterId,
+  normalizeEpochMs,
+  PASSIVE_STUDY_SESSION_MIN_SECONDS,
+  persistStudySessionPayload,
+  postStudySessionKeepalive,
+  readActiveStudySessionSnapshot,
+  recoverPendingStudySession,
+  resolveStudySessionDurationSeconds,
+  sendStudySessionBeacon,
+  shouldDiscardPassiveSession,
+  STUDY_SESSION_IDLE_GRACE_MS,
+  writeActiveStudySessionSnapshot,
+  type FinalizeStudySessionSegmentInput,
+  type FinalizeStudySessionSegmentResult,
+  type PrepareStudySessionForLearningActionInput,
+  type PrepareStudySessionForLearningActionResult,
+  type SessionSnapshotPatch,
+  type StudySessionContext,
+} from './sessionTrackingShared'
 
 const ModePerformanceSchema = z.record(
   z.string(),
   z.object({ correct: z.number(), wrong: z.number() }).passthrough(),
 )
 
-interface ActiveStudySessionSnapshot {
-  version: 1
-  sessionId: number
-  mode: string
-  bookId: string | null
-  chapterId: string | null
-  startedAt: number
-  lastActiveAt: number
-  wordsStudied: number
-  correctCount: number
-  wrongCount: number
+export {
+  markStudySessionRecoveryHandled,
+  PASSIVE_STUDY_SESSION_MIN_SECONDS,
+  resolveStudySessionDurationSeconds,
+  STUDY_SESSION_IDLE_GRACE_MS,
 }
 
-type SessionSnapshotPatch = {
-  sessionId?: number | null
-  mode?: string
-  bookId?: string | null
-  chapterId?: string | null
-  startedAt?: number
-  activeAt?: number
-  wordsStudied?: number
-  correctCount?: number
-  wrongCount?: number
-}
-
-export const PASSIVE_STUDY_SESSION_MIN_SECONDS = 30
-export const STUDY_SESSION_IDLE_GRACE_MS = 5 * 60 * 1000
-
-function normalizeChapterId(value?: string | null): string | null {
-  if (value == null) return null
-  const text = String(value).trim()
-  return text ? text : null
-}
-
-function readActiveStudySessionSnapshot(): ActiveStudySessionSnapshot | null {
-  const raw = localStorage.getItem('active_study_session')
-  if (!raw) return null
-  const parsed = safeParse(ActiveStudySessionSchema, JSON.parse(raw))
-  return parsed.success ? parsed.data : null
-}
-
-function writeActiveStudySessionSnapshot(snapshot: ActiveStudySessionSnapshot): void {
-  localStorage.setItem('active_study_session', JSON.stringify(snapshot))
-}
-
-function clearActiveStudySessionSnapshot(sessionId?: number | null): void {
-  const snapshot = readActiveStudySessionSnapshot()
-  if (!snapshot) return
-  if (sessionId != null && snapshot.sessionId !== sessionId) return
-  localStorage.removeItem('active_study_session')
-}
-
-function resolveSnapshotEndAt(snapshot: ActiveStudySessionSnapshot, now = Date.now()): number {
-  const graceDeadline = snapshot.lastActiveAt + STUDY_SESSION_IDLE_GRACE_MS
-  return Math.max(snapshot.startedAt, Math.min(now, graceDeadline))
-}
-
-function normalizeEpochMs(value: unknown, fallback = Date.now()): number {
-  const timestamp = Number(value)
-  return Number.isFinite(timestamp) ? Math.max(0, Math.trunc(timestamp)) : fallback
-}
-
-function resolveStudySessionTiming(data: {
-  sessionId?: number | null
-  startedAt: number
-  endedAt?: number
-  durationSeconds?: number
-}) {
-  const startedAt = normalizeEpochMs(data.startedAt, 0)
-  const requestedEndedAt = normalizeEpochMs(data.endedAt)
-  const snapshot = data.sessionId != null ? readActiveStudySessionSnapshot() : null
-  const shouldApplyIdleCap = Boolean(
-    snapshot
-    && snapshot.sessionId === data.sessionId
-    && startedAt > 0
-  )
-  const endedAt = shouldApplyIdleCap
-    ? resolveSnapshotEndAt(snapshot as ActiveStudySessionSnapshot, requestedEndedAt)
-    : requestedEndedAt
-  const derivedDuration = startedAt > 0 && endedAt >= startedAt
-    ? Math.max(0, Math.round((endedAt - startedAt) / 1000))
-    : 0
-  const rawDuration = Math.max(0, Math.trunc(Number(data.durationSeconds ?? 0) || 0))
-  const durationSeconds = shouldApplyIdleCap && derivedDuration > 0
-    ? derivedDuration
-    : Math.max(rawDuration, derivedDuration)
-
-  return { startedAt, endedAt, durationSeconds, cappedByActivity: shouldApplyIdleCap && endedAt < requestedEndedAt }
-}
-
-export function resolveStudySessionDurationSeconds(data: {
-  sessionId?: number | null
-  startedAt: number
-  endedAt?: number
-  durationSeconds?: number
-}): number {
-  return resolveStudySessionTiming(data).durationSeconds
-}
-
-function buildSessionPayload(data: {
-  sessionId?: number | null
-  mode: string
-  bookId?: string | null
-  chapterId?: string | null
-  wordsStudied: number
-  correctCount: number
-  wrongCount: number
-  durationSeconds: number
-  startedAt: number
-  endedAt?: number
-}) {
-  const timing = resolveStudySessionTiming({
-    sessionId: data.sessionId,
-    startedAt: data.startedAt,
-    endedAt: data.endedAt,
-    durationSeconds: data.durationSeconds,
-  })
-  const payload = {
-    sessionId: data.sessionId ?? undefined,
-    mode: data.mode,
-    bookId: data.bookId ?? undefined,
-    chapterId: normalizeChapterId(data.chapterId),
-    wordsStudied: Math.max(0, Math.trunc(data.wordsStudied)),
-    correctCount: Math.max(0, Math.trunc(data.correctCount)),
-    wrongCount: Math.max(0, Math.trunc(data.wrongCount)),
-    durationSeconds: timing.durationSeconds,
-    startedAt: timing.startedAt,
-    endedAt: timing.endedAt,
-    durationCappedByActivity: timing.cappedByActivity || undefined,
-  }
-  return payload
-}
-
-function shouldDiscardPassiveSession(payload: ReturnType<typeof buildSessionPayload>) {
-  return (
-    payload.wordsStudied <= 0
-    && payload.correctCount <= 0
-    && payload.wrongCount <= 0
-    && payload.durationSeconds < PASSIVE_STUDY_SESSION_MIN_SECONDS
-  )
-}
-
-function sendStudySessionBeacon(url: string, payload: unknown): boolean {
-  if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') {
-    return false
-  }
-
+export async function startSession(
+  ctx?: StudySessionContext,
+  options?: {
+    skipRecovery?: boolean
+    startedAt?: number
+    forceNewSession?: boolean
+  },
+): Promise<number | null> {
+  const startedAt = normalizeEpochMs(options?.startedAt)
   try {
-    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-    return navigator.sendBeacon(url, blob)
-  } catch {
-    return false
-  }
-}
-
-function postStudySessionKeepalive(url: string, payload: unknown): void {
-  fetch(url, {
-    method: 'POST',
-    credentials: 'include',
-    keepalive: true,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  }).catch(() => {})
-}
-
-async function recoverPendingStudySession(): Promise<void> {
-  const snapshot = readActiveStudySessionSnapshot()
-  if (!snapshot) return
-
-  const endedAt = resolveSnapshotEndAt(snapshot)
-  const durationSeconds = Math.max(0, Math.round((endedAt - snapshot.startedAt) / 1000))
-  const payload = buildSessionPayload({
-    sessionId: snapshot.sessionId,
-    mode: snapshot.mode,
-    bookId: snapshot.bookId,
-    chapterId: snapshot.chapterId,
-    wordsStudied: snapshot.wordsStudied,
-    correctCount: snapshot.correctCount,
-    wrongCount: snapshot.wrongCount,
-    durationSeconds,
-    startedAt: snapshot.startedAt,
-    endedAt,
-  })
-
-  try {
-    if (shouldDiscardPassiveSession(payload)) {
-      await apiFetch('/api/ai/cancel-session', {
-        method: 'POST',
-        keepalive: true,
-        body: JSON.stringify({ sessionId: snapshot.sessionId }),
-      })
-    } else {
-      await apiFetch('/api/ai/log-session', {
-        method: 'POST',
-        keepalive: true,
-        body: JSON.stringify(payload),
-      })
+    if (!options?.skipRecovery && !consumeStudySessionRecoverySkip(startedAt)) {
+      await recoverPendingStudySession()
     }
-    clearActiveStudySessionSnapshot(snapshot.sessionId)
-  } catch {
-    // Keep the snapshot for the next recovery attempt.
-  }
-}
-
-export async function startSession(ctx?: {
-  mode?: string
-  bookId?: string | null
-  chapterId?: string | null
-}): Promise<number | null> {
-  try {
-    await recoverPendingStudySession()
     const res = await apiFetch<{ sessionId: number }>('/api/ai/start-session', {
       method: 'POST',
       keepalive: true,
@@ -237,19 +58,20 @@ export async function startSession(ctx?: {
         mode: ctx?.mode ?? 'smart',
         bookId: ctx?.bookId ?? undefined,
         chapterId: ctx?.chapterId != null && ctx.chapterId !== '' ? String(ctx.chapterId) : undefined,
+        startedAt,
+        forceNewSession: options?.forceNewSession || undefined,
       }),
     })
 
     if (res.sessionId) {
-      const now = Date.now()
       writeActiveStudySessionSnapshot({
         version: 1,
         sessionId: res.sessionId,
         mode: ctx?.mode ?? 'smart',
         bookId: ctx?.bookId ?? null,
         chapterId: normalizeChapterId(ctx?.chapterId),
-        startedAt: now,
-        lastActiveAt: now,
+        startedAt,
+        lastActiveAt: startedAt,
         wordsStudied: 0,
         correctCount: 0,
         wrongCount: 0,
@@ -298,6 +120,157 @@ export function updateStudySessionSnapshot(patch: SessionSnapshotPatch): void {
 
 export function touchStudySessionActivity(sessionId?: number | null, activeAt = Date.now()): void {
   updateStudySessionSnapshot({ sessionId, activeAt })
+}
+
+export function isStudySessionActive(data: {
+  sessionId?: number | null
+  startedAt?: number
+  lastActiveAt?: number
+}, now = Date.now()): boolean {
+  const startedAt = normalizeEpochMs(data.startedAt, 0)
+  if (startedAt <= 0) return false
+
+  const snapshot = data.sessionId != null ? readActiveStudySessionSnapshot() : null
+  const snapshotLastActiveAt = (
+    snapshot
+    && data.sessionId != null
+    && snapshot.sessionId === data.sessionId
+  )
+    ? snapshot.lastActiveAt
+    : null
+  const anchor = snapshotLastActiveAt ?? normalizeEpochMs(data.lastActiveAt, startedAt)
+  return now <= anchor + STUDY_SESSION_IDLE_GRACE_MS
+}
+
+export async function finalizeStudySessionSegment(
+  data: FinalizeStudySessionSegmentInput,
+): Promise<FinalizeStudySessionSegmentResult> {
+  const sessionId = data.sessionId ?? null
+  if (data.startedAt <= 0) {
+    return { discarded: true, durationSeconds: 0 }
+  }
+
+  if (sessionId) {
+    updateStudySessionSnapshot({
+      sessionId,
+      mode: data.mode,
+      bookId: data.bookId,
+      chapterId: data.chapterId,
+      startedAt: data.startedAt,
+      wordsStudied: data.wordsStudied,
+      correctCount: data.correctCount,
+      wrongCount: data.wrongCount,
+    })
+  }
+
+  const payload = buildSessionPayload({
+    sessionId,
+    mode: data.mode,
+    bookId: data.bookId,
+    chapterId: data.chapterId,
+    wordsStudied: data.wordsStudied,
+    correctCount: data.correctCount,
+    wrongCount: data.wrongCount,
+    durationSeconds: resolveStudySessionDurationSeconds({
+      sessionId,
+      startedAt: data.startedAt,
+      endedAt: data.endedAt,
+    }),
+    startedAt: data.startedAt,
+    endedAt: data.endedAt,
+  })
+
+  markStudySessionRecoveryHandled()
+  if (shouldDiscardPassiveSession(payload)) {
+    await cancelSession(sessionId)
+    return { discarded: true, durationSeconds: 0 }
+  }
+
+  await persistStudySessionPayload(payload, sessionId)
+  return { discarded: false, durationSeconds: payload.durationSeconds }
+}
+
+export async function prepareStudySessionForLearningAction(
+  data: PrepareStudySessionForLearningActionInput,
+): Promise<PrepareStudySessionForLearningActionResult> {
+  const activityAt = normalizeEpochMs(data.activityAt)
+  const startedAt = normalizeEpochMs(data.startedAt, 0)
+  const snapshot = data.sessionId != null ? readActiveStudySessionSnapshot() : null
+  const matchingSnapshot = (
+    snapshot
+    && data.sessionId != null
+    && snapshot.sessionId === data.sessionId
+  )
+    ? snapshot
+    : null
+  const previousLastActiveAt = matchingSnapshot?.lastActiveAt
+    ?? normalizeEpochMs(data.lastActiveAt, startedAt > 0 ? startedAt : activityAt)
+  const hasOpenSegment = startedAt > 0
+  const shouldContinueExistingSegment = (
+    hasOpenSegment
+    && previousLastActiveAt + STUDY_SESSION_IDLE_GRACE_MS >= activityAt
+    && (!matchingSnapshot || matchesStudySessionContext(matchingSnapshot, data))
+  )
+
+  if (shouldContinueExistingSegment) {
+    if (data.sessionId != null) {
+      updateStudySessionSnapshot({
+        sessionId: data.sessionId,
+        mode: data.mode,
+        bookId: data.bookId,
+        chapterId: data.chapterId,
+        startedAt,
+        activeAt: activityAt,
+        wordsStudied: data.wordsStudied,
+        correctCount: data.correctCount,
+        wrongCount: data.wrongCount,
+      })
+    }
+    return {
+      sessionId: data.sessionId ?? null,
+      startedAt,
+      lastActiveAt: activityAt,
+      continuedSegment: true,
+      segmented: false,
+      finalizedPreviousSegment: null,
+    }
+  }
+
+  let finalizedPreviousSegment: FinalizeStudySessionSegmentResult | null = null
+  if (hasOpenSegment) {
+    finalizedPreviousSegment = await finalizeStudySessionSegment({
+      sessionId: data.sessionId,
+      mode: data.mode,
+      bookId: data.bookId,
+      chapterId: data.chapterId,
+      wordsStudied: data.wordsStudied,
+      correctCount: data.correctCount,
+      wrongCount: data.wrongCount,
+      startedAt,
+      endedAt: Math.max(startedAt, Math.min(activityAt, previousLastActiveAt + STUDY_SESSION_IDLE_GRACE_MS)),
+    })
+  }
+
+  const newSessionId = await startSession(
+    {
+      mode: data.mode,
+      bookId: data.bookId,
+      chapterId: data.chapterId,
+    },
+    {
+      startedAt: activityAt,
+      forceNewSession: hasOpenSegment,
+    },
+  )
+
+  return {
+    sessionId: newSessionId,
+    startedAt: activityAt,
+    lastActiveAt: activityAt,
+    continuedSegment: false,
+    segmented: hasOpenSegment,
+    finalizedPreviousSegment,
+  }
 }
 
 export function flushStudySessionOnPageHide(data: {
@@ -396,15 +369,11 @@ export async function logSession(data: {
     })
   }
 
-  apiFetch('/api/ai/log-session', {
-    method: 'POST',
-    keepalive: true,
-    body: JSON.stringify(payload),
-  })
-    .then(() => {
-      if (data.sessionId) clearActiveStudySessionSnapshot(data.sessionId)
-    })
-    .catch(() => {})
+  try {
+    await persistStudySessionPayload(payload, data.sessionId)
+  } catch {
+    // Non-critical.
+  }
 }
 
 export function recordModeAnswer(mode: string, correct: boolean) {

@@ -1,14 +1,6 @@
 import { useEffect } from 'react'
 import { apiFetch } from '../../../lib'
-import {
-  PASSIVE_STUDY_SESSION_MIN_SECONDS,
-  cancelSession,
-  flushStudySessionOnPageHide,
-  logSession,
-  resolveStudySessionDurationSeconds,
-  startSession,
-  touchStudySessionActivity,
-} from '../../../hooks/useAIChat'
+import { flushStudySessionOnPageHide } from '../../../hooks/useAIChat'
 import type { QuickMemorySessionResult } from '../../../components/practice/quick-memory/QuickMemorySummary'
 
 interface QuickMemorySessionLifecycleArgs {
@@ -21,12 +13,14 @@ interface QuickMemorySessionLifecycleArgs {
   results: QuickMemorySessionResult[]
   resultsRef: React.MutableRefObject<QuickMemorySessionResult[]>
   sessionStartRef: React.MutableRefObject<number>
+  sessionLastActiveAtRef: React.MutableRefObject<number>
+  completedSessionDurationSecondsRef: React.MutableRefObject<number | null>
   bookIdRef: React.MutableRefObject<string | null>
   chapterIdRef: React.MutableRefObject<string | null>
   sessionIdRef: React.MutableRefObject<number | null>
   sessionLoggedRef: React.MutableRefObject<boolean>
-  pendingSessionCancelRef: React.MutableRefObject<boolean>
   flushPendingRecordSync: (keepalive?: boolean) => void
+  completeCurrentSession: () => Promise<number>
   syncSessionSnapshot: (patch?: {
     activeAt?: number
     wordsStudied?: number
@@ -54,12 +48,14 @@ export function useQuickMemorySession({
   results,
   resultsRef,
   sessionStartRef,
+  sessionLastActiveAtRef,
+  completedSessionDurationSecondsRef,
   bookIdRef,
   chapterIdRef,
   sessionIdRef,
   sessionLoggedRef,
-  pendingSessionCancelRef,
   flushPendingRecordSync,
+  completeCurrentSession,
   syncSessionSnapshot,
   showSaveError,
 }: QuickMemorySessionLifecycleArgs) {
@@ -70,26 +66,6 @@ export function useQuickMemorySession({
   useEffect(() => {
     chapterIdRef.current = chapterId
   }, [chapterId, chapterIdRef])
-
-  useEffect(() => {
-    const touch = () => {
-      if (sessionStartRef.current <= 0) return
-      touchStudySessionActivity(sessionIdRef.current)
-    }
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') touch()
-    }
-    window.addEventListener('pointerdown', touch, true)
-    window.addEventListener('keydown', touch, true)
-    window.addEventListener('focus', touch)
-    document.addEventListener('visibilitychange', onVisible)
-    return () => {
-      window.removeEventListener('pointerdown', touch, true)
-      window.removeEventListener('keydown', touch, true)
-      window.removeEventListener('focus', touch)
-      document.removeEventListener('visibilitychange', onVisible)
-    }
-  }, [sessionIdRef, sessionStartRef])
 
   useEffect(() => {
     const handlePageHide = () => {
@@ -156,39 +132,24 @@ export function useQuickMemorySession({
     if (finalResults.length < queueLength) return
     const summary = summarizeResults(finalResults)
 
-    sessionLoggedRef.current = true
     flushPendingRecordSync()
     syncSessionSnapshot({
       wordsStudied: queueLength,
       correctCount: summary.correctCount,
       wrongCount: summary.wrongCount,
     })
-    const durationSeconds = resolveStudySessionDurationSeconds({
-      sessionId: sessionIdRef.current,
-      startedAt: sessionStartRef.current,
-    })
-    logSession({
-      mode: 'quickmemory',
-      bookId,
-      chapterId,
-      wordsStudied: queueLength,
-      correctCount: summary.correctCount,
-      wrongCount: summary.wrongCount,
-      durationSeconds,
-      startedAt: sessionStartRef.current,
-      sessionId: sessionIdRef.current,
+    void completeCurrentSession().then(totalDurationSeconds => {
+      completedSessionDurationSecondsRef.current = totalDurationSeconds
     })
   }, [
-    bookId,
-    chapterId,
+    completeCurrentSession,
+    completedSessionDurationSecondsRef,
     done,
     flushPendingRecordSync,
     queueLength,
     results,
     resultsRef,
-    sessionIdRef,
     sessionLoggedRef,
-    sessionStartRef,
     syncSessionSnapshot,
   ])
 
@@ -214,60 +175,20 @@ export function useQuickMemorySession({
   }, [bookId, chapterId, done, index, results, reviewMode])
 
   useEffect(() => {
-    sessionStartRef.current = Date.now()
-    sessionLoggedRef.current = false
-    pendingSessionCancelRef.current = false
-    startSession({ mode: 'quickmemory', bookId, chapterId })
-      .then(id => {
-        sessionIdRef.current = id
-        if (pendingSessionCancelRef.current && id) cancelSession(id)
-      })
-      .catch(() => {})
-  }, [bookId, chapterId, pendingSessionCancelRef, sessionIdRef, sessionLoggedRef, sessionStartRef])
-
-  useEffect(() => {
     return () => {
       flushPendingRecordSync(true)
-      if (sessionLoggedRef.current) return
-
-      const summary = summarizeResults(resultsRef.current)
-      const durationSeconds = resolveStudySessionDurationSeconds({
-        sessionId: sessionIdRef.current,
-        startedAt: sessionStartRef.current,
+      if (sessionLoggedRef.current || sessionStartRef.current <= 0) return
+      void completeCurrentSession().then(totalDurationSeconds => {
+        completedSessionDurationSecondsRef.current = totalDurationSeconds
       })
-      if (summary.wordsStudied <= 0 && durationSeconds < PASSIVE_STUDY_SESSION_MIN_SECONDS) {
-        pendingSessionCancelRef.current = true
-        cancelSession(sessionIdRef.current)
-        return
-      }
-
-      sessionLoggedRef.current = true
-      syncSessionSnapshot({
-        wordsStudied: summary.wordsStudied,
-        correctCount: summary.correctCount,
-        wrongCount: summary.wrongCount,
-      })
-      logSession({
-        mode: 'quickmemory',
-        bookId: bookIdRef.current,
-        chapterId: chapterIdRef.current,
-        wordsStudied: summary.wordsStudied,
-        correctCount: summary.correctCount,
-        wrongCount: summary.wrongCount,
-        durationSeconds,
-        startedAt: sessionStartRef.current,
-        sessionId: sessionIdRef.current,
-      })
+      sessionLastActiveAtRef.current = 0
     }
   }, [
-    bookIdRef,
-    chapterIdRef,
+    completeCurrentSession,
+    completedSessionDurationSecondsRef,
     flushPendingRecordSync,
-    pendingSessionCancelRef,
-    resultsRef,
-    sessionIdRef,
+    sessionLastActiveAtRef,
     sessionLoggedRef,
     sessionStartRef,
-    syncSessionSnapshot,
   ])
 }

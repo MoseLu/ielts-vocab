@@ -1,21 +1,12 @@
 import { useCallback } from 'react'
-import {
-  recordWordResult,
-  syncSmartStatsToBackend,
-} from '../../../lib/smartMode'
-import {
-  logSession,
-  recordModeAnswer,
-  resolveStudySessionDurationSeconds,
-} from '../../../hooks/useAIChat'
+import { recordWordResult } from '../../../lib/smartMode'
+import { recordModeAnswer } from '../../../hooks/useAIChat'
 import type {
   PracticeMode,
   SmartDimension,
   SpellingSubmitSource,
 } from '../../../components/practice/types'
-import {
-  normalizeWordAnswer,
-} from '../../../components/practice/utils'
+import { normalizeWordAnswer } from '../../../components/practice/utils'
 import type {
   UsePracticePageActionsParams,
   UsePracticePageActionsResult,
@@ -49,6 +40,8 @@ export function usePracticePageActions({
   saveProgress,
   clearSpellingRetryTimer,
   clearSpellingFeedbackDismissTimer,
+  prepareSessionForLearningAction,
+  completeCurrentSession,
   registerAnsweredWord,
   syncCurrentSessionSnapshot,
   lastState,
@@ -71,14 +64,7 @@ export function usePracticePageActions({
   spellingRetryTimerRef,
   sessionCorrectRef,
   sessionWrongRef,
-  sessionStartRef,
-  sessionIdRef,
-  sessionLoggedRef,
   completedSessionDurationSecondsRef,
-  sessionUniqueWordsRef,
-  sessionBookIdRef,
-  sessionChapterIdRef,
-  effectiveSessionModeRef,
   errorRoundResultsRef,
 }: UsePracticePageActionsParams): UsePracticePageActionsResult {
   const {
@@ -97,7 +83,7 @@ export function usePracticePageActions({
     errorRoundResultsRef,
   })
 
-  const goNext = useCallback((wasCorrect: boolean) => {
+  const goNext = useCallback(async (wasCorrect: boolean) => {
     setLastState({ qi: queueIndex, cc: correctCount, wc: wrongCount, prevWord: previousWord })
     setPreviousWord(currentWord ?? null)
     setSelectedAnswer(null)
@@ -114,37 +100,9 @@ export function usePracticePageActions({
     }
 
     if (queueIndex + 1 >= queue.length) {
-      const finalSessionCorrect = wasCorrect ? sessionCorrectRef.current + 1 : sessionCorrectRef.current
-      const finalSessionWrong = wasCorrect ? sessionWrongRef.current : sessionWrongRef.current + 1
-      const sessionStart = sessionStartRef.current
-      const durationSeconds = resolveStudySessionDurationSeconds({
-        sessionId: sessionIdRef.current,
-        startedAt: sessionStart,
-      })
-      completedSessionDurationSecondsRef.current = durationSeconds
-      sessionLoggedRef.current = true
-      syncCurrentSessionSnapshot()
-      logSession({
-        mode: effectiveSessionModeRef.current,
-        bookId: sessionBookIdRef.current,
-        chapterId: sessionChapterIdRef.current,
-        wordsStudied: sessionUniqueWordsRef.current.size,
-        correctCount: finalSessionCorrect,
-        wrongCount: finalSessionWrong,
-        durationSeconds,
-        startedAt: sessionStart,
-        sessionId: sessionIdRef.current,
-      })
-      syncSmartStatsToBackend({
-        bookId: sessionBookIdRef.current,
-        chapterId: sessionChapterIdRef.current,
-        mode: effectiveSessionModeRef.current,
-      })
-      if (errorMode) {
-        setQueueIndex(queue.length)
-        return
-      }
-      if (sessionChapterIdRef.current) {
+      const totalDurationSeconds = await completeCurrentSession()
+      completedSessionDurationSecondsRef.current = totalDurationSeconds
+      if (errorMode || chapterId) {
         setQueueIndex(queue.length)
         return
       }
@@ -154,23 +112,16 @@ export function usePracticePageActions({
 
     setQueueIndex(prev => prev + 1)
   }, [
+    chapterId,
+    completeCurrentSession,
     correctCount,
     currentWord,
-    effectiveSessionModeRef,
     errorMode,
     navigate,
     previousWord,
     queue,
     queueIndex,
     completedSessionDurationSecondsRef,
-    sessionBookIdRef,
-    sessionChapterIdRef,
-    sessionCorrectRef,
-    sessionIdRef,
-    sessionLoggedRef,
-    sessionStartRef,
-    sessionUniqueWordsRef,
-    sessionWrongRef,
     setLastState,
     setPreviousWord,
     setQueue,
@@ -184,7 +135,6 @@ export function usePracticePageActions({
     setSpellingResult,
     setWrongSelections,
     settings.repeatWrong,
-    syncCurrentSessionSnapshot,
   ])
 
   const goBack = useCallback(() => {
@@ -217,10 +167,9 @@ export function usePracticePageActions({
     setSpellingResult,
     setWrongCount,
     setWrongSelections,
-    wrongCount,
   ])
 
-  const commitAnswerResult = useCallback((
+  const commitAnswerResult = useCallback(async (
     isCorrect: boolean,
     {
       dimension,
@@ -234,6 +183,8 @@ export function usePracticePageActions({
       completionDelayMs?: number
     },
   ) => {
+    await prepareSessionForLearningAction()
+
     const nextCorrect = isCorrect ? correctCount + 1 : correctCount
     const nextWrong = isCorrect ? wrongCount : wrongCount + 1
 
@@ -258,11 +209,12 @@ export function usePracticePageActions({
     recordModeAnswer(analyticsMode, isCorrect)
 
     if (!advanceToNext) return
-    window.setTimeout(() => goNext(isCorrect), completionDelayMs)
+    window.setTimeout(() => { void goNext(isCorrect) }, completionDelayMs)
   }, [
     correctCount,
     currentWord,
     goNext,
+    prepareSessionForLearningAction,
     queue,
     queueIndex,
     recordErrorReviewOutcome,
@@ -278,7 +230,7 @@ export function usePracticePageActions({
     sessionWrongRef,
   ])
 
-  const handleOptionSelect = useCallback((idx: number) => {
+  const handleOptionSelect = useCallback(async (idx: number) => {
     if (!choiceOptionsReady || showResult) return
     const dimension: SmartDimension = mode === 'smart' ? smartDimension : 'listening'
     const shouldReplayListeningPrompt = Boolean(
@@ -292,7 +244,7 @@ export function usePracticePageActions({
       setSelectedAnswer(idx)
       setWrongSelections(prev => [...prev, idx])
       if (wrongSelections.length === 0) {
-        commitAnswerResult(false, {
+        await commitAnswerResult(false, {
           dimension,
           analyticsMode: mode ?? 'smart',
           advanceToNext: false,
@@ -306,7 +258,7 @@ export function usePracticePageActions({
 
     setSelectedAnswer(idx)
     setShowResult(true)
-    commitAnswerResult(true, {
+    await commitAnswerResult(true, {
       dimension,
       analyticsMode: mode ?? 'smart',
     })
@@ -314,19 +266,19 @@ export function usePracticePageActions({
     choiceOptionsReady,
     commitAnswerResult,
     correctIndex,
-    mode,
     currentWord,
+    mode,
     options,
     playWord,
-    showResult,
-    smartDimension,
-    wrongSelections,
     setSelectedAnswer,
     setShowResult,
     setWrongSelections,
+    showResult,
+    smartDimension,
+    wrongSelections,
   ])
 
-  const handleSpellingSubmit = useCallback((source: SpellingSubmitSource = 'button') => {
+  const handleSpellingSubmit = useCallback(async (source: SpellingSubmitSource = 'button') => {
     if (spellingResult || !currentWord) return
     const isCorrect = normalizeWordAnswer(spellingInput) === normalizeWordAnswer(currentWord.word)
     clearSpellingRetryTimer()
@@ -335,7 +287,7 @@ export function usePracticePageActions({
     setSpellingFeedbackDismissing(false)
     setSpellingFeedbackSnapshot(isCorrect ? null : spellingInput)
     setSpellingResult(isCorrect ? 'correct' : 'wrong')
-    commitAnswerResult(isCorrect, {
+    await commitAnswerResult(isCorrect, {
       dimension: 'dictation',
       analyticsMode: mode ?? 'dictation',
       advanceToNext: isCorrect,
@@ -371,7 +323,7 @@ export function usePracticePageActions({
     spellingRetryTimerRef,
   ])
 
-  const handleMeaningRecallSubmit = useCallback((_source: SpellingSubmitSource = 'button') => {
+  const handleMeaningRecallSubmit = useCallback(async (_source: SpellingSubmitSource = 'button') => {
     if (spellingResult || !currentWord) return
     const isCorrect = normalizeWordAnswer(spellingInput) === normalizeWordAnswer(currentWord.word)
     clearSpellingRetryTimer()
@@ -380,7 +332,7 @@ export function usePracticePageActions({
     setSpellingFeedbackDismissing(false)
     setSpellingFeedbackSnapshot(null)
     setSpellingResult(isCorrect ? 'correct' : 'wrong')
-    commitAnswerResult(isCorrect, {
+    await commitAnswerResult(isCorrect, {
       dimension: 'meaning',
       analyticsMode: mode ?? 'meaning',
     })
@@ -398,13 +350,14 @@ export function usePracticePageActions({
     spellingResult,
   ])
 
-  const handleSkip = useCallback(() => {
+  const handleSkip = useCallback(async () => {
     if (!currentWord) return
+    await prepareSessionForLearningAction()
     const hasPendingListeningMistake = wrongSelections.length > 0
       && (mode === 'listening' || (mode === 'smart' && smartDimension === 'listening'))
 
     if (hasPendingListeningMistake) {
-      goNext(false)
+      void goNext(false)
       return
     }
 
@@ -418,12 +371,13 @@ export function usePracticePageActions({
     syncCurrentSessionSnapshot(Date.now())
     recordModeAnswer(mode ?? 'smart', false)
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: 'wrong' }))
-    goNext(false)
+    void goNext(false)
   }, [
     correctCount,
     currentWord,
     goNext,
     mode,
+    prepareSessionForLearningAction,
     queue,
     queueIndex,
     recordErrorReviewOutcome,

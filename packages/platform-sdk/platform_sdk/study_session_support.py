@@ -125,9 +125,7 @@ def get_live_pending_session_snapshot(
 ) -> dict | None:
     """Return the latest recent open placeholder session plus its live elapsed time."""
     now = now or datetime.utcnow()
-    threshold = now - _LIVE_PENDING_SESSION_WINDOW
-    if since is not None and since > threshold:
-        threshold = since
+    threshold = since if since is not None else datetime(1970, 1, 1)
 
     session = find_recent_open_placeholder_session(
         user_id=user_id,
@@ -162,7 +160,7 @@ def get_live_pending_session_snapshot(
         started_at=session.started_at,
         candidate_end=now,
         last_activity_at=last_activity_at,
-        fallback_to_started_at=True,
+        fallback_to_started_at=False,
     )
     if effective_end is None:
         return None
@@ -253,27 +251,38 @@ def start_or_reuse_study_session(
     book_id: str | None,
     chapter_id: str | None,
     reuse_window_seconds: int,
+    started_at: datetime | None = None,
+    force_new_session: bool = False,
     find_pending_session_in_window,
+    close_open_placeholder_sessions_before,
     create_study_session,
     commit,
 ):
-    existing = find_pending_session(
-        user_id=user_id,
-        mode=mode,
-        book_id=book_id,
-        chapter_id=chapter_id,
-        find_pending_session_in_window=find_pending_session_in_window,
-        window_seconds=reuse_window_seconds,
-    )
+    session_started_at = started_at or datetime.utcnow()
+    existing = None
+    if not force_new_session:
+        existing = find_pending_session(
+            user_id=user_id,
+            mode=mode,
+            book_id=book_id,
+            chapter_id=chapter_id,
+            find_pending_session_in_window=find_pending_session_in_window,
+            started_at=started_at,
+            window_seconds=reuse_window_seconds,
+        )
     if existing:
         return existing
 
+    close_open_placeholder_sessions_before(
+        user_id=user_id,
+        started_before=session_started_at,
+    )
     session = create_study_session(
         user_id=user_id,
         mode=mode,
         book_id=book_id,
         chapter_id=chapter_id,
-        started_at=datetime.utcnow(),
+        started_at=session_started_at,
     )
     commit()
     return session

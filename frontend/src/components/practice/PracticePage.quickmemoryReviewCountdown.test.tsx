@@ -183,6 +183,10 @@ describe('PracticePage quick-memory review countdown', () => {
         return Promise.resolve({})
       }
 
+      if (url === '/api/ai/wrong-words/sync') {
+        return Promise.resolve({})
+      }
+
       throw new Error(`Unexpected url: ${url}`)
     })
   })
@@ -191,7 +195,7 @@ describe('PracticePage quick-memory review countdown', () => {
     vi.useRealTimers()
   })
 
-  it('keeps the first review word countdown running after switching into quickmemory review mode', async () => {
+  it('does not auto reveal the first due-review word before any learning action', async () => {
     const { rerender } = render(
       <MemoryRouter initialEntries={['/practice?review=due']}>
         <PracticePage
@@ -225,18 +229,26 @@ describe('PracticePage quick-memory review countdown', () => {
 
     expect(screen.getByText('alpha')).toBeInTheDocument()
     await act(async () => {
-      await vi.runOnlyPendingTimersAsync()
-      await Promise.resolve()
-    })
-    expect(playWordAudioMock).toHaveBeenCalled()
-    const countdownBeforeTick = Number(screen.getByText(value => /^\d$/.test(value)).textContent)
-
-    await act(async () => {
       await vi.advanceTimersByTimeAsync(1000)
       await Promise.resolve()
     })
+    expect(screen.getByText('3')).toBeInTheDocument()
 
-    expect(screen.getByText(String(Math.max(0, countdownBeforeTick - 1)))).toBeInTheDocument()
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000)
+      await Promise.resolve()
+    })
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.queryByText('✗ 不认识')).not.toBeInTheDocument()
+    expect(playWordAudioMock).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350)
+      await Promise.resolve()
+    })
+
+    expect(playWordAudioMock).not.toHaveBeenCalled()
+    expect(startSessionMock).not.toHaveBeenCalled()
   })
 
   it('skips lookahead audio preloading on the first due-review word', async () => {
@@ -266,6 +278,10 @@ describe('PracticePage quick-memory review countdown', () => {
       }
 
       if (url === '/api/ai/quick-memory/sync') {
+        return Promise.resolve({})
+      }
+
+      if (url === '/api/ai/wrong-words/sync') {
         return Promise.resolve({})
       }
 

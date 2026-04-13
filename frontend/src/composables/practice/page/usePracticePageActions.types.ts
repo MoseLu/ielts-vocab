@@ -47,6 +47,8 @@ export interface UsePracticePageActionsParams {
   ) => void
   clearSpellingRetryTimer: () => void
   clearSpellingFeedbackDismissTimer: () => void
+  prepareSessionForLearningAction: () => Promise<void>
+  completeCurrentSession: () => Promise<number>
   registerAnsweredWord: (word: string) => void
   syncCurrentSessionSnapshot: (activeAt?: number) => void
   lastState: LastState | null
@@ -69,14 +71,7 @@ export interface UsePracticePageActionsParams {
   spellingRetryTimerRef: MutableRefObject<number | null>
   sessionCorrectRef: MutableRefObject<number>
   sessionWrongRef: MutableRefObject<number>
-  sessionStartRef: MutableRefObject<number>
-  sessionIdRef: MutableRefObject<number | null>
-  sessionLoggedRef: MutableRefObject<boolean>
   completedSessionDurationSecondsRef: MutableRefObject<number | null>
-  sessionUniqueWordsRef: MutableRefObject<Set<string>>
-  sessionBookIdRef: MutableRefObject<string | null>
-  sessionChapterIdRef: MutableRefObject<string | null>
-  effectiveSessionModeRef: MutableRefObject<string>
   errorRoundResultsRef: MutableRefObject<ErrorReviewRoundResults>
 }
 

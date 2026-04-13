@@ -210,8 +210,9 @@ export interface RadioModeProps {
   onCloseSettings: () => void
   onModeChange: (mode: PracticeMode) => void
   onIndexChange?: (index: number) => void
-  onSessionInteraction?: () => void
+  onSessionInteraction?: () => void | Promise<void>
   onProgressChange?: (wordsStudied: number) => void
+  isSessionActive?: (at?: number) => boolean
   favoriteSlot?: ReactNode
 }
 

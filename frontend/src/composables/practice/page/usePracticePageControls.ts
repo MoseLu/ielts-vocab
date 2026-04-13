@@ -112,7 +112,7 @@ export function usePracticePageControls({
   setReviewOffset,
   setErrorReviewRound,
 }: UsePracticePageControlsParams): UsePracticePageControlsResult {
-  const hasValidCurrentDay = Number.isInteger(currentDay) && currentDay > 0
+  const hasValidCurrentDay = Number.isInteger(currentDay ?? null) && (currentDay ?? 0) > 0
 
   const saveProgress = useCallback((
     correct: number,
@@ -194,9 +194,10 @@ export function usePracticePageControls({
     if (!hasValidCurrentDay) {
       return
     }
+    const activeDay = currentDay
 
     const dayProgress: Record<string, Record<string, unknown>> = JSON.parse(localStorage.getItem('day_progress') || '{}')
-    dayProgress[String(currentDay)] = {
+    dayProgress[String(activeDay)] = {
       ...progressData,
       is_completed: correct + wrong >= vocabulary.length,
       queue_words: queueWords,
@@ -205,7 +206,7 @@ export function usePracticePageControls({
     localStorage.setItem('day_progress', JSON.stringify(dayProgress))
     apiFetch('/api/progress', {
       method: 'POST',
-      body: JSON.stringify({ day: currentDay, ...progressData }),
+      body: JSON.stringify({ day: activeDay, ...progressData }),
     }).catch(() => {})
   }, [
     bookId,

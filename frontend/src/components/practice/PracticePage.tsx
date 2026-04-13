@@ -38,7 +38,7 @@ function PracticePage({
   const chapterId = searchParams.get('chapter')
   const errorMode = searchParams.get('mode') === 'errors'
   const reviewMode = searchParams.get('review') === 'due'
-  const practiceMode: PracticeMode = reviewMode ? 'quickmemory' : mode
+  const practiceMode: PracticeMode = reviewMode ? 'quickmemory' : (mode ?? 'smart')
   const practiceBookId = reviewMode ? (bookId ?? null) : bookId, practiceChapterId = reviewMode ? (chapterId ?? null) : chapterId
   const [vocabulary, setVocabulary] = useState<Word[]>([])
   const [queue, setQueue] = useState<number[]>([])
@@ -83,26 +83,22 @@ function PracticePage({
     settings,
     radioQuickSettings,
     handleRadioSettingChange,
-    sessionStartRef,
-    sessionIdRef,
     sessionCorrectRef,
     sessionWrongRef,
     correctCountRef,
     wrongCountRef,
     completedSessionDurationSecondsRef,
-    sessionLoggedRef,
-    effectiveSessionModeRef,
-    sessionBookIdRef,
-    sessionChapterIdRef,
     wordsLearnedBaselineRef,
     uniqueAnsweredRef,
-    sessionUniqueWordsRef,
     beginSession,
+    prepareSessionForLearningAction,
+    completeCurrentSession,
     computeChapterWordsLearned,
     registerAnsweredWord,
     markRadioSessionInteraction,
     handleRadioProgressChange,
     syncCurrentSessionSnapshot,
+    isCurrentSessionActive,
   } = usePracticePageSession({
     mode: practiceMode,
     errorMode,
@@ -343,6 +339,8 @@ function PracticePage({
     saveProgress,
     clearSpellingRetryTimer,
     clearSpellingFeedbackDismissTimer,
+    prepareSessionForLearningAction,
+    completeCurrentSession,
     registerAnsweredWord,
     syncCurrentSessionSnapshot,
     lastState,
@@ -365,14 +363,7 @@ function PracticePage({
     spellingRetryTimerRef,
     sessionCorrectRef,
     sessionWrongRef,
-    sessionStartRef,
-    sessionIdRef,
-    sessionLoggedRef,
     completedSessionDurationSecondsRef,
-    sessionUniqueWordsRef,
-    sessionBookIdRef,
-    sessionChapterIdRef,
-    effectiveSessionModeRef,
     errorRoundResultsRef,
   })
 
@@ -457,6 +448,7 @@ function PracticePage({
       handleRadioSettingChange={handleRadioSettingChange}
       markRadioSessionInteraction={markRadioSessionInteraction}
       handleRadioProgressChange={handleRadioProgressChange}
+      isCurrentSessionActive={isCurrentSessionActive}
       reviewMode={reviewMode}
       reviewSummary={reviewSummary}
       reviewOffset={reviewOffset}

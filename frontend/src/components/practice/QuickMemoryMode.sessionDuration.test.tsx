@@ -27,6 +27,9 @@ vi.mock('./utils', () => ({
 
 vi.mock('../../hooks/useAIChat', () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
+  prepareStudySessionForLearningAction: undefined,
+  finalizeStudySessionSegment: undefined,
+  isStudySessionActive: undefined,
   resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
     data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
   logSession: (...args: unknown[]) => logSessionMock(...args),
@@ -44,6 +47,26 @@ vi.mock('../../lib', () => ({
 vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({ showToast: showToastMock }),
 }))
+
+async function revealKnown(container: HTMLElement) {
+  fireEvent.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+  await act(async () => {
+    await Promise.resolve()
+    await Promise.resolve()
+  })
+}
+
+async function goNext(container: HTMLElement) {
+  await act(async () => {
+    await Promise.resolve()
+    await Promise.resolve()
+  })
+  fireEvent.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+  await act(async () => {
+    await Promise.resolve()
+    await Promise.resolve()
+  })
+}
 
 describe('QuickMemoryMode session duration summary', () => {
   const vocabulary: Word[] = [
@@ -89,14 +112,9 @@ describe('QuickMemoryMode session duration summary', () => {
       />,
     )
 
-    fireEvent.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await revealKnown(container)
     vi.setSystemTime(new Date('2026-04-07T00:01:05.000Z'))
-    fireEvent.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
-
-    await act(async () => {
-      await Promise.resolve()
-      await Promise.resolve()
-    })
+    await goNext(container)
 
     expect(screen.getByText('本次用时')).toBeInTheDocument()
     expect(screen.getByText('1分5秒')).toBeInTheDocument()
@@ -123,14 +141,9 @@ describe('QuickMemoryMode session duration summary', () => {
       />,
     )
 
-    fireEvent.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await revealKnown(container)
     vi.setSystemTime(new Date('2026-04-07T00:00:45.000Z'))
-    fireEvent.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
-
-    await act(async () => {
-      await Promise.resolve()
-      await Promise.resolve()
-    })
+    await goNext(container)
 
     expect(screen.getByText('本轮完成')).toBeInTheDocument()
     expect(screen.getByText('本次用时')).toBeInTheDocument()
@@ -153,14 +166,9 @@ describe('QuickMemoryMode session duration summary', () => {
       />,
     )
 
-    fireEvent.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await revealKnown(container)
     vi.setSystemTime(new Date('2026-04-07T00:00:45.000Z'))
-    fireEvent.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
-
-    await act(async () => {
-      await Promise.resolve()
-      await Promise.resolve()
-    })
+    await goNext(container)
 
     expect(screen.getByText('本轮完成')).toBeInTheDocument()
     expect(screen.getByText('本次用时')).toBeInTheDocument()
