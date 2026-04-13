@@ -5,6 +5,21 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from flask import current_app, has_app_context
+from platform_sdk.time_audit_support import (
+    SESSION_ACTIVITY_SOURCES,
+    SessionIntervalCollection,
+    TimeAuditReport,
+    TimeInterval,
+    audit_event_reconciliation,
+    audit_live_pending_interval,
+    audit_zero_activity_duration_sessions,
+    build_time_audit_report,
+    collect_eligible_session_intervals,
+    filter_reportable_sessions,
+    merge_overlapping_intervals,
+    session_has_direct_activity,
+    sum_interval_seconds,
+)
 
 
 DEFAULT_APP_TIMEZONE = 'Asia/Shanghai'
@@ -140,3 +155,34 @@ def format_event_time_for_ai(
         return event_local.strftime('%H:%M')
 
     return event_local.strftime('%m-%d %H:%M')
+
+
+__all__ = [
+    'DEFAULT_APP_TIMEZONE',
+    'SESSION_ACTIVITY_SOURCES',
+    'SessionIntervalCollection',
+    'TimeAuditReport',
+    'TimeInterval',
+    'audit_event_reconciliation',
+    'audit_live_pending_interval',
+    'audit_zero_activity_duration_sessions',
+    'build_time_audit_report',
+    'collect_eligible_session_intervals',
+    'current_local_date',
+    'current_local_datetime',
+    'filter_reportable_sessions',
+    'format_event_time_for_ai',
+    'get_app_timezone',
+    'local_date_to_utc_naive',
+    'local_day_window_ms',
+    'merge_overlapping_intervals',
+    'parse_utc_datetime',
+    'recent_local_day_range',
+    'resolve_local_day_window',
+    'session_has_direct_activity',
+    'sum_interval_seconds',
+    'utc_naive_to_epoch_ms',
+    'utc_naive_to_local',
+    'utc_naive_to_local_date_key',
+    'utc_now_naive',
+]

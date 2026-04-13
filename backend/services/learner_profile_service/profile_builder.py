@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from services import learner_profile_repository
+from services import learner_profile_repository, learning_event_repository
+from services.local_time import build_time_audit_report, collect_eligible_session_intervals
 
 
 def _build_daily_plan(
@@ -206,7 +207,12 @@ def build_learner_profile(user_id: int, target_date: str | None = None, view: st
         user_id,
         before=end_dt,
     )
-    day_session_candidates = all_sessions
+    reportable_all_sessions = list(collect_eligible_session_intervals(
+        all_sessions,
+        now=now_utc,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).reportable_sessions)
+    day_session_candidates = reportable_all_sessions
     day_sessions = []
     day_session_metrics = []
     for session in day_session_candidates:
@@ -252,22 +258,23 @@ def build_learner_profile(user_id: int, target_date: str | None = None, view: st
     today_wrong = sum(item['wrong_count'] for item in day_session_metrics)
     today_attempts = today_correct + today_wrong
     today_accuracy = round(today_correct / today_attempts * 100) if today_attempts > 0 else 0
-    today_duration = sum(item['duration_seconds'] for item in day_session_metrics)
+    live_pending = None
     if start_dt <= now_utc < end_dt:
         live_pending = get_live_pending_session_snapshot(
             user_id,
             since=start_dt,
             now=now_utc,
         )
-        if live_pending:
-            live_duration_seconds = get_live_pending_window_duration_seconds(
-                live_pending,
-                window_start=start_dt,
-                window_end=end_dt,
-            )
-            today_duration += live_duration_seconds
+    today_duration = build_time_audit_report(
+        sessions=reportable_all_sessions,
+        live_pending=live_pending,
+        now=now_utc,
+        window_start=start_dt,
+        window_end=end_dt,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).audited_total_seconds
 
-    modes, weakest_mode = _build_mode_summary(all_sessions)
+    modes, weakest_mode = _build_mode_summary(reportable_all_sessions)
     dimensions = _build_dimension_breakdown(smart_rows, wrong_words)
     focus_words = _build_focus_words(wrong_words)
     memory_system = None
@@ -304,7 +311,7 @@ def build_learner_profile(user_id: int, target_date: str | None = None, view: st
         'weakest_mode_label': weakest_mode['label'] if weakest_mode else None,
         'weakest_mode_accuracy': weakest_mode['accuracy'] if weakest_mode else None,
         'due_reviews': due_reviews,
-        'trend_direction': _build_trend_direction(all_sessions),
+        'trend_direction': _build_trend_direction(reportable_all_sessions),
     }
     daily_plan = None
     if profile_view != 'stats':

@@ -5,20 +5,40 @@ from datetime import datetime, timedelta
 
 from flask import jsonify
 
-from platform_sdk.local_time_support import format_event_time_for_ai
+from platform_sdk.learning_repository_adapters import learning_event_repository
+from platform_sdk.local_time_support import (
+    build_time_audit_report,
+    collect_eligible_session_intervals,
+    current_local_date,
+    format_event_time_for_ai,
+    resolve_local_day_window,
+    utc_naive_to_local_date_key,
+    utc_now_naive,
+)
+from platform_sdk.notes_summary_output_support import (
+    estimate_summary_target_chars,
+    fallback_summary_content,
+    prune_summary_jobs,
+    save_summary,
+    serialize_summary_job,
+)
 from platform_sdk.notes_summary_runtime_support import (
     GENERATE_COOLDOWN_SECONDS,
-    SUMMARY_JOB_TTL_SECONDS,
     SUMMARY_MODE_LABELS,
-    _summary_jobs,
-    _summary_jobs_lock,
 )
 from platform_sdk.notes_repository_adapters import (
     daily_summary_repository,
     learning_note_repository,
     notes_summary_context_repository,
 )
-from platform_sdk.notes_summary_event_application import queue_summary_generated_event
+from platform_sdk.study_session_repository_adapter import (
+    find_recent_open_placeholder_session,
+    newer_analytics_session_exists,
+)
+from platform_sdk.study_session_support import (
+    get_live_pending_session_snapshot,
+    get_session_window_metrics,
+)
 
 
 AI_PROMPT_RUN_KIND_LABELS = {
@@ -55,8 +75,8 @@ def utc_now() -> datetime:
 
 
 def date_bounds(target_date: str) -> tuple[datetime, datetime]:
-    start_dt = datetime.strptime(target_date, '%Y-%m-%d')
-    return start_dt, start_dt + timedelta(days=1)
+    _date_str, start_dt, end_dt = resolve_local_day_window(target_date)
+    return start_dt, end_dt
 
 
 def check_generate_cooldown(user_id: int, target_date: str):
@@ -121,9 +141,9 @@ def summary_streak_days(user_id: int, target_date: str) -> int:
         return 0
 
     date_set = {
-        row.started_at.strftime('%Y-%m-%d')
+        utc_naive_to_local_date_key(row.started_at)
         for row in rows
-        if row.started_at is not None
+        if utc_naive_to_local_date_key(row.started_at)
     }
     if not date_set:
         return 0
@@ -164,26 +184,72 @@ def _format_prompt_run_summary(prompt_run, *, target_date: str) -> str:
 def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_words, prompt_runs=None) -> dict:
     _start_dt, end_dt = date_bounds(target_date)
     prompt_runs = list(prompt_runs or [])
-    today_words = sum(session.words_studied or 0 for session in sessions)
-    today_duration = sum(session.duration_seconds or 0 for session in sessions)
-    today_correct = sum(session.correct_count or 0 for session in sessions)
-    today_wrong = sum(session.wrong_count or 0 for session in sessions)
+    now_utc = utc_now_naive()
+    reportable_sessions = list(collect_eligible_session_intervals(
+        sessions,
+        now=now_utc,
+        window_start=_start_dt,
+        window_end=end_dt,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).reportable_sessions)
+    live_pending = None
+    if target_date == current_local_date(now_utc).isoformat():
+        live_pending = get_live_pending_session_snapshot(
+            user_id,
+            find_recent_open_placeholder_session=find_recent_open_placeholder_session,
+            newer_analytics_session_exists=newer_analytics_session_exists,
+            find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+            since=_start_dt,
+            now=now_utc,
+        )
+    today_words = 0
+    today_correct = 0
+    today_wrong = 0
+    for session in reportable_sessions:
+        metrics = get_session_window_metrics(
+            session,
+            window_start=_start_dt,
+            window_end=end_dt,
+            now=now_utc,
+        )
+        if not metrics:
+            continue
+        today_words += metrics['words_studied']
+        today_correct += metrics['correct_count']
+        today_wrong += metrics['wrong_count']
+    today_duration = build_time_audit_report(
+        user_id=user_id,
+        sessions=reportable_sessions,
+        live_pending=live_pending,
+        now=now_utc,
+        window_start=_start_dt,
+        window_end=end_dt,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).audited_total_seconds
     today_attempted = today_correct + today_wrong
     today_accuracy = round(today_correct / today_attempted * 100) if today_attempted > 0 else 0
 
     today_mode_breakdown = []
-    for session in sessions:
+    for session in reportable_sessions:
+        metrics = get_session_window_metrics(
+            session,
+            window_start=_start_dt,
+            window_end=end_dt,
+            now=now_utc,
+        )
+        if not metrics:
+            continue
         mode_label = SUMMARY_MODE_LABELS.get(session.mode or '', session.mode or '未知模式')
-        correct = session.correct_count or 0
-        wrong = session.wrong_count or 0
+        correct = metrics['correct_count']
+        wrong = metrics['wrong_count']
         attempted = correct + wrong
         accuracy = round(correct / attempted * 100) if attempted > 0 else 0
         today_mode_breakdown.append({
             'mode': session.mode or '',
             'label': mode_label,
             'accuracy': accuracy,
-            'words': session.words_studied or 0,
-            'duration_seconds': session.duration_seconds or 0,
+            'words': metrics['words_studied'],
+            'duration_seconds': metrics['duration_seconds'],
         })
 
     all_sessions = notes_summary_context_repository.list_study_sessions_before(
@@ -191,6 +257,11 @@ def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_word
         end_before=end_dt,
         descending=False,
     )
+    all_sessions = list(collect_eligible_session_intervals(
+        all_sessions,
+        now=now_utc,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).reportable_sessions)
     mode_totals: dict[str, dict] = {}
     for session in all_sessions:
         mode = (session.mode or '').strip()
@@ -224,73 +295,12 @@ def build_learning_snapshot(user_id: int, target_date: str, sessions, wrong_word
         'today_words': today_words,
         'today_duration': today_duration,
         'today_accuracy': today_accuracy,
-        'today_sessions': len(sessions),
+        'today_sessions': len(reportable_sessions),
         'today_prompt_runs': len(prompt_runs),
         'today_mode_breakdown': today_mode_breakdown,
         'streak_days': summary_streak_days(user_id, target_date),
         'weakest_mode': weakest_mode,
         'wrong_words': [word.word for word in wrong_words[:8] if word.word],
-    }
-
-
-def estimate_summary_target_chars(notes_list, sessions, wrong_words, prompt_runs=None) -> int:
-    prompt_runs = list(prompt_runs or [])
-    estimate = (
-        420
-        + len(notes_list) * 150
-        + len(sessions) * 110
-        + min(len(wrong_words), 20) * 18
-        + len(prompt_runs) * 70
-    )
-    return max(480, min(1800, estimate))
-
-
-def fallback_summary_content(target_date: str) -> str:
-    return (
-        f"# {target_date} 学习总结\n\n"
-        "## 学习概况\n\n"
-        "今天暂时没有足够的学习数据可供总结。\n\n"
-        "## 建议\n\n"
-        "- 先完成一轮词汇练习或向 AI 提一个问题，再回来生成总结。"
-    )
-
-
-def save_summary(existing, user_id: int, target_date: str, summary_content: str):
-    summary = daily_summary_repository.save_daily_summary(
-        existing,
-        user_id=user_id,
-        target_date=target_date,
-        summary_content=summary_content,
-        generated_at=utc_now(),
-    )
-    queue_summary_generated_event(summary)
-    daily_summary_repository.commit()
-    return summary
-
-
-def prune_summary_jobs() -> None:
-    cutoff = utc_now() - timedelta(seconds=SUMMARY_JOB_TTL_SECONDS)
-    with _summary_jobs_lock:
-        stale_job_ids = [
-            job_id
-            for job_id, job in _summary_jobs.items()
-            if job['updated_at'] < cutoff and job['status'] in {'completed', 'failed'}
-        ]
-        for job_id in stale_job_ids:
-            _summary_jobs.pop(job_id, None)
-
-
-def serialize_summary_job(job: dict) -> dict:
-    return {
-        'job_id': job['job_id'],
-        'date': job['date'],
-        'status': job['status'],
-        'progress': job['progress'],
-        'message': job['message'],
-        'estimated_chars': job['estimated_chars'],
-        'generated_chars': job['generated_chars'],
-        'summary': job.get('summary'),
-        'error': job.get('error'),
     }
 
 

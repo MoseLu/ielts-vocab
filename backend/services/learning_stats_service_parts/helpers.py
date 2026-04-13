@@ -22,6 +22,7 @@ from platform_sdk.learning_stats_modes_support import (
     stats_mode_candidates,
 )
 from services.local_time import (
+    build_time_audit_report,
     current_local_date,
     recent_local_day_range,
     resolve_local_day_window,
@@ -177,9 +178,9 @@ def _build_period_summary_from_sessions(
     range_end: datetime,
     now_utc: datetime,
     filtered_live_pending: dict | None,
+    find_latest_session_activity_at=None,
 ) -> dict:
     total_words = 0
-    total_duration = 0
     total_correct = 0
     total_wrong = 0
 
@@ -193,17 +194,17 @@ def _build_period_summary_from_sessions(
         if not period_metrics:
             continue
         total_words += period_metrics['words_studied']
-        total_duration += period_metrics['duration_seconds']
         total_correct += period_metrics['correct_count']
         total_wrong += period_metrics['wrong_count']
 
-    if filtered_live_pending:
-        live_duration_seconds = get_live_pending_window_duration_seconds(
-            filtered_live_pending,
-            window_start=since,
-            window_end=range_end,
-        )
-        total_duration += live_duration_seconds
+    total_duration = build_time_audit_report(
+        sessions=sessions,
+        live_pending=filtered_live_pending,
+        now=now_utc,
+        window_start=since,
+        window_end=range_end,
+        find_latest_session_activity_at=find_latest_session_activity_at,
+    ).audited_total_seconds
 
     return {
         'total_words': total_words,
