@@ -37,16 +37,7 @@ export default function WordListActionButton({
       title={title}
     >
       {kind === 'familiar' ? (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M9 12.75 11.25 15 15.75 9.75M12 3.75l6.177 2.245a1.5 1.5 0 0 1 .99 1.409V12c0 4.145-2.65 7.927-6.585 9.399a1.75 1.75 0 0 1-1.164 0C7.473 19.927 4.823 16.145 4.823 12V7.404a1.5 1.5 0 0 1 .99-1.409L12 3.75Z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <span className="wordlist-action-btn__label">熟字</span>
       ) : (
         <svg viewBox="0 0 1024 1024" aria-hidden="true">
           <path

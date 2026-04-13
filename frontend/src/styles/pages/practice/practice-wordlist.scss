@@ -1,7 +1,7 @@
 /* Practice: control bar and word list panel */
 
 :root {
-    --practice-wordlist-panel-width: min(460px, 100vw);
+    --practice-wordlist-panel-width: clamp(520px, 42vw, 680px);
 }
 
 .practice-ctrl-bar {
@@ -248,7 +248,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: calc(22px + env(safe-area-inset-top, 0px)) 22px 18px;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 24px 20px;
     border-bottom: 1px solid var(--surface-border-strong);
     flex-shrink: 0;
     position: sticky;
@@ -258,23 +258,22 @@
 }
 
 .wordlist-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
     color: var(--text-primary);
 }
 
 .wordlist-total {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
     background: var(--surface-hover);
-    padding: 4px 10px;
+    padding: 5px 11px;
     border-radius: var(--radius-full);
 }
-
 .wordlist-close {
     margin-left: auto;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     background: none;
     border: none;
     color: var(--text-tertiary);
@@ -293,22 +292,22 @@
 }
 
 .wordlist-close svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
 }
 
 .wordlist-body {
     flex: 1;
     overflow-y: auto;
-    padding: 10px 0 calc(22px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 0 calc(26px + env(safe-area-inset-bottom, 0px));
     overscroll-behavior: contain;
 }
 
 .wordlist-item {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 14px 18px;
+    gap: 14px;
+    padding: 16px 22px;
     border-left: 4px solid transparent;
     transition: all var(--transition-fast);
 }
@@ -336,23 +335,23 @@
 
 .wordlist-item-status {
     flex-shrink: 0;
-    width: 20px;
+    width: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-top: 4px;
+    padding-top: 5px;
 }
 
 .wl-dot {
     display: inline-block;
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     border-radius: var(--radius-full);
 }
 
 .wl-dot-current {
     background: var(--success);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 18%, transparent);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 18%, transparent);
 }
 
 .wl-dot-pending {
@@ -360,8 +359,8 @@
 }
 
 .wl-icon {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 }
 
 .wl-icon.correct {
@@ -382,16 +381,16 @@
 .wordlist-item-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex-shrink: 0;
     align-self: center;
     margin-left: auto;
-    padding-left: 12px;
+    padding-left: 14px;
 }
 
 .wordlist-action-btn {
-    width: 34px;
-    height: 34px;
+    min-width: 40px;
+    height: 40px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -401,6 +400,14 @@
     color: var(--text-tertiary);
     cursor: pointer;
     transition: all var(--transition-fast);
+}
+.wordlist-action-btn--familiar {
+    min-width: 60px;
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
 }
 
 .wordlist-action-btn:hover:not(:disabled) {
@@ -416,9 +423,16 @@
 }
 
 .wordlist-action-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
+}
+.wordlist-action-btn__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1;
 }
 
 .wordlist-action-btn--familiar.is-active {
@@ -436,29 +450,27 @@
 .wordlist-action-btn.is-pending {
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
 }
-
 .wordlist-word {
-    font-size: 16px;
+    font-size: 19px;
     font-weight: 700;
     line-height: 1.35;
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin-bottom: 5px;
 }
 
 .wordlist-phonetic {
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.4;
     color: var(--text-tertiary);
-    margin-bottom: 4px;
+    margin-bottom: 5px;
 }
-
 .wordlist-def {
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.6;
     color: var(--text-secondary);
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 7px;
     flex-wrap: wrap;
 }
 
