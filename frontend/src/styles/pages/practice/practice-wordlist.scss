@@ -1,5 +1,9 @@
 /* Practice: control bar and word list panel */
 
+:root {
+    --practice-wordlist-panel-width: min(460px, 100vw);
+}
+
 .practice-ctrl-bar {
     display: flex;
     align-items: center;
@@ -215,7 +219,7 @@
     position: fixed;
     top: 0;
     right: 0;
-    width: min(420px, 100vw);
+    width: var(--practice-wordlist-panel-width);
     height: 100vh;
     height: 100dvh;
     background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
@@ -244,7 +248,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: calc(18px + env(safe-area-inset-top, 0px)) 20px 16px;
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 22px 18px;
     border-bottom: 1px solid var(--surface-border-strong);
     flex-shrink: 0;
     position: sticky;
@@ -254,29 +258,32 @@
 }
 
 .wordlist-title {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     color: var(--text-primary);
 }
 
 .wordlist-total {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-secondary);
     background: var(--surface-hover);
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: var(--radius-full);
 }
 
 .wordlist-close {
     margin-left: auto;
+    width: 36px;
+    height: 36px;
     background: none;
     border: none;
     color: var(--text-tertiary);
     cursor: pointer;
-    padding: 4px;
+    padding: 0;
     border-radius: 10px;
     display: flex;
     align-items: center;
+    justify-content: center;
     transition: all var(--transition-fast);
 }
 
@@ -286,23 +293,23 @@
 }
 
 .wordlist-close svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
 .wordlist-body {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 0 calc(18px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 0 calc(22px + env(safe-area-inset-bottom, 0px));
     overscroll-behavior: contain;
 }
 
 .wordlist-item {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 10px 16px;
-    border-left: 3px solid transparent;
+    gap: 12px;
+    padding: 14px 18px;
+    border-left: 4px solid transparent;
     transition: all var(--transition-fast);
 }
 
@@ -329,23 +336,23 @@
 
 .wordlist-item-status {
     flex-shrink: 0;
-    width: 18px;
+    width: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-top: 3px;
+    padding-top: 4px;
 }
 
 .wl-dot {
     display: inline-block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: var(--radius-full);
 }
 
 .wl-dot-current {
     background: var(--success);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 18%, transparent);
 }
 
 .wl-dot-pending {
@@ -353,8 +360,8 @@
 }
 
 .wl-icon {
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
 }
 
 .wl-icon.correct {
@@ -375,16 +382,16 @@
 .wordlist-item-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex-shrink: 0;
     align-self: center;
     margin-left: auto;
-    padding-left: 10px;
+    padding-left: 12px;
 }
 
 .wordlist-action-btn {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -409,8 +416,8 @@
 }
 
 .wordlist-action-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
 }
 
@@ -431,24 +438,27 @@
 }
 
 .wordlist-word {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
+    line-height: 1.35;
     color: var(--text-primary);
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .wordlist-phonetic {
-    font-size: 11px;
+    font-size: 13px;
+    line-height: 1.4;
     color: var(--text-tertiary);
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .wordlist-def {
-    font-size: 11px;
+    font-size: 13px;
+    line-height: 1.6;
     color: var(--text-secondary);
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: 6px;
     flex-wrap: wrap;
 }
 

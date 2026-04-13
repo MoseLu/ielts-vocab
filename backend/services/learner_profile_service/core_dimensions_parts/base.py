@@ -6,7 +6,11 @@ from services import learner_profile_repository, quick_memory_record_repository
 from services.learning_events import build_learning_activity_timeline
 from services.local_time import resolve_local_day_window, utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 from services.memory_topics import build_memory_topics
-from services.study_sessions import get_live_pending_session_snapshot, get_session_window_metrics
+from services.study_sessions import (
+    get_live_pending_session_snapshot,
+    get_live_pending_window_duration_seconds,
+    get_session_window_metrics,
+)
 
 MODE_LABELS = {
     'smart': '智能练习',

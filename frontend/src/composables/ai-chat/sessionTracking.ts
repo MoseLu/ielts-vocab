@@ -45,7 +45,7 @@ type SessionSnapshotPatch = {
 }
 
 export const PASSIVE_STUDY_SESSION_MIN_SECONDS = 30
-export const STUDY_SESSION_IDLE_GRACE_MS = 20 * 60 * 1000
+export const STUDY_SESSION_IDLE_GRACE_MS = 5 * 60 * 1000
 
 function normalizeChapterId(value?: string | null): string | null {
   if (value == null) return null

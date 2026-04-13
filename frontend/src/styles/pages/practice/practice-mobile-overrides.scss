@@ -1,0 +1,183 @@
+@media (max-width: 768px) {
+    .practice-page.practice-page--choice .practice-main {
+        padding: 8px 12px 10px;
+        gap: 12px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail,
+    .practice-page.practice-page--choice .practice-choice-top-rail.practice-choice-top-rail--action-only {
+        min-height: 0;
+        gap: 8px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail__right .practice-favorite-btn {
+        width: 38px;
+        height: 38px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-prompt {
+        gap: 8px;
+        padding-inline: 4px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-audio-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-sentence {
+        font-size: clamp(1rem, 4.3vw, 1.14rem);
+        line-height: 1.48;
+    }
+
+    .practice-page.practice-page--choice .options-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .practice-page.practice-page--choice .option-btn {
+        min-height: 108px;
+        padding: 14px 14px 12px;
+        gap: 8px;
+        border-radius: 16px;
+    }
+
+    .practice-page.practice-page--choice .option-header {
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .practice-page.practice-page--choice .option-pos-group {
+        gap: 6px;
+    }
+
+    .practice-page.practice-page--choice .option-key {
+        font-size: 11px;
+    }
+
+    .practice-page.practice-page--choice .option-text {
+        font-size: clamp(1rem, 4vw, 1.18rem);
+        line-height: 1.32;
+    }
+
+    .practice-page.practice-page--choice .options-footer {
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        margin-top: 0;
+    }
+
+    .practice-page.practice-page--choice .skip-btn {
+        padding: 10px 14px;
+        font-size: 14px;
+        border-radius: 14px;
+    }
+
+    .practice-page.practice-page--choice .shortcut-hint {
+        display: none;
+    }
+
+    .practice-page.practice-page--choice .replay-btn {
+        width: 42px;
+        height: 42px;
+    }
+
+    .practice-page.practice-page--choice .practice-bottom-bar {
+        gap: 10px;
+        padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+    }
+
+    .practice-page.practice-page--choice .bottom-progress-track {
+        height: 8px;
+    }
+
+    .practice-page.practice-page--choice .bottom-progress-dot {
+        right: -4px;
+        width: 12px;
+        height: 12px;
+        border-width: 2px;
+    }
+
+    .practice-page.practice-page--choice .bottom-progress-count {
+        font-size: 12px;
+        padding: 7px 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .practice-ctrl-bar {
+        padding: 8px 8px 6px;
+        min-height: 50px;
+        gap: 8px;
+    }
+
+    .practice-ctrl-brand {
+        gap: 0;
+        padding: 0;
+    }
+
+    .practice-ctrl-brand-logo {
+        width: 24px;
+        height: 24px;
+    }
+
+    .practice-ctrl-right {
+        gap: 6px;
+    }
+
+    .practice-ctrl-icon-btn,
+    .radio-quick-btn {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px 10px;
+        border-radius: 12px;
+    }
+
+    .practice-ctrl-icon-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .practice-page.practice-page--choice .practice-main {
+        padding-inline: 10px;
+        padding-bottom: 8px;
+        gap: 10px;
+    }
+
+    .practice-page.practice-page--choice .option-btn {
+        min-height: 92px;
+        padding: 12px;
+    }
+
+    .practice-page.practice-page--choice .option-text {
+        font-size: clamp(0.95rem, 4.2vw, 1.08rem);
+    }
+
+    .practice-page.practice-page--choice .option-key,
+    .practice-page.practice-page--choice .option-pos {
+        font-size: 10px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-sentence {
+        font-size: 0.98rem;
+        line-height: 1.42;
+    }
+}
+
+@media (max-width: 768px) and (max-height: 720px) {
+    .practice-page.practice-page--choice .practice-main {
+        padding-top: 6px;
+        gap: 8px;
+    }
+
+    .practice-page.practice-page--choice .option-btn {
+        min-height: 84px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-sentence {
+        line-height: 1.36;
+    }
+
+    .practice-page.practice-page--choice .practice-bottom-bar {
+        padding-top: 6px;
+    }
+}

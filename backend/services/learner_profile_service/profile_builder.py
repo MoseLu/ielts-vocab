@@ -260,14 +260,12 @@ def build_learner_profile(user_id: int, target_date: str | None = None, view: st
             now=now_utc,
         )
         if live_pending:
-            live_metrics = get_session_window_metrics(
-                live_pending['session'],
+            live_duration_seconds = get_live_pending_window_duration_seconds(
+                live_pending,
                 window_start=start_dt,
                 window_end=end_dt,
-                now=now_utc,
             )
-            if live_metrics:
-                today_duration += live_metrics['duration_seconds']
+            today_duration += live_duration_seconds
 
     modes, weakest_mode = _build_mode_summary(all_sessions)
     dimensions = _build_dimension_breakdown(smart_rows, wrong_words)

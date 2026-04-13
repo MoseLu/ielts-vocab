@@ -7,10 +7,12 @@ from platform_sdk.study_session_support import (
     _get_session_total_duration_seconds,
     find_pending_session as _find_pending_session,
     get_live_pending_session_snapshot as _get_live_pending_session_snapshot,
+    get_live_pending_window_duration_seconds,
     get_session_window_metrics,
     normalize_chapter_id,
     start_or_reuse_study_session as _start_or_reuse_study_session,
 )
+from services import learning_event_repository
 from services import study_session_repository
 
 
@@ -27,6 +29,7 @@ def get_live_pending_session_snapshot(
         user_id,
         find_recent_open_placeholder_session=study_session_repository.find_recent_open_placeholder_session,
         newer_analytics_session_exists=study_session_repository.newer_analytics_session_exists,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
         mode=mode,
         book_id=book_id,
         chapter_id=chapter_id,

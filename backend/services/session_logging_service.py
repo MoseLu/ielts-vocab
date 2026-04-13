@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 
 from platform_sdk.learning_core_event_application import queue_study_session_logged_event
+from platform_sdk.study_session_support import resolve_session_activity_capped_end
 from service_models.learning_core_models import UserStudySession
+from services import learning_event_repository
 from services import study_session_repository
 from services.learning_events import record_learning_event
 
@@ -61,6 +63,39 @@ def _coerce_non_negative_int(value) -> int:
         return max(0, int(value or 0))
     except (TypeError, ValueError):
         return 0
+
+
+def _resolve_server_activity_capped_end(
+    *,
+    user_id: int,
+    started_at: datetime | None,
+    candidate_end: datetime,
+    mode: str | None,
+    book_id: str | None,
+    chapter_id: str | None,
+) -> tuple[datetime, bool]:
+    if started_at is None or candidate_end <= started_at:
+        return candidate_end, False
+
+    last_activity_at = learning_event_repository.find_latest_session_activity_at(
+        user_id=user_id,
+        started_at=started_at,
+        end_at=candidate_end,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+    )
+    if last_activity_at is None:
+        return candidate_end, False
+
+    capped_end = resolve_session_activity_capped_end(
+        started_at=started_at,
+        candidate_end=candidate_end,
+        last_activity_at=last_activity_at,
+    )
+    if capped_end is None or capped_end >= candidate_end:
+        return candidate_end, False
+    return capped_end, True
 
 
 def _record_study_session_event(*, user_id: int, session: UserStudySession, occurred_at: datetime | None) -> None:
@@ -156,6 +191,17 @@ def persist_study_session(
                 started_at=session.started_at,
                 client_ended_at=client_ended_at,
             )
+            activity_capped_end, activity_cap_applied = _resolve_server_activity_capped_end(
+                user_id=user_id,
+                started_at=session.started_at,
+                candidate_end=ended_at,
+                mode=mode or session.mode,
+                book_id=book_id if book_id is not None else session.book_id,
+                chapter_id=chapter_id if chapter_id is not None else session.chapter_id,
+            )
+            if activity_cap_applied:
+                ended_at = activity_capped_end
+                duration_capped_by_activity = True
             session.ended_at = ended_at
             duration_seconds = normalize_client_duration_seconds(
                 body.get('durationSeconds', 0),
@@ -207,6 +253,17 @@ def persist_study_session(
             started_at=pending.started_at,
             client_ended_at=client_ended_at,
         )
+        activity_capped_end, activity_cap_applied = _resolve_server_activity_capped_end(
+            user_id=user_id,
+            started_at=pending.started_at,
+            candidate_end=pending.ended_at,
+            mode=mode or pending.mode,
+            book_id=book_id if book_id is not None else pending.book_id,
+            chapter_id=chapter_id if chapter_id is not None else pending.chapter_id,
+        )
+        if activity_cap_applied:
+            pending.ended_at = activity_capped_end
+            duration_capped_by_activity = True
         _apply_session_stats(
             pending,
             mode=mode,

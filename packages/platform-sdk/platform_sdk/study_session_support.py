@@ -8,6 +8,8 @@ if TYPE_CHECKING:
 
 _LIVE_PENDING_SESSION_WINDOW = timedelta(hours=3)
 _DEFAULT_PENDING_SESSION_MATCH_WINDOW_SECONDS = 15
+_STUDY_SESSION_IDLE_GRACE = timedelta(minutes=5)
+STUDY_SESSION_IDLE_GRACE_SECONDS = int(_STUDY_SESSION_IDLE_GRACE.total_seconds())
 
 
 def _get_session_effective_end(session: UserStudySession, *, now: datetime | None = None) -> datetime | None:
@@ -45,6 +47,29 @@ def _get_session_total_duration_seconds(
 
     span_seconds = max(0, int((effective_end - started_at).total_seconds()))
     return max(max(0, int(session.duration_seconds or 0)), span_seconds)
+
+
+def resolve_session_activity_capped_end(
+    *,
+    started_at: datetime | None,
+    candidate_end: datetime | None,
+    last_activity_at: datetime | None = None,
+    fallback_to_started_at: bool = False,
+) -> datetime | None:
+    if started_at is None or candidate_end is None:
+        return candidate_end
+
+    anchor = None
+    if last_activity_at is not None and last_activity_at >= started_at:
+        anchor = last_activity_at
+    elif fallback_to_started_at:
+        anchor = started_at
+
+    if anchor is None:
+        return candidate_end
+
+    capped_end = min(candidate_end, anchor + _STUDY_SESSION_IDLE_GRACE)
+    return max(started_at, capped_end)
 
 
 def get_session_window_metrics(
@@ -91,6 +116,7 @@ def get_live_pending_session_snapshot(
     *,
     find_recent_open_placeholder_session,
     newer_analytics_session_exists,
+    find_latest_session_activity_at=None,
     mode: str | None = None,
     book_id: str | None = None,
     chapter_id: str | None = None,
@@ -121,14 +147,56 @@ def get_live_pending_session_snapshot(
     if newer_analytics_exists:
         return None
 
-    elapsed_seconds = max(0, int((now - session.started_at).total_seconds()))
+    last_activity_at = None
+    if find_latest_session_activity_at is not None:
+        last_activity_at = find_latest_session_activity_at(
+            user_id=user_id,
+            started_at=session.started_at,
+            end_at=now,
+            mode=session.mode,
+            book_id=session.book_id,
+            chapter_id=session.chapter_id,
+        )
+
+    effective_end = resolve_session_activity_capped_end(
+        started_at=session.started_at,
+        candidate_end=now,
+        last_activity_at=last_activity_at,
+        fallback_to_started_at=True,
+    )
+    if effective_end is None:
+        return None
+
+    elapsed_seconds = max(0, int((effective_end - session.started_at).total_seconds()))
     if elapsed_seconds <= 0:
         return None
 
     return {
         'session': session,
         'elapsed_seconds': elapsed_seconds,
+        'effective_end': effective_end,
+        'last_activity_at': last_activity_at,
     }
+
+
+def get_live_pending_window_duration_seconds(
+    live_pending: dict | None,
+    *,
+    window_start: datetime,
+    window_end: datetime,
+) -> int:
+    if not live_pending:
+        return 0
+
+    session = live_pending.get('session')
+    started_at = getattr(session, 'started_at', None)
+    effective_end = live_pending.get('effective_end')
+    if started_at is None or effective_end is None:
+        return 0
+
+    overlap_start = max(started_at, window_start)
+    overlap_end = min(effective_end, window_end)
+    return max(0, int((overlap_end - overlap_start).total_seconds()))
 
 
 def normalize_chapter_id(value) -> str | None:

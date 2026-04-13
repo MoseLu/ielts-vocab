@@ -4,8 +4,8 @@ import { STORAGE_KEYS } from '../constants'
 
 const STARTED_AT = Date.parse('2026-04-11T18:08:40.000Z')
 const LAST_ACTIVE_AT = Date.parse('2026-04-11T18:08:48.000Z')
-const EXPECTED_DURATION_SECONDS = 20 * 60 + 8
-const EXPECTED_ENDED_AT = LAST_ACTIVE_AT + 20 * 60 * 1000
+const EXPECTED_DURATION_SECONDS = 5 * 60 + 8
+const EXPECTED_ENDED_AT = LAST_ACTIVE_AT + 5 * 60 * 1000
 
 function writeActiveSession(sessionId: number) {
   localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDY_SESSION, JSON.stringify({

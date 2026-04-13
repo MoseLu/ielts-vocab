@@ -32,6 +32,7 @@ from services.local_time import (
 )
 from services.study_sessions import (
     get_live_pending_session_snapshot,
+    get_live_pending_window_duration_seconds,
     get_session_window_metrics,
 )
 
@@ -192,14 +193,12 @@ def build_learning_stats_payload(
     alltime_duration = sum(session.duration_seconds or 0 for session in all_user_sessions)
     if global_live_pending:
         alltime_duration += global_live_pending['elapsed_seconds']
-        live_today_metrics = get_session_window_metrics(
-            global_live_pending['session'],
+        live_today_duration = get_live_pending_window_duration_seconds(
+            global_live_pending,
             window_start=today_start_dt,
             window_end=today_end_dt,
-            now=now_utc,
         )
-        if live_today_metrics:
-            today_duration += live_today_metrics['duration_seconds']
+        today_duration += live_today_duration
 
     mode_breakdown, qm_extra = build_mode_breakdown(
         user_id=user_id,

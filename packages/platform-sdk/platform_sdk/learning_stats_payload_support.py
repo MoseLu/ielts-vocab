@@ -12,8 +12,10 @@ from platform_sdk.local_time_support import (
     utc_naive_to_local_date_key,
 )
 from platform_sdk.learning_repository_adapters import learning_stats_repository
+from platform_sdk.learning_repository_adapters import learning_event_repository
 from platform_sdk.study_session_support import (
     get_live_pending_session_snapshot,
+    get_live_pending_window_duration_seconds,
     get_session_window_metrics,
 )
 from platform_sdk.learning_stats_breakdowns_support import (
@@ -65,17 +67,15 @@ def _append_live_pending_duration(
     if not live_pending:
         return
 
-    live_session = live_pending['session']
     for date_key, (day_start, day_end) in day_windows.items():
-        live_metrics = get_session_window_metrics(
-            live_session,
+        live_duration_seconds = get_live_pending_window_duration_seconds(
+            live_pending,
             window_start=day_start,
             window_end=day_end,
-            now=now_utc,
         )
-        if not live_metrics:
+        if live_duration_seconds <= 0:
             continue
-        daily[date_key]['duration_seconds'] += live_metrics['duration_seconds']
+        daily[date_key]['duration_seconds'] += live_duration_seconds
 
 
 def _build_daily_series(
@@ -199,14 +199,12 @@ def _build_period_summary_from_sessions(
         total_wrong += period_metrics['wrong_count']
 
     if filtered_live_pending:
-        live_period_metrics = get_session_window_metrics(
-            filtered_live_pending['session'],
+        live_duration_seconds = get_live_pending_window_duration_seconds(
+            filtered_live_pending,
             window_start=since,
             window_end=range_end,
-            now=now_utc,
         )
-        if live_period_metrics:
-            total_duration += live_period_metrics['duration_seconds']
+        total_duration += live_duration_seconds
 
     return {
         'total_words': total_words,
@@ -228,6 +226,7 @@ def _get_live_pending_snapshot(
         user_id,
         find_recent_open_placeholder_session=find_recent_open_placeholder_session,
         newer_analytics_session_exists=newer_analytics_session_exists,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
         mode=mode,
         book_id=book_id,
         since=since,
@@ -391,14 +390,12 @@ def build_learning_stats_payload(
     alltime_duration = sum(session.duration_seconds or 0 for session in all_user_sessions)
     if global_live_pending:
         alltime_duration += global_live_pending['elapsed_seconds']
-        live_today_metrics = get_session_window_metrics(
-            global_live_pending['session'],
+        live_today_duration = get_live_pending_window_duration_seconds(
+            global_live_pending,
             window_start=today_start_dt,
             window_end=today_end_dt,
-            now=now_utc,
         )
-        if live_today_metrics:
-            today_duration += live_today_metrics['duration_seconds']
+        today_duration += live_today_duration
 
     mode_breakdown, qm_extra = build_mode_breakdown(
         user_id=user_id,

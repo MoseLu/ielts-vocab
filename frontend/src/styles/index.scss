@@ -63,3 +63,6 @@
 /* Utils */
 @use './utils/utilities.scss';
 @use './utils/responsive.scss';
+
+/* Late mobile overrides */
+@use './pages/practice/practice-mobile-overrides.scss' as *;

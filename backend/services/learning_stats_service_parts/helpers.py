@@ -29,6 +29,7 @@ from services.local_time import (
 )
 from services.study_sessions import (
     get_live_pending_session_snapshot,
+    get_live_pending_window_duration_seconds,
     get_session_window_metrics,
 )
 
@@ -65,17 +66,15 @@ def _append_live_pending_duration(
     if not live_pending:
         return
 
-    live_session = live_pending['session']
     for date_key, (day_start, day_end) in day_windows.items():
-        live_metrics = get_session_window_metrics(
-            live_session,
+        live_duration_seconds = get_live_pending_window_duration_seconds(
+            live_pending,
             window_start=day_start,
             window_end=day_end,
-            now=now_utc,
         )
-        if not live_metrics:
+        if live_duration_seconds <= 0:
             continue
-        daily[date_key]['duration_seconds'] += live_metrics['duration_seconds']
+        daily[date_key]['duration_seconds'] += live_duration_seconds
 
 
 def _build_daily_series(
@@ -199,14 +198,12 @@ def _build_period_summary_from_sessions(
         total_wrong += period_metrics['wrong_count']
 
     if filtered_live_pending:
-        live_period_metrics = get_session_window_metrics(
-            filtered_live_pending['session'],
+        live_duration_seconds = get_live_pending_window_duration_seconds(
+            filtered_live_pending,
             window_start=since,
             window_end=range_end,
-            now=now_utc,
         )
-        if live_period_metrics:
-            total_duration += live_period_metrics['duration_seconds']
+        total_duration += live_duration_seconds
 
     return {
         'total_words': total_words,

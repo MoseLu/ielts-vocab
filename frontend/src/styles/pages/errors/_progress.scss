@@ -7,7 +7,7 @@
 
 .errors-stage-row {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
     justify-content: flex-end;
 }
@@ -15,10 +15,10 @@
 .errors-stage-pill {
     display: inline-flex;
     align-items: center;
-    min-height: 22px;
-    padding: 0 9px;
+    min-height: 24px;
+    padding: 0 10px;
     border-radius: var(--radius-full);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
 }
 
@@ -44,18 +44,18 @@
 }
 
 .errors-stage-note {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
 }
 
 .errors-item-compact-row {
-    --errors-bottom-card-height: 70px;
+    --errors-bottom-card-height: 76px;
 }
 
 .errors-item-meters {
     display: flex;
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
     flex: 0 0 auto;
     flex-wrap: wrap;
 }
@@ -64,9 +64,9 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-width: 164px;
+    min-width: 176px;
     min-height: var(--errors-bottom-card-height);
-    padding: 8px 10px;
+    padding: 10px 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--bg-secondary);
@@ -78,20 +78,20 @@
     justify-content: space-between;
     gap: 10px;
     margin-bottom: 6px;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
 }
 
 .errors-meter-head strong {
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .errors-meter-bar,
 .errors-dim-track-bar {
     position: relative;
     overflow: hidden;
-    height: 6px;
+    height: 7px;
     border-radius: var(--radius-full);
     background: color-mix(in srgb, var(--border) 80%, transparent);
 }
@@ -120,14 +120,14 @@
 .errors-meter-note,
 .errors-dim-track-note {
     margin-top: 6px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-secondary);
 }
 
 .errors-item-dim-tracks {
     display: flex;
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
     flex: 1 1 260px;
     min-width: 0;
     flex-wrap: wrap;
@@ -137,7 +137,7 @@
     display: flex;
     align-items: center;
     min-height: var(--errors-bottom-card-height);
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--bg-color);
@@ -161,14 +161,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-secondary);
     flex-wrap: wrap;
 }
 
 .errors-dim-track-head strong {
     color: var(--text-primary);
-    font-size: 11px;
+    font-size: 12px;
 }
 
 @media (max-width: 768px) {
