@@ -94,22 +94,82 @@
     margin-bottom: -8px;
 }
 
+.qm-card-toolbar__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.qm-card-toolbar__icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg-color));
+    color: var(--accent);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.qm-card-toolbar__icon-btn:hover,
+.qm-card-toolbar__icon-btn:focus-visible {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+    background: color-mix(in srgb, var(--accent) 16%, var(--bg-color));
+    box-shadow: var(--shadow-md);
+    outline: none;
+}
+
+.qm-card-toolbar__icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
 .qm-card-toolbar--question {
     margin-bottom: -14px;
 }
 
-.qm-card-toolbar--question .qm-card-toolbar__action,
+.qm-card-toolbar--question .qm-card-toolbar__actions,
 .qm-card-toolbar__spacer {
     width: var(--qm-side-rail-size, 48px);
     flex: 0 0 var(--qm-side-rail-size, 48px);
 }
 
-.qm-card-toolbar--question .qm-card-toolbar__action {
-    justify-content: center;
+.qm-word-btn {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.qm-word-btn:hover,
+.qm-word-btn:focus-visible {
+    color: var(--accent);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.qm-key-hints {
+    flex-wrap: wrap;
 }
 
 @media (max-width: 768px) {
     .practice-favorite-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .qm-card-toolbar__actions {
+        gap: 6px;
+    }
+
+    .qm-card-toolbar__icon-btn {
         width: 40px;
         height: 40px;
     }

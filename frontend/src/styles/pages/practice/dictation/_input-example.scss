@@ -218,6 +218,22 @@
     padding: 22px 28px;
 }
 
+.dictation-example-sentence--interactive {
+    display: block;
+    width: 100%;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.dictation-example-sentence--interactive:hover,
+.dictation-example-sentence--interactive:focus-visible {
+    color: var(--accent);
+    border-color: rgba(var(--accent-rgb), 0.32);
+    transform: translateY(-1px);
+    outline: none;
+}
+
 .example-blank-word {
     display: inline-flex;
     flex-wrap: nowrap;

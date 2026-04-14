@@ -386,6 +386,7 @@ export default function QuickMemoryMode({
   }
 
   const progress = (index / queue.length) * 100
+  const replayWordHint = '点击单词或按 Tab 重播发音'
 
   return (
     <div className="qm-root">
@@ -396,19 +397,22 @@ export default function QuickMemoryMode({
         <div className="qm-progress-label">{index + 1} / {queue.length}</div>
 
         <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
-          {favoriteSlot ? (
-            <div className={`qm-card-toolbar${phase === 'question' ? ' qm-card-toolbar--question' : ''}`}>
-              {phase === 'question' ? <div className="qm-card-toolbar__spacer" /> : null}
-              <div className="qm-card-toolbar__action">{favoriteSlot}</div>
+          <div className={`qm-card-toolbar${phase === 'question' ? ' qm-card-toolbar--question' : ''}`}>
+            {phase === 'question' ? <div className="qm-card-toolbar__spacer" /> : null}
+            <div className="qm-card-toolbar__actions">
+              {favoriteSlot ? <div className="qm-card-toolbar__action">{favoriteSlot}</div> : null}
+              <button type="button" className="qm-card-toolbar__icon-btn" onClick={replayCurrentWord} aria-label="重播发音" title={replayWordHint}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
+              </button>
             </div>
-          ) : null}
+          </div>
           {phase === 'question' && (
             <>
               <div className="qm-countdown-ring">
                 <QuickMemoryCountdownRing seconds={countdown} total={TIMER_SECONDS} />
               </div>
 
-              <div className="qm-word">{currentWord.word}</div>
+              <button type="button" className="qm-word qm-word-btn" onClick={replayCurrentWord} title={replayWordHint}>{currentWord.word}</button>
 
               <p className="qm-hint">你认识这个单词吗？</p>
 
@@ -431,7 +435,7 @@ export default function QuickMemoryMode({
               <div className="qm-key-hints">
                 {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
                 <span className="qm-key-hint"><kbd>→</kbd> 认识</span>
-                <span className="qm-key-hint"><kbd>Tab</kbd> 重播发音</span>
+                <span className="qm-key-hint">点击单词或 <kbd>Tab</kbd> 重播发音</span>
               </div>
             </>
           )}
@@ -443,7 +447,7 @@ export default function QuickMemoryMode({
                 {revisitedSet.has(index) && <span className="qm-badge-fuzzy-tag">模糊</span>}
               </div>
 
-              <div className="qm-word">{currentWord.word}</div>
+              <button type="button" className="qm-word qm-word-btn" onClick={replayCurrentWord} title={replayWordHint}>{currentWord.word}</button>
 
               {currentWord.phonetic && (
                 <div className="qm-phonetic">{currentWord.phonetic}</div>
@@ -478,7 +482,7 @@ export default function QuickMemoryMode({
               <div className="qm-key-hints">
                 {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
                 <span className="qm-key-hint"><kbd>→</kbd> 下一个</span>
-                <span className="qm-key-hint"><kbd>Tab</kbd> 重播发音</span>
+                <span className="qm-key-hint">点击单词或 <kbd>Tab</kbd> 重播发音</span>
               </div>
             </>
           )}

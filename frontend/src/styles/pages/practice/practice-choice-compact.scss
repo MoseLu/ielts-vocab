@@ -18,6 +18,24 @@
     padding-inline: 6px;
 }
 
+.practice-page.practice-page--choice .listening-example-sentence--interactive {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+    transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.practice-page.practice-page--choice .listening-example-sentence--interactive:hover,
+.practice-page.practice-page--choice .listening-example-sentence--interactive:focus-visible {
+    color: var(--accent);
+    transform: translateY(-1px);
+    outline: none;
+}
+
 .practice-page.practice-page--choice .options-footer {
     margin-top: 0;
 }

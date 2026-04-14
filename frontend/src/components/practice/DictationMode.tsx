@@ -125,6 +125,7 @@ export default function DictationMode({
   const modeTitle = isExampleMode ? '根据语境填写单词' : '根据发音写出单词'
   const modeHint = isExampleMode ? '听例句，写出空缺的单词' : '听发音，拼写单词'
   const modeBadge = isExampleMode ? '例句填空' : '单词拼写'
+  const replayButtonLabel = isExampleMode ? '重播例句，点击例句或按 Alt' : '重播发音，快捷键 Tab'
 
   const handleReplayClick = useCallback(() => {
     if (isExampleMode) {
@@ -206,8 +207,8 @@ export default function DictationMode({
               <button
                 className="play-btn-large dictation-play-btn"
                 onClick={handleReplayClick}
-                title={isExampleMode ? '重播例句，快捷键 Tab / Alt' : '重播发音，快捷键 Tab'}
-                aria-label={isExampleMode ? '重播例句，快捷键 Tab / Alt' : '重播发音，快捷键 Tab'}
+                title={replayButtonLabel}
+                aria-label={replayButtonLabel}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -235,9 +236,14 @@ export default function DictationMode({
                       </div>
                     ) : null}
                   </div>
-                  <div className="dictation-example-sentence">
+                  <button
+                    type="button"
+                    className="dictation-example-sentence dictation-example-sentence--interactive"
+                    title="点击例句重播"
+                    onClick={handleReplayClick}
+                  >
                     {buildBlankSentence(sentenceText, currentWord.word)}
-                  </div>
+                  </button>
                 </div>
               )}
 

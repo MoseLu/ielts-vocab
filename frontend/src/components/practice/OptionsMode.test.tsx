@@ -178,7 +178,7 @@ describe('OptionsMode listening feedback', () => {
   })
 
   it('plays example audio from the listening prompt when requested', () => {
-    render(
+    const { container } = render(
       <OptionsMode
         currentWord={makeWordWithExample('two', '/tuː/', '二', 'He adds two and three to get five.')}
         previousWord={null}
@@ -214,12 +214,15 @@ describe('OptionsMode listening feedback', () => {
     )
 
     screen.getByRole('button', { name: '播放例句' }).click()
+    const sentenceButton = container.querySelector('.listening-example-sentence') as HTMLButtonElement
+    sentenceButton.click()
 
     expect(playExampleAudioMock).toHaveBeenCalledWith(
       'He adds two and three to get five.',
       'two',
       { playbackSpeed: '0.9', volume: '70' },
     )
+    expect(playExampleAudioMock).toHaveBeenCalledTimes(2)
   })
 
   it('keeps the listening prompt hidden when the listening word has no example', () => {

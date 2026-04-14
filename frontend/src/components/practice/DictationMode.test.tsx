@@ -72,6 +72,20 @@ describe('DictationMode', () => {
     })
   })
 
+  it('replays example audio when the example sentence is tapped', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<DictationMode {...baseProps} />)
+
+    await user.click(container.querySelector('.dictation-example-sentence') as HTMLButtonElement)
+
+    expect(playExampleAudioMock).toHaveBeenCalledWith(
+      'Pay attention to the main idea.',
+      'attention',
+      baseProps.settings,
+    )
+    expect(screen.getByText('已手动播放 1/3 次，再点 2 次显示答案')).toBeInTheDocument()
+  })
+
   it('plays word audio after switching to word dictation mode', async () => {
     const user = userEvent.setup()
     const onPlayWord = vi.fn()

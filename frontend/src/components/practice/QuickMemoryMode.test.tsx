@@ -453,7 +453,8 @@ describe('QuickMemoryMode', () => {
     expect(playWordAudioMock).not.toHaveBeenCalled()
   })
 
-  it('replays the current word audio when the shared replay shortcut event is dispatched', async () => {
+  it('replays the current word audio from the shared shortcut, the toolbar button, and the word itself', async () => {
+    const user = userEvent.setup()
     render(
       <QuickMemoryMode
         vocabulary={vocabulary}
@@ -477,7 +478,20 @@ describe('QuickMemoryMode', () => {
     await waitFor(() => {
       expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
     })
+
+    playWordAudioMock.mockClear()
+    await user.click(screen.getByRole('button', { name: '重播发音' }))
+    await waitFor(() => {
+      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
+    })
+
+    playWordAudioMock.mockClear()
+    await user.click(screen.getByRole('button', { name: 'apple' }))
+    await waitFor(() => {
+      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
+    })
+
     expect(stopAudioMock).toHaveBeenCalled()
-    expect(screen.getAllByText('重播发音').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: '重播发音' })).toBeInTheDocument()
   })
 })

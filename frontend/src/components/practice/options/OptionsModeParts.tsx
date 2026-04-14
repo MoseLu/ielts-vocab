@@ -176,6 +176,7 @@ export function ListeningExamplePrompt({
   onPlayAudio,
 }: ListeningExamplePromptProps) {
   if (!sentence.trim()) return null
+  const sentenceContent = buildBlankSentence(sentence, targetWord)
 
   return (
     <div className="listening-example-prompt">
@@ -184,15 +185,24 @@ export function ListeningExamplePrompt({
           type="button"
           className="play-btn-mini listening-example-audio-btn"
           aria-label="播放例句"
-          title="播放例句（快捷键 Alt）"
+          title="播放例句（点击例句或按 Alt）"
           onClick={onPlayAudio}
         >
           <ExampleAudioIcon className="example-audio-icon" />
         </button>
       ) : null}
-      <div className="listening-example-sentence">
-        {buildBlankSentence(sentence, targetWord)}
-      </div>
+      {onPlayAudio ? (
+        <button
+          type="button"
+          className="listening-example-sentence listening-example-sentence--interactive"
+          title="点击例句播放"
+          onClick={onPlayAudio}
+        >
+          {sentenceContent}
+        </button>
+      ) : (
+        <div className="listening-example-sentence">{sentenceContent}</div>
+      )}
     </div>
   )
 }
