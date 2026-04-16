@@ -7,6 +7,7 @@ from services import learning_event_repository
 from services.local_time import resolve_local_day_window
 
 MODE_LABELS = {
+    'game': '五维闯关',
     'smart': '智能练习',
     'listening': '听音选义',
     'meaning': '默写模式',
@@ -32,12 +33,14 @@ SOURCE_LABELS = {
 EVENT_LABELS = {
     'study_session': '练习会话',
     'quick_memory_review': '速记复习',
+    'meaning_review': '释义检查',
     'listening_review': '听力检查',
     'writing_review': '书写检查',
     'wrong_word_recorded': '新增错词',
     'assistant_question': '助手问答',
     'pronunciation_check': '发音检查',
     'speaking_simulation': '口语模拟',
+    'speaking_assessment_completed': '口语估分',
     'chapter_progress_updated': '章节进度更新',
     'chapter_mode_progress_updated': '章节模式进度更新',
     'book_progress_updated': '词书进度更新',
@@ -213,6 +216,18 @@ def _format_event_title(event: UserLearningEvent, payload: dict) -> str:
         if topic:
             bits.append(topic)
         bits.append(suffix)
+        return ' '.join(bits)
+    if event.event_type == 'speaking_assessment_completed':
+        part = payload.get('part')
+        topic = str(payload.get('topic') or '').strip()
+        overall_band = payload.get('overall_band')
+        bits = ['口语估分']
+        if part:
+            bits.append(f"Part {part}")
+        if topic:
+            bits.append(topic)
+        if isinstance(overall_band, (int, float)):
+            bits.append(f'{float(overall_band):.1f}分')
         return ' '.join(bits)
     if event.event_type == 'chapter_progress_updated':
         return f"{chapter_label} 学习进度更新".strip()

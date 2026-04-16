@@ -39,6 +39,7 @@ def build_learning_activity_timeline(user_id: int, target_date: str | None = Non
             'total_events': len(rows),
             'study_sessions': event_counts.get('study_session', 0),
             'quick_memory_reviews': event_counts.get('quick_memory_review', 0),
+            'meaning_reviews': event_counts.get('meaning_review', 0),
             'listening_reviews': event_counts.get('listening_review', 0),
             'writing_reviews': event_counts.get('writing_review', 0),
             'wrong_word_records': event_counts.get('wrong_word_recorded', 0),
@@ -50,6 +51,7 @@ def build_learning_activity_timeline(user_id: int, target_date: str | None = Non
             ),
             'pronunciation_checks': event_counts.get('pronunciation_check', 0),
             'speaking_simulations': event_counts.get('speaking_simulation', 0),
+            'speaking_assessments': event_counts.get('speaking_assessment_completed', 0),
             'chapter_updates': (
                 event_counts.get('chapter_progress_updated', 0)
                 + event_counts.get('chapter_mode_progress_updated', 0)
