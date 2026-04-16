@@ -1,13 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type {
-  Chapter,
-  LastState,
-  PracticeMode,
-  ProgressData,
-  Word,
-  WordStatuses,
-} from '../../../components/practice/types'
+import type { Chapter, LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../components/practice/types'
 import { DEFAULT_SETTINGS } from '../../../constants'
 import { apiFetch, buildApiUrl } from '../../../lib'
 import { loadSmartStats, loadSmartStatsFromBackend, buildSmartQueue } from '../../../lib/smartMode'
@@ -16,14 +9,10 @@ import { loadWrongWords, readWrongWordsReviewSelectionFromStorage } from '../../
 import { safeParse } from '../../../lib/validation'
 import { LearnerProfileSchema, type LearnerProfile as BackendLearnerProfile } from '../../../lib/schemas'
 import { shuffleArray } from '../../../components/practice/utils'
+import { loadBookProgressSnapshot, loadChapterProgressSnapshot } from '../../../components/practice/progressStorage'
 import {
-  buildWrongWordsQueue,
-  createResetProgressState,
-  filterVocabularyForMode,
-  normalizeOptionWordKey,
-  readWrongWordsProgress,
-  type ReviewQueueContext,
-  type ReviewQueueSummary,
+  buildWrongWordsQueue, createResetProgressState, filterVocabularyForMode, normalizeOptionWordKey, readWrongWordsProgress,
+  type ReviewQueueContext, type ReviewQueueSummary,
 } from '../../../components/practice/page/practicePageHelpers'
 import type { ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
 
@@ -40,6 +29,7 @@ interface UsePracticePageDataParams {
   resolvedPracticeChapterId: string | null
   reviewMode: boolean
   errorMode: boolean
+  isCustomPracticeScope: boolean
   searchParams: URLSearchParams
   settings: {
     shuffle?: boolean
@@ -61,6 +51,7 @@ interface UsePracticePageDataParams {
   setBookChapters: Dispatch<SetStateAction<Chapter[]>>
   setCurrentChapterTitle: Dispatch<SetStateAction<string>>
   setWordStatuses: Dispatch<SetStateAction<WordStatuses>>
+  setResumeProgress: Dispatch<SetStateAction<ProgressData | null>>
   setBackendLearnerProfile: Dispatch<SetStateAction<BackendLearnerProfile | null>>
   setReviewOffset: Dispatch<SetStateAction<number>>
   reviewOffset: number
@@ -77,6 +68,7 @@ interface UsePracticePageDataParams {
   errorProgressHydratedRef: MutableRefObject<boolean>
   errorRoundResultsRef: MutableRefObject<ErrorReviewRoundResults>
   beginSession: (context?: { bookId?: string | null; chapterId?: string | null }) => void
+  onListeningModeFallback: () => void
 }
 
 export function usePracticePageData({
@@ -90,6 +82,7 @@ export function usePracticePageData({
   resolvedPracticeChapterId,
   reviewMode,
   errorMode,
+  isCustomPracticeScope,
   searchParams,
   settings,
   navigate,
@@ -104,6 +97,7 @@ export function usePracticePageData({
   setBookChapters,
   setCurrentChapterTitle,
   setWordStatuses,
+  setResumeProgress,
   setBackendLearnerProfile,
   setReviewOffset,
   reviewOffset,
@@ -120,7 +114,16 @@ export function usePracticePageData({
   errorProgressHydratedRef,
   errorRoundResultsRef,
   beginSession,
+  onListeningModeFallback,
 }: UsePracticePageDataParams) {
+  const scopedLoadGenerationRef = useRef(0)
+  const activeScopedLoadKeyRef = useRef<string | null>(null)
+  const lastAppliedScopedLoadRef = useRef<{ key: string | null; generation: number }>({
+    key: null,
+    generation: 0,
+  })
+  const scopedQueueWordsCacheRef = useRef<Record<string, string[]>>({})
+
   useEffect(() => {
     if (!resolvedPracticeBookId) {
       setBookChapters([])
@@ -192,12 +195,32 @@ export function usePracticePageData({
     errorProgressHydratedRef.current = false
     setNoListeningPresets(false)
     setReviewQueueError(null)
+    const scopedLoadKey = reviewMode || errorMode
+      ? null
+      : JSON.stringify({
+          currentDay: currentDay ?? null,
+          mode: mode ?? null,
+          bookId,
+          chapterId,
+          shuffle: settings.shuffle ?? null,
+        })
+    const scopedLoadGeneration = scopedLoadGenerationRef.current + 1
+    scopedLoadGenerationRef.current = scopedLoadGeneration
+    activeScopedLoadKeyRef.current = scopedLoadKey
+    const canApplyScopedLoad = () => {
+      if (activeScopedLoadKeyRef.current !== scopedLoadKey) return false
+      return !(
+        lastAppliedScopedLoadRef.current.key === scopedLoadKey
+        && scopedLoadGeneration < lastAppliedScopedLoadRef.current.generation
+      )
+    }
 
     if (!reviewMode && Object.keys(loadSmartStats()).length === 0) {
       void loadSmartStatsFromBackend()
     }
 
     if (reviewMode && mode === 'quickmemory') {
+      setResumeProgress(null)
       setQuickMemoryReviewQueueResolved(false)
       void (async () => {
         try {
@@ -280,8 +303,22 @@ export function usePracticePageData({
       if (mode === 'smart') return buildSmartQueue(words.map(word => word.word), loadSmartStats())
       return settings.shuffle !== false ? shuffleArray(indices) : indices
     }
+    const resolveWordsForMode = (rawWords: Word[]) => {
+      const words = filterVocabularyForMode(rawWords, mode)
+      const listeningUnavailable = mode === 'listening' && words.length === 0 && rawWords.length > 0
+
+      if (listeningUnavailable && isCustomPracticeScope) {
+        setNoListeningPresets(false)
+        onListeningModeFallback()
+        return null
+      }
+
+      setNoListeningPresets(listeningUnavailable)
+      return words
+    }
     const resetProgress = (progress: ProgressData | null, words: Word[]) => {
       if (!progress) {
+        setResumeProgress(null)
         setQueueIndex(0)
         setCorrectCount(0)
         setWrongCount(0)
@@ -297,11 +334,13 @@ export function usePracticePageData({
       setPreviousWord(null)
       setLastState(null)
       setWordStatuses({})
+      setResumeProgress(progress.is_completed ? null : progress)
       wordsLearnedBaselineRef.current = restored.wordsLearnedBaseline
       uniqueAnsweredRef.current = restored.answeredWords
     }
 
     if (errorMode) {
+      setResumeProgress(null)
       void (async () => {
         try {
           const wrongWords = await loadWrongWords({
@@ -369,12 +408,33 @@ export function usePracticePageData({
     }
 
     const loadScopedWords = async (words: Word[], progress: ProgressData | null) => {
-      const nextQueue = buildWrongWordsQueue(words, progress?.queue_words) ?? buildQueue(words)
+      const cachedQueueWords = scopedLoadKey != null
+        ? scopedQueueWordsCacheRef.current[scopedLoadKey]
+        : undefined
+      const previousQueueWords = lastAppliedScopedLoadRef.current.key === scopedLoadKey
+        ? queueRef.current
+          .map(index => vocabRef.current[index]?.word)
+          .filter((word): word is string => Boolean(word))
+        : []
+      const nextQueue = buildWrongWordsQueue(words, progress?.queue_words)
+        ?? (cachedQueueWords?.length ? buildWrongWordsQueue(words, cachedQueueWords) : null)
+        ?? (previousQueueWords.length ? buildWrongWordsQueue(words, previousQueueWords) : null)
+        ?? buildQueue(words)
+      if (scopedLoadKey != null) {
+        scopedQueueWordsCacheRef.current[scopedLoadKey] = nextQueue
+          .map(index => words[index]?.word)
+          .filter((word): word is string => Boolean(word))
+      }
+      if (!canApplyScopedLoad()) return
       queueRef.current = nextQueue
       setVocabulary(words)
       vocabRef.current = words
       setQueue(nextQueue)
       resetProgress(progress, words)
+      lastAppliedScopedLoadRef.current = {
+        key: scopedLoadKey,
+        generation: scopedLoadGeneration,
+      }
       beginSession()
     }
 
@@ -382,47 +442,45 @@ export function usePracticePageData({
       fetch(buildApiUrl(`/api/books/${bookId}/chapters/${chapterId}`))
         .then(res => res.json())
         .then(async (data: { words?: Word[] }) => {
+          if (!canApplyScopedLoad()) return
           const rawWords = data.words || []
-          const words = filterVocabularyForMode(rawWords, mode)
-          setNoListeningPresets(mode === 'listening' && words.length === 0 && rawWords.length > 0)
-          const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-          let progress: ProgressData | null = saved[`${bookId}_${chapterId}`] ?? null
-          if (!progress) {
-            try {
-              const remote = await apiFetch<{ chapter_progress?: Record<string, ProgressData> }>(
-                `/api/books/${bookId}/chapters/progress`,
-              )
-              progress = remote.chapter_progress?.[String(chapterId)] ?? null
-            } catch {}
-          }
+          const words = resolveWordsForMode(rawWords)
+          if (!words || !canApplyScopedLoad()) return
+          const progress = await loadChapterProgressSnapshot(bookId, chapterId)
+          if (!canApplyScopedLoad()) return
           await loadScopedWords(words, progress)
         })
-        .catch(() => showToast?.('加载章节词汇失败', 'error'))
+        .catch(() => {
+          if (canApplyScopedLoad()) {
+            showToast?.('加载章节词汇失败', 'error')
+          }
+        })
       return
     }
 
     if (bookId) {
+      setResumeProgress(null)
       fetch(buildApiUrl(`/api/books/${bookId}/words?per_page=100`))
         .then(res => res.json())
         .then(async (data: { words?: Word[] }) => {
+          if (!canApplyScopedLoad()) return
           const rawWords = data.words || []
-          const words = filterVocabularyForMode(rawWords, mode)
-          setNoListeningPresets(mode === 'listening' && words.length === 0 && rawWords.length > 0)
-          const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('book_progress') || '{}')
-          let progress: ProgressData | null = saved[bookId] ?? null
-          if (!progress) {
-            try {
-              const remote = await apiFetch<{ progress?: ProgressData }>(`/api/books/progress/${bookId}`)
-              progress = remote.progress ?? null
-            } catch {}
-          }
+          const words = resolveWordsForMode(rawWords)
+          if (!words || !canApplyScopedLoad()) return
+          const progress = await loadBookProgressSnapshot(bookId)
+          if (!canApplyScopedLoad()) return
           await loadScopedWords(words, progress)
         })
-        .catch(() => showToast?.('加载词书失败', 'error'))
+        .catch(() => {
+          if (canApplyScopedLoad()) {
+            showToast?.('加载词书失败', 'error')
+          }
+        })
       return
     }
 
     if (!currentDay) {
+      setResumeProgress(null)
       navigate('/plan')
       return
     }
@@ -430,14 +488,16 @@ export function usePracticePageData({
     fetch(buildApiUrl(`/api/vocabulary/day/${currentDay}`))
       .then(res => res.json())
       .then(async (data: { vocabulary?: Word[]; words?: Word[] }) => {
+        if (!canApplyScopedLoad()) return
         const rawWords = data.vocabulary || data.words || []
-        const words = filterVocabularyForMode(rawWords, mode)
-        setNoListeningPresets(mode === 'listening' && words.length === 0 && rawWords.length > 0)
+        const words = resolveWordsForMode(rawWords)
+        if (!words || !canApplyScopedLoad()) return
         const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('day_progress') || '{}')
         let progress: ProgressData | null = saved[String(currentDay)] ?? null
         if (!progress) {
           try {
             const remote = await apiFetch<{ progress?: Array<{ day: number; current_index: number; correct_count: number; wrong_count: number; is_completed?: boolean }> }>('/api/progress')
+            if (!canApplyScopedLoad()) return
             const entry = remote.progress?.find(item => item.day === currentDay)
             progress = entry
               ? {
@@ -449,9 +509,14 @@ export function usePracticePageData({
               : null
           } catch {}
         }
+        if (!canApplyScopedLoad()) return
         await loadScopedWords(words, progress)
       })
-      .catch(() => showToast?.('加载词汇失败', 'error'))
+      .catch(() => {
+        if (canApplyScopedLoad()) {
+          showToast?.('加载词汇失败', 'error')
+        }
+      })
 
     return () => {
       cancelled = true
@@ -462,14 +527,17 @@ export function usePracticePageData({
     chapterId,
     currentDay,
     errorMode,
+    isCustomPracticeScope,
     errorProgressHydratedRef,
     errorRoundResultsRef,
     mode,
     navigate,
+    onListeningModeFallback,
     queueRef,
     reviewMode,
     reviewOffset,
     searchParams,
+    setResumeProgress,
     setCorrectCount,
     setCurrentChapterTitle,
     setErrorReviewRound,

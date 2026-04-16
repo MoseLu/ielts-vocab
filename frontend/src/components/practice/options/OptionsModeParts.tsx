@@ -137,20 +137,14 @@ export function OptionsGrid({
 interface WordDisplayProps {
   currentWord: { word: string; phonetic: string; pos: string; definition: string }
   displayMode: 'audio' | 'definition'
-  onPlayWord: (word: string) => void
 }
 
-export function WordDisplay({ currentWord, displayMode, onPlayWord }: WordDisplayProps) {
+export function WordDisplay({
+  currentWord,
+  displayMode,
+}: WordDisplayProps) {
   return (
     <div className="word-display-area">
-      {displayMode === 'audio' && (
-        <button className="play-btn-large" onClick={() => onPlayWord(currentWord.word)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-          </svg>
-        </button>
-      )}
       {displayMode === 'definition' && (
         <div className="meaning-prompt-card">
           <div className="meaning-prompt-label">看中文释义，拼英文单词</div>
@@ -183,7 +177,7 @@ export function ListeningExamplePrompt({
       {onPlayAudio ? (
         <button
           type="button"
-          className="play-btn-mini listening-example-audio-btn"
+          className="listening-example-audio-btn"
           aria-label="播放例句"
           title="播放例句（点击例句或按 Alt）"
           onClick={onPlayAudio}
