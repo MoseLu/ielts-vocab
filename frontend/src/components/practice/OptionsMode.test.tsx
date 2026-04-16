@@ -91,10 +91,10 @@ describe('OptionsMode listening feedback', () => {
     expect(screen.queryByText('这一步干什么')).not.toBeInTheDocument()
   })
 
-  it('renders a compact choice top rail when only the favorite action is present', () => {
+  it('keeps example playback separate and moves word actions to the footer replay row', () => {
     const { container } = render(
       <OptionsMode
-        currentWord={makeWord()}
+        currentWord={makeWordWithExample('guy', '/gaɪ/', '家伙', 'The movie has guy started.')}
         previousWord={null}
         lastState={null}
         mode="listening"
@@ -117,6 +117,7 @@ describe('OptionsMode listening feedback', () => {
         total={4}
         queueIndex={0}
         favoriteSlot={<button type="button">fav</button>}
+        speakingSlot={<button type="button">speak</button>}
         onOptionSelect={vi.fn()}
         onSkip={vi.fn()}
         onGoBack={vi.fn()}
@@ -128,10 +129,18 @@ describe('OptionsMode listening feedback', () => {
       />,
     )
 
-    expect(container.querySelector('.practice-choice-top-rail.practice-choice-top-rail--action-only')).not.toBeNull()
-    expect(container.querySelector('.practice-choice-top-rail__left')).toBeNull()
-    expect(container.querySelector('.practice-choice-top-rail__right button')).not.toBeNull()
-    expect(container.querySelector('.practice-main-header__action')).toBeNull()
+    expect(container.querySelector('.practice-choice-top-rail')).not.toBeNull()
+    expect(container.querySelector('.practice-choice-top-rail--empty')).not.toBeNull()
+    expect(container.querySelector('.practice-choice-top-rail__left')).not.toBeNull()
+    expect(container.querySelector('.prev-word-inline--choice')).toBeNull()
+    expect(container.querySelector('.practice-choice-stage')).not.toBeNull()
+    expect(container.querySelector('.play-btn-large')).toBeNull()
+    expect(container.querySelector('.listening-example-prompt .listening-example-audio-btn')).not.toBeNull()
+    expect(container.querySelector('.listening-example-prompt .word-display-audio-controls')).toBeNull()
+    expect(container.querySelector('.options-footer-actions .word-display-audio-side button')?.textContent).toBe('fav')
+    expect(container.querySelector('.options-footer-actions .replay-btn')).not.toBeNull()
+    expect(container.querySelector('.options-footer-actions .word-display-audio-side--end button')?.textContent).toBe('speak')
+    expect(container.querySelector('.practice-main-header')).toBeNull()
   })
 
   it('shows a blanked example sentence when the listening word includes an example', () => {

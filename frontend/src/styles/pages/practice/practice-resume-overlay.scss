@@ -1,0 +1,92 @@
+.practice-resume-overlay {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 2px 0 0;
+}
+
+.practice-resume-overlay__close {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.practice-resume-overlay__close:hover {
+    color: var(--text-primary);
+    transform: scale(1.04);
+}
+
+.practice-resume-overlay__close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.practice-resume-overlay__message-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding-right: 18px;
+    min-height: 28px;
+}
+
+.practice-resume-overlay__status {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.practice-resume-overlay__status svg {
+    width: 18px;
+    height: 18px;
+}
+
+.practice-resume-overlay__message {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.practice-resume-overlay__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.practice-resume-overlay__button {
+    min-width: 92px;
+}
+
+.practice-resume-overlay__button--primary {
+    box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 480px) {
+    .practice-resume-overlay__message-row {
+        padding-right: 12px;
+        align-items: flex-start;
+    }
+
+    .practice-resume-overlay__actions {
+        justify-content: stretch;
+    }
+
+    .practice-resume-overlay__button {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}

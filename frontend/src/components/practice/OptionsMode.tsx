@@ -39,6 +39,7 @@ export default function OptionsMode({
   total,
   queueIndex,
   favoriteSlot,
+  speakingSlot,
   onOptionSelect,
   onSkip,
   onGoBack,
@@ -55,7 +56,7 @@ export default function OptionsMode({
   const isMeaningRecall = mode === 'meaning' || (mode === 'smart' && smartDimension === 'meaning')
   const isChoiceLayout = !isSmartDictation && !isMeaningRecall
   const hasChoicePrevWord = Boolean(previousWord)
-  const hasChoiceTopRail = isChoiceLayout && (hasChoicePrevWord || Boolean(favoriteSlot))
+  const hasHeaderActions = Boolean(favoriteSlot) || Boolean(speakingSlot)
   const listeningExample = currentWord.examples?.[0]?.en ?? ''
   const showListeningExample = displayMode === 'audio'
     && !optionsLoading
@@ -69,7 +70,7 @@ export default function OptionsMode({
   useLayoutEffect(() => {
     if (!isChoiceLayout) return
     const pageElement = pageRef.current
-    if (!pageElement) return
+    if (!pageElement || pageElement.scrollTop <= 1) return
     if (typeof pageElement.scrollTo === 'function') {
       pageElement.scrollTo({ top: 0, behavior: 'auto' })
       return
@@ -91,79 +92,45 @@ export default function OptionsMode({
       )}
 
       <div className="practice-main">
-        {hasChoiceTopRail && (
-          <div className={`practice-choice-top-rail${hasChoicePrevWord ? '' : ' practice-choice-top-rail--action-only'}`}>
-            {hasChoicePrevWord ? (
-              <div className="practice-choice-top-rail__left">
-              <PrevWordBlock
-                previousWord={previousWord}
-                lastState={lastState}
-                onGoBack={onGoBack}
-                className="prev-word-inline--choice"
-              />
-              </div>
-            ) : null}
-            {favoriteSlot ? (
-              <div className="practice-choice-top-rail__right">{favoriteSlot}</div>
-            ) : null}
+        {isChoiceLayout && (
+          <div className={`practice-choice-top-rail${hasChoicePrevWord ? '' : ' practice-choice-top-rail--empty'}`}>
+            <div className="practice-choice-top-rail__left">
+              {hasChoicePrevWord ? (
+                <PrevWordBlock
+                  previousWord={previousWord}
+                  lastState={lastState}
+                  onGoBack={onGoBack}
+                  className="prev-word-inline--choice"
+                />
+              ) : null}
+            </div>
           </div>
         )}
 
-        {(mode === 'smart' || (favoriteSlot && !isChoiceLayout)) && (
+        {(mode === 'smart' || (!isChoiceLayout && hasHeaderActions)) && (
           <div className="practice-main-header">
+            <div className="practice-main-header__side">
+              {!isChoiceLayout ? favoriteSlot : null}
+            </div>
             <div className="practice-main-header__meta">
               {mode === 'smart' && <SmartDimBadge dimension={smartDimension} />}
             </div>
-            {favoriteSlot && !isChoiceLayout ? (
-              <div className="practice-main-header__action">{favoriteSlot}</div>
-            ) : null}
+            <div className="practice-main-header__side practice-main-header__side--end">
+              {!isChoiceLayout ? speakingSlot : null}
+            </div>
           </div>
         )}
 
-        {displayMode === 'definition' && (
-          <WordDisplay
-            currentWord={currentWord}
-            displayMode={displayMode}
-            onPlayWord={onPlayWord}
-          />
-        )}
+        {isChoiceLayout ? (
+          <div className="practice-choice-stage">
+            {showListeningExample && (
+              <ListeningExamplePrompt
+                sentence={listeningExample}
+                targetWord={currentWord.word}
+                onPlayAudio={handlePlayExample}
+              />
+            )}
 
-        {showListeningExample && (
-          <ListeningExamplePrompt
-            sentence={listeningExample}
-            targetWord={currentWord.word}
-            onPlayAudio={handlePlayExample}
-          />
-        )}
-
-        {isSmartDictation ? (
-          <SmartDictation
-            currentWord={currentWord}
-            spellingInput={spellingInput}
-            spellingResult={spellingResult}
-            speechConnected={speechConnected}
-            speechRecording={speechRecording}
-            onSpellingInputChange={onSpellingInputChange}
-            onSpellingSubmit={onSpellingSubmit}
-            onStartRecording={onStartRecording}
-            onStopRecording={onStopRecording}
-            onPlayWord={onPlayWord}
-          />
-        ) : isMeaningRecall ? (
-          <MeaningRecallInput
-            currentWord={currentWord}
-            spellingInput={spellingInput}
-            spellingResult={spellingResult}
-            speechConnected={speechConnected}
-            speechRecording={speechRecording}
-            onSpellingInputChange={onSpellingInputChange}
-            onSpellingSubmit={onSpellingSubmit}
-            onStartRecording={onStartRecording}
-            onStopRecording={onStopRecording}
-            onSkip={onSkip}
-          />
-        ) : (
-          <>
             <OptionsGrid
               options={options}
               optionsLoading={optionsLoading}
@@ -178,18 +145,71 @@ export default function OptionsMode({
               <button className="skip-btn" onClick={onSkip}>
                 不知道 <span className="shortcut-hint">快捷键: 5</span>
               </button>
-              <button
-                className="replay-btn"
-                onClick={() => onPlayWord(currentWord.word)}
-                title="再读一遍，快捷键 Tab"
-                aria-label="再读一遍，快捷键 Tab"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                </svg>
-              </button>
+              <div className="options-footer-actions">
+                <div className="word-display-audio-side">
+                  {favoriteSlot}
+                </div>
+                <button
+                  className="replay-btn"
+                  onClick={() => onPlayWord(currentWord.word)}
+                  title="再读一遍，快捷键 Tab"
+                  aria-label="再读一遍，快捷键 Tab"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                  </svg>
+                </button>
+                <div className="word-display-audio-side word-display-audio-side--end">
+                  {speakingSlot}
+                </div>
+              </div>
             </div>
+          </div>
+        ) : (
+          <>
+            {displayMode === 'definition' && (
+              <WordDisplay
+                currentWord={currentWord}
+                displayMode={displayMode}
+              />
+            )}
+
+            {showListeningExample && (
+              <ListeningExamplePrompt
+                sentence={listeningExample}
+                targetWord={currentWord.word}
+                onPlayAudio={handlePlayExample}
+              />
+            )}
+
+            {isSmartDictation ? (
+              <SmartDictation
+                currentWord={currentWord}
+                spellingInput={spellingInput}
+                spellingResult={spellingResult}
+                speechConnected={speechConnected}
+                speechRecording={speechRecording}
+                onSpellingInputChange={onSpellingInputChange}
+                onSpellingSubmit={onSpellingSubmit}
+                onStartRecording={onStartRecording}
+                onStopRecording={onStopRecording}
+                onPlayWord={onPlayWord}
+              />
+            ) : (
+              <MeaningRecallInput
+                currentWord={currentWord}
+                spellingInput={spellingInput}
+                spellingResult={spellingResult}
+                speechConnected={speechConnected}
+                speechRecording={speechRecording}
+                onSpellingInputChange={onSpellingInputChange}
+                onSpellingSubmit={onSpellingSubmit}
+                onStartRecording={onStartRecording}
+                onStopRecording={onStopRecording}
+                onSkip={onSkip}
+              />
+            )}
           </>
         )}
 
