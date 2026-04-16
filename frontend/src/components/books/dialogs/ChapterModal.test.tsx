@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import ChapterModal from './ChapterModal'
 
@@ -139,5 +140,40 @@ describe('ChapterModal', () => {
 
     expect(screen.getAllByText('60 组')).toHaveLength(2)
     expect(screen.queryByText('120 词')).toBeNull()
+  })
+
+  it('reports the independent game entry when the user switches to 游戏闯关', async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        chapters: [{ id: 1, title: 'Unit 1', word_count: 30 }],
+      }),
+    } as Response)
+
+    apiFetchMock.mockResolvedValue({ chapter_progress: {} })
+    const onSelectChapter = vi.fn()
+    const user = userEvent.setup()
+
+    render(
+      <ChapterModal
+        book={{ id: 'book-1', title: 'Test Book', word_count: 30 }}
+        progress={{ current_index: 0 }}
+        onClose={() => {}}
+        onSelectChapter={onSelectChapter}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: '游戏闯关' })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('tab', { name: '游戏闯关' }))
+    await user.click(screen.getByText('Unit 1'))
+
+    expect(onSelectChapter).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1, title: 'Unit 1' }),
+      0,
+      'game',
+    )
   })
 })

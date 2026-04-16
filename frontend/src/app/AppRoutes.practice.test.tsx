@@ -81,4 +81,22 @@ describe('AppRoutes practice route', () => {
     fireEvent.click(screen.getByRole('button', { name: 'practice-page' }))
     expect(showToastMock).toHaveBeenCalledWith('favorite-clicked', 'success')
   })
+
+  it('mounts PracticePage on the independent /game route with fixed game mode', () => {
+    render(
+      <MemoryRouter initialEntries={['/game?book=book-1&chapter=2']}>
+        <AppRoutes
+          mode="meaning"
+          currentDay={1}
+          onModeChange={vi.fn()}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(practicePageMock).toHaveBeenCalled()
+    expect(practicePageMock.mock.calls[0]?.[0]).toMatchObject({
+      mode: 'game',
+    })
+  })
 })

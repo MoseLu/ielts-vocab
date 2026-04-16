@@ -1,8 +1,12 @@
+import { useState } from 'react'
+import type { BookEntryMode } from '../../../lib'
+
 // Type definitions
 interface Book {
   id: string
   title: string
   word_count: number
+  practice_mode?: string
   description?: string
 }
 
@@ -21,15 +25,28 @@ interface PlanModalProps {
   book: Book
   progress?: BookProgress
   onClose: () => void
-  onStart: (plan: StudyPlan | null) => void
+  onStart: (plan: StudyPlan | null, entryMode?: BookEntryMode) => void
 }
 
 const DAILY_OPTIONS: number[] = [10, 20, 30, 50, 100]
+const ENTRY_MODE_META: Record<BookEntryMode, { title: string; description: string }> = {
+  practice: {
+    title: '常规练习',
+    description: '进入单项练习入口，再按具体模式推进。',
+  },
+  game: {
+    title: '游戏闯关',
+    description: '进入独立的五维闯关入口，把认义听说写串成一条主线。',
+  },
+}
 
 function PlanModal({ book, progress, onClose, onStart }: PlanModalProps) {
   const currentIndex = progress?.current_index || 0
   const remainingWords = book.word_count - currentIndex
   const progressPercent = Math.round((currentIndex / book.word_count) * 100)
+  const [entryMode, setEntryMode] = useState<BookEntryMode>('practice')
+  const supportsGameEntry = book.practice_mode !== 'match'
+  const activeEntryMode: BookEntryMode = supportsGameEntry ? entryMode : 'practice'
 
   const handleSelectPlan = (dailyCount: number) => {
     const plan: StudyPlan = {
@@ -38,11 +55,11 @@ function PlanModal({ book, progress, onClose, onStart }: PlanModalProps) {
       totalDays: Math.ceil(remainingWords / dailyCount),
       startIndex: currentIndex
     }
-    onStart(plan)
+    onStart(plan, activeEntryMode)
   }
 
   const handleContinue = () => {
-    onStart(null) // null means continue with existing progress
+    onStart(null, activeEntryMode) // null means continue with existing progress
   }
 
   return (
@@ -55,6 +72,25 @@ function PlanModal({ book, progress, onClose, onStart }: PlanModalProps) {
               {book.word_count} 词
               {book.description && ` · ${book.description}`}
             </p>
+            {supportsGameEntry && (
+              <>
+                <div className="plan-entry-switch" role="tablist" aria-label="学习入口">
+                  {(Object.entries(ENTRY_MODE_META) as [BookEntryMode, { title: string; description: string }][]).map(([mode, meta]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeEntryMode === mode}
+                      className={`plan-entry-switch__option${activeEntryMode === mode ? ' is-active' : ''}`}
+                      onClick={() => setEntryMode(mode)}
+                    >
+                      {meta.title}
+                    </button>
+                  ))}
+                </div>
+                <p className="plan-entry-note">{ENTRY_MODE_META[activeEntryMode].description}</p>
+              </>
+            )}
           </div>
           <button className="plan-modal-close" onClick={onClose}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -75,7 +111,7 @@ function PlanModal({ book, progress, onClose, onStart }: PlanModalProps) {
               <progress className="plan-progress-fill" max="100" value={progressPercent} />
             </div>
             <button className="plan-continue-btn" onClick={handleContinue}>
-              继续学习
+              {activeEntryMode === 'game' ? '继续闯关' : '继续学习'}
             </button>
           </div>
         )}

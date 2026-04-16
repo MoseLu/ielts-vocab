@@ -20,7 +20,7 @@ export interface ToastData {
 }
 
 // Practice types (re-export from practice)
-export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio'
+export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'game'
 
 export interface Word {
   word: string
@@ -46,6 +46,7 @@ export interface ProgressData {
   is_completed: boolean
   words_learned?: number
   answered_words?: string[]
+  queue_words?: string[]
   updatedAt?: string
 }
 

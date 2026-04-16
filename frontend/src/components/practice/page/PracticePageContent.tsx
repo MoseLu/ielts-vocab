@@ -1,6 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import FavoriteToggleButton from '../FavoriteToggleButton'
+import PracticeControlBar from '../PracticeControlBar'
+import WordListPanel from '../WordListPanel'
+import GameMode from './GameMode'
 import type {
   AppSettings,
   Chapter,
@@ -15,6 +18,8 @@ import type {
   WordListActionControls,
   WordStatuses,
 } from '../types'
+import PracticePronunciationButton from './PracticePronunciationButton'
+import SettingsPanel from '../../settings/SettingsPanel'
 import {
   PracticePageQuickMemoryLayout,
   PracticePageRadioLayout,
@@ -156,11 +161,19 @@ export function PracticePageContent({
   handleContinueReview,
 }: PracticePageContentProps) {
   const progress = Math.min((queueIndex + 1) / Math.max(queue.length, 1), 1)
-  const favoriteSlot = (
+  const favoriteButton = (
     <FavoriteToggleButton
       active={favoriteActive}
       pending={favoriteBusy}
       onClick={onFavoriteToggle}
+    />
+  )
+  const speakingButton = (
+    <PracticePronunciationButton
+      bookId={resolvedPracticeBookId}
+      chapterId={resolvedPracticeChapterId}
+      targetWord={currentWord.word}
+      targetPhonetic={currentWord.phonetic}
     />
   )
 
@@ -199,7 +212,8 @@ export function PracticePageContent({
         handleRadioProgressChange={handleRadioProgressChange}
         isCurrentSessionActive={isCurrentSessionActive}
         onIndexChange={onFavoriteWordIndexChange}
-        favoriteSlot={favoriteSlot}
+        favoriteSlot={favoriteButton}
+        speakingSlot={speakingButton}
       />
     )
   }
@@ -219,7 +233,8 @@ export function PracticePageContent({
         onQuickMemoryRecordChange={handleQuickMemoryRecordChange}
         initialIndex={errorMode ? queueIndex : undefined}
         onIndexChange={onFavoriteWordIndexChange}
-        favoriteSlot={favoriteSlot}
+        favoriteSlot={favoriteButton}
+        speakingSlot={speakingButton}
       />
     )
   }
@@ -250,8 +265,55 @@ export function PracticePageContent({
         onStartRecording={startRecording}
         onStopRecording={stopRecording}
         onPlayWord={playWord}
-        favoriteSlot={favoriteSlot}
+        favoriteSlot={favoriteButton}
+        speakingSlot={speakingButton}
       />
+    )
+  }
+
+  if (mode === 'game') {
+    return (
+      <div className="practice-session-layout">
+        <PracticeControlBar
+          mode={mode}
+          currentDay={currentDay}
+          bookId={resolvedPracticeBookId}
+          chapterId={resolvedPracticeChapterId}
+          errorMode={errorMode}
+          vocabularyLength={vocabulary.length}
+          currentChapterTitle={currentChapterTitle}
+          bookChapters={bookChapters}
+          showWordList={showWordList}
+          showPracticeSettings={showPracticeSettings}
+          onWordListToggle={() => setShowWordList(value => !value)}
+          onSettingsToggle={() => setShowPracticeSettings(value => !value)}
+          onModeChange={(nextMode: PracticeMode) => onModeChange?.(nextMode)}
+          onDayChange={onDayChange}
+          onNavigate={navigate}
+          buildChapterPath={resolvedPracticeBookId ? buildChapterPath : undefined}
+          onExitHome={() => navigate('/plan')}
+        />
+        <WordListPanel
+          show={showWordList}
+          vocabulary={vocabulary}
+          queue={queue}
+          queueIndex={queueIndex}
+          wordStatuses={wordStatuses}
+          wordActionControls={wordListActionControls}
+          onClose={() => setShowWordList(value => !value)}
+        />
+        {showPracticeSettings ? (
+          <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(value => !value)} />
+        ) : null}
+        <GameMode
+          bookId={resolvedPracticeBookId}
+          chapterId={resolvedPracticeChapterId}
+          currentDay={currentDay}
+          vocabulary={vocabulary}
+          playWord={playWord}
+          wordListActionControls={wordListActionControls}
+        />
+      </div>
     )
   }
 
@@ -285,7 +347,8 @@ export function PracticePageContent({
       onStartRecording={startRecording}
       onStopRecording={stopRecording}
       onPlayWord={playWord}
-      favoriteSlot={favoriteSlot}
+      favoriteSlot={favoriteButton}
+      speakingSlot={speakingButton}
     />
   )
 }

@@ -11,6 +11,7 @@ import {
 const LEGACY_DIMENSION_KEY_MAP: Record<Exclude<WrongWordDimension, 'recognition'>, string> = {
   meaning: 'meaning',
   listening: 'listening',
+  speaking: 'speaking',
   dictation: 'dictation',
 }
 
@@ -311,6 +312,18 @@ export function withDerivedFields(base: Omit<WrongWordRecord, 'wrong_count' | 'p
 }): WrongWordRecord {
   const summary = summarizeDimensionStates(base.dimension_states)
 
+  const pendingDimensions = WRONG_WORD_DIMENSIONS.filter(
+    dimension => (base.dimension_states[dimension]?.pass_streak ?? 0) < WRONG_WORD_PENDING_REVIEW_TARGET,
+  )
+  const wordMasteryStatus: WrongWordRecord['word_mastery_status'] =
+    pendingDimensions.length === 0
+      ? 'passed'
+      : WRONG_WORD_DIMENSIONS.every(dimension => (base.dimension_states[dimension]?.pass_streak ?? 0) >= 1)
+        ? WRONG_WORD_DIMENSIONS.some(dimension => (base.dimension_states[dimension]?.pass_streak ?? 0) > 1)
+          ? 'in_review'
+          : 'unlocked'
+        : 'new'
+
   return {
     ...base,
     wrong_count: summary.historyWrongCount,
@@ -327,9 +340,14 @@ export function withDerivedFields(base: Omit<WrongWordRecord, 'wrong_count' | 'p
     listening_wrong: Math.max(base.listening_wrong ?? 0, base.dimension_states.listening.history_wrong),
     listening_pending: isDimensionPendingState(base.dimension_states.listening),
     listening_pass_streak: base.dimension_states.listening.pass_streak,
+    speaking_wrong: Math.max(base.speaking_wrong ?? 0, base.dimension_states.speaking.history_wrong),
+    speaking_pending: isDimensionPendingState(base.dimension_states.speaking),
+    speaking_pass_streak: base.dimension_states.speaking.pass_streak,
     dictation_wrong: Math.max(base.dictation_wrong ?? 0, base.dimension_states.dictation.history_wrong),
     dictation_pending: isDimensionPendingState(base.dimension_states.dictation),
     dictation_pass_streak: base.dimension_states.dictation.pass_streak,
+    word_mastery_status: wordMasteryStatus,
+    pending_dimensions: pendingDimensions,
     dimension_states: base.dimension_states,
   }
 }
@@ -394,6 +412,7 @@ export function normalizeWrongWord(word: WrongWordInput): WrongWordRecord | null
     listening_wrong: asNumber(word.listening_wrong ?? word.listeningWrong),
     meaning_correct: asNumber(word.meaning_correct ?? word.meaningCorrect),
     meaning_wrong: asNumber(word.meaning_wrong ?? word.meaningWrong),
+    speaking_wrong: asNumber(word.speaking_wrong ?? word.speakingWrong),
     dictation_correct: asNumber(word.dictation_correct ?? word.dictationCorrect),
     dictation_wrong: asNumber(word.dictation_wrong ?? word.dictationWrong),
     ebbinghaus_streak: asNumber(word.ebbinghaus_streak ?? word.ebbinghausStreak),

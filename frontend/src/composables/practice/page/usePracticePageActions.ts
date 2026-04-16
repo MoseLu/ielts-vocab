@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { recordWordResult } from '../../../lib/smartMode'
+import { submitWordMasteryAttempt } from '../../../lib/gamePractice'
 import { recordModeAnswer } from '../../../hooks/useAIChat'
 import type {
   PracticeMode,
@@ -201,6 +202,15 @@ export function usePracticePageActions({
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
 
     if (currentWord) {
+      void submitWordMasteryAttempt({
+        bookId,
+        chapterId,
+        word: currentWord.word,
+        dimension,
+        passed: isCorrect,
+        sourceMode: analyticsMode,
+        wordPayload: currentWord,
+      }).catch(() => {})
       recordWordResult(currentWord.word, dimension, isCorrect)
       if (!isCorrect) saveWrongWord(currentWord)
       recordErrorReviewOutcome(currentWord, isCorrect)
@@ -211,6 +221,8 @@ export function usePracticePageActions({
     if (!advanceToNext) return
     window.setTimeout(() => { void goNext(isCorrect) }, completionDelayMs)
   }, [
+    bookId,
+    chapterId,
     correctCount,
     currentWord,
     goNext,
@@ -353,6 +365,13 @@ export function usePracticePageActions({
   const handleSkip = useCallback(async () => {
     if (!currentWord) return
     await prepareSessionForLearningAction()
+    const dimension: SmartDimension = mode === 'smart'
+      ? smartDimension
+      : mode === 'dictation'
+        ? 'dictation'
+        : mode === 'listening'
+          ? 'listening'
+          : 'meaning'
     const hasPendingListeningMistake = wrongSelections.length > 0
       && (mode === 'listening' || (mode === 'smart' && smartDimension === 'listening'))
 
@@ -363,6 +382,15 @@ export function usePracticePageActions({
 
     saveWrongWord(currentWord)
     recordErrorReviewOutcome(currentWord, false)
+    void submitWordMasteryAttempt({
+      bookId,
+      chapterId,
+      word: currentWord.word,
+      dimension,
+      passed: false,
+      sourceMode: mode ?? 'smart',
+      wordPayload: currentWord,
+    }).catch(() => {})
     registerAnsweredWord(currentWord.word)
     const nextWrong = wrongCount + 1
     setWrongCount(nextWrong)
@@ -373,6 +401,8 @@ export function usePracticePageActions({
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: 'wrong' }))
     void goNext(false)
   }, [
+    bookId,
+    chapterId,
     correctCount,
     currentWord,
     goNext,

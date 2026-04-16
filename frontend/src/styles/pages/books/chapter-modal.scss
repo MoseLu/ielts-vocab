@@ -52,6 +52,43 @@
     color: var(--text-secondary);
 }
 
+.chapter-entry-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-muted) 88%, transparent);
+    border: 1px solid var(--surface-border-strong);
+}
+
+.chapter-entry-switch__option {
+    min-height: 34px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.chapter-entry-switch__option.is-active {
+    background: var(--surface-elevated);
+    color: var(--accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.chapter-entry-note {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
 .chapter-modal-actions {
     display: flex;
     align-items: center;

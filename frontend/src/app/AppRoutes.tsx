@@ -22,6 +22,7 @@ const LeftSidebar = lazy(() => import('../components/layout/navigation/LeftSideb
 const NotFoundPage = lazy(() => import('../components/not-found/page/NotFoundPage'))
 const ConfusableMatchPage = lazy(() => import('../components/practice/ConfusableMatchPage'))
 const ProfilePage = lazy(() => import('../components/profile/page/ProfilePage'))
+const SpeakingPage = lazy(() => import('../components/speaking/page/SpeakingPage'))
 const StatsPage = lazy(() => import('../components/stats/page/StatsPage'))
 const TermsPage = lazy(() => import('../components/terms/page/TermsPage'))
 const VocabTestPage = lazy(() => import('../components/vocab-test/page/VocabTestPage'))
@@ -78,8 +79,10 @@ export function AppRoutes({
   const { toast, showToast } = useToast()
   const location = useLocation()
   const isPractice = location.pathname.startsWith('/practice')
+  const isGame = location.pathname.startsWith('/game')
+  const isPracticeSurface = isPractice || isGame
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
-  const shouldShowBottomNav = Boolean(user) && !isPractice && !isSpecialPage
+  const shouldShowBottomNav = Boolean(user) && !isPracticeSurface && !isSpecialPage
   const [chromeReady, setChromeReady] = useState(false)
 
   useEffect(() => {
@@ -88,7 +91,7 @@ export function AppRoutes({
       return
     }
 
-    if (!isPractice) {
+    if (!isPracticeSurface) {
       setChromeReady(true)
       return
     }
@@ -101,7 +104,7 @@ export function AppRoutes({
     return () => {
       window.clearTimeout(timerId)
     }
-  }, [isPractice, isSpecialPage, user])
+  }, [isPracticeSurface, isSpecialPage, user])
 
   if (isLoading) {
     return <Loading fullScreen />
@@ -111,7 +114,7 @@ export function AppRoutes({
     <div className="app">
       <ScrollToTop />
 
-      {!isPractice && !isSpecialPage && (
+      {!isPracticeSurface && !isSpecialPage && (
         <ChromeSlot>
           <Header
             user={user}
@@ -125,14 +128,14 @@ export function AppRoutes({
         </ChromeSlot>
       )}
 
-      <div className={isPractice || isSpecialPage ? 'practice-fullscreen' : 'app-body'}>
-        {user && !isPractice && !isSpecialPage && (
+      <div className={isPracticeSurface || isSpecialPage ? 'practice-fullscreen' : 'app-body'}>
+        {user && !isPracticeSurface && !isSpecialPage && (
           <ChromeSlot>
             <LeftSidebar />
           </ChromeSlot>
         )}
 
-        <main className={isPractice || isSpecialPage ? 'practice-fullscreen-main' : 'main'}>
+        <main className={isPracticeSurface || isSpecialPage ? 'practice-fullscreen-main' : 'main'}>
           <div className="main-view">
             <Suspense fallback={<RouteFallback />}>
               <Routes>
@@ -206,6 +209,21 @@ export function AppRoutes({
                   )}
                 />
                 <Route
+                  path="/game"
+                  element={(
+                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                      <PracticePage
+                        user={user ?? undefined}
+                        currentDay={currentDay ?? undefined}
+                        mode="game"
+                        onModeChange={nextMode => onModeChange(nextMode)}
+                        onDayChange={onDayChange}
+                        showToast={showToast}
+                      />
+                    </AuthenticatedRoute>
+                  )}
+                />
+                <Route
                   path="/practice/confusable"
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
@@ -234,6 +252,14 @@ export function AppRoutes({
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
                       <ProfilePage />
+                    </AuthenticatedRoute>
+                  )}
+                />
+                <Route
+                  path="/speaking"
+                  element={(
+                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                      <SpeakingPage />
                     </AuthenticatedRoute>
                   )}
                 />

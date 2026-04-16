@@ -1,4 +1,5 @@
 export const CANONICAL_PRACTICE_MODES = [
+  'game',
   'smart',
   'quickmemory',
   'listening',
@@ -17,6 +18,11 @@ type PracticeModeMeta = {
 }
 
 const PRACTICE_MODE_META: Record<CanonicalPracticeMode, PracticeModeMeta> = {
+  game: {
+    label: '五维闯关',
+    description: '按认义听说写逐词闯关',
+    shortLabel: '闯',
+  },
   smart: {
     label: '智能模式',
     description: '根据水平自动调整',
@@ -95,6 +101,7 @@ export const PRACTICE_CONTROL_MODES = [
 export const PRACTICE_CONTROL_MODE_LABELS = buildPracticeModeRecord(PRACTICE_CONTROL_MODES, 'label')
 
 export const STATS_MODE_ORDER = [
+  'game',
   'smart',
   'quickmemory',
   'listening',
@@ -132,6 +139,7 @@ export const WRONG_WORD_DIMENSIONS = [
   'recognition',
   'meaning',
   'listening',
+  'speaking',
   'dictation',
 ] as const
 
@@ -141,6 +149,7 @@ export const WRONG_WORD_DIMENSION_TO_MODE: Record<WrongWordDimensionKey, Canonic
   recognition: 'quickmemory',
   meaning: 'meaning',
   listening: 'listening',
+  speaking: 'game',
   dictation: 'dictation',
 }
 
@@ -148,6 +157,7 @@ const WRONG_WORD_DIMENSION_TITLES_META: Record<WrongWordDimensionKey, string> = 
   recognition: `${PRACTICE_MODE_LABELS.quickmemory}：看到英文单词时，能不能立刻认出中文意思`,
   meaning: `${PRACTICE_MODE_LABELS.meaning}：看到中文意思时，能不能主动默写出英文单词`,
   listening: `${PRACTICE_MODE_LABELS.listening}：听到发音后，能不能判断它对应的意思`,
+  speaking: `${PRACTICE_MODE_LABELS.game}：能不能把当前单词读准并通过发音匹配`,
   dictation: `${PRACTICE_MODE_LABELS.dictation}：听到发音后，能不能把单词完整拼出来`,
 }
 
@@ -164,6 +174,9 @@ const MODE_ALIAS_TO_KEY: Record<string, CanonicalPracticeMode> = {
   '智能模式': 'smart',
   '智能练习': 'smart',
   '智能学习': 'smart',
+  game: 'game',
+  '五维闯关': 'game',
+  '闯关模式': 'game',
   quickmemory: 'quickmemory',
   recognition: 'quickmemory',
   '速记模式': 'quickmemory',
