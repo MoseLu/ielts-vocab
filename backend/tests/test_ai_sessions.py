@@ -170,7 +170,7 @@ def test_log_session_honors_activity_capped_duration_for_started_session(client,
 
     base_now_utc = datetime.now(timezone.utc).replace(microsecond=0)
     recovered_start_utc = base_now_utc - timedelta(hours=7, minutes=10, seconds=46)
-    capped_duration_seconds = 20 * 60 + 8
+    capped_duration_seconds = 5 * 60 + 8
 
     start_res = client.post('/api/ai/start-session', json={
         'mode': 'quickmemory',

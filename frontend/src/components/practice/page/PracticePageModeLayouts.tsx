@@ -40,6 +40,7 @@ interface SharedModeLayoutProps {
   queueIndex: number
   wordStatuses: WordStatuses
   favoriteSlot?: ReactNode
+  speakingSlot?: ReactNode
   wordListActionControls?: WordListActionControls
 }
 
@@ -89,6 +90,7 @@ export function PracticePageDictationLayout(props: PracticePageDictationLayoutPr
     queueIndex,
     wordStatuses,
     favoriteSlot,
+    speakingSlot,
     wordListActionControls,
     currentWord,
     spellingInput,
@@ -153,7 +155,7 @@ export function PracticePageDictationLayout(props: PracticePageDictationLayoutPr
         speechRecording={speechRecording}
         settings={settings}
         progressValue={progressValue}
-        total={vocabulary.length}
+        total={queue.length}
         queueIndex={queueIndex}
         previousWord={previousWord}
         lastState={lastState}
@@ -170,6 +172,7 @@ export function PracticePageDictationLayout(props: PracticePageDictationLayoutPr
         onStopRecording={onStopRecording}
         onPlayWord={onPlayWord}
         favoriteSlot={favoriteSlot}
+        speakingSlot={speakingSlot}
       />
     </div>
   )
@@ -226,6 +229,7 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
     queueIndex,
     wordStatuses,
     favoriteSlot,
+    speakingSlot,
     wordListActionControls,
     currentWord,
     previousWord,
@@ -307,7 +311,7 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
         speechRecording={speechRecording}
         settings={settings}
         progressValue={progressValue}
-        total={vocabulary.length}
+        total={queue.length}
         queueIndex={queueIndex}
         onOptionSelect={onOptionSelect}
         onSkip={onSkip}
@@ -318,6 +322,7 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
         onStopRecording={onStopRecording}
         onPlayWord={onPlayWord}
         favoriteSlot={favoriteSlot}
+        speakingSlot={speakingSlot}
       />
     </div>
   )

@@ -178,14 +178,11 @@ export default function WordListDetailPanel({
       id="practice-wordlist-detail-panel"
       className="wordlist-detail-panel"
       role="dialog"
-      aria-labelledby="practice-wordlist-detail-title"
+      aria-label="单词详情"
     >
       <div className="wordlist-detail-header">
         <div className="wordlist-detail-heading">
           <span className="wordlist-detail-eyebrow">已接入全局搜索能力</span>
-          <h2 id="practice-wordlist-detail-title" className="wordlist-detail-title">
-            单词详情
-          </h2>
         </div>
         <div className="wordlist-detail-actions">
           {isResolving ? (

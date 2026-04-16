@@ -6,9 +6,14 @@ from services import learner_profile_repository, quick_memory_record_repository
 from services.learning_events import build_learning_activity_timeline
 from services.local_time import resolve_local_day_window, utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 from services.memory_topics import build_memory_topics
-from services.study_sessions import get_live_pending_session_snapshot, get_session_window_metrics
+from services.study_sessions import (
+    get_live_pending_session_snapshot,
+    get_live_pending_window_duration_seconds,
+    get_session_window_metrics,
+)
 
 MODE_LABELS = {
+    'game': '五维闯关',
     'smart': '智能练习',
     'listening': '听音选义',
     'meaning': '默写模式',
@@ -19,8 +24,10 @@ MODE_LABELS = {
 }
 
 DIMENSION_LABELS = {
+    'recognition': '认词',
     'listening': '听音辨义',
-    'meaning': '默写模式',
+    'meaning': '释义回想',
+    'speaking': '单词发音',
     'dictation': '拼写默写',
 }
 
@@ -38,6 +45,13 @@ FOUR_DIMENSION_CONFIG = {
         'schedule_days': [1, 2, 4, 7, 14],
         'mastery_rule': '按第1/2/4/7/14天多次快速识别，才算听力维度稳定。',
         'evidence_label': '听音辨义练习',
+    },
+    'meaning': {
+        'label': '释义',
+        'definition': '看到中文释义后，能主动想出对应英文单词。',
+        'schedule_days': [1, 2, 4, 7, 14],
+        'mastery_rule': '按第1/2/4/7/14天多轮回想并答对，才算释义维度稳定。',
+        'evidence_label': '释义回想练习',
     },
     'speaking': {
         'label': '口语',

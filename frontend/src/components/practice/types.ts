@@ -5,7 +5,7 @@ export type { QuickMemoryRecordState } from '../../lib/quickMemory'
 
 // ── Types for Practice Components ────────────────────────────────────────────────
 
-export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'quickmemory'
+export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'quickmemory' | 'game'
 export type SpellingSubmitSource = 'button' | 'enter'
 
 // ── Quick Memory — DHP + Ebbinghaus spaced repetition ──────────────────────
@@ -45,6 +45,7 @@ export interface QuickMemoryModeProps {
   /** Called whenever the user advances or goes back, so the parent can persist position */
   onIndexChange?: (index: number) => void
   favoriteSlot?: ReactNode
+  speakingSlot?: ReactNode
 }
 
 // Which dimension smart mode is testing for the current word
@@ -210,9 +211,11 @@ export interface RadioModeProps {
   onCloseSettings: () => void
   onModeChange: (mode: PracticeMode) => void
   onIndexChange?: (index: number) => void
-  onSessionInteraction?: () => void
+  onSessionInteraction?: () => void | Promise<void>
   onProgressChange?: (wordsStudied: number) => void
+  isSessionActive?: (at?: number) => boolean
   favoriteSlot?: ReactNode
+  speakingSlot?: ReactNode
 }
 
 export interface DictationModeProps {
@@ -240,6 +243,7 @@ export interface DictationModeProps {
   onStopRecording: () => void
   onPlayWord: (word: string) => void
   favoriteSlot?: ReactNode
+  speakingSlot?: ReactNode
 }
 
 export interface OptionsModeProps {
@@ -272,4 +276,5 @@ export interface OptionsModeProps {
   onStopRecording: () => void
   onPlayWord: (word: string) => void
   favoriteSlot?: ReactNode
+  speakingSlot?: ReactNode
 }

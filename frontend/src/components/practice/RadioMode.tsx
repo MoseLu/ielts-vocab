@@ -21,7 +21,9 @@ export default function RadioMode({
   onIndexChange,
   onSessionInteraction,
   onProgressChange,
+  isSessionActive,
   favoriteSlot,
+  speakingSlot,
 }: RadioModeProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [radioPaused, setRadioPaused] = useState(false)
@@ -42,8 +44,9 @@ export default function RadioMode({
   }, [vocabulary, queue])
   useEffect(() => { settingsRef.current = settings }, [settings])
   useEffect(() => {
+    if (isSessionActive?.() === false) return
     onProgressChange?.(Math.min(queue.length, currentIndex + 1))
-  }, [currentIndex, queue.length, onProgressChange])
+  }, [currentIndex, isSessionActive, queue.length, onProgressChange])
   useEffect(() => {
     onIndexChange?.(currentIndex)
   }, [currentIndex, onIndexChange])
@@ -119,8 +122,8 @@ export default function RadioMode({
     }
   }, [])
 
-  const handleRadioSkipPrev = () => {
-    onSessionInteraction?.()
+  const handleRadioSkipPrev = async () => {
+    await onSessionInteraction?.()
     const newIdx = Math.max(0, radioIndexRef.current - 1)
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -134,8 +137,8 @@ export default function RadioMode({
     }
   }
 
-  const handleRadioSkipNext = () => {
-    onSessionInteraction?.()
+  const handleRadioSkipNext = async () => {
+    await onSessionInteraction?.()
     const newIdx = Math.min(queueRef.current.length - 1, radioIndexRef.current + 1)
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -149,8 +152,8 @@ export default function RadioMode({
     }
   }
 
-  const handleRadioPause = () => {
-    onSessionInteraction?.()
+  const handleRadioPause = async () => {
+    await onSessionInteraction?.()
     radioActiveRef.current = false
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -159,15 +162,15 @@ export default function RadioMode({
     setRadioPaused(true)
   }
 
-  const handleRadioResume = () => {
-    onSessionInteraction?.()
+  const handleRadioResume = async () => {
+    await onSessionInteraction?.()
     radioActiveRef.current = true
     setRadioPaused(false)
     radioPlayFrom(radioIndexRef.current)
   }
 
-  const handleRadioStop = () => {
-    onSessionInteraction?.()
+  const handleRadioStop = async () => {
+    await onSessionInteraction?.()
     radioActiveRef.current = false
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -177,8 +180,8 @@ export default function RadioMode({
     setRadioPaused(false)
   }
 
-  const handleRadioRestart = () => {
-    onSessionInteraction?.()
+  const handleRadioRestart = async () => {
+    await onSessionInteraction?.()
     radioActiveRef.current = true
     radioIndexRef.current = 0
     setCurrentIndex(0)
@@ -187,9 +190,9 @@ export default function RadioMode({
     radioPlayFrom(0)
   }
 
-  const replayCurrentWord = useCallback(() => {
+  const replayCurrentWord = useCallback(async () => {
     if (radioStopped) return
-    onSessionInteraction?.()
+    await onSessionInteraction?.()
     radioActiveRef.current = true
     radioGenRef.current++
     if (radioTimerRef.current) clearTimeout(radioTimerRef.current)
@@ -215,9 +218,10 @@ export default function RadioMode({
   return (
     <div className="practice-page radio-mode">
       <section className="radio-stage" aria-live="polite">
-        {favoriteSlot ? (
+        {(favoriteSlot || speakingSlot) ? (
           <div className="radio-stage-toolbar">
-            <div className="radio-stage-toolbar__action">{favoriteSlot}</div>
+            <div className="radio-stage-toolbar__side">{favoriteSlot}</div>
+            <div className="radio-stage-toolbar__side radio-stage-toolbar__side--end">{speakingSlot}</div>
           </div>
         ) : null}
         <h1 className="radio-stage-word">{radioWord?.word ?? '...'}</h1>
@@ -264,8 +268,8 @@ export default function RadioMode({
       <div className="radio-progress-label">{currentIndex + 1} / {queue.length}</div>
 
       <div className="radio-bottom-btns">
-        <button className="radio-stop-btn" onClick={handleRadioStop}>停止</button>
-        <button className="radio-home-btn" onClick={() => { handleRadioStop(); onNavigate('/plan') }}>返回主页</button>
+          <button className="radio-stop-btn" onClick={() => { void handleRadioStop() }}>停止</button>
+        <button className="radio-home-btn" onClick={() => { void handleRadioStop(); onNavigate('/plan') }}>返回主页</button>
       </div>
 
       {showSettings && (

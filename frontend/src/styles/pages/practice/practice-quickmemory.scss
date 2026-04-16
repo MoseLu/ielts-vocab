@@ -4,7 +4,7 @@
 .qm-root {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     justify-content: flex-start;
     flex: 1;
     min-height: 0;
@@ -12,9 +12,13 @@
     overflow: hidden auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable both-edges;
-    padding: calc(var(--space-xl) + 8px) calc(var(--space-lg) + 2px) calc(var(--space-2xl) + 8px);
+    padding: calc(var(--space-xl) + 8px) calc(var(--space-lg) + 2px) calc(var(--space-xl) + 8px + env(safe-area-inset-bottom, 0px));
     background: var(--bg-secondary);
-    scroll-padding-block: 24px 40px;
+    scroll-padding-block: 24px calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+.qm-stage {
+    width: 100%; display: flex; flex-direction: column; align-items: center; margin-block: auto;
 }
 
 /* ── Progress bar ─────────────────────────────────────────────────────────── */
@@ -489,5 +493,3 @@ kbd {
     .qm-btn  { padding: 12px 12px; font-size: 14px; }
     .qm-definition { font-size: 16px; }
 }
-
-@media (min-height: 820px) { .qm-root { justify-content: center; } }

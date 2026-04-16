@@ -70,6 +70,7 @@ LEARNING_CORE_SERVICE_TABLES = frozenset({
     'user_learning_events',
     'user_quick_memory_records',
     'user_smart_word_stats',
+    'user_word_mastery_states',
 }) | LEARNING_CORE_EVENTING_TABLES
 
 CATALOG_CONTENT_SERVICE_TABLES = frozenset({
@@ -124,6 +125,8 @@ AI_EXECUTION_SERVICE_TABLES = frozenset({
     'ai_projected_daily_summaries',
     'ai_projected_wrong_words',
     'ai_prompt_runs',
+    'ai_speaking_assessments',
+    'ai_word_image_assets',
     'user_conversation_history',
     'user_memory',
     'search_cache',

@@ -21,7 +21,7 @@ class GuardedSQLAlchemy(SQLAlchemy):
 
 db = GuardedSQLAlchemy()
 
-WRONG_WORD_DIMENSIONS = ('recognition', 'meaning', 'listening', 'dictation')
+WRONG_WORD_DIMENSIONS = ('recognition', 'meaning', 'listening', 'speaking', 'dictation')
 WRONG_WORD_PENDING_REVIEW_TARGET = 4
 
 
@@ -37,6 +37,16 @@ def _serialize_chapter_id(value):
         return int(value)
     except (TypeError, ValueError):
         return value
+
+
+def _serialize_string_list(raw_value) -> list[str]:
+    if not isinstance(raw_value, str) or not raw_value.strip():
+        return []
+    try:
+        parsed = json.loads(raw_value)
+    except Exception:
+        return []
+    return [str(item).strip() for item in parsed if str(item).strip()]
 
 
 def _normalize_wrong_word_iso(value) -> str | None:
@@ -276,6 +286,9 @@ class UserChapterProgress(db.Model):
     correct_count = db.Column(db.Integer, default=0)
     wrong_count = db.Column(db.Integer, default=0)
     is_completed = db.Column(db.Boolean, default=False)
+    session_current_index = db.Column(db.Integer, default=0)
+    session_answered_words = db.Column(db.Text, nullable=True)
+    session_queue_words = db.Column(db.Text, nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (
@@ -290,11 +303,14 @@ class UserChapterProgress(db.Model):
             'user_id': self.user_id,
             'book_id': self.book_id,
             'chapter_id': _serialize_chapter_id(self.chapter_id),
+            'current_index': max(0, int(self.session_current_index or 0)),
             'words_learned': self.words_learned,
             'correct_count': self.correct_count,
             'wrong_count': self.wrong_count,
             'accuracy': accuracy,
             'is_completed': self.is_completed,
+            'answered_words': _serialize_string_list(self.session_answered_words),
+            'queue_words': _serialize_string_list(self.session_queue_words),
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 

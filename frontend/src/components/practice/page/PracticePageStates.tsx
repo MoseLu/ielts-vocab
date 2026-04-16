@@ -9,7 +9,6 @@ import SettingsPanel from '../../settings/SettingsPanel'
 import { PageSkeleton } from '../../ui'
 import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../errorReviewSession'
 import { PracticeRoundSummary } from './PracticeRoundSummary'
-
 function formatSessionDuration(seconds: number): string {
   const safeSeconds = Math.max(0, Math.round(seconds))
   const hours = Math.floor(safeSeconds / 3600)
@@ -19,7 +18,6 @@ function formatSessionDuration(seconds: number): string {
   if (minutes > 0) return remainingSeconds > 0 ? `${minutes}分${remainingSeconds}秒` : `${minutes}分`
   return `${remainingSeconds}秒`
 }
-
 interface ReviewQueueSummary {
   due_count: number
   upcoming_count: number
@@ -31,7 +29,6 @@ interface ReviewQueueSummary {
   has_more: boolean
   next_offset: number | null
 }
-
 interface PracticePageLoadingStateProps {
   navigate: NavigateFunction
   mode?: PracticeMode
@@ -40,7 +37,6 @@ interface PracticePageLoadingStateProps {
   reviewQueueError: string | null
   quickMemoryReviewQueueResolved: boolean
 }
-
 export function PracticePageLoadingState({
   navigate,
   mode,
@@ -96,7 +92,6 @@ export function PracticePageLoadingState({
     </div>
   )
 }
-
 interface PracticePageCompletedStateProps {
   navigate: NavigateFunction
   bookId: string | null
@@ -196,7 +191,6 @@ export function PracticePageCompletedState({
     </div>
   )
 }
-
 export function PracticePagePauseOverlay({
   isPaused,
   mode,
@@ -252,7 +246,6 @@ export function PracticePagePauseOverlay({
     </div>
   )
 }
-
 interface SharedLayoutProps {
   mode?: PracticeMode
   currentDay?: number
@@ -272,6 +265,7 @@ interface SharedLayoutProps {
   buildChapterPath?: (chapterId: string | number) => string
   onExitHome: () => void
   favoriteSlot?: ReactNode
+  speakingSlot?: ReactNode
   wordListActionControls?: WordListActionControls
 }
 
@@ -288,10 +282,10 @@ interface PracticePageRadioLayoutProps extends SharedLayoutProps {
   }
   onRadioSettingChange: (key: 'playbackSpeed' | 'playbackCount' | 'loopMode' | 'interval', value: string | boolean) => void
   onIndexChange: (index: number) => void
-  markRadioSessionInteraction: () => void
+  markRadioSessionInteraction: () => Promise<void>
   handleRadioProgressChange: (wordsStudied: number) => void
+  isCurrentSessionActive: (at?: number) => boolean
 }
-
 export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
   const {
     mode,
@@ -312,6 +306,7 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
     buildChapterPath,
     onExitHome,
     favoriteSlot,
+    speakingSlot,
     wordListActionControls,
     queue,
     radioIndex,
@@ -322,6 +317,7 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
     onIndexChange,
     markRadioSessionInteraction,
     handleRadioProgressChange,
+    isCurrentSessionActive,
   } = props
 
   return (
@@ -377,12 +373,13 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
         onIndexChange={onIndexChange}
         onSessionInteraction={markRadioSessionInteraction}
         onProgressChange={handleRadioProgressChange}
+        isSessionActive={isCurrentSessionActive}
         favoriteSlot={favoriteSlot}
+        speakingSlot={speakingSlot}
       />
     </div>
   )
 }
-
 interface PracticePageQuickMemoryLayoutProps extends SharedLayoutProps {
   queue: number[]
   queueIndex: number
@@ -405,7 +402,6 @@ interface PracticePageQuickMemoryLayoutProps extends SharedLayoutProps {
   initialIndex?: number
   onIndexChange?: (index: number) => void
 }
-
 export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayoutProps) {
   const {
     mode,
@@ -426,6 +422,7 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
     buildChapterPath,
     onExitHome,
     favoriteSlot,
+    speakingSlot,
     wordListActionControls,
     queue,
     queueIndex,
@@ -494,6 +491,7 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
         initialIndex={initialIndex}
         onIndexChange={onIndexChange}
         favoriteSlot={favoriteSlot}
+        speakingSlot={speakingSlot}
       />
     </div>
   )

@@ -4,8 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Callable
 
-from service_models.learning_core_models import UserStudySession
-from services import learning_stats_repository
+from services import learning_event_repository, learning_stats_repository
 from platform_sdk.learning_stats_breakdowns_support import (
     build_chapter_breakdowns,
     build_mode_breakdown,
@@ -16,7 +15,6 @@ from platform_sdk.learning_stats_breakdowns_support import (
 from platform_sdk.learning_stats_modes_support import normalize_stats_mode, stats_mode_candidates
 from services.learning_stats_service_parts.helpers import (
     _accuracy,
-    _append_live_pending_duration,
     _build_day_windows,
     _build_daily_series,
     _build_fallback_daily_series,
@@ -25,6 +23,8 @@ from services.learning_stats_service_parts.helpers import (
     _empty_daily_bucket,
 )
 from services.local_time import (
+    build_time_audit_report,
+    collect_eligible_session_intervals,
     current_local_date,
     recent_local_day_range,
     resolve_local_day_window,
@@ -63,19 +63,16 @@ def build_learning_stats_payload(
         book_id=book_id_filter,
         mode_candidates=mode_filter_candidates,
     )
-    sessions: list[UserStudySession] = []
+    sessions = list(collect_eligible_session_intervals(
+        session_candidates,
+        now=now_utc,
+        window_start=since,
+        window_end=range_end,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).reportable_sessions)
     daily = defaultdict(_empty_daily_bucket)
 
-    for session in session_candidates:
-        period_metrics = get_session_window_metrics(
-            session,
-            window_start=since,
-            window_end=range_end,
-            now=now_utc,
-        )
-        if not period_metrics:
-            continue
-        sessions.append(session)
+    for session in sessions:
         for date_key, (day_start, day_end) in day_windows.items():
             day_metrics = get_session_window_metrics(
                 session,
@@ -88,7 +85,6 @@ def build_learning_stats_payload(
             daily[date_key]['words_studied'] += day_metrics['words_studied']
             daily[date_key]['correct_count'] += day_metrics['correct_count']
             daily[date_key]['wrong_count'] += day_metrics['wrong_count']
-            daily[date_key]['duration_seconds'] += day_metrics['duration_seconds']
             daily[date_key]['sessions'] += day_metrics['sessions']
 
     filtered_live_pending = get_live_pending_session_snapshot(
@@ -102,12 +98,15 @@ def build_learning_stats_payload(
         user_id,
         now=now_utc,
     )
-    _append_live_pending_duration(
-        live_pending=filtered_live_pending,
-        daily=daily,
-        day_windows=day_windows,
-        now_utc=now_utc,
-    )
+    for date_key, (day_start, day_end) in day_windows.items():
+        daily[date_key]['duration_seconds'] = build_time_audit_report(
+            sessions=sessions,
+            live_pending=filtered_live_pending,
+            now=now_utc,
+            window_start=day_start,
+            window_end=day_end,
+            find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+        ).audited_total_seconds
 
     result = _build_daily_series(date_keys=date_keys, daily=daily)
     fallback_result = _build_fallback_daily_series(
@@ -128,6 +127,11 @@ def build_learning_stats_payload(
         book_title_map=book_title_map,
         global_live_pending=global_live_pending,
     )
+    all_user_sessions = list(collect_eligible_session_intervals(
+        all_user_sessions,
+        now=now_utc,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).reportable_sessions)
 
     if use_fallback:
         summary = {
@@ -146,6 +150,7 @@ def build_learning_stats_payload(
             range_end=range_end,
             now_utc=now_utc,
             filtered_live_pending=filtered_live_pending,
+            find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
         )
 
     chapter_words_sum = sum(chapter.words_learned or 0 for chapter in all_chapter_progress)
@@ -171,7 +176,6 @@ def build_learning_stats_payload(
 
     session_today_correct = 0
     session_today_wrong = 0
-    today_duration = 0
     for session in all_user_sessions:
         today_metrics = get_session_window_metrics(
             session,
@@ -183,23 +187,25 @@ def build_learning_stats_payload(
             continue
         session_today_correct += today_metrics['correct_count']
         session_today_wrong += today_metrics['wrong_count']
-        today_duration += today_metrics['duration_seconds']
 
     today_accuracy = _accuracy(session_today_correct, session_today_wrong)
     if today_accuracy is None:
         today_accuracy = _accuracy(today_correct, today_wrong)
 
-    alltime_duration = sum(session.duration_seconds or 0 for session in all_user_sessions)
-    if global_live_pending:
-        alltime_duration += global_live_pending['elapsed_seconds']
-        live_today_metrics = get_session_window_metrics(
-            global_live_pending['session'],
-            window_start=today_start_dt,
-            window_end=today_end_dt,
-            now=now_utc,
-        )
-        if live_today_metrics:
-            today_duration += live_today_metrics['duration_seconds']
+    today_duration = build_time_audit_report(
+        sessions=all_user_sessions,
+        live_pending=global_live_pending,
+        now=now_utc,
+        window_start=today_start_dt,
+        window_end=today_end_dt,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).audited_total_seconds
+    alltime_duration = build_time_audit_report(
+        sessions=all_user_sessions,
+        live_pending=global_live_pending,
+        now=now_utc,
+        find_latest_session_activity_at=learning_event_repository.find_latest_session_activity_at,
+    ).audited_total_seconds
 
     mode_breakdown, qm_extra = build_mode_breakdown(
         user_id=user_id,

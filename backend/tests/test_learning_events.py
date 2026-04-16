@@ -1,9 +1,14 @@
 from datetime import datetime
+from io import BytesIO
 
-from models import UserLearningEvent, db
+from models import User, UserLearningEvent, db
+from services.learning_events import record_learning_event
+from services.learner_profile import build_learner_profile
 from services import ai_assistant_ask_service as ask_service
 from services import ai_practice_support_service as practice_support_service
 from services.local_time import current_local_date
+from platform_sdk import ai_speaking_assessment_application
+from werkzeug.datastructures import FileStorage, MultiDict
 
 
 def register_and_login(client, username='event-user', password='password123'):
@@ -148,7 +153,94 @@ def test_speaking_routes_record_learning_events_and_timeline_titles(client, app)
     assert any(item['title'] == '口语模拟 Part 2 education 已作答' for item in data['recent_activity'])
 
 
-def test_smart_stats_sync_records_listening_and_writing_events(client, app):
+def test_pronunciation_check_accepts_normalized_single_word_transcript(client):
+    register_and_login(client, username='pronunciation-normalize-user')
+
+    response = client.post('/api/ai/pronunciation-check', json={
+        'word': 'dynamic',
+        'transcript': 'Dynamic, please.',
+        'bookId': 'ielts_reading_premium',
+        'chapterId': '1',
+    })
+
+    assert response.status_code == 200
+    assert response.get_json()['passed'] is True
+
+
+def test_speaking_assessment_route_records_learning_event_and_profile_summary(client, app, monkeypatch):
+    register_and_login(client, username='speaking-assessment-user')
+
+    monkeypatch.setattr(
+        ai_speaking_assessment_application,
+        '_transcribe_audio_bytes',
+        lambda **kwargs: 'Dynamic planning needs coherent examples.',
+    )
+    monkeypatch.setattr(
+        ai_speaking_assessment_application,
+        '_run_speaking_assessment',
+        lambda **kwargs: ({
+            'raw_scores': {
+                'fluency': 62,
+                'lexical': 62,
+                'grammar': 62,
+                'pronunciation': 62,
+            },
+            'feedback': {
+                'summary': 'The answer is understandable with room to expand.',
+                'strengths': ['Relevant response'],
+                'priorities': ['Add more precise detail'],
+                'dimensionFeedback': {
+                    'fluency': 'Mostly steady with some hesitation.',
+                    'lexical': 'Adequate range for the task.',
+                    'grammar': 'Some control of sentence patterns.',
+                    'pronunciation': 'Generally understandable.',
+                },
+            },
+        }, 'qwen-audio-turbo'),
+    )
+    monkeypatch.setattr(
+        ai_speaking_assessment_application,
+        'record_ai_prompt_run_completion',
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        ai_speaking_assessment_application,
+        'record_learning_core_event',
+        lambda user_id, **kwargs: record_learning_event(user_id=user_id, **kwargs),
+    )
+
+    with app.app_context():
+        user = User.query.filter_by(username='speaking-assessment-user').one()
+        form = MultiDict([
+            ('part', '2'),
+            ('topic', 'education'),
+            ('promptText', 'Describe an education experience.'),
+            ('targetWords[]', 'dynamic'),
+            ('bookId', 'ielts_speaking'),
+            ('chapterId', '2'),
+            ('durationSeconds', '48'),
+        ])
+        files = MultiDict({
+            'audio': FileStorage(
+                stream=BytesIO(b'RIFFtest'),
+                filename='sample.wav',
+                content_type='audio/wav',
+            ),
+        })
+        response, status = ai_speaking_assessment_application.evaluate_speaking_response(user, form, files)
+        assert status == 200
+        assert response.get_json()['overallBand'] == 6.5
+
+        event = UserLearningEvent.query.filter_by(event_type='speaking_assessment_completed').one()
+        assert event.mode == 'speaking'
+        assert event.payload_dict()['overall_band'] == 6.5
+        assert event.payload_dict()['target_words'] == ['dynamic']
+        data = build_learner_profile(user.id, current_local_date().isoformat())
+        assert data['activity_summary']['speaking_assessments'] == 1
+        assert any(item['title'] == '口语估分 Part 2 education 6.5分' for item in data['recent_activity'])
+
+
+def test_smart_stats_sync_records_meaning_listening_and_writing_events(client, app):
     register_and_login(client, username='smart-event-user')
 
     res = client.post('/api/ai/smart-stats/sync', json={
@@ -160,7 +252,7 @@ def test_smart_stats_sync_records_listening_and_writing_events(client, app):
         'stats': [{
             'word': 'dynamic',
             'listening': {'correct': 2, 'wrong': 1},
-            'meaning': {'correct': 0, 'wrong': 0},
+            'meaning': {'correct': 1, 'wrong': 1},
             'dictation': {'correct': 1, 'wrong': 1},
         }],
     })
@@ -168,6 +260,12 @@ def test_smart_stats_sync_records_listening_and_writing_events(client, app):
     assert res.status_code == 200
 
     with app.app_context():
+        meaning_event = UserLearningEvent.query.filter_by(event_type='meaning_review').first()
+        assert meaning_event is not None
+        assert meaning_event.word == 'dynamic'
+        assert meaning_event.correct_count == 1
+        assert meaning_event.wrong_count == 1
+
         listening_event = UserLearningEvent.query.filter_by(event_type='listening_review').first()
         assert listening_event is not None
         assert listening_event.word == 'dynamic'
@@ -188,8 +286,10 @@ def test_smart_stats_sync_records_listening_and_writing_events(client, app):
     assert profile_res.status_code == 200
     data = profile_res.get_json()
 
+    assert data['activity_summary']['meaning_reviews'] == 1
     assert data['activity_summary']['listening_reviews'] == 1
     assert data['activity_summary']['writing_reviews'] == 1
+    assert any(item['title'] == '释义检查 dynamic 待强化' for item in data['recent_activity'])
     assert any(item['title'] == '听力检查 dynamic 通过' for item in data['recent_activity'])
     assert any(item['title'] == '书写检查 dynamic 待强化' for item in data['recent_activity'])
 

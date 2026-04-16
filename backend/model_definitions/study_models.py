@@ -26,6 +26,19 @@ class UserWrongWord(db.Model):
     def to_dict(self):
         dimension_states = _build_wrong_word_dimension_states(self)
         summary = _summarize_wrong_word_dimension_states(dimension_states)
+        if all(dimension_states[dimension]['pass_streak'] >= WRONG_WORD_PENDING_REVIEW_TARGET for dimension in WRONG_WORD_DIMENSIONS):
+            word_mastery_status = 'passed'
+        elif all(dimension_states[dimension]['pass_streak'] >= 1 for dimension in WRONG_WORD_DIMENSIONS):
+            word_mastery_status = 'in_review' if any(
+                dimension_states[dimension]['pass_streak'] > 1 for dimension in WRONG_WORD_DIMENSIONS
+            ) else 'unlocked'
+        else:
+            word_mastery_status = 'new'
+        pending_dimensions = [
+            dimension
+            for dimension in WRONG_WORD_DIMENSIONS
+            if dimension_states[dimension]['pass_streak'] < WRONG_WORD_PENDING_REVIEW_TARGET
+        ]
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -51,8 +64,13 @@ class UserWrongWord(db.Model):
             'meaning_pass_streak': dimension_states['meaning']['pass_streak'],
             'listening_pending': _is_wrong_word_dimension_pending(dimension_states['listening']),
             'listening_pass_streak': dimension_states['listening']['pass_streak'],
+            'speaking_wrong': dimension_states['speaking']['history_wrong'],
+            'speaking_pending': _is_wrong_word_dimension_pending(dimension_states['speaking']),
+            'speaking_pass_streak': dimension_states['speaking']['pass_streak'],
             'dictation_pending': _is_wrong_word_dimension_pending(dimension_states['dictation']),
             'dictation_pass_streak': dimension_states['dictation']['pass_streak'],
+            'word_mastery_status': word_mastery_status,
+            'pending_dimensions': pending_dimensions,
             'dimension_states': dimension_states,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

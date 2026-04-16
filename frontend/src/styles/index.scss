@@ -9,6 +9,7 @@
 /* Layout */
 @use './layout/app.scss';
 @use './layout/header-base.scss';
+@use './layout/header-help-modal.scss';
 @use './layout/header-selectors.scss';
 
 /* Components */
@@ -51,6 +52,9 @@
 /* Pages: AI Chat */
 @use './pages/ai-chat/index.scss' as *;
 
+/* Pages: Speaking */
+@use './pages/speaking/index.scss' as *;
+
 /* Pages: Vocab Test */
 @use './pages/vocab-test/index.scss' as *;
 
@@ -63,3 +67,6 @@
 /* Utils */
 @use './utils/utilities.scss';
 @use './utils/responsive.scss';
+
+/* Late mobile overrides */
+@use './pages/practice/practice-mobile-overrides.scss' as *;

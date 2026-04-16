@@ -3,7 +3,7 @@
     min-width: 0;
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     padding: 0;
     border: none;
     background: transparent;
@@ -16,7 +16,7 @@
 .wordlist-item-main:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring-strong);
-    border-radius: 14px;
+    border-radius: 16px;
 }
 
 .wordlist-item.is-detail-selected {
@@ -32,9 +32,9 @@
 .wordlist-detail-panel {
     position: fixed;
     top: 18px;
-    right: calc(min(420px, 100vw) + 20px);
-    width: min(760px, calc(100vw - min(420px, 100vw) - 40px));
-    max-width: calc(100vw - min(420px, 100vw) - 40px);
+    right: calc(var(--practice-wordlist-panel-width) + 20px);
+    width: min(760px, calc(100vw - var(--practice-wordlist-panel-width) - 40px));
+    max-width: calc(100vw - var(--practice-wordlist-panel-width) - 40px);
     height: calc(100dvh - 36px);
     max-height: calc(100dvh - 36px);
     z-index: var(--layer-global-search);
@@ -53,7 +53,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
-    padding: 18px 20px 14px;
+    padding: 20px 22px 16px;
     border-bottom: 1px solid color-mix(in srgb, var(--surface-border-strong) 85%, transparent);
     background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
 }
@@ -61,21 +61,13 @@
 .wordlist-detail-heading {
     display: flex;
     flex-direction: column;
-    gap: 6px;
     min-width: 0;
 }
 
 .wordlist-detail-eyebrow {
     color: var(--text-tertiary);
-    font-size: 12px;
+    font-size: 13px;
     letter-spacing: 0.04em;
-}
-
-.wordlist-detail-title {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 18px;
-    line-height: 1.2;
 }
 
 .wordlist-detail-actions {
@@ -86,11 +78,11 @@
 }
 
 .wordlist-detail-status {
-    padding: 4px 10px;
+    padding: 5px 10px;
     border-radius: 999px;
     background: var(--surface-hover);
     color: var(--accent);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -100,8 +92,8 @@
 }
 
 .wordlist-detail-close {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -120,14 +112,14 @@
 }
 
 .wordlist-detail-close svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
 .wordlist-detail-body {
     flex: 1;
     min-height: 0;
-    padding: 0 14px 14px 0;
+    padding: 0 16px 16px 0;
 }
 
 .wordlist-detail-body .global-word-search-detail {
@@ -136,7 +128,7 @@
     border: none;
     border-radius: 0;
     background: transparent;
-    padding: 14px 6px 14px 20px;
+    padding: 18px 8px 18px 22px;
 }
 
 @media (max-width: 1024px) {

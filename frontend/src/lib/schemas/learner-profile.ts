@@ -69,6 +69,7 @@ export const LearnerProfileActivitySummarySchema = z.object({
   assistant_tool_uses: z.number().int().default(0),
   pronunciation_checks: z.number().int().default(0),
   speaking_simulations: z.number().int().default(0),
+  speaking_assessments: z.number().int().default(0),
   chapter_updates: z.number().int(),
   books_touched: z.number().int(),
   chapters_touched: z.number().int(),

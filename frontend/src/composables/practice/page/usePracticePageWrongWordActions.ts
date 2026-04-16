@@ -9,6 +9,7 @@ import {
   WRONG_WORD_DIMENSION_LABELS,
 } from '../../../features/vocabulary/wrongWordsStore'
 import { apiFetch } from '../../../lib'
+import { submitWordMasteryAttempt } from '../../../lib/gamePractice'
 import { loadSmartStats } from '../../../lib/smartMode'
 import { updateErrorReviewRoundResults, type ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
 import { resolveWrongWordDimensionForPractice } from '../../../components/practice/page/practicePageHelpers'
@@ -101,6 +102,15 @@ export function usePracticePageWrongWordActions({
       && !isWrongWordPendingInDimension(nextWrongWord ?? {}, 'recognition')
 
     if (user && nextWrongWord) {
+      void submitWordMasteryAttempt({
+        bookId,
+        chapterId,
+        word: word.word,
+        dimension: 'recognition',
+        passed: record.status === 'known',
+        sourceMode: 'quickmemory',
+        wordPayload: word,
+      }).catch(() => {})
       apiFetch('/api/ai/wrong-words/sync', {
         method: 'POST',
         body: JSON.stringify({

@@ -55,6 +55,14 @@ def collocation_practice_response(current_user, args):
     return _lexical_tools.collocation_practice_response(current_user, args)
 
 
+def game_state_response(current_user, args):
+    return _speaking_and_plans.game_state_response(current_user, args)
+
+
+def game_attempt_response(current_user, body):
+    return _speaking_and_plans.game_attempt_response(current_user, body)
+
+
 def pronunciation_check_response(current_user, body):
     return _speaking_and_plans.pronunciation_check_response(current_user, body)
 
@@ -81,6 +89,8 @@ __all__ = [
     'correction_feedback_response',
     'correct_text',
     'correct_text_response',
+    'game_attempt_response',
+    'game_state_response',
     'greet_response',
     'ielts_example_response',
     'pronunciation_check_response',

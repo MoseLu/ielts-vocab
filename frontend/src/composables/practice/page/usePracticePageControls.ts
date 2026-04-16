@@ -2,7 +2,10 @@ import { useCallback, useEffect } from 'react'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import { apiFetch } from '../../../lib'
 import { playWordAudio as playWordUtil } from '../../../components/practice/utils'
-import { persistBookProgressSnapshot } from '../../../components/practice/progressStorage'
+import {
+  persistBookProgressSnapshot,
+  persistChapterProgressSnapshot,
+} from '../../../components/practice/progressStorage'
 import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
 import { persistWrongWordsProgress } from '../../../components/practice/page/practicePageHelpers'
 import type {
@@ -65,6 +68,7 @@ interface UsePracticePageControlsResult {
     wrong: number,
     options?: { advanceToNext?: boolean },
   ) => void
+  resetChapterProgress: () => Promise<void>
   startRecording: () => Promise<void>
   stopRecording: () => void
   playWord: (word: string) => void
@@ -112,7 +116,7 @@ export function usePracticePageControls({
   setReviewOffset,
   setErrorReviewRound,
 }: UsePracticePageControlsParams): UsePracticePageControlsResult {
-  const hasValidCurrentDay = Number.isInteger(currentDay) && currentDay > 0
+  const hasValidCurrentDay = Number.isInteger(currentDay ?? null) && (currentDay ?? 0) > 0
 
   const saveProgress = useCallback((
     correct: number,
@@ -162,19 +166,16 @@ export function usePracticePageControls({
     if (bookId && chapterId) {
       const answeredWords = Array.from(uniqueAnsweredRef.current)
       const wordsLearned = computeChapterWordsLearned(vocabulary.length)
-      const chapterProgress: Record<string, Record<string, unknown>> =
-        JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-      chapterProgress[`${bookId}_${chapterId}`] = {
+      const chapterProgress = {
         ...progressData,
         words_learned: wordsLearned,
         answered_words: answeredWords,
         queue_words: queueWords,
-        updatedAt: new Date().toISOString(),
       }
-      localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
+      persistChapterProgressSnapshot(bookId, chapterId, chapterProgress)
       apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
         method: 'POST',
-        body: JSON.stringify({ ...progressData, words_learned: wordsLearned, answered_words: answeredWords }),
+        body: JSON.stringify({ ...chapterProgress }),
       }).catch(() => {})
 
       if (mode && correct + wrong > 0) {
@@ -194,9 +195,10 @@ export function usePracticePageControls({
     if (!hasValidCurrentDay) {
       return
     }
+    const activeDay = currentDay
 
     const dayProgress: Record<string, Record<string, unknown>> = JSON.parse(localStorage.getItem('day_progress') || '{}')
-    dayProgress[String(currentDay)] = {
+    dayProgress[String(activeDay)] = {
       ...progressData,
       is_completed: correct + wrong >= vocabulary.length,
       queue_words: queueWords,
@@ -205,7 +207,7 @@ export function usePracticePageControls({
     localStorage.setItem('day_progress', JSON.stringify(dayProgress))
     apiFetch('/api/progress', {
       method: 'POST',
-      body: JSON.stringify({ day: currentDay, ...progressData }),
+      body: JSON.stringify({ day: activeDay, ...progressData }),
     }).catch(() => {})
   }, [
     bookId,
@@ -248,6 +250,34 @@ export function usePracticePageControls({
     showToast?.('请说出单词...', 'info')
     await startSpeechRecording()
   }, [showToast, speechConnected, startSpeechRecording])
+
+  const resetChapterProgress = useCallback(async () => {
+    if (!bookId || !chapterId) return
+
+    const queueWords = queue
+      .map(index => vocabulary[index]?.word)
+      .filter((word): word is string => Boolean(word))
+    const resetSnapshot = {
+      current_index: 0,
+      correct_count: 0,
+      wrong_count: 0,
+      is_completed: false,
+      words_learned: 0,
+      answered_words: [],
+      queue_words: queueWords,
+    }
+
+    persistChapterProgressSnapshot(bookId, chapterId, resetSnapshot)
+
+    try {
+      await apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
+        method: 'POST',
+        body: JSON.stringify(resetSnapshot),
+      })
+    } catch {
+      showToast?.('重置进度失败，请检查网络连接', 'error')
+    }
+  }, [bookId, chapterId, queue, showToast, vocabulary])
 
   const playWord = useCallback((word: string) => {
     playWordUtil(word, settings)
@@ -332,6 +362,7 @@ export function usePracticePageControls({
 
   return {
     saveProgress,
+    resetChapterProgress,
     startRecording,
     stopRecording: stopSpeechRecording,
     playWord,

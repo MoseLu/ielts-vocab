@@ -83,6 +83,7 @@ export const ProgressDataSchema = z.object({
   is_completed: z.boolean().optional(),
   words_learned: z.number().int().nonnegative().optional(),
   answered_words: z.array(z.string()).optional(),
+  queue_words: z.array(z.string()).optional(),
   updatedAt: z.string().datetime().optional(),
 })
 export type ProgressData = z.infer<typeof ProgressDataSchema>
@@ -93,6 +94,8 @@ export const ChapterProgressMapSchema = z.record(z.string(), z.object({
   wrong_count: z.number().optional(),
   is_completed: z.boolean().optional(),
   words_learned: z.number().optional(),
+  answered_words: z.array(z.string()).optional(),
+  queue_words: z.array(z.string()).optional(),
   updatedAt: z.string().optional(),
 }).passthrough())
 export type ChapterProgressMap = z.infer<typeof ChapterProgressMapSchema>

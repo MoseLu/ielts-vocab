@@ -482,4 +482,12 @@ describe('AIChatPanel', () => {
     })
     expect(getByText('语音输入不可用：麦克风权限被拒绝')).toBeInTheDocument()
   })
+
+  it('only applies bottom-nav offset classes when requested', () => {
+    useAIChatMock.mockReturnValue({ messages: [], isLoading: false, isGreeting: false, greetingDone: true, isOpen: false, contextLoaded: true, openPanel: vi.fn(), closePanel: vi.fn(), sendMessage: vi.fn() })
+    const { container, rerender } = render(<AIChatPanel avoidBottomNav />)
+    expect(container.querySelector('.ai-fab.ai-fab--nav-offset')).not.toBeNull()
+    rerender(<AIChatPanel />)
+    expect(container.querySelector('.ai-fab.ai-fab--nav-offset')).toBeNull()
+  })
 })

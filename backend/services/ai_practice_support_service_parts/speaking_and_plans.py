@@ -1,15 +1,38 @@
 import logging
+import re
 
 from flask import jsonify
 
+from platform_sdk.ai_word_image_application import enrich_game_state_with_word_image
 from platform_sdk.learning_repository_adapters import (
     learning_event_repository,
     learning_stats_repository,
 )
 from platform_sdk.learner_profile_builder_adapter import build_learner_profile
+from services.word_mastery_service import (
+    build_game_practice_state,
+    update_word_mastery_attempt,
+)
 from services.ai_route_support_service import _normalize_chapter_id, _normalize_word_list, _track_metric
 from services.ai_vocab_catalog_service import _get_global_vocab_pool
 from services.learning_events import record_learning_event
+
+
+_NON_WORD_PATTERN = re.compile(r"[^a-zA-Z'\-]+")
+
+
+def _normalize_pronunciation_text(value):
+    return _NON_WORD_PATTERN.sub(' ', str(value or '').lower()).strip()
+
+
+def _transcript_matches_word(word, transcript):
+    normalized_word = _normalize_pronunciation_text(word)
+    normalized_transcript = _normalize_pronunciation_text(transcript)
+    if not normalized_word or not normalized_transcript:
+        return False
+    if normalized_transcript == normalized_word:
+        return True
+    return f' {normalized_word} ' in f' {normalized_transcript} '
 
 
 def pronunciation_check_response(current_user, body):
@@ -22,7 +45,7 @@ def pronunciation_check_response(current_user, body):
     if not word:
         return jsonify({'error': 'word is required'}), 400
 
-    score = 85 if transcript.lower() == word.lower() else 65
+    score = 85 if _transcript_matches_word(word, transcript) else 65
     passed = score >= 80
     result = {
         'word': word,
@@ -55,6 +78,20 @@ def pronunciation_check_response(current_user, body):
     except Exception as exc:
         learning_event_repository.rollback()
         logging.warning("[AI] Failed to record pronunciation check: %s", exc)
+    try:
+        mastery_state = update_word_mastery_attempt(
+            current_user.id,
+            word=word,
+            dimension='speaking',
+            passed=passed,
+            source_mode='speaking',
+            book_id=book_id,
+            chapter_id=chapter_id,
+            word_payload={'word': word},
+        )
+        result['mastery_state'] = mastery_state
+    except Exception as exc:
+        logging.warning("[AI] Failed to sync speaking mastery: %s", exc)
     _track_metric(current_user.id, 'pronunciation_check_used', {'word': word, 'score': score})
     return jsonify(result), 200
 
@@ -125,7 +162,7 @@ def review_plan_response(current_user):
         plan = ['先补当前优先维度 10 分钟，再安排错词辨析和巩固复现。']
 
     response = {
-        'level': 'four-dimensional',
+        'level': 'five-dimensional',
         'wrong_words': learning_stats_repository.count_user_wrong_words(current_user.id),
         'mastery_rule': memory_system.get('mastery_rule'),
         'priority_dimension': memory_system.get('priority_dimension_label'),
@@ -147,11 +184,54 @@ def review_plan_response(current_user):
         current_user.id,
         'adaptive_plan_generated',
         {
-            'level': 'four-dimensional',
+            'level': 'five-dimensional',
             'priority_dimension': memory_system.get('priority_dimension'),
         },
     )
     return jsonify(response), 200
+
+
+def game_state_response(current_user, args):
+    payload = enrich_game_state_with_word_image(build_game_practice_state(
+        current_user.id,
+        book_id=str(args.get('bookId') or args.get('book_id') or '').strip() or None,
+        chapter_id=_normalize_chapter_id(args.get('chapterId', args.get('chapter_id'))),
+        day=args.get('day'),
+    ))
+    return jsonify(payload), 200
+
+
+def game_attempt_response(current_user, body):
+    payload = body or {}
+    word = str(payload.get('word') or '').strip()
+    dimension = str(payload.get('dimension') or '').strip().lower()
+    if not word:
+        return jsonify({'error': 'word is required'}), 400
+    if not dimension:
+        return jsonify({'error': 'dimension is required'}), 400
+
+    try:
+        state = update_word_mastery_attempt(
+            current_user.id,
+            word=word,
+            dimension=dimension,
+            passed=bool(payload.get('passed')),
+            source_mode=str(payload.get('sourceMode') or payload.get('source_mode') or '').strip() or 'game',
+            book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
+            chapter_id=_normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
+            day=payload.get('day'),
+            word_payload=payload.get('wordPayload') if isinstance(payload.get('wordPayload'), dict) else payload,
+        )
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    game_state = enrich_game_state_with_word_image(build_game_practice_state(
+        current_user.id,
+        book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
+        chapter_id=_normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
+        day=payload.get('day'),
+    ))
+    return jsonify({'state': state, 'game_state': game_state}), 200
 
 
 def vocab_assessment_response(current_user, args):

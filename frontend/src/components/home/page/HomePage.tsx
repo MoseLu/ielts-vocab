@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import ChapterModal from '../../books/dialogs/ChapterModal'
 import PlanModal from '../../books/dialogs/PlanModal'
-import { MyBookCard, StudyGuidancePanel, TodoTaskRow } from './HomePageSections'
+import { MyBookCard, TodoTaskRow } from './HomePageSections'
 import { PageReady, PageSkeleton } from '../../ui'
 import { useHomePage } from '../../../composables/home/page/useHomePage'
+import { clearPlanHelpFaqItems, setPlanHelpFaqItems } from '../../layout/navigation/helpContentRegistry'
 
 export default function HomePage() {
   const {
@@ -24,6 +26,14 @@ export default function HomePage() {
     closeChapterModal,
     closePlanModal,
   } = useHomePage()
+
+  useEffect(() => {
+    setPlanHelpFaqItems(studyGuidance.cards)
+
+    return () => {
+      clearPlanHelpFaqItems()
+    }
+  }, [studyGuidance])
 
   return (
     <div className="study-center-page">
@@ -56,10 +66,6 @@ export default function HomePage() {
                   <span>{bookCards.length > 0 ? '添加或切换词书' : '添加第一本词书'}</span>
                 </button>
               </div>
-            </section>
-
-            <section className="study-guidance-panel">
-              <StudyGuidancePanel guidance={studyGuidance} />
             </section>
 
             <section className="study-todo-panel">

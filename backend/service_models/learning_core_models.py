@@ -10,6 +10,7 @@ from models import (
     UserQuickMemoryRecord,
     UserSmartWordStat,
     UserStudySession,
+    UserWordMasteryState,
     UserWrongWord,
     db,
 )
@@ -27,6 +28,7 @@ __all__ = [
     'UserQuickMemoryRecord',
     'UserSmartWordStat',
     'UserStudySession',
+    'UserWordMasteryState',
     'UserWrongWord',
     'db',
 ]

@@ -75,3 +75,59 @@ def test_gateway_ai_stream_proxy_routes_to_ai_execution_service(monkeypatch):
     assert captured['path'] == '/api/ai/ask/stream'
     forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
     assert 'cookie' not in forwarded
+
+
+def test_gateway_ai_speaking_evaluate_proxy_preserves_multipart_uploads(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app, base_url='https://axiomaticworld.com')
+    captured: dict[str, object] = {}
+
+    async def fake_proxy_browser_request(**kwargs):
+        captured.update(kwargs)
+        return browser_routes.Response(
+            b'{"assessmentId":1,"overallBand":6.5}',
+            status_code=200,
+            media_type='application/json',
+        )
+
+    monkeypatch.setattr(browser_routes, 'proxy_browser_request', fake_proxy_browser_request)
+
+    response = client.post(
+        '/api/ai/speaking/evaluate',
+        data={'part': '2', 'topic': 'education'},
+        files={'audio': ('sample.wav', b'RIFFtest', 'audio/wav')},
+        headers={'Authorization': 'Bearer ai-token'},
+    )
+
+    assert response.status_code == 200
+    assert response.json()['assessmentId'] == 1
+    assert captured['service_name'] == 'ai-execution-service'
+    assert captured['path'] == '/api/ai/speaking/evaluate'
+    request = captured['request']
+    assert 'multipart/form-data' in request.headers['content-type']
+
+
+def test_gateway_ai_speaking_history_detail_proxy_routes_to_ai_execution_service(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app, base_url='https://axiomaticworld.com')
+    captured: dict[str, object] = {}
+
+    async def fake_proxy_browser_request(**kwargs):
+        captured.update(kwargs)
+        return browser_routes.Response(
+            b'{"assessmentId":11,"overallBand":6.5,"topic":"technology"}',
+            status_code=200,
+            media_type='application/json',
+        )
+
+    monkeypatch.setattr(browser_routes, 'proxy_browser_request', fake_proxy_browser_request)
+
+    response = client.get(
+        '/api/ai/speaking/history/11',
+        headers={'Authorization': 'Bearer ai-token'},
+    )
+
+    assert response.status_code == 200
+    assert response.json()['assessmentId'] == 11
+    assert captured['service_name'] == 'ai-execution-service'
+    assert captured['path'] == '/api/ai/speaking/history/11'

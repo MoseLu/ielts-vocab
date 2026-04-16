@@ -43,6 +43,162 @@ class AIPromptRun(db.Model):
         }
 
 
+class AIWordImageAsset(db.Model):
+    __tablename__ = 'ai_word_image_assets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    sense_key = db.Column(db.String(240), nullable=False, unique=True, index=True)
+    word = db.Column(db.String(120), nullable=False, index=True)
+    pos = db.Column(db.String(60), nullable=True)
+    definition = db.Column(db.Text, nullable=False)
+    example_text = db.Column(db.Text, nullable=True)
+    book_ids_json = db.Column(db.Text, nullable=True)
+    prompt_text = db.Column(db.Text, nullable=False)
+    prompt_version = db.Column(db.String(40), nullable=False)
+    style_version = db.Column(db.String(60), nullable=False, index=True)
+    provider = db.Column(db.String(40), nullable=False)
+    model = db.Column(db.String(120), nullable=False)
+    storage_provider = db.Column(db.String(40), nullable=True)
+    object_key = db.Column(db.String(320), nullable=True)
+    status = db.Column(db.String(20), nullable=False, index=True)
+    attempt_count = db.Column(db.Integer, default=0, nullable=False)
+    last_error = db.Column(db.Text, nullable=True)
+    last_requested_at = db.Column(db.DateTime, nullable=True, index=True)
+    generated_at = db.Column(db.DateTime, nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, onupdate=datetime.utcnow)
+
+    def book_ids(self) -> list[str]:
+        try:
+            value = json.loads(self.book_ids_json) if self.book_ids_json else []
+        except Exception:
+            return []
+        if not isinstance(value, list):
+            return []
+        items: list[str] = []
+        seen: set[str] = set()
+        for item in value:
+            text = str(item or '').strip()
+            if not text or text in seen:
+                continue
+            seen.add(text)
+            items.append(text)
+        return items
+
+    def set_book_ids(self, book_ids: list[str] | tuple[str, ...] | set[str] | None) -> None:
+        unique_ids: list[str] = []
+        seen: set[str] = set()
+        for book_id in book_ids or ():
+            text = str(book_id or '').strip()
+            if not text or text in seen:
+                continue
+            seen.add(text)
+            unique_ids.append(text)
+        self.book_ids_json = json.dumps(unique_ids, ensure_ascii=False) if unique_ids else None
+
+    def to_dict(self) -> dict:
+        return {
+            'id': self.id,
+            'sense_key': self.sense_key,
+            'word': self.word,
+            'pos': self.pos,
+            'definition': self.definition,
+            'example_text': self.example_text,
+            'book_ids': self.book_ids(),
+            'prompt_text': self.prompt_text,
+            'prompt_version': self.prompt_version,
+            'style_version': self.style_version,
+            'provider': self.provider,
+            'model': self.model,
+            'storage_provider': self.storage_provider,
+            'object_key': self.object_key,
+            'status': self.status,
+            'attempt_count': int(self.attempt_count or 0),
+            'last_error': self.last_error,
+            'last_requested_at': _iso_utc(self.last_requested_at),
+            'generated_at': _iso_utc(self.generated_at),
+            'created_at': _iso_utc(self.created_at),
+            'updated_at': _iso_utc(self.updated_at),
+        }
+
+
+class AISpeakingAssessment(db.Model):
+    __tablename__ = 'ai_speaking_assessments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    part = db.Column(db.Integer, nullable=False, index=True)
+    topic = db.Column(db.String(200), nullable=False)
+    prompt_text = db.Column(db.Text, nullable=False)
+    target_words_json = db.Column(db.Text, nullable=True)
+    transcript = db.Column(db.Text, nullable=False)
+    overall_band = db.Column(db.Float, nullable=False)
+    fluency_band = db.Column(db.Float, nullable=False)
+    lexical_band = db.Column(db.Float, nullable=False)
+    grammar_band = db.Column(db.Float, nullable=False)
+    pronunciation_band = db.Column(db.Float, nullable=False)
+    metrics_json = db.Column(db.Text, nullable=True)
+    feedback_json = db.Column(db.Text, nullable=True)
+    provider = db.Column(db.String(40), nullable=True)
+    model = db.Column(db.String(120), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    def target_words(self) -> list[str]:
+        try:
+            value = json.loads(self.target_words_json) if self.target_words_json else []
+        except Exception:
+            return []
+        return value if isinstance(value, list) else []
+
+    def set_target_words(self, words: list[str] | None) -> None:
+        self.target_words_json = json.dumps(words or [], ensure_ascii=False)
+
+    def metrics_dict(self) -> dict:
+        try:
+            value = json.loads(self.metrics_json) if self.metrics_json else {}
+        except Exception:
+            return {}
+        return value if isinstance(value, dict) else {}
+
+    def set_metrics(self, metrics: dict | None) -> None:
+        self.metrics_json = json.dumps(metrics or {}, ensure_ascii=False)
+
+    def feedback_dict(self) -> dict:
+        try:
+            value = json.loads(self.feedback_json) if self.feedback_json else {}
+        except Exception:
+            return {}
+        return value if isinstance(value, dict) else {}
+
+    def set_feedback(self, feedback: dict | None) -> None:
+        self.feedback_json = json.dumps(feedback or {}, ensure_ascii=False)
+
+    def dimension_bands(self) -> dict[str, float]:
+        return {
+            'fluency': float(self.fluency_band or 0),
+            'lexical': float(self.lexical_band or 0),
+            'grammar': float(self.grammar_band or 0),
+            'pronunciation': float(self.pronunciation_band or 0),
+        }
+
+    def to_dict(self):
+        return {
+            'assessment_id': self.id,
+            'part': self.part,
+            'topic': self.topic,
+            'prompt_text': self.prompt_text,
+            'target_words': self.target_words(),
+            'transcript': self.transcript,
+            'overall_band': float(self.overall_band or 0),
+            'dimension_bands': self.dimension_bands(),
+            'feedback': self.feedback_dict(),
+            'metrics': self.metrics_dict(),
+            'provider': self.provider,
+            'model': self.model,
+            'created_at': _iso_utc(self.created_at),
+        }
+
+
 class AIProjectedWrongWord(db.Model):
     __tablename__ = 'ai_projected_wrong_words'
 

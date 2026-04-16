@@ -109,9 +109,13 @@ vi.mock('../settings/SettingsPanel', () => ({
   default: () => null,
 }))
 
-vi.mock('../ui', () => ({
-  PageSkeleton: () => <div data-testid="page-skeleton" />,
-}))
+vi.mock('../ui', async () => {
+  const actual = await vi.importActual<typeof import('../ui')>('../ui')
+  return {
+    ...actual,
+    PageSkeleton: () => <div data-testid="page-skeleton" />,
+  }
+})
 
 vi.mock('./OptionsMode', () => ({
   default: ({
@@ -254,6 +258,59 @@ describe('PracticePage listening options loading', () => {
     expect(
       apiFetchMock.mock.calls.every(([url]) => !String(url).includes('/api/ai/similar-words')),
     ).toBe(true)
+  })
+
+  it('falls back to meaning mode for custom-book chapters without listening presets', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
+
+    const onModeChange = vi.fn()
+    const showToast = vi.fn()
+    const chapterWords = [
+      { word: 'ability', phonetic: '/əˈbɪləti/', pos: 'n.', definition: '能力' },
+      { word: 'agility', phonetic: '/əˈdʒɪləti/', pos: 'n.', definition: '敏捷' },
+      { word: 'facility', phonetic: '/fəˈsɪləti/', pos: 'n.', definition: '设施' },
+      { word: 'liability', phonetic: '/ˌlaɪəˈbɪləti/', pos: 'n.', definition: '责任' },
+    ]
+
+    fetchMock.mockImplementation((url: string) => Promise.resolve({
+      json: async () => (
+        url === '/api/books/custom_1/chapters'
+          ? {
+              chapters: [
+                { id: 'custom_1_1', title: '第1章' },
+                { id: 'custom_1_2', title: '第2章' },
+              ],
+            }
+          : { words: chapterWords }
+      ),
+    }))
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/books/custom_1/chapters/progress') return Promise.resolve({ chapter_progress: {} })
+      throw new Error(`Unexpected url: ${url}`)
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?book=custom_1&chapter=custom_1_2']}>
+        <PracticePage
+          currentDay={1}
+          mode="listening"
+          showToast={showToast}
+          onModeChange={onModeChange}
+          onDayChange={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveAttribute('data-mode', 'meaning')
+      expect(screen.getByTestId('options-state')).toHaveTextContent('loading:ability')
+    })
+
+    expect(onModeChange).toHaveBeenCalledWith('meaning')
+    expect(showToast).toHaveBeenCalledWith('自定义词书当前章节没有听音题素材，已自动切换到词义模式。', 'info')
+    expect(screen.queryByText('当前词表暂无可用听音辨析')).toBeNull()
   })
 
   it('does not interrupt auto-play when learner profile resolves after playback starts', async () => {

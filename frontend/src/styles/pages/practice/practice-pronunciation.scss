@@ -1,0 +1,220 @@
+.practice-pronunciation {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.practice-pronunciation-panel {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: min(320px, calc(100vw - 28px));
+    padding: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+    box-shadow: var(--shadow-overlay);
+    z-index: var(--layer-local-overlay);
+}
+
+.practice-pronunciation-panel__close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.practice-pronunciation-panel__close:hover,
+.practice-pronunciation-panel__close:focus-visible {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
+    outline: none;
+}
+
+.practice-pronunciation-panel__close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.practice-pronunciation-panel__eyebrow {
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.practice-pronunciation-panel__word-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.practice-pronunciation-panel__word {
+    font-size: 22px;
+    line-height: 1.1;
+    color: var(--text-primary);
+}
+
+.practice-pronunciation-panel__phonetic {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.practice-pronunciation-panel__status {
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.practice-pronunciation-panel__status--idle {
+    color: var(--text-secondary);
+}
+
+.practice-pronunciation-panel__status--recording {
+    color: var(--accent);
+}
+
+.practice-pronunciation-panel__status--success {
+    color: var(--success-strong);
+}
+
+.practice-pronunciation-panel__status--warning {
+    color: var(--warning);
+}
+
+.practice-pronunciation-panel__status--error {
+    color: var(--error);
+}
+
+.practice-pronunciation-panel__transcript {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 11px 12px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface-elevated));
+    border: 1px solid color-mix(in srgb, var(--accent) 10%, var(--border));
+}
+
+.practice-pronunciation-panel__transcript-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+}
+
+.practice-pronunciation-panel__transcript-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.practice-pronunciation-panel__result {
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+    background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+}
+
+.practice-pronunciation-panel__result.is-passed {
+    border-color: color-mix(in srgb, var(--success) 22%, var(--border));
+    background: color-mix(in srgb, var(--success-light) 82%, var(--surface-elevated));
+}
+
+.practice-pronunciation-panel__result.is-warning {
+    border-color: color-mix(in srgb, var(--warning) 24%, var(--border));
+    background: color-mix(in srgb, var(--warning-bg) 40%, var(--surface-elevated));
+}
+
+.practice-pronunciation-panel__result-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.practice-pronunciation-panel__score {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 14%, var(--surface-elevated));
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.practice-pronunciation-panel__result-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.practice-pronunciation-panel__feedback-list {
+    display: grid;
+    gap: 6px;
+    padding-left: 18px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.practice-pronunciation-panel__action {
+    width: 100%;
+    height: 40px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 78%, var(--surface-elevated)));
+    color: var(--text-inverse);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--glow-accent);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+}
+
+.practice-pronunciation-panel__action:hover:not(:disabled),
+.practice-pronunciation-panel__action:focus-visible:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--glow-accent-strong);
+    outline: none;
+}
+
+.practice-pronunciation-panel__action:disabled {
+    opacity: 0.68;
+    cursor: not-allowed;
+}
+
+.practice-pronunciation-panel__action.is-recording {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 88%, var(--surface-accent)), var(--accent-dark));
+}
+
+.practice-pronunciation-panel__hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+@media (max-width: 768px) {
+    .practice-pronunciation-panel {
+        right: -8px;
+        width: min(300px, calc(100vw - 20px));
+        padding: 12px;
+    }
+}

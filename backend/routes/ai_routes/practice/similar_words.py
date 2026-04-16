@@ -3,6 +3,7 @@ from services.ai_vocab_catalog_service import (
     _get_quick_memory_vocab_lookup,
     _resolve_quick_memory_vocab_entry,
 )
+from services.listening_confusables import rank_preset_listening_confusables
 
 
 # ── Similarity helpers ────────────────────────────────────────────────────────
@@ -151,7 +152,16 @@ def get_similar_words(current_user: User):
 
     preset_results: list[dict] = []
     seen_preset_family_keys: set[str] = set()
-    for preset_word in get_preset_listening_confusables(target_word, limit=n * 2):
+    ranked_preset_words = rank_preset_listening_confusables(
+        {
+            'word': target_word,
+            'phonetic': target_phonetic,
+            'pos': target_pos,
+            'definition': target_definition,
+        },
+        get_preset_listening_confusables(target_word, limit=n * 2),
+    )
+    for preset_word in ranked_preset_words:
         candidate_word = (preset_word.get('word') or '').strip()
         if not candidate_word or candidate_word.lower() == tw_lower:
             continue

@@ -38,6 +38,15 @@
     color: var(--accent);
 }
 
+.global-word-search-word-button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
 .global-word-search-phonetic {
     color: var(--text-tertiary);
     font-size: 15px;
@@ -115,6 +124,27 @@
 .global-word-search-memory-list {
     display: grid;
     gap: 6px;
+}
+
+.global-word-search-memory-note {
+    margin: 0;
+    color: var(--text-primary);
+    line-height: 1.7;
+}
+
+.global-word-search-memory-related {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px solid color-mix(in srgb, var(--border-subtle) 85%, transparent);
+}
+
+.global-word-search-memory-subtitle {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
 }
 
 .global-word-search-memory-item {

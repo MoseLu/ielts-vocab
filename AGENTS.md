@@ -184,6 +184,10 @@ powershell -ExecutionPolicy Bypass -File .\start-monolith-compat.ps1
 start-project.bat
 ```
 
+## Test Account
+- Dedicated test account for local/manual verification: username `admin`
+- Password: `admin123`
+
 ## Production SSH Access
 - Production SSH connection metadata is already tracked in `backend/.env`; when Codex needs remote access, read `PROD_SSH_HOST`, `PROD_SSH_USER`, and `PROD_SSH_KEY_PATH` or `PROD_SSH_PRIVATE_KEY_PATH` from that file first instead of assuming the local shell has no credentials.
 - Treat `backend/.env` as sensitive: use it to resolve the SSH host, username, and local key-file path, but never echo private-key contents or unrelated secrets back to the user.

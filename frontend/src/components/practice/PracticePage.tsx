@@ -1,25 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import type {
-  AppSettings,
-  Chapter,
-  LastState,
-  OptionItem,
-  PracticeMode,
-  PracticePageProps,
-  SmartDimension,
-  Word,
-  WordStatuses,
-} from './types'
+import type { AppSettings, Chapter, LastState, OptionItem, PracticeMode, PracticePageProps, ProgressData, SmartDimension, Word, WordStatuses } from './types'
 import { usePracticePageSession } from '../../composables/practice/page/usePracticePageSession'
 import { usePracticePageData } from '../../composables/practice/page/usePracticePageData'
 import { usePracticePageEffects } from '../../composables/practice/page/usePracticePageEffects'
 import { usePracticePageActions } from '../../composables/practice/page/usePracticePageActions'
 import { usePracticePageControls } from '../../composables/practice/page/usePracticePageControls'
 import { usePracticePageKeyboardShortcuts } from '../../composables/practice/page/usePracticePageKeyboardShortcuts'
+import { usePracticeResumePrompt } from '../../composables/practice/page/usePracticeResumePrompt'
+import { usePracticeSpellingFeedback } from '../../composables/practice/page/usePracticeSpellingFeedback'
 import { usePracticePageWordActions } from '../../composables/practice/page/usePracticePageWordActions'
+import { useCustomListeningFallback } from '../../composables/practice/page/useCustomListeningFallback'
 import { PracticePageContent } from './page/PracticePageContent'
 import type { ErrorReviewRoundResults } from './errorReviewSession'
+import { PracticeResumeOverlay } from './page/PracticeResumeOverlay'
 import { PracticePageCompletedState, PracticePageLoadingState } from './page/PracticePageStates'
 import { readUserId, type ReviewQueueContext, type ReviewQueueSummary } from './page/practicePageHelpers'
 export type { PracticeMode, Word, AppSettings, Chapter }
@@ -38,7 +32,7 @@ function PracticePage({
   const chapterId = searchParams.get('chapter')
   const errorMode = searchParams.get('mode') === 'errors'
   const reviewMode = searchParams.get('review') === 'due'
-  const practiceMode: PracticeMode = reviewMode ? 'quickmemory' : mode
+  const requestedPracticeMode: PracticeMode = reviewMode ? 'quickmemory' : (mode ?? 'smart')
   const practiceBookId = reviewMode ? (bookId ?? null) : bookId, practiceChapterId = reviewMode ? (chapterId ?? null) : chapterId
   const [vocabulary, setVocabulary] = useState<Word[]>([])
   const [queue, setQueue] = useState<number[]>([])
@@ -64,45 +58,42 @@ function PracticePage({
   const [bookChapters, setBookChapters] = useState<Chapter[]>([])
   const [currentChapterTitle, setCurrentChapterTitle] = useState('')
   const [wordStatuses, setWordStatuses] = useState<WordStatuses>({})
+  const [resumeProgress, setResumeProgress] = useState<ProgressData | null>(null)
   const [backendLearnerProfile, setBackendLearnerProfile] = useState<unknown>(null)
   const [reviewOffset, setReviewOffset] = useState(0)
   const [reviewSummary, setReviewSummary] = useState<ReviewQueueSummary | null>(null)
   const [reviewContext, setReviewContext] = useState<ReviewQueueContext | null>(null)
   const [reviewQueueError, setReviewQueueError] = useState<string | null>(null)
-  const [quickMemoryReviewQueueResolved, setQuickMemoryReviewQueueResolved] = useState(false)
-  const [noListeningPresets, setNoListeningPresets] = useState(false)
+  const [quickMemoryReviewQueueResolved, setQuickMemoryReviewQueueResolved] = useState(false), [noListeningPresets, setNoListeningPresets] = useState(false)
   const [errorReviewRound, setErrorReviewRound] = useState(1)
   const [smartDimension, setSmartDimension] = useState<SmartDimension>('meaning')
-  const vocabRef = useRef<Word[]>([])
-  const queueRef = useRef<number[]>([])
-  const errorProgressHydratedRef = useRef(false)
-  const errorRoundResultsRef = useRef<ErrorReviewRoundResults>({})
-  const spellingRetryTimerRef = useRef<number | null>(null)
-  const spellingFeedbackDismissTimerRef = useRef<number | null>(null)
+  const vocabRef = useRef<Word[]>([]), queueRef = useRef<number[]>([])
+  const errorProgressHydratedRef = useRef(false), errorRoundResultsRef = useRef<ErrorReviewRoundResults>({})
+  const resolvedPracticeBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId, resolvedPracticeChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
+  const { isCustomPracticeScope, practiceMode, handleCustomListeningFallback } = useCustomListeningFallback({
+    requestedPracticeMode, currentDay, bookId, chapterId, resolvedPracticeBookId, resolvedPracticeChapterId, reviewMode, errorMode, showToast, onModeChange,
+  })
+
   const {
     settings,
     radioQuickSettings,
     handleRadioSettingChange,
-    sessionStartRef,
-    sessionIdRef,
     sessionCorrectRef,
     sessionWrongRef,
     correctCountRef,
     wrongCountRef,
     completedSessionDurationSecondsRef,
-    sessionLoggedRef,
-    effectiveSessionModeRef,
-    sessionBookIdRef,
-    sessionChapterIdRef,
     wordsLearnedBaselineRef,
     uniqueAnsweredRef,
-    sessionUniqueWordsRef,
     beginSession,
+    prepareSessionForLearningAction,
+    completeCurrentSession,
     computeChapterWordsLearned,
     registerAnsweredWord,
     markRadioSessionInteraction,
     handleRadioProgressChange,
     syncCurrentSessionSnapshot,
+    isCurrentSessionActive,
   } = usePracticePageSession({
     mode: practiceMode,
     errorMode,
@@ -113,47 +104,21 @@ function PracticePage({
     wrongCount,
   })
 
-  const clearSpellingRetryTimer = useCallback(() => {
-    if (spellingRetryTimerRef.current === null) return
-    window.clearTimeout(spellingRetryTimerRef.current)
-    spellingRetryTimerRef.current = null
-  }, [])
-
-  const clearSpellingFeedbackDismissTimer = useCallback(() => {
-    if (spellingFeedbackDismissTimerRef.current === null) return
-    window.clearTimeout(spellingFeedbackDismissTimerRef.current)
-    spellingFeedbackDismissTimerRef.current = null
-  }, [])
-
-  const resolvedPracticeBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId
-  const resolvedPracticeChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
-
-  const handleSpellingInputChange = useCallback((value: string) => {
-    if (spellingFeedbackLocked && spellingResult === 'wrong' && !spellingFeedbackDismissing) {
-      clearSpellingRetryTimer()
-      clearSpellingFeedbackDismissTimer()
-      setSpellingFeedbackLocked(false)
-      setSpellingFeedbackDismissing(true)
-      spellingFeedbackDismissTimerRef.current = window.setTimeout(() => {
-        setSpellingResult(current => (current === 'wrong' ? null : current))
-        setSpellingFeedbackDismissing(false)
-        setSpellingFeedbackSnapshot(null)
-        spellingFeedbackDismissTimerRef.current = null
-      }, 120)
-    }
-    setSpellingInput(value)
-  }, [
-    clearSpellingFeedbackDismissTimer,
+  const {
     clearSpellingRetryTimer,
-    spellingFeedbackDismissing,
+    clearSpellingFeedbackDismissTimer,
+    handleSpellingInputChange,
+    spellingRetryTimerRef,
+  } = usePracticeSpellingFeedback({
     spellingFeedbackLocked,
+    spellingFeedbackDismissing,
     spellingResult,
-  ])
-
-  useEffect(() => () => {
-    clearSpellingRetryTimer()
-    clearSpellingFeedbackDismissTimer()
-  }, [clearSpellingFeedbackDismissTimer, clearSpellingRetryTimer])
+    setSpellingInput,
+    setSpellingResult,
+    setSpellingFeedbackLocked,
+    setSpellingFeedbackDismissing,
+    setSpellingFeedbackSnapshot,
+  })
 
   usePracticePageData({
     user,
@@ -166,6 +131,7 @@ function PracticePage({
     resolvedPracticeChapterId,
     reviewMode,
     errorMode,
+    isCustomPracticeScope,
     searchParams,
     settings,
     navigate,
@@ -183,6 +149,7 @@ function PracticePage({
     setBookChapters,
     setCurrentChapterTitle,
     setWordStatuses,
+    setResumeProgress,
     setBackendLearnerProfile,
     setReviewOffset,
     reviewOffset,
@@ -199,13 +166,9 @@ function PracticePage({
     errorProgressHydratedRef,
     errorRoundResultsRef,
     beginSession,
+    onListeningModeFallback: handleCustomListeningFallback,
   })
   const currentWord = vocabulary[queue[queueIndex]]
-
-  useEffect(() => {
-    const nextIndex = queue.length > 0 ? Math.min(queueIndex, queue.length - 1) : 0
-    setFavoriteQueueIndex(nextIndex)
-  }, [bookId, chapterId, errorMode, practiceMode, queue.length, queueIndex, reviewMode])
 
   const { favoriteActive, favoriteBusy, handleFavoriteToggle, wordListActionControls } = usePracticePageWordActions({
     userId, mode: practiceMode, vocabulary, queue, queueIndex, favoriteQueueIndex, currentWord,
@@ -230,8 +193,8 @@ function PracticePage({
     queue,
     queueIndex,
     currentWord,
-    settings,
-    backendLearnerProfile: backendLearnerProfile as never,
+    optionsCount: options.length,
+    settings, backendLearnerProfile: backendLearnerProfile as never,
     setOptions,
     setCorrectIndex,
     optionsWordKey,
@@ -256,6 +219,7 @@ function PracticePage({
 
   const {
     saveProgress,
+    resetChapterProgress,
     startRecording,
     stopRecording,
     playWord,
@@ -304,6 +268,46 @@ function PracticePage({
     setReviewOffset,
     setErrorReviewRound,
   })
+  const {
+    handlePracticeWordIndexChange,
+    handleResumeContinue,
+    handleResumeRestart,
+    resumeContinueLabel,
+    resumeMessage,
+    resumePromptOpen,
+  } = usePracticeResumePrompt({
+    practiceMode,
+    bookId,
+    chapterId,
+    reviewMode,
+    errorMode,
+    vocabulary,
+    queue,
+    queueIndex,
+    correctCount,
+    wrongCount,
+    saveProgress,
+    resumeProgress,
+    setResumeProgress,
+    resetChapterProgress,
+    wordsLearnedBaselineRef,
+    uniqueAnsweredRef,
+    setFavoriteQueueIndex,
+    setQueueIndex,
+    setCorrectCount,
+    setWrongCount,
+    setPreviousWord,
+    setLastState,
+    setWordStatuses,
+    setSelectedAnswer,
+    setWrongSelections,
+    setShowResult,
+    setSpellingInput,
+    setSpellingResult,
+    setSpellingFeedbackLocked,
+    setSpellingFeedbackDismissing,
+    setSpellingFeedbackSnapshot,
+  })
 
   const {
     saveWrongWord,
@@ -343,6 +347,8 @@ function PracticePage({
     saveProgress,
     clearSpellingRetryTimer,
     clearSpellingFeedbackDismissTimer,
+    prepareSessionForLearningAction,
+    completeCurrentSession,
     registerAnsweredWord,
     syncCurrentSessionSnapshot,
     lastState,
@@ -365,136 +371,122 @@ function PracticePage({
     spellingRetryTimerRef,
     sessionCorrectRef,
     sessionWrongRef,
-    sessionStartRef,
-    sessionIdRef,
-    sessionLoggedRef,
     completedSessionDurationSecondsRef,
-    sessionUniqueWordsRef,
-    sessionBookIdRef,
-    sessionChapterIdRef,
-    effectiveSessionModeRef,
     errorRoundResultsRef,
   })
 
   usePracticePageKeyboardShortcuts({
-    mode: practiceMode,
-    smartDimension,
-    choiceOptionsReady,
-    showWordList,
-    showPracticeSettings,
-    showResult,
-    spellingResult,
-    currentWord,
-    optionsLength: options.length,
-    settings,
-    playWord,
-    handleOptionSelect,
-    handleSkip,
-    handleGoBack: goBack,
-    handleFavoriteToggle: handleFavoriteToggle,
-    onExitHome: () => navigate('/plan'),
+    mode: practiceMode, smartDimension, choiceOptionsReady, showWordList, showPracticeSettings, showResult, spellingResult,
+    currentWord, optionsLength: options.length, settings, playWord, handleOptionSelect, handleSkip,
+    handleGoBack: goBack, handleFavoriteToggle, onExitHome: () => navigate('/plan'),
   })
 
-  if (!vocabulary.length) {
-    return (
-      <PracticePageLoadingState
-        navigate={navigate}
-        mode={practiceMode}
-        noListeningPresets={noListeningPresets}
-        reviewMode={reviewMode}
-        reviewQueueError={reviewQueueError}
-        quickMemoryReviewQueueResolved={quickMemoryReviewQueueResolved}
-      />
-    )
-  }
+  if (!vocabulary.length) return (
+    <PracticePageLoadingState
+      navigate={navigate}
+      mode={requestedPracticeMode === 'listening' && isCustomPracticeScope && noListeningPresets ? 'meaning' : practiceMode}
+      noListeningPresets={noListeningPresets}
+      reviewMode={reviewMode}
+      reviewQueueError={reviewQueueError}
+      quickMemoryReviewQueueResolved={quickMemoryReviewQueueResolved}
+    />
+  )
 
-  if (!currentWord) {
-    return (
-      <PracticePageCompletedState
-        navigate={navigate}
-        bookId={bookId}
-        chapterId={chapterId}
-        currentDay={currentDay}
-        correctCount={correctCount}
-        wrongCount={wrongCount}
-        errorMode={errorMode}
-        errorReviewRound={errorReviewRound}
-        reviewMode={reviewMode}
-        sessionDurationSeconds={completedSessionDurationSecondsRef.current}
-        reviewSummary={reviewSummary}
-        vocabulary={vocabulary}
-        errorRoundResults={errorRoundResultsRef.current}
-        onContinueReview={handleContinueReview}
-        onContinueErrorReview={handleContinueErrorReview}
-      />
-    )
-  }
+  if (!currentWord) return (
+    <PracticePageCompletedState
+      navigate={navigate}
+      bookId={bookId}
+      chapterId={chapterId}
+      currentDay={currentDay}
+      correctCount={correctCount}
+      wrongCount={wrongCount}
+      errorMode={errorMode}
+      errorReviewRound={errorReviewRound}
+      reviewMode={reviewMode}
+      sessionDurationSeconds={completedSessionDurationSecondsRef.current}
+      reviewSummary={reviewSummary}
+      vocabulary={vocabulary}
+      errorRoundResults={errorRoundResultsRef.current}
+      onContinueReview={handleContinueReview}
+      onContinueErrorReview={handleContinueErrorReview}
+    />
+  )
 
   return (
-    <PracticePageContent
-      mode={practiceMode}
-      currentDay={currentDay}
-      resolvedPracticeBookId={resolvedPracticeBookId}
-      resolvedPracticeChapterId={resolvedPracticeChapterId}
-      errorMode={errorMode}
-      vocabulary={vocabulary}
-      currentChapterTitle={currentChapterTitle}
-      bookChapters={bookChapters}
-      showWordList={showWordList}
-      setShowWordList={setShowWordList}
-      showPracticeSettings={showPracticeSettings}
-      setShowPracticeSettings={setShowPracticeSettings}
-      onModeChange={onModeChange}
-      onDayChange={onDayChange}
-      navigate={navigate}
-      buildChapterPath={buildChapterPath}
-      queue={queue}
-      queueIndex={queueIndex}
-      radioIndex={favoriteQueueIndex}
-      wordStatuses={wordStatuses}
-      settings={settings}
-      radioQuickSettings={radioQuickSettings}
-      handleRadioSettingChange={handleRadioSettingChange}
-      markRadioSessionInteraction={markRadioSessionInteraction}
-      handleRadioProgressChange={handleRadioProgressChange}
-      reviewMode={reviewMode}
-      reviewSummary={reviewSummary}
-      reviewOffset={reviewOffset}
-      saveWrongWord={saveWrongWord}
-      handleQuickMemoryRecordChange={handleQuickMemoryRecordChange}
-      currentWord={currentWord}
-      favoriteActive={favoriteActive}
-      favoriteBusy={favoriteBusy}
-      onFavoriteWordIndexChange={setFavoriteQueueIndex}
-      onFavoriteToggle={handleFavoriteToggle}
-      wordListActionControls={wordListActionControls}
-      spellingInput={spellingInput}
-      spellingResult={spellingResult}
-      speechConnected={speechConnected}
-      speechRecording={speechRecording}
-      previousWord={previousWord}
-      lastState={lastState}
-      spellingFeedbackLocked={spellingFeedbackLocked}
-      spellingFeedbackDismissing={spellingFeedbackDismissing}
-      spellingFeedbackSnapshot={spellingFeedbackSnapshot}
-      handleSpellingInputChange={handleSpellingInputChange}
-      handleSpellingSubmit={handleSpellingSubmit}
-      handleSkip={handleSkip}
-      goBack={goBack}
-      startRecording={startRecording}
-      stopRecording={stopRecording}
-      playWord={playWord}
-      smartDimension={smartDimension}
-      options={options}
-      choiceOptionsReady={choiceOptionsReady}
-      selectedAnswer={selectedAnswer}
-      wrongSelections={wrongSelections}
-      showResult={showResult}
-      correctIndex={correctIndex}
-      handleOptionSelect={handleOptionSelect}
-      handleMeaningRecallSubmit={handleMeaningRecallSubmit}
-      handleContinueReview={handleContinueReview}
-    />
+    <>
+      <PracticePageContent
+        mode={practiceMode}
+        currentDay={currentDay}
+        resolvedPracticeBookId={resolvedPracticeBookId}
+        resolvedPracticeChapterId={resolvedPracticeChapterId}
+        errorMode={errorMode}
+        vocabulary={vocabulary}
+        currentChapterTitle={currentChapterTitle}
+        bookChapters={bookChapters}
+        showWordList={showWordList}
+        setShowWordList={setShowWordList}
+        showPracticeSettings={showPracticeSettings}
+        setShowPracticeSettings={setShowPracticeSettings}
+        onModeChange={onModeChange}
+        onDayChange={onDayChange}
+        navigate={navigate}
+        buildChapterPath={buildChapterPath}
+        queue={queue}
+        queueIndex={queueIndex}
+        radioIndex={favoriteQueueIndex}
+        wordStatuses={wordStatuses}
+        settings={settings}
+        radioQuickSettings={radioQuickSettings}
+        handleRadioSettingChange={handleRadioSettingChange}
+        markRadioSessionInteraction={markRadioSessionInteraction}
+        handleRadioProgressChange={handleRadioProgressChange}
+        isCurrentSessionActive={isCurrentSessionActive}
+        reviewMode={reviewMode}
+        reviewSummary={reviewSummary}
+        reviewOffset={reviewOffset}
+        saveWrongWord={saveWrongWord}
+        handleQuickMemoryRecordChange={handleQuickMemoryRecordChange}
+        currentWord={currentWord}
+        favoriteActive={favoriteActive}
+        favoriteBusy={favoriteBusy}
+        onFavoriteWordIndexChange={handlePracticeWordIndexChange}
+        onFavoriteToggle={handleFavoriteToggle}
+        wordListActionControls={wordListActionControls}
+        spellingInput={spellingInput}
+        spellingResult={spellingResult}
+        speechConnected={speechConnected}
+        speechRecording={speechRecording}
+        previousWord={previousWord}
+        lastState={lastState}
+        spellingFeedbackLocked={spellingFeedbackLocked}
+        spellingFeedbackDismissing={spellingFeedbackDismissing}
+        spellingFeedbackSnapshot={spellingFeedbackSnapshot}
+        handleSpellingInputChange={handleSpellingInputChange}
+        handleSpellingSubmit={handleSpellingSubmit}
+        handleSkip={handleSkip}
+        goBack={goBack}
+        startRecording={startRecording}
+        stopRecording={stopRecording}
+        playWord={playWord}
+        smartDimension={smartDimension}
+        options={options}
+        choiceOptionsReady={choiceOptionsReady}
+        selectedAnswer={selectedAnswer}
+        wrongSelections={wrongSelections}
+        showResult={showResult}
+        correctIndex={correctIndex}
+        handleOptionSelect={handleOptionSelect}
+        handleMeaningRecallSubmit={handleMeaningRecallSubmit}
+        handleContinueReview={handleContinueReview}
+      />
+      <PracticeResumeOverlay
+        isOpen={resumePromptOpen}
+        message={resumeMessage}
+        continueLabel={resumeContinueLabel}
+        onContinue={handleResumeContinue}
+        onRestart={handleResumeRestart}
+      />
+    </>
   )
 }
 export default PracticePage

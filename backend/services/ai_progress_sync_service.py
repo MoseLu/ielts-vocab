@@ -168,6 +168,8 @@ def sync_smart_stats_response(user_id: int, body: dict | None) -> tuple[dict, in
         existing = ai_smart_word_stat_repository.get_user_smart_word_stat(user_id, word)
         previous_listening_correct = int(existing.listening_correct or 0) if existing else 0
         previous_listening_wrong = int(existing.listening_wrong or 0) if existing else 0
+        previous_meaning_correct = int(existing.meaning_correct or 0) if existing else 0
+        previous_meaning_wrong = int(existing.meaning_wrong or 0) if existing else 0
         previous_dictation_correct = int(existing.dictation_correct or 0) if existing else 0
         previous_dictation_wrong = int(existing.dictation_wrong or 0) if existing else 0
 
@@ -180,12 +182,12 @@ def sync_smart_stats_response(user_id: int, body: dict | None) -> tuple[dict, in
             previous_listening_wrong,
         )
         meaning_correct = _safe_non_negative_int(
-            meaning.get('correct', int(existing.meaning_correct or 0) if existing else 0),
-            int(existing.meaning_correct or 0) if existing else 0,
+            meaning.get('correct', previous_meaning_correct),
+            previous_meaning_correct,
         )
         meaning_wrong = _safe_non_negative_int(
-            meaning.get('wrong', int(existing.meaning_wrong or 0) if existing else 0),
-            int(existing.meaning_wrong or 0) if existing else 0,
+            meaning.get('wrong', previous_meaning_wrong),
+            previous_meaning_wrong,
         )
         dictation_correct = _safe_non_negative_int(
             dictation.get('correct', previous_dictation_correct),
@@ -227,6 +229,19 @@ def sync_smart_stats_response(user_id: int, body: dict | None) -> tuple[dict, in
             previous_wrong=previous_listening_wrong,
             current_correct=listening_correct,
             current_wrong=listening_wrong,
+        )
+        record_smart_dimension_delta_event(
+            user_id=user_id,
+            event_type='meaning_review',
+            mode='meaning',
+            word=word,
+            book_id=record_book_id,
+            chapter_id=record_chapter_id,
+            source_mode=source_mode,
+            previous_correct=previous_meaning_correct,
+            previous_wrong=previous_meaning_wrong,
+            current_correct=meaning_correct,
+            current_wrong=meaning_wrong,
         )
         record_smart_dimension_delta_event(
             user_id=user_id,

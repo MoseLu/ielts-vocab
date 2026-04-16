@@ -2,6 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
+  buildPresetListeningOptions,
   shuffleArray,
   countPhoneticSyllables,
   syllabifyWord,
@@ -241,6 +242,28 @@ describe('generateOptions', () => {
 
     expect(kilometerVariants).toHaveLength(1)
     expect(options).toHaveLength(4)
+  })
+
+  it('reorders preset listening distractors to favor closer confusables', () => {
+    const currentWord: import('./types').Word = {
+      word: 'power',
+      phonetic: '/ˈpaʊə(r)/',
+      definition: '力量；电源；权力；强国；',
+      pos: 'n.',
+    }
+
+    const { options, correctIndex } = buildPresetListeningOptions(currentWord, [
+      { word: 'powerful', phonetic: '/ˈpaʊəfəl/', pos: 'adj.', definition: '强大的' },
+      { word: 'poker', phonetic: '/ˈpəʊkə(r)/', pos: 'n.', definition: '扑克' },
+      { word: 'powder', phonetic: '/ˈpaʊdə(r)/', pos: 'n.', definition: '粉末' },
+      { word: 'tower', phonetic: '/ˈtaʊə(r)/', pos: 'n.', definition: '塔' },
+    ])
+
+    const distractorWords = options
+      .filter((_, index) => index !== correctIndex)
+      .map(option => option.word)
+
+    expect(distractorWords).toEqual(['powder', 'tower', 'poker'])
   })
 })
 

@@ -44,6 +44,20 @@ describe('DictationMode', () => {
     vi.clearAllMocks()
   })
 
+  it('groups dictation controls, prompt panel and progress inside one card', () => {
+    const { container } = render(<DictationMode {...baseProps} />)
+
+    expect(container.querySelector('.dictation-card')).not.toBeNull()
+    expect(container.querySelector('.dictation-card-header__center .dictation-submode-toggle')).not.toBeNull()
+    expect(container.querySelector('.dictation-card-header__side--action')).not.toBeNull()
+    expect(container.querySelector('.dictation-stage')).not.toBeNull()
+    expect(container.querySelector('.dictation-content-card')).not.toBeNull()
+    expect(container.querySelector('.dictation-progress')).not.toBeNull()
+    expect(container.querySelector('.practice-bottom-bar')).toBeNull()
+    expect(screen.getByText('练习进度')).toBeInTheDocument()
+    expect(screen.getByText('2/10')).toBeInTheDocument()
+  })
+
   it('auto-plays example audio when example mode is active', async () => {
     render(<DictationMode {...baseProps} />)
 
@@ -56,6 +70,20 @@ describe('DictationMode', () => {
         baseProps.settings,
       )
     })
+  })
+
+  it('replays example audio when the example sentence is tapped', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<DictationMode {...baseProps} />)
+
+    await user.click(container.querySelector('.dictation-example-sentence') as HTMLButtonElement)
+
+    expect(playExampleAudioMock).toHaveBeenCalledWith(
+      'Pay attention to the main idea.',
+      'attention',
+      baseProps.settings,
+    )
+    expect(screen.getByText('已手动播放 1/3 次，再点 2 次显示答案')).toBeInTheDocument()
   })
 
   it('plays word audio after switching to word dictation mode', async () => {

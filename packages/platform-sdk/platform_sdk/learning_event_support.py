@@ -8,6 +8,7 @@ from models import UserLearningEvent
 
 MODE_LABELS = {
     'smart': '智能练习',
+    'game': '五维闯关',
     'listening': '听音选义',
     'meaning': '默写模式',
     'dictation': '听写',
@@ -32,12 +33,14 @@ SOURCE_LABELS = {
 EVENT_LABELS = {
     'study_session': '练习会话',
     'quick_memory_review': '速记复习',
+    'meaning_review': '释义检查',
     'listening_review': '听力检查',
     'writing_review': '书写检查',
     'wrong_word_recorded': '新增错词',
     'assistant_question': '助手问答',
     'pronunciation_check': '发音检查',
     'speaking_simulation': '口语模拟',
+    'speaking_assessment_completed': '口语估分',
     'chapter_progress_updated': '章节进度更新',
     'chapter_mode_progress_updated': '章节模式进度更新',
     'book_progress_updated': '词书进度更新',
@@ -193,9 +196,13 @@ def _format_event_title(event: UserLearningEvent, payload: dict) -> str:
     if event.event_type == 'vocab_assessment_generated':
         count = int(payload.get('count') or 0)
         return f"生成词汇测评（{count} 题）" if count > 0 else event_label
-    if event.event_type in {'listening_review', 'writing_review'}:
+    if event.event_type in {'meaning_review', 'listening_review', 'writing_review'}:
         verdict = '通过' if payload.get('passed') or (event.correct_count or 0) > (event.wrong_count or 0) else '待强化'
-        prefix = '听力检查' if event.event_type == 'listening_review' else '书写检查'
+        prefix = {
+            'meaning_review': '释义检查',
+            'listening_review': '听力检查',
+            'writing_review': '书写检查',
+        }.get(event.event_type, EVENT_LABELS.get(event.event_type, event.event_type))
         if event.word:
             return f"{prefix} {event.word} {verdict}"
         return f"{prefix} {verdict}"
@@ -214,6 +221,18 @@ def _format_event_title(event: UserLearningEvent, payload: dict) -> str:
         if topic:
             bits.append(topic)
         bits.append(suffix)
+        return ' '.join(bits)
+    if event.event_type == 'speaking_assessment_completed':
+        part = payload.get('part')
+        topic = str(payload.get('topic') or '').strip()
+        overall_band = payload.get('overall_band')
+        bits = ['口语估分']
+        if part:
+            bits.append(f"Part {part}")
+        if topic:
+            bits.append(topic)
+        if isinstance(overall_band, (int, float)):
+            bits.append(f'{float(overall_band):.1f}分')
         return ' '.join(bits)
     if event.event_type == 'chapter_progress_updated':
         return f"{chapter_label} 学习进度更新".strip()
@@ -295,6 +314,7 @@ def build_learning_activity_timeline(
             'total_events': len(rows),
             'study_sessions': event_counts.get('study_session', 0),
             'quick_memory_reviews': event_counts.get('quick_memory_review', 0),
+            'meaning_reviews': event_counts.get('meaning_review', 0),
             'listening_reviews': event_counts.get('listening_review', 0),
             'writing_reviews': event_counts.get('writing_review', 0),
             'wrong_word_records': event_counts.get('wrong_word_recorded', 0),
@@ -306,6 +326,7 @@ def build_learning_activity_timeline(
             ),
             'pronunciation_checks': event_counts.get('pronunciation_check', 0),
             'speaking_simulations': event_counts.get('speaking_simulation', 0),
+            'speaking_assessments': event_counts.get('speaking_assessment_completed', 0),
             'chapter_updates': (
                 event_counts.get('chapter_progress_updated', 0)
                 + event_counts.get('chapter_mode_progress_updated', 0)

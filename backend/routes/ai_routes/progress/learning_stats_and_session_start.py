@@ -1,4 +1,5 @@
 from services.books_registry_service import get_vocab_book_title_map
+from services.ai_text_support import parse_client_epoch_ms
 from services.learning_stats_service import build_learning_stats_payload
 from services.study_sessions import normalize_chapter_id, start_or_reuse_study_session
 
@@ -42,5 +43,7 @@ def start_session(current_user: User):
         book_id=body.get('bookId') or None,
         chapter_id=normalize_chapter_id(body.get('chapterId')),
         reuse_window_seconds=_PENDING_SESSION_REUSE_WINDOW_SECONDS,
+        started_at=parse_client_epoch_ms(body.get('startedAt')),
+        force_new_session=bool(body.get('forceNewSession')),
     )
     return jsonify({'sessionId': session.id}), 201

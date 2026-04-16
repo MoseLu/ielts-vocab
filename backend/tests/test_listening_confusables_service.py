@@ -117,3 +117,51 @@ def test_get_preset_listening_confusables_filters_out_non_ielts_candidates(monke
     result = listening_service.get_preset_listening_confusables('quit', limit=4)
 
     assert [candidate['word'] for candidate in result] == ['quiet', 'quits']
+
+
+def test_rank_preset_listening_confusables_prioritizes_closer_distractors():
+    ranked = listening_service.rank_preset_listening_confusables(
+        {
+            'word': 'power',
+            'phonetic': '/ˈpaʊə(r)/',
+            'pos': 'n.',
+            'definition': '力量；电源；权力；强国；',
+        },
+        [
+            {'word': 'powerful', 'phonetic': '/ˈpaʊəfəl/', 'pos': 'adj.', 'definition': '强大的'},
+            {'word': 'poker', 'phonetic': '/ˈpəʊkə(r)/', 'pos': 'n.', 'definition': '扑克'},
+            {'word': 'powder', 'phonetic': '/ˈpaʊdə(r)/', 'pos': 'n.', 'definition': '粉末'},
+            {'word': 'tower', 'phonetic': '/ˈtaʊə(r)/', 'pos': 'n.', 'definition': '塔'},
+        ],
+    )
+
+    assert [candidate['word'] for candidate in ranked] == [
+        'powder',
+        'tower',
+        'poker',
+        'powerful',
+    ]
+
+
+def test_attach_preset_listening_confusables_ranks_before_limit(monkeypatch):
+    monkeypatch.setattr(
+        listening_service,
+        'get_preset_listening_confusables',
+        lambda word, limit=None: [
+            {'word': 'powerful', 'phonetic': '/ˈpaʊəfəl/', 'pos': 'adj.', 'definition': '强大的'},
+            {'word': 'poker', 'phonetic': '/ˈpəʊkə(r)/', 'pos': 'n.', 'definition': '扑克'},
+            {'word': 'powder', 'phonetic': '/ˈpaʊdə(r)/', 'pos': 'n.', 'definition': '粉末'},
+            {'word': 'tower', 'phonetic': '/ˈtaʊə(r)/', 'pos': 'n.', 'definition': '塔'},
+        ],
+    )
+
+    entry = listening_service.attach_preset_listening_confusables(
+        {'word': 'power', 'phonetic': '/ˈpaʊə(r)/', 'pos': 'n.', 'definition': '力量；电源；权力；强国；'},
+        limit=3,
+    )
+
+    assert [candidate['word'] for candidate in entry['listening_confusables']] == [
+        'powder',
+        'tower',
+        'poker',
+    ]

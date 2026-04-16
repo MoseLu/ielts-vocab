@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const PracticeModeSchema = z.enum([
+  'game',
   'smart',
   'listening',
   'meaning',

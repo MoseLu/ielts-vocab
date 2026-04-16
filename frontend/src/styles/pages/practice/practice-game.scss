@@ -1,0 +1,424 @@
+.practice-game-mode {
+  width: min(980px, calc(100vw - 96px));
+  margin: 48px auto 72px;
+  display: grid;
+  gap: 24px;
+  color: var(--text-primary);
+}
+
+.practice-game-mode--loading,
+.practice-game-mode--error,
+.practice-game-mode--done {
+  width: min(760px, calc(100vw - 96px));
+  margin: 120px auto;
+  padding: 28px 32px;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 24%, transparent);
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  box-shadow: var(--shadow-floating);
+  text-align: center;
+}
+
+.practice-game-mode__summary,
+.practice-game-mode__stage-card,
+.practice-game-mode__queue {
+  border: 1px solid color-mix(in srgb, var(--border-strong) 22%, transparent);
+  border-radius: 28px;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--surface-elevated) 96%, transparent),
+      color-mix(in srgb, var(--surface-subtle) 96%, transparent)
+    );
+  box-shadow: var(--shadow-floating);
+}
+
+.practice-game-mode__summary {
+  padding: 28px 32px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.practice-game-mode__summary h2 {
+  margin: 6px 0 8px;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1;
+}
+
+.practice-game-mode__summary p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.practice-game-mode__eyebrow {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.practice-game-mode__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.practice-game-mode__meta span,
+.practice-game-mode__queue-item,
+.practice-game-mode__dimension-chip {
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-muted) 90%, transparent);
+  color: var(--text-secondary);
+}
+
+.practice-game-mode__stage-card {
+  padding: 28px 32px;
+  display: grid;
+  gap: 24px;
+}
+
+.practice-game-mode__stage-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.practice-game-mode__stage-content {
+  display: grid;
+  gap: 24px;
+}
+
+.practice-game-mode__stage-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.practice-game-mode__image-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.practice-game-mode__image-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.practice-game-mode__image-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.practice-game-mode__image-status {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-muted) 92%, transparent);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.practice-game-mode__image-status.is-ready {
+  background: color-mix(in srgb, var(--success-bg) 92%, transparent);
+  color: var(--success-strong);
+}
+
+.practice-game-mode__image-status.is-generating,
+.practice-game-mode__image-status.is-queued {
+  background: color-mix(in srgb, var(--accent-light) 92%, transparent);
+  color: var(--accent-dark);
+}
+
+.practice-game-mode__image-status.is-failed {
+  background: color-mix(in srgb, var(--surface-subtle) 95%, transparent);
+  color: var(--text-secondary);
+}
+
+.practice-game-mode__image-frame {
+  aspect-ratio: 1;
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 20%, transparent);
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent-light) 56%, transparent), transparent 58%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-elevated) 95%, transparent), color-mix(in srgb, var(--surface-subtle) 94%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-elevated) 72%, transparent);
+}
+
+.practice-game-mode__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.practice-game-mode__image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--surface-subtle) 96%, transparent) 0%,
+      color-mix(in srgb, var(--accent-light) 82%, transparent) 48%,
+      color-mix(in srgb, var(--surface-subtle) 96%, transparent) 100%
+    );
+}
+
+.practice-game-mode__image-frame.is-generating .practice-game-mode__image-placeholder,
+.practice-game-mode__image-frame.is-queued .practice-game-mode__image-placeholder {
+  animation: practice-game-image-pulse 1.8s ease-in-out infinite;
+}
+
+.practice-game-mode__image-token {
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--surface-elevated) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 18%, transparent);
+  box-shadow: var(--shadow-floating);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.practice-game-mode__image-copy {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.practice-game-mode__image-caption {
+  display: grid;
+  gap: 6px;
+}
+
+.practice-game-mode__image-caption strong {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.practice-game-mode__image-caption span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.practice-game-mode__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.practice-game-mode__stage-label {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.practice-game-mode__stage-status {
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+
+.practice-game-mode__dimension-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.practice-game-mode__dimension-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid transparent;
+}
+
+.practice-game-mode__dimension-chip.is-active {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent-light) 95%, transparent);
+  color: var(--accent-dark);
+}
+
+.practice-game-mode__dimension-chip.is-passed {
+  background: color-mix(in srgb, var(--success-bg) 92%, transparent);
+  color: var(--success-strong);
+}
+
+.practice-game-mode__task {
+  display: grid;
+  gap: 18px;
+}
+
+.practice-game-mode__prompt {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.practice-game-mode__recognition,
+.practice-game-mode__definition {
+  padding: 24px 28px;
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface-subtle) 96%, transparent);
+  font-size: clamp(24px, 3vw, 38px);
+}
+
+.practice-game-mode__button-row,
+.practice-game-mode__input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.practice-game-mode__button-row button,
+.practice-game-mode__input-row button,
+.practice-game-mode__option {
+  border: 1px solid color-mix(in srgb, var(--border-strong) 30%, transparent);
+  border-radius: 18px;
+  background: var(--surface-elevated);
+  color: inherit;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.practice-game-mode__button-row button,
+.practice-game-mode__input-row button {
+  min-width: 120px;
+  padding: 14px 18px;
+  font-weight: 600;
+}
+
+.practice-game-mode__button-row .is-secondary {
+  background: color-mix(in srgb, var(--surface-subtle) 96%, transparent);
+}
+
+.practice-game-mode__input-row input {
+  flex: 1 1 280px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 26%, transparent);
+  border-radius: 18px;
+  background: var(--surface-elevated);
+  font-size: 16px;
+}
+
+.practice-game-mode__option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.practice-game-mode__option {
+  min-height: 96px;
+  padding: 18px;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+}
+
+.practice-game-mode__option small {
+  color: var(--text-secondary);
+}
+
+.practice-game-mode__button-row button:hover,
+.practice-game-mode__input-row button:hover,
+.practice-game-mode__option:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  box-shadow: var(--glow-accent);
+}
+
+.practice-game-mode__feedback {
+  color: var(--success-strong);
+}
+
+.practice-game-mode__error {
+  color: var(--error-strong);
+}
+
+.practice-game-mode__queue {
+  padding: 24px 28px;
+  display: grid;
+  gap: 16px;
+}
+
+.practice-game-mode__queue-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.practice-game-mode__queue-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.practice-game-mode__queue-item {
+  display: grid;
+  gap: 4px;
+}
+
+.practice-game-mode__queue-empty {
+  color: var(--text-secondary);
+}
+
+@keyframes practice-game-image-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+
+  50% {
+    transform: scale(1.015);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 960px) {
+  .practice-game-mode {
+    width: min(100vw - 32px, 100%);
+    margin: 32px auto 56px;
+  }
+
+  .practice-game-mode__summary,
+  .practice-game-mode__stage-card,
+  .practice-game-mode__queue {
+    padding: 22px 20px;
+  }
+
+  .practice-game-mode__summary,
+  .practice-game-mode__stage-header {
+    flex-direction: column;
+  }
+
+  .practice-game-mode__stage-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-game-mode__image-panel {
+    max-width: 420px;
+  }
+
+  .practice-game-mode__meta {
+    justify-content: flex-start;
+  }
+
+  .practice-game-mode__dimension-row,
+  .practice-game-mode__option-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -6,6 +6,7 @@ import {
 } from '../../../constants/practiceModes'
 import { useResponsiveChapterSkeletonCount } from '../../../hooks/useResponsiveSkeletonCount'
 import { apiFetch, buildApiUrl } from '../../../lib'
+import type { BookEntryMode } from '../../../lib'
 import { Skeleton } from '../../ui'
 import { Scrollbar } from '../../ui/Scrollbar'
 import ConfusableCustomGroupsModal, {
@@ -58,7 +59,7 @@ interface ChapterModalProps {
   book: Book
   progress: Progress | null
   onClose: () => void
-  onSelectChapter: (chapter: Chapter, startIndex: number) => void
+  onSelectChapter: (chapter: Chapter, startIndex: number, entryMode?: BookEntryMode) => void
   onFallback?: () => void
 }
 
@@ -77,6 +78,17 @@ interface ChapterModalSkeletonProps {
 type RenderUnit =
   | { kind: 'flat'; chapters: Chapter[] }
   | { kind: 'section'; label: string; wordCount: number; groupCount: number; chapters: Chapter[] }
+
+const ENTRY_MODE_META: Record<BookEntryMode, { title: string; description: string }> = {
+  practice: {
+    title: '常规练习',
+    description: '进入单项训练模式，按你选择的练习方式推进。',
+  },
+  game: {
+    title: '游戏闯关',
+    description: '进入独立的五维闯关入口，在同一词上串联认义听说写。',
+  },
+}
 
 function findPartSeparatorIndex(title: string): number {
   const match = title.match(/\s+[·•]\s+Part\s+/i)
@@ -180,6 +192,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCustomModal, setShowCustomModal] = useState(false)
+  const [entryMode, setEntryMode] = useState<BookEntryMode>('practice')
   const { bodyRef, count: skeletonCount } = useResponsiveChapterSkeletonCount({
     rowMinHeight: 156,
     gap: 10,
@@ -188,6 +201,8 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
 
   const currentIndex = progress?.current_index || 0
   const isConfusableBook = String(book.id) === 'ielts_confusable_match'
+  const supportsGameEntry = !isConfusableBook && book.practice_mode !== 'match'
+  const activeEntryMode: BookEntryMode = supportsGameEntry ? entryMode : 'practice'
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -249,7 +264,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
       startIndex += currentChapter.word_count ?? 0
     }
 
-    onSelectChapter(chapter, startIndex)
+    onSelectChapter(chapter, startIndex, activeEntryMode)
   }
 
   const handleContinue = () => {
@@ -364,6 +379,25 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
           <div className="chapter-modal-info">
             <h2 className="chapter-modal-title">{book.title}</h2>
             <p className="chapter-modal-subtitle">{subtitle}</p>
+            {supportsGameEntry && (
+              <>
+                <div className="chapter-entry-switch" role="tablist" aria-label="学习入口">
+                  {(Object.entries(ENTRY_MODE_META) as [BookEntryMode, { title: string; description: string }][]).map(([mode, meta]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeEntryMode === mode}
+                      className={`chapter-entry-switch__option${activeEntryMode === mode ? ' is-active' : ''}`}
+                      onClick={() => setEntryMode(mode)}
+                    >
+                      {meta.title}
+                    </button>
+                  ))}
+                </div>
+                <p className="chapter-entry-note">{ENTRY_MODE_META[activeEntryMode].description}</p>
+              </>
+            )}
           </div>
           <div className="chapter-modal-actions">
             {isConfusableBook && (
@@ -376,7 +410,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
             )}
             {currentIndex > 0 && (
               <button className="chapter-continue-btn" onClick={handleContinue}>
-                继续学习
+                {activeEntryMode === 'game' ? '继续闯关' : '继续学习'}
               </button>
             )}
             <button className="chapter-modal-close" onClick={onClose}>

@@ -3,6 +3,8 @@ from services.ai_practice_support_service import (
     collocation_practice_response as _collocation_practice_response,
     correction_feedback_response as _correction_feedback_response,
     correct_text_response as _correct_text_response,
+    game_attempt_response as _game_attempt_response,
+    game_state_response as _game_state_response,
     greet_response as _greet_response,
     ielts_example_response as _ielts_example_response,
     pronunciation_check_response as _pronunciation_check_response,
@@ -12,6 +14,12 @@ from services.ai_practice_support_service import (
     vocab_assessment_response as _vocab_assessment_response,
     word_family_quiz_response as _word_family_quiz_response,
     word_family_response as _word_family_response,
+)
+from platform_sdk.ai_speaking_assessment_application import (
+    build_speaking_prompt_response as _build_speaking_prompt_response,
+    evaluate_speaking_response as _evaluate_speaking_response,
+    get_speaking_assessment_response as _get_speaking_assessment_response,
+    list_speaking_history_response as _list_speaking_history_response,
 )
 
 
@@ -63,6 +71,18 @@ def collocation_practice(current_user):
     return _collocation_practice_response(current_user, request.args)
 
 
+@ai_bp.route('/practice/game/state', methods=['GET'])
+@token_required
+def practice_game_state(current_user):
+    return _game_state_response(current_user, request.args)
+
+
+@ai_bp.route('/practice/game/attempt', methods=['POST'])
+@token_required
+def practice_game_attempt(current_user):
+    return _game_attempt_response(current_user, request.get_json(silent=True) or {})
+
+
 @ai_bp.route('/pronunciation-check', methods=['POST'])
 @token_required
 def pronunciation_check(current_user):
@@ -73,6 +93,30 @@ def pronunciation_check(current_user):
 @token_required
 def speaking_simulate(current_user):
     return _speaking_simulate_response(current_user, request.get_json() or {})
+
+
+@ai_bp.route('/speaking/prompts', methods=['POST'])
+@token_required
+def speaking_prompts(current_user):
+    return _build_speaking_prompt_response(current_user, request.get_json(silent=True) or {})
+
+
+@ai_bp.route('/speaking/evaluate', methods=['POST'])
+@token_required
+def speaking_evaluate(current_user):
+    return _evaluate_speaking_response(current_user, request.form, request.files)
+
+
+@ai_bp.route('/speaking/history', methods=['GET'])
+@token_required
+def speaking_history(current_user):
+    return _list_speaking_history_response(current_user, request.args)
+
+
+@ai_bp.route('/speaking/history/<int:assessment_id>', methods=['GET'])
+@token_required
+def speaking_history_detail(current_user, assessment_id: int):
+    return _get_speaking_assessment_response(current_user, assessment_id)
 
 
 @ai_bp.route('/review-plan', methods=['GET'])

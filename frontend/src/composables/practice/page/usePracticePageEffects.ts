@@ -6,6 +6,7 @@ import { loadSmartStats, chooseSmartDimension } from '../../../lib/smartMode'
 import { readWrongWordsFromStorage } from '../../../features/vocabulary/wrongWordsStore'
 import { buildLearnerProfile, mergeLearnerProfileWithBackend } from '../../../components/practice/learnerProfile'
 import {
+  buildPresetListeningOptions,
   prepareWordAudioPlayback,
   preloadWordAudioBatch,
   generateOptions,
@@ -31,6 +32,7 @@ interface UsePracticePageEffectsParams {
   queue: number[]
   queueIndex: number
   currentWord: Word | undefined
+  optionsCount: number
   settings: AppSettings
   backendLearnerProfile: BackendLearnerProfile | null
   setOptions: Dispatch<SetStateAction<OptionItem[]>>
@@ -72,6 +74,7 @@ export function usePracticePageEffects({
   queue,
   queueIndex,
   currentWord,
+  optionsCount,
   settings,
   backendLearnerProfile,
   setOptions,
@@ -97,6 +100,7 @@ export function usePracticePageEffects({
 }: UsePracticePageEffectsParams): UsePracticePageEffectsResult {
   const autoPlayTimerRef = useRef<number | null>(null)
   const autoPlayStartedKeyRef = useRef<string | null>(null)
+  const interactionStateKeyRef = useRef<string | null>(null)
   const currentOptionsWordKey = normalizeOptionWordKey(currentWord?.word)
   const choiceOptionsReady = currentOptionsWordKey != null && currentOptionsWordKey === optionsWordKey
   const upcomingWords = queue
@@ -144,6 +148,12 @@ export function usePracticePageEffects({
 
     const needsOptions = mode === 'listening' || (mode === 'smart' && subMode === 'listening')
     const currentWordKey = normalizeOptionWordKey(currentWord.word)
+    const presetListeningWords = currentWord.listening_confusables ?? []
+    const hasCompleteListeningPresets = presetListeningWords.length >= 3
+    const hasSufficientChoiceOptions = optionsCount >= 4
+    const interactionStateKey = currentWordKey
+      ? `${mode ?? 'unknown'}:${subMode}:${queueIndex}:${currentWordKey}`
+      : null
 
     const applyGeneratedOptions = ({
       options: nextOptions,
@@ -158,7 +168,25 @@ export function usePracticePageEffects({
       setOptionsWordKey(currentWordKey)
     }
 
+    if (interactionStateKeyRef.current !== interactionStateKey) {
+      interactionStateKeyRef.current = interactionStateKey
+      setSelectedAnswer(null)
+      setWrongSelections([])
+      setShowResult(false)
+      setSpellingInput('')
+      setSpellingResult(null)
+      setSpellingFeedbackLocked(false)
+      setSpellingFeedbackDismissing(false)
+      setSpellingFeedbackSnapshot(null)
+    }
+
     if (needsOptions) {
+      if (currentWordKey != null && currentWordKey === optionsWordKey && hasSufficientChoiceOptions) {
+        return () => {
+          cancelled = true
+        }
+      }
+
       const resolvedSmartStats = smartStats ?? loadSmartStats()
       const wrongWords = readWrongWordsFromStorage(userId)
       const localLearnerProfile = buildLearnerProfile({
@@ -175,15 +203,8 @@ export function usePracticePageEffects({
         vocabulary,
         wrongWords,
       })
-      const localPool = [currentWord, ...vocabulary, ...learnerProfile.priorityWords]
-      const localGeneratedOptions = generateOptions(currentWord, localPool, {
-        mode: 'listening',
-        priorityWords: learnerProfile.priorityWords,
-      })
-      const presetListeningWords = currentWord.listening_confusables ?? []
-
-      if (presetListeningWords.length >= 3) {
-        applyGeneratedOptions(generateOptions(currentWord, [currentWord, ...presetListeningWords], { mode: 'listening' }))
+      if (hasCompleteListeningPresets) {
+        applyGeneratedOptions(buildPresetListeningOptions(currentWord, presetListeningWords))
       } else if (presetListeningWords.length > 0) {
         applyGeneratedOptions(generateOptions(
           currentWord,
@@ -194,22 +215,16 @@ export function usePracticePageEffects({
           },
         ))
       } else {
-        applyGeneratedOptions(localGeneratedOptions)
+        applyGeneratedOptions(generateOptions(currentWord, [currentWord, ...vocabulary, ...learnerProfile.priorityWords], {
+          mode: 'listening',
+          priorityWords: learnerProfile.priorityWords,
+        }))
       }
     } else {
       setOptions([])
       setCorrectIndex(0)
       setOptionsWordKey(null)
     }
-
-    setSelectedAnswer(null)
-    setWrongSelections([])
-    setShowResult(false)
-    setSpellingInput('')
-    setSpellingResult(null)
-    setSpellingFeedbackLocked(false)
-    setSpellingFeedbackDismissing(false)
-    setSpellingFeedbackSnapshot(null)
 
     return () => {
       cancelled = true
@@ -218,6 +233,8 @@ export function usePracticePageEffects({
     backendLearnerProfile,
     currentWord?.word,
     mode,
+    optionsWordKey,
+    optionsCount,
     queueIndex,
     setCorrectIndex,
     setOptions,

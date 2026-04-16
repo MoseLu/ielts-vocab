@@ -1,0 +1,75 @@
+.wordlist-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    align-self: center;
+    margin-left: auto;
+    padding-left: 14px;
+}
+
+.wordlist-action-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--surface-border-strong);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface-elevated) 90%, transparent);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.wordlist-action-btn--familiar {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.wordlist-action-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    color: var(--text-primary);
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--surface-border-strong));
+    background: var(--surface-hover);
+}
+
+.wordlist-action-btn:disabled {
+    cursor: wait;
+    opacity: 0.72;
+}
+
+.wordlist-action-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.wordlist-action-btn__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.wordlist-action-btn--familiar.is-active {
+    color: var(--success);
+    border-color: color-mix(in srgb, var(--success) 32%, var(--surface-border-strong));
+    background: color-mix(in srgb, var(--success-light) 72%, var(--surface-elevated));
+}
+
+.wordlist-action-btn--favorite.is-active {
+    color: var(--chart-series-5);
+    border-color: color-mix(in srgb, var(--chart-series-5) 32%, var(--surface-border-strong));
+    background: color-mix(in srgb, var(--chart-series-5) 12%, var(--surface-elevated));
+}
+
+.wordlist-action-btn.is-pending {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+}

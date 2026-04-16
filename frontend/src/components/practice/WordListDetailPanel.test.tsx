@@ -70,6 +70,9 @@ describe('WordListDetailPanel', () => {
       />,
     )
 
+    expect(screen.getByRole('dialog', { name: '单词详情' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '单词详情' })).toBeNull()
+
     await waitFor(() => {
       expect(screen.getByTestId('global-word-search-detail')).toHaveTextContent('alpha|alpha|alpha local|Local Book')
     })

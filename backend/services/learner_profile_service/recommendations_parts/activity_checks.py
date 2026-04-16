@@ -19,6 +19,7 @@ def _recommend_wrong_dimension(wrong_words) -> tuple[str | None, int]:
         'recognition': 0,
         'listening': 0,
         'meaning': 0,
+        'speaking': 0,
         'dictation': 0,
     }
     for row in wrong_words:
@@ -43,6 +44,8 @@ def _mode_from_wrong_dimension(dimension: str | None) -> str | None:
         return 'listening'
     if dimension == 'meaning':
         return 'meaning'
+    if dimension == 'speaking':
+        return 'speaking'
     if dimension == 'dictation':
         return 'dictation'
     return None

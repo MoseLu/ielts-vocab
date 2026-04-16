@@ -103,7 +103,7 @@ def test_learning_core_migration_runner_converts_chapter_ids_to_strings(tmp_path
 
     result = module.migrate_service_schema('learning-core-service', env_file=env_path)
 
-    assert result['version_after'] == 'learning_core_service_0003'
+    assert result['version_after'] == 'learning_core_service_0004'
     assert result['applied_patches'][0]['revision'] == 'learning_core_service_0002'
 
     engine, inspector = _sqlite_inspector(database_path)
@@ -127,7 +127,52 @@ def test_learning_core_migration_runner_converts_chapter_ids_to_strings(tmp_path
                 sa.text('SELECT version_num FROM alembic_version_learning_core_service')
             ).scalar_one()
         assert str(chapter_id_value) == '3'
-        assert version_value == 'learning_core_service_0003'
+        assert version_value == 'learning_core_service_0004'
+    finally:
+        engine.dispose()
+
+
+def test_learning_core_migration_runner_adds_chapter_resume_snapshot_columns(tmp_path, monkeypatch):
+    module = _load_script_module()
+    database_path = tmp_path / 'learning-core-progress-resume.sqlite'
+    env_path = _write_env_file(tmp_path, service_name='learning-core-service', database_path=database_path)
+
+    monkeypatch.setenv('PYTEST_RUNNING', '1')
+    monkeypatch.setenv('MICROSERVICES_ENV_FILE', str(env_path))
+
+    engine = sa.create_engine(f'sqlite:///{database_path.as_posix()}')
+    with engine.begin() as connection:
+        connection.execute(sa.text(
+            'CREATE TABLE users ('
+            'id INTEGER PRIMARY KEY, '
+            'username VARCHAR(100) NOT NULL UNIQUE, '
+            'password_hash VARCHAR(255) NOT NULL'
+            ')'
+        ))
+        connection.execute(sa.text(
+            'CREATE TABLE user_chapter_progress ('
+            'id INTEGER PRIMARY KEY, '
+            'user_id INTEGER NOT NULL, '
+            'book_id VARCHAR(50) NOT NULL, '
+            'chapter_id VARCHAR(50) NOT NULL, '
+            'words_learned INTEGER, '
+            'correct_count INTEGER, '
+            'wrong_count INTEGER, '
+            'is_completed BOOLEAN, '
+            'updated_at DATETIME'
+            ')'
+        ))
+    engine.dispose()
+
+    result = module.migrate_service_schema('learning-core-service', env_file=env_path)
+
+    assert result['version_after'] == 'learning_core_service_0004'
+    assert [patch['revision'] for patch in result['applied_patches']] == ['learning_core_service_0004']
+
+    engine, inspector = _sqlite_inspector(database_path)
+    try:
+        columns = {column['name'] for column in inspector.get_columns('user_chapter_progress')}
+        assert {'session_current_index', 'session_answered_words', 'session_queue_words'}.issubset(columns)
     finally:
         engine.dispose()
 
@@ -197,7 +242,7 @@ def test_learning_core_migration_runner_adds_shadow_custom_book_metadata_columns
 
     result = module.migrate_service_schema('learning-core-service', env_file=env_path)
 
-    assert result['version_after'] == 'learning_core_service_0003'
+    assert result['version_after'] == 'learning_core_service_0004'
     assert [patch['revision'] for patch in result['applied_patches']] == ['learning_core_service_0003']
 
     engine, inspector = _sqlite_inspector(database_path)
@@ -226,7 +271,7 @@ def test_learning_core_migration_runner_adds_shadow_custom_book_metadata_columns
         assert int(share_enabled or 0) == 0
         assert int(chapter_word_target or 0) == 15
         assert int(is_incomplete or 0) == 0
-        assert version_value == 'learning_core_service_0003'
+        assert version_value == 'learning_core_service_0004'
     finally:
         engine.dispose()
 

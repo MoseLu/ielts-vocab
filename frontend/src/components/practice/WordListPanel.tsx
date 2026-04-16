@@ -1,9 +1,12 @@
 // ── Word List Panel Component ───────────────────────────────────────────────────
 
-import { useRef, useEffect, useMemo, useState } from 'react'
+import { useRef, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { DEFAULT_SETTINGS } from '../../constants'
+import { readAppSettingsFromStorage } from '../../lib/appSettings'
 import WordListActionButton from './WordListActionButton'
 import type { Word, WordListPanelProps } from './types'
 import WordListDetailPanel from './WordListDetailPanel'
+import { playWordAudio } from './utils.audio'
 
 function normalizeWordKey(word: string | null | undefined): string {
   return (word ?? '').trim().toLowerCase()
@@ -20,7 +23,16 @@ export default function WordListPanel({
 }: WordListPanelProps) {
   const wordListRef = useRef<HTMLDivElement>(null)
   const currentWordListItemRef = useRef<HTMLDivElement>(null)
+  const wasOpenRef = useRef(false)
+  const focusPlaybackSuppressionRef = useRef<string | null>(null)
   const [selectedDetailState, setSelectedDetailState] = useState<{ word: Word; version: number } | null>(null)
+  const wordAudioSettings = useMemo(() => {
+    const settings = typeof window === 'undefined' ? DEFAULT_SETTINGS : readAppSettingsFromStorage()
+    return {
+      playbackSpeed: String(settings.playbackSpeed ?? DEFAULT_SETTINGS.playbackSpeed),
+      volume: String(settings.volume ?? DEFAULT_SETTINGS.volume),
+    }
+  }, [])
 
   const visibleWords = useMemo(
     () => queue
@@ -52,11 +64,22 @@ export default function WordListPanel({
     setSelectedDetailState(null)
   }
 
-  // Scroll current word into view
-  useEffect(() => {
-    if (show && currentWordListItemRef.current && typeof currentWordListItemRef.current.scrollIntoView === 'function') {
-      currentWordListItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  // Position the list before paint on first open so the panel does not visibly jump.
+  useLayoutEffect(() => {
+    if (!show) {
+      wasOpenRef.current = false
+      return
     }
+
+    const currentItem = currentWordListItemRef.current
+    if (currentItem && typeof currentItem.scrollIntoView === 'function') {
+      currentItem.scrollIntoView({
+        block: 'nearest',
+        behavior: wasOpenRef.current ? 'smooth' : 'auto',
+      })
+    }
+
+    wasOpenRef.current = true
   }, [queueIndex, show])
 
   useEffect(() => {
@@ -85,6 +108,11 @@ export default function WordListPanel({
     }
   }
 
+  const playListWord = (word: string) => {
+    if (!word.trim()) return
+    void playWordAudio(word, wordAudioSettings)
+  }
+
   return (
     <>
       {show && (
@@ -108,7 +136,8 @@ export default function WordListPanel({
             const isCurrent = qi === queueIndex
             const isDetailSelected =
               normalizeWordKey(selectedDetailState?.word.word) === normalizeWordKey(w.word)
-            const status = wordStatuses[vocabIdx]
+            const explicitStatus = wordStatuses[vocabIdx]
+            const status = explicitStatus ?? (qi < queueIndex ? 'correct' : undefined)
             const favoriteActive = wordActionControls?.isFavorite(w.word) ?? false
             const favoritePending = wordActionControls?.isFavoritePending(w.word) ?? false
             const familiarActive = wordActionControls?.isFamiliar(w.word) ?? false
@@ -125,7 +154,22 @@ export default function WordListPanel({
                   aria-label={`查看 ${w.word} 详情`}
                   aria-controls="practice-wordlist-detail-panel"
                   aria-pressed={isDetailSelected}
-                  onClick={() => openWordDetails(w)}
+                  onPointerDown={() => {
+                    focusPlaybackSuppressionRef.current = normalizeWordKey(w.word)
+                  }}
+                  onFocus={() => {
+                    const normalizedWord = normalizeWordKey(w.word)
+                    if (focusPlaybackSuppressionRef.current === normalizedWord) {
+                      focusPlaybackSuppressionRef.current = null
+                      return
+                    }
+                    playListWord(w.word)
+                  }}
+                  onClick={() => {
+                    focusPlaybackSuppressionRef.current = null
+                    playListWord(w.word)
+                    openWordDetails(w)
+                  }}
                 >
                   <div className="wordlist-item-status">
                     {isCurrent ? (

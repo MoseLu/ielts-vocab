@@ -1,8 +1,10 @@
 from models import (
+    AISpeakingAssessment,
     AIProjectedDailySummary,
     AIProjectedWrongWord,
     AIProjectionCursor,
     AIPromptRun,
+    AIWordImageAsset,
     SearchCache,
     UserConversationHistory,
     UserMemory,
@@ -11,10 +13,12 @@ from models import (
 
 
 __all__ = [
+    'AISpeakingAssessment',
     'AIProjectedDailySummary',
     'AIProjectedWrongWord',
     'AIProjectionCursor',
     'AIPromptRun',
+    'AIWordImageAsset',
     'SearchCache',
     'UserConversationHistory',
     'UserMemory',

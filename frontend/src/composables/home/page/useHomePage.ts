@@ -8,7 +8,7 @@ import {
 } from '../../../features/vocabulary/hooks'
 import { buildWrongWordsPracticeQuery, type WrongWordDimensionFilter } from '../../../features/vocabulary/wrongWordsFilters'
 import { useResponsivePageSkeletonCount } from '../../../hooks/useResponsiveSkeletonCount'
-import { buildBookPracticePath } from '../../../lib'
+import { buildBookStudyEntryPath, type BookEntryMode } from '../../../lib'
 import { requestPracticeMode } from '../../practice/page/practiceModeEvents'
 import type { Book, BookProgress } from '../../../types'
 import type { Chapter } from '../../../components/books/dialogs/ChapterModal'
@@ -90,21 +90,25 @@ export function useHomePage() {
     setSelectedBook(null)
   }, [])
 
-  const handleStartStudy = useCallback((plan: StudyPlan | null) => {
+  const handleStartStudy = useCallback((plan: StudyPlan | null, entryMode: BookEntryMode = 'practice') => {
     if (plan) {
       localStorage.setItem('study_plan', JSON.stringify(plan))
     }
     localStorage.setItem('selected_book', JSON.stringify(selectedBook))
     if (!selectedBook) return
-    navigate(buildBookPracticePath(selectedBook))
+    navigate(buildBookStudyEntryPath(selectedBook, entryMode))
   }, [navigate, selectedBook])
 
-  const handleSelectChapter = useCallback((chapter: Chapter, startIndex: number) => {
+  const handleSelectChapter = useCallback((
+    chapter: Chapter,
+    startIndex: number,
+    entryMode: BookEntryMode = 'practice',
+  ) => {
     localStorage.setItem('selected_book', JSON.stringify(selectedBook))
     localStorage.setItem('selected_chapter', JSON.stringify({ id: chapter.id, title: chapter.title }))
     localStorage.setItem('chapter_start_index', String(startIndex))
     if (!selectedBook) return
-    navigate(buildBookPracticePath(selectedBook, chapter.id))
+    navigate(buildBookStudyEntryPath(selectedBook, entryMode, chapter.id))
   }, [navigate, selectedBook])
 
   const handleRemoveBook = useCallback((bookId: string, event: MouseEvent<HTMLButtonElement>) => {

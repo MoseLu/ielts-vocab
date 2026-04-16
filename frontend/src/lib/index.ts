@@ -127,6 +127,8 @@ function _buildHeaders(options: RequestInit): Record<string, string> {
       : Array.isArray(options.headers)
       ? Object.fromEntries(options.headers)
       : (options.headers as Record<string, string>) || {}
+  const isFormDataBody = typeof FormData !== 'undefined' && options.body instanceof FormData
+  if (isFormDataBody) return existing
   return { 'Content-Type': 'application/json', ...existing }
 }
 

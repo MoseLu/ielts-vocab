@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import json
 
 from platform_sdk.books_user_state_repository_adapter import (
     commit as _commit_user_state,
@@ -18,6 +19,13 @@ from platform_sdk.learning_repository_adapters import (
     learning_event_repository,
     legacy_progress_repository,
 )
+
+
+def _dump_progress_words(values) -> str | None:
+    if not isinstance(values, list):
+        return None
+    normalized = [str(value).strip() for value in values if str(value).strip()]
+    return json.dumps(normalized, ensure_ascii=False) if normalized else None
 
 
 def list_legacy_progress(user_id: int) -> list[dict]:
@@ -168,6 +176,7 @@ def save_chapter_progress_response(user_id: int, book_id, chapter_id, data: dict
     progress = get_user_chapter_progress(user_id, book_id, chapter_id)
     if not progress:
         progress = create_user_chapter_progress(user_id, book_id, chapter_id)
+    clear_session_snapshot = bool(payload.get('clear_session_snapshot'))
 
     before_snapshot = {
         'words_learned': progress.words_learned or 0,
@@ -184,6 +193,12 @@ def save_chapter_progress_response(user_id: int, book_id, chapter_id, data: dict
         progress.wrong_count = payload['wrong_count']
     if 'is_completed' in payload:
         progress.is_completed = payload['is_completed']
+    if 'current_index' in payload or clear_session_snapshot:
+        progress.session_current_index = 0 if clear_session_snapshot else max(0, int(payload.get('current_index') or 0))
+    if 'answered_words' in payload or clear_session_snapshot:
+        progress.session_answered_words = None if clear_session_snapshot else _dump_progress_words(payload.get('answered_words'))
+    if 'queue_words' in payload or clear_session_snapshot:
+        progress.session_queue_words = None if clear_session_snapshot else _dump_progress_words(payload.get('queue_words'))
 
     after_snapshot = {
         'words_learned': progress.words_learned or 0,

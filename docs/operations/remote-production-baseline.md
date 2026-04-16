@@ -65,6 +65,8 @@ Status snapshot on `2026-04-11`: `119.29.182.134` now reaches GitHub SSH on `ssh
 - `redis` runs locally on `127.0.0.1:6379`
 - `rabbitmq-server` runs locally on `127.0.0.1:5672`
 - `/etc/ielts-vocab/microservices.env` must carry `REDIS_HOST`, `REDIS_PORT`, `REDIS_KEY_PREFIX`, per-service Redis DB assignments, `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST`, and `RABBITMQ_DOMAIN_EXCHANGE`
+- Optional speaking calibration overrides for `ai-execution-service` also belong in `/etc/ielts-vocab/microservices.env`; use `SPEAKING_ASSESSMENT_BAND_THRESHOLDS_JSON=[[95,9.0],[89,8.5],[83,8.0],[76,7.5],[69,7.0],[62,6.5],[55,6.0],[48,5.5],[41,5.0],[34,4.5],[27,4.0],[20,3.5],[13,3.0],[6,2.5],[1,2.0],[0,0.0]]` when calibration needs to diverge from the built-in default table
+- `scripts/cloud-deploy/preflight-check.sh` now validates that optional speaking calibration JSON before deploy; unset keeps defaults, invalid configured JSON blocks the rollout early
 - `scripts/cloud-deploy/preflight-check.sh` now fails fast if the broker env keys or broker systemd units are missing
 - `scripts/cloud-deploy/smoke-check.sh` now runs `scripts/cloud-deploy/validate-broker-runtime.sh` before the HTTP readiness probes
 

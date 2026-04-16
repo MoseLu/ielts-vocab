@@ -63,6 +63,20 @@ def test_deploy_release_starts_inactive_slot_before_switching_nginx():
     assert 'record_legacy_http_activation "${previous_current}"' in script
 
 
+def test_preflight_checks_speaking_calibration_before_nginx_and_remote_deploy():
+    script = _read('scripts/cloud-deploy/preflight-check.sh')
+    workflow = _read('.github/workflows/deploy-production.yml')
+
+    speaking_index = script.index('Checking speaking calibration config')
+    nginx_index = script.index('Checking nginx configuration')
+
+    assert 'SPEAKING_BAND_VALIDATOR_PATH' in script
+    assert 'validate_speaking_band_thresholds.py' in script
+    assert 'python3 "${speaking_validator_path}" --env-file "${MICROSERVICES_ENV_FILE}" >/dev/null' in script
+    assert speaking_index < nginx_index
+    assert 'scripts/validate_speaking_band_thresholds.py \\' in workflow
+
+
 def test_rollback_release_defaults_to_last_good_release_and_uses_slot_smoke():
     script = _read('scripts/cloud-deploy/rollback-release.sh')
 

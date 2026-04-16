@@ -12,6 +12,7 @@ from platform_sdk.learning_event_support import record_learning_event
 from platform_sdk.study_session_support import (
     find_pending_session,
     normalize_chapter_id,
+    resolve_session_activity_capped_end,
     start_or_reuse_study_session,
 )
 
@@ -79,6 +80,43 @@ def _coerce_non_negative_int(value) -> int:
         return 0
 
 
+def _has_direct_session_counts(*, words_studied: int, correct_count: int, wrong_count: int) -> bool:
+    return words_studied > 0 or correct_count > 0 or wrong_count > 0
+
+
+def _resolve_server_activity_capped_end(
+    *,
+    user_id: int,
+    started_at: datetime | None,
+    candidate_end: datetime,
+    mode: str | None,
+    book_id: str | None,
+    chapter_id: str | None,
+) -> tuple[datetime, bool, datetime | None]:
+    if started_at is None or candidate_end <= started_at:
+        return candidate_end, False, None
+
+    last_activity_at = learning_event_repository.find_latest_session_activity_at(
+        user_id=user_id,
+        started_at=started_at,
+        end_at=candidate_end,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+    )
+    if last_activity_at is None:
+        return candidate_end, False, None
+
+    capped_end = resolve_session_activity_capped_end(
+        started_at=started_at,
+        candidate_end=candidate_end,
+        last_activity_at=last_activity_at,
+    )
+    if capped_end is None or capped_end >= candidate_end:
+        return candidate_end, False, last_activity_at
+    return capped_end, True, last_activity_at
+
+
 def _record_study_session_event_locally(*, user_id: int, session, occurred_at: datetime | None) -> None:
     try:
         record_learning_event(
@@ -139,7 +177,10 @@ def start_learning_core_session_response(user_id: int, body: dict | None) -> tup
         book_id=payload.get('bookId') or None,
         chapter_id=normalize_chapter_id(payload.get('chapterId')),
         reuse_window_seconds=_PENDING_SESSION_REUSE_WINDOW_SECONDS,
+        started_at=parse_client_epoch_ms(payload.get('startedAt')),
+        force_new_session=bool(payload.get('forceNewSession')),
         find_pending_session_in_window=study_session_repository.find_pending_session_in_window,
+        close_open_placeholder_sessions_before=study_session_repository.close_open_placeholder_sessions_before,
         create_study_session=study_session_repository.create_study_session,
         commit=study_session_repository.commit,
     )
@@ -174,6 +215,11 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
         words_studied = _coerce_non_negative_int(payload.get('wordsStudied', 0))
         correct_count = _coerce_non_negative_int(payload.get('correctCount', 0))
         wrong_count = _coerce_non_negative_int(payload.get('wrongCount', 0))
+        has_direct_counts = _has_direct_session_counts(
+            words_studied=words_studied,
+            correct_count=correct_count,
+            wrong_count=wrong_count,
+        )
 
         if session_id:
             session = study_session_repository.get_user_study_session(user_id, session_id)
@@ -185,6 +231,17 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                     started_at=session.started_at,
                     client_ended_at=client_ended_at,
                 )
+                activity_capped_end, activity_cap_applied, last_activity_at = _resolve_server_activity_capped_end(
+                    user_id=user_id,
+                    started_at=session.started_at,
+                    candidate_end=ended_at,
+                    mode=mode or session.mode,
+                    book_id=book_id if book_id is not None else session.book_id,
+                    chapter_id=chapter_id if chapter_id is not None else session.chapter_id,
+                )
+                if activity_cap_applied:
+                    ended_at = activity_capped_end
+                    duration_capped_by_activity = True
                 session.ended_at = ended_at
                 duration_seconds = _normalize_client_duration_seconds(
                     payload.get('durationSeconds', 0),
@@ -201,9 +258,16 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                     correct_count=correct_count,
                     wrong_count=wrong_count,
                 )
-                session.duration_seconds = (
-                    1 if duration_seconds == 0 and session.has_activity() else duration_seconds
+                preserve_recovered_duration = (
+                    client_ended_at is not None
+                    and session.started_at is not None
+                    and client_ended_at > session.started_at
+                    and duration_seconds > 0
                 )
+                if not has_direct_counts and last_activity_at is None:
+                    session.duration_seconds = duration_seconds if preserve_recovered_duration else 0
+                else:
+                    session.duration_seconds = 1 if duration_seconds == 0 and has_direct_counts else duration_seconds
                 _record_study_session_event_locally(
                     user_id=user_id,
                     session=session,
@@ -236,6 +300,17 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                 started_at=pending.started_at,
                 client_ended_at=client_ended_at,
             )
+            activity_capped_end, activity_cap_applied, last_activity_at = _resolve_server_activity_capped_end(
+                user_id=user_id,
+                started_at=pending.started_at,
+                candidate_end=pending.ended_at,
+                mode=mode or pending.mode,
+                book_id=book_id if book_id is not None else pending.book_id,
+                chapter_id=chapter_id if chapter_id is not None else pending.chapter_id,
+            )
+            if activity_cap_applied:
+                pending.ended_at = activity_capped_end
+                duration_capped_by_activity = True
             _apply_session_stats(
                 pending,
                 mode=mode,
@@ -246,12 +321,21 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
                 wrong_count=wrong_count,
             )
             computed_duration = max(0, int((pending.ended_at - pending.started_at).total_seconds()))
-            pending.duration_seconds = (
-                min(duration_seconds, computed_duration)
-                if duration_capped_by_activity and duration_seconds > 0
-                else max(duration_seconds, computed_duration)
+            preserve_recovered_duration = (
+                client_ended_at is not None
+                and pending.started_at is not None
+                and client_ended_at > pending.started_at
+                and computed_duration > 0
             )
-            if pending.duration_seconds == 0 and pending.has_activity():
+            if not has_direct_counts and last_activity_at is None:
+                pending.duration_seconds = computed_duration if preserve_recovered_duration else 0
+            else:
+                pending.duration_seconds = (
+                    min(duration_seconds, computed_duration)
+                    if duration_capped_by_activity and duration_seconds > 0
+                    else max(duration_seconds, computed_duration)
+                )
+            if pending.duration_seconds == 0 and has_direct_counts:
                 pending.duration_seconds = 1
             _record_study_session_event_locally(
                 user_id=user_id,
@@ -272,7 +356,18 @@ def log_learning_core_session_response(user_id: int, body: dict | None) -> tuple
         session.words_studied = words_studied
         session.correct_count = correct_count
         session.wrong_count = wrong_count
-        session.duration_seconds = duration_seconds
+        if duration_seconds > 0 and not has_direct_counts and session.started_at is not None:
+            last_activity_at = learning_event_repository.find_latest_session_activity_at(
+                user_id=user_id,
+                started_at=session.started_at,
+                end_at=client_ended_at or datetime.utcnow(),
+                mode=mode,
+                book_id=book_id,
+                chapter_id=chapter_id,
+            )
+            session.duration_seconds = duration_seconds if last_activity_at is not None else 0
+        else:
+            session.duration_seconds = duration_seconds
         if duration_seconds > 0:
             session.ended_at = _resolve_client_end(
                 started_at=session.started_at,

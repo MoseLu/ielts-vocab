@@ -3,6 +3,7 @@ import SettingsPanel from '../../settings/SettingsPanel'
 import Popover from '../../ui/Popover'
 import { Scrollbar } from '../../ui/Scrollbar'
 import { useHeader } from '../../../composables/layout/navigation/useHeader'
+import HeaderHelpModal from './HeaderHelpModal'
 import type { HeaderProps, PracticeMode } from './Header.types'
 
 export type { HeaderProps, PracticeMode, User } from './Header.types'
@@ -228,44 +229,13 @@ function Header({
         </div>
       )}
 
-      {/* Help Modal */}
       {showHelp && (
-        <div className="settings-overlay show" onClick={(e) => e.target === e.currentTarget && setShowHelp(false)}>
-          <div className="settings-modal settings-modal--help">
-            <div className="settings-header">
-              <h2 className="settings-title">帮助</h2>
-              <button className="settings-close" onClick={() => setShowHelp(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <div className="settings-content settings-content--help">
-              <div className="help-modal-section">
-                <h3 className="help-modal-title">键盘快捷键</h3>
-                <div className="help-modal-list">
-                  {([['Shift + Q', '打开单词搜索'], ['1 - 4', '选择答案选项'], ['5', '不知道（跳过）'], ['空格', '重新播放发音'], ['Esc', '退出练习']] as [string, string][]).map(([key, desc]) => (
-                    <div key={key} className="help-modal-row">
-                      <kbd className="help-modal-kbd">{key}</kbd>
-                      <span className="help-modal-text">{desc}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h3 className="help-modal-title">学习模式说明</h3>
-                <div className="help-modal-list">
-                  {(Object.entries(modeNames) as [PracticeMode, string][]).map(([key, name]) => (
-                    <div key={key} className="help-modal-mode">
-                      <strong className="help-modal-mode-name">{name}</strong> — {modeDescriptions[key]}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <HeaderHelpModal
+          modeNames={modeNames}
+          modeDescriptions={modeDescriptions}
+          onClose={() => setShowHelp(false)}
+          pathname={location.pathname}
+        />
       )}
 
       <SettingsPanel showSettings={showSettings} onClose={() => setShowSettings(false)} />

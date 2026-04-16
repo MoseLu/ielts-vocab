@@ -1,9 +1,11 @@
-import type { OptionItem, Word } from './types'
+import type { ListeningConfusableCandidate, OptionItem, Word } from './types'
 
 export interface GenerateOptionsConfig {
   mode?: string
   priorityWords?: Word[]
 }
+
+type ListeningOptionSource = Pick<ListeningConfusableCandidate, 'word' | 'phonetic' | 'pos' | 'definition'>
 
 const IPA_VOWELS = 'aeiouəɪʊʌæɒɔɑɛɜɐøœɨɯɵ'
 const VALID_ONSET2 = new Set([
@@ -12,6 +14,7 @@ const VALID_ONSET2 = new Set([
 ])
 const VALID_ONSET3 = new Set(['str', 'scr', 'spr', 'spl', 'squ', 'thr', 'chr'])
 const MEANING_POS_RE = /\b(?:n|v|vi|vt|adj|adv|prep|pron|conj|aux|int|num|art|a)\.\s*/gi
+const MEANING_NOISE_TOKENS = new Set(['复数', '现在分词', '过去式', '过去分词', '第三人称单数', '比较级', '最高级', '口语', '英', '美'])
 const LISTENING_VARIANT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/metres\b/g, 'meters'],
   [/metre\b/g, 'meter'],
@@ -30,6 +33,14 @@ export function shuffleArray<T>(arr: T[]): T[] {
     ;[next[index], next[swapIndex]] = [next[swapIndex], next[index]]
   }
   return next
+}
+
+function stableHash(value: string): number {
+  let hash = 0
+  for (let index = 0; index < value.length; index += 1) {
+    hash = ((hash * 31) + value.charCodeAt(index)) >>> 0
+  }
+  return hash
 }
 
 export function normalizeWordAnswer(value: string): string {
@@ -171,6 +182,16 @@ function cleanMeaningFragment(value: string): string {
     .trim()
 }
 
+function toListeningOption(word: ListeningOptionSource): OptionItem {
+  return {
+    word: word.word,
+    phonetic: word.phonetic,
+    definition: cleanMeaningFragment(word.definition) || word.definition,
+    pos: word.pos,
+    display_mode: 'definition',
+  }
+}
+
 function normalizeMeaningText(value: string): string {
   return cleanMeaningFragment(value)
     .toLowerCase()
@@ -178,6 +199,48 @@ function normalizeMeaningText(value: string): string {
     .replace(/[。！？]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function extractMeaningParts(value: string): string[] {
+  return cleanMeaningFragment(value)
+    .split(/[;；，,、/。！？\s]+/)
+    .map(part => part.trim())
+    .filter(part => part.length > 0 && /[\u4e00-\u9fff]/.test(part) && !MEANING_NOISE_TOKENS.has(part))
+}
+
+function meaningSimilarity(left: string, right: string): number {
+  const leftParts = extractMeaningParts(left)
+  const rightParts = extractMeaningParts(right)
+  if (leftParts.length === 0 || rightParts.length === 0) return 0
+
+  const leftSet = new Set(leftParts)
+  const rightSet = new Set(rightParts)
+  if (leftParts.some(part => rightSet.has(part)) || rightParts.some(part => leftSet.has(part))) return 1
+
+  let best = 0
+  for (const leftPart of leftParts) {
+    const leftBigrams = new Set(Array.from({ length: Math.max(1, leftPart.length - 1) }, (_, index) => (
+      leftPart.length > 1 ? leftPart.slice(index, index + 2) : leftPart
+    )))
+    for (const rightPart of rightParts) {
+      const rightBigrams = new Set(Array.from({ length: Math.max(1, rightPart.length - 1) }, (_, index) => (
+        rightPart.length > 1 ? rightPart.slice(index, index + 2) : rightPart
+      )))
+      const union = new Set([...leftBigrams, ...rightBigrams])
+      if (union.size === 0) continue
+      const intersectionSize = [...leftBigrams].filter(item => rightBigrams.has(item)).length
+      best = Math.max(best, intersectionSize / union.size)
+    }
+  }
+  return best
+}
+
+function phoneticSimilarity(left: string, right: string): number {
+  const normalizePhonetic = (value: string) => value.replace(/[/[\]ˈˌ.: ]/g, '').toLowerCase()
+  const normalizedLeft = normalizePhonetic(left)
+  const normalizedRight = normalizePhonetic(right)
+  if (!normalizedLeft || !normalizedRight) return 0
+  return 1 - levenshtein(normalizedLeft, normalizedRight) / Math.max(normalizedLeft.length, normalizedRight.length)
 }
 
 function singularizeListeningToken(token: string): string {
@@ -206,6 +269,89 @@ function normalizeListeningFamilyKey(word: Pick<Word, 'word' | 'group_key'>): st
 function listeningDistractorScore(currentWord: Word, candidate: Word, priorityIndex?: number): number {
   const priorityBonus = priorityIndex == null ? 0 : 6 - Math.min(priorityIndex, 5)
   return confusabilityScore(currentWord, candidate) + priorityBonus
+}
+
+function presetListeningDistractorScore(
+  currentWord: Pick<Word, 'word' | 'phonetic' | 'pos' | 'definition'>,
+  candidate: ListeningOptionSource,
+): number {
+  const targetWord = normalizeWordAnswer(currentWord.word)
+  const candidateWord = normalizeWordAnswer(candidate.word)
+  const editDistance = levenshtein(targetWord, candidateWord)
+  const spellingSimilarity = 1 - editDistance / Math.max(targetWord.length, candidateWord.length, 1)
+
+  let prefixLength = 0
+  while (
+    prefixLength < targetWord.length
+    && prefixLength < candidateWord.length
+    && targetWord[prefixLength] === candidateWord[prefixLength]
+  ) {
+    prefixLength += 1
+  }
+
+  const pronunciationSimilarity = phoneticSimilarity(currentWord.phonetic ?? '', candidate.phonetic ?? '')
+  const translationSimilarity = meaningSimilarity(currentWord.definition ?? '', candidate.definition ?? '')
+  const samePos = Number((currentWord.pos ?? '').trim() !== '' && (currentWord.pos ?? '').trim() === (candidate.pos ?? '').trim())
+  const targetMeaningKey = normalizeMeaningText(currentWord.definition ?? '')
+  const candidateMeaningKey = normalizeMeaningText(candidate.definition ?? '')
+  const meaningDistinct = Number(targetMeaningKey !== '' && targetMeaningKey !== candidateMeaningKey)
+  const spellingClose = (
+    spellingSimilarity >= 0.8
+    || (
+      editDistance <= 1
+      && prefixLength >= Math.min(3, Math.max(2, Math.floor(Math.min(targetWord.length, candidateWord.length) / 2)))
+    )
+  )
+  const phoneticClose = pronunciationSimilarity >= 0.78
+  const meaningClose = translationSimilarity >= 0.5
+  const categoryRank = spellingClose ? 3 : phoneticClose ? 2 : meaningClose ? 1 : 0
+
+  return (
+    categoryRank * 1000
+    + meaningDistinct * 100
+    + samePos * 10
+    + spellingSimilarity * 8
+    + pronunciationSimilarity * 12
+    + translationSimilarity * 5
+    + prefixLength * 0.5
+    - editDistance * 0.5
+  )
+}
+
+export function buildPresetListeningOptions(
+  currentWord: Pick<Word, 'word' | 'phonetic' | 'pos' | 'definition'>,
+  candidates: ListeningOptionSource[],
+): { options: OptionItem[]; correctIndex: number } {
+  const normalizedCurrentWord = normalizeWordAnswer(currentWord.word)
+  const distractors: Array<{ candidate: ListeningOptionSource; index: number }> = []
+  const seenWords = new Set<string>()
+
+  for (const [index, candidate] of candidates.entries()) {
+    const normalizedCandidateWord = normalizeWordAnswer(candidate.word)
+    if (!normalizedCandidateWord || normalizedCandidateWord === normalizedCurrentWord || seenWords.has(normalizedCandidateWord)) {
+      continue
+    }
+    seenWords.add(normalizedCandidateWord)
+    distractors.push({ candidate, index })
+  }
+
+  const correctOption = toListeningOption(currentWord)
+  const distractorOptions = distractors
+    .sort((left, right) => {
+      const scoreDelta = presetListeningDistractorScore(currentWord, right.candidate)
+        - presetListeningDistractorScore(currentWord, left.candidate)
+      return scoreDelta !== 0 ? scoreDelta : left.index - right.index
+    })
+    .slice(0, 3)
+    .map(item => toListeningOption(item.candidate))
+  const optionCount = 1 + distractorOptions.length
+  const correctIndex = optionCount > 0
+    ? stableHash(normalizedCurrentWord || currentWord.word) % optionCount
+    : 0
+  const options = [...distractorOptions]
+  options.splice(correctIndex, 0, correctOption)
+
+  return { options, correctIndex }
 }
 
 export function generateOptions(
@@ -301,13 +447,7 @@ export function generateOptions(
           pos: word.pos,
           display_mode: 'word',
         }
-      : {
-          word: word.word,
-          phonetic: word.phonetic,
-          definition: cleanMeaningFragment(word.definition) || word.definition,
-          pos: word.pos,
-          display_mode: 'definition',
-        }
+      : toListeningOption(word)
   )
 
   const options = shuffleArray([toOption(currentWord), ...distractorWords.map(toOption)])
