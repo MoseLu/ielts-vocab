@@ -8,6 +8,7 @@ load_split_module_files(
         'model_definitions/word_preference_models.py',
         'model_definitions/word_detail_models.py',
         'model_definitions/study_models.py',
+        'model_definitions/word_mastery_models.py',
         'model_definitions/ai_runtime_models.py',
         'model_definitions/note_models.py',
         'model_definitions/notes_runtime_models.py',
