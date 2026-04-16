@@ -43,6 +43,15 @@ def _load_book_payload(filename: str) -> dict:
     return json.loads((VOCAB_ROOT / filename).read_text(encoding='utf-8'))
 
 
+def _build_book_phonetic_map(filename: str) -> dict[str, str]:
+    payload = _load_book_payload(filename)
+    return {
+        str(entry.get('word') or '').strip().lower(): str(entry.get('phonetic') or '').strip()
+        for chapter in payload['chapters']
+        for entry in chapter['words']
+    }
+
+
 def test_premium_books_have_synced_metadata_and_no_phrase_chapters():
     registry_count_map = books_registry_service.get_vocab_book_word_count_map()
 
@@ -83,3 +92,52 @@ def test_premium_books_only_keep_clean_single_word_entries():
                 seen_words.add(word)
 
         assert violations == []
+
+
+def test_known_premium_phonetic_regressions_stay_fixed():
+    expected = {
+        'ielts_listening_premium.json': {
+            'arising': '/əˈraɪzɪŋ/',
+            'elementary': '/ˌelɪˈmentəri/',
+            'herbs': '/hɜːbz/',
+            'history': '/ˈhɪstəri/',
+            'increases': '/ɪnˈkriːsɪz/',
+            'instruments': '/ˈɪnstrəmənts/',
+            'quantities': '/ˈkwɒntɪtɪz/',
+            'recruits': '/rɪˈkruːts/',
+            'structures': '/ˈstrʌktʃəz/',
+            'the amount of': '/ðiː əˈmaʊnt əv/',
+            'visuals': '/ˈvɪʒuəlz/',
+        },
+        'ielts_reading_premium.json': {
+            'abuse': '/əˈbjuːz/',
+            'elementary': '/ˌelɪˈmentəri/',
+            'history': '/ˈhɪstəri/',
+            'instruments': '/ˈɪnstrəmənts/',
+            'quantities': '/ˈkwɒntɪtɪz/',
+            'stadiums': '/ˈsteɪdiəmz/',
+            'the amount of': '/ðiː əˈmaʊnt əv/',
+        },
+    }
+    for filename, cases in expected.items():
+        phonetic_map = _build_book_phonetic_map(filename)
+        for word, phonetic in cases.items():
+            assert phonetic_map[word] == phonetic
+
+    overrides = json.loads((VOCAB_ROOT / 'phonetic_overrides.json').read_text(encoding='utf-8'))
+    for word, phonetic in {
+        'abuse': '/əˈbjuːz/',
+        'arising': '/əˈraɪzɪŋ/',
+        'elementary': '/ˌelɪˈmentəri/',
+        'herbs': '/hɜːbz/',
+        'history': '/ˈhɪstəri/',
+        'increases': '/ɪnˈkriːsɪz/',
+        'instruments': '/ˈɪnstrəmənts/',
+        'quantities': '/ˈkwɒntɪtɪz/',
+        'recruits': '/rɪˈkruːts/',
+        'stadiums': '/ˈsteɪdiəmz/',
+        'structures': '/ˈstrʌktʃəz/',
+        'the amount of': '/ðiː əˈmaʊnt əv/',
+        'visuals': '/ˈvɪʒuəlz/',
+    }.items():
+        assert overrides[word] == phonetic

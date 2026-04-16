@@ -11,6 +11,7 @@ from platform_sdk.books_registry_adapter import books_registry_service
 _listening_confusable_index_cache: dict[str, list[dict]] | None = None
 _high_value_listening_confusable_index_cache: dict[str, list[dict]] | None = None
 _allowed_ielts_word_keys_cache: set[str] | None = None
+_phonetic_overrides_cache: dict[str, str] | None = None
 _HIGH_VALUE_ONLY_THRESHOLD = 3
 _EXCLUDED_IELTS_CONFUSABLE_BOOK_IDS = {'ielts_confusable_match'}
 
@@ -25,6 +26,32 @@ def get_listening_confusables_path() -> Path:
 
 def get_high_value_listening_confusables_path() -> Path:
     return _repo_root() / 'vocabulary_data' / 'ielts_high_value_confusables.json'
+
+
+def get_phonetic_overrides_path() -> Path:
+    return _repo_root() / 'vocabulary_data' / 'phonetic_overrides.json'
+
+
+def _load_phonetic_overrides() -> dict[str, str]:
+    global _phonetic_overrides_cache
+    if _phonetic_overrides_cache is not None:
+        return _phonetic_overrides_cache
+
+    try:
+        payload = json.loads(get_phonetic_overrides_path().read_text(encoding='utf-8'))
+    except FileNotFoundError:
+        payload = {}
+    except Exception:
+        payload = {}
+
+    if not isinstance(payload, dict):
+        payload = {}
+    _phonetic_overrides_cache = {
+        str(word).strip().lower(): str(phonetic).strip()
+        for word, phonetic in payload.items()
+        if str(word).strip() and str(phonetic).strip()
+    }
+    return _phonetic_overrides_cache
 
 
 def normalize_listening_confusable_key(word: str | None) -> str:
@@ -55,6 +82,7 @@ def _load_confusable_index_file(path: Path) -> dict[str, list[dict]]:
     if not isinstance(raw_index, dict):
         return index
 
+    phonetic_overrides = _load_phonetic_overrides()
     for raw_word, raw_candidates in raw_index.items():
         key = normalize_listening_confusable_key(raw_word)
         if not key or not isinstance(raw_candidates, list):
@@ -76,9 +104,12 @@ def _load_confusable_index_file(path: Path) -> dict[str, list[dict]]:
                 continue
 
             seen_words.add(candidate_key)
+            candidate_phonetic = phonetic_overrides.get(candidate_key) or str(
+                raw_candidate.get('phonetic', ''),
+            ).strip()
             candidates.append({
                 'word': candidate_word,
-                'phonetic': str(raw_candidate.get('phonetic', '')).strip(),
+                'phonetic': candidate_phonetic,
                 'pos': str(raw_candidate.get('pos', 'n.')).strip() or 'n.',
                 'definition': candidate_definition,
             })

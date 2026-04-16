@@ -1,3 +1,5 @@
+import json
+
 from services import listening_confusables as listening_service
 
 
@@ -165,3 +167,31 @@ def test_attach_preset_listening_confusables_ranks_before_limit(monkeypatch):
         'tower',
         'poker',
     ]
+
+
+def test_load_confusable_index_file_applies_phonetic_overrides(tmp_path, monkeypatch):
+    path = tmp_path / 'confusables.json'
+    path.write_text(json.dumps({
+        'words': {
+            'recipe': [
+                {
+                    'word': 'recipes',
+                    'phonetic': '/ˈresɪpsiːz/',
+                    'pos': 'n.',
+                    'definition': '食谱；配方',
+                }
+            ]
+        }
+    }, ensure_ascii=False), encoding='utf-8')
+    monkeypatch.setattr(
+        listening_service.phonetic_lookup_service,
+        'load_phonetic_overrides',
+        lambda: {'recipes': '/ˈresəpiz/'},
+    )
+
+    index = listening_service._load_confusable_index_file(
+        str(path),
+        warning_label='test confusables index',
+    )
+
+    assert index['recipe'][0]['phonetic'] == '/ˈresəpiz/'

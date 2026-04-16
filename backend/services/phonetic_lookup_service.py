@@ -251,23 +251,49 @@ def lookup_local_phonetic(word: str) -> str:
 
 
 def hydrate_missing_entry_phonetics(entries: list[dict]) -> list[dict]:
-    lookup = lookup_local_phonetics([
-        str(entry.get('word') or '')
-        for entry in entries
-        if not normalize_phonetic_text(entry.get('phonetic'))
-    ])
-    if not lookup:
+    if not entries:
         return entries
+
+    normalized_words: list[str] = []
+    missing_words: list[str] = []
+    seen_words = set()
+    seen_missing_words = set()
+    for entry in entries:
+        normalized_word = normalize_word_key(entry.get('word'))
+        if not normalized_word:
+            continue
+        if normalized_word not in seen_words:
+            seen_words.add(normalized_word)
+            normalized_words.append(normalized_word)
+        if (
+            not normalize_phonetic_text(entry.get('phonetic'))
+            and normalized_word not in seen_missing_words
+        ):
+            seen_missing_words.add(normalized_word)
+            missing_words.append(normalized_word)
+
+    override_lookup = _lookup_override_phonetics(normalized_words)
+    missing_lookup = lookup_local_phonetics([
+        word for word in missing_words if word not in override_lookup
+    ])
 
     hydrated_entries: list[dict] = []
     for entry in entries:
-        phonetic = normalize_phonetic_text(entry.get('phonetic'))
-        if phonetic:
+        normalized_word = normalize_word_key(entry.get('word'))
+        existing_phonetic = normalize_phonetic_text(entry.get('phonetic'))
+        override_phonetic = override_lookup.get(normalized_word, '')
+        if override_phonetic:
+            if existing_phonetic != override_phonetic:
+                hydrated_entries.append({**entry, 'phonetic': override_phonetic})
+            else:
+                hydrated_entries.append(entry)
+            continue
+
+        if existing_phonetic:
             hydrated_entries.append(entry)
             continue
 
-        normalized_word = normalize_word_key(entry.get('word'))
-        resolved_phonetic = lookup.get(normalized_word, '')
+        resolved_phonetic = missing_lookup.get(normalized_word, '')
         if resolved_phonetic:
             hydrated_entries.append({**entry, 'phonetic': resolved_phonetic})
             continue

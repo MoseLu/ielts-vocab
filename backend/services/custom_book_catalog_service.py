@@ -271,14 +271,12 @@ def _resolve_word_entry(word_payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def create_custom_book_response(user_id: int, body: dict[str, Any] | None) -> tuple[dict[str, Any], int]:
-    payload = body if isinstance(body, dict) else {}
-    metadata = _normalize_custom_book_meta(payload)
+def _prepare_custom_book_content(payload: dict[str, Any]) -> dict[str, Any]:
     chapters = _normalize_chapters(payload)
     chapter_ids = [chapter['id'] for chapter in chapters]
     words = _normalize_words(payload, chapter_ids)
     if not words:
-        return {'error': '至少需要输入 1 个单词'}, 400
+        raise ValueError('至少需要输入 1 个单词')
     if not chapters:
         chapters = [{'id': 'chapter-1', 'title': '第1章', 'sort_order': 0}]
         chapter_ids = ['chapter-1']
@@ -293,7 +291,65 @@ def create_custom_book_response(user_id: int, body: dict[str, Any] | None) -> tu
         if words_by_chapter.get(chapter['id'])
     ]
     if not non_empty_chapters:
-        return {'error': '至少需要保留 1 个非空章节'}, 400
+        raise ValueError('至少需要保留 1 个非空章节')
+
+    return {
+        'chapters': non_empty_chapters,
+        'words_by_chapter': words_by_chapter,
+    }
+
+
+def _next_custom_book_chapter_sequence(book) -> int:
+    max_sequence = 0
+    prefix = f'{book.id}_'
+    for chapter in book.chapters:
+        chapter_id = str(getattr(chapter, 'id', '') or '')
+        if not chapter_id.startswith(prefix):
+            continue
+        suffix = chapter_id[len(prefix):]
+        if suffix.isdigit():
+            max_sequence = max(max_sequence, int(suffix))
+    return max(max_sequence, len(book.chapters))
+
+
+def _append_custom_book_chapters(book, chapters: list[dict[str, Any]], words_by_chapter: dict[str, list[dict[str, Any]]]):
+    created_chapters = []
+    next_sequence = _next_custom_book_chapter_sequence(book)
+    next_sort_order = max((int(chapter.sort_order or 0) for chapter in book.chapters), default=-1) + 1
+    total_words_added = 0
+
+    for index, chapter_payload in enumerate(chapters):
+        chapter_words = words_by_chapter.get(chapter_payload['id'], [])
+        chapter = ai_custom_book_repository.create_custom_book_chapter(
+            chapter_id=f'{book.id}_{next_sequence + index + 1}',
+            book_id=book.id,
+            title=chapter_payload['title'],
+            word_count=len(chapter_words),
+            sort_order=next_sort_order + index,
+        )
+        total_words_added += len(chapter_words)
+        for word_entry in chapter_words:
+            ai_custom_book_repository.create_custom_book_word(
+                chapter_id=chapter.id,
+                word=word_entry['word'],
+                phonetic=word_entry['phonetic'],
+                pos=word_entry['pos'],
+                definition=word_entry['definition'],
+                is_incomplete=word_entry['is_incomplete'],
+            )
+        created_chapters.append(chapter)
+
+    book.word_count = int(book.word_count or 0) + total_words_added
+    return created_chapters
+
+
+def create_custom_book_response(user_id: int, body: dict[str, Any] | None) -> tuple[dict[str, Any], int]:
+    payload = body if isinstance(body, dict) else {}
+    metadata = _normalize_custom_book_meta(payload)
+    try:
+        prepared_content = _prepare_custom_book_content(payload)
+    except ValueError as exc:
+        return {'error': str(exc)}, 400
 
     try:
         book_id = f'custom_{uuid.uuid4().hex[:12]}'
@@ -309,30 +365,11 @@ def create_custom_book_response(user_id: int, body: dict[str, Any] | None) -> tu
             share_enabled=metadata['share_enabled'],
             chapter_word_target=metadata['chapter_word_target'],
         )
-
-        total_words = 0
-        for index, chapter_payload in enumerate(non_empty_chapters):
-            chapter_words = words_by_chapter.get(chapter_payload['id'], [])
-            stored_chapter_id = f'{book_id}_{index + 1}'
-            chapter = ai_custom_book_repository.create_custom_book_chapter(
-                chapter_id=stored_chapter_id,
-                book_id=book_id,
-                title=chapter_payload['title'],
-                word_count=len(chapter_words),
-                sort_order=index,
-            )
-            total_words += len(chapter_words)
-            for word_entry in chapter_words:
-                ai_custom_book_repository.create_custom_book_word(
-                    chapter_id=chapter.id,
-                    word=word_entry['word'],
-                    phonetic=word_entry['phonetic'],
-                    pos=word_entry['pos'],
-                    definition=word_entry['definition'],
-                    is_incomplete=word_entry['is_incomplete'],
-                )
-
-        book.word_count = total_words
+        created_chapters = _append_custom_book_chapters(
+            book,
+            prepared_content['chapters'],
+            prepared_content['words_by_chapter'],
+        )
         ai_custom_book_repository.commit()
         created_book = ai_custom_book_repository.get_custom_book(user_id, book_id)
         if created_book is None:
@@ -347,8 +384,58 @@ def create_custom_book_response(user_id: int, body: dict[str, Any] | None) -> tu
         'book': detail,
         'title': detail['title'],
         'description': detail['description'],
+        'created_count': len(created_chapters),
+        'created_chapters': [
+            serialize_custom_book_chapter(chapter, include_words=False)
+            for chapter in created_chapters
+        ],
         'chapters': detail['chapters'],
         'words': build_custom_book_vocabulary_entries(created_book),
+    }, 201
+
+
+def append_custom_book_chapters_response(
+    user_id: int,
+    book_id: str,
+    body: dict[str, Any] | None,
+) -> tuple[dict[str, Any], int]:
+    book = get_custom_book_for_user(user_id, book_id)
+    if not book:
+        return {'error': 'Book not found'}, 404
+
+    payload = body if isinstance(body, dict) else {}
+    try:
+        prepared_content = _prepare_custom_book_content(payload)
+    except ValueError as exc:
+        return {'error': str(exc)}, 400
+
+    try:
+        created_chapters = _append_custom_book_chapters(
+            book,
+            prepared_content['chapters'],
+            prepared_content['words_by_chapter'],
+        )
+        ai_custom_book_repository.commit()
+        updated_book = ai_custom_book_repository.get_custom_book(user_id, book_id)
+        if updated_book is None:
+            raise RuntimeError('updated custom book is missing')
+    except Exception:
+        ai_custom_book_repository.rollback()
+        raise
+
+    detail = serialize_custom_book_detail(updated_book)
+    return {
+        'bookId': updated_book.id,
+        'book': detail,
+        'title': detail['title'],
+        'description': detail['description'],
+        'created_count': len(created_chapters),
+        'created_chapters': [
+            serialize_custom_book_chapter(chapter, include_words=False)
+            for chapter in created_chapters
+        ],
+        'chapters': detail['chapters'],
+        'words': build_custom_book_vocabulary_entries(updated_book),
     }, 201
 
 

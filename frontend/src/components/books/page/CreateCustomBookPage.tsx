@@ -45,18 +45,31 @@ function OptionGroup({ label, value, options, disabled = false, onChange }: Opti
 
 export default function CreateCustomBookPage() {
   const page = useCreateCustomBookPage()
+  const chapterNumberOffset = page.chapterIndexBase
+  const titleLabel = page.isAppendMode ? '继续为词书补充新章节' : '创建一本可立即学习的词书'
+  const description = page.isAppendMode
+    ? (
+        page.isLoadingExistingBook
+          ? '正在读取现有词书信息...'
+          : `新内容会追加到《${page.title || '当前词书'}》，当前已有 ${page.existingChapterCount} 章、${page.existingWordCount} 个词。`
+      )
+    : '按章节粘贴单词，或导入 UTF-8 CSV；保存后会加入“我的词书”。'
+  const saveLabel = page.isAppendMode ? '保存新增章节' : '保存词书'
+  const metaDisabled = page.isAppendMode || page.isLoadingExistingBook
 
   return (
     <Page className="custom-book-page">
       <PageHeader className="custom-book-header">
         <div className="custom-book-heading">
           <span className="custom-book-kicker">自定义词书</span>
-          <h1>创建一本可立即学习的词书</h1>
-          <p>按章节粘贴单词，或导入 UTF-8 CSV；保存后会加入“我的词书”。</p>
+          <h1>{titleLabel}</h1>
+          <p>{description}</p>
         </div>
         <div className="custom-book-actions">
           <Button variant="ghost" onClick={page.cancel}>取消</Button>
-          <Button onClick={page.saveBook} isLoading={page.isSaving}>保存词书</Button>
+          <Button onClick={page.saveBook} isLoading={page.isSaving} disabled={page.isLoadingExistingBook}>
+            {saveLabel}
+          </Button>
         </div>
       </PageHeader>
 
@@ -67,6 +80,7 @@ export default function CreateCustomBookPage() {
               <Input
                 label="词书名称"
                 value={page.title}
+                disabled={metaDisabled}
                 onChange={event => page.setTitle(event.target.value)}
                 placeholder="例如：雅思口语高频短语"
               />
@@ -79,6 +93,7 @@ export default function CreateCustomBookPage() {
                     type="number"
                     min={1}
                     value={page.chapterWordTarget}
+                    disabled={metaDisabled}
                     onChange={event => page.setChapterWordTarget(Math.max(1, Number(event.target.value) || 1))}
                   />
                 </div>
@@ -88,6 +103,7 @@ export default function CreateCustomBookPage() {
                       type="button"
                       key={target}
                       className={page.chapterWordTarget === target ? 'active' : ''}
+                      disabled={metaDisabled}
                       onClick={() => page.setChapterWordTarget(target)}
                     >
                       {target}
@@ -100,19 +116,21 @@ export default function CreateCustomBookPage() {
                 label="词书分类"
                 value={page.educationStage}
                 options={EDUCATION_STAGE_OPTIONS}
+                disabled={metaDisabled}
                 onChange={page.setEducationStage}
               />
               <OptionGroup
                 label="子分类"
                 value={page.examType}
                 options={EXAM_TYPE_OPTIONS}
+                disabled={metaDisabled}
                 onChange={page.setExamType}
               />
               <OptionGroup
                 label="雅思分类"
                 value={page.ieltsSkill}
                 options={IELTS_SKILL_OPTIONS}
-                disabled={page.examType !== 'ielts'}
+                disabled={metaDisabled || page.examType !== 'ielts'}
                 onChange={page.setIeltsSkill}
               />
 
@@ -120,6 +138,7 @@ export default function CreateCustomBookPage() {
                 <input
                   type="checkbox"
                   checked={page.shareEnabled}
+                  disabled={metaDisabled}
                   onChange={event => page.setShareEnabled(event.target.checked)}
                 />
                 <span>分享到社区</span>
@@ -146,7 +165,12 @@ export default function CreateCustomBookPage() {
                 </div>
 
                 <label className="custom-book-file">
-                  <input type="file" accept=".csv,text/csv" onChange={page.handleCsvFile} />
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    disabled={page.isLoadingExistingBook}
+                    onChange={page.handleCsvFile}
+                  />
                   导入 CSV
                 </label>
               </div>
@@ -158,10 +182,13 @@ export default function CreateCustomBookPage() {
                   {page.csvSummary && <span>{page.csvSummary}</span>}
                 </div>
                 <div className="custom-book-toolbar-actions">
-                  <Button variant="secondary" size="sm" onClick={page.addChapter}>添加章节</Button>
+                  <Button variant="secondary" size="sm" onClick={page.addChapter} disabled={page.isLoadingExistingBook}>
+                    添加章节
+                  </Button>
                   <Button
                     variant={page.reorderMode ? 'primary' : 'ghost'}
                     size="sm"
+                    disabled={page.isLoadingExistingBook}
                     onClick={() => page.setReorderMode(!page.reorderMode)}
                   >
                     {page.reorderMode ? '完成排序' : '调整排序'}
@@ -185,7 +212,7 @@ export default function CreateCustomBookPage() {
                       <div className="custom-book-chapter-compact">
                         <span className="custom-book-drag-handle">拖拽</span>
                         <div>
-                          <strong>{chapter.title || `第${index + 1}章`}</strong>
+                          <strong>{chapter.title || `第${chapterNumberOffset + index + 1}章`}</strong>
                           <span>{countChapterWords(chapter)} 个词</span>
                         </div>
                         <div className="custom-book-reorder-buttons">
@@ -197,7 +224,7 @@ export default function CreateCustomBookPage() {
                       <>
                         <div className="custom-book-chapter-header">
                           <Input
-                            label={`章节 ${index + 1}`}
+                            label={`章节 ${chapterNumberOffset + index + 1}`}
                             value={chapter.title}
                             onChange={event => page.updateChapterTitle(chapter.id, event.target.value)}
                           />

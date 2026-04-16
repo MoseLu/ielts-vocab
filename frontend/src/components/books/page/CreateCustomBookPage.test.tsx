@@ -23,9 +23,9 @@ vi.mock('../../../lib', async () => {
   }
 })
 
-function renderPage() {
+function renderPage(initialEntries: string[] = ['/books/create']) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={initialEntries}>
       <ToastProvider>
         <CreateCustomBookPage />
       </ToastProvider>
@@ -96,5 +96,48 @@ describe('CreateCustomBookPage', () => {
     await user.click(screen.getByRole('button', { name: '取消' }))
 
     expect(navigateMock).toHaveBeenCalledWith('/plan')
+  })
+
+  it('loads an existing custom book and saves new chapters through the append endpoint', async () => {
+    const user = userEvent.setup()
+    apiFetchMock
+      .mockResolvedValueOnce({
+        id: 'custom_9',
+        title: '听力补充词书',
+        word_count: 42,
+        education_stage: 'abroad',
+        exam_type: 'ielts',
+        ielts_skill: 'listening',
+        share_enabled: false,
+        chapter_word_target: 30,
+        chapters: [
+          { id: 'custom_9_1', title: '第1章' },
+          { id: 'custom_9_2', title: '第2章' },
+        ],
+      })
+      .mockResolvedValueOnce({
+        bookId: 'custom_9',
+        created_count: 1,
+        book: { id: 'custom_9', incomplete_word_count: 0 },
+      })
+
+    renderPage(['/books/create?bookId=custom_9'])
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '继续为词书补充新章节' })).toBeInTheDocument()
+    })
+    expect(screen.getByDisplayValue('听力补充词书')).toBeDisabled()
+    expect(screen.getByLabelText('章节 3')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('单词内容'), 'meticulous')
+    await user.click(screen.getByRole('button', { name: '保存新增章节' }))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/books/custom-books/custom_9/chapters', expect.objectContaining({
+        method: 'POST',
+      }))
+    })
+    expect(apiFetchMock).not.toHaveBeenCalledWith('/api/books/my', expect.anything())
+    expect(navigateMock).toHaveBeenCalledWith('/books')
   })
 })

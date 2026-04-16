@@ -5,7 +5,7 @@ import json
 import os
 import re
 
-from services import books_registry_service
+from services import books_registry_service, phonetic_lookup_service
 
 _listening_confusable_index_cache: dict[str, list[dict]] | None = None
 _high_value_listening_confusable_index_cache: dict[str, list[dict]] | None = None
@@ -184,6 +184,8 @@ def _load_confusable_index_file(path: str, *, warning_label: str) -> dict[str, l
     raw_index = payload.get('words', {}) if isinstance(payload, dict) else {}
     index: dict[str, list[dict]] = {}
 
+    phonetic_overrides = phonetic_lookup_service.load_phonetic_overrides()
+
     if isinstance(raw_index, dict):
         for raw_word, raw_candidates in raw_index.items():
             key = normalize_listening_confusable_key(raw_word)
@@ -206,9 +208,12 @@ def _load_confusable_index_file(path: str, *, warning_label: str) -> dict[str, l
                     continue
 
                 seen_words.add(candidate_key)
+                candidate_phonetic = phonetic_overrides.get(candidate_key) or str(
+                    raw_candidate.get('phonetic', ''),
+                ).strip()
                 candidates.append({
                     'word': candidate_word,
-                    'phonetic': str(raw_candidate.get('phonetic', '')).strip(),
+                    'phonetic': candidate_phonetic,
                     'pos': str(raw_candidate.get('pos', 'n.')).strip() or 'n.',
                     'definition': candidate_definition,
                 })

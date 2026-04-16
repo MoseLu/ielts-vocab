@@ -5,6 +5,15 @@ import { vi } from 'vitest'
 import ChapterModal from './ChapterModal'
 
 const apiFetchMock = vi.fn()
+const navigateMock = vi.fn()
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  }
+})
 
 vi.mock('../../../contexts', () => ({
   useAuth: () => ({ user: { id: 1 } }),
@@ -49,6 +58,7 @@ describe('ChapterModal', () => {
     })
 
     apiFetchMock.mockReset()
+    navigateMock.mockReset()
     vi.mocked(global.fetch).mockReset()
   })
 
@@ -175,5 +185,29 @@ describe('ChapterModal', () => {
       0,
       'game',
     )
+  })
+
+  it('offers an append entry for existing custom books', async () => {
+    const user = userEvent.setup()
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        chapters: [{ id: 'custom_1_1', title: '第1章', word_count: 20 }],
+      }),
+    } as Response)
+    apiFetchMock.mockResolvedValue({ chapter_progress: {} })
+
+    render(
+      <ChapterModal
+        book={{ id: 'custom_1', title: '我的词书', word_count: 20, is_custom_book: true }}
+        progress={{ current_index: 0 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: '继续添加章节' }))
+
+    expect(navigateMock).toHaveBeenCalledWith('/books/create?bookId=custom_1')
   })
 })

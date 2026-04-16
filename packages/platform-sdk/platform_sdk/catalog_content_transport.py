@@ -16,6 +16,7 @@ from platform_sdk.catalog_content_catalog_application import (
     build_word_examples_response,
 )
 from platform_sdk.catalog_content_custom_books_application import (
+    append_catalog_content_custom_book_chapters_response,
     create_catalog_content_custom_book_response,
     get_catalog_content_custom_book_response,
     list_catalog_content_custom_books_response,
@@ -111,6 +112,17 @@ def get_custom_book(current_user, book_id):
     return jsonify(payload), status
 
 
+@catalog_content_bp.route('/api/books/custom-books/<book_id>/chapters', methods=['POST'])
+@token_required
+def append_custom_book_chapters(current_user, book_id):
+    payload, status = append_catalog_content_custom_book_chapters_response(
+        current_user.id,
+        book_id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
 @catalog_content_bp.route('/api/books/<book_id>', methods=['GET'])
 def get_book(book_id):
     payload, status = build_book_response(book_id)
@@ -160,6 +172,17 @@ def list_internal_custom_books(current_user):
 @token_required
 def get_internal_custom_book(current_user, book_id):
     payload, status = get_catalog_content_custom_book_response(current_user.id, book_id)
+    return jsonify(payload), status
+
+
+@catalog_content_bp.route('/internal/catalog/custom-books/<book_id>/chapters', methods=['POST'])
+@token_required
+def append_internal_custom_book_chapters(current_user, book_id):
+    payload, status = append_catalog_content_custom_book_chapters_response(
+        current_user.id,
+        book_id,
+        request.get_json(silent=True),
+    )
     return jsonify(payload), status
 
 

@@ -74,13 +74,18 @@ function buildEntryFromRow(row: string[], columns: Record<string, number>): Cust
   }
 }
 
-function chunkEntries(entries: CustomBookWordDraft[], chapterWordTarget: number): CustomBookChapterDraft[] {
+function chunkEntries(
+  entries: CustomBookWordDraft[],
+  chapterWordTarget: number,
+  startIndex: number,
+): CustomBookChapterDraft[] {
   const chunkSize = Math.max(1, chapterWordTarget)
   const chapters: CustomBookChapterDraft[] = []
   for (let index = 0; index < entries.length; index += chunkSize) {
     const chunk = entries.slice(index, index + chunkSize)
+    const chapterNumber = startIndex + chapters.length + 1
     chapters.push(createChapterDraft(chapters.length + 1, {
-      title: `第${chapters.length + 1}章`,
+      title: `第${chapterNumber}章`,
       entries: chunk,
     }))
   }
@@ -90,6 +95,7 @@ function chunkEntries(entries: CustomBookWordDraft[], chapterWordTarget: number)
 export function parseCustomBookCsv(
   text: string,
   chapterWordTarget: number,
+  startIndex = 0,
 ): CustomBookChapterDraft[] {
   const rows = parseCsvRows(text.trim().replace(/^\uFEFF/, ''))
   if (rows.length === 0) return []
@@ -110,14 +116,14 @@ export function parseCustomBookCsv(
     const entries = dataRows
       .map(row => buildEntryFromRow(row, columns))
       .filter((entry): entry is CustomBookWordDraft => Boolean(entry))
-    return chunkEntries(entries, chapterWordTarget)
+    return chunkEntries(entries, chapterWordTarget, startIndex)
   }
 
   const grouped = new Map<string, CustomBookWordDraft[]>()
   for (const row of dataRows) {
     const entry = buildEntryFromRow(row, columns)
     if (!entry) continue
-    const chapterTitle = row[columns.chapter]?.trim() || `第${grouped.size + 1}章`
+    const chapterTitle = row[columns.chapter]?.trim() || `第${startIndex + grouped.size + 1}章`
     grouped.set(chapterTitle, [...(grouped.get(chapterTitle) ?? []), entry])
   }
 

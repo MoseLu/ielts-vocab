@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../contexts'
 import {
   CHAPTER_PRACTICE_MODE_META,
@@ -25,6 +26,7 @@ interface Book {
   word_count: number
   chapter_count?: number
   group_count?: number
+  is_custom_book?: boolean
   practice_mode?: string
 }
 
@@ -186,6 +188,7 @@ function ChapterModalSkeleton({ itemCount }: ChapterModalSkeletonProps) {
 }
 
 function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: ChapterModalProps) {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [chapterProgress, setChapterProgress] = useState<Record<string | number, ChapterProgress>>({})
@@ -201,6 +204,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
 
   const currentIndex = progress?.current_index || 0
   const isConfusableBook = String(book.id) === 'ielts_confusable_match'
+  const isCustomBook = !!book.is_custom_book && !isConfusableBook
   const supportsGameEntry = !isConfusableBook && book.practice_mode !== 'match'
   const activeEntryMode: BookEntryMode = supportsGameEntry ? entryMode : 'practice'
 
@@ -400,6 +404,14 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
             )}
           </div>
           <div className="chapter-modal-actions">
+            {isCustomBook && (
+              <button
+                className="chapter-continue-btn"
+                onClick={() => navigate(`/books/create?bookId=${encodeURIComponent(String(book.id))}`)}
+              >
+                继续添加章节
+              </button>
+            )}
             {isConfusableBook && (
               <button
                 className="chapter-continue-btn"
