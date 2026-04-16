@@ -4,9 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import WordListPanel from './WordListPanel'
 import type { WordListActionControls } from './types'
 
+const playWordAudioMock = vi.fn()
+
 vi.mock('./WordListDetailPanel', () => ({
   default: ({ open, selectedWord }: { open: boolean; selectedWord: { word: string } | null }) =>
     open ? <div data-testid="wordlist-detail-panel">{selectedWord?.word}</div> : null,
+}))
+
+vi.mock('./utils.audio', () => ({
+  playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
 }))
 
 describe('WordListPanel', () => {
@@ -14,6 +20,7 @@ describe('WordListPanel', () => {
   const scrollIntoViewMock = vi.fn()
 
   beforeEach(() => {
+    playWordAudioMock.mockReset()
     scrollIntoViewMock.mockReset()
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
       configurable: true,
@@ -64,6 +71,7 @@ describe('WordListPanel', () => {
     expect(favoriteButtons).toHaveLength(2)
     expect(favoriteButtons[0]).toHaveClass('is-active')
     expect(familiarButtons[1]).toHaveClass('is-active')
+    expect(familiarButtons[0]).toHaveTextContent('熟')
     expect(screen.queryByTestId('wordlist-detail-panel')).not.toBeInTheDocument()
 
     await user.click(familiarButtons[0])
@@ -76,6 +84,31 @@ describe('WordListPanel', () => {
     await user.click(alphaRow)
 
     expect(screen.getByTestId('wordlist-detail-panel')).toHaveTextContent('alpha')
+    expect(playWordAudioMock).toHaveBeenCalledWith('alpha', expect.objectContaining({ playbackSpeed: expect.any(String), volume: expect.any(String) }))
+  })
+
+  it('plays word audio on focus navigation and click without double-playing on mouse focus', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <WordListPanel
+        show
+        vocabulary={[{ word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' }]}
+        queue={[0]}
+        queueIndex={0}
+        wordStatuses={{}}
+        onClose={() => {}}
+      />,
+    )
+
+    const alphaRow = screen.getByRole('button', { name: '查看 alpha 详情' })
+
+    alphaRow.focus()
+    expect(playWordAudioMock).toHaveBeenCalledTimes(1)
+    expect(playWordAudioMock).toHaveBeenLastCalledWith('alpha', expect.objectContaining({ playbackSpeed: expect.any(String), volume: expect.any(String) }))
+
+    await user.click(alphaRow)
+    expect(playWordAudioMock).toHaveBeenCalledTimes(2)
   })
 
   it('treats words before the restored queue index as completed in the list', () => {

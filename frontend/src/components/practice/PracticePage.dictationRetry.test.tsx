@@ -102,9 +102,13 @@ vi.mock('../settings/SettingsPanel', () => ({
   default: () => null,
 }))
 
-vi.mock('../ui', () => ({
-  PageSkeleton: () => <div data-testid="page-skeleton" />,
-}))
+vi.mock('../ui', async () => {
+  const actual = await vi.importActual<typeof import('../ui')>('../ui')
+  return {
+    ...actual,
+    PageSkeleton: () => <div data-testid="page-skeleton" />,
+  }
+})
 
 async function flushMicrotasks() {
   await act(async () => {
@@ -171,7 +175,11 @@ describe('PracticePage dictation retry flow', () => {
     const submit = container.querySelector('.spelling-submit-btn') as HTMLButtonElement
 
     fireEvent.change(input, { target: { value: 'alpga' } })
-    fireEvent.click(submit)
+    await act(async () => {
+      fireEvent.click(submit)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
 
     expect(recordWordResultMock).toHaveBeenLastCalledWith('alpha', 'dictation', false)
     expect(recordModeAnswerMock).toHaveBeenLastCalledWith('dictation', false)
@@ -218,7 +226,11 @@ describe('PracticePage dictation retry flow', () => {
     expect(playWordAudioMock.mock.calls.map(call => call[0])).not.toContain('beta')
 
     fireEvent.change(container.querySelector('.spelling-input') as HTMLInputElement, { target: { value: 'alpha' } })
-    fireEvent.click(container.querySelector('.spelling-submit-btn') as HTMLButtonElement)
+    await act(async () => {
+      fireEvent.click(container.querySelector('.spelling-submit-btn') as HTMLButtonElement)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
 
     expect(recordWordResultMock).toHaveBeenLastCalledWith('alpha', 'dictation', true)
     expect(recordModeAnswerMock).toHaveBeenLastCalledWith('dictation', true)
@@ -266,7 +278,11 @@ describe('PracticePage dictation retry flow', () => {
     const input = container.querySelector('.spelling-input') as HTMLInputElement
 
     fireEvent.change(input, { target: { value: 'alpga' } })
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+      await Promise.resolve()
+      await Promise.resolve()
+    })
 
     act(() => {
       vi.advanceTimersByTime(3500)

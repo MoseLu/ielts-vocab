@@ -23,6 +23,7 @@ export default function RadioMode({
   onProgressChange,
   isSessionActive,
   favoriteSlot,
+  speakingSlot,
 }: RadioModeProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [radioPaused, setRadioPaused] = useState(false)
@@ -217,9 +218,10 @@ export default function RadioMode({
   return (
     <div className="practice-page radio-mode">
       <section className="radio-stage" aria-live="polite">
-        {favoriteSlot ? (
+        {(favoriteSlot || speakingSlot) ? (
           <div className="radio-stage-toolbar">
-            <div className="radio-stage-toolbar__action">{favoriteSlot}</div>
+            <div className="radio-stage-toolbar__side">{favoriteSlot}</div>
+            <div className="radio-stage-toolbar__side radio-stage-toolbar__side--end">{speakingSlot}</div>
           </div>
         ) : null}
         <h1 className="radio-stage-word">{radioWord?.word ?? '...'}</h1>

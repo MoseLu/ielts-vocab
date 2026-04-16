@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import RadioMode from './RadioMode'
@@ -77,12 +77,29 @@ describe('RadioMode layout', () => {
     expect(screen.getByText('minus')).toBeInTheDocument()
   })
 
-  it('replays the current word when the shared replay shortcut event is dispatched', () => {
+  it('replays the current word when the shared replay shortcut event is dispatched', async () => {
     render(<RadioMode {...baseProps} />)
 
     vi.mocked(playWordAudio).mockClear()
-    window.dispatchEvent(new Event(PRACTICE_GLOBAL_SHORTCUT_REPLAY_EVENT))
+    await act(async () => {
+      await Promise.resolve()
+      window.dispatchEvent(new Event(PRACTICE_GLOBAL_SHORTCUT_REPLAY_EVENT))
+      await Promise.resolve()
+    })
 
     expect(playWordAudio).toHaveBeenCalledWith('plus', baseProps.settings, expect.any(Function))
+  })
+
+  it('keeps favorite and speaking actions on opposite sides of the toolbar', () => {
+    const { container } = render(
+      <RadioMode
+        {...baseProps}
+        favoriteSlot={<button type="button">fav</button>}
+        speakingSlot={<button type="button">speak</button>}
+      />,
+    )
+
+    expect(container.querySelector('.radio-stage-toolbar__side button')?.textContent).toBe('fav')
+    expect(container.querySelector('.radio-stage-toolbar__side--end button')?.textContent).toBe('speak')
   })
 })

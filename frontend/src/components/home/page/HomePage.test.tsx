@@ -2,6 +2,11 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import HomePage from './HomePage'
 
+const helpRegistryState = vi.hoisted(() => ({
+  setPlanHelpFaqItems: vi.fn(),
+  clearPlanHelpFaqItems: vi.fn(),
+}))
+
 const hooksState = vi.hoisted(() => ({
   vocabBooks: {
     books: [
@@ -157,6 +162,11 @@ vi.mock('../../books/dialogs/ChapterModal', () => ({
   default: () => null,
 }))
 
+vi.mock('../../layout/navigation/helpContentRegistry', () => ({
+  setPlanHelpFaqItems: (...args: unknown[]) => helpRegistryState.setPlanHelpFaqItems(...args),
+  clearPlanHelpFaqItems: (...args: unknown[]) => helpRegistryState.clearPlanHelpFaqItems(...args),
+}))
+
 describe('HomePage', () => {
   beforeEach(() => {
     Object.defineProperty(window, 'innerWidth', {
@@ -180,6 +190,8 @@ describe('HomePage', () => {
     hooksState.myBooks.loading = false
     hooksState.myBooks.addBook.mockReset()
     hooksState.myBooks.removeBook.mockReset()
+    helpRegistryState.setPlanHelpFaqItems.mockReset()
+    helpRegistryState.clearPlanHelpFaqItems.mockReset()
     hooksState.learningStats.loading = false
     hooksState.learningStats.alltime = {
       total_words: 120,
@@ -292,10 +304,10 @@ describe('HomePage', () => {
 
     expect(screen.queryByText('今日待办')).not.toBeInTheDocument()
     expect(screen.queryByText('指标怎么达成')).not.toBeInTheDocument()
-    expect(screen.getByText('错词怎么减少')).toBeInTheDocument()
-    expect(screen.getByText('复习怎样算完成')).toBeInTheDocument()
-    expect(screen.getByText('每个模式看什么')).toBeInTheDocument()
-    expect(screen.getByText('系统还缺哪一关')).toBeInTheDocument()
+    expect(screen.queryByText('错词怎么减少')).not.toBeInTheDocument()
+    expect(screen.queryByText('复习怎样算完成')).not.toBeInTheDocument()
+    expect(screen.queryByText('每个模式看什么')).not.toBeInTheDocument()
+    expect(screen.queryByText('系统还缺哪一关')).not.toBeInTheDocument()
     expect(screen.getByText('到期复习')).toBeInTheDocument()
     expect(screen.getAllByText('清错词').length).toBeGreaterThan(0)
     expect(screen.getByText('推进词书')).toBeInTheDocument()
@@ -316,21 +328,13 @@ describe('HomePage', () => {
     expect(screen.queryByText('当前在学词书会排在最前，方便直接开始今天的主线。')).not.toBeInTheDocument()
     expect(screen.queryByText('不改待办逻辑，只把常用路径收成一排。')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '管理词书' })).not.toBeInTheDocument()
-    expect(screen.getByText('打开速记复习队列，只处理到期这一组。')).toBeInTheDocument()
-    expect(screen.getByText('先完成 6 词到期，每个词都要做到能立刻回想释义。')).toBeInTheDocument()
-    expect(screen.getByText('完成标准：到期数量归零，回到首页后这一项才会自动勾选。')).toBeInTheDocument()
-    expect(screen.getByText('只要某一项还没连续答对 4 次，这一项就还算“没清掉”。')).toBeInTheDocument()
-    expect(screen.getByText('频次：1 天 / 1 天 / 4 天 / 7 天 / 14 天 / 30 天')).toBeInTheDocument()
-    expect(screen.getByText('同一个词要按 1 天 / 1 天 / 4 天 / 7 天 / 14 天 / 30 天 这 6 轮节奏反复通过，才算把“认识它”这一步走完整。')).toBeInTheDocument()
-    expect(screen.getByText('某一章显示这个模式已完成，意思是你已经把这一章在这个模式下完整练过一轮。')).toBeInTheDocument()
-    expect(screen.getByText('现在还没有一场专门的“总检查”，去把速记模式、默写模式、听音选义、听写模式这四个模式维度一起复核一遍。')).toBeInTheDocument()
     expect(screen.queryByText(/history_wrong/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/nextReview/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/is_completed/i)).not.toBeInTheDocument()
     expect(screen.getByText('当前步骤')).toBeInTheDocument()
     expect(screen.getAllByText('待处理').length).toBeGreaterThan(0)
     expect(screen.getAllByText('已完成').length).toBeGreaterThan(0)
-    expect(container.querySelectorAll('.study-guidance-card')).toHaveLength(4)
+    expect(container.querySelectorAll('.study-guidance-card')).toHaveLength(0)
     expect(container.querySelectorAll('.study-todo-item')).toHaveLength(3)
     expect(container.querySelectorAll('.study-todo-card-head')).toHaveLength(3)
     expect(container.querySelector('.study-todo-summary')).toBeNull()
@@ -355,6 +359,15 @@ describe('HomePage', () => {
     expect(screen.queryByText('系统推荐顺序')).not.toBeInTheDocument()
     expect(screen.queryByText('我现在想...')).not.toBeInTheDocument()
     expect(screen.queryByText('系统提醒')).not.toBeInTheDocument()
+    expect(helpRegistryState.setPlanHelpFaqItems).toHaveBeenCalledTimes(1)
+    expect(helpRegistryState.setPlanHelpFaqItems.mock.calls[0][0]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: '错词怎么减少' }),
+        expect.objectContaining({ title: '复习怎样算完成' }),
+        expect.objectContaining({ title: '每个模式看什么' }),
+        expect.objectContaining({ title: '系统还缺哪一关' }),
+      ]),
+    )
   })
 
   it('renders the book panel first in DOM order', () => {
@@ -370,9 +383,20 @@ describe('HomePage', () => {
 
     expect(sectionClasses).toEqual([
       'study-guide-panel',
-      'study-guidance-panel',
       'study-todo-panel',
     ])
+  })
+
+  it('clears the registered homepage help content on unmount', () => {
+    const { unmount } = render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    )
+
+    unmount()
+
+    expect(helpRegistryState.clearPlanHelpFaqItems).toHaveBeenCalledTimes(1)
   })
 
   it('shows add-book as the third task when no focus book is available', () => {

@@ -74,6 +74,7 @@ export default function DictationMode({
   spellingFeedbackDismissing = false,
   spellingFeedbackSnapshot = null,
   favoriteSlot,
+  speakingSlot,
   onSpellingInputChange,
   onSpellingSubmit,
   onGoBack,
@@ -117,11 +118,12 @@ export default function DictationMode({
   const wrongReplayNote = isExampleMode && sentenceText
     ? '系统正在重播例句，稍后重新填写。'
     : '系统正在重播发音，稍后重新拼写。'
+  const hasHeaderActions = Boolean(favoriteSlot) || Boolean(speakingSlot)
   const wrongSubmittedAnswer = spellingFeedbackSnapshot ?? (spellingInput.trim() ? spellingInput : '未输入内容')
   const allowEditingWhileWrong = spellingResult === 'wrong' && (spellingLocked || spellingFeedbackDismissing)
   const disableSpellingInput = spellingResult === 'correct' || (spellingResult === 'wrong' && !allowEditingWhileWrong)
   const showSpellingActions = spellingResult === null
-  const showHeader = hasExamples || Boolean(favoriteSlot)
+  const showHeader = hasExamples || hasHeaderActions
   const modeTitle = isExampleMode ? '根据语境填写单词' : '根据发音写出单词'
   const modeHint = isExampleMode ? '听例句，写出空缺的单词' : '听发音，拼写单词'
   const modeBadge = isExampleMode ? '例句填空' : '单词拼写'
@@ -168,7 +170,11 @@ export default function DictationMode({
         <div className="dictation-card">
           {showHeader ? (
             <div className="dictation-card-header">
-              <div className="dictation-card-header__side" aria-hidden="true" />
+              <div className="dictation-card-header__side">
+                {favoriteSlot ? (
+                  <div className="dictation-card-header__action">{favoriteSlot}</div>
+                ) : null}
+              </div>
               <div className="dictation-card-header__center">
                 {hasExamples ? (
                   <div className="dictation-submode-toggle">
@@ -192,8 +198,8 @@ export default function DictationMode({
                 )}
               </div>
               <div className="dictation-card-header__side dictation-card-header__side--action">
-                {favoriteSlot ? (
-                  <div className="dictation-card-header__action">{favoriteSlot}</div>
+                {speakingSlot ? (
+                  <div className="dictation-card-header__action">{speakingSlot}</div>
                 ) : null}
               </div>
             </div>

@@ -37,7 +37,7 @@ export default function WordListActionButton({
       title={title}
     >
       {kind === 'familiar' ? (
-        <span className="wordlist-action-btn__label">熟字</span>
+        <span className="wordlist-action-btn__label">熟</span>
       ) : (
         <svg viewBox="0 0 1024 1024" aria-hidden="true">
           <path

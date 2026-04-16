@@ -105,9 +105,13 @@ vi.mock('../settings/SettingsPanel', () => ({
   default: () => null,
 }))
 
-vi.mock('../ui', () => ({
-  PageSkeleton: () => <div data-testid="page-skeleton" />,
-}))
+vi.mock('../ui', async () => {
+  const actual = await vi.importActual<typeof import('../ui')>('../ui')
+  return {
+    ...actual,
+    PageSkeleton: () => <div data-testid="page-skeleton" />,
+  }
+})
 
 vi.mock('./OptionsMode', () => ({
   default: ({

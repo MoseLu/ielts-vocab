@@ -49,6 +49,7 @@ export default function QuickMemoryMode({
   initialIndex,
   onIndexChange,
   favoriteSlot,
+  speakingSlot,
 }: QuickMemoryModeProps) {
   const { showToast } = useToast()
   const [index, setIndex] = useState(0)
@@ -75,6 +76,7 @@ export default function QuickMemoryMode({
   const recordSyncInFlightRef = useRef(false)
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
+  const queueWords = queue.map(queueIndex => vocabulary[queueIndex]?.word).filter((word): word is string => Boolean(word))
   wordRef.current = currentWord
 
   const {
@@ -104,6 +106,7 @@ export default function QuickMemoryMode({
     chapterId,
     done,
     index,
+    queueWords,
     queueLength: queue.length,
     reviewMode,
     results,
@@ -397,14 +400,12 @@ export default function QuickMemoryMode({
         <div className="qm-progress-label">{index + 1} / {queue.length}</div>
 
         <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
-          <div className={`qm-card-toolbar${phase === 'question' ? ' qm-card-toolbar--question' : ''}`}>
-            {phase === 'question' ? <div className="qm-card-toolbar__spacer" /> : null}
-            <div className="qm-card-toolbar__actions">
-              {favoriteSlot ? <div className="qm-card-toolbar__action">{favoriteSlot}</div> : null}
-              <button type="button" className="qm-card-toolbar__icon-btn" onClick={replayCurrentWord} aria-label="重播发音" title={replayWordHint}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
-              </button>
-            </div>
+          <div className="qm-card-toolbar">
+            <div className="qm-card-toolbar__side">{favoriteSlot}</div>
+            <button type="button" className="qm-card-toolbar__icon-btn" onClick={replayCurrentWord} aria-label="重播发音" title={replayWordHint}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
+            </button>
+            <div className="qm-card-toolbar__side qm-card-toolbar__side--end">{speakingSlot}</div>
           </div>
           {phase === 'question' && (
             <>

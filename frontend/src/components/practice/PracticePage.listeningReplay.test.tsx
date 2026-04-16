@@ -75,7 +75,13 @@ vi.mock('./RadioMode', () => ({ default: () => null }))
 vi.mock('./DictationMode', () => ({ default: () => null }))
 vi.mock('./QuickMemoryMode', () => ({ default: () => null }))
 vi.mock('../settings/SettingsPanel', () => ({ default: () => null }))
-vi.mock('../ui', () => ({ PageSkeleton: () => <div data-testid="page-skeleton" /> }))
+vi.mock('../ui', async () => {
+  const actual = await vi.importActual<typeof import('../ui')>('../ui')
+  return {
+    ...actual,
+    PageSkeleton: () => <div data-testid="page-skeleton" />,
+  }
+})
 
 vi.mock('./OptionsMode', () => ({
   default: ({
@@ -176,10 +182,18 @@ describe('PracticePage listening replay', () => {
     await flushRender()
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
 
-    fireEvent.click(screen.getByTestId('answer-guy'))
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('answer-guy'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guy'])
 
-    fireEvent.click(screen.getByTestId('answer-guise'))
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('answer-guise'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guy', 'guise'])
   })
 })

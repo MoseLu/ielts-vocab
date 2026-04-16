@@ -28,7 +28,7 @@
 }
 
 .dictation-card-header {
-    --dictation-header-side-size: 54px;
+    --dictation-header-side-size: 104px;
     display: grid;
     grid-template-columns: var(--dictation-header-side-size) minmax(0, 1fr) var(--dictation-header-side-size);
     align-items: center;

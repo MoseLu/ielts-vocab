@@ -37,7 +37,6 @@ interface PracticePageLoadingStateProps {
   reviewQueueError: string | null
   quickMemoryReviewQueueResolved: boolean
 }
-
 export function PracticePageLoadingState({
   navigate,
   mode,
@@ -93,7 +92,6 @@ export function PracticePageLoadingState({
     </div>
   )
 }
-
 interface PracticePageCompletedStateProps {
   navigate: NavigateFunction
   bookId: string | null
@@ -193,7 +191,6 @@ export function PracticePageCompletedState({
     </div>
   )
 }
-
 export function PracticePagePauseOverlay({
   isPaused,
   mode,
@@ -249,7 +246,6 @@ export function PracticePagePauseOverlay({
     </div>
   )
 }
-
 interface SharedLayoutProps {
   mode?: PracticeMode
   currentDay?: number
@@ -269,6 +265,7 @@ interface SharedLayoutProps {
   buildChapterPath?: (chapterId: string | number) => string
   onExitHome: () => void
   favoriteSlot?: ReactNode
+  speakingSlot?: ReactNode
   wordListActionControls?: WordListActionControls
 }
 
@@ -289,7 +286,6 @@ interface PracticePageRadioLayoutProps extends SharedLayoutProps {
   handleRadioProgressChange: (wordsStudied: number) => void
   isCurrentSessionActive: (at?: number) => boolean
 }
-
 export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
   const {
     mode,
@@ -310,6 +306,7 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
     buildChapterPath,
     onExitHome,
     favoriteSlot,
+    speakingSlot,
     wordListActionControls,
     queue,
     radioIndex,
@@ -378,11 +375,11 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
         onProgressChange={handleRadioProgressChange}
         isSessionActive={isCurrentSessionActive}
         favoriteSlot={favoriteSlot}
+        speakingSlot={speakingSlot}
       />
     </div>
   )
 }
-
 interface PracticePageQuickMemoryLayoutProps extends SharedLayoutProps {
   queue: number[]
   queueIndex: number
@@ -405,7 +402,6 @@ interface PracticePageQuickMemoryLayoutProps extends SharedLayoutProps {
   initialIndex?: number
   onIndexChange?: (index: number) => void
 }
-
 export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayoutProps) {
   const {
     mode,
@@ -426,6 +422,7 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
     buildChapterPath,
     onExitHome,
     favoriteSlot,
+    speakingSlot,
     wordListActionControls,
     queue,
     queueIndex,
@@ -494,6 +491,7 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
         initialIndex={initialIndex}
         onIndexChange={onIndexChange}
         favoriteSlot={favoriteSlot}
+        speakingSlot={speakingSlot}
       />
     </div>
   )

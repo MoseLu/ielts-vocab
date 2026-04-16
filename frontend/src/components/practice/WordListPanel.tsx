@@ -1,9 +1,12 @@
 // ── Word List Panel Component ───────────────────────────────────────────────────
 
 import { useRef, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { DEFAULT_SETTINGS } from '../../constants'
+import { readAppSettingsFromStorage } from '../../lib/appSettings'
 import WordListActionButton from './WordListActionButton'
 import type { Word, WordListPanelProps } from './types'
 import WordListDetailPanel from './WordListDetailPanel'
+import { playWordAudio } from './utils.audio'
 
 function normalizeWordKey(word: string | null | undefined): string {
   return (word ?? '').trim().toLowerCase()
@@ -21,7 +24,15 @@ export default function WordListPanel({
   const wordListRef = useRef<HTMLDivElement>(null)
   const currentWordListItemRef = useRef<HTMLDivElement>(null)
   const wasOpenRef = useRef(false)
+  const focusPlaybackSuppressionRef = useRef<string | null>(null)
   const [selectedDetailState, setSelectedDetailState] = useState<{ word: Word; version: number } | null>(null)
+  const wordAudioSettings = useMemo(() => {
+    const settings = typeof window === 'undefined' ? DEFAULT_SETTINGS : readAppSettingsFromStorage()
+    return {
+      playbackSpeed: String(settings.playbackSpeed ?? DEFAULT_SETTINGS.playbackSpeed),
+      volume: String(settings.volume ?? DEFAULT_SETTINGS.volume),
+    }
+  }, [])
 
   const visibleWords = useMemo(
     () => queue
@@ -97,6 +108,11 @@ export default function WordListPanel({
     }
   }
 
+  const playListWord = (word: string) => {
+    if (!word.trim()) return
+    void playWordAudio(word, wordAudioSettings)
+  }
+
   return (
     <>
       {show && (
@@ -138,7 +154,22 @@ export default function WordListPanel({
                   aria-label={`查看 ${w.word} 详情`}
                   aria-controls="practice-wordlist-detail-panel"
                   aria-pressed={isDetailSelected}
-                  onClick={() => openWordDetails(w)}
+                  onPointerDown={() => {
+                    focusPlaybackSuppressionRef.current = normalizeWordKey(w.word)
+                  }}
+                  onFocus={() => {
+                    const normalizedWord = normalizeWordKey(w.word)
+                    if (focusPlaybackSuppressionRef.current === normalizedWord) {
+                      focusPlaybackSuppressionRef.current = null
+                      return
+                    }
+                    playListWord(w.word)
+                  }}
+                  onClick={() => {
+                    focusPlaybackSuppressionRef.current = null
+                    playListWord(w.word)
+                    openWordDetails(w)
+                  }}
                 >
                   <div className="wordlist-item-status">
                     {isCurrent ? (
