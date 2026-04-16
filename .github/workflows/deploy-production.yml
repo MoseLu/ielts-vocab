@@ -67,6 +67,7 @@ jobs:
           remote_tmp="/tmp/ielts-vocab-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "rm -rf '${remote_tmp}' && mkdir -p '${remote_tmp}'"
           scp \
+            scripts/validate_speaking_band_thresholds.py \
             scripts/cloud-deploy/deploy-release.sh \
             scripts/cloud-deploy/http-slot-common.sh \
             scripts/cloud-deploy/preflight-check.sh \
