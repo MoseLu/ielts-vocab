@@ -54,7 +54,7 @@
           "definition": "鱼；鱼肉；"
         },
         {
-          "word": "Work",
+          "word": "work",
           "phonetic": "/wɜːk/",
           "pos": "n.",
           "definition": "工作；活计；作品；制作品；"
@@ -222,7 +222,7 @@
           "definition": "学习；学问； v. 学习；“learn”的现在分词；"
         },
         {
-          "word": "Students",
+          "word": "students",
           "phonetic": "/stˈjuːd(ə)nts/",
           "pos": "n.",
           "definition": "学生；“student”的复数；"
@@ -240,7 +240,7 @@
           "definition": "照明；灯光； v. “light”的现在分词；"
         },
         {
-          "word": "Education",
+          "word": "education",
           "phonetic": "/ˌedʒuˈkeɪʃ(ə)n/",
           "pos": "n.",
           "definition": "教育"
@@ -264,7 +264,7 @@
           "definition": "食品；“food”的复数；"
         },
         {
-          "word": "Fishes",
+          "word": "fishes",
           "phonetic": "/ˈfɪʃɪz/",
           "pos": "n.",
           "definition": "鱼；“fish”的复数；"
@@ -361,7 +361,7 @@
           "definition": "空间；太空；空格；以一定间隔排列"
         },
         {
-          "word": "Shops",
+          "word": "shops",
           "phonetic": "/ʃɒps/",
           "pos": "n.",
           "definition": "商店；“shop”的复数"
@@ -541,7 +541,7 @@
           "definition": "更老的；更旧的；更年老的；“old”的比较级"
         },
         {
-          "word": "Spaces",
+          "word": "spaces",
           "phonetic": "/ˈspeɪsɪz/",
           "pos": "n.",
           "definition": "空地；空间；空白；“space”的复数"
@@ -565,7 +565,7 @@
           "definition": "控制"
         },
         {
-          "word": "Changes",
+          "word": "changes",
           "phonetic": "/ˈtʃeɪndʒɪz/",
           "pos": "v.",
           "definition": "变化；变革；“change”的复数；变化；变革"
@@ -614,7 +614,7 @@
           "definition": "树；树木"
         },
         {
-          "word": "Move",
+          "word": "move",
           "phonetic": "/muːv/",
           "pos": "v.",
           "definition": "移动；搬家；n. 行动；移动"
@@ -674,7 +674,7 @@
           "definition": "纸；论文；报纸；试卷"
         },
         {
-          "word": "Price",
+          "word": "price",
           "phonetic": "/praɪs/",
           "pos": "n.",
           "definition": "价格；代价"
@@ -728,7 +728,7 @@
           "definition": "价格；“price”的复数"
         },
         {
-          "word": "Humans",
+          "word": "humans",
           "phonetic": "/ˈhjuːməns/",
           "pos": "n.",
           "definition": "人类；“human”的复数"
@@ -975,7 +975,7 @@
           "definition": "邮票"
         },
         {
-          "word": "Avenue",
+          "word": "avenue",
           "phonetic": "/ˈævənjuː/",
           "pos": "n.",
           "definition": "大街；途径；林荫道"
@@ -987,7 +987,7 @@
           "definition": "票；车票"
         },
         {
-          "word": "Higher",
+          "word": "higher",
           "phonetic": "/ˈhaɪə(r)/",
           "pos": "adj.",
           "definition": "更高的；高等级的；“high”的比较级；adv. 在更高处；“high”的比较级"
@@ -1360,7 +1360,7 @@
           "definition": "航班；飞行；（阶梯的）一段"
         },
         {
-          "word": "Videos",
+          "word": "videos",
           "phonetic": "/ˈvɪdiəʊs/",
           "pos": "n.",
           "definition": "视频；录像；“video”的复数"
@@ -1396,7 +1396,7 @@
           "definition": "酒店；“hotel”的复数"
         },
         {
-          "word": "Tested",
+          "word": "tested",
           "phonetic": "/ˈtestɪd/",
           "pos": "v.",
           "definition": "测试；试验；“test”的过去式和过去分词；adj. 经受过考验的"
@@ -1462,7 +1462,7 @@
           "definition": "教练；长途客运汽车；“coach”的复数；培训"
         },
         {
-          "word": "Leaders",
+          "word": "leaders",
           "phonetic": "/liːdə(r)z/",
           "pos": "n.",
           "definition": "领袖；“leader”的复数"
@@ -1829,7 +1829,7 @@
           "definition": "海洋；大海"
         },
         {
-          "word": "Topic",
+          "word": "topic",
           "phonetic": "/ˈtɒpɪk/",
           "pos": "n.",
           "definition": "话题；题目"
@@ -1865,7 +1865,7 @@
           "definition": "星星；明星；“star”的复数"
         },
         {
-          "word": "Safer",
+          "word": "safer",
           "phonetic": "/ˈseɪfə(r)/",
           "pos": "adj.",
           "definition": "更安全的；“safe”的比较级"
@@ -1968,7 +1968,7 @@
       "word_count": 50,
       "words": [
         {
-          "word": "Tennis",
+          "word": "tennis",
           "phonetic": "/ˈtenɪs/",
           "pos": "n.",
           "definition": "网球"
@@ -2148,7 +2148,7 @@
           "definition": "打猎；寻找；“hunt”的现在分词"
         },
         {
-          "word": "Teacher",
+          "word": "teacher",
           "phonetic": "/ˈtiːtʃə(r)/",
           "pos": "n.",
           "definition": "教师"
@@ -2214,7 +2214,7 @@
           "definition": "方法；接近；靠近；路径；接近；靠近；临近；处理"
         },
         {
-          "word": "Festival",
+          "word": "festival",
           "phonetic": "/ˈfestɪv(ə)l/",
           "pos": "n.",
           "definition": "节日"
@@ -2272,7 +2272,7 @@
     {
       "id": 8,
       "title": "答案词4次③",
-      "word_count": 64,
+      "word_count": 62,
       "words": [
         {
           "word": "meetings",
@@ -2455,7 +2455,7 @@
           "definition": "电子器件"
         },
         {
-          "word": "Advertising",
+          "word": "advertising",
           "phonetic": "/ədˈvɜːtɪsɪŋ/",
           "pos": "v.",
           "definition": "广告活动；广告业；做广告；“advertise”的现在分词"
@@ -2497,12 +2497,6 @@
           "definition": "岩石；摇滚乐；（使）摇动；（使）摇晃"
         },
         {
-          "word": "tail",
-          "phonetic": "/teɪl/",
-          "pos": "n.",
-          "definition": "尾巴"
-        },
-        {
           "word": "understanding",
           "phonetic": "/ˌʌndəˈstændɪŋ/",
           "pos": "v.",
@@ -2519,12 +2513,6 @@
           "phonetic": "/aɪˌdentɪfɪˈkeɪʃ(ə)n/",
           "pos": "n.",
           "definition": "识别；身份证明"
-        },
-        {
-          "word": "brain",
-          "phonetic": "/breɪn/",
-          "pos": "n.",
-          "definition": "脑；脑力；智力"
         },
         {
           "word": "metals",
@@ -2599,7 +2587,7 @@
           "definition": "价值；（数）值；估价；重视"
         },
         {
-          "word": "Standard",
+          "word": "standard",
           "phonetic": "/ˈstændəd/",
           "pos": "adj.",
           "definition": "标准；标准的；规范的"
@@ -2641,7 +2629,7 @@
           "definition": "饮料；酒；“drink”的复数"
         },
         {
-          "word": "Teachers",
+          "word": "teachers",
           "phonetic": "/ˈtiːtʃə(r)z/",
           "pos": "n.",
           "definition": "教师；“teacher”的复数"
@@ -2690,7 +2678,7 @@
           "definition": "飞翔；飞行；n. 苍蝇"
         },
         {
-          "word": "Lion",
+          "word": "lion",
           "phonetic": "/ˈlaɪən/",
           "pos": "n.",
           "definition": "狮子"
@@ -3135,7 +3123,7 @@
           "definition": "逃避；逃走；n. 逃脱；逃避"
         },
         {
-          "word": "Select",
+          "word": "select",
           "phonetic": "/sɪˈlekt/",
           "pos": "v.",
           "definition": "选择；挑选；adj. 精心挑选的"
@@ -3177,7 +3165,7 @@
           "definition": "七十位客人"
         },
         {
-          "word": "Single",
+          "word": "single",
           "phonetic": "/ˈsɪŋɡl/",
           "pos": "adj.",
           "definition": "单一的；单独的；单身的"
@@ -3213,7 +3201,7 @@
           "definition": "想象；视力；视野"
         },
         {
-          "word": "Summer",
+          "word": "summer",
           "phonetic": "/ˈsʌmə(r)/",
           "pos": "n.",
           "definition": "夏季；夏天"
@@ -3255,7 +3243,7 @@
           "definition": "医疗的；医术的"
         },
         {
-          "word": "Display",
+          "word": "display",
           "phonetic": "/dɪˈspleɪ/",
           "pos": "v.",
           "definition": "展示；陈列；展示；陈列"
@@ -3478,7 +3466,7 @@
           "definition": "政治；政治学"
         },
         {
-          "word": "Strategy",
+          "word": "strategy",
           "phonetic": "/ˈstrætədʒi/",
           "pos": "n.",
           "definition": "策略；战略"
@@ -3514,7 +3502,7 @@
           "definition": "个人的；私人的"
         },
         {
-          "word": "Headings",
+          "word": "headings",
           "phonetic": "/ˈhɛdɪŋz/",
           "pos": "n.",
           "definition": "标题"
@@ -3562,7 +3550,7 @@
           "definition": "恢复；复苏"
         },
         {
-          "word": "Visitors",
+          "word": "visitors",
           "phonetic": "/ˈvɪzɪtəz/",
           "pos": "n.",
           "definition": "客人；游客；“visitor”的复数"
@@ -3647,7 +3635,7 @@
           "definition": "扩张；扩充"
         },
         {
-          "word": "Diversity",
+          "word": "diversity",
           "phonetic": "/daɪˈvɜːsəti/",
           "pos": "n.",
           "definition": "多样性；多样化"
@@ -3713,7 +3701,7 @@
           "definition": "动机；动力"
         },
         {
-          "word": "Individual",
+          "word": "individual",
           "phonetic": "/ˌɪndɪˈvɪdʒuəl/",
           "pos": "adj.",
           "definition": "个人；个别的；单独的"
@@ -3731,7 +3719,7 @@
           "definition": "个性；人格"
         },
         {
-          "word": "Agriculture",
+          "word": "agriculture",
           "phonetic": "/ˈæɡrɪkʌltʃə(r)/",
           "pos": "n.",
           "definition": "农业"
@@ -3851,7 +3839,7 @@
           "definition": "一餐；一顿饭"
         },
         {
-          "word": "Strings",
+          "word": "strings",
           "phonetic": "/strɪŋz/",
           "pos": "n.",
           "definition": "弦；线；一连串；“string”的复数"
@@ -3935,7 +3923,7 @@
           "definition": "约会；约定；任命"
         },
         {
-          "word": "Driving",
+          "word": "driving",
           "phonetic": "/ˈdraɪvɪŋ/",
           "pos": "v.",
           "definition": "驾驶；驱使；驾驶；“drive”的现在分词；adj. 强有力的；推动的"
@@ -3989,7 +3977,7 @@
           "definition": "图画；照片；“picture”的复数"
         },
         {
-          "word": "Sleeping",
+          "word": "sleeping",
           "phonetic": "/ˈsliːpɪŋ/",
           "pos": "n.",
           "definition": "睡眠"
@@ -4242,7 +4230,7 @@
           "definition": "铁；铁器；熨斗"
         },
         {
-          "word": "Bags",
+          "word": "bags",
           "phonetic": "/bæɡz/",
           "pos": "n.",
           "definition": "包；“bag”的复数"
@@ -4639,7 +4627,7 @@
           "definition": "收入；收益；所得"
         },
         {
-          "word": "Thesis",
+          "word": "thesis",
           "phonetic": "/ˈθiːsɪs/",
           "pos": "n.",
           "definition": "论点；论文"
@@ -4694,7 +4682,7 @@
           "definition": "手指"
         },
         {
-          "word": "Cheque",
+          "word": "cheque",
           "phonetic": "/tʃek/",
           "pos": "n.",
           "definition": "支票"
@@ -4862,7 +4850,7 @@
           "definition": "健康；适宜"
         },
         {
-          "word": "Finance",
+          "word": "finance",
           "phonetic": "/ˈfaɪnæns/",
           "pos": "v.",
           "definition": "金融；财务；提供资金"
@@ -4910,7 +4898,7 @@
           "definition": "分类；分类；整理；“sort”的现在分词"
         },
         {
-          "word": "Corners",
+          "word": "corners",
           "phonetic": "/ˈkɔːnəz/",
           "pos": "n.",
           "definition": "（嘴）角；街角；“corner”的复数"
@@ -4922,7 +4910,7 @@
           "definition": "流行的；受欢迎的；大众的"
         },
         {
-          "word": "Married",
+          "word": "married",
           "phonetic": "/ˈmærid/",
           "pos": "adj.",
           "definition": "已婚的；v. 结婚；“marry”的过去式和过去分词"
@@ -5404,7 +5392,7 @@
           "definition": "永久的；持久的"
         },
         {
-          "word": "Knowledge",
+          "word": "knowledge",
           "phonetic": "/ˈnɒlɪdʒ/",
           "pos": "n.",
           "definition": "知识；了解；学问；学识"
@@ -5536,7 +5524,7 @@
           "definition": "流行；普及"
         },
         {
-          "word": "Particular",
+          "word": "particular",
           "phonetic": "/pəˈtɪkjələ(r)/",
           "pos": "adj.",
           "definition": "特指的；特殊的；挑剔的；n. 细节；详情"
@@ -5928,7 +5916,7 @@
           "definition": "笔记本电脑；“laptop”的复数"
         },
         {
-          "word": "Networks",
+          "word": "networks",
           "phonetic": "/ˈnetwɜːks/",
           "pos": "n.",
           "definition": "网络"
@@ -5952,7 +5940,7 @@
           "definition": "说话；交谈；“talk”的现在分词"
         },
         {
-          "word": "Call",
+          "word": "call",
           "phonetic": "/kɔːl/",
           "pos": "v.",
           "definition": "叫；打电话；n. 打电话"
@@ -6006,7 +5994,7 @@
           "definition": "时间表；日程表"
         },
         {
-          "word": "Platform",
+          "word": "platform",
           "phonetic": "/ˈplætfɔːm/",
           "pos": "n.",
           "definition": "平台；站台；月台"
@@ -6036,7 +6024,7 @@
           "definition": "铁路"
         },
         {
-          "word": "Grants",
+          "word": "grants",
           "phonetic": "/ɡrɑːnts/",
           "pos": "n.",
           "definition": "补助金；津贴；“grant”的复数"
@@ -6138,13 +6126,13 @@
           "definition": "描述；形容"
         },
         {
-          "word": "Mathematics",
+          "word": "mathematics",
           "phonetic": "/ˌmæθəˈmætɪks/",
           "pos": "n.",
           "definition": "数学"
         },
         {
-          "word": "Math",
+          "word": "math",
           "phonetic": "/mæθ/",
           "pos": "n.",
           "definition": "数学"
@@ -6403,7 +6391,7 @@
           "definition": "颈；脖子"
         },
         {
-          "word": "Bees",
+          "word": "bees",
           "phonetic": "/ˈbiːz/",
           "pos": "n.",
           "definition": "蜜蜂"
@@ -6427,7 +6415,7 @@
           "definition": "羔羊；小羊；羔羊肉"
         },
         {
-          "word": "BALL",
+          "word": "ball",
           "phonetic": "/bɔːl/",
           "pos": "n.",
           "definition": "球"
@@ -6553,7 +6541,7 @@
           "definition": "膝盖；膝部"
         },
         {
-          "word": "Gold",
+          "word": "gold",
           "phonetic": "/ɡəʊld/",
           "pos": "adj.",
           "definition": "金；金币；金黄色；金色的"
@@ -6617,7 +6605,7 @@
     {
       "id": 21,
       "title": "答案词1次②",
-      "word_count": 50,
+      "word_count": 49,
       "words": [
         {
           "word": "vegan",
@@ -6818,7 +6806,7 @@
           "definition": "信任；信赖；信任；信赖"
         },
         {
-          "word": "Tiger",
+          "word": "tiger",
           "phonetic": "/ˈtaɪɡə(r)/",
           "pos": "n.",
           "definition": "老虎"
@@ -6858,12 +6846,6 @@
           "phonetic": "/ˈætləs/",
           "pos": "n.",
           "definition": "地图册；地图集"
-        },
-        {
-          "word": "Tesla",
-          "phonetic": "/ˈtɛslə/",
-          "pos": "n.",
-          "definition": "（Tesla）人名；（英、捷、塞）特斯拉"
         },
         {
           "word": "flute",
@@ -6999,7 +6981,7 @@
           "definition": "葡萄；“grape”的复数"
         },
         {
-          "word": "Padded",
+          "word": "padded",
           "phonetic": "/ˈpædɪd/",
           "pos": "adj.",
           "definition": "带衬垫的；v. “pad”的过去式和过去分词"
@@ -7715,7 +7697,7 @@
           "definition": "钙"
         },
         {
-          "word": "Aspects",
+          "word": "aspects",
           "phonetic": "/ˈæspekts/",
           "pos": "n.",
           "definition": "模样；面貌；方面；朝向；“aspect”的复数"
@@ -7739,7 +7721,7 @@
           "definition": "回答；回应"
         },
         {
-          "word": "Cashier",
+          "word": "cashier",
           "phonetic": "/kæˈʃɪə(r)/",
           "pos": "v.",
           "definition": "出纳员，收银员；革除（军职）"
@@ -7787,7 +7769,7 @@
           "definition": "物理学"
         },
         {
-          "word": "Classic",
+          "word": "classic",
           "phonetic": "/ˈklæsɪk/",
           "pos": "adj.",
           "definition": "典范的；典型的；n. 文学经典；名著；优秀的典范"
@@ -7845,7 +7827,7 @@
     {
       "id": 25,
       "title": "答案词1次⑥",
-      "word_count": 49,
+      "word_count": 48,
       "words": [
         {
           "word": "bacteria",
@@ -7876,12 +7858,6 @@
           "phonetic": "/ˈtrækɪŋ/",
           "pos": "v.",
           "definition": "追踪；跟踪；追踪；跟踪；“track”的现在分词"
-        },
-        {
-          "word": "Olympics",
-          "phonetic": "/əˈlɪmpɪks/",
-          "pos": "n.",
-          "definition": "奥林匹克运动会"
         },
         {
           "word": "collapse",
@@ -8004,7 +7980,7 @@
           "definition": "俱乐部会议室"
         },
         {
-          "word": "Vouchers",
+          "word": "vouchers",
           "phonetic": "/ˈvaʊtʃə(r)/",
           "pos": "n.",
           "definition": "代金券"
@@ -8130,7 +8106,7 @@
           "definition": "扩大；扩张；更充分地阐述；“expand”的过去式和过去分词"
         },
         {
-          "word": "Commuter",
+          "word": "commuter",
           "phonetic": "/kəˈmjuːtə(r)/",
           "pos": "n.",
           "definition": "通勤者；经常往返者"
@@ -8522,7 +8498,7 @@
           "definition": "陌生人"
         },
         {
-          "word": "Necessity",
+          "word": "necessity",
           "phonetic": "/nəˈsesəti/",
           "pos": "n.",
           "definition": "必需品；需要"
@@ -8618,7 +8594,7 @@
           "definition": "结构（或构造）上的"
         },
         {
-          "word": "Distribute",
+          "word": "distribute",
           "phonetic": "/dɪˈstrɪbjuːt/",
           "pos": "v.",
           "definition": "分发；分配"
@@ -8763,7 +8739,7 @@
       "word_count": 50,
       "words": [
         {
-          "word": "Universals",
+          "word": "universals",
           "phonetic": "/ˌjuːnɪˈvɜːsəlz/",
           "pos": "n.",
           "definition": "普遍原则；共相；普遍事物；普遍事物（universal 的复数形式）"
@@ -8871,7 +8847,7 @@
           "definition": "布告牌"
         },
         {
-          "word": "Photography",
+          "word": "photography",
           "phonetic": "/fəˈtɒɡrəfi/",
           "pos": "n.",
           "definition": "摄影术；摄影学"
@@ -9172,7 +9148,7 @@
           "definition": "制造业；制造；“manufacture”的现在分词"
         },
         {
-          "word": "Effectiveness",
+          "word": "effectiveness",
           "phonetic": "/ɪˈfektɪvnəs/",
           "pos": "n.",
           "definition": "有效性"
@@ -9226,7 +9202,7 @@
           "definition": "夫或妻的兄弟；姐夫；妹夫；连襟；姻兄弟"
         },
         {
-          "word": "Pizza",
+          "word": "pizza",
           "phonetic": "/ˈpiːtsə/",
           "pos": "n.",
           "definition": "比萨饼；披萨；意大利薄饼"
@@ -9374,7 +9350,7 @@
     {
       "id": 30,
       "title": "答案词1次⑪",
-      "word_count": 50,
+      "word_count": 48,
       "words": [
         {
           "word": "adapter",
@@ -9407,7 +9383,7 @@
           "definition": "窗帘；“blind”的复数"
         },
         {
-          "word": "Hunters",
+          "word": "hunters",
           "phonetic": "/ˈhʌntəz/",
           "pos": "n.",
           "definition": "猎人"
@@ -9473,12 +9449,6 @@
           "definition": "签证"
         },
         {
-          "word": "stats",
-          "phonetic": "/stæts/",
-          "pos": "n.",
-          "definition": "abbr. 统计"
-        },
-        {
           "word": "emotions",
           "phonetic": "/ɪˈməʊʃənz/",
           "pos": "n.",
@@ -9489,12 +9459,6 @@
           "phonetic": "/ˈwaɪtnd/",
           "pos": "adj.",
           "definition": "变白的；被漂白的；变苍白的"
-        },
-        {
-          "word": "dentist's",
-          "phonetic": "/ˈdentɪsts/",
-          "pos": "n.",
-          "definition": "牙科医生诊疗所"
         },
         {
           "word": "revisions",
@@ -9665,7 +9629,7 @@
           "definition": "宣传；提升；促进；将（体育运动队）晋级（promote 的过去式和过去分词）"
         },
         {
-          "word": "Happier",
+          "word": "happier",
           "phonetic": "/ˈhæpiə(r)/",
           "pos": "adj.",
           "definition": "感到（或显得）幸福的；幸福的( happy的比较级 )"
@@ -9780,7 +9744,7 @@
           "definition": "创造性；才思"
         },
         {
-          "word": "Fertilizers",
+          "word": "fertilizers",
           "phonetic": "/ˈfɜːtəlaɪzəz/",
           "pos": "n.",
           "definition": "肥料；“fertilizer”的复数"
@@ -9864,7 +9828,7 @@
           "definition": "vi. （在家里通过使用与工作单位连接的计算机终端）远距离工作"
         },
         {
-          "word": "Landscape",
+          "word": "landscape",
           "phonetic": "/ˈlændskeɪp/",
           "pos": "n.",
           "definition": "景色；风景画"
@@ -10014,7 +9978,7 @@
           "definition": "字典；辞典"
         },
         {
-          "word": "Spelling",
+          "word": "spelling",
           "phonetic": "/ˈspelɪŋ/",
           "pos": "v.",
           "definition": "拼写；拼法；“spell”的现在分词"
@@ -10090,7 +10054,7 @@
     {
       "id": 32,
       "title": "听力原文150次及以上",
-      "word_count": 47,
+      "word_count": 46,
       "words": [
         {
           "word": "set",
@@ -10355,12 +10319,6 @@
           "phonetic": "/ɪnˈvɒlvd/",
           "pos": "adj.",
           "definition": "有关的；有牵连的；繁杂的；v. 包括；牵涉；“involve”的过去式和过去分词"
-        },
-        {
-          "word": "program",
-          "phonetic": "/ˈprəʊɡræm/",
-          "pos": "v.",
-          "definition": "节目；程序；编程"
         },
         {
           "word": "certainly",
@@ -10670,7 +10628,7 @@
           "definition": "困难的"
         },
         {
-          "word": "Obviously",
+          "word": "obviously",
           "phonetic": "/ˈɒbviəsli/",
           "pos": "adv.",
           "definition": "显然；明显地"
@@ -11116,7 +11074,7 @@
           "definition": "接触（的机会或权利）；进入；通道；获取；使用；接近"
         },
         {
-          "word": "Itself",
+          "word": "itself",
           "phonetic": "/ɪtˈself/",
           "pos": "n.",
           "definition": "pron. 它自己"
@@ -11610,7 +11568,7 @@
           "definition": "角色；职能；作用"
         },
         {
-          "word": "Ready",
+          "word": "ready",
           "phonetic": "/ˈredi/",
           "pos": "adj.",
           "definition": "准备好的"
@@ -11640,7 +11598,7 @@
           "definition": "提前；在前"
         },
         {
-          "word": "Goals",
+          "word": "goals",
           "phonetic": "/gəʊlz/",
           "pos": "n.",
           "definition": "目标"
@@ -11664,7 +11622,7 @@
           "definition": "米；公尺"
         },
         {
-          "word": "Lucky",
+          "word": "lucky",
           "phonetic": "/ˈlʌki/",
           "pos": "adj.",
           "definition": "好运的；幸运的"
@@ -12362,7 +12320,7 @@
           "definition": "代替；取代"
         },
         {
-          "word": "Success",
+          "word": "success",
           "phonetic": "/səkˈses/",
           "pos": "n.",
           "definition": "成功"
@@ -13729,7 +13687,7 @@
           "definition": "猎物；受害者；受骗者；捕食；坑害；折磨"
         },
         {
-          "word": "Boys",
+          "word": "boys",
           "phonetic": "/bɔɪz/",
           "pos": "n.",
           "definition": "男孩；“boy”的复数"
@@ -14228,7 +14186,7 @@
           "definition": "装备的"
         },
         {
-          "word": "Employed",
+          "word": "employed",
           "phonetic": "/ɪmˈplɔɪd/",
           "pos": "v.",
           "definition": "使用；雇用；雇用( employ的过去式和过去分词 )"
@@ -14980,7 +14938,7 @@
           "definition": "许可；批准"
         },
         {
-          "word": "Thoroughly",
+          "word": "thoroughly",
           "phonetic": "/ˈθʌrəli/",
           "pos": "adv.",
           "definition": "彻底地"
@@ -15372,7 +15330,7 @@
           "definition": "岸；滨"
         },
         {
-          "word": "Shame",
+          "word": "shame",
           "phonetic": "/ʃeɪm/",
           "pos": "n.",
           "definition": "羞愧；羞耻"
@@ -16194,7 +16152,7 @@
     {
       "id": 52,
       "title": "听力原文13次",
-      "word_count": 59,
+      "word_count": 58,
       "words": [
         {
           "word": "ash",
@@ -16273,12 +16231,6 @@
           "phonetic": "/tʃeə(r)/",
           "pos": "n.",
           "definition": "椅子；主席"
-        },
-        {
-          "word": "latin",
-          "phonetic": "/ˈlætɪn/",
-          "pos": "adj.",
-          "definition": "拉丁语的；拉丁语系国家的；n. 拉丁语"
         },
         {
           "word": "thick",
@@ -17000,7 +16952,7 @@
     {
       "id": 54,
       "title": "听力原文11次",
-      "word_count": 65,
+      "word_count": 64,
       "words": [
         {
           "word": "fan",
@@ -17085,12 +17037,6 @@
           "phonetic": "/ˈfɔɪeɪ/",
           "pos": "n.",
           "definition": "门厅"
-        },
-        {
-          "word": "multi",
-          "phonetic": "/ˌmʌlti/",
-          "pos": "n.",
-          "definition": "abbr. （拉丁语前缀）许多"
         },
         {
           "word": "boost",
@@ -17345,7 +17291,7 @@
           "definition": "目标；“objective”的复数"
         },
         {
-          "word": "Entertained",
+          "word": "entertained",
           "phonetic": "/ˌentəˈteɪn/",
           "pos": "v.",
           "definition": "使娱乐；款待，招待；款待，招待( entertain的过去式和过去分词 )"
@@ -17397,7 +17343,7 @@
     {
       "id": 55,
       "title": "听力原文10次",
-      "word_count": 86,
+      "word_count": 85,
       "words": [
         {
           "word": "sap",
@@ -17418,13 +17364,13 @@
           "definition": "流行音乐；发出砰的一声；突然地行动"
         },
         {
-          "word": "Gap",
+          "word": "gap",
           "phonetic": "/ɡæp/",
           "pos": "n.",
           "definition": "差距；隔阂；缺口；缝隙"
         },
         {
-          "word": "Joke",
+          "word": "joke",
           "phonetic": "/dʒəʊk/",
           "pos": "v.",
           "definition": "笑话；玩笑；开玩笑"
@@ -17484,7 +17430,7 @@
           "definition": "次要的；轻微的；小的；小调的；n. 未成年人"
         },
         {
-          "word": "Euros",
+          "word": "euros",
           "phonetic": "/ˈjʊərəʊz/",
           "pos": "n.",
           "definition": "欧元"
@@ -17670,7 +17616,7 @@
           "definition": "互相作用；互相影响；交流；沟通"
         },
         {
-          "word": "Occupied",
+          "word": "occupied",
           "phonetic": "/ˈɒkjupaɪd/",
           "pos": "v.",
           "definition": "占据；占领；“occupy”的过去式和过去分词；adj. 有人使用（或居住）；忙于；被占领的"
@@ -17874,12 +17820,6 @@
           "definition": "居住者；居民；“inhabitant”的复数"
         },
         {
-          "word": "Shakespeare",
-          "phonetic": "/ˈʃeɪkspɪə(r)/",
-          "pos": "n.",
-          "definition": "莎士比亚"
-        },
-        {
           "word": "residential",
           "phonetic": "/ˌrezɪˈdenʃ(ə)l/",
           "pos": "adj.",
@@ -17898,7 +17838,7 @@
           "definition": "影印；影印得好（或不好）（photocopy 的现在分词）"
         },
         {
-          "word": "Conservatory",
+          "word": "conservatory",
           "phonetic": "/kənˈsɜːvətri/",
           "pos": "n.",
           "definition": "温室"
@@ -19042,7 +18982,7 @@
           "definition": "暴力"
         },
         {
-          "word": "Turnover",
+          "word": "turnover",
           "phonetic": "/ˈtɜːnəʊvə(r)/",
           "pos": "n.",
           "definition": "营业额；人员流动率；周转率"
@@ -19328,14 +19268,8 @@
     {
       "id": 60,
       "title": "听力原文7次①",
-      "word_count": 50,
+      "word_count": 49,
       "words": [
-        {
-          "word": "Eco",
-          "phonetic": "/ˈiːkəʊ/",
-          "pos": "n.",
-          "definition": "abbr.abbr. economy 经济; economic 经济的; economics 经济学; eco"
-        },
         {
           "word": "pub",
           "phonetic": "/pʌb/",
@@ -20245,7 +20179,7 @@
           "definition": "毁灭性的；v. “devastate”的现在分词"
         },
         {
-          "word": "Translation",
+          "word": "translation",
           "phonetic": "/trænzˈleɪʃ(ə)n/",
           "pos": "n.",
           "definition": "翻译；译文"
@@ -20369,19 +20303,13 @@
     {
       "id": 63,
       "title": "听力原文6次①",
-      "word_count": 50,
+      "word_count": 49,
       "words": [
         {
           "word": "odd",
           "phonetic": "/ɒd/",
           "pos": "adj.",
           "definition": "奇怪的；奇数的；余的"
-        },
-        {
-          "word": "DNA",
-          "phonetic": "/ˌdiː en ˈeɪ/",
-          "pos": "n.",
-          "definition": "abbr. 脱氧核糖核酸；“deoxyribonucleic acid”的缩写"
         },
         {
           "word": "jet",
@@ -21316,7 +21244,7 @@
           "definition": "令人安心的；v. “reassure”的现在分词"
         },
         {
-          "word": "Friendship",
+          "word": "friendship",
           "phonetic": "/ˈfrendʃɪp/",
           "pos": "n.",
           "definition": "友谊；友情"
@@ -21466,7 +21394,7 @@
           "definition": "保守的；守旧的"
         },
         {
-          "word": "Psychologists",
+          "word": "psychologists",
           "phonetic": "/saɪˈkɒlədʒɪsts/",
           "pos": "n.",
           "definition": "心理学家"
@@ -21563,7 +21491,7 @@
           "definition": "phrase. 有点；稍微"
         },
         {
-          "word": "A few",
+          "word": "a few",
           "phonetic": "/ə fjuː/",
           "pos": "n.",
           "definition": "phrase. 少许；少数"
@@ -21575,7 +21503,7 @@
           "definition": "phrase. 例如"
         },
         {
-          "word": "Such as",
+          "word": "such as",
           "phonetic": "/sʌtʃ æz/",
           "pos": "n.",
           "definition": "phrase. 例如；像…这样的"
@@ -21689,7 +21617,7 @@
           "definition": "phrase. 当时；此刻；现在"
         },
         {
-          "word": "Have a look",
+          "word": "have a look",
           "phonetic": "/hæv ə lʊk/",
           "pos": "n.",
           "definition": "phrase. 看一下；看一看"
@@ -21900,7 +21828,7 @@
           "definition": "phrase. 从事于…；继续工作；设法说服；影响"
         },
         {
-          "word": "Phone number",
+          "word": "phone number",
           "phonetic": "/ˈfəʊn nʌmbə(r)/",
           "pos": "n.",
           "definition": "phrase. 电话号码"
@@ -21972,7 +21900,7 @@
           "definition": "phrase. 好多了；好得多"
         },
         {
-          "word": "Go through",
+          "word": "go through",
           "phonetic": "/ɡəʊ θruː/",
           "pos": "n.",
           "definition": "phrase. 经历；仔细检查；完成；通过；穿过"
@@ -22102,7 +22030,7 @@
     {
       "id": 68,
       "title": "词组15~22次",
-      "word_count": 51,
+      "word_count": 50,
       "words": [
         {
           "word": "car park",
@@ -22327,12 +22255,6 @@
           "definition": "phrase. 放弃"
         },
         {
-          "word": "North America",
-          "phonetic": "/ˌnɔːθ əˈmerɪkə/",
-          "pos": "n.",
-          "definition": "北美洲"
-        },
-        {
           "word": "look after",
           "phonetic": "/lʊk ˈɑːftə(r)/",
           "pos": "n.",
@@ -22381,7 +22303,7 @@
           "definition": "phrase. 适用于；运用"
         },
         {
-          "word": "High Street",
+          "word": "high street",
           "phonetic": "/haɪ striːt/",
           "pos": "n.",
           "definition": "商业街；市中心的主要购物街道"
@@ -22415,7 +22337,7 @@
     {
       "id": 69,
       "title": "词组12~14次",
-      "word_count": 50,
+      "word_count": 48,
       "words": [
         {
           "word": "a great deal of",
@@ -22430,7 +22352,7 @@
           "definition": "phr. 阅读关于……的内容；通过阅读了解到"
         },
         {
-          "word": "More important",
+          "word": "more important",
           "phonetic": "/mɔːr ɪmˈpɔːtənt/",
           "pos": "adj.",
           "definition": "更重要的；更为重要的"
@@ -22472,7 +22394,7 @@
           "definition": "phrase. 依赖；依靠"
         },
         {
-          "word": "Other students",
+          "word": "other students",
           "phonetic": "/ˈʌðə ˈstjuːd(ə)nts/",
           "pos": "n.",
           "definition": "phrase. 其他学生"
@@ -22592,12 +22514,6 @@
           "definition": "phrase. 在电话里"
         },
         {
-          "word": "the United Kingdom",
-          "phonetic": "/ðə juˈnaɪtɪd ˈkɪŋdəm/",
-          "pos": "n.",
-          "definition": "联合王国（英国）"
-        },
-        {
           "word": "concentrate on",
           "phonetic": "/ˈkɒns(ə)ntreɪt ɒn/",
           "pos": "n.",
@@ -22700,12 +22616,6 @@
           "definition": "phrase. 不够的"
         },
         {
-          "word": "South America",
-          "phonetic": "/ˌsaʊθ əˈmerɪkə/",
-          "pos": "n.",
-          "definition": "南美洲"
-        },
-        {
           "word": "sort out",
           "phonetic": "/sɔːt aʊt/",
           "pos": "n.",
@@ -22722,7 +22632,7 @@
     {
       "id": 70,
       "title": "词组10~11次",
-      "word_count": 44,
+      "word_count": 43,
       "words": [
         {
           "word": "when it comes to",
@@ -22921,12 +22831,6 @@
           "phonetic": "/ˈɪnsaɪt ˈɪntuː/",
           "pos": "n.",
           "definition": "phrase. 洞察…"
-        },
-        {
-          "word": "Art Gallery",
-          "phonetic": "/ˈɑːt ɡæləri/",
-          "pos": "n.",
-          "definition": "phrase. 艺廊；画廊；美术馆"
         },
         {
           "word": "reading list",
@@ -23212,7 +23116,7 @@
           "definition": "普通人"
         },
         {
-          "word": "Write about",
+          "word": "write about",
           "phonetic": "/raɪt/",
           "pos": "v.",
           "definition": "撰写关于……的内容；就……主题写作"
@@ -23224,13 +23128,13 @@
           "definition": "phrase. 地方议会"
         },
         {
-          "word": "National Park",
+          "word": "national park",
           "phonetic": "/ˌnæʃnəl ˈpɑːk/",
           "pos": "n.",
           "definition": "phrase. 国家公园"
         },
         {
-          "word": "Make a booking",
+          "word": "make a booking",
           "phonetic": "/meɪk ə ˈbʊkɪŋ/",
           "pos": "v.",
           "definition": "预订（票、位置等）【动词短语】"
@@ -23284,7 +23188,7 @@
           "definition": "phrase. 搬进"
         },
         {
-          "word": "City Council",
+          "word": "city council",
           "phonetic": "/ˌsɪti ˈkaʊns(ə)l/",
           "pos": "n.",
           "definition": "phrase. 市议会；市参议会"
@@ -23390,7 +23294,7 @@
     {
       "id": 72,
       "title": "词组7次",
-      "word_count": 50,
+      "word_count": 48,
       "words": [
         {
           "word": "turn up",
@@ -23435,7 +23339,7 @@
           "definition": "训练课程；培训时段"
         },
         {
-          "word": "Run through",
+          "word": "run through",
           "phonetic": "/rʌn θruː/",
           "pos": "n.",
           "definition": "phrase. 跑着穿过；刺、戳；贯穿；匆匆处理；排练；划掉；挥霍"
@@ -23501,7 +23405,7 @@
           "definition": "phrase. 专线电话；直线"
         },
         {
-          "word": "Special offers",
+          "word": "special offers",
           "phonetic": "/ˈspeʃ(ə)l ˈɒfəz/",
           "pos": "n.",
           "definition": "特价商品；特价销售"
@@ -23513,7 +23417,7 @@
           "definition": "phrase. 休假"
         },
         {
-          "word": "Health Centre",
+          "word": "health centre",
           "phonetic": "/hɛlθ ˈsɛntə/",
           "pos": "n.",
           "definition": "健康中心；医疗中心（提供基本医疗服务的机构）"
@@ -23603,7 +23507,7 @@
           "definition": "phrase. 遭受；患病"
         },
         {
-          "word": "Take part in",
+          "word": "take part in",
           "phonetic": "/teɪk pɑːt ɪn/",
           "pos": "n.",
           "definition": "phrase. 参加；参与"
@@ -23631,18 +23535,6 @@
           "phonetic": "/fiːd ɒn/",
           "pos": "n.",
           "definition": "phrase. 以…为食；以…为能源"
-        },
-        {
-          "word": "northern ireland",
-          "phonetic": "/ˌnɔːðən ˈaɪələnd/",
-          "pos": "n.",
-          "definition": "北爱尔兰（英）"
-        },
-        {
-          "word": "South Africa",
-          "phonetic": "/ˌsaʊθ ˈæfrɪkə/",
-          "pos": "n.",
-          "definition": "南非；非洲南部"
         },
         {
           "word": "the present day",
@@ -23697,7 +23589,7 @@
     {
       "id": 73,
       "title": "词组6次",
-      "word_count": 51,
+      "word_count": 47,
       "words": [
         {
           "word": "car parks",
@@ -23758,12 +23650,6 @@
           "phonetic": "/ɪn ə ɡruːp/",
           "pos": "prep.",
           "definition": "以小组形式；成群地；集体地"
-        },
-        {
-          "word": "Ticket Office",
-          "phonetic": "/ˈtɪkɪt ˈɒfɪs/",
-          "pos": "n.",
-          "definition": "phrase. 票房；售票处"
         },
         {
           "word": "the basis for",
@@ -23874,18 +23760,6 @@
           "definition": "phrase. 赞成；支持"
         },
         {
-          "word": "notice board",
-          "phonetic": "/ˈnəʊtɪs bɔːd/",
-          "pos": "n.",
-          "definition": "phrase. 布告牌；告示牌"
-        },
-        {
-          "word": "New South Wales",
-          "phonetic": "/ˌnjuː saʊθ ˈweɪlz/",
-          "pos": "n.",
-          "definition": "新南威尔士州（澳大利亚州名）"
-        },
-        {
           "word": "medical care",
           "phonetic": "/ˈmedɪk(ə)l keə(r)/",
           "pos": "n.",
@@ -23976,12 +23850,6 @@
           "definition": "phrase. 订阅费；预订费"
         },
         {
-          "word": "Great Britain",
-          "phonetic": "/ˌɡreɪt ˈbrɪt(ə)n/",
-          "pos": "n.",
-          "definition": "大不列颠；英国"
-        },
-        {
           "word": "city gardens",
           "phonetic": "/ˈsɪti ˈɡɑːdnz/",
           "pos": "n.",
@@ -24009,5 +23877,5 @@
     }
   ],
   "total_chapters": 73,
-  "total_words": 3910
+  "total_words": 3894
 }
