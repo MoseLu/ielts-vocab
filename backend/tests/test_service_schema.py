@@ -82,6 +82,8 @@ def test_notes_and_ai_ownership_stays_split():
         'ai_projected_daily_summaries',
         'ai_projected_wrong_words',
         'ai_prompt_runs',
+        'ai_speaking_assessments',
+        'ai_word_image_assets',
         'user_conversation_history',
         'user_memory',
         'search_cache',
