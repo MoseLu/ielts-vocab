@@ -140,25 +140,6 @@
     padding: 0 18px;
 }
 
-.listening-example-audio-btn {
-    width: 44px;
-    height: 44px;
-    background: rgba(var(--accent-rgb), 0.08);
-    color: var(--accent);
-    border-color: rgba(var(--accent-rgb), 0.18);
-}
-
-.listening-example-audio-btn:hover {
-    background: rgba(var(--accent-rgb), 0.14);
-    border-color: rgba(var(--accent-rgb), 0.3);
-    color: var(--accent);
-}
-
-.listening-example-audio-btn .example-audio-icon {
-    width: 19px;
-    height: 19px;
-}
-
 .listening-example-sentence {
     max-width: 650px;
     font-size: clamp(1.16rem, 2.15vw, 1.48rem);
@@ -192,33 +173,6 @@
     align-items: center;
     gap: var(--space-sm);
     justify-content: center;
-}
-
-/* Small play button next to phonetic in meaning mode */
-.play-btn-mini {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-full);
-    border: 1.5px solid var(--border);
-    background: rgba(var(--accent-rgb), 0.06);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    flex-shrink: 0;
-}
-
-.play-btn-mini:hover {
-    background: rgba(var(--accent-rgb), 0.12);
-    color: var(--accent);
-    border-color: rgba(var(--accent-rgb), 0.2);
-}
-
-.play-btn-mini svg {
-    width: 16px;
-    height: 16px;
 }
 
 /* Dictation letter-count hint */
@@ -452,26 +406,7 @@
 .replay-btn {
     grid-column: 2;
     justify-self: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    height: 50px;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--surface-border-strong);
-    background: color-mix(in srgb, var(--surface-elevated) 76%, transparent);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
     position: relative;
-    box-shadow: var(--shadow-sm);
-}
-
-.replay-btn:hover {
-    background: rgba(var(--accent-rgb), 0.08);
-    border-color: rgba(var(--accent-rgb), 0.18);
-    color: var(--accent);
-    transform: translateY(-1px);
 }
 
 .replay-btn:hover::after {
@@ -487,9 +422,4 @@
     padding: 3px 8px;
     border-radius: var(--radius-sm);
     pointer-events: none;
-}
-
-.replay-btn svg {
-    width: 21px;
-    height: 21px;
 }

@@ -1,16 +1,33 @@
 .practice-page.practice-page--choice .practice-main {
     max-width: min(100%, var(--practice-main-max-width, 1180px));
-    padding-top: clamp(12px, 2vw, 18px);
-    gap: 16px;
+    padding-top: clamp(8px, 1.4vw, 14px);
+    gap: 0;
 }
 
-.practice-page.practice-page--choice .practice-choice-top-rail.practice-choice-top-rail--action-only {
-    width: min(100%, var(--practice-choice-grid-max-width, 980px));
-    min-height: 0;
+.practice-page.practice-page--choice .practice-choice-top-rail {
+    flex-shrink: 0;
+    min-height: clamp(68px, 9vh, 84px);
+    gap: clamp(10px, 1.6vw, 16px);
+}
+
+.practice-page.practice-page--choice .practice-choice-stage {
+    flex: 1 1 auto;
+    width: 100%;
     display: flex;
-    justify-content: flex-end;
-    gap: 0;
-    padding: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 1.6vh, 16px);
+    min-height: 0;
+    padding: 2px 0 8px;
+}
+
+.practice-page.practice-page--choice .practice-choice-top-rail--empty {
+    pointer-events: none;
+}
+
+.practice-page.practice-page--choice .practice-main .practice-bottom-bar {
+    margin-top: 0;
 }
 
 .practice-page.practice-page--choice .listening-example-prompt {
@@ -40,21 +57,47 @@
     margin-top: 0;
 }
 
+.practice-page.practice-page--choice .options-footer-actions {
+    grid-column: 2;
+    display: inline-grid;
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.practice-page.practice-page--choice .options-footer-actions .practice-favorite-btn,
+.practice-page.practice-page--choice .options-footer-actions .practice-speaking-entry-btn,
+.practice-page.practice-page--choice .options-footer-actions .replay-btn,
+.practice-page.practice-page--choice .listening-example-audio-btn {
+    width: 42px;
+    height: 42px;
+}
+
+.practice-page.practice-page--choice .options-footer-actions .practice-favorite-btn svg,
+.practice-page.practice-page--choice .options-footer-actions .practice-speaking-entry-btn svg,
+.practice-page.practice-page--choice .options-footer-actions .replay-btn svg,
+.practice-page.practice-page--choice .listening-example-audio-btn .example-audio-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.practice-page.practice-page--choice .options-footer-actions .replay-btn {
+    grid-column: auto;
+}
+
 @media (max-height: 820px) and (min-width: 768px) {
     .practice-page.practice-page--choice .practice-main {
-        padding-top: 8px;
-        gap: 14px;
+        padding-top: 6px;
     }
 
-    .practice-page.practice-page--choice .practice-choice-top-rail,
-    .practice-page.practice-page--choice .practice-choice-top-rail.practice-choice-top-rail--action-only {
-        min-height: 84px;
+    .practice-page.practice-page--choice .practice-choice-stage {
         gap: 12px;
+        padding-block: 0 8px;
     }
 
-    .practice-page.practice-page--choice .practice-choice-top-rail.practice-choice-top-rail--action-only {
-        align-items: flex-start;
-        padding-top: 2px;
+    .practice-page.practice-page--choice .practice-choice-top-rail {
+        min-height: 70px;
+        gap: 12px;
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice {
@@ -134,6 +177,18 @@
         margin-top: -6px;
     }
 
+    .practice-page.practice-page--choice .options-footer-actions {
+        gap: 10px;
+    }
+
+    .practice-page.practice-page--choice .options-footer-actions .practice-favorite-btn,
+    .practice-page.practice-page--choice .options-footer-actions .practice-speaking-entry-btn,
+    .practice-page.practice-page--choice .options-footer-actions .replay-btn,
+    .practice-page.practice-page--choice .listening-example-audio-btn {
+        width: 40px;
+        height: 40px;
+    }
+
     .practice-page.practice-page--choice .skip-btn {
         padding: 10px 14px;
         font-size: 14px;
@@ -167,5 +222,133 @@
     .practice-page.practice-page--choice .practice-main .bottom-progress-count {
         font-size: 13px;
         padding: 7px 10px;
+    }
+}
+
+@media (max-height: 760px) and (min-width: 768px) {
+    .practice-page.practice-page--choice .practice-main {
+        padding-top: 4px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail {
+        min-height: 58px;
+        gap: 10px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-stage {
+        justify-content: flex-start;
+        gap: 10px;
+        padding-block: 0 6px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice {
+        gap: 8px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-back-btn {
+        padding: 0 10px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-info {
+        max-width: min(280px, calc(100% - 48px));
+        padding: 7px 10px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-prompt {
+        gap: 6px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-sentence {
+        font-size: clamp(0.96rem, 1.25vw, 1.08rem);
+        line-height: 1.34;
+    }
+
+    .practice-page.practice-page--choice .options-grid {
+        gap: 8px;
+    }
+
+    .practice-page.practice-page--choice .option-btn {
+        min-height: 88px;
+        padding: 14px 16px 12px;
+    }
+
+    .practice-page.practice-page--choice .option-text {
+        font-size: clamp(1.05rem, 1.14vw, 1.2rem);
+        line-height: 1.24;
+    }
+
+    .practice-page.practice-page--choice .options-footer {
+        margin-top: -4px;
+    }
+
+    .practice-page.practice-page--choice .options-footer-actions {
+        gap: 8px;
+    }
+
+    .practice-page.practice-page--choice .skip-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .practice-page.practice-page--choice .practice-main .practice-bottom-bar {
+        gap: 8px;
+        padding: 6px 12px 6px;
+    }
+
+    .practice-page.practice-page--choice .practice-main .bottom-progress-track {
+        height: 7px;
+    }
+
+    .practice-page.practice-page--choice .practice-main .bottom-progress-dot {
+        right: -4px;
+        width: 11px;
+        height: 11px;
+    }
+
+    .practice-page.practice-page--choice .practice-main .bottom-progress-count {
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+}
+
+@media (max-height: 680px) and (min-width: 768px) {
+    .practice-page.practice-page--choice .practice-choice-top-rail {
+        min-height: 50px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-stage {
+        gap: 8px;
+        padding-bottom: 4px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-info {
+        padding: 6px 9px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-text {
+        font-size: 15px;
+    }
+
+    .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-phonetic,
+    .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-def {
+        font-size: 10px;
+    }
+
+    .practice-page.practice-page--choice .listening-example-sentence {
+        font-size: 0.94rem;
+    }
+
+    .practice-page.practice-page--choice .option-btn {
+        min-height: 80px;
+        padding: 12px 14px 10px;
+    }
+
+    .practice-page.practice-page--choice .option-text {
+        font-size: 1rem;
+    }
+
+    .practice-page.practice-page--choice .practice-main .practice-bottom-bar {
+        padding-inline: 10px;
+        padding-bottom: 5px;
     }
 }
