@@ -58,6 +58,14 @@ The install script now prepares `/opt/ielts-vocab/releases`, bootstraps `/opt/ie
 - `RABBITMQ_PORT=5672`
 - `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST`, and `RABBITMQ_DOMAIN_EXCHANGE`
 
+Optional `ai-execution-service` speaking calibration can also live in `/etc/ielts-vocab/microservices.env`:
+
+```bash
+SPEAKING_ASSESSMENT_BAND_THRESHOLDS_JSON=[[95,9.0],[89,8.5],[83,8.0],[76,7.5],[69,7.0],[62,6.5],[55,6.0],[48,5.5],[41,5.0],[34,4.5],[27,4.0],[20,3.5],[13,3.0],[6,2.5],[1,2.0],[0,0.0]]
+```
+
+The value is a JSON array of `[minScore, band]` pairs used by `ai-execution-service` to map model raw scores (`0-100`) into IELTS half-band scores. Invalid JSON or invalid rows now fall back to the built-in default table, and overall band rounding uses a half-up rule, so `7.25` becomes `7.5`.
+
 ## Broker Runtime
 
 Remote Wave 5 broker rollout now has a dedicated provisioning and validation path:
@@ -68,6 +76,8 @@ sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deplo
 ```
 
 The validation wrapper checks `systemctl is-active --quiet redis`, `systemctl is-active --quiet rabbitmq-server`, and then runs [validate_wave5_broker_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/validate_wave5_broker_runtime.py) against `/etc/ielts-vocab/microservices.env`.
+
+`preflight-check.sh` now also runs [validate_speaking_band_thresholds.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/validate_speaking_band_thresholds.py) against the same env file. If `SPEAKING_ASSESSMENT_BAND_THRESHOLDS_JSON` is unset, preflight keeps the built-in defaults; if it is set but the JSON shape is invalid, preflight fails before the release starts.
 
 The first real remote rollout was executed on `2026-04-11` against `119.29.182.134`: broker env keys were added to `/etc/ielts-vocab/microservices.env`, `redis` plus `rabbitmq-server` were installed and enabled, and `validate-broker-runtime.sh`, `preflight-check.sh`, and `smoke-check.sh` all passed.
 
