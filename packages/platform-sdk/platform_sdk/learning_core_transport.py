@@ -14,6 +14,9 @@ from platform_sdk.learning_core_notes_context_application import (
     list_internal_notes_wrong_words_response,
 )
 from platform_sdk.learning_core_events_application import record_internal_learning_event_response
+from platform_sdk.learning_core_home_todo_signals_application import (
+    build_learning_core_home_todo_signals_response,
+)
 from platform_sdk.learning_core_library_application import (
     add_my_book_response,
     build_my_books_response,
@@ -103,6 +106,16 @@ def get_internal_learning_stats(current_user):
         days=min(int(request.args.get('days', 30)), 90),
         book_id_filter=request.args.get('book_id') or None,
         mode_filter_raw=request.args.get('mode') or None,
+    )
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/home-todo-signals', methods=['GET'])
+@token_required
+def get_internal_home_todo_signals(current_user):
+    payload, status = build_learning_core_home_todo_signals_response(
+        current_user.id,
+        target_date=request.args.get('date') or None,
     )
     return jsonify(payload), status
 

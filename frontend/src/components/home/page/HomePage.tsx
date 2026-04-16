@@ -16,12 +16,12 @@ export default function HomePage() {
     isInitialLoading,
     bookCards,
     taskList,
+    todoError,
     studyGuidance,
     handleSelectBook,
     handleRemoveBook,
     handleSelectChapter,
     handleStartStudy,
-    runDailyPlanAction,
     navigateToBooks,
     closeChapterModal,
     closePlanModal,
@@ -72,16 +72,12 @@ export default function HomePage() {
               {taskList.length > 0 ? (
                 <ol className="study-todo-list" aria-label="今日待办列表">
                   {taskList.map(task => (
-                    <TodoTaskRow
-                      key={task.id}
-                      task={task}
-                      onAction={runDailyPlanAction}
-                    />
+                    <TodoTaskRow key={task.id} task={task} />
                   ))}
                 </ol>
               ) : (
-                <div className="study-todo-empty">
-                  待办还在同步，先从词书开始。
+                <div className="study-todo-empty" role="status">
+                  {todoError ? '待办暂时不可用，先从词书开始。' : '暂时没有待办，先从词书开始。'}
                 </div>
               )}
             </section>

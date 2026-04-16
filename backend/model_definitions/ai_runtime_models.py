@@ -290,3 +290,117 @@ class AIProjectionCursor(db.Model):
     last_event_id = db.Column(db.String(64), nullable=True)
     last_topic = db.Column(db.String(120), nullable=True)
     last_processed_at = db.Column(db.DateTime, nullable=True)
+
+
+def _load_json_object(value: str | None) -> dict:
+    try:
+        parsed = json.loads(value) if value else {}
+    except Exception:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _load_json_list(value: str | None) -> list[dict]:
+    try:
+        parsed = json.loads(value) if value else []
+    except Exception:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [item for item in parsed if isinstance(item, dict)]
+
+
+class UserHomeTodoPlan(db.Model):
+    __tablename__ = 'user_home_todo_plans'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    plan_date = db.Column(db.String(10), nullable=False, index=True)
+    pending_count = db.Column(db.Integer, default=0, nullable=False)
+    completed_count = db.Column(db.Integer, default=0, nullable=False)
+    carry_over_count = db.Column(db.Integer, default=0, nullable=False)
+    last_generated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, onupdate=datetime.utcnow)
+
+    items = db.relationship(
+        'UserHomeTodoItem',
+        backref='plan',
+        cascade='all, delete-orphan',
+        lazy='select',
+        order_by='UserHomeTodoItem.priority.asc(), UserHomeTodoItem.id.asc()',
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'plan_date', name='unique_user_home_todo_plan'),
+    )
+
+    def summary_dict(self) -> dict:
+        return {
+            'pending_count': int(self.pending_count or 0),
+            'completed_count': int(self.completed_count or 0),
+            'carry_over_count': int(self.carry_over_count or 0),
+            'last_generated_at': _iso_utc(self.last_generated_at),
+        }
+
+
+class UserHomeTodoItem(db.Model):
+    __tablename__ = 'user_home_todo_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    plan_id = db.Column(db.Integer, db.ForeignKey('user_home_todo_plans.id'), nullable=False, index=True)
+    task_key = db.Column(db.String(40), nullable=False)
+    kind = db.Column(db.String(40), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, index=True)
+    priority = db.Column(db.Integer, default=100, nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    badge = db.Column(db.String(120), nullable=False)
+    action_json = db.Column(db.Text, nullable=True)
+    steps_json = db.Column(db.Text, nullable=True)
+    evidence_json = db.Column(db.Text, nullable=True)
+    carry_over_count = db.Column(db.Integer, default=0, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True, index=True)
+    rolled_over_at = db.Column(db.DateTime, nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('plan_id', 'task_key', name='unique_user_home_todo_item'),
+    )
+
+    def action_dict(self) -> dict:
+        return _load_json_object(self.action_json)
+
+    def set_action(self, action: dict | None) -> None:
+        self.action_json = json.dumps(action or {}, ensure_ascii=False)
+
+    def steps(self) -> list[dict]:
+        return _load_json_list(self.steps_json)
+
+    def set_steps(self, steps: list[dict] | None) -> None:
+        self.steps_json = json.dumps(steps or [], ensure_ascii=False)
+
+    def evidence_dict(self) -> dict:
+        return _load_json_object(self.evidence_json)
+
+    def set_evidence(self, evidence: dict | None) -> None:
+        self.evidence_json = json.dumps(evidence or {}, ensure_ascii=False)
+
+    def to_dict(self) -> dict:
+        evidence = self.evidence_dict()
+        return {
+            'id': self.task_key,
+            'task_key': self.task_key,
+            'kind': self.kind,
+            'status': self.status,
+            'priority': int(self.priority or 0),
+            'title': self.title,
+            'description': self.description,
+            'badge': self.badge,
+            'completion_source': evidence.get('completion_source'),
+            'steps': self.steps(),
+            'action': self.action_dict(),
+            'carry_over_count': int(self.carry_over_count or 0),
+            'completed_at': _iso_utc(self.completed_at),
+        }

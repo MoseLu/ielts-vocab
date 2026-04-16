@@ -127,6 +127,8 @@ AI_EXECUTION_SERVICE_TABLES = frozenset({
     'ai_prompt_runs',
     'ai_speaking_assessments',
     'ai_word_image_assets',
+    'user_home_todo_items',
+    'user_home_todo_plans',
     'user_conversation_history',
     'user_memory',
     'search_cache',

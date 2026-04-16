@@ -29,7 +29,7 @@ export interface StudyBookCard {
 }
 
 export interface DailyPlanAction {
-  kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book'
+  kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book' | 'speaking'
   cta_label: string
   mode?: string | null
   book_id?: string | null
@@ -44,7 +44,7 @@ export interface DailyPlanStep {
 
 export interface DailyPlanTask {
   id: string
-  kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book'
+  kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book' | 'speaking'
   title: string
   description: string
   status: 'pending' | 'completed'
@@ -52,6 +52,7 @@ export interface DailyPlanTask {
   badge: string
   steps?: DailyPlanStep[]
   action: DailyPlanAction
+  carry_over_count?: number
 }
 
 export interface StudyGuidanceCard {

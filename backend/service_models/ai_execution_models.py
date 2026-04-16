@@ -1,5 +1,7 @@
 from models import (
     AISpeakingAssessment,
+    UserHomeTodoItem,
+    UserHomeTodoPlan,
     AIProjectedDailySummary,
     AIProjectedWrongWord,
     AIProjectionCursor,
@@ -14,6 +16,8 @@ from models import (
 
 __all__ = [
     'AISpeakingAssessment',
+    'UserHomeTodoItem',
+    'UserHomeTodoPlan',
     'AIProjectedDailySummary',
     'AIProjectedWrongWord',
     'AIProjectionCursor',

@@ -1,19 +1,16 @@
-import type { MouseEvent } from 'react'
+import type { CSSProperties, MouseEvent } from 'react'
 import type { Book } from '../../../types'
 import {
   getStepStateLabel,
   getTaskStateLabel,
-  type DailyPlanAction,
   type DailyPlanTask,
   type StudyBookCard,
 } from './homePageModels'
 
 export function TodoTaskRow({
   task,
-  onAction,
 }: {
   task: DailyPlanTask
-  onAction: (action: DailyPlanAction) => void
 }) {
   const isCompleted = task.status === 'completed'
   const taskSteps = task.steps ?? []
@@ -40,13 +37,6 @@ export function TodoTaskRow({
           </div>
         </div>
         <div className="study-todo-head-side">
-          <button
-            type="button"
-            className="study-todo-action"
-            onClick={() => onAction(task.action)}
-          >
-            {task.action.cta_label}
-          </button>
           <div className="study-todo-title-meta">
             <span className={`study-todo-progress${isCompleted ? ' is-completed' : ''}`}>
               {task.badge}
@@ -154,7 +144,7 @@ export function MyBookCard({
       >
         <div
           className="study-book-progress-fill"
-          style={{ width: `${card.progressPercent}%` }}
+          style={{ '--progress-percent': `${card.progressPercent}%` } as CSSProperties}
         />
       </div>
       <div className="study-book-stats">

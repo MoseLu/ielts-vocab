@@ -380,3 +380,39 @@ def test_ai_execution_service_similar_words_route(monkeypatch, tmp_path):
 
     assert response.status_code == 200
     assert response.json()['words'][0]['word'] == 'adopt'
+
+
+def test_ai_execution_service_home_todos_route(monkeypatch, tmp_path):
+    _configure_ai_env(monkeypatch, tmp_path)
+    module = _load_ai_execution_service_module('ai_execution_service_home_todos')
+    client = TestClient(module.app)
+    token = _create_user_and_token(module.ai_flask_app, username='ai-home-todos-runtime-user')
+
+    monkeypatch.setattr(
+        'platform_sdk.ai_transport.build_home_todos_response',
+        lambda user_id, *, target_date=None: ({
+            'date': '2026-04-16',
+            'summary': {
+                'pending_count': 2,
+                'completed_count': 1,
+                'carry_over_count': 1,
+                'last_generated_at': '2026-04-16T04:00:00',
+            },
+            'primary_items': [{
+                'id': 'due-review',
+                'kind': 'due-review',
+                'title': '到期复习',
+                'description': '还有 2 个到期词需要先回顾。',
+                'status': 'pending',
+                'badge': '2 词到期',
+                'action': {'kind': 'due-review', 'cta_label': '去复习'},
+            }],
+            'overflow_items': [],
+        }, 200),
+    )
+
+    response = client.get('/api/ai/home-todos', headers=_auth_headers(token))
+
+    assert response.status_code == 200
+    assert response.json()['date'] == '2026-04-16'
+    assert response.json()['primary_items'][0]['kind'] == 'due-review'

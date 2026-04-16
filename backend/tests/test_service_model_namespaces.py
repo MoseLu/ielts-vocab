@@ -48,6 +48,8 @@ def test_ai_execution_models_expose_ai_owned_models():
     assert hasattr(ai_execution_models, 'AIProjectedWrongWord')
     assert hasattr(ai_execution_models, 'AIPromptRun')
     assert hasattr(ai_execution_models, 'AIWordImageAsset')
+    assert hasattr(ai_execution_models, 'UserHomeTodoPlan')
+    assert hasattr(ai_execution_models, 'UserHomeTodoItem')
     assert hasattr(ai_execution_models, 'UserConversationHistory')
     assert hasattr(ai_execution_models, 'UserMemory')
     assert hasattr(ai_execution_models, 'SearchCache')

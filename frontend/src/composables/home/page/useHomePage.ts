@@ -1,22 +1,20 @@
 import { useCallback, useMemo, useState, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useHomeTodos } from '../../../features/home/hooks/useHomeTodos'
 import {
   useAllBookProgress,
   useLearningStats,
   useMyBooks,
   useVocabBooks,
 } from '../../../features/vocabulary/hooks'
-import { buildWrongWordsPracticeQuery, type WrongWordDimensionFilter } from '../../../features/vocabulary/wrongWordsFilters'
 import { useResponsivePageSkeletonCount } from '../../../hooks/useResponsiveSkeletonCount'
 import { buildBookStudyEntryPath, type BookEntryMode } from '../../../lib'
-import { requestPracticeMode } from '../../practice/page/practiceModeEvents'
 import type { Book, BookProgress } from '../../../types'
 import type { Chapter } from '../../../components/books/dialogs/ChapterModal'
 import {
   buildStudyBookCards,
   buildStudyGuidanceSection,
   buildTaskGuidanceSteps,
-  type DailyPlanAction,
   type DailyPlanTask,
   type StudyPlan,
 } from '../../../components/home/page/homePageModels'
@@ -30,12 +28,18 @@ export function useHomePage() {
   const { progressMap, loading: progressLoading } = useAllBookProgress()
   const { myBookIds, loading: myBooksLoading, addBook, removeBook } = useMyBooks()
   const { learnerProfile, alltime, loading: learningStatsLoading } = useLearningStats(7, 'all', 'all')
+  const {
+    primaryItems,
+    overflowItems,
+    loading: homeTodosLoading,
+    error: homeTodosError,
+  } = useHomeTodos()
   const { containerRef, count: skeletonCount } = useResponsivePageSkeletonCount({
     minColumnWidth: 260,
     gap: 10,
   })
 
-  const isInitialLoading = booksLoading || progressLoading || myBooksLoading || learningStatsLoading
+  const isInitialLoading = booksLoading || progressLoading || myBooksLoading || learningStatsLoading || homeTodosLoading
 
   const bookCards = useMemo(() => (
     buildStudyBookCards(
@@ -45,26 +49,28 @@ export function useHomePage() {
     )
   ), [books, myBookIds, progressMap])
 
-  const dailyPlan = learnerProfile?.daily_plan
-  const rawTaskList = dailyPlan?.tasks ?? []
-
   const focusBookCard = useMemo(() => {
-    const focusBookId = dailyPlan?.focus_book?.book_id
-    if (focusBookId) {
-      const matched = bookCards.find(card => card.book.id === focusBookId)
-      if (matched) return matched
-    }
-
     return bookCards.find(card => !card.isComplete) ?? bookCards[0] ?? null
-  }, [bookCards, dailyPlan])
+  }, [bookCards])
 
-  const taskList = useMemo(() => {
-    const focusBookTitle = dailyPlan?.focus_book?.title ?? focusBookCard?.book.title ?? null
-    return rawTaskList.map(task => ({
-      ...task,
-      steps: buildTaskGuidanceSteps(task, { focusBookTitle }),
-    }))
-  }, [dailyPlan, focusBookCard, rawTaskList])
+  const decorateTask = useCallback((task: DailyPlanTask) => ({
+    ...task,
+    steps: task.steps?.length
+      ? task.steps
+      : buildTaskGuidanceSteps(task, { focusBookTitle: focusBookCard?.book.title ?? null }),
+  }), [focusBookCard])
+
+  const primaryTaskList = useMemo(() => (
+    primaryItems.map(task => decorateTask(task as DailyPlanTask))
+  ), [decorateTask, primaryItems])
+
+  const overflowTaskList = useMemo(() => (
+    overflowItems.map(task => decorateTask(task as DailyPlanTask))
+  ), [decorateTask, overflowItems])
+
+  const taskList = useMemo(() => (
+    [...primaryTaskList, ...overflowTaskList]
+  ), [overflowTaskList, primaryTaskList])
 
   const taskMap = useMemo(() => {
     return taskList.reduce<Record<string, DailyPlanTask>>((result, task) => {
@@ -78,7 +84,12 @@ export function useHomePage() {
       addBook(book.id)
     }
     setSelectedBook(book)
-    setShowChapterModal(Boolean(book.is_paid || book.practice_mode === 'match' || book.is_auto_favorites))
+    setShowChapterModal(Boolean(
+      book.is_paid
+      || book.practice_mode === 'match'
+      || book.is_auto_favorites
+      || book.is_custom_book
+    ))
   }, [addBook, myBookIds])
 
   const closeChapterModal = useCallback(() => {
@@ -116,53 +127,6 @@ export function useHomePage() {
     removeBook(bookId)
   }, [removeBook])
 
-  const openBookFromAction = useCallback((bookId?: string | null) => {
-    const targetBook = books.find(book => book.id === bookId)
-      ?? focusBookCard?.book
-      ?? null
-
-    if (!targetBook) {
-      navigate('/books')
-      return
-    }
-
-    handleSelectBook(targetBook as Book)
-  }, [books, focusBookCard, handleSelectBook, navigate])
-
-  const runDailyPlanAction = useCallback((action?: DailyPlanAction | null) => {
-    if (!action) return
-
-    switch (action.kind) {
-      case 'add-book':
-        navigate('/books/create')
-        return
-      case 'due-review':
-        requestPracticeMode(action.mode ?? 'quickmemory')
-        navigate('/practice?review=due')
-        return
-      case 'error-review': {
-        requestPracticeMode(action.mode)
-        const dimFilter: WrongWordDimensionFilter = (
-          action.dimension === 'recognition'
-          || action.dimension === 'listening'
-          || action.dimension === 'meaning'
-          || action.dimension === 'dictation'
-        ) ? action.dimension : 'all'
-        const query = buildWrongWordsPracticeQuery({
-          scope: 'pending',
-          dimFilter,
-        })
-        navigate(query ? `/practice?mode=errors&${query}` : '/practice?mode=errors')
-        return
-      }
-      case 'continue-book':
-        openBookFromAction(action.book_id)
-        return
-      default:
-        return
-    }
-  }, [navigate, openBookFromAction])
-
   const reviewTask = taskMap['due-review']
   const errorTask = taskMap['error-review']
   const studyGuidance = useMemo(() => buildStudyGuidanceSection({
@@ -170,12 +134,9 @@ export function useHomePage() {
     alltime,
     reviewTask,
     errorTask,
-    focusBookTitle: dailyPlan?.focus_book?.title ?? focusBookCard?.book.title ?? null,
-    focusBookRemainingWords:
-      dailyPlan?.focus_book?.remaining_words
-      ?? focusBookCard?.remainingWords
-      ?? null,
-  }), [alltime, dailyPlan, errorTask, focusBookCard, learnerProfile, reviewTask])
+    focusBookTitle: focusBookCard?.book.title ?? null,
+    focusBookRemainingWords: focusBookCard?.remainingWords ?? null,
+  }), [alltime, errorTask, focusBookCard, learnerProfile, reviewTask])
 
   return {
     selectedBook,
@@ -186,12 +147,12 @@ export function useHomePage() {
     isInitialLoading,
     bookCards,
     taskList,
+    todoError: homeTodosError,
     studyGuidance,
     handleSelectBook,
     handleRemoveBook,
     handleSelectChapter,
     handleStartStudy,
-    runDailyPlanAction,
     navigateToBooks: () => navigate('/books/create'),
     closeChapterModal,
     closePlanModal,

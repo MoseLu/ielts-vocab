@@ -105,6 +105,25 @@ def fetch_learning_core_learning_stats_response(
     return payload, status
 
 
+def fetch_learning_core_home_todo_signals(
+    user_id: int,
+    *,
+    target_date: str | None,
+) -> dict:
+    params = {'date': target_date} if target_date else None
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/home-todo-signals',
+        user_id=user_id,
+        params=params,
+    )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'learning-core home-todo-signals request failed: {status}')
+    if status != 200:
+        raise RuntimeError(f'learning-core home-todo-signals request failed: {status}')
+    return payload
+
+
 def start_learning_core_study_session_response(user_id: int, data: dict | None) -> tuple[dict, int]:
     payload, status = _request_json(
         'POST',
