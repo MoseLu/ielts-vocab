@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { apiFetch } from '../../../lib'
 import { flushStudySessionOnPageHide } from '../../../hooks/useAIChat'
+import { persistChapterProgressSnapshot } from '../../../components/practice/progressStorage'
 import type { QuickMemorySessionResult } from '../../../components/practice/quick-memory/QuickMemorySummary'
 
 interface QuickMemorySessionLifecycleArgs {
@@ -8,6 +9,7 @@ interface QuickMemorySessionLifecycleArgs {
   chapterId: string | null
   done: boolean
   index: number
+  queueWords: string[]
   queueLength: number
   reviewMode?: boolean
   results: QuickMemorySessionResult[]
@@ -43,6 +45,7 @@ export function useQuickMemorySession({
   chapterId,
   done,
   index,
+  queueWords,
   queueLength,
   reviewMode,
   results,
@@ -103,12 +106,10 @@ export function useQuickMemorySession({
       wrong_count: results.filter(result => result.choice === 'unknown').length,
       words_learned: queueLength,
       is_completed: true,
+      queue_words: queueWords,
     }
 
-    const chapterProgress: Record<string, typeof progressData & { updatedAt: string }> =
-      JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-    chapterProgress[`${bookId}_${chapterId}`] = { ...progressData, updatedAt: new Date().toISOString() }
-    localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
+    persistChapterProgressSnapshot(bookId, chapterId, progressData)
 
     apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
       method: 'POST',
@@ -124,7 +125,7 @@ export function useQuickMemorySession({
         is_completed: true,
       }),
     }).catch(() => {})
-  }, [bookId, chapterId, done, queueLength, results, reviewMode, showSaveError])
+  }, [bookId, chapterId, done, queueLength, queueWords, results, reviewMode, showSaveError])
 
   useEffect(() => {
     if (!done || sessionLoggedRef.current || results.length < queueLength) return
@@ -154,25 +155,22 @@ export function useQuickMemorySession({
   ])
 
   useEffect(() => {
-    return () => {
-      if (reviewMode || done || !bookId || !chapterId || index === 0) return
-      const summary = summarizeResults(results)
-      const partialProgress = {
-        current_index: index,
-        correct_count: summary.correctCount,
-        wrong_count: summary.wrongCount,
-        words_learned: index,
-        is_completed: false,
-        updatedAt: new Date().toISOString(),
-      }
-      const chapterProgress: Record<string, typeof partialProgress> =
-        JSON.parse(localStorage.getItem('chapter_progress') || '{}')
-      if (!chapterProgress[`${bookId}_${chapterId}`]?.is_completed) {
-        chapterProgress[`${bookId}_${chapterId}`] = partialProgress
-        localStorage.setItem('chapter_progress', JSON.stringify(chapterProgress))
-      }
+    if (reviewMode || done || !bookId || !chapterId || index === 0) return
+    const summary = summarizeResults(results)
+    const partialProgress = {
+      current_index: index,
+      correct_count: summary.correctCount,
+      wrong_count: summary.wrongCount,
+      words_learned: index,
+      is_completed: false,
+      queue_words: queueWords,
     }
-  }, [bookId, chapterId, done, index, results, reviewMode])
+    persistChapterProgressSnapshot(bookId, chapterId, partialProgress)
+    apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
+      method: 'POST',
+      body: JSON.stringify(partialProgress),
+    }).catch(showSaveError)
+  }, [bookId, chapterId, done, index, queueWords, results, reviewMode, showSaveError])
 
   useEffect(() => {
     return () => {

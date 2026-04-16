@@ -39,4 +39,22 @@ describe('navigation entry routes', () => {
 
     expect(screen.getByTestId('location-probe')).toHaveTextContent('/plan')
   })
+
+  it('routes the left sidebar speaking item to the speaking page', async () => {
+    const user = userEvent.setup()
+    renderWithRouter(<LeftSidebar />)
+
+    await user.click(screen.getByRole('button', { name: '口语' }))
+
+    expect(screen.getByTestId('location-probe')).toHaveTextContent('/speaking')
+  })
+
+  it('routes the bottom nav speaking item to the speaking page', async () => {
+    const user = userEvent.setup()
+    renderWithRouter(<BottomNav />)
+
+    await user.click(screen.getByRole('button', { name: '口语' }))
+
+    expect(screen.getByTestId('location-probe')).toHaveTextContent('/speaking')
+  })
 })

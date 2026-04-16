@@ -50,6 +50,24 @@ function normalizeDuration(total: number | null, extra = 0): number {
   return Math.max(0, Math.round(total ?? 0) + Math.max(0, Math.round(extra)))
 }
 
+function getOptionalAIChatFunction<T extends (...args: any[]) => any>(key: string): T | null {
+  try {
+    const value = Reflect.get(AIChat as object, key)
+    return typeof value === 'function' ? (value as T) : null
+  } catch {
+    return null
+  }
+}
+
+function getAIChatNumber(key: string, fallback: number): number {
+  try {
+    const value = Reflect.get(AIChat as object, key)
+    return typeof value === 'number' ? value : fallback
+  } catch {
+    return fallback
+  }
+}
+
 export function usePracticePageSession({
   mode,
   errorMode,
@@ -60,6 +78,11 @@ export function usePracticePageSession({
   wrongCount,
 }: UsePracticePageSessionParams): UsePracticePageSessionResult {
   const [settings, setSettings] = useState<AppSettings>(() => readAppSettingsFromStorage())
+  const isStudySessionActive = getOptionalAIChatFunction<typeof AIChat.isStudySessionActive>('isStudySessionActive')
+  const finalizeStudySessionSegment = getOptionalAIChatFunction<typeof AIChat.finalizeStudySessionSegment>('finalizeStudySessionSegment')
+  const markStudySessionRecoveryHandled = getOptionalAIChatFunction<typeof AIChat.markStudySessionRecoveryHandled>('markStudySessionRecoveryHandled')
+  const prepareStudySessionForLearningAction = getOptionalAIChatFunction<typeof AIChat.prepareStudySessionForLearningAction>('prepareStudySessionForLearningAction')
+  const passiveStudySessionMinSeconds = getAIChatNumber('PASSIVE_STUDY_SESSION_MIN_SECONDS', 30)
 
   const sessionStartRef = useRef<number>(0)
   const sessionLastActiveAtRef = useRef<number>(0)
@@ -134,15 +157,15 @@ export function usePracticePageSession({
 
   const isCurrentSessionActive = useCallback((at = Date.now()) => {
     if (sessionStartRef.current <= 0) return false
-    if (typeof AIChat.isStudySessionActive === 'function') {
-      return AIChat.isStudySessionActive({
+    if (isStudySessionActive) {
+      return isStudySessionActive({
         sessionId: sessionIdRef.current,
         startedAt: sessionStartRef.current,
         lastActiveAt: sessionLastActiveAtRef.current,
       }, at)
     }
     return true
-  }, [])
+  }, [isStudySessionActive])
 
   const closeActiveSegment = useCallback(async ({
     markRoundCompleted = false,
@@ -183,8 +206,8 @@ export function usePracticePageSession({
     }
 
     let finalized = { discarded: true, durationSeconds: 0 }
-    if (typeof AIChat.finalizeStudySessionSegment === 'function') {
-      finalized = await AIChat.finalizeStudySessionSegment(payload)
+    if (finalizeStudySessionSegment) {
+      finalized = await finalizeStudySessionSegment(payload)
     } else {
       const durationSeconds = AIChat.resolveStudySessionDurationSeconds({
         sessionId: payload.sessionId,
@@ -194,9 +217,9 @@ export function usePracticePageSession({
         payload.wordsStudied <= 0
         && payload.correctCount <= 0
         && payload.wrongCount <= 0
-        && durationSeconds < AIChat.PASSIVE_STUDY_SESSION_MIN_SECONDS
+        && durationSeconds < passiveStudySessionMinSeconds
       )
-      AIChat.markStudySessionRecoveryHandled()
+      markStudySessionRecoveryHandled?.()
       if (shouldDiscard) {
         await AIChat.cancelSession(payload.sessionId)
       } else {
@@ -232,7 +255,14 @@ export function usePracticePageSession({
     sessionLoggedRef.current = markRoundCompleted
     resetCurrentSegmentState()
     return completedSessionDurationSecondsRef.current ?? 0
-  }, [accumulateCompletedDuration, getCurrentSegmentWordsStudied, resetCurrentSegmentState])
+  }, [
+    accumulateCompletedDuration,
+    finalizeStudySessionSegment,
+    getCurrentSegmentWordsStudied,
+    markStudySessionRecoveryHandled,
+    passiveStudySessionMinSeconds,
+    resetCurrentSegmentState,
+  ])
 
   const prepareSessionForLearningAction = useCallback(async (activityAt = Date.now()) => {
     if (effectiveSessionModeRef.current === 'quickmemory') return
@@ -243,8 +273,8 @@ export function usePracticePageSession({
       wrongCount: sessionWrongRef.current,
     }
 
-    if (typeof AIChat.prepareStudySessionForLearningAction === 'function') {
-      const prepared = await AIChat.prepareStudySessionForLearningAction({
+    if (prepareStudySessionForLearningAction) {
+      const prepared = await prepareStudySessionForLearningAction({
         sessionId: sessionIdRef.current,
         startedAt: sessionStartRef.current,
         lastActiveAt: sessionLastActiveAtRef.current,
@@ -299,7 +329,7 @@ export function usePracticePageSession({
       skipRecovery: true,
       startedAt: activityAt,
     })
-  }, [accumulateCompletedDuration, getCurrentSegmentWordsStudied])
+  }, [accumulateCompletedDuration, getCurrentSegmentWordsStudied, prepareStudySessionForLearningAction])
 
   const completeCurrentSession = useCallback(async () => {
     const totalDurationSeconds = await closeActiveSegment({

@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from '../../constants'
+import { apiFetch } from '../../lib'
 import type { ProgressData } from './types'
 
 interface StoredSelection {
@@ -34,26 +36,91 @@ export function readStoredChapterStartIndex(
   return Number.isFinite(startIndex) && startIndex >= 0 ? startIndex : 0
 }
 
+function readStoredProgressMap(key: string): Record<string, ProgressData> {
+  try {
+    return JSON.parse(localStorage.getItem(key) || '{}') as Record<string, ProgressData>
+  } catch {
+    return {}
+  }
+}
+
+function writeStoredProgressMap(key: string, value: Record<string, ProgressData>): void {
+  localStorage.setItem(key, JSON.stringify(value))
+}
+
+function buildStoredSnapshot(progressData: ProgressData): ProgressData {
+  return {
+    ...progressData,
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+export function readStoredChapterProgressSnapshot(
+  bookId: string,
+  chapterId: string | number,
+): ProgressData | null {
+  return readStoredProgressMap(STORAGE_KEYS.CHAPTER_PROGRESS)[`${bookId}_${chapterId}`] ?? null
+}
+
 export function persistBookProgressSnapshot(
   bookId: string,
   progressData: ProgressData,
   queueWords: string[],
 ): void {
-  let bookProgress: Record<string, ProgressData> = {}
-
-  try {
-    bookProgress = JSON.parse(localStorage.getItem('book_progress') || '{}') as Record<string, ProgressData>
-  } catch {
-    bookProgress = {}
-  }
-
+  const bookProgress = readStoredProgressMap(STORAGE_KEYS.BOOK_PROGRESS)
   const previous = bookProgress[bookId]
   bookProgress[bookId] = {
-    ...progressData,
+    ...buildStoredSnapshot(progressData),
     current_index: Math.max(previous?.current_index ?? 0, progressData.current_index),
     queue_words: queueWords,
-    updatedAt: new Date().toISOString(),
   }
+  writeStoredProgressMap(STORAGE_KEYS.BOOK_PROGRESS, bookProgress)
+}
 
-  localStorage.setItem('book_progress', JSON.stringify(bookProgress))
+export function persistChapterProgressSnapshot(
+  bookId: string,
+  chapterId: string | number,
+  progressData: ProgressData,
+): void {
+  const chapterProgress = readStoredProgressMap(STORAGE_KEYS.CHAPTER_PROGRESS)
+  chapterProgress[`${bookId}_${chapterId}`] = buildStoredSnapshot(progressData)
+  writeStoredProgressMap(STORAGE_KEYS.CHAPTER_PROGRESS, chapterProgress)
+}
+
+export function clearChapterProgressSnapshot(
+  bookId: string,
+  chapterId: string | number,
+): void {
+  const chapterProgress = readStoredProgressMap(STORAGE_KEYS.CHAPTER_PROGRESS)
+  delete chapterProgress[`${bookId}_${chapterId}`]
+  writeStoredProgressMap(STORAGE_KEYS.CHAPTER_PROGRESS, chapterProgress)
+}
+
+export async function loadBookProgressSnapshot(bookId: string): Promise<ProgressData | null> {
+  const stored = readStoredProgressMap(STORAGE_KEYS.BOOK_PROGRESS)[bookId] ?? null
+  if (stored) return stored
+
+  try {
+    const remote = await apiFetch<{ progress?: ProgressData }>(`/api/books/progress/${bookId}`)
+    return remote.progress ?? null
+  } catch {
+    return null
+  }
+}
+
+export async function loadChapterProgressSnapshot(
+  bookId: string,
+  chapterId: string | number,
+): Promise<ProgressData | null> {
+  const stored = readStoredChapterProgressSnapshot(bookId, chapterId)
+  if (stored) return stored
+
+  try {
+    const remote = await apiFetch<{ chapter_progress?: Record<string, ProgressData> }>(
+      `/api/books/${bookId}/chapters/progress`,
+    )
+    return remote.chapter_progress?.[String(chapterId)] ?? null
+  } catch {
+    return null
+  }
 }

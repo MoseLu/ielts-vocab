@@ -60,4 +60,22 @@ describe('apiFetch', () => {
       '登录尝试过于频繁，请 14分37秒后再试',
     )
   })
+
+  it('does not force json content-type for FormData uploads', async () => {
+    setAuthSessionActive(false)
+    const formData = new FormData()
+    formData.append('audio', new Blob(['test'], { type: 'audio/wav' }), 'sample.wav')
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    )
+
+    await apiFetch<{ ok: boolean }>('/api/ai/speaking/evaluate', {
+      method: 'POST',
+      body: formData,
+    })
+
+    const headers = new Headers(vi.mocked(global.fetch).mock.calls[0]?.[1]?.headers)
+    expect(headers.get('Content-Type')).toBeNull()
+  })
 })
