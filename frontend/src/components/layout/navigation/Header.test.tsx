@@ -49,6 +49,38 @@ describe('Header', () => {
     expect(screen.queryByRole('button', { name: '口语' })).not.toBeInTheDocument()
   })
 
+  it('renders 真题 in the top navigation immediately after 词书', () => {
+    render(
+      <MemoryRouter>
+        <Header
+          user={{ username: 'luo', email: 'luo@example.com', avatar_url: null }}
+          currentDay={1}
+          onLogout={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    const navButtons = screen.getAllByRole('button').filter(button => (
+      ['学习中心', '词书', '真题'].includes(button.textContent || '')
+    ))
+
+    expect(navButtons.map(button => button.textContent)).toEqual(['学习中心', '词书', '真题'])
+  })
+
+  it('keeps 真题 active on nested exam routes', () => {
+    render(
+      <MemoryRouter initialEntries={['/exams/12']}>
+        <Header
+          user={{ username: 'luo', email: 'luo@example.com', avatar_url: null }}
+          currentDay={1}
+          onLogout={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('button', { name: '真题' })).toHaveClass('active')
+  })
+
   it('dispatches the global word search event when the search icon is clicked', async () => {
     const user = userEvent.setup()
     const listener = vi.fn()

@@ -17,6 +17,14 @@ const ErrorsIcon = ({ active }: { active: boolean }) => (
   </svg>
 )
 
+const ExamsIcon = ({ active }: { active: boolean }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'currentColor'} strokeWidth="2">
+    <path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+    <polyline points="14 3 14 8 19 8"/>
+    <path d="M8 13h8M8 17h6"/>
+  </svg>
+)
+
 const SpeakingIcon = ({ active }: { active: boolean }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'currentColor'} strokeWidth="2">
     <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
@@ -49,6 +57,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { key: 'home', label: '\u9996\u9875', path: '/plan', icon: HomeIcon },
+  { key: 'exams', label: '\u771f\u9898', path: '/exams', icon: ExamsIcon },
   { key: 'speaking', label: '\u53e3\u8bed', path: '/speaking', icon: SpeakingIcon },
   { key: 'errors', label: '\u9519\u8bcd', path: '/errors', icon: ErrorsIcon },
   { key: 'stats', label: '\u7edf\u8ba1', path: '/stats', icon: StatsIcon },

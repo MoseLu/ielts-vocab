@@ -10,6 +10,8 @@ load_split_module_files(
         'model_definitions/study_models.py',
         'model_definitions/word_mastery_models.py',
         'model_definitions/ai_runtime_models.py',
+        'model_definitions/exam_content_models.py',
+        'model_definitions/exam_runtime_models.py',
         'model_definitions/note_models.py',
         'model_definitions/notes_runtime_models.py',
         'model_definitions/eventing_models.py',

@@ -266,7 +266,7 @@ function Ensure-ProjectPostgres {
 
     & $pgCtl status -D $postgresDataDir | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        & $pgCtl start -D $postgresDataDir -l $postgresLog -o '\"-p 55432\"' | Out-Null
+        & $pgCtl start -D $postgresDataDir -l $postgresLog -o "-p 55432 -c autovacuum=off" | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw 'Failed to start project PostgreSQL cluster on port 55432.'
         }
@@ -288,6 +288,34 @@ function Invoke-ServiceSchemaMigrations {
     & python $migrationScript --env-file $microservicesEnv
     if ($LASTEXITCODE -ne 0) {
         throw 'Failed to apply split-service schema migrations.'
+    }
+}
+
+function Invoke-AcademicExamPreload {
+    $preloadScript = Join-Path $root 'scripts\preload-academic-exams-from-local-repo.py'
+    if (-not (Test-Path $preloadScript)) {
+        return
+    }
+
+    $candidateRoots = @()
+    if ($env:IELTS_LOCAL_REPO_ROOT) {
+        $candidateRoots += $env:IELTS_LOCAL_REPO_ROOT
+    }
+    $candidateRoots += (Join-Path (Split-Path $root -Parent) 'IELTS')
+
+    $repoRoot = $candidateRoots |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and (Test-Path $_) } |
+        Select-Object -First 1
+
+    if (-not $repoRoot) {
+        Write-Host '[INFO] Local IELTS source repo not found. Skipping Academic exam preload.'
+        return
+    }
+
+    Write-Host "[INFO] Preloading Academic exam library from $repoRoot"
+    & python $preloadScript --repo-root $repoRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Failed to preload Academic exams from local repo.'
     }
 }
 
@@ -324,6 +352,7 @@ try {
 
     Ensure-ProjectPostgres
     Invoke-ServiceSchemaMigrations
+    Invoke-AcademicExamPreload
 
     $runtimePythonPath = "$(Join-Path $root 'backend');$(Join-Path $root 'packages\platform-sdk')"
 

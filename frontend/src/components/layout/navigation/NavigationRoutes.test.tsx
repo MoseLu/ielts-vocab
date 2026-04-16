@@ -22,6 +22,12 @@ function renderWithRouter(ui: React.ReactNode, initialPath = '/stats') {
 }
 
 describe('navigation entry routes', () => {
+  it('keeps exams out of the left sidebar navigation', () => {
+    renderWithRouter(<LeftSidebar />)
+
+    expect(screen.queryByRole('button', { name: '真题' })).not.toBeInTheDocument()
+  })
+
   it('routes the left sidebar home item to the study center', async () => {
     const user = userEvent.setup()
     renderWithRouter(<LeftSidebar />)

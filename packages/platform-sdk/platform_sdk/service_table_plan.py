@@ -49,6 +49,20 @@ ADMIN_OPS_EVENTING_TABLES = frozenset({
     'admin_projected_study_sessions',
     'admin_projected_users',
 })
+ADMIN_OPS_EXAM_TABLES = frozenset({
+    'exam_sources',
+    'exam_assets',
+    'exam_papers',
+    'exam_sections',
+    'exam_passages',
+    'exam_questions',
+    'exam_choices',
+    'exam_answer_keys',
+    'exam_ingestion_jobs',
+    'exam_review_items',
+    'exam_attempts',
+    'exam_responses',
+})
 
 IDENTITY_SERVICE_TABLES = frozenset({
     'users',
@@ -134,7 +148,7 @@ AI_EXECUTION_SERVICE_TABLES = frozenset({
     'search_cache',
 }) | AI_EXECUTION_EVENTING_TABLES
 
-ADMIN_OPS_SERVICE_TABLES = ADMIN_OPS_EVENTING_TABLES
+ADMIN_OPS_SERVICE_TABLES = ADMIN_OPS_EVENTING_TABLES | ADMIN_OPS_EXAM_TABLES
 TTS_MEDIA_SERVICE_TABLES = TTS_MEDIA_EVENTING_TABLES
 ASR_SERVICE_TABLES = ASR_EVENTING_TABLES
 

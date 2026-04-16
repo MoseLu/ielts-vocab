@@ -22,6 +22,7 @@ export function useHeader({ onLogout, onDayChange, onUserUpdate }: Pick<HeaderPr
   const mainNavItems = useMemo<Array<{ key: string; label: string; path: string }>>(() => [
     { key: 'plan', label: '学习中心', path: '/plan' },
     { key: 'books', label: '词书', path: '/books' },
+    { key: 'exams', label: '真题', path: '/exams' },
     ...(isAdmin ? [{ key: 'admin', label: '管理控制台', path: '/admin' }] : []),
   ], [isAdmin])
 

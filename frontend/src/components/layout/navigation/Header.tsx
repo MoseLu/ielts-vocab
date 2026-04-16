@@ -40,6 +40,10 @@ function Header({
     navigateMobile,
   } = useHeader({ onLogout, onDayChange, onUserUpdate })
 
+  const isNavItemActive = (path: string) => (
+    location.pathname === path || location.pathname.startsWith(`${path}/`)
+  )
+
   return (
     <header className="header">
       {/* Logo - left, aligned with sidebar width */}
@@ -53,7 +57,7 @@ function Header({
         {mainNavItems.map(item => (
           <button
             key={item.key}
-            className={`header-nav-item ${location.pathname === item.path ? 'active' : ''}`}
+            className={`header-nav-item ${isNavItemActive(item.path) ? 'active' : ''}`}
             onClick={() => navigateTo(item.path)}
           >
             {item.label}
@@ -219,7 +223,7 @@ function Header({
             {mainNavItems.map(item => (
               <button
                 key={item.key}
-                className={`mobile-menu-item ${location.pathname === item.path ? 'active' : ''}`}
+                className={`mobile-menu-item ${isNavItemActive(item.path) ? 'active' : ''}`}
                 onClick={() => navigateMobile(item.path)}
               >
                 {item.label}

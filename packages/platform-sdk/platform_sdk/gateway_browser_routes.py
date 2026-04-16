@@ -223,6 +223,66 @@ async def word_feedback_proxy(request: Request):
     )
 
 
+@browser_compat_router.api_route('/api/exams', methods=['GET'])
+async def exams_proxy(request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path='/api/exams',
+        unavailable_detail='admin ops service unavailable',
+    )
+
+
+@browser_compat_router.api_route('/api/exams/{paper_id}', methods=['GET'])
+async def exam_detail_proxy(paper_id: int, request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path=f'/api/exams/{paper_id}',
+        unavailable_detail='admin ops service unavailable',
+    )
+
+
+@browser_compat_router.post('/api/exams/{paper_id}/attempts')
+async def exam_attempt_proxy(paper_id: int, request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path=f'/api/exams/{paper_id}/attempts',
+        unavailable_detail='admin ops service unavailable',
+    )
+
+
+@browser_compat_router.patch('/api/exam-attempts/{attempt_id}/responses')
+async def exam_attempt_responses_proxy(attempt_id: int, request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path=f'/api/exam-attempts/{attempt_id}/responses',
+        unavailable_detail='admin ops service unavailable',
+    )
+
+
+@browser_compat_router.post('/api/exam-attempts/{attempt_id}/submit')
+async def exam_attempt_submit_proxy(attempt_id: int, request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path=f'/api/exam-attempts/{attempt_id}/submit',
+        unavailable_detail='admin ops service unavailable',
+    )
+
+
+@browser_compat_router.get('/api/exam-attempts/{attempt_id}/result')
+async def exam_attempt_result_proxy(attempt_id: int, request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path=f'/api/exam-attempts/{attempt_id}/result',
+        unavailable_detail='admin ops service unavailable',
+    )
+
+
 @browser_compat_router.put('/api/books/word-details/note')
 async def word_detail_note_proxy(request: Request):
     return await _proxy_service_request(

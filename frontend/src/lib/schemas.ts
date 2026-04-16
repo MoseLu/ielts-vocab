@@ -1,5 +1,6 @@
 export * from './schemas/api'
 export * from './schemas/core'
+export * from './schemas/exams'
 export * from './schemas/home-todo'
 export * from './schemas/journal'
 export * from './schemas/learner-profile'

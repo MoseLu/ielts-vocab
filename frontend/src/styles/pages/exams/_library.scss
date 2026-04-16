@@ -1,0 +1,192 @@
+.exams-library-page {
+  min-height: calc(100vh - var(--size-60));
+}
+
+.exams-library-page__body {
+  min-height: 0;
+}
+
+.exam-library-source-note,
+.exams-library-meta {
+  color: var(--text-secondary);
+  font-size: var(--size-13);
+}
+
+.exam-library-source-note {
+  display: inline-flex;
+  align-items: center;
+}
+
+.exams-library-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-8) var(--size-16);
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--size-14);
+}
+
+.exams-vb-grid {
+  align-items: stretch;
+}
+
+.exam-vb-card {
+  min-height: var(--size-260);
+  cursor: default;
+}
+
+.exam-vb-card__header,
+.exam-vb-card__heading,
+.exam-vb-card__sections,
+.exam-vb-card__section-copy {
+  display: flex;
+  flex-direction: column;
+}
+
+.exam-vb-card__header {
+  flex-direction: row;
+  gap: var(--size-12);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.exam-vb-card__heading {
+  min-width: 0;
+  gap: var(--size-4);
+}
+
+.exam-vb-card__collection {
+  color: var(--text-secondary);
+  font-size: var(--size-12);
+  font-weight: 700;
+}
+
+.exam-vb-card__status,
+.exam-vb-card__section-action,
+.exam-vb-card__paper-entry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  font-size: var(--size-12);
+  font-weight: 700;
+}
+
+.exam-vb-card__status {
+  flex: 0 0 auto;
+  min-height: var(--size-30);
+  padding: 0 var(--size-10);
+  border: var(--size-1) solid var(--surface-border-strong);
+  background: color-mix(in srgb, var(--surface-muted) var(--mix-90), transparent);
+  color: var(--text-secondary);
+}
+
+.exam-vb-card__status.is-in_progress {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) var(--mix-18), transparent);
+  background: color-mix(in srgb, var(--accent) var(--mix-10), var(--surface-elevated));
+}
+
+.exam-vb-card__status.is-submitted {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) var(--mix-28), transparent);
+  background: color-mix(in srgb, var(--success) var(--mix-8), var(--surface-elevated));
+}
+
+.exam-vb-card__meta {
+  gap: var(--size-6);
+}
+
+.exam-vb-card__sections {
+  gap: var(--size-10);
+  margin-top: auto;
+}
+
+.exam-vb-card__section,
+.exam-vb-card__paper-entry {
+  width: 100%;
+  border: var(--size-1) solid var(--surface-border-strong);
+  background: color-mix(in srgb, var(--surface-muted) var(--mix-86), transparent);
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.exam-vb-card__section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--size-12);
+  align-items: center;
+  padding: var(--size-12) var(--size-14);
+  border-radius: var(--size-18);
+  text-align: left;
+  cursor: pointer;
+}
+
+.exam-vb-card__section:hover,
+.exam-vb-card__paper-entry:hover {
+  border-color: color-mix(in srgb, var(--accent) var(--mix-24), transparent);
+  background: color-mix(in srgb, var(--accent) var(--mix-6), var(--surface-elevated));
+  transform: translateY(calc(var(--size-2) * -1));
+}
+
+.exam-vb-card__section-copy {
+  min-width: 0;
+  gap: var(--size-4);
+}
+
+.exam-vb-card__section-copy strong {
+  color: var(--text-primary);
+  font-size: var(--size-15);
+  line-height: 1.35;
+}
+
+.exam-vb-card__section-copy span {
+  color: var(--text-secondary);
+  font-size: var(--size-12);
+  line-height: 1.45;
+}
+
+.exam-vb-card__section-action {
+  min-width: var(--size-68);
+  min-height: var(--size-32);
+  padding: 0 var(--size-10);
+  background: color-mix(in srgb, var(--surface-elevated) var(--mix-82), var(--surface-base));
+  color: var(--text-primary);
+}
+
+.exam-vb-card__paper-entry {
+  min-height: var(--size-38);
+  padding: 0 var(--size-14);
+  margin-top: var(--size-2);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .exams-library-meta {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .exam-vb-card {
+    min-height: var(--size-220);
+  }
+
+  .exam-vb-card__header,
+  .exam-vb-card__section {
+    grid-template-columns: 1fr;
+  }
+
+  .exam-vb-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .exam-vb-card__section-action {
+    width: fit-content;
+  }
+}

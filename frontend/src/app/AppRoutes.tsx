@@ -13,6 +13,8 @@ const AIChatPanel = lazy(() => import('../components/ai-chat/page/AIChatPanel'))
 const CreateCustomBookPage = lazy(() => import('../components/books/page/CreateCustomBookPage'))
 const VocabBookPage = lazy(() => import('../components/books/page/VocabBookPage'))
 const ErrorsPage = lazy(() => import('../components/errors/page/ErrorsPage'))
+const ExamAttemptPage = lazy(() => import('../components/exams/page/ExamAttemptPage'))
+const ExamsLibraryPage = lazy(() => import('../components/exams/page/ExamsLibraryPage'))
 const HomePage = lazy(() => import('../components/home/page/HomePage'))
 const LearningJournalPage = lazy(() => import('../components/journal/page/LearningJournalPage'))
 const BottomNav = lazy(() => import('../components/layout/navigation/BottomNav'))
@@ -228,6 +230,22 @@ export function AppRoutes({
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
                       <ConfusableMatchPage />
+                    </AuthenticatedRoute>
+                  )}
+                />
+                <Route
+                  path="/exams"
+                  element={(
+                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                      <ExamsLibraryPage />
+                    </AuthenticatedRoute>
+                  )}
+                />
+                <Route
+                  path="/exams/:paperId"
+                  element={(
+                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                      <ExamAttemptPage />
                     </AuthenticatedRoute>
                   )}
                 />
