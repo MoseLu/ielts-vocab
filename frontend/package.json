@@ -1,6 +1,6 @@
 {
   "name": "ielts-vocab-frontend",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "IELTS Vocabulary Learning App with 30-day structured learning plan",
   "private": true,
   "type": "module",
