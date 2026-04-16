@@ -16,6 +16,7 @@ def test_learning_core_models_expose_learning_owned_models():
     assert hasattr(learning_core_models, 'UserFavoriteWord')
     assert hasattr(learning_core_models, 'UserFamiliarWord')
     assert hasattr(learning_core_models, 'UserStudySession')
+    assert hasattr(learning_core_models, 'UserWordMasteryState')
     assert not hasattr(learning_core_models, 'UserWordNote')
 
 
@@ -41,10 +42,12 @@ def test_identity_models_expose_identity_owned_models():
 
 
 def test_ai_execution_models_expose_ai_owned_models():
+    assert hasattr(ai_execution_models, 'AISpeakingAssessment')
     assert hasattr(ai_execution_models, 'AIProjectionCursor')
     assert hasattr(ai_execution_models, 'AIProjectedDailySummary')
     assert hasattr(ai_execution_models, 'AIProjectedWrongWord')
     assert hasattr(ai_execution_models, 'AIPromptRun')
+    assert hasattr(ai_execution_models, 'AIWordImageAsset')
     assert hasattr(ai_execution_models, 'UserConversationHistory')
     assert hasattr(ai_execution_models, 'UserMemory')
     assert hasattr(ai_execution_models, 'SearchCache')
@@ -83,5 +86,6 @@ def test_learner_profile_model_namespace_declares_cross_domain_reads_explicitly(
 
 def test_ai_route_model_namespace_declares_cross_domain_reads_explicitly():
     assert hasattr(ai_route_models, 'UserWrongWord')
+    assert hasattr(ai_route_models, 'UserWordMasteryState')
     assert hasattr(ai_route_models, 'UserLearningNote')
     assert hasattr(ai_route_models, 'WRONG_WORD_DIMENSIONS')
