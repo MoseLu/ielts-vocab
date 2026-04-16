@@ -248,6 +248,29 @@ def _apply_custom_book_metadata_patch(connection: sa.engine.Connection) -> list[
     return changes
 
 
+def _apply_learning_core_progress_resume_patch(connection: sa.engine.Connection) -> list[str]:
+    inspector = sa.inspect(connection)
+    if 'user_chapter_progress' not in inspector.get_table_names():
+        return []
+
+    ops = _migration_ops(connection)
+    columns = {column['name'] for column in inspector.get_columns('user_chapter_progress')}
+    changes: list[str] = []
+    if 'session_current_index' not in columns:
+        ops.add_column(
+            'user_chapter_progress',
+            sa.Column('session_current_index', sa.Integer(), nullable=False, server_default=sa.text('0')),
+        )
+        changes.append('user_chapter_progress.session_current_index')
+    if 'session_answered_words' not in columns:
+        ops.add_column('user_chapter_progress', sa.Column('session_answered_words', sa.Text(), nullable=True))
+        changes.append('user_chapter_progress.session_answered_words')
+    if 'session_queue_words' not in columns:
+        ops.add_column('user_chapter_progress', sa.Column('session_queue_words', sa.Text(), nullable=True))
+        changes.append('user_chapter_progress.session_queue_words')
+    return changes
+
+
 SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
     'learning-core-service': (
         SchemaPatch(
@@ -259,6 +282,11 @@ SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
             revision='learning_core_service_0003',
             description='Add shadow custom book metadata and incomplete-word flags.',
             apply=_apply_custom_book_metadata_patch,
+        ),
+        SchemaPatch(
+            revision='learning_core_service_0004',
+            description='Add resumable chapter-progress snapshot columns.',
+            apply=_apply_learning_core_progress_resume_patch,
         ),
     ),
     'catalog-content-service': (
