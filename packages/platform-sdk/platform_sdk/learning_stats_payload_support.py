@@ -30,6 +30,7 @@ from platform_sdk.learning_stats_modes_support import (
     normalize_stats_mode,
     stats_mode_candidates,
 )
+from platform_sdk.learning_stats_word_mastery_support import build_word_mastery_summary
 from platform_sdk.study_session_repository_adapter import (
     find_recent_open_placeholder_session,
     newer_analytics_session_exists,
@@ -418,6 +419,7 @@ def build_learning_stats_payload(
         chapter_title_map_resolver=chapter_title_map_resolver,
     )
     weakest_mode = resolve_weakest_mode(mode_breakdown)
+    word_mastery_summary, dimension_mastery = build_word_mastery_summary(user_id)
 
     return {
         'daily': active_daily,
@@ -456,4 +458,6 @@ def build_learning_stats_payload(
         'pending_wrong_top10': pending_wrong_top10,
         'chapter_breakdown': chapter_breakdown,
         'chapter_mode_stats': chapter_mode_stats,
+        'word_mastery_summary': word_mastery_summary,
+        'dimension_mastery': dimension_mastery,
     }

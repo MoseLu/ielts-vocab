@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 import os
 
 import requests
@@ -319,6 +320,34 @@ def sync_learning_core_wrong_words(user_id: int, data: dict | None) -> dict:
     )
     if status != 200:
         raise RuntimeError(f'learning-core wrong-words sync request failed: {status}')
+    return payload
+
+
+def fetch_learning_core_game_state_response(user_id: int, args) -> dict:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/game/state',
+        user_id=user_id,
+        params={
+            'bookId': args.get('bookId'),
+            'chapterId': args.get('chapterId'),
+            'day': args.get('day'),
+        },
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core game-state request failed: {status}')
+    return payload
+
+
+def post_learning_core_game_attempt(user_id: int, data: dict | None) -> dict:
+    payload, status = _request_json(
+        'POST',
+        '/internal/learning/game/attempt',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core game-attempt request failed: {status}')
     return payload
 
 

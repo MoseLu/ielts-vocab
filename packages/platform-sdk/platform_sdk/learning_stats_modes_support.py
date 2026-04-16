@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 _STATS_MODE_ORDER = (
+    'game',
     'smart',
     'quickmemory',
     'listening',
@@ -16,6 +17,7 @@ _STATS_MODE_ALIASES = {
     'selection': 'radio',
     'quick_memory': 'quickmemory',
     'quick-memory': 'quickmemory',
+    'five-dimension-game': 'game',
 }
 
 

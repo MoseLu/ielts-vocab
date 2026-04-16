@@ -46,6 +46,10 @@ from platform_sdk.learning_core_wrong_words_application import (
     clear_learning_core_wrong_words_response,
     sync_learning_core_wrong_words_response,
 )
+from platform_sdk.learning_core_word_mastery_application import (
+    build_learning_core_game_state_response,
+    post_learning_core_word_mastery_attempt_response,
+)
 from platform_sdk.learning_core_personalization_application import (
     FAVORITES_BOOK_ID,
     add_familiar_word,
@@ -265,6 +269,23 @@ def post_internal_wrong_words_clear(current_user):
         payload, status = clear_learning_core_wrong_word_response(current_user.id, word.strip())
     else:
         payload, status = clear_learning_core_wrong_words_response(current_user.id)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/game/state', methods=['GET'])
+@token_required
+def get_internal_game_state(current_user):
+    payload, status = build_learning_core_game_state_response(current_user.id, request.args)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/game/attempt', methods=['POST'])
+@token_required
+def post_internal_game_attempt(current_user):
+    payload, status = post_learning_core_word_mastery_attempt_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
     return jsonify(payload), status
 
 
