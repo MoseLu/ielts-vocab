@@ -12,10 +12,12 @@ import { readAppSettingsFromStorage } from '../../../lib/appSettings'
 import { useAuth, useToast } from '../../../contexts'
 import type { Word } from '../../practice/types'
 import { playExampleAudio, stopAudio } from '../../practice/utils'
+import { playWordAudio } from '../../practice/utils.audio'
 import { useFavoriteWords } from '../../../features/vocabulary/hooks'
 import ExampleAudioIcon from '../../ui/ExampleAudioIcon'
 import GlobalWordSearchActionRail from './GlobalWordSearchActionRail'
 import WordFeedbackModal from './WordFeedbackModal'
+import { buildWordMemoryNote } from './globalWordMemoryNote'
 import { WORD_NOTE_LIMIT } from './globalWordSearchDetailUtils'
 type DetailTab = 'examples' | 'root' | 'english' | 'derivatives' | 'notes'
 type NoteStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -52,15 +54,6 @@ function renderHighlightedText(text: string, query: string) {
   ))
 }
 
-function speakWord(word: string): void {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-  window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(word)
-  utterance.lang = 'en-US'
-  utterance.rate = 0.9
-  window.speechSynthesis.speak(utterance)
-}
-
 function buildNoteStatusLabel(status: NoteStatus): string {
   if (status === 'saving') return '自动保存中...'
   if (status === 'saved') return '已保存到账号'
@@ -85,7 +78,6 @@ export default function GlobalWordSearchDetailPanel({
   const detailAbortRef = useRef<AbortController | null>(null)
   const noteAbortRef = useRef<AbortController | null>(null)
   const lastSyncedNoteRef = useRef('')
-  const primaryExampleTextRef = useRef('')
 
   const summaryDefinition = result.definition || '暂无释义'
   const rootDetail = detailData?.root
@@ -96,6 +88,8 @@ export default function GlobalWordSearchDetailPanel({
   const resolvedPhonetic = detailData?.phonetic || result.phonetic || '/暂无音标/'
   const resolvedPos = detailData?.pos || result.pos
   const resolvedDefinition = detailData?.definition || summaryDefinition
+  const memoryNote = buildWordMemoryNote({ detailData, result })
+  const memoryCandidates = result.listening_confusables?.slice(0, 6) ?? []
   const primaryExampleText = detailExamples[0]?.en?.trim() ?? ''
 
   const noteStatusLabel = useMemo(() => buildNoteStatusLabel(noteStatus), [noteStatus])
@@ -127,6 +121,7 @@ export default function GlobalWordSearchDetailPanel({
       volume: String(settings.volume ?? DEFAULT_SETTINGS.volume),
     }
   }, [])
+  const handlePlayWord = () => { void playWordAudio(result.word, exampleAudioSettings) }
   const { isFavorite, isPending, toggleFavorite } = useFavoriteWords({
     userId: user?.id ?? null,
     vocabulary: favoriteVocabulary,
@@ -183,14 +178,9 @@ export default function GlobalWordSearchDetailPanel({
   }, [result.word])
 
   useEffect(() => {
-    primaryExampleTextRef.current = primaryExampleText
-  }, [primaryExampleText])
-
-  useEffect(() => {
     if (activeTab !== 'examples') return
 
     const handlePlayExampleShortcut = (event: KeyboardEvent) => {
-      const visiblePrimaryExampleText = primaryExampleTextRef.current
       if (
         event.repeat
         || event.key !== 'Alt'
@@ -198,19 +188,19 @@ export default function GlobalWordSearchDetailPanel({
         || event.shiftKey
         || event.ctrlKey
         || event.metaKey
-        || !visiblePrimaryExampleText
+        || !primaryExampleText
       ) {
         return
       }
 
       event.preventDefault()
       event.stopImmediatePropagation()
-      playExampleAudio(visiblePrimaryExampleText, result.word, exampleAudioSettings)
+      playExampleAudio(primaryExampleText, result.word, exampleAudioSettings)
     }
 
     window.addEventListener('keydown', handlePlayExampleShortcut, true)
     return () => window.removeEventListener('keydown', handlePlayExampleShortcut, true)
-  }, [activeTab, exampleAudioSettings, result.word])
+  }, [activeTab, exampleAudioSettings, primaryExampleText, result.word])
 
   useEffect(() => {
     if (!detailData) return
@@ -276,31 +266,37 @@ export default function GlobalWordSearchDetailPanel({
           <div className="global-word-search-detail-header">
             <div className="global-word-search-detail-heading">
               <div className="global-word-search-heading-row">
-                <h2 className="global-word-search-word">{result.word}</h2>
+                <h2 className="global-word-search-word">
+                  <button type="button" className="global-word-search-word-button" aria-label={`播放 ${result.word} 发音`} title={`播放 ${result.word} 发音`} onClick={handlePlayWord}>{result.word}</button>
+                </h2>
                 <span className="global-word-search-phonetic">{resolvedPhonetic}</span>
               </div>
               <p className="global-word-search-summary">{resolvedPos} {resolvedDefinition}</p>
             </div>
           </div>
 
-          {result.listening_confusables?.length ? (
-            <section className="global-word-search-memory-card" aria-label="串记">
-              <span className="global-word-search-memory-badge">串记</span>
-              <div className="global-word-search-memory-list">
-                {result.listening_confusables.slice(0, 6).map(candidate => (
-                  <button
-                    key={`${result.word}-${candidate.word}`}
-                    type="button"
-                    className="global-word-search-memory-item"
-                    onClick={() => onPickWord(candidate.word)}
-                  >
-                    <strong>{candidate.word}</strong>
-                    <span>{candidate.definition || '暂无释义'}</span>
-                  </button>
-                ))}
+          <section className="global-word-search-memory-card" aria-label={`${memoryNote.badge}记忆提示`}>
+            <span className="global-word-search-memory-badge">{memoryNote.badge}</span>
+            <p className="global-word-search-memory-note">{memoryNote.text}</p>
+            {memoryCandidates.length ? (
+              <div className="global-word-search-memory-related">
+                <span className="global-word-search-memory-subtitle">串记</span>
+                <div className="global-word-search-memory-list">
+                  {memoryCandidates.map(candidate => (
+                    <button
+                      key={`${result.word}-${candidate.word}`}
+                      type="button"
+                      className="global-word-search-memory-item"
+                      onClick={() => onPickWord(candidate.word)}
+                    >
+                      <strong>{candidate.word}</strong>
+                      <span>{candidate.definition || '暂无释义'}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </section>
-          ) : null}
+            ) : null}
+          </section>
 
           <div className="global-word-search-tabs" role="tablist" aria-label="单词详情模块">
             {DETAIL_TABS.map(tab => {
@@ -308,14 +304,14 @@ export default function GlobalWordSearchDetailPanel({
               return (
                 <button
                   key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={`global-word-search-tab${isActive ? ' is-active' : ''}`}
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  {tab.label}
-                </button>
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={`global-word-search-tab${isActive ? ' is-active' : ''}`}
+                    onClick={() => { setActiveTab(tab.id); handlePlayWord() }}
+                  >
+                    {tab.label}
+                  </button>
               )
             })}
           </div>
@@ -474,7 +470,7 @@ export default function GlobalWordSearchDetailPanel({
           favoritePending={isPending(result.word)}
           word={result.word}
           onToggleFavorite={handleFavoriteToggle}
-          onPlayWord={() => speakWord(result.word)}
+          onPlayWord={handlePlayWord}
           onOpenFeedback={handleOpenFeedback}
         />
       </div>
