@@ -41,6 +41,10 @@ function hasCompleteListeningPresets(word: Word): boolean {
   return Array.isArray(word.listening_confusables) && word.listening_confusables.length >= 3
 }
 
+export function isCustomPracticeBookId(bookId?: string | null): boolean {
+  return typeof bookId === 'string' && bookId.startsWith('custom_')
+}
+
 export function normalizeOptionWordKey(word?: string | null): string | null {
   const normalized = word?.trim().toLowerCase()
   return normalized ? normalized : null
