@@ -12,6 +12,10 @@ from platform_sdk.ai_practice_lexical_application import (
     word_family_quiz_response,
     word_family_response,
 )
+from platform_sdk.ai_practice_game_application import (
+    game_attempt_response,
+    game_state_response,
+)
 from platform_sdk.ai_practice_speaking_application import (
     pronunciation_check_response,
     review_plan_response,
@@ -50,6 +54,14 @@ def word_family_quiz_api_response(current_user, args):
 
 def collocation_practice_api_response(current_user, args):
     return collocation_practice_response(current_user, args)
+
+
+def game_state_api_response(current_user, args):
+    return game_state_response(current_user, args)
+
+
+def game_attempt_api_response(current_user, body: dict | None):
+    return game_attempt_response(current_user, body or {})
 
 
 def pronunciation_check_api_response(current_user, body: dict | None):

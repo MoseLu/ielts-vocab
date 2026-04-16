@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import random
+import re
 
 from flask import jsonify
 
@@ -10,11 +11,28 @@ from platform_sdk.learner_profile_application_support import build_learner_profi
 from platform_sdk.ai_metric_support import track_metric
 from platform_sdk.learning_core_internal_client import (
     fetch_learning_core_wrong_word_count,
+    post_learning_core_game_attempt,
     record_learning_core_event,
 )
 from platform_sdk.ai_text_support import normalize_word_list
 from platform_sdk.study_session_support import normalize_chapter_id
 from platform_sdk.ai_vocab_catalog_application import get_global_vocab_pool
+
+_NON_WORD_PATTERN = re.compile(r"[^a-zA-Z'\-]+")
+
+
+def _normalize_pronunciation_text(value: str) -> str:
+    return _NON_WORD_PATTERN.sub(' ', str(value or '').lower()).strip()
+
+
+def _transcript_matches_word(word: str, transcript: str) -> bool:
+    normalized_word = _normalize_pronunciation_text(word)
+    normalized_transcript = _normalize_pronunciation_text(transcript)
+    if not normalized_word or not normalized_transcript:
+        return False
+    if normalized_word == normalized_transcript:
+        return True
+    return f' {normalized_word} ' in f' {normalized_transcript} '
 
 
 def pronunciation_check_response(current_user, body: dict | None):
@@ -27,7 +45,7 @@ def pronunciation_check_response(current_user, body: dict | None):
     if not word:
         return jsonify({'error': 'word is required'}), 400
 
-    score = 85 if transcript.lower() == word.lower() else 65
+    score = 85 if _transcript_matches_word(word, transcript) else 65
     passed = score >= 80
     result = {
         'word': word,
@@ -58,6 +76,19 @@ def pronunciation_check_response(current_user, body: dict | None):
         )
     except Exception as exc:
         logging.warning('[AI] Failed to record pronunciation check: %s', exc)
+    try:
+        mastery_payload = post_learning_core_game_attempt(current_user.id, {
+            'word': word,
+            'dimension': 'speaking',
+            'passed': passed,
+            'sourceMode': 'speaking',
+            'bookId': book_id,
+            'chapterId': chapter_id,
+            'wordPayload': {'word': word},
+        })
+        result['mastery_state'] = mastery_payload.get('state')
+    except Exception as exc:
+        logging.warning('[AI] Failed to sync speaking mastery: %s', exc)
     track_metric(current_user.id, 'pronunciation_check_used', {'word': word, 'score': score})
     return jsonify(result), 200
 
@@ -126,7 +157,7 @@ def review_plan_response(current_user):
         plan = ['先补当前优先维度 10 分钟，再安排错词辨析和巩固复现。']
 
     response = {
-        'level': 'four-dimensional',
+        'level': 'five-dimensional',
         'wrong_words': _count_wrong_words(current_user.id),
         'mastery_rule': memory_system.get('mastery_rule'),
         'priority_dimension': memory_system.get('priority_dimension_label'),
@@ -148,7 +179,7 @@ def review_plan_response(current_user):
         current_user.id,
         'adaptive_plan_generated',
         {
-            'level': 'four-dimensional',
+            'level': 'five-dimensional',
             'priority_dimension': memory_system.get('priority_dimension'),
         },
     )

@@ -16,6 +16,7 @@ from service_models.learning_core_models import (
     UserQuickMemoryRecord,
     UserSmartWordStat,
     UserStudySession,
+    UserWordMasteryState,
     UserWrongWord,
 )
 from service_models.notes_models import UserLearningNote
@@ -35,6 +36,7 @@ __all__ = [
     'UserQuickMemoryRecord',
     'UserSmartWordStat',
     'UserStudySession',
+    'UserWordMasteryState',
     'UserWrongWord',
     'WRONG_WORD_DIMENSIONS',
     'WRONG_WORD_PENDING_REVIEW_TARGET',
