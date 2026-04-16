@@ -13,6 +13,7 @@ from services.study_sessions import (
 )
 
 MODE_LABELS = {
+    'game': '五维闯关',
     'smart': '智能练习',
     'listening': '听音选义',
     'meaning': '默写模式',
@@ -23,8 +24,10 @@ MODE_LABELS = {
 }
 
 DIMENSION_LABELS = {
+    'recognition': '认词',
     'listening': '听音辨义',
-    'meaning': '默写模式',
+    'meaning': '释义回想',
+    'speaking': '单词发音',
     'dictation': '拼写默写',
 }
 
@@ -42,6 +45,13 @@ FOUR_DIMENSION_CONFIG = {
         'schedule_days': [1, 2, 4, 7, 14],
         'mastery_rule': '按第1/2/4/7/14天多次快速识别，才算听力维度稳定。',
         'evidence_label': '听音辨义练习',
+    },
+    'meaning': {
+        'label': '释义',
+        'definition': '看到中文释义后，能主动想出对应英文单词。',
+        'schedule_days': [1, 2, 4, 7, 14],
+        'mastery_rule': '按第1/2/4/7/14天多轮回想并答对，才算释义维度稳定。',
+        'evidence_label': '释义回想练习',
     },
     'speaking': {
         'label': '口语',

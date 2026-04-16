@@ -12,10 +12,17 @@ def _build_speaking_dimension(speaking_events, focus_words: list[dict], now_utc:
         if not target_words:
             continue
 
-        response_text = str(payload.get('response_text') or '').strip()
+        response_text = str(payload.get('response_text') or payload.get('transcript_excerpt') or '').strip()
         sentence = str(payload.get('sentence') or '').strip()
         score = int(payload.get('score') or 0)
-        passed = bool(payload.get('passed')) or (event.correct_count or 0) > 0 or score >= 80
+        overall_band = float(payload.get('overall_band') or 0)
+        passed = (
+            bool(payload.get('passed'))
+            or bool(payload.get('passed_threshold'))
+            or (event.correct_count or 0) > 0
+            or score >= 80
+            or overall_band >= 6
+        )
 
         for word in target_words:
             word_key = word.lower()
@@ -26,6 +33,7 @@ def _build_speaking_dimension(speaking_events, focus_words: list[dict], now_utc:
                 'wrong': 0,
                 'sentence_uses': 0,
                 'simulation_uses': 0,
+                'assessment_uses': 0,
                 'last_pass_at': None,
             })
 
@@ -41,6 +49,17 @@ def _build_speaking_dimension(speaking_events, focus_words: list[dict], now_utc:
                     bucket['sentence_uses'] += 1
             elif event.event_type == 'speaking_simulation':
                 bucket['simulation_uses'] += 1
+                if response_text:
+                    bucket['sentence_uses'] += 1
+            elif event.event_type == 'speaking_assessment_completed':
+                bucket['attempts'] += 1
+                bucket['assessment_uses'] += 1
+                if passed:
+                    bucket['correct'] += 1
+                    if bucket['last_pass_at'] is None or (event.occurred_at and event.occurred_at > bucket['last_pass_at']):
+                        bucket['last_pass_at'] = event.occurred_at
+                else:
+                    bucket['wrong'] += 1
                 if response_text:
                     bucket['sentence_uses'] += 1
 
@@ -60,6 +79,7 @@ def _build_speaking_dimension(speaking_events, focus_words: list[dict], now_utc:
             'wrong': bucket['wrong'],
             'sentence_ready': sentence_ready,
             'simulation_uses': bucket['simulation_uses'],
+            'assessment_uses': bucket['assessment_uses'],
             'review_stage': review_stage,
             'due': due,
             'accuracy': accuracy,
@@ -138,7 +158,7 @@ def _build_speaking_dimension(speaking_events, focus_words: list[dict], now_utc:
         next_action = f"口语维度继续按 { _format_schedule_label(config['schedule_days']) } 节奏复现发音和造句。"
 
     evidence_note = (
-        '当前口语维度依据发音检查与带回应的口语模拟事件跟踪，发音通过后仍需补主动造句证据。'
+        '当前口语维度依据发音检查、带回应的口语模拟和口语估分事件跟踪，发音通过后仍需补主动造句证据。'
         if tracked_words > 0
         else '当前仓库里还没有口语维度的有效事件，AI 需要主动补发音和造句训练。'
     )

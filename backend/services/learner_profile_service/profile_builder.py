@@ -239,6 +239,7 @@ def build_learner_profile(user_id: int, target_date: str | None = None, view: st
                 'writing_review',
                 'pronunciation_check',
                 'speaking_simulation',
+                'speaking_assessment_completed',
             ),
         )
     notes = learner_profile_repository.list_user_learning_notes(
