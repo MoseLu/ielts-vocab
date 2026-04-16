@@ -31,6 +31,7 @@ $workerDefinitions = @(
     @{ Name = 'ai-execution-outbox-publisher'; Workdir = (Join-Path $root 'services\\ai-execution-service'); Command = 'python -u outbox_publisher.py' },
     @{ Name = 'ai-wrong-word-projection-worker'; Workdir = (Join-Path $root 'services\\ai-execution-service'); Command = 'python -u wrong_word_projection_worker.py' },
     @{ Name = 'ai-daily-summary-projection-worker'; Workdir = (Join-Path $root 'services\\ai-execution-service'); Command = 'python -u daily_summary_projection_worker.py' },
+    @{ Name = 'ai-word-image-generation-worker'; Workdir = (Join-Path $root 'services\\ai-execution-service'); Command = 'python -u word_image_generation_worker.py' },
     @{ Name = 'notes-outbox-publisher'; Workdir = (Join-Path $root 'services\\notes-service'); Command = 'python -u outbox_publisher.py' },
     @{ Name = 'notes-study-session-projection-worker'; Workdir = (Join-Path $root 'services\\notes-service'); Command = 'python -u study_session_projection_worker.py' },
     @{ Name = 'notes-wrong-word-projection-worker'; Workdir = (Join-Path $root 'services\\notes-service'); Command = 'python -u wrong_word_projection_worker.py' },
@@ -383,6 +384,7 @@ try {
     Write-Host '       AI worker:         ai-execution-outbox-publisher'
     Write-Host '       AI wrong worker:   ai-wrong-word-projection-worker'
     Write-Host '       AI summary worker: ai-daily-summary-projection-worker'
+    Write-Host '       AI image worker:   ai-word-image-generation-worker'
     Write-Host '       Notes worker:      notes-outbox-publisher'
     Write-Host '       Notes session worker: notes-study-session-projection-worker'
     Write-Host '       Notes wrong worker: notes-wrong-word-projection-worker'
