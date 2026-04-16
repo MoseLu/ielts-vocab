@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { Book, BookProgress } from '../../../types'
 import PlanModal from '../dialogs/PlanModal'
 import ChapterModal from '../dialogs/ChapterModal'
@@ -76,10 +77,10 @@ function VocabBookCard({ book, progress, onSelect, isInMyBooks }: VocabBookCardP
             aria-valuemax={100}
             aria-valuenow={progressPercent}
           >
-            <div
-              className="vb-card-progress-fill"
-              style={{ width: `${progressPercent}%` }}
-            />
+          <div
+            className="vb-card-progress-fill"
+            style={{ '--progress-percent': `${progressPercent}%` } as CSSProperties}
+          />
           </div>
           <span className="vb-card-progress-text">{progressText}</span>
         </div>

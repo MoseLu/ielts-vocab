@@ -1,17 +1,17 @@
-﻿/* Utils: Loading Spinner, Utility Classes, Animations */
+/* Utils: Loading Spinner, Utility Classes, Animations */
 
 /* Loading */
 .loading {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 200px;
+    min-height: var(--size-200);
 }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border);
+    width: var(--size-40);
+    height: var(--size-40);
+    border: var(--size-3) solid var(--border);
     border-top-color: var(--accent);
     border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
@@ -19,9 +19,9 @@
 }
 
 .spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border);
+    width: var(--size-40);
+    height: var(--size-40);
+    border: var(--size-3) solid var(--border);
     border-top-color: var(--accent);
     border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
@@ -43,10 +43,10 @@
 
 .sr-only {
     position: absolute;
-    width: 1px;
-    height: 1px;
+    width: var(--size-1);
+    height: var(--size-1);
     padding: 0;
-    margin: -1px;
+    margin: calc(var(--size-1) * -1);
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
@@ -75,9 +75,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 120px;
+    min-height: var(--size-120);
     width: 100%;
-    padding: 10px;
+    padding: var(--size-10);
     box-sizing: border-box;
 }
 
@@ -87,13 +87,13 @@
 }
 
 .loading-state--page {
-    min-height: calc(100vh - var(--header-height, 0px) - 20px);
+    min-height: calc(100vh - var(--header-height, 0px) - var(--size-20));
     padding: 0;
 }
 
 .loading-state--component {
-    min-height: 120px;
-    padding: 10px;
+    min-height: var(--size-120);
+    padding: var(--size-10);
 }
 
 .loading-fullscreen {
@@ -103,7 +103,7 @@
     align-items: center;
     justify-content: center;
     background: var(--surface-overlay);
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(var(--size-4));
     z-index: var(--layer-global-loading);
 }
 
@@ -112,12 +112,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--size-10);
     text-align: center;
-    min-width: 120px;
-    padding: 10px;
-    border: 1px solid var(--border-strong);
-    border-radius: 10px;
+    min-width: var(--size-120);
+    padding: var(--size-10);
+    border: var(--size-1) solid var(--border-strong);
+    border-radius: var(--size-10);
     background: var(--surface-floating);
     box-shadow: var(--shadow-soft);
 }
@@ -126,15 +126,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: var(--size-40);
+    height: var(--size-40);
     border-radius: 50%;
     background: transparent;
 }
 
 .loading-text {
     margin: 0;
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 500;
     letter-spacing: 0.01em;
     color: var(--text-secondary);
@@ -143,7 +143,7 @@
 .micro-loading {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--size-6);
     min-width: 0;
     color: var(--text-secondary);
 }
@@ -157,7 +157,7 @@
 }
 
 .micro-loading__text {
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 600;
     line-height: 1.4;
     white-space: nowrap;
@@ -166,33 +166,35 @@
 .ui-skeleton {
     position: relative;
     overflow: hidden;
-    border-radius: 10px;
+    width: var(--ui-skeleton-width, auto);
+    height: var(--ui-skeleton-height, auto);
+    border-radius: var(--size-10);
     background: linear-gradient(
         90deg,
-        color-mix(in srgb, var(--surface-elevated) 92%, var(--text-primary) 8%) 0%,
-        color-mix(in srgb, var(--surface-elevated) 98%, var(--surface-base) 2%) 50%,
-        color-mix(in srgb, var(--surface-elevated) 92%, var(--text-primary) 8%) 100%
+        color-mix(in srgb, var(--surface-elevated) var(--mix-92), var(--text-primary) var(--mix-8)) 0%,
+        color-mix(in srgb, var(--surface-elevated) var(--mix-98), var(--surface-base) var(--mix-2)) 50%,
+        color-mix(in srgb, var(--surface-elevated) var(--mix-92), var(--text-primary) var(--mix-8)) 100%
     );
     background-size: 220% 100%;
     animation: skeletonShimmer 1.35s ease-in-out infinite;
 }
 
 .ui-skeleton--text {
-    height: 14px;
-    border-radius: 999px;
+    height: var(--size-14);
+    border-radius: var(--radius-pill);
 }
 
 .ui-skeleton--circular {
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
 }
 
 .ui-skeleton--rectangular {
-    border-radius: 12px;
+    border-radius: var(--size-12);
 }
 
 .page-skeleton {
     width: 100%;
-    min-height: calc(100vh - var(--header-height, 0px) - 20px);
+    min-height: calc(100vh - var(--header-height, 0px) - var(--size-20));
     padding: var(--page-gutter);
     box-sizing: border-box;
 }
@@ -204,7 +206,7 @@
 .page-skeleton-body {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--size-14);
     width: 100%;
     min-height: 100%;
 }
@@ -216,15 +218,15 @@
 
 .page-skeleton-grid {
     display: grid;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .page-skeleton-grid--books {
-    grid-template-columns: repeat(auto-fit, minmax(var(--page-skeleton-book-min-width, 260px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(var(--page-skeleton-book-min-width, var(--size-260)), 1fr));
 }
 
 .page-skeleton-grid--metrics {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(var(--size-160), 1fr));
 }
 
 .page-skeleton-grid--stats-panels {
@@ -238,7 +240,7 @@
 }
 
 .page-skeleton-grid--journal {
-    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    grid-template-columns: minmax(var(--size-260), var(--size-320)) minmax(0, 1fr);
     align-items: stretch;
 }
 
@@ -251,43 +253,43 @@
 .page-skeleton-panel {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 14px;
-    border: 1px solid var(--border-strong);
-    border-radius: 12px;
+    gap: var(--size-12);
+    padding: var(--size-14);
+    border: var(--size-1) solid var(--border-strong);
+    border-radius: var(--size-12);
     background: var(--surface-elevated);
     box-shadow: var(--shadow-soft);
 }
 
 .page-skeleton-card--book {
-    min-height: 210px;
+    min-height: var(--size-210);
 }
 
 .page-skeleton-card--metric {
-    min-height: 112px;
+    min-height: var(--size-112);
     justify-content: center;
 }
 
 .page-skeleton-card--option {
-    min-height: 120px;
+    min-height: var(--size-120);
 }
 
 .page-skeleton-panel--wide {
-    min-height: 340px;
+    min-height: var(--size-340);
 }
 
 .page-skeleton-panel--sidebar {
-    min-height: 560px;
+    min-height: var(--size-560);
 }
 
 .page-skeleton-panel--document {
-    min-height: 560px;
+    min-height: var(--size-560);
 }
 
 .page-skeleton-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--size-12);
 }
 
 .page-skeleton-row--spread {
@@ -306,7 +308,7 @@
 .page-skeleton-stack {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .page-skeleton-stack--book-title {
@@ -317,31 +319,31 @@
 .page-skeleton-tabs {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .page-skeleton-chart {
-    min-height: 220px;
-    border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 96%, transparent), color-mix(in srgb, var(--surface-base) 94%, transparent));
+    min-height: var(--size-220);
+    border-radius: var(--size-12);
+    border: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-72), transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) var(--mix-96), transparent), color-mix(in srgb, var(--surface-base) var(--mix-94), transparent));
 }
 
 .page-skeleton-chart--donut {
-    min-height: 260px;
+    min-height: var(--size-260);
 }
 
 .page-skeleton-table {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .page-skeleton-practice,
 .page-skeleton-quiz {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--size-14);
 }
 
 .page-skeleton-practice-head,
@@ -349,38 +351,38 @@
 .page-skeleton-quiz-card {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 14px;
-    border: 1px solid var(--border-strong);
-    border-radius: 12px;
+    gap: var(--size-12);
+    padding: var(--size-14);
+    border: var(--size-1) solid var(--border-strong);
+    border-radius: var(--size-12);
     background: var(--surface-elevated);
     box-shadow: var(--shadow-soft);
 }
 
 .page-skeleton-practice-stage {
-    min-height: 220px;
+    min-height: var(--size-220);
     justify-content: center;
 }
 
 .page-skeleton-quiz-card {
-    min-height: 180px;
+    min-height: var(--size-180);
     justify-content: center;
 }
 
 .page-skeleton-sidebar-item {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
-    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+    gap: var(--size-10);
+    padding: var(--size-12);
+    border-radius: var(--size-12);
+    border: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-72), transparent);
+    background: color-mix(in srgb, var(--surface-elevated) var(--mix-98), transparent);
 }
 
 .ui-surface {
     background: var(--surface-base);
-    border: 1px solid var(--border-strong);
-    border-radius: 10px;
+    border: var(--size-1) solid var(--border-strong);
+    border-radius: var(--size-10);
     box-shadow: var(--shadow-soft);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -388,8 +390,8 @@
 
 .ui-panel {
     background: var(--surface-elevated);
-    border: 1px solid var(--border-strong);
-    border-radius: 10px;
+    border: var(--size-1) solid var(--border-strong);
+    border-radius: var(--size-10);
     box-shadow: var(--shadow-soft);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -436,3 +438,5 @@ svg, svg * {
         flex: 1;
     }
 }
+
+

@@ -1,7 +1,7 @@
 /* Layout: Header in-nav selectors (day, mode) */
 
 @keyframes dropdownFadeIn {
-    from { opacity: 0; transform: translateY(-8px); }
+    from { opacity: 0; transform: translateY(calc(var(--size-8) * -1)); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -12,36 +12,36 @@
     display: flex; align-items: center; gap: var(--space-xs);
     padding: var(--space-xs) var(--space-md);
     background: var(--accent-light);
-    border: 1px solid var(--accent);
+    border: var(--size-1) solid var(--accent);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 .day-selector:hover { background: var(--accent); color: var(--text-inverse); }
 .day-selector:hover .day-selector-current,
 .day-selector:hover .day-selector-arrow { color: var(--text-inverse); }
 
-.day-selector-current { font-size: 14px; font-weight: 600; color: var(--accent); }
-.day-selector-arrow { width: 16px; height: 16px; color: var(--accent); transition: transform var(--transition-fast); }
+.day-selector-current { font-size: var(--size-14); font-weight: 600; color: var(--accent); }
+.day-selector-arrow { width: var(--size-16); height: var(--size-16); color: var(--accent); transition: transform var(--transition-fast); }
 
 .day-selector-btn {
     display: flex; align-items: center; gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
-    background: var(--bg-secondary); border: 1px solid var(--border);
+    background: var(--bg-secondary); border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
-    font-size: 14px; font-weight: 600; color: var(--text-primary);
-    cursor: pointer; transition: all var(--transition-fast);
+    font-size: var(--size-14); font-weight: 600; color: var(--text-primary);
+    cursor: pointer; transition: var(--motion-transition-interactive-fast);
 }
 .day-selector-btn:hover { border-color: var(--accent); background: var(--accent-subtle); }
-.day-selector-btn svg { width: 16px; height: 16px; transition: transform var(--transition-fast); }
+.day-selector-btn svg { width: var(--size-16); height: var(--size-16); transition: transform var(--transition-fast); }
 .day-selector-btn.active svg,
 .day-selector-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
 
 .day-dropdown-header {
-    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.5px;
+    font-size: var(--size-12); font-weight: 600; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: calc(var(--size-1) / 2);
     padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--size-1) solid var(--border);
     margin-bottom: var(--space-sm);
 }
 .day-dropdown-scroll { /* overflow handled by Scrollbar component */ }
@@ -50,7 +50,7 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-md);
-    cursor: pointer; transition: all var(--transition-fast); font-size: 14px;
+    cursor: pointer; transition: var(--motion-transition-interactive-fast); font-size: var(--size-14);
 }
 .day-dropdown-item:hover { background: var(--bg-secondary); }
 .day-dropdown-item.active { background: var(--accent); color: var(--text-inverse); }
@@ -59,17 +59,17 @@
 
 .day-item {
     padding: var(--space-sm); background: transparent;
-    border: 1px solid transparent; border-radius: var(--radius-sm);
-    font-size: 13px; font-weight: 500; color: var(--text-primary);
-    cursor: pointer; transition: all var(--transition-fast);
+    border: var(--size-1) solid transparent; border-radius: var(--radius-sm);
+    font-size: var(--size-14); font-weight: 500; color: var(--text-primary);
+    cursor: pointer; transition: var(--motion-transition-interactive-fast);
 }
 .day-item:hover { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent); }
 .day-item.selected { background: var(--accent); color: var(--text-inverse); border-color: var(--accent); }
 
 .day-indicator {
     margin-top: var(--space-xs);
-    font-size: 12px; font-weight: 600; color: var(--accent);
-    text-transform: uppercase; letter-spacing: 0.5px;
+    font-size: var(--size-12); font-weight: 600; color: var(--accent);
+    text-transform: uppercase; letter-spacing: calc(var(--size-1) / 2);
 }
 
 /* ── Mode selector trigger ── */
@@ -79,36 +79,38 @@
 .mode-selector-btn {
     display: flex; align-items: center; gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
-    background: var(--bg-secondary); border: 1px solid var(--border);
+    background: var(--bg-secondary); border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
-    font-size: 14px; font-weight: 500; color: var(--text-primary);
-    cursor: pointer; transition: all var(--transition-fast);
+    font-size: var(--size-14); font-weight: 500; color: var(--text-primary);
+    cursor: pointer; transition: var(--motion-transition-interactive-fast);
 }
 .mode-selector-btn:hover { border-color: var(--accent); background: var(--accent-subtle); }
-.mode-selector-btn svg.dropdown-arrow { width: 16px; height: 16px; color: var(--text-secondary); }
+.mode-selector-btn svg.dropdown-arrow { width: var(--size-16); height: var(--size-16); color: var(--text-secondary); }
 
 .mode-btn {
-    display: flex; align-items: center; gap: 4px;
+    display: flex; align-items: center; gap: var(--size-4);
     padding: 0 var(--space-md); width: auto; white-space: nowrap;
-    font-size: 14px; font-weight: 500;
+    font-size: var(--size-14); font-weight: 500;
 }
 
 .current-mode {
     display: flex; align-items: center; gap: var(--space-xs);
     padding: var(--space-xs) var(--space-sm);
     background: var(--bg-secondary); border-radius: var(--radius-sm);
-    font-size: 13px; color: var(--text-secondary);
+    font-size: var(--size-14); color: var(--text-secondary);
 }
 .current-mode .mode-icon { display: flex; align-items: center; }
-.current-mode .mode-icon svg { width: 14px; height: 14px; color: var(--accent); }
+.current-mode .mode-icon svg { width: var(--size-14); height: var(--size-14); color: var(--accent); }
 .current-mode .mode-text { font-weight: 500; }
 
 .settings-btn {
-    width: 40px; height: 40px;
+    width: var(--size-40); height: var(--size-40);
     display: flex; align-items: center; justify-content: center;
-    background: transparent; border: 1px solid var(--border);
+    background: transparent; border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text-secondary); cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 .settings-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-subtle); }
+
+

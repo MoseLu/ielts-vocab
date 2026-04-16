@@ -157,6 +157,8 @@ for (const relativePath of pageStyleFiles) {
 
 const tokenSourceRootFiles = new Set([
   frontendAwarePath('src/styles/base.scss'),
+  frontendAwarePath('src/styles/base.tokens.scss'),
+  frontendAwarePath('src/styles/base.mix-tokens.scss'),
 ])
 
 const allStyleFiles = listScssFiles('src/styles').filter((relativePath) => !tokenSourceRootFiles.has(relativePath))

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -17,7 +17,7 @@ function buildBlankWord(targetWord: string): ReactNode {
         <span
           key={`${part}-${index}`}
           className="example-blank-segment"
-          style={{ width: buildBlankWidth(part) }}
+          style={{ '--example-blank-width': buildBlankWidth(part) } as CSSProperties}
         />
       ))}
     </span>

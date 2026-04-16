@@ -2,39 +2,39 @@
     .dictation-shell {
         align-items: stretch;
         justify-content: flex-start;
-        padding: 16px 14px 22px;
+        padding: var(--size-16) var(--size-14) var(--size-22);
     }
 
     .dictation-card {
         width: 100%;
-        gap: 14px;
-        padding: 16px;
-        border-radius: 20px;
+        gap: var(--size-14);
+        padding: var(--size-16);
+        border-radius: var(--size-20);
     }
 
     .dictation-stage {
-        grid-template-columns: minmax(168px, 216px) minmax(0, 1fr);
-        gap: 14px;
+        grid-template-columns: minmax(var(--size-168), var(--size-216)) minmax(0, 1fr);
+        gap: var(--size-14);
     }
 
     .dictation-play-panel,
     .dictation-content-card {
-        border-radius: 18px;
+        border-radius: var(--size-18);
     }
 
     .dictation-play-panel {
-        gap: 10px;
-        padding: 16px;
+        gap: var(--size-10);
+        padding: var(--size-16);
     }
 
     .dictation-play-btn {
-        width: 70px;
-        height: 70px;
+        width: var(--size-70);
+        height: var(--size-70);
     }
 
     .dictation-play-btn svg {
-        width: 25px;
-        height: 25px;
+        width: var(--size-25);
+        height: var(--size-25);
     }
 
     .dictation-play-panel .dictation-mode-title {
@@ -42,21 +42,21 @@
     }
 
     .dictation-play-panel .dictation-hint {
-        font-size: 15px;
+        font-size: var(--size-16);
     }
 
     .dictation-play-panel .dictation-replay-hint {
-        font-size: 14px;
+        font-size: var(--size-14);
     }
 
     .dictation-content-card {
         justify-content: flex-start;
-        gap: 10px;
-        padding: 14px;
+        gap: var(--size-10);
+        padding: var(--size-14);
     }
 
     .dictation-example-sentence {
-        padding: 14px 16px;
+        padding: var(--size-14) var(--size-16);
         line-height: 1.6;
     }
 
@@ -65,7 +65,7 @@
     }
 
     .practice-page--dictation .dictation-live-stage {
-        gap: 8px;
+        gap: var(--size-8);
         height: auto;
         justify-content: flex-start;
     }
@@ -73,19 +73,19 @@
     .practice-page--dictation .dictation-live-answer,
     .practice-page--dictation .dictation-live-preview {
         min-height: 0;
-        padding: 12px 14px;
+        padding: var(--size-12) var(--size-14);
     }
 
     .practice-page--dictation .spelling-input {
-        height: 58px;
-        padding: 0 18px;
-        font-size: 18px;
+        height: var(--size-58);
+        padding: 0 var(--size-18);
+        font-size: var(--size-18);
     }
 
     .practice-page--dictation .mic-btn,
     .practice-page--dictation .spelling-submit-btn {
-        width: 50px;
-        height: 58px;
+        width: var(--size-50);
+        height: var(--size-58);
     }
 }
 
@@ -93,39 +93,39 @@
     .dictation-shell {
         align-items: stretch;
         justify-content: flex-start;
-        padding: 16px 12px 20px;
+        padding: var(--size-16) var(--size-12) var(--size-20);
     }
 
     .dictation-card {
         width: 100%;
-        gap: 12px;
-        padding: 14px;
-        border-radius: 18px;
+        gap: var(--size-12);
+        padding: var(--size-14);
+        border-radius: var(--size-18);
     }
 
     .dictation-stage {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: var(--size-12);
     }
 
     .dictation-play-panel,
     .dictation-content-card {
-        border-radius: 16px;
+        border-radius: var(--size-16);
     }
 
     .dictation-play-panel {
-        gap: 8px;
-        padding: 14px;
+        gap: var(--size-8);
+        padding: var(--size-14);
     }
 
     .dictation-play-btn {
-        width: 66px;
-        height: 66px;
+        width: var(--size-66);
+        height: var(--size-66);
     }
 
     .dictation-play-btn svg {
-        width: 24px;
-        height: 24px;
+        width: var(--size-24);
+        height: var(--size-24);
     }
 
     .dictation-play-panel .dictation-mode-title {
@@ -133,21 +133,21 @@
     }
 
     .dictation-play-panel .dictation-hint {
-        font-size: 15px;
+        font-size: var(--size-16);
     }
 
     .dictation-play-panel .dictation-replay-hint {
-        font-size: 14px;
+        font-size: var(--size-14);
     }
 
     .dictation-content-card {
         justify-content: flex-start;
-        gap: 10px;
-        padding: 12px;
+        gap: var(--size-10);
+        padding: var(--size-12);
     }
 
     .dictation-example-sentence {
-        padding: 12px 14px;
+        padding: var(--size-12) var(--size-14);
         text-align: center;
         line-height: 1.55;
     }
@@ -160,13 +160,13 @@
     .practice-page--dictation .dictation-live-stage {
         height: auto;
         justify-content: flex-start;
-        gap: 8px;
+        gap: var(--size-8);
     }
 
     .practice-page--dictation .dictation-live-answer,
     .practice-page--dictation .dictation-live-preview {
         min-height: 0;
-        padding: 14px 16px;
+        padding: var(--size-14) var(--size-16);
     }
 
     .practice-page--dictation .dictation-live-answer-label,
@@ -175,19 +175,19 @@
     }
 
     .practice-page--dictation .spelling-input {
-        height: 56px;
-        padding: 0 16px;
-        font-size: 18px;
+        height: var(--size-56);
+        padding: 0 var(--size-16);
+        font-size: var(--size-18);
     }
 
     .practice-page--dictation .mic-btn,
     .practice-page--dictation .spelling-submit-btn {
-        width: 48px;
-        height: 56px;
+        width: var(--size-48);
+        height: var(--size-56);
     }
 
     .dictation-progress {
-        gap: 6px;
+        gap: var(--size-6);
         padding-top: 0;
     }
 
@@ -201,14 +201,14 @@
     .dictation-shell {
         align-items: stretch;
         justify-content: flex-start;
-        padding-top: 12px;
-        padding-bottom: 16px;
+        padding-top: var(--size-12);
+        padding-bottom: var(--size-16);
     }
 
     .dictation-card {
-        gap: 12px;
-        padding: 14px;
-        border-radius: 18px;
+        gap: var(--size-12);
+        padding: var(--size-14);
+        border-radius: var(--size-18);
     }
 
     .dictation-card-header {
@@ -216,27 +216,27 @@
     }
 
     .dictation-stage {
-        gap: 12px;
+        gap: var(--size-12);
     }
 
     .dictation-play-panel {
-        gap: 8px;
-        padding: 14px;
+        gap: var(--size-8);
+        padding: var(--size-14);
     }
 
     .dictation-content-card {
-        gap: 8px;
-        padding: 12px;
+        gap: var(--size-8);
+        padding: var(--size-12);
     }
 
     .dictation-play-btn {
-        width: 64px;
-        height: 64px;
+        width: var(--size-64);
+        height: var(--size-64);
     }
 
     .dictation-play-btn svg {
-        width: 24px;
-        height: 24px;
+        width: var(--size-24);
+        height: var(--size-24);
     }
 
     .dictation-play-panel .dictation-mode-title {
@@ -245,15 +245,15 @@
     }
 
     .dictation-play-panel .dictation-hint {
-        font-size: 15px;
+        font-size: var(--size-16);
     }
 
     .dictation-play-panel .dictation-replay-hint {
-        font-size: 14px;
+        font-size: var(--size-14);
     }
 
     .dictation-example-sentence {
-        padding: 12px 14px;
+        padding: var(--size-12) var(--size-14);
         line-height: 1.55;
     }
 
@@ -262,7 +262,7 @@
     }
 
     .practice-page--dictation .dictation-live-stage {
-        gap: 8px;
+        gap: var(--size-8);
         height: auto;
         justify-content: flex-start;
     }
@@ -270,19 +270,19 @@
     .practice-page--dictation .dictation-live-answer,
     .practice-page--dictation .dictation-live-preview {
         min-height: 0;
-        padding: 12px 14px;
+        padding: var(--size-12) var(--size-14);
     }
 
     .practice-page--dictation .spelling-input {
-        height: 56px;
-        padding: 0 16px;
-        font-size: 18px;
+        height: var(--size-56);
+        padding: 0 var(--size-16);
+        font-size: var(--size-18);
     }
 
     .practice-page--dictation .mic-btn,
     .practice-page--dictation .spelling-submit-btn {
-        width: 48px;
-        height: 56px;
+        width: var(--size-48);
+        height: var(--size-56);
     }
 }
 
@@ -293,21 +293,23 @@
     }
 
     .dictation-play-btn {
-        width: 62px;
-        height: 62px;
+        width: var(--size-62);
+        height: var(--size-62);
     }
 
     .dictation-play-btn svg {
-        width: 22px;
-        height: 22px;
+        width: var(--size-22);
+        height: var(--size-22);
     }
 
     .dictation-example-sentence {
-        font-size: 17px;
+        font-size: var(--size-18);
     }
 
     .dictation-progress-count {
-        padding: 5px 9px;
-        font-size: 12px;
+        padding: var(--size-5) var(--size-10);
+        font-size: var(--size-12);
     }
 }
+
+

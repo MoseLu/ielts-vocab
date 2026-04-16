@@ -1,19 +1,19 @@
 .errors-faq-card {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .errors-faq-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .errors-faq-eyebrow {
-    margin: 0 0 4px;
-    font-size: 11px;
+    margin: 0 0 var(--size-4);
+    font-size: var(--size-12);
     font-weight: 700;
     color: var(--text-secondary);
     letter-spacing: 0.08em;
@@ -21,7 +21,7 @@
 
 .errors-faq-title {
     margin: 0;
-    font-size: 16px;
+    font-size: var(--size-16);
     line-height: 1.2;
     color: var(--text-primary);
 }
@@ -29,27 +29,27 @@
 .errors-faq-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .errors-faq-item {
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
     background: var(--bg-secondary);
     overflow: hidden;
 }
 
 .errors-faq-item.is-open {
-    border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+    border-color: color-mix(in srgb, var(--accent) var(--mix-24), var(--border));
+    box-shadow: 0 0 0 var(--size-1) color-mix(in srgb, var(--accent) var(--mix-12), transparent);
 }
 
 .errors-faq-question {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--size-10);
     width: 100%;
-    padding: 12px 14px;
+    padding: var(--size-12) var(--size-14);
     border: none;
     background: transparent;
     color: var(--text-primary);
@@ -62,33 +62,33 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: var(--size-22);
+    height: var(--size-22);
     border-radius: 50%;
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 800;
     flex: 0 0 auto;
 }
 
 .errors-faq-question-mark {
-    background: color-mix(in srgb, var(--accent) 12%, var(--bg-color));
+    background: color-mix(in srgb, var(--accent) var(--mix-12), var(--bg-color));
     color: var(--accent);
 }
 
 .errors-faq-answer-mark {
-    background: color-mix(in srgb, var(--success) 12%, var(--bg-color));
+    background: color-mix(in srgb, var(--success) var(--mix-12), var(--bg-color));
     color: var(--success);
 }
 
 .errors-faq-question-text {
     flex: 1;
     min-width: 0;
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 600;
 }
 
 .errors-faq-toggle {
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 700;
     color: var(--text-secondary);
     flex: 0 0 auto;
@@ -97,13 +97,15 @@
 .errors-faq-answer {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 0 14px 14px;
+    gap: var(--size-10);
+    padding: 0 var(--size-14) var(--size-14);
     color: var(--text-secondary);
 }
 
 .errors-faq-answer p {
-    margin: 2px 0 0;
-    font-size: 13px;
+    margin: var(--size-2) 0 0;
+    font-size: var(--size-14);
     line-height: 1.6;
 }
+
+

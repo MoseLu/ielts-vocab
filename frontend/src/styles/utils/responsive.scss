@@ -1,46 +1,46 @@
 /* ============================================================
    Responsive Media Queries
-   Breakpoints: xs (375px), sm (480px), md (640px), lg (768px), xl (1024px)
+   Breakpoints: xs (var(--size-375)), sm (var(--size-480)), md (var(--size-640)), lg (var(--size-768)), xl (var(--size-1024))
    ============================================================ */
 
-/* ── Extra Small Devices (375px) ── */
+/* ── Extra Small Devices (var(--size-375)) ── */
 @media (max-width: 375px) {
     .logo-text {
         display: none;
     }
 
     .user-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 12px;
+        width: var(--size-32);
+        height: var(--size-32);
+        font-size: var(--size-12);
     }
 
     .day-grid {
-        gap: 6px;
+        gap: var(--size-6);
     }
 
     .day-number {
-        font-size: 13px;
+        font-size: var(--size-14);
     }
 
     .day-status {
-        font-size: 11px;
+        font-size: var(--size-12);
     }
 }
 
-/* ── Small Devices / Large Phones (480px) ── */
+/* ── Small Devices / Large Phones (var(--size-480)) ── */
 @media (max-width: 480px) {
     .header-left {
         gap: var(--space-sm);
     }
 
     .tool-buttons {
-        gap: 2px;
+        gap: var(--size-2);
     }
 
     .tool-btn {
-        width: 36px;
-        height: 36px;
+        width: var(--size-36);
+        height: var(--size-36);
     }
 
     .options-grid {
@@ -49,28 +49,28 @@
 
     .option-btn {
         padding: var(--space-md);
-        min-height: 80px;
+        min-height: var(--size-80);
     }
 
     .option-definition {
-        font-size: 14px;
+        font-size: var(--size-14);
     }
 
     .play-btn {
-        width: 60px;
-        height: 60px;
+        width: var(--size-60);
+        height: var(--size-60);
     }
 
     .play-btn svg {
-        width: 24px;
-        height: 24px;
+        width: var(--size-24);
+        height: var(--size-24);
     }
 }
 
-/* ── Mobile / Tablets (640px - 768px) ── */
+/* ── Mobile / Tablets (var(--size-640) - var(--size-768)) ── */
 @media (max-width: 768px) {
     :root {
-        --header-height: 52px;
+        --header-height: var(--size-52);
     }
 
     /* Sidebar hidden on mobile */
@@ -100,7 +100,7 @@
     /* Show brand name on mobile */
     .header-logo-text {
         display: block;
-        font-size: 15px;
+        font-size: var(--size-16);
     }
 
     .header-right {
@@ -117,17 +117,17 @@
     }
 
     .logo-img {
-        width: 32px;
-        height: 32px;
+        width: var(--size-32);
+        height: var(--size-32);
     }
 
     .logo-text {
-        font-size: 16px;
+        font-size: var(--size-16);
     }
 
     .header-btn {
-        width: 36px;
-        height: 36px;
+        width: var(--size-36);
+        height: var(--size-36);
     }
 
     /* Day dropdown full-width on mobile */
@@ -161,7 +161,7 @@
 
     /* Home page mobile */
     .home-page {
-        padding: var(--space-md) var(--space-md) calc(var(--space-xl) + 56px);
+        padding: var(--space-md) var(--space-md) calc(var(--space-xl) + var(--size-56));
         gap: var(--space-sm);
     }
 
@@ -179,7 +179,7 @@
     }
 
     .home-welcome {
-        font-size: 22px;
+        font-size: var(--size-22);
     }
 
     .stats-grid {
@@ -189,15 +189,15 @@
     /* Day grid mobile */
     .day-grid {
         grid-template-columns: repeat(5, 1fr) !important;
-        gap: 6px;
+        gap: var(--size-6);
     }
 
     .day-card {
-        padding: var(--space-sm) 4px;
+        padding: var(--space-sm) var(--size-4);
     }
 
     .day-number {
-        font-size: 12px;
+        font-size: var(--size-12);
     }
 
     .day-words {
@@ -216,7 +216,7 @@
     }
 
     .word-text {
-        font-size: 26px;
+        font-size: var(--size-28);
     }
 
     .options-grid {
@@ -225,13 +225,13 @@
     }
 
     .play-btn-large {
-        width: 64px;
-        height: 64px;
+        width: var(--size-64);
+        height: var(--size-64);
     }
 
     .play-btn-large svg {
-        width: 24px;
-        height: 24px;
+        width: var(--size-24);
+        height: var(--size-24);
     }
 
     /* Dictation */
@@ -257,7 +257,7 @@
         flex-direction: row;
         overflow-x: auto;
         border-right: none;
-        border-bottom: 1px solid var(--border);
+        border-bottom: var(--size-1) solid var(--border);
     }
 
     .settings-sidebar-item {
@@ -270,7 +270,7 @@
     }
 
     .settings-sidebar-item.active {
-        border-bottom: 2px solid var(--accent);
+        border-bottom: var(--size-2) solid var(--accent);
         border-right: none;
     }
 
@@ -281,7 +281,7 @@
         margin: 0;
         position: absolute;
         bottom: 0;
-        max-height: min(82vh, 640px);
+        max-height: min(82vh, var(--size-640));
     }
 
     .avatar-modal-overlay {
@@ -291,7 +291,7 @@
 
     /* Radio mode */
     .radio-word {
-        font-size: 28px;
+        font-size: var(--size-28);
     }
 
     /* Auth page */
@@ -301,20 +301,20 @@
     }
 
     .auth-title {
-        font-size: 20px;
+        font-size: var(--size-20);
     }
 
     .auth-input {
-        height: 44px;
-        font-size: 14px;
+        height: var(--size-44);
+        font-size: var(--size-14);
     }
 
     .auth-btn {
-        height: 44px;
+        height: var(--size-44);
     }
 
     .agreement-label {
-        font-size: 13px;
+        font-size: var(--size-14);
         flex-wrap: wrap;
     }
 
@@ -324,7 +324,7 @@
     }
 
     .mode-breakdown-item {
-        grid-template-columns: 70px 1fr;
+        grid-template-columns: var(--size-70) 1fr;
         grid-template-rows: auto auto;
     }
 
@@ -339,7 +339,7 @@
     }
 
     .stats-accuracy-item {
-        grid-template-columns: 1fr 80px;
+        grid-template-columns: 1fr var(--size-80);
         grid-template-rows: auto auto;
     }
 
@@ -368,7 +368,7 @@
         overflow-x: auto;
         flex-wrap: nowrap;
         -webkit-overflow-scrolling: touch;
-        gap: 12px;
+        gap: var(--size-12);
         padding-bottom: var(--space-xs);
     }
 
@@ -377,26 +377,26 @@
     }
 
     .vb-search {
-        min-width: 120px;
+        min-width: var(--size-120);
         margin-top: 0;
     }
 }
 
-/* ── Tablets (640px - 1023px) ── */
+/* ── Tablets (var(--size-640) - var(--size-1024)) ── */
 @media (min-width: 640px) and (max-width: 1023px) {
     .day-grid {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(var(--size-80), 1fr)) !important;
     }
 
     .practice-main {
-        max-width: 600px;
+        max-width: var(--size-600);
     }
 }
 
-/* ── Desktop (≥ 1024px) ── */
+/* ── Desktop (≥ var(--size-1024)) ── */
 @media (min-width: 1024px) {
     .practice-main {
-        max-width: 800px;
+        max-width: var(--size-800);
     }
 
     .header-hamburger {
@@ -404,10 +404,10 @@
     }
 }
 
-/* ── Wide Screens (≥ 1280px) ── */
+/* ── Wide Screens (≥ var(--size-1280)) ── */
 @media (min-width: 1280px) {
     .home-page {
-        max-width: 1100px;
+        max-width: var(--size-1100);
     }
 
     .day-grid {
@@ -415,9 +415,11 @@
     }
 }
 
-/* ── Extra Wide (≥ 1440px) ── */
+/* ── Extra Wide (≥ var(--size-1440)) ── */
 @media (min-width: 1440px) {
     .day-grid {
         grid-template-columns: repeat(12, 1fr);
     }
 }
+
+

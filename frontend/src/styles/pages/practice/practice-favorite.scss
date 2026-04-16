@@ -2,9 +2,9 @@
 
 @mixin practice-round-icon-button(
     $size,
-    $icon-size: 20px,
+    $icon-size: var(--size-20),
     $border-color: var(--surface-border-strong),
-    $background: color-mix(in srgb, var(--surface-elevated) 76%, transparent),
+    $background: color-mix(in srgb, var(--surface-elevated) var(--mix-76), transparent),
     $color: var(--text-secondary)
 ) {
     display: inline-flex;
@@ -14,8 +14,8 @@
     height: $size;
     padding: 0;
     appearance: none;
-    border: 1px solid $border-color;
-    border-radius: 999px;
+    border: var(--size-1) solid $border-color;
+    border-radius: var(--radius-pill);
     background: $background;
     color: $color;
     box-shadow: var(--shadow-sm);
@@ -34,10 +34,10 @@
 
 @mixin practice-round-icon-button-hover(
     $color: var(--accent),
-    $border-color: rgba(var(--accent-rgb), 0.18),
-    $background: rgba(var(--accent-rgb), 0.08)
+    $border-color: rgba(var(--accent-rgb), var(--alpha-18)),
+    $background: rgba(var(--accent-rgb), var(--alpha-8))
 ) {
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
     color: $color;
     border-color: $border-color;
     background: $background;
@@ -47,36 +47,36 @@
 
 .practice-favorite-btn {
     @include practice-round-icon-button(
-        42px,
-        20px,
-        color-mix(in srgb, var(--border) 78%, transparent),
-        color-mix(in srgb, var(--bg-color) 88%, transparent)
+        var(--size-42),
+        var(--size-20),
+        color-mix(in srgb, var(--border) var(--mix-78), transparent),
+        color-mix(in srgb, var(--bg-color) var(--mix-88), transparent)
     );
 }
 
 .practice-speaking-entry-btn {
-    @include practice-round-icon-button(42px);
+    @include practice-round-icon-button(var(--size-42));
 }
 
 .qm-card-toolbar__icon-btn {
-    @include practice-round-icon-button(42px);
+    @include practice-round-icon-button(var(--size-42));
 }
 
 .replay-btn {
-    @include practice-round-icon-button(50px, 21px);
+    @include practice-round-icon-button(var(--size-50), var(--size-24));
     grid-column: 2;
     justify-self: center;
     position: relative;
 }
 
 .listening-example-audio-btn {
-    @include practice-round-icon-button(44px, 19px);
+    @include practice-round-icon-button(var(--size-44), var(--size-20));
 }
 
 .practice-favorite-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
     color: var(--error);
-    border-color: color-mix(in srgb, var(--error) 30%, var(--border));
+    border-color: color-mix(in srgb, var(--error) var(--mix-30), var(--border));
     box-shadow: var(--shadow-md);
 }
 
@@ -97,8 +97,8 @@
 
 .practice-favorite-btn.is-active {
     color: var(--error);
-    border-color: color-mix(in srgb, var(--error) 40%, var(--border));
-    background: color-mix(in srgb, var(--error) 12%, var(--bg-color));
+    border-color: color-mix(in srgb, var(--error) var(--mix-40), var(--border));
+    background: color-mix(in srgb, var(--error) var(--mix-12), var(--bg-color));
 }
 
 .practice-favorite-btn.is-pending {
@@ -107,10 +107,10 @@
 
 .word-display-audio-controls {
     display: grid;
-    grid-template-columns: var(--practice-action-side-size, 48px) auto var(--practice-action-side-size, 48px);
+    grid-template-columns: var(--practice-action-side-size, var(--size-48)) auto var(--practice-action-side-size, var(--size-48));
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    gap: var(--size-14);
 }
 
 .word-display-audio-side,
@@ -132,39 +132,39 @@
 .practice-main-header,
 .qm-card-toolbar,
 .radio-stage-toolbar {
-    width: min(100%, var(--practice-header-max-width, 720px));
+    width: min(100%, var(--practice-header-max-width, var(--size-720)));
 }
 
 .practice-main-header {
     display: grid;
-    grid-template-columns: var(--practice-action-side-size, 48px) minmax(0, 1fr) var(--practice-action-side-size, 48px);
+    grid-template-columns: var(--practice-action-side-size, var(--size-48)) minmax(0, 1fr) var(--practice-action-side-size, var(--size-48));
     align-items: center;
-    gap: 15px;
-    margin-bottom: calc(var(--space-md) + 4px);
+    gap: var(--size-16);
+    margin-bottom: calc(var(--space-md) + var(--size-4));
 }
 
 .practice-main-header__meta {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--size-10);
     min-width: 0;
 }
 
 .radio-stage-toolbar {
     display: grid;
-    grid-template-columns: var(--practice-action-side-size, 48px) 1fr var(--practice-action-side-size, 48px);
+    grid-template-columns: var(--practice-action-side-size, var(--size-48)) 1fr var(--practice-action-side-size, var(--size-48));
     align-items: center;
-    margin: 0 auto 12px;
+    margin: 0 auto var(--size-12);
 }
 
 .qm-card-toolbar {
     display: grid;
-    grid-template-columns: var(--practice-action-side-size, 48px) auto var(--practice-action-side-size, 48px);
+    grid-template-columns: var(--practice-action-side-size, var(--size-48)) auto var(--practice-action-side-size, var(--size-48));
     align-items: center;
     justify-content: center;
     width: 100%;
-    margin-bottom: -8px;
+    margin-bottom: calc(var(--size-8) * -1);
 }
 
 .qm-word-btn {
@@ -178,7 +178,7 @@
 .qm-word-btn:hover,
 .qm-word-btn:focus-visible {
     color: var(--accent);
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
     outline: none;
 }
 
@@ -189,27 +189,29 @@
 @media (max-width: 768px) {
     .practice-favorite-btn,
     .practice-speaking-entry-btn {
-        width: 40px;
-        height: 40px;
+        width: var(--size-40);
+        height: var(--size-40);
     }
 
     .word-display-audio-controls {
-        grid-template-columns: 40px auto 40px;
-        gap: 10px;
+        grid-template-columns: var(--size-40) auto var(--size-40);
+        gap: var(--size-10);
     }
 
     .practice-main-header,
     .qm-card-toolbar,
     .radio-stage-toolbar {
-        grid-template-columns: 40px minmax(0, 1fr) 40px;
+        grid-template-columns: var(--size-40) minmax(0, 1fr) var(--size-40);
     }
 
     .qm-card-toolbar__icon-btn {
-        width: 40px;
-        height: 40px;
+        width: var(--size-40);
+        height: var(--size-40);
     }
 
     .radio-stage-toolbar {
         width: 100%;
     }
 }
+
+

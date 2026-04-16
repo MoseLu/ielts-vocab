@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
 import { playWordAudio, preloadWordAudioBatch, stopAudio } from './utils'
 import { useToast } from '../../contexts/ToastContext'
@@ -395,7 +395,10 @@ export default function QuickMemoryMode({
     <div className="qm-root">
       <div className="qm-stage">
         <div className="qm-progress-track">
-          <div className="qm-progress-fill" style={{ width: `${progress}%` }} />
+          <div
+            className="qm-progress-fill"
+            style={{ '--progress-percent': `${progress}%` } as CSSProperties}
+          />
         </div>
         <div className="qm-progress-label">{index + 1} / {queue.length}</div>
 

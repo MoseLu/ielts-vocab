@@ -7,23 +7,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: var(--size-10);
     background: var(--overlay-strong);
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(var(--size-8));
 }
 
 .global-word-search-panel {
-    width: min(680px, calc(100vw - 20px));
-    padding: 10px;
-    border-radius: 14px;
+    width: min(var(--size-680), calc(100vw - var(--size-20)));
+    padding: var(--size-10);
+    border-radius: var(--size-14);
     background: var(--surface-elevated);
-    border: 1px solid var(--border-strong);
+    border: var(--size-1) solid var(--border-strong);
     box-shadow: var(--shadow-overlay);
     transition: width var(--transition-fast), min-height var(--transition-fast);
 }
 
 .global-word-search-panel--with-result {
-    width: min(1040px, calc(100vw - 20px));
+    width: min(var(--size-1040), calc(100vw - var(--size-20)));
 }
 
 .global-word-search-bar {
@@ -34,13 +34,13 @@
     flex: 1;
     display: flex;
     align-items: center;
-    min-height: 54px;
-    gap: 12px;
-    padding: 0 16px 0 18px;
-    border: 1px solid color-mix(in srgb, var(--accent) 72%, transparent);
-    border-radius: 10px;
+    min-height: var(--size-54);
+    gap: var(--size-12);
+    padding: 0 var(--size-16) 0 var(--size-18);
+    border: var(--size-1) solid color-mix(in srgb, var(--accent) var(--mix-72), transparent);
+    border-radius: var(--size-10);
     background: var(--surface-elevated);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-elevated) 72%, var(--text-inverse));
+    box-shadow: inset 0 var(--size-1) 0 color-mix(in srgb, var(--surface-elevated) var(--mix-72), var(--text-inverse));
 }
 
 .global-word-search-form:focus-within {
@@ -50,12 +50,12 @@
 .global-word-search-input {
     flex: 1;
     min-width: 0;
-    padding: 14px 0;
+    padding: var(--size-14) 0;
     border: none;
     outline: none;
     background: transparent;
     color: var(--text-primary);
-    font-size: 16px;
+    font-size: var(--size-16);
     line-height: 1.4;
 }
 
@@ -72,15 +72,15 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 8px;
-    min-height: 148px;
+    gap: var(--size-8);
+    min-height: var(--size-148);
     text-align: center;
     color: var(--text-secondary);
 }
 
 .global-word-search-status {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--size-14);
 }
 
 .global-word-search-status--error {
@@ -92,12 +92,12 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    padding: 5px 10px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--border-subtle) 70%, transparent);
-    background: color-mix(in srgb, var(--surface-floating) 66%, transparent);
-    color: color-mix(in srgb, var(--text-tertiary) 78%, transparent);
-    font-size: 12px;
+    padding: var(--size-5) var(--size-10);
+    border-radius: var(--radius-pill);
+    border: var(--size-1) solid color-mix(in srgb, var(--border-subtle) var(--mix-70), transparent);
+    background: color-mix(in srgb, var(--surface-floating) var(--mix-66), transparent);
+    color: color-mix(in srgb, var(--text-tertiary) var(--mix-78), transparent);
+    font-size: var(--size-12);
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -111,33 +111,35 @@
 
 @media (max-width: 768px) {
     .global-word-search-overlay {
-        padding: 10px;
+        padding: var(--size-10);
     }
 
     .global-word-search-panel,
     .global-word-search-panel--with-result {
         width: 100%;
         min-height: auto;
-        padding: 10px;
+        padding: var(--size-10);
     }
 
     .global-word-search-bar {
-        gap: 8px;
+        gap: var(--size-8);
     }
 
     .global-word-search-form {
-        min-height: 48px;
-        gap: 10px;
-        padding: 0 12px 0 14px;
+        min-height: var(--size-48);
+        gap: var(--size-10);
+        padding: 0 var(--size-12) 0 var(--size-14);
     }
 
     .global-word-search-input {
-        font-size: 15px;
+        font-size: var(--size-16);
     }
 
     .global-word-search-shortcut {
-        padding: 4px 8px;
-        font-size: 11px;
+        padding: var(--size-4) var(--size-8);
+        font-size: var(--size-12);
     }
 
 }
+
+

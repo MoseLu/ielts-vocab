@@ -1,6 +1,6 @@
 // ── Dictation Mode Component ───────────────────────────────────────────────────
 
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback, type CSSProperties } from 'react'
 import type { DictationModeProps, LastState } from './types'
 import { buildBlankSentence } from './exampleSentence'
 import { playExampleAudio, stopAudio } from './utils'
@@ -50,7 +50,10 @@ function BottomBar({ progressValue, total, queueIndex }: BottomBarProps) {
         <span className="dictation-progress-count">{safeCurrent}/{safeTotal}</span>
       </div>
       <div className="dictation-progress-track">
-        <div className="dictation-progress-fill" style={{ width: `${progressValue * 100}%` }}>
+        <div
+          className="dictation-progress-fill"
+          style={{ '--progress-percent': `${progressValue * 100}%` } as CSSProperties}
+        >
           <div className="dictation-progress-dot" />
         </div>
       </div>

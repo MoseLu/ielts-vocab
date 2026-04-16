@@ -4,7 +4,7 @@
 
 .vocab-book-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 260px);
+    grid-template-columns: repeat(auto-fill, var(--size-260));
     gap: var(--space-md);
     justify-content: start;
 }
@@ -12,22 +12,22 @@
 .vocab-book-card {
     @include page-stack();
     padding: var(--space-lg);
-    @include panel-surface(var(--bg-color), 1px solid var(--border), var(--radius-lg), none);
+    @include panel-surface(var(--bg-color), var(--size-1) solid var(--border), var(--radius-lg), none);
     cursor: pointer;
-    transition: all var(--transition-fast);
-    width: 260px;
-    min-height: 160px;
+    transition: var(--motion-transition-interactive-fast);
+    width: var(--size-260);
+    min-height: var(--size-160);
 }
 
 .vocab-book-card:hover {
     border-color: var(--book-color, var(--accent));
     box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    transform: translateY(calc(var(--size-2) * -1));
 }
 
 .vocab-book-icon {
-    width: 40px;
-    height: 40px;
+    width: var(--size-40);
+    height: var(--size-40);
     background: var(--accent-subtle);
     border-radius: var(--radius-md);
     display: flex;
@@ -38,8 +38,8 @@
 }
 
 .vocab-book-icon svg {
-    width: 20px;
-    height: 20px;
+    width: var(--size-20);
+    height: var(--size-20);
 }
 
 .vocab-book-content {
@@ -47,15 +47,15 @@
 }
 
 .vocab-book-title {
-    font-size: 15px;
+    font-size: var(--size-16);
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin-bottom: var(--size-4);
     line-height: 1.4;
 }
 
 .vocab-book-desc {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
     margin-bottom: var(--space-sm);
     display: -webkit-box;
@@ -68,7 +68,7 @@
 .vocab-book-meta {
     display: flex;
     gap: var(--space-sm);
-    font-size: 12px;
+    font-size: var(--size-12);
     margin-top: auto;
 }
 
@@ -89,7 +89,7 @@
 
 .vocab-book-progress-bar {
     flex: 1;
-    height: 4px;
+    height: var(--size-4);
     background: var(--bg-tertiary);
     border-radius: var(--radius-full);
     overflow: hidden;
@@ -103,10 +103,10 @@
 }
 
 .vocab-book-progress-text {
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 600;
     color: var(--text-tertiary);
-    min-width: 30px;
+    min-width: var(--size-30);
 }
 
 .vocab-book-arrow {
@@ -127,9 +127,9 @@
 }
 
 .vocab-book-loading .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border);
+    width: var(--size-40);
+    height: var(--size-40);
+    border: var(--size-3) solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -144,15 +144,15 @@
 }
 
 .main-nav-item {
-    padding: 8px 16px;
+    padding: var(--size-8) var(--size-16);
     background: transparent;
     border: none;
     border-radius: var(--radius-sm);
-    font-size: 15px;
+    font-size: var(--size-16);
     font-weight: 500;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
     position: relative;
 }
 
@@ -168,12 +168,12 @@
 .main-nav-item.active::after {
     content: '';
     position: absolute;
-    bottom: -8px;
-    left: 16px;
-    right: 16px;
-    height: 2px;
+    bottom: calc(var(--size-8) * -1);
+    left: var(--size-16);
+    right: var(--size-16);
+    height: var(--size-2);
     background: var(--accent);
-    border-radius: 1px;
+    border-radius: var(--size-1);
 }
 
 /* Header Search */
@@ -181,15 +181,15 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 6px 12px;
+    padding: var(--size-6) var(--size-12);
     background: var(--bg-secondary);
     border-radius: var(--radius-full);
-    min-width: 200px;
+    min-width: var(--size-200);
 }
 
 .header-search svg {
-    width: 16px;
-    height: 16px;
+    width: var(--size-16);
+    height: var(--size-16);
     color: var(--text-tertiary);
 }
 
@@ -198,7 +198,7 @@
     border: none;
     background: transparent;
     outline: none;
-    font-size: 14px;
+    font-size: var(--size-14);
     color: var(--text-primary);
 }
 
@@ -230,13 +230,13 @@
     }
 
     .filter-label {
-        font-size: 13px;
-        min-width: 60px;
+        font-size: var(--size-14);
+        min-width: var(--size-60);
     }
 
     .filter-btn {
-        font-size: 13px;
-        padding: 4px 10px;
+        font-size: var(--size-14);
+        padding: var(--size-4) var(--size-10);
     }
 
     .vocab-search-wrapper {
@@ -265,3 +265,5 @@
         display: none;
     }
 }
+
+

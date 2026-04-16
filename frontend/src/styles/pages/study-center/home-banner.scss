@@ -6,36 +6,36 @@
 
 
 .page-title {
-    font-size: 28px;
+    font-size: var(--size-28);
     font-weight: 700;
     margin-bottom: var(--space-sm);
 }
 
 .page-subtitle {
-    font-size: 15px;
+    font-size: var(--size-16);
     color: var(--text-secondary);
     margin-bottom: var(--space-xl);
 }
 
 .day-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--size-160), 1fr));
     gap: var(--space-md);
 }
 
 .day-card {
     background: var(--bg-color);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: var(--motion-transition-interactive-normal);
 }
 
 .day-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-subtle);
-    transform: translateY(-2px);
+    box-shadow: 0 0 0 var(--size-3) var(--accent-subtle);
+    transform: translateY(calc(var(--size-2) * -1));
 }
 
 .day-card.completed {
@@ -55,14 +55,14 @@
 }
 
 .day-number {
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 700;
     color: var(--accent);
     margin-bottom: var(--space-xs);
 }
 
 .day-status {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
 }
 
@@ -73,7 +73,7 @@
 /* Unified container — all children inherit same width */
 .home-page {
     padding: var(--space-xl) var(--space-xl) var(--space-2xl);
-    max-width: 960px;
+    max-width: var(--size-960);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -83,7 +83,7 @@
 /* ── Banner ── */
 .home-banner {
     background: var(--surface-base);
-    border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+    border: var(--size-1) solid color-mix(in srgb, var(--accent) var(--mix-20), transparent);
     border-radius: var(--radius-xl);
     padding: var(--space-xl) var(--space-2xl);
     display: flex;
@@ -100,24 +100,24 @@
 .home-banner-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: var(--size-6);
+    font-size: var(--size-12);
     font-weight: 600;
     color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    background: color-mix(in srgb, var(--accent) var(--mix-12), transparent);
     border-radius: var(--radius-full);
-    padding: 4px 12px 4px 8px;
+    padding: var(--size-4) var(--size-12) var(--size-4) var(--size-8);
     margin-bottom: var(--space-md);
 }
 
 .home-banner-badge svg {
-    width: 13px;
-    height: 13px;
+    width: var(--size-14);
+    height: var(--size-14);
     flex-shrink: 0;
 }
 
 .home-welcome {
-    font-size: 28px;
+    font-size: var(--size-28);
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: var(--space-xs);
@@ -125,7 +125,7 @@
 }
 
 .home-subtitle {
-    font-size: 14px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
     margin-bottom: var(--space-lg);
     line-height: 1.5;
@@ -140,26 +140,26 @@
 .home-stat {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: var(--size-1);
 }
 
 .home-stat-num {
-    font-size: 22px;
+    font-size: var(--size-22);
     font-weight: 700;
     color: var(--accent);
     line-height: 1;
 }
 
 .home-stat-label {
-    font-size: 11px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
     letter-spacing: 0.02em;
 }
 
 .home-stat-divider {
-    width: 1px;
-    height: 28px;
-    background: color-mix(in srgb, var(--accent) 25%, transparent);
+    width: var(--size-1);
+    height: var(--size-28);
+    background: color-mix(in srgb, var(--accent) var(--mix-25), transparent);
     flex-shrink: 0;
 }
 
@@ -174,13 +174,13 @@
 
 .home-progress-ring {
     position: relative;
-    width: 96px;
-    height: 96px;
+    width: var(--size-96);
+    height: var(--size-96);
 }
 
 .progress-ring-svg {
-    width: 96px;
-    height: 96px;
+    width: var(--size-96);
+    height: var(--size-96);
 }
 
 .progress-ring-text {
@@ -193,22 +193,24 @@
 }
 
 .progress-ring-num {
-    font-size: 18px;
+    font-size: var(--size-18);
     font-weight: 700;
     color: var(--accent);
     line-height: 1;
 }
 
 .progress-ring-label {
-    font-size: 10px;
+    font-size: var(--size-10);
     color: var(--text-tertiary);
 }
 
 .home-current-day {
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 600;
     color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    background: color-mix(in srgb, var(--accent) var(--mix-12), transparent);
     border-radius: var(--radius-full);
-    padding: 3px 12px;
+    padding: var(--size-3) var(--size-12);
 }
+
+

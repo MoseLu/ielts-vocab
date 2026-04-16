@@ -4,17 +4,17 @@
     position: fixed;
     bottom: var(--space-xl);
     left: 50%;
-    transform: translateX(-50%) translateY(100px);
+    transform: translateX(-50%) translateY(var(--size-100));
     background: var(--surface-floating);
     color: var(--text-primary);
     padding: var(--space-md) var(--space-xl);
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--size-14);
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: var(--motion-transition-interactive-normal);
     z-index: var(--layer-toast);
     box-shadow: var(--shadow-lg);
-    border: 1px solid var(--border-strong);
+    border: var(--size-1) solid var(--border-strong);
 }
 
 .toast.show {
@@ -25,11 +25,13 @@
 .toast.success {
     background: var(--success-bg);
     color: var(--success);
-    border-color: color-mix(in srgb, var(--success) 35%, var(--success-bg));
+    border-color: color-mix(in srgb, var(--success) var(--mix-35), var(--success-bg));
 }
 
 .toast.error {
     background: var(--error-bg);
     color: var(--error);
-    border-color: color-mix(in srgb, var(--error) 35%, var(--error-bg));
+    border-color: color-mix(in srgb, var(--error) var(--mix-35), var(--error-bg));
 }
+
+

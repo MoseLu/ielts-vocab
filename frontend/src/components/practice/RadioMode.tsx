@@ -1,6 +1,6 @@
 // ── Radio Mode Component ────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
 import type { RadioModeProps, Word } from './types'
 import { playWordAudio, preloadWordAudioBatch, stopAudio } from './utils'
 import SettingsPanel from '../settings/SettingsPanel'
@@ -263,7 +263,10 @@ export default function RadioMode({
       </div>
 
       <div className="radio-progress-track">
-        <div className="radio-progress-fill" style={{ width: `${((currentIndex + 1) / Math.max(queue.length, 1)) * 100}%` }} />
+        <div
+          className="radio-progress-fill"
+          style={{ '--progress-percent': `${((currentIndex + 1) / Math.max(queue.length, 1)) * 100}%` } as CSSProperties}
+        />
       </div>
       <div className="radio-progress-label">{currentIndex + 1} / {queue.length}</div>
 

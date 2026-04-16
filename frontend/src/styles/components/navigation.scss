@@ -36,12 +36,12 @@
 
 .segmented-control__badge {
   @include pill-badge(
-    20px,
-    0 6px,
-    999px,
-    color-mix(in srgb, var(--text-primary) 8%, transparent),
+    var(--size-20),
+    0 var(--size-6),
+    var(--radius-pill),
+    color-mix(in srgb, var(--text-primary) var(--mix-8), transparent),
     inherit,
-    11px,
+    var(--size-12),
     700
   );
   line-height: 1;
@@ -57,15 +57,15 @@
 }
 
 .underline-tabs--small {
-  gap: 10px;
+  gap: var(--size-10);
 }
 
 .underline-tabs--middle {
-  gap: 16px;
+  gap: var(--size-16);
 }
 
 .underline-tabs--large {
-  gap: 18px;
+  gap: var(--size-18);
 }
 
 .underline-tabs--stretch {
@@ -79,23 +79,23 @@
 }
 
 .underline-tabs__item--small {
-  min-height: 32px;
-  padding-bottom: 8px;
-  font-size: 13px;
+  min-height: var(--size-32);
+  padding-bottom: var(--size-8);
+  font-size: var(--size-14);
   font-weight: 600;
 }
 
 .underline-tabs__item--middle {
-  min-height: 38px;
-  padding-bottom: 12px;
-  font-size: 15px;
+  min-height: var(--size-40);
+  padding-bottom: var(--size-12);
+  font-size: var(--size-16);
   font-weight: 700;
 }
 
 .underline-tabs__item--large {
-  min-height: 42px;
-  padding-bottom: 14px;
-  font-size: 16px;
+  min-height: var(--size-42);
+  padding-bottom: var(--size-14);
+  font-size: var(--size-16);
   font-weight: 700;
 }
 
@@ -119,9 +119,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -1px;
-  height: 2px;
-  border-radius: 999px;
+  bottom: calc(var(--size-1) * -1);
+  height: var(--size-2);
+  border-radius: var(--radius-pill);
   background: var(--accent);
   opacity: 0;
   transform: scaleX(0);
@@ -138,20 +138,22 @@
 }
 
 .underline-tabs__badge {
-  @include pill-badge(18px, 0 6px, 999px, var(--surface-muted), var(--text-tertiary), 10px, 700);
+  @include pill-badge(var(--size-18), 0 var(--size-6), var(--radius-pill), var(--surface-muted), var(--text-tertiary), var(--size-10), 700);
 }
 
 .underline-tabs__item--middle .underline-tabs__badge {
-  min-height: 20px;
-  font-size: 11px;
+  min-height: var(--size-20);
+  font-size: var(--size-12);
 }
 
 .underline-tabs__item--large .underline-tabs__badge {
-  min-height: 22px;
-  font-size: 12px;
+  min-height: var(--size-22);
+  font-size: var(--size-12);
 }
 
 .underline-tabs__item.is-active .underline-tabs__badge {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: color-mix(in srgb, var(--accent) var(--mix-12), transparent);
   color: var(--accent);
 }
+
+

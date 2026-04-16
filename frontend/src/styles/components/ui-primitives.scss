@@ -4,40 +4,40 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--size-8);
     text-decoration: none;
     @include control-button(
-        44px,
-        0 18px,
-        14px,
-        1px solid transparent,
+        var(--size-44),
+        0 var(--size-18),
+        var(--size-14),
+        var(--size-1) solid transparent,
         var(--surface-elevated),
         var(--text-primary),
-        14px,
+        var(--size-14),
         700
     );
 }
 
 .ui-button:hover:not(:disabled) {
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
 }
 
 .ui-button--sm {
-    min-height: 36px;
-    padding: 0 14px;
-    border-radius: 12px;
-    font-size: 13px;
+    min-height: var(--size-36);
+    padding: 0 var(--size-14);
+    border-radius: var(--size-12);
+    font-size: var(--size-14);
 }
 
 .ui-button--md {
-    min-height: 44px;
-    padding: 0 18px;
+    min-height: var(--size-44);
+    padding: 0 var(--size-18);
 }
 
 .ui-button--lg {
-    min-height: 48px;
-    padding: 0 24px;
-    font-size: 15px;
+    min-height: var(--size-48);
+    padding: 0 var(--size-24);
+    font-size: var(--size-16);
 }
 
 .ui-button--primary {
@@ -59,7 +59,7 @@
 }
 
 .ui-button--secondary:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--accent) 26%, var(--border-strong));
+    border-color: color-mix(in srgb, var(--accent) var(--mix-26), var(--border-strong));
     background: var(--surface-subtle);
 }
 
@@ -82,19 +82,19 @@
 }
 
 .ui-button--danger:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--error) 88%, var(--text-primary) 12%);
+    background: color-mix(in srgb, var(--error) var(--mix-88), var(--text-primary) var(--mix-12));
 }
 
 .ui-button--warning {
-    border-color: color-mix(in srgb, var(--warning) 24%, transparent);
-    background: color-mix(in srgb, var(--warning-bg) 70%, var(--surface-elevated));
-    color: color-mix(in srgb, var(--warning) 74%, var(--text-primary));
+    border-color: color-mix(in srgb, var(--warning) var(--mix-24), transparent);
+    background: color-mix(in srgb, var(--warning-bg) var(--mix-70), var(--surface-elevated));
+    color: color-mix(in srgb, var(--warning) var(--mix-74), var(--text-primary));
     box-shadow: var(--shadow-sm);
 }
 
 .ui-button--warning:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--warning-bg) 52%, var(--warning) 12%);
-    border-color: color-mix(in srgb, var(--warning) 34%, transparent);
+    background: color-mix(in srgb, var(--warning-bg) var(--mix-52), var(--warning) var(--mix-12));
+    border-color: color-mix(in srgb, var(--warning) var(--mix-34), transparent);
 }
 
 .ui-button__spinner,
@@ -106,8 +106,8 @@
 }
 
 .ui-button__spinner {
-    width: 16px;
-    height: 16px;
+    width: var(--size-16);
+    height: var(--size-16);
 }
 
 .ui-button__spinner circle {
@@ -124,7 +124,7 @@
 }
 
 .ui-card {
-    @include panel-surface(var(--surface-base), 1px solid var(--border-strong), 14px, var(--shadow-soft));
+    @include panel-surface(var(--surface-base), var(--size-1) solid var(--border-strong), var(--size-14), var(--shadow-soft));
 }
 
 .ui-card--pad-none {
@@ -132,15 +132,15 @@
 }
 
 .ui-card--pad-sm {
-    padding: 10px;
+    padding: var(--size-10);
 }
 
 .ui-card--pad-md {
-    padding: 14px;
+    padding: var(--size-14);
 }
 
 .ui-card--pad-lg {
-    padding: 20px;
+    padding: var(--size-20);
 }
 
 .ui-card--interactive {
@@ -153,19 +153,19 @@
 }
 
 .ui-card--interactive:hover {
-    border-color: color-mix(in srgb, var(--accent) 22%, var(--border-strong));
+    border-color: color-mix(in srgb, var(--accent) var(--mix-22), var(--border-strong));
     box-shadow: var(--shadow-floating);
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
 }
 
 .ui-card--interactive:focus-visible {
     outline: none;
-    border-color: color-mix(in srgb, var(--accent) 26%, var(--border-strong));
+    border-color: color-mix(in srgb, var(--accent) var(--mix-26), var(--border-strong));
     box-shadow: var(--focus-ring);
 }
 
 .ui-card__header {
-    font-size: 18px;
+    font-size: var(--size-18);
     font-weight: 700;
     line-height: 1.3;
     color: var(--text-primary);
@@ -176,20 +176,20 @@
 }
 
 .ui-card__footer {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-subtle);
+    margin-top: var(--size-14);
+    padding-top: var(--size-14);
+    border-top: var(--size-1) solid var(--border-subtle);
 }
 
 .ui-field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--size-6);
     width: 100%;
 }
 
 .ui-field__label {
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 600;
     line-height: 1.4;
     color: var(--text-primary);
@@ -209,32 +209,32 @@
 }
 
 .ui-input {
-    @include input-control(44px, 0 14px, 12px, 1px solid var(--border-strong), var(--surface-elevated), var(--text-primary), 14px);
+    @include input-control(var(--size-44), 0 var(--size-14), var(--size-12), var(--size-1) solid var(--border-strong), var(--surface-elevated), var(--text-primary), var(--size-14));
 }
 
 .ui-textarea {
-    @include input-control(auto, 12px 14px, 12px, 1px solid var(--border-strong), var(--surface-elevated), var(--text-primary), 14px);
-    min-height: 112px;
+    @include input-control(auto, var(--size-12) var(--size-14), var(--size-12), var(--size-1) solid var(--border-strong), var(--surface-elevated), var(--text-primary), var(--size-14));
+    min-height: var(--size-112);
     line-height: 1.6;
     resize: vertical;
 }
 
 .ui-input::placeholder,
 .ui-textarea::placeholder {
-    color: color-mix(in srgb, var(--text-tertiary) 80%, transparent);
+    color: color-mix(in srgb, var(--text-tertiary) var(--mix-80), transparent);
 }
 
 .ui-input--with-left-icon {
-    padding-left: 42px;
+    padding-left: var(--size-42);
 }
 
 .ui-input--with-right-icon {
-    padding-right: 42px;
+    padding-right: var(--size-42);
 }
 
 .ui-input--error,
 .ui-textarea--error {
-    border-color: color-mix(in srgb, var(--error) 72%, var(--border-strong));
+    border-color: color-mix(in srgb, var(--error) var(--mix-72), var(--border-strong));
 }
 
 .ui-input-icon {
@@ -249,16 +249,16 @@
 }
 
 .ui-input-icon--left {
-    left: 14px;
+    left: var(--size-14);
 }
 
 .ui-input-icon--right {
-    right: 14px;
+    right: var(--size-14);
 }
 
 .ui-field__message {
     margin: 0;
-    font-size: 12px;
+    font-size: var(--size-12);
     line-height: 1.5;
 }
 
@@ -276,7 +276,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: var(--size-10);
     z-index: var(--layer-modal);
 }
 
@@ -284,53 +284,53 @@
     position: absolute;
     inset: 0;
     background: var(--overlay-strong);
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(var(--size-8));
     animation: uiModalFadeIn 0.18s ease;
 }
 
 .ui-modal__panel {
     position: relative;
-    width: min(100%, 520px);
-    max-height: calc(100vh - 20px);
+    width: min(100%, var(--size-520));
+    max-height: calc(100vh - var(--size-20));
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    @include panel-surface(var(--surface-floating), 1px solid var(--border-strong), 18px, var(--shadow-overlay));
+    @include panel-surface(var(--surface-floating), var(--size-1) solid var(--border-strong), var(--size-18), var(--shadow-overlay));
     animation: uiModalScaleIn 0.18s ease;
 }
 
 .ui-modal__panel--sm {
-    width: min(100%, 360px);
+    width: min(100%, var(--size-360));
 }
 
 .ui-modal__panel--md {
-    width: min(100%, 520px);
+    width: min(100%, var(--size-520));
 }
 
 .ui-modal__panel--lg {
-    width: min(100%, 640px);
+    width: min(100%, var(--size-640));
 }
 
 .ui-modal__panel--xl {
-    width: min(100%, 820px);
+    width: min(100%, var(--size-820));
 }
 
 .ui-modal__panel--full {
-    width: min(100%, 1080px);
+    width: min(100%, var(--size-1080));
 }
 
 .ui-modal__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    padding: 14px;
-    border-bottom: 1px solid var(--border-subtle);
+    gap: var(--size-10);
+    padding: var(--size-14);
+    border-bottom: var(--size-1) solid var(--border-subtle);
 }
 
 .ui-modal__title {
     margin: 0;
-    font-size: 18px;
+    font-size: var(--size-18);
     font-weight: 700;
     line-height: 1.3;
     color: var(--text-primary);
@@ -338,8 +338,8 @@
 
 .ui-modal__close {
     flex-shrink: 0;
-    @include control-button(36px, 0, 12px, 1px solid transparent, transparent, var(--text-secondary), 14px, 700);
-    width: 36px;
+    @include control-button(var(--size-36), 0, var(--size-12), var(--size-1) solid transparent, transparent, var(--text-secondary), var(--size-14), 700);
+    width: var(--size-36);
 }
 
 .ui-modal__close:hover:not(:disabled) {
@@ -348,12 +348,12 @@
 }
 
 .ui-modal__close svg {
-    width: 18px;
-    height: 18px;
+    width: var(--size-18);
+    height: var(--size-18);
 }
 
 .ui-modal__body {
-    padding: 14px;
+    padding: var(--size-14);
     overflow: auto;
 }
 
@@ -361,8 +361,8 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
+    gap: var(--size-10);
+    margin-top: var(--size-20);
 }
 
 @keyframes uiModalFadeIn {
@@ -371,14 +371,14 @@
 }
 
 @keyframes uiModalScaleIn {
-    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    from { opacity: 0; transform: translateY(var(--size-8)) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 640px) {
     .ui-modal {
         align-items: flex-end;
-        padding: 10px;
+        padding: var(--size-10);
     }
 
     .ui-modal__panel,
@@ -388,8 +388,10 @@
     .ui-modal__panel--xl,
     .ui-modal__panel--full {
         width: 100%;
-        max-height: calc(100vh - 10px);
+        max-height: calc(100vh - var(--size-10));
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
     }
 }
+
+

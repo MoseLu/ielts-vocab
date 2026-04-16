@@ -48,7 +48,6 @@ function SpeakingPage() {
             <section className="speaking-page__library" aria-label="口语题目选择">
               <div className="speaking-page__library-bar">
                 <div className="speaking-page__library-copy">
-                  <span className="speaking-page__library-eyebrow">口语题目</span>
                   <p className="speaking-page__library-note">选择一个主题，直接进入整套题目流程。</p>
                 </div>
                 <span className="speaking-page__library-count">{SPEAKING_SETS.length} 套</span>

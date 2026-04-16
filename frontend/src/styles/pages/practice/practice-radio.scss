@@ -13,18 +13,18 @@
     overflow: hidden auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable both-edges;
-    padding: clamp(36px, 6.2vh, 80px) 22px 32px;
-    gap: 24px;
-    scroll-padding-block: 24px 40px;
+    padding: clamp(var(--size-36), 6.2vh, var(--size-80)) var(--size-22) var(--size-32);
+    gap: var(--size-24);
+    scroll-padding-block: var(--size-24) var(--size-40);
 }
 
 .radio-stage {
-    width: min(100%, var(--practice-shell-max-width, 760px));
+    width: min(100%, var(--practice-shell-max-width, var(--size-760)));
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 19px;
+    gap: var(--size-20);
 }
 
 .radio-stage-word {
@@ -44,32 +44,32 @@
 }
 
 .radio-stage-definition {
-    margin: 13px 0 0;
-    max-width: min(100%, var(--practice-header-max-width, 720px));
+    margin: var(--size-14) 0 0;
+    max-width: min(100%, var(--practice-header-max-width, var(--size-720)));
     font-size: clamp(1.17rem, 2.65vw, 1.64rem);
     line-height: 1.72;
     color: var(--text-primary);
 }
 
 .radio-stage-definition .word-pos-tag {
-    margin-right: 10px;
+    margin-right: var(--size-10);
 }
 
 .radio-controls {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: clamp(11px, 2.5vw, 25px);
-    margin-top: 20px;
+    gap: clamp(var(--size-12), 2.5vw, var(--size-25));
+    margin-top: var(--size-20);
 }
 
 .radio-ctrl-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 999px;
+    width: var(--size-48);
+    height: var(--size-48);
+    border-radius: var(--radius-pill);
     border: none;
     background: transparent;
     color: var(--text-tertiary);
@@ -80,17 +80,17 @@
 .radio-ctrl-btn:hover {
     color: var(--text-primary);
     background: var(--surface-hover);
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
 }
 
 .radio-ctrl-btn svg {
-    width: 23px;
-    height: 23px;
+    width: var(--size-24);
+    height: var(--size-24);
 }
 
 .radio-play-btn {
-    width: 67px;
-    height: 67px;
+    width: var(--size-68);
+    height: var(--size-68);
     background: var(--accent);
     color: var(--text-inverse);
     box-shadow: var(--glow-accent);
@@ -102,15 +102,16 @@
 }
 
 .radio-progress-track {
-    width: min(78vw, 756px);
-    height: 6px;
-    border-radius: 999px;
+    width: min(78vw, var(--size-756));
+    height: var(--size-6);
+    border-radius: var(--radius-pill);
     background: var(--border-subtle);
     overflow: hidden;
-    margin-top: 10px;
+    margin-top: var(--size-10);
 }
 
 .radio-progress-fill {
+    width: var(--progress-percent, 0%);
     height: 100%;
     background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
     border-radius: inherit;
@@ -118,41 +119,41 @@
 }
 
 .radio-progress-label {
-    font-size: 16px;
+    font-size: var(--size-16);
     color: var(--text-tertiary);
 }
 
 .radio-bottom-btns {
     display: flex;
     align-items: center;
-    gap: 13px;
-    margin-top: 12px;
+    gap: var(--size-14);
+    margin-top: var(--size-12);
 }
 
 .radio-stop-btn,
 .radio-home-btn {
-    padding: 11px 17px;
-    border-radius: 14px;
-    font-size: 15px;
+    padding: var(--size-12) var(--size-18);
+    border-radius: var(--size-14);
+    font-size: var(--size-16);
     font-weight: 600;
-    border: 1px solid var(--border-subtle);
-    background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+    border: var(--size-1) solid var(--border-subtle);
+    background: color-mix(in srgb, var(--surface-elevated) var(--mix-82), transparent);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 
 .radio-stop-btn:hover,
 .radio-home-btn:hover {
-    border-color: color-mix(in srgb, var(--accent) 28%, var(--border-subtle));
+    border-color: color-mix(in srgb, var(--accent) var(--mix-28), var(--border-subtle));
     color: var(--text-primary);
     background: var(--surface-elevated);
 }
 
 @media (max-width: 768px) {
     .radio-mode {
-        padding: 24px 14px calc(80px + env(safe-area-inset-bottom));
-        gap: 14px;
+        padding: var(--size-24) var(--size-14) calc(var(--size-80) + env(safe-area-inset-bottom));
+        gap: var(--size-14);
     }
 
     .radio-stage-definition {
@@ -160,7 +161,7 @@
     }
 
     .radio-progress-track {
-        width: min(84vw, 560px);
+        width: min(84vw, var(--size-560));
     }
 }
 
@@ -175,14 +176,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 55px;
-    height: 65px;
+    width: var(--size-55);
+    height: var(--size-65);
     border: none;
     background: transparent;
     color: var(--text-tertiary);
     cursor: pointer;
     flex-shrink: 0;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
     outline: none;
 }
 
@@ -218,8 +219,8 @@
 }
 
 .mic-btn svg {
-    width: 23px;
-    height: 23px;
+    width: var(--size-24);
+    height: var(--size-24);
 }
 
 .spin {
@@ -234,3 +235,5 @@
         transform: rotate(360deg);
     }
 }
+
+

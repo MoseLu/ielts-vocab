@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef } from 'react'
+import {
+  DESIGN_TOKEN_KEYS,
+  DESIGN_TOKEN_SIZES,
+  readCssPxToken,
+  readCssToken,
+} from '../../../lib/designTokens'
 
 const DEFAULT_WAVEFORM_CONFIG = {
-  activeBarColor: 'rgba(38, 46, 58, 0.96)',
-  activeDotColor: 'rgba(38, 46, 58, 0.18)',
-  barWidth: 2,
-  gap: 1,
+  barWidth: DESIGN_TOKEN_SIZES[2],
+  gap: DESIGN_TOKEN_SIZES[1],
   holdFrames: 3,
-  idleBarColor: 'rgba(96, 104, 118, 0.76)',
-  idleDotColor: 'rgba(96, 104, 118, 0.14)',
   maxBars: 420,
   maxHeightRatio: 0.46,
   minSpeechHalfHeight: 1.2,
@@ -16,6 +18,13 @@ const DEFAULT_WAVEFORM_CONFIG = {
   speechCloseThreshold: 0.07,
   speechOpenThreshold: 0.11,
   visibleThreshold: 0.018,
+}
+
+const DEFAULT_WAVEFORM_THEME = {
+  activeBarColor: 'rgba(38, 46, 58, 0.96)',
+  activeDotColor: 'rgba(38, 46, 58, 0.18)',
+  idleBarColor: 'rgba(96, 104, 118, 0.76)',
+  idleDotColor: 'rgba(96, 104, 118, 0.14)',
 }
 
 interface WaveformProcessorState {
@@ -98,22 +107,28 @@ export function useSpeechWaveform() {
     if (!setup) return
 
     const { ctx, height, width } = setup
-    const stride = DEFAULT_WAVEFORM_CONFIG.barWidth + DEFAULT_WAVEFORM_CONFIG.gap
+    const barWidth = readCssPxToken(DESIGN_TOKEN_KEYS.waveformBarWidth, DEFAULT_WAVEFORM_CONFIG.barWidth)
+    const gap = readCssPxToken(DESIGN_TOKEN_KEYS.waveformBarGap, DEFAULT_WAVEFORM_CONFIG.gap)
+    const activeDotColor = readCssToken(DESIGN_TOKEN_KEYS.waveformActiveDot, DEFAULT_WAVEFORM_THEME.activeDotColor)
+    const activeBarColor = readCssToken(DESIGN_TOKEN_KEYS.waveformActiveBar, DEFAULT_WAVEFORM_THEME.activeBarColor)
+    const idleDotColor = readCssToken(DESIGN_TOKEN_KEYS.waveformIdleDot, DEFAULT_WAVEFORM_THEME.idleDotColor)
+    const idleBarColor = readCssToken(DESIGN_TOKEN_KEYS.waveformIdleBar, DEFAULT_WAVEFORM_THEME.idleBarColor)
+    const stride = barWidth + gap
     const count = Math.max(1, Math.floor(width / stride))
     const history = historyRef.current
     const midlineY = Math.round(height / 2)
     const maxHalfHeight = height * DEFAULT_WAVEFORM_CONFIG.maxHeightRatio
     const dotColor = isRecordingRef.current
-      ? DEFAULT_WAVEFORM_CONFIG.activeDotColor
-      : DEFAULT_WAVEFORM_CONFIG.idleDotColor
+      ? activeDotColor
+      : idleDotColor
     const barColor = isRecordingRef.current
-      ? DEFAULT_WAVEFORM_CONFIG.activeBarColor
-      : DEFAULT_WAVEFORM_CONFIG.idleBarColor
+      ? activeBarColor
+      : idleBarColor
 
     ctx.clearRect(0, 0, width, height)
     ctx.fillStyle = dotColor
     for (let column = 0; column < count; column += 1) {
-      const x = column * stride + DEFAULT_WAVEFORM_CONFIG.barWidth / 2
+      const x = column * stride + barWidth / 2
       ctx.beginPath()
       ctx.arc(x, midlineY, 0.8, 0, Math.PI * 2)
       ctx.fill()
@@ -132,9 +147,9 @@ export function useSpeechWaveform() {
 
       ctx.beginPath()
       if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(x, y, DEFAULT_WAVEFORM_CONFIG.barWidth, barHeight, DEFAULT_WAVEFORM_CONFIG.barWidth / 2)
+        ctx.roundRect(x, y, barWidth, barHeight, barWidth / 2)
       } else {
-        ctx.rect(x, y, DEFAULT_WAVEFORM_CONFIG.barWidth, barHeight)
+        ctx.rect(x, y, barWidth, barHeight)
       }
       ctx.fill()
     }

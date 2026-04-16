@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import refreshIcon from '../../../assets/icons/refresh.svg'
 import { today } from '../../../composables/journal/page/journalPageUtils'
 import type { SummaryGenerationJob } from '../../../lib/schemas'
@@ -145,7 +146,7 @@ export function JournalSummaryActions({
           <div className="journal-summary-progress__track" aria-hidden="true">
             <span
               className="journal-summary-progress__fill"
-              style={{ width: `${summaryProgress.progress}%` }}
+              style={{ '--progress-percent': `${summaryProgress.progress}%` } as CSSProperties}
             />
           </div>
         </div>

@@ -68,6 +68,8 @@ backend/backups/
 # Local runtime artifacts
 .playwright-cli/
 logs/runtime/
+.omc/research/
+.omc/*.png
 
 # Temporary generated directories
 录音文件生成记录/

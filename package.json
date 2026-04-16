@@ -6,6 +6,7 @@
     "dev": "pnpm --dir frontend dev",
     "build": "pnpm --dir frontend build",
     "check:file-lines": "node scripts/check-file-line-limits.mjs",
+    "check:design-tokens": "node scripts/check-design-token-usage.mjs",
     "check:style-discipline": "node scripts/check-style-discipline.mjs",
     "lint": "pnpm --dir frontend lint",
     "preview": "pnpm --dir frontend preview",

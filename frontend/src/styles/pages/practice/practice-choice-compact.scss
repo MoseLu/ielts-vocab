@@ -1,13 +1,13 @@
 .practice-page.practice-page--choice .practice-main {
-    max-width: min(100%, var(--practice-main-max-width, 1180px));
-    padding-top: clamp(8px, 1.4vw, 14px);
+    max-width: min(100%, var(--practice-main-max-width, var(--size-1180)));
+    padding-top: clamp(var(--size-8), 1.4vw, var(--size-14));
     gap: 0;
 }
 
 .practice-page.practice-page--choice .practice-choice-top-rail {
     flex-shrink: 0;
-    min-height: clamp(68px, 9vh, 84px);
-    gap: clamp(10px, 1.6vw, 16px);
+    min-height: clamp(var(--size-68), 9vh, var(--size-84));
+    gap: clamp(var(--size-10), 1.6vw, var(--size-16));
 }
 
 .practice-page.practice-page--choice .practice-choice-stage {
@@ -17,9 +17,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(10px, 1.6vh, 16px);
+    gap: clamp(var(--size-10), 1.6vh, var(--size-16));
     min-height: 0;
-    padding: 2px 0 8px;
+    padding: var(--size-2) 0 var(--size-8);
 }
 
 .practice-page.practice-page--choice .practice-choice-top-rail--empty {
@@ -31,8 +31,8 @@
 }
 
 .practice-page.practice-page--choice .listening-example-prompt {
-    gap: 12px;
-    padding-inline: 6px;
+    gap: var(--size-12);
+    padding-inline: var(--size-6);
 }
 
 .practice-page.practice-page--choice .listening-example-sentence--interactive {
@@ -49,7 +49,7 @@
 .practice-page.practice-page--choice .listening-example-sentence--interactive:hover,
 .practice-page.practice-page--choice .listening-example-sentence--interactive:focus-visible {
     color: var(--accent);
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
     outline: none;
 }
 
@@ -62,23 +62,23 @@
     display: inline-grid;
     grid-auto-flow: column;
     align-items: center;
-    gap: 14px;
+    gap: var(--size-14);
 }
 
 .practice-page.practice-page--choice .options-footer-actions .practice-favorite-btn,
 .practice-page.practice-page--choice .options-footer-actions .practice-speaking-entry-btn,
 .practice-page.practice-page--choice .options-footer-actions .replay-btn,
 .practice-page.practice-page--choice .listening-example-audio-btn {
-    width: 42px;
-    height: 42px;
+    width: var(--size-42);
+    height: var(--size-42);
 }
 
 .practice-page.practice-page--choice .options-footer-actions .practice-favorite-btn svg,
 .practice-page.practice-page--choice .options-footer-actions .practice-speaking-entry-btn svg,
 .practice-page.practice-page--choice .options-footer-actions .replay-btn svg,
 .practice-page.practice-page--choice .listening-example-audio-btn .example-audio-icon {
-    width: 20px;
-    height: 20px;
+    width: var(--size-20);
+    height: var(--size-20);
 }
 
 .practice-page.practice-page--choice .options-footer-actions .replay-btn {
@@ -87,28 +87,28 @@
 
 @media (max-height: 820px) and (min-width: 768px) {
     .practice-page.practice-page--choice .practice-main {
-        padding-top: 6px;
+        padding-top: var(--size-6);
     }
 
     .practice-page.practice-page--choice .practice-choice-stage {
-        gap: 12px;
-        padding-block: 0 8px;
+        gap: var(--size-12);
+        padding-block: 0 var(--size-8);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail {
-        min-height: 70px;
-        gap: 12px;
+        min-height: var(--size-70);
+        gap: var(--size-12);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice {
         align-items: stretch;
-        gap: 10px;
+        gap: var(--size-10);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-back-btn {
         margin-top: 0;
-        padding: 0 12px;
-        border-radius: 14px;
+        padding: 0 var(--size-12);
+        border-radius: var(--size-14);
         align-self: stretch;
     }
 
@@ -116,20 +116,20 @@
         display: grid;
         grid-template-columns: minmax(0, auto) auto;
         align-items: baseline;
-        column-gap: 8px;
-        row-gap: 2px;
-        max-width: min(312px, calc(100% - 54px));
-        padding: 8px 12px;
-        border-radius: 16px;
+        column-gap: var(--size-8);
+        row-gap: var(--size-2);
+        max-width: min(var(--size-312), calc(100% - var(--size-54)));
+        padding: var(--size-8) var(--size-12);
+        border-radius: var(--size-16);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-text {
-        font-size: 17px;
+        font-size: var(--size-18);
         line-height: 1.1;
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-phonetic {
-        font-size: 11px;
+        font-size: var(--size-12);
         line-height: 1.1;
         margin: 0;
     }
@@ -140,18 +140,18 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 12px;
+        font-size: var(--size-12);
         line-height: 1.22;
     }
 
     .practice-page.practice-page--choice .listening-example-prompt {
-        gap: 10px;
+        gap: var(--size-10);
         padding-inline: 0;
     }
 
     .practice-page.practice-page--choice .listening-example-audio-btn {
-        width: 38px;
-        height: 38px;
+        width: var(--size-40);
+        height: var(--size-40);
     }
 
     .practice-page.practice-page--choice .listening-example-sentence {
@@ -160,12 +160,12 @@
     }
 
     .practice-page.practice-page--choice .options-grid {
-        gap: 10px;
+        gap: var(--size-10);
     }
 
     .practice-page.practice-page--choice .option-btn {
-        min-height: clamp(96px, 11vw, 110px);
-        padding: 16px 18px 14px;
+        min-height: clamp(var(--size-96), 11vw, var(--size-110));
+        padding: var(--size-16) var(--size-18) var(--size-14);
     }
 
     .practice-page.practice-page--choice .option-text {
@@ -174,88 +174,88 @@
     }
 
     .practice-page.practice-page--choice .options-footer {
-        margin-top: -6px;
+        margin-top: calc(var(--size-6) * -1);
     }
 
     .practice-page.practice-page--choice .options-footer-actions {
-        gap: 10px;
+        gap: var(--size-10);
     }
 
     .practice-page.practice-page--choice .options-footer-actions .practice-favorite-btn,
     .practice-page.practice-page--choice .options-footer-actions .practice-speaking-entry-btn,
     .practice-page.practice-page--choice .options-footer-actions .replay-btn,
     .practice-page.practice-page--choice .listening-example-audio-btn {
-        width: 40px;
-        height: 40px;
+        width: var(--size-40);
+        height: var(--size-40);
     }
 
     .practice-page.practice-page--choice .skip-btn {
-        padding: 10px 14px;
-        font-size: 14px;
+        padding: var(--size-10) var(--size-14);
+        font-size: var(--size-14);
     }
 
     .practice-page.practice-page--choice .shortcut-hint {
-        font-size: 13px;
+        font-size: var(--size-14);
     }
 
     .practice-page.practice-page--choice .replay-btn {
-        width: 42px;
-        height: 42px;
+        width: var(--size-42);
+        height: var(--size-42);
     }
 
     .practice-page.practice-page--choice .practice-main .practice-bottom-bar {
-        gap: 10px;
-        padding: 8px 16px 8px;
+        gap: var(--size-10);
+        padding: var(--size-8) var(--size-16) var(--size-8);
     }
 
     .practice-page.practice-page--choice .practice-main .bottom-progress-track {
-        height: 8px;
+        height: var(--size-8);
     }
 
     .practice-page.practice-page--choice .practice-main .bottom-progress-dot {
-        right: -4px;
-        width: 13px;
-        height: 13px;
-        border-width: 2px;
+        right: calc(var(--size-4) * -1);
+        width: var(--size-14);
+        height: var(--size-14);
+        border-width: var(--size-2);
     }
 
     .practice-page.practice-page--choice .practice-main .bottom-progress-count {
-        font-size: 13px;
-        padding: 7px 10px;
+        font-size: var(--size-14);
+        padding: var(--size-8) var(--size-10);
     }
 }
 
 @media (max-height: 760px) and (min-width: 768px) {
     .practice-page.practice-page--choice .practice-main {
-        padding-top: 4px;
+        padding-top: var(--size-4);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail {
-        min-height: 58px;
-        gap: 10px;
+        min-height: var(--size-58);
+        gap: var(--size-10);
     }
 
     .practice-page.practice-page--choice .practice-choice-stage {
         justify-content: flex-start;
-        gap: 10px;
-        padding-block: 0 6px;
+        gap: var(--size-10);
+        padding-block: 0 var(--size-6);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice {
-        gap: 8px;
+        gap: var(--size-8);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-back-btn {
-        padding: 0 10px;
+        padding: 0 var(--size-10);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-info {
-        max-width: min(280px, calc(100% - 48px));
-        padding: 7px 10px;
+        max-width: min(var(--size-280), calc(100% - var(--size-48)));
+        padding: var(--size-8) var(--size-10);
     }
 
     .practice-page.practice-page--choice .listening-example-prompt {
-        gap: 6px;
+        gap: var(--size-6);
     }
 
     .practice-page.practice-page--choice .listening-example-sentence {
@@ -264,12 +264,12 @@
     }
 
     .practice-page.practice-page--choice .options-grid {
-        gap: 8px;
+        gap: var(--size-8);
     }
 
     .practice-page.practice-page--choice .option-btn {
-        min-height: 88px;
-        padding: 14px 16px 12px;
+        min-height: var(--size-88);
+        padding: var(--size-14) var(--size-16) var(--size-12);
     }
 
     .practice-page.practice-page--choice .option-text {
@@ -278,60 +278,60 @@
     }
 
     .practice-page.practice-page--choice .options-footer {
-        margin-top: -4px;
+        margin-top: calc(var(--size-4) * -1);
     }
 
     .practice-page.practice-page--choice .options-footer-actions {
-        gap: 8px;
+        gap: var(--size-8);
     }
 
     .practice-page.practice-page--choice .skip-btn {
-        padding: 8px 12px;
-        font-size: 13px;
+        padding: var(--size-8) var(--size-12);
+        font-size: var(--size-14);
     }
 
     .practice-page.practice-page--choice .practice-main .practice-bottom-bar {
-        gap: 8px;
-        padding: 6px 12px 6px;
+        gap: var(--size-8);
+        padding: var(--size-6) var(--size-12) var(--size-6);
     }
 
     .practice-page.practice-page--choice .practice-main .bottom-progress-track {
-        height: 7px;
+        height: var(--size-8);
     }
 
     .practice-page.practice-page--choice .practice-main .bottom-progress-dot {
-        right: -4px;
-        width: 11px;
-        height: 11px;
+        right: calc(var(--size-4) * -1);
+        width: var(--size-12);
+        height: var(--size-12);
     }
 
     .practice-page.practice-page--choice .practice-main .bottom-progress-count {
-        font-size: 12px;
-        padding: 6px 8px;
+        font-size: var(--size-12);
+        padding: var(--size-6) var(--size-8);
     }
 }
 
 @media (max-height: 680px) and (min-width: 768px) {
     .practice-page.practice-page--choice .practice-choice-top-rail {
-        min-height: 50px;
+        min-height: var(--size-50);
     }
 
     .practice-page.practice-page--choice .practice-choice-stage {
-        gap: 8px;
-        padding-bottom: 4px;
+        gap: var(--size-8);
+        padding-bottom: var(--size-4);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-info {
-        padding: 6px 9px;
+        padding: var(--size-6) var(--size-10);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-text {
-        font-size: 15px;
+        font-size: var(--size-16);
     }
 
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-phonetic,
     .practice-page.practice-page--choice .practice-choice-top-rail .prev-word-inline--choice .prev-word-def {
-        font-size: 10px;
+        font-size: var(--size-10);
     }
 
     .practice-page.practice-page--choice .listening-example-sentence {
@@ -339,8 +339,8 @@
     }
 
     .practice-page.practice-page--choice .option-btn {
-        min-height: 80px;
-        padding: 12px 14px 10px;
+        min-height: var(--size-80);
+        padding: var(--size-12) var(--size-14) var(--size-10);
     }
 
     .practice-page.practice-page--choice .option-text {
@@ -348,7 +348,9 @@
     }
 
     .practice-page.practice-page--choice .practice-main .practice-bottom-bar {
-        padding-inline: 10px;
-        padding-bottom: 5px;
+        padding-inline: var(--size-10);
+        padding-bottom: var(--size-5);
     }
 }
+
+

@@ -3,7 +3,7 @@
 @use '../../utils/mixins' as *;
 
 .vocab-book-page {
-    gap: 10px;
+    gap: var(--size-10);
     padding: var(--page-gutter);
     box-sizing: border-box;
 }
@@ -20,7 +20,7 @@
 
 .vb-filters {
     width: 100%;
-    padding: 2px 0 0;
+    padding: var(--size-2) 0 0;
     background: transparent;
     border: none;
     border-radius: 0;
@@ -31,7 +31,7 @@
 .vb-filter-left {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--size-8);
     width: 100%;
 }
 
@@ -39,18 +39,18 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 14px 24px;
+    gap: var(--size-14) var(--size-24);
     width: 100%;
 }
 
 .vb-filter-btn {
     position: relative;
-    @include control-button(0, 0, 0, none, transparent, var(--text-secondary), 15px, 500);
+    @include control-button(0, 0, 0, none, transparent, var(--text-secondary), var(--size-16), 500);
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
     min-height: auto;
-    padding: 0 0 10px;
+    padding: 0 0 var(--size-10);
     border-radius: 0;
     transition: color var(--transition-fast), opacity var(--transition-fast);
     white-space: nowrap;
@@ -70,9 +70,9 @@
     position: absolute;
     left: 0;
     bottom: 0;
-    width: 20px;
-    height: 2px;
-    border-radius: 999px;
+    width: var(--size-20);
+    height: var(--size-2);
+    border-radius: var(--radius-pill);
     background: var(--accent);
     opacity: 0;
     transform: scaleX(0.2);
@@ -104,22 +104,22 @@
 
 .vb-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(var(--size-220), 1fr));
+    gap: var(--size-10);
 }
 
 .vb-card {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
-    border: 1px solid var(--surface-border-strong);
-    border-radius: 24px;
-    padding: 20px 18px 18px;
+    gap: var(--size-10);
+    background: color-mix(in srgb, var(--surface-elevated) var(--mix-96), transparent);
+    border: var(--size-1) solid var(--surface-border-strong);
+    border-radius: var(--size-24);
+    padding: var(--size-20) var(--size-18) var(--size-18);
     cursor: pointer;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-    min-height: 180px;
+    min-height: var(--size-180);
     box-shadow: var(--shadow-soft);
     overflow: hidden;
 }
@@ -128,17 +128,17 @@
     content: '';
     position: absolute;
     inset: 0 0 auto;
-    height: 4px;
+    height: var(--size-4);
     background: var(--accent);
     opacity: 0;
     transition: opacity var(--transition-fast);
 }
 
 .vb-card:hover {
-    border-color: rgba(var(--accent-rgb), 0.26);
+    border-color: rgba(var(--accent-rgb), var(--alpha-26));
     box-shadow: var(--shadow-panel);
-    background: color-mix(in srgb, var(--accent) 4%, var(--surface-elevated));
-    transform: translateY(-3px);
+    background: color-mix(in srgb, var(--accent) var(--mix-4), var(--surface-elevated));
+    transform: translateY(calc(var(--size-3) * -1));
 }
 
 .vb-card:hover::before {
@@ -147,40 +147,40 @@
 
 .vb-card-badge {
     position: absolute;
-    top: 14px;
-    right: 14px;
-    @include pill-badge(24px, 5px 10px, 999px, var(--accent), white, 11px, 600);
-    box-shadow: 0 10px 18px rgba(var(--accent-rgb), 0.24);
+    top: var(--size-14);
+    right: var(--size-14);
+    @include pill-badge(var(--size-24), var(--size-5) var(--size-10), var(--radius-pill), var(--accent), white, var(--size-12), 600);
+    box-shadow: 0 var(--size-10) var(--size-18) rgba(var(--accent-rgb), var(--alpha-24));
 }
 
 .vb-card-title {
-    font-size: 18px;
+    font-size: var(--size-18);
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1.35;
-    margin-bottom: 6px;
+    margin-bottom: var(--size-6);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    max-width: calc(100% - 72px);
+    max-width: calc(100% - var(--size-72));
 }
 
 .vb-card-meta {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--size-10);
     margin-top: auto;
 }
 
 .vb-card-count {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
     font-weight: 600;
 }
 
 .vb-card-desc {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -190,49 +190,50 @@
 }
 
 .vb-card-progress {
-    margin-top: 2px;
+    margin-top: var(--size-2);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .vb-card-progress-bar {
     flex: 1;
-    height: 6px;
+    height: var(--size-6);
     background: var(--surface-inset);
-    border-radius: 99px;
+    border-radius: var(--radius-pill);
     overflow: hidden;
 }
 
 .vb-card-progress-fill {
+    width: var(--progress-percent, 0%);
     height: 100%;
     display: block;
     background: var(--accent);
-    border-radius: 99px;
+    border-radius: var(--radius-pill);
 }
 
 .vb-card-progress-text {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-secondary);
     font-weight: 600;
     white-space: nowrap;
 }
 
 .vb-card-added {
-    @include pill-badge(30px, 7px 10px, 999px, color-mix(in srgb, var(--success) 10%, var(--surface-elevated)), var(--success), 12px, 600);
-    gap: 10px;
-    margin-top: 4px;
+    @include pill-badge(var(--size-30), var(--size-8) var(--size-10), var(--radius-pill), color-mix(in srgb, var(--success) var(--mix-10), var(--surface-elevated)), var(--success), var(--size-12), 600);
+    gap: var(--size-10);
+    margin-top: var(--size-4);
     width: fit-content;
 }
 
 .vb-card-added svg {
-    width: 12px;
-    height: 12px;
+    width: var(--size-12);
+    height: var(--size-12);
 }
 
 @media (max-width: 900px) {
     .vb-filters {
-        padding: 2px 0 0;
+        padding: var(--size-2) 0 0;
     }
 }
 
@@ -242,6 +243,8 @@
     }
 
     .vb-card {
-        min-height: 160px;
+        min-height: var(--size-160);
     }
 }
+
+

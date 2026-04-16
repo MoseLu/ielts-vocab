@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import smartDictationIcon from '../../../assets/icons/smart-dictation.svg'
 import smartListeningIcon from '../../../assets/icons/smart-listening.svg'
 import smartMeaningIcon from '../../../assets/icons/smart-meaning.svg'
@@ -46,7 +46,10 @@ export function BottomBar({ progressValue, total, queueIndex }: BottomBarProps) 
   return (
     <div className="practice-bottom-bar">
       <div className="bottom-progress-track">
-        <div className="bottom-progress-fill" style={{ width: `${progressValue * 100}%` }}>
+        <div
+          className="bottom-progress-fill"
+          style={{ '--progress-percent': `${progressValue * 100}%` } as CSSProperties}
+        >
           <div className="bottom-progress-dot"></div>
         </div>
       </div>

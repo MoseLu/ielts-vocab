@@ -1,3 +1,42 @@
+@use 'sass:map';
+
+$breakpoints: (
+  phone: var(--size-375),
+  phone-lg: var(--size-480),
+  tablet-sm: var(--size-640),
+  tablet: var(--size-768),
+  desktop: var(--size-1024),
+  wide: var(--size-1280),
+  ultra: var(--size-1440),
+  tablet-edge: var(--size-681),
+  desktop-compact: var(--size-900),
+  desktop-wide: var(--size-1100),
+);
+
+@mixin respond-max($breakpoint) {
+  $value: map.get($breakpoints, $breakpoint);
+
+  @if $value == null {
+    @error "Unknown breakpoint `#{$breakpoint}`.";
+  }
+
+  @media (max-width: $value) {
+    @content;
+  }
+}
+
+@mixin respond-min($breakpoint) {
+  $value: map.get($breakpoints, $breakpoint);
+
+  @if $value == null {
+    @error "Unknown breakpoint `#{$breakpoint}`.";
+  }
+
+  @media (min-width: $value) {
+    @content;
+  }
+}
+
 @mixin page-stack($gap: null) {
   display: flex;
   flex-direction: column;
@@ -7,7 +46,7 @@
   }
 }
 
-@mixin page-shell-fill($min-height: calc(100vh - var(--header-height) - 20px)) {
+@mixin page-shell-fill($min-height: calc(100vh - var(--header-height) - var(--size-20))) {
   max-width: 100%;
   min-height: $min-height;
   @include page-stack();
@@ -21,8 +60,8 @@
 
 @mixin panel-surface(
   $background: var(--surface-base),
-  $border: 1px solid var(--border-subtle),
-  $radius: 10px,
+  $border: var(--size-1) solid var(--border-subtle),
+  $radius: var(--radius-10),
   $shadow: var(--shadow-soft)
 ) {
   background: $background;
@@ -34,11 +73,11 @@
 @mixin toolbar-surface(
   $justify: flex-start,
   $wrap: wrap,
-  $padding: 10px,
-  $gap: 10px,
+  $padding: var(--size-10),
+  $gap: var(--size-10),
   $background: var(--surface-base),
-  $border: 1px solid var(--border-subtle),
-  $radius: 10px,
+  $border: var(--size-1) solid var(--border-subtle),
+  $radius: var(--radius-10),
   $shadow: var(--shadow-soft)
 ) {
   display: flex;
@@ -52,8 +91,8 @@
 
 @mixin table-shell(
   $background: var(--surface-base),
-  $border: 1px solid var(--border-subtle),
-  $radius: 10px,
+  $border: var(--size-1) solid var(--border-subtle),
+  $radius: var(--radius-10),
   $shadow: var(--shadow-soft),
   $overflow-x: auto,
   $overflow-y: visible
@@ -64,10 +103,10 @@
 }
 
 @mixin metric-card(
-  $padding: 10px,
+  $padding: var(--size-10),
   $background: var(--surface-base),
-  $border: 1px solid var(--border-subtle),
-  $radius: 10px,
+  $border: var(--size-1) solid var(--border-subtle),
+  $radius: var(--radius-10),
   $shadow: var(--shadow-soft)
 ) {
   position: relative;
@@ -77,19 +116,19 @@
   @include panel-surface($background, $border, $radius, $shadow);
 }
 
-@mixin data-table-base($font-size: 13px, $collapse: collapse) {
+@mixin data-table-base($font-size: var(--size-14), $collapse: collapse) {
   width: 100%;
   border-collapse: $collapse;
   font-size: $font-size;
 }
 
 @mixin data-table-head-cell(
-  $padding: 10px,
+  $padding: var(--size-10),
   $background: var(--surface-muted),
-  $font-size: 12px,
+  $font-size: var(--size-12),
   $font-weight: 600,
   $color: var(--text-tertiary),
-  $border-bottom: 1px solid var(--border-subtle)
+  $border-bottom: var(--size-1) solid var(--border-subtle)
 ) {
   padding: $padding;
   background: $background;
@@ -100,10 +139,10 @@
 }
 
 @mixin data-table-body-cell(
-  $padding: 10px,
+  $padding: var(--size-10),
   $background: transparent,
   $color: var(--text-primary),
-  $border-bottom: 1px solid var(--border-subtle)
+  $border-bottom: var(--size-1) solid var(--border-subtle)
 ) {
   padding: $padding;
   background: $background;
@@ -112,13 +151,13 @@
 }
 
 @mixin control-button(
-  $min-height: 40px,
-  $padding: 0 10px,
-  $radius: 10px,
-  $border: 1px solid var(--border-subtle),
+  $min-height: var(--size-40),
+  $padding: 0 var(--size-10),
+  $radius: var(--radius-10),
+  $border: var(--size-1) solid var(--border-subtle),
   $background: var(--surface-muted),
   $color: var(--text-secondary),
-  $font-size: 14px,
+  $font-size: var(--size-14),
   $font-weight: 600
 ) {
   min-height: $min-height;
@@ -130,16 +169,11 @@
   font-size: $font-size;
   font-weight: $font-weight;
   cursor: pointer;
-  transition:
-    transform var(--transition-fast),
-    border-color var(--transition-fast),
-    background var(--transition-fast),
-    color var(--transition-fast),
-    box-shadow var(--transition-fast);
+  transition: var(--motion-transition-interactive-fast);
 
   &:focus-visible {
     outline: none;
-    border-color: rgba(var(--accent-rgb), 0.42);
+    border-color: rgba(var(--accent-rgb), var(--alpha-42));
     box-shadow: var(--focus-ring);
   }
 
@@ -152,13 +186,13 @@
 }
 
 @mixin accent-button(
-  $min-height: 40px,
-  $padding: 0 10px,
-  $radius: 10px,
+  $min-height: var(--size-40),
+  $padding: 0 var(--size-10),
+  $radius: var(--radius-10),
   $background: var(--accent),
   $color: var(--text-inverse),
-  $border: 1px solid transparent,
-  $font-size: 14px,
+  $border: var(--size-1) solid transparent,
+  $font-size: var(--size-14),
   $font-weight: 700,
   $shadow: none
 ) {
@@ -167,13 +201,13 @@
 }
 
 @mixin input-control(
-  $min-height: 40px,
-  $padding: 0 10px,
-  $radius: 10px,
-  $border: 1px solid var(--border-subtle),
+  $min-height: var(--size-40),
+  $padding: 0 var(--size-10),
+  $radius: var(--radius-10),
+  $border: var(--size-1) solid var(--border-subtle),
   $background: var(--surface-muted),
   $color: var(--text-primary),
-  $font-size: 14px
+  $font-size: var(--size-14)
 ) {
   min-height: $min-height;
   padding: $padding;
@@ -183,22 +217,22 @@
   color: $color;
   font-size: $font-size;
   outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  transition: var(--motion-transition-surface-fast);
 
   &:focus,
   &:focus-visible {
-    border-color: rgba(var(--accent-rgb), 0.42);
+    border-color: rgba(var(--accent-rgb), var(--alpha-42));
     box-shadow: var(--focus-ring);
   }
 }
 
 @mixin pill-badge(
-  $min-height: 28px,
-  $padding: 0 10px,
-  $radius: 999px,
+  $min-height: var(--size-28),
+  $padding: 0 var(--size-10),
+  $radius: var(--radius-pill),
   $background: var(--accent-light),
   $color: var(--accent),
-  $font-size: 12px,
+  $font-size: var(--size-12),
   $font-weight: 700
 ) {
   display: inline-flex;
@@ -214,11 +248,11 @@
 }
 
 @mixin segmented-control-shell(
-  $gap: 4px,
-  $padding: 4px,
-  $background: color-mix(in srgb, var(--surface-base) 92%, var(--surface-muted)),
-  $border: 1px solid var(--border-subtle),
-  $radius: 999px
+  $gap: var(--size-4),
+  $padding: var(--size-4),
+  $background: color-mix(in srgb, var(--surface-base) var(--mix-92), var(--surface-muted)),
+  $border: var(--size-1) solid var(--border-subtle),
+  $radius: var(--radius-pill)
 ) {
   display: inline-flex;
   align-items: center;
@@ -228,21 +262,21 @@
 }
 
 @mixin segmented-control-item(
-  $min-height: 34px,
-  $padding: 0 12px,
-  $radius: 999px,
-  $font-size: 13px,
+  $min-height: var(--size-34),
+  $padding: 0 var(--size-12),
+  $radius: var(--radius-pill),
+  $font-size: var(--size-14),
   $font-weight: 600
 ) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--size-6);
   @include control-button(
     $min-height,
     $padding,
     $radius,
-    1px solid transparent,
+    var(--size-1) solid transparent,
     transparent,
     var(--text-secondary),
     $font-size,
@@ -250,25 +284,25 @@
   );
 }
 
-@mixin underline-tabs-shell($gap: 12px) {
+@mixin underline-tabs-shell($gap: var(--size-12)) {
   display: inline-flex;
   align-items: center;
   gap: $gap;
-  padding: 0 2px;
-  border-bottom: 1px solid var(--border);
+  padding: 0 var(--size-2);
+  border-bottom: var(--size-1) solid var(--border);
   background: transparent;
 }
 
 @mixin underline-tab-item(
-  $font-size: 14px,
+  $font-size: var(--size-14),
   $font-weight: 700,
-  $padding-bottom: 10px
+  $padding-bottom: var(--size-10)
 ) {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--size-6);
   @include control-button(
     0,
     0,
@@ -284,7 +318,7 @@
   border-radius: 0;
 }
 
-@mixin native-progress($fill: var(--accent), $radius: 999px) {
+@mixin native-progress($fill: var(--accent), $radius: var(--radius-pill)) {
   width: 100%;
   height: 100%;
   appearance: none;
@@ -308,10 +342,12 @@
   }
 }
 
-@mixin flex-center-column($gap: 10px) {
+@mixin flex-center-column($gap: var(--size-10)) {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: $gap;
 }
+
+

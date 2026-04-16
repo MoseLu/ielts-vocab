@@ -1,39 +1,39 @@
 .wordlist-item-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--size-12);
     flex-shrink: 0;
     align-self: center;
     margin-left: auto;
-    padding-left: 14px;
+    padding-left: var(--size-14);
 }
 
 .wordlist-action-btn {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
+    width: var(--size-40);
+    height: var(--size-40);
+    min-width: var(--size-40);
     padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--surface-border-strong);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--surface-elevated) 90%, transparent);
+    border: var(--size-1) solid var(--surface-border-strong);
+    border-radius: var(--size-10);
+    background: color-mix(in srgb, var(--surface-elevated) var(--mix-90), transparent);
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 
 .wordlist-action-btn--familiar {
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 700;
     letter-spacing: 0.01em;
 }
 
 .wordlist-action-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
     color: var(--text-primary);
-    border-color: color-mix(in srgb, var(--accent) 28%, var(--surface-border-strong));
+    border-color: color-mix(in srgb, var(--accent) var(--mix-28), var(--surface-border-strong));
     background: var(--surface-hover);
 }
 
@@ -43,8 +43,8 @@
 }
 
 .wordlist-action-btn svg {
-    width: 20px;
-    height: 20px;
+    width: var(--size-20);
+    height: var(--size-20);
     flex-shrink: 0;
 }
 
@@ -60,16 +60,18 @@
 
 .wordlist-action-btn--familiar.is-active {
     color: var(--success);
-    border-color: color-mix(in srgb, var(--success) 32%, var(--surface-border-strong));
-    background: color-mix(in srgb, var(--success-light) 72%, var(--surface-elevated));
+    border-color: color-mix(in srgb, var(--success) var(--mix-32), var(--surface-border-strong));
+    background: color-mix(in srgb, var(--success-light) var(--mix-72), var(--surface-elevated));
 }
 
 .wordlist-action-btn--favorite.is-active {
     color: var(--chart-series-5);
-    border-color: color-mix(in srgb, var(--chart-series-5) 32%, var(--surface-border-strong));
-    background: color-mix(in srgb, var(--chart-series-5) 12%, var(--surface-elevated));
+    border-color: color-mix(in srgb, var(--chart-series-5) var(--mix-32), var(--surface-border-strong));
+    background: color-mix(in srgb, var(--chart-series-5) var(--mix-12), var(--surface-elevated));
 }
 
 .wordlist-action-btn.is-pending {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+    box-shadow: inset 0 0 0 var(--size-1) color-mix(in srgb, var(--accent) var(--mix-18), transparent);
 }
+
+

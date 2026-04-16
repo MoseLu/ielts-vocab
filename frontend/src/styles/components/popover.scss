@@ -2,9 +2,9 @@
    Matches Element Plus el-dropdown / el-popper behavior:
    1. Portal-rendered to body (handled in JS)
    2. Open animation: fade + slide; Close animation: fade + slide (reverse)
-   3. Arrow uses 1px border technique — identical to el-popper__arrow
+   3. Arrow uses var(--size-1) border technique — identical to el-popper__arrow
       - Arrow is a 10×10 square rotated 45°
-      - base border: 1px solid var(--border)
+      - base border: var(--size-1) solid var(--border)
       - Two inner-facing sides set to transparent per placement
       - z-index: -1 lets the panel background cover the inner half
    ──────────────────────────────────────────────────────────────────────── */
@@ -16,7 +16,7 @@
     top: var(--popover-top, 0);
     min-width: var(--popover-min-width, auto);
     background: var(--surface-floating);
-    border: 1px solid var(--border-strong);
+    border: var(--size-1) solid var(--border-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-floating);
     z-index: var(--layer-tooltip);
@@ -46,20 +46,20 @@
 .popover-panel[data-placement^="right"].popover-closing  { animation-name: popoverFadeOut; }
 
 @keyframes popoverSlideDown {
-    from { opacity: 0; transform: translateY(-6px); }
+    from { opacity: 0; transform: translateY(calc(var(--size-6) * -1)); }
     to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes popoverSlideDownOut {
     from { opacity: 1; transform: translateY(0); }
-    to   { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 0; transform: translateY(calc(var(--size-6) * -1)); }
 }
 @keyframes popoverSlideUp {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(var(--size-6)); }
     to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes popoverSlideUpOut {
     from { opacity: 1; transform: translateY(0); }
-    to   { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 0; transform: translateY(var(--size-6)); }
 }
 @keyframes popoverFadeIn {
     from { opacity: 0; }
@@ -72,23 +72,23 @@
 
 .popover-content {
     position: relative;
-    z-index: 2;
+    z-index: var(--layer-above);
     padding: var(--space-xs);
 }
 
 /* ── Arrow ─────────────────────────────────────────────────────────────────
    Element Plus technique (el-popper__arrow):
    - 10×10 square with transform: rotate(45deg)
-   - Full 1px border; two inner-facing sides set transparent per placement
+   - Full var(--size-1) border; two inner-facing sides set transparent per placement
    - z-index: -1 → panel background covers the inner (panel-side) half
    - Floating UI sets arrow.x / arrow.y to align with trigger center
    ──────────────────────────────────────────────────────────────────────── */
 
 .popover-arrow {
     position: absolute;
-    width: 10px;
-    height: 10px;
-    z-index: -1;          /* behind panel background; outer tip remains visible */
+    width: var(--size-10);
+    height: var(--size-10);
+    z-index: var(--layer-underlay);          /* behind panel background; outer tip remains visible */
     pointer-events: none;
 }
 
@@ -97,7 +97,7 @@
     position: absolute;
     inset: 0;
     background: var(--surface-floating);
-    border: 1px solid var(--border-strong);
+    border: var(--size-1) solid var(--border-strong);
     transform: rotate(45deg);
     box-sizing: border-box;
 }
@@ -108,7 +108,7 @@
    and upper-right ("top" border) — both should be COLORED.
    Inner sides ("right" + "bottom") → transparent.                        */
 .popover-panel[data-placement^="bottom"] .popover-arrow {
-    top: -6px;
+    top: calc(var(--size-6) * -1);
 }
 .popover-panel[data-placement^="bottom"] .popover-arrow::before {
     border-right-color: transparent;
@@ -120,7 +120,7 @@
    Visible sides: lower-right ("right") + lower-left ("bottom").
    Inner sides ("top" + "left") → transparent.                            */
 .popover-panel[data-placement^="top"] .popover-arrow {
-    bottom: -6px;
+    bottom: calc(var(--size-6) * -1);
 }
 .popover-panel[data-placement^="top"] .popover-arrow::before {
     border-top-color: transparent;
@@ -132,7 +132,7 @@
    Visible sides: upper-left ("left") + lower-left ("bottom").
    Inner sides ("top" + "right") → transparent.                           */
 .popover-panel[data-placement^="right"] .popover-arrow {
-    left: -6px;
+    left: calc(var(--size-6) * -1);
 }
 .popover-panel[data-placement^="right"] .popover-arrow::before {
     border-top-color: transparent;
@@ -144,7 +144,7 @@
    Visible sides: upper-right ("top") + lower-right ("right").
    Inner sides ("left" + "bottom") → transparent.                         */
 .popover-panel[data-placement^="left"] .popover-arrow {
-    right: -6px;
+    right: calc(var(--size-6) * -1);
 }
 .popover-panel[data-placement^="left"] .popover-arrow::before {
     border-left-color: transparent;
@@ -159,12 +159,12 @@
 .popover-option {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--size-10);
     width: 100%;
-    padding: 9px 14px;
+    padding: var(--size-10) var(--size-14);
     background: none;
     border: none;
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 500;
     color: var(--text-primary);
     cursor: pointer;
@@ -192,29 +192,29 @@
 }
 
 .ctx-opt-count {
-    font-size: 11px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
     flex-shrink: 0;
 }
 
 .ctx-radio {
-    width: 14px;
-    height: 14px;
+    width: var(--size-14);
+    height: var(--size-14);
     border-radius: 50%;
-    border: 2px solid var(--border-subtle);
+    border: var(--size-2) solid var(--border-subtle);
     flex-shrink: 0;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 
 .ctx-radio.checked {
     border-color: var(--accent);
     background: var(--accent);
-    box-shadow: inset 0 0 0 2.5px var(--surface-floating);
+    box-shadow: inset 0 0 0 calc(var(--size-5) / 2) var(--surface-floating);
 }
 
 .popover-loading {
-    padding: 20px 14px;
-    font-size: 13px;
+    padding: var(--size-20) var(--size-14);
+    font-size: var(--size-14);
     color: var(--text-tertiary);
     text-align: center;
 }
@@ -228,8 +228,8 @@
 }
 
 .popover-avatar-btn {
-    width: 40px;
-    height: 40px;
+    width: var(--size-40);
+    height: var(--size-40);
     border-radius: var(--radius-full);
     background: var(--accent);
     color: var(--text-inverse);
@@ -237,7 +237,7 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 15px;
+    font-size: var(--size-16);
     flex-shrink: 0;
     overflow: hidden;
     border: none;
@@ -255,18 +255,18 @@
 }
 
 .popover-user-name {
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 600;
     color: var(--text-primary);
 }
 
 .popover-user-email {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
 }
 
 .popover-divider {
-    height: 1px;
+    height: var(--size-1);
     background: var(--border-subtle);
     margin: var(--space-xs) 0;
 }
@@ -275,9 +275,9 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 9px var(--space-md);
+    padding: var(--size-10) var(--space-md);
     border-radius: var(--radius-md);
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 500;
     color: var(--text-primary);
     background: none;
@@ -295,3 +295,5 @@
 
 .popover-item-danger { color: var(--error); }
 .popover-item-danger:hover { background: var(--error-light); color: var(--error); }
+
+

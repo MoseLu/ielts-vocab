@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import {
   type WrongWordCollectionScope,
   type WrongWordDimension,
@@ -95,7 +96,7 @@ export function ErrorsWordItem({
               <div className="errors-meter-bar">
                 <span
                   className={`errors-meter-fill errors-meter-fill--${progress.statusTone}`}
-                  style={{ width: `${progress.bookProgressPercent}%` }}
+                  style={{ '--progress-percent': `${progress.bookProgressPercent}%` } as CSSProperties}
                 />
               </div>
               <div className="errors-meter-note">{bookCompactNote}</div>
@@ -109,7 +110,7 @@ export function ErrorsWordItem({
               <div className="errors-meter-bar">
                 <span
                   className={`errors-meter-fill ${word.ebbinghaus_completed ? 'errors-meter-fill--success' : 'errors-meter-fill--accent'}`}
-                  style={{ width: `${progress.reviewProgressPercent}%` }}
+                  style={{ '--progress-percent': `${progress.reviewProgressPercent}%` } as CSSProperties}
                 />
               </div>
               <div className="errors-meter-note">{reviewCompactNote}</div>

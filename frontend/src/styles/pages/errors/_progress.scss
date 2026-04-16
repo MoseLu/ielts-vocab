@@ -1,13 +1,13 @@
 .errors-filter-shortcuts {
     display: flex;
-    gap: 8px;
+    gap: var(--size-8);
     flex-wrap: wrap;
     align-items: flex-end;
 }
 
 .errors-stage-row {
     display: flex;
-    gap: 8px;
+    gap: var(--size-8);
     flex-wrap: wrap;
     justify-content: flex-end;
 }
@@ -15,10 +15,10 @@
 .errors-stage-pill {
     display: inline-flex;
     align-items: center;
-    min-height: 24px;
-    padding: 0 10px;
+    min-height: var(--size-24);
+    padding: 0 var(--size-10);
     border-radius: var(--radius-full);
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 700;
 }
 
@@ -34,7 +34,7 @@
 
 .errors-stage-pill--accent,
 .errors-stage-pill--today {
-    background: color-mix(in srgb, var(--accent) 12%, var(--bg-color));
+    background: color-mix(in srgb, var(--accent) var(--mix-12), var(--bg-color));
     color: var(--accent);
 }
 
@@ -44,18 +44,18 @@
 }
 
 .errors-stage-note {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
 }
 
 .errors-item-compact-row {
-    --errors-bottom-card-height: 76px;
+    --errors-bottom-card-height: var(--size-76);
 }
 
 .errors-item-meters {
     display: flex;
     align-items: stretch;
-    gap: 10px;
+    gap: var(--size-10);
     flex: 0 0 auto;
     flex-wrap: wrap;
 }
@@ -64,10 +64,10 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-width: 176px;
+    min-width: var(--size-176);
     min-height: var(--errors-bottom-card-height);
-    padding: 10px 12px;
-    border: 1px solid var(--border);
+    padding: var(--size-10) var(--size-12);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
     background: var(--bg-secondary);
 }
@@ -76,29 +76,30 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 6px;
-    font-size: 13px;
+    gap: var(--size-10);
+    margin-bottom: var(--size-6);
+    font-size: var(--size-14);
     color: var(--text-secondary);
 }
 
 .errors-meter-head strong {
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: var(--size-14);
 }
 
 .errors-meter-bar,
 .errors-dim-track-bar {
     position: relative;
     overflow: hidden;
-    height: 7px;
+    height: var(--size-8);
     border-radius: var(--radius-full);
-    background: color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, var(--border) var(--mix-80), transparent);
 }
 
 .errors-meter-fill,
 .errors-dim-track-fill {
     display: block;
+    width: var(--progress-percent, 0%);
     height: 100%;
     border-radius: inherit;
     background: var(--accent);
@@ -119,16 +120,16 @@
 
 .errors-meter-note,
 .errors-dim-track-note {
-    margin-top: 6px;
-    font-size: 12px;
+    margin-top: var(--size-6);
+    font-size: var(--size-12);
     color: var(--text-secondary);
 }
 
 .errors-item-dim-tracks {
     display: flex;
     align-items: stretch;
-    gap: 10px;
-    flex: 1 1 260px;
+    gap: var(--size-10);
+    flex: 1 1 var(--size-260);
     min-width: 0;
     flex-wrap: wrap;
 }
@@ -137,38 +138,38 @@
     display: flex;
     align-items: center;
     min-height: var(--errors-bottom-card-height);
-    padding: 8px 12px;
-    border: 1px solid var(--border);
+    padding: var(--size-8) var(--size-12);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
     background: var(--bg-color);
     min-width: 0;
 }
 
 .errors-dim-track.is-pending {
-    background: color-mix(in srgb, var(--warning-bg) 82%, var(--bg-color));
+    background: color-mix(in srgb, var(--warning-bg) var(--mix-82), var(--bg-color));
 }
 
 .errors-dim-track.is-cleared {
-    background: color-mix(in srgb, var(--success-bg) 82%, var(--bg-color));
+    background: color-mix(in srgb, var(--success-bg) var(--mix-82), var(--bg-color));
 }
 
 .errors-dim-track.is-highlighted {
-    border-color: color-mix(in srgb, var(--accent) 44%, var(--border));
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--accent) var(--mix-44), var(--border));
+    box-shadow: 0 0 0 var(--size-1) color-mix(in srgb, var(--accent) var(--mix-18), transparent);
 }
 
 .errors-dim-track-head {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
+    gap: var(--size-8);
+    font-size: var(--size-12);
     color: var(--text-secondary);
     flex-wrap: wrap;
 }
 
 .errors-dim-track-head strong {
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: var(--size-12);
 }
 
 @media (max-width: 768px) {
@@ -185,10 +186,12 @@
     }
 
     .errors-meter {
-        flex: 1 1 140px;
+        flex: 1 1 var(--size-140);
     }
 
     .errors-item-dim-tracks {
         width: 100%;
     }
 }
+
+

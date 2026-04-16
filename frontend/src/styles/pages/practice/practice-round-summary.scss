@@ -2,23 +2,23 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
-    width: min(100%, 760px);
+    gap: var(--size-24);
+    width: min(100%, var(--size-760));
     min-height: 70vh;
     margin: 0 auto;
-    padding: clamp(48px, 9vh, 84px) var(--space-lg) var(--space-2xl);
+    padding: clamp(var(--size-48), 9vh, var(--size-84)) var(--space-lg) var(--space-2xl);
     text-align: center;
 }
 
 .practice-round-summary__eyebrow {
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 700;
     letter-spacing: 0.08em;
     color: var(--text-tertiary);
 }
 
 .practice-round-summary__title {
-    font-size: clamp(32px, 4vw, 44px);
+    font-size: clamp(var(--size-32), 4vw, var(--size-44));
     font-weight: 800;
     line-height: 1.05;
     color: var(--text-primary);
@@ -28,26 +28,26 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 24px 40px;
+    gap: var(--size-24) var(--size-40);
 }
 
 .practice-round-summary__stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    min-width: 92px;
+    gap: var(--size-6);
+    min-width: var(--size-92);
 }
 
 .practice-round-summary__stat-value {
-    font-size: clamp(34px, 4vw, 48px);
+    font-size: clamp(var(--size-34), 4vw, var(--size-48));
     font-weight: 800;
     line-height: 1;
     color: var(--text-primary);
 }
 
 .practice-round-summary__stat-label {
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 600;
     color: var(--text-secondary);
 }
@@ -58,21 +58,21 @@
 .practice-round-summary__stat--success .practice-round-summary__stat-value { color: var(--success); }
 
 .practice-round-summary__note {
-    max-width: 540px;
-    font-size: 14px;
+    max-width: var(--size-540);
+    font-size: var(--size-14);
     line-height: 1.7;
     color: var(--text-secondary);
 }
 
 .practice-round-summary__section {
     width: 100%;
-    max-width: 540px;
+    max-width: var(--size-540);
     text-align: left;
 }
 
 .practice-round-summary__section-title {
-    margin-bottom: 12px;
-    font-size: 13px;
+    margin-bottom: var(--size-12);
+    font-size: var(--size-14);
     font-weight: 700;
     letter-spacing: 0.06em;
     color: var(--text-tertiary);
@@ -81,15 +81,15 @@
 .practice-round-summary__chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .practice-round-summary__chip {
-    padding: 6px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
+    padding: var(--size-6) var(--size-12);
+    border-radius: var(--radius-pill);
+    border: var(--size-1) solid var(--border);
     background: var(--bg-color);
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-primary);
 }
 
@@ -97,18 +97,18 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 12px;
+    gap: var(--size-12);
 }
 
 .practice-round-summary__action {
-    min-width: 148px;
-    padding: 12px 24px;
+    min-width: var(--size-148);
+    padding: var(--size-12) var(--size-24);
     border-radius: var(--radius-lg);
-    border: 2px solid var(--accent);
-    font-size: 14px;
+    border: var(--size-2) solid var(--accent);
+    font-size: var(--size-14);
     font-weight: 700;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 
 .practice-round-summary__action--primary {
@@ -119,7 +119,7 @@
 .practice-round-summary__action--primary:hover {
     background: var(--accent-hover);
     border-color: var(--accent-hover);
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
 }
 
 .practice-round-summary__action--secondary {
@@ -128,20 +128,22 @@
 }
 
 .practice-round-summary__action--secondary:hover {
-    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    background: color-mix(in srgb, var(--accent) var(--mix-10), transparent);
 }
 
 @media (max-width: 640px) {
     .practice-round-summary {
-        gap: 20px;
+        gap: var(--size-20);
         padding-inline: var(--space-md);
     }
 
     .practice-round-summary__stats {
-        gap: 20px 24px;
+        gap: var(--size-20) var(--size-24);
     }
 
     .practice-round-summary__action {
         width: 100%;
     }
 }
+
+

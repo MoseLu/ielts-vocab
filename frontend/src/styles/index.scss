@@ -36,6 +36,7 @@
 /* Pages: Home / Study Center */
 @use './pages/study-center/index.scss' as *;
 @use './pages/books/index.scss' as *;
+@use './pages/exams/index.scss' as *;
 
 /* Pages: Practice */
 @use './pages/practice/index.scss' as *;
@@ -70,3 +71,5 @@
 
 /* Late mobile overrides */
 @use './pages/practice/practice-mobile-overrides.scss' as *;
+
+

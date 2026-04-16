@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   AdminDetailTab,
   buildSessionContent,
   buildSessionWordSample,
@@ -298,7 +299,10 @@ export function AdminDashboardModal({
                             <span>{b.total_words > 0 ? `${learnedWords} / ${b.total_words} 词` : `${learnedWords} 词`}</span>
                           </div>
                           <div className="admin-book-progress__track" aria-hidden="true">
-                            <span className="admin-book-progress__fill" style={{ width: `${progressPercent}%` }} />
+                            <span
+                              className="admin-book-progress__fill"
+                              style={{ '--progress-percent': `${progressPercent}%` } as CSSProperties}
+                            />
                           </div>
                         </div>
                       </td>

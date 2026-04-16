@@ -8,19 +8,19 @@
     align-items: center;
     justify-content: center;
     z-index: var(--layer-topmost);
-    backdrop-filter: blur(2px);
-    padding: 24px;
+    backdrop-filter: blur(var(--size-2));
+    padding: var(--size-24);
     overflow-y: auto;
 }
 
 .avatar-modal {
-    width: min(100%, 420px);
-    max-width: 420px;
-    max-height: calc(100vh - 48px);
+    width: min(100%, var(--size-420));
+    max-width: var(--size-420);
+    max-height: calc(100vh - var(--size-48));
     background: var(--surface-elevated);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
-    border: 1px solid var(--border-strong);
+    border: var(--size-1) solid var(--border-strong);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -32,12 +32,12 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-lg) var(--space-xl);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: var(--size-1) solid var(--border-subtle);
     background: var(--surface-subtle);
 }
 
 .avatar-modal-header h3 {
-    font-size: 16px;
+    font-size: var(--size-16);
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
@@ -48,7 +48,7 @@
     border: none;
     cursor: pointer;
     color: var(--text-secondary);
-    padding: 4px;
+    padding: var(--size-4);
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
@@ -61,8 +61,8 @@
 }
 
 .avatar-modal-close svg {
-    width: 18px;
-    height: 18px;
+    width: var(--size-18);
+    height: var(--size-18);
 }
 
 .avatar-modal-body {
@@ -75,11 +75,11 @@
 }
 
 .avatar-preview-area {
-    width: 128px;
-    height: 128px;
+    width: var(--size-128);
+    height: var(--size-128);
     border-radius: var(--radius-full);
     overflow: hidden;
-    border: 3px solid var(--border-subtle);
+    border: var(--size-3) solid var(--border-subtle);
     background: var(--surface-muted);
     box-shadow: var(--shadow-soft);
 }
@@ -96,7 +96,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 40px;
+    font-size: var(--size-40);
     font-weight: 700;
     color: var(--text-tertiary);
     background: var(--surface-inset);
@@ -122,7 +122,7 @@
     color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 500;
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -133,17 +133,17 @@
 }
 
 .avatar-upload-btn svg {
-    width: 16px;
-    height: 16px;
+    width: var(--size-16);
+    height: var(--size-16);
 }
 
 .avatar-remove-btn {
     padding: var(--space-sm) var(--space-lg);
     background: none;
     color: var(--error);
-    border: 1px solid var(--error);
+    border: var(--size-1) solid var(--error);
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--size-14);
     cursor: pointer;
     transition: background var(--transition-fast);
 }
@@ -153,16 +153,16 @@
 }
 
 .avatar-hint {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
     margin: 0;
 }
 
 .avatar-error {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--error);
     background: var(--error-light);
-    border: 1px solid var(--error);
+    border: var(--size-1) solid var(--error);
     border-radius: var(--radius-md);
     padding: var(--space-sm) var(--space-md);
     width: 100%;
@@ -174,7 +174,7 @@
     flex-wrap: wrap;
     gap: var(--space-sm);
     padding: var(--space-lg) var(--space-xl);
-    border-top: 1px solid var(--border-subtle);
+    border-top: var(--size-1) solid var(--border-subtle);
     justify-content: flex-end;
     background: var(--surface-subtle);
 }
@@ -183,9 +183,9 @@
     padding: var(--space-sm) var(--space-xl);
     background: none;
     color: var(--text-secondary);
-    border: 1px solid var(--border-subtle);
+    border: var(--size-1) solid var(--border-subtle);
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--size-14);
     cursor: pointer;
     transition: background var(--transition-fast);
 }
@@ -200,7 +200,7 @@
     color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 600;
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -218,11 +218,11 @@
 
 /* User avatar image in header button */
 .user-avatar-img {
-    width: 28px;
-    height: 28px;
+    width: var(--size-28);
+    height: var(--size-28);
     border-radius: var(--radius-full);
     object-fit: cover;
-    border: 2px solid var(--accent);
+    border: var(--size-2) solid var(--accent);
 }
 
 /* User dropdown header section */
@@ -235,8 +235,8 @@
 
 /* Clickable avatar in dropdown — replaces .user-dropdown-avatar */
 .user-dropdown-avatar-btn {
-    width: 40px;
-    height: 40px;
+    width: var(--size-40);
+    height: var(--size-40);
     border-radius: var(--radius-full);
     background: var(--accent);
     color: var(--text-inverse);
@@ -244,7 +244,7 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 15px;
+    font-size: var(--size-16);
     flex-shrink: 0;
     overflow: hidden;
     border: none;
@@ -268,7 +268,7 @@
     inset: 0;
     background: var(--overlay);
     color: var(--text-inverse);
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -284,8 +284,8 @@
 
 /* Keep old class as alias in case used elsewhere */
 .user-dropdown-avatar {
-    width: 36px;
-    height: 36px;
+    width: var(--size-36);
+    height: var(--size-36);
     border-radius: var(--radius-full);
     background: var(--accent);
     color: var(--text-inverse);
@@ -293,24 +293,26 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 15px;
+    font-size: var(--size-16);
     flex-shrink: 0;
     overflow: hidden;
 }
 
 .user-dropdown-name {
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 600;
     color: var(--text-primary);
 }
 
 .user-dropdown-email {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
 }
 
 .user-dropdown-divider {
-    height: 1px;
+    height: var(--size-1);
     background: var(--border);
     margin: var(--space-xs) 0;
 }
+
+

@@ -9,12 +9,12 @@
 .practice-page,
 .qm-root,
 .qm-summary {
-    --practice-main-max-width: 970px;
-    --practice-shell-max-width: 800px;
-    --practice-header-max-width: 760px;
-    --practice-compact-max-width: 570px;
-    --practice-inline-max-width: 370px;
-    --practice-choice-grid-max-width: 940px;
+    --practice-main-max-width: var(--size-970);
+    --practice-shell-max-width: var(--size-800);
+    --practice-header-max-width: var(--size-760);
+    --practice-compact-max-width: var(--size-570);
+    --practice-inline-max-width: var(--size-375);
+    --practice-choice-grid-max-width: var(--size-940);
 }
 
 @media (min-width: 1024px) {
@@ -22,12 +22,12 @@
     .practice-page,
     .qm-root,
     .qm-summary {
-        --practice-main-max-width: 1050px;
-        --practice-shell-max-width: 860px;
-        --practice-header-max-width: 820px;
-        --practice-compact-max-width: 630px;
-        --practice-inline-max-width: 410px;
-        --practice-choice-grid-max-width: 1040px;
+        --practice-main-max-width: var(--size-1050);
+        --practice-shell-max-width: var(--size-860);
+        --practice-header-max-width: var(--size-820);
+        --practice-compact-max-width: var(--size-630);
+        --practice-inline-max-width: var(--size-410);
+        --practice-choice-grid-max-width: var(--size-1040);
     }
 }
 
@@ -47,9 +47,9 @@
 
 /* Practice Container */
 .practice-container {
-    max-width: var(--practice-header-max-width, 680px);
+    max-width: var(--practice-header-max-width, var(--size-680));
     margin: 0 auto;
-    padding-top: calc(var(--space-xl) + 4px);
+    padding-top: calc(var(--space-xl) + var(--size-4));
 }
 
 /* Practice Header */
@@ -66,7 +66,7 @@
     bottom: var(--space-lg);
     right: var(--space-lg);
     background: var(--bg-color);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-full);
     padding: var(--space-sm) var(--space-md);
     display: flex;
@@ -80,7 +80,7 @@
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(var(--size-20));
     }
     to {
         opacity: 1;
@@ -89,26 +89,27 @@
 }
 
 .progress-bar-fixed .progress-text {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
     font-weight: 500;
 }
 
 .progress-bar-fixed .progress-count {
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 700;
     color: var(--accent);
 }
 
 .progress-bar-fixed .progress-track {
-    width: 80px;
-    height: 6px;
+    width: var(--size-80);
+    height: var(--size-6);
     background: var(--bg-tertiary);
     border-radius: var(--radius-full);
     overflow: hidden;
 }
 
 .progress-bar-fixed .progress-fill {
+    width: var(--progress-percent, 0%);
     height: 100%;
   background: var(--accent);
     border-radius: var(--radius-full);
@@ -131,8 +132,8 @@
 }
 
 .stat-dot {
-    width: 10px;
-    height: 10px;
+    width: var(--size-10);
+    height: var(--size-10);
     border-radius: var(--radius-full);
 }
 
@@ -145,7 +146,7 @@
 }
 
 .stat-value {
-    font-size: 18px;
+    font-size: var(--size-18);
     font-weight: 700;
 }
 
@@ -158,7 +159,7 @@
 }
 
 .stat-label {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-tertiary);
 }
 
@@ -169,12 +170,12 @@
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: var(--space-sm);
-    letter-spacing: -1px;
+    letter-spacing: calc(var(--size-1) * -1);
 }
 
 @media (max-width: 768px) {
     .current-word {
-        font-size: 36px;
+        font-size: var(--size-36);
     }
 }
 
@@ -182,8 +183,8 @@
 
 /* Play Button - Centered Large */
 .play-btn {
-    width: 82px;
-    height: 82px;
+    width: var(--size-82);
+    height: var(--size-82);
   background: var(--accent);
     border: none;
     border-radius: var(--radius-full);
@@ -192,7 +193,7 @@
     align-items: center;
     justify-content: center;
     color: var(--text-inverse);
-    transition: all var(--transition-normal);
+    transition: var(--motion-transition-interactive-normal);
     box-shadow: var(--glow-accent);
     margin-bottom: var(--space-lg);
 }
@@ -220,6 +221,8 @@
 }
 
 .play-btn svg {
-    width: 31px;
-    height: 31px;
+    width: var(--size-31);
+    height: var(--size-31);
 }
+
+

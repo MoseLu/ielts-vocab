@@ -8,13 +8,14 @@
     "dev": "vite",
     "build": "pnpm run verify:repo-guards && vite build",
     "check:file-lines": "pnpm --dir .. check:file-lines",
+    "check:design-tokens": "pnpm --dir .. check:design-tokens",
     "check:style-discipline": "pnpm --dir .. check:style-discipline",
     "lint": "eslint .. --config ./eslint.config.mjs --max-warnings=0",
     "preview": "vite preview",
     "test": "pnpm run verify:repo-guards && vitest run",
     "test:watch": "pnpm run verify:repo-guards && vitest",
     "test:e2e": "playwright test",
-    "verify:repo-guards": "pnpm run check:file-lines && pnpm run check:style-discipline && pnpm run lint"
+    "verify:repo-guards": "pnpm run check:file-lines && pnpm run check:design-tokens && pnpm run check:style-discipline && pnpm run lint"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.46.1",

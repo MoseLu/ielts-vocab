@@ -1,4 +1,9 @@
 import { useLayoutEffect, type RefObject } from 'react'
+import {
+  buildMinWidthMediaQuery,
+  DESIGN_TOKEN_BREAKPOINTS,
+  DESIGN_TOKEN_SIZES,
+} from '../../lib/designTokens'
 
 export function useBalancedStatsLayout({
   layoutRef,
@@ -20,8 +25,8 @@ export function useBalancedStatsLayout({
     const bottomEl = bottomRef.current
     if (!layoutEl || !leftEl || !topEl || !bottomEl) return
 
-    const media = window.matchMedia('(min-width: 901px)')
-    const gapPx = 10
+    const media = window.matchMedia(buildMinWidthMediaQuery(DESIGN_TOKEN_BREAKPOINTS.desktop))
+    const gapPx = DESIGN_TOKEN_SIZES[10]
 
     const syncBottomHeight = () => {
       if (!media.matches) {
@@ -32,7 +37,7 @@ export function useBalancedStatsLayout({
 
       const leftHeight = Math.round(leftEl.getBoundingClientRect().height)
       const topHeight = Math.round(topEl.getBoundingClientRect().height)
-      const availableHeight = Math.max(leftHeight - topHeight - gapPx, 320)
+      const availableHeight = Math.max(leftHeight - topHeight - gapPx, DESIGN_TOKEN_SIZES[320])
 
       layoutEl.classList.add('stats-main-layout--balanced')
       bottomEl.style.setProperty('--stats-right-bottom-height', `${availableHeight}px`)

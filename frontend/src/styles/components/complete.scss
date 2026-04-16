@@ -11,8 +11,8 @@
 }
 
 .complete-icon {
-    width: 80px;
-    height: 80px;
+    width: var(--size-80);
+    height: var(--size-80);
     background: var(--success-bg);
     border-radius: var(--radius-full);
     display: flex;
@@ -23,18 +23,18 @@
 }
 
 .complete-icon svg {
-    width: 40px;
-    height: 40px;
+    width: var(--size-40);
+    height: var(--size-40);
 }
 
 .complete-title {
-    font-size: 28px;
+    font-size: var(--size-28);
     font-weight: 700;
     margin-bottom: var(--space-sm);
 }
 
 .complete-subtitle {
-    font-size: 15px;
+    font-size: var(--size-16);
     color: var(--text-secondary);
     margin-bottom: var(--space-xl);
 }
@@ -51,12 +51,14 @@
 }
 
 .complete-stat-value {
-    font-size: 36px;
+    font-size: var(--size-36);
     font-weight: 700;
     color: var(--success);
 }
 
 .complete-stat-label {
-    font-size: 14px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
 }
+
+

@@ -1,21 +1,21 @@
 .word-feedback-modal {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--size-16);
 }
 
 .word-feedback-modal__card {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-muted) 92%, transparent);
-    border: 1px solid var(--border-subtle);
+    gap: var(--size-8);
+    padding: var(--size-16);
+    border-radius: var(--size-16);
+    background: color-mix(in srgb, var(--surface-muted) var(--mix-92), transparent);
+    border: var(--size-1) solid var(--border-subtle);
 }
 
 .word-feedback-modal__word {
-    font-size: 32px;
+    font-size: var(--size-32);
     font-weight: 800;
     line-height: 1;
     color: var(--accent);
@@ -24,7 +24,7 @@
 .word-feedback-modal__meta,
 .word-feedback-modal__source {
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: var(--size-14);
 }
 
 .word-feedback-modal__definition {
@@ -35,9 +35,9 @@
 .word-feedback-modal__example {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border-subtle);
+    gap: var(--size-4);
+    padding-top: var(--size-8);
+    border-top: var(--size-1) solid var(--border-subtle);
     color: var(--text-secondary);
     line-height: 1.7;
 }
@@ -50,11 +50,11 @@
 .word-feedback-modal__section {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .word-feedback-modal__label {
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 700;
     color: var(--text-primary);
 }
@@ -62,13 +62,13 @@
 .word-feedback-modal__options {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 14px;
+    gap: var(--size-10) var(--size-14);
 }
 
 .word-feedback-modal__option {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--size-8);
     color: var(--text-secondary);
     cursor: pointer;
 }
@@ -79,33 +79,33 @@
 
 .word-feedback-modal__error {
     color: var(--error);
-    font-size: 13px;
+    font-size: var(--size-14);
 }
 
 .word-feedback-modal__actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .word-feedback-modal__secondary,
 .word-feedback-modal__primary {
-    min-width: 92px;
-    padding: 10px 16px;
-    border-radius: 10px;
+    min-width: var(--size-92);
+    padding: var(--size-10) var(--size-16);
+    border-radius: var(--size-10);
     font-weight: 600;
     cursor: pointer;
     transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .word-feedback-modal__secondary {
-    border: 1px solid var(--border-subtle);
+    border: var(--size-1) solid var(--border-subtle);
     background: var(--surface-muted);
     color: var(--text-secondary);
 }
 
 .word-feedback-modal__primary {
-    border: 1px solid var(--accent);
+    border: var(--size-1) solid var(--accent);
     background: var(--accent);
     color: var(--text-inverse);
 }
@@ -121,3 +121,5 @@
         grid-template-columns: 1fr;
     }
 }
+
+

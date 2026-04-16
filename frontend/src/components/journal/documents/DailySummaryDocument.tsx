@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Skeleton } from '../../ui'
 import {
   getPracticeModeLabel,
@@ -46,7 +47,7 @@ function SummaryProgressPanel({ progress }: { progress: SummaryGenerationJob }) 
       <div className="journal-summary-progress__track" aria-hidden="true">
         <span
           className="journal-summary-progress__fill"
-          style={{ width: `${progress.progress}%` }}
+          style={{ '--progress-percent': `${progress.progress}%` } as CSSProperties}
         />
       </div>
     </div>

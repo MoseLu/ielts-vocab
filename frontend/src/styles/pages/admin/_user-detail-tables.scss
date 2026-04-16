@@ -2,8 +2,8 @@
 @use '../../utils/mixins' as *;
 
 .admin-section-title--stacked {
-  margin-top: 20px;
-  margin-bottom: 8px;
+  margin-top: var(--size-20);
+  margin-bottom: var(--size-8);
 }
 
 .admin-inline-table {
@@ -15,22 +15,22 @@
 }
 
 .admin-inline-table-row {
-  border-top: 1px solid var(--border);
+  border-top: var(--size-1) solid var(--border);
 }
 
 .admin-inline-table-cell {
-  padding: 6px 8px;
+  padding: var(--size-6) var(--size-8);
   text-align: center;
 }
 
 .admin-inline-table-cell--left {
   text-align: center;
-  padding: 4px 8px;
+  padding: var(--size-4) var(--size-8);
 }
 
 .admin-inline-table-cell--right {
   text-align: center;
-  padding: 4px 8px;
+  padding: var(--size-4) var(--size-8);
 }
 
 .admin-cell-positive {
@@ -42,16 +42,16 @@
 }
 
 .admin-detail-summary {
-  font-size: 13px;
+  font-size: var(--size-14);
   color: var(--text-tertiary);
-  margin-bottom: 12px;
+  margin-bottom: var(--size-12);
 }
 
 .admin-detail-summary--row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--size-12);
   flex-wrap: wrap;
 }
 
@@ -59,12 +59,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--size-8);
   flex-wrap: wrap;
 }
 
 .admin-detail-action-btn {
-  @include control-button(32px, 5px 12px, 8px, 1px solid var(--border), transparent, var(--text-secondary), 12px, 500);
+  @include control-button(var(--size-32), var(--size-5) var(--size-12), var(--size-8), var(--size-1) solid var(--border), transparent, var(--text-secondary), var(--size-12), 500);
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
@@ -74,18 +74,18 @@
 }
 
 .admin-detail-action-btn.is-primary {
-  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+  border-color: color-mix(in srgb, var(--accent) var(--mix-26), var(--border));
   color: var(--accent);
 }
 
 .admin-detail-inline-filter {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--size-8);
 }
 
 .admin-detail-inline-filter__label {
-  font-size: 12px;
+  font-size: var(--size-12);
   color: var(--text-tertiary);
   white-space: nowrap;
 }
@@ -96,11 +96,11 @@
 }
 
 .admin-detail-table--favorite-words .admin-cell-ellipsis {
-  max-width: 180px;
+  max-width: var(--size-180);
 }
 
 .admin-cell-ellipsis {
-  max-width: 120px;
+  max-width: var(--size-120);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -108,5 +108,7 @@
 }
 
 .admin-cell-ellipsis--wide {
-  max-width: 200px;
+  max-width: var(--size-200);
 }
+
+

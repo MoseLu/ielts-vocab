@@ -6,13 +6,13 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--size-6);
   flex: 1;
   min-width: 0;
 }
 
 .admin-modal-username-hl {
-  font-size: 15px;
+  font-size: var(--size-16);
   font-weight: 700;
   color: var(--accent);
 }
@@ -22,27 +22,27 @@
 }
 
 .admin-modal-meta-sep {
-  font-size: 13px;
+  font-size: var(--size-14);
   color: var(--border);
   user-select: none;
 }
 
 .admin-modal-meta-item {
-  font-size: 13px;
+  font-size: var(--size-14);
   color: var(--text-tertiary);
   overflow-wrap: anywhere;
 }
 
 .admin-modal-email {
-  font-size: 12px;
+  font-size: var(--size-12);
   color: var(--text-tertiary);
-  margin-top: 2px;
+  margin-top: var(--size-2);
 }
 
 .admin-modal-meta {
-  font-size: 12px;
+  font-size: var(--size-12);
   color: var(--text-tertiary);
-  margin-top: 1px;
+  margin-top: var(--size-1);
 }
 
 .admin-modal-close {
@@ -50,8 +50,8 @@
   border: none;
   color: var(--text-tertiary);
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
+  padding: var(--size-6);
+  border-radius: var(--size-6);
   transition: color 0.12s, background 0.12s;
   flex-shrink: 0;
   line-height: 0;
@@ -67,60 +67,60 @@
 /* User summary stats row */
 .admin-modal-stats {
   display: flex;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--size-1) solid var(--border);
   overflow-x: auto;
   background: var(--bg-color);
 }
 
 .admin-modal-stat {
   flex: 1;
-  min-width: 80px;
-  padding: 12px 10px;
+  min-width: var(--size-80);
+  padding: var(--size-12) var(--size-10);
   text-align: center;
-  border-right: 1px solid var(--border);
+  border-right: var(--size-1) solid var(--border);
 }
 .admin-modal-stat:last-child { border-right: none; }
 
 .admin-modal-stat-val {
-  font-size: 17px;
+  font-size: var(--size-18);
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .admin-modal-stat-lbl {
-  font-size: 11px;
+  font-size: var(--size-12);
   color: var(--text-tertiary);
-  margin-top: 2px;
+  margin-top: var(--size-2);
 }
 
 /* Filter bar inside user detail modal */
 .admin-detail-filters {
-  @include toolbar-surface($justify: flex-start, $padding: 10px, $gap: 8px, $background: var(--bg-secondary), $border: none, $radius: 0, $shadow: none);
-  border-bottom: 1px solid var(--border);
+  @include toolbar-surface($justify: flex-start, $padding: var(--size-10), $gap: var(--size-8), $background: var(--bg-secondary), $border: none, $radius: 0, $shadow: none);
+  border-bottom: var(--size-1) solid var(--border);
 }
 
 .admin-filter-separator {
   color: var(--text-tertiary);
-  font-size: 12px;
+  font-size: var(--size-12);
 }
 
 .admin-filter-date {
-  @include input-control(32px, 5px 8px, 6px, 1px solid var(--border), var(--bg-color), var(--text-primary), 12px);
+  @include input-control(var(--size-32), var(--size-5) var(--size-8), var(--size-6), var(--size-1) solid var(--border), var(--bg-color), var(--text-primary), var(--size-12));
 }
 
 .admin-filter-select {
-  @include input-control(32px, 5px 8px, 6px, 1px solid var(--border), var(--bg-color), var(--text-primary), 12px);
+  @include input-control(var(--size-32), var(--size-5) var(--size-8), var(--size-6), var(--size-1) solid var(--border), var(--bg-color), var(--text-primary), var(--size-12));
   cursor: pointer;
 }
 
 .admin-filter-apply {
-  @include accent-button(32px, 5px 14px, 6px, var(--accent), var(--text-inverse), none, 12px, 600);
+  @include accent-button(var(--size-32), var(--size-5) var(--size-14), var(--size-6), var(--accent), var(--text-inverse), none, var(--size-12), 600);
   transition: background 0.12s;
 }
 .admin-filter-apply:hover { background: var(--accent-hover); }
 
 .admin-filter-reset {
-  @include control-button(32px, 5px 12px, 6px, 1px solid var(--border), transparent, var(--text-secondary), 12px, 400);
+  @include control-button(var(--size-32), var(--size-5) var(--size-12), var(--size-6), var(--size-1) solid var(--border), transparent, var(--text-secondary), var(--size-12), 400);
   transition: background 0.12s;
 }
 .admin-filter-reset:hover { background: var(--bg-tertiary); }
@@ -129,17 +129,17 @@
 .admin-detail-tabs {
   display: flex;
   gap: 0;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 0 var(--size-16);
+  border-bottom: var(--size-1) solid var(--border);
   background: var(--bg-secondary);
 }
 
 .admin-detail-tab {
-  padding: 10px 14px;
+  padding: var(--size-10) var(--size-14);
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  font-size: 13px;
+  border-bottom: var(--size-2) solid transparent;
+  font-size: var(--size-14);
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
@@ -154,8 +154,8 @@
 }
 
 .admin-modal-body {
-  padding: 16px 20px;
-  max-height: 520px;
+  padding: var(--size-16) var(--size-20);
+  max-height: var(--size-520);
   overflow-y: auto;
   background: var(--bg-color);
 }
@@ -165,12 +165,12 @@
   border: none;
   color: var(--text-tertiary);
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
+  padding: var(--size-6);
+  border-radius: var(--size-6);
   transition: color 0.12s, background 0.12s;
   flex-shrink: 0;
   line-height: 0;
-  margin-right: 4px;
+  margin-right: var(--size-4);
 }
 .admin-modal-toggle-fs:hover { color: var(--text-primary); background: var(--bg-tertiary); }
 
@@ -180,13 +180,13 @@
 }
 
 .admin-detail-table th {
-  @include data-table-head-cell(7px 10px, var(--bg-secondary), 11px, 600, var(--text-tertiary), 1px solid var(--border));
+  @include data-table-head-cell(var(--size-8) var(--size-10), var(--bg-secondary), var(--size-12), 600, var(--text-tertiary), var(--size-1) solid var(--border));
   text-align: center;
   white-space: nowrap;
 }
 
 .admin-detail-table td {
-  @include data-table-body-cell(9px 10px);
+  @include data-table-body-cell(var(--size-10) var(--size-10));
   vertical-align: middle;
   text-align: center;
 }
@@ -195,7 +195,7 @@
 .admin-detail-table tbody tr:hover td { background: var(--bg-secondary) !important; }
 
 .admin-book-progress {
-  min-width: 180px;
+  min-width: var(--size-180);
   margin-inline: auto;
 }
 
@@ -204,43 +204,44 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 6px;
-  font-size: 12px;
+  gap: var(--size-12);
+  margin-bottom: var(--size-6);
+  font-size: var(--size-12);
   color: var(--text-secondary);
 }
 
 .admin-book-progress__meta strong {
-  font-size: 13px;
+  font-size: var(--size-14);
   color: var(--text-primary);
 }
 
 .admin-book-progress__track {
-  height: 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 12%, var(--bg-tertiary));
+  height: var(--size-8);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--accent) var(--mix-12), var(--bg-tertiary));
   overflow: hidden;
 }
 
 .admin-book-progress__fill {
   display: block;
+  width: var(--progress-percent, 0%);
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--bg-color)));
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) var(--mix-70), var(--bg-color)));
 }
 
 .admin-book-performance {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  font-size: 12px;
+  gap: var(--size-3);
+  font-size: var(--size-12);
   text-align: center;
 }
 
 /* Status badges */
 .admin-status-badge {
-  @include pill-badge(20px, 2px 8px, 10px, transparent, var(--text-secondary), 11px, 600);
+  @include pill-badge(var(--size-20), var(--size-2) var(--size-8), var(--size-10), transparent, var(--text-secondary), var(--size-12), 600);
 }
 .admin-status-badge.completed {
   background: var(--success-bg);
@@ -260,12 +261,12 @@
 .admin-detail-chart {}
 
 .admin-section-title--compact {
-  margin-bottom: 8px;
+  margin-bottom: var(--size-8);
 }
 
 .admin-section-title--spaced {
-  margin-top: 20px;
-  margin-bottom: 8px;
+  margin-top: var(--size-20);
+  margin-bottom: var(--size-8);
 }
 
 .admin-chart-table {
@@ -273,12 +274,12 @@
 }
 
 .admin-chart-table__row {
-  border-top: 1px solid var(--border);
+  border-top: var(--size-1) solid var(--border);
 }
 
 .admin-chart-table__th,
 .admin-chart-table__td {
-  padding: 6px 8px;
+  padding: var(--size-6) var(--size-8);
 }
 
 .admin-chart-table__th {
@@ -297,32 +298,32 @@
 }
 
 .admin-detail-note {
-  font-size: 13px;
+  font-size: var(--size-14);
   color: var(--text-tertiary);
-  margin-bottom: 12px;
+  margin-bottom: var(--size-12);
 }
 
 .admin-detail-ellipsis {
-  max-width: 120px;
+  max-width: var(--size-120);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .admin-detail-ellipsis--wide {
-  max-width: 200px;
+  max-width: var(--size-200);
 }
 
 .admin-section-title {
-  font-size: 18px;
+  font-size: var(--size-18);
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: var(--size-8);
 }
 
 .admin-section-desc {
   color: var(--text-secondary);
-  font-size: 14px;
-  margin-bottom: 10px;
+  font-size: var(--size-14);
+  margin-bottom: var(--size-10);
 }
 
 .admin-modal-actions {
@@ -332,9 +333,11 @@
 
 .admin-filter-separator {
   color: var(--text-tertiary);
-  font-size: 12px;
+  font-size: var(--size-12);
 }
 
 .admin-section-title--tight {
-  margin-bottom: 8px;
+  margin-bottom: var(--size-8);
 }
+
+

@@ -11,9 +11,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--size-10);
   flex: 0 0 auto;
-  min-height: 48px;
+  min-height: var(--size-48);
 }
 
 .page-shell-body {
@@ -23,3 +23,5 @@
   min-height: 0;
   overflow: hidden;
 }
+
+

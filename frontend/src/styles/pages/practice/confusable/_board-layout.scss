@@ -1,15 +1,15 @@
 .confusable-shell {
-  --match-neon: color-mix(in srgb, var(--success) 78%, var(--tone-blue) 22%);
+  --match-neon: color-mix(in srgb, var(--success) var(--mix-78), var(--tone-blue) var(--mix-22));
   --match-neon-rgb: 15, 159, 121;
-  --match-danger: color-mix(in srgb, var(--error) 90%, var(--accent) 10%);
+  --match-danger: color-mix(in srgb, var(--error) var(--mix-90), var(--accent) var(--mix-10));
   --match-danger-rgb: 255, 90, 103;
-  --match-danger-ink: color-mix(in srgb, var(--error) 88%, var(--text-primary));
+  --match-danger-ink: color-mix(in srgb, var(--error) var(--mix-88), var(--text-primary));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-subtle) 96%, transparent), var(--bg-secondary));
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-subtle) var(--mix-96), transparent), var(--bg-secondary));
 }
 
 .confusable-ctrl-bar {
-  min-height: 42px;
+  min-height: var(--size-42);
   padding: 0;
   border: 0;
   background: transparent;
@@ -20,18 +20,18 @@
 
 .confusable-shell .practice-ctrl-brand {
   gap: 0.55rem;
-  min-height: 36px;
+  min-height: var(--size-36);
   padding: 0;
 }
 
 .confusable-shell .practice-ctrl-brand-logo {
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
+  width: var(--size-24);
+  height: var(--size-24);
+  border-radius: var(--size-8);
 }
 
 .confusable-shell .practice-ctrl-brand-text {
-  font-size: 15px;
+  font-size: var(--size-16);
   font-weight: 800;
 }
 
@@ -40,34 +40,34 @@
 }
 
 .confusable-shell .practice-ctrl-icon-btn {
-  height: 36px;
-  min-height: 36px;
-  padding: 0 11px;
-  border-radius: 12px;
+  height: var(--size-36);
+  min-height: var(--size-36);
+  padding: 0 var(--size-12);
+  border-radius: var(--size-12);
 }
 
 .confusable-shell .practice-mode-btn {
-  padding-inline: 12px;
+  padding-inline: var(--size-12);
 }
 
 .confusable-shell .practice-mode-label {
-  font-size: 12px;
+  font-size: var(--size-12);
 }
 
 .confusable-shell .practice-ctx-arrow {
-  width: 12px;
-  height: 12px;
+  width: var(--size-12);
+  height: var(--size-12);
 }
 
 .confusable-stage {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--size-10);
   min-height: 0;
-  width: min(1420px, 100%);
+  width: min(var(--size-1420), 100%);
   margin: 0 auto;
-  padding: 10px;
+  padding: var(--size-10);
 }
 
 .confusable-board {
@@ -83,33 +83,33 @@
 .confusable-focus-panel {
   width: 100%;
   min-height: 0;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
-  box-shadow: 0 16px 40px color-mix(in srgb, var(--text-primary) 5%, transparent);
+  padding: var(--size-12);
+  border: var(--size-1) solid color-mix(in srgb, var(--border) var(--mix-88), transparent);
+  border-radius: var(--size-24);
+  background: color-mix(in srgb, var(--surface-elevated) var(--mix-96), transparent);
+  box-shadow: 0 var(--size-16) var(--size-40) color-mix(in srgb, var(--text-primary) var(--mix-5), transparent);
 }
 
 .confusable-focus-panel::before {
   content: '';
   display: block;
   width: 100%;
-  height: 3px;
-  margin-bottom: 12px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--confusable-group-accent) 82%, transparent);
+  height: var(--size-3);
+  margin-bottom: var(--size-12);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--confusable-group-accent) var(--mix-82), transparent);
 }
 
 .confusable-focus-panel.is-completed {
-  border-color: color-mix(in srgb, var(--confusable-group-accent) 22%, var(--border));
+  border-color: color-mix(in srgb, var(--confusable-group-accent) var(--mix-22), var(--border));
 }
 
 .confusable-focus-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
+  gap: var(--size-16);
+  margin-bottom: var(--size-14);
 }
 
 .confusable-focus-copy {
@@ -119,19 +119,19 @@
 .confusable-focus-kicker {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--confusable-group-accent) 10%, var(--surface-subtle));
-  color: color-mix(in srgb, var(--confusable-group-accent) 72%, var(--text-primary));
-  font-size: 11px;
+  min-height: var(--size-22);
+  padding: 0 var(--size-8);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--confusable-group-accent) var(--mix-10), var(--surface-subtle));
+  color: color-mix(in srgb, var(--confusable-group-accent) var(--mix-72), var(--text-primary));
+  font-size: var(--size-12);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .confusable-focus-copy h2 {
-  margin: 10px 0 6px;
+  margin: var(--size-10) 0 var(--size-6);
   font-size: clamp(1.1rem, 0.95rem + 0.6vw, 1.45rem);
   line-height: 1.2;
   color: var(--text-primary);
@@ -147,34 +147,34 @@
 .confusable-progress-ring {
   position: relative;
   flex-shrink: 0;
-  width: 92px;
+  width: var(--size-92);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background:
     conic-gradient(
-      color-mix(in srgb, var(--confusable-group-accent) 82%, transparent) calc(var(--confusable-progress-ratio) * 1turn),
-      color-mix(in srgb, var(--surface-muted) 94%, transparent) 0turn
+      color-mix(in srgb, var(--confusable-group-accent) var(--mix-82), transparent) calc(var(--confusable-progress-ratio) * 1turn),
+      color-mix(in srgb, var(--surface-muted) var(--mix-94), transparent) 0turn
     );
 }
 
 .confusable-progress-ring::before {
   content: '';
   position: absolute;
-  inset: 8px;
+  inset: var(--size-8);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 84%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) var(--mix-98), transparent);
+  box-shadow: inset 0 0 0 var(--size-1) color-mix(in srgb, var(--border) var(--mix-84), transparent);
 }
 
 .confusable-progress-ring__core {
   position: relative;
-  z-index: 1;
+  z-index: var(--layer-raised);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: var(--size-2);
 }
 
 .confusable-progress-ring__core strong {
@@ -190,15 +190,15 @@
 
 .confusable-focus-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 12px;
-  min-height: min(66vh, 720px);
+  grid-template-columns: minmax(0, 1fr) var(--size-320);
+  gap: var(--size-12);
+  min-height: min(66vh, var(--size-720));
 }
 
 .confusable-group-board {
   position: relative;
   min-height: 0;
-  padding: 4px 0;
+  padding: var(--size-4) 0;
 }
 
 .confusable-lines {
@@ -211,31 +211,31 @@
 }
 
 .confusable-line {
-  stroke-width: 4px;
+  stroke-width: var(--size-4);
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
 }
 
 .confusable-line--success {
-  stroke: color-mix(in srgb, var(--confusable-group-accent) 78%, var(--success));
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--confusable-group-accent) 38%, transparent));
+  stroke: color-mix(in srgb, var(--confusable-group-accent) var(--mix-78), var(--success));
+  filter: drop-shadow(0 0 var(--size-10) color-mix(in srgb, var(--confusable-group-accent) var(--mix-38), transparent));
   animation: confusable-line-pop 0.9s ease forwards;
 }
 
 .confusable-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--size-12);
 }
 
 .confusable-card {
   position: relative;
-  min-height: 112px;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+  min-height: var(--size-112);
+  padding: var(--size-12);
+  border: var(--size-1) solid color-mix(in srgb, var(--border) var(--mix-86), transparent);
+  border-radius: var(--size-18);
+  background: color-mix(in srgb, var(--surface-elevated) var(--mix-98), transparent);
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
@@ -249,52 +249,52 @@
 .confusable-card::before {
   content: '';
   position: absolute;
-  inset: 10px auto 10px 0;
-  width: 3px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--confusable-group-accent) 80%, transparent);
+  inset: var(--size-10) auto var(--size-10) 0;
+  width: var(--size-3);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--confusable-group-accent) var(--mix-80), transparent);
 }
 
 .confusable-card:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--confusable-group-accent) 24%, var(--border-hover));
-  box-shadow: 0 12px 26px color-mix(in srgb, var(--text-primary) 7%, transparent);
+  transform: translateY(calc(var(--size-2) * -1));
+  border-color: color-mix(in srgb, var(--confusable-group-accent) var(--mix-24), var(--border-hover));
+  box-shadow: 0 var(--size-12) var(--size-28) color-mix(in srgb, var(--text-primary) var(--mix-7), transparent);
 }
 
 .confusable-card.is-selected {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--confusable-group-accent) 54%, var(--border-focus));
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--confusable-group-accent) 10%, transparent);
+  transform: translateY(calc(var(--size-2) * -1));
+  border-color: color-mix(in srgb, var(--confusable-group-accent) var(--mix-54), var(--border-focus));
+  box-shadow: 0 0 0 var(--size-4) color-mix(in srgb, var(--confusable-group-accent) var(--mix-10), transparent);
 }
 
 .confusable-card.is-success {
-  border-color: color-mix(in srgb, var(--success) 62%, var(--confusable-group-accent));
+  border-color: color-mix(in srgb, var(--success) var(--mix-62), var(--confusable-group-accent));
   box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--success) 12%, transparent),
-    0 16px 28px color-mix(in srgb, var(--success) 16%, transparent);
+    0 0 0 var(--size-4) color-mix(in srgb, var(--success) var(--mix-12), transparent),
+    0 var(--size-16) var(--size-28) color-mix(in srgb, var(--success) var(--mix-16), transparent);
   animation: confusable-green-flash 0.8s ease;
 }
 
 .confusable-card.is-error {
   border-color: var(--match-danger);
   box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--match-danger) 10%, transparent),
-    0 10px 18px color-mix(in srgb, var(--match-danger) 16%, transparent);
+    0 0 0 var(--size-4) color-mix(in srgb, var(--match-danger) var(--mix-10), transparent),
+    0 var(--size-10) var(--size-18) color-mix(in srgb, var(--match-danger) var(--mix-16), transparent);
   animation: confusable-red-pulse 0.2s ease-in-out 2;
 }
 
 .confusable-side-rail {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--size-12);
 }
 
 .confusable-insight-panel,
 .confusable-queue-panel {
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--surface-subtle) 96%, transparent);
+  padding: var(--size-12);
+  border: var(--size-1) solid color-mix(in srgb, var(--border) var(--mix-86), transparent);
+  border-radius: var(--size-18);
+  background: color-mix(in srgb, var(--surface-subtle) var(--mix-96), transparent);
 }
 
 .confusable-insight-panel {
@@ -310,15 +310,15 @@
 
 .confusable-insight-panel.is-visible {
   opacity: 1;
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--confusable-group-accent) 28%, var(--border));
+  transform: translateY(calc(var(--size-2) * -1));
+  border-color: color-mix(in srgb, var(--confusable-group-accent) var(--mix-28), var(--border));
 }
 
 .confusable-side-kicker {
   display: inline-flex;
-  margin-bottom: 8px;
+  margin-bottom: var(--size-8);
   color: var(--text-tertiary);
-  font-size: 11px;
+  font-size: var(--size-12);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -326,28 +326,28 @@
 
 .confusable-insight-panel strong {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--size-8);
   color: var(--text-primary);
   font-size: 0.98rem;
   line-height: 1.35;
 }
 
 .confusable-insight-panel p {
-  margin: 0 0 12px;
+  margin: 0 0 var(--size-12);
   color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .confusable-insight-list {
   display: grid;
-  gap: 10px;
+  gap: var(--size-10);
 }
 
 .confusable-insight-item {
   display: grid;
-  gap: 4px;
-  padding-top: 10px;
-  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 90%, transparent);
+  gap: var(--size-4);
+  padding-top: var(--size-10);
+  border-top: var(--size-1) solid color-mix(in srgb, var(--border-subtle) var(--mix-90), transparent);
 }
 
 .confusable-insight-word {
@@ -370,14 +370,14 @@
 
 .confusable-queue-list {
   display: grid;
-  gap: 10px;
+  gap: var(--size-10);
 }
 
 .confusable-queue-item {
-  padding: 10px 10px 10px 12px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--confusable-group-accent) 74%, transparent);
+  padding: var(--size-10) var(--size-10) var(--size-10) var(--size-12);
+  border-radius: var(--size-14);
+  background: color-mix(in srgb, var(--surface-elevated) var(--mix-94), transparent);
+  box-shadow: inset var(--size-3) 0 0 color-mix(in srgb, var(--confusable-group-accent) var(--mix-74), transparent);
 }
 
 .confusable-queue-item strong,
@@ -386,7 +386,7 @@
 }
 
 .confusable-queue-item strong {
-  margin-bottom: 4px;
+  margin-bottom: var(--size-4);
   color: var(--text-primary);
   font-size: 0.9rem;
 }
@@ -414,7 +414,7 @@
 
 @media (max-width: 640px) {
   .confusable-stage {
-    padding: 10px;
+    padding: var(--size-10);
   }
 
   .confusable-focus-head {
@@ -422,10 +422,12 @@
   }
 
   .confusable-progress-ring {
-    width: 84px;
+    width: var(--size-84);
   }
 
   .confusable-card-grid {
     grid-template-columns: 1fr;
   }
 }
+
+

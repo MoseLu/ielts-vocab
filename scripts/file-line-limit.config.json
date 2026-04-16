@@ -1,6 +1,7 @@
 {
   "maxLines": 500,
   "exemptions": [
+    ".omc/**",
     "vocabulary_data/**",
     "pnpm-lock.yaml"
   ],

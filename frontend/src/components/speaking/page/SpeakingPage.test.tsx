@@ -19,6 +19,7 @@ describe('SpeakingPage', () => {
 
     expect(screen.getByRole('button', { name: /家乡与城市生活/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /学习与工作节奏/ })).toBeInTheDocument()
+    expect(screen.queryByText('口语题目')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: '雅思口语模拟' })).not.toBeInTheDocument()
     expect(screen.queryByText('考试结构')).not.toBeInTheDocument()
     expect(screen.queryByText('考官关注点')).not.toBeInTheDocument()

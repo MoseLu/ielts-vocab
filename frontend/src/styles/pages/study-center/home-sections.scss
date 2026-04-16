@@ -3,10 +3,10 @@
 /* ── Tab Navigation ── */
 .home-tabs {
     display: flex;
-    gap: 4px;
+    gap: var(--size-4);
     background: var(--bg-secondary);
     border-radius: var(--radius-lg);
-    padding: 4px;
+    padding: var(--size-4);
 }
 
 .home-tab {
@@ -14,8 +14,8 @@
     padding: var(--space-sm) var(--space-md);
     background: none;
     border: none;
-    border-radius: calc(var(--radius-lg) - 2px);
-    font-size: 13px;
+    border-radius: calc(var(--radius-lg) - var(--size-2));
+    font-size: var(--size-14);
     font-weight: 500;
     color: var(--text-secondary);
     cursor: pointer;
@@ -25,7 +25,7 @@
 
 .home-tab:hover {
     color: var(--text-primary);
-    background: color-mix(in srgb, var(--bg-color) 60%, transparent);
+    background: color-mix(in srgb, var(--bg-color) var(--mix-60), transparent);
 }
 
 .home-tab.active {
@@ -48,13 +48,13 @@
 }
 
 .home-section-title {
-    font-size: 16px;
+    font-size: var(--size-16);
     font-weight: 700;
     color: var(--text-primary);
 }
 
 .home-section-desc {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-tertiary);
 }
 
@@ -67,32 +67,32 @@
 }
 
 .day-check {
-    width: 16px;
-    height: 16px;
+    width: var(--size-16);
+    height: var(--size-16);
     color: var(--success);
 }
 
 .day-badge {
-    font-size: 10px;
+    font-size: var(--size-10);
     font-weight: 600;
     background: var(--accent);
     color: var(--text-inverse);
-    padding: 2px 6px;
+    padding: var(--size-2) var(--size-6);
     border-radius: var(--radius-full);
 }
 
 .day-words {
-    font-size: 11px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
-    margin-bottom: 4px;
+    margin-bottom: var(--size-4);
 }
 
 .day-progress-bar {
-    height: 3px;
+    height: var(--size-3);
     background: var(--bg-tertiary);
     border-radius: var(--radius-full);
     overflow: hidden;
-    margin-bottom: 4px;
+    margin-bottom: var(--size-4);
 }
 
 .day-progress-fill {
@@ -103,7 +103,7 @@
 }
 
 .day-progress-text {
-    font-size: 11px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
 }
 
@@ -123,8 +123,8 @@
 }
 
 .home-empty-icon {
-    width: 56px;
-    height: 56px;
+    width: var(--size-56);
+    height: var(--size-56);
     background: var(--bg-secondary);
     border-radius: var(--radius-full);
     display: flex;
@@ -133,12 +133,12 @@
 }
 
 .home-empty-icon svg {
-    width: 24px;
-    height: 24px;
+    width: var(--size-24);
+    height: var(--size-24);
 }
 
 .home-empty-text {
-    font-size: 14px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
 }
 
@@ -148,7 +148,7 @@
     color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 600;
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -162,7 +162,7 @@
 .wrong-words-list {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: var(--size-1);
     border-radius: var(--radius-lg);
     overflow: hidden;
     background: var(--bg-secondary);
@@ -173,8 +173,8 @@
     background: var(--bg-color);
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    border-bottom: 1px solid var(--bg-secondary);
+    gap: var(--size-4);
+    border-bottom: var(--size-1) solid var(--bg-secondary);
 }
 
 .wrong-word-item:last-child {
@@ -188,13 +188,13 @@
 }
 
 .wrong-word-en {
-    font-size: 16px;
+    font-size: var(--size-16);
     font-weight: 600;
     color: var(--text-primary);
 }
 
 .wrong-word-phonetic {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-tertiary);
 }
 
@@ -202,15 +202,15 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
 }
 
 .wrong-word-pos {
-    font-size: 11px;
+    font-size: var(--size-12);
     background: var(--bg-tertiary);
     border-radius: var(--radius-sm);
-    padding: 1px 6px;
+    padding: var(--size-1) var(--size-6);
     color: var(--text-tertiary);
 }
 
@@ -235,13 +235,13 @@
 }
 
 .stats-card-num {
-    font-size: 28px;
+    font-size: var(--size-28);
     font-weight: 700;
     line-height: 1;
 }
 
 .stats-card-label {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-secondary);
     text-align: center;
     padding: var(--space-sm) var(--space-md);
@@ -252,10 +252,10 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--size-14);
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--warning) 12%, transparent), transparent 28%),
-        linear-gradient(180deg, color-mix(in srgb, var(--warning-bg) 32%, var(--surface-elevated)), color-mix(in srgb, var(--surface-muted) 94%, transparent));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--warning) var(--mix-12), transparent), transparent 28%),
+        linear-gradient(180deg, color-mix(in srgb, var(--warning-bg) var(--mix-32), var(--surface-elevated)), color-mix(in srgb, var(--surface-muted) var(--mix-94), transparent));
 }
 
 .study-guidance-panel::before {
@@ -263,17 +263,17 @@
     position: absolute;
     inset: 0;
     background:
-        linear-gradient(118deg, color-mix(in srgb, var(--surface-elevated) 64%, transparent), transparent 38%),
-        radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--text-primary) 8%, transparent), transparent 24%);
+        linear-gradient(118deg, color-mix(in srgb, var(--surface-elevated) var(--mix-64), transparent), transparent 38%),
+        radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--text-primary) var(--mix-8), transparent), transparent 24%);
     pointer-events: none;
 }
 
 .study-guidance-grid {
     position: relative;
-    z-index: 1;
+    z-index: var(--layer-raised);
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .study-guidance-card {
@@ -281,12 +281,12 @@
     --guidance-color: var(--accent);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--size-12);
     min-height: 100%;
-    padding: 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(var(--guidance-rgb), 0.16);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 96%, transparent), rgba(var(--guidance-rgb), 0.05));
+    padding: var(--size-14);
+    border-radius: var(--size-18);
+    border: var(--size-1) solid rgba(var(--guidance-rgb), var(--alpha-16));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) var(--mix-96), transparent), rgba(var(--guidance-rgb), var(--alpha-5)));
     box-shadow: var(--shadow-soft);
 }
 
@@ -309,17 +309,17 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    gap: 12px;
+    gap: var(--size-12);
 }
 
 .study-guidance-card__heading {
     display: grid;
-    gap: 4px;
+    gap: var(--size-4);
     min-width: 0;
 }
 
 .study-guidance-card__eyebrow {
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -328,19 +328,19 @@
 
 .study-guidance-card h3 {
     margin: 0;
-    font-size: 16px;
+    font-size: var(--size-16);
     line-height: 1.35;
 }
 
 .study-guidance-card__badge {
     display: inline-flex;
     align-items: center;
-    min-height: 26px;
-    padding: 0 10px;
-    border-radius: 999px;
-    background: rgba(var(--guidance-rgb), 0.12);
+    min-height: var(--size-28);
+    padding: 0 var(--size-10);
+    border-radius: var(--radius-pill);
+    background: rgba(var(--guidance-rgb), var(--alpha-12));
     color: var(--guidance-color);
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 700;
     white-space: nowrap;
     flex-shrink: 0;
@@ -348,7 +348,7 @@
 
 .study-guidance-card__description {
     margin: 0;
-    font-size: 13px;
+    font-size: var(--size-14);
     line-height: 1.65;
     color: var(--text-secondary);
 }
@@ -356,36 +356,36 @@
 .study-guidance-card__facts {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .study-guidance-card__fact {
     display: inline-flex;
     align-items: center;
-    min-height: 24px;
-    padding: 0 8px;
-    border-radius: 999px;
+    min-height: var(--size-24);
+    padding: 0 var(--size-8);
+    border-radius: var(--radius-pill);
     background: var(--surface-inset);
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 700;
 }
 
 .study-guidance-sections {
     display: grid;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .study-guidance-section {
     display: grid;
-    gap: 8px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border-subtle);
+    gap: var(--size-8);
+    padding-top: var(--size-10);
+    border-top: var(--size-1) solid var(--border-subtle);
 }
 
 .study-guidance-section__label {
     margin: 0;
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 800;
     letter-spacing: 0.04em;
     color: var(--text-primary);
@@ -394,7 +394,7 @@
 .study-guidance-steps {
     counter-reset: guidance-step;
     display: grid;
-    gap: 8px;
+    gap: var(--size-8);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -402,8 +402,8 @@
 
 .study-guidance-steps li {
     position: relative;
-    padding-left: 28px;
-    font-size: 13px;
+    padding-left: var(--size-28);
+    font-size: var(--size-14);
     line-height: 1.65;
     color: var(--text-secondary);
 }
@@ -414,15 +414,15 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 20px;
-    height: 20px;
-    border-radius: 999px;
+    width: var(--size-20);
+    height: var(--size-20);
+    border-radius: var(--radius-pill);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(var(--guidance-rgb), 0.14);
+    background: rgba(var(--guidance-rgb), var(--alpha-14));
     color: var(--guidance-color);
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 800;
 }
 
@@ -437,3 +437,5 @@
         grid-template-columns: 1fr;
     }
 }
+
+

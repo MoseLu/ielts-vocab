@@ -1,20 +1,20 @@
 .practice-stage-guide {
     --guide-color: var(--accent);
-    width: min(100%, var(--practice-shell-max-width, 760px));
+    width: min(100%, var(--practice-shell-max-width, var(--size-760)));
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 19px;
-    padding: 23px 25px;
-    border-radius: 28px;
-    border: 1px solid color-mix(in srgb, var(--guide-color) 18%, var(--surface-border-strong));
+    gap: var(--size-20);
+    padding: var(--size-24) var(--size-25);
+    border-radius: var(--size-28);
+    border: var(--size-1) solid color-mix(in srgb, var(--guide-color) var(--mix-18), var(--surface-border-strong));
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--guide-color) 14%, transparent), transparent 44%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--guide-color) var(--mix-14), transparent), transparent 44%),
         linear-gradient(
             155deg,
-            color-mix(in srgb, var(--guide-color) 10%, var(--surface-elevated)) 0%,
-            color-mix(in srgb, var(--surface-elevated) 95%, var(--surface-base)) 52%,
+            color-mix(in srgb, var(--guide-color) var(--mix-10), var(--surface-elevated)) 0%,
+            color-mix(in srgb, var(--surface-elevated) var(--mix-95), var(--surface-base)) 52%,
             var(--surface-elevated) 100%
         );
     box-shadow: var(--shadow-panel);
@@ -28,14 +28,14 @@
     background:
         linear-gradient(
             120deg,
-            color-mix(in srgb, var(--guide-color) 14%, transparent),
+            color-mix(in srgb, var(--guide-color) var(--mix-14), transparent),
             transparent 28%,
             transparent 72%,
-            color-mix(in srgb, var(--guide-color) 8%, transparent)
+            color-mix(in srgb, var(--guide-color) var(--mix-8), transparent)
         );
     opacity: 0.85;
     pointer-events: none;
-    z-index: -1;
+    z-index: var(--layer-underlay);
 }
 
 .practice-stage-guide--error {
@@ -53,20 +53,20 @@
 .practice-stage-guide__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .practice-stage-guide__pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
-    padding: 0 12px;
+    min-height: var(--size-28);
+    padding: 0 var(--size-12);
     border-radius: var(--radius-full);
-    background: color-mix(in srgb, var(--guide-color) 12%, var(--surface-elevated));
-    border: 1px solid color-mix(in srgb, var(--guide-color) 18%, transparent);
-    color: color-mix(in srgb, var(--guide-color) 82%, var(--text-primary));
-    font-size: 12px;
+    background: color-mix(in srgb, var(--guide-color) var(--mix-12), var(--surface-elevated));
+    border: var(--size-1) solid color-mix(in srgb, var(--guide-color) var(--mix-18), transparent);
+    color: color-mix(in srgb, var(--guide-color) var(--mix-82), var(--text-primary));
+    font-size: var(--size-12);
     font-weight: 700;
     letter-spacing: 0.03em;
 }
@@ -74,14 +74,14 @@
 .practice-stage-guide__headline {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .practice-stage-guide__eyebrow {
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 800;
     letter-spacing: 0.08em;
-    color: color-mix(in srgb, var(--guide-color) 76%, var(--text-secondary));
+    color: color-mix(in srgb, var(--guide-color) var(--mix-76), var(--text-secondary));
 }
 
 .practice-stage-guide__title {
@@ -94,7 +94,7 @@
 
 .practice-stage-guide__context {
     margin: 0;
-    font-size: 16px;
+    font-size: var(--size-16);
     line-height: 1.6;
     color: var(--text-secondary);
 }
@@ -102,33 +102,33 @@
 .practice-stage-guide__rows {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 13px;
+    gap: var(--size-14);
     margin: 0;
 }
 
 .practice-stage-guide__row {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--size-10);
     min-height: 100%;
-    padding: 17px 17px 18px;
-    border-radius: 20px;
-    background: color-mix(in srgb, var(--guide-color) 5%, var(--surface-base));
-    border: 1px solid color-mix(in srgb, var(--guide-color) 12%, var(--surface-border-strong));
+    padding: var(--size-18) var(--size-18) var(--size-18);
+    border-radius: var(--size-20);
+    background: color-mix(in srgb, var(--guide-color) var(--mix-5), var(--surface-base));
+    border: var(--size-1) solid color-mix(in srgb, var(--guide-color) var(--mix-12), var(--surface-border-strong));
     box-shadow: var(--shadow-soft);
 }
 
 .practice-stage-guide__label {
     margin: 0;
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 800;
     letter-spacing: 0.05em;
-    color: color-mix(in srgb, var(--guide-color) 74%, var(--text-secondary));
+    color: color-mix(in srgb, var(--guide-color) var(--mix-74), var(--text-secondary));
 }
 
 .practice-stage-guide__value {
     margin: 0;
-    font-size: 15px;
+    font-size: var(--size-16);
     line-height: 1.7;
     color: var(--text-primary);
 }
@@ -141,12 +141,14 @@
 
 @media (max-width: 600px) {
     .practice-stage-guide {
-        padding: 18px 16px;
-        border-radius: 24px;
+        padding: var(--size-18) var(--size-16);
+        border-radius: var(--size-24);
     }
 
     .practice-stage-guide__row {
-        padding: 13px 13px 14px;
-        border-radius: 18px;
+        padding: var(--size-14) var(--size-14) var(--size-14);
+        border-radius: var(--size-18);
     }
 }
+
+

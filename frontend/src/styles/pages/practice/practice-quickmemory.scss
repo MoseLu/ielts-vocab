@@ -12,9 +12,9 @@
     overflow: hidden auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable both-edges;
-    padding: calc(var(--space-xl) + 8px) calc(var(--space-lg) + 2px) calc(var(--space-xl) + 8px + env(safe-area-inset-bottom, 0px));
+    padding: calc(var(--space-xl) + var(--size-8)) calc(var(--space-lg) + var(--size-2)) calc(var(--space-xl) + var(--size-8) + env(safe-area-inset-bottom, 0px));
     background: var(--bg-secondary);
-    scroll-padding-block: 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    scroll-padding-block: var(--size-24) calc(var(--size-24) + env(safe-area-inset-bottom, 0px));
 }
 
 .qm-stage {
@@ -24,15 +24,16 @@
 /* ── Progress bar ─────────────────────────────────────────────────────────── */
 .qm-progress-track {
     width: 100%;
-    max-width: var(--practice-compact-max-width, 540px);
-    height: 6px;
+    max-width: var(--practice-compact-max-width, var(--size-540));
+    height: var(--size-6);
     background: var(--border);
     border-radius: var(--radius-full);
     overflow: hidden;
-    margin-bottom: 11px;
+    margin-bottom: var(--size-12);
 }
 
 .qm-progress-fill {
+    width: var(--progress-percent, 0%);
     height: 100%;
     background: var(--accent);
     border-radius: var(--radius-full);
@@ -40,26 +41,26 @@
 }
 
 .qm-progress-label {
-    font-size: 14px;
+    font-size: var(--size-14);
     color: var(--text-tertiary);
-    margin-bottom: calc(var(--space-xl) + 2px);
+    margin-bottom: calc(var(--space-xl) + var(--size-2));
     font-weight: 500;
 }
 
 /* ── Card ─────────────────────────────────────────────────────────────────── */
 .qm-card {
-    --qm-side-rail-size: 55px;
+    --qm-side-rail-size: var(--size-55);
     background: var(--bg-color);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     width: 100%;
-    max-width: var(--practice-compact-max-width, 540px);
-    padding: 48px 42px 42px;
+    max-width: var(--practice-compact-max-width, var(--size-540));
+    padding: var(--size-48) var(--size-42) var(--size-42);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 23px;
+    gap: var(--size-24);
     animation: qmCardIn 0.22s ease;
 }
 
@@ -68,7 +69,7 @@
 }
 
 @keyframes qmCardIn {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(var(--size-12)); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -83,7 +84,7 @@
     width: var(--qm-side-rail-size);
     display: flex;
     justify-content: center;
-    margin-bottom: -4px;
+    margin-bottom: calc(var(--size-4) * -1);
 }
 
 .qm-timer-svg {
@@ -97,7 +98,7 @@
 
 /* ── Word display ─────────────────────────────────────────────────────────── */
 .qm-word {
-    font-size: clamp(38px, 6.6vw, 57px);
+    font-size: clamp(var(--size-40), 6.6vw, var(--size-58));
     font-weight: 800;
     color: var(--text-primary);
     letter-spacing: 0.02em;
@@ -106,7 +107,7 @@
 }
 
 .qm-hint {
-    font-size: 16px;
+    font-size: var(--size-16);
     color: var(--text-tertiary);
     margin: 0;
 }
@@ -115,25 +116,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 92px;
-    height: 92px;
+    width: var(--size-92);
+    height: var(--size-92);
     border-radius: 50%;
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    background: color-mix(in srgb, var(--accent) var(--mix-12), transparent);
     color: var(--accent);
     animation: qm-audio-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes qm-audio-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
-    50%       { box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent) 0%, transparent); }
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) var(--mix-30), transparent); }
+    50%       { box-shadow: 0 0 0 var(--size-12) color-mix(in srgb, var(--accent) var(--mix-0), transparent); }
 }
 
 /* ── Choice buttons ───────────────────────────────────────────────────────── */
 .qm-choice-row {
     display: flex;
-    gap: 19px;
+    gap: var(--size-20);
     width: 100%;
-    margin-top: 7px;
+    margin-top: var(--size-8);
 }
 
 .qm-btn {
@@ -141,19 +142,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 17px 23px;
+    gap: var(--size-8);
+    padding: var(--size-18) var(--size-24);
     border-radius: var(--radius-lg);
-    border: 2px solid;
-    font-size: 18px;
+    border: var(--size-2) solid;
+    font-size: var(--size-18);
     font-weight: 700;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 
 .qm-btn svg {
-    width: 21px;
-    height: 21px;
+    width: var(--size-24);
+    height: var(--size-24);
     flex-shrink: 0;
 }
 
@@ -166,8 +167,8 @@
 .qm-btn--unknown:hover {
     background: var(--error);
     color: var(--text-inverse);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(var(--error-rgb), 0.3);
+    transform: translateY(calc(var(--size-1) * -1));
+    box-shadow: 0 var(--size-4) var(--size-12) rgba(var(--error-rgb), var(--alpha-30));
 }
 
 .qm-btn--known {
@@ -179,15 +180,15 @@
 .qm-btn--known:hover {
     background: var(--accent);
     color: var(--text-inverse);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.35);
+    transform: translateY(calc(var(--size-1) * -1));
+    box-shadow: 0 var(--size-4) var(--size-12) rgba(var(--accent-rgb), var(--alpha-35));
 }
 
 /* ── Reveal phase ─────────────────────────────────────────────────────────── */
 .qm-result-badge {
-    font-size: 15px;
+    font-size: var(--size-16);
     font-weight: 700;
-    padding: 6px 17px;
+    padding: var(--size-6) var(--size-18);
     border-radius: var(--radius-full);
 }
 
@@ -202,24 +203,24 @@
 }
 
 .qm-phonetic {
-    font-size: 18px;
+    font-size: var(--size-18);
     color: var(--text-secondary);
 }
 
 .qm-pos {
     display: inline-block;
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--accent);
     background: var(--accent-light);
-    padding: 3px 10px;
+    padding: var(--size-3) var(--size-10);
     border-radius: var(--radius-sm);
 }
 
 .qm-definition {
-    font-size: 20px;
+    font-size: var(--size-20);
     color: var(--text-primary);
     text-align: center;
     line-height: 1.68;
@@ -229,8 +230,8 @@
 /* ── Nav row (上一个 + 下一个) ────────────────────────────────────────────── */
 .qm-nav-row {
     display: flex;
-    gap: 13px;
-    margin-top: 10px;
+    gap: var(--size-14);
+    margin-top: var(--size-10);
     width: 100%;
     justify-content: center;
 }
@@ -238,22 +239,22 @@
 .qm-btn-prev {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 14px 23px;
+    gap: var(--size-6);
+    padding: var(--size-14) var(--size-24);
     background: none;
     color: var(--text-secondary);
-    border: 1.5px solid var(--border);
+    border: calc(var(--size-3) / 2) solid var(--border);
     border-radius: var(--radius-lg);
-    font-size: 16px;
+    font-size: var(--size-16);
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
     flex-shrink: 0;
 }
 
 .qm-btn-prev svg {
-    width: 18px;
-    height: 18px;
+    width: var(--size-18);
+    height: var(--size-18);
 }
 
 .qm-btn-prev:hover {
@@ -264,62 +265,62 @@
 
 .qm-btn-next {
     flex: 1;
-    padding: 15px 31px;
+    padding: var(--size-16) var(--size-31);
     background: var(--accent);
     color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-lg);
-    font-size: 17px;
+    font-size: var(--size-18);
     font-weight: 700;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 
 .qm-btn-next-inner {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: var(--size-6);
 }
 
 .qm-btn-next-inner svg {
-    width: 21px;
-    height: 21px;
+    width: var(--size-24);
+    height: var(--size-24);
 }
 
 .qm-btn-next:hover {
     background: var(--accent-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.4);
+    transform: translateY(calc(var(--size-1) * -1));
+    box-shadow: 0 var(--size-4) var(--size-14) rgba(var(--accent-rgb), var(--alpha-40));
 }
 
 /* ── Keyboard shortcut hints ──────────────────────────────────────────────── */
 .qm-key-hints {
     display: flex;
-    gap: 16px;
+    gap: var(--size-16);
     justify-content: center;
 }
 
 .qm-key-hint {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-tertiary);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--size-4);
 }
 
 kbd {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 22px;
-    height: 20px;
-    padding: 0 6px;
+    min-width: var(--size-22);
+    height: var(--size-20);
+    padding: 0 var(--size-6);
     background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-bottom-width: 2px;
-    border-radius: 3px;
-    font-size: 12px;
+    border: var(--size-1) solid var(--border);
+    border-bottom-width: var(--size-2);
+    border-radius: var(--size-3);
+    font-size: var(--size-12);
     font-family: inherit;
     font-weight: 600;
     color: var(--text-secondary);
@@ -329,15 +330,15 @@ kbd {
 .qm-badge--fuzzy {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--size-6);
 }
 
 .qm-badge-fuzzy-tag {
-    font-size: 10px;
+    font-size: var(--size-10);
     font-weight: 700;
     background: var(--overlay-medium);
     border-radius: var(--radius-full);
-    padding: 1px 6px;
+    padding: var(--size-1) var(--size-6);
     letter-spacing: 0.03em;
 }
 
@@ -346,19 +347,19 @@ kbd {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 28px;
+    gap: var(--size-28);
     flex: 1;
     min-height: 0;
     height: 100%;
     overflow: hidden auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable both-edges;
-    padding: 72px calc(var(--space-lg) + 2px) calc(var(--space-2xl) + 8px);
+    padding: var(--size-72) calc(var(--space-lg) + var(--size-2)) calc(var(--space-2xl) + var(--size-8));
     background: var(--bg-secondary);
 }
 
 .qm-summary-title {
-    font-size: 29px;
+    font-size: var(--size-210);
     font-weight: 800;
     color: var(--text-primary);
 }
@@ -367,24 +368,24 @@ kbd {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 24px 40px;
+    gap: var(--size-24) var(--size-40);
 }
 
 .qm-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: var(--size-4);
 }
 
 .qm-stat-num {
-    font-size: 48px;
+    font-size: var(--size-48);
     font-weight: 800;
     line-height: 1;
 }
 
 .qm-stat-label {
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 600;
     color: var(--text-secondary);
 }
@@ -395,30 +396,30 @@ kbd {
 
 .qm-summary-section {
     width: 100%;
-    max-width: var(--practice-compact-max-width, 540px);
+    max-width: var(--practice-compact-max-width, var(--size-540));
 }
 
 .qm-summary-section-title {
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 600;
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 12px;
+    margin-bottom: var(--size-12);
 }
 
 .qm-summary-word-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .qm-summary-word-tag {
     background: var(--bg-color);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
-    padding: 4px 12px;
-    font-size: 13px;
+    padding: var(--size-4) var(--size-12);
+    font-size: var(--size-14);
     font-weight: 500;
     color: var(--text-primary);
 }
@@ -426,23 +427,23 @@ kbd {
 .qm-summary-word-fuzzy {
     border-color: var(--warning);
     color: var(--warning);
-    background: color-mix(in srgb, var(--warning) 10%, transparent);
+    background: color-mix(in srgb, var(--warning) var(--mix-10), transparent);
 }
 
 .qm-summary-actions {
     display: flex;
-    gap: 15px;
+    gap: var(--size-16);
 }
 
 .qm-btn-restart,
 .qm-btn-mode {
-    padding: 14px 31px;
+    padding: var(--size-14) var(--size-31);
     border-radius: var(--radius-lg);
-    font-size: 16px;
+    font-size: var(--size-16);
     font-weight: 700;
     cursor: pointer;
-    transition: all var(--transition-fast);
-    border: 2px solid var(--accent);
+    transition: var(--motion-transition-interactive-fast);
+    border: var(--size-2) solid var(--accent);
 }
 
 .qm-btn-restart {
@@ -452,7 +453,7 @@ kbd {
 
 .qm-btn-restart:hover {
     background: var(--accent-dark);
-    transform: translateY(-1px);
+    transform: translateY(calc(var(--size-1) * -1));
 }
 
 .qm-btn-mode {
@@ -467,29 +468,31 @@ kbd {
 .qm-btn-next-chapter {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 14px 31px;
+    gap: var(--size-6);
+    padding: var(--size-14) var(--size-31);
     border-radius: var(--radius-lg);
-    font-size: 16px;
+    font-size: var(--size-16);
     font-weight: 700;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
     background: var(--accent);
     color: var(--text-inverse);
-    border: 2px solid var(--accent);
+    border: var(--size-2) solid var(--accent);
 }
-.qm-btn-next-chapter:hover { background: var(--accent-dark); transform: translateY(-1px); }
+.qm-btn-next-chapter:hover { background: var(--accent-dark); transform: translateY(calc(var(--size-1) * -1)); }
 
 /* Accuracy stat in summary */
-.qm-stat-num { font-size: 28px; font-weight: 800; line-height: 1; }
+.qm-stat-num { font-size: var(--size-28); font-weight: 800; line-height: 1; }
 
 /* ── Empty state ──────────────────────────────────────────────────────────── */
-.qm-empty { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 48px); font-size: 18px; color: var(--text-tertiary); }
+.qm-empty { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - var(--size-48)); font-size: var(--size-18); color: var(--text-tertiary); }
 
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
-    .qm-card { padding: 28px 20px 24px; gap: 16px; }
-    .qm-word { font-size: 30px; }
-    .qm-btn  { padding: 12px 12px; font-size: 14px; }
-    .qm-definition { font-size: 16px; }
+    .qm-card { padding: var(--size-28) var(--size-20) var(--size-24); gap: var(--size-16); }
+    .qm-word { font-size: var(--size-30); }
+    .qm-btn  { padding: var(--size-12) var(--size-12); font-size: var(--size-14); }
+    .qm-definition { font-size: var(--size-16); }
 }
+
+

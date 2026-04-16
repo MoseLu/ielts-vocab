@@ -34,11 +34,11 @@
 /* ── Vertical track (the rail) ── */
 .el-scrollbar__bar {
     position: absolute;
-    right: 3px;
-    top: 2px;
-    bottom: 2px;
-    width: 6px;
-    border-radius: 9999px;
+    right: var(--size-3);
+    top: var(--size-2);
+    bottom: var(--size-2);
+    width: var(--size-6);
+    border-radius: var(--radius-full);
     background: transparent;
     cursor: default;
     z-index: var(--layer-local-overlay);
@@ -64,7 +64,7 @@
     height: var(--scrollbar-thumb-height, 100%);
     transform: translateY(var(--scrollbar-thumb-offset, 0));
     cursor: pointer;
-    border-radius: 9999px;
+    border-radius: var(--radius-full);
     background-color: var(--scrollbar-thumb);
     transition: background-color 200ms ease, width 200ms ease;
 }
@@ -75,6 +75,8 @@
 
 /* hover 时变宽：Element Plus 效果 */
 .el-scrollbar__bar:hover {
-    width: 8px;
-    right: 2px;
+    width: var(--size-8);
+    right: var(--size-2);
 }
+
+

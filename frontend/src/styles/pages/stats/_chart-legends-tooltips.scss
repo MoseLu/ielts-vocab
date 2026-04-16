@@ -11,22 +11,22 @@
 }
 
 .stats-pie-svg--sm {
-    width: 104px;
-    height: 104px;
+    width: var(--size-104);
+    height: var(--size-104);
     flex-shrink: 0;
 }
 
 .stats-pie-legend--compact {
-    font-size: 11px;
+    font-size: var(--size-12);
 }
 
 .stats-pie-legend--compact li {
-    margin-bottom: 4px;
+    margin-bottom: var(--size-4);
 }
 
 .stats-pie-legend--compact .stats-pie-label {
-    min-width: 56px;
-    max-width: 120px;
+    min-width: var(--size-56);
+    max-width: var(--size-120);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -40,21 +40,21 @@
 }
 
 .stats-pie-svg {
-    width: 160px;
-    height: 160px;
+    width: var(--size-160);
+    height: var(--size-160);
     flex-shrink: 0;
 }
 
 .stats-pie-svg--lg {
-    width: 176px;
-    height: 176px;
+    width: var(--size-176);
+    height: var(--size-176);
 }
 
 .stats-pie-legend {
     list-style: none;
     margin: 0;
     padding: 0;
-    font-size: 12px;
+    font-size: var(--size-12);
     flex: 1;
     min-width: 0;
 }
@@ -68,9 +68,9 @@
 }
 
 .stats-pie-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 2px;
+    width: var(--size-8);
+    height: var(--size-8);
+    border-radius: var(--size-2);
     flex-shrink: 0;
 }
 
@@ -97,7 +97,7 @@
 .stats-pie-label {
     color: var(--text-secondary);
     flex: 1;
-    min-width: 72px;
+    min-width: var(--size-72);
 }
 
 .stats-pie-val {
@@ -107,17 +107,17 @@
 
 .stats-pie-sub {
     color: var(--text-tertiary);
-    font-size: 11px;
+    font-size: var(--size-12);
 }
 
 .stats-pie-empty {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-tertiary);
-    padding: 16px 0;
+    padding: var(--size-16) 0;
 }
 
 .ebbinghaus-panel {
-    padding: 8px 0;
+    padding: var(--size-8) 0;
 }
 
 .ebbinghaus-summary-row {
@@ -129,7 +129,7 @@
 }
 
 .ebbinghaus-big {
-    font-size: 36px;
+    font-size: var(--size-36);
     font-weight: 700;
     color: var(--accent);
     margin-bottom: 0;
@@ -137,7 +137,7 @@
 }
 
 .ebbinghaus-meta {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-secondary);
     line-height: 1.5;
 }
@@ -162,7 +162,7 @@
 .ebb-chart-svg {
     width: 100%;
     height: auto;
-    min-height: 200px;
+    min-height: var(--size-200);
     display: block;
     overflow: visible;
 }
@@ -172,7 +172,7 @@
     flex-wrap: wrap;
     gap: var(--space-stack);
     margin-top: var(--space-stack);
-    font-size: 11px;
+    font-size: var(--size-12);
     color: var(--text-secondary);
 }
 
@@ -184,8 +184,8 @@
 
 .ebb-legend-line {
     display: inline-block;
-    width: 22px;
-    border-top: 2px dashed;
+    width: var(--size-22);
+    border-top: var(--size-2) dashed;
     vertical-align: middle;
 }
 
@@ -194,7 +194,7 @@
 }
 
 .ebb-chart-note {
-    font-size: 11px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
     margin: var(--space-stack) 0 0 0;
     line-height: 1.45;
@@ -202,17 +202,17 @@
 
 .ebb-chart-tooltip {
     position: absolute;
-    top: 2px;
+    top: var(--size-2);
     transform: translateX(-50%);
     background: var(--bg-color);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
-    padding: 8px 12px;
+    padding: var(--size-8) var(--size-12);
     box-shadow: var(--shadow-md);
     pointer-events: none;
-    z-index: 5;
-    min-width: 200px;
-    font-size: 12px;
+    z-index: var(--layer-overlay-local);
+    min-width: var(--size-200);
+    font-size: var(--size-12);
 }
 
 .ebb-chart-tooltip-box,
@@ -226,7 +226,7 @@
 .ebb-chart-tooltip-svg-title,
 .lc-tooltip-svg-val {
     fill: var(--text-primary);
-    font-size: 10px;
+    font-size: var(--size-10);
     font-weight: 600;
 }
 
@@ -234,7 +234,7 @@
 .lc-tooltip-svg-date,
 .lc-tooltip-svg-sub {
     fill: var(--text-secondary);
-    font-size: 9px;
+    font-size: var(--size-10);
 }
 
 /* 统计页紧凑图：避免在 overflow 容器内绝对定位撑出滚动条 */
@@ -249,16 +249,16 @@
 .ebb-chart-tooltip-title {
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 6px;
-    font-size: 12px;
+    margin-bottom: var(--size-6);
+    font-size: var(--size-12);
 }
 
 .ebb-chart-tooltip-row {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 4px 6px;
-    margin-top: 4px;
+    gap: var(--size-4) var(--size-6);
+    margin-top: var(--size-4);
     color: var(--text-secondary);
 }
 
@@ -267,13 +267,13 @@
 }
 
 .ebb-chart-tooltip-sub {
-    font-size: 10px;
+    font-size: var(--size-10);
     color: var(--text-tertiary);
 }
 
 .ebb-dot {
-    width: 8px;
-    height: 8px;
+    width: var(--size-8);
+    height: var(--size-8);
     border-radius: 50%;
     flex-shrink: 0;
 }
@@ -292,10 +292,10 @@
 }
 
 .stats-pie-legend--wrong {
-    font-size: 11px;
-    max-height: 280px;
+    font-size: var(--size-12);
+    max-height: var(--size-280);
     overflow-y: auto;
-    padding-right: 4px;
+    padding-right: var(--size-4);
 }
 
 .stats-pie-legend--wrong li {
@@ -304,18 +304,18 @@
 
 .stats-pie-legend--wrong .stats-pie-label {
     min-width: 0;
-    max-width: 140px;
+    max-width: var(--size-140);
 }
 
 .stats-subsection-title {
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 600;
     color: var(--text-secondary);
     margin: 0 0 var(--space-stack) 0;
 }
 
 .stats-section-hint {
-    font-size: 11px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
     margin: 0 0 var(--space-stack) 0;
     line-height: 1.4;
@@ -324,13 +324,13 @@
 .stats-data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: var(--size-12);
 }
 
 .stats-data-table th,
 .stats-data-table td {
-    border: 1px solid var(--border);
-    padding: 8px var(--space-stack);
+    border: var(--size-1) solid var(--border);
+    padding: var(--size-8) var(--space-stack);
     text-align: center;
 }
 
@@ -350,20 +350,20 @@
 
 .wrong-count-badge {
     display: inline-block;
-    background: color-mix(in srgb, var(--error) 12%, transparent);
+    background: color-mix(in srgb, var(--error) var(--mix-12), transparent);
     color: var(--error);
     font-weight: 600;
-    padding: 2px 8px;
+    padding: var(--size-2) var(--size-8);
     border-radius: var(--radius-sm);
 }
 
 .error-reason-tag {
     display: inline-block;
-    background: color-mix(in srgb, var(--info) 12%, transparent);
+    background: color-mix(in srgb, var(--info) var(--mix-12), transparent);
     color: var(--info);
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 500;
-    padding: 2px 6px;
+    padding: var(--size-2) var(--size-6);
     border-radius: var(--radius-sm);
     white-space: nowrap;
 }
@@ -373,3 +373,5 @@
 }
 
 /* 独立区块用（当前统计页章节表已改用 stats-table-scroll--in-cell） */
+
+

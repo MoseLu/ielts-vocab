@@ -1,26 +1,26 @@
 .errors-overview {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .errors-overview-card {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--size-14);
 }
 
 .errors-overview-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--size-12);
     flex-wrap: wrap;
 }
 
 .errors-overview-eyebrow {
-    margin: 0 0 4px;
-    font-size: 11px;
+    margin: 0 0 var(--size-4);
+    font-size: var(--size-12);
     font-weight: 700;
     color: var(--accent);
     letter-spacing: 0.08em;
@@ -28,7 +28,7 @@
 
 .errors-overview-title {
     margin: 0;
-    font-size: 18px;
+    font-size: var(--size-18);
     line-height: 1.2;
     color: var(--text-primary);
 }
@@ -36,13 +36,13 @@
 .errors-overview-focus {
     display: inline-flex;
     align-items: center;
-    min-height: 32px;
-    padding: 0 14px;
-    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+    min-height: var(--size-32);
+    padding: 0 var(--size-14);
+    border: var(--size-1) solid color-mix(in srgb, var(--accent) var(--mix-24), var(--border));
     border-radius: var(--radius-full);
-    background: color-mix(in srgb, var(--accent) 10%, var(--bg-secondary));
+    background: color-mix(in srgb, var(--accent) var(--mix-10), var(--bg-secondary));
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 700;
 }
 
@@ -50,12 +50,12 @@
 .errors-journey-labels {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .errors-journey-segment {
     display: block;
-    min-height: 16px;
+    min-height: var(--size-16);
     border-radius: var(--radius-full);
     opacity: 0.35;
     transition:
@@ -65,19 +65,19 @@
 }
 
 .errors-journey-segment--neutral {
-    background: color-mix(in srgb, var(--text-tertiary) 32%, var(--bg-secondary));
+    background: color-mix(in srgb, var(--text-tertiary) var(--mix-32), var(--bg-secondary));
 }
 
 .errors-journey-segment--warning {
-    background: color-mix(in srgb, var(--warning) 70%, var(--bg-color));
+    background: color-mix(in srgb, var(--warning) var(--mix-70), var(--bg-color));
 }
 
 .errors-journey-segment--accent {
-    background: color-mix(in srgb, var(--accent) 80%, var(--bg-color));
+    background: color-mix(in srgb, var(--accent) var(--mix-80), var(--bg-color));
 }
 
 .errors-journey-segment--success {
-    background: color-mix(in srgb, var(--success) 78%, var(--bg-color));
+    background: color-mix(in srgb, var(--success) var(--mix-78), var(--bg-color));
 }
 
 .errors-journey-segment.is-complete {
@@ -86,26 +86,26 @@
 
 .errors-journey-segment.is-active {
     opacity: 1;
-    transform: translateY(-1px);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+    transform: translateY(calc(var(--size-1) * -1));
+    box-shadow: 0 0 0 var(--size-2) color-mix(in srgb, var(--accent) var(--mix-18), transparent);
 }
 
 .errors-journey-label {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--size-4);
     min-width: 0;
     color: var(--text-secondary);
 }
 
 .errors-journey-label strong {
-    font-size: 13px;
+    font-size: var(--size-14);
     line-height: 1.3;
     color: var(--text-primary);
 }
 
 .errors-journey-step {
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 700;
     color: var(--text-tertiary);
 }
@@ -117,20 +117,22 @@
 
 @media (max-width: 768px) {
     .errors-overview-title {
-        font-size: 16px;
+        font-size: var(--size-16);
     }
 
     .errors-overview-focus {
-        min-height: 28px;
-        padding: 0 12px;
+        min-height: var(--size-28);
+        padding: 0 var(--size-12);
     }
 
     .errors-journey-track,
     .errors-journey-labels {
-        gap: 6px;
+        gap: var(--size-6);
     }
 
     .errors-journey-label strong {
-        font-size: 12px;
+        font-size: var(--size-12);
     }
 }
+
+

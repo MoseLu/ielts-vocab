@@ -7,20 +7,20 @@
 /* User card */
 .profile-user-card {
     background: var(--bg-color);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 10px;
+    padding: var(--size-10);
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: var(--size-10);
+    margin-bottom: var(--size-10);
     box-shadow: var(--shadow-sm);
 }
 
 .profile-avatar {
     flex-shrink: 0;
-    width: 64px;
-    height: 64px;
+    width: var(--size-64);
+    height: var(--size-64);
     border-radius: var(--radius-full);
     overflow: hidden;
 }
@@ -36,7 +36,7 @@
     height: 100%;
   background: var(--accent);
     color: var(--text-inverse);
-    font-size: 22px;
+    font-size: var(--size-22);
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -49,14 +49,14 @@
 }
 
 .profile-username {
-    font-size: 17px;
+    font-size: var(--size-18);
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 2px;
+    margin-bottom: var(--size-2);
 }
 
 .profile-email {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -67,17 +67,17 @@
     flex-shrink: 0;
     background: var(--bg-tertiary);
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 500;
-    padding: 3px 10px;
+    padding: var(--size-3) var(--size-10);
     border-radius: var(--radius-full);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
 }
 
 /* Menu list */
 .profile-menu {
     background: var(--bg-color);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
@@ -87,11 +87,11 @@
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 10px;
+    gap: var(--size-10);
+    padding: var(--size-10) var(--size-10);
     background: none;
     border: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--size-1) solid var(--border);
     cursor: pointer;
     transition: background var(--transition-fast);
     text-align: left;
@@ -107,8 +107,8 @@
 
 .profile-menu-icon {
     flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    width: var(--size-20);
+    height: var(--size-20);
     color: var(--text-secondary);
     display: flex;
     align-items: center;
@@ -116,21 +116,21 @@
 }
 
 .profile-menu-icon svg {
-    width: 18px;
-    height: 18px;
+    width: var(--size-18);
+    height: var(--size-18);
 }
 
 .profile-menu-label {
     flex: 1;
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 500;
     color: var(--text-primary);
 }
 
 .profile-menu-arrow {
     flex-shrink: 0;
-    width: 16px;
-    height: 16px;
+    width: var(--size-16);
+    height: var(--size-16);
     color: var(--text-tertiary);
 }
 
@@ -172,11 +172,11 @@
 
 .bind-email-modal {
     background: var(--bg-color);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-xl);
     padding: var(--space-xl);
     width: 100%;
-    max-width: 420px;
+    max-width: var(--size-420);
     box-shadow: var(--shadow-lg);
 }
 
@@ -188,7 +188,7 @@
 }
 
 .bind-email-title {
-    font-size: 18px;
+    font-size: var(--size-18);
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
@@ -199,8 +199,8 @@
     border: none;
     cursor: pointer;
     color: var(--text-secondary);
-    width: 28px;
-    height: 28px;
+    width: var(--size-28);
+    height: var(--size-28);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -213,12 +213,12 @@
 }
 
 .bind-email-close svg {
-    width: 16px;
-    height: 16px;
+    width: var(--size-16);
+    height: var(--size-16);
 }
 
 .bind-email-desc {
-    font-size: 13px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
     margin-bottom: var(--space-lg);
     line-height: 1.5;
@@ -230,10 +230,10 @@
 
 .bind-email-label {
     display: block;
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 500;
     color: var(--text-secondary);
-    margin-bottom: 6px;
+    margin-bottom: var(--size-6);
 }
 
 .bind-email-row {
@@ -260,15 +260,15 @@
 }
 
 .bind-email-cancel {
-    height: 40px;
+    height: var(--size-40);
     padding: 0 var(--space-lg);
     background: var(--bg-secondary);
-    border: 1px solid var(--border);
+    border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--size-14);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--motion-transition-interactive-fast);
 }
 
 .bind-email-cancel:hover {
@@ -277,8 +277,10 @@
 
 .bind-email-submit {
     width: auto;
-    height: 40px;
+    height: var(--size-40);
     padding: 0 var(--space-xl);
-    font-size: 14px;
+    font-size: var(--size-14);
 }
+
+
 

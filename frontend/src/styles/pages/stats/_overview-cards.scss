@@ -13,7 +13,7 @@
 }
 
 .stats-page > * + * {
-    margin-top: 10px;
+    margin-top: var(--size-10);
 }
 
 .stats-pie-dot--0 { background: var(--chart-series-1); }
@@ -44,7 +44,7 @@
 .stats-page {
     /* 与下方「错词 | 艾宾浩斯…」主布局同一竖线分割与槽宽 */
     --stats-col-left-pct: 32%;
-    --stats-align-gutter: 10px;
+    --stats-align-gutter: var(--size-10);
     box-sizing: border-box;
 }
 
@@ -77,7 +77,7 @@
     width: 100%;
     margin: 0;
     padding: 0;
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-tertiary);
     line-height: 1.6;
 }
@@ -97,11 +97,11 @@
 }
 
 .mode-recommendation {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-secondary);
     background: var(--accent-light);
-    border: 1px solid rgba(var(--accent-rgb), 0.22);
-    padding: 4px 10px;
+    border: var(--size-1) solid rgba(var(--accent-rgb), var(--alpha-22));
+    padding: var(--size-4) var(--size-10);
     border-radius: var(--radius-full);
     white-space: nowrap;
 }
@@ -112,8 +112,8 @@
 
 .mode-recommendation-acc {
     color: var(--text-tertiary);
-    margin-left: 4px;
-    font-size: 11px;
+    margin-left: var(--size-4);
+    font-size: var(--size-12);
 }
 
 .stats-section--mode-strip .stats-section-hint {
@@ -150,7 +150,7 @@
 }
 
 .stats-mode-strip-title {
-    font-size: 12px;
+    font-size: var(--size-12);
     font-weight: 600;
     color: var(--text-secondary);
     margin: 0;
@@ -188,23 +188,23 @@
 }
 
 .stats-table--mode-strip {
-    font-size: 11px;
+    font-size: var(--size-12);
 }
 
 .stats-table--mode-strip th,
 .stats-table--mode-strip td {
-    padding: 5px 6px;
+    padding: var(--size-5) var(--size-6);
     white-space: nowrap;
 }
 
 .stats-empty--mode-strip {
-    padding: 12px 8px;
-    font-size: 12px;
+    padding: var(--size-12) var(--size-8);
+    font-size: var(--size-12);
 }
 
 .stats-chart-loading--strip-table {
-    min-height: 72px;
-    height: 72px;
+    min-height: var(--size-72);
+    height: var(--size-72);
 }
 
 @media (max-width: 640px) {
@@ -219,8 +219,8 @@
     }
 
     .stats-mode-strip-title--modes {
-        border-top: 1px solid var(--border);
-        padding-top: var(--stats-align-gutter, 10px);
+        border-top: var(--size-1) solid var(--border);
+        padding-top: var(--stats-align-gutter, var(--size-10));
     }
 
     .stats-mode-strip-col--modes {
@@ -233,11 +233,11 @@
 .stats-cards.stats-cards-8,
 .stats-cards.stats-cards-9 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .stats-card {
-    @include metric-card(10px, var(--surface-base), 1px solid var(--border-strong), 10px, var(--shadow-soft));
+    @include metric-card(var(--size-10), var(--surface-base), var(--size-1) solid var(--border-strong), var(--size-10), var(--shadow-soft));
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -250,16 +250,16 @@
 
 .stats-card--detailed {
     justify-content: flex-start;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .stats-card--simple {
     justify-content: center;
-    gap: 6px;
+    gap: var(--size-6);
 }
 
 .stats-card-label {
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: 0;
@@ -267,7 +267,7 @@
 }
 
 .stats-card--simple .stats-card-label {
-    font-size: 13px;
+    font-size: var(--size-14);
 }
 
 .stats-card-value {
@@ -276,7 +276,7 @@
     line-height: 1;
     letter-spacing: -0.04em;
     color: var(--accent);
-    margin: 2px 0 4px;
+    margin: var(--size-2) 0 var(--size-4);
 }
 
 .stats-card--simple .stats-card-value {
@@ -286,31 +286,31 @@
 .stats-card-meta {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--size-6);
     width: 100%;
 }
 
 .stats-card-meta-row {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .stats-card-meta-label {
     flex: 0 0 auto;
-    min-width: 54px;
-    padding: 2px 6px;
-    border-radius: 999px;
-    background: rgba(var(--accent-rgb), 0.1);
+    min-width: var(--size-54);
+    padding: var(--size-2) var(--size-6);
+    border-radius: var(--radius-pill);
+    background: rgba(var(--accent-rgb), var(--alpha-10));
     color: var(--accent);
-    font-size: 11px;
+    font-size: var(--size-12);
     font-weight: 700;
     line-height: 1.4;
 }
 
 .stats-card-meta-text {
     flex: 1 1 auto;
-    font-size: 11px;
+    font-size: var(--size-12);
     color: var(--text-secondary);
     line-height: 1.5;
 }
@@ -318,35 +318,35 @@
 .stats-section,
 .stats-main-layout .stats-section,
 .stats-left-stack > .stats-section {
-    @include panel-surface(var(--surface-base), 1px solid var(--border-strong), 10px, var(--shadow-soft));
-    padding: 10px;
+    @include panel-surface(var(--surface-base), var(--size-1) solid var(--border-strong), var(--size-10), var(--shadow-soft));
+    padding: var(--size-10);
 }
 
 .stats-section-title {
-    margin-bottom: 10px;
-    font-size: 14px;
+    margin-bottom: var(--size-10);
+    font-size: var(--size-14);
     font-weight: 600;
     letter-spacing: 0;
     color: var(--text-primary);
 }
 
 .stats-section-hint {
-    margin: 0 0 10px;
-    font-size: 13px;
+    margin: 0 0 var(--size-10);
+    font-size: var(--size-14);
     line-height: 1.5;
     color: var(--text-secondary);
 }
 
 .stats-mode-strip-header {
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: var(--size-10);
+    margin-bottom: var(--size-10);
 }
 
 .mode-recommendation {
-    padding: 10px;
-    border-radius: 10px;
+    padding: var(--size-10);
+    border-radius: var(--size-10);
     background: var(--accent-light);
-    border: 1px solid rgba(var(--accent-rgb), 0.18);
+    border: var(--size-1) solid rgba(var(--accent-rgb), var(--alpha-18));
     color: var(--accent);
     font-weight: 700;
 }
@@ -355,7 +355,7 @@
 .stats-main-layout,
 .stats-main-right-top,
 .stats-main-right-bottom {
-    gap: 10px;
+    gap: var(--size-10);
 }
 
 .stats-pie-wrap,
@@ -373,17 +373,17 @@
 
 .stats-data-table,
 .stats-table {
-    @include data-table-base(13px, separate);
+    @include data-table-base(var(--size-14), separate);
     border-spacing: 0;
     overflow: hidden;
 }
 
 .stats-data-table thead th,
 .stats-table thead th {
-    @include data-table-head-cell(10px, var(--bg-secondary), 11px, 800, var(--text-secondary), none);
+    @include data-table-head-cell(var(--size-10), var(--bg-secondary), var(--size-12), 800, var(--text-secondary), none);
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: var(--layer-raised);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -392,8 +392,8 @@
 .stats-data-table td,
 .stats-table th,
 .stats-table td {
-    @include data-table-body-cell(10px, transparent, var(--text-primary), 1px solid var(--border-subtle));
-    border-bottom: 1px solid var(--border-subtle);
+    @include data-table-body-cell(var(--size-10), transparent, var(--text-primary), var(--size-1) solid var(--border-subtle));
+    border-bottom: var(--size-1) solid var(--border-subtle);
 }
 
 .stats-data-table tbody tr:hover,
@@ -406,24 +406,26 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
-    padding: 0 10px;
-    border-radius: 999px;
+    min-height: var(--size-28);
+    padding: 0 var(--size-10);
+    border-radius: var(--radius-pill);
     font-weight: 700;
 }
 
 .wrong-count-badge {
-    background: color-mix(in srgb, var(--error) 12%, transparent);
+    background: color-mix(in srgb, var(--error) var(--mix-12), transparent);
     color: var(--error);
 }
 
 .error-reason-tag {
-    background: color-mix(in srgb, var(--info) 12%, transparent);
+    background: color-mix(in srgb, var(--info) var(--mix-12), transparent);
     color: var(--info);
 }
 
 .stats-chart-loading,
 .stats-empty {
-    border-radius: 10px;
+    border-radius: var(--size-10);
     background: var(--surface-muted);
 }
+
+

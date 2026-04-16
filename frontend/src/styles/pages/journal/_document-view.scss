@@ -21,12 +21,12 @@
 .journal-doc-main {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--size-8);
   flex: 1;
   min-width: 0;
   min-height: 0;
   height: 100%;
-  padding: 8px;
+  padding: var(--size-8);
   overflow: hidden;
 }
 
@@ -44,11 +44,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--size-8);
   flex: 0 0 auto;
-  min-height: 72px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+  min-height: var(--size-72);
+  padding-bottom: var(--size-8);
+  border-bottom: var(--size-1) solid var(--border);
 }
 
 .journal-doc-breadcrumb {
@@ -59,35 +59,35 @@
 .journal-doc-main-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--size-10);
 }
 
 .journal-regen-btn {
-  @include control-button(38px, 0 10px, 10px, 1px solid var(--border), var(--surface-base), var(--text-secondary), 0.84rem, 700);
+  @include control-button(var(--size-40), 0 var(--size-10), var(--size-10), var(--size-1) solid var(--border), var(--surface-base), var(--text-secondary), 0.84rem, 700);
 }
 
 .journal-regen-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  transform: translateY(calc(var(--size-1) * -1));
+  border-color: color-mix(in srgb, var(--accent) var(--mix-30), var(--border));
   color: var(--accent);
 }
 
 .journal-doc-hero {
-  @include metric-card(10px, var(--surface-base), 1px solid var(--border-subtle), 10px, none);
+  @include metric-card(var(--size-10), var(--surface-base), var(--size-1) solid var(--border-subtle), var(--size-10), none);
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
-  gap: 8px;
-  border-bottom: 1px solid var(--border);
+  gap: var(--size-8);
+  border-bottom: var(--size-1) solid var(--border);
 }
 
 .journal-doc-hero--note {
-  background: color-mix(in srgb, var(--surface-base) 88%, var(--surface-muted));
+  background: color-mix(in srgb, var(--surface-base) var(--mix-88), var(--surface-muted));
 }
 
 .journal-doc-date-chip,
 .journal-doc-meta-chip {
-  @include pill-badge(28px, 0 10px, 999px, color-mix(in srgb, var(--accent) 8%, transparent), var(--accent), 0.8rem, 700);
+  @include pill-badge(var(--size-28), 0 var(--size-10), var(--radius-pill), color-mix(in srgb, var(--accent) var(--mix-8), transparent), var(--accent), 0.8rem, 700);
   width: fit-content;
 }
 
@@ -95,7 +95,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--size-10);
 }
 
 .journal-doc-title {
@@ -113,7 +113,7 @@
 
 .journal-doc-lead {
   margin: 0;
-  max-width: 820px;
+  max-width: var(--size-820);
   font-size: 0.96rem;
   line-height: 1.85;
   color: var(--text-secondary);
@@ -122,7 +122,7 @@
 .journal-doc-meta-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--size-10);
   font-size: 0.82rem;
   color: var(--text-tertiary);
 }
@@ -131,7 +131,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: var(--size-4);
 }
 
 .journal-doc-body--summary {
@@ -146,9 +146,9 @@
   min-height: 0;
   height: 100%;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--size-8);
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: var(--size-4);
 }
 
 .journal-doc-main-scroll--summary {
@@ -156,24 +156,24 @@
 }
 
 .journal-summary-profile {
-  @include metric-card(10px, color-mix(in srgb, var(--surface-base) 96%, var(--surface-muted)), 1px solid var(--border-subtle), 10px, none);
+  @include metric-card(var(--size-10), color-mix(in srgb, var(--surface-base) var(--mix-96), var(--surface-muted)), var(--size-1) solid var(--border-subtle), var(--size-10), none);
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--size-12);
 }
 
 .journal-summary-profile__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--size-12);
 }
 
 .journal-summary-profile__copy {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--size-6);
 }
 
 .journal-summary-profile__eyebrow {
@@ -199,28 +199,28 @@
 }
 
 .journal-summary-profile__trend {
-  @include pill-badge(30px, 0 12px, 999px, color-mix(in srgb, var(--accent) 8%, transparent), var(--accent), 0.8rem, 700);
+  @include pill-badge(var(--size-30), 0 var(--size-12), var(--radius-pill), color-mix(in srgb, var(--accent) var(--mix-8), transparent), var(--accent), 0.8rem, 700);
   flex-shrink: 0;
 }
 
 .journal-summary-profile__metrics {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--size-8);
 }
 
 .journal-summary-profile__metric,
 .journal-summary-profile__card {
-  border-radius: 12px;
-  border: 1px solid var(--border-subtle);
+  border-radius: var(--size-12);
+  border: var(--size-1) solid var(--border-subtle);
   background: var(--surface-base);
 }
 
 .journal-summary-profile__metric {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px;
+  gap: var(--size-6);
+  padding: var(--size-12);
 }
 
 .journal-summary-profile__metric span {
@@ -237,14 +237,14 @@
 .journal-summary-profile__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--size-8);
 }
 
 .journal-summary-profile__card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
+  gap: var(--size-10);
+  padding: var(--size-12);
 }
 
 .journal-summary-profile__card--wide {
@@ -262,7 +262,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--size-12);
 }
 
 .journal-summary-profile__section-meta {
@@ -281,18 +281,18 @@
 .journal-summary-profile__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--size-8);
 }
 
 .journal-summary-profile__chip {
-  @include pill-badge(30px, 0 12px, 999px, color-mix(in srgb, var(--accent) 8%, transparent), var(--accent), 0.8rem, 700);
+  @include pill-badge(var(--size-30), 0 var(--size-12), var(--radius-pill), color-mix(in srgb, var(--accent) var(--mix-8), transparent), var(--accent), 0.8rem, 700);
 }
 
 .journal-summary-profile__list,
 .journal-summary-profile__actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--size-8);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -302,9 +302,9 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--size-10);
+  padding-bottom: var(--size-8);
+  border-bottom: var(--size-1) solid var(--border-subtle);
 }
 
 .journal-summary-profile__list li:last-child {
@@ -332,7 +332,7 @@
 
 .journal-summary-profile__actions li {
   position: relative;
-  padding-left: 14px;
+  padding-left: var(--size-14);
 }
 
 .journal-summary-profile__actions li::before {
@@ -340,16 +340,16 @@
   position: absolute;
   top: 0.7em;
   left: 0;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
+  width: var(--size-6);
+  height: var(--size-6);
+  border-radius: var(--radius-pill);
   background: var(--accent);
 }
 
 .journal-summary-profile__timeline {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--size-10);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -359,9 +359,9 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--size-12);
+  padding-bottom: var(--size-10);
+  border-bottom: var(--size-1) solid var(--border-subtle);
 }
 
 .journal-summary-profile__timeline-item:last-child {
@@ -372,7 +372,7 @@
 .journal-summary-profile__timeline-main {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--size-4);
   min-width: 0;
 }
 
@@ -381,3 +381,5 @@
   line-height: 1.6;
   color: var(--text-primary);
 }
+
+

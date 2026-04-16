@@ -3,30 +3,30 @@
 .study-guide-notes li::before {
     content: '';
     position: absolute;
-    top: 9px;
+    top: var(--size-10);
     left: 0;
-    width: 8px;
-    height: 8px;
+    width: var(--size-8);
+    height: var(--size-8);
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.1);
+    box-shadow: 0 0 0 var(--size-4) rgba(var(--accent-rgb), var(--alpha-10));
 }
 
 .study-quick-links {
     display: grid;
-    gap: 8px;
+    gap: var(--size-8);
 }
 
 .study-quick-link {
     width: 100%;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid var(--surface-border-strong);
-    background: color-mix(in srgb, var(--surface-elevated) 78%, transparent);
+    padding: var(--size-12) var(--size-14);
+    border-radius: var(--size-14);
+    border: var(--size-1) solid var(--surface-border-strong);
+    background: color-mix(in srgb, var(--surface-elevated) var(--mix-78), transparent);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--size-12);
     text-align: left;
     cursor: pointer;
     transition:
@@ -36,35 +36,35 @@
 }
 
 .study-quick-link:hover {
-    transform: translateY(-1px);
-    border-color: rgba(var(--accent-rgb), 0.2);
-    background: rgba(var(--accent-rgb), 0.04);
+    transform: translateY(calc(var(--size-1) * -1));
+    border-color: rgba(var(--accent-rgb), var(--alpha-20));
+    background: rgba(var(--accent-rgb), var(--alpha-4));
 }
 
 .study-quick-link__label {
-    font-size: 14px;
+    font-size: var(--size-14);
     font-weight: 700;
     color: var(--text-primary);
 }
 
 .study-quick-link__value {
-    font-size: 12px;
+    font-size: var(--size-12);
     color: var(--text-secondary);
 }
 
 .study-center-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(var(--size-260), 1fr));
+    gap: var(--size-10);
 }
 
 .study-book-card {
     position: relative;
-    min-height: 196px;
-    padding: 14px;
+    min-height: var(--size-196);
+    padding: var(--size-14);
     display: grid;
-    grid-template-rows: 64px auto 8px auto;
-    gap: 10px;
+    grid-template-rows: var(--size-64) auto var(--size-8) auto;
+    gap: var(--size-10);
     align-content: start;
     cursor: pointer;
     overflow: hidden;
@@ -76,29 +76,29 @@
 }
 
 .study-book-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(calc(var(--size-3) * -1));
     box-shadow: var(--shadow-panel);
-    border-color: rgba(var(--accent-rgb), 0.2);
+    border-color: rgba(var(--accent-rgb), var(--alpha-20));
 }
 
 .study-book-remove {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
+    top: var(--size-12);
+    right: var(--size-12);
+    width: var(--size-32);
+    height: var(--size-32);
     padding: 0;
     background: var(--surface-floating);
-    border: 1px solid var(--border-subtle);
-    border-radius: 10px;
+    border: var(--size-1) solid var(--border-subtle);
+    border-radius: var(--size-10);
     color: var(--text-tertiary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: all var(--transition-fast);
-    z-index: 1;
+    transition: var(--motion-transition-interactive-fast);
+    z-index: var(--layer-raised);
 }
 
 .study-book-card:hover .study-book-remove {
@@ -108,25 +108,25 @@
 .study-book-remove:hover {
     background: var(--error-light);
     color: var(--error);
-    border-color: color-mix(in srgb, var(--error) 25%, transparent);
+    border-color: color-mix(in srgb, var(--error) var(--mix-25), transparent);
 }
 
 .study-book-remove svg {
-    width: 14px;
-    height: 14px;
+    width: var(--size-14);
+    height: var(--size-14);
 }
 
 .study-book-icon-row {
     display: flex;
     align-items: stretch;
-    gap: 12px;
-    min-height: 64px;
+    gap: var(--size-12);
+    min-height: var(--size-64);
 }
 
 .study-book-icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
+    width: var(--size-46);
+    height: var(--size-46);
+    border-radius: var(--size-12);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,24 +139,24 @@
 }
 
 .study-book-icon svg {
-    width: 22px;
-    height: 22px;
+    width: var(--size-22);
+    height: var(--size-22);
 }
 
 .study-book-header {
     display: grid;
     flex: 1;
-    grid-template-rows: minmax(0, 1fr) 24px;
-    gap: 6px;
+    grid-template-rows: minmax(0, 1fr) var(--size-24);
+    gap: var(--size-6);
     align-content: start;
     min-width: 0;
-    min-height: 64px;
-    padding-right: 40px;
+    min-height: var(--size-64);
+    padding-right: var(--size-40);
 }
 
 .study-book-title {
     margin: 0;
-    font-size: 17px;
+    font-size: var(--size-18);
     font-weight: 700;
     line-height: 1.32;
     display: block;
@@ -171,12 +171,12 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
-    min-height: 24px;
+    gap: var(--size-6);
+    min-height: var(--size-24);
 }
 
 .study-book-badge {
-    @include pill-badge(24px, 4px 8px, 999px, var(--surface-inset), var(--text-secondary), 11px, 700);
+    @include pill-badge(var(--size-24), var(--size-4) var(--size-8), var(--radius-pill), var(--surface-inset), var(--text-secondary), var(--size-12), 700);
 }
 
 .study-book-badge--neutral {
@@ -185,50 +185,51 @@
 }
 
 .study-book-badge--success {
-    background: color-mix(in srgb, var(--success) 14%, transparent);
+    background: color-mix(in srgb, var(--success) var(--mix-14), transparent);
     color: var(--success);
 }
 
 .study-book-state {
-    @include pill-badge(24px, 4px 8px, 999px, var(--surface-inset), var(--text-secondary), 11px, 700);
+    @include pill-badge(var(--size-24), var(--size-4) var(--size-8), var(--radius-pill), var(--surface-inset), var(--text-secondary), var(--size-12), 700);
 }
 
 .study-book-state--active {
-    background: rgba(var(--accent-rgb), 0.12);
+    background: rgba(var(--accent-rgb), var(--alpha-12));
     color: var(--accent);
 }
 
 .study-book-state--complete {
-    background: color-mix(in srgb, var(--success) 12%, transparent);
+    background: color-mix(in srgb, var(--success) var(--mix-12), transparent);
     color: var(--success);
 }
 
 .study-book-progress-text {
-    font-size: 13px;
+    font-size: var(--size-14);
     font-weight: 600;
     color: var(--text-secondary);
 }
 
 .study-book-progress-bar {
-    height: 8px;
+    height: var(--size-8);
     background: var(--surface-inset);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     overflow: hidden;
 }
 
 .study-book-progress-fill {
+    width: var(--progress-percent, 0%);
     height: 100%;
     display: block;
     background: var(--accent);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .study-book-stats {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    font-size: 13px;
+    gap: var(--size-12);
+    font-size: var(--size-14);
     color: var(--text-secondary);
 }
 
@@ -237,13 +238,13 @@
 }
 
 .study-add-card {
-    min-height: 204px;
-    padding: 20px;
+    min-height: var(--size-204);
+    padding: var(--size-20);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: var(--size-12);
     border-style: dashed;
     cursor: pointer;
     color: var(--accent);
@@ -255,19 +256,19 @@
 }
 
 .study-add-card:hover {
-    transform: translateY(-3px);
-    background: rgba(var(--accent-rgb), 0.05);
-    border-color: rgba(var(--accent-rgb), 0.24);
+    transform: translateY(calc(var(--size-3) * -1));
+    background: rgba(var(--accent-rgb), var(--alpha-5));
+    border-color: rgba(var(--accent-rgb), var(--alpha-24));
     box-shadow: var(--shadow-soft);
 }
 
 .study-add-card svg {
-    width: 34px;
-    height: 34px;
+    width: var(--size-34);
+    height: var(--size-34);
 }
 
 .study-add-card span {
-    font-size: 15px;
+    font-size: var(--size-16);
     font-weight: 700;
 }
 
@@ -333,7 +334,7 @@
     .study-guide-side-card,
     .study-book-card,
     .study-add-card {
-        border-radius: 14px;
+        border-radius: var(--size-14);
     }
 
     .study-quick-actions {
@@ -354,7 +355,7 @@
 
     .study-book-card,
     .study-add-card {
-        min-height: 180px;
+        min-height: var(--size-180);
     }
 
     .study-book-remove {
@@ -375,3 +376,5 @@
         flex-direction: column;
     }
 }
+
+
