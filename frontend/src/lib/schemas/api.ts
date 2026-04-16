@@ -165,8 +165,111 @@ export const AIPronunciationCheckResponseSchema = z.object({
   stress_feedback: z.string(),
   vowel_feedback: z.string(),
   speed_feedback: z.string(),
+  mastery_state: z.object({
+    overall_status: z.string(),
+    current_round: z.number().int(),
+    pending_dimensions: z.array(z.string()),
+    dimension_states: z.record(z.string(), z.object({
+      status: z.string(),
+      pass_streak: z.number().int(),
+      attempt_count: z.number().int(),
+      history_wrong: z.number().int().optional(),
+      last_result: z.string().nullable().optional(),
+      next_review_at: z.string().nullable().optional(),
+      source_mode: z.string().nullable().optional(),
+    })),
+  }).optional(),
 })
 export type AIPronunciationCheckResponse = z.infer<typeof AIPronunciationCheckResponseSchema>
+
+export const GamePracticeDimensionStateSchema = z.object({
+  status: z.string(),
+  pass_streak: z.number().int(),
+  attempt_count: z.number().int(),
+  history_wrong: z.number().int().optional(),
+  last_result: z.string().nullable().optional(),
+  next_review_at: z.string().nullable().optional(),
+  source_mode: z.string().nullable().optional(),
+})
+export type GamePracticeDimensionState = z.infer<typeof GamePracticeDimensionStateSchema>
+
+export const GamePracticeWordImageSchema = z.object({
+  status: z.enum(['queued', 'generating', 'ready', 'failed']),
+  senseKey: z.string().catch(''),
+  url: z.string().nullable().optional().default(null),
+  alt: z.string().catch('词义配图'),
+  styleVersion: z.string().nullable().optional().default(null),
+  model: z.string().nullable().optional().default(null),
+  generatedAt: z.string().nullable().optional().default(null),
+})
+export type GamePracticeWordImage = z.infer<typeof GamePracticeWordImageSchema>
+
+export const GamePracticeWordSchema = z.object({
+  word: z.string(),
+  phonetic: z.string().catch(''),
+  pos: z.string().catch(''),
+  definition: z.string().catch(''),
+  chapter_id: z.union([z.string(), z.number()]).nullable().optional(),
+  chapter_title: z.string().nullable().optional(),
+  overall_status: z.enum(['new', 'unlocked', 'in_review', 'passed']),
+  current_round: z.number().int(),
+  pending_dimensions: z.array(z.string()),
+  listening_confusables: z.array(WordSearchConfusableSchema).optional(),
+  examples: z.array(WordSearchExampleSchema).optional(),
+  dimension_states: z.record(z.string(), GamePracticeDimensionStateSchema),
+  image: GamePracticeWordImageSchema,
+})
+export type GamePracticeWord = z.infer<typeof GamePracticeWordSchema>
+
+export const GamePracticeQueueItemSchema = z.object({
+  word: z.string(),
+  overall_status: z.enum(['new', 'unlocked', 'in_review', 'passed']),
+  current_round: z.number().int(),
+  next_due_at: z.string().nullable().optional(),
+  pending_dimensions: z.array(z.string()),
+})
+export type GamePracticeQueueItem = z.infer<typeof GamePracticeQueueItemSchema>
+
+export const GamePracticeStateSchema = z.object({
+  scope: z.object({
+    bookId: z.string().nullable().optional(),
+    chapterId: z.union([z.string(), z.number()]).nullable().optional(),
+    day: z.number().int().nullable().optional(),
+  }),
+  activeWord: GamePracticeWordSchema.nullable(),
+  activeDimension: z.string().nullable(),
+  unlockProgress: z.object({
+    completed: z.number().int(),
+    total: z.number().int(),
+  }),
+  masteryProgress: z.object({
+    completed: z.number().int(),
+    total: z.number().int(),
+    currentRound: z.number().int(),
+    targetRound: z.number().int(),
+  }),
+  reviewQueue: z.array(GamePracticeQueueItemSchema),
+  pendingDimensions: z.array(z.string()),
+  summary: z.object({
+    totalWords: z.number().int(),
+    passedWords: z.number().int(),
+    unlockedWords: z.number().int(),
+    dueWords: z.number().int(),
+    newWords: z.number().int(),
+  }),
+})
+export type GamePracticeState = z.infer<typeof GamePracticeStateSchema>
+
+export const GamePracticeAttemptResponseSchema = z.object({
+  state: z.object({
+    overall_status: z.enum(['new', 'unlocked', 'in_review', 'passed']),
+    current_round: z.number().int(),
+    pending_dimensions: z.array(z.string()),
+    dimension_states: z.record(z.string(), GamePracticeDimensionStateSchema),
+  }),
+  game_state: GamePracticeStateSchema,
+})
+export type GamePracticeAttemptResponse = z.infer<typeof GamePracticeAttemptResponseSchema>
 
 export const AISpeakingSimulationResponseSchema = z.object({
   part: z.number().int(),
@@ -192,3 +295,86 @@ export const AIReviewPlanResponseSchema = z.object({
   })).optional(),
 })
 export type AIReviewPlanResponse = z.infer<typeof AIReviewPlanResponseSchema>
+
+export const AISpeakingPromptsResponseSchema = z.object({
+  promptText: z.string(),
+  followUps: z.array(z.string()),
+  recommendedDurationSeconds: z.number().int().positive(),
+})
+export type AISpeakingPromptsResponse = z.infer<typeof AISpeakingPromptsResponseSchema>
+
+export const AISpeakingDimensionBandsSchema = z.object({
+  fluency: z.number(),
+  lexical: z.number(),
+  grammar: z.number(),
+  pronunciation: z.number(),
+})
+export type AISpeakingDimensionBands = z.infer<typeof AISpeakingDimensionBandsSchema>
+
+export const AISpeakingRawScoresSchema = z.object({
+  fluency: z.number().int(),
+  lexical: z.number().int(),
+  grammar: z.number().int(),
+  pronunciation: z.number().int(),
+})
+export type AISpeakingRawScores = z.infer<typeof AISpeakingRawScoresSchema>
+
+export const AISpeakingFeedbackSchema = z.object({
+  summary: z.string(),
+  strengths: z.array(z.string()).default([]),
+  priorities: z.array(z.string()).default([]),
+  dimensionFeedback: z.object({
+    fluency: z.string(),
+    lexical: z.string(),
+    grammar: z.string(),
+    pronunciation: z.string(),
+  }),
+})
+export type AISpeakingFeedback = z.infer<typeof AISpeakingFeedbackSchema>
+
+export const AISpeakingMetricsSchema = z.object({
+  durationSeconds: z.number().int().nullable().optional(),
+  wordCount: z.number().int().nonnegative(),
+  uniqueWordCount: z.number().int().nonnegative(),
+  typeTokenRatio: z.number(),
+  estimatedWpm: z.number().int().nullable().optional(),
+  targetWordsAttempted: z.number().int().nonnegative(),
+  targetWordsUsed: z.array(z.string()).default([]),
+  rawScores: AISpeakingRawScoresSchema.optional(),
+})
+export type AISpeakingMetrics = z.infer<typeof AISpeakingMetricsSchema>
+
+export const AISpeakingAssessmentResponseSchema = z.object({
+  assessmentId: z.number().int(),
+  part: z.number().int(),
+  topic: z.string(),
+  promptText: z.string(),
+  targetWords: z.array(z.string()).default([]),
+  transcript: z.string(),
+  overallBand: z.number(),
+  dimensionBands: AISpeakingDimensionBandsSchema,
+  feedback: AISpeakingFeedbackSchema,
+  metrics: AISpeakingMetricsSchema,
+  provider: z.string().nullable().optional().default(null),
+  model: z.string().nullable().optional().default(null),
+  createdAt: z.string().nullable().optional().default(null),
+})
+export type AISpeakingAssessmentResponse = z.infer<typeof AISpeakingAssessmentResponseSchema>
+
+export const AISpeakingHistoryItemSchema = z.object({
+  assessmentId: z.number().int(),
+  part: z.number().int(),
+  topic: z.string(),
+  promptText: z.string(),
+  targetWords: z.array(z.string()).default([]),
+  transcriptExcerpt: z.string(),
+  overallBand: z.number(),
+  dimensionBands: AISpeakingDimensionBandsSchema,
+  createdAt: z.string().nullable().optional().default(null),
+})
+export type AISpeakingHistoryItem = z.infer<typeof AISpeakingHistoryItemSchema>
+
+export const AISpeakingHistoryResponseSchema = z.object({
+  items: z.array(AISpeakingHistoryItemSchema),
+})
+export type AISpeakingHistoryResponse = z.infer<typeof AISpeakingHistoryResponseSchema>
