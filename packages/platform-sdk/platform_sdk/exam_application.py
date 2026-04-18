@@ -12,7 +12,6 @@ from services.exam_api_service import (
     save_exam_attempt_responses,
     submit_exam_attempt,
 )
-from services.exam_import_service import run_exam_import_job
 
 
 def _error_payload(message: str, status: int):
@@ -21,7 +20,10 @@ def _error_payload(message: str, status: int):
 
 def create_exam_import_job_response(body: dict | None):
     try:
+        from services.exam_import_service import run_exam_import_job
         return run_exam_import_job(body), 201
+    except ModuleNotFoundError as exc:
+        return _error_payload(f'Missing exam import dependency: {exc.name}', 500)
     except ValueError as exc:
         return _error_payload(str(exc), 400)
     except Exception as exc:
