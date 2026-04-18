@@ -110,6 +110,9 @@ _generating_words: bool = False
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _AUDIO_SOURCE_HEADER = 'X-Audio-Source'
 _SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
+_LEGACY_SEGMENTED_WORD_VOICES = (
+    'en-GB-LibbyNeural',
+)
 
 
 def _word_tts_dir() -> Path:
@@ -202,6 +205,23 @@ def _resolve_word_audio_identity(pronunciation_mode: str) -> tuple[str, str, str
     return provider, model, voice, 'word'
 
 
+def _resolve_word_audio_identity_candidates(
+    pronunciation_mode: str,
+) -> list[tuple[str, str, str, str]]:
+    primary = _resolve_word_audio_identity(pronunciation_mode)
+    if pronunciation_mode != 'word-segmented':
+        return [primary]
+
+    provider, model, voice, content_mode = primary
+    candidates = [primary]
+    for fallback_voice in _LEGACY_SEGMENTED_WORD_VOICES:
+        normalized_voice = (fallback_voice or '').strip()
+        if not normalized_voice or normalized_voice == voice:
+            continue
+        candidates.append((provider, model, normalized_voice, content_mode))
+    return candidates
+
+
 @tts_bp.route('/word-audio', methods=['GET'])
 def get_word_audio():
     """
@@ -225,41 +245,86 @@ def get_word_audio():
         return jsonify({'error': 'invalid w'}), 400
     cache_only = request.args.get('cache_only') == '1' or request.headers.get('X-Audio-Cache-Only') == '1'
     pronunciation_mode = _normalize_word_audio_pronunciation_mode(request.args.get('pronunciation_mode'))
+    phonetic = (request.args.get('phonetic') or '').strip()
+    if not phonetic or phonetic == '/暂无音标/':
+        phonetic = None
 
     key = normalize_word_key(raw)
-    provider, model, voice, content_mode = _resolve_word_audio_identity(pronunciation_mode)
-    path = word_tts_cache_path(_word_tts_dir(), key, model, voice)
-    if path.exists() and not is_probably_valid_mp3_file(path):
-        remove_invalid_cached_audio(path)
-    oss_metadata = None
-    if content_mode == 'word':
-        oss_metadata = resolve_word_audio_oss_metadata(file_name=path.name, model=model, voice=voice)
+    identity_candidates = _resolve_word_audio_identity_candidates(pronunciation_mode)
+    provider, model, voice, content_mode = identity_candidates[0]
+    cache_dir = _word_tts_dir()
+    path = word_tts_cache_path(cache_dir, key, model, voice)
     if request.method == 'HEAD':
-        if oss_metadata is not None:
-            response = _audio_metadata_response(
-                oss_metadata.byte_length,
-                cache_key=oss_metadata.cache_key,
+        for _candidate_provider, candidate_model, candidate_voice, _candidate_content_mode in identity_candidates:
+            candidate_path = word_tts_cache_path(cache_dir, key, candidate_model, candidate_voice)
+            if candidate_path.exists() and not is_probably_valid_mp3_file(candidate_path):
+                remove_invalid_cached_audio(candidate_path)
+            oss_metadata = resolve_word_audio_oss_metadata(
+                file_name=candidate_path.name,
+                model=candidate_model,
+                voice=candidate_voice,
             )
-            response.headers[_AUDIO_OSS_URL_HEADER] = oss_metadata.signed_url
-            response.headers[_AUDIO_SOURCE_HEADER] = 'oss'
-            return response
-        byte_length = path.stat().st_size if path.exists() else None
-        cache_key = _audio_cache_key(path) if path.exists() else None
-        response = _audio_metadata_response(byte_length, cache_key=cache_key)
-        response.headers[_AUDIO_SOURCE_HEADER] = 'local' if path.exists() else 'missing'
+            if oss_metadata is not None:
+                response = _audio_metadata_response(
+                    oss_metadata.byte_length,
+                    cache_key=oss_metadata.cache_key,
+                )
+                response.headers[_AUDIO_OSS_URL_HEADER] = oss_metadata.signed_url
+                response.headers[_AUDIO_SOURCE_HEADER] = 'oss'
+                return response
+            if candidate_path.exists():
+                response = _audio_metadata_response(
+                    candidate_path.stat().st_size,
+                    cache_key=_audio_cache_key(candidate_path),
+                )
+                response.headers[_AUDIO_SOURCE_HEADER] = 'local'
+                return response
+        response = _audio_metadata_response(None, cache_key=None)
+        response.headers[_AUDIO_SOURCE_HEADER] = 'missing'
         return response
-    if oss_metadata is not None:
-        oss_payload = fetch_word_audio_oss_payload(file_name=path.name, model=model, voice=voice)
-        if oss_payload is not None:
-            response = Response(oss_payload.audio_bytes, mimetype=oss_payload.content_type or 'audio/mpeg')
+    for _candidate_provider, candidate_model, candidate_voice, _candidate_content_mode in identity_candidates:
+        candidate_path = word_tts_cache_path(cache_dir, key, candidate_model, candidate_voice)
+        if candidate_path.exists() and not is_probably_valid_mp3_file(candidate_path):
+            remove_invalid_cached_audio(candidate_path)
+        oss_metadata = resolve_word_audio_oss_metadata(
+            file_name=candidate_path.name,
+            model=candidate_model,
+            voice=candidate_voice,
+        )
+        if oss_metadata is not None:
+            oss_payload = fetch_word_audio_oss_payload(
+                file_name=candidate_path.name,
+                model=candidate_model,
+                voice=candidate_voice,
+            )
+            if oss_payload is not None:
+                response = Response(oss_payload.audio_bytes, mimetype=oss_payload.content_type or 'audio/mpeg')
+                response = _apply_audio_headers(
+                    response,
+                    byte_length=oss_payload.byte_length,
+                    cache_key=oss_payload.cache_key,
+                )
+                response.headers[_AUDIO_OSS_URL_HEADER] = oss_payload.signed_url
+                response.headers[_AUDIO_SOURCE_HEADER] = 'oss'
+                return response
+        if candidate_path.exists():
+            response = send_file(
+                candidate_path,
+                mimetype='audio/mpeg',
+                as_attachment=False,
+                download_name=f'{key}.mp3',
+                conditional=False,
+            )
             response = _apply_audio_headers(
                 response,
-                byte_length=oss_payload.byte_length,
-                cache_key=oss_payload.cache_key,
+                byte_length=candidate_path.stat().st_size,
+                cache_key=_audio_cache_key(candidate_path),
             )
-            response.headers[_AUDIO_OSS_URL_HEADER] = oss_payload.signed_url
-            response.headers[_AUDIO_SOURCE_HEADER] = 'oss'
+            if oss_metadata is not None:
+                response.headers[_AUDIO_OSS_URL_HEADER] = oss_metadata.signed_url
+            response.headers[_AUDIO_SOURCE_HEADER] = 'local'
             return response
+
     if not path.exists():
         if cache_only:
             return jsonify({'error': 'word audio cache miss'}), 404
@@ -271,6 +336,7 @@ def get_word_audio():
                 voice,
                 provider=provider,
                 content_mode=content_mode,
+                phonetic=phonetic if content_mode == 'word-segmented' else None,
             )
             write_bytes_atomically(path, audio_bytes)
         except Exception as exc:
@@ -292,8 +358,6 @@ def get_word_audio():
         byte_length=path.stat().st_size,
         cache_key=_audio_cache_key(path),
     )
-    if oss_metadata is not None:
-        response.headers[_AUDIO_OSS_URL_HEADER] = oss_metadata.signed_url
     response.headers[_AUDIO_SOURCE_HEADER] = 'local'
     return response
 

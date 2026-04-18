@@ -18,6 +18,7 @@ const preloadWordAudioMock = vi.fn(() => Promise.resolve(true))
 const stopAudioMock = vi.fn()
 
 vi.mock('./utils', () => ({
+  playSlowWordAudio: vi.fn(() => Promise.resolve(true)),
   playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
   prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
   preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),

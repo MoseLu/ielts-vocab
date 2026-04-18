@@ -117,7 +117,7 @@ const quitWordDetails = {
   },
 }
 
-const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.scss'), 'utf-8')
+const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.tokens.scss'), 'utf-8')
 const readRootLayerToken = (tokenName: string) => {
   const escapedName = tokenName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = baseStyles.match(new RegExp(`${escapedName}:\\s*(\\d+)`, 'u'))
@@ -476,6 +476,7 @@ describe('GlobalWordSearch', () => {
 
     expect(screen.getByRole('button', { name: '收藏到收藏词书' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '朗读单词 quit' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '慢速朗读单词 quit' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '反馈 quit 的问题' }))
 
     await screen.findByText('报告问题')

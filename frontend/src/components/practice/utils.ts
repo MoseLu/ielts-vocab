@@ -10,6 +10,7 @@ export {
 export {
   __resetAudioStateForTests,
   playExampleAudio,
+  playSlowWordAudio,
   playWord,
   playWordAudio,
   prepareWordAudioPlayback,

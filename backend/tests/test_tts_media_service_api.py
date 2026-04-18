@@ -252,6 +252,42 @@ def test_tts_media_service_word_audio_metadata_contract(monkeypatch, tmp_path):
     assert body['signed_url_expires_at'].endswith('+00:00')
 
 
+def test_tts_media_service_segmented_word_audio_metadata_uses_segmented_prefix(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
+    module = _load_tts_media_service_module()
+    client = TestClient(module.app)
+
+    monkeypatch.setattr(
+        module,
+        'resolve_object_metadata',
+        lambda **kwargs: SimpleNamespace(
+            provider='aliyun-oss',
+            bucket_name='bucket',
+            object_key=kwargs['object_key'],
+            byte_length=654,
+            content_type='audio/mpeg',
+            cache_key='oss:brain.mp3:654:etag-1',
+            signed_url='https://oss.example.com/brain.mp3?signature=1',
+        ),
+    )
+
+    response = client.get(
+        '/v1/media/word-audio',
+        params={
+            'file_name': '155c13a07c89c23d.mp3',
+            'model': 'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-segmented-v1',
+            'voice': 'en-GB-LibbyNeural',
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()['object_key'] == (
+        'projects/ielts-vocab/word-tts-cache/segmented/'
+        'azure-rest-audio-24khz-48kbitrate-mono-mp3-azure-word-segmented-v1-en-gb-libbyneural/'
+        '155c13a07c89c23d.mp3'
+    )
+
+
 def test_tts_media_service_word_audio_content_contract(monkeypatch, tmp_path):
     _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()

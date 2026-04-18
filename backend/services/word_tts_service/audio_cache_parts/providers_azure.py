@@ -1,6 +1,8 @@
 import os
 import re
 
+from services.word_tts_service.audio_cache_parts.identity_and_fetch import normalize_word_key
+
 
 _AZURE_SPEECH_KEY = os.environ.get('AZURE_SPEECH_KEY', '').strip()
 _AZURE_SPEECH_REGION = os.environ.get('AZURE_SPEECH_REGION', '').strip()

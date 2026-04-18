@@ -15,9 +15,11 @@ const cancelSessionMock = vi.fn(() => Promise.resolve())
 const flushStudySessionOnPageHideMock = vi.fn()
 const touchStudySessionActivityMock = vi.fn()
 const updateStudySessionSnapshotMock = vi.fn(); const playWordAudioMock = vi.fn(() => Promise.resolve(true))
+const playSlowWordAudioMock = vi.fn(() => Promise.resolve(true))
 const preloadWordAudioMock = vi.fn(() => Promise.resolve(true))
 const stopAudioMock = vi.fn()
 vi.mock('./utils', () => ({
+  playSlowWordAudio: (...args: unknown[]) => playSlowWordAudioMock(...args),
   playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
   preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
   preloadWordAudioBatch: (...args: unknown[]) => preloadWordAudioMock(...args),
@@ -74,6 +76,8 @@ describe('QuickMemoryMode', () => {
     updateStudySessionSnapshotMock.mockClear()
     playWordAudioMock.mockClear()
     playWordAudioMock.mockImplementation(() => Promise.resolve(true))
+    playSlowWordAudioMock.mockClear()
+    playSlowWordAudioMock.mockImplementation(() => Promise.resolve(true))
     preloadWordAudioMock.mockClear()
     preloadWordAudioMock.mockImplementation(() => Promise.resolve(true))
     stopAudioMock.mockClear()
@@ -493,5 +497,28 @@ describe('QuickMemoryMode', () => {
 
     expect(stopAudioMock).toHaveBeenCalled()
     expect(screen.getByRole('button', { name: '重播发音' })).toBeInTheDocument()
+  })
+
+  it('plays the segmented slow pronunciation from the turtle button', async () => {
+    const user = userEvent.setup()
+    render(
+      <QuickMemoryMode
+        vocabulary={vocabulary}
+        queue={[0]}
+        settings={settings}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: '慢速重播发音' }))
+
+    await waitFor(() => {
+      expect(playSlowWordAudioMock).toHaveBeenCalledWith('apple', settings, '/ˈæpəl/', expect.any(Function))
+    })
   })
 })

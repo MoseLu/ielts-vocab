@@ -1,5 +1,6 @@
 import FavoriteToggleButton from '../../practice/FavoriteToggleButton'
 import FeedbackIssueIcon from '../../ui/FeedbackIssueIcon'
+import SlowPlaybackIcon from '../../ui/SlowPlaybackIcon'
 
 interface GlobalWordSearchActionRailProps {
   canPlaySegmentedWord?: boolean
@@ -7,6 +8,7 @@ interface GlobalWordSearchActionRailProps {
   favoritePending: boolean
   onPlaySegmentedWord?: () => void
   onToggleFavorite: () => void
+  onPlaySlowWord: () => void
   onPlayWord: () => void
   onOpenFeedback: () => void
   word: string
@@ -18,6 +20,7 @@ export default function GlobalWordSearchActionRail({
   favoritePending,
   onPlaySegmentedWord,
   onToggleFavorite,
+  onPlaySlowWord,
   onPlayWord,
   onOpenFeedback,
   word,
@@ -54,6 +57,15 @@ export default function GlobalWordSearchActionRail({
             strokeLinecap="round"
           />
         </svg>
+      </button>
+      <button
+        type="button"
+        className="global-word-search-action-btn global-word-search-action-btn--slow"
+        aria-label={`慢速朗读单词 ${word}`}
+        title={`慢速朗读单词 ${word}`}
+        onClick={onPlaySlowWord}
+      >
+        <SlowPlaybackIcon className="global-word-search-slow-icon" />
       </button>
       {canPlaySegmentedWord && onPlaySegmentedWord ? (
         <button

@@ -62,6 +62,7 @@
 }
 
 .global-word-search-action-btn svg,
+.global-word-search-slow-icon,
 .global-word-search-action-rail .practice-favorite-btn svg {
     width: var(--size-24);
     height: var(--size-24);
@@ -79,6 +80,10 @@
 .global-word-search-action-icon {
     width: var(--size-22);
     height: var(--size-22);
+}
+
+.global-word-search-slow-icon {
+    object-fit: contain;
 }
 
 .word-feedback-modal {

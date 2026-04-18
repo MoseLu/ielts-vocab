@@ -4,6 +4,7 @@ import QuickMemoryMode from './QuickMemoryMode'
 import type { AppSettings, Word } from './types'
 
 vi.mock('./utils', () => ({
+  playSlowWordAudio: () => Promise.resolve(true),
   playWordAudio: () => Promise.resolve(true),
   prepareWordAudioPlayback: () => Promise.resolve(true),
   preloadWordAudio: () => Promise.resolve(true),

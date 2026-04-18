@@ -26,7 +26,8 @@
     transition: transform var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
 
     svg,
-    .example-audio-icon {
+    .example-audio-icon,
+    .slow-playback-icon {
         width: $icon-size;
         height: $icon-size;
     }

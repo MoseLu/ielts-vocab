@@ -9,6 +9,7 @@ import type {
   OptionItem,
   SmartDimension,
   SpellingSubmitSource,
+  WordPlaybackHandler,
 } from '../types'
 import { buildBlankSentence } from '../exampleSentence'
 import PracticeStageGuide from '../PracticeStageGuide.tsx'
@@ -236,7 +237,7 @@ interface SmartDictationProps {
   onSpellingSubmit: (source?: SpellingSubmitSource) => void
   onStartRecording: () => void
   onStopRecording: () => void
-  onPlayWord: (word: string) => void
+  onPlayWord: WordPlaybackHandler
 }
 
 export function SmartDictation({

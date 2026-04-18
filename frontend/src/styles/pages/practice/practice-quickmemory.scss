@@ -112,6 +112,13 @@
     margin: 0;
 }
 
+.qm-card-toolbar__audio-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--size-10);
+}
+
 .qm-audio-prompt {
     display: flex;
     align-items: center;

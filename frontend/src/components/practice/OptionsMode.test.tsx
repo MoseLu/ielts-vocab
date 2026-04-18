@@ -1,16 +1,18 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import OptionsMode from './OptionsMode'
 import type { OptionItem, Word } from './types'
 
 const playExampleAudioMock = vi.fn()
+const playSlowWordAudioMock = vi.fn(() => Promise.resolve(true))
 
 vi.mock('./utils', async () => {
   const actual = await vi.importActual<typeof import('./utils')>('./utils')
   return {
     ...actual,
     playExampleAudio: (...args: unknown[]) => playExampleAudioMock(...args),
+    playSlowWordAudio: (...args: unknown[]) => playSlowWordAudioMock(...args),
   }
 })
 
@@ -43,6 +45,12 @@ function makeDefinitionOption(word: string, pos: string, definition: string): Op
 }
 
 describe('OptionsMode listening feedback', () => {
+  beforeEach(() => {
+    playExampleAudioMock.mockClear()
+    playSlowWordAudioMock.mockClear()
+    playSlowWordAudioMock.mockImplementation(() => Promise.resolve(true))
+  })
+
   it('reveals the clicked word and simplifies part-of-speech labels in listening mode', () => {
     const { container } = render(
       <OptionsMode
@@ -92,6 +100,7 @@ describe('OptionsMode listening feedback', () => {
   })
 
   it('keeps example playback separate and moves word actions to the footer replay row', () => {
+    const onPlayWord = vi.fn()
     const { container } = render(
       <OptionsMode
         currentWord={makeWordWithExample('guy', '/gaɪ/', '家伙', 'The movie has guy started.')}
@@ -125,7 +134,7 @@ describe('OptionsMode listening feedback', () => {
         onSpellingInputChange={vi.fn()}
         onStartRecording={vi.fn()}
         onStopRecording={vi.fn()}
-        onPlayWord={vi.fn()}
+        onPlayWord={onPlayWord}
       />,
     )
 
@@ -139,6 +148,15 @@ describe('OptionsMode listening feedback', () => {
     expect(container.querySelector('.listening-example-prompt .word-display-audio-controls')).toBeNull()
     expect(container.querySelector('.options-footer-actions .word-display-audio-side button')?.textContent).toBe('fav')
     expect(container.querySelector('.options-footer-actions .replay-btn')).not.toBeNull()
+    expect(screen.getByRole('button', { name: '慢速播放单词' })).toBeInTheDocument()
+    screen.getByRole('button', { name: '慢速播放单词' }).click()
+    expect(playSlowWordAudioMock).toHaveBeenCalledWith(
+      'guy',
+      {},
+      '/gaɪ/',
+      expect.any(Function),
+    )
+    expect(onPlayWord).not.toHaveBeenCalled()
     expect(container.querySelector('.options-footer-actions .word-display-audio-side--end button')?.textContent).toBe('speak')
     expect(container.querySelector('.practice-main-header')).toBeNull()
   })

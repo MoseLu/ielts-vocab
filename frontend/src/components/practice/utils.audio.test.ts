@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   __resetAudioStateForTests,
   playExampleAudio,
+  playSlowWordAudio,
   preloadWordAudio,
   preloadWordAudioBatch,
   playWordAudio,
@@ -245,6 +246,79 @@ describe('practice audio cache', () => {
     expect(createdAudioSources.some(src => src.includes('dict.youdao.com'))).toBe(false)
     expect(createdAudioSources.some(src => src.includes('api.dictionaryapi.dev'))).toBe(false)
     expect(createObjectURLMock).toHaveBeenCalled()
+    expect(createdAudioSources).toContain('blob:audio')
+
+    stopAudio()
+  })
+
+  it('plays slow word audio from the segmented endpoint when available', async () => {
+    const fetchMock = vi.fn()
+    const createdAudioSources: string[] = []
+
+    class TrackingAudio extends TestAudio {
+      constructor(src = '') {
+        super()
+        this.src = src
+        createdAudioSources.push(src)
+      }
+    }
+
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
+    Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
+
+    const started = await playSlowWordAudio('internet', { playbackSpeed: '1', volume: '100' }, '/ˈɪntənet/')
+    await flushAudioWork()
+
+    expect(started).toBe(true)
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(createdAudioSources.some(src =>
+      src.includes('/api/tts/word-audio?w=internet')
+      && src.includes('pronunciation_mode=phonetic_segments')
+      && src.includes('phonetic='),
+    )).toBe(true)
+
+    stopAudio()
+  })
+
+  it('falls back to regular slow playback when segmented audio is unavailable', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'cache-v1' }),
+      })
+      .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'cache-v1'))
+    const createdAudioSources: string[] = []
+
+    class TrackingAudio extends TestAudio {
+      constructor(src = '') {
+        super()
+        this.src = src
+        createdAudioSources.push(src)
+        if (src.includes('pronunciation_mode=phonetic_segments')) {
+          this.play = vi.fn().mockRejectedValue(new Error('segmented unavailable'))
+        }
+      }
+    }
+
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
+    Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
+
+    const started = await playSlowWordAudio('fallback-word', { playbackSpeed: '1', volume: '100' }, '/ˈfɔːlbæk/')
+    await flushAudioWork()
+
+    expect(started).toBe(true)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio?w=fallback-word&cache_only=1', {
+      method: 'HEAD',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=fallback-word&cache_only=1&v=cache-v1', {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    })
+    expect(createdAudioSources.some(src => src.includes('pronunciation_mode=phonetic_segments'))).toBe(true)
     expect(createdAudioSources).toContain('blob:audio')
 
     stopAudio()

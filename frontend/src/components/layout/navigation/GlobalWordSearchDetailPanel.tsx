@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   apiFetch,
   safeParse,
@@ -13,52 +13,25 @@ import { useAuth, useToast } from '../../../contexts'
 import type { Word } from '../../practice/types'
 import { playExampleAudio, stopAudio } from '../../practice/utils'
 import { playSegmentedWordAudio, playWordAudio } from '../../practice/utils.audio'
+import { resolveWordPlaybackSettings, SLOW_WORD_PLAYBACK_OPTIONS } from '../../practice/wordPlayback'
 import { useFavoriteWords } from '../../../features/vocabulary/hooks'
 import ExampleAudioIcon from '../../ui/ExampleAudioIcon'
 import GlobalWordSearchActionRail from './GlobalWordSearchActionRail'
 import WordFeedbackModal from './WordFeedbackModal'
 import { buildWordMemoryNote } from './globalWordMemoryNote'
 import { WORD_NOTE_LIMIT } from './globalWordSearchDetailUtils'
-type DetailTab = 'examples' | 'root' | 'english' | 'derivatives' | 'notes'
-type NoteStatus = 'idle' | 'saving' | 'saved' | 'error'
+import {
+  buildNoteStatusLabel,
+  DETAIL_TABS,
+  renderHighlightedText,
+  type DetailTab,
+  type NoteStatus,
+} from './globalWordSearchDetailPanel.helpers'
+
 type GlobalWordSearchDetailPanelProps = {
   onPickWord: (word: string) => void
   query: string
   result: WordSearchResult
-}
-const DETAIL_TABS: Array<{ id: DetailTab; label: string }> = [
-  { id: 'examples', label: '例句' },
-  { id: 'root', label: '词根' },
-  { id: 'english', label: '英义' },
-  { id: 'derivatives', label: '派生' },
-  { id: 'notes', label: '笔记' },
-]
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
-function renderHighlightedText(text: string, query: string) {
-  const trimmedQuery = query.trim()
-  if (!trimmedQuery) return text
-
-  const segments = text.split(new RegExp(`(${escapeRegExp(trimmedQuery)})`, 'ig'))
-  return segments.map((segment, index) => (
-    <Fragment key={`${segment}-${index}`}>
-      {segment.toLowerCase() === trimmedQuery.toLowerCase() ? (
-        <mark className="global-word-search-highlight">{segment}</mark>
-      ) : (
-        segment
-      )}
-    </Fragment>
-  ))
-}
-
-function buildNoteStatusLabel(status: NoteStatus): string {
-  if (status === 'saving') return '自动保存中...'
-  if (status === 'saved') return '已保存到账号'
-  if (status === 'error') return '保存失败，请稍后重试'
-  return '自动保存到当前账号'
 }
 
 export default function GlobalWordSearchDetailPanel({
@@ -122,7 +95,12 @@ export default function GlobalWordSearchDetailPanel({
       volume: String(settings.volume ?? DEFAULT_SETTINGS.volume),
     }
   }, [])
+  const slowWordAudioSettings = useMemo(
+    () => resolveWordPlaybackSettings(exampleAudioSettings, SLOW_WORD_PLAYBACK_OPTIONS),
+    [exampleAudioSettings],
+  )
   const handlePlayWord = () => { void playWordAudio(result.word, exampleAudioSettings) }
+  const handlePlaySlowWord = () => { void playWordAudio(result.word, slowWordAudioSettings) }
   const handlePlaySegmentedWord = () => { void playSegmentedWordAudio(result.word, exampleAudioSettings, resolvedPhonetic) }
   const { isFavorite, isPending, toggleFavorite } = useFavoriteWords({
     userId: user?.id ?? null,
@@ -475,6 +453,7 @@ export default function GlobalWordSearchDetailPanel({
           onPlaySegmentedWord={handlePlaySegmentedWord}
           onToggleFavorite={handleFavoriteToggle}
           onPlayWord={handlePlayWord}
+          onPlaySlowWord={handlePlaySlowWord}
           onOpenFeedback={handleOpenFeedback}
         />
       </div>

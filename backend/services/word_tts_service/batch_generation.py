@@ -53,6 +53,11 @@ def run_batch_generate_words(
     words: list[str],
     *,
     cache_dir: Path | None = None,
+    provider: str | None = None,
+    model: str | None = None,
+    voice: str | None = None,
+    content_mode: str = 'word',
+    phonetic_lookup: Callable[[str], str] | None = None,
     concurrency: int = 6,
     backoff_delays: tuple[float, ...] | None = None,
     rate_interval: float = 0.0,
@@ -77,7 +82,10 @@ def run_batch_generate_words(
     else:
         cache_dir.mkdir(parents=True, exist_ok=True)
 
-    provider, model, voice = default_word_tts_identity()
+    default_provider, default_model, default_voice = default_word_tts_identity()
+    provider = (provider or default_provider).strip().lower()
+    model = (model or default_model).strip() or default_model
+    voice = (voice or default_voice).strip() or default_voice
     sleep = sleep_fn or time.sleep
     if rate_interval <= 0.0:
         rate_interval = recommended_batch_rate_interval(model, provider=provider)
@@ -144,12 +152,14 @@ def run_batch_generate_words(
             for attempt in range(len(backoff_delays) + 1):
                 try:
                     rate_limiter.wait_for_turn()
+                    phonetic = phonetic_lookup(w) if phonetic_lookup is not None else None
                     audio = synthesize_word_to_bytes(
                         w,
                         _strip_word_tts_strategy_tag(model),
                         voice,
                         provider=provider,
-                        content_mode='word',
+                        content_mode=content_mode,
+                        phonetic=phonetic,
                     )
                     write_bytes_atomically(out_path, audio)
                     return True

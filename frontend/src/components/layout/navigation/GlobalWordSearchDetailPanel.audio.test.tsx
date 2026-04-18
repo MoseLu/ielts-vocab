@@ -100,6 +100,9 @@ describe('GlobalWordSearchDetailPanel audio interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: '播放 quit 发音' }))
     expect(playWordAudioMock).toHaveBeenLastCalledWith('quit', { playbackSpeed: '1.25', volume: '80' })
 
+    fireEvent.click(screen.getByRole('button', { name: '慢速朗读单词 quit' }))
+    expect(playWordAudioMock).toHaveBeenLastCalledWith('quit', { playbackSpeed: '0.65', volume: '80' })
+
     fireEvent.click(screen.getByRole('button', { name: '拆读单词 quit' }))
     expect(playSegmentedWordAudioMock).toHaveBeenLastCalledWith('quit', { playbackSpeed: '1.25', volume: '80' }, '/kwɪt/')
 

@@ -109,9 +109,23 @@
     box-shadow: 0 var(--size-14) var(--size-30) rgba(var(--accent-rgb), var(--alpha-22));
 }
 
-.dictation-play-btn svg {
+.dictation-play-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--size-12);
+}
+
+.dictation-play-btn svg,
+.dictation-play-btn .slow-playback-icon {
     width: var(--size-30);
     height: var(--size-30);
+}
+
+.dictation-play-btn--slow {
+    background: color-mix(in srgb, var(--surface-elevated) var(--mix-92), var(--accent));
+    color: var(--accent);
+    border: var(--size-1) solid rgba(var(--accent-rgb), var(--alpha-18));
 }
 
 .dictation-play-panel .dictation-mode-title,

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.scss'), 'utf-8')
+const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.tokens.scss'), 'utf-8')
 const readRootLayerToken = (tokenName: string) => {
   const escapedName = tokenName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = baseStyles.match(new RegExp(`${escapedName}:\\s*(\\d+)`, 'u'))

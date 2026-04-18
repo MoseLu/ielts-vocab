@@ -125,7 +125,8 @@
     box-shadow: 0 var(--size-22) var(--size-42) rgba(var(--accent-rgb), var(--alpha-32));
 }
 
-.play-btn-large svg {
+.play-btn-large svg,
+.play-btn-large .slow-playback-icon {
     width: var(--size-35);
     height: var(--size-35);
 }

@@ -8,9 +8,10 @@ from pathlib import Path
 
 HASHED_MP3_RE = re.compile(r'^[0-9a-f]{16}\.mp3$')
 SAFE_OSS_SEGMENT_RE = re.compile(r'[^a-z0-9]+')
-TASK_MANIFEST_NAME = 'word_tts_full_batch_manifest.json'
-TASK_PROGRESS_NAME = 'word_tts_full_batch_progress.json'
-TASK_VERIFICATION_NAME = 'word_tts_full_batch_verification.json'
+DEFAULT_TASK_STEM = 'word_tts_full_batch'
+TASK_MANIFEST_NAME = f'{DEFAULT_TASK_STEM}_manifest.json'
+TASK_PROGRESS_NAME = f'{DEFAULT_TASK_STEM}_progress.json'
+TASK_VERIFICATION_NAME = f'{DEFAULT_TASK_STEM}_verification.json'
 LEGACY_PROGRESS_NAME = 'progress_all_words.json'
 
 
@@ -32,9 +33,13 @@ def task_identity(
     voice: str,
     book_ids: list[str] | None,
     package_size: int,
+    *,
+    content_mode: str = 'word',
+    cache_model: str | None = None,
 ) -> str:
     scope = ','.join(book_ids or ['ALL'])
-    return f'{provider}|{model}|{voice}|{scope}|pkg={package_size}'
+    identity_model = cache_model or model
+    return f'{provider}|{identity_model}|{voice}|{scope}|mode={content_mode}|pkg={package_size}'
 
 
 def build_manifest(
@@ -42,9 +47,11 @@ def build_manifest(
     *,
     provider: str,
     model: str,
+    cache_model: str | None = None,
     voice: str,
     book_ids: list[str] | None,
     package_size: int,
+    content_mode: str = 'word',
 ) -> dict:
     total_words = len(words)
     total_packages = math.ceil(total_words / package_size) if total_words else 0
@@ -66,12 +73,22 @@ def build_manifest(
         'created_at': utc_now_iso(),
         'provider': provider,
         'model': model,
+        'cache_model': cache_model or model,
         'voice': voice,
+        'content_mode': content_mode,
         'book_ids': book_ids or [],
         'package_size': package_size,
         'total_words': total_words,
         'total_packages': total_packages,
-        'task_identity': task_identity(provider, model, voice, book_ids, package_size),
+        'task_identity': task_identity(
+            provider,
+            model,
+            voice,
+            book_ids,
+            package_size,
+            content_mode=content_mode,
+            cache_model=cache_model,
+        ),
         'packages': packages,
         'words': words,
     }
@@ -94,12 +111,39 @@ def initial_progress(manifest: dict) -> dict:
     }
 
 
-def resolve_task_files(cache_dir: Path) -> tuple[Path, Path, Path]:
+def resolve_task_stem(task_name: str | None = None) -> str:
+    if not task_name:
+        return DEFAULT_TASK_STEM
+    normalized = SAFE_OSS_SEGMENT_RE.sub('_', str(task_name).strip().lower()).strip('_')
+    return normalized or DEFAULT_TASK_STEM
+
+
+def resolve_task_file_names(task_name: str | None = None) -> tuple[str, str, str]:
+    stem = resolve_task_stem(task_name)
     return (
-        cache_dir / TASK_MANIFEST_NAME,
-        cache_dir / TASK_PROGRESS_NAME,
-        cache_dir / TASK_VERIFICATION_NAME,
+        f'{stem}_manifest.json',
+        f'{stem}_progress.json',
+        f'{stem}_verification.json',
     )
+
+
+def resolve_task_files(cache_dir: Path, task_name: str | None = None) -> tuple[Path, Path, Path]:
+    manifest_name, progress_name, verification_name = resolve_task_file_names(task_name)
+    return (
+        cache_dir / manifest_name,
+        cache_dir / progress_name,
+        cache_dir / verification_name,
+    )
+
+
+def resolve_upload_payload_path(
+    cache_dir: Path,
+    package_index: int,
+    *,
+    task_name: str | None = None,
+) -> Path:
+    stem = resolve_task_stem(task_name)
+    return cache_dir / f'{stem}_upload_package_{int(package_index):04d}.json'
 
 
 def cleanup_word_audio_cache(
@@ -110,6 +154,7 @@ def cleanup_word_audio_cache(
     voice: str,
     word_tts_cache_path,
     normalize_word_key,
+    task_name: str | None = None,
 ) -> dict:
     expected_names = {
         word_tts_cache_path(cache_dir, normalize_word_key(word), model, voice).name
@@ -119,24 +164,21 @@ def cleanup_word_audio_cache(
     removed_target = 0
     removed_stale = 0
 
-    for path in cache_dir.iterdir():
-        if not path.is_file() or not HASHED_MP3_RE.fullmatch(path.name):
-            continue
-        path.unlink()
-        if path.name in expected_names:
+    for file_name in expected_names:
+        path = cache_dir / file_name
+        if path.exists():
+            path.unlink()
             removed_target += 1
-        else:
-            removed_stale += 1
 
     for extra_name in (
         LEGACY_PROGRESS_NAME,
-        TASK_MANIFEST_NAME,
-        TASK_PROGRESS_NAME,
-        TASK_VERIFICATION_NAME,
+        *resolve_task_file_names(task_name),
     ):
         extra_path = cache_dir / extra_name
         if extra_path.exists():
             extra_path.unlink()
+    for payload_path in cache_dir.glob(f'{resolve_task_stem(task_name)}_upload_package_*.json'):
+        payload_path.unlink()
 
     return {
         'removed_target_audio': removed_target,
@@ -151,18 +193,22 @@ def load_or_create_manifest(
     words: list[str],
     provider: str,
     model: str,
+    cache_model: str | None = None,
     voice: str,
     book_ids: list[str] | None,
     package_size: int,
+    content_mode: str = 'word',
     reset_task: bool,
 ) -> dict:
     manifest = build_manifest(
         words,
         provider=provider,
         model=model,
+        cache_model=cache_model,
         voice=voice,
         book_ids=book_ids,
         package_size=package_size,
+        content_mode=content_mode,
     )
     if reset_task or not manifest_path.exists():
         json_dump(manifest_path, manifest)

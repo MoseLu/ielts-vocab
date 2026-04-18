@@ -48,6 +48,7 @@ _AUDIO_BYTES_HEADER = 'X-Audio-Bytes'
 _AUDIO_CACHE_KEY_HEADER = 'X-Audio-Cache-Key'
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _MEDIA_ID_HEADER = 'X-Media-Id'
+_SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
 tts_media_flask_app = create_tts_media_flask_app()
 
 
@@ -107,9 +108,13 @@ def _metadata_cache_ttl_seconds() -> int:
 def _word_audio_object_key(*, file_name: str, model: str, voice: str) -> str:
     identity = f'{model}--{voice}'
     identity_segment = SAFE_OSS_SEGMENT_RE.sub('-', identity.lower()).strip('-') or 'default'
+    segments: list[str] = []
+    if f'@{_SEGMENTED_WORD_CACHE_TAG}' in (model or ''):
+        segments.append('segmented')
+    segments.append(identity_segment)
     return join_object_key(
         prefix=_word_tts_oss_prefix(),
-        segments=[identity_segment],
+        segments=segments,
         file_name=file_name,
     )
 

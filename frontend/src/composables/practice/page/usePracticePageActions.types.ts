@@ -7,6 +7,7 @@ import type {
   SmartDimension,
   SpellingSubmitSource,
   Word,
+  WordPlaybackHandler,
   WordStatuses,
 } from '../../../components/practice/types'
 import type { ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
@@ -39,7 +40,7 @@ export interface UsePracticePageActionsParams {
   }
   navigate: (to: string) => void
   showToast?: (message: string, type?: 'success' | 'error' | 'info') => void
-  playWord: (word: string) => void
+  playWord: WordPlaybackHandler
   saveProgress: (
     correct: number,
     wrong: number,

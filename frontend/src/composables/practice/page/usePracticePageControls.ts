@@ -13,8 +13,10 @@ import type {
   AppSettings,
   PracticeMode,
   Word,
+  WordPlaybackHandler,
   WordStatuses,
 } from '../../../components/practice/types'
+import { resolveWordPlaybackSettings } from '../../../components/practice/wordPlayback'
 
 interface UsePracticePageControlsParams {
   mode?: PracticeMode
@@ -71,7 +73,7 @@ interface UsePracticePageControlsResult {
   resetChapterProgress: () => Promise<void>
   startRecording: () => Promise<void>
   stopRecording: () => void
-  playWord: (word: string) => void
+  playWord: WordPlaybackHandler
   handleContinueReview: () => void
   buildChapterPath: (chapterId: string | number) => string
   handleContinueErrorReview: () => void
@@ -279,8 +281,8 @@ export function usePracticePageControls({
     }
   }, [bookId, chapterId, queue, showToast, vocabulary])
 
-  const playWord = useCallback((word: string) => {
-    playWordUtil(word, settings)
+  const playWord = useCallback<WordPlaybackHandler>((word, options) => {
+    playWordUtil(word, resolveWordPlaybackSettings(settings, options))
   }, [settings])
 
   const handleContinueReview = useCallback(() => {

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { playExampleAudio } from '../../../components/practice/utils'
-import type { AppSettings, PracticeMode, SmartDimension, Word } from '../../../components/practice/types'
+import type { AppSettings, PracticeMode, SmartDimension, Word, WordPlaybackHandler } from '../../../components/practice/types'
 import { openGlobalWordSearch } from '../../../components/layout/navigation/globalWordSearchEvents'
 import {
   dispatchPracticeGlobalShortcutNext,
@@ -19,7 +19,7 @@ interface UsePracticePageKeyboardShortcutsParams {
   currentWord: Word | undefined
   optionsLength: number
   settings: AppSettings
-  playWord: (word: string) => void
+  playWord: WordPlaybackHandler
   handleOptionSelect: (index: number) => void
   handleSkip: () => void
   handleGoBack: () => void

@@ -1,6 +1,7 @@
 import requests
 
 from services import word_tts
+from services.word_tts_service.audio_cache_parts import providers_azure
 
 
 VALID_MP3 = b'ID3' + (b'\x00' * 800)
@@ -120,6 +121,19 @@ def test_build_azure_ssml_supports_segmented_word_mode(monkeypatch):
     assert "ph='nən'" in ssml
     assert "<break time='100ms'/>" in ssml
     assert ssml.count("<break time='180ms'/>") == 3
+
+
+def test_lookup_azure_word_phonetic_reads_manual_overrides(monkeypatch):
+    monkeypatch.setattr(word_tts, '_AZURE_WORD_PRONUNCIATION_LOOKUP', None)
+
+    assert word_tts.lookup_azure_word_phonetic('participant') == 'pɑːˈtɪsɪpənt'
+    assert word_tts.lookup_azure_word_phonetic('manufacturer') == 'ˌmænjuˈfæktʃɚɹɚ'
+
+
+def test_providers_azure_lookup_word_phonetic_uses_identity_normalizer(monkeypatch):
+    monkeypatch.setattr(providers_azure, '_AZURE_WORD_PRONUNCIATION_LOOKUP', None)
+
+    assert providers_azure.lookup_azure_word_phonetic('sweat') == 'swet'
 
 
 def test_azure_provider_uses_rest_ssml_endpoint(monkeypatch):

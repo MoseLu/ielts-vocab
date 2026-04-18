@@ -107,6 +107,12 @@ export interface AppSettings {
   [key: string]: unknown
 }
 
+export interface WordPlaybackOptions {
+  playbackSpeed?: string
+}
+
+export type WordPlaybackHandler = (word: string, options?: WordPlaybackOptions) => void
+
 export interface OptionItem {
   definition: string
   pos: string
@@ -241,7 +247,7 @@ export interface DictationModeProps {
   onGoBack: () => void
   onStartRecording: () => void
   onStopRecording: () => void
-  onPlayWord: (word: string) => void
+  onPlayWord: WordPlaybackHandler
   favoriteSlot?: ReactNode
   speakingSlot?: ReactNode
 }
@@ -274,7 +280,7 @@ export interface OptionsModeProps {
   onSpellingInputChange: (value: string) => void
   onStartRecording: () => void
   onStopRecording: () => void
-  onPlayWord: (word: string) => void
+  onPlayWord: WordPlaybackHandler
   favoriteSlot?: ReactNode
   speakingSlot?: ReactNode
 }

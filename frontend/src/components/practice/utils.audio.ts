@@ -6,6 +6,7 @@ import {
   stopManagedAudio,
   warmupManagedAudio,
 } from './utils.audio.playback'
+import { SLOW_WORD_PLAYBACK_SPEED } from './wordPlayback'
 
 let audioGeneration = 0
 let audioStopped = false
@@ -357,6 +358,7 @@ export function playSegmentedWordAudio(
   settings: { playbackSpeed?: string; volume?: string },
   phonetic?: string | null,
   onEnd?: () => void,
+  options?: { notifyOnFailure?: boolean },
 ): Promise<boolean> {
   stopAudio()
   audioStopped = false
@@ -373,10 +375,31 @@ export function playSegmentedWordAudio(
     volume: parseFloat(settings.volume || '100') / 100,
     rate: Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '1.0'))),
     onEnd,
+    notifyOnFailure: options?.notifyOnFailure ?? true,
   }).catch(() => {
-    if (audioGeneration === generation) onEnd?.()
+    if ((options?.notifyOnFailure ?? true) && audioGeneration === generation) onEnd?.()
     return false
   })
+}
+
+export async function playSlowWordAudio(
+  word: string,
+  settings: { playbackSpeed?: string; volume?: string },
+  phonetic?: string | null,
+  onEnd?: () => void,
+): Promise<boolean> {
+  const startedSegmented = await playSegmentedWordAudio(
+    word,
+    settings,
+    phonetic,
+    onEnd,
+    { notifyOnFailure: false },
+  )
+  if (startedSegmented) return true
+  return playWordAudio(word, {
+    ...settings,
+    playbackSpeed: SLOW_WORD_PLAYBACK_SPEED,
+  }, onEnd)
 }
 
 export function stopAudio(): void {

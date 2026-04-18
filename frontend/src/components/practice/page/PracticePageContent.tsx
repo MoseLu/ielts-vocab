@@ -13,6 +13,7 @@ import type {
   SmartDimension,
   SpellingSubmitSource,
   Word,
+  WordPlaybackHandler,
   WordListActionControls,
   WordStatuses,
 } from '../types'
@@ -80,7 +81,7 @@ interface PracticePageContentProps {
   goBack: () => void
   startRecording: () => Promise<void>
   stopRecording: () => void
-  playWord: (word: string) => void
+  playWord: WordPlaybackHandler
   smartDimension: SmartDimension
   options: OptionItem[]
   choiceOptionsReady: boolean

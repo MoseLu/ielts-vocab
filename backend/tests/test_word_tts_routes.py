@@ -140,6 +140,126 @@ class TestWordAudioRoute:
         assert res.headers['X-Audio-Source'] == 'oss'
         assert res.headers['X-Audio-Oss-Url'].startswith('https://oss.example.com/abc123.mp3')
 
+    def test_segmented_head_prefers_oss_metadata_when_available(self, client, monkeypatch, tmp_path):
+        monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
+        monkeypatch.setattr(
+            'services.word_tts.azure_default_model',
+            lambda: 'azure-rest:audio-24khz-48kbitrate-mono-mp3',
+        )
+        monkeypatch.setattr(
+            'services.word_tts.azure_word_voice',
+            lambda: 'en-GB-LibbyNeural',
+        )
+        target = tmp_path / 'segmented.mp3'
+        target.write_bytes(VALID_MP3)
+        monkeypatch.setattr(
+            'services.word_tts.word_tts_cache_path',
+            lambda cache_dir, normalized_key, model, voice: target,
+        )
+        monkeypatch.setattr(
+            'services.word_tts_oss.resolve_word_audio_oss_metadata',
+            lambda **kwargs: type(
+                'OssMetadata',
+                (),
+                {
+                    'byte_length': 654,
+                    'cache_key': 'oss:segmented.mp3:654:etag',
+                    'signed_url': 'https://oss.example.com/segmented.mp3?signature=1',
+                },
+            )(),
+        )
+
+        res = client.head('/api/tts/word-audio?w=internet&pronunciation_mode=phonetic_segments')
+
+        assert res.status_code == 204
+        assert res.headers['X-Audio-Bytes'] == '654'
+        assert res.headers['X-Audio-Cache-Key'] == 'oss:segmented.mp3:654:etag'
+        assert res.headers['X-Audio-Source'] == 'oss'
+        assert res.headers['X-Audio-Oss-Url'].startswith('https://oss.example.com/segmented.mp3')
+
+    def test_segmented_get_prefers_oss_audio_bytes_when_available(self, client, monkeypatch, tmp_path):
+        monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
+        monkeypatch.setattr(
+            'services.word_tts.azure_default_model',
+            lambda: 'azure-rest:audio-24khz-48kbitrate-mono-mp3',
+        )
+        monkeypatch.setattr(
+            'services.word_tts.azure_word_voice',
+            lambda: 'en-GB-LibbyNeural',
+        )
+        target = tmp_path / 'segmented.mp3'
+        target.write_bytes(VALID_MP3)
+        monkeypatch.setattr(
+            'services.word_tts.word_tts_cache_path',
+            lambda cache_dir, normalized_key, model, voice: target,
+        )
+        monkeypatch.setattr(
+            'services.word_tts_oss.resolve_word_audio_oss_metadata',
+            lambda **kwargs: type(
+                'OssMetadata',
+                (),
+                {
+                    'byte_length': 654,
+                    'cache_key': 'oss:segmented.mp3:654:etag',
+                    'signed_url': 'https://oss.example.com/segmented.mp3?signature=1',
+                },
+            )(),
+        )
+        monkeypatch.setattr(
+            'services.word_tts_oss.fetch_word_audio_oss_payload',
+            lambda **kwargs: type(
+                'OssPayload',
+                (),
+                {
+                    'audio_bytes': b'ID3' + (b'\x02' * 651),
+                    'byte_length': 654,
+                    'cache_key': 'oss:segmented.mp3:654:etag',
+                    'signed_url': 'https://oss.example.com/segmented.mp3?signature=1',
+                    'content_type': 'audio/mpeg',
+                },
+            )(),
+        )
+
+        res = client.get('/api/tts/word-audio?w=internet&pronunciation_mode=phonetic_segments&cache_only=1')
+
+        assert res.status_code == 200
+        assert res.mimetype == 'audio/mpeg'
+        assert res.headers['X-Audio-Bytes'] == '654'
+        assert res.headers['X-Audio-Cache-Key'] == 'oss:segmented.mp3:654:etag'
+        assert res.headers['X-Audio-Source'] == 'oss'
+        assert res.data == b'ID3' + (b'\x02' * 651)
+
+    def test_segmented_get_falls_back_to_legacy_voice_cache_identity(self, client, monkeypatch, tmp_path):
+        monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
+        monkeypatch.setattr(
+            'services.word_tts.azure_default_model',
+            lambda: 'azure-rest:audio-24khz-48kbitrate-mono-mp3',
+        )
+        monkeypatch.setattr(
+            'services.word_tts.azure_word_voice',
+            lambda: 'en-GB-RyanNeural',
+        )
+
+        current_target = tmp_path / 'current.mp3'
+        legacy_target = tmp_path / 'legacy.mp3'
+        legacy_target.write_bytes(VALID_MP3)
+
+        def fake_cache_path(cache_dir, normalized_key, model, voice):
+            return legacy_target if voice == 'en-GB-LibbyNeural' else current_target
+
+        monkeypatch.setattr('services.word_tts.word_tts_cache_path', fake_cache_path)
+        monkeypatch.setattr(
+            'services.word_tts_oss.resolve_word_audio_oss_metadata',
+            lambda **kwargs: None,
+        )
+
+        res = client.get('/api/tts/word-audio?w=brain&pronunciation_mode=phonetic_segments&cache_only=1')
+
+        assert res.status_code == 200
+        assert res.mimetype == 'audio/mpeg'
+        assert res.headers['X-Audio-Source'] == 'local'
+        assert res.data == VALID_MP3
+
     def test_get_ignores_range_and_returns_full_audio(self, client, monkeypatch, tmp_path):
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
@@ -192,7 +312,7 @@ class TestWordAudioRoute:
         )
         monkeypatch.setattr(
             'services.word_tts.synthesize_word_to_bytes',
-            lambda text, model, voice, provider=None, content_mode=None: VALID_MP3,
+            lambda text, model, voice, provider=None, content_mode=None, phonetic=None: VALID_MP3,
         )
 
         res = client.get('/api/tts/word-audio?w=hello')
@@ -224,7 +344,7 @@ class TestWordAudioRoute:
         )
         monkeypatch.setattr(
             'services.word_tts.synthesize_word_to_bytes',
-            lambda text, model, voice, provider=None, content_mode=None: VALID_MP3,
+            lambda text, model, voice, provider=None, content_mode=None, phonetic=None: VALID_MP3,
         )
 
         res = client.get('/api/tts/word-audio?w=hello')
@@ -261,7 +381,7 @@ class TestWordAudioRoute:
             lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
         )
 
-        def fake_synthesize(text, model, voice, provider=None, content_mode=None):
+        def fake_synthesize(text, model, voice, provider=None, content_mode=None, phonetic=None):
             seen['provider'] = provider
             seen['model'] = model
             seen['voice'] = voice
@@ -293,17 +413,22 @@ class TestWordAudioRoute:
             lambda: 'en-GB-LibbyNeural',
         )
 
-        def fake_synthesize(text, model, voice, provider=None, content_mode=None):
+        def fake_synthesize(text, model, voice, provider=None, content_mode=None, phonetic=None):
             seen['text'] = text
             seen['provider'] = provider
             seen['model'] = model
             seen['voice'] = voice
             seen['content_mode'] = content_mode
+            seen['phonetic'] = phonetic
             return VALID_MP3
 
         monkeypatch.setattr('services.word_tts.synthesize_word_to_bytes', fake_synthesize)
 
-        res = client.get('/api/tts/word-audio?w=phenomenon&pronunciation_mode=phonetic_segments')
+        res = client.get(
+            '/api/tts/word-audio?w=phenomenon'
+            '&pronunciation_mode=phonetic_segments'
+            '&phonetic=%2Ffəˈnɒmɪnən%2F',
+        )
 
         target = word_tts.word_tts_cache_path(
             tmp_path,
@@ -319,4 +444,5 @@ class TestWordAudioRoute:
             'model': 'azure-rest:audio-24khz-48kbitrate-mono-mp3',
             'voice': 'en-GB-LibbyNeural',
             'content_mode': 'word-segmented',
+            'phonetic': '/fəˈnɒmɪnən/',
         }

@@ -11,6 +11,13 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
+REPO_ROOT = BACKEND_ROOT.parent
+for extra_path in (
+    REPO_ROOT / 'packages' / 'platform-sdk',
+    REPO_ROOT / 'services' / 'tts-media-service',
+):
+    if str(extra_path) not in sys.path:
+        sys.path.insert(0, str(extra_path))
 
 from dotenv import load_dotenv
 
@@ -22,12 +29,15 @@ from services.word_tts_full_batch_task import (
     load_or_create_manifest,
     load_or_create_progress,
     resolve_task_files,
+    resolve_upload_payload_path,
     update_progress,
     verify_manifest_cache,
 )
 
 load_dotenv(BACKEND_ROOT / '.env')
 DEFAULT_OSS_PREFIX = 'projects/ielts-vocab/word-tts-cache'
+SEGMENTED_OSS_PREFIX = f'{DEFAULT_OSS_PREFIX}/segmented'
+SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
 
 
 def _provider() -> str:
@@ -51,6 +61,12 @@ def _require_provider_credentials(provider: str) -> bool:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='词书单词 TTS 全量分包生成')
+    parser.add_argument(
+        '--mode',
+        choices=('word', 'word-segmented'),
+        default='word',
+        help='生成模式：普通单词音频或按音标分段的单词音频',
+    )
     parser.add_argument('--jobs', '-j', type=int, default=None, help='并发线程数')
     parser.add_argument('--book', action='append', default=[], help='仅跑指定词书 id')
     parser.add_argument('--rate-interval', type=float, default=None, help='相邻 API 请求最小间隔秒数')
@@ -59,7 +75,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument('--reset-task', action='store_true', help='清理当前任务相关旧音频并从头开始跑')
     parser.add_argument('--stop-after-packages', type=int, default=None, help='最多连续处理多少个任务包')
     parser.add_argument('--upload-oss', action='store_true', help='每个任务包完成后上传到 OSS')
-    parser.add_argument('--oss-prefix', default=DEFAULT_OSS_PREFIX, help='OSS 对象前缀')
+    parser.add_argument('--oss-prefix', default=None, help='OSS 对象前缀')
     parser.add_argument(
         '--axi-app-cli-root',
         default=str((BACKEND_ROOT.parent.parent / 'axi-app-cli').resolve()),
@@ -107,6 +123,7 @@ def _upload_package_to_oss(
     oss_prefix: str,
     axi_app_cli_root: Path,
     upload_concurrency: int,
+    task_name: str | None = None,
 ) -> dict:
     payload = build_package_upload_payload(
         package,
@@ -118,7 +135,11 @@ def _upload_package_to_oss(
         word_tts_cache_path=word_tts_cache_path,
         oss_prefix=oss_prefix,
     )
-    payload_path = cache_dir / f'word_tts_full_batch_upload_package_{int(package["index"]):04d}.json'
+    payload_path = resolve_upload_payload_path(
+        cache_dir,
+        int(package['index']),
+        task_name=task_name,
+    )
     json_dump(payload_path, payload)
 
     command = [
@@ -157,16 +178,20 @@ def _upload_package_to_oss(
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
-    provider = _provider()
+    batch_mode = args.mode
+    provider = 'azure' if batch_mode == 'word-segmented' else _provider()
     if not _require_provider_credentials(provider):
         return 1
 
     from services.word_tts import (
         _strip_word_tts_strategy_tag,
+        azure_default_model,
+        azure_word_voice,
         collect_unique_words,
         count_cached_words,
         default_word_tts_identity,
         is_probably_valid_mp3_file,
+        lookup_azure_word_phonetic,
         normalize_word_key,
         recommended_batch_backoff_delays,
         recommended_batch_concurrency,
@@ -177,9 +202,19 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     cache_dir = word_tts_data_dir()
-    manifest_path, progress_path, verification_path = resolve_task_files(cache_dir)
-    _, cache_model, voice = default_word_tts_identity()
-    request_model = _strip_word_tts_strategy_tag(cache_model)
+    task_name = 'word_tts_segmented_batch' if batch_mode == 'word-segmented' else None
+    manifest_path, progress_path, verification_path = resolve_task_files(cache_dir, task_name=task_name)
+    if batch_mode == 'word-segmented':
+        request_model = azure_default_model()
+        cache_model = f'{request_model}@{SEGMENTED_WORD_CACHE_TAG}'
+        voice = azure_word_voice()
+        content_mode = 'word-segmented'
+        phonetic_lookup = lookup_azure_word_phonetic
+    else:
+        _, cache_model, voice = default_word_tts_identity()
+        request_model = _strip_word_tts_strategy_tag(cache_model)
+        content_mode = 'word'
+        phonetic_lookup = None
     package_size = max(1, int(args.package_size))
     book_ids = args.book or None
     words = collect_unique_words(book_ids)
@@ -197,15 +232,20 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     backoff = recommended_batch_backoff_delays(rate_interval)
+    oss_prefix = args.oss_prefix or (
+        SEGMENTED_OSS_PREFIX if batch_mode == 'word-segmented' else DEFAULT_OSS_PREFIX
+    )
 
     manifest = load_or_create_manifest(
         manifest_path,
         words=words,
         provider=provider,
         model=request_model,
+        cache_model=cache_model,
         voice=voice,
         book_ids=book_ids,
         package_size=package_size,
+        content_mode=content_mode,
         reset_task=args.reset_task,
     )
     if args.reset_task:
@@ -216,21 +256,27 @@ def main(argv: list[str] | None = None) -> int:
             voice=voice,
             word_tts_cache_path=word_tts_cache_path,
             normalize_word_key=normalize_word_key,
+            task_name=task_name,
         )
         manifest = build_manifest(
             words,
             provider=provider,
             model=request_model,
+            cache_model=cache_model,
             voice=voice,
             book_ids=book_ids,
             package_size=package_size,
+            content_mode=content_mode,
         )
         json_dump(manifest_path, manifest)
         print(f'[Word TTS] cleanup={cleanup_stats}')
 
     progress = load_or_create_progress(progress_path, manifest=manifest, reset_task=args.reset_task)
     print(f'[Word TTS] cache_dir={cache_dir}')
-    print(f'[Word TTS] provider={provider} model={request_model} voice={voice}')
+    print(
+        f'[Word TTS] mode={content_mode} provider={provider} '
+        f'model={request_model} cache_model={cache_model} voice={voice}'
+    )
     print(f'[Word TTS] book_ids={book_ids or "ALL"}')
     print(
         '[Word TTS] '
@@ -260,7 +306,7 @@ def main(argv: list[str] | None = None) -> int:
         if not axi_app_cli_root.exists():
             print(f'ERROR: axi-app-cli 根目录不存在: {axi_app_cli_root}', file=sys.stderr)
             return 1
-        print(f'[Word TTS] upload_oss=on prefix={args.oss_prefix} axi_root={axi_app_cli_root}')
+        print(f'[Word TTS] upload_oss=on prefix={oss_prefix} axi_root={axi_app_cli_root}')
     stop_after_packages = None if args.stop_after_packages is None else max(0, int(args.stop_after_packages))
     packages_processed = 0
 
@@ -306,6 +352,11 @@ def main(argv: list[str] | None = None) -> int:
         stats = run_batch_generate_words(
             package_words,
             cache_dir=cache_dir,
+            provider=provider,
+            model=cache_model,
+            voice=voice,
+            content_mode=content_mode,
+            phonetic_lookup=phonetic_lookup,
             concurrency=jobs,
             backoff_delays=backoff,
             rate_interval=rate_interval,
@@ -342,9 +393,10 @@ def main(argv: list[str] | None = None) -> int:
                     voice=voice,
                     normalize_word_key=normalize_word_key,
                     word_tts_cache_path=word_tts_cache_path,
-                    oss_prefix=args.oss_prefix,
+                    oss_prefix=oss_prefix,
                     axi_app_cli_root=axi_app_cli_root,
                     upload_concurrency=jobs,
+                    task_name=task_name,
                 )
             except Exception as exc:
                 update_progress(

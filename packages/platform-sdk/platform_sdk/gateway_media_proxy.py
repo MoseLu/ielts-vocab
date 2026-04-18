@@ -28,6 +28,7 @@ from platform_sdk.word_tts_runtime_adapter import (
     normalize_word_key,
     word_tts_cache_path,
 )
+from services.word_tts import azure_default_model, azure_word_voice
 
 
 DEFAULT_TTS_MEDIA_SERVICE_URL = 'http://127.0.0.1:8105'
@@ -38,6 +39,10 @@ _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _AUDIO_SOURCE_HEADER = 'X-Audio-Source'
 _MEDIA_ID_HEADER = 'X-Media-Id'
 _RYAN_WORD_AUDIO_VOICE = 'en-GB-RyanNeural'
+_SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
+_LEGACY_SEGMENTED_WORD_VOICES = (
+    'en-GB-LibbyNeural',
+)
 _RYAN_WORD_AUDIO_OVERRIDES = frozenset({
     'brag',
     'branch',
@@ -77,13 +82,26 @@ def validate_sentence(sentence: str) -> str:
     return resolved
 
 
-def resolve_word_audio_request(word: str) -> dict[str, str]:
+def normalize_word_audio_pronunciation_mode(value: str | None) -> str:
+    normalized = (value or '').strip().lower()
+    if normalized in {'word-segmented', 'phonetic-segments', 'phonetic_segments'}:
+        return 'word-segmented'
+    return 'word'
+
+
+def resolve_word_audio_request(word: str, pronunciation_mode: str | None = None) -> dict[str, str]:
     raw = (word or '').strip()
     if not raw or len(raw) > 160:
         raise HTTPException(status_code=400, detail='invalid w')
     normalized = normalize_word_key(raw)
-    provider, model, voice = default_word_tts_identity()
-    if provider == 'azure' and normalized in _RYAN_WORD_AUDIO_OVERRIDES:
+    resolved_mode = normalize_word_audio_pronunciation_mode(pronunciation_mode)
+    if resolved_mode == 'word-segmented':
+        provider = 'azure'
+        model = f'{azure_default_model()}@{_SEGMENTED_WORD_CACHE_TAG}'
+        voice = azure_word_voice()
+    else:
+        provider, model, voice = default_word_tts_identity()
+    if resolved_mode == 'word' and provider == 'azure' and normalized in _RYAN_WORD_AUDIO_OVERRIDES:
         voice = _RYAN_WORD_AUDIO_VOICE
     file_name = word_tts_cache_path(Path('word_tts_cache'), normalized, model, voice).name
     return {
@@ -93,7 +111,35 @@ def resolve_word_audio_request(word: str) -> dict[str, str]:
         'model': model,
         'voice': voice,
         'file_name': file_name,
+        'pronunciation_mode': resolved_mode,
     }
+
+
+def resolve_word_audio_request_candidates(
+    word: str,
+    pronunciation_mode: str | None = None,
+) -> list[dict[str, str]]:
+    primary = resolve_word_audio_request(word, pronunciation_mode=pronunciation_mode)
+    if primary['pronunciation_mode'] != 'word-segmented':
+        return [primary]
+
+    candidates = [primary]
+    for fallback_voice in _LEGACY_SEGMENTED_WORD_VOICES:
+        normalized_voice = (fallback_voice or '').strip()
+        if not normalized_voice or normalized_voice == primary['voice']:
+            continue
+        fallback_file_name = word_tts_cache_path(
+            Path('word_tts_cache'),
+            primary['normalized_word'],
+            primary['model'],
+            normalized_voice,
+        ).name
+        candidates.append({
+            **primary,
+            'voice': normalized_voice,
+            'file_name': fallback_file_name,
+        })
+    return candidates
 
 
 def call_media_upstream(

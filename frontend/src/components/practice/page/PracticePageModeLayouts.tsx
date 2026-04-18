@@ -14,6 +14,7 @@ import type {
   SmartDimension,
   SpellingSubmitSource,
   Word,
+  WordPlaybackHandler,
   WordListActionControls,
   WordStatuses,
 } from '../types'
@@ -64,7 +65,7 @@ interface PracticePageDictationLayoutProps extends SharedModeLayoutProps {
   onGoBack: () => void
   onStartRecording: () => void
   onStopRecording: () => void
-  onPlayWord: (word: string) => void
+  onPlayWord: WordPlaybackHandler
 }
 
 export function PracticePageDictationLayout(props: PracticePageDictationLayoutProps) {
@@ -203,7 +204,7 @@ interface PracticePageOptionsLayoutProps extends SharedModeLayoutProps {
   onSpellingInputChange: (value: string) => void
   onStartRecording: () => void
   onStopRecording: () => void
-  onPlayWord: (word: string) => void
+  onPlayWord: WordPlaybackHandler
 }
 
 export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps) {

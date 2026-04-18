@@ -5,10 +5,12 @@ import { vi } from 'vitest'
 import DictationMode from './DictationMode'
 
 const playExampleAudioMock = vi.fn()
+const playSlowWordAudioMock = vi.fn(() => Promise.resolve(true))
 const stopAudioMock = vi.fn()
 
 vi.mock('./utils', () => ({
   playExampleAudio: (...args: unknown[]) => playExampleAudioMock(...args),
+  playSlowWordAudio: (...args: unknown[]) => playSlowWordAudioMock(...args),
   stopAudio: (...args: unknown[]) => stopAudioMock(...args),
 }))
 
@@ -42,6 +44,7 @@ describe('DictationMode', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    playSlowWordAudioMock.mockImplementation(() => Promise.resolve(true))
   })
 
   it('groups dictation controls, prompt panel and progress inside one card', () => {
@@ -99,6 +102,14 @@ describe('DictationMode', () => {
 
     expect(screen.getByText('根据发音写出单词')).toBeInTheDocument()
     expect(onPlayWord).toHaveBeenCalledWith('attention')
+
+    await user.click(screen.getByRole('button', { name: '慢速播放发音' }))
+    expect(playSlowWordAudioMock).toHaveBeenCalledWith(
+      'attention',
+      baseProps.settings,
+      '/əˈten.ʃən/',
+      expect.any(Function),
+    )
   })
 
   it('reveals the answer after three manual replays', async () => {

@@ -37,6 +37,7 @@ from platform_sdk.gateway_media_proxy import (
     metadata_only_response as _metadata_only_response,
     proxy_generic_tts_response as _proxy_generic_tts_response,
     proxy_json_response as _proxy_json_response,
+    resolve_word_audio_request_candidates as _resolve_word_audio_request_candidates,
     resolve_word_audio_request as _resolve_word_audio_request,
     transcribe_speech_upload,
     tts_media_service_url as _tts_media_service_url,
@@ -132,28 +133,42 @@ def post_speech_transcribe_proxy(request: Request, audio: UploadFile | None = Fi
 
 
 @app.get('/api/tts/word-audio/metadata')
-def get_word_audio_metadata_proxy(request: Request, w: str = Query(..., min_length=1, max_length=160)):
-    request_info = _resolve_word_audio_request(w)
-    metadata = fetch_word_audio_metadata(
-        file_name=request_info['file_name'],
-        model=request_info['model'],
-        voice=request_info['voice'],
-        headers=build_forward_headers(request, target_service_name='tts-media-service'),
-    )
+def get_word_audio_metadata_proxy(
+    request: Request,
+    w: str = Query(..., min_length=1, max_length=160),
+    pronunciation_mode: str | None = Query(default=None),
+):
+    metadata = None
+    for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
+        metadata = fetch_word_audio_metadata(
+            file_name=request_info['file_name'],
+            model=request_info['model'],
+            voice=request_info['voice'],
+            headers=build_forward_headers(request, target_service_name='tts-media-service'),
+        )
+        if metadata is not None:
+            break
     if metadata is None:
         return JSONResponse(status_code=404, content={'error': 'word audio cache miss'})
     return metadata
 
 
 @app.head('/api/tts/word-audio')
-def head_word_audio_proxy(request: Request, w: str = Query(..., min_length=1, max_length=160)):
-    request_info = _resolve_word_audio_request(w)
-    metadata = fetch_word_audio_metadata(
-        file_name=request_info['file_name'],
-        model=request_info['model'],
-        voice=request_info['voice'],
-        headers=build_forward_headers(request, target_service_name='tts-media-service'),
-    )
+def head_word_audio_proxy(
+    request: Request,
+    w: str = Query(..., min_length=1, max_length=160),
+    pronunciation_mode: str | None = Query(default=None),
+):
+    metadata = None
+    for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
+        metadata = fetch_word_audio_metadata(
+            file_name=request_info['file_name'],
+            model=request_info['model'],
+            voice=request_info['voice'],
+            headers=build_forward_headers(request, target_service_name='tts-media-service'),
+        )
+        if metadata is not None:
+            break
     return _metadata_only_response(metadata or {'cache_hit': False}, source='oss')
 
 
@@ -167,6 +182,17 @@ def get_word_audio_proxy(
 ):
     normalized_mode = (pronunciation_mode or '').strip().lower()
     if normalized_mode in {'word-segmented', 'phonetic-segments', 'phonetic_segments'}:
+        for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
+            cached_payload = fetch_word_audio_content(
+                file_name=request_info['file_name'],
+                model=request_info['model'],
+                voice=request_info['voice'],
+                headers=build_forward_headers(request, target_service_name='tts-media-service'),
+            )
+            if cached_payload is not None:
+                return _audio_content_response(cached_payload, source='oss')
+        if cache_only == '1':
+            return JSONResponse(status_code=404, content={'error': 'word audio cache miss'})
         payload = {
             'text': w.strip(),
             'provider': 'azure',

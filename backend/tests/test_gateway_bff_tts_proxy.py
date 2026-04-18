@@ -48,6 +48,29 @@ def test_resolve_word_audio_request_uses_ryan_hotfix_voice(monkeypatch):
     assert request['file_name'] == 'bread-en-GB-RyanNeural.mp3'
 
 
+def test_resolve_segmented_word_audio_request_candidates_include_legacy_voice(monkeypatch):
+    module = _load_gateway_media_proxy_module()
+
+    monkeypatch.setattr(module, 'azure_default_model', lambda: 'azure-rest:test')
+    monkeypatch.setattr(module, 'azure_word_voice', lambda: 'en-GB-RyanNeural')
+    monkeypatch.setattr(
+        module,
+        'word_tts_cache_path',
+        lambda base, normalized, model, voice: Path(f'{normalized}-{model}-{voice}.mp3'),
+    )
+
+    candidates = module.resolve_word_audio_request_candidates(
+        'brain',
+        pronunciation_mode='phonetic_segments',
+    )
+
+    assert [candidate['voice'] for candidate in candidates] == [
+        'en-GB-RyanNeural',
+        'en-GB-LibbyNeural',
+    ]
+    assert candidates[0]['model'] == 'azure-rest:test@azure-word-segmented-v1'
+
+
 def test_gateway_word_audio_metadata_proxy_returns_upstream_payload(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
@@ -335,6 +358,20 @@ def test_gateway_get_word_audio_proxy_generates_segmented_audio(monkeypatch):
         seen.update(kwargs)
         return FakeResponse()
 
+    monkeypatch.setattr(
+        module,
+        '_resolve_word_audio_request_candidates',
+        lambda word, pronunciation_mode=None: [{
+            'word': word,
+            'normalized_word': 'phenomenon',
+            'provider': 'azure',
+            'model': 'azure-rest:test@azure-word-segmented-v1',
+            'voice': 'en-GB-RyanNeural',
+            'file_name': 'phenomenon.mp3',
+            'pronunciation_mode': 'word-segmented',
+        }],
+    )
+    monkeypatch.setattr(module, 'fetch_word_audio_content', lambda **kwargs: None)
     monkeypatch.setattr(module, 'generate_tts_audio', fake_generate_tts_audio)
 
     response = client.get(
@@ -351,6 +388,64 @@ def test_gateway_get_word_audio_proxy_generates_segmented_audio(monkeypatch):
         'content_mode': 'word-segmented',
         'phonetic': '/fəˈnɒmɪnən/',
     }
+
+
+def test_gateway_get_word_audio_proxy_prefers_cached_segmented_audio(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app)
+
+    monkeypatch.setattr(
+        module,
+        '_resolve_word_audio_request_candidates',
+        lambda word, pronunciation_mode=None: [
+            {
+                'word': word,
+                'normalized_word': 'brain',
+                'provider': 'azure',
+                'model': 'azure-rest:test@azure-word-segmented-v1',
+                'voice': 'en-GB-RyanNeural',
+                'file_name': 'brain-ryan.mp3',
+                'pronunciation_mode': 'word-segmented',
+            },
+            {
+                'word': word,
+                'normalized_word': 'brain',
+                'provider': 'azure',
+                'model': 'azure-rest:test@azure-word-segmented-v1',
+                'voice': 'en-GB-LibbyNeural',
+                'file_name': 'brain-libby.mp3',
+                'pronunciation_mode': 'word-segmented',
+            },
+        ],
+    )
+
+    def fake_fetch_word_audio_content(**kwargs):
+        if kwargs['voice'] == 'en-GB-LibbyNeural':
+            return {
+                'body': b'ID3CACHED',
+                'content_type': 'audio/mpeg',
+                'byte_length': '9',
+                'cache_key': 'oss:brain-libby.mp3:9:etag-1',
+                'signed_url': 'https://oss.example.com/brain-libby.mp3?signature=1',
+                'media_id': 'tts/object/brain-libby.mp3',
+            }
+        return None
+
+    monkeypatch.setattr(module, 'fetch_word_audio_content', fake_fetch_word_audio_content)
+    monkeypatch.setattr(
+        module,
+        'generate_tts_audio',
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('should not generate segmented audio')),
+    )
+
+    response = client.get(
+        '/api/tts/word-audio',
+        params={'w': 'brain', 'pronunciation_mode': 'phonetic_segments'},
+    )
+
+    assert response.status_code == 200
+    assert response.content == b'ID3CACHED'
+    assert response.headers['x-audio-source'] == 'oss'
 
 
 def test_gateway_head_example_audio_proxy_maps_legacy_headers(monkeypatch):
