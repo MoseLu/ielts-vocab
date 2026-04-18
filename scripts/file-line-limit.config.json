@@ -7,7 +7,7 @@
   ],
   "baseline": {
     "backend/scripts/run_word_tts_full_batch.py": 516,
-    "backend/tests/test_gateway_bff_tts_proxy.py": 593,
+    "backend/tests/test_gateway_bff_tts_proxy.py": 651,
     "frontend/src/components/practice/QuickMemoryMode.test.tsx": 524,
     "frontend/src/components/practice/QuickMemoryMode.tsx": 522,
     "frontend/src/components/practice/utils.audio.test.ts": 553,

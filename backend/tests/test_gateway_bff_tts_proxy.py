@@ -320,7 +320,7 @@ def test_gateway_get_word_audio_proxy_returns_audio_bytes(monkeypatch):
     assert response.headers['x-audio-source'] == 'oss'
 
 
-def test_gateway_get_word_audio_proxy_requires_cache_only(monkeypatch):
+def test_gateway_get_word_audio_proxy_returns_cached_audio_without_cache_only(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
 
@@ -336,11 +336,69 @@ def test_gateway_get_word_audio_proxy_requires_cache_only(monkeypatch):
             'file_name': 'hello.mp3',
         },
     )
+    monkeypatch.setattr(
+        module,
+        'fetch_word_audio_content',
+        lambda **kwargs: {
+            'body': b'ID3CACHED',
+            'content_type': 'audio/mpeg',
+            'byte_length': '9',
+            'cache_key': 'oss:hello.mp3:9:etag-1',
+            'signed_url': 'https://oss.example.com/hello.mp3?signature=1',
+            'media_id': 'tts/object/hello.mp3',
+        },
+    )
 
     response = client.get('/api/tts/word-audio', params={'w': 'hello'})
 
-    assert response.status_code == 501
-    assert response.json() == {'error': 'word audio generation via gateway is not implemented yet'}
+    assert response.status_code == 200
+    assert response.content == b'ID3CACHED'
+    assert response.headers['x-audio-cache-key'] == 'oss:hello.mp3:9:etag-1'
+
+
+def test_gateway_get_word_audio_proxy_generates_audio_on_cache_miss(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app)
+    seen: dict[str, object] = {}
+
+    class FakeResponse:
+        status_code = 200
+        content = b'ID3GENERATED'
+        headers = {'content-type': 'audio/mpeg', 'X-Audio-Bytes': '12'}
+
+    monkeypatch.setattr(
+        module,
+        '_resolve_word_audio_request',
+        lambda word: {
+            'word': word,
+            'normalized_word': 'hello',
+            'provider': 'azure',
+            'model': 'azure-rest:test@azure-word-v5',
+            'voice': 'en-GB-LibbyNeural',
+            'file_name': 'hello.mp3',
+        },
+    )
+    monkeypatch.setattr(module, 'fetch_word_audio_content', lambda **kwargs: None)
+
+    def fake_generate_tts_audio(payload, **kwargs):
+        seen['payload'] = payload
+        seen.update(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr(module, 'generate_tts_audio', fake_generate_tts_audio)
+
+    response = client.get('/api/tts/word-audio', params={'w': 'hello'})
+
+    assert response.status_code == 200
+    assert response.content == b'ID3GENERATED'
+    assert response.headers['x-audio-bytes'] == '12'
+    assert seen['payload'] == {
+        'text': 'hello',
+        'provider': 'azure',
+        'model': 'azure-rest:test',
+        'voice_id': 'en-GB-LibbyNeural',
+        'content_mode': 'word',
+    }
 
 
 def test_gateway_get_word_audio_proxy_generates_segmented_audio(monkeypatch):

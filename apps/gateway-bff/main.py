@@ -207,11 +207,6 @@ def get_word_audio_proxy(
                 headers=build_forward_headers(request, target_service_name='tts-media-service'),
             )
         )
-    if cache_only != '1':
-        return JSONResponse(
-            status_code=501,
-            content={'error': 'word audio generation via gateway is not implemented yet'},
-        )
     request_info = _resolve_word_audio_request(w)
     payload = fetch_word_audio_content(
         file_name=request_info['file_name'],
@@ -219,9 +214,22 @@ def get_word_audio_proxy(
         voice=request_info['voice'],
         headers=build_forward_headers(request, target_service_name='tts-media-service'),
     )
-    if payload is None:
+    if payload is not None:
+        return _audio_content_response(payload, source='oss')
+    if cache_only == '1':
         return JSONResponse(status_code=404, content={'error': 'word audio cache miss'})
-    return _audio_content_response(payload, source='oss')
+    return _proxy_generic_tts_response(
+        generate_tts_audio(
+            {
+                'text': request_info['word'],
+                'provider': request_info['provider'],
+                'model': request_info['model'].split('@', 1)[0],
+                'voice_id': request_info['voice'],
+                'content_mode': 'word',
+            },
+            headers=build_forward_headers(request, target_service_name='tts-media-service'),
+        )
+    )
 
 
 @app.head('/api/tts/example-audio')
