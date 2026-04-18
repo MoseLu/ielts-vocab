@@ -4,7 +4,7 @@ import json
 from math import ceil
 
 from service_models.learning_core_models import UserGameWrongWord, UserWordMasteryState, db
-from services import game_wrong_word_repository
+from services import game_session_service, game_wrong_word_repository
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_support import (
     WORD_MASTERY_DIMENSIONS,
@@ -366,4 +366,15 @@ def build_game_practice_state(
         },
         'activeWord': current_node.get('word') if isinstance(current_node, dict) and current_node.get('nodeType') == 'word' else None,
         'activeDimension': current_node.get('dimension') if isinstance(current_node, dict) and current_node.get('nodeType') == 'word' else None,
+        **game_session_service.build_game_session_bundle(
+            user_id,
+            scope_key=_scope_value(normalized_book_id, normalized_chapter_id, normalized_day),
+            game_state={
+                'segment': current_segment,
+                'currentNode': current_node,
+            },
+            book_id=normalized_book_id,
+            chapter_id=normalized_chapter_id,
+            day=normalized_day,
+        ),
     }

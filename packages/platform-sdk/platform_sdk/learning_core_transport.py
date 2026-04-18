@@ -51,6 +51,7 @@ from platform_sdk.learning_core_wrong_words_application import (
 )
 from platform_sdk.learning_core_word_mastery_application import (
     build_learning_core_game_state_response,
+    post_learning_core_game_session_start_response,
     post_learning_core_word_mastery_attempt_response,
 )
 from platform_sdk.learning_core_personalization_application import (
@@ -289,6 +290,16 @@ def post_internal_wrong_words_clear(current_user):
 @token_required
 def get_internal_game_state(current_user):
     payload, status = build_learning_core_game_state_response(current_user.id, request.args)
+    return jsonify(payload), status
+
+
+@learning_core_bp.route('/internal/learning/game/session/start', methods=['POST'])
+@token_required
+def post_internal_game_session_start(current_user):
+    payload, status = post_learning_core_game_session_start_response(
+        current_user.id,
+        request.get_json(silent=True),
+    )
     return jsonify(payload), status
 
 

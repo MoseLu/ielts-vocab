@@ -124,3 +124,96 @@ class UserGameWrongWord(db.Model):
             'created_at': _iso_utc(self.created_at),
             'updated_at': _iso_utc(self.updated_at),
         }
+
+
+class UserGameEnergyState(db.Model):
+    __tablename__ = 'user_game_energy_states'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True, index=True)
+    energy = db.Column(db.Integer, nullable=False, default=5)
+    energy_max = db.Column(db.Integer, nullable=False, default=5)
+    next_energy_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'energy': self.energy or 0,
+            'energy_max': self.energy_max or 5,
+            'next_energy_at': _iso_utc(self.next_energy_at),
+            'created_at': _iso_utc(self.created_at),
+            'updated_at': _iso_utc(self.updated_at),
+        }
+
+
+class UserGameSessionState(db.Model):
+    __tablename__ = 'user_game_session_states'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    scope_key = db.Column(db.String(180), nullable=False, index=True)
+    book_id = db.Column(db.String(100), nullable=True, index=True)
+    chapter_id = db.Column(db.String(100), nullable=True, index=True)
+    day = db.Column(db.Integer, nullable=True, index=True)
+    lesson_id = db.Column(db.String(120), nullable=False)
+    segment_index = db.Column(db.Integer, nullable=False, default=0)
+    status = db.Column(db.String(20), nullable=False, default='launcher', index=True)
+    score = db.Column(db.Integer, nullable=False, default=0)
+    hits = db.Column(db.Integer, nullable=False, default=0)
+    best_hits = db.Column(db.Integer, nullable=False, default=0)
+    hints_remaining = db.Column(db.Integer, nullable=False, default=2)
+    hint_usage = db.Column(db.Integer, nullable=False, default=0)
+    pass_score = db.Column(db.Integer, nullable=False, default=70)
+    enabled_boosts = db.Column(db.Text, nullable=False, default='{}')
+    active_boost_module = db.Column(db.Text, nullable=True)
+    boss_completed = db.Column(db.Boolean, nullable=False, default=False)
+    reward_completed = db.Column(db.Boolean, nullable=False, default=False)
+    last_feedback_tone = db.Column(db.String(20), nullable=True)
+    last_feedback_message = db.Column(db.Text, nullable=True)
+    last_score_delta = db.Column(db.Integer, nullable=False, default=0)
+    result_overlay = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'scope_key', name='unique_user_scope_game_session_state'),
+    )
+
+    def _parse_json(self, value, default):
+        try:
+            parsed = json.loads(value) if value else default
+        except Exception:
+            return default
+        return parsed if isinstance(parsed, type(default)) else default
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'scope_key': self.scope_key,
+            'book_id': self.book_id,
+            'chapter_id': self.chapter_id,
+            'day': self.day,
+            'lesson_id': self.lesson_id,
+            'segment_index': self.segment_index or 0,
+            'status': self.status or 'launcher',
+            'score': self.score or 0,
+            'hits': self.hits or 0,
+            'best_hits': self.best_hits or 0,
+            'hints_remaining': self.hints_remaining or 0,
+            'hint_usage': self.hint_usage or 0,
+            'pass_score': self.pass_score or 70,
+            'enabled_boosts': self._parse_json(self.enabled_boosts, {}),
+            'active_boost_module': self._parse_json(self.active_boost_module, None),
+            'boss_completed': bool(self.boss_completed),
+            'reward_completed': bool(self.reward_completed),
+            'last_feedback_tone': self.last_feedback_tone,
+            'last_feedback_message': self.last_feedback_message,
+            'last_score_delta': self.last_score_delta or 0,
+            'result_overlay': self._parse_json(self.result_overlay, None),
+            'created_at': _iso_utc(self.created_at),
+            'updated_at': _iso_utc(self.updated_at),
+        }

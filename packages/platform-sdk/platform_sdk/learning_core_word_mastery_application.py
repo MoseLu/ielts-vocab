@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from services.word_mastery_service import (
     build_game_practice_state,
+    start_game_campaign_session,
     update_game_campaign_attempt,
 )
 from services.study_sessions import normalize_chapter_id
@@ -15,6 +16,21 @@ def build_learning_core_game_state_response(user_id: int, args) -> tuple[dict, i
         day=args.get('day'),
     )
     return payload, 200
+
+
+def post_learning_core_game_session_start_response(user_id: int, body: dict | None) -> tuple[dict, int]:
+    payload = body or {}
+    try:
+        game_state = start_game_campaign_session(
+            user_id,
+            book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
+            chapter_id=normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
+            day=payload.get('day'),
+            enabled_boosts=payload.get('enabledBoosts') if isinstance(payload.get('enabledBoosts'), dict) else None,
+        )
+    except ValueError as exc:
+        return {'error': str(exc)}, 400
+    return {'game_state': game_state}, 200
 
 
 def _normalize_game_attempt_state(result: dict | None, *, node_type: str) -> dict:
@@ -73,6 +89,9 @@ def post_learning_core_word_mastery_attempt_response(user_id: int, body: dict | 
             day=payload.get('day'),
             word_payload=payload.get('wordPayload') if isinstance(payload.get('wordPayload'), dict) else payload,
             segment_index=payload.get('segmentIndex', payload.get('segment_index')),
+            hint_used=bool(payload.get('hintUsed', payload.get('hint_used'))),
+            input_mode=str(payload.get('inputMode') or payload.get('input_mode') or '').strip() or None,
+            boost_type=str(payload.get('boostType') or payload.get('boost_type') or '').strip() or None,
         )
     except ValueError as exc:
         return {'error': str(exc)}, 400
@@ -83,4 +102,11 @@ def post_learning_core_word_mastery_attempt_response(user_id: int, body: dict | 
         chapter_id=normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
         day=payload.get('day'),
     )
-    return {'state': _normalize_game_attempt_state(state, node_type=node_type), 'game_state': game_state}, 200
+    return {
+        'state': _normalize_game_attempt_state(state, node_type=node_type),
+        'scoreDelta': int(state.get('scoreDelta') or 0),
+        'hits': int(state.get('hits') or 0),
+        'bestHits': int(state.get('bestHits') or 0),
+        'resultOverlay': state.get('resultOverlay'),
+        'game_state': game_state,
+    }, 200

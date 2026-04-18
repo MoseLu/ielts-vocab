@@ -5,7 +5,8 @@ from math import ceil
 from datetime import datetime
 
 from service_models.learning_core_models import UserGameWrongWord, UserWordMasteryState, db
-from services import game_wrong_word_repository
+from services import game_session_service, game_wrong_word_repository
+from services.game_campaign_session import start_game_campaign_session
 from services.word_mastery_campaign_state import build_game_practice_state
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_support import (
@@ -394,6 +395,9 @@ def update_game_campaign_attempt(
     day: int | None = None,
     word_payload: dict | None = None,
     segment_index: int | None = None,
+    hint_used: bool = False,
+    input_mode: str | None = None,
+    boost_type: str | None = None,
 ) -> dict:
     normalized_node_type = str(node_type or 'word').strip().lower() or 'word'
     if normalized_node_type == 'word':
@@ -401,7 +405,7 @@ def update_game_campaign_attempt(
             raise ValueError('word is required for word node')
         if not dimension:
             raise ValueError('dimension is required for word node')
-        return update_word_mastery_attempt(
+        state = update_word_mastery_attempt(
             user_id,
             word=word,
             dimension=dimension,
@@ -412,6 +416,28 @@ def update_game_campaign_attempt(
             day=day,
             word_payload=word_payload,
         )
+        scope_state = build_game_practice_state(
+            user_id,
+            book_id=book_id,
+            chapter_id=chapter_id,
+            day=day,
+        )
+        meta = game_session_service.apply_game_attempt_meta(
+            user_id,
+            scope_key=_scope_value(book_id, chapter_id, day),
+            book_id=book_id,
+            chapter_id=chapter_id,
+            day=day,
+            node_type='word',
+            dimension=dimension,
+            passed=passed,
+            hint_used=hint_used,
+            input_mode=input_mode,
+            boost_type=boost_type,
+            word_payload=word_payload,
+            game_state=scope_state,
+        )
+        return {**state, **meta}
     if normalized_node_type not in {'speaking_boss', 'speaking_reward'}:
         raise ValueError('invalid campaign node type')
     normalized_book_id = normalize_optional_text(book_id)
@@ -429,7 +455,7 @@ def update_game_campaign_attempt(
     segment_words = vocabulary[segment_start:segment_start + GAME_SEGMENT_WORD_COUNT]
     if not segment_words:
         raise ValueError('invalid segment index')
-    return _upsert_speaking_node_attempt(
+    state = _upsert_speaking_node_attempt(
         user_id,
         node_type=normalized_node_type,
         segment_index=safe_segment_index,
@@ -439,3 +465,25 @@ def update_game_campaign_attempt(
         day=normalized_day,
         segment_words=segment_words,
     )
+    scope_state = build_game_practice_state(
+        user_id,
+        book_id=normalized_book_id,
+        chapter_id=normalized_chapter_id,
+        day=normalized_day,
+    )
+    meta = game_session_service.apply_game_attempt_meta(
+        user_id,
+        scope_key=_scope_value(normalized_book_id, normalized_chapter_id, normalized_day),
+        book_id=normalized_book_id,
+        chapter_id=normalized_chapter_id,
+        day=normalized_day,
+        node_type=normalized_node_type,
+        dimension='speaking',
+        passed=passed,
+        hint_used=hint_used,
+        input_mode=input_mode,
+        boost_type=boost_type,
+        word_payload={'word': segment_words[0].get('word')} if segment_words else None,
+        game_state=scope_state,
+    )
+    return {**state, **meta}

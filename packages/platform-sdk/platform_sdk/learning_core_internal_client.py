@@ -358,6 +358,18 @@ def fetch_learning_core_game_state_response(user_id: int, args) -> dict:
     return payload
 
 
+def post_learning_core_game_session_start(user_id: int, data: dict | None) -> dict:
+    payload, status = _request_json(
+        'POST',
+        '/internal/learning/game/session/start',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core game-session-start request failed: {status}')
+    return payload
+
+
 def post_learning_core_game_attempt(user_id: int, data: dict | None) -> dict:
     payload, status = _request_json(
         'POST',

@@ -4,6 +4,7 @@ import re
 from flask import jsonify
 
 from platform_sdk.ai_word_image_application import enrich_game_state_with_word_image
+from platform_sdk.ai_practice_game_application import game_session_start_response as _game_session_start_response
 from platform_sdk.learning_repository_adapters import (
     learning_event_repository,
     learning_stats_repository,
@@ -202,6 +203,10 @@ def game_state_response(current_user, args):
     return jsonify(payload), 200
 
 
+def game_session_start_response(current_user, body):
+    return _game_session_start_response(current_user, body)
+
+
 def game_attempt_response(current_user, body):
     payload = body or {}
     node_type = str(payload.get('nodeType') or payload.get('node_type') or 'word').strip().lower() or 'word'
@@ -228,6 +233,9 @@ def game_attempt_response(current_user, body):
             day=payload.get('day'),
             word_payload=payload.get('wordPayload') if isinstance(payload.get('wordPayload'), dict) else payload,
             segment_index=payload.get('segmentIndex', payload.get('segment_index')),
+            hint_used=bool(payload.get('hintUsed', payload.get('hint_used'))),
+            input_mode=str(payload.get('inputMode') or payload.get('input_mode') or '').strip() or None,
+            boost_type=str(payload.get('boostType') or payload.get('boost_type') or '').strip() or None,
         )
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
@@ -264,6 +272,10 @@ def game_attempt_response(current_user, body):
             'bossFailures': int(state.get('bossFailures') or state.get('boss_failures') or 0),
             'rewardFailures': int(state.get('rewardFailures') or state.get('reward_failures') or 0),
         },
+        'scoreDelta': int(state.get('scoreDelta') or 0),
+        'hits': int(state.get('hits') or 0),
+        'bestHits': int(state.get('bestHits') or 0),
+        'resultOverlay': state.get('resultOverlay'),
         'game_state': game_state,
     }), 200
 
