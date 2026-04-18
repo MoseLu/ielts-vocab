@@ -14,10 +14,7 @@ import {
   syncQuickMemoryRecordsToBackend,
 } from '../../lib/quickMemorySync'
 import { QuickMemoryCountdownRing } from './quick-memory/QuickMemoryCountdownRing'
-import {
-  QuickMemorySummary,
-  type QuickMemorySessionResult as SessionResult,
-} from './quick-memory/QuickMemorySummary'
+import { QuickMemorySummary, type QuickMemorySessionResult as SessionResult } from './quick-memory/QuickMemorySummary'
 import { useQuickMemoryModeSession } from './quick-memory/useQuickMemoryModeSession'
 import { useQuickMemorySession } from '../../composables/practice/quick-memory/useQuickMemorySession'
 import {
@@ -83,6 +80,7 @@ export default function QuickMemoryMode({
   const {
     completeCurrentSession,
     flushPendingRecordSync,
+    isCurrentSessionActive,
     prepareLearningSession,
     resetCurrentSessionSegment,
     syncSessionSnapshot,
@@ -148,11 +146,7 @@ export default function QuickMemoryMode({
     resetCurrentSessionSegment()
   }, [bookId, chapterId, onIndexChange, queue.length, resetCurrentSessionSegment])
 
-  const reveal = useCallback(async (
-    picked: 'known' | 'unknown',
-    countAsActivity = true,
-    shouldPlayRevealAudio = true,
-  ) => {
+  const reveal = useCallback(async (picked: 'known' | 'unknown', countAsActivity = true, shouldPlayRevealAudio = countAsActivity) => {
     if (chosenRef.current) return
     chosenRef.current = true
     clearInterval(timerRef.current)
@@ -232,13 +226,15 @@ export default function QuickMemoryMode({
       setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current)
-          void reveal('unknown')
+          if (isCurrentSessionActive()) {
+            void reveal('unknown', false, false)
+          }
           return 0
         }
         return prev - 1
       })
     }, 1000)
-  }, [reveal])
+  }, [isCurrentSessionActive, reveal])
 
   useEffect(() => {
     if (phase !== 'question' || !currentWord) return
@@ -415,10 +411,7 @@ export default function QuickMemoryMode({
     <div className="qm-root">
       <div className="qm-stage">
         <div className="qm-progress-track">
-          <div
-            className="qm-progress-fill"
-            style={{ '--progress-percent': `${progress}%` } as CSSProperties}
-          />
+          <div className="qm-progress-fill" style={{ '--progress-percent': `${progress}%` } as CSSProperties} />
         </div>
         <div className="qm-progress-label">{index + 1} / {queue.length}</div>
 

@@ -72,6 +72,18 @@ export function useQuickMemoryModeSession({
     })
   }, [bookIdRef, chapterIdRef, sessionIdRef, sessionLastActiveAtRef, sessionStartRef])
 
+  const isCurrentSessionActive = useCallback((at = Date.now()) => {
+    if (sessionStartRef.current <= 0) return false
+    if (typeof AIChat.isStudySessionActive === 'function') {
+      return AIChat.isStudySessionActive({
+        sessionId: sessionIdRef.current,
+        startedAt: sessionStartRef.current,
+        lastActiveAt: sessionLastActiveAtRef.current,
+      }, at)
+    }
+    return true
+  }, [sessionIdRef, sessionLastActiveAtRef, sessionStartRef])
+
   const flushPendingRecordSync = useCallback((keepalive = false) => {
     if (recordSyncInFlightRef.current) return
 
@@ -236,6 +248,7 @@ export function useQuickMemoryModeSession({
   return {
     completeCurrentSession,
     flushPendingRecordSync,
+    isCurrentSessionActive,
     prepareLearningSession,
     resetCurrentSessionSegment,
     syncSessionSnapshot,
