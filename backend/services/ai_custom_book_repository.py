@@ -12,6 +12,12 @@ _CUSTOM_BOOK_SCHEMA_DRIFT_MARKERS = (
     'column custom_books.share_enabled does not exist',
     'column custom_books.chapter_word_target does not exist',
     'column custom_book_words.is_incomplete does not exist',
+    'no such column: custom_books.education_stage',
+    'no such column: custom_books.exam_type',
+    'no such column: custom_books.ielts_skill',
+    'no such column: custom_books.share_enabled',
+    'no such column: custom_books.chapter_word_target',
+    'no such column: custom_book_words.is_incomplete',
 )
 
 
@@ -22,6 +28,10 @@ def _is_custom_book_schema_drift_error(exc: Exception) -> bool:
         seen_ids.add(id(current))
         message = str(current).lower()
         if 'undefinedcolumn' in message and (
+            'custom_books.' in message or 'custom_book_words.' in message
+        ):
+            return True
+        if 'no such column:' in message and (
             'custom_books.' in message or 'custom_book_words.' in message
         ):
             return True

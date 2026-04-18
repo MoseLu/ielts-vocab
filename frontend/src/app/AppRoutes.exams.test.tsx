@@ -47,7 +47,7 @@ vi.mock('../components/vocab-test/page/VocabTestPage', () => ({ default: () => n
 
 describe('AppRoutes exam routes', () => {
   it('mounts the exam library page on /exams', async () => {
-    render(
+    const { container } = render(
       <MemoryRouter initialEntries={['/exams']}>
         <AppRoutes
           mode="meaning"
@@ -59,10 +59,12 @@ describe('AppRoutes exam routes', () => {
     )
 
     expect(await screen.findByText('exams-library-page')).toBeInTheDocument()
+    expect(container.querySelector('.app-body')).toBeTruthy()
+    expect(container.querySelector('.practice-fullscreen')).toBeFalsy()
   })
 
   it('mounts the exam attempt page on /exams/:paperId', async () => {
-    render(
+    const { container } = render(
       <MemoryRouter initialEntries={['/exams/12?section=reading']}>
         <AppRoutes
           mode="meaning"
@@ -74,5 +76,7 @@ describe('AppRoutes exam routes', () => {
     )
 
     expect(await screen.findByText('exam-attempt-page')).toBeInTheDocument()
+    expect(container.querySelector('.practice-fullscreen')).toBeTruthy()
+    expect(container.querySelector('.app-body')).toBeFalsy()
   })
 })

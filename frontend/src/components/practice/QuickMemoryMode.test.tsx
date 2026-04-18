@@ -415,7 +415,7 @@ describe('QuickMemoryMode', () => {
     })
   })
 
-  it('does not auto reveal after the countdown expires without an active learning segment', async () => {
+  it('auto reveals and plays audio after the countdown expires on the first word', async () => {
     vi.useFakeTimers()
 
     render(
@@ -443,14 +443,14 @@ describe('QuickMemoryMode', () => {
     await act(async () => {
       vi.advanceTimersByTime(3000)
     })
-    expect(screen.getByText('0')).toBeInTheDocument()
-    expect(screen.queryByText('✗ 不认识')).not.toBeInTheDocument()
+    expect(screen.getByText('✗ 不认识')).toBeInTheDocument()
+    expect(startSessionMock).toHaveBeenCalledTimes(1)
     expect(playWordAudioMock).not.toHaveBeenCalled()
 
     await act(async () => {
       vi.advanceTimersByTime(350)
     })
-    expect(playWordAudioMock).not.toHaveBeenCalled()
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function))
   })
 
   it('replays the current word audio from the shared shortcut, the toolbar button, and the word itself', async () => {

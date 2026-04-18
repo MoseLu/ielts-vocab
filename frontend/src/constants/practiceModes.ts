@@ -1,5 +1,4 @@
 export const CANONICAL_PRACTICE_MODES = [
-  'game',
   'smart',
   'quickmemory',
   'listening',
@@ -18,11 +17,6 @@ type PracticeModeMeta = {
 }
 
 const PRACTICE_MODE_META: Record<CanonicalPracticeMode, PracticeModeMeta> = {
-  game: {
-    label: '五维闯关',
-    description: '按认义听说写逐词闯关',
-    shortLabel: '闯',
-  },
   smart: {
     label: '智能模式',
     description: '根据水平自动调整',
@@ -101,7 +95,6 @@ export const PRACTICE_CONTROL_MODES = [
 export const PRACTICE_CONTROL_MODE_LABELS = buildPracticeModeRecord(PRACTICE_CONTROL_MODES, 'label')
 
 export const STATS_MODE_ORDER = [
-  'game',
   'smart',
   'quickmemory',
   'listening',
@@ -139,17 +132,43 @@ export const WRONG_WORD_DIMENSIONS = [
   'recognition',
   'meaning',
   'listening',
-  'speaking',
   'dictation',
 ] as const
 
 export type WrongWordDimensionKey = typeof WRONG_WORD_DIMENSIONS[number]
 
+export const GAME_CAMPAIGN_DIMENSIONS = [
+  'recognition',
+  'meaning',
+  'listening',
+  'speaking',
+  'dictation',
+] as const
+
+export type GameCampaignDimension = typeof GAME_CAMPAIGN_DIMENSIONS[number]
+
+export const GAME_NODE_TYPES = [
+  'word',
+  'speaking_boss',
+  'speaking_reward',
+] as const
+
+export type GameNodeType = typeof GAME_NODE_TYPES[number]
+
+export const GAME_CAMPAIGN_LABEL = '五维闯关'
+
+export const GAME_CAMPAIGN_DIMENSION_LABELS: Record<GameCampaignDimension, string> = {
+  recognition: '认词',
+  meaning: '释义',
+  listening: '听辨',
+  speaking: '口语',
+  dictation: '拼写',
+}
+
 export const WRONG_WORD_DIMENSION_TO_MODE: Record<WrongWordDimensionKey, CanonicalPracticeMode> = {
   recognition: 'quickmemory',
   meaning: 'meaning',
   listening: 'listening',
-  speaking: 'game',
   dictation: 'dictation',
 }
 
@@ -157,7 +176,6 @@ const WRONG_WORD_DIMENSION_TITLES_META: Record<WrongWordDimensionKey, string> = 
   recognition: `${PRACTICE_MODE_LABELS.quickmemory}：看到英文单词时，能不能立刻认出中文意思`,
   meaning: `${PRACTICE_MODE_LABELS.meaning}：看到中文意思时，能不能主动默写出英文单词`,
   listening: `${PRACTICE_MODE_LABELS.listening}：听到发音后，能不能判断它对应的意思`,
-  speaking: `${PRACTICE_MODE_LABELS.game}：能不能把当前单词读准并通过发音匹配`,
   dictation: `${PRACTICE_MODE_LABELS.dictation}：听到发音后，能不能把单词完整拼出来`,
 }
 
@@ -174,9 +192,6 @@ const MODE_ALIAS_TO_KEY: Record<string, CanonicalPracticeMode> = {
   '智能模式': 'smart',
   '智能练习': 'smart',
   '智能学习': 'smart',
-  game: 'game',
-  '五维闯关': 'game',
-  '闯关模式': 'game',
   quickmemory: 'quickmemory',
   recognition: 'quickmemory',
   '速记模式': 'quickmemory',
@@ -208,7 +223,16 @@ const MODE_ALIAS_TO_KEY: Record<string, CanonicalPracticeMode> = {
   '错词复习': 'errors',
 }
 
-const MODE_COPY_ALIASES = Object.keys(MODE_ALIAS_TO_KEY).sort((left, right) => right.length - left.length)
+const GAME_MODE_ALIASES = [
+  'game',
+  '五维闯关',
+  '闯关模式',
+] as const
+
+const MODE_COPY_ALIASES = [
+  ...Object.keys(MODE_ALIAS_TO_KEY),
+  ...GAME_MODE_ALIASES,
+].sort((left, right) => right.length - left.length)
 
 function normalizeLookupKey(value: string): string {
   return value.trim().toLowerCase()
@@ -231,11 +255,21 @@ export function getPracticeModeLabel(
   const canonicalMode = getCanonicalMode(mode) ?? getCanonicalMode(fallbackLabel)
   if (canonicalMode) return PRACTICE_MODE_LABELS[canonicalMode]
 
+  const normalizedMode = normalizeLookupKey(mode ?? '')
+  if (GAME_MODE_ALIASES.includes(normalizedMode as typeof GAME_MODE_ALIASES[number])) {
+    return GAME_CAMPAIGN_LABEL
+  }
+
+  const normalizedFallbackLabel = normalizeLookupKey(fallbackLabel ?? '')
+  if (GAME_MODE_ALIASES.includes(normalizedFallbackLabel as typeof GAME_MODE_ALIASES[number])) {
+    return GAME_CAMPAIGN_LABEL
+  }
+
   const normalizedFallback = fallbackLabel?.trim()
   if (normalizedFallback) return normalizedFallback
 
-  const normalizedMode = mode?.trim()
-  return normalizedMode || null
+  const trimmedMode = mode?.trim()
+  return trimmedMode || null
 }
 
 export function getWrongWordDimensionModeLabel(
@@ -254,7 +288,9 @@ export function normalizeModeText(text?: string | null): string {
   if (!normalized) return ''
 
   return MODE_COPY_ALIASES.reduce((result, alias) => {
-    const replacement = PRACTICE_MODE_LABELS[MODE_ALIAS_TO_KEY[alias]]
+    const replacement = alias in MODE_ALIAS_TO_KEY
+      ? PRACTICE_MODE_LABELS[MODE_ALIAS_TO_KEY[alias]]
+      : GAME_CAMPAIGN_LABEL
     return result.split(alias).join(replacement)
   }, normalized)
 }

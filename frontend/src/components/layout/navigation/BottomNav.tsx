@@ -25,12 +25,13 @@ const ExamsIcon = ({ active }: { active: boolean }) => (
   </svg>
 )
 
-const SpeakingIcon = ({ active }: { active: boolean }) => (
+const GameIcon = ({ active }: { active: boolean }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'currentColor'} strokeWidth="2">
-    <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
-    <path d="M19 11a7 7 0 0 1-14 0"/>
-    <line x1="12" y1="18" x2="12" y2="22"/>
-    <line x1="8" y1="22" x2="16" y2="22"/>
+    <path d="M4 19h16"/>
+    <path d="M5 19l2.5-9 4.5 4 4-8 3 13"/>
+    <circle cx="7.5" cy="10" r="1.2"/>
+    <circle cx="12" cy="14" r="1.2"/>
+    <circle cx="16" cy="6" r="1.2"/>
   </svg>
 )
 
@@ -58,7 +59,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: 'home', label: '\u9996\u9875', path: '/plan', icon: HomeIcon },
   { key: 'exams', label: '\u771f\u9898', path: '/exams', icon: ExamsIcon },
-  { key: 'speaking', label: '\u53e3\u8bed', path: '/speaking', icon: SpeakingIcon },
+  { key: 'game', label: '\u95ef\u5173', path: '/game', icon: GameIcon },
   { key: 'errors', label: '\u9519\u8bcd', path: '/errors', icon: ErrorsIcon },
   { key: 'stats', label: '\u7edf\u8ba1', path: '/stats', icon: StatsIcon },
   { key: 'profile', label: '\u6211\u7684', path: '/profile', icon: ProfileIcon },

@@ -126,6 +126,56 @@ def test_tts_media_service_generate_uses_azure_provider_branch(monkeypatch, tmp_
     assert seen['materialization']['byte_length'] == len(VALID_MP3)
 
 
+def test_tts_media_service_generate_segmented_word_uses_word_voice(monkeypatch, tmp_path):
+    _configure_tts_media_env(monkeypatch, tmp_path)
+    module = _load_tts_media_service_module()
+    client = TestClient(module.app)
+    seen = {}
+
+    monkeypatch.setenv('BAILIAN_TTS_PROVIDER', 'azure')
+    monkeypatch.setattr(module.runtime, 'tts_cache_dir', lambda: tmp_path)
+    monkeypatch.setattr(module.runtime, 'azure_default_model', lambda: 'azure-rest:audio-24khz-48kbitrate-mono-mp3')
+    monkeypatch.setattr(module.runtime, 'azure_sentence_voice', lambda: 'en-US-AndrewMultilingualNeural')
+    monkeypatch.setattr(module.runtime, 'azure_word_voice', lambda: 'en-GB-LibbyNeural')
+    monkeypatch.setattr(module.runtime, 'default_cache_identity', lambda: ('azure-rest:audio-24khz-48kbitrate-mono-mp3', 'en-US-AndrewMultilingualNeural'))
+
+    def fake_synthesize(text, model, voice, provider=None, speed=None, content_mode=None, phonetic=None):
+        seen['text'] = text
+        seen['model'] = model
+        seen['voice'] = voice
+        seen['provider'] = provider
+        seen['speed'] = speed
+        seen['content_mode'] = content_mode
+        seen['phonetic'] = phonetic
+        return VALID_MP3
+
+    monkeypatch.setattr(module.runtime, 'synthesize_word_to_bytes', fake_synthesize)
+
+    response = client.post(
+        '/v1/tts/generate',
+        json={
+            'text': 'phenomenon',
+            'provider': 'azure',
+            'content_mode': 'word-segmented',
+            'phonetic': '/fəˈnɒmɪnən/',
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers['content-type'].startswith('audio/mpeg')
+    assert {
+        key: seen[key]
+        for key in ('text', 'model', 'voice', 'provider', 'content_mode', 'phonetic')
+    } == {
+        'text': 'phenomenon',
+        'model': 'azure-rest:audio-24khz-48kbitrate-mono-mp3',
+        'voice': 'en-GB-LibbyNeural',
+        'provider': 'azure',
+        'content_mode': 'word-segmented',
+        'phonetic': '/fəˈnɒmɪnən/',
+    }
+
+
 def test_tts_media_service_generate_uses_minimax_adapter(monkeypatch, tmp_path):
     _configure_tts_media_env(monkeypatch, tmp_path)
     module = _load_tts_media_service_module()

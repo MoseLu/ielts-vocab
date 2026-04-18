@@ -279,3 +279,44 @@ class TestWordAudioRoute:
             'voice': 'English_Trustworthy_Man',
             'content_mode': 'word',
         }
+
+    def test_segmented_generation_uses_azure_word_profile(self, client, monkeypatch, tmp_path):
+        seen = {}
+
+        monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
+        monkeypatch.setattr(
+            'services.word_tts.azure_default_model',
+            lambda: 'azure-rest:audio-24khz-48kbitrate-mono-mp3',
+        )
+        monkeypatch.setattr(
+            'services.word_tts.azure_word_voice',
+            lambda: 'en-GB-LibbyNeural',
+        )
+
+        def fake_synthesize(text, model, voice, provider=None, content_mode=None):
+            seen['text'] = text
+            seen['provider'] = provider
+            seen['model'] = model
+            seen['voice'] = voice
+            seen['content_mode'] = content_mode
+            return VALID_MP3
+
+        monkeypatch.setattr('services.word_tts.synthesize_word_to_bytes', fake_synthesize)
+
+        res = client.get('/api/tts/word-audio?w=phenomenon&pronunciation_mode=phonetic_segments')
+
+        target = word_tts.word_tts_cache_path(
+            tmp_path,
+            'phenomenon',
+            'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-segmented-v1',
+            'en-GB-LibbyNeural',
+        )
+        assert res.status_code == 200
+        assert target.exists()
+        assert seen == {
+            'text': 'phenomenon',
+            'provider': 'azure',
+            'model': 'azure-rest:audio-24khz-48kbitrate-mono-mp3',
+            'voice': 'en-GB-LibbyNeural',
+            'content_mode': 'word-segmented',
+        }

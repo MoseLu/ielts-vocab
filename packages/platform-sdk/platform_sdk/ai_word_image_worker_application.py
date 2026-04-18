@@ -21,6 +21,8 @@ from .ai_word_image_application import (
     DEFAULT_GAME_WORD_IMAGE_SIZE,
     DEFAULT_GAME_WORD_IMAGE_STYLE,
     DEFAULT_GAME_WORD_IMAGE_STYLE_VERSION,
+    GAME_WORD_IMAGE_PROVIDER_DASHSCOPE,
+    GAME_WORD_IMAGE_PROVIDER_MINIMAX,
     GAME_WORD_IMAGE_ASYNC_ENDPOINT,
     GAME_WORD_IMAGE_MAX_POLL_ATTEMPTS,
     GAME_WORD_IMAGE_POLL_INTERVAL_SECONDS,
@@ -42,8 +44,7 @@ from .ai_word_image_application import (
     ensure_ai_word_image_asset_table,
     utc_now,
 )
-
-
+from .ai_word_image_minimax_client import run_minimax_word_image_generation
 _MODEL_FALLBACK_STATUS_CODES = {400, 403, 404, 409, 429}
 _MODEL_FALLBACK_MESSAGE_TOKENS = (
     'quota',
@@ -79,8 +80,6 @@ def _task_headers(*, async_mode: bool) -> dict[str, str]:
     if workspace:
         headers['X-DashScope-WorkSpace'] = workspace
     return headers
-
-
 def _dashscope_generation_payload(prompt_text: str, *, model: str) -> dict:
     return {
         'model': model,
@@ -153,6 +152,15 @@ def _run_dashscope_word_image_generation(*, prompt_text: str, model: str) -> tup
     raise RuntimeError('word-image task finished without a downloadable result')
 
 
+def _run_minimax_word_image_generation(*, prompt_text: str, model: str) -> tuple[bytes, str, dict]:
+    return run_minimax_word_image_generation(
+        prompt_text=prompt_text,
+        model=model,
+        request_timeout_seconds=GAME_WORD_IMAGE_REQUEST_TIMEOUT_SECONDS,
+        result_timeout_seconds=GAME_WORD_IMAGE_RESULT_TIMEOUT_SECONDS,
+    )
+
+
 def _should_try_next_model(exc: Exception) -> bool:
     if isinstance(exc, requests.HTTPError):
         status_code = exc.response.status_code if exc.response is not None else None
@@ -196,26 +204,43 @@ def _is_model_on_cooldown(model: str) -> bool:
 
 
 def _generate_word_image_with_model_fallback(asset: AIWordImageAsset) -> tuple[bytes, str, dict]:
+    provider = str(asset.provider or DEFAULT_GAME_WORD_IMAGE_PROVIDER).strip().lower() or DEFAULT_GAME_WORD_IMAGE_PROVIDER
+    provider = (
+        GAME_WORD_IMAGE_PROVIDER_MINIMAX
+        if provider == GAME_WORD_IMAGE_PROVIDER_MINIMAX
+        else GAME_WORD_IMAGE_PROVIDER_DASHSCOPE
+    )
     attempted_models: list[str] = []
     last_error: Exception | None = None
-    for candidate_model in list_game_word_image_model_candidates(preferred_model=asset.model):
+    for candidate_model in list_game_word_image_model_candidates(
+        preferred_model=asset.model,
+        provider=provider,
+    ):
         if _is_model_on_cooldown(candidate_model):
             continue
         attempted_models.append(candidate_model)
         try:
-            image_bytes, content_type, runtime_metadata = _run_dashscope_word_image_generation(
-                prompt_text=asset.prompt_text,
-                model=candidate_model,
-            )
+            if provider == GAME_WORD_IMAGE_PROVIDER_MINIMAX:
+                image_bytes, content_type, runtime_metadata = _run_minimax_word_image_generation(
+                    prompt_text=asset.prompt_text,
+                    model=candidate_model,
+                )
+            else:
+                image_bytes, content_type, runtime_metadata = _run_dashscope_word_image_generation(
+                    prompt_text=asset.prompt_text,
+                    model=candidate_model,
+                )
             return image_bytes, content_type, {
                 **runtime_metadata,
                 'attempted_models': attempted_models,
                 'selected_model': candidate_model,
+                'selected_provider': provider,
             }
         except Exception as exc:
             last_error = exc
             logging.warning(
-                '[AI] Game word image model %s failed for %s: %s',
+                '[AI] Game word image provider %s model %s failed for %s: %s',
+                provider,
                 candidate_model,
                 asset.sense_key,
                 exc,
@@ -290,6 +315,7 @@ def drain_game_word_image_generation_queue(*, limit: int = 10) -> int:
             if stored is None:
                 raise RuntimeError('failed to upload generated image to OSS')
             asset.status = WORD_IMAGE_STATUS_READY
+            asset.provider = str(runtime_metadata.get('selected_provider') or asset.provider or DEFAULT_GAME_WORD_IMAGE_PROVIDER)
             asset.model = str(runtime_metadata.get('selected_model') or asset.model or DEFAULT_GAME_WORD_IMAGE_MODEL)
             asset.storage_provider = stored.provider
             asset.object_key = stored.object_key
@@ -304,6 +330,7 @@ def drain_game_word_image_generation_queue(*, limit: int = 10) -> int:
                     'object_key': stored.object_key,
                     'task_id': runtime_metadata.get('task_id'),
                     'source_url': runtime_metadata.get('url'),
+                    'selected_provider': asset.provider,
                     'attempted_models': runtime_metadata.get('attempted_models') or [asset.model],
                     'selected_model': asset.model,
                     'attempt_count': int(asset.attempt_count or 0),
@@ -381,8 +408,8 @@ def queue_game_word_images_for_books(
         asset.prompt_text = seed['prompt_text']
         asset.prompt_version = DEFAULT_GAME_WORD_IMAGE_PROMPT_VERSION
         asset.style_version = DEFAULT_GAME_WORD_IMAGE_STYLE_VERSION
-        asset.provider = DEFAULT_GAME_WORD_IMAGE_PROVIDER
-        asset.model = DEFAULT_GAME_WORD_IMAGE_MODEL
+        asset.provider = seed['provider']
+        asset.model = seed['model']
         asset.storage_provider = GAME_WORD_IMAGE_STORAGE_PROVIDER
         asset.object_key = asset.object_key or build_game_word_image_object_key(sense_key=sense_key)
         asset.last_requested_at = utc_now()

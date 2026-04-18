@@ -82,7 +82,6 @@ export default function QuickMemoryMode({
   const {
     completeCurrentSession,
     flushPendingRecordSync,
-    isCurrentSessionActive,
     prepareLearningSession,
     resetCurrentSessionSegment,
     syncSessionSnapshot,
@@ -232,15 +231,13 @@ export default function QuickMemoryMode({
       setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current)
-          if (isCurrentSessionActive()) {
-            void reveal('unknown', false)
-          }
+          void reveal('unknown')
           return 0
         }
         return prev - 1
       })
     }, 1000)
-  }, [isCurrentSessionActive, reveal])
+  }, [reveal])
 
   useEffect(() => {
     if (phase !== 'question' || !currentWord) return

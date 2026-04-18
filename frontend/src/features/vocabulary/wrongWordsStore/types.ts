@@ -70,9 +70,6 @@ export interface WrongWordRecord {
   meaning_pass_streak?: number
   listening_pending?: boolean
   listening_pass_streak?: number
-  speaking_wrong?: number
-  speaking_pending?: boolean
-  speaking_pass_streak?: number
   dictation_pending?: boolean
   dictation_pass_streak?: number
   word_mastery_status?: 'new' | 'unlocked' | 'in_review' | 'passed'
@@ -105,9 +102,6 @@ export type WrongWordInput = Partial<WrongWordRecord> & {
   meaningPassStreak?: number
   listeningPending?: boolean
   listeningPassStreak?: number
-  speakingWrong?: number
-  speakingPending?: boolean
-  speakingPassStreak?: number
   dictationPending?: boolean
   dictationPassStreak?: number
   wordMasteryStatus?: 'new' | 'unlocked' | 'in_review' | 'passed'

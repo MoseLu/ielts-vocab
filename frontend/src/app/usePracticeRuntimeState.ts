@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 
+const CLASSIC_PRACTICE_MODES = new Set([
+  'smart',
+  'quickmemory',
+  'listening',
+  'meaning',
+  'dictation',
+  'radio',
+])
+
 export function normalizePracticeDay(value: number | string | null | undefined): number | null {
   const numericValue = typeof value === 'number'
     ? value
@@ -24,12 +33,25 @@ function readStoredDay() {
 }
 
 export function usePracticeRuntimeState() {
+  const readStoredMode = () => {
+    const savedMode = localStorage.getItem('current_mode') || 'listening'
+    return CLASSIC_PRACTICE_MODES.has(savedMode) ? savedMode : 'listening'
+  }
   const [mode, setMode] = useState<string>(
-    () => localStorage.getItem('current_mode') || 'listening',
+    readStoredMode,
   )
   const [currentDay, setCurrentDay] = useState<number | null>(readStoredDay)
 
   const handleModeChange = useCallback((nextMode: string) => {
+    const normalizedMode = CLASSIC_PRACTICE_MODES.has(nextMode) ? nextMode : 'listening'
+    setMode(normalizedMode)
+    localStorage.setItem('current_mode', normalizedMode)
+  }, [])
+
+  const handleExternalModeChange = useCallback((nextMode: string) => {
+    if (!CLASSIC_PRACTICE_MODES.has(nextMode)) {
+      return
+    }
     setMode(nextMode)
     localStorage.setItem('current_mode', nextMode)
   }, [])
@@ -59,7 +81,7 @@ export function usePracticeRuntimeState() {
     const handlePracticeModeRequest = (event: Event) => {
       const requestedMode = (event as CustomEvent<{ mode?: string }>).detail?.mode
       if (requestedMode) {
-        handleModeChange(requestedMode)
+        handleExternalModeChange(requestedMode)
       }
     }
 
@@ -67,7 +89,7 @@ export function usePracticeRuntimeState() {
     return () => {
       window.removeEventListener('practice-mode-request', handlePracticeModeRequest)
     }
-  }, [handleModeChange])
+  }, [handleExternalModeChange])
 
   return {
     mode,

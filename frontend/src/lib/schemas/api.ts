@@ -38,7 +38,7 @@ const WordSearchConfusableSchema = z.object({
   phonetic: z.string().catch(''),
   pos: z.string().catch(''),
   definition: z.string().catch(''),
-  group_key: z.string().optional(),
+  group_key: z.string().nullable().optional(),
 })
 
 export const WordSearchResultSchema = WordSchema.extend({
@@ -193,6 +193,22 @@ export const GamePracticeDimensionStateSchema = z.object({
 })
 export type GamePracticeDimensionState = z.infer<typeof GamePracticeDimensionStateSchema>
 
+export const GameCampaignDimensionSchema = z.enum([
+  'recognition',
+  'meaning',
+  'listening',
+  'speaking',
+  'dictation',
+])
+export type GameCampaignDimension = z.infer<typeof GameCampaignDimensionSchema>
+
+export const GameNodeTypeSchema = z.enum([
+  'word',
+  'speaking_boss',
+  'speaking_reward',
+])
+export type GameNodeType = z.infer<typeof GameNodeTypeSchema>
+
 export const GamePracticeWordImageSchema = z.object({
   status: z.enum(['queued', 'generating', 'ready', 'failed']),
   senseKey: z.string().catch(''),
@@ -204,7 +220,7 @@ export const GamePracticeWordImageSchema = z.object({
 })
 export type GamePracticeWordImage = z.infer<typeof GamePracticeWordImageSchema>
 
-export const GamePracticeWordSchema = z.object({
+export const GameCampaignWordSchema = z.object({
   word: z.string(),
   phonetic: z.string().catch(''),
   pos: z.string().catch(''),
@@ -219,57 +235,89 @@ export const GamePracticeWordSchema = z.object({
   dimension_states: z.record(z.string(), GamePracticeDimensionStateSchema),
   image: GamePracticeWordImageSchema,
 })
-export type GamePracticeWord = z.infer<typeof GamePracticeWordSchema>
+export type GameCampaignWord = z.infer<typeof GameCampaignWordSchema>
 
-export const GamePracticeQueueItemSchema = z.object({
-  word: z.string(),
-  overall_status: z.enum(['new', 'unlocked', 'in_review', 'passed']),
-  current_round: z.number().int(),
-  next_due_at: z.string().nullable().optional(),
-  pending_dimensions: z.array(z.string()),
+export const GameCampaignNodeSchema = z.object({
+  nodeType: GameNodeTypeSchema,
+  nodeKey: z.string(),
+  segmentIndex: z.number().int().nonnegative(),
+  title: z.string(),
+  subtitle: z.string().nullable().optional().default(null),
+  status: z.enum(['locked', 'ready', 'pending', 'passed']),
+  dimension: GameCampaignDimensionSchema.nullable().optional().default(null),
+  promptText: z.string().nullable().optional().default(null),
+  targetWords: z.array(z.string()).default([]),
+  failedDimensions: z.array(GameCampaignDimensionSchema).default([]),
+  bossFailures: z.number().int().nonnegative().optional().default(0),
+  rewardFailures: z.number().int().nonnegative().optional().default(0),
+  lastEncounterType: GameNodeTypeSchema.nullable().optional().default(null),
+  word: GameCampaignWordSchema.nullable().optional().default(null),
 })
-export type GamePracticeQueueItem = z.infer<typeof GamePracticeQueueItemSchema>
+export type GameCampaignNode = z.infer<typeof GameCampaignNodeSchema>
 
-export const GamePracticeStateSchema = z.object({
+export const GameCampaignRecoveryItemSchema = z.object({
+  nodeKey: z.string(),
+  nodeType: GameNodeTypeSchema,
+  title: z.string(),
+  subtitle: z.string().nullable().optional().default(null),
+  failedDimensions: z.array(GameCampaignDimensionSchema).default([]),
+  bossFailures: z.number().int().nonnegative().optional().default(0),
+  rewardFailures: z.number().int().nonnegative().optional().default(0),
+  updatedAt: z.string().nullable().optional().default(null),
+})
+export type GameCampaignRecoveryItem = z.infer<typeof GameCampaignRecoveryItemSchema>
+
+export const GameCampaignStateSchema = z.object({
   scope: z.object({
     bookId: z.string().nullable().optional(),
     chapterId: z.union([z.string(), z.number()]).nullable().optional(),
     day: z.number().int().nullable().optional(),
   }),
-  activeWord: GamePracticeWordSchema.nullable(),
-  activeDimension: z.string().nullable(),
-  unlockProgress: z.object({
-    completed: z.number().int(),
-    total: z.number().int(),
-  }),
-  masteryProgress: z.object({
-    completed: z.number().int(),
-    total: z.number().int(),
-    currentRound: z.number().int(),
-    targetRound: z.number().int(),
-  }),
-  reviewQueue: z.array(GamePracticeQueueItemSchema),
-  pendingDimensions: z.array(z.string()),
-  summary: z.object({
+  campaign: z.object({
+    title: z.string(),
+    scopeLabel: z.string(),
     totalWords: z.number().int(),
     passedWords: z.number().int(),
-    unlockedWords: z.number().int(),
-    dueWords: z.number().int(),
-    newWords: z.number().int(),
+    totalSegments: z.number().int(),
+    clearedSegments: z.number().int(),
+    currentSegment: z.number().int(),
+  }),
+  segment: z.object({
+    index: z.number().int(),
+    title: z.string(),
+    clearedWords: z.number().int(),
+    totalWords: z.number().int(),
+    bossStatus: z.enum(['locked', 'ready', 'pending', 'passed']),
+    rewardStatus: z.enum(['locked', 'ready', 'pending', 'passed']),
+  }),
+  currentNode: GameCampaignNodeSchema.nullable(),
+  nodeType: GameNodeTypeSchema.nullable(),
+  speakingBoss: GameCampaignNodeSchema.nullable(),
+  speakingReward: GameCampaignNodeSchema.nullable(),
+  recoveryPanel: z.object({
+    queue: z.array(GameCampaignRecoveryItemSchema),
+    bossQueue: z.array(GameCampaignRecoveryItemSchema),
+    recentMisses: z.array(GameCampaignRecoveryItemSchema),
+    resumeNode: GameCampaignRecoveryItemSchema.nullable(),
   }),
 })
-export type GamePracticeState = z.infer<typeof GamePracticeStateSchema>
+export type GameCampaignState = z.infer<typeof GameCampaignStateSchema>
 
-export const GamePracticeAttemptResponseSchema = z.object({
+export const GameCampaignAttemptResponseSchema = z.object({
   state: z.object({
-    overall_status: z.enum(['new', 'unlocked', 'in_review', 'passed']),
-    current_round: z.number().int(),
-    pending_dimensions: z.array(z.string()),
-    dimension_states: z.record(z.string(), GamePracticeDimensionStateSchema),
+    nodeType: GameNodeTypeSchema,
+    status: z.string(),
+    failedDimensions: z.array(GameCampaignDimensionSchema).default([]),
+    bossFailures: z.number().int().nonnegative().optional().default(0),
+    rewardFailures: z.number().int().nonnegative().optional().default(0),
   }),
-  game_state: GamePracticeStateSchema,
+  game_state: GameCampaignStateSchema,
 })
-export type GamePracticeAttemptResponse = z.infer<typeof GamePracticeAttemptResponseSchema>
+export type GameCampaignAttemptResponse = z.infer<typeof GameCampaignAttemptResponseSchema>
+
+export type GamePracticeWord = GameCampaignWord
+export type GamePracticeState = GameCampaignState
+export type GamePracticeAttemptResponse = GameCampaignAttemptResponse
 
 export const AISpeakingSimulationResponseSchema = z.object({
   part: z.number().int(),

@@ -288,10 +288,8 @@ def send_audio_file(
     response = Response(body, media_type=mimetype)
     return apply_audio_headers(response, byte_length=len(body), cache_key=cache_key)
 
-
 def jsonify(payload: dict) -> dict:
     return payload
-
 
 def to_fastapi_response(result):
     if isinstance(result, Response):
@@ -302,18 +300,6 @@ def to_fastapi_response(result):
     if isinstance(result, dict):
         return JSONResponse(status_code=200, content=result)
     return result
-
-
-def synthesize_azure_bytes(text: str, voice_id: str, *, speed: float = 1.0) -> bytes:
-    return synthesize_word_to_bytes(
-        text,
-        azure_default_model(),
-        voice_id,
-        provider='azure',
-        speed=speed,
-        content_mode='sentence',
-    )
-
 
 def synthesize_example_audio(sentence: str, model: str, voice: str) -> bytes:
     provider = current_tts_provider()
@@ -368,24 +354,27 @@ def generate_non_minimax_speech(
     english_voices = current_english_voices(provider)
     default_model, default_voice = default_cache_identity()
     if provider == 'azure':
-        default_model = azure_default_model()
-        default_voice = azure_sentence_voice()
+        default_model, default_voice = azure_default_model(), azure_sentence_voice()
     voice_id = str(payload.get('voice_id') or default_voice).strip() or default_voice
     try:
         speed = float(payload.get('speed', 1.0))
     except (TypeError, ValueError):
         return JSONResponse(status_code=400, content={'error': 'invalid speed'})
+    content_mode = str(payload.get('content_mode') or '').strip().lower()
+    phonetic = str(payload.get('phonetic') or '').strip() or None
     emotion = payload.get('emotion', 'neutral')
     model = str(payload.get('model') or default_model).strip() or default_model
+    if provider == 'azure' and content_mode in {'word', 'word-segmented', 'phonetic-segments'}:
+        voice_id = str(payload.get('voice_id') or azure_word_voice()).strip() or azure_word_voice()
     if provider != 'volcengine' and voice_id not in english_voices:
         return JSONResponse(
             status_code=400,
             content={'error': f'Invalid voice_id. Available: {list(english_voices.keys())}'},
         )
     cache_id = hashlib.md5(
-        f'{provider}:{text}:{voice_id}:{speed}:{emotion}:{model}'.encode()
+        f'{provider}:{text}:{voice_id}:{speed}:{emotion}:{model}:{content_mode}:{phonetic or ""}'.encode()
     ).hexdigest()[:16]
-    cached_file = cache_path(f'{provider}:{text}:{speed}:{emotion}:{model}', voice_id)
+    cached_file = cache_path(f'{provider}:{text}:{speed}:{emotion}:{model}:{content_mode}:{phonetic or ""}', voice_id)
     if cached_file.exists() and is_probably_valid_mp3_file(cached_file):
         _notify_materialization(
             on_materialized,
@@ -406,7 +395,15 @@ def generate_non_minimax_speech(
     remove_invalid_cached_audio(cached_file)
     try:
         if provider == 'azure':
-            audio_bytes = synthesize_azure_bytes(text, voice_id, speed=speed)
+            audio_bytes = synthesize_word_to_bytes(
+                text,
+                model,
+                voice_id,
+                provider='azure',
+                speed=speed,
+                content_mode=content_mode or 'sentence',
+                phonetic=phonetic,
+            )
         else:
             audio_bytes = synthesize_word_to_bytes(
                 text,
@@ -414,6 +411,8 @@ def generate_non_minimax_speech(
                 voice_id,
                 provider=provider,
                 speed=speed,
+                content_mode=content_mode or None,
+                phonetic=phonetic,
             )
         write_bytes_atomically(cached_file, audio_bytes)
         _notify_materialization(

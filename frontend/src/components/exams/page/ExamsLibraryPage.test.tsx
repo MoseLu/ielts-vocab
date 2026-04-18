@@ -33,17 +33,48 @@ function createCollections() {
               sectionType: 'listening',
               title: 'Listening Section',
               audioTracks: [{ title: 'Part 1' }],
-              questionCount: 40,
+              questionCount: 1,
             },
             {
               id: 12,
               sectionType: 'reading',
               title: 'Reading Section',
               audioTracks: [],
-              questionCount: 40,
+              questionCount: 1,
+            },
+            {
+              id: 13,
+              sectionType: 'writing',
+              title: 'Writing Section',
+              audioTracks: [],
+              questionCount: 1,
             },
           ],
-          latestAttempt: null,
+          latestAttempt: {
+            id: 7,
+            paperId: 1,
+            status: 'submitted',
+            objectiveCorrect: 0,
+            objectiveTotal: 1,
+            autoScore: 0,
+            maxScore: 1,
+            feedback: {},
+            startedAt: null,
+            submittedAt: null,
+            responses: [
+              {
+                id: 701,
+                questionId: 1101,
+                responseText: 'hotel',
+                selectedChoices: [],
+                attachmentUrl: null,
+                durationSeconds: null,
+                isCorrect: false,
+                score: 0,
+                feedback: {},
+              },
+            ],
+          },
         },
       ],
     },
@@ -101,6 +132,32 @@ function createCollections() {
 
 const hookState = vi.hoisted(() => ({
   collections: createCollections(),
+  questionIndexMap: {
+    1: {
+      paperQuestionFilters: ['fill_blank', 'single_choice', 'judgement'],
+      sectionQuestionFilters: {
+        11: ['fill_blank'],
+        12: ['single_choice', 'judgement'],
+        13: [],
+      },
+      sectionQuestionIds: {
+        11: [1101],
+        12: [1201],
+        13: [1301],
+      },
+    },
+    2: {
+      paperQuestionFilters: [],
+      sectionQuestionFilters: {
+        21: [],
+        22: [],
+      },
+      sectionQuestionIds: {
+        21: [2101],
+        22: [2201],
+      },
+    },
+  },
   loading: false,
   error: '',
 }))
@@ -121,6 +178,32 @@ describe('ExamsLibraryPage', () => {
   beforeEach(() => {
     navigateMock.mockReset()
     hookState.collections = createCollections()
+    hookState.questionIndexMap = {
+      1: {
+        paperQuestionFilters: ['fill_blank', 'single_choice', 'judgement'],
+        sectionQuestionFilters: {
+          11: ['fill_blank'],
+          12: ['single_choice', 'judgement'],
+          13: [],
+        },
+        sectionQuestionIds: {
+          11: [1101],
+          12: [1201],
+          13: [1301],
+        },
+      },
+      2: {
+        paperQuestionFilters: [],
+        sectionQuestionFilters: {
+          21: [],
+          22: [],
+        },
+        sectionQuestionIds: {
+          21: [2101],
+          22: [2201],
+        },
+      },
+    }
     hookState.loading = false
     hookState.error = ''
   })
@@ -143,8 +226,11 @@ describe('ExamsLibraryPage', () => {
       expect(button).toHaveClass('vb-filter-btn--compact')
     })
 
-    expect(screen.getAllByText('剑雅20').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('剑雅19').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: '填空题' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '单选题' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '多选题' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '匹配题' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '判断题' })).toBeInTheDocument()
   })
 
   it('filters cards by selected section mode', () => {
@@ -156,9 +242,35 @@ describe('ExamsLibraryPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '写作' }))
 
-    expect(screen.getByText('Writing Task 1')).toBeInTheDocument()
-    expect(screen.queryByText('Listening Section')).toBeNull()
-    expect(screen.queryByText('Reading Section')).toBeNull()
+    expect(screen.getAllByRole('button', { name: 'Writing' }).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: 'Listening' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Reading' })).toBeNull()
+  })
+
+  it('filters cards by selected question type', () => {
+    render(
+      <MemoryRouter>
+        <ExamsLibraryPage />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '判断题' }))
+
+    expect(screen.getByRole('button', { name: 'Reading' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Listening' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Writing' })).toBeNull()
+  })
+
+  it('renders row-level metrics and excludes speaking rows from test cards', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ExamsLibraryPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('button', { name: 'Speaking' })).toBeNull()
+    expect(screen.getByText('0分')).toBeInTheDocument()
+    expect(container.querySelector('.exam-series-paper__check')).not.toBeNull()
   })
 
   it('navigates to the selected section when a module button is clicked', () => {
@@ -168,10 +280,7 @@ describe('ExamsLibraryPage', () => {
       </MemoryRouter>,
     )
 
-    const readingButton = screen.getByText('Reading Section').closest('button')
-    expect(readingButton).not.toBeNull()
-
-    fireEvent.click(readingButton!)
+    fireEvent.click(screen.getByRole('button', { name: 'Reading' }))
 
     expect(navigateMock).toHaveBeenCalledWith('/exams/1?section=reading')
   })

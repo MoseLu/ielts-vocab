@@ -1,0 +1,289 @@
+.practice-game-mode {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: var(--size-28) var(--size-32) var(--size-40);
+  display: grid;
+  gap: var(--size-20);
+  align-self: stretch;
+  align-content: start;
+  overflow: auto;
+  color: var(--text-primary);
+  position: relative;
+}
+
+.practice-game-mode::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent-light) var(--mix-88), transparent), transparent 38%),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--info-bg) var(--mix-82), transparent), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-accent) var(--mix-42), transparent), transparent 45%);
+  filter: blur(var(--size-16));
+  pointer-events: none;
+  z-index: var(--layer-underlay);
+}
+
+.practice-game-mode__hud,
+.practice-game-mode__recovery-dock,
+.practice-game-mode--loading,
+.practice-game-mode--error,
+.practice-game-mode--done {
+  position: relative;
+  z-index: var(--layer-base);
+  border: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-18), transparent);
+  background: color-mix(in srgb, var(--surface-elevated) var(--mix-96), transparent);
+  box-shadow: var(--shadow-floating);
+}
+
+.practice-game-mode__chrome {
+  display: grid;
+  gap: var(--size-18);
+  min-width: 0;
+}
+
+.practice-game-mode__body {
+  position: relative;
+  z-index: var(--layer-base);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--size-320);
+  gap: var(--size-20);
+  align-items: start;
+}
+
+.practice-game-mode__mission {
+  min-width: 0;
+}
+
+.practice-game-mode--loading,
+.practice-game-mode--error,
+.practice-game-mode--done {
+  width: min(100%, var(--size-720));
+  padding: var(--size-28) var(--size-24);
+  border-radius: var(--size-28);
+  display: grid;
+  gap: var(--size-8);
+  text-align: center;
+  justify-self: center;
+}
+
+.practice-game-mode__hud {
+  padding: var(--size-20) var(--size-22);
+  border-radius: var(--size-28);
+  display: grid;
+  gap: var(--size-16);
+}
+
+.practice-game-mode__hud-brand {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-8);
+  padding: var(--size-8) var(--size-10);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface-subtle) var(--mix-92), transparent);
+  color: inherit;
+  cursor: pointer;
+}
+
+.practice-game-mode__hud-brand-logo {
+  width: var(--size-24);
+  height: var(--size-24);
+  border-radius: 50%;
+}
+
+.practice-game-mode__hud-copy {
+  display: grid;
+  gap: var(--size-4);
+}
+
+.practice-game-mode__hud-eyebrow,
+.practice-game-mode__lesson-eyebrow {
+  font-size: var(--size-12);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.practice-game-mode__hud-copy strong {
+  font-size: clamp(var(--size-32), 5vw, var(--size-56));
+  line-height: 0.96;
+}
+
+.practice-game-mode__hud-copy span:last-child {
+  color: var(--text-secondary);
+  font-size: var(--size-14);
+}
+
+.practice-game-mode__hud-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-8);
+}
+
+.practice-game-mode__hud-meta span,
+.practice-game-mode__lesson-chips span,
+.practice-game-mode__sheet-wave {
+  padding: var(--size-8) var(--size-12);
+  border-radius: var(--size-16);
+  background: color-mix(in srgb, var(--surface-muted) var(--mix-88), transparent);
+  color: var(--text-secondary);
+  font-size: var(--size-13);
+  font-weight: 600;
+}
+
+.practice-game-mode__lesson-card {
+  padding: var(--size-22);
+  border-radius: var(--size-28);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-elevated) var(--mix-28), transparent);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--surface-base) var(--mix-22), transparent), transparent 34%),
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--tone-blue) var(--mix-76), var(--info)) 0%,
+      color-mix(in srgb, var(--info) var(--mix-72), var(--tone-blue)) 54%,
+      color-mix(in srgb, var(--success) var(--mix-60), var(--info)) 100%
+    );
+  color: var(--text-inverse);
+  display: grid;
+  gap: var(--size-12);
+  box-shadow: var(--shadow-floating);
+}
+
+.practice-game-mode__lesson-copy,
+.practice-game-mode__lesson-chips {
+  display: grid;
+  gap: var(--size-6);
+}
+
+.practice-game-mode__lesson-copy strong {
+  font-size: clamp(var(--size-28), 3.5vw, var(--size-38));
+  line-height: 1;
+}
+
+.practice-game-mode__lesson-copy span:last-child {
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-82), transparent);
+  font-size: var(--size-14);
+}
+
+.practice-game-mode__lesson-chips {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.practice-game-mode__lesson-chips span {
+  background: color-mix(in srgb, var(--surface-overlay) var(--mix-26), transparent);
+  color: var(--text-inverse);
+  text-align: center;
+}
+
+.practice-game-mode__recovery-dock {
+  padding: var(--size-16);
+  border-radius: var(--size-24);
+  display: grid;
+  gap: var(--size-14);
+}
+
+.practice-game-mode__recovery-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--size-12);
+}
+
+.practice-game-mode__recovery-head strong {
+  display: block;
+  font-size: var(--size-18);
+}
+
+.practice-game-mode__recovery-action {
+  min-height: var(--size-40);
+  padding: 0 var(--size-14);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--accent) var(--mix-16), var(--surface-elevated));
+  color: var(--accent-dark);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.practice-game-mode__recovery-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--size-10);
+}
+
+.practice-game-mode__recovery-stat {
+  padding: var(--size-12);
+  border-radius: var(--size-18);
+  background: color-mix(in srgb, var(--surface-subtle) var(--mix-94), transparent);
+  display: grid;
+  gap: var(--size-4);
+}
+
+.practice-game-mode__recovery-stat span,
+.practice-game-mode__recovery-stat small {
+  color: var(--text-secondary);
+  font-size: var(--size-12);
+}
+
+.practice-game-mode__recovery-stat strong {
+  font-size: var(--size-24);
+  line-height: 1;
+}
+
+@media (min-width: 960px) {
+  .practice-game-mode__hud {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--size-16);
+  }
+
+  .practice-game-mode__hud-copy {
+    max-width: var(--size-640);
+  }
+
+  .practice-game-mode__hud-meta {
+    justify-self: end;
+    justify-content: end;
+    align-content: start;
+  }
+
+  .practice-game-mode__lesson-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--size-20);
+  }
+
+  .practice-game-mode__lesson-chips {
+    grid-template-columns: repeat(3, minmax(var(--size-108), 1fr));
+    align-self: center;
+  }
+}
+
+@media (min-width: 1280px) {
+  .practice-game-mode__recovery-dock {
+    position: sticky;
+    top: var(--size-24);
+    align-self: start;
+  }
+
+  .practice-game-mode__recovery-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1279px) {
+  .practice-game-mode {
+    padding: var(--size-24) var(--size-20) var(--size-36);
+  }
+
+  .practice-game-mode__body {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-game-mode__recovery-dock {
+    position: static;
+  }
+}

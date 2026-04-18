@@ -55,15 +55,14 @@ def _hydrate_primary_result_phonetic(results):
 
 
 def load_book_vocabulary(book_id):
-    current_user = books_confusable_service.resolve_optional_current_user()
-    custom_book = get_custom_book_for_user(current_user.id if current_user else None, book_id)
-    if custom_book:
-        return build_custom_book_vocabulary_entries(custom_book)
-
+    book = _find_book(book_id)
     if book_id in books_vocabulary_loader_service._vocabulary_cache:
         return books_vocabulary_loader_service._vocabulary_cache[book_id]
-
-    book = _find_book(book_id)
+    if book is None:
+        current_user = books_confusable_service.resolve_optional_current_user()
+        custom_book = get_custom_book_for_user(current_user.id if current_user else None, book_id)
+        if custom_book:
+            return build_custom_book_vocabulary_entries(custom_book)
     file_name = str((book or {}).get('file') or '').strip()
     if not file_name:
         return [] if book else None
@@ -306,12 +305,11 @@ def build_book_response(book_id):
         return {'book': favorite_book}, 200
 
     current_user = books_confusable_service.resolve_optional_current_user()
-    custom_book = get_custom_book_for_user(current_user.id if current_user else None, book_id)
-    if custom_book:
-        return {'book': serialize_custom_book_summary(custom_book)}, 200
-
     book = _find_book(book_id)
-    if not book:
+    if book is None:
+        custom_book = get_custom_book_for_user(current_user.id if current_user else None, book_id)
+        if custom_book:
+            return {'book': serialize_custom_book_summary(custom_book)}, 200
         return {'error': 'Book not found'}, 404
 
     user_id = current_user.id if current_user else None

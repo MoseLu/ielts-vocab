@@ -34,17 +34,15 @@ def _serialize_wrong_top_item(
     recognition_wrong = get_dimension_wrong('recognition')
     meaning_wrong = get_dimension_wrong('meaning')
     listening_wrong = get_dimension_wrong('listening')
-    speaking_wrong = get_dimension_wrong('speaking')
     dictation_wrong = get_dimension_wrong('dictation')
 
     if scope == 'pending':
         recognition_wrong = recognition_wrong if item.get('recognition_pending') else 0
         meaning_wrong = meaning_wrong if item.get('meaning_pending') else 0
         listening_wrong = listening_wrong if item.get('listening_pending') else 0
-        speaking_wrong = speaking_wrong if item.get('speaking_pending') else 0
         dictation_wrong = dictation_wrong if item.get('dictation_pending') else 0
 
-    wrong_count = recognition_wrong + meaning_wrong + listening_wrong + speaking_wrong + dictation_wrong
+    wrong_count = recognition_wrong + meaning_wrong + listening_wrong + dictation_wrong
     if wrong_count <= 0:
         return None
 
@@ -56,7 +54,6 @@ def _serialize_wrong_top_item(
         'recognition_wrong': recognition_wrong,
         'meaning_wrong': meaning_wrong,
         'listening_wrong': listening_wrong,
-        'speaking_wrong': speaking_wrong,
         'dictation_wrong': dictation_wrong,
         'word_mastery_status': item.get('word_mastery_status'),
         'pending_dimensions': item.get('pending_dimensions') or [],

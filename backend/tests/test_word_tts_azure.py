@@ -35,6 +35,28 @@ def test_default_word_identity_prefers_azure_when_global_provider_is_azure(monke
     )
 
 
+def test_default_word_identity_defaults_to_ryan_voice_when_unset(monkeypatch):
+    monkeypatch.setattr(word_tts, '_TTS_PROVIDER', 'azure')
+    monkeypatch.setattr(word_tts, 'WORD_TTS_PROVIDER', '')
+    monkeypatch.setattr(word_tts, '_MINIMAX_API_KEYS', ['primary-key'])
+    monkeypatch.setattr(word_tts, 'WORD_TTS_MODEL', '')
+    monkeypatch.setattr(word_tts, 'WORD_TTS_VOICE', '')
+    monkeypatch.setattr(word_tts, '_AZURE_DEFAULT_MODEL', 'azure-rest:audio-24khz-48kbitrate-mono-mp3')
+    monkeypatch.setattr(word_tts, '_AZURE_DEFAULT_VOICE', 'en-US-AndrewMultilingualNeural')
+    monkeypatch.setattr(word_tts, '_AZURE_DEFAULT_SENTENCE_VOICE', 'en-US-AndrewMultilingualNeural')
+    monkeypatch.setattr(word_tts, '_AZURE_DEFAULT_WORD_VOICE', 'en-GB-RyanNeural')
+    monkeypatch.delenv('AZURE_TTS_WORD_VOICE', raising=False)
+    monkeypatch.delenv('WORD_TTS_VOICE', raising=False)
+    monkeypatch.delenv('AZURE_TTS_SENTENCE_VOICE', raising=False)
+    monkeypatch.delenv('AZURE_TTS_VOICE', raising=False)
+
+    assert word_tts.default_word_tts_identity() == (
+        'azure',
+        'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-v5-ielts-rp-female-onset-buffer',
+        'en-GB-RyanNeural',
+    )
+
+
 def test_build_azure_ssml_uses_word_profile_and_lookup_phonetic(monkeypatch):
     monkeypatch.setattr(word_tts, '_AZURE_WORD_PRONUNCIATION_LOOKUP', {'economy': 'ɪˈkɒnəmi'})
     monkeypatch.setenv('AZURE_TTS_WORD_PITCH', '')
@@ -58,6 +80,46 @@ def test_build_azure_ssml_uses_word_profile_and_lookup_phonetic(monkeypatch):
 
 def test_normalize_azure_ipa_converts_ascii_stress_marks():
     assert word_tts.normalize_azure_ipa("/'bʊklɪsts/") == 'ˈbʊklɪsts'
+
+
+def test_split_azure_ipa_syllables_respects_explicit_boundaries():
+    assert word_tts.split_azure_ipa_syllables('/æn.əˈlɪt.ɪk.əl.li/') == [
+        'æn',
+        'ə',
+        'ˈlɪt',
+        'ɪk',
+        'əl',
+        'li',
+    ]
+
+
+def test_split_azure_ipa_syllables_uses_onset_heuristic_when_boundaries_missing():
+    assert word_tts.split_azure_ipa_syllables('/fəˈnɒmɪnən/') == [
+        'fə',
+        'ˈnɒ',
+        'mɪ',
+        'nən',
+    ]
+
+
+def test_build_azure_ssml_supports_segmented_word_mode(monkeypatch):
+    monkeypatch.setenv('AZURE_TTS_WORD_SEGMENT_BREAK_MS', '180')
+    monkeypatch.setenv('AZURE_TTS_WORD_LEADING_BREAK_MS', '100')
+    monkeypatch.setenv('AZURE_TTS_WORD_TRAILING_BREAK_MS', '')
+
+    ssml = word_tts.build_azure_ssml(
+        'phenomenon',
+        'en-GB-RyanNeural',
+        content_mode='word-segmented',
+        phonetic='/fəˈnɒmɪnən/',
+    )
+
+    assert "ph='fə'" in ssml
+    assert "ph='ˈnɒ'" in ssml
+    assert "ph='mɪ'" in ssml
+    assert "ph='nən'" in ssml
+    assert "<break time='100ms'/>" in ssml
+    assert ssml.count("<break time='180ms'/>") == 3
 
 
 def test_azure_provider_uses_rest_ssml_endpoint(monkeypatch):

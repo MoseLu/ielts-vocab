@@ -1,0 +1,59 @@
+@media (max-width: 960px) {
+  .practice-game-mode {
+    padding: var(--size-16) var(--size-16) var(--size-32);
+  }
+
+  .practice-game-mode__hud,
+  .practice-game-mode__lesson-card,
+  .practice-game-mode__recovery-dock {
+    border-radius: var(--size-24);
+  }
+
+  .practice-game-mode__scene {
+    min-height: var(--size-520);
+    padding: var(--size-16);
+  }
+
+  .practice-game-mode__sheet {
+    margin-top: calc(var(--size-72) * -1);
+    margin-inline: var(--size-8);
+    padding: var(--size-18);
+  }
+
+  .practice-game-mode__choice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .practice-game-mode {
+    width: 100%;
+    padding: var(--size-14) var(--size-10) var(--size-28);
+  }
+
+  .practice-game-mode__lesson-chips,
+  .practice-game-mode__recovery-stats,
+  .practice-game-mode__dimension-row {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-game-mode__scene {
+    min-height: var(--size-480);
+    padding: var(--size-14);
+  }
+
+  .practice-game-mode__sheet {
+    margin-top: calc(var(--size-64) * -1);
+    margin-inline: 0;
+    padding: var(--size-16);
+  }
+
+  .practice-game-mode__sheet-head,
+  .practice-game-mode__recovery-head {
+    flex-direction: column;
+  }
+
+  .practice-game-mode__input-row {
+    grid-template-columns: 1fr;
+  }
+}

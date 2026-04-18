@@ -67,7 +67,6 @@ export default function PracticeControlBar({
   onRadioSettingChange,
 }: PracticeControlBarProps) {
   const hasStaticContextLabel = !bookId && currentDay == null && Boolean(currentChapterTitle)
-  const isGameEntry = mode === 'game'
   const contextLabel = bookId
     ? (currentChapterTitle || '选择章节')
     : hasStaticContextLabel
@@ -190,41 +189,30 @@ export default function PracticeControlBar({
           </>
         )}
 
-        {isGameEntry ? (
-          <button
-            type="button"
-            className="practice-ctrl-icon-btn practice-mode-btn"
-            title="五维闯关"
-            disabled
-          >
-            <span className="practice-mode-label">五维闯关</span>
-          </button>
-        ) : (
-          <Popover
-            placement="bottom-end"
-            offset={10}
-            panelClassName="popover-mode-panel"
-            trigger={
-              <button className="practice-ctrl-icon-btn practice-mode-btn" title="切换模式">
-                <span className="practice-mode-label">{PRACTICE_CONTROL_MODE_LABELS[mode as PracticeMode] || mode}</span>
-                <svg className="practice-ctx-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-            }
-          >
-            {PRACTICE_CONTROL_MODES.map(m => (
-              <button
-                key={m}
-                className={`popover-option ${mode === m ? 'active' : ''}`}
-                onClick={() => onModeChange(m)}
-              >
-                <span className={`ctx-radio ${mode === m ? 'checked' : ''}`} />
-                {PRACTICE_CONTROL_MODE_LABELS[m]}
-              </button>
-            ))}
-          </Popover>
-        )}
+        <Popover
+          placement="bottom-end"
+          offset={10}
+          panelClassName="popover-mode-panel"
+          trigger={
+            <button className="practice-ctrl-icon-btn practice-mode-btn" title="切换模式">
+              <span className="practice-mode-label">{PRACTICE_CONTROL_MODE_LABELS[mode as PracticeMode] || mode}</span>
+              <svg className="practice-ctx-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          }
+        >
+          {PRACTICE_CONTROL_MODES.map(m => (
+            <button
+              key={m}
+              className={`popover-option ${mode === m ? 'active' : ''}`}
+              onClick={() => onModeChange(m)}
+            >
+              <span className={`ctx-radio ${mode === m ? 'checked' : ''}`} />
+              {PRACTICE_CONTROL_MODE_LABELS[m]}
+            </button>
+          ))}
+        </Popover>
 
         <button
           className={`practice-ctrl-icon-btn ${showWordList ? 'active' : ''}`}

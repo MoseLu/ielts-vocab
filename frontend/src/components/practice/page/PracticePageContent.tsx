@@ -2,8 +2,6 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import FavoriteToggleButton from '../FavoriteToggleButton'
 import PracticeControlBar from '../PracticeControlBar'
-import WordListPanel from '../WordListPanel'
-import GameMode from './GameMode'
 import type {
   AppSettings,
   Chapter,
@@ -268,52 +266,6 @@ export function PracticePageContent({
         favoriteSlot={favoriteButton}
         speakingSlot={speakingButton}
       />
-    )
-  }
-
-  if (mode === 'game') {
-    return (
-      <div className="practice-session-layout">
-        <PracticeControlBar
-          mode={mode}
-          currentDay={currentDay}
-          bookId={resolvedPracticeBookId}
-          chapterId={resolvedPracticeChapterId}
-          errorMode={errorMode}
-          vocabularyLength={vocabulary.length}
-          currentChapterTitle={currentChapterTitle}
-          bookChapters={bookChapters}
-          showWordList={showWordList}
-          showPracticeSettings={showPracticeSettings}
-          onWordListToggle={() => setShowWordList(value => !value)}
-          onSettingsToggle={() => setShowPracticeSettings(value => !value)}
-          onModeChange={(nextMode: PracticeMode) => onModeChange?.(nextMode)}
-          onDayChange={onDayChange}
-          onNavigate={navigate}
-          buildChapterPath={resolvedPracticeBookId ? buildChapterPath : undefined}
-          onExitHome={() => navigate('/plan')}
-        />
-        <WordListPanel
-          show={showWordList}
-          vocabulary={vocabulary}
-          queue={queue}
-          queueIndex={queueIndex}
-          wordStatuses={wordStatuses}
-          wordActionControls={wordListActionControls}
-          onClose={() => setShowWordList(value => !value)}
-        />
-        {showPracticeSettings ? (
-          <SettingsPanel showSettings={showPracticeSettings} onClose={() => setShowPracticeSettings(value => !value)} />
-        ) : null}
-        <GameMode
-          bookId={resolvedPracticeBookId}
-          chapterId={resolvedPracticeChapterId}
-          currentDay={currentDay}
-          vocabulary={vocabulary}
-          playWord={playWord}
-          wordListActionControls={wordListActionControls}
-        />
-      </div>
     )
   }
 

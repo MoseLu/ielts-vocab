@@ -176,6 +176,15 @@ function buildWordAudioUrl(word: string, cacheKey: string | null): string {
   return `/api/tts/word-audio?${params.toString()}`
 }
 
+function buildSegmentedWordAudioUrl(word: string, phonetic?: string | null): string {
+  const params = new URLSearchParams({ w: word.trim(), pronunciation_mode: 'phonetic_segments' })
+  const normalizedPhonetic = phonetic?.trim()
+  if (normalizedPhonetic && normalizedPhonetic !== '/暂无音标/') {
+    params.set('phonetic', normalizedPhonetic)
+  }
+  return `/api/tts/word-audio?${params.toString()}`
+}
+
 function buildExampleAudioUrl(sentence: string, word: string, cacheKey: string | null): string {
   const params = new URLSearchParams({ sentence: sentence.trim() })
   const trimmedWord = word.trim()
@@ -341,6 +350,33 @@ export function playWordAudio(
       return false
     }
   })()
+}
+
+export function playSegmentedWordAudio(
+  word: string,
+  settings: { playbackSpeed?: string; volume?: string },
+  phonetic?: string | null,
+  onEnd?: () => void,
+): Promise<boolean> {
+  stopAudio()
+  audioStopped = false
+  const generation = audioGeneration
+  const trimmed = word.trim()
+  if (!trimmed) {
+    onEnd?.()
+    return Promise.resolve(false)
+  }
+
+  return playManagedAudioUrl(buildSegmentedWordAudioUrl(trimmed, phonetic), {
+    isCurrent: () => audioGeneration === generation,
+    isStopped: () => audioStopped,
+    volume: parseFloat(settings.volume || '100') / 100,
+    rate: Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '1.0'))),
+    onEnd,
+  }).catch(() => {
+    if (audioGeneration === generation) onEnd?.()
+    return false
+  })
 }
 
 export function stopAudio(): void {

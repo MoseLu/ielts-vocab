@@ -1,41 +1,35 @@
 import { useEffect, useMemo, useState } from 'react'
-
-import type { ExamAttemptResultResponse, ExamPaperDetail, ExamQuestion, ExamSection } from '../../../lib'
+import type { ExamQuestion, ExamSection } from '../../../lib'
 import type { ExamResponseDraft } from '../../../features/exams/examApi'
 import { sanitizeExamHtml } from '../../../features/exams/examHtml'
+import { ExamDocumentContent } from './ExamDocumentContent'
 import { ExamQuestionFields } from './ExamQuestionFields'
-
+import { ExamQuestionGroupPanel } from './ExamQuestionGroupPanel'
 
 interface ExamSectionWorkspaceProps {
-  paper: ExamPaperDetail
   activeSection: ExamSection
-  activeSectionId: number
   responseMap: Record<number, ExamResponseDraft>
-  result: ExamAttemptResultResponse | null
   error: string
   isSubmitted: boolean
-  onSelectSection: (sectionId: number, sectionType: string) => void
   onChangeResponse: (questionId: number, patch: Record<string, unknown>) => void
   onPersist: () => Promise<void>
 }
-
 interface WorkspaceBlock {
   key: string
   label: string
   meta: string
   documentHtml: string | null
   questions: ExamQuestion[]
+  questionGroups: Array<QuestionGroup & { promptHtml: string | null }>
   trackUrl: string | null
   trackTitle: string | null
 }
-
 interface QuestionGroup {
   key: string
   start: number
   end: number
   questions: ExamQuestion[]
 }
-
 function normalizeQuestionNumber(question: ExamQuestion): number {
   return question.questionNumber ?? question.sortOrder
 }
@@ -117,6 +111,35 @@ function extractHtmlSegment(source: string | null | undefined, startMarkers: str
   return source.slice(start, end).trim()
 }
 
+function extractQuestionPromptSegments(source: string | null | undefined, allowedStart: number, allowedEnd: number) {
+  if (!source) return []
+  const matches = Array.from(source.matchAll(/questions\s+(\d+)\s*-\s*(\d+)/ig))
+    .map(match => ({
+      index: match.index ?? -1,
+      start: Number(match[1]),
+      end: Number(match[2]),
+    }))
+    .filter(match => match.index >= 0 && match.start >= allowedStart && match.end <= allowedEnd)
+
+  const detailed = matches.some(match => match.start !== allowedStart || match.end !== allowedEnd)
+  const filtered = detailed
+    ? matches.filter(match => match.start !== allowedStart || match.end !== allowedEnd)
+    : matches
+
+  return filtered
+    .filter((match, index, items) => items.findIndex(item => item.start === match.start && item.end === match.end) === index)
+    .map((match, index, items) => {
+      const paragraphStart = source.lastIndexOf('<p', match.index)
+      const breakStart = source.lastIndexOf('<br', match.index)
+      const start = breakStart > paragraphStart
+        ? source.indexOf('>', breakStart) + 1
+        : snapToParagraphStart(source, match.index)
+      const next = items[index + 1]
+      const end = next ? snapToParagraphStart(source, next.index) : source.length
+      return { ...match, html: source.slice(start, end).trim() }
+    })
+}
+
 function splitOrderedGroups(groups: QuestionGroup[], blockCount: number) {
   if (groups.length === 0) return []
   if (blockCount <= 1 || groups.length <= 1) return [groups]
@@ -173,12 +196,15 @@ function buildListeningBlocks(section: ExamSection): WorkspaceBlock[] {
         key: `listening-part-${index + 1}`,
         label: range.label,
         meta: `${range.start}-${range.end}`,
-        documentHtml: extractHtmlSegment(
-          section.htmlContent,
-          [`section ${index + 1}`],
-          index < ranges.length - 1 ? [`section ${index + 2}`] : [],
-        ) || section.htmlContent || section.instructionsHtml || null,
+        documentHtml: null,
         questions,
+        questionGroups: [{
+          key: `listening-part-${index + 1}`,
+          start: range.start,
+          end: range.end,
+          questions,
+          promptHtml: questions[0]?.promptHtml || null,
+        }],
         trackUrl: track?.sourceUrl || null,
         trackTitle: track?.title || range.label,
       }
@@ -199,16 +225,42 @@ function buildReadingBlocks(section: ExamSection): WorkspaceBlock[] {
     const first = questions[0]
     const last = questions[questions.length - 1]
     const passage = section.passages[index]
+    const passageHtml = passage?.htmlContent || extractHtmlSegment(
+      section.htmlContent,
+      [`reading passage ${index + 1}`],
+      index < clusters.length - 1 ? [`reading passage ${index + 2}`] : [],
+    ) || section.htmlContent || null
+    const promptSegments = extractQuestionPromptSegments(
+      passageHtml,
+      normalizeQuestionNumber(first),
+      normalizeQuestionNumber(last),
+    )
     return {
       key: `reading-passage-${index + 1}`,
       label: `Passage ${index + 1}`,
       meta: `${normalizeQuestionNumber(first)}-${normalizeQuestionNumber(last)}`,
-      documentHtml: passage?.htmlContent || extractHtmlSegment(
-        section.htmlContent,
-        [`reading passage ${index + 1}`],
-        index < clusters.length - 1 ? [`reading passage ${index + 2}`] : [],
-      ) || section.htmlContent || null,
+      documentHtml: promptSegments.length > 0 && passageHtml
+        ? passageHtml.slice(0, snapToParagraphStart(passageHtml, promptSegments[0].index)).trim()
+        : passageHtml,
       questions,
+      questionGroups: promptSegments.length > 0
+        ? promptSegments.map(segment => ({
+          key: `reading-${segment.start}-${segment.end}`,
+          start: segment.start,
+          end: segment.end,
+          questions: questions.filter(question => {
+            const number = normalizeQuestionNumber(question)
+            return number >= segment.start && number <= segment.end
+          }),
+          promptHtml: segment.html,
+        })).filter(group => group.questions.length > 0)
+        : [{
+          key: `reading-passage-${index + 1}`,
+          start: normalizeQuestionNumber(first),
+          end: normalizeQuestionNumber(last),
+          questions,
+          promptHtml: questions[0]?.promptHtml || null,
+        }],
       trackUrl: null,
       trackTitle: null,
     }
@@ -224,6 +276,7 @@ function buildPromptBlocks(section: ExamSection, labelPrefix: string): Workspace
       meta: `Q${normalizeQuestionNumber(question)}`,
       documentHtml: question.promptHtml,
       questions: [question],
+      questionGroups: [],
       trackUrl: null,
       trackTitle: null,
     }))
@@ -247,6 +300,7 @@ function buildSectionBlocks(section: ExamSection): WorkspaceBlock[] {
           meta: `${section.questions.length} 题`,
           documentHtml: section.htmlContent || section.instructionsHtml || null,
           questions: section.questions,
+          questionGroups: [],
           trackUrl: null,
           trackTitle: null,
         },
@@ -263,14 +317,10 @@ function buildSectionTone(sectionType: string) {
 }
 
 export function ExamSectionWorkspace({
-  paper,
   activeSection,
-  activeSectionId,
   responseMap,
-  result,
   error,
   isSubmitted,
-  onSelectSection,
   onChangeResponse,
   onPersist,
 }: ExamSectionWorkspaceProps) {
@@ -283,52 +333,16 @@ export function ExamSectionWorkspace({
 
   const activeBlock = blocks[activeBlockIndex] || blocks[0] || null
   const sectionTone = buildSectionTone(activeSection.sectionType)
-  const answeredCount = activeSection.questions.filter(question => responseFilled(responseMap[question.id])).length
   const speakingOrWriting = activeSection.sectionType === 'writing' || activeSection.sectionType === 'speaking'
+  const groupedObjectiveLayout = !speakingOrWriting && activeBlock.questionGroups.length > 0
   const activePrompt = activeBlock?.questions[0] || null
   const activeWordCount = activePrompt ? countWords(responseMap[activePrompt.id]?.responseText) : 0
+  const showSectionIntro = Boolean(activeSection.instructionsHtml) && !/^(testi|introduction)$/i.test(sanitizeExamHtml(activeSection.instructionsHtml || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
 
   if (!activeBlock) return null
 
   return (
     <div className={`exam-workspace ${sectionTone}`}>
-      <div className="exam-workspace__topbar">
-        <div className="exam-workspace__headline">
-          <span className="exam-kicker">{paper.collectionTitle}</span>
-          <div className="exam-workspace__title-row">
-            <strong>{paper.title}</strong>
-            <span>{activeSection.title}</span>
-          </div>
-        </div>
-
-        <div className="exam-workspace__section-tabs" aria-label="Section switcher">
-          {paper.sections.map(section => (
-            <button
-              key={section.id}
-              type="button"
-              className={`exam-section-tab ${section.id === activeSectionId ? 'is-active' : ''}`}
-              onClick={() => onSelectSection(section.id, section.sectionType)}
-            >
-              <strong>{section.title}</strong>
-              <span>{section.questions.length} 题</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="exam-workspace__summary">
-          <div className="exam-summary-pill">
-            <span>进度</span>
-            <strong>{answeredCount}/{activeSection.questions.length}</strong>
-          </div>
-          {result && (
-            <div className="exam-summary-pill">
-              <span>得分</span>
-              <strong>{result.summary.objectiveCorrect}/{result.summary.objectiveTotal}</strong>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className={`exam-workspace__canvas ${speakingOrWriting ? 'is-editor-layout' : ''}`}>
         <section className="exam-workspace-pane exam-workspace-pane--document">
           <div className="exam-workspace-pane__header">
@@ -341,7 +355,7 @@ export function ExamSectionWorkspace({
             )}
           </div>
 
-          {activeSection.instructionsHtml && (
+          {showSectionIntro && (
             <div
               className="exam-workspace-pane__intro"
               dangerouslySetInnerHTML={{ __html: sanitizeExamHtml(activeSection.instructionsHtml) }}
@@ -360,12 +374,13 @@ export function ExamSectionWorkspace({
 
           <div className="exam-workspace-pane__scroll">
             {activeBlock.documentHtml ? (
-              <article
-                className="exam-document"
-                dangerouslySetInnerHTML={{ __html: sanitizeExamHtml(activeBlock.documentHtml) }}
-              />
+              <ExamDocumentContent html={activeBlock.documentHtml} sectionType={activeSection.sectionType} />
             ) : (
-              <div className="exam-document exam-document--empty">当前题组暂无可展示材料。</div>
+              <div className="exam-document exam-document--empty">
+                {activeSection.sectionType === 'listening'
+                  ? '当前题组暂无可展示音频脚本，先根据题面与音频作答。'
+                  : '当前题组暂无可展示材料。'}
+              </div>
             )}
           </div>
         </section>
@@ -407,6 +422,20 @@ export function ExamSectionWorkspace({
                     onPersist={onPersist}
                   />
                 </div>
+              </div>
+            ) : groupedObjectiveLayout ? (
+              <div className="exam-question-stack">
+                {activeBlock.questionGroups.map(group => (
+                  <ExamQuestionGroupPanel
+                    key={group.key}
+                    questions={group.questions}
+                    promptHtml={group.promptHtml}
+                    responseMap={responseMap}
+                    disabled={isSubmitted}
+                    onChange={onChangeResponse}
+                    onPersist={onPersist}
+                  />
+                ))}
               </div>
             ) : (
               <div className="exam-question-stack">

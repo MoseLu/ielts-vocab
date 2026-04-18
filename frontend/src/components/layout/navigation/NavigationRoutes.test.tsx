@@ -46,21 +46,21 @@ describe('navigation entry routes', () => {
     expect(screen.getByTestId('location-probe')).toHaveTextContent('/plan')
   })
 
-  it('routes the left sidebar speaking item to the speaking page', async () => {
+  it('routes the left sidebar game item to the game campaign page', async () => {
     const user = userEvent.setup()
     renderWithRouter(<LeftSidebar />)
 
-    await user.click(screen.getByRole('button', { name: '口语' }))
+    await user.click(screen.getByRole('button', { name: '五维闯关' }))
 
-    expect(screen.getByTestId('location-probe')).toHaveTextContent('/speaking')
+    expect(screen.getByTestId('location-probe')).toHaveTextContent('/game')
   })
 
-  it('routes the bottom nav speaking item to the speaking page', async () => {
+  it('routes the bottom nav game item to the game campaign page', async () => {
     const user = userEvent.setup()
     renderWithRouter(<BottomNav />)
 
-    await user.click(screen.getByRole('button', { name: '口语' }))
+    await user.click(screen.getByRole('button', { name: '闯关' }))
 
-    expect(screen.getByTestId('location-probe')).toHaveTextContent('/speaking')
+    expect(screen.getByTestId('location-probe')).toHaveTextContent('/game')
   })
 })

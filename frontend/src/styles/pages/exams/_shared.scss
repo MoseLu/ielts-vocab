@@ -145,6 +145,19 @@
   min-height: min(56vh, var(--size-520));
 }
 
+.exam-question-fields--inline {
+  gap: var(--size-8);
+}
+
+.exam-question-fields--inline .exam-response-input,
+.exam-question-fields--inline .exam-response-textarea {
+  min-height: var(--size-40);
+}
+
+.exam-question-fields--inline .exam-question-fields__hint {
+  display: none;
+}
+
 .exam-question-fields__hint {
   color: var(--text-secondary);
   font-size: var(--size-12);
@@ -158,4 +171,167 @@
 
 .exam-speaking-field__player {
   width: 100%;
+}
+
+.exam-document {
+  font-size: var(--size-15);
+  line-height: 1.82;
+}
+
+.exam-reading-doc,
+.exam-transcript {
+  display: flex;
+  max-width: min(100%, var(--size-760));
+  flex-direction: column;
+}
+
+.exam-reading-doc {
+  gap: var(--size-20);
+}
+
+.exam-reading-doc__eyebrow {
+  margin: 0;
+  color: var(--exam-tone, var(--accent));
+  font-size: var(--size-14);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.exam-reading-doc__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-6);
+  padding: var(--size-14) var(--size-16);
+  border-radius: var(--size-8);
+  background: color-mix(in srgb, var(--exam-tone, var(--accent)) var(--mix-8), var(--surface-muted));
+  color: var(--text-secondary);
+}
+
+.exam-reading-doc__intro p,
+.exam-reading-doc__paragraph,
+.exam-transcript__block p {
+  margin: 0;
+}
+
+.exam-reading-doc__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(var(--size-28), 2.4vw, var(--size-34));
+  font-weight: 800;
+  line-height: 1.12;
+}
+
+.exam-reading-doc__body,
+.exam-transcript {
+  gap: var(--size-18);
+}
+
+.exam-reading-doc__paragraph {
+  color: var(--text-primary);
+  font-size: var(--size-17);
+  line-height: 1.88;
+}
+
+.exam-transcript {
+  gap: var(--size-20);
+}
+
+.exam-transcript__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-8);
+  padding-bottom: var(--size-18);
+  border-bottom: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-36), transparent);
+}
+
+.exam-transcript__block:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.exam-transcript__speaker {
+  margin: 0;
+  color: var(--exam-tone, var(--accent));
+  font-size: var(--size-14);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.exam-transcript__line {
+  color: var(--text-primary);
+  font-size: var(--size-17);
+  font-weight: 700;
+  line-height: 1.62;
+}
+
+.exam-transcript__translation {
+  color: var(--text-secondary);
+  font-size: var(--size-15);
+  line-height: 1.68;
+}
+
+.exam-inline-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-10);
+}
+
+.exam-inline-sheet__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4);
+}
+
+.exam-inline-line--range {
+  font-size: var(--size-18);
+  font-weight: 700;
+}
+
+.exam-inline-line--instruction {
+  font-style: italic;
+  line-height: 1.55;
+}
+
+.exam-inline-line--section {
+  margin-top: var(--size-8);
+  font-size: var(--size-17);
+  font-weight: 700;
+}
+
+.exam-inline-form {
+  display: grid;
+  grid-template-columns: minmax(var(--size-160), var(--size-220)) minmax(0, 1fr);
+  gap: var(--size-12) var(--size-18);
+  align-items: start;
+}
+
+.exam-inline-form__row {
+  display: contents;
+}
+
+.exam-inline-form__section,
+.exam-inline-form__row--full {
+  grid-column: 1 / -1;
+}
+
+.exam-inline-form__section {
+  padding-top: var(--size-4);
+  font-size: var(--size-17);
+  font-weight: 700;
+}
+
+.exam-inline-form__label {
+  color: var(--text-secondary);
+  font-size: var(--size-14);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.exam-inline-form__value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-6) var(--size-8);
+  align-items: center;
+  font-size: var(--size-16);
+  line-height: 1.68;
 }

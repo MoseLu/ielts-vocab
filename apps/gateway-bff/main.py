@@ -162,7 +162,25 @@ def get_word_audio_proxy(
     request: Request,
     w: str = Query(..., min_length=1, max_length=160),
     cache_only: str | None = Query(default=None),
+    pronunciation_mode: str | None = Query(default=None),
+    phonetic: str | None = Query(default=None),
 ):
+    normalized_mode = (pronunciation_mode or '').strip().lower()
+    if normalized_mode in {'word-segmented', 'phonetic-segments', 'phonetic_segments'}:
+        payload = {
+            'text': w.strip(),
+            'provider': 'azure',
+            'content_mode': 'word-segmented',
+        }
+        normalized_phonetic = (phonetic or '').strip()
+        if normalized_phonetic:
+            payload['phonetic'] = normalized_phonetic
+        return _proxy_generic_tts_response(
+            generate_tts_audio(
+                payload,
+                headers=build_forward_headers(request, target_service_name='tts-media-service'),
+            )
+        )
     if cache_only != '1':
         return JSONResponse(
             status_code=501,

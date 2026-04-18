@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
+from math import ceil
 from datetime import datetime
 
-from service_models.learning_core_models import UserWordMasteryState, db
-from services import ai_wrong_word_repository
+from service_models.learning_core_models import UserGameWrongWord, UserWordMasteryState, db
+from services import game_wrong_word_repository
+from services.word_mastery_campaign_state import build_game_practice_state
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_support import (
     WORD_MASTERY_DIMENSIONS,
@@ -28,6 +31,9 @@ from services.word_mastery_support import (
     update_word_metadata,
     utc_now,
 )
+
+GAME_SEGMENT_WORD_COUNT = 5
+_GAME_WRONG_WORD_TABLE_READY = False
 
 
 def _record_query(user_id: int, *, word: str, book_id: str | None, chapter_id: str | None, day: int | None):
@@ -96,38 +102,208 @@ def list_scope_word_mastery_states(
     )
 
 
-def _sync_wrong_word_projection(record: UserWordMasteryState, states: dict[str, dict]) -> None:
-    summary = dimension_state_summary(states)
-    should_project = any(state['attempt_count'] > 0 or state['history_wrong'] > 0 for state in states.values())
-    if not should_project:
+def ensure_game_wrong_word_table() -> None:
+    global _GAME_WRONG_WORD_TABLE_READY
+    if _GAME_WRONG_WORD_TABLE_READY:
         return
-    wrong_record = ai_wrong_word_repository.get_user_wrong_word(record.user_id, record.word)
+    UserGameWrongWord.__table__.create(bind=db.engine, checkfirst=True)
+    _GAME_WRONG_WORD_TABLE_READY = True
+
+
+def _scope_value(book_id: str | None, chapter_id: str | None, day: int | None) -> str:
+    return scope_key(book_id=book_id, chapter_id=chapter_id, day=day)
+
+
+def _word_node_key(word: str) -> str:
+    return f'word:{normalize_word_key(word)}'
+
+
+def _segment_node_key(node_type: str, segment_index: int) -> str:
+    return f'{node_type}:{max(0, int(segment_index))}'
+
+
+def _serialize_failed_dimensions(dimensions: list[str]) -> str:
+    return json.dumps(dimensions, ensure_ascii=False)
+
+
+def _pending_failed_dimensions(states: dict[str, dict]) -> list[str]:
+    return [
+        dimension
+        for dimension in WORD_MASTERY_DIMENSIONS
+        if safe_int(states[dimension].get('history_wrong')) > 0
+        and safe_int(states[dimension].get('pass_streak')) < WORD_MASTERY_TARGET_STREAK
+    ]
+
+
+def _sync_game_wrong_word_projection(record: UserWordMasteryState, states: dict[str, dict]) -> None:
+    ensure_game_wrong_word_table()
+    normalized_scope_key = _scope_value(record.book_id, record.chapter_id, record.day)
+    failed_dimensions = _pending_failed_dimensions(states)
+    wrong_record = game_wrong_word_repository.get_game_wrong_word(
+        record.user_id,
+        scope_key=normalized_scope_key,
+        node_key=_word_node_key(record.word),
+    )
+    if wrong_record is None and not failed_dimensions:
+        return
     if wrong_record is None:
-        wrong_record = ai_wrong_word_repository.create_user_wrong_word(
+        wrong_record = game_wrong_word_repository.create_game_wrong_word(
             record.user_id,
-            record.word,
-            phonetic=record.phonetic,
-            pos=record.pos,
-            definition=record.definition,
+            scope_key=normalized_scope_key,
+            node_key=_word_node_key(record.word),
+            node_type='word',
+            book_id=record.book_id,
+            chapter_id=record.chapter_id,
+            day=record.day,
         )
+    wrong_record.node_type = 'word'
+    wrong_record.book_id = record.book_id
+    wrong_record.chapter_id = record.chapter_id
+    wrong_record.day = record.day
+    wrong_record.word = record.word
     wrong_record.phonetic = record.phonetic
     wrong_record.pos = record.pos
     wrong_record.definition = record.definition
-    wrong_record.wrong_count = sum(state['history_wrong'] for state in states.values())
-    wrong_record.meaning_wrong = states['meaning']['history_wrong']
-    wrong_record.listening_wrong = states['listening']['history_wrong']
-    wrong_record.dictation_wrong = states['dictation']['history_wrong']
-    wrong_record.dimension_state = serialize_states({
-        dimension: {
-            'history_wrong': states[dimension]['history_wrong'],
-            'pass_streak': states[dimension]['pass_streak'],
-            'last_wrong_at': states[dimension]['last_wrong_at'],
-            'last_pass_at': states[dimension]['last_pass_at'],
-        }
-        for dimension in WORD_MASTERY_DIMENSIONS
-    })
-    if summary['overall_status'] == 'passed':
-        wrong_record.updated_at = utc_now()
+    wrong_record.failed_dimensions = _serialize_failed_dimensions(failed_dimensions)
+    wrong_record.recovery_streak = 0 if failed_dimensions else WORD_MASTERY_TARGET_STREAK
+    wrong_record.status = 'pending' if failed_dimensions else 'recovered'
+    wrong_record.last_encounter_type = 'word'
+    wrong_record.updated_at = utc_now()
+
+
+def _segment_prompt(segment_words: list[dict], *, is_boss: bool) -> str:
+    words = [item.get('word') or '' for item in segment_words if item.get('word')]
+    keywords = '、'.join(words[:3]) or '本段关键词'
+    if is_boss:
+        return f'围绕 {keywords} 做一段 30 秒复述，要求自然串联这些词。'
+    return f'用 {keywords} 造一句更完整的英语表达，作为奖励加练。'
+
+
+def _serialize_game_recovery_item(record: UserGameWrongWord) -> dict:
+    payload = record.to_dict()
+    node_type = payload.get('node_type') or 'word'
+    failed_dimensions = payload.get('failed_dimensions') or []
+    title = payload.get('word') or (
+        f'第 {int(str(payload.get("node_key", "0")).split(":")[-1]) + 1} 段'
+    )
+    subtitle = ' / '.join(failed_dimensions) if failed_dimensions else (payload.get('last_encounter_type') or node_type)
+    return {
+        'nodeKey': payload.get('node_key') or '',
+        'nodeType': node_type,
+        'title': title,
+        'subtitle': subtitle,
+        'failedDimensions': failed_dimensions,
+        'bossFailures': payload.get('speaking_boss_failures') or 0,
+        'rewardFailures': payload.get('speaking_reward_failures') or 0,
+        'updatedAt': payload.get('updated_at'),
+    }
+
+
+def _upsert_speaking_node_attempt(
+    user_id: int,
+    *,
+    node_type: str,
+    segment_index: int,
+    passed: bool,
+    book_id: str | None,
+    chapter_id: str | None,
+    day: int | None,
+    segment_words: list[dict],
+) -> dict:
+    ensure_game_wrong_word_table()
+    normalized_scope_key = _scope_value(book_id, chapter_id, day)
+    node_key = _segment_node_key(node_type, segment_index)
+    record = game_wrong_word_repository.get_game_wrong_word(
+        user_id,
+        scope_key=normalized_scope_key,
+        node_key=node_key,
+    )
+    if record is None:
+        record = game_wrong_word_repository.create_game_wrong_word(
+            user_id,
+            scope_key=normalized_scope_key,
+            node_key=node_key,
+            node_type=node_type,
+            book_id=book_id,
+            chapter_id=chapter_id,
+            day=day,
+        )
+    record.node_type = node_type
+    record.book_id = book_id
+    record.chapter_id = chapter_id
+    record.day = day
+    record.word = (segment_words[0].get('word') if segment_words else None) or None
+    record.definition = _segment_prompt(segment_words, is_boss=node_type == 'speaking_boss')
+    record.failed_dimensions = '[]'
+    record.last_encounter_type = node_type
+    if passed:
+        record.status = 'recovered'
+        record.recovery_streak = safe_int(record.recovery_streak) + 1
+    else:
+        if node_type == 'speaking_boss':
+            record.speaking_boss_failures = safe_int(record.speaking_boss_failures) + 1
+        else:
+            record.speaking_reward_failures = safe_int(record.speaking_reward_failures) + 1
+        record.status = 'pending'
+        record.recovery_streak = 0
+    record.updated_at = utc_now()
+    db.session.commit()
+    return {
+        'node_type': node_type,
+        'status': record.status,
+        'failed_dimensions': [],
+        'boss_failures': safe_int(record.speaking_boss_failures),
+        'reward_failures': safe_int(record.speaking_reward_failures),
+    }
+
+
+def _build_word_node(entry: dict, *, segment_index: int, active_dimension: str | None) -> dict:
+    return {
+        'nodeType': 'word',
+        'nodeKey': _word_node_key(entry['word']['word']),
+        'segmentIndex': segment_index,
+        'title': entry['word']['word'],
+        'subtitle': entry['word'].get('definition') or '',
+        'status': 'pending' if entry['summary']['pending_dimensions'] else 'passed',
+        'dimension': active_dimension,
+        'promptText': None,
+        'targetWords': [entry['word']['word']],
+        'failedDimensions': entry['summary']['pending_dimensions'],
+        'word': {
+            **entry['word'],
+            'overall_status': entry['summary']['overall_status'],
+            'current_round': entry['summary']['current_round'],
+            'pending_dimensions': entry['summary']['pending_dimensions'],
+            'dimension_states': entry['states'],
+        },
+    }
+
+
+def _build_speaking_node(
+    *,
+    node_type: str,
+    segment_index: int,
+    status: str,
+    segment_words: list[dict],
+    record: UserGameWrongWord | None,
+) -> dict:
+    payload = record.to_dict() if record is not None else {}
+    return {
+        'nodeType': node_type,
+        'nodeKey': _segment_node_key(node_type, segment_index),
+        'segmentIndex': segment_index,
+        'title': f'第 {segment_index + 1} 段{" Boss" if node_type == "speaking_boss" else "奖励"}关',
+        'subtitle': '段末结算口语试炼' if node_type == 'speaking_boss' else '非阻塞奖励口语关',
+        'status': status,
+        'dimension': 'speaking',
+        'promptText': _segment_prompt(segment_words, is_boss=node_type == 'speaking_boss'),
+        'targetWords': [item.get('word') for item in segment_words[:3] if item.get('word')],
+        'failedDimensions': payload.get('failed_dimensions') or [],
+        'bossFailures': payload.get('speaking_boss_failures') or 0,
+        'rewardFailures': payload.get('speaking_reward_failures') or 0,
+        'lastEncounterType': payload.get('last_encounter_type'),
+        'word': None,
+    }
 
 
 def _apply_dimension_attempt(state: dict, *, passed: bool, source_mode: str | None, now_utc: datetime) -> dict:
@@ -196,7 +372,7 @@ def update_word_mastery_attempt(
     if summary['overall_status'] == 'passed':
         record.passed_at = now_utc
     update_word_metadata(record, word_payload)
-    _sync_wrong_word_projection(record, states)
+    _sync_game_wrong_word_projection(record, states)
     db.session.commit()
     return {
         **record.to_dict(),
@@ -205,13 +381,39 @@ def update_word_mastery_attempt(
     }
 
 
-def build_game_practice_state(
+def update_game_campaign_attempt(
     user_id: int,
     *,
+    node_type: str,
+    passed: bool,
+    word: str | None = None,
+    dimension: str | None = None,
+    source_mode: str | None = None,
     book_id: str | None = None,
     chapter_id: str | None = None,
     day: int | None = None,
+    word_payload: dict | None = None,
+    segment_index: int | None = None,
 ) -> dict:
+    normalized_node_type = str(node_type or 'word').strip().lower() or 'word'
+    if normalized_node_type == 'word':
+        if not word:
+            raise ValueError('word is required for word node')
+        if not dimension:
+            raise ValueError('dimension is required for word node')
+        return update_word_mastery_attempt(
+            user_id,
+            word=word,
+            dimension=dimension,
+            passed=passed,
+            source_mode=source_mode,
+            book_id=book_id,
+            chapter_id=chapter_id,
+            day=day,
+            word_payload=word_payload,
+        )
+    if normalized_node_type not in {'speaking_boss', 'speaking_reward'}:
+        raise ValueError('invalid campaign node type')
     normalized_book_id = normalize_optional_text(book_id)
     normalized_chapter_id = normalize_chapter_id(chapter_id)
     normalized_day = normalize_day(day)
@@ -220,119 +422,20 @@ def build_game_practice_state(
         chapter_id=normalized_chapter_id,
         day=normalized_day,
     )
-    word_keys = [normalize_word_text(item.get('word')) for item in vocabulary if normalize_word_text(item.get('word'))]
-    source_maps = build_legacy_source_maps(user_id, word_keys)
-    existing_records = list_scope_word_mastery_states(
+    if not vocabulary:
+        raise ValueError('campaign scope has no vocabulary')
+    safe_segment_index = max(0, safe_int(segment_index))
+    segment_start = safe_segment_index * GAME_SEGMENT_WORD_COUNT
+    segment_words = vocabulary[segment_start:segment_start + GAME_SEGMENT_WORD_COUNT]
+    if not segment_words:
+        raise ValueError('invalid segment index')
+    return _upsert_speaking_node_attempt(
         user_id,
+        node_type=normalized_node_type,
+        segment_index=safe_segment_index,
+        passed=passed,
         book_id=normalized_book_id,
         chapter_id=normalized_chapter_id,
         day=normalized_day,
+        segment_words=segment_words,
     )
-    record_map = {
-        normalize_word_key(record.word): record
-        for record in existing_records
-    }
-
-    now_utc = utc_now()
-    entries: list[dict] = []
-    for item in vocabulary:
-        word = normalize_word_text(item.get('word'))
-        if not word:
-            continue
-        word_key = normalize_word_key(word)
-        record = record_map.get(word_key)
-        states = dimension_states_from_record(record) if record else legacy_states_for_word(word_key, source_maps)
-        summary = dimension_state_summary(states)
-        entries.append({
-            'word': {
-                'word': word,
-                'phonetic': normalize_optional_text(item.get('phonetic')) or '',
-                'pos': normalize_optional_text(item.get('pos')) or '',
-                'definition': normalize_optional_text(item.get('definition')) or '',
-                'listening_confusables': item.get('listening_confusables') or [],
-                'examples': item.get('examples') or [],
-                'book_id': normalized_book_id or item.get('book_id'),
-                'chapter_id': normalized_chapter_id or normalize_chapter_id(item.get('chapter_id')),
-                'chapter_title': item.get('chapter_title'),
-            },
-            'record': record,
-            'states': states,
-            'summary': summary,
-        })
-
-    def active_rank(entry: dict) -> tuple[int, int, str]:
-        status = entry['summary']['overall_status']
-        due = any(is_pending_dimension_due(entry['states'][dimension], now_utc=now_utc) for dimension in WORD_MASTERY_DIMENSIONS)
-        if status == 'new':
-            return (0, 0, entry['word']['word'])
-        if due:
-            return (1, 0, entry['word']['word'])
-        if status in {'unlocked', 'in_review'}:
-            return (2, 0, entry['word']['word'])
-        return (3, 0, entry['word']['word'])
-
-    active_entry = min(entries, key=active_rank) if entries else None
-    active_dimension = active_dimension_for_states(active_entry['states'], now_utc=now_utc) if active_entry else None
-
-    review_queue = sorted(
-        [
-            {
-                'word': entry['word']['word'],
-                'overall_status': entry['summary']['overall_status'],
-                'current_round': entry['summary']['current_round'],
-                'next_due_at': entry['summary']['next_due_at'].isoformat() if entry['summary']['next_due_at'] else None,
-                'pending_dimensions': entry['summary']['pending_dimensions'],
-            }
-            for entry in entries
-            if entry['summary']['overall_status'] != 'passed'
-        ],
-        key=lambda item: (
-            item['next_due_at'] or '',
-            item['word'],
-        ),
-    )
-
-    total_words = len(entries)
-    passed_words = sum(1 for entry in entries if entry['summary']['overall_status'] == 'passed')
-    unlocked_words = sum(1 for entry in entries if entry['summary']['overall_status'] in {'unlocked', 'in_review', 'passed'})
-    due_words = sum(
-        1
-        for entry in entries
-        if any(is_pending_dimension_due(entry['states'][dimension], now_utc=now_utc) for dimension in WORD_MASTERY_DIMENSIONS)
-        and entry['summary']['overall_status'] != 'passed'
-    )
-
-    return {
-        'scope': {
-            'bookId': normalized_book_id,
-            'chapterId': normalized_chapter_id,
-            'day': normalized_day,
-        },
-        'activeWord': None if active_entry is None else {
-            **active_entry['word'],
-            'overall_status': active_entry['summary']['overall_status'],
-            'current_round': active_entry['summary']['current_round'],
-            'pending_dimensions': active_entry['summary']['pending_dimensions'],
-            'dimension_states': active_entry['states'],
-        },
-        'activeDimension': active_dimension,
-        'unlockProgress': {
-            'completed': 0 if active_entry is None else active_entry['summary']['unlock_count'],
-            'total': len(WORD_MASTERY_DIMENSIONS),
-        },
-        'masteryProgress': {
-            'completed': 0 if active_entry is None else active_entry['summary']['mastery_units_completed'],
-            'total': len(WORD_MASTERY_DIMENSIONS) * WORD_MASTERY_TARGET_STREAK,
-            'currentRound': 0 if active_entry is None else active_entry['summary']['current_round'],
-            'targetRound': WORD_MASTERY_TARGET_STREAK,
-        },
-        'reviewQueue': review_queue[:12],
-        'pendingDimensions': [] if active_entry is None else active_entry['summary']['pending_dimensions'],
-        'summary': {
-            'totalWords': total_words,
-            'passedWords': passed_words,
-            'unlockedWords': unlocked_words,
-            'dueWords': due_words,
-            'newWords': max(total_words - unlocked_words, 0),
-        },
-    }

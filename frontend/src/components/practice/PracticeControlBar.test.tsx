@@ -85,4 +85,30 @@ describe('PracticeControlBar layout', () => {
     await user.click(screen.getByRole('button', { name: '返回主页' }))
     expect(onExitHome).toHaveBeenCalledTimes(1)
   })
+
+  it('shows the selected chapter label and keeps the word-list toggle for classic practice', () => {
+    render(
+      <PracticeControlBar
+        mode="listening"
+        currentDay={undefined}
+        bookId="ielts_reading_premium"
+        chapterId="1"
+        errorMode={false}
+        vocabularyLength={12}
+        currentChapterTitle="Chapter 1"
+        bookChapters={[]}
+        showWordList={false}
+        showPracticeSettings={false}
+        onWordListToggle={() => {}}
+        onSettingsToggle={() => {}}
+        onModeChange={() => {}}
+        onDayChange={() => {}}
+        onNavigate={() => {}}
+        onExitHome={() => {}}
+      />,
+    )
+
+    expect(screen.getByText('Chapter 1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '单词列表' })).toBeInTheDocument()
+  })
 })

@@ -51,6 +51,8 @@ export default function StatsPage() {
     displayStreak,
     ebbRateCaption,
     ebbSummaryHelp,
+    weakestModeLabel,
+    gameCampaignStats,
     hasChartData,
     ebbStages,
     isInitialLoading,
@@ -93,10 +95,10 @@ export default function StatsPage() {
       <div className="stats-section stats-section--mode-strip">
         <div className="stats-mode-strip-header">
           <h2 className="stats-section-title">模式占比与各模式统计</h2>
-          {alltime?.weakest_mode && (
+          {weakestModeLabel && (
             <span className="mode-recommendation">
-              建议加强：<strong>{MODE_LABELS[alltime.weakest_mode] || alltime.weakest_mode}</strong>
-              {alltime.weakest_mode_accuracy != null && (
+              建议加强：<strong>{MODE_LABELS[weakestModeLabel] || weakestModeLabel}</strong>
+              {alltime?.weakest_mode_accuracy != null && (
                 <span className="mode-recommendation-acc">（正确率 {alltime.weakest_mode_accuracy}%）</span>
               )}
             </span>
@@ -124,6 +126,36 @@ export default function StatsPage() {
           </div>
         </div>
       </div>
+
+      {gameCampaignStats ? (
+        <div className="stats-section">
+          <div className="stats-mode-strip-header">
+            <h2 className="stats-section-title">五维战役独立统计</h2>
+            <span className="mode-recommendation">口语 Boss / 奖励关与词链数据单独归档</span>
+          </div>
+          <p className="stats-section-hint">
+            五维战役不再混入经典练习模式和通用错词本。这里单独看战役投入、命中率与挑战频次。
+          </p>
+          <div className="stats-cards">
+            <div className="stats-card stats-card--simple">
+              <div className="stats-card-label">战役词链学习词数</div>
+              <div className="stats-card-value">{gameCampaignStats.wordsStudied}</div>
+            </div>
+            <div className="stats-card stats-card--simple">
+              <div className="stats-card-label">战役挑战次数</div>
+              <div className="stats-card-value">{gameCampaignStats.sessions}</div>
+            </div>
+            <div className="stats-card stats-card--simple">
+              <div className="stats-card-label">战役正确率</div>
+              <div className="stats-card-value">{fmtPct(gameCampaignStats.accuracy)}</div>
+            </div>
+            <div className="stats-card stats-card--simple">
+              <div className="stats-card-label">战役学习时长</div>
+              <div className="stats-card-value">{fmtDuration(gameCampaignStats.durationSeconds)}</div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="stats-main-layout-wrap">
         <div className="stats-insight-grid">

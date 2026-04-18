@@ -37,6 +37,29 @@ _AUDIO_CACHE_KEY_HEADER = 'X-Audio-Cache-Key'
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _AUDIO_SOURCE_HEADER = 'X-Audio-Source'
 _MEDIA_ID_HEADER = 'X-Media-Id'
+_RYAN_WORD_AUDIO_VOICE = 'en-GB-RyanNeural'
+_RYAN_WORD_AUDIO_OVERRIDES = frozenset({
+    'brag',
+    'branch',
+    'brash',
+    'brass',
+    'brave',
+    'breach',
+    'bread',
+    'breadth',
+    'breed',
+    'breeding',
+    'brew',
+    'brewery',
+    'brick',
+    'bridle',
+    'brim',
+    'brochure',
+    'broker',
+    'broom',
+    'brought',
+    'brute',
+})
 
 
 def tts_media_service_url() -> str:
@@ -60,6 +83,8 @@ def resolve_word_audio_request(word: str) -> dict[str, str]:
         raise HTTPException(status_code=400, detail='invalid w')
     normalized = normalize_word_key(raw)
     provider, model, voice = default_word_tts_identity()
+    if provider == 'azure' and normalized in _RYAN_WORD_AUDIO_OVERRIDES:
+        voice = _RYAN_WORD_AUDIO_VOICE
     file_name = word_tts_cache_path(Path('word_tts_cache'), normalized, model, voice).name
     return {
         'word': raw,

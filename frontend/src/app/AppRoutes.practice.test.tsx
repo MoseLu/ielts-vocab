@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 import { AppRoutes } from './AppRoutes'
 
 const showToastMock = vi.fn()
+const gameCampaignPageMock = vi.fn(() => <div>game-campaign-page</div>)
 const practicePageMock = vi.fn((props: {
   user?: { id: number; username: string }
   showToast?: (message: string, type?: 'info' | 'success' | 'error') => void
@@ -33,6 +34,9 @@ vi.mock('../contexts', () => ({
 vi.mock('../components/practice/PracticePage', () => ({
   default: (props: unknown) => practicePageMock(props),
 }))
+vi.mock('../components/game/page/GameCampaignPage', () => ({
+  default: () => gameCampaignPageMock(),
+}))
 
 vi.mock('../components/ai-chat/page/AIChatPanel', () => ({ default: () => null }))
 vi.mock('../components/layout/navigation/GlobalWordSearch', () => ({ default: () => null }))
@@ -59,6 +63,7 @@ describe('AppRoutes practice route', () => {
   beforeEach(() => {
     showToastMock.mockReset()
     practicePageMock.mockClear()
+    gameCampaignPageMock.mockClear()
   })
 
   it('passes the authenticated user and shared showToast into PracticePage', () => {
@@ -82,7 +87,7 @@ describe('AppRoutes practice route', () => {
     expect(showToastMock).toHaveBeenCalledWith('favorite-clicked', 'success')
   })
 
-  it('mounts PracticePage on the independent /game route with fixed game mode', () => {
+  it('mounts the independent game campaign page on /game', async () => {
     render(
       <MemoryRouter initialEntries={['/game?book=book-1&chapter=2']}>
         <AppRoutes
@@ -94,9 +99,23 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(practicePageMock).toHaveBeenCalled()
-    expect(practicePageMock.mock.calls[0]?.[0]).toMatchObject({
-      mode: 'game',
-    })
+    expect(await screen.findByText('game-campaign-page')).toBeInTheDocument()
+    expect(practicePageMock).not.toHaveBeenCalled()
+  })
+
+  it('redirects /practice?mode=game into /game', async () => {
+    render(
+      <MemoryRouter initialEntries={['/practice?mode=game&book=book-1']}>
+        <AppRoutes
+          mode="meaning"
+          currentDay={1}
+          onModeChange={vi.fn()}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('game-campaign-page')).toBeInTheDocument()
+    expect(practicePageMock).not.toHaveBeenCalled()
   })
 })

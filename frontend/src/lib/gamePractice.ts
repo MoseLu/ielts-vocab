@@ -1,10 +1,12 @@
 import {
-  GamePracticeAttemptResponseSchema,
-  GamePracticeStateSchema,
+  GameCampaignAttemptResponseSchema,
+  GameCampaignStateSchema,
   apiFetch,
   safeParse,
-  type GamePracticeAttemptResponse,
-  type GamePracticeState,
+  type GameCampaignAttemptResponse,
+  type GameCampaignDimension,
+  type GameCampaignState,
+  type GameNodeType,
   type Word,
 } from './index'
 
@@ -15,9 +17,12 @@ interface GamePracticeScope {
 }
 
 interface SubmitWordMasteryAttemptInput extends GamePracticeScope {
-  word: string
-  dimension: 'recognition' | 'meaning' | 'listening' | 'speaking' | 'dictation'
+  word?: string | null
+  dimension?: GameCampaignDimension | null
   passed: boolean
+  nodeType?: GameNodeType | null
+  segmentIndex?: number | null
+  promptText?: string | null
   sourceMode?: string | null
   wordPayload?: Partial<Word> | null
 }
@@ -30,10 +35,10 @@ function buildScopeParams(scope: GamePracticeScope): URLSearchParams {
   return params
 }
 
-export async function fetchGamePracticeState(scope: GamePracticeScope): Promise<GamePracticeState> {
+export async function fetchGamePracticeState(scope: GamePracticeScope): Promise<GameCampaignState> {
   const query = buildScopeParams(scope).toString()
   const raw = await apiFetch(`/api/ai/practice/game/state${query ? `?${query}` : ''}`)
-  const parsed = safeParse(GamePracticeStateSchema, raw)
+  const parsed = safeParse(GameCampaignStateSchema, raw)
   if (!parsed.success) {
     throw new Error('五维闯关状态响应格式错误')
   }
@@ -42,13 +47,16 @@ export async function fetchGamePracticeState(scope: GamePracticeScope): Promise<
 
 export async function submitWordMasteryAttempt(
   input: SubmitWordMasteryAttemptInput,
-): Promise<GamePracticeAttemptResponse> {
+): Promise<GameCampaignAttemptResponse> {
   const raw = await apiFetch('/api/ai/practice/game/attempt', {
     method: 'POST',
     body: JSON.stringify({
-      word: input.word,
-      dimension: input.dimension,
+      word: input.word ?? undefined,
+      dimension: input.dimension ?? undefined,
       passed: input.passed,
+      nodeType: input.nodeType ?? undefined,
+      segmentIndex: input.segmentIndex ?? undefined,
+      promptText: input.promptText ?? undefined,
       sourceMode: input.sourceMode ?? 'game',
       bookId: input.bookId ?? undefined,
       chapterId: input.chapterId ?? undefined,
@@ -56,7 +64,7 @@ export async function submitWordMasteryAttempt(
       wordPayload: input.wordPayload ?? undefined,
     }),
   })
-  const parsed = safeParse(GamePracticeAttemptResponseSchema, raw)
+  const parsed = safeParse(GameCampaignAttemptResponseSchema, raw)
   if (!parsed.success) {
     throw new Error('五维闯关提交响应格式错误')
   }

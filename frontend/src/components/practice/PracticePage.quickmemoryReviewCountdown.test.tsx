@@ -52,6 +52,9 @@ vi.mock('../../lib/smartMode', () => ({
 
 vi.mock('../../hooks/useAIChat', () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
+  prepareStudySessionForLearningAction: undefined,
+  finalizeStudySessionSegment: undefined,
+  isStudySessionActive: undefined,
   recordModeAnswer: vi.fn(),
   resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
     data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
@@ -195,7 +198,7 @@ describe('PracticePage quick-memory review countdown', () => {
     vi.useRealTimers()
   })
 
-  it('does not auto reveal the first due-review word before any learning action', async () => {
+  it('auto reveals the first due-review word and plays audio after the countdown', async () => {
     const { rerender } = render(
       <MemoryRouter initialEntries={['/practice?review=due']}>
         <PracticePage
@@ -238,8 +241,7 @@ describe('PracticePage quick-memory review countdown', () => {
       await vi.advanceTimersByTimeAsync(3000)
       await Promise.resolve()
     })
-    expect(screen.getByText('0')).toBeInTheDocument()
-    expect(screen.queryByText('✗ 不认识')).not.toBeInTheDocument()
+    expect(screen.getByText('✗ 不认识')).toBeInTheDocument()
     expect(playWordAudioMock).not.toHaveBeenCalled()
 
     await act(async () => {
@@ -247,8 +249,8 @@ describe('PracticePage quick-memory review countdown', () => {
       await Promise.resolve()
     })
 
-    expect(playWordAudioMock).not.toHaveBeenCalled()
-    expect(startSessionMock).not.toHaveBeenCalled()
+    expect(playWordAudioMock).toHaveBeenCalledWith('alpha', expect.anything(), expect.any(Function))
+    expect(startSessionMock).toHaveBeenCalledTimes(1)
   })
 
   it('skips lookahead audio preloading on the first due-review word', async () => {

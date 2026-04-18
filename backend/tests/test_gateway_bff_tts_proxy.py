@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 
 GATEWAY_PATH = Path(__file__).resolve().parents[2] / 'apps' / 'gateway-bff' / 'main.py'
+GATEWAY_MEDIA_PROXY_PATH = Path(__file__).resolve().parents[2] / 'packages' / 'platform-sdk' / 'platform_sdk' / 'gateway_media_proxy.py'
 
 
 def _load_gateway_module():
@@ -16,6 +17,35 @@ def _load_gateway_module():
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module
+
+
+def _load_gateway_media_proxy_module():
+    spec = importlib.util.spec_from_file_location('gateway_media_proxy', GATEWAY_MEDIA_PROXY_PATH)
+    module = importlib.util.module_from_spec(spec)
+    assert spec is not None
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_resolve_word_audio_request_uses_ryan_hotfix_voice(monkeypatch):
+    module = _load_gateway_media_proxy_module()
+
+    monkeypatch.setattr(
+        module,
+        'default_word_tts_identity',
+        lambda: ('azure', 'azure-rest:test@azure-word-v5', 'en-GB-LibbyNeural'),
+    )
+    monkeypatch.setattr(
+        module,
+        'word_tts_cache_path',
+        lambda base, normalized, model, voice: Path(f'{normalized}-{voice}.mp3'),
+    )
+
+    request = module.resolve_word_audio_request('bread')
+
+    assert request['voice'] == 'en-GB-RyanNeural'
+    assert request['file_name'] == 'bread-en-GB-RyanNeural.mp3'
 
 
 def test_gateway_word_audio_metadata_proxy_returns_upstream_payload(monkeypatch):
@@ -288,6 +318,39 @@ def test_gateway_get_word_audio_proxy_requires_cache_only(monkeypatch):
 
     assert response.status_code == 501
     assert response.json() == {'error': 'word audio generation via gateway is not implemented yet'}
+
+
+def test_gateway_get_word_audio_proxy_generates_segmented_audio(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app)
+    seen: dict[str, object] = {}
+
+    class FakeResponse:
+        status_code = 200
+        content = b'ID3DATA'
+        headers = {'content-type': 'audio/mpeg', 'X-Audio-Bytes': '7'}
+
+    def fake_generate_tts_audio(payload, **kwargs):
+        seen['payload'] = payload
+        seen.update(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr(module, 'generate_tts_audio', fake_generate_tts_audio)
+
+    response = client.get(
+        '/api/tts/word-audio',
+        params={'w': 'phenomenon', 'pronunciation_mode': 'phonetic_segments', 'phonetic': '/fəˈnɒmɪnən/'},
+    )
+
+    assert response.status_code == 200
+    assert response.content == b'ID3DATA'
+    assert response.headers['x-audio-bytes'] == '7'
+    assert seen['payload'] == {
+        'text': 'phenomenon',
+        'provider': 'azure',
+        'content_mode': 'word-segmented',
+        'phonetic': '/fəˈnɒmɪnən/',
+    }
 
 
 def test_gateway_head_example_audio_proxy_maps_legacy_headers(monkeypatch):

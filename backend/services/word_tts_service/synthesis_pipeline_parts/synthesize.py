@@ -54,7 +54,7 @@ def synthesize_word_to_bytes(
             text,
             requested_voice,
             rate=azure_rate_for_mode(text, content_mode=resolved_mode, speed=speed),
-            content_mode=resolved_mode,
+            content_mode=content_mode or resolved_mode,
             phonetic=phonetic,
         )
         resp = requests.post(
@@ -75,7 +75,7 @@ def synthesize_word_to_bytes(
                     text,
                     requested_voice,
                     rate=azure_rate_for_mode(text, content_mode=resolved_mode, speed=speed),
-                    content_mode=resolved_mode,
+                    content_mode=content_mode or resolved_mode,
                     phonetic='',
                     use_lookup_phonetic=False,
                 ),

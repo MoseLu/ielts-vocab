@@ -5,7 +5,7 @@ export type { QuickMemoryRecordState } from '../../lib/quickMemory'
 
 // ── Types for Practice Components ────────────────────────────────────────────────
 
-export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'quickmemory' | 'game'
+export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'quickmemory'
 export type SpellingSubmitSource = 'button' | 'enter'
 
 // ── Quick Memory — DHP + Ebbinghaus spaced repetition ──────────────────────

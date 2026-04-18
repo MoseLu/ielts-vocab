@@ -11,6 +11,7 @@ from platform_sdk.learning_repository_adapters import (
 from platform_sdk.learner_profile_builder_adapter import build_learner_profile
 from services.word_mastery_service import (
     build_game_practice_state,
+    update_game_campaign_attempt,
     update_word_mastery_attempt,
 )
 from services.ai_route_support_service import _normalize_chapter_id, _normalize_word_list, _track_metric
@@ -203,16 +204,21 @@ def game_state_response(current_user, args):
 
 def game_attempt_response(current_user, body):
     payload = body or {}
+    node_type = str(payload.get('nodeType') or payload.get('node_type') or 'word').strip().lower() or 'word'
     word = str(payload.get('word') or '').strip()
     dimension = str(payload.get('dimension') or '').strip().lower()
-    if not word:
-        return jsonify({'error': 'word is required'}), 400
-    if not dimension:
-        return jsonify({'error': 'dimension is required'}), 400
+    if node_type == 'word':
+        if not word:
+            return jsonify({'error': 'word is required'}), 400
+        if not dimension:
+            return jsonify({'error': 'dimension is required'}), 400
+    elif node_type not in {'speaking_boss', 'speaking_reward'}:
+        return jsonify({'error': 'invalid nodeType'}), 400
 
     try:
-        state = update_word_mastery_attempt(
+        state = update_game_campaign_attempt(
             current_user.id,
+            node_type=node_type,
             word=word,
             dimension=dimension,
             passed=bool(payload.get('passed')),
@@ -221,6 +227,7 @@ def game_attempt_response(current_user, body):
             chapter_id=_normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
             day=payload.get('day'),
             word_payload=payload.get('wordPayload') if isinstance(payload.get('wordPayload'), dict) else payload,
+            segment_index=payload.get('segmentIndex', payload.get('segment_index')),
         )
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
@@ -231,7 +238,34 @@ def game_attempt_response(current_user, body):
         chapter_id=_normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
         day=payload.get('day'),
     ))
-    return jsonify({'state': state, 'game_state': game_state}), 200
+    failed_dimensions = state.get('failedDimensions')
+    if not isinstance(failed_dimensions, list):
+        failed_dimensions = state.get('failed_dimensions')
+    if not isinstance(failed_dimensions, list):
+        dimension_states = state.get('dimension_states')
+        if isinstance(dimension_states, dict):
+            failed_dimensions = [
+                dimension
+                for dimension, item in dimension_states.items()
+                if isinstance(dimension, str)
+                and isinstance(item, dict)
+                and int(item.get('history_wrong') or 0) > 0
+                and int(item.get('pass_streak') or 0) < 4
+            ]
+    if not isinstance(failed_dimensions, list):
+        failed_dimensions = state.get('pending_dimensions')
+    if not isinstance(failed_dimensions, list):
+        failed_dimensions = []
+    return jsonify({
+        'state': {
+            'nodeType': str(state.get('nodeType') or state.get('node_type') or node_type),
+            'status': str(state.get('status') or state.get('overall_status') or 'pending'),
+            'failedDimensions': [str(item) for item in failed_dimensions if isinstance(item, str)],
+            'bossFailures': int(state.get('bossFailures') or state.get('boss_failures') or 0),
+            'rewardFailures': int(state.get('rewardFailures') or state.get('reward_failures') or 0),
+        },
+        'game_state': game_state,
+    }), 200
 
 
 def vocab_assessment_response(current_user, args):

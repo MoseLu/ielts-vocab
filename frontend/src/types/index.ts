@@ -20,7 +20,7 @@ export interface ToastData {
 }
 
 // Practice types (re-export from practice)
-export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio' | 'game'
+export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio'
 
 export interface Word {
   word: string

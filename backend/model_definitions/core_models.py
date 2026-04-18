@@ -21,7 +21,7 @@ class GuardedSQLAlchemy(SQLAlchemy):
 
 db = GuardedSQLAlchemy()
 
-WRONG_WORD_DIMENSIONS = ('recognition', 'meaning', 'listening', 'speaking', 'dictation')
+WRONG_WORD_DIMENSIONS = ('recognition', 'meaning', 'listening', 'dictation')
 WRONG_WORD_PENDING_REVIEW_TARGET = 4
 
 

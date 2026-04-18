@@ -25,9 +25,17 @@ WORD_IMAGE_STATUSES = (
     WORD_IMAGE_STATUS_READY,
     WORD_IMAGE_STATUS_FAILED,
 )
-DEFAULT_GAME_WORD_IMAGE_PROVIDER = 'dashscope'
-DEFAULT_GAME_WORD_IMAGE_MODEL = 'wanx-v1'
-DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES = (
+GAME_WORD_IMAGE_PROVIDER_DASHSCOPE = 'dashscope'
+GAME_WORD_IMAGE_PROVIDER_MINIMAX = 'minimax'
+GAME_WORD_IMAGE_PROVIDER_AUTO = 'auto'
+DEFAULT_GAME_WORD_IMAGE_PROVIDER = GAME_WORD_IMAGE_PROVIDER_DASHSCOPE
+DEFAULT_GAME_WORD_IMAGE_MODELS = {
+    GAME_WORD_IMAGE_PROVIDER_DASHSCOPE: 'wanx-v1',
+    GAME_WORD_IMAGE_PROVIDER_MINIMAX: 'image-01',
+}
+DEFAULT_GAME_WORD_IMAGE_MODEL = DEFAULT_GAME_WORD_IMAGE_MODELS[DEFAULT_GAME_WORD_IMAGE_PROVIDER]
+DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES = {
+    GAME_WORD_IMAGE_PROVIDER_DASHSCOPE: (
     'wanx-v1',
     'wanx2.1-t2i-plus',
     'wanx2.1-t2i-turbo',
@@ -36,9 +44,13 @@ DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES = (
     'wan2.2-t2i-flash',
     'wan2.5-t2i-preview',
     'wan2.6-t2i',
-)
-DEFAULT_GAME_WORD_IMAGE_STYLE_VERSION = 'edu-illustration-v1'
-DEFAULT_GAME_WORD_IMAGE_PROMPT_VERSION = 'v1'
+    ),
+    GAME_WORD_IMAGE_PROVIDER_MINIMAX: (
+        'image-01',
+    ),
+}
+DEFAULT_GAME_WORD_IMAGE_STYLE_VERSION = 'sense-scene-v2'
+DEFAULT_GAME_WORD_IMAGE_PROMPT_VERSION = 'v2'
 DEFAULT_GAME_WORD_IMAGE_SIZE = '1024*1024'
 DEFAULT_GAME_WORD_IMAGE_STYLE = '<flat illustration>'
 DEFAULT_GAME_WORD_IMAGE_BOOK_IDS = (
@@ -76,10 +88,53 @@ def _truncate_text(value, *, limit: int = 500) -> str | None:
     return text[:limit]
 
 
-def _read_game_word_image_model_candidates() -> tuple[str, ...]:
+def _normalize_game_word_image_provider(value) -> str:
+    normalized = _clean_text(value).lower().replace('_', '-')
+    if normalized in {GAME_WORD_IMAGE_PROVIDER_DASHSCOPE, GAME_WORD_IMAGE_PROVIDER_MINIMAX, GAME_WORD_IMAGE_PROVIDER_AUTO}:
+        return normalized
+    return DEFAULT_GAME_WORD_IMAGE_PROVIDER
+
+
+def _has_dashscope_image_key() -> bool:
+    return bool(_clean_text(os.environ.get('DASHSCOPE_API_KEY')))
+
+
+def _has_minimax_image_key() -> bool:
+    return any(
+        _clean_text(os.environ.get(env_name))
+        for env_name in ('MINIMAX_IMAGE_API_KEY', 'MINIMAX_API_KEY', 'MINIMAX_API_KEY_2')
+    )
+
+
+def resolve_game_word_image_provider() -> str:
+    configured = _normalize_game_word_image_provider(
+        os.environ.get('GAME_WORD_IMAGE_PROVIDER') or DEFAULT_GAME_WORD_IMAGE_PROVIDER
+    )
+    if configured != GAME_WORD_IMAGE_PROVIDER_AUTO:
+        return configured
+    if _has_dashscope_image_key():
+        return GAME_WORD_IMAGE_PROVIDER_DASHSCOPE
+    if _has_minimax_image_key():
+        return GAME_WORD_IMAGE_PROVIDER_MINIMAX
+    return DEFAULT_GAME_WORD_IMAGE_PROVIDER
+
+
+def resolve_game_word_image_model(*, provider: str | None = None) -> str:
+    configured_model = _clean_text(os.environ.get('GAME_WORD_IMAGE_MODEL'))
+    if configured_model:
+        return configured_model
+    resolved_provider = _normalize_game_word_image_provider(provider) if provider else resolve_game_word_image_provider()
+    return DEFAULT_GAME_WORD_IMAGE_MODELS.get(resolved_provider, DEFAULT_GAME_WORD_IMAGE_MODELS[DEFAULT_GAME_WORD_IMAGE_PROVIDER])
+
+
+def _read_game_word_image_model_candidates(*, provider: str | None = None) -> tuple[str, ...]:
+    resolved_provider = _normalize_game_word_image_provider(provider) if provider else resolve_game_word_image_provider()
     raw_value = _clean_text(os.environ.get('GAME_WORD_IMAGE_MODEL_CANDIDATES'))
     if not raw_value:
-        return DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES
+        return DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES.get(
+            resolved_provider,
+            DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES[DEFAULT_GAME_WORD_IMAGE_PROVIDER],
+        )
     candidates = []
     seen: set[str] = set()
     for item in raw_value.split(','):
@@ -88,19 +143,31 @@ def _read_game_word_image_model_candidates() -> tuple[str, ...]:
             continue
         seen.add(model)
         candidates.append(model)
-    return tuple(candidates) or DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES
+    return tuple(candidates) or DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES.get(
+        resolved_provider,
+        DEFAULT_GAME_WORD_IMAGE_MODEL_CANDIDATES[DEFAULT_GAME_WORD_IMAGE_PROVIDER],
+    )
 
 
-def list_game_word_image_model_candidates(*, preferred_model: str | None = None) -> tuple[str, ...]:
+def list_game_word_image_model_candidates(
+    *,
+    preferred_model: str | None = None,
+    provider: str | None = None,
+) -> tuple[str, ...]:
+    resolved_provider = _normalize_game_word_image_provider(provider) if provider else resolve_game_word_image_provider()
+    default_model = DEFAULT_GAME_WORD_IMAGE_MODELS.get(
+        resolved_provider,
+        DEFAULT_GAME_WORD_IMAGE_MODELS[DEFAULT_GAME_WORD_IMAGE_PROVIDER],
+    )
     ordered: list[str] = []
     seen: set[str] = set()
-    for model in (_clean_text(preferred_model), *_read_game_word_image_model_candidates()):
+    for model in (_clean_text(preferred_model), *_read_game_word_image_model_candidates(provider=resolved_provider)):
         if not model or model in seen:
             continue
         seen.add(model)
         ordered.append(model)
-    if DEFAULT_GAME_WORD_IMAGE_MODEL not in seen:
-        ordered.insert(0, DEFAULT_GAME_WORD_IMAGE_MODEL)
+    if default_model not in seen:
+        ordered.insert(0, default_model)
     return tuple(ordered)
 
 
@@ -156,7 +223,7 @@ def build_game_word_image_prompt(
     example_text: str | None,
 ) -> str:
     parts = [
-        'Create a clean educational illustration for an IELTS vocabulary flashcard.',
+        'Create a square semantic image for an IELTS vocabulary memory card.',
         f'Word: "{_clean_text(word)}".',
     ]
     if _clean_text(pos):
@@ -165,9 +232,11 @@ def build_game_word_image_prompt(
     if _clean_text(example_text):
         parts.append(f'Example context: "{_clean_text(example_text)}".')
     parts.extend((
-        'Show one clear scene or visual metaphor that helps a learner remember this exact sense.',
-        'Use a calm, premium educational illustration style with a single dominant subject and a simple background.',
-        'No text, no letters, no subtitles, no watermark, no logo, no collage, no split panels, square composition.',
+        'Show one concrete scene or one precise visual metaphor that makes this exact sense obvious at a glance.',
+        'Prefer semantic relevance over decoration. Avoid generic classroom scenes, random portraits, and unrelated scenery unless the sense truly requires them.',
+        'If the word is abstract, depict the emotional tone, consequence, or capability in action rather than a static person posing for the camera.',
+        'Use a single dominant subject, clear focal point, restrained background detail, and a polished illustration look.',
+        'No text, no letters, no subtitles, no watermark, no logo, no collage, no split panels, no UI frame, square composition.',
     ))
     return ' '.join(parts)[:780]
 
@@ -223,7 +292,7 @@ def _serialize_game_word_image(
         'url': url,
         'alt': f'{word} 词义配图',
         'styleVersion': asset.style_version if asset is not None else DEFAULT_GAME_WORD_IMAGE_STYLE_VERSION,
-        'model': asset.model if asset is not None else DEFAULT_GAME_WORD_IMAGE_MODEL,
+        'model': asset.model if asset is not None else resolve_game_word_image_model(),
         'generatedAt': asset.generated_at.isoformat() if asset is not None and asset.generated_at else None,
     }
 
@@ -239,12 +308,15 @@ def _word_seed_from_payload(word_payload: dict, *, fallback_book_id: str | None 
     example_text = extract_game_word_example_text(word_payload)
     sense_key = build_game_word_image_sense_key(word=word, pos=pos, definition=definition)
     book_id = _clean_text(word_payload.get('book_id') or word_payload.get('bookId') or fallback_book_id) or None
+    provider = resolve_game_word_image_provider()
     return {
         'sense_key': sense_key,
         'word': word,
         'pos': pos or None,
         'definition': definition,
         'example_text': example_text,
+        'provider': provider,
+        'model': resolve_game_word_image_model(provider=provider),
         'prompt_text': build_game_word_image_prompt(
             word=word,
             pos=pos,
@@ -267,8 +339,8 @@ def _upsert_word_image_asset(seed: dict, *, now_utc: datetime) -> AIWordImageAss
             prompt_text=seed['prompt_text'],
             prompt_version=DEFAULT_GAME_WORD_IMAGE_PROMPT_VERSION,
             style_version=DEFAULT_GAME_WORD_IMAGE_STYLE_VERSION,
-            provider=DEFAULT_GAME_WORD_IMAGE_PROVIDER,
-            model=DEFAULT_GAME_WORD_IMAGE_MODEL,
+            provider=seed['provider'],
+            model=seed['model'],
             storage_provider=GAME_WORD_IMAGE_STORAGE_PROVIDER,
             object_key=build_game_word_image_object_key(sense_key=seed['sense_key']),
             status=WORD_IMAGE_STATUS_QUEUED,
@@ -287,8 +359,8 @@ def _upsert_word_image_asset(seed: dict, *, now_utc: datetime) -> AIWordImageAss
     asset.prompt_text = seed['prompt_text']
     asset.prompt_version = DEFAULT_GAME_WORD_IMAGE_PROMPT_VERSION
     asset.style_version = DEFAULT_GAME_WORD_IMAGE_STYLE_VERSION
-    asset.provider = DEFAULT_GAME_WORD_IMAGE_PROVIDER
-    asset.model = DEFAULT_GAME_WORD_IMAGE_MODEL
+    asset.provider = seed['provider']
+    asset.model = seed['model']
     asset.storage_provider = GAME_WORD_IMAGE_STORAGE_PROVIDER
     asset.object_key = asset.object_key or build_game_word_image_object_key(sense_key=seed['sense_key'])
     asset.set_book_ids(_asset_book_ids(asset, seed['book_ids']))
@@ -337,29 +409,40 @@ def resolve_game_word_image_payload(word_payload: dict, *, fallback_book_id: str
 def enrich_game_state_with_word_image(payload: dict | None) -> dict | None:
     if not isinstance(payload, dict):
         return payload
-    active_word = payload.get('activeWord')
-    if not isinstance(active_word, dict):
+    active_word = payload.get('activeWord') if isinstance(payload.get('activeWord'), dict) else None
+    current_node = payload.get('currentNode') if isinstance(payload.get('currentNode'), dict) else None
+    current_node_word = current_node.get('word') if isinstance(current_node, dict) and isinstance(current_node.get('word'), dict) else None
+    target_word = current_node_word or active_word
+    if not isinstance(target_word, dict):
         return payload
     scope = payload.get('scope') if isinstance(payload.get('scope'), dict) else {}
-    fallback_book_id = _clean_text(scope.get('bookId')) or _clean_text(active_word.get('book_id')) or None
+    fallback_book_id = _clean_text(scope.get('bookId')) or _clean_text(target_word.get('book_id')) or None
     try:
-        image = resolve_game_word_image_payload(active_word, fallback_book_id=fallback_book_id)
+        image = resolve_game_word_image_payload(target_word, fallback_book_id=fallback_book_id)
     except Exception as exc:
-        logging.warning('[AI] Failed to resolve game word image for %s: %s', active_word.get('word'), exc)
-        seed = _word_seed_from_payload(active_word, fallback_book_id=fallback_book_id)
+        logging.warning('[AI] Failed to resolve game word image for %s: %s', target_word.get('word'), exc)
+        seed = _word_seed_from_payload(target_word, fallback_book_id=fallback_book_id)
         image = _serialize_game_word_image(
             asset=None,
-            word=_clean_text(active_word.get('word')) or 'word',
+            word=_clean_text(target_word.get('word')) or 'word',
             sense_key=seed['sense_key'] if seed else '',
             status=WORD_IMAGE_STATUS_FAILED,
         )
-    return {
-        **payload,
-        'activeWord': {
+    next_payload = dict(payload)
+    if active_word is not None:
+        next_payload['activeWord'] = {
             **active_word,
             'image': image,
-        },
-    }
+        }
+    if current_node is not None and current_node_word is not None:
+        next_payload['currentNode'] = {
+            **current_node,
+            'word': {
+                **current_node_word,
+                'image': image,
+            },
+        }
+    return next_payload
 
 
 def drain_game_word_image_generation_queue(*, limit: int = 10) -> int:

@@ -15,6 +15,7 @@ const VocabBookPage = lazy(() => import('../components/books/page/VocabBookPage'
 const ErrorsPage = lazy(() => import('../components/errors/page/ErrorsPage'))
 const ExamAttemptPage = lazy(() => import('../components/exams/page/ExamAttemptPage'))
 const ExamsLibraryPage = lazy(() => import('../components/exams/page/ExamsLibraryPage'))
+const GameCampaignPage = lazy(() => import('../components/game/page/GameCampaignPage'))
 const HomePage = lazy(() => import('../components/home/page/HomePage'))
 const LearningJournalPage = lazy(() => import('../components/journal/page/LearningJournalPage'))
 const BottomNav = lazy(() => import('../components/layout/navigation/BottomNav'))
@@ -24,7 +25,6 @@ const LeftSidebar = lazy(() => import('../components/layout/navigation/LeftSideb
 const NotFoundPage = lazy(() => import('../components/not-found/page/NotFoundPage'))
 const ConfusableMatchPage = lazy(() => import('../components/practice/ConfusableMatchPage'))
 const ProfilePage = lazy(() => import('../components/profile/page/ProfilePage'))
-const SpeakingPage = lazy(() => import('../components/speaking/page/SpeakingPage'))
 const StatsPage = lazy(() => import('../components/stats/page/StatsPage'))
 const TermsPage = lazy(() => import('../components/terms/page/TermsPage'))
 const VocabTestPage = lazy(() => import('../components/vocab-test/page/VocabTestPage'))
@@ -71,6 +71,51 @@ function ChromeSlot({
   return <Suspense fallback={null}>{children}</Suspense>
 }
 
+function normalizeHeaderMode(mode: string): PracticeMode {
+  return ['smart', 'listening', 'meaning', 'dictation', 'radio'].includes(mode)
+    ? (mode as PracticeMode)
+    : 'smart'
+}
+
+function PracticeRouteElement({
+  isAuthenticated,
+  user,
+  currentDay,
+  mode,
+  onModeChange,
+  onDayChange,
+  showToast,
+}: {
+  isAuthenticated: boolean
+  user: unknown
+  currentDay: number | null
+  mode: string
+  onModeChange: (mode: string) => void
+  onDayChange: (day: number) => void
+  showToast: (message: string, type?: 'info' | 'success' | 'error') => void
+}) {
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  if (searchParams.get('mode') === 'game') {
+    searchParams.delete('mode')
+    const query = searchParams.toString()
+    return <Navigate to={`/game${query ? `?${query}` : ''}`} replace />
+  }
+
+  return (
+    <AuthenticatedRoute isAuthenticated={isAuthenticated}>
+      <PracticePage
+        user={user ?? undefined}
+        currentDay={currentDay ?? undefined}
+        mode={mode as PracticeMode}
+        onModeChange={nextMode => onModeChange(nextMode)}
+        onDayChange={onDayChange}
+        showToast={showToast}
+      />
+    </AuthenticatedRoute>
+  )
+}
+
 export function AppRoutes({
   mode,
   currentDay,
@@ -82,7 +127,8 @@ export function AppRoutes({
   const location = useLocation()
   const isPractice = location.pathname.startsWith('/practice')
   const isGame = location.pathname.startsWith('/game')
-  const isPracticeSurface = isPractice || isGame
+  const isExamAttemptSurface = /^\/exams\/\d+$/.test(location.pathname)
+  const isPracticeSurface = isPractice || isGame || isExamAttemptSurface
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
   const shouldShowBottomNav = Boolean(user) && !isPracticeSurface && !isSpecialPage
   const [chromeReady, setChromeReady] = useState(false)
@@ -121,7 +167,7 @@ export function AppRoutes({
           <Header
             user={user}
             currentDay={currentDay}
-            mode={mode as PracticeMode}
+            mode={normalizeHeaderMode(mode)}
             onLogout={logout}
             onModeChange={nextMode => onModeChange(nextMode)}
             onDayChange={onDayChange}
@@ -198,30 +244,22 @@ export function AppRoutes({
                 <Route
                   path="/practice"
                   element={(
-                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <PracticePage
-                        user={user ?? undefined}
-                        currentDay={currentDay ?? undefined}
-                        mode={mode as PracticeMode}
-                        onModeChange={nextMode => onModeChange(nextMode)}
-                        onDayChange={onDayChange}
-                        showToast={showToast}
-                      />
-                    </AuthenticatedRoute>
+                    <PracticeRouteElement
+                      isAuthenticated={Boolean(user)}
+                      user={user}
+                      currentDay={currentDay}
+                      mode={mode}
+                      onModeChange={onModeChange}
+                      onDayChange={onDayChange}
+                      showToast={showToast}
+                    />
                   )}
                 />
                 <Route
                   path="/game"
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <PracticePage
-                        user={user ?? undefined}
-                        currentDay={currentDay ?? undefined}
-                        mode="game"
-                        onModeChange={nextMode => onModeChange(nextMode)}
-                        onDayChange={onDayChange}
-                        showToast={showToast}
-                      />
+                      <GameCampaignPage />
                     </AuthenticatedRoute>
                   )}
                 />
@@ -277,7 +315,7 @@ export function AppRoutes({
                   path="/speaking"
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <SpeakingPage />
+                      <Navigate to="/game" replace />
                     </AuthenticatedRoute>
                   )}
                 />

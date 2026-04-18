@@ -109,6 +109,7 @@ def admin_tts_status(current_user, book_id):
 _generating_words: bool = False
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _AUDIO_SOURCE_HEADER = 'X-Audio-Source'
+_SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
 
 
 def _word_tts_dir() -> Path:
@@ -179,6 +180,28 @@ def _generate_words_worker(book_ids: list[str] | None):
         _generating_words = False
 
 
+def _normalize_word_audio_pronunciation_mode(value: str | None) -> str:
+    normalized = (value or '').strip().lower()
+    if normalized in {'word-segmented', 'phonetic-segments', 'phonetic_segments'}:
+        return 'word-segmented'
+    return 'word'
+
+
+def _resolve_word_audio_identity(pronunciation_mode: str) -> tuple[str, str, str, str]:
+    if pronunciation_mode == 'word-segmented':
+        from services.word_tts import azure_default_model, azure_word_voice
+
+        return (
+            'azure',
+            f'{azure_default_model()}@{_SEGMENTED_WORD_CACHE_TAG}',
+            azure_word_voice(),
+            'word-segmented',
+        )
+
+    provider, model, voice = default_word_tts_identity()
+    return provider, model, voice, 'word'
+
+
 @tts_bp.route('/word-audio', methods=['GET'])
 def get_word_audio():
     """
@@ -201,13 +224,16 @@ def get_word_audio():
     if not raw or len(raw) > 160:
         return jsonify({'error': 'invalid w'}), 400
     cache_only = request.args.get('cache_only') == '1' or request.headers.get('X-Audio-Cache-Only') == '1'
+    pronunciation_mode = _normalize_word_audio_pronunciation_mode(request.args.get('pronunciation_mode'))
 
     key = normalize_word_key(raw)
-    provider, model, voice = default_word_tts_identity()
+    provider, model, voice, content_mode = _resolve_word_audio_identity(pronunciation_mode)
     path = word_tts_cache_path(_word_tts_dir(), key, model, voice)
     if path.exists() and not is_probably_valid_mp3_file(path):
         remove_invalid_cached_audio(path)
-    oss_metadata = resolve_word_audio_oss_metadata(file_name=path.name, model=model, voice=voice)
+    oss_metadata = None
+    if content_mode == 'word':
+        oss_metadata = resolve_word_audio_oss_metadata(file_name=path.name, model=model, voice=voice)
     if request.method == 'HEAD':
         if oss_metadata is not None:
             response = _audio_metadata_response(
@@ -244,7 +270,7 @@ def get_word_audio():
                 synthesis_model,
                 voice,
                 provider=provider,
-                content_mode='word',
+                content_mode=content_mode,
             )
             write_bytes_atomically(path, audio_bytes)
         except Exception as exc:
