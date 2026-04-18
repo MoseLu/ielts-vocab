@@ -67,7 +67,10 @@ backend/backups/
 
 # Local runtime artifacts
 .playwright-cli/
+.codex/
+frontend/.codex/
 logs/runtime/
+.omc/artifacts/
 .omc/research/
 .omc/*.png
 
