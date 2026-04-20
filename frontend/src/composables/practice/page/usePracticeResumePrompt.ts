@@ -12,6 +12,8 @@ function getResumeLabels(mode: PracticeMode) {
   switch (mode) {
     case 'dictation':
       return { context: '听写', action: '继续听写' }
+    case 'follow':
+      return { context: '跟读', action: '继续跟读' }
     case 'listening':
       return { context: '听音', action: '继续练习' }
     case 'quickmemory':
@@ -121,7 +123,7 @@ export function usePracticeResumePrompt({
 
   const handlePracticeWordIndexChange = useCallback((index: number) => {
     setFavoriteQueueIndex(index)
-    if (practiceMode === 'radio') setQueueIndex(index)
+    if (practiceMode === 'radio' || practiceMode === 'follow') setQueueIndex(index)
   }, [practiceMode, setFavoriteQueueIndex, setQueueIndex])
 
   const resumePromptOpen = (

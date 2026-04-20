@@ -5,6 +5,7 @@ export const PracticeModeSchema = z.enum([
   'listening',
   'meaning',
   'dictation',
+  'follow',
   'radio',
   'quickmemory',
   'errors',

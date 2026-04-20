@@ -85,18 +85,14 @@ export function PracticePageLoadingState({
       </div>
     )
   }
-
-  return (
-    <div className="practice-session-layout">
-      <PageSkeleton variant="practice" />
-    </div>
-  )
+  return <div className="practice-session-layout"><PageSkeleton variant="practice" /></div>
 }
 interface PracticePageCompletedStateProps {
   navigate: NavigateFunction
   bookId: string | null
   chapterId: string | null
   currentDay?: number
+  mode?: PracticeMode
   correctCount: number
   wrongCount: number
   errorMode: boolean
@@ -109,11 +105,11 @@ interface PracticePageCompletedStateProps {
   onContinueReview: () => void
   onContinueErrorReview: () => void
 }
-
 export function PracticePageCompletedState({
   navigate,
   bookId,
   currentDay,
+  mode,
   correctCount,
   wrongCount,
   errorMode,
@@ -135,7 +131,10 @@ export function PracticePageCompletedState({
     : null
   const totalAnswered = correctCount + wrongCount
   const accuracy = totalAnswered > 0 ? `${Math.round((correctCount / totalAnswered) * 100)}%` : '0%'
-  const contextLabel = errorMode
+  const isFollowMode = mode === 'follow'
+  const contextLabel = isFollowMode
+    ? '跟读练习'
+    : errorMode
     ? '错词复习'
     : reviewMode
       ? '到期复习'
@@ -144,7 +143,9 @@ export function PracticePageCompletedState({
         : currentDay != null
           ? `Day ${currentDay}`
           : '本轮练习'
-  const note = errorMode
+  const note = isFollowMode
+    ? '跟读模式只记录学习时长，不计入测试正确率、错词或掌握度。'
+    : errorMode
     ? `第 ${errorReviewRound} 轮已完成，剩余 ${nextErrorRoundWords.length} 个单词需要继续巩固。`
     : reviewMode
       ? (reviewSummary?.has_more
@@ -166,7 +167,6 @@ export function PracticePageCompletedState({
       tone: 'primary' as const,
     })
   }
-
   actions.push({
     label: '返回主页',
     onClick: () => navigate('/plan'),
@@ -178,9 +178,11 @@ export function PracticePageCompletedState({
       <PracticeRoundSummary
         contextLabel={contextLabel}
         stats={[
-          { value: correctCount, label: '正确', tone: 'accent' },
-          { value: wrongCount, label: '错误', tone: 'error' },
-          { value: accuracy, label: '正确率', tone: 'warning' },
+          ...(!isFollowMode ? [
+            { value: correctCount, label: '正确', tone: 'accent' as const },
+            { value: wrongCount, label: '错误', tone: 'error' as const },
+            { value: accuracy, label: '正确率', tone: 'warning' as const },
+          ] : []),
           ...(sessionDurationText ? [{ value: sessionDurationText, label: '本次用时', tone: 'neutral' as const }] : []),
         ]}
         note={note}
@@ -211,7 +213,6 @@ export function PracticePagePauseOverlay({
   onExit: () => void
 }) {
   if (!isPaused) return null
-
   return (
     <div className="practice-pause-overlay">
       <div className="practice-pause-card">
@@ -268,7 +269,6 @@ interface SharedLayoutProps {
   speakingSlot?: ReactNode
   wordListActionControls?: WordListActionControls
 }
-
 interface PracticePageRadioLayoutProps extends SharedLayoutProps {
   queue: number[]
   radioIndex: number
@@ -319,7 +319,6 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
     handleRadioProgressChange,
     isCurrentSessionActive,
   } = props
-
   return (
     <div className="practice-session-layout">
       <PracticeControlBar
@@ -437,7 +436,6 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
     initialIndex,
     onIndexChange,
   } = props
-
   return (
     <div className="practice-session-layout">
       <PracticeControlBar

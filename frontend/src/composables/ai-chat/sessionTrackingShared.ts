@@ -221,6 +221,7 @@ export function buildSessionPayload(data: {
 }
 
 export function shouldDiscardPassiveSession(payload: ReturnType<typeof buildSessionPayload>) {
+  if (payload.mode === 'follow') return payload.durationSeconds <= 0
   return (
     payload.wordsStudied <= 0
     && payload.correctCount <= 0

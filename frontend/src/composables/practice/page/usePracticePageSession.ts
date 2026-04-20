@@ -40,6 +40,7 @@ interface UsePracticePageSessionResult {
   completeCurrentSession: () => Promise<number>
   computeChapterWordsLearned: (cap: number) => number
   registerAnsweredWord: (word: string) => void
+  markFollowSessionInteraction: (activityAt?: number) => Promise<void>
   markRadioSessionInteraction: () => Promise<void>
   handleRadioProgressChange: (wordsStudied: number) => void
   syncCurrentSessionSnapshot: (activeAt?: number) => void
@@ -93,6 +94,7 @@ export function usePracticePageSession({
   const wrongCountRef = useRef(0)
   const completedSessionDurationSecondsRef = useRef<number | null>(null)
   const sessionLoggedRef = useRef(false)
+  const followInteractionRef = useRef(false)
   const radioInteractionRef = useRef(false)
   const radioWordsStudiedRef = useRef(0)
   const wordsLearnedBaselineRef = useRef(0)
@@ -130,6 +132,7 @@ export function usePracticePageSession({
     sessionCorrectRef.current = 0
     sessionWrongRef.current = 0
     sessionUniqueWordsRef.current = new Set()
+    followInteractionRef.current = false
     radioInteractionRef.current = false
     radioWordsStudiedRef.current = 0
   }, [])
@@ -213,12 +216,14 @@ export function usePracticePageSession({
         sessionId: payload.sessionId,
         startedAt: payload.startedAt,
       })
-      const shouldDiscard = (
-        payload.wordsStudied <= 0
-        && payload.correctCount <= 0
-        && payload.wrongCount <= 0
-        && durationSeconds < passiveStudySessionMinSeconds
-      )
+      const shouldDiscard = sessionMode === 'follow'
+        ? !followInteractionRef.current
+        : (
+            payload.wordsStudied <= 0
+            && payload.correctCount <= 0
+            && payload.wrongCount <= 0
+            && durationSeconds < passiveStudySessionMinSeconds
+          )
       markStudySessionRecoveryHandled?.()
       if (shouldDiscard) {
         await AIChat.cancelSession(payload.sessionId)
@@ -244,7 +249,7 @@ export function usePracticePageSession({
     if (!finalized.discarded && accumulateIntoCompletedRef) {
       accumulateCompletedDuration(finalized.durationSeconds)
     }
-    if (!finalized.discarded && syncStats) {
+    if (!finalized.discarded && syncStats && sessionMode !== 'follow') {
       syncSmartStatsToBackend({
         bookId: sessionBookId,
         chapterId: sessionChapterId,
@@ -289,15 +294,18 @@ export function usePracticePageSession({
         const finalizedPreviousSegment = prepared.finalizedPreviousSegment
         if (finalizedPreviousSegment && !finalizedPreviousSegment.discarded) {
           accumulateCompletedDuration(finalizedPreviousSegment.durationSeconds)
-          syncSmartStatsToBackend({
-            bookId: sessionBookIdRef.current,
-            chapterId: sessionChapterIdRef.current,
-            mode: effectiveSessionModeRef.current,
-          })
+          if (effectiveSessionModeRef.current !== 'follow') {
+            syncSmartStatsToBackend({
+              bookId: sessionBookIdRef.current,
+              chapterId: sessionChapterIdRef.current,
+              mode: effectiveSessionModeRef.current,
+            })
+          }
         }
         sessionCorrectRef.current = 0
         sessionWrongRef.current = 0
         sessionUniqueWordsRef.current = new Set()
+        followInteractionRef.current = false
         radioInteractionRef.current = false
         radioWordsStudiedRef.current = 0
       }
@@ -408,6 +416,12 @@ export function usePracticePageSession({
     if (chapterId) uniqueAnsweredRef.current.add(key)
   }, [chapterId])
 
+  const markFollowSessionInteraction = useCallback(async (activityAt = Date.now()) => {
+    await prepareSessionForLearningAction(activityAt)
+    followInteractionRef.current = true
+    syncCurrentSessionSnapshot(activityAt)
+  }, [prepareSessionForLearningAction, syncCurrentSessionSnapshot])
+
   const markRadioSessionInteraction = useCallback(async () => {
     await prepareSessionForLearningAction()
     radioInteractionRef.current = true
@@ -450,6 +464,7 @@ export function usePracticePageSession({
     completeCurrentSession,
     computeChapterWordsLearned,
     registerAnsweredWord,
+    markFollowSessionInteraction,
     markRadioSessionInteraction,
     handleRadioProgressChange,
     syncCurrentSessionSnapshot,

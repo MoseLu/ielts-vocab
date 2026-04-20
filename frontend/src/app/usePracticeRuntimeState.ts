@@ -6,6 +6,7 @@ const CLASSIC_PRACTICE_MODES = new Set([
   'listening',
   'meaning',
   'dictation',
+  'follow',
   'radio',
 ])
 

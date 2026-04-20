@@ -102,14 +102,8 @@ describe('DictationMode', () => {
 
     expect(screen.getByText('根据发音写出单词')).toBeInTheDocument()
     expect(onPlayWord).toHaveBeenCalledWith('attention')
-
-    await user.click(screen.getByRole('button', { name: '慢速播放发音' }))
-    expect(playSlowWordAudioMock).toHaveBeenCalledWith(
-      'attention',
-      baseProps.settings,
-      '/əˈten.ʃən/',
-      expect.any(Function),
-    )
+    expect(screen.queryByRole('button', { name: '慢速播放发音' })).not.toBeInTheDocument()
+    expect(playSlowWordAudioMock).not.toHaveBeenCalled()
   })
 
   it('reveals the answer after three manual replays', async () => {

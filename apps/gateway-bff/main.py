@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import Body, File, Header, Query, Request, UploadFile
+from fastapi import Body, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 
@@ -30,6 +30,8 @@ from platform_sdk.gateway_media_proxy import (
     audio_content_response as _audio_content_response,
     fetch_example_audio_content,
     fetch_example_audio_metadata,
+    fetch_follow_read_chunked_audio,
+    fetch_follow_read_word,
     fetch_tts_voices,
     fetch_word_audio_content,
     fetch_word_audio_metadata,
@@ -51,6 +53,7 @@ load_split_service_env(service_name='gateway-bff')
 
 
 DEFAULT_UPSTREAM_TIMEOUT_SECONDS = 10.0
+TRANSIENT_WORD_AUDIO_CACHE_ERROR_STATUSES = frozenset({502, 503, 504})
 
 
 def _upstream_timeout_seconds() -> float:
@@ -61,6 +64,50 @@ def _upstream_timeout_seconds() -> float:
         return max(0.1, float(raw))
     except ValueError:
         return DEFAULT_UPSTREAM_TIMEOUT_SECONDS
+
+
+def _is_transient_word_audio_cache_error(exc: HTTPException) -> bool:
+    return exc.status_code in TRANSIENT_WORD_AUDIO_CACHE_ERROR_STATUSES
+
+
+def _fetch_word_audio_metadata_with_cache_fallback(
+    *,
+    file_name: str,
+    model: str,
+    voice: str,
+    request: Request,
+):
+    try:
+        return fetch_word_audio_metadata(
+            file_name=file_name,
+            model=model,
+            voice=voice,
+            headers=build_forward_headers(request, target_service_name='tts-media-service'),
+        )
+    except HTTPException as exc:
+        if _is_transient_word_audio_cache_error(exc):
+            return None
+        raise
+
+
+def _fetch_word_audio_content_with_cache_fallback(
+    *,
+    file_name: str,
+    model: str,
+    voice: str,
+    request: Request,
+):
+    try:
+        return fetch_word_audio_content(
+            file_name=file_name,
+            model=model,
+            voice=voice,
+            headers=build_forward_headers(request, target_service_name='tts-media-service'),
+        )
+    except HTTPException as exc:
+        if _is_transient_word_audio_cache_error(exc):
+            return None
+        raise
 
 
 app = create_service_app(
@@ -140,11 +187,11 @@ def get_word_audio_metadata_proxy(
 ):
     metadata = None
     for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
-        metadata = fetch_word_audio_metadata(
+        metadata = _fetch_word_audio_metadata_with_cache_fallback(
             file_name=request_info['file_name'],
             model=request_info['model'],
             voice=request_info['voice'],
-            headers=build_forward_headers(request, target_service_name='tts-media-service'),
+            request=request,
         )
         if metadata is not None:
             break
@@ -161,11 +208,11 @@ def head_word_audio_proxy(
 ):
     metadata = None
     for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
-        metadata = fetch_word_audio_metadata(
+        metadata = _fetch_word_audio_metadata_with_cache_fallback(
             file_name=request_info['file_name'],
             model=request_info['model'],
             voice=request_info['voice'],
-            headers=build_forward_headers(request, target_service_name='tts-media-service'),
+            request=request,
         )
         if metadata is not None:
             break
@@ -183,11 +230,11 @@ def get_word_audio_proxy(
     normalized_mode = (pronunciation_mode or '').strip().lower()
     if normalized_mode in {'word-segmented', 'phonetic-segments', 'phonetic_segments'}:
         for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
-            cached_payload = fetch_word_audio_content(
+            cached_payload = _fetch_word_audio_content_with_cache_fallback(
                 file_name=request_info['file_name'],
                 model=request_info['model'],
                 voice=request_info['voice'],
-                headers=build_forward_headers(request, target_service_name='tts-media-service'),
+                request=request,
             )
             if cached_payload is not None:
                 return _audio_content_response(cached_payload, source='oss')
@@ -208,11 +255,11 @@ def get_word_audio_proxy(
             )
         )
     request_info = _resolve_word_audio_request(w)
-    payload = fetch_word_audio_content(
+    payload = _fetch_word_audio_content_with_cache_fallback(
         file_name=request_info['file_name'],
         model=request_info['model'],
         voice=request_info['voice'],
-        headers=build_forward_headers(request, target_service_name='tts-media-service'),
+        request=request,
     )
     if payload is not None:
         return _audio_content_response(payload, source='oss')
@@ -230,6 +277,37 @@ def get_word_audio_proxy(
             headers=build_forward_headers(request, target_service_name='tts-media-service'),
         )
     )
+
+
+@app.get('/api/tts/follow-read-word')
+def get_follow_read_word_proxy(
+    request: Request,
+    w: str = Query(..., min_length=1, max_length=160),
+    phonetic: str | None = Query(default=None),
+    definition: str | None = Query(default=None),
+    pos: str | None = Query(default=None),
+):
+    return fetch_follow_read_word(
+        word=w,
+        phonetic=phonetic,
+        definition=definition,
+        pos=pos,
+        headers=build_forward_headers(request, target_service_name='tts-media-service'),
+    )
+
+
+@app.get('/api/tts/follow-read-chunked-audio')
+def get_follow_read_chunked_audio_proxy(
+    request: Request,
+    w: str = Query(..., min_length=1, max_length=160),
+    phonetic: str | None = Query(default=None),
+):
+    payload = fetch_follow_read_chunked_audio(
+        word=w,
+        phonetic=phonetic,
+        headers=build_forward_headers(request, target_service_name='tts-media-service'),
+    )
+    return _audio_content_response(payload, source='local')
 
 
 @app.head('/api/tts/example-audio')

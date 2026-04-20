@@ -97,7 +97,7 @@ describe('QuickMemoryMode audio behavior', () => {
     vi.useRealTimers()
   })
 
-  it('does not auto reveal after the countdown expires without an active learning segment', async () => {
+  it('stops at zero after the countdown expires without auto revealing or slow playback', async () => {
     vi.useFakeTimers()
 
     renderQuickMemoryMode({ word: 'within', phonetic: '/wɪˈðɪn/', pos: 'prep.', definition: 'inside' })
@@ -116,14 +116,11 @@ describe('QuickMemoryMode audio behavior', () => {
     expect(screen.getByText('0')).toBeInTheDocument()
     expect(screen.queryByText('✗ 不认识')).not.toBeInTheDocument()
     expect(playWordAudioMock).not.toHaveBeenCalled()
-
-    await act(async () => {
-      vi.advanceTimersByTime(350)
-    })
-    expect(playWordAudioMock).not.toHaveBeenCalled()
+    expect(playSlowWordAudioMock).not.toHaveBeenCalled()
+    expect(startSessionMock).not.toHaveBeenCalled()
   })
 
-  it('starts the countdown immediately and only plays audio after the user answers', async () => {
+  it('plays word audio immediately after the user answers before the countdown ends', async () => {
     vi.useFakeTimers()
 
     renderQuickMemoryMode({ word: 'within', phonetic: '/wɪˈðɪn/', pos: 'prep.', definition: 'inside' })
@@ -139,12 +136,8 @@ describe('QuickMemoryMode audio behavior', () => {
     await act(async () => {
       screen.getByRole('button', { name: '认识' }).click()
     })
-    expect(playWordAudioMock).not.toHaveBeenCalled()
-
-    await act(async () => {
-      vi.advanceTimersByTime(350)
-    })
     expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function))
+    expect(playSlowWordAudioMock).not.toHaveBeenCalled()
   })
 
   it('replays the current word audio from the shared shortcut, the toolbar button, and the word itself', async () => {
@@ -175,16 +168,5 @@ describe('QuickMemoryMode audio behavior', () => {
 
     expect(stopAudioMock).toHaveBeenCalled()
     expect(screen.getByRole('button', { name: '重播发音' })).toBeInTheDocument()
-  })
-
-  it('plays the segmented slow pronunciation from the turtle button', async () => {
-    const user = userEvent.setup()
-    renderQuickMemoryMode()
-
-    await user.click(screen.getByRole('button', { name: '慢速重播发音' }))
-
-    await waitFor(() => {
-      expect(playSlowWordAudioMock).toHaveBeenCalledWith('apple', settings, '/ˈæpəl/', expect.any(Function))
-    })
   })
 })

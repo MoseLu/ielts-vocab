@@ -2,8 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react'
 import type { OptionsModeProps } from './types'
-import { playExampleAudio, playSlowWordAudio } from './utils'
-import SlowPlaybackIcon from '../ui/SlowPlaybackIcon'
+import { playExampleAudio } from './utils'
 import {
   BottomBar,
   ListeningExamplePrompt,
@@ -160,14 +159,6 @@ export default function OptionsMode({
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
                   </svg>
-                </button>
-                <button
-                  className="replay-btn replay-btn--slow"
-                  onClick={() => { void playSlowWordAudio(currentWord.word, settings, currentWord.phonetic, () => {}) }}
-                  title="慢速播放单词"
-                  aria-label="慢速播放单词"
-                >
-                  <SlowPlaybackIcon />
                 </button>
                 <div className="word-display-audio-side word-display-audio-side--end">
                   {speakingSlot}

@@ -314,4 +314,8 @@ def copy_optional_word_fields(source_word, target_word):
     headword = source_word.get('headword')
     if isinstance(headword, str) and headword.strip():
         target_word['headword'] = headword.strip()
+
+    follow_read_segments = source_word.get('follow_read_segments')
+    if isinstance(follow_read_segments, list) and follow_read_segments:
+        target_word['follow_read_segments'] = [{**segment} for segment in follow_read_segments if isinstance(segment, dict)]
     return target_word

@@ -31,7 +31,9 @@ _AZURE_DEFAULT_MODEL = (
     or f'azure-rest:{_AZURE_OUTPUT_FORMAT}'
 )
 _AZURE_RATE = os.environ.get('AZURE_TTS_RATE', '+0.00%').strip() or '+0.00%'
-_AZURE_WORD_CACHE_TAG = 'azure-word-v5-ielts-rp-female-onset-buffer'
+# Bump the normal word-audio cache namespace so production stops reusing
+# previously materialized assets that may contain the segmented pronunciation.
+_AZURE_WORD_CACHE_TAG = 'azure-word-v6-ielts-rp-female-onset-buffer'
 _AZURE_SENTENCE_CACHE_TAG = 'azure-sentence-v4-ielts-rp-female'
 _AZURE_WORD_RATE = os.environ.get('AZURE_TTS_WORD_RATE', '-6.00%').strip() or '-6.00%'
 _AZURE_SENTENCE_RATE = os.environ.get('AZURE_TTS_SENTENCE_RATE', '-2.00%').strip() or '-2.00%'

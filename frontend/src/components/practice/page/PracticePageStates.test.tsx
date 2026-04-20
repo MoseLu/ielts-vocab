@@ -54,6 +54,34 @@ describe('PracticePageCompletedState session duration', () => {
     expect(screen.getByText('错词复习')).toBeInTheDocument()
     expect(screen.getByText('2分5秒')).toBeInTheDocument()
   })
+
+  it('shows duration-only summary for follow completion', () => {
+    render(
+      <PracticePageCompletedState
+        navigate={vi.fn()}
+        bookId="book-1"
+        chapterId="1"
+        currentDay={1}
+        mode="follow"
+        correctCount={8}
+        wrongCount={2}
+        errorMode={false}
+        errorReviewRound={1}
+        reviewMode={false}
+        sessionDurationSeconds={92}
+        reviewSummary={null}
+        vocabulary={[]}
+        errorRoundResults={{}}
+        onContinueReview={() => {}}
+        onContinueErrorReview={() => {}}
+      />,
+    )
+
+    expect(screen.getByText('跟读练习')).toBeInTheDocument()
+    expect(screen.getByText('1分32秒')).toBeInTheDocument()
+    expect(screen.getByText('跟读模式只记录学习时长，不计入测试正确率、错词或掌握度。')).toBeInTheDocument()
+    expect(screen.queryByText('正确率')).not.toBeInTheDocument()
+  })
 })
 
 describe('PracticePageLoadingState review errors', () => {

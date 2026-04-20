@@ -90,6 +90,7 @@ function PracticePage({
     completeCurrentSession,
     computeChapterWordsLearned,
     registerAnsweredWord,
+    markFollowSessionInteraction,
     markRadioSessionInteraction,
     handleRadioProgressChange,
     syncCurrentSessionSnapshot,
@@ -268,6 +269,7 @@ function PracticePage({
     setReviewOffset,
     setErrorReviewRound,
   })
+  const completeFollowSession = async () => { completedSessionDurationSecondsRef.current = await completeCurrentSession() }
   const {
     handlePracticeWordIndexChange,
     handleResumeContinue,
@@ -405,6 +407,7 @@ function PracticePage({
       reviewMode={reviewMode}
       sessionDurationSeconds={completedSessionDurationSecondsRef.current}
       reviewSummary={reviewSummary}
+      mode={practiceMode}
       vocabulary={vocabulary}
       errorRoundResults={errorRoundResultsRef.current}
       onContinueReview={handleContinueReview}
@@ -440,6 +443,8 @@ function PracticePage({
         handleRadioSettingChange={handleRadioSettingChange}
         markRadioSessionInteraction={markRadioSessionInteraction}
         handleRadioProgressChange={handleRadioProgressChange}
+        markFollowSessionInteraction={markFollowSessionInteraction}
+        completeFollowSession={completeFollowSession}
         isCurrentSessionActive={isCurrentSessionActive}
         reviewMode={reviewMode}
         reviewSummary={reviewSummary}

@@ -8,6 +8,7 @@ export const PRACTICE_MODES = {
   LISTENING: 'listening',
   MEANING: 'meaning',
   DICTATION: 'dictation',
+  FOLLOW: 'follow',
   RADIO: 'radio',
   QUICK_MEMORY: 'quickmemory',
 } as const
@@ -17,6 +18,7 @@ export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRAC
   [PRACTICE_MODES.LISTENING]: PRACTICE_MODE_LABELS.listening,
   [PRACTICE_MODES.MEANING]: PRACTICE_MODE_LABELS.meaning,
   [PRACTICE_MODES.DICTATION]: PRACTICE_MODE_LABELS.dictation,
+  [PRACTICE_MODES.FOLLOW]: PRACTICE_MODE_LABELS.follow,
   [PRACTICE_MODES.RADIO]: PRACTICE_MODE_LABELS.radio,
   [PRACTICE_MODES.QUICK_MEMORY]: PRACTICE_MODE_LABELS.quickmemory,
 }

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import PracticeControlBar from '../PracticeControlBar'
 import WordListPanel from '../WordListPanel'
 import DictationMode from '../DictationMode'
+import FollowMode from '../FollowMode'
 import OptionsMode from '../OptionsMode'
 import SettingsPanel from '../../settings/SettingsPanel'
 import type {
@@ -324,6 +325,107 @@ export function PracticePageOptionsLayout(props: PracticePageOptionsLayoutProps)
         onPlayWord={onPlayWord}
         favoriteSlot={favoriteSlot}
         speakingSlot={speakingSlot}
+      />
+    </div>
+  )
+}
+
+interface PracticePageFollowLayoutProps extends SharedModeLayoutProps {
+  currentWord: Word
+  settings: AppSettings
+  speechConnected: boolean
+  speechRecording: boolean
+  recognizedText: string
+  onIndexChange: (index: number) => void
+  onCompleteSession: () => Promise<void>
+  onStartRecording: () => Promise<void>
+  onStopRecording: () => void
+  onSessionInteraction: () => Promise<void>
+}
+
+export function PracticePageFollowLayout(props: PracticePageFollowLayoutProps) {
+  const {
+    mode,
+    currentDay,
+    practiceBookId,
+    practiceChapterId,
+    errorMode,
+    vocabulary,
+    currentChapterTitle,
+    bookChapters,
+    showWordList,
+    showPracticeSettings,
+    onWordListToggle,
+    onSettingsToggle,
+    onModeChange,
+    onDayChange,
+    navigate,
+    buildChapterPath,
+    onExitHome,
+    queue,
+    queueIndex,
+    wordStatuses,
+    favoriteSlot,
+    wordListActionControls,
+    currentWord,
+    settings,
+    speechConnected,
+    speechRecording,
+    recognizedText,
+    onIndexChange,
+    onCompleteSession,
+    onStartRecording,
+    onStopRecording,
+    onSessionInteraction,
+  } = props
+
+  return (
+    <div className="practice-session-layout practice-session-layout--follow">
+      <PracticeControlBar
+        mode={mode}
+        currentDay={currentDay}
+        bookId={practiceBookId}
+        chapterId={practiceChapterId}
+        errorMode={errorMode}
+        vocabularyLength={vocabulary.length}
+        currentChapterTitle={currentChapterTitle}
+        bookChapters={bookChapters}
+        showWordList={showWordList}
+        showPracticeSettings={showPracticeSettings}
+        onWordListToggle={onWordListToggle}
+        onSettingsToggle={onSettingsToggle}
+        onModeChange={onModeChange}
+        onDayChange={onDayChange}
+        onNavigate={navigate}
+        buildChapterPath={buildChapterPath}
+        onExitHome={onExitHome}
+      />
+      <WordListPanel
+        show={showWordList}
+        vocabulary={vocabulary}
+        queue={queue}
+        queueIndex={queueIndex}
+        wordStatuses={wordStatuses}
+        wordActionControls={wordListActionControls}
+        onClose={onWordListToggle}
+      />
+      {showPracticeSettings && (
+        <SettingsPanel showSettings={showPracticeSettings} onClose={onSettingsToggle} />
+      )}
+      <FollowMode
+        currentWord={currentWord}
+        queueIndex={queueIndex}
+        total={queue.length}
+        settings={settings}
+        speechConnected={speechConnected}
+        speechRecording={speechRecording}
+        recognizedText={recognizedText}
+        favoriteSlot={favoriteSlot}
+        onIndexChange={onIndexChange}
+        onCompleteSession={onCompleteSession}
+        onStartRecording={onStartRecording}
+        onStopRecording={onStopRecording}
+        onSessionInteraction={onSessionInteraction}
       />
     </div>
   )

@@ -4,6 +4,7 @@ export const CANONICAL_PRACTICE_MODES = [
   'listening',
   'meaning',
   'dictation',
+  'follow',
   'radio',
   'errors',
 ] as const
@@ -42,6 +43,11 @@ const PRACTICE_MODE_META: Record<CanonicalPracticeMode, PracticeModeMeta> = {
     description: '听发音拼写单词',
     shortLabel: '默',
   },
+  follow: {
+    label: '跟读模式',
+    description: '自然慢读，音标同步高亮',
+    shortLabel: '读',
+  },
   radio: {
     label: '随身听',
     description: '连续播放音频',
@@ -77,6 +83,7 @@ export const HEADER_PRACTICE_MODES = [
   'listening',
   'meaning',
   'dictation',
+  'follow',
   'radio',
 ] as const
 
@@ -89,6 +96,7 @@ export const PRACTICE_CONTROL_MODES = [
   'listening',
   'meaning',
   'dictation',
+  'follow',
   'radio',
 ] as const
 
@@ -109,6 +117,7 @@ export const CHAPTER_PRACTICE_MODES = [
   'listening',
   'meaning',
   'dictation',
+  'follow',
   'smart',
 ] as const
 
@@ -215,6 +224,10 @@ const MODE_ALIAS_TO_KEY: Record<string, CanonicalPracticeMode> = {
   '听写模式（会写）': 'dictation',
   '听音拼写': 'dictation',
   '拼写默写': 'dictation',
+  follow: 'follow',
+  '跟读模式': 'follow',
+  '跟读练习': 'follow',
+  '跟读': 'follow',
   radio: 'radio',
   '随身听': 'radio',
   '随身听模式': 'radio',

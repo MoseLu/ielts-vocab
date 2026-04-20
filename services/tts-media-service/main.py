@@ -42,6 +42,10 @@ from platform_sdk.storage import (
 from platform_sdk.tts_media_event_application import record_tts_media_materialization
 from platform_sdk.tts_media_runtime import create_tts_media_flask_app
 import runtime_helpers as runtime
+from services.follow_read_timeline_service import (
+    build_follow_read_payload,
+    generate_follow_read_chunked_audio_bytes,
+)
 
 DEFAULT_WORD_TTS_OSS_PREFIX = 'projects/ielts-vocab/word-tts-cache'
 _AUDIO_BYTES_HEADER = 'X-Audio-Bytes'
@@ -210,6 +214,36 @@ def get_word_audio_content(
         response.headers[_AUDIO_CACHE_KEY_HEADER] = payload.cache_key
     response.headers[_AUDIO_OSS_URL_HEADER] = payload.signed_url
     response.headers[_MEDIA_ID_HEADER] = payload.object_key
+    return response
+
+
+@app.get('/v1/media/follow-read-word')
+def get_follow_read_word(
+    w: str = Query(..., min_length=1, max_length=160),
+    phonetic: str | None = Query(default=None),
+    definition: str | None = Query(default=None),
+    pos: str | None = Query(default=None),
+) -> dict:
+    return build_follow_read_payload(
+        word=w,
+        phonetic=phonetic,
+        definition=definition,
+        pos=pos,
+    )
+
+
+@app.get('/v1/media/follow-read-chunked-audio')
+def get_follow_read_chunked_audio(
+    w: str = Query(..., min_length=1, max_length=160),
+    phonetic: str | None = Query(default=None),
+):
+    try:
+        audio_bytes = generate_follow_read_chunked_audio_bytes(word=w, phonetic=phonetic)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail='follow read audio generation failed') from exc
+
+    response = Response(audio_bytes, media_type='audio/mpeg')
+    response.headers[_AUDIO_BYTES_HEADER] = str(len(audio_bytes))
     return response
 
 

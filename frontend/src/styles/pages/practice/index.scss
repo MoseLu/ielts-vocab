@@ -7,6 +7,7 @@
 @use './practice-stage-guide';
 @use './dictation/index.scss' as *;
 @use './practice-radio';
+@use './practice-follow';
 @use './practice-quickmemory';
 @use './practice-complete';
 @use './practice-game';
@@ -16,5 +17,4 @@
 @use './practice-wordlist';
 @use './practice-wordlist-actions';
 @use './practice-wordlist-detail';
-
 

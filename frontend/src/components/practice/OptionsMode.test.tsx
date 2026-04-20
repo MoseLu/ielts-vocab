@@ -148,15 +148,10 @@ describe('OptionsMode listening feedback', () => {
     expect(container.querySelector('.listening-example-prompt .word-display-audio-controls')).toBeNull()
     expect(container.querySelector('.options-footer-actions .word-display-audio-side button')?.textContent).toBe('fav')
     expect(container.querySelector('.options-footer-actions .replay-btn')).not.toBeNull()
-    expect(screen.getByRole('button', { name: '慢速播放单词' })).toBeInTheDocument()
-    screen.getByRole('button', { name: '慢速播放单词' }).click()
-    expect(playSlowWordAudioMock).toHaveBeenCalledWith(
-      'guy',
-      {},
-      '/gaɪ/',
-      expect.any(Function),
-    )
-    expect(onPlayWord).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: '慢速播放单词' })).not.toBeInTheDocument()
+    screen.getByRole('button', { name: '再读一遍，快捷键 Tab' }).click()
+    expect(onPlayWord).toHaveBeenCalledWith('guy')
+    expect(playSlowWordAudioMock).not.toHaveBeenCalled()
     expect(container.querySelector('.options-footer-actions .word-display-audio-side--end button')?.textContent).toBe('speak')
     expect(container.querySelector('.practice-main-header')).toBeNull()
   })

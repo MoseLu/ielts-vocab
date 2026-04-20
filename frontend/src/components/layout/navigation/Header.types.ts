@@ -4,7 +4,7 @@ export interface User {
   avatar_url?: string | null
 }
 
-export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'radio'
+export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'follow' | 'radio'
 
 export interface HeaderProps {
   user: User | null

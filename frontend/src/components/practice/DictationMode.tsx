@@ -3,8 +3,7 @@
 import { useRef, useEffect, useState, useCallback, type CSSProperties } from 'react'
 import type { DictationModeProps, LastState } from './types'
 import { buildBlankSentence } from './exampleSentence'
-import { playExampleAudio, playSlowWordAudio, stopAudio } from './utils'
-import SlowPlaybackIcon from '../ui/SlowPlaybackIcon'
+import { playExampleAudio, stopAudio } from './utils'
 import {
   DictationErrorFeedback,
   DictationLiveStage,
@@ -108,10 +107,6 @@ export default function DictationMode({
     onPlayWord(currentWord.word)
   }, [onPlayWord, currentWord.word])
 
-  const handlePlayWordSlow = useCallback(() => {
-    void playSlowWordAudio(currentWord.word, settings, currentWord.phonetic, () => {})
-  }, [currentWord.word, currentWord.phonetic, settings])
-
   const handlePlayExample = useCallback(() => {
     const example = currentWord.examples?.[0]
     if (!example) return
@@ -137,19 +132,15 @@ export default function DictationMode({
   const modeBadge = isExampleMode ? '例句填空' : '单词拼写'
   const replayButtonLabel = isExampleMode ? '重播例句，点击例句或按 Alt' : '重播发音，快捷键 Tab'
 
-  const handleReplayClick = useCallback((playbackMode: 'normal' | 'slow' = 'normal') => {
+  const handleReplayClick = useCallback(() => {
     if (isExampleMode) {
       handlePlayExample()
     } else {
-      if (playbackMode === 'slow') {
-        handlePlayWordSlow()
-      } else {
-        handlePlayWord()
-      }
+      handlePlayWord()
     }
 
     setManualReplayCount(count => Math.min(count + 1, ANSWER_REVEAL_PLAY_COUNT))
-  }, [handlePlayExample, handlePlayWord, handlePlayWordSlow, isExampleMode])
+  }, [handlePlayExample, handlePlayWord, isExampleMode])
 
   useEffect(() => {
     if (!isExampleMode || !sentenceText) return
@@ -234,16 +225,6 @@ export default function DictationMode({
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
                   </svg>
                 </button>
-                {!isExampleMode ? (
-                  <button
-                    className="play-btn-large dictation-play-btn dictation-play-btn--slow"
-                    onClick={() => handleReplayClick('slow')}
-                    title="慢速播放发音"
-                    aria-label="慢速播放发音"
-                  >
-                    <SlowPlaybackIcon />
-                  </button>
-                ) : null}
               </div>
               <p className={`dictation-replay-hint${shouldRevealAnswer ? ' revealed' : ''}`}>
                 {shouldRevealAnswer

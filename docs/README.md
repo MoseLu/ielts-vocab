@@ -1,5 +1,5 @@
 # Docs Architecture
-Last updated: 2026-04-04 21:09:41 +08:00
+Last updated: 2026-04-19 00:00:00 +08:00
 
 This directory is the project's durable documentation layer.
 
@@ -30,7 +30,7 @@ docs/
 - Put child scope guidance under `agents/` only when root `AGENTS.md` would otherwise become noisy.
 - Put structural or risk reviews in `architecture/audits/`.
 - Put tooling setup and operational runbooks in `operations/`.
-- Put phased feature plans and rollout checklists in `planning/`.
+- Put product requirement baselines, phased feature plans, and rollout checklists in `planning/`.
 - Put governance history and cross-cutting UI cleanup logs in `governance/`.
 - Put cross-feature delivery checkpoints and release snapshots in `milestones/`.
 - Put detailed child task breakdowns in `todo/` when a root TODO item needs its own checklist.
@@ -68,6 +68,7 @@ docs/
 
 ### Planning
 
+- [product-requirements-document.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/product-requirements-document.md)
 - [ui-redesign-plan.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/ui-redesign-plan.md)
 - [2026-03-28-tts-batch-generation-plan.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/implementation/2026-03-28-tts-batch-generation-plan.md)
 - [implementation-plan-template.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/implementation/templates/implementation-plan-template.md)

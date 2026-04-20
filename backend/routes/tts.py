@@ -6,6 +6,7 @@ load_split_module_files(
     (
         'tts_routes/sentence_audio.py',
         'tts_routes/batch_and_word_audio.py',
+        'tts_routes/follow_read.py',
     ),
     globals(),
 )

@@ -72,7 +72,7 @@ function ChromeSlot({
 }
 
 function normalizeHeaderMode(mode: string): PracticeMode {
-  return ['smart', 'listening', 'meaning', 'dictation', 'radio'].includes(mode)
+  return ['smart', 'listening', 'meaning', 'dictation', 'follow', 'radio'].includes(mode)
     ? (mode as PracticeMode)
     : 'smart'
 }

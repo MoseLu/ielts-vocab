@@ -8,6 +8,7 @@ from services import (
     books_favorites_service,
     books_registry_service,
     books_vocabulary_loader_service,
+    follow_read_segments_service,
     phonetic_lookup_service,
 )
 from services.custom_book_catalog_service import (
@@ -79,10 +80,13 @@ def load_book_vocabulary(book_id):
             words = []
 
         words = _hydrate_missing_phonetics(words)
-        books_vocabulary_loader_service._vocabulary_cache[book_id] = [
+        enriched_words = [
             books_vocabulary_loader_service.enrich_word_entry(word)
             for word in words
         ]
+        books_vocabulary_loader_service._vocabulary_cache[book_id] = (
+            follow_read_segments_service.attach_follow_read_segments(book_id, enriched_words)
+        )
         return books_vocabulary_loader_service._vocabulary_cache[book_id]
     except FileNotFoundError:
         print(f"Warning: Vocabulary file not found: {file_path}")

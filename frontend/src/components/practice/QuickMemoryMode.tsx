@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
-import { playSlowWordAudio, playWordAudio, preloadWordAudioBatch, stopAudio } from './utils'
-import SlowPlaybackIcon from '../ui/SlowPlaybackIcon'
+import { playWordAudio, preloadWordAudioBatch, stopAudio } from './utils'
 import { useToast } from '../../contexts/ToastContext'
 import {
   readQuickMemoryRecordsFromStorage,
@@ -80,7 +79,6 @@ export default function QuickMemoryMode({
   const {
     completeCurrentSession,
     flushPendingRecordSync,
-    isCurrentSessionActive,
     prepareLearningSession,
     resetCurrentSessionSegment,
     syncSessionSnapshot,
@@ -152,6 +150,7 @@ export default function QuickMemoryMode({
     clearInterval(timerRef.current)
     clearTimeout(revealTimerRef.current)
     stopAudio()
+    const answeredWord = currentWord
 
     const actionAt = Date.now()
     if (countAsActivity) {
@@ -165,22 +164,22 @@ export default function QuickMemoryMode({
 
     const { records, record } = updateQuickMemoryRecord(
       readQuickMemoryRecordsFromStorage(),
-      currentWord?.word ?? '',
+      answeredWord?.word ?? '',
       picked,
       isFuzzy,
       {
         bookId: bookId ?? undefined,
-        chapterId: chapterId ?? (currentWord?.chapter_id != null ? String(currentWord.chapter_id) : undefined),
+        chapterId: chapterId ?? (answeredWord?.chapter_id != null ? String(answeredWord.chapter_id) : undefined),
       },
     )
     writeQuickMemoryRecordsToStorage(records)
-    const wordKey = (currentWord?.word ?? '').toLowerCase()
+    const wordKey = (answeredWord?.word ?? '').toLowerCase()
     if (wordKey && record) {
       pendingRecordSyncRef.current[wordKey] = record
       syncRecordToBackend(wordKey, record)
     }
-    if (currentWord && record) {
-      onQuickMemoryRecordChange?.(currentWord, record)
+    if (answeredWord && record) {
+      onQuickMemoryRecordChange?.(answeredWord, record)
     }
 
     const prevResults = resultsRef.current
@@ -198,14 +197,12 @@ export default function QuickMemoryMode({
       wrongCount: nextResults.filter(result => result.choice === 'unknown').length,
     })
 
-    if (picked === 'unknown' && currentWord) {
-      onWrongWord(currentWord)
+    if (picked === 'unknown' && answeredWord) {
+      onWrongWord(answeredWord)
     }
 
-    if (shouldPlayRevealAudio) {
-      revealTimerRef.current = setTimeout(() => {
-        if (wordRef.current) void playWordAudio(wordRef.current.word, settings, () => {})
-      }, 350)
+    if (shouldPlayRevealAudio && answeredWord) {
+      void playWordAudio(answeredWord.word, settings, () => {})
     }
   }, [
     bookId,
@@ -226,15 +223,12 @@ export default function QuickMemoryMode({
       setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current)
-          if (isCurrentSessionActive()) {
-            void reveal('unknown', false, false)
-          }
           return 0
         }
         return prev - 1
       })
     }, 1000)
-  }, [isCurrentSessionActive, reveal])
+  }, [])
 
   useEffect(() => {
     if (phase !== 'question' || !currentWord) return
@@ -323,28 +317,6 @@ export default function QuickMemoryMode({
     void playWordAudio(wordRef.current.word, settings, () => {})
   }, [phase, settings, startQuestionCountdown])
 
-  const replayCurrentWordSlow = useCallback(() => {
-    if (!wordRef.current) return
-    clearTimeout(revealTimerRef.current)
-    clearInterval(timerRef.current)
-    setCountdown(TIMER_SECONDS)
-    if (phase === 'question') {
-      stopAudio()
-      const replayWord = wordRef.current
-      void playSlowWordAudio(replayWord.word, settings, replayWord.phonetic, () => {
-        if (!chosenRef.current && wordRef.current?.word === replayWord.word) {
-          startQuestionCountdown()
-        }
-      }).then(started => {
-        if (!started && !chosenRef.current && wordRef.current?.word === replayWord.word) {
-          startQuestionCountdown()
-        }
-      })
-      return
-    }
-    void playSlowWordAudio(wordRef.current.word, settings, wordRef.current.phonetic, () => {})
-  }, [phase, settings, startQuestionCountdown])
-
   useEffect(() => {
     const handlePreviousShortcut = () => { void handlePrev() }
     const handleNextShortcut = () => {
@@ -421,9 +393,6 @@ export default function QuickMemoryMode({
             <div className="qm-card-toolbar__audio-group">
               <button type="button" className="qm-card-toolbar__icon-btn" onClick={replayCurrentWord} aria-label="重播发音" title={replayWordHint}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
-              </button>
-              <button type="button" className="qm-card-toolbar__icon-btn" onClick={replayCurrentWordSlow} aria-label="慢速重播发音" title="慢速重播发音">
-                <SlowPlaybackIcon />
               </button>
             </div>
             <div className="qm-card-toolbar__side qm-card-toolbar__side--end">{speakingSlot}</div>

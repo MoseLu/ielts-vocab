@@ -485,7 +485,7 @@ describe('PracticePage quick-memory review mode', () => {
     await user.click(screen.getByRole('button', { name: 'go-second-word' }))
     fireEvent.keyDown(window, { key: 'W', code: 'KeyW', shiftKey: true })
 
-    expect(toggleFavoriteMock).toHaveBeenCalledWith(
+      expect(toggleFavoriteMock).toHaveBeenCalledWith(
       expect.objectContaining({ word: 'beta' }),
       expect.objectContaining({
         bookId: null,

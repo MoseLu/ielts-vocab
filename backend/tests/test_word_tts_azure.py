@@ -31,7 +31,7 @@ def test_default_word_identity_prefers_azure_when_global_provider_is_azure(monke
 
     assert word_tts.default_word_tts_identity() == (
         'azure',
-        'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-v5-ielts-rp-female-onset-buffer',
+        'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-v6-ielts-rp-female-onset-buffer',
         'en-US-AndrewMultilingualNeural',
     )
 
@@ -53,7 +53,7 @@ def test_default_word_identity_defaults_to_ryan_voice_when_unset(monkeypatch):
 
     assert word_tts.default_word_tts_identity() == (
         'azure',
-        'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-v5-ielts-rp-female-onset-buffer',
+        'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-v6-ielts-rp-female-onset-buffer',
         'en-GB-RyanNeural',
     )
 

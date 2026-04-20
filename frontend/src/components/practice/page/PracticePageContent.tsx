@@ -25,6 +25,7 @@ import {
 } from './PracticePageStates'
 import {
   PracticePageDictationLayout,
+  PracticePageFollowLayout,
   PracticePageOptionsLayout,
 } from './PracticePageModeLayouts'
 
@@ -54,6 +55,8 @@ interface PracticePageContentProps {
   handleRadioSettingChange: (key: keyof RadioQuickSettings, value: string | boolean) => void
   markRadioSessionInteraction: () => Promise<void>
   handleRadioProgressChange: (correctDelta: number, wrongDelta?: number) => void
+  markFollowSessionInteraction: () => Promise<void>
+  completeFollowSession: () => Promise<void>
   isCurrentSessionActive: (at?: number) => boolean
   reviewMode: boolean
   reviewSummary: { has_more?: boolean } | null
@@ -120,6 +123,8 @@ export function PracticePageContent({
   handleRadioSettingChange,
   markRadioSessionInteraction,
   handleRadioProgressChange,
+  markFollowSessionInteraction,
+  completeFollowSession,
   isCurrentSessionActive,
   reviewMode,
   reviewSummary,
@@ -160,6 +165,9 @@ export function PracticePageContent({
   handleContinueReview,
 }: PracticePageContentProps) {
   const progress = Math.min((queueIndex + 1) / Math.max(queue.length, 1), 1)
+  const activeStageWord = (mode === 'quickmemory' || mode === 'radio')
+    ? (vocabulary[queue[radioIndex]] ?? currentWord)
+    : currentWord
   const favoriteButton = (
     <FavoriteToggleButton
       active={favoriteActive}
@@ -171,8 +179,8 @@ export function PracticePageContent({
     <PracticePronunciationButton
       bookId={resolvedPracticeBookId}
       chapterId={resolvedPracticeChapterId}
-      targetWord={currentWord.word}
-      targetPhonetic={currentWord.phonetic}
+      targetWord={activeStageWord.word}
+      targetPhonetic={activeStageWord.phonetic}
     />
   )
 
@@ -234,6 +242,27 @@ export function PracticePageContent({
         onIndexChange={onFavoriteWordIndexChange}
         favoriteSlot={favoriteButton}
         speakingSlot={speakingButton}
+      />
+    )
+  }
+
+  if (mode === 'follow') {
+    return (
+      <PracticePageFollowLayout
+        {...baseLayoutProps}
+        queueIndex={queueIndex}
+        wordStatuses={wordStatuses}
+        currentWord={currentWord}
+        settings={settings}
+        speechConnected={speechConnected}
+        speechRecording={speechRecording}
+        recognizedText={spellingInput}
+        onIndexChange={onFavoriteWordIndexChange}
+        onCompleteSession={completeFollowSession}
+        onStartRecording={startRecording}
+        onStopRecording={stopRecording}
+        onSessionInteraction={markFollowSessionInteraction}
+        favoriteSlot={favoriteButton}
       />
     )
   }

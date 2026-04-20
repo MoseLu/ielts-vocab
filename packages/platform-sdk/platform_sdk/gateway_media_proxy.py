@@ -277,6 +277,62 @@ def fetch_word_audio_content(
     return audio_payload_from_response(response)
 
 
+def fetch_follow_read_word(
+    *,
+    word: str,
+    phonetic: str | None = None,
+    definition: str | None = None,
+    pos: str | None = None,
+    headers: dict[str, str] | None = None,
+) -> dict:
+    params = {'w': word}
+    if phonetic:
+        params['phonetic'] = phonetic
+    if definition:
+        params['definition'] = definition
+    if pos:
+        params['pos'] = pos
+    response = call_media_upstream(
+        service_name='tts-media-service',
+        method='GET',
+        base_url=tts_media_service_url(),
+        path='/v1/media/follow-read-word',
+        params=params,
+        headers=headers,
+        unavailable_detail='tts media service unavailable',
+    )
+    if response.status_code == 400:
+        raise HTTPException(status_code=400, detail='invalid w')
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail='tts media service error')
+    return response.json()
+
+
+def fetch_follow_read_chunked_audio(
+    *,
+    word: str,
+    phonetic: str | None = None,
+    headers: dict[str, str] | None = None,
+) -> dict:
+    params = {'w': word}
+    if phonetic:
+        params['phonetic'] = phonetic
+    response = call_media_upstream(
+        service_name='tts-media-service',
+        method='GET',
+        base_url=tts_media_service_url(),
+        path='/v1/media/follow-read-chunked-audio',
+        params=params,
+        headers=headers,
+        unavailable_detail='tts media service unavailable',
+    )
+    if response.status_code == 400:
+        raise HTTPException(status_code=400, detail='invalid w')
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail='tts media service error')
+    return audio_payload_from_response(response)
+
+
 def fetch_example_audio_metadata(
     *,
     sentence: str,

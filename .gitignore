@@ -69,12 +69,15 @@ backend/backups/
 .playwright-cli/
 .codex/
 frontend/.codex/
+.minimax/
 logs/runtime/
 .omc/artifacts/
 .omc/research/
 .omc/*.png
 
 # Temporary generated directories
+backend/tmp/
+tmp/
 录音文件生成记录/
 
 # Vocabulary data (local generated)

@@ -34,7 +34,7 @@ def test_resolve_word_audio_request_uses_ryan_hotfix_voice(monkeypatch):
     monkeypatch.setattr(
         module,
         'default_word_tts_identity',
-        lambda: ('azure', 'azure-rest:test@azure-word-v5', 'en-GB-LibbyNeural'),
+        lambda: ('azure', 'azure-rest:test@azure-word-v6', 'en-GB-LibbyNeural'),
     )
     monkeypatch.setattr(
         module,
@@ -373,7 +373,7 @@ def test_gateway_get_word_audio_proxy_generates_audio_on_cache_miss(monkeypatch)
             'word': word,
             'normalized_word': 'hello',
             'provider': 'azure',
-            'model': 'azure-rest:test@azure-word-v5',
+            'model': 'azure-rest:test@azure-word-v6',
             'voice': 'en-GB-LibbyNeural',
             'file_name': 'hello.mp3',
         },
