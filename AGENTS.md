@@ -14,7 +14,8 @@ Last updated: 2026-04-12 11:18:00 +08:00
 - Treat `vocabulary_data/**` and `pnpm-lock.yaml` as generated artifacts that are exempt from the `500`-line cap.
 - Keep `pnpm check:file-lines` and `pnpm lint` green before submit; `pnpm build` and `pnpm test` now run the guardrail bundle automatically.
 - Keep `pytest backend/tests/test_source_text_integrity.py -q` green after backend or text-heavy edits.
-- Treat the local production-style chain as canonical for runtime bugs: `natapp -> nginx(:80) -> vite preview(:3002)` for UI, `/api` to `gateway-bff :8000`, downstream fan-out to `:8101-8108`, and `/socket.io` to speech service `:5001`.
+- Treat the remote cloud chain as canonical for domain/runtime bugs: `axiomaticworld.com -> nginx(:443/:80) -> active HTTP slot gateway-bff(:18000|:28000) -> downstream services(:18101-18108|:28101-28108)`, with `/socket.io` proxied to ASR Socket.IO on `:5001`.
+- Use the local split runtime only for reproduction: preview UI on `3002`, browser API ingress on `8000`, downstream services on `8101-8108`, and speech Socket.IO on `5001`.
 - When touching runtime startup, keep `start-project.bat` and `start-project.ps1` aligned with `frontend/vite.config.ts`, `nginx.conf.example`, and the real service ports.
 
 ## Current Focus
@@ -206,15 +207,20 @@ sudo journalctl -u 'ielts-service@catalog-content-service' -n 200 --no-pager
 ```
 - When a browser request fails only for logged-in users, inspect `gateway-bff`, `learning-core-service`, `ai-execution-service`, and `catalog-content-service` together before assuming the frontend auth flow is at fault.
 
-## Local Proxy Topology
-1. Vite preview serves the browser UI on `http://127.0.0.1:3002`
-2. Local `nginx` listens on port `80` and proxies UI traffic to `3002`
-3. `natapp` exposes `https://axiomaticworld.com` and forwards to local `:80`
-4. `nginx` proxies `/api/*` to `gateway-bff` on `127.0.0.1:8000`
-5. `gateway-bff` fans out browser API traffic to split services on `127.0.0.1:8101-8108`
-6. `nginx` proxies `/socket.io/*` directly to ASR Socket.IO on `127.0.0.1:5001`
+## Remote Production Topology
+1. `https://axiomaticworld.com/` terminates at the cloud nginx entrypoint on `119.29.182.134`
+2. nginx serves the frontend build from the active release symlink under `/var/www/ielts-vocab/current`
+3. nginx proxies `/api/*` to the active HTTP slot `gateway-bff` on `127.0.0.1:18000` or `127.0.0.1:28000`
+4. `gateway-bff` fans out browser API traffic to the same-slot microservices on `18101-18108` or `28101-28108`
+5. nginx proxies `/socket.io/*` directly to ASR Socket.IO on `127.0.0.1:5001`
 
-When debugging domain issues, treat the whole chain as the deployment context instead of blaming only frontend code.
+When debugging domain issues, treat this remote chain as the deployment context instead of assuming any local tunnel is involved.
+
+## Local Reproduction Topology
+1. Vite preview serves the browser UI on `http://127.0.0.1:3002`
+2. Local browser API ingress runs on `http://127.0.0.1:8000`
+3. Split backend services run on `127.0.0.1:8101-8108`
+4. Local `/socket.io/*` traffic goes to ASR Socket.IO on `127.0.0.1:5001`
 
 ## Browser APIs
 - `speechSynthesis`: pronunciation playback

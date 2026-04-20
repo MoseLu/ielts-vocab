@@ -23,7 +23,6 @@ import {
 } from './page/practiceGlobalShortcutEvents'
 
 const TIMER_SECONDS = 4
-
 function syncRecordToBackend(word: string, record: QuickMemoryRecordState): void {
   void syncQuickMemoryRecordsToBackend([{ word, record }]).catch(() => {})
 }
@@ -58,8 +57,8 @@ export default function QuickMemoryMode({
   const [done, setDone] = useState(false)
   const [revisitedSet, setRevisitedSet] = useState<Set<number>>(new Set())
   const resultsRef = useRef<SessionResult[]>([])
+  const countdownRef = useRef(TIMER_SECONDS)
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
-  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const chosenRef = useRef(false)
   const wordRef = useRef<Word | undefined>(undefined)
   const sessionStartRef = useRef(0)
@@ -124,7 +123,6 @@ export default function QuickMemoryMode({
     if (queue.length === 0) return
     stopAudio()
     clearInterval(timerRef.current)
-    clearTimeout(revealTimerRef.current)
     const startIndex =
       !hasRestoredIndexRef.current && initialIndex != null && initialIndex > 0 && initialIndex < queue.length
         ? initialIndex
@@ -134,6 +132,7 @@ export default function QuickMemoryMode({
     onIndexChange?.(startIndex)
     setPhase('question')
     setCountdown(TIMER_SECONDS)
+    countdownRef.current = TIMER_SECONDS
     setChoice(null)
     setResults([])
     resultsRef.current = []
@@ -148,7 +147,6 @@ export default function QuickMemoryMode({
     if (chosenRef.current) return
     chosenRef.current = true
     clearInterval(timerRef.current)
-    clearTimeout(revealTimerRef.current)
     stopAudio()
     const answeredWord = currentWord
 
@@ -217,24 +215,30 @@ export default function QuickMemoryMode({
     syncSessionSnapshot,
   ])
 
+  const beginAutoUnknownReveal = useCallback(() => {
+    if (chosenRef.current) return
+    void reveal('unknown')
+  }, [reveal])
+
   const startQuestionCountdown = useCallback(() => {
     clearInterval(timerRef.current)
     timerRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current)
-          return 0
-        }
-        return prev - 1
-      })
+      const nextCountdown = Math.max(countdownRef.current - 1, 0)
+      countdownRef.current = nextCountdown
+      setCountdown(nextCountdown)
+      if (nextCountdown === 0) {
+        clearInterval(timerRef.current)
+        beginAutoUnknownReveal()
+      }
     }, 1000)
-  }, [])
+  }, [beginAutoUnknownReveal])
 
   useEffect(() => {
     if (phase !== 'question' || !currentWord) return
 
     chosenRef.current = false
     setCountdown(TIMER_SECONDS)
+    countdownRef.current = TIMER_SECONDS
     clearInterval(timerRef.current)
 
     const upcomingWords = queue
@@ -259,12 +263,10 @@ export default function QuickMemoryMode({
   useEffect(() => () => {
     stopAudio()
     clearInterval(timerRef.current)
-    clearTimeout(revealTimerRef.current)
   }, [])
 
   const handleNext = useCallback(async () => {
     await prepareLearningSession()
-    clearTimeout(revealTimerRef.current)
     stopAudio()
     const next = index + 1
     if (next >= queue.length) {
@@ -281,7 +283,6 @@ export default function QuickMemoryMode({
   const handlePrev = useCallback(async () => {
     if (index === 0) return
     await prepareLearningSession()
-    clearTimeout(revealTimerRef.current)
     stopAudio()
     const prev = index - 1
     setRevisitedSet(current => {
@@ -297,9 +298,9 @@ export default function QuickMemoryMode({
 
   const replayCurrentWord = useCallback(() => {
     if (!wordRef.current) return
-    clearTimeout(revealTimerRef.current)
     clearInterval(timerRef.current)
     setCountdown(TIMER_SECONDS)
+    countdownRef.current = TIMER_SECONDS
     if (phase === 'question') {
       stopAudio()
       const replayWord = wordRef.current.word
@@ -377,7 +378,7 @@ export default function QuickMemoryMode({
   }
 
   const progress = (index / queue.length) * 100
-  const replayWordHint = '点击单词或按 Tab 重播发音'
+  const replayWordHint = '点击右上角喇叭或按 Tab 重播发音'
 
   return (
     <div className="qm-root">
@@ -386,7 +387,6 @@ export default function QuickMemoryMode({
           <div className="qm-progress-fill" style={{ '--progress-percent': `${progress}%` } as CSSProperties} />
         </div>
         <div className="qm-progress-label">{index + 1} / {queue.length}</div>
-
         <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
           <div className="qm-card-toolbar">
             <div className="qm-card-toolbar__side">{favoriteSlot}</div>
@@ -399,26 +399,15 @@ export default function QuickMemoryMode({
           </div>
           {phase === 'question' && (
             <>
-              <div className="qm-countdown-ring">
-                <QuickMemoryCountdownRing seconds={countdown} total={TIMER_SECONDS} />
-              </div>
-
-              <button type="button" className="qm-word qm-word-btn" onClick={replayCurrentWord} title={replayWordHint}>{currentWord.word}</button>
-
+              {countdown > 0 && <div className="qm-countdown-ring"><QuickMemoryCountdownRing seconds={countdown} total={TIMER_SECONDS} /></div>}
+              <div className="qm-word">{currentWord.word}</div>
               <p className="qm-hint">你认识这个单词吗？</p>
-
               <div className="qm-choice-row">
-                <button
-                  className="qm-btn qm-btn--unknown"
-                  onClick={() => { void reveal('unknown') }}
-                >
+                <button className="qm-btn qm-btn--unknown" onClick={() => { void reveal('unknown') }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   不认识
                 </button>
-                <button
-                  className="qm-btn qm-btn--known"
-                  onClick={() => { void reveal('known') }}
-                >
+                <button className="qm-btn qm-btn--known" onClick={() => { void reveal('known') }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   认识
                 </button>
@@ -426,55 +415,26 @@ export default function QuickMemoryMode({
               <div className="qm-key-hints">
                 {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
                 <span className="qm-key-hint"><kbd>→</kbd> 认识</span>
-                <span className="qm-key-hint">点击单词或 <kbd>Tab</kbd> 重播发音</span>
+                <span className="qm-key-hint">点右上角喇叭或 <kbd>Tab</kbd> 重播发音</span>
               </div>
             </>
           )}
-
           {phase === 'reveal' && currentWord && (
             <>
               <div className={`qm-result-badge ${choice === 'known' ? 'qm-badge--known' : 'qm-badge--unknown'}${revisitedSet.has(index) ? ' qm-badge--fuzzy' : ''}`}>
                 {choice === 'known' ? '✓ 认识' : '✗ 不认识'}
                 {revisitedSet.has(index) && <span className="qm-badge-fuzzy-tag">模糊</span>}
               </div>
-
-              <button type="button" className="qm-word qm-word-btn" onClick={replayCurrentWord} title={replayWordHint}>{currentWord.word}</button>
-
-              {currentWord.phonetic && (
-                <div className="qm-phonetic">{currentWord.phonetic}</div>
-              )}
-
-              {currentWord.pos && (
-                <span className="qm-pos">{currentWord.pos}</span>
-              )}
-
-              <div className="qm-definition">{currentWord.definition}</div>
-
+              <div className="qm-word">{currentWord.word}</div>
+              {currentWord.phonetic && <div className="qm-phonetic">{currentWord.phonetic}</div>}
+              <div className="qm-definition-line">{currentWord.pos && <span className="qm-pos">{currentWord.pos.toLowerCase()}</span>}<span className="qm-definition">{currentWord.definition}</span></div>
               <div className="qm-nav-row">
-                {index > 0 && (
-                  <button className="qm-btn-prev" onClick={() => { void handlePrev() }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M15 18l-6-6 6-6"/>
-                    </svg>
-                    上一个
-                  </button>
-                )}
+                {index > 0 && <button className="qm-btn-prev" onClick={() => { void handlePrev() }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>上一个</button>}
                 <button className="qm-btn-next" onClick={() => { void handleNext() }}>
-                  {index + 1 < queue.length ? (
-                    <span className="qm-btn-next-inner">
-                      下一个
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M9 18l6-6-6-6"/>
-                      </svg>
-                    </span>
-                  ) : '查看结果'}
+                  {index + 1 < queue.length ? <span className="qm-btn-next-inner">下一个<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg></span> : '查看结果'}
                 </button>
               </div>
-              <div className="qm-key-hints">
-                {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
-                <span className="qm-key-hint"><kbd>→</kbd> 下一个</span>
-                <span className="qm-key-hint">点击单词或 <kbd>Tab</kbd> 重播发音</span>
-              </div>
+              <div className="qm-key-hints">{index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}<span className="qm-key-hint"><kbd>→</kbd> 下一个</span><span className="qm-key-hint">点右上角喇叭或 <kbd>Tab</kbd> 重播发音</span></div>
             </>
           )}
         </div>

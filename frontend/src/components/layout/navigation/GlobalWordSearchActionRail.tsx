@@ -3,10 +3,8 @@ import FeedbackIssueIcon from '../../ui/FeedbackIssueIcon'
 import SlowPlaybackIcon from '../../ui/SlowPlaybackIcon'
 
 interface GlobalWordSearchActionRailProps {
-  canPlaySegmentedWord?: boolean
   favoriteActive: boolean
   favoritePending: boolean
-  onPlaySegmentedWord?: () => void
   onToggleFavorite: () => void
   onPlaySlowWord: () => void
   onPlayWord: () => void
@@ -15,10 +13,8 @@ interface GlobalWordSearchActionRailProps {
 }
 
 export default function GlobalWordSearchActionRail({
-  canPlaySegmentedWord = false,
   favoriteActive,
   favoritePending,
-  onPlaySegmentedWord,
   onToggleFavorite,
   onPlaySlowWord,
   onPlayWord,
@@ -67,27 +63,6 @@ export default function GlobalWordSearchActionRail({
       >
         <SlowPlaybackIcon className="global-word-search-slow-icon" />
       </button>
-      {canPlaySegmentedWord && onPlaySegmentedWord ? (
-        <button
-          type="button"
-          className="global-word-search-action-btn"
-          aria-label={`拆读单词 ${word}`}
-          title={`拆读单词 ${word}`}
-          onClick={onPlaySegmentedWord}
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M4.5 8.2h3.8l3.2-2.6a.9.9 0 0 1 1.5.7v11.4a.9.9 0 0 1-1.5.7l-3.2-2.6H4.5"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path d="M16 7v10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M19.5 9v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        </button>
-      ) : null}
       <button
         type="button"
         className="global-word-search-action-btn"

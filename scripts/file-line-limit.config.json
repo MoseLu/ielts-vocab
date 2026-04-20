@@ -8,8 +8,6 @@
   "baseline": {
     "backend/scripts/run_word_tts_full_batch.py": 516,
     "backend/tests/test_gateway_bff_tts_proxy.py": 651,
-    "frontend/src/components/practice/utils.audio.test.ts": 553,
-    "frontend/src/styles/pages/practice/practice-quickmemory.scss": 505,
     "frontend/src/components/practice/utils.audio.playback.ts": 508,
     "realtime_waveform.md": 1155,
     "scripts/merge-learning-core-from-sqlite.py": 577

@@ -30,7 +30,7 @@ def test_gateway_head_word_audio_proxy_treats_transient_cache_errors_as_miss(mon
             'word': word,
             'normalized_word': 'hello',
             'provider': 'azure',
-            'model': 'azure-rest:test@azure-word-v6',
+            'model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
             'voice': 'en-GB-LibbyNeural',
             'file_name': 'hello.mp3',
             'pronunciation_mode': 'word',
@@ -61,15 +61,16 @@ def test_gateway_get_word_audio_proxy_generates_audio_after_transient_cache_fail
 
     monkeypatch.setattr(
         module,
-        '_resolve_word_audio_request',
-        lambda word: {
+        '_resolve_word_audio_request_candidates',
+        lambda word, pronunciation_mode=None: [{
             'word': word,
             'normalized_word': 'hello',
             'provider': 'azure',
-            'model': 'azure-rest:test@azure-word-v6',
+            'model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
             'voice': 'en-GB-LibbyNeural',
             'file_name': 'hello.mp3',
-        },
+            'pronunciation_mode': 'word',
+        }],
     )
 
     def fake_fetch_word_audio_content(**kwargs):

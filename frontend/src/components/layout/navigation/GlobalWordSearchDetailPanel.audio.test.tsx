@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import GlobalWordSearchDetailPanel from './GlobalWordSearchDetailPanel'
 
 const apiFetchMock = vi.fn()
-const playSegmentedWordAudioMock = vi.fn()
 const playWordAudioMock = vi.fn()
 const playExampleAudioMock = vi.fn()
 const stopAudioMock = vi.fn()
@@ -36,14 +35,12 @@ vi.mock('../../practice/utils', () => ({
 }))
 
 vi.mock('../../practice/utils.audio', () => ({
-  playSegmentedWordAudio: (...args: unknown[]) => playSegmentedWordAudioMock(...args),
   playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
 }))
 
 describe('GlobalWordSearchDetailPanel audio interactions', () => {
   beforeEach(() => {
     apiFetchMock.mockReset()
-    playSegmentedWordAudioMock.mockReset()
     playWordAudioMock.mockReset()
     playExampleAudioMock.mockReset()
     stopAudioMock.mockReset()
@@ -103,8 +100,7 @@ describe('GlobalWordSearchDetailPanel audio interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: '慢速朗读单词 quit' }))
     expect(playWordAudioMock).toHaveBeenLastCalledWith('quit', { playbackSpeed: '0.65', volume: '80' })
 
-    fireEvent.click(screen.getByRole('button', { name: '拆读单词 quit' }))
-    expect(playSegmentedWordAudioMock).toHaveBeenLastCalledWith('quit', { playbackSpeed: '1.25', volume: '80' }, '/kwɪt/')
+    expect(screen.queryByRole('button', { name: '拆读单词 quit' })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('tab', { name: '英义' }))
     expect(playWordAudioMock).toHaveBeenLastCalledWith('quit', { playbackSpeed: '1.25', volume: '80' })

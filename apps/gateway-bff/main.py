@@ -254,15 +254,17 @@ def get_word_audio_proxy(
                 headers=build_forward_headers(request, target_service_name='tts-media-service'),
             )
         )
-    request_info = _resolve_word_audio_request(w)
-    payload = _fetch_word_audio_content_with_cache_fallback(
-        file_name=request_info['file_name'],
-        model=request_info['model'],
-        voice=request_info['voice'],
-        request=request,
-    )
-    if payload is not None:
-        return _audio_content_response(payload, source='oss')
+    request_candidates = _resolve_word_audio_request_candidates(w)
+    request_info = request_candidates[0]
+    for candidate in request_candidates:
+        payload = _fetch_word_audio_content_with_cache_fallback(
+            file_name=candidate['file_name'],
+            model=candidate['model'],
+            voice=candidate['voice'],
+            request=request,
+        )
+        if payload is not None:
+            return _audio_content_response(payload, source='oss')
     if cache_only == '1':
         return JSONResponse(status_code=404, content={'error': 'word audio cache miss'})
     return _proxy_generic_tts_response(

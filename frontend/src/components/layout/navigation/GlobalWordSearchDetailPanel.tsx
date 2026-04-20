@@ -12,7 +12,7 @@ import { readAppSettingsFromStorage } from '../../../lib/appSettings'
 import { useAuth, useToast } from '../../../contexts'
 import type { Word } from '../../practice/types'
 import { playExampleAudio, stopAudio } from '../../practice/utils'
-import { playSegmentedWordAudio, playWordAudio } from '../../practice/utils.audio'
+import { playWordAudio } from '../../practice/utils.audio'
 import { resolveWordPlaybackSettings, SLOW_WORD_PLAYBACK_OPTIONS } from '../../practice/wordPlayback'
 import { useFavoriteWords } from '../../../features/vocabulary/hooks'
 import ExampleAudioIcon from '../../ui/ExampleAudioIcon'
@@ -64,7 +64,6 @@ export default function GlobalWordSearchDetailPanel({
   const memoryNote = buildWordMemoryNote({ detailData, result })
   const memoryCandidates = result.listening_confusables?.slice(0, 6) ?? []
   const primaryExampleText = detailExamples[0]?.en?.trim() ?? ''
-  const canPlaySegmentedWord = resolvedPhonetic !== '/暂无音标/'
 
   const noteStatusLabel = useMemo(() => buildNoteStatusLabel(noteStatus), [noteStatus])
   const favoriteVocabulary = useMemo<Word[]>(() => [{
@@ -101,7 +100,6 @@ export default function GlobalWordSearchDetailPanel({
   )
   const handlePlayWord = () => { void playWordAudio(result.word, exampleAudioSettings) }
   const handlePlaySlowWord = () => { void playWordAudio(result.word, slowWordAudioSettings) }
-  const handlePlaySegmentedWord = () => { void playSegmentedWordAudio(result.word, exampleAudioSettings, resolvedPhonetic) }
   const { isFavorite, isPending, toggleFavorite } = useFavoriteWords({
     userId: user?.id ?? null,
     vocabulary: favoriteVocabulary,
@@ -446,11 +444,9 @@ export default function GlobalWordSearchDetailPanel({
         </div>
 
         <GlobalWordSearchActionRail
-          canPlaySegmentedWord={canPlaySegmentedWord}
           favoriteActive={isFavorite(result.word)}
           favoritePending={isPending(result.word)}
           word={result.word}
-          onPlaySegmentedWord={handlePlaySegmentedWord}
           onToggleFavorite={handleFavoriteToggle}
           onPlayWord={handlePlayWord}
           onPlaySlowWord={handlePlaySlowWord}

@@ -94,6 +94,19 @@ async function flushAudioWork() {
   for (let i = 0; i < 4; i += 1) await Promise.resolve()
 }
 
+function expectWordAudioFetchCall(
+  fetchMock: ReturnType<typeof vi.fn>,
+  index: number,
+  url: string,
+  method: 'GET' | 'HEAD',
+) {
+  expect(fetchMock).toHaveBeenNthCalledWith(index, url, expect.objectContaining({
+    method,
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache' },
+  }))
+}
+
 describe('practice audio cache', () => {
   const createObjectURLMock = vi.fn(() => 'blob:audio')
   const revokeObjectURLMock = vi.fn()
@@ -117,10 +130,6 @@ describe('practice audio cache', () => {
   it('preloads a full word audio buffer and reuses it on playback', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'cache-v1' }),
-      })
       .mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
     const createdAudioSources: string[] = []
 
@@ -139,17 +148,8 @@ describe('practice audio cache', () => {
     playWordAudio('prefetched-word', { playbackSpeed: '1', volume: '100' })
     await flushAudioWork()
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio?w=prefetched-word&cache_only=1', {
-      method: 'HEAD',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=prefetched-word&cache_only=1&v=cache-v1', {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=prefetched-word&cache_only=1', 'GET')
     expect(createObjectURLMock).toHaveBeenCalled()
     expect(createdAudioSources).toContain('blob:audio')
     stopAudio()
@@ -158,10 +158,6 @@ describe('practice audio cache', () => {
   it('decodes preloaded word audio once and reuses the shared web audio path for playback', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'cache-v1' }),
-      })
       .mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
     const createdAudioSources: string[] = []
 
@@ -195,7 +191,7 @@ describe('practice audio cache', () => {
     expect(prepared).toBe(true)
     expect(firstStarted).toBe(true)
     expect(secondStarted).toBe(true)
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(createObjectURLMock).not.toHaveBeenCalled()
     expect(createdAudioSources).not.toContain('blob:audio')
 
@@ -212,10 +208,6 @@ describe('practice audio cache', () => {
   it('plays word audio from a fully fetched buffer on first playback', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'cache-v1' }),
-      })
       .mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
     const createdAudioSources: string[] = []
 
@@ -233,16 +225,8 @@ describe('practice audio cache', () => {
     playWordAudio('global', { playbackSpeed: '1', volume: '100' })
     await flushAudioWork()
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio?w=global&cache_only=1', {
-      method: 'HEAD',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=global&cache_only=1&v=cache-v1', {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=global&cache_only=1', 'GET')
     expect(createdAudioSources.some(src => src.includes('dict.youdao.com'))).toBe(false)
     expect(createdAudioSources.some(src => src.includes('api.dictionaryapi.dev'))).toBe(false)
     expect(createObjectURLMock).toHaveBeenCalled()
@@ -251,8 +235,10 @@ describe('practice audio cache', () => {
     stopAudio()
   })
 
-  it('plays slow word audio from the segmented endpoint when available', async () => {
-    const fetchMock = vi.fn()
+  it('plays slow word audio through the regular word endpoint', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'cache-v1'))
     const createdAudioSources: string[] = []
 
     class TrackingAudio extends TestAudio {
@@ -270,75 +256,18 @@ describe('practice audio cache', () => {
     await flushAudioWork()
 
     expect(started).toBe(true)
-    expect(fetchMock).not.toHaveBeenCalled()
-    expect(createdAudioSources.some(src =>
-      src.includes('/api/tts/word-audio?w=internet')
-      && src.includes('pronunciation_mode=phonetic_segments')
-      && src.includes('phonetic='),
-    )).toBe(true)
-
-    stopAudio()
-  })
-
-  it('falls back to regular slow playback when segmented audio is unavailable', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'cache-v1' }),
-      })
-      .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'cache-v1'))
-    const createdAudioSources: string[] = []
-
-    class TrackingAudio extends TestAudio {
-      constructor(src = '') {
-        super()
-        this.src = src
-        createdAudioSources.push(src)
-        if (src.includes('pronunciation_mode=phonetic_segments')) {
-          this.play = vi.fn().mockRejectedValue(new Error('segmented unavailable'))
-        }
-      }
-    }
-
-    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
-    Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
-
-    const started = await playSlowWordAudio('fallback-word', { playbackSpeed: '1', volume: '100' }, '/ˈfɔːlbæk/')
-    await flushAudioWork()
-
-    expect(started).toBe(true)
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio?w=fallback-word&cache_only=1', {
-      method: 'HEAD',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=fallback-word&cache_only=1&v=cache-v1', {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    expect(createdAudioSources.some(src => src.includes('pronunciation_mode=phonetic_segments'))).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=internet&cache_only=1', 'GET')
+    expect(createdAudioSources.some(src => src.includes('pronunciation_mode=phonetic_segments'))).toBe(false)
     expect(createdAudioSources).toContain('blob:audio')
 
     stopAudio()
   })
 
-  it('refreshes the cached word buffer when the cache signature changes', async () => {
-    let now = 1_000
-    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => now)
+  it('reuses the cached word buffer without revalidating metadata on repeated playback', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'cache-v1' }),
-      })
       .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'cache-v1'))
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'X-Audio-Bytes': '4', 'X-Audio-Cache-Key': 'cache-v2' }),
-      })
-      .mockResolvedValueOnce(createAudioResponse([7, 8, 9, 10], 'cache-v2'))
     const createdAudioSources: string[] = []
 
     class TrackingAudio extends TestAudio {
@@ -353,25 +282,12 @@ describe('practice audio cache', () => {
     Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
 
     await preloadWordAudio('stale-word')
-    now += 6_000
     playWordAudio('stale-word', { playbackSpeed: '1', volume: '100' })
     await flushAudioWork()
 
-    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=stale-word&cache_only=1', {
-      method: 'HEAD',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/tts/word-audio?w=stale-word&cache_only=1', {
-      method: 'HEAD',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    expect(fetchMock.mock.calls.some(([url, init]) =>
-      url === '/api/tts/word-audio?w=stale-word&cache_only=1&v=cache-v2'
-      && (init as RequestInit | undefined)?.method === 'GET'
-    )).toBe(true)
-    nowSpy.mockRestore()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=stale-word&cache_only=1', 'GET')
+    expect(createdAudioSources).toContain('blob:audio')
     stopAudio()
   })
 
@@ -420,50 +336,9 @@ describe('practice audio cache', () => {
     stopAudio()
   })
 
-  it('uses the latest cache key when fetching the full word buffer', async () => {
+  it('plays cached OSS-backed word audio through the same cache-only endpoint', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'cache-v2' }),
-      })
-      .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'cache-v2'))
-    const createdAudioSources: string[] = []
-
-    class TrackingAudio extends TestAudio {
-      constructor(src = '') {
-        super()
-        this.src = src
-        createdAudioSources.push(src)
-      }
-    }
-
-    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
-    Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
-
-    playWordAudio('fallback-word', { playbackSpeed: '1', volume: '100' })
-    await flushAudioWork()
-
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=fallback-word&cache_only=1&v=cache-v2', {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    expect(createdAudioSources).toContain('blob:audio')
-    stopAudio()
-  })
-
-  it('uses the backend fetch path when metadata exposes an oss cache key', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({
-          'X-Audio-Oss-Url': 'https://oss.example.com/oss-word.mp3?signature=1',
-          'X-Audio-Cache-Key': 'oss-cache-v1',
-          'X-Audio-Bytes': '3',
-        }),
-      })
       .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'oss-cache-v1'))
     const createdAudioSources: string[] = []
 
@@ -481,17 +356,8 @@ describe('practice audio cache', () => {
     playWordAudio('oss-word', { playbackSpeed: '1', volume: '100' })
     await flushAudioWork()
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio?w=oss-word&cache_only=1', {
-      method: 'HEAD',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=oss-word&cache_only=1&v=oss-cache-v1', {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=oss-word&cache_only=1', 'GET')
     expect(createdAudioSources.every(src => !src.includes('oss.example.com'))).toBe(true)
     expect(createdAudioSources).toContain('blob:audio')
     expect(createObjectURLMock).toHaveBeenCalled()
@@ -502,16 +368,10 @@ describe('practice audio cache', () => {
   it('preloads several upcoming words without duplicating the same word request', async () => {
     const fetchMock = vi.fn((url: string, init?: RequestInit) => {
       const method = init?.method ?? 'GET'
-      if (url === '/api/tts/word-audio?w=alpha&cache_only=1' && method === 'HEAD') {
-        return Promise.resolve({ ok: true, headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'alpha-v1' }) })
-      }
-      if (url === '/api/tts/word-audio?w=alpha&cache_only=1&v=alpha-v1' && method === 'GET') {
+      if (url === '/api/tts/word-audio?w=alpha&cache_only=1' && method === 'GET') {
         return Promise.resolve(createAudioResponse([1, 2, 3], 'alpha-v1'))
       }
-      if (url === '/api/tts/word-audio?w=beta&cache_only=1' && method === 'HEAD') {
-        return Promise.resolve({ ok: true, headers: new Headers({ 'X-Audio-Bytes': '4', 'X-Audio-Cache-Key': 'beta-v1' }) })
-      }
-      if (url === '/api/tts/word-audio?w=beta&cache_only=1&v=beta-v1' && method === 'GET') {
+      if (url === '/api/tts/word-audio?w=beta&cache_only=1' && method === 'GET') {
         return Promise.resolve(createAudioResponse([4, 5, 6, 7], 'beta-v1'))
       }
       return Promise.reject(new Error(`Unexpected request: ${method} ${url}`))

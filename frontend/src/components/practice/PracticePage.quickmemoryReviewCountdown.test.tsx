@@ -1,5 +1,5 @@
 import React from 'react'
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PracticePage from './PracticePage'
@@ -198,7 +198,7 @@ describe('PracticePage quick-memory review countdown', () => {
     vi.useRealTimers()
   })
 
-  it('auto reveals the first due-review word and plays audio after the countdown', async () => {
+  it('auto reveals the first due-review word and plays audio immediately after the countdown', async () => {
     const { rerender } = render(
       <MemoryRouter initialEntries={['/practice?review=due']}>
         <PracticePage
@@ -241,14 +241,8 @@ describe('PracticePage quick-memory review countdown', () => {
       await vi.advanceTimersByTimeAsync(3000)
       await Promise.resolve()
     })
-    expect(screen.getByText('✗ 不认识')).toBeInTheDocument()
-    expect(playWordAudioMock).not.toHaveBeenCalled()
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(350)
-      await Promise.resolve()
-    })
-
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
+    expect(screen.getAllByText('alpha')).toHaveLength(1)
     expect(playWordAudioMock).toHaveBeenCalledWith('alpha', expect.anything(), expect.any(Function))
     expect(startSessionMock).toHaveBeenCalledTimes(1)
   })

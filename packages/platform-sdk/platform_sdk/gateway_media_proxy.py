@@ -16,20 +16,25 @@ from platform_sdk.gateway_upstream import (
     resolve_gateway_upstream_policy,
     should_retry_gateway_upstream,
 )
-
-
+from platform_sdk.word_audio_cache_profiles import (
+    CURRENT_WORD_CACHE_TAG as _CURRENT_WORD_CACHE_TAG,
+    LEGACY_NORMAL_WORD_VOICES as _LEGACY_NORMAL_WORD_VOICES,
+    LEGACY_SEGMENTED_WORD_VOICES as _LEGACY_SEGMENTED_WORD_VOICES,
+    LEGACY_WORD_CACHE_TAG as _LEGACY_WORD_CACHE_TAG,
+    RYAN_WORD_AUDIO_OVERRIDES as _RYAN_WORD_AUDIO_OVERRIDES,
+    RYAN_WORD_AUDIO_VOICE as _RYAN_WORD_AUDIO_VOICE,
+    SEGMENTED_WORD_CACHE_TAG as _SEGMENTED_WORD_CACHE_TAG,
+)
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_PATH = REPO_ROOT / 'backend'
 if str(BACKEND_PATH) not in sys.path:
     sys.path.insert(0, str(BACKEND_PATH))
 
 from platform_sdk.word_tts_runtime_adapter import (
-    default_word_tts_identity,
     normalize_word_key,
     word_tts_cache_path,
 )
 from services.word_tts import azure_default_model, azure_word_voice
-
 
 DEFAULT_TTS_MEDIA_SERVICE_URL = 'http://127.0.0.1:8105'
 DEFAULT_ASR_SERVICE_URL = 'http://127.0.0.1:8106'
@@ -38,34 +43,6 @@ _AUDIO_CACHE_KEY_HEADER = 'X-Audio-Cache-Key'
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _AUDIO_SOURCE_HEADER = 'X-Audio-Source'
 _MEDIA_ID_HEADER = 'X-Media-Id'
-_RYAN_WORD_AUDIO_VOICE = 'en-GB-RyanNeural'
-_SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
-_LEGACY_SEGMENTED_WORD_VOICES = (
-    'en-GB-LibbyNeural',
-)
-_RYAN_WORD_AUDIO_OVERRIDES = frozenset({
-    'brag',
-    'branch',
-    'brash',
-    'brass',
-    'brave',
-    'breach',
-    'bread',
-    'breadth',
-    'breed',
-    'breeding',
-    'brew',
-    'brewery',
-    'brick',
-    'bridle',
-    'brim',
-    'brochure',
-    'broker',
-    'broom',
-    'brought',
-    'brute',
-})
-
 
 def tts_media_service_url() -> str:
     return (os.environ.get('TTS_MEDIA_SERVICE_URL') or DEFAULT_TTS_MEDIA_SERVICE_URL).rstrip('/')
@@ -73,7 +50,6 @@ def tts_media_service_url() -> str:
 
 def asr_service_url() -> str:
     return (os.environ.get('ASR_SERVICE_URL') or DEFAULT_ASR_SERVICE_URL).rstrip('/')
-
 
 def validate_sentence(sentence: str) -> str:
     resolved = (sentence or '').strip()
@@ -88,6 +64,8 @@ def normalize_word_audio_pronunciation_mode(value: str | None) -> str:
         return 'word-segmented'
     return 'word'
 
+def resolve_normal_word_audio_identity() -> tuple[str, str, str]:
+    return 'azure', f'{azure_default_model()}@{_CURRENT_WORD_CACHE_TAG}', azure_word_voice()
 
 def resolve_word_audio_request(word: str, pronunciation_mode: str | None = None) -> dict[str, str]:
     raw = (word or '').strip()
@@ -100,7 +78,7 @@ def resolve_word_audio_request(word: str, pronunciation_mode: str | None = None)
         model = f'{azure_default_model()}@{_SEGMENTED_WORD_CACHE_TAG}'
         voice = azure_word_voice()
     else:
-        provider, model, voice = default_word_tts_identity()
+        provider, model, voice = resolve_normal_word_audio_identity()
     if resolved_mode == 'word' and provider == 'azure' and normalized in _RYAN_WORD_AUDIO_OVERRIDES:
         voice = _RYAN_WORD_AUDIO_VOICE
     file_name = word_tts_cache_path(Path('word_tts_cache'), normalized, model, voice).name
@@ -120,25 +98,48 @@ def resolve_word_audio_request_candidates(
     pronunciation_mode: str | None = None,
 ) -> list[dict[str, str]]:
     primary = resolve_word_audio_request(word, pronunciation_mode=pronunciation_mode)
-    if primary['pronunciation_mode'] != 'word-segmented':
-        return [primary]
+    candidates: list[dict[str, str]] = []
+    seen: set[tuple[str, str, str]] = set()
 
-    candidates = [primary]
-    for fallback_voice in _LEGACY_SEGMENTED_WORD_VOICES:
-        normalized_voice = (fallback_voice or '').strip()
-        if not normalized_voice or normalized_voice == primary['voice']:
-            continue
+    def append_candidate(candidate_model: str, candidate_voice: str):
+        key = (primary['provider'], candidate_model, candidate_voice)
+        if key in seen:
+            return
+        seen.add(key)
         fallback_file_name = word_tts_cache_path(
             Path('word_tts_cache'),
             primary['normalized_word'],
-            primary['model'],
-            normalized_voice,
+            candidate_model,
+            candidate_voice,
         ).name
         candidates.append({
             **primary,
-            'voice': normalized_voice,
+            'model': candidate_model,
+            'voice': candidate_voice,
             'file_name': fallback_file_name,
         })
+
+    append_candidate(primary['model'], primary['voice'])
+    if primary['pronunciation_mode'] != 'word-segmented':
+        if primary['provider'] != 'azure':
+            return candidates
+        base_model, separator, _cache_tag = primary['model'].partition('@')
+        if not separator:
+            return candidates
+        legacy_model = f'{base_model}@{_LEGACY_WORD_CACHE_TAG}'
+        append_candidate(legacy_model, primary['voice'])
+        for fallback_voice in _LEGACY_NORMAL_WORD_VOICES:
+            normalized_voice = (fallback_voice or '').strip()
+            if not normalized_voice:
+                continue
+            append_candidate(legacy_model, normalized_voice)
+        return candidates
+
+    for fallback_voice in _LEGACY_SEGMENTED_WORD_VOICES:
+        normalized_voice = (fallback_voice or '').strip()
+        if not normalized_voice:
+            continue
+        append_candidate(primary['model'], normalized_voice)
     return candidates
 
 

@@ -1,6 +1,3 @@
-/* ── Quick Memory Mode ──────────────────────────────────────────────────────── */
-
-/* ── Root layout ─────────────────────────────────────────────────────────── */
 .qm-root {
     display: flex;
     flex-direction: column;
@@ -21,7 +18,6 @@
     width: 100%; display: flex; flex-direction: column; align-items: center; margin-block: auto;
 }
 
-/* ── Progress bar ─────────────────────────────────────────────────────────── */
 .qm-progress-track {
     width: 100%;
     max-width: var(--practice-compact-max-width, var(--size-540));
@@ -47,7 +43,6 @@
     font-weight: 500;
 }
 
-/* ── Card ─────────────────────────────────────────────────────────────────── */
 .qm-card {
     --qm-side-rail-size: var(--size-55);
     background: var(--bg-color);
@@ -78,7 +73,6 @@
     to   { opacity: 1;   transform: scale(1); }
 }
 
-/* ── Countdown ring ───────────────────────────────────────────────────────── */
 .qm-countdown-ring {
     align-self: flex-end;
     width: var(--qm-side-rail-size);
@@ -96,7 +90,6 @@
 .qm-timer-label { fill: var(--text-primary); }
 .qm-timer-label.is-critical { fill: var(--error); }
 
-/* ── Word display ─────────────────────────────────────────────────────────── */
 .qm-word {
     font-size: clamp(var(--size-40), 6.6vw, var(--size-58));
     font-weight: 800;
@@ -136,7 +129,6 @@
     50%       { box-shadow: 0 0 0 var(--size-12) color-mix(in srgb, var(--accent) var(--mix-0), transparent); }
 }
 
-/* ── Choice buttons ───────────────────────────────────────────────────────── */
 .qm-choice-row {
     display: flex;
     gap: var(--size-20);
@@ -191,11 +183,15 @@
     box-shadow: 0 var(--size-4) var(--size-12) rgba(var(--accent-rgb), var(--alpha-35));
 }
 
-/* ── Reveal phase ─────────────────────────────────────────────────────────── */
 .qm-result-badge {
-    font-size: var(--size-16);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--size-40);
+    font-size: var(--size-18);
     font-weight: 700;
-    padding: var(--size-6) var(--size-18);
+    line-height: 1;
+    padding: var(--size-8) var(--size-20);
     border-radius: var(--radius-full);
 }
 
@@ -218,12 +214,19 @@
     display: inline-block;
     font-size: var(--size-14);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.02em;
     color: var(--accent);
     background: var(--accent-light);
     padding: var(--size-3) var(--size-10);
     border-radius: var(--radius-sm);
+}
+
+.qm-definition-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--size-10);
+    flex-wrap: wrap;
 }
 
 .qm-definition {
@@ -234,7 +237,6 @@
     font-weight: 500;
 }
 
-/* ── Nav row (上一个 + 下一个) ────────────────────────────────────────────── */
 .qm-nav-row {
     display: flex;
     gap: var(--size-14);
@@ -301,7 +303,6 @@
     box-shadow: 0 var(--size-4) var(--size-14) rgba(var(--accent-rgb), var(--alpha-40));
 }
 
-/* ── Keyboard shortcut hints ──────────────────────────────────────────────── */
 .qm-key-hints {
     display: flex;
     gap: var(--size-16);
@@ -333,7 +334,6 @@ kbd {
     color: var(--text-secondary);
 }
 
-/* ── Fuzzy badge ──────────────────────────────────────────────────────────── */
 .qm-badge--fuzzy {
     display: flex;
     align-items: center;
@@ -349,7 +349,6 @@ kbd {
     letter-spacing: 0.03em;
 }
 
-/* ── Summary screen ───────────────────────────────────────────────────────── */
 .qm-summary {
     display: flex;
     flex-direction: column;
@@ -491,15 +490,11 @@ kbd {
 /* Accuracy stat in summary */
 .qm-stat-num { font-size: var(--size-28); font-weight: 800; line-height: 1; }
 
-/* ── Empty state ──────────────────────────────────────────────────────────── */
 .qm-empty { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - var(--size-48)); font-size: var(--size-18); color: var(--text-tertiary); }
 
-/* ── Mobile ───────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
     .qm-card { padding: var(--size-28) var(--size-20) var(--size-24); gap: var(--size-16); }
     .qm-word { font-size: var(--size-30); }
     .qm-btn  { padding: var(--size-12) var(--size-12); font-size: var(--size-14); }
     .qm-definition { font-size: var(--size-16); }
 }
-
-

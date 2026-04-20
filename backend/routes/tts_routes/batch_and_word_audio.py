@@ -109,7 +109,12 @@ def admin_tts_status(current_user, book_id):
 _generating_words: bool = False
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _AUDIO_SOURCE_HEADER = 'X-Audio-Source'
+_CURRENT_WORD_CACHE_TAG = 'azure-word-v6-ielts-rp-female-onset-buffer'
 _SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
+_LEGACY_WORD_CACHE_TAG = 'azure-word-v5-ielts-rp-female-onset-buffer'
+_LEGACY_NORMAL_WORD_VOICES = (
+    'en-GB-LibbyNeural',
+)
 _LEGACY_SEGMENTED_WORD_VOICES = (
     'en-GB-LibbyNeural',
 )
@@ -190,6 +195,16 @@ def _normalize_word_audio_pronunciation_mode(value: str | None) -> str:
     return 'word'
 
 
+def _resolve_normal_word_audio_identity() -> tuple[str, str, str]:
+    from services.word_tts import azure_default_model, azure_word_voice
+
+    return (
+        'azure',
+        f'{azure_default_model()}@{_CURRENT_WORD_CACHE_TAG}',
+        azure_word_voice(),
+    )
+
+
 def _resolve_word_audio_identity(pronunciation_mode: str) -> tuple[str, str, str, str]:
     if pronunciation_mode == 'word-segmented':
         from services.word_tts import azure_default_model, azure_word_voice
@@ -201,7 +216,7 @@ def _resolve_word_audio_identity(pronunciation_mode: str) -> tuple[str, str, str
             'word-segmented',
         )
 
-    provider, model, voice = default_word_tts_identity()
+    provider, model, voice = _resolve_normal_word_audio_identity()
     return provider, model, voice, 'word'
 
 
@@ -209,16 +224,38 @@ def _resolve_word_audio_identity_candidates(
     pronunciation_mode: str,
 ) -> list[tuple[str, str, str, str]]:
     primary = _resolve_word_audio_identity(pronunciation_mode)
-    if pronunciation_mode != 'word-segmented':
-        return [primary]
-
     provider, model, voice, content_mode = primary
-    candidates = [primary]
+    candidates: list[tuple[str, str, str, str]] = []
+    seen: set[tuple[str, str, str, str]] = set()
+
+    def append_candidate(candidate_model: str, candidate_voice: str):
+        candidate = (provider, candidate_model, candidate_voice, content_mode)
+        if candidate in seen:
+            return
+        seen.add(candidate)
+        candidates.append(candidate)
+
+    append_candidate(model, voice)
+    if pronunciation_mode != 'word-segmented':
+        if provider != 'azure':
+            return candidates
+        base_model, separator, _cache_tag = model.partition('@')
+        if not separator:
+            return candidates
+        legacy_model = f'{base_model}@{_LEGACY_WORD_CACHE_TAG}'
+        append_candidate(legacy_model, voice)
+        for fallback_voice in _LEGACY_NORMAL_WORD_VOICES:
+            normalized_voice = (fallback_voice or '').strip()
+            if not normalized_voice:
+                continue
+            append_candidate(legacy_model, normalized_voice)
+        return candidates
+
     for fallback_voice in _LEGACY_SEGMENTED_WORD_VOICES:
         normalized_voice = (fallback_voice or '').strip()
-        if not normalized_voice or normalized_voice == voice:
+        if not normalized_voice:
             continue
-        candidates.append((provider, model, normalized_voice, content_mode))
+        append_candidate(model, normalized_voice)
     return candidates
 
 
@@ -411,7 +448,7 @@ def admin_word_audio_status(current_user):
     prog = _read_word_progress()
     words = collect_unique_words(None)
     total = len(words)
-    _, model, voice = default_word_tts_identity()
+    _, model, voice = _resolve_normal_word_audio_identity()
     cached = count_cached_words(words, _word_tts_dir(), model, voice)
 
     status = 'idle'

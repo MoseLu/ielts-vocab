@@ -97,10 +97,10 @@ describe('QuickMemoryMode audio behavior', () => {
     vi.useRealTimers()
   })
 
-  it('stops at zero after the countdown expires without auto revealing or slow playback', async () => {
+  it('auto marks the word as unknown and reveals with audio immediately after the countdown', async () => {
     vi.useFakeTimers()
 
-    renderQuickMemoryMode({ word: 'within', phonetic: '/wɪˈðɪn/', pos: 'prep.', definition: 'inside' })
+    renderQuickMemoryMode({ word: 'within', phonetic: '/wɪˈðɪn/', pos: 'PREP.', definition: 'inside' })
 
     expect(playWordAudioMock).not.toHaveBeenCalled()
     expect(screen.getByText('4')).toBeInTheDocument()
@@ -112,12 +112,15 @@ describe('QuickMemoryMode audio behavior', () => {
 
     await act(async () => {
       vi.advanceTimersByTime(3000)
+      await Promise.resolve()
     })
-    expect(screen.getByText('0')).toBeInTheDocument()
-    expect(screen.queryByText('✗ 不认识')).not.toBeInTheDocument()
-    expect(playWordAudioMock).not.toHaveBeenCalled()
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
+    expect(screen.getByText('✗ 不认识')).toBeInTheDocument()
+    expect(screen.getByText('prep.')).toBeInTheDocument()
+    expect(screen.getAllByText('within')).toHaveLength(1)
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function))
     expect(playSlowWordAudioMock).not.toHaveBeenCalled()
-    expect(startSessionMock).not.toHaveBeenCalled()
+    expect(startSessionMock).toHaveBeenCalledTimes(1)
   })
 
   it('plays word audio immediately after the user answers before the countdown ends', async () => {
@@ -140,9 +143,11 @@ describe('QuickMemoryMode audio behavior', () => {
     expect(playSlowWordAudioMock).not.toHaveBeenCalled()
   })
 
-  it('replays the current word audio from the shared shortcut, the toolbar button, and the word itself', async () => {
+  it('replays the current word audio from the shared shortcut and the toolbar button, but not by clicking the word', async () => {
     const user = userEvent.setup()
     renderQuickMemoryMode()
+
+    expect(screen.queryByRole('button', { name: 'apple' })).toBeNull()
 
     stopAudioMock.mockClear()
     await act(async () => {
@@ -156,12 +161,6 @@ describe('QuickMemoryMode audio behavior', () => {
 
     playWordAudioMock.mockClear()
     await user.click(screen.getByRole('button', { name: '重播发音' }))
-    await waitFor(() => {
-      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
-    })
-
-    playWordAudioMock.mockClear()
-    await user.click(screen.getByRole('button', { name: 'apple' }))
     await waitFor(() => {
       expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
     })

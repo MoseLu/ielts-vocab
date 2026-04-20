@@ -13,12 +13,16 @@ class TestWordAudioRoute:
         res = client.get('/api/tts/word-audio')
         assert res.status_code == 400
 
-    def test_uses_effective_minimax_cache_identity(self, client, monkeypatch, tmp_path):
+    def test_uses_effective_normal_azure_cache_identity(self, client, monkeypatch, tmp_path):
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
         target = tmp_path / 'abc123.mp3'
         target.write_bytes(VALID_MP3)
@@ -39,8 +43,12 @@ class TestWordAudioRoute:
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
         target = tmp_path / 'abc123.mp3'
         target.write_bytes(VALID_MP3)
@@ -60,8 +68,12 @@ class TestWordAudioRoute:
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('azure', 'azure-rest:audio@cache-tag', 'en-GB-LibbyNeural'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:audio@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
         target = tmp_path / 'abc123.mp3'
         target.write_bytes(VALID_MP3)
@@ -94,8 +106,12 @@ class TestWordAudioRoute:
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('azure', 'azure-rest:audio@cache-tag', 'en-GB-LibbyNeural'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:audio@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
         target = tmp_path / 'abc123.mp3'
         target.write_bytes(VALID_MP3)
@@ -264,8 +280,12 @@ class TestWordAudioRoute:
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
         target = tmp_path / 'abc123.mp3'
         target.write_bytes(VALID_MP3)
@@ -287,8 +307,12 @@ class TestWordAudioRoute:
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
 
         def fake_synthesize(*args, **kwargs):
@@ -307,8 +331,12 @@ class TestWordAudioRoute:
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
         monkeypatch.setattr(
             'services.word_tts.synthesize_word_to_bytes',
@@ -320,8 +348,8 @@ class TestWordAudioRoute:
         target = word_tts.word_tts_cache_path(
             tmp_path,
             'hello',
-            'speech-2.8-hd@dict-v1',
-            'English_Trustworthy_Man',
+            'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+            'en-GB-LibbyNeural',
         )
         assert res.status_code == 200
         assert res.mimetype == 'audio/mpeg'
@@ -333,8 +361,12 @@ class TestWordAudioRoute:
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
         broken = tmp_path / 'broken.mp3'
         broken.write_bytes(b'ID3')
@@ -357,8 +389,12 @@ class TestWordAudioRoute:
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
 
         def raise_error(text, model, voice, provider=None, content_mode=None):
@@ -371,14 +407,18 @@ class TestWordAudioRoute:
         assert res.status_code == 502
         assert res.get_json() == {'error': 'word audio generation failed'}
 
-    def test_generation_uses_word_provider_override(self, client, monkeypatch, tmp_path):
+    def test_generation_uses_normal_azure_word_profile(self, client, monkeypatch, tmp_path):
         seen = {}
 
         monkeypatch.setattr(tts, '_word_tts_dir', lambda: tmp_path)
         monkeypatch.setattr(
             tts,
-            'default_word_tts_identity',
-            lambda: ('hybrid', 'speech-2.8-hd@dict-v1', 'English_Trustworthy_Man'),
+            '_resolve_normal_word_audio_identity',
+            lambda: (
+                'azure',
+                'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+                'en-GB-LibbyNeural',
+            ),
         )
 
         def fake_synthesize(text, model, voice, provider=None, content_mode=None, phonetic=None):
@@ -394,9 +434,9 @@ class TestWordAudioRoute:
 
         assert res.status_code == 200
         assert seen == {
-            'provider': 'hybrid',
-            'model': 'speech-2.8-hd',
-            'voice': 'English_Trustworthy_Man',
+            'provider': 'azure',
+            'model': 'azure-rest:test',
+            'voice': 'en-GB-LibbyNeural',
             'content_mode': 'word',
         }
 
