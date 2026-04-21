@@ -126,7 +126,8 @@ describe('CreateCustomBookPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: '继续为词书补充新章节' })).toBeInTheDocument()
     })
-    expect(screen.getByDisplayValue('听力补充词书')).toBeDisabled()
+    const titleInput = await screen.findByDisplayValue('听力补充词书')
+    expect(titleInput).toBeDisabled()
     expect(screen.getByLabelText('章节 3')).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('单词内容'), 'meticulous')

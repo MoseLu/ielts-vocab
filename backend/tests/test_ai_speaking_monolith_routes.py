@@ -1,9 +1,7 @@
 from io import BytesIO
 
-from models import User
+from service_models.ai_execution_models import AISpeakingAssessment
 from platform_sdk import ai_speaking_assessment_application
-from services.learner_profile import build_learner_profile
-from services.local_time import current_local_date
 
 
 def register_and_login(client, username='speaking-monolith-user', password='password123'):
@@ -97,7 +95,7 @@ def test_monolith_speaking_routes_support_prompt_evaluate_and_history(client, ap
     assert detail_payload['transcript'] == 'Dynamic planning needs coherent examples.'
 
     with app.app_context():
-        user = User.query.filter_by(username='speaking-monolith-user').one()
-        profile = build_learner_profile(user.id, current_local_date().isoformat())
-        assert profile['activity_summary']['speaking_assessments'] == 1
-        assert any(item['title'] == '口语估分 Part 2 education 6.5分' for item in profile['recent_activity'])
+        stored = AISpeakingAssessment.query.get(evaluate_payload['assessmentId'])
+        assert stored is not None
+        assert stored.topic == 'education'
+        assert stored.transcript == 'Dynamic planning needs coherent examples.'

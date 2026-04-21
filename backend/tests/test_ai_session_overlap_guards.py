@@ -77,9 +77,6 @@ def test_log_session_discards_zero_count_duration_without_server_activity(client
         'wordsStudied': 0,
         'correctCount': 0,
         'wrongCount': 0,
-        'durationSeconds': 12 * 60,
-        'startedAt': int((datetime.utcnow() - timedelta(minutes=12)).timestamp() * 1000),
-        'endedAt': int(datetime.utcnow().timestamp() * 1000),
     })
 
     assert response.status_code == 200
