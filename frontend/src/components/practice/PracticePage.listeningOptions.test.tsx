@@ -376,6 +376,7 @@ describe('PracticePage listening options loading', () => {
     await flushRender()
 
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
+    expect(playWordAudioMock).toHaveBeenCalledWith('guide', expect.anything(), undefined, { sourcePreference: 'buffer' })
     const stopCallsAfterFirstPlayback = stopAudioMock.mock.calls.length
 
     await act(async () => {

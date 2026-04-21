@@ -6,19 +6,11 @@ import FollowMode from './FollowMode'
 import type { Word } from './types'
 
 const fetchFollowReadWordMock = vi.fn()
-const stopAudioMock = vi.fn()
+const fetchMock = vi.fn()
 
 vi.mock('./followReadApi', () => ({
   fetchFollowReadWord: (...args: unknown[]) => fetchFollowReadWordMock(...args),
 }))
-
-vi.mock('./utils', async () => {
-  const actual = await vi.importActual<typeof import('./utils')>('./utils')
-  return {
-    ...actual,
-    stopAudio: (...args: unknown[]) => stopAudioMock(...args),
-  }
-})
 
 class TestAudio {
   static instances: TestAudio[] = []
@@ -61,9 +53,21 @@ function makeWord(): Word {
 describe('FollowMode', () => {
   beforeEach(() => {
     fetchFollowReadWordMock.mockReset()
-    stopAudioMock.mockReset()
+    fetchMock.mockReset()
     TestAudio.instances = []
+    Object.defineProperty(globalThis, 'fetch', {
+      value: fetchMock.mockResolvedValue({
+        ok: true,
+        headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'follow-v1' }),
+        arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]).buffer),
+      }),
+      writable: true,
+    })
     Object.defineProperty(globalThis, 'Audio', { value: TestAudio as unknown as typeof Audio, writable: true })
+    Object.defineProperty(globalThis.URL, 'createObjectURL', { value: vi.fn(() => 'blob:follow-audio'), writable: true })
+    Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: vi.fn(), writable: true })
+    Object.defineProperty(globalThis, 'AudioContext', { value: undefined, writable: true, configurable: true })
+    Object.defineProperty(globalThis, 'webkitAudioContext', { value: undefined, writable: true, configurable: true })
     Object.defineProperty(window, 'requestAnimationFrame', { value: vi.fn(() => 1), writable: true })
     Object.defineProperty(window, 'cancelAnimationFrame', { value: vi.fn(), writable: true })
   })
@@ -115,7 +119,7 @@ describe('FollowMode', () => {
 
     await waitFor(() => {
       expect(fetchFollowReadWordMock).toHaveBeenCalledWith(makeWord())
-      expect(TestAudio.instances).toHaveLength(1)
+      expect(fetchMock).toHaveBeenCalled()
     })
 
     expect(await screen.findByText('/fə/')).toBeInTheDocument()
@@ -128,13 +132,10 @@ describe('FollowMode', () => {
 
     await waitFor(() => {
       expect(onSessionInteraction).toHaveBeenCalled()
-      expect(stopAudioMock).toHaveBeenCalled()
-      expect(TestAudio.instances[0].play).toHaveBeenCalled()
+      expect(TestAudio.instances.some(instance => instance.play.mock.calls.length > 0)).toBe(true)
     })
 
-    expect(TestAudio.instances[0].src).toContain('/api/tts/follow-read-chunked-audio?w=phenomenon')
-    expect(TestAudio.instances[0].volume).toBeCloseTo(0.6)
-    expect(TestAudio.instances[0].playbackRate).toBeCloseTo(1)
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/api/tts/follow-read-chunked-audio'))).toBe(true)
 
     await user.click(screen.getByRole('button', { name: '录音' }))
     await waitFor(() => {

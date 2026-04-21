@@ -23,6 +23,15 @@ import type {
 } from '../../../components/practice/types'
 import type { LearnerProfile as BackendLearnerProfile } from '../../../lib/schemas'
 
+const PRACTICE_AUTOPLAY_PRELOAD_OPTIONS = { includeBuffer: true, sourcePreference: 'buffer' as const }
+const PRACTICE_AUTOPLAY_PLAYBACK_OPTIONS = { sourcePreference: 'buffer' as const }
+
+function shouldUseBufferAutoplay(mode: PracticeMode | undefined, smartDimension: SmartDimension): boolean {
+  return mode === 'listening'
+    || mode === 'dictation'
+    || (mode === 'smart' && (smartDimension === 'listening' || smartDimension === 'dictation'))
+}
+
 interface UsePracticePageEffectsParams {
   userId: string | number | null
   mode?: PracticeMode
@@ -257,21 +266,21 @@ export function usePracticePageEffects({
 
   useEffect(() => {
     if (mode === 'quickmemory') return
-
     const activeWord = currentWord?.word?.trim()
     if (!activeWord) return
 
-    void prepareWordAudioPlayback(activeWord).catch(() => {})
+    const preloadOptions = shouldUseBufferAutoplay(mode, smartDimension)
+      ? PRACTICE_AUTOPLAY_PRELOAD_OPTIONS
+      : undefined
+    void prepareWordAudioPlayback(activeWord, preloadOptions).catch(() => {})
     if (upcomingWords.length) {
-      void preloadWordAudioBatch(upcomingWords).catch(() => {})
+      void preloadWordAudioBatch(upcomingWords, upcomingWords.length, preloadOptions).catch(() => {})
     }
-  }, [currentWord?.word, mode, upcomingWordsKey, upcomingWords.length])
+  }, [currentWord?.word, mode, smartDimension, upcomingWordsKey, upcomingWords.length])
 
   useEffect(() => {
     if (!currentWord) return
-    const shouldAutoPlay = mode === 'listening'
-      || mode === 'dictation'
-      || (mode === 'smart' && (smartDimension === 'listening' || smartDimension === 'dictation'))
+    const shouldAutoPlay = shouldUseBufferAutoplay(mode, smartDimension)
     if (!shouldAutoPlay) return
 
     const isDictation = mode === 'dictation' || (mode === 'smart' && smartDimension === 'dictation')
@@ -289,10 +298,10 @@ export function usePracticePageEffects({
     autoPlayTimerRef.current = window.setTimeout(() => {
       autoPlayTimerRef.current = null
       void (async () => {
-        const prepared = await prepareWordAudioPlayback(currentWord.word).catch(() => false)
+        const prepared = await prepareWordAudioPlayback(currentWord.word, PRACTICE_AUTOPLAY_PRELOAD_OPTIONS).catch(() => false)
         if (cancelled || !prepared) return
         autoPlayStartedKeyRef.current = autoPlayKey
-        playWordUtil(currentWord.word, settings)
+        playWordUtil(currentWord.word, settings, undefined, PRACTICE_AUTOPLAY_PLAYBACK_OPTIONS)
       })()
     }, 280)
 

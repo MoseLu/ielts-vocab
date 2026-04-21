@@ -170,6 +170,16 @@ describe('PracticePage dictation retry flow', () => {
     })
     await flushMicrotasks()
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['alpha'])
+    expect(prepareWordAudioPlaybackMock).toHaveBeenCalledWith('alpha', {
+      includeBuffer: true,
+      sourcePreference: 'buffer',
+    })
+    expect(playWordAudioMock).toHaveBeenCalledWith(
+      'alpha',
+      expect.anything(),
+      undefined,
+      { sourcePreference: 'buffer' },
+    )
 
     const input = container.querySelector('.spelling-input') as HTMLInputElement
     const submit = container.querySelector('.spelling-submit-btn') as HTMLButtonElement

@@ -17,12 +17,14 @@ const touchStudySessionActivityMock = vi.fn()
 const updateStudySessionSnapshotMock = vi.fn()
 const playWordAudioMock = vi.fn(() => Promise.resolve(true))
 const playSlowWordAudioMock = vi.fn(() => Promise.resolve(true))
+const prepareWordAudioPlaybackMock = vi.fn(() => Promise.resolve(true))
 const preloadWordAudioMock = vi.fn(() => Promise.resolve(true))
 const stopAudioMock = vi.fn()
 
 vi.mock('./utils', () => ({
   playSlowWordAudio: (...args: unknown[]) => playSlowWordAudioMock(...args),
   playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
+  prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
   preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
   preloadWordAudioBatch: (...args: unknown[]) => preloadWordAudioMock(...args),
   stopAudio: (...args: unknown[]) => stopAudioMock(...args),
@@ -86,6 +88,8 @@ describe('QuickMemoryMode audio behavior', () => {
     playWordAudioMock.mockImplementation(() => Promise.resolve(true))
     playSlowWordAudioMock.mockClear()
     playSlowWordAudioMock.mockImplementation(() => Promise.resolve(true))
+    prepareWordAudioPlaybackMock.mockClear()
+    prepareWordAudioPlaybackMock.mockImplementation(() => Promise.resolve(true))
     preloadWordAudioMock.mockClear()
     preloadWordAudioMock.mockImplementation(() => Promise.resolve(true))
     stopAudioMock.mockClear()
@@ -102,6 +106,10 @@ describe('QuickMemoryMode audio behavior', () => {
 
     renderQuickMemoryMode({ word: 'within', phonetic: '/wɪˈðɪn/', pos: 'PREP.', definition: 'inside' })
 
+    expect(prepareWordAudioPlaybackMock).toHaveBeenCalledWith('within', {
+      includeBuffer: true,
+      sourcePreference: 'buffer',
+    })
     expect(playWordAudioMock).not.toHaveBeenCalled()
     expect(screen.getByText('4')).toBeInTheDocument()
 
@@ -118,7 +126,7 @@ describe('QuickMemoryMode audio behavior', () => {
     expect(screen.getByText('✗ 不认识')).toBeInTheDocument()
     expect(screen.getByText('prep.')).toBeInTheDocument()
     expect(screen.getAllByText('within')).toHaveLength(1)
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function))
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
     expect(playSlowWordAudioMock).not.toHaveBeenCalled()
     expect(startSessionMock).toHaveBeenCalledTimes(1)
   })
@@ -128,6 +136,10 @@ describe('QuickMemoryMode audio behavior', () => {
 
     renderQuickMemoryMode({ word: 'within', phonetic: '/wɪˈðɪn/', pos: 'prep.', definition: 'inside' })
 
+    expect(prepareWordAudioPlaybackMock).toHaveBeenCalledWith('within', {
+      includeBuffer: true,
+      sourcePreference: 'buffer',
+    })
     expect(playWordAudioMock).not.toHaveBeenCalled()
     expect(screen.getByText('4')).toBeInTheDocument()
 
@@ -139,7 +151,7 @@ describe('QuickMemoryMode audio behavior', () => {
     await act(async () => {
       screen.getByRole('button', { name: '认识' }).click()
     })
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function))
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
     expect(playSlowWordAudioMock).not.toHaveBeenCalled()
   })
 
@@ -147,6 +159,10 @@ describe('QuickMemoryMode audio behavior', () => {
     const user = userEvent.setup()
     renderQuickMemoryMode()
 
+    expect(prepareWordAudioPlaybackMock).toHaveBeenCalledWith('apple', {
+      includeBuffer: true,
+      sourcePreference: 'buffer',
+    })
     expect(screen.queryByRole('button', { name: 'apple' })).toBeNull()
 
     stopAudioMock.mockClear()
@@ -156,13 +172,13 @@ describe('QuickMemoryMode audio behavior', () => {
     })
 
     await waitFor(() => {
-      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
+      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function), { sourcePreference: 'buffer' })
     })
 
     playWordAudioMock.mockClear()
     await user.click(screen.getByRole('button', { name: '重播发音' }))
     await waitFor(() => {
-      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function))
+      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function), { sourcePreference: 'buffer' })
     })
 
     expect(stopAudioMock).toHaveBeenCalled()

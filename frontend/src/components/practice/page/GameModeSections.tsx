@@ -1,4 +1,7 @@
 import PracticePronunciationButton from './PracticePronunciationButton'
+import { DEFAULT_SETTINGS } from '../../../constants'
+import { readAppSettingsFromStorage } from '../../../lib/appSettings'
+import { playWordAudio as playPracticeWordAudio } from '../utils.audio'
 import type {
   GameCampaignDimension,
   GameCampaignNode,
@@ -27,13 +30,7 @@ export const NODE_STATUS_LABELS = {
   passed: '已通关',
 } as const
 
-const DIMENSION_ORDER: GameCampaignDimension[] = [
-  'recognition',
-  'meaning',
-  'listening',
-  'speaking',
-  'dictation',
-]
+const DIMENSION_ORDER: GameCampaignDimension[] = ['recognition', 'meaning', 'listening', 'speaking', 'dictation']
 
 function normalizeAnswer(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ')
@@ -85,12 +82,16 @@ function buildListeningChoices(word: GameCampaignWord) {
 }
 
 function playWordAudio(word: string) {
-  if (typeof window === 'undefined' || typeof window.speechSynthesis === 'undefined') return
-  const utterance = new SpeechSynthesisUtterance(word)
-  utterance.lang = 'en-US'
-  utterance.rate = 0.92
-  window.speechSynthesis.cancel()
-  window.speechSynthesis.speak(utterance)
+  const settings = typeof window === 'undefined'
+    ? DEFAULT_SETTINGS
+    : readAppSettingsFromStorage()
+  void playPracticeWordAudio(word, {
+    playbackSpeed: String(settings.playbackSpeed ?? DEFAULT_SETTINGS.playbackSpeed),
+    volume: String(settings.volume ?? DEFAULT_SETTINGS.volume),
+  }, undefined, undefined, {
+    origin: 'game-mode',
+    wordKey: word.trim().toLowerCase(),
+  })
 }
 
 function getWaveNumber(word: GameCampaignWord) {
@@ -109,7 +110,7 @@ function getDimensionSummary(word: GameCampaignWord) {
   })
 }
 
-function getSceneCaption(word: GameCampaignWord, dimension: GameCampaignDimension) {
+function getSceneCaption(dimension: GameCampaignDimension) {
   if (dimension === 'meaning') return '把场景和词义绑定在一起，再做判断。'
   if (dimension === 'listening') return '先听，再从候选里锁定正确词形。'
   if (dimension === 'speaking') return '先开口，通过后这一维直接点亮。'
@@ -137,7 +138,7 @@ function getSceneKicker(node: GameCampaignNode) {
   return `${getChallengeStep(node)}/5 ${DIMENSION_LABELS[node.dimension]}挑战`
 }
 
-function getStagePrompt(node: GameCampaignNode, word: GameCampaignWord) {
+function getStagePrompt(node: GameCampaignNode) {
   if (node.dimension === 'meaning') return '根据场景与单词，选出正确的中文释义'
   if (node.dimension === 'listening') return '播放单词后，选出正确的英文词形'
   if (node.dimension === 'dictation') return '播放单词后，完整拼写这个单词'
@@ -146,8 +147,9 @@ function getStagePrompt(node: GameCampaignNode, word: GameCampaignWord) {
 }
 
 function getResultText(correct: boolean, mode: 'word' | 'boss') {
-  if (correct) return mode === 'boss' ? '非常棒，Boss 已结算，战役继续。' : '非常棒，当前关已结算，继续推进。'
-  return mode === 'boss' ? '这关已回流到 Boss 队列，稍后重打。' : '这关已记入回流区，稍后还会再出现。'
+  return correct
+    ? (mode === 'boss' ? '非常棒，Boss 已结算，战役继续。' : '非常棒，当前关已结算，继续推进。')
+    : (mode === 'boss' ? '这关已回流到 Boss 队列，稍后重打。' : '这关已记入回流区，稍后还会再出现。')
 }
 
 function getSceneTone(node: GameCampaignNode) {
@@ -241,7 +243,7 @@ function WordScene({
       <div className="practice-game-mode__scene-caption">
         <strong>{word.definition}</strong>
         <span>{getSceneStatusHelp(image)}</span>
-        <span>{getSceneCaption(word, node.dimension ?? 'recognition')}</span>
+        <span>{getSceneCaption(node.dimension ?? 'recognition')}</span>
       </div>
     </div>
   )
@@ -327,7 +329,7 @@ export function WordMissionScreen({
         <div className="practice-game-mode__sheet-head">
           <div>
             <span className="practice-game-mode__sheet-eyebrow">{DIMENSION_LABELS[dimension]}关</span>
-            <strong>{getStagePrompt(node, word)}</strong>
+            <strong>{getStagePrompt(node)}</strong>
           </div>
           <span className="practice-game-mode__sheet-wave">第 {getWaveNumber(word)}/4 波</span>
         </div>
@@ -484,12 +486,8 @@ export function SpeakingMissionScreen({
         ) : null}
 
         <div className="practice-game-mode__button-row">
-          <button type="button" className="practice-game-mode__action" onClick={() => void onSubmitNode(true)} disabled={isSubmitting}>
-            {isBoss ? '闯过 Boss' : '领取奖励'}
-          </button>
-          <button type="button" className="practice-game-mode__action is-secondary" onClick={() => void onSubmitNode(false)} disabled={isSubmitting}>
-            {isBoss ? '稍后重打' : '先跳过'}
-          </button>
+          <button type="button" className="practice-game-mode__action" onClick={() => void onSubmitNode(true)} disabled={isSubmitting}>{isBoss ? '闯过 Boss' : '领取奖励'}</button>
+          <button type="button" className="practice-game-mode__action is-secondary" onClick={() => void onSubmitNode(false)} disabled={isSubmitting}>{isBoss ? '稍后重打' : '先跳过'}</button>
         </div>
 
         {banner ? <BattleBanner tone={banner.tone} message={banner.message} /> : null}

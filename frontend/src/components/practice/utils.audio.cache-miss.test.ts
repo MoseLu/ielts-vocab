@@ -40,18 +40,23 @@ describe('practice audio cache miss handling', () => {
     Object.defineProperty(globalThis.URL, 'createObjectURL', { value: vi.fn(() => 'blob:missing'), writable: true })
     Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: vi.fn(), writable: true })
 
-    const started = await playWordAudio('missing-word', { playbackSpeed: '1', volume: '100' })
+    const started = await playWordAudio('missing-word', { playbackSpeed: '1', volume: '100' }, undefined, { sourcePreference: 'url' })
     await flushAudioWork()
 
     expect(started).toBe(false)
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio?w=missing-word&cache_only=1', expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio/metadata?w=missing-word', expect.objectContaining({
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    }))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=missing-word&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
       signal: expect.anything(),
     }))
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=missing-word&cache_only=1', expect.objectContaining({
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=missing-word&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
@@ -69,18 +74,23 @@ describe('practice audio cache miss handling', () => {
     Object.defineProperty(globalThis.URL, 'createObjectURL', { value: vi.fn(() => 'blob:failed'), writable: true })
     Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: vi.fn(), writable: true })
 
-    const started = await playWordAudio('cache-flaky', { playbackSpeed: '1', volume: '100' })
+    const started = await playWordAudio('cache-flaky', { playbackSpeed: '1', volume: '100' }, undefined, { sourcePreference: 'url' })
     await flushAudioWork()
 
     expect(started).toBe(false)
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio?w=cache-flaky&cache_only=1', expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio/metadata?w=cache-flaky', expect.objectContaining({
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    }))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=cache-flaky&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
       signal: expect.anything(),
     }))
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=cache-flaky&cache_only=1', expect.objectContaining({
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=cache-flaky&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },

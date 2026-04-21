@@ -17,6 +17,8 @@ export interface FollowReadAudioClip {
   kind: 'full' | 'split' | string
   label: string
   url: string
+  cache_key?: string
+  byte_length?: number
   playback_rate: number
   track_segments: boolean
 }

@@ -1,5 +1,6 @@
-const SILENT_WAV_DATA_URI = 'data:audio/wav;base64,UklGRlYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YTIAAACA'
-
+import { getManagedAudioFailureReason, isAutoplayBlockedError, rememberManagedAudioFailureReason, resetManagedAudioFailureReason } from './utils.audio.failure'
+import { ensureManagedAudioKeepAlive, fillManagedAudioLeadIn, getManagedAudioLeadInMs as readManagedAudioLeadInMs, getManagedAudioLeadingSilenceSeconds, getManagedAudioStartDelaySeconds, stopManagedAudioKeepAlive, type ManagedAudioKeepAliveState } from './utils.audio.webAudio'
+const SILENT_WAV_DATA_URI = 'data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YRAAAAAAAAAAAAAAAAAAAAAAAAAA'
 type PlaybackOptions = {
   isCurrent: () => boolean
   isStopped: () => boolean
@@ -20,17 +21,19 @@ let htmlAudioWarmupPromise: Promise<void> | null = null
 let managedAudioContext: AudioContext | null = null
 let managedAudioResumePromise: Promise<boolean> | null = null
 let managedAudioOutputPrimePromise: Promise<boolean> | null = null
+const managedAudioKeepAliveState: ManagedAudioKeepAliveState = { source: null, gain: null }
 let removeAudioUnlockListeners: (() => void) | null = null
 let audioOutputPrimed = false
 let managedAudioOutputPrimed = false
 let decodedBufferCache = new WeakMap<ArrayBuffer, Promise<AudioBuffer | null>>()
 const preparedAudioPool = new Map<string, HTMLAudioElement>()
+const preparedAudioReadyPromises = new Map<string, Promise<boolean>>()
 const MAX_PREPARED_AUDIO = 4
 const AUDIO_PREPARE_TIMEOUT_MS = 1_200
 const AUDIO_OUTPUT_PRIME_MS = 160
 const WEB_AUDIO_OUTPUT_PRIME_MS = 140
-const WEB_AUDIO_START_DELAY_S = 0.03
 const AUDIO_UNLOCK_EVENTS = ['pointerdown', 'keydown', 'touchstart', 'mousedown'] as const
+let playbackReadyBufferCache = new WeakMap<AudioBuffer, AudioBuffer>()
 
 function cleanupPlayback(): void {
   if (!currentPlaybackCleanup) return
@@ -44,10 +47,12 @@ function rememberPreparedAudio(src: string, audio: HTMLAudioElement): HTMLAudioE
   preparedAudioPool.set(src, audio)
   if (preparedAudioPool.size <= MAX_PREPARED_AUDIO) return audio
   const oldestSrc = preparedAudioPool.keys().next().value
-  if (oldestSrc) preparedAudioPool.delete(oldestSrc)
+  if (oldestSrc) {
+    preparedAudioPool.delete(oldestSrc)
+    preparedAudioReadyPromises.delete(oldestSrc)
+  }
   return audio
 }
-
 async function warmupHtmlAudio(): Promise<void> {
   await new Promise<void>(resolve => {
     try {
@@ -78,10 +83,11 @@ function attachAudioSource(audio: HTMLAudioElement, src: string): void {
   audio.preload = 'auto'
   if (audio.src !== src) audio.src = src
 }
-
-async function waitForPreparedAudio(audio: HTMLAudioElement, minimumReadyState = 4): Promise<boolean> {
-  if (audio.readyState >= minimumReadyState) return true
-  return new Promise(resolve => {
+async function waitForPreparedAudio(audio: HTMLAudioElement, src: string, minimumReadyState = 4): Promise<boolean> {
+  if (audio.readyState >= minimumReadyState) { preparedAudioReadyPromises.delete(src); return true }
+  const existing = preparedAudioReadyPromises.get(src)
+  if (existing) return existing
+  const pending = new Promise<boolean>(resolve => {
     let settled = false
     let timerId: ReturnType<typeof setTimeout> | null = null
     const finish = (ready: boolean) => {
@@ -94,13 +100,13 @@ async function waitForPreparedAudio(audio: HTMLAudioElement, minimumReadyState =
         audio.removeEventListener('canplaythrough', handleReady)
         audio.removeEventListener('error', handleError)
       }
+      if (preparedAudioReadyPromises.get(src) === pending) preparedAudioReadyPromises.delete(src)
       resolve(ready)
     }
     const handleReady = () => {
       if (audio.readyState >= minimumReadyState) finish(true)
     }
     const handleError = () => finish(false)
-
     if (typeof audio.addEventListener === 'function') {
       audio.addEventListener('loadeddata', handleReady)
       audio.addEventListener('canplay', handleReady)
@@ -110,14 +116,11 @@ async function waitForPreparedAudio(audio: HTMLAudioElement, minimumReadyState =
     timerId = setTimeout(() => finish(audio.readyState >= 2), AUDIO_PREPARE_TIMEOUT_MS)
     audio.load()
   })
+  preparedAudioReadyPromises.set(src, pending)
+  return pending
 }
-
 async function primeAudioOutput(): Promise<void> {
   if (audioOutputPrimed) return
-  // Use a separate silent element so we never consume frames of the real audio.
-  // The previous implementation played the actual audio element for AUDIO_OUTPUT_PRIME_MS,
-  // which caused the beginning of the word to be skipped if currentTime = 0 did not
-  // complete synchronously before the next play() call.
   await new Promise<void>(resolve => {
     try {
       const primer = new Audio(SILENT_WAV_DATA_URI)
@@ -145,20 +148,17 @@ function getAudioContextCtor(): ManagedAudioContextCtor | null {
   const managedWindow = window as ManagedAudioWindow
   return managedWindow.AudioContext ?? managedWindow.webkitAudioContext ?? null
 }
-
 function clearAudioUnlockListeners(): void {
   if (!removeAudioUnlockListeners) return
   const cleanup = removeAudioUnlockListeners
   removeAudioUnlockListeners = null
   cleanup()
 }
-
 function canResumeManagedAudioContext(audioContext: AudioContext): boolean {
   if (audioContext.state === 'running') return true
   const activation = (navigator as Navigator & { userActivation?: { isActive?: boolean } }).userActivation
   return Boolean(activation?.isActive)
 }
-
 function ensureAudioUnlockListeners(): void {
   if (removeAudioUnlockListeners || typeof document === 'undefined') return
   const handleUserGesture = () => {
@@ -175,17 +175,12 @@ function ensureAudioUnlockListeners(): void {
     }
   }
 }
-
 function getOrCreateManagedAudioContext(): AudioContext | null {
   if (managedAudioContext && managedAudioContext.state !== 'closed') return managedAudioContext
   const AudioContextCtor = getAudioContextCtor()
   if (!AudioContextCtor) return null
   try {
     managedAudioContext = new AudioContextCtor()
-    // The decoded buffer cache and prime state are tied to a specific AudioContext
-    // instance. When a new context is created (e.g. because the old one was closed
-    // by the browser after a long suspension), stale AudioBuffers from the previous
-    // context must not be used with the new one.
     decodedBufferCache = new WeakMap()
     managedAudioOutputPrimed = false
     ensureAudioUnlockListeners()
@@ -200,6 +195,7 @@ async function resumeManagedAudioContext(): Promise<boolean> {
   const audioContext = getOrCreateManagedAudioContext()
   if (!audioContext) return false
   if (audioContext.state === 'running') {
+    ensureManagedAudioKeepAlive(audioContext, managedAudioKeepAliveState)
     clearAudioUnlockListeners()
     return true
   }
@@ -208,6 +204,7 @@ async function resumeManagedAudioContext(): Promise<boolean> {
   managedAudioResumePromise = (async () => {
     try {
       await audioContext.resume()
+      if (audioContext.state === 'running') ensureManagedAudioKeepAlive(audioContext, managedAudioKeepAliveState)
       return audioContext.state === 'running'
     } catch {
       return false
@@ -218,14 +215,12 @@ async function resumeManagedAudioContext(): Promise<boolean> {
   })()
   return managedAudioResumePromise
 }
-
 async function decodeManagedAudioBuffer(buffer: ArrayBuffer): Promise<AudioBuffer | null> {
   if (buffer.byteLength <= 0) return null
   const audioContext = getOrCreateManagedAudioContext()
   if (!audioContext) return null
   const existing = decodedBufferCache.get(buffer)
   if (existing) return existing
-
   const nextDecodedBuffer = (async () => {
     try {
       return await audioContext.decodeAudioData(buffer.slice(0))
@@ -233,13 +228,11 @@ async function decodeManagedAudioBuffer(buffer: ArrayBuffer): Promise<AudioBuffe
       return null
     }
   })()
-
   decodedBufferCache.set(buffer, nextDecodedBuffer)
   const decodedBuffer = await nextDecodedBuffer
   if (!decodedBuffer) decodedBufferCache.delete(buffer)
   return decodedBuffer
 }
-
 async function primeManagedAudioContextOutput(audioContext: AudioContext): Promise<boolean> {
   if (managedAudioOutputPrimed) return true
   if (audioContext.state !== 'running') return false
@@ -272,27 +265,45 @@ async function primeManagedAudioContextOutput(audioContext: AudioContext): Promi
   })
   return managedAudioOutputPrimePromise
 }
-
+function getPlaybackReadyBuffer(audioContext: AudioContext, buffer: AudioBuffer): AudioBuffer {
+  const cached = playbackReadyBufferCache.get(buffer)
+  if (cached) return cached
+  const leadingFrames = Math.max(0, Math.round(buffer.sampleRate * getManagedAudioLeadingSilenceSeconds(audioContext)))
+  if (leadingFrames <= 0) return buffer
+  const playbackBuffer = audioContext.createBuffer(
+    buffer.numberOfChannels,
+    Math.max(1, buffer.length + leadingFrames),
+    buffer.sampleRate,
+  )
+  for (let channelIndex = 0; channelIndex < buffer.numberOfChannels; channelIndex += 1) {
+    const channelData = playbackBuffer.getChannelData(channelIndex)
+    fillManagedAudioLeadIn(channelData, leadingFrames, channelIndex)
+    channelData.set(buffer.getChannelData(channelIndex), leadingFrames)
+  }
+  playbackReadyBufferCache.set(buffer, playbackBuffer)
+  return playbackBuffer
+}
 async function playWebAudioBuffer(buffer: AudioBuffer, options: PlaybackOptions): Promise<boolean> {
   const audioContext = getOrCreateManagedAudioContext()
   if (!audioContext) return false
-  const resumed = await resumeManagedAudioContext()
+  const canResume = canResumeManagedAudioContext(audioContext)
+  const resumed = canResume ? await resumeManagedAudioContext() : false
+  if (!resumed) rememberManagedAudioFailureReason('not-allowed')
   if (!resumed || !options.isCurrent()) return false
   await primeManagedAudioContextOutput(audioContext)
   if (!options.isCurrent()) return false
-
+  const playbackBuffer = getPlaybackReadyBuffer(audioContext, buffer)
+  const startDelaySeconds = getManagedAudioStartDelaySeconds(audioContext)
   const gainNode = audioContext.createGain()
   const source = audioContext.createBufferSource()
   gainNode.gain.value = options.volume
-  source.buffer = buffer
+  source.buffer = playbackBuffer
   source.playbackRate.value = options.rate
   source.connect(gainNode)
   gainNode.connect(audioContext.destination)
-
   currentBufferSource = source
   currentBufferGain = gainNode
   currentPlaybackCleanup = options.cleanup ?? null
-
   let settled = false
   let started = false
   const clearCurrent = () => {
@@ -311,13 +322,11 @@ async function playWebAudioBuffer(buffer: AudioBuffer, options: PlaybackOptions)
     if (notifyEnd) options.onEnd?.()
     return true
   }
-
   source.onended = () => {
     finalize(options.isCurrent() && !options.isStopped())
   }
-
   try {
-    source.start(audioContext.currentTime + WEB_AUDIO_START_DELAY_S)
+    source.start(audioContext.currentTime + startDelaySeconds)
     started = true
     return true
   } catch {
@@ -329,22 +338,16 @@ async function playWebAudioBuffer(buffer: AudioBuffer, options: PlaybackOptions)
 async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boolean> {
   const audio = getOrCreatePreparedAudio(src)
   attachAudioSource(audio, src)
-  const prepared = await waitForPreparedAudio(audio)
+  const prepared = await waitForPreparedAudio(audio, src)
   if (!prepared || !options.isCurrent()) return false
   await primeAudioOutput()
   if (!options.isCurrent()) return false
-
-  // Seek to the beginning. If the element was previously played (e.g. pooled URL
-  // reuse), currentTime may be at the end of the audio.  Wait for the 'seeked'
-  // event so that play() never starts at a stale position.
-  const needsSeek = audio.currentTime !== 0
-  try {
-    audio.pause()
-    audio.currentTime = 0
-  } catch {
-    // Ignore browsers that reject currentTime writes before playback starts.
-  }
-  if (needsSeek) {
+  const needsReset = !audio.paused || audio.currentTime !== 0 || audio.ended
+  if (needsReset) {
+    try {
+      audio.pause()
+      audio.currentTime = 0
+    } catch {}
     await new Promise<void>(resolve => {
       let seekSettled = false
       const onSeeked = () => {
@@ -355,7 +358,6 @@ async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boo
       if (typeof audio.addEventListener === 'function') {
         audio.addEventListener('seeked', onSeeked, { once: true })
       }
-      // Fallback: don't block forever if 'seeked' never fires.
       setTimeout(onSeeked, 200)
     })
     if (!options.isCurrent()) return false
@@ -364,7 +366,6 @@ async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boo
   audio.playbackRate = options.rate
   currentAudio = audio
   currentPlaybackCleanup = options.cleanup ?? null
-
   let settled = false
   let started = false
   const clearCurrent = () => {
@@ -373,13 +374,12 @@ async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boo
       cleanupPlayback()
     }
   }
-  const resolveIfCurrent = (resolve: (value: boolean) => void) => {
-    if (settled) return
-    settled = true
-    clearCurrent()
-    resolve(started)
-  }
-
+    const resolveIfCurrent = (resolve: (value: boolean) => void) => {
+      if (settled) return
+      settled = true
+      clearCurrent()
+      resolve(started)
+    }
   return new Promise(resolve => {
     const markStarted = () => {
       if (!options.isCurrent()) return resolveIfCurrent(resolve)
@@ -387,15 +387,15 @@ async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boo
       started = true
       resolve(true)
     }
-    const fail = () => {
+    const fail = (reason: ManagedAudioFailureReason = 'unknown') => {
       if (!options.isCurrent()) return resolveIfCurrent(resolve)
       if (settled) return
       settled = true
+      rememberManagedAudioFailureReason(reason)
       clearCurrent()
       resolve(started)
       if (options.notifyOnFailure !== false) options.onEnd?.()
     }
-
     audio.onerror = fail
     audio.onended = () => {
       if (!options.isCurrent()) return resolveIfCurrent(resolve)
@@ -405,19 +405,21 @@ async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boo
       resolve(started)
       if (!options.isStopped()) options.onEnd?.()
     }
-
     const start = () => {
       if (!options.isCurrent()) return resolveIfCurrent(resolve)
       if (settled) return
       try {
         const result = audio.play()
-        if (result && typeof result.then === 'function') void result.then(markStarted).catch(fail)
+        if (result && typeof result.then === 'function') {
+          void result.then(markStarted).catch(error => {
+            fail(isAutoplayBlockedError(error) ? 'not-allowed' : 'unknown')
+          })
+        }
         else markStarted()
       } catch {
         fail()
       }
     }
-
     if (typeof audio.addEventListener === 'function') audio.addEventListener('playing', markStarted, { once: true })
     if (audio.readyState >= 4) start()
     else if (typeof audio.addEventListener === 'function') {
@@ -426,19 +428,12 @@ async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boo
     } else start()
   })
 }
-
-export async function prepareManagedAudioBuffer(buffer: ArrayBuffer): Promise<boolean> {
-  const decodedBuffer = await decodeManagedAudioBuffer(buffer)
-  return Boolean(decodedBuffer) || typeof URL.createObjectURL === 'function'
-}
-
+export async function prepareManagedAudioBuffer(buffer: ArrayBuffer): Promise<boolean> { return Boolean(await decodeManagedAudioBuffer(buffer)) || typeof URL.createObjectURL === 'function' }
 export async function prepareManagedAudioUrl(src: string): Promise<boolean> {
   if (!src) return false
-  const audio = getOrCreatePreparedAudio(src)
-  attachAudioSource(audio, src)
-  return waitForPreparedAudio(audio)
+  const audio = getOrCreatePreparedAudio(src); attachAudioSource(audio, src)
+  return waitForPreparedAudio(audio, src)
 }
-
 export async function warmupManagedAudio(): Promise<void> {
   const htmlWarmup = htmlAudioWarmupPromise ?? (htmlAudioWarmupPromise = warmupHtmlAudio())
   const audioContext = getOrCreateManagedAudioContext()
@@ -447,12 +442,13 @@ export async function warmupManagedAudio(): Promise<void> {
   if (resumed && audioContext?.state === 'running') await primeManagedAudioContextOutput(audioContext)
   ensureAudioUnlockListeners()
 }
-
 export async function playManagedAudioBuffer(buffer: ArrayBuffer, options: PlaybackOptions): Promise<boolean> {
+  rememberManagedAudioFailureReason(null)
   const decodedBuffer = await decodeManagedAudioBuffer(buffer)
   if (decodedBuffer) {
     const startedFromWebAudio = await playWebAudioBuffer(decodedBuffer, options)
     if (startedFromWebAudio) return true
+    if (getManagedAudioFailureReason() === 'not-allowed') return false
   }
   if (typeof URL.createObjectURL !== 'function') return false
   const objectUrl = URL.createObjectURL(new Blob([buffer], { type: 'audio/mpeg' }))
@@ -464,7 +460,6 @@ export async function playManagedAudioBuffer(buffer: ArrayBuffer, options: Playb
     },
   })
 }
-
 export function stopManagedAudio(): void {
   if (currentBufferSource) {
     currentBufferSource.onended = null
@@ -484,25 +479,25 @@ export function stopManagedAudio(): void {
   }
   cleanupPlayback()
 }
-
-export function playManagedAudioUrl(src: string, options: PlaybackOptions): Promise<boolean> {
-  return playHtmlAudio(src, options)
-}
-
+export function playManagedAudioUrl(src: string, options: PlaybackOptions): Promise<boolean> { rememberManagedAudioFailureReason(null); return playHtmlAudio(src, options) }
 export function __resetManagedAudioStateForTests(): void {
   stopManagedAudio()
   htmlAudioWarmupPromise = null
   audioOutputPrimed = false
   preparedAudioPool.clear()
+  preparedAudioReadyPromises.clear()
   decodedBufferCache = new WeakMap()
+  playbackReadyBufferCache = new WeakMap()
   clearAudioUnlockListeners()
   managedAudioOutputPrimed = false
+  stopManagedAudioKeepAlive(managedAudioKeepAliveState)
   if (managedAudioContext && managedAudioContext.state !== 'closed') {
     void managedAudioContext.close().catch(() => {})
   }
   managedAudioContext = null
   managedAudioResumePromise = null
   managedAudioOutputPrimePromise = null
+  resetManagedAudioFailureReason()
 }
-
+export function getManagedAudioLeadInMs(): number { return readManagedAudioLeadInMs(managedAudioContext && managedAudioContext.state !== 'closed' ? managedAudioContext : null) }
 ensureAudioUnlockListeners()

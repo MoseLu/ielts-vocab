@@ -9,7 +9,6 @@ import {
   prepareWordAudioPlayback,
   stopAudio,
 } from './utils'
-
 const createAudioResponse = (bytes: number[], cacheKey = 'cache-v1') => ({
   ok: true,
   headers: new Headers({
@@ -18,7 +17,22 @@ const createAudioResponse = (bytes: number[], cacheKey = 'cache-v1') => ({
   }),
   arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array(bytes).buffer),
 })
-
+const createWordAudioMetadataResponse = ({
+  byteLength = 3,
+  cacheKey = 'cache-v1',
+  signedUrl = 'https://oss.example.com/audio.mp3?signature=1',
+}: {
+  byteLength?: number
+  cacheKey?: string
+  signedUrl?: string | null
+} = {}) => ({
+  ok: true,
+  json: vi.fn().mockResolvedValue({
+    byte_length: byteLength,
+    cache_key: cacheKey,
+    signed_url: signedUrl,
+  }),
+})
 class TestAudio {
   src = ''
   volume = 1
@@ -34,15 +48,14 @@ class TestAudio {
   canPlayType = vi.fn(() => '')
   play = vi.fn().mockResolvedValue(undefined)
 }
-
 class TestGainNode {
   gain = { value: 1 }
   connect = vi.fn()
   disconnect = vi.fn()
 }
-
 class TestBufferSourceNode {
   buffer: AudioBuffer | null = null
+  loop = false
   playbackRate = { value: 1 }
   onended: (() => void) | null = null
   connect = vi.fn()
@@ -54,12 +67,14 @@ class TestBufferSourceNode {
     this.onended?.()
   })
 }
-
 class TestManagedAudioContext {
   static instances: TestManagedAudioContext[] = []
-
   state: AudioContextState = 'suspended'
+  currentTime = 0
+  baseLatency = 0
+  outputLatency = 0
   destination = {} as AudioDestinationNode
+  bufferSources: TestBufferSourceNode[] = []
   resume = vi.fn(async () => {
     this.state = 'running'
   })
@@ -78,22 +93,24 @@ class TestManagedAudioContext {
     getChannelData: vi.fn(() => new Float32Array(Math.max(1, length))),
   } as unknown as AudioBuffer))
   createGain = vi.fn(() => new TestGainNode() as unknown as GainNode)
-  createBufferSource = vi.fn(() => new TestBufferSourceNode() as unknown as AudioBufferSourceNode)
+  createBufferSource = vi.fn(() => {
+    const node = new TestBufferSourceNode()
+    this.bufferSources.push(node)
+    return node as unknown as AudioBufferSourceNode
+  })
+  createConstantSource = vi.fn(() => ({ offset: { value: 0 }, connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn() } as unknown as ConstantSourceNode))
   close = vi.fn(async () => {
     this.state = 'closed'
   })
-
   constructor() {
     TestManagedAudioContext.instances.push(this)
   }
 }
-
 async function flushAudioWork() {
   for (let i = 0; i < 4; i += 1) await Promise.resolve()
   await new Promise(resolve => setTimeout(resolve, 0))
   for (let i = 0; i < 4; i += 1) await Promise.resolve()
 }
-
 function expectWordAudioFetchCall(
   fetchMock: ReturnType<typeof vi.fn>,
   index: number,
@@ -106,7 +123,6 @@ function expectWordAudioFetchCall(
     headers: { 'Cache-Control': 'no-cache' },
   }))
 }
-
 describe('practice audio cache', () => {
   const createObjectURLMock = vi.fn(() => 'blob:audio')
   const revokeObjectURLMock = vi.fn()
@@ -127,10 +143,12 @@ describe('practice audio cache', () => {
     })
   })
 
-  it('preloads a full word audio buffer and reuses it on playback', async () => {
+  it('preloads an OSS-backed word audio URL and reuses it on playback', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
+      .mockResolvedValueOnce(createWordAudioMetadataResponse({
+        signedUrl: 'https://oss.example.com/prefetched-word.mp3?signature=1',
+      }))
     const createdAudioSources: string[] = []
 
     class TrackingAudio extends TestAudio {
@@ -144,21 +162,19 @@ describe('practice audio cache', () => {
     Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
     Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
 
-    await preloadWordAudio('prefetched-word')
-    playWordAudio('prefetched-word', { playbackSpeed: '1', volume: '100' })
+    await preloadWordAudio('prefetched-word', { sourcePreference: 'url' })
+    playWordAudio('prefetched-word', { playbackSpeed: '1', volume: '100' }, undefined, { sourcePreference: 'url' })
     await flushAudioWork()
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=prefetched-word&cache_only=1', 'GET')
-    expect(createObjectURLMock).toHaveBeenCalled()
-    expect(createdAudioSources).toContain('blob:audio')
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio/metadata?w=prefetched-word', 'GET')
+    expect(createObjectURLMock).not.toHaveBeenCalled()
+    expect(createdAudioSources).toContain('https://oss.example.com/prefetched-word.mp3?signature=1')
     stopAudio()
   })
 
-  it('decodes preloaded word audio once and reuses the shared web audio path for playback', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
+  it('decodes preloaded word audio once and reuses the shared web audio path for playback when metadata has no signed URL', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
     const createdAudioSources: string[] = []
 
     class TrackingAudio extends TestAudio {
@@ -192,20 +208,23 @@ describe('practice audio cache', () => {
     expect(firstStarted).toBe(true)
     expect(secondStarted).toBe(true)
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=decoded-word&cache_only=1', 'GET')
     expect(createObjectURLMock).not.toHaveBeenCalled()
     expect(createdAudioSources).not.toContain('blob:audio')
 
     const managedContext = TestManagedAudioContext.instances.at(-1)
     expect(managedContext).toBeDefined()
     expect(managedContext?.decodeAudioData).toHaveBeenCalledTimes(1)
-    expect(managedContext?.createBuffer).toHaveBeenCalledTimes(1)
+    expect(managedContext?.createBuffer).toHaveBeenCalledTimes(2)
+    expect(managedContext?.createBuffer).toHaveBeenCalledWith(1, 5763, 24_000)
     expect(managedContext?.createBufferSource).toHaveBeenCalledTimes(3)
+    expect(managedContext?.createConstantSource).toHaveBeenCalledTimes(1)
     expect(managedContext?.resume).toHaveBeenCalled()
 
     stopAudio()
   })
 
-  it('plays word audio from a fully fetched buffer on first playback', async () => {
+  it('uses buffer-first as the default word playback path without touching signed-url metadata', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
@@ -221,24 +240,36 @@ describe('practice audio cache', () => {
 
     Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
     Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
+    Object.defineProperty(globalThis, 'AudioContext', {
+      value: TestManagedAudioContext as unknown as typeof AudioContext,
+      writable: true,
+      configurable: true,
+    })
+    Object.defineProperty(globalThis.navigator, 'userActivation', {
+      value: { isActive: true, hasBeenActive: true },
+      writable: true,
+      configurable: true,
+    })
 
-    playWordAudio('global', { playbackSpeed: '1', volume: '100' })
+    const started = await playWordAudio('buffer-first-word', { playbackSpeed: '1', volume: '100' })
     await flushAudioWork()
 
+    expect(started).toBe(true)
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=global&cache_only=1', 'GET')
-    expect(createdAudioSources.some(src => src.includes('dict.youdao.com'))).toBe(false)
-    expect(createdAudioSources.some(src => src.includes('api.dictionaryapi.dev'))).toBe(false)
-    expect(createObjectURLMock).toHaveBeenCalled()
-    expect(createdAudioSources).toContain('blob:audio')
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=buffer-first-word&cache_only=1', 'GET')
+    expect(createdAudioSources).not.toContain('https://oss.example.com/audio.mp3?signature=1')
 
+    const managedContext = TestManagedAudioContext.instances.at(-1)
+    expect(managedContext?.decodeAudioData).toHaveBeenCalledTimes(1)
     stopAudio()
   })
 
-  it('plays slow word audio through the regular word endpoint', async () => {
+  it('plays word audio from the OSS metadata signed URL on first playback', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'cache-v1'))
+      .mockResolvedValueOnce(createWordAudioMetadataResponse({
+        signedUrl: 'https://oss.example.com/global.mp3?signature=1',
+      }))
     const createdAudioSources: string[] = []
 
     class TrackingAudio extends TestAudio {
@@ -251,6 +282,43 @@ describe('practice audio cache', () => {
 
     Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
     Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
+
+    playWordAudio('global', { playbackSpeed: '1', volume: '100' }, undefined, { sourcePreference: 'url' })
+    await flushAudioWork()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio/metadata?w=global', 'GET')
+    expect(createdAudioSources.some(src => src.includes('dict.youdao.com'))).toBe(false)
+    expect(createdAudioSources.some(src => src.includes('api.dictionaryapi.dev'))).toBe(false)
+    expect(createObjectURLMock).not.toHaveBeenCalled()
+    expect(createdAudioSources).toContain('https://oss.example.com/global.mp3?signature=1')
+
+    stopAudio()
+  })
+  it('plays slow word audio through the regular word endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(createAudioResponse([1, 2, 3]))
+    const createdAudioSources: string[] = []
+
+    class TrackingAudio extends TestAudio {
+      constructor(src = '') {
+        super()
+        this.src = src
+        createdAudioSources.push(src)
+      }
+    }
+
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
+    Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
+    Object.defineProperty(globalThis, 'AudioContext', {
+      value: TestManagedAudioContext as unknown as typeof AudioContext,
+      writable: true,
+      configurable: true,
+    })
+    Object.defineProperty(globalThis.navigator, 'userActivation', {
+      value: { isActive: true, hasBeenActive: true },
+      writable: true,
+      configurable: true,
+    })
 
     const started = await playSlowWordAudio('internet', { playbackSpeed: '1', volume: '100' }, '/ˈɪntənet/')
     await flushAudioWork()
@@ -259,15 +327,18 @@ describe('practice audio cache', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=internet&cache_only=1', 'GET')
     expect(createdAudioSources.some(src => src.includes('pronunciation_mode=phonetic_segments'))).toBe(false)
-    expect(createdAudioSources).toContain('blob:audio')
+    expect(createdAudioSources).not.toContain('blob:audio')
 
     stopAudio()
   })
 
-  it('reuses the cached word buffer without revalidating metadata on repeated playback', async () => {
+  it('reuses the cached signed URL without refetching metadata on repeated playback', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'cache-v1'))
+      .mockResolvedValueOnce(createWordAudioMetadataResponse({
+        cacheKey: 'cache-v1',
+        signedUrl: 'https://oss.example.com/stale-word.mp3?signature=1',
+      }))
     const createdAudioSources: string[] = []
 
     class TrackingAudio extends TestAudio {
@@ -281,13 +352,13 @@ describe('practice audio cache', () => {
     Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
     Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
 
-    await preloadWordAudio('stale-word')
-    playWordAudio('stale-word', { playbackSpeed: '1', volume: '100' })
+    await preloadWordAudio('stale-word', { sourcePreference: 'url' })
+    playWordAudio('stale-word', { playbackSpeed: '1', volume: '100' }, undefined, { sourcePreference: 'url' })
     await flushAudioWork()
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=stale-word&cache_only=1', 'GET')
-    expect(createdAudioSources).toContain('blob:audio')
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio/metadata?w=stale-word', 'GET')
+    expect(createdAudioSources).toContain('https://oss.example.com/stale-word.mp3?signature=1')
     stopAudio()
   })
 
@@ -336,9 +407,13 @@ describe('practice audio cache', () => {
     stopAudio()
   })
 
-  it('plays cached OSS-backed word audio through the same cache-only endpoint', async () => {
+  it('falls back to the cache-only word audio endpoint when signed URL playback fails', async () => {
     const fetchMock = vi
       .fn()
+      .mockResolvedValueOnce(createWordAudioMetadataResponse({
+        cacheKey: 'oss-cache-v1',
+        signedUrl: 'https://oss.example.com/oss-word.mp3?signature=1',
+      }))
       .mockResolvedValueOnce(createAudioResponse([1, 2, 3], 'oss-cache-v1'))
     const createdAudioSources: string[] = []
 
@@ -346,6 +421,12 @@ describe('practice audio cache', () => {
       constructor(src = '') {
         super()
         this.src = src
+        this.play = vi.fn(() => {
+          if (this.src.includes('https://oss.example.com/oss-word.mp3')) {
+            return Promise.reject(new Error('signed url blocked'))
+          }
+          return Promise.resolve(undefined)
+        })
         createdAudioSources.push(src)
       }
     }
@@ -353,12 +434,14 @@ describe('practice audio cache', () => {
     Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
     Object.defineProperty(globalThis, 'Audio', { value: TrackingAudio as unknown as typeof Audio, writable: true })
 
-    playWordAudio('oss-word', { playbackSpeed: '1', volume: '100' })
+    const started = await playWordAudio('oss-word', { playbackSpeed: '1', volume: '100' }, undefined, { sourcePreference: 'url' })
     await flushAudioWork()
 
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio?w=oss-word&cache_only=1', 'GET')
-    expect(createdAudioSources.every(src => !src.includes('oss.example.com'))).toBe(true)
+    expect(started).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expectWordAudioFetchCall(fetchMock, 1, '/api/tts/word-audio/metadata?w=oss-word', 'GET')
+    expectWordAudioFetchCall(fetchMock, 2, '/api/tts/word-audio?w=oss-word&cache_only=1', 'GET')
+    expect(createdAudioSources).toContain('https://oss.example.com/oss-word.mp3?signature=1')
     expect(createdAudioSources).toContain('blob:audio')
     expect(createObjectURLMock).toHaveBeenCalled()
 
@@ -372,7 +455,7 @@ describe('practice audio cache', () => {
         return Promise.resolve(createAudioResponse([1, 2, 3], 'alpha-v1'))
       }
       if (url === '/api/tts/word-audio?w=beta&cache_only=1' && method === 'GET') {
-        return Promise.resolve(createAudioResponse([4, 5, 6, 7], 'beta-v1'))
+        return Promise.resolve(createAudioResponse([4, 5, 6], 'beta-v1'))
       }
       return Promise.reject(new Error(`Unexpected request: ${method} ${url}`))
     })
@@ -382,10 +465,10 @@ describe('practice audio cache', () => {
 
     await preloadWordAudioBatch(['alpha', 'alpha', 'beta'], 3)
 
-    const alphaCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes('/api/tts/word-audio?w=alpha'))
-    const betaCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes('/api/tts/word-audio?w=beta'))
-    expect(alphaCalls.filter(([, init]) => (init as RequestInit | undefined)?.method === 'GET').length).toBe(1)
-    expect(betaCalls.filter(([, init]) => (init as RequestInit | undefined)?.method === 'GET').length).toBe(1)
+    const alphaCalls = fetchMock.mock.calls.filter(([url]) => String(url) === '/api/tts/word-audio?w=alpha&cache_only=1')
+    const betaCalls = fetchMock.mock.calls.filter(([url]) => String(url) === '/api/tts/word-audio?w=beta&cache_only=1')
+    expect(alphaCalls).toHaveLength(1)
+    expect(betaCalls).toHaveLength(1)
   })
 
   it('uses the latest cache key in the direct example playback URL when blob URLs are unavailable', async () => {

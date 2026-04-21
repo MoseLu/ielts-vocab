@@ -1,13 +1,17 @@
-import { startTransition, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { buildApiUrl } from '../../lib'
+import { startTransition, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { AppSettings, Word } from './types'
 import {
   fetchFollowReadWord,
-  type FollowReadAudioClip,
   type FollowReadPayload,
   type FollowReadSegment,
 } from './followReadApi'
-import { stopAudio } from './utils'
+import {
+  getPracticeAudioSnapshot,
+  playPracticeAudio,
+  preparePracticeAudio,
+  stopPracticeAudio,
+  subscribePracticeAudio,
+} from './practiceAudio.session'
 
 interface FollowModeProps {
   currentWord: Word
@@ -62,19 +66,6 @@ function renderWordSegments(word: string, segments: FollowReadSegment[], activeI
   return nodes
 }
 
-function resolveAudioSequence(payload: FollowReadPayload): FollowReadAudioClip[] {
-  return payload.audio_sequence?.length
-    ? payload.audio_sequence
-    : [{
-        id: 'full-fallback',
-        kind: 'full',
-        label: '完整示范',
-        url: payload.audio_url,
-        playback_rate: payload.audio_playback_rate || 1,
-        track_segments: true,
-      }]
-}
-
 export default function FollowMode({
   currentWord,
   queueIndex,
@@ -93,68 +84,21 @@ export default function FollowMode({
   const [payload, setPayload] = useState<FollowReadPayload | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(-1)
-  const [durationMs, setDurationMs] = useState<number | null>(null)
-  const [currentClipIndex, setCurrentClipIndex] = useState(-1)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const frameRef = useRef<number | null>(null)
-  const clipIndexRef = useRef(-1)
-  const clipRef = useRef<FollowReadAudioClip | null>(null)
-  const sequenceRef = useRef<FollowReadAudioClip[]>([])
-  const preparedAudioRef = useRef<Map<string, HTMLAudioElement>>(new Map())
+  const [snapshot, setSnapshot] = useState(getPracticeAudioSnapshot())
+  const wordKey = currentWord.word.trim().toLowerCase()
 
-  const segments = payload
-    ? scaleTimeline(payload.segments, payload.estimated_duration_ms, durationMs)
-    : []
-
-  const releaseCurrentAudio = useCallback(() => {
-    if (frameRef.current != null) window.cancelAnimationFrame(frameRef.current)
-    frameRef.current = null
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.onended = null
-      audioRef.current.onerror = null
-      audioRef.current.onloadedmetadata = null
-      audioRef.current = null
-    }
-  }, [])
-
-  const resetPreparedAudio = useCallback(() => {
-    preparedAudioRef.current.forEach(audio => {
-      audio.pause()
-      audio.onended = null
-      audio.onerror = null
-      audio.onloadedmetadata = null
-    })
-    preparedAudioRef.current.clear()
-  }, [])
-
-  const stopLocalAudio = useCallback((resetSequence = true) => {
-    releaseCurrentAudio()
-    if (resetSequence) {
-      clipIndexRef.current = -1
-      clipRef.current = null
-      sequenceRef.current = []
-      setCurrentClipIndex(-1)
-      setActiveIndex(-1)
-      setDurationMs(null)
-    }
-    setIsPlaying(false)
-  }, [releaseCurrentAudio])
+  useEffect(() => subscribePracticeAudio(setSnapshot), [])
 
   useEffect(() => {
     let cancelled = false
-    stopLocalAudio()
-    resetPreparedAudio()
-    setActiveIndex(-1)
-    setDurationMs(null)
+    stopPracticeAudio()
     setLoading(true)
     setError(null)
     void fetchFollowReadWord(currentWord)
       .then(nextPayload => {
         if (cancelled) return
         startTransition(() => setPayload(nextPayload))
+        void preparePracticeAudio({ kind: 'follow-sequence', payload: nextPayload }).catch(() => {})
       })
       .catch(() => {
         if (!cancelled) setError('跟读素材暂时加载失败')
@@ -164,104 +108,44 @@ export default function FollowMode({
       })
     return () => {
       cancelled = true
-      stopLocalAudio()
-      resetPreparedAudio()
+      stopPracticeAudio()
     }
-  }, [currentWord, resetPreparedAudio, stopLocalAudio])
+  }, [currentWord])
 
-  useEffect(() => {
-    resetPreparedAudio()
-    if (!payload) return
-
-    const prepared = new Map<string, HTMLAudioElement>()
-    resolveAudioSequence(payload).forEach(clip => {
-      const audio = new Audio(buildApiUrl(clip.url))
-      audio.preload = 'auto'
-      audio.load?.()
-      prepared.set(clip.id, audio)
-    })
-    preparedAudioRef.current = prepared
-    return resetPreparedAudio
-  }, [payload, resetPreparedAudio])
-
-  const syncActiveSegment = () => {
-    const audio = audioRef.current
-    if (!audio || !payload || !clipRef.current?.track_segments) return
-    const nextIndex = getActiveSegmentIndex(segments, audio.currentTime * 1000)
-    setActiveIndex(previous => (previous === nextIndex ? previous : nextIndex))
-    if (!audio.paused && !audio.ended) {
-      frameRef.current = window.requestAnimationFrame(syncActiveSegment)
-    }
-  }
-
-  const playClipAt = useCallback(async (index: number) => {
-    const clip = sequenceRef.current[index]
-    if (!clip) {
-      stopLocalAudio()
-      return
-    }
-
-    releaseCurrentAudio()
-    clipIndexRef.current = index
-    clipRef.current = clip
-    setCurrentClipIndex(index)
-    setDurationMs(null)
-    if (!clip.track_segments) setActiveIndex(-1)
-
-    const audio = preparedAudioRef.current.get(clip.id) ?? new Audio(buildApiUrl(clip.url))
-    audio.preload = 'auto'
-    audio.pause()
-    audio.currentTime = 0
-    const volume = Number(settings.volume ?? '100') / 100
-    audio.volume = Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : 1
-    audio.playbackRate = Math.min(1.15, Math.max(0.72, Number(clip.playback_rate) || 1))
-    const syncClipDuration = () => {
-      if (clip.track_segments && Number.isFinite(audio.duration) && audio.duration > 0) {
-        setDurationMs(Math.round(audio.duration * 1000))
-      }
-    }
-    audio.onloadedmetadata = syncClipDuration
-    syncClipDuration()
-    audio.onended = () => {
-      const nextIndex = index + 1
-      if (nextIndex < sequenceRef.current.length) {
-        void playClipAt(nextIndex)
-        return
-      }
-      stopLocalAudio()
-    }
-    audio.onerror = () => {
-      stopLocalAudio()
-      setError('跟读音频播放失败')
-    }
-    audioRef.current = audio
-    await audio.play()
-    setIsPlaying(true)
-    if (clip.track_segments) {
-      syncActiveSegment()
-    }
-  }, [releaseCurrentAudio, settings.volume, stopLocalAudio])
+  const isCurrentPlayback = snapshot.origin === 'follow-mode'
+    && snapshot.wordKey === wordKey
+    && snapshot.queueIndex === queueIndex
+  const isPlaying = isCurrentPlayback && snapshot.state === 'playing'
+  const durationMs = isCurrentPlayback ? snapshot.durationMs : null
+  const currentClipIndex = isCurrentPlayback ? snapshot.clipIndex : -1
+  const segments = useMemo(() => (
+    payload ? scaleTimeline(payload.segments, payload.estimated_duration_ms, durationMs) : []
+  ), [durationMs, payload])
+  const activeIndex = useMemo(
+    () => getActiveSegmentIndex(segments, isCurrentPlayback ? snapshot.currentTimeMs : 0),
+    [isCurrentPlayback, segments, snapshot.currentTimeMs],
+  )
 
   const playAudio = async () => {
     if (!payload) return
     await onSessionInteraction()
-    if (audioRef.current && audioRef.current.paused && audioRef.current.currentTime > 0) {
-      await audioRef.current.play()
-      setIsPlaying(true)
-      if (clipRef.current?.track_segments) syncActiveSegment()
-      return
-    }
-
-    stopAudio()
-    stopLocalAudio()
-    sequenceRef.current = resolveAudioSequence(payload)
-    await playClipAt(0)
+    setError(null)
+    const started = await playPracticeAudio({
+      kind: 'follow-sequence',
+      payload,
+    }, {
+      volume: settings.volume,
+    }, {
+      origin: 'follow-mode',
+      wordKey,
+      queueIndex,
+    })
+    if (!started) setError('跟读音频播放失败')
   }
 
   const handlePlayClick = () => {
-    if (audioRef.current && !audioRef.current.paused) {
-      audioRef.current.pause()
-      setIsPlaying(false)
+    if (isPlaying) {
+      stopPracticeAudio()
       return
     }
     void playAudio().catch(() => setError('跟读音频播放失败'))
@@ -278,18 +162,27 @@ export default function FollowMode({
 
   const handlePrevious = () => {
     if (queueIndex <= 0) return
-    stopLocalAudio()
+    stopPracticeAudio()
     onIndexChange(queueIndex - 1)
   }
 
   const handleNext = () => {
-    stopLocalAudio()
+    stopPracticeAudio()
     if (queueIndex + 1 >= total) {
       void onCompleteSession().then(() => onIndexChange(total))
       return
     }
     onIndexChange(queueIndex + 1)
   }
+
+  const playbackLabel = payload?.audio_sequence?.[currentClipIndex]?.label ?? '跟读播放'
+  const statusLine = loading
+    ? '正在加载跟读时间轴...'
+    : error ?? (
+        isPlaying
+          ? `${playbackLabel} ${Math.max(currentClipIndex + 1, 1)}/${Math.max(payload?.audio_sequence?.length ?? 1, 1)}`
+          : '三段式播放：完整示范 -> 拆分跟读 -> 完整回放。'
+      )
 
   return (
     <div className="follow-mode">
@@ -328,15 +221,7 @@ export default function FollowMode({
             <span>{currentWord.definition}</span>
           </div>
 
-          <div className="follow-status-line">
-            {loading
-              ? '正在加载跟读时间轴...'
-              : error ?? (
-                  isPlaying
-                    ? `${payload?.audio_sequence?.[currentClipIndex]?.label ?? '跟读播放'} ${Math.max(currentClipIndex + 1, 1)}/${Math.max(payload?.audio_sequence?.length ?? 1, 1)}`
-                    : '三段式播放：完整示范 -> 拆分跟读 -> 完整回放。'
-                )}
-          </div>
+          <div className="follow-status-line">{statusLine}</div>
           {(speechRecording || recognizedText) && (
             <div className="follow-recording-note">
               {speechRecording ? '录音中...' : `识别结果：${recognizedText || '未识别到内容'}`}

@@ -1,453 +1,100 @@
-import {
-  __resetManagedAudioStateForTests,
-  playManagedAudioUrl,
-  prepareManagedAudioBuffer,
-  playManagedAudioBuffer,
-  stopManagedAudio,
-  warmupManagedAudio,
-} from './utils.audio.playback'
 import { SLOW_WORD_PLAYBACK_SPEED } from './wordPlayback'
+import {
+  __resetPracticeAudioSessionForTests,
+  playPracticeAudio,
+  stopPracticeAudio,
+} from './practiceAudio.session'
+import type {
+  PracticeAudioRequestContext,
+  WordAudioSourcePreference,
+} from './practiceAudio.types'
+export { preloadWordAudio, preloadWordAudioBatch, prepareWordAudioPlayback } from './utils.audio.word'
 
-let audioGeneration = 0
-let audioStopped = false
-
-const AUDIO_BYTES_HEADER = 'x-audio-bytes'
-const AUDIO_CACHE_KEY_HEADER = 'x-audio-cache-key'
-const MAX_WORD_AUDIO_CACHE_ENTRIES = 12
-const WORD_AUDIO_CACHE_PROBE_TIMEOUT_MS = 1_500
-
-type AudioCacheEntry = { buffer: ArrayBuffer; byteLength: number; cacheKey: string | null; validatedAt: number }
-type AudioMetadata = { byteLength: number | null; cacheKey: string | null }
-
-const wordAudioCache = new Map<string, AudioCacheEntry>()
-const wordAudioRequestCache = new Map<string, Promise<AudioCacheEntry | null>>()
-const exampleAudioCache = new Map<string, AudioCacheEntry>()
-const exampleAudioRequestCache = new Map<string, Promise<AudioCacheEntry | null>>()
-
-function wordAudioCacheKey(word: string): string { return word.trim().toLowerCase() }
-function exampleAudioCacheKey(sentence: string): string { return sentence.trim() }
-
-function isCacheEntryIntact(entry: AudioCacheEntry | undefined): entry is AudioCacheEntry {
-  return !!entry && entry.byteLength > 0 && entry.byteLength === entry.buffer.byteLength
+type AudioSettings = {
+  playbackSpeed?: string
+  volume?: string
 }
 
-function getCachedEntry(cache: Map<string, AudioCacheEntry>, key: string): AudioCacheEntry | null {
-  const entry = cache.get(key)
-  if (!isCacheEntryIntact(entry)) {
-    cache.delete(key)
-    return null
-  }
-  return entry
+type WordAudioPlayOptions = {
+  sourcePreference?: WordAudioSourcePreference
 }
 
-function rememberEntry(
-  cache: Map<string, AudioCacheEntry>,
-  key: string,
-  entry: AudioCacheEntry,
-  options?: { maxEntries?: number },
-): AudioCacheEntry {
-  const saved = { ...entry, validatedAt: Date.now() }
-  cache.delete(key)
-  cache.set(key, saved)
-  const maxEntries = options?.maxEntries ?? Number.POSITIVE_INFINITY
-  while (cache.size > maxEntries) {
-    const oldestKey = cache.keys().next().value
-    if (!oldestKey) break
-    cache.delete(oldestKey)
-  }
-  return saved
-}
+const DEFAULT_WORD_AUDIO_PLAYBACK_OPTIONS: Required<WordAudioPlayOptions> = { sourcePreference: 'buffer' }
 
-function readExpectedAudioBytes(headers: Headers): number | null {
-  const raw = headers.get(AUDIO_BYTES_HEADER) ?? headers.get('content-length')
-  if (!raw) return null
-  const parsed = Number.parseInt(raw, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
-}
-
-function readAudioCacheKey(headers: Headers): string | null { const raw = headers.get(AUDIO_CACHE_KEY_HEADER); return raw && raw.trim() ? raw.trim() : null }
-function readAudioMetadata(headers: Headers): AudioMetadata { return { byteLength: readExpectedAudioBytes(headers), cacheKey: readAudioCacheKey(headers) } }
-
-async function decodeValidatedAudioResponse(response: Response): Promise<AudioCacheEntry | null> {
-  if (!response.ok) return null
-  const metadata = readAudioMetadata(response.headers)
-  const expectedBytes = metadata.byteLength
-  const buffer = await response.arrayBuffer()
-  if (buffer.byteLength <= 0) return null
-  if (expectedBytes !== null && buffer.byteLength !== expectedBytes) return null
-  return {
-    buffer,
-    byteLength: buffer.byteLength,
-    cacheKey: metadata.cacheKey,
-    validatedAt: Date.now(),
-  }
-}
-
-async function fetchValidatedAudioEntry(requestAudio: () => Promise<Response>): Promise<AudioCacheEntry | null> {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const response = await requestAudio()
-      const entry = await decodeValidatedAudioResponse(response)
-      if (entry) return entry
-    } catch {
-      // Retry once on transient fetch or decode failures.
-    }
-  }
-  return null
-}
-
-async function fetchExampleAudioMetadata(sentence: string, word: string): Promise<AudioMetadata> {
-  try {
-    const response = await fetch('/api/tts/example-audio', {
-      method: 'POST',
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Content-Type': 'application/json',
-        'X-Audio-Metadata-Only': '1',
-      },
-      body: JSON.stringify({ sentence, word }),
-    })
-    return response.ok ? readAudioMetadata(response.headers) : { byteLength: null, cacheKey: null }
-  } catch {
-    return { byteLength: null, cacheKey: null }
-  }
-}
-
-function isMetadataMatch(entry: AudioCacheEntry, metadata: AudioMetadata): boolean {
-  if (metadata.byteLength === null || metadata.byteLength !== entry.byteLength) return false
-  if (!metadata.cacheKey) return true
-  return entry.cacheKey === metadata.cacheKey
-}
-
-async function validateCachedEntry(
-  entry: AudioCacheEntry,
-  requestMetadata: () => Promise<AudioMetadata>,
-  options?: { force?: boolean },
-): Promise<boolean> {
-  if (!options?.force) return true
-  const metadata = await requestMetadata()
-  if (!isMetadataMatch(entry, metadata)) return false
-  if (metadata.cacheKey) entry.cacheKey = metadata.cacheKey
-  entry.validatedAt = Date.now()
-  return true
-}
-
-async function requestExampleAudioEntry(sentence: string, word: string): Promise<AudioCacheEntry | null> {
-  return fetchValidatedAudioEntry(async () =>
-    fetch('/api/tts/example-audio', {
-      method: 'POST',
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ sentence, word }),
-    }),
-  )
-}
-
-async function requestWordAudioEntry(word: string, cacheKey: string | null): Promise<AudioCacheEntry | null> {
-  return fetchValidatedAudioEntry(() => fetchWordAudioCacheProbe(buildWordAudioUrl(word, cacheKey), 'GET'))
-}
-
-function buildWordAudioUrl(word: string, cacheKey: string | null): string {
-  const params = new URLSearchParams({ w: word.trim() })
-  params.set('cache_only', '1')
-  if (cacheKey) params.set('v', cacheKey)
-  return `/api/tts/word-audio?${params.toString()}`
-}
-
-async function fetchWordAudioCacheProbe(url: string, method: 'GET' | 'HEAD'): Promise<Response> {
-  const request: RequestInit = {
-    method,
-    cache: 'no-store',
-    headers: { 'Cache-Control': 'no-cache' },
-  }
-  if (typeof AbortController === 'undefined') return fetch(url, request)
-  const controller = new AbortController()
-  const timeoutId = globalThis.setTimeout(() => controller.abort(), WORD_AUDIO_CACHE_PROBE_TIMEOUT_MS)
-  request.signal = controller.signal
-  try {
-    return await fetch(url, request)
-  } finally {
-    globalThis.clearTimeout(timeoutId)
-  }
-}
-
-function buildSegmentedWordAudioUrl(word: string, phonetic?: string | null): string {
-  const params = new URLSearchParams({ w: word.trim(), pronunciation_mode: 'phonetic_segments' })
-  const normalizedPhonetic = phonetic?.trim()
-  if (normalizedPhonetic && normalizedPhonetic !== '/暂无音标/') {
-    params.set('phonetic', normalizedPhonetic)
-  }
-  return `/api/tts/word-audio?${params.toString()}`
-}
-
-function buildExampleAudioUrl(sentence: string, word: string, cacheKey: string | null): string {
-  const params = new URLSearchParams({ sentence: sentence.trim() })
-  const trimmedWord = word.trim()
-  if (trimmedWord) params.set('word', trimmedWord)
-  if (cacheKey) params.set('v', cacheKey)
-  return `/api/tts/example-audio?${params.toString()}`
-}
-
-async function ensureExampleAudioEntryForPlayback(
-  sentence: string,
-  word: string,
-  options?: { forceMetadataCheck?: boolean },
-): Promise<AudioCacheEntry | null> {
-  const key = exampleAudioCacheKey(sentence)
-  if (!key) return null
-  const cached = getCachedEntry(exampleAudioCache, key)
-  if (cached) {
-    const isValid = await validateCachedEntry(
-      cached,
-      () => fetchExampleAudioMetadata(sentence, word),
-      { force: options?.forceMetadataCheck ?? false },
-    )
-    if (isValid) return cached
-    exampleAudioCache.delete(key)
-  }
-
-  const existingRequest = exampleAudioRequestCache.get(key)
-  if (existingRequest) return existingRequest
-
-  const nextRequest = requestExampleAudioEntry(sentence, word)
-    .then(entry => (entry ? rememberEntry(exampleAudioCache, key, entry) : null))
-    .finally(() => {
-      if (exampleAudioRequestCache.get(key) === nextRequest) {
-        exampleAudioRequestCache.delete(key)
-      }
-    })
-  exampleAudioRequestCache.set(key, nextRequest)
-  return nextRequest
-}
-
-async function ensureWordAudioEntryForPlayback(
-  word: string,
-  options?: { forceMetadataCheck?: boolean },
-): Promise<AudioCacheEntry | null> {
-  const key = wordAudioCacheKey(word)
-  if (!key) return null
-  const cached = getCachedEntry(wordAudioCache, key)
-  if (cached) {
-    const isValid = await validateCachedEntry(cached, async () => ({ byteLength: cached.byteLength, cacheKey: cached.cacheKey }), {
-      force: options?.forceMetadataCheck ?? false,
-    })
-    if (isValid) return cached
-    wordAudioCache.delete(key)
-  }
-
-  const requestKey = `${key}|cache-only`
-  const existingRequest = wordAudioRequestCache.get(requestKey)
-  if (existingRequest) return existingRequest
-
-  const nextRequest = requestWordAudioEntry(word, null)
-    .then(entry => (entry ? rememberEntry(wordAudioCache, key, entry, { maxEntries: MAX_WORD_AUDIO_CACHE_ENTRIES }) : null))
-    .finally(() => {
-      if (wordAudioRequestCache.get(requestKey) === nextRequest) {
-        wordAudioRequestCache.delete(requestKey)
-      }
-    })
-  wordAudioRequestCache.set(requestKey, nextRequest)
-  return nextRequest
-}
-
-export function playWord(word: string, settings: { playbackSpeed?: string; volume?: string }): void {
+export function playWord(word: string, settings: AudioSettings): void {
   void playWordAudio(word, settings)
-}
-
-export async function preloadWordAudio(word: string): Promise<boolean> {
-  const entry = await ensureWordAudioEntryForPlayback(word)
-  if (!entry) return false
-  const [prepared] = await Promise.all([
-    prepareManagedAudioBuffer(entry.buffer),
-    warmupManagedAudio(),
-  ])
-  return prepared
-}
-
-export async function preloadExampleAudio(sentence: string, word: string): Promise<boolean> {
-  const entry = await ensureExampleAudioEntryForPlayback(sentence, word)
-  if (!entry) return false
-  const [prepared] = await Promise.all([
-    prepareManagedAudioBuffer(entry.buffer),
-    warmupManagedAudio(),
-  ])
-  return prepared
-}
-
-export async function preloadWordAudioBatch(words: string[], lookahead = words.length): Promise<void> {
-  const uniqueWords = Array.from(new Set(
-    words
-      .map(word => word.trim())
-      .filter(Boolean),
-  )).slice(0, Math.max(0, lookahead))
-  await Promise.allSettled(uniqueWords.map(word => preloadWordAudio(word)))
-}
-
-export async function prepareWordAudioPlayback(word: string): Promise<boolean> {
-  const trimmed = word.trim()
-  if (!trimmed) return false
-  const entry = await ensureWordAudioEntryForPlayback(trimmed)
-  if (!entry) return false
-  const [prepared] = await Promise.all([
-    prepareManagedAudioBuffer(entry.buffer),
-    warmupManagedAudio(),
-  ])
-  return prepared
 }
 
 export function playWordAudio(
   word: string,
-  settings: { playbackSpeed?: string; volume?: string },
+  settings: AudioSettings,
   onEnd?: () => void,
+  options?: WordAudioPlayOptions,
+  context?: PracticeAudioRequestContext,
 ): Promise<boolean> {
-  stopAudio()
-  audioStopped = false
-  const generation = audioGeneration
   const trimmed = word.trim()
   if (!trimmed) {
     onEnd?.()
     return Promise.resolve(false)
   }
-
-  const volume = parseFloat(settings.volume || '100') / 100
-  const rate = Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '1.0')))
-
-  return (async () => {
-    try {
-      const entry = await ensureWordAudioEntryForPlayback(trimmed)
-      if (audioGeneration !== generation) {
-        return false
-      }
-      if (!entry) {
-        onEnd?.()
-        return false
-      }
-      await Promise.all([
-        prepareManagedAudioBuffer(entry.buffer),
-        warmupManagedAudio(),
-      ])
-      if (audioGeneration !== generation) {
-        return false
-      }
-      return playManagedAudioBuffer(entry.buffer, {
-        isCurrent: () => audioGeneration === generation,
-        isStopped: () => audioStopped,
-        volume,
-        rate,
-        onEnd,
-      })
-    } catch {
-      if (audioGeneration === generation) onEnd?.()
-      return false
-    }
-  })()
-}
-
-export function playSegmentedWordAudio(
-  word: string,
-  settings: { playbackSpeed?: string; volume?: string },
-  phonetic?: string | null,
-  onEnd?: () => void,
-  options?: { notifyOnFailure?: boolean },
-): Promise<boolean> {
-  stopAudio()
-  audioStopped = false
-  const generation = audioGeneration
-  const trimmed = word.trim()
-  if (!trimmed) {
-    onEnd?.()
-    return Promise.resolve(false)
-  }
-
-  return playManagedAudioUrl(buildSegmentedWordAudioUrl(trimmed, phonetic), {
-    isCurrent: () => audioGeneration === generation,
-    isStopped: () => audioStopped,
-    volume: parseFloat(settings.volume || '100') / 100,
-    rate: Math.min(4, Math.max(0.25, parseFloat(settings.playbackSpeed || '1.0'))),
-    onEnd,
-    notifyOnFailure: options?.notifyOnFailure ?? true,
-  }).catch(() => {
-    if ((options?.notifyOnFailure ?? true) && audioGeneration === generation) onEnd?.()
-    return false
-  })
+  return playPracticeAudio({
+    kind: 'word',
+    word: trimmed,
+    sourcePreference: options?.sourcePreference ?? DEFAULT_WORD_AUDIO_PLAYBACK_OPTIONS.sourcePreference,
+  }, settings, {
+    origin: context?.origin ?? 'practice-audio',
+    requestId: context?.requestId,
+    wordKey: context?.wordKey ?? trimmed.toLowerCase(),
+    queueIndex: context?.queueIndex ?? null,
+    autoplay: context?.autoplay ?? false,
+  }, { onEnd })
 }
 
 export async function playSlowWordAudio(
   word: string,
-  settings: { playbackSpeed?: string; volume?: string },
+  settings: AudioSettings,
   _phonetic?: string | null,
   onEnd?: () => void,
+  context?: PracticeAudioRequestContext,
 ): Promise<boolean> {
   return playWordAudio(word, {
     ...settings,
     playbackSpeed: SLOW_WORD_PLAYBACK_SPEED,
-  }, onEnd)
+  }, onEnd, undefined, context)
 }
 
 export function stopAudio(): void {
-  audioStopped = true
-  audioGeneration += 1
-  stopManagedAudio()
+  stopPracticeAudio()
 }
 
 export function __resetAudioStateForTests(): void {
-  wordAudioCache.clear()
-  wordAudioRequestCache.clear()
-  exampleAudioCache.clear()
-  exampleAudioRequestCache.clear()
-  audioGeneration = 0
-  audioStopped = false
-  __resetManagedAudioStateForTests()
+  __resetPracticeAudioSessionForTests()
 }
 
 export function playExampleAudio(
   sentence: string,
   word: string,
-  settings: { playbackSpeed?: string; volume?: string },
+  settings: AudioSettings,
   onEnd?: () => void,
+  context?: PracticeAudioRequestContext,
 ): void {
-  stopAudio()
-  audioStopped = false
-  const generation = audioGeneration
-  const volume = parseFloat(settings.volume || '100') / 100
-  const rate = parseFloat(settings.playbackSpeed || '1')
-
-  void (async () => {
-    try {
-      const [entry] = await Promise.all([
-        ensureExampleAudioEntryForPlayback(sentence, word, { forceMetadataCheck: true }),
-        warmupManagedAudio(),
-      ])
-      if (audioGeneration !== generation) {
-        return
-      }
-      if (entry) {
-        const startedFromEntry = await playManagedAudioBuffer(entry.buffer, {
-          isCurrent: () => audioGeneration === generation,
-          isStopped: () => audioStopped,
-          volume,
-          rate,
-          onEnd,
-        })
-        if (startedFromEntry || audioGeneration !== generation) return
-      }
-      const playbackUrl = buildExampleAudioUrl(sentence, word, entry?.cacheKey ?? null)
-      if (audioGeneration !== generation) {
-        return
-      }
-      void playManagedAudioUrl(playbackUrl, {
-        isCurrent: () => audioGeneration === generation,
-        isStopped: () => audioStopped,
-        volume,
-        rate,
-        onEnd,
-      })
-    } catch {
-      if (audioGeneration === generation) onEnd?.()
-    }
-  })()
+  const trimmedSentence = sentence.trim()
+  if (!trimmedSentence) {
+    onEnd?.()
+    return
+  }
+  void playPracticeAudio({
+    kind: 'example',
+    sentence: trimmedSentence,
+    word,
+  }, settings, {
+    origin: context?.origin ?? 'practice-example-audio',
+    requestId: context?.requestId,
+    wordKey: context?.wordKey ?? word.trim().toLowerCase(),
+    queueIndex: context?.queueIndex ?? null,
+    autoplay: context?.autoplay ?? false,
+  }, {
+    forceMetadataCheck: true,
+    onEnd,
+  })
 }
