@@ -3,6 +3,7 @@ param(
     [switch]$AllowDetachedRuntime,
     [switch]$AllowDirtyCompatibilityDrill,
     [switch]$UseMonolithCompatibility,
+    [switch]$UseDockerPostgres,
     [string]$MonolithCompatRouteGroups,
     [ValidateSet('browser', 'rollback', 'all')][string]$MonolithCompatSurface = 'all',
     [switch]$SkipRedis,
@@ -452,12 +453,9 @@ try {
             '-ProjectRoot', $root,
             '-SkipFrontendChecks'
         )
-        if ($SkipRedis) {
-            $microserviceArgs += '-SkipRedis'
-        }
-        if ($SkipRabbit) {
-            $microserviceArgs += '-SkipRabbit'
-        }
+        if ($SkipRedis) { $microserviceArgs += '-SkipRedis' }
+        if ($SkipRabbit) { $microserviceArgs += '-SkipRabbit' }
+        if ($UseDockerPostgres) { $microserviceArgs += '-UseDockerPostgres' }
         & $powerShellPath @microserviceArgs
         if ($LASTEXITCODE -ne 0) {
             throw 'start-microservices.ps1 failed.'

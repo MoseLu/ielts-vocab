@@ -2,7 +2,8 @@ param(
     [string]$ProjectRoot,
     [switch]$SkipFrontendChecks,
     [switch]$SkipRedis,
-    [switch]$SkipRabbit
+    [switch]$SkipRabbit,
+    [switch]$UseDockerPostgres
 )
 
 $ErrorActionPreference = 'Stop'
@@ -257,6 +258,14 @@ function Set-DefaultRabbitEnv {
 }
 
 function Ensure-ProjectPostgres {
+    if ($UseDockerPostgres) {
+        & (Join-Path $root 'scripts\start-local-postgres-docker-microservices.ps1') -ProjectRoot $root -BindHost '127.0.0.1' -Port 55432 -MicroservicesEnv $microservicesEnv
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Failed to start Docker PostgreSQL runtime on port 55432.'
+        }
+        return
+    }
+
     $pgCtl = Join-Path $postgresBin 'pg_ctl.exe'
     $pgIsReady = Join-Path $postgresBin 'pg_isready.exe'
 

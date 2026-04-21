@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 const DEV_SERVER_PORT = 3020
 const PREVIEW_PORT = 3002
 const SPEECH_PROXY_PATH = '/speech-socket.io'
-const API_PROXY_TARGET = process.env.VITE_API_PROXY_TARGET?.trim() || 'http://localhost:8000'
+const API_PROXY_TARGET = process.env.VITE_API_PROXY_TARGET?.trim() || 'http://127.0.0.1:8000'
 const SPEECH_PROXY_TARGET =
   process.env.VITE_SPEECH_PROXY_TARGET?.trim() || 'http://localhost:5001'
 const rewriteSpeechSocketPath = (path: string) => path.replace(SPEECH_PROXY_PATH, '/socket.io')
@@ -46,7 +46,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0', // Allow access from any local interface
+    host: true, // Bind localhost without forcing IPv4-only fallback delays
     port: DEV_SERVER_PORT,
     strictPort: true, // Fail instead of switching ports when 3020 is occupied
     open: false,
@@ -66,7 +66,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
   },
   preview: {
-    host: '0.0.0.0',
+    host: true,
     port: PREVIEW_PORT,
     strictPort: true,
     allowedHosts: true,
