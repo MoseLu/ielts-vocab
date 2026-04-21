@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import WordListPanel from './WordListPanel'
@@ -109,6 +109,35 @@ describe('WordListPanel', () => {
 
     await user.click(alphaRow)
     expect(playWordAudioMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('switches the selected word detail with arrow up and arrow down', () => {
+    render(
+      <WordListPanel
+        show
+        vocabulary={[
+          { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
+          { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
+          { word: 'gamma', phonetic: '/g/', pos: 'n.', definition: 'gamma def' },
+        ]}
+        queue={[0, 1, 2]}
+        queueIndex={0}
+        wordStatuses={{}}
+        onClose={() => {}}
+      />,
+    )
+
+    expect(screen.getByText('切换选中')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '关闭单词列表' })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'ArrowDown' })
+    expect(screen.getByTestId('wordlist-detail-panel')).toHaveTextContent('beta')
+
+    fireEvent.keyDown(window, { key: 'ArrowDown' })
+    expect(screen.getByTestId('wordlist-detail-panel')).toHaveTextContent('gamma')
+
+    fireEvent.keyDown(window, { key: 'ArrowUp' })
+    expect(screen.getByTestId('wordlist-detail-panel')).toHaveTextContent('beta')
   })
 
   it('treats words before the restored queue index as completed in the list', () => {

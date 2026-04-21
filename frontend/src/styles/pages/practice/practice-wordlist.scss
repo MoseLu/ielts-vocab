@@ -247,6 +247,7 @@
 .wordlist-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--space-sm);
     padding: calc(var(--size-24) + env(safe-area-inset-top, 0px)) var(--size-24) var(--size-20);
     border-bottom: var(--size-1) solid var(--surface-border-strong);
@@ -257,10 +258,28 @@
     z-index: var(--layer-raised);
 }
 
+.wordlist-header-main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
+    min-width: 0;
+}
+
+.wordlist-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--size-10);
+    flex-shrink: 0;
+}
+
 .wordlist-title {
     font-size: var(--size-20);
     font-weight: 800;
     color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .wordlist-total {
@@ -269,11 +288,42 @@
     background: var(--surface-hover);
     padding: var(--size-5) var(--size-12);
     border-radius: var(--radius-full);
+    flex-shrink: 0;
+    white-space: nowrap;
 }
+
+.wordlist-shortcut-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--size-5);
+    padding: var(--size-5) var(--size-8);
+    border: var(--size-1) solid var(--surface-border-strong);
+    border-radius: var(--size-8);
+    color: var(--text-tertiary);
+    font-size: var(--size-12);
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.wordlist-shortcut-hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--size-22);
+    height: var(--size-22);
+    border-radius: var(--size-6);
+    background: var(--surface-hover);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: var(--size-13);
+}
+
 .wordlist-close {
-    margin-left: auto;
     width: var(--size-40);
     height: var(--size-40);
+    flex-shrink: 0;
     background: none;
     border: none;
     color: var(--text-tertiary);
@@ -425,6 +475,23 @@
         width: 100vw;
         border-radius: 0;
     }
+
+    .wordlist-header {
+        gap: var(--size-8);
+        padding-inline: var(--size-16);
+    }
+
+    .wordlist-shortcut-hint {
+        gap: var(--size-4);
+        padding-inline: var(--size-6);
+    }
+
+    .wordlist-shortcut-label {
+        display: none;
+    }
+
+    .wordlist-shortcut-hint kbd {
+        min-width: var(--size-20);
+        height: var(--size-20);
+    }
 }
-
-

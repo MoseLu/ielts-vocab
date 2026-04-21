@@ -1,6 +1,6 @@
 // ── Word List Panel Component ───────────────────────────────────────────────────
 
-import { useRef, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useRef, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { DEFAULT_SETTINGS } from '../../constants'
 import { readAppSettingsFromStorage } from '../../lib/appSettings'
 import WordListActionButton from './WordListActionButton'
@@ -10,6 +10,12 @@ import { playWordAudio } from './utils.audio'
 
 function normalizeWordKey(word: string | null | undefined): string {
   return (word ?? '').trim().toLowerCase()
+}
+
+function isEditableShortcutTarget(target: EventTarget | null): boolean {
+  const element = target instanceof HTMLElement ? target : null
+  const tagName = element?.tagName
+  return tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || element?.isContentEditable === true
 }
 
 export default function WordListPanel({
@@ -23,6 +29,7 @@ export default function WordListPanel({
 }: WordListPanelProps) {
   const wordListRef = useRef<HTMLDivElement>(null)
   const currentWordListItemRef = useRef<HTMLDivElement>(null)
+  const selectedDetailItemRef = useRef<HTMLDivElement>(null)
   const wasOpenRef = useRef(false)
   const focusPlaybackSuppressionRef = useRef<string | null>(null)
   const [selectedDetailState, setSelectedDetailState] = useState<{ word: Word; version: number } | null>(null)
@@ -51,14 +58,30 @@ export default function WordListPanel({
     return entries
   }, [visibleWords])
 
-  const openWordDetails = (word: Word) => {
+  const openWordDetails = useCallback((word: Word) => {
     setSelectedDetailState(previous => {
       if (previous && normalizeWordKey(previous.word.word) === normalizeWordKey(word.word)) {
         return { word, version: previous.version + 1 }
       }
       return { word, version: 0 }
     })
-  }
+  }, [])
+
+  const selectedDetailIndex = useMemo(() => {
+    if (!selectedDetailState) return -1
+    const selectedKey = normalizeWordKey(selectedDetailState.word.word)
+    return visibleWords.findIndex(word => normalizeWordKey(word.word) === selectedKey)
+  }, [selectedDetailState, visibleWords])
+
+  const moveSelectedWord = useCallback((direction: -1 | 1) => {
+    if (!visibleWords.length) return
+
+    const fallbackIndex = Math.min(Math.max(queueIndex, 0), visibleWords.length - 1)
+    const baseIndex = selectedDetailIndex >= 0 ? selectedDetailIndex : fallbackIndex
+    const nextIndex = Math.min(Math.max(baseIndex + direction, 0), visibleWords.length - 1)
+    const nextWord = visibleWords[nextIndex]
+    if (nextWord) openWordDetails(nextWord)
+  }, [openWordDetails, queueIndex, selectedDetailIndex, visibleWords])
 
   const closeWordDetails = () => {
     setSelectedDetailState(null)
@@ -88,6 +111,17 @@ export default function WordListPanel({
     }
   }, [show])
 
+  useLayoutEffect(() => {
+    if (!show || !selectedDetailState) return
+    const selectedItem = selectedDetailItemRef.current
+    if (selectedItem && typeof selectedItem.scrollIntoView === 'function') {
+      selectedItem.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth',
+      })
+    }
+  }, [selectedDetailState, show])
+
   useEffect(() => {
     if (!selectedDetailState) return
     const normalizedWord = normalizeWordKey(selectedDetailState.word.word)
@@ -113,6 +147,23 @@ export default function WordListPanel({
     void playWordAudio(word, wordAudioSettings)
   }
 
+  useEffect(() => {
+    if (!show) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+      if (isEditableShortcutTarget(event.target)) return
+
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      moveSelectedWord(event.key === 'ArrowDown' ? 1 : -1)
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [moveSelectedWord, show])
+
   return (
     <>
       {show && (
@@ -120,14 +171,23 @@ export default function WordListPanel({
       )}
       <div className={`wordlist-panel ${show ? 'open' : ''}`} ref={wordListRef}>
         <div className="wordlist-header">
-          <span className="wordlist-title">单词列表</span>
-          <span className="wordlist-total">{vocabulary.length}词</span>
-          <button className="wordlist-close" onClick={handleClose}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <div className="wordlist-header-main">
+            <span className="wordlist-title">单词列表</span>
+            <span className="wordlist-total">{vocabulary.length}词</span>
+          </div>
+          <div className="wordlist-header-actions">
+            <span className="wordlist-shortcut-hint" aria-label="上下方向键切换选中单词">
+              <kbd>↑</kbd>
+              <kbd>↓</kbd>
+              <span className="wordlist-shortcut-label">切换选中</span>
+            </span>
+            <button type="button" className="wordlist-close" aria-label="关闭单词列表" onClick={handleClose}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div className="wordlist-body">
           {queue.map((vocabIdx, qi) => {
@@ -145,7 +205,7 @@ export default function WordListPanel({
             return (
               <div
                 key={qi}
-                ref={isCurrent ? currentWordListItemRef : null}
+                ref={isDetailSelected ? selectedDetailItemRef : isCurrent ? currentWordListItemRef : null}
                 className={`wordlist-item ${isCurrent ? 'current' : ''} ${isDetailSelected ? 'is-detail-selected' : ''} ${status || ''}`}
               >
                 <button
