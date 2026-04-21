@@ -21,7 +21,7 @@ const makeTask = (
   completion_source: null,
   steps: [
     { id: `${overrides.id}-1`, label: '确认任务目标', status: 'current' },
-    { id: `${overrides.id}-2`, label: '完成有效练习', status: 'pending' },
+    { id: `${overrides.id}-2`, label: '完成一轮练习', status: 'pending' },
     { id: `${overrides.id}-3`, label: '等待系统自动判定', status: 'pending' },
   ],
   action: {
@@ -94,9 +94,9 @@ const baseTasks = {
   speaking: makeTask({
     id: 'speaking',
     kind: 'speaking',
-    title: '口语补证据',
-    description: '完成一次发音检查和一次英文输出。',
-    badge: '2 步',
+    title: '口语任务',
+    description: '完成一次发音检查和一句英文表达。',
+    badge: '开始练口语',
     action: {
       kind: 'speaking',
       cta_label: '去口语',
@@ -310,7 +310,7 @@ describe('HomePage', () => {
     expect(screen.getAllByText('待处理').length).toBeGreaterThan(0)
     expect(screen.getAllByText('已完成').length).toBeGreaterThan(0)
     expect(container.querySelectorAll('.study-guidance-card')).toHaveLength(0)
-    expect(screen.getByText('口语补证据')).toBeInTheDocument()
+    expect(screen.getByText('口语任务')).toBeInTheDocument()
     expect(container.querySelectorAll('.study-todo-item')).toHaveLength(4)
     expect(container.querySelectorAll('.study-todo-card-head')).toHaveLength(4)
     expect(container.querySelector('.study-todo-summary')).toBeNull()
@@ -354,7 +354,7 @@ describe('HomePage', () => {
     expect(container.querySelectorAll('.study-todo-item')).toHaveLength(4)
     expect(screen.getByText('到期复习')).toBeInTheDocument()
     expect(screen.getByText('推进词书')).toBeInTheDocument()
-    expect(screen.getByText('口语补证据')).toBeInTheDocument()
+    expect(screen.getByText('口语任务')).toBeInTheDocument()
     expect(screen.getByText('清错词')).toBeInTheDocument()
   })
 

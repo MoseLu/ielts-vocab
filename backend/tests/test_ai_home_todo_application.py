@@ -182,6 +182,51 @@ def test_build_home_todos_response_marks_continue_book_and_speaking_completed(ap
     assert 'add-book' not in tasks
 
 
+def test_build_home_todos_response_sanitizes_speaking_copy_for_home_todo(app, monkeypatch):
+    signals = {
+        'date': '2026-04-16',
+        'due_review': {'pending_count': 0, 'done_today': True},
+        'error_review': {
+            'pending_count': 0,
+            'recommended_dimension': None,
+            'recommended_count': 0,
+            'done_today': False,
+        },
+        'focus_book': None,
+        'activity': {'studied_words': 0, 'duration_seconds': 0, 'sessions': 0},
+        'weakest_mode': None,
+        'speaking': {
+            'status': 'needs_setup',
+            'status_label': '待建立',
+            'tracked_words': 0,
+            'due_words': 0,
+            'backlog_words': 0,
+            'accuracy': None,
+            'focus_words': ['dynamic'],
+            'next_action': '口语维度还没有有效证据，先拿 dynamic 做 1 次发音检查 + 1 句主动造句。',
+            'has_pronunciation_today': False,
+            'has_output_today': False,
+            'has_assessment_today': False,
+            'has_simulation_today': False,
+        },
+    }
+    monkeypatch.setattr(ai_home_todo_application, 'fetch_learning_core_home_todo_signals', lambda *args, **kwargs: signals)
+
+    with app.app_context():
+        user = _create_user()
+        payload, status = ai_home_todo_application.build_home_todos_response(
+            user.id,
+            target_date='2026-04-16',
+        )
+
+    assert status == 200
+    speaking = _task_map(payload)['speaking']
+    assert speaking['badge'] == '开始练口语'
+    assert speaking['steps'][1]['label'] == '1 句英文主动表达'
+    assert '证据' not in speaking['description']
+    assert all('证据' not in step['label'] for step in speaking['steps'])
+
+
 def test_build_home_todos_response_returns_strict_boundary_when_learning_core_is_unavailable(monkeypatch):
     monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
     monkeypatch.delenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', raising=False)

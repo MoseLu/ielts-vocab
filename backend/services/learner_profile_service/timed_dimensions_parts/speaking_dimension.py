@@ -142,15 +142,15 @@ def _build_speaking_dimension(speaking_events, focus_words: list[dict], now_utc:
     if status == 'needs_setup':
         if focus_word_list:
             focus_text = '、'.join(focus_word_list[:3])
-            next_action = f"口语维度还没有有效证据，先拿 {focus_text} 做 1 次发音检查 + 1 句主动造句。"
+            next_action = f"口语这块还没怎么开口练，先拿 {focus_text} 做 1 次发音检查 + 1 句主动造句。"
         else:
-            next_action = '口语维度还没有有效证据，先做 5 个词的发音检查 + 主动造句，建立首轮记录。'
+            next_action = '口语这块还没怎么开口练，先做 5 个词的发音检查 + 主动造句，先把第一轮练起来。'
     elif status == 'due':
         focus_text = '、'.join(focus_word_list[:3])
         next_action = f"口语维度有 {due_words} 个词到了第1/3/7/15/30天节点，优先复现 {focus_text} 的发音 + 造句。"
     elif missing_sentence_words > 0 and focus_word_list:
         focus_text = '、'.join(focus_word_list[:3])
-        next_action = f"口语维度先补 {focus_text} 的造句证据，每个词至少说 1 句完整表达。"
+        next_action = f"口语这块先补 {focus_text} 的主动造句，每个词至少说 1 句完整表达。"
     elif focus_word_list:
         focus_text = '、'.join(focus_word_list[:3])
         next_action = f"口语维度优先处理 {focus_text}，每个词完成 1 次发音检查并口头造句。"
@@ -158,9 +158,9 @@ def _build_speaking_dimension(speaking_events, focus_words: list[dict], now_utc:
         next_action = f"口语维度继续按 { _format_schedule_label(config['schedule_days']) } 节奏复现发音和造句。"
 
     evidence_note = (
-        '当前口语维度依据发音检查、带回应的口语模拟和口语估分事件跟踪，发音通过后仍需补主动造句证据。'
+        '当前口语维度依据发音检查、带回应的口语模拟和口语估分事件跟踪，发音通过后仍需补主动造句练习。'
         if tracked_words > 0
-        else '当前仓库里还没有口语维度的有效事件，AI 需要主动补发音和造句训练。'
+        else '当前仓库里还没有口语维度的练习记录，AI 需要主动补发音和造句训练。'
     )
 
     return {

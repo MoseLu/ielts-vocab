@@ -100,6 +100,22 @@ def _task_spec(
     }
 
 
+def _sanitize_speaking_todo_text(text: str) -> str:
+    sanitized = str(text or '').strip()
+    replacements = (
+        ('有效证据', '练习记录'),
+        ('造句证据', '主动造句'),
+        ('输出证据', '输出练习'),
+        ('口语证据', '口语练习'),
+        ('补证据', '补练习'),
+        ('有效口语输出记录', '英文输出'),
+        ('有效回答', '口语回答'),
+    )
+    for source, target in replacements:
+        sanitized = sanitized.replace(source, target)
+    return sanitized
+
+
 def build_due_review_task(signals: dict, *, carry_over_count: int) -> dict:
     pending_count = int(((signals.get('due_review') or {}).get('pending_count')) or 0)
     done_today = bool((signals.get('due_review') or {}).get('done_today'))
@@ -259,24 +275,30 @@ def build_speaking_task(
     if variant == 'needs_setup':
         raw_steps = [
             {'id': 'pronunciation', 'label': '1 次发音检查', 'done': has_pronunciation_today},
-            {'id': 'output', 'label': '1 次带英文输出的口语记录', 'done': has_output_today},
+            {'id': 'output', 'label': '1 句英文主动表达', 'done': has_output_today},
         ]
-        badge = '建立口语证据'
-        description = str(speaking.get('next_action') or '先补一次发音检查和一条有效口语输出记录。')
+        badge = '开始练口语'
+        description = _sanitize_speaking_todo_text(
+            speaking.get('next_action') or '先做一次发音检查，再说 1 句英文。',
+        )
     elif variant == 'due':
         raw_steps = [
             {'id': 'due-clear', 'label': '完成当日到期口语复现', 'done': due_words <= 0},
-            {'id': 'answer', 'label': '1 次有效回答/估分记录', 'done': has_output_today or has_assessment_today},
+            {'id': 'answer', 'label': '1 次口语回答或估分', 'done': has_output_today or has_assessment_today},
         ]
         badge = f'{max(due_words, 0)} 个到期'
-        description = str(speaking.get('next_action') or '优先清掉今天到期的口语复现，再补一条有效回答。')
+        description = _sanitize_speaking_todo_text(
+            speaking.get('next_action') or '优先清掉今天到期的口语复现，再补 1 次口语回答。',
+        )
     else:
         raw_steps = [
             {'id': 'pronunciation', 'label': '1 次发音检查', 'done': has_pronunciation_today},
-            {'id': 'reinforce', 'label': '1 次造句/模拟/估分补证据', 'done': has_output_today or has_assessment_today},
+            {'id': 'reinforce', 'label': '1 次造句/模拟/估分', 'done': has_output_today or has_assessment_today},
         ]
         badge = f'{max(backlog_words, 0)} 项待补'
-        description = str(speaking.get('next_action') or '先做一次发音检查，再补一条造句或模拟证据。')
+        description = _sanitize_speaking_todo_text(
+            speaking.get('next_action') or '先做一次发音检查，再补一条造句或口语模拟。',
+        )
 
     steps = _finalize_steps(raw_steps)
     completed = all(step.get('status') == 'completed' for step in steps)
