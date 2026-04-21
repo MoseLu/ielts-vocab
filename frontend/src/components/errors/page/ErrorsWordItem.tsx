@@ -5,6 +5,7 @@ import {
   type WrongWordRecord,
   getWrongWordActiveCount,
 } from '../../../features/vocabulary/wrongWordsStore'
+import WordMeaningGroups from '../../ui/WordMeaningGroups'
 import { formatWrongWordOccurrenceDate } from '../../../features/vocabulary/wrongWordsFilters'
 import { normalizeWrongWordKey } from './errorsPageHelpers'
 import { buildWrongWordCardModel } from './errorsPageProgress'
@@ -77,10 +78,12 @@ export function ErrorsWordItem({
         <div className="errors-item-subline">
           {word.phonetic && <span className="errors-item-phonetic">{word.phonetic}</span>}
           {collectedOn && <span className="errors-item-date">收录于 {collectedOn}</span>}
-          <div className="errors-item-definition">
-            {word.pos && <span className="word-pos-tag">{word.pos}</span>}
-            {word.definition}
-          </div>
+          <WordMeaningGroups
+            className="errors-item-definition"
+            definition={word.definition}
+            pos={word.pos}
+            size="sm"
+          />
           <span className="errors-item-focus-note" title={progress.statusDescription}>
             {compactFocusLabel}
           </span>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
 import type { RadioModeProps, Word } from './types'
+import WordMeaningGroups from '../ui/WordMeaningGroups'
 import { playWordAudio, preloadWordAudioBatch, stopAudio } from './utils'
 import SettingsPanel from '../settings/SettingsPanel'
 import {
@@ -226,10 +227,12 @@ export default function RadioMode({
         ) : null}
         <h1 className="radio-stage-word">{radioWord?.word ?? '...'}</h1>
         <p className="radio-stage-phonetic">{radioWord?.phonetic ?? '/-/'}</p>
-        <p className="radio-stage-definition">
-          {radioWord?.pos ? <span className="word-pos-tag">{radioWord.pos}</span> : null}
-          <span>{radioWord?.definition ?? ''}</span>
-        </p>
+        <WordMeaningGroups
+          className="radio-stage-definition"
+          definition={radioWord?.definition ?? ''}
+          pos={radioWord?.pos ?? ''}
+          size="lg"
+        />
       </section>
 
       <div className="radio-controls">

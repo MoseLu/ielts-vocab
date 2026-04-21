@@ -133,6 +133,7 @@ class WordCatalogEntry(db.Model):
     definition = db.Column(db.Text, nullable=True)
     root_segments_json = db.Column(db.Text, nullable=False, default='[]')
     root_summary = db.Column(db.Text, nullable=False, default='')
+    memory_note_json = db.Column(db.Text, nullable=False, default='')
     english_entries_json = db.Column(db.Text, nullable=False, default='[]')
     derivatives_json = db.Column(db.Text, nullable=False, default='[]')
     examples_json = db.Column(db.Text, nullable=False, default='[]')
@@ -158,6 +159,31 @@ class WordCatalogEntry(db.Model):
 
     def get_english_entries(self) -> list[dict]:
         return self._get_json_list(self.english_entries_json)
+
+    def set_memory_note(self, note: dict | None) -> None:
+        self.memory_note_json = json.dumps(note or {}, ensure_ascii=False)
+
+    def get_memory_note(self) -> dict | None:
+        try:
+            payload = json.loads(self.memory_note_json) if self.memory_note_json else {}
+        except Exception:
+            return None
+
+        if not isinstance(payload, dict):
+            return None
+
+        badge = str(payload.get('badge') or '').strip()
+        text = str(payload.get('text') or '').strip()
+        if badge not in {'谐音', '联想'} or not text:
+            return None
+
+        source = str(payload.get('source') or '').strip()
+        return {
+            'badge': badge,
+            'text': text,
+            'source': source or self.source,
+            'updated_at': _iso_utc(self.updated_at),
+        }
 
     def set_derivatives(self, derivatives: list[dict]) -> None:
         self.derivatives_json = json.dumps(derivatives, ensure_ascii=False)
@@ -192,6 +218,7 @@ class WordCatalogEntry(db.Model):
                 'source': self.source,
                 'updated_at': _iso_utc(self.updated_at),
             },
+            'memory': self.get_memory_note(),
             'english': {
                 'word': self.word,
                 'normalized_word': self.normalized_word,

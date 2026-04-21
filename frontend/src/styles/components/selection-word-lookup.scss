@@ -1,0 +1,160 @@
+.selection-word-lookup {
+    position: fixed;
+    left: var(--selection-lookup-left, 0);
+    top: var(--selection-lookup-top, 0);
+    z-index: var(--layer-selection-lookup);
+    width: min(var(--size-320), calc(100vw - var(--size-24)));
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-10);
+    padding: var(--size-14);
+    border: var(--size-1) solid color-mix(in srgb, var(--accent) var(--mix-14), var(--border-strong));
+    border-radius: var(--radius-16);
+    isolation: isolate;
+    overflow: hidden;
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--accent-light) var(--mix-26), var(--surface-elevated) var(--mix-74)) 0%,
+            color-mix(in srgb, var(--surface-elevated) var(--mix-98), var(--text-inverse)) 100%
+        );
+    box-shadow: var(--shadow-overlay);
+    backdrop-filter: blur(var(--size-16));
+}
+
+.selection-word-lookup--global-search {
+    z-index: var(--layer-tooltip);
+}
+
+.selection-word-lookup-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--size-12);
+}
+
+.selection-word-lookup-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--size-8);
+}
+
+.selection-word-lookup-word {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--accent);
+    font-size: var(--size-28);
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.selection-word-lookup-word:focus-visible,
+.selection-word-lookup-close:focus-visible,
+.selection-word-lookup-action-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring-strong);
+}
+
+.selection-word-lookup-phonetic {
+    color: var(--text-tertiary);
+    font-size: var(--size-15);
+}
+
+.selection-word-lookup-close {
+    width: var(--size-32);
+    height: var(--size-32);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--surface-muted) var(--mix-92), transparent);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.selection-word-lookup-close svg {
+    width: var(--size-16);
+    height: var(--size-16);
+}
+
+.selection-word-lookup-summary,
+.selection-word-lookup-meta,
+.selection-word-lookup-example-en,
+.selection-word-lookup-example-zh {
+    margin: 0;
+}
+
+.selection-word-lookup-summary {
+    color: var(--text-primary);
+    font-size: var(--size-15);
+    line-height: 1.6;
+}
+
+.selection-word-lookup-meta {
+    color: var(--text-tertiary);
+    font-size: var(--size-13);
+}
+
+.selection-word-lookup-example {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-6);
+    padding: var(--size-10);
+    border-radius: var(--radius-12);
+    background: color-mix(in srgb, var(--surface-muted) var(--mix-88), transparent);
+}
+
+.selection-word-lookup-example-en {
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.selection-word-lookup-example-zh {
+    color: var(--text-secondary);
+    font-size: var(--size-14);
+    line-height: 1.6;
+}
+
+.selection-word-lookup-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--size-8);
+}
+
+.selection-word-lookup-actions .practice-favorite-btn {
+    flex: 0 0 auto;
+}
+
+.selection-word-lookup-action-btn {
+    min-height: var(--size-36);
+    padding: 0 var(--size-12);
+    border: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-82), transparent);
+    border-radius: var(--radius-pill);
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+    font-size: var(--size-13);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--motion-transition-interactive-fast);
+}
+
+.selection-word-lookup-action-btn:hover {
+    transform: translateY(calc(var(--size-1) * -1));
+    border-color: color-mix(in srgb, var(--accent) var(--mix-26), transparent);
+}
+
+.selection-word-lookup-action-btn--accent {
+    background: color-mix(in srgb, var(--accent) var(--mix-10), var(--surface-elevated));
+    color: color-mix(in srgb, var(--accent) var(--mix-78), var(--text-primary));
+}
+
+@media (max-width: 768px) {
+    .selection-word-lookup {
+        display: none;
+    }
+}

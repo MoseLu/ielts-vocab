@@ -1,3 +1,4 @@
+import { WORD_MEANING_POS_RE } from '../../lib/wordMeaning'
 import type { ListeningConfusableCandidate, OptionItem, Word } from './types'
 
 export interface GenerateOptionsConfig {
@@ -13,7 +14,6 @@ const VALID_ONSET2 = new Set([
   'ph', 'pl', 'pr', 'sc', 'sh', 'sk', 'sl', 'sm', 'sn', 'sp', 'st', 'sw', 'th', 'tr', 'tw', 'wh', 'wr',
 ])
 const VALID_ONSET3 = new Set(['str', 'scr', 'spr', 'spl', 'squ', 'thr', 'chr'])
-const MEANING_POS_RE = /\b(?:n|v|vi|vt|adj|adv|prep|pron|conj|aux|int|num|art|a)\.\s*/gi
 const MEANING_NOISE_TOKENS = new Set(['复数', '现在分词', '过去式', '过去分词', '第三人称单数', '比较级', '最高级', '口语', '英', '美'])
 const LISTENING_VARIANT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/metres\b/g, 'meters'],
@@ -176,7 +176,7 @@ function confusabilityScore(target: Word, candidate: Word): number {
 
 function cleanMeaningFragment(value: string): string {
   return value
-    .replace(MEANING_POS_RE, ' ')
+    .replace(WORD_MEANING_POS_RE, ' ')
     .replace(/[()（）[\]【】]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()

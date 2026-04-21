@@ -89,4 +89,25 @@ describe('buildWordMemoryNote', () => {
     expect(note.text).toContain('西斯特姆')
     expect(note.text).toContain('symptom')
   })
+
+  it('prefers server-provided memory notes when available', () => {
+    const note = buildWordMemoryNote({
+      detailData: buildDetail({
+        memory: {
+          badge: '联想',
+          text: '先想象自己把责任扛在肩上，再把“责任；职责”这个意思挂上去。',
+          source: 'llm_memory',
+          updated_at: '2026-04-21T12:00:00Z',
+        },
+      }),
+      result: buildResult({
+        word: 'responsibility',
+        phonetic: '/rɪˌspɒnsəˈbɪləti/',
+        definition: '责任；职责',
+      }),
+    })
+
+    expect(note.badge).toBe('联想')
+    expect(note.text).toBe('先想象自己把责任扛在肩上，再把“责任；职责”这个意思挂上去。')
+  })
 })

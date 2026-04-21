@@ -12,6 +12,7 @@ import {
   stopPracticeAudio,
   subscribePracticeAudio,
 } from './practiceAudio.session'
+import WordMeaningGroups from '../ui/WordMeaningGroups'
 
 interface FollowModeProps {
   currentWord: Word
@@ -216,10 +217,12 @@ export default function FollowMode({
             )) : <span className="follow-phonetic-chip">{currentWord.phonetic}</span>}
           </div>
 
-          <div className="follow-definition-row">
-            {currentWord.pos ? <span className="word-pos-tag">{currentWord.pos}</span> : null}
-            <span>{currentWord.definition}</span>
-          </div>
+          <WordMeaningGroups
+            className="follow-definition-row"
+            definition={currentWord.definition}
+            pos={currentWord.pos}
+            size="lg"
+          />
 
           <div className="follow-status-line">{statusLine}</div>
           {(speechRecording || recognizedText) && (

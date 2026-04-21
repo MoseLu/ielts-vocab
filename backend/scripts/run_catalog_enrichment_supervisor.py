@@ -10,8 +10,6 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = BACKEND_ROOT.parent
@@ -23,9 +21,7 @@ UTC = timezone.utc
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-load_dotenv(BACKEND_ROOT / '.env')
-
-from app import create_app
+from scripts.catalog_content_script_runtime import create_catalog_content_script_app
 from services.word_detail_enrichment import collect_pending_word_seeds, collect_word_seeds
 from services.word_detail_llm_client import is_quota_exhausted_error
 
@@ -60,7 +56,7 @@ def _write_state(path: Path, data: dict) -> None:
 
 
 def _collect_pending_words(book_ids: tuple[str, ...] | None) -> list[str]:
-    app = create_app()
+    app = create_catalog_content_script_app()
     with app.app_context():
         seeds = collect_pending_word_seeds(collect_word_seeds(book_ids), overwrite=False)
     return [seed['normalized_word'] for seed in seeds]

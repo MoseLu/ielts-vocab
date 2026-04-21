@@ -12,11 +12,11 @@ DEFAULT_PROVIDER = 'minimax'
 DISABLE_FALLBACK_PROVIDER = 'none'
 MINIMAX_PRIMARY_PROVIDER = 'minimax-primary'
 MINIMAX_SECONDARY_PROVIDER = 'minimax-secondary'
-DEFAULT_MINIMAX_MODEL = 'MiniMax-M2.5'
+DEFAULT_MINIMAX_MODEL = 'MiniMax-M2.7'
 DEFAULT_DASHSCOPE_MODEL = 'qwen-turbo'
 DEFAULT_MODEL_MAX_TOKENS = 3200
 DEFAULT_DASHSCOPE_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
-DEFAULT_MINIMAX_BASE_URL = 'https://api.minimaxi.com/anthropic/v1'
+DEFAULT_MINIMAX_BASE_URL = 'https://api.minimaxi.com/v1'
 QUOTA_EXHAUSTED_PATTERNS = (
     r'\bquota exhausted\b',
     r'\binsufficient quota\b',
@@ -53,8 +53,8 @@ _DASHSCOPE_BASE_URL = (
     _ENV.get('DASHSCOPE_BASE_URL', DEFAULT_DASHSCOPE_BASE_URL).strip().rstrip('/')
 )
 _MINIMAX_BASE_URL = (
-    _ENV.get('ANTHROPIC_BASE_URL')
-    or _ENV.get('MINIMAX_BASE_URL')
+    _ENV.get('MINIMAX_BASE_URL')
+    or _ENV.get('ANTHROPIC_BASE_URL')
     or DEFAULT_MINIMAX_BASE_URL
 ).strip().rstrip('/')
 _MINIMAX_PRIMARY_KEY = _ENV.get('MINIMAX_API_KEY', '').strip()

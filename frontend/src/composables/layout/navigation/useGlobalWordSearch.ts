@@ -12,7 +12,10 @@ import {
   WordSearchResponseSchema,
   type WordSearchResult,
 } from '../../../lib'
-import { GLOBAL_WORD_SEARCH_OPEN_EVENT } from '../../../components/layout/navigation/globalWordSearchEvents'
+import {
+  GLOBAL_WORD_SEARCH_OPEN_EVENT,
+  type OpenGlobalWordSearchDetail,
+} from '../../../components/layout/navigation/globalWordSearchEvents'
 
 const SEARCH_LIMIT = 12
 
@@ -58,17 +61,6 @@ export function useGlobalWordSearch() {
     setQuery('')
   }, [clearSearchState])
 
-  const openSearch = useCallback((nextQuery = '') => {
-    setIsOpen(true)
-    if (nextQuery) {
-      setQuery(nextQuery)
-    }
-    requestAnimationFrame(() => {
-      inputRef.current?.focus()
-      inputRef.current?.select()
-    })
-  }, [])
-
   const runSearch = useCallback(async (rawQuery: string) => {
     const trimmedQuery = rawQuery.trim()
     if (!trimmedQuery) {
@@ -112,6 +104,23 @@ export function useGlobalWordSearch() {
     }
   }, [clearSearchState])
 
+  const openSearch = useCallback((
+    nextQuery = '',
+    options: Pick<OpenGlobalWordSearchDetail, 'autoSubmit'> = {},
+  ) => {
+    setIsOpen(true)
+    if (nextQuery) {
+      setQuery(nextQuery)
+    }
+    if (options.autoSubmit && nextQuery.trim()) {
+      void runSearch(nextQuery)
+    }
+    requestAnimationFrame(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    })
+  }, [runSearch])
+
   const handleQueryChange = useCallback((nextQuery: string) => {
     setQuery(nextQuery)
 
@@ -144,9 +153,11 @@ export function useGlobalWordSearch() {
       openSearch()
     }
 
-    const handleOpenEvent = (event: Event) => {
-      const customEvent = event as CustomEvent<{ query?: string }>
-      openSearch(customEvent.detail?.query ?? '')
+      const handleOpenEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<OpenGlobalWordSearchDetail>
+      openSearch(customEvent.detail?.query ?? '', {
+        autoSubmit: customEvent.detail?.autoSubmit === true,
+      })
     }
 
     window.addEventListener('keydown', handleGlobalKey, true)

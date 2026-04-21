@@ -22,6 +22,7 @@ const BottomNav = lazy(() => import('../components/layout/navigation/BottomNav')
 const GlobalWordSearch = lazy(() => import('../components/layout/navigation/GlobalWordSearch'))
 const Header = lazy(() => import('../components/layout/navigation/Header'))
 const LeftSidebar = lazy(() => import('../components/layout/navigation/LeftSidebar'))
+const SelectionWordLookup = lazy(() => import('../components/layout/navigation/SelectionWordLookup'))
 const NotFoundPage = lazy(() => import('../components/not-found/page/NotFoundPage'))
 const ConfusableMatchPage = lazy(() => import('../components/practice/ConfusableMatchPage'))
 const ProfilePage = lazy(() => import('../components/profile/page/ProfilePage'))
@@ -353,6 +354,11 @@ export function AppRoutes({
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} />}
+      {user && !isSpecialPage && chromeReady && (
+        <ChromeSlot>
+          <SelectionWordLookup />
+        </ChromeSlot>
+      )}
       {user && !isSpecialPage && chromeReady && (
         <ChromeSlot>
           <GlobalWordSearch />

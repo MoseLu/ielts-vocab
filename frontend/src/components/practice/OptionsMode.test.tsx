@@ -320,4 +320,52 @@ describe('OptionsMode listening feedback', () => {
 
     expect(screen.getByText('默写模式')).toBeInTheDocument()
   })
+
+  it('stacks multiple part-of-speech groups in meaning mode while keeping the shared tags', () => {
+    const { container } = render(
+      <OptionsMode
+        currentWord={{
+          word: 'tested',
+          phonetic: '/ˈtestɪd/',
+          pos: 'v.',
+          definition: '测试；试验；“test”的过去式和过去分词； adj. 经受过考验的；',
+        }}
+        previousWord={null}
+        lastState={null}
+        mode="meaning"
+        options={[
+          { ...makeDefinitionOption('tested', 'v.', '测试；试验；“test”的过去式和过去分词； adj. 经受过考验的；'), display_mode: 'word' },
+          { ...makeDefinitionOption('trying', 'adj.', '令人费劲的'), display_mode: 'word' },
+          { ...makeDefinitionOption('tester', 'n.', '测试员'), display_mode: 'word' },
+          { ...makeDefinitionOption('testing', 'n.', '测试'), display_mode: 'word' },
+        ]}
+        selectedAnswer={null}
+        wrongSelections={[]}
+        showResult={false}
+        correctIndex={0}
+        spellingInput=""
+        spellingResult={null}
+        speechConnected
+        speechRecording={false}
+        settings={{}}
+        progressValue={0.25}
+        total={4}
+        queueIndex={0}
+        onOptionSelect={vi.fn()}
+        onSkip={vi.fn()}
+        onGoBack={vi.fn()}
+        onSpellingSubmit={vi.fn()}
+        onSpellingInputChange={vi.fn()}
+        onStartRecording={vi.fn()}
+        onStopRecording={vi.fn()}
+        onPlayWord={vi.fn()}
+      />,
+    )
+
+    const meaningPrompt = container.querySelector('.meaning-prompt-definition')
+    expect(meaningPrompt?.className).toContain('word-meaning-groups--stacked')
+    expect(meaningPrompt?.querySelectorAll('.word-meaning-group')).toHaveLength(2)
+    expect(meaningPrompt).toHaveTextContent('v. 测试；试验；“test”的过去式和过去分词')
+    expect(meaningPrompt).toHaveTextContent('adj. 经受过考验的')
+  })
 })

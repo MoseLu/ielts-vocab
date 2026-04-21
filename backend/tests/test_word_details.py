@@ -2,6 +2,7 @@ import services.legacy_word_detail_migration as legacy_word_detail_migration
 import services.books_catalog_service as books_catalog_service
 import services.books_vocabulary_loader_service as books_vocabulary_loader_service
 import services.word_detail_enrichment as word_detail_enrichment
+from services.word_catalog_service import ensure_word_catalog_entry
 from models import (
     WordCatalogBookRef,
     WordCatalogEntry,
@@ -144,6 +145,28 @@ class TestWordDetails:
         derivative_words = [item['word'] for item in data['derivatives']]
         assert 'analyst' in derivative_words
         assert 'analytical' in derivative_words
+
+    def test_word_details_return_persisted_memory_note(self, client, app, monkeypatch):
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _mock_catalog)
+
+        with app.app_context():
+            catalog_entry, changed = ensure_word_catalog_entry('quit')
+            if changed:
+                db.session.commit()
+            catalog_entry.set_memory_note({
+                'badge': '联想',
+                'text': '先想一个人突然 quit 离场，把“停止；离开”这个意思一起记住。',
+                'source': 'llm_memory',
+            })
+            db.session.commit()
+
+        res = client.get('/api/books/word-details?word=quit')
+
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['memory']['badge'] == '联想'
+        assert data['memory']['text'] == '先想一个人突然 quit 离场，把“停止；离开”这个意思一起记住。'
+        assert data['memory']['source'] == 'llm_memory'
 
     def test_word_details_fall_back_to_placeholder_derivatives(self, client, monkeypatch):
         monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', lambda: [])

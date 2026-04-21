@@ -219,7 +219,7 @@ describe('GlobalWordSearch', () => {
       )
     })
 
-    await screen.findByText('v. 停止；离开')
+    await waitFor(() => expect(document.querySelector('.global-word-search-summary')).toHaveTextContent('v. 停止；离开'))
 
     expect(screen.getByText('/kwɪt/')).toBeInTheDocument()
     expect(screen.getByText('串记')).toBeInTheDocument()
@@ -287,7 +287,7 @@ describe('GlobalWordSearch', () => {
     fireEvent.change(input, { target: { value: 'quit' } })
     fireEvent.submit(container.querySelector('.global-word-search-form') as HTMLFormElement)
 
-    await screen.findByText('noun 暂无释义')
+    await waitFor(() => expect(document.querySelector('.global-word-search-summary')).toHaveTextContent('noun 暂无释义'))
     expect(screen.queryByText('搜索结果格式错误')).not.toBeInTheDocument()
   })
 
@@ -347,7 +347,7 @@ describe('GlobalWordSearch', () => {
     fireEvent.change(input, { target: { value: 'quit' } })
     fireEvent.submit(container.querySelector('.global-word-search-form') as HTMLFormElement)
 
-    await screen.findByText('v. 停止；离开')
+    await waitFor(() => expect(document.querySelector('.global-word-search-summary')).toHaveTextContent('v. 停止；离开'))
     await screen.findByRole('button', { name: '朗读例句 1' })
 
     fireEvent.click(screen.getByRole('tab', { name: '派生' }))
@@ -472,7 +472,7 @@ describe('GlobalWordSearch', () => {
     fireEvent.change(input, { target: { value: 'quit' } })
     fireEvent.submit(container.querySelector('.global-word-search-form') as HTMLFormElement)
 
-    await screen.findByText('v. 停止；离开')
+    await waitFor(() => expect(document.querySelector('.global-word-search-summary')).toHaveTextContent('v. 停止；离开'))
 
     expect(screen.getByRole('button', { name: '收藏到收藏词书' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '朗读单词 quit' })).toBeInTheDocument()

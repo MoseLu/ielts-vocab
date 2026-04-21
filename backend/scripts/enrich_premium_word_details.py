@@ -6,16 +6,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-load_dotenv(BACKEND_ROOT / '.env')
-
-from app import create_app
+from scripts.catalog_content_script_runtime import create_catalog_content_script_app
 from services.word_detail_enrichment import (
     DEFAULT_BATCH_SIZE,
     enrich_premium_books,
@@ -62,7 +58,7 @@ def main() -> int:
     )
     fallback_model = None if args.no_fallback else (args.fallback_model or None)
 
-    app = create_app()
+    app = create_catalog_content_script_app()
     with app.app_context():
         stats = enrich_premium_books(
             book_ids=tuple(args.book) if args.book else (

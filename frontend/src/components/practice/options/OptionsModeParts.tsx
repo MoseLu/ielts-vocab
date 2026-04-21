@@ -3,6 +3,7 @@ import smartDictationIcon from '../../../assets/icons/smart-dictation.svg'
 import smartListeningIcon from '../../../assets/icons/smart-listening.svg'
 import smartMeaningIcon from '../../../assets/icons/smart-meaning.svg'
 import ExampleAudioIcon from '../../ui/ExampleAudioIcon'
+import WordMeaningGroups from '../../ui/WordMeaningGroups'
 import { WRONG_WORD_DIMENSION_LABELS } from '../../../features/vocabulary/wrongWordsStore'
 import type {
   LastState,
@@ -31,7 +32,12 @@ export function PrevWordBlock({ previousWord, lastState, onGoBack, className }: 
       <div className="prev-word-info">
         <div className="prev-word-text">{previousWord.word}</div>
         <div className="prev-word-phonetic">{previousWord.phonetic}</div>
-        <div className="prev-word-def"><span className="word-pos-tag">{previousWord.pos}</span>{previousWord.definition}</div>
+        <WordMeaningGroups
+          className="prev-word-def"
+          definition={previousWord.definition}
+          pos={previousWord.pos}
+          size="sm"
+        />
       </div>
     </div>
   )
@@ -152,10 +158,12 @@ export function WordDisplay({
       {displayMode === 'definition' && (
         <div className="meaning-prompt-card">
           <div className="meaning-prompt-label">看中文释义，拼英文单词</div>
-          <div className="meaning-prompt-definition">
-            <span className="word-pos-tag">{currentWord.pos}</span>
-            {currentWord.definition}
-          </div>
+          <WordMeaningGroups
+            className="meaning-prompt-definition"
+            definition={currentWord.definition}
+            pos={currentWord.pos}
+            size="lg"
+          />
         </div>
       )}
     </div>

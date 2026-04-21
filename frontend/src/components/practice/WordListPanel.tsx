@@ -3,6 +3,7 @@
 import { useCallback, useRef, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { DEFAULT_SETTINGS } from '../../constants'
 import { readAppSettingsFromStorage } from '../../lib/appSettings'
+import WordMeaningGroups from '../ui/WordMeaningGroups'
 import WordListActionButton from './WordListActionButton'
 import type { Word, WordListPanelProps } from './types'
 import WordListDetailPanel from './WordListDetailPanel'
@@ -250,10 +251,11 @@ export default function WordListPanel({
                   <div className="wordlist-item-info">
                     <div className="wordlist-word">{w.word}</div>
                     <div className="wordlist-phonetic">{w.phonetic}</div>
-                    <div className="wordlist-def">
-                      <span className="word-pos-tag">{w.pos}</span>
-                      {w.definition}
-                    </div>
+                    <WordMeaningGroups
+                      className="wordlist-def"
+                      definition={w.definition}
+                      pos={w.pos}
+                    />
                   </div>
                 </button>
                 {wordActionControls && (

@@ -6,16 +6,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-load_dotenv(BACKEND_ROOT / '.env')
-
-from app import create_app
+from scripts.catalog_content_script_runtime import create_catalog_content_script_app
 from services.legacy_word_detail_migration import migrate_legacy_word_details
 
 
@@ -28,7 +24,7 @@ args = parser.parse_args()
 
 
 def main() -> int:
-    app = create_app()
+    app = create_catalog_content_script_app()
     with app.app_context():
         stats = migrate_legacy_word_details(
             words=args.word or None,

@@ -6,16 +6,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-load_dotenv(BACKEND_ROOT / '.env')
-
-from app import create_app
+from scripts.catalog_content_script_runtime import create_catalog_content_script_app
 from services.word_catalog_service import materialize_word_catalog
 
 
@@ -27,7 +23,7 @@ args = parser.parse_args()
 
 
 def main() -> int:
-    app = create_app()
+    app = create_catalog_content_script_app()
     with app.app_context():
         stats = materialize_word_catalog(
             book_ids=tuple(args.book) if args.book else None,

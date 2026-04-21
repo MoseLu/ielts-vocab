@@ -182,6 +182,17 @@ export function buildWordMemoryNote({
   detailData,
   result,
 }: BuildWordMemoryNoteParams): WordMemoryNote {
+  const persistedMemory = detailData?.memory
+  if (
+    persistedMemory?.badge
+    && persistedMemory?.text?.trim()
+  ) {
+    return {
+      badge: persistedMemory.badge,
+      text: persistedMemory.text.trim(),
+    }
+  }
+
   const definition = trimDefinition(detailData?.definition || result.definition)
   const confusableSuffix = buildConfusableSuffix(result)
   const transliteration = transliterateWord(result.word)

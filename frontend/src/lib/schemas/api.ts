@@ -119,6 +119,14 @@ export const WordDetailBookRefSchema = z.object({
 })
 export type WordDetailBookRef = z.infer<typeof WordDetailBookRefSchema>
 
+export const WordMemoryDetailSchema = z.object({
+  badge: z.enum(['谐音', '联想']),
+  text: z.string(),
+  source: z.string().catch('').optional(),
+  updated_at: z.string().nullable().optional(),
+})
+export type WordMemoryDetail = z.infer<typeof WordMemoryDetailSchema>
+
 export const WordDetailNoteSchema = z.object({
   word: z.string(),
   content: z.string(),
@@ -132,6 +140,7 @@ export const WordDetailResponseSchema = z.object({
   pos: z.string().catch(''),
   definition: z.string().catch(''),
   root: WordRootDetailSchema,
+  memory: WordMemoryDetailSchema.nullable().optional(),
   english: WordEnglishDetailSchema,
   examples: z.array(WordDetailExampleSchema),
   derivatives: z.array(WordDerivativeDetailSchema),

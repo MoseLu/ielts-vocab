@@ -16,6 +16,7 @@ import { playWordAudio } from '../../practice/utils.audio'
 import { resolveWordPlaybackSettings, SLOW_WORD_PLAYBACK_OPTIONS } from '../../practice/wordPlayback'
 import { useFavoriteWords } from '../../../features/vocabulary/hooks'
 import ExampleAudioIcon from '../../ui/ExampleAudioIcon'
+import WordMeaningGroups from '../../ui/WordMeaningGroups'
 import GlobalWordSearchActionRail from './GlobalWordSearchActionRail'
 import WordFeedbackModal from './WordFeedbackModal'
 import { buildWordMemoryNote } from './globalWordMemoryNote'
@@ -249,7 +250,11 @@ export default function GlobalWordSearchDetailPanel({
                 </h2>
                 <span className="global-word-search-phonetic">{resolvedPhonetic}</span>
               </div>
-              <p className="global-word-search-summary">{resolvedPos} {resolvedDefinition}</p>
+              <WordMeaningGroups
+                className="global-word-search-summary"
+                definition={resolvedDefinition}
+                pos={resolvedPos}
+              />
             </div>
           </div>
 

@@ -11,6 +11,7 @@ from platform_sdk.service_schema import bootstrap_monolith_schema
 from routes.middleware import init_middleware
 from service_models.identity_models import User, db
 from services.db_backup import initialize_sqlite_backup_runtime
+from services.word_catalog_schema_runtime import ensure_word_catalog_memory_note_column
 
 
 def _ensure_quick_memory_context_columns() -> None:
@@ -104,6 +105,7 @@ def configure_monolith_compat_runtime(app: Flask, *, migrate) -> None:
         bootstrap_monolith_schema(bind=db.engine, metadata=db.metadata)
         _ensure_quick_memory_context_columns()
         _ensure_wrong_word_dimension_state_column()
+        ensure_word_catalog_memory_note_column(engine=db.engine, session=db.session)
         _ensure_admin_user()
 
     if os.environ.get('PYTEST_RUNNING') != '1':

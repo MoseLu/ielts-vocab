@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback, type CSSProperties } from 'react'
 import type { DictationModeProps, LastState } from './types'
 import { buildBlankSentence } from './exampleSentence'
+import WordMeaningGroups from '../ui/WordMeaningGroups'
 import { playExampleAudio, stopAudio } from './utils'
 import {
   DictationErrorFeedback,
@@ -27,7 +28,12 @@ function PrevWordBlock({ previousWord, lastState, onGoBack }: PrevWordBlockProps
       <div className="prev-word-info">
         <div className="prev-word-text">{previousWord.word}</div>
         <div className="prev-word-phonetic">{previousWord.phonetic}</div>
-        <div className="prev-word-def"><span className="word-pos-tag">{previousWord.pos}</span>{previousWord.definition}</div>
+        <WordMeaningGroups
+          className="prev-word-def"
+          definition={previousWord.definition}
+          pos={previousWord.pos}
+          size="sm"
+        />
       </div>
     </div>
   )
@@ -241,10 +247,11 @@ export default function DictationMode({
                   <div className="dictation-example-meta">
                     <span className="dictation-example-label">语境线索</span>
                     {(currentWord.pos || currentWord.definition) ? (
-                      <div className="dictation-example-definition">
-                        {currentWord.pos ? <span className="word-pos-tag">{currentWord.pos}</span> : null}
-                        {currentWord.definition}
-                      </div>
+                      <WordMeaningGroups
+                        className="dictation-example-definition"
+                        definition={currentWord.definition}
+                        pos={currentWord.pos}
+                      />
                     ) : null}
                   </div>
                   <button

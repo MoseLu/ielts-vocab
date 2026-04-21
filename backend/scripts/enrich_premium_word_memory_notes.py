@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -13,8 +14,12 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from scripts.catalog_content_script_runtime import create_catalog_content_script_app
-from services.word_detail_enrichment import DEFAULT_BATCH_SIZE, enrich_catalog_words
 from services.word_detail_llm_client import DISABLE_FALLBACK_PROVIDER
+from services.word_memory_note_enrichment import (
+    DEFAULT_BATCH_SIZE,
+    PREMIUM_BOOK_IDS,
+    enrich_premium_book_memory_notes,
+)
 
 
 def _load_words_from_files(paths: list[str]) -> list[str]:
@@ -43,19 +48,24 @@ def _write_summary(path_value: str | None, stats: dict) -> None:
     )
 
 
-parser = argparse.ArgumentParser(description='批量补全全局词库单词详情')
+def _utc_now_iso() -> str:
+    return datetime.now(tz=timezone.utc).isoformat()
+
+
+parser = argparse.ArgumentParser(description='批量重跑付费词书联想记忆')
 parser.add_argument('--book', action='append', default=[], help='指定词书 id，可重复传入')
-parser.add_argument('--word', action='append', default=[], help='只补指定单词，可重复传入')
+parser.add_argument('--word', action='append', default=[], help='只处理指定单词，可重复传入')
 parser.add_argument('--words-file', action='append', default=[], help='从文件读取单词列表，每行一个')
 parser.add_argument('--summary-file', type=str, default='', help='输出本次执行统计 JSON')
+parser.add_argument('--progress-file', type=str, default='', help='批次级实时进度 JSON；默认沿用 summary-file')
 parser.add_argument('--batch-size', type=int, default=DEFAULT_BATCH_SIZE, help='每批请求的单词数')
-parser.add_argument('--limit', type=int, default=None, help='仅处理前 N 个词')
+parser.add_argument('--limit', type=int, default=None, help='仅处理前 N 个去重词')
 parser.add_argument('--start-at', type=int, default=0, help='从第 N 个去重词开始')
-parser.add_argument('--sleep', type=float, default=0.0, help='批次间隔秒数')
-parser.add_argument('--overwrite', action='store_true', help='覆盖已有详情')
+parser.add_argument('--sleep', type=float, default=0.2, help='批次间隔秒数')
+parser.add_argument('--overwrite', action='store_true', help='覆盖已有联想记忆')
 parser.add_argument('--no-fallback', action='store_true', help='禁用 provider 自动回退')
 parser.add_argument('--provider', type=str, default='dashscope', help='LLM provider')
-parser.add_argument('--model', type=str, default='', help='主模型，支持逗号分隔优先级链')
+parser.add_argument('--model', type=str, default='qwen3.6-plus', help='主模型，支持逗号分隔优先级链')
 parser.add_argument('--fallback-provider', type=str, default='', help='失败时切换的备用 provider')
 parser.add_argument('--fallback-model', type=str, default='', help='失败时切换的备用模型')
 args = parser.parse_args()
@@ -69,11 +79,45 @@ def main() -> int:
         else (args.fallback_provider or None)
     )
     fallback_model = None if args.no_fallback else (args.fallback_model or None)
+    progress_path = args.progress_file or args.summary_file or ''
+    job_meta = {
+        'started_at': _utc_now_iso(),
+        'book_ids': list(tuple(args.book) if args.book else PREMIUM_BOOK_IDS),
+        'provider': args.provider,
+        'model': args.model or '',
+        'batch_size': max(1, args.batch_size),
+        'limit': args.limit,
+        'start_at': max(0, args.start_at),
+        'overwrite': bool(args.overwrite),
+        'progress_state': 'running',
+    }
+
+    def write_progress(stats: dict) -> None:
+        payload = {
+            **job_meta,
+            **stats,
+            'updated_at': _utc_now_iso(),
+        }
+        _write_summary(progress_path or None, payload)
+
+    write_progress({
+        'requested': 0,
+        'pending': 0,
+        'enriched': 0,
+        'failed': 0,
+        'failed_words': [],
+        'failure_details': [],
+        'quota_exhausted': False,
+        'stop_reason': '',
+        'total_batches': 0,
+        'completed_batches': 0,
+        'word_count': 0,
+    })
 
     app = create_catalog_content_script_app()
     with app.app_context():
-        stats = enrich_catalog_words(
-            book_ids=tuple(args.book) if args.book else None,
+        stats = enrich_premium_book_memory_notes(
+            book_ids=tuple(args.book) if args.book else PREMIUM_BOOK_IDS,
             words=selected_words or None,
             batch_size=max(1, args.batch_size),
             limit=args.limit,
@@ -84,11 +128,20 @@ def main() -> int:
             model=args.model or None,
             fallback_provider=fallback_provider,
             fallback_model=fallback_model,
+            progress_callback=write_progress,
         )
 
-    _write_summary(args.summary_file or None, stats)
-    print('[Word Detail Enrichment] done')
-    print(f"books={','.join(stats['book_ids']) or '__all__'}")
+    final_payload = {
+        **job_meta,
+        **stats,
+        'updated_at': _utc_now_iso(),
+        'progress_state': 'completed',
+    }
+    _write_summary(progress_path or None, final_payload)
+    if args.summary_file and args.summary_file != progress_path:
+        _write_summary(args.summary_file, final_payload)
+    print('[Word Memory Enrichment] done')
+    print(f"books={','.join(stats['book_ids'])}")
     print(f"provider={stats['provider']} model={stats['model']}")
     print(f"requested={stats['requested']} pending={stats['pending']}")
     print(f"enriched={stats['enriched']} failed={stats['failed']}")

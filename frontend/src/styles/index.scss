@@ -27,8 +27,8 @@
 @use './components/global-word-search.scss';
 @use './components/global-word-search-actions.scss';
 @use './components/global-word-search-detail.scss';
+@use './components/selection-word-lookup.scss';
 @use './components/ui-primitives.scss';
-
 /* Pages: Auth */
 @use './pages/auth/index.scss' as *;
 @use './pages/special/index.scss' as *;
@@ -65,11 +65,12 @@
 /* Pages: Learning Journal */
 @use './pages/journal/index.scss' as *;
 
+/* Shared helpers that intentionally override page wrapper layouts */
+@use './components/word-meaning-groups.scss';
+
 /* Utils */
 @use './utils/utilities.scss';
 @use './utils/responsive.scss';
 
 /* Late mobile overrides */
 @use './pages/practice/practice-mobile-overrides.scss' as *;
-
-

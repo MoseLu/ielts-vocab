@@ -1,0 +1,49 @@
+.word-meaning-groups {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+.word-meaning-groups--inline,
+.word-meaning-groups--stacked {
+    display: flex;
+    flex-direction: column;
+}
+
+.word-meaning-groups--stacked {
+    gap: var(--size-8);
+}
+
+.word-meaning-groups--sm.word-meaning-groups--stacked {
+    gap: var(--size-6);
+}
+
+.word-meaning-group {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--size-10);
+    min-width: 0;
+}
+
+.word-meaning-groups--sm .word-meaning-group {
+    column-gap: var(--size-8);
+}
+
+.word-meaning-groups--lg .word-meaning-group {
+    column-gap: var(--size-12);
+}
+
+.word-meaning-group__pos.word-pos-tag {
+    margin-top: 0.12em;
+}
+
+.word-meaning-group__text {
+    min-width: 0;
+    line-height: inherit;
+    white-space: normal;
+}
+
+.word-meaning-group__text:only-child {
+    grid-column: 1 / -1;
+}

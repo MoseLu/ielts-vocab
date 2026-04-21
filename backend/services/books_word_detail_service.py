@@ -58,6 +58,7 @@ def build_word_details_response(raw_word: str, current_user) -> tuple[dict, int]
         'pos': catalog_payload['pos'],
         'definition': catalog_payload['definition'],
         'root': catalog_payload['root'],
+        'memory': catalog_payload.get('memory'),
         'english': catalog_payload['english'],
         'examples': examples,
         'derivatives': catalog_payload['derivatives'],

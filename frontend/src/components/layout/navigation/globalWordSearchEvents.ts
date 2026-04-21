@@ -1,7 +1,8 @@
 export const GLOBAL_WORD_SEARCH_OPEN_EVENT = 'global-word-search:open'
 
-interface OpenGlobalWordSearchDetail {
+export interface OpenGlobalWordSearchDetail {
   query?: string
+  autoSubmit?: boolean
 }
 
 export function openGlobalWordSearch(detail: OpenGlobalWordSearchDetail = {}): void {

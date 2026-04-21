@@ -21,6 +21,7 @@ from routes.middleware import init_middleware
 from platform_sdk.service_schema import bootstrap_service_schema
 from platform_sdk.vocabulary_transport import vocabulary_bp
 from service_models.catalog_content_models import db
+from services.word_catalog_schema_runtime import ensure_word_catalog_memory_note_column
 
 
 def _resolve_config_class(config_class):
@@ -53,6 +54,7 @@ def create_catalog_content_flask_app(config_class=None) -> Flask:
 
     with app.app_context():
         bootstrap_service_schema('catalog-content-service')
+        ensure_word_catalog_memory_note_column(engine=db.engine, session=db.session)
         prime_global_word_search_catalog()
 
     return app
