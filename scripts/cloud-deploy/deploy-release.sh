@@ -19,6 +19,7 @@ bootstrap_admin_projections() {
 
   require_file "${bootstrap_script}"
   log "Bootstrapping admin projections"
+  BACKEND_ENV_FILE="${BACKEND_ENV_FILE}" \
   CURRENT_SERVICE_NAME="admin-ops-service" \
   MICROSERVICES_ENV_FILE="${MICROSERVICES_ENV_FILE}" \
   PYTHONPATH="${release_path}/backend:${release_path}/packages/platform-sdk:${PYTHONPATH:-}" \
