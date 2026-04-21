@@ -14,10 +14,12 @@ const cancelSessionMock = vi.fn(() => Promise.resolve())
 const flushStudySessionOnPageHideMock = vi.fn()
 const touchStudySessionActivityMock = vi.fn()
 const updateStudySessionSnapshotMock = vi.fn(); const playWordAudioMock = vi.fn(() => Promise.resolve(true))
+const prepareWordAudioPlaybackMock = vi.fn(() => Promise.resolve(true))
 const preloadWordAudioMock = vi.fn(() => Promise.resolve(true))
 const stopAudioMock = vi.fn()
 vi.mock('./utils', () => ({
   playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
+  prepareWordAudioPlayback: (...args: unknown[]) => prepareWordAudioPlaybackMock(...args),
   preloadWordAudio: (...args: unknown[]) => preloadWordAudioMock(...args),
   preloadWordAudioBatch: (...args: unknown[]) => preloadWordAudioMock(...args),
   stopAudio: (...args: unknown[]) => stopAudioMock(...args),
@@ -73,6 +75,8 @@ describe('QuickMemoryMode', () => {
     updateStudySessionSnapshotMock.mockClear()
     playWordAudioMock.mockClear()
     playWordAudioMock.mockImplementation(() => Promise.resolve(true))
+    prepareWordAudioPlaybackMock.mockClear()
+    prepareWordAudioPlaybackMock.mockImplementation(() => Promise.resolve(true))
     preloadWordAudioMock.mockClear()
     preloadWordAudioMock.mockImplementation(() => Promise.resolve(true))
     stopAudioMock.mockClear()
@@ -181,6 +185,52 @@ describe('QuickMemoryMode', () => {
         wrongCount: 0,
         sessionId: 1,
       }))
+    })
+  })
+
+  it('resets to the latest requested resume index within the same chapter', async () => {
+    const { rerender } = render(
+      <QuickMemoryMode
+        vocabulary={[
+          { word: 'apple', phonetic: '/apple/', pos: 'n.', definition: 'fruit' },
+          { word: 'banana', phonetic: '/banana/', pos: 'n.', definition: 'fruit' },
+        ]}
+        queue={[0, 1]}
+        settings={settings}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        initialIndex={1}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('banana')).toBeInTheDocument()
+    })
+
+    rerender(
+      <QuickMemoryMode
+        vocabulary={[
+          { word: 'apple', phonetic: '/apple/', pos: 'n.', definition: 'fruit' },
+          { word: 'banana', phonetic: '/banana/', pos: 'n.', definition: 'fruit' },
+        ]}
+        queue={[0, 1]}
+        settings={settings}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        initialIndex={0}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('apple')).toBeInTheDocument()
     })
   })
 

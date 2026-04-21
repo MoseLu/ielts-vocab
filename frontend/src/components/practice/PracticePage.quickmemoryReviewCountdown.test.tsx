@@ -243,11 +243,16 @@ describe('PracticePage quick-memory review countdown', () => {
     })
     expect(screen.queryByText('0')).not.toBeInTheDocument()
     expect(screen.getAllByText('alpha')).toHaveLength(1)
-    expect(playWordAudioMock).toHaveBeenCalledWith('alpha', expect.anything(), expect.any(Function))
+    expect(playWordAudioMock).toHaveBeenCalledWith(
+      'alpha',
+      expect.anything(),
+      expect.any(Function),
+      { sourcePreference: 'buffer' },
+    )
     expect(startSessionMock).toHaveBeenCalledTimes(1)
   })
 
-  it('skips lookahead audio preloading on the first due-review word', async () => {
+  it('preloads current and lookahead audio for the first due-review word', async () => {
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/ai/quick-memory/review-queue?limit=10&within_days=3&offset=0&scope=due') {
         return Promise.resolve({
@@ -303,6 +308,15 @@ describe('PracticePage quick-memory review countdown', () => {
     })
 
     expect(screen.getByText('alpha')).toBeInTheDocument()
-    expect(preloadWordAudioMock).not.toHaveBeenCalled()
+    expect(prepareWordAudioPlaybackMock).toHaveBeenCalledWith('alpha', {
+      includeBuffer: true,
+      sourcePreference: 'buffer',
+    })
+    expect(preloadWordAudioMock).toHaveBeenCalledWith(['beta'], 1, {
+      includeBuffer: true,
+      sourcePreference: 'buffer',
+    })
+    expect(prepareWordAudioPlaybackMock.mock.calls.filter(call => call[0] === 'alpha').length).toBeGreaterThanOrEqual(1)
+    expect(preloadWordAudioMock.mock.calls.filter(call => Array.isArray(call[0]) && call[0][0] === 'beta').length).toBeGreaterThanOrEqual(1)
   })
 })

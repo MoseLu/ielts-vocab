@@ -165,7 +165,7 @@ export function PracticePageContent({
   handleContinueReview,
 }: PracticePageContentProps) {
   const progress = Math.min((queueIndex + 1) / Math.max(queue.length, 1), 1)
-  const activeStageWord = (mode === 'quickmemory' || mode === 'radio')
+  const activeStageWord = mode === 'radio'
     ? (vocabulary[queue[radioIndex]] ?? currentWord)
     : currentWord
   const favoriteButton = (
@@ -175,14 +175,16 @@ export function PracticePageContent({
       onClick={onFavoriteToggle}
     />
   )
-  const speakingButton = (
-    <PracticePronunciationButton
-      bookId={resolvedPracticeBookId}
-      chapterId={resolvedPracticeChapterId}
-      targetWord={activeStageWord.word}
-      targetPhonetic={activeStageWord.phonetic}
-    />
-  )
+  const speakingButton = mode === 'quickmemory'
+    ? undefined
+    : (
+      <PracticePronunciationButton
+        bookId={resolvedPracticeBookId}
+        chapterId={resolvedPracticeChapterId}
+        targetWord={activeStageWord.word}
+        targetPhonetic={activeStageWord.phonetic}
+      />
+    )
 
   const baseLayoutProps = {
     mode,
@@ -238,10 +240,9 @@ export function PracticePageContent({
         onContinueReview={reviewMode ? handleContinueReview : undefined}
         onWrongWord={saveWrongWord}
         onQuickMemoryRecordChange={handleQuickMemoryRecordChange}
-        initialIndex={errorMode ? queueIndex : undefined}
+        initialIndex={queueIndex}
         onIndexChange={onFavoriteWordIndexChange}
         favoriteSlot={favoriteButton}
-        speakingSlot={speakingButton}
       />
     )
   }

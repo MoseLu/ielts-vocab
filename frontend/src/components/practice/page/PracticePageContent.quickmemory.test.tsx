@@ -17,12 +17,21 @@ vi.mock('../../settings/SettingsPanel', () => ({
 }))
 
 vi.mock('./PracticePronunciationButton', () => ({
-  default: ({ targetWord }: { targetWord: string }) => <div data-testid="pronunciation-word">{targetWord}</div>,
+  default: () => <div data-testid="pronunciation-entry" />,
 }))
 
 vi.mock('./PracticePageStates', () => ({
-  PracticePageQuickMemoryLayout: ({ speakingSlot }: { speakingSlot?: React.ReactNode }) => (
-    <div data-testid="quickmemory-layout">{speakingSlot}</div>
+  PracticePageQuickMemoryLayout: ({
+    favoriteSlot,
+    speakingSlot,
+  }: {
+    favoriteSlot?: React.ReactNode
+    speakingSlot?: React.ReactNode
+  }) => (
+    <div data-testid="quickmemory-layout">
+      {favoriteSlot}
+      {speakingSlot}
+    </div>
   ),
   PracticePageRadioLayout: () => null,
 }))
@@ -38,7 +47,7 @@ const vocabulary: Word[] = [
   { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
 ]
 
-function buildProps(radioIndex: number) {
+function buildProps() {
   const navigate = vi.fn()
   const practiceMode: PracticeMode = 'quickmemory'
   const smartDimension: SmartDimension = 'meaning'
@@ -68,7 +77,7 @@ function buildProps(radioIndex: number) {
     buildChapterPath: vi.fn(() => '/practice'),
     queue: [0, 1],
     queueIndex: 0,
-    radioIndex,
+    radioIndex: 0,
     wordStatuses: {},
     settings: {},
     radioQuickSettings,
@@ -118,14 +127,11 @@ function buildProps(radioIndex: number) {
   }
 }
 
-describe('PracticePageContent quick-memory pronunciation target', () => {
-  it('tracks the currently displayed quick-memory word instead of the stale parent currentWord', () => {
-    const { rerender } = render(<PracticePageContent {...buildProps(0)} />)
+describe('PracticePageContent quick-memory recording support', () => {
+  it('does not inject the pronunciation recording entry into quick-memory layout', () => {
+    render(<PracticePageContent {...buildProps()} />)
 
-    expect(screen.getByTestId('pronunciation-word')).toHaveTextContent('alpha')
-
-    rerender(<PracticePageContent {...buildProps(1)} />)
-
-    expect(screen.getByTestId('pronunciation-word')).toHaveTextContent('beta')
+    expect(screen.getByTestId('favorite-toggle')).toBeInTheDocument()
+    expect(screen.queryByTestId('pronunciation-entry')).toBeNull()
   })
 })

@@ -62,4 +62,23 @@ describe('QuickMemoryMode layout', () => {
     expect(stage?.querySelector('.qm-progress-label')).not.toBeNull()
     expect(stage?.querySelector('.qm-card')).not.toBeNull()
   })
+
+  it('renders no empty toolbar side wrapper when only the replay button remains', () => {
+    const { container } = render(
+      <QuickMemoryMode
+        vocabulary={vocabulary}
+        queue={[0]}
+        settings={settings}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    expect(container.querySelectorAll('.qm-card-toolbar__side')).toHaveLength(0)
+    expect(container.querySelector('.qm-card-toolbar__icon-btn')).not.toBeNull()
+  })
 })

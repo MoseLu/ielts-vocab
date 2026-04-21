@@ -45,7 +45,6 @@ export interface QuickMemoryModeProps {
   /** Called whenever the user advances or goes back, so the parent can persist position */
   onIndexChange?: (index: number) => void
   favoriteSlot?: ReactNode
-  speakingSlot?: ReactNode
 }
 
 // Which dimension smart mode is testing for the current word

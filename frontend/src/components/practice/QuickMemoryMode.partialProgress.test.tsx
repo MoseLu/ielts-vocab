@@ -10,6 +10,7 @@ const apiFetchMock = vi.fn(() => Promise.resolve({}))
 vi.mock('./utils', () => ({
   playSlowWordAudio: vi.fn(() => Promise.resolve(true)),
   playWordAudio: vi.fn(() => Promise.resolve(true)),
+  prepareWordAudioPlayback: vi.fn(() => Promise.resolve(true)),
   preloadWordAudio: vi.fn(() => Promise.resolve(true)),
   preloadWordAudioBatch: vi.fn(() => Promise.resolve(true)),
   stopAudio: vi.fn(),

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
-import { playWordAudio, preloadWordAudioBatch, stopAudio } from './utils'
+import { playWordAudio, prepareWordAudioPlayback, preloadWordAudioBatch, stopAudio } from './utils'
 import { useToast } from '../../contexts/ToastContext'
 import {
   readQuickMemoryRecordsFromStorage,
@@ -23,6 +23,8 @@ import {
 } from './page/practiceGlobalShortcutEvents'
 
 const TIMER_SECONDS = 4
+const QUICK_MEMORY_PLAYBACK_OPTIONS = { sourcePreference: 'buffer' as const }
+const QUICK_MEMORY_PRELOAD_OPTIONS = { includeBuffer: true, sourcePreference: 'buffer' as const }
 function syncRecordToBackend(word: string, record: QuickMemoryRecordState): void {
   void syncQuickMemoryRecordsToBackend([{ word, record }]).catch(() => {})
 }
@@ -45,11 +47,9 @@ export default function QuickMemoryMode({
   initialIndex,
   onIndexChange,
   favoriteSlot,
-  speakingSlot,
 }: QuickMemoryModeProps) {
   const { showToast } = useToast()
   const [index, setIndex] = useState(0)
-  const hasRestoredIndexRef = useRef(false)
   const [phase, setPhase] = useState<'question' | 'reveal'>('question')
   const [countdown, setCountdown] = useState(TIMER_SECONDS)
   const [choice, setChoice] = useState<'known' | 'unknown' | null>(null)
@@ -124,10 +124,9 @@ export default function QuickMemoryMode({
     stopAudio()
     clearInterval(timerRef.current)
     const startIndex =
-      !hasRestoredIndexRef.current && initialIndex != null && initialIndex > 0 && initialIndex < queue.length
+      initialIndex != null && initialIndex > 0 && initialIndex < queue.length
         ? initialIndex
         : 0
-    hasRestoredIndexRef.current = true
     setIndex(startIndex)
     onIndexChange?.(startIndex)
     setPhase('question')
@@ -141,7 +140,7 @@ export default function QuickMemoryMode({
     completedSessionDurationSecondsRef.current = null
     sessionLoggedRef.current = false
     resetCurrentSessionSegment()
-  }, [bookId, chapterId, onIndexChange, queue.length, resetCurrentSessionSegment])
+  }, [bookId, chapterId, initialIndex, onIndexChange, queue.length, resetCurrentSessionSegment])
 
   const reveal = useCallback(async (picked: 'known' | 'unknown', countAsActivity = true, shouldPlayRevealAudio = countAsActivity) => {
     if (chosenRef.current) return
@@ -199,9 +198,7 @@ export default function QuickMemoryMode({
       onWrongWord(answeredWord)
     }
 
-    if (shouldPlayRevealAudio && answeredWord) {
-      void playWordAudio(answeredWord.word, settings, () => {})
-    }
+    if (shouldPlayRevealAudio && answeredWord) void playWordAudio(answeredWord.word, settings, () => {}, QUICK_MEMORY_PLAYBACK_OPTIONS)
   }, [
     bookId,
     chapterId,
@@ -240,13 +237,14 @@ export default function QuickMemoryMode({
     setCountdown(TIMER_SECONDS)
     countdownRef.current = TIMER_SECONDS
     clearInterval(timerRef.current)
+    void prepareWordAudioPlayback(currentWord.word, QUICK_MEMORY_PRELOAD_OPTIONS)
 
     const upcomingWords = queue
       .slice(index + 1, index + 4)
       .map(queueIndex => vocabulary[queueIndex]?.word?.trim())
       .filter((word): word is string => Boolean(word))
-    if (upcomingWords.length && (!reviewMode || index > 0)) {
-      void preloadWordAudioBatch(upcomingWords)
+    if (upcomingWords.length) {
+      void preloadWordAudioBatch(upcomingWords, upcomingWords.length, QUICK_MEMORY_PRELOAD_OPTIONS)
     }
 
     startQuestionCountdown()
@@ -308,14 +306,14 @@ export default function QuickMemoryMode({
         if (!chosenRef.current && wordRef.current?.word === replayWord) {
           startQuestionCountdown()
         }
-      }).then(started => {
+      }, QUICK_MEMORY_PLAYBACK_OPTIONS).then(started => {
         if (!started && !chosenRef.current && wordRef.current?.word === replayWord) {
           startQuestionCountdown()
         }
       })
       return
     }
-    void playWordAudio(wordRef.current.word, settings, () => {})
+    void playWordAudio(wordRef.current.word, settings, () => {}, QUICK_MEMORY_PLAYBACK_OPTIONS)
   }, [phase, settings, startQuestionCountdown])
 
   useEffect(() => {
@@ -389,13 +387,12 @@ export default function QuickMemoryMode({
         <div className="qm-progress-label">{index + 1} / {queue.length}</div>
         <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
           <div className="qm-card-toolbar">
-            <div className="qm-card-toolbar__side">{favoriteSlot}</div>
+            {favoriteSlot ? <div className="qm-card-toolbar__side">{favoriteSlot}</div> : null}
             <div className="qm-card-toolbar__audio-group">
               <button type="button" className="qm-card-toolbar__icon-btn" onClick={replayCurrentWord} aria-label="重播发音" title={replayWordHint}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
               </button>
             </div>
-            <div className="qm-card-toolbar__side qm-card-toolbar__side--end">{speakingSlot}</div>
           </div>
           {phase === 'question' && (
             <>

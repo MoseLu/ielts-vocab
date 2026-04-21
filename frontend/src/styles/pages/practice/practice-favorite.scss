@@ -160,11 +160,10 @@
 }
 
 .qm-card-toolbar {
-    display: grid;
-    grid-template-columns: var(--practice-action-side-size, var(--size-48)) auto var(--practice-action-side-size, var(--size-48));
+    display: flex;
     align-items: center;
     justify-content: center;
-    column-gap: var(--size-12);
+    gap: var(--size-12);
     width: 100%;
     margin-bottom: 0;
 }
@@ -201,13 +200,12 @@
     }
 
     .practice-main-header,
-    .qm-card-toolbar,
     .radio-stage-toolbar {
         grid-template-columns: var(--size-40) minmax(0, 1fr) var(--size-40);
     }
 
     .qm-card-toolbar {
-        column-gap: var(--size-10);
+        gap: var(--size-10);
     }
 
     .qm-card-toolbar__icon-btn {

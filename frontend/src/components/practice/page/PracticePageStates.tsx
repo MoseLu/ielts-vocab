@@ -379,7 +379,7 @@ export function PracticePageRadioLayout(props: PracticePageRadioLayoutProps) {
     </div>
   )
 }
-interface PracticePageQuickMemoryLayoutProps extends SharedLayoutProps {
+interface PracticePageQuickMemoryLayoutProps extends Omit<SharedLayoutProps, 'speakingSlot'> {
   queue: number[]
   queueIndex: number
   wordStatuses: WordStatuses
@@ -421,7 +421,6 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
     buildChapterPath,
     onExitHome,
     favoriteSlot,
-    speakingSlot,
     wordListActionControls,
     queue,
     queueIndex,
@@ -489,7 +488,6 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
         initialIndex={initialIndex}
         onIndexChange={onIndexChange}
         favoriteSlot={favoriteSlot}
-        speakingSlot={speakingSlot}
       />
     </div>
   )
