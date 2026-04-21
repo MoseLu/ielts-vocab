@@ -8,10 +8,10 @@ from sqlalchemy import inspect, text
 
 from monolith_compat_manifest import resolve_enabled_monolith_compat_route_groups
 from platform_sdk.service_schema import bootstrap_monolith_schema
+from platform_sdk.word_catalog_schema_runtime import ensure_word_catalog_memory_note_column
 from routes.middleware import init_middleware
 from service_models.identity_models import User, db
 from services.db_backup import initialize_sqlite_backup_runtime
-from services.word_catalog_schema_runtime import ensure_word_catalog_memory_note_column
 
 
 def _ensure_quick_memory_context_columns() -> None:

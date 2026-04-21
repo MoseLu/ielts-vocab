@@ -19,9 +19,9 @@ from platform_sdk.catalog_search_runtime_adapter import prime_global_word_search
 from platform_sdk.catalog_content_transport import catalog_content_bp
 from routes.middleware import init_middleware
 from platform_sdk.service_schema import bootstrap_service_schema
+from platform_sdk.word_catalog_schema_runtime import ensure_word_catalog_memory_note_column
 from platform_sdk.vocabulary_transport import vocabulary_bp
 from service_models.catalog_content_models import db
-from services.word_catalog_schema_runtime import ensure_word_catalog_memory_note_column
 
 
 def _resolve_config_class(config_class):
