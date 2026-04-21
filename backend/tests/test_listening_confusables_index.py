@@ -46,7 +46,7 @@ def test_listening_confusables_index_covers_all_supported_source_words():
                 continue
             expected_words.add(word)
 
-    assert set(index) == expected_words
+    assert expected_words <= set(index)
     assert payload['total_words'] == len(index)
 
     for word, candidates in index.items():

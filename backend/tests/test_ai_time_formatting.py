@@ -27,7 +27,10 @@ def test_format_event_time_for_ai_includes_date_for_non_reference_day():
 
 
 def test_learning_context_uses_local_today_and_safe_event_stamp(monkeypatch):
-    monkeypatch.setattr('services.local_time.utc_now_naive', lambda: datetime(2026, 4, 9, 16, 30, 0))
+    monkeypatch.setattr(
+        'services.ai_learning_context_service.current_local_datetime',
+        lambda: datetime(2026, 4, 10, 0, 30, 0),
+    )
 
     rendered = build_learning_context_msg(
         {

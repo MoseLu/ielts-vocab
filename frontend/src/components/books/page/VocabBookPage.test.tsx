@@ -100,7 +100,7 @@ describe('VocabBookPage', () => {
 
     expect(screen.getByText('词书 A')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '创建词书' })).toBeNull()
-    expect(container.querySelector('.vb-card-progress-fill')).toHaveStyle({ width: '20%' })
+    expect(container.querySelector('.vb-card-progress-fill')).toHaveStyle({ '--progress-percent': '20%' })
   })
 
   it('renders compact filter tabs instead of stretched buttons', () => {

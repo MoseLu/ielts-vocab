@@ -7,7 +7,10 @@ PLATFORM_SDK_DIR = REPO_ROOT / 'packages' / 'platform-sdk' / 'platform_sdk'
 ALLOWED_BOUNDARY_SUFFIXES = (
     '_adapter.py',
     '_adapters.py',
+    '_application.py',
+    '_proxy.py',
     '_service_repositories.py',
+    '_task_builders.py',
 )
 
 

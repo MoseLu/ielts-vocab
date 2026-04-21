@@ -8,6 +8,8 @@ SKIP_PARTS = {
     'node_modules',
     'dist',
     '.git',
+    '.minimax',
+    '.omc',
     '__pycache__',
     '.pytest_cache',
     'output',
@@ -40,14 +42,28 @@ MOJIBAKE_TOKENS = (
 
 
 def iter_text_files():
-    for path in REPO_ROOT.rglob('*'):
-        if not path.is_file() or path.suffix.lower() not in TEXT_FILE_SUFFIXES:
+    pending = [REPO_ROOT]
+    while pending:
+        directory = pending.pop()
+        try:
+            children = list(directory.iterdir())
+        except (FileNotFoundError, OSError):
             continue
-        if any(part in SKIP_PARTS for part in path.parts):
-            continue
-        if path.resolve() == THIS_FILE:
-            continue
-        yield path
+
+        for path in children:
+            if path.name in SKIP_PARTS:
+                continue
+            try:
+                if path.is_dir():
+                    pending.append(path)
+                    continue
+                if not path.is_file() or path.suffix.lower() not in TEXT_FILE_SUFFIXES:
+                    continue
+            except OSError:
+                continue
+            if path.resolve() == THIS_FILE:
+                continue
+            yield path
 
 
 def test_repo_text_files_do_not_contain_mojibake_tokens():

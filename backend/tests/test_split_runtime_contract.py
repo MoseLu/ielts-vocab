@@ -87,7 +87,7 @@ def test_vite_and_nginx_proxy_api_traffic_through_gateway_bff():
     vite_config = _read('frontend/vite.config.ts')
     nginx_config = _read('nginx.conf.example')
 
-    assert "const API_PROXY_TARGET = process.env.VITE_API_PROXY_TARGET?.trim() || 'http://localhost:8000'" in vite_config
+    assert "const API_PROXY_TARGET = process.env.VITE_API_PROXY_TARGET?.trim() || 'http://127.0.0.1:8000'" in vite_config
     assert 'const SPEECH_PROXY_TARGET =' in vite_config
     assert 'function buildProxyConfig()' in vite_config
     assert 'proxy: buildProxyConfig()' in vite_config

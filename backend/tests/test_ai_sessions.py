@@ -452,7 +452,7 @@ def test_greet_allows_profile_aware_freeform_reply_without_options(client, monke
     assert '当前优先维度：认读' in serialized
 
 
-def test_review_plan_returns_four_dimension_actions(client, monkeypatch):
+def test_review_plan_returns_five_dimension_actions(client, monkeypatch):
     register_and_login(client, username='review-plan-user')
 
     def fake_profile(_user_id, _target_date=None):
@@ -462,7 +462,7 @@ def test_review_plan_returns_four_dimension_actions(client, monkeypatch):
                 '口语维度当前还没有持久化记录，先拿 kind、effect 做跟读 + 造句，补齐发音与输出证据。',
             ],
             'memory_system': {
-                'mastery_rule': '认读、听力、口语、书写四个维度全部达标，才算一个单词完全掌握。',
+                'mastery_rule': '认读、释义、听力、口语、书写五个维度全部达标，才算一个单词完全掌握。',
                 'priority_dimension': 'recognition',
                 'priority_dimension_label': '认读',
                 'priority_reason': '有 12 个到期复习节点',
@@ -493,8 +493,8 @@ def test_review_plan_returns_four_dimension_actions(client, monkeypatch):
 
     assert res.status_code == 200
     data = res.get_json()
-    assert data['level'] == 'four-dimensional'
+    assert data['level'] == 'five-dimensional'
     assert data['priority_dimension'] == '认读'
-    assert '四个维度全部达标' in data['mastery_rule']
+    assert '五个维度全部达标' in data['mastery_rule']
     assert any('认读的 1/3/7/30 天节奏' in item for item in data['plan'])
     assert any(item['label'] == '口语' and item['status_label'] == '证据不足' for item in data['dimensions'])
