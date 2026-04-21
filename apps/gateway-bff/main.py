@@ -186,7 +186,9 @@ def get_word_audio_metadata_proxy(
     pronunciation_mode: str | None = Query(default=None),
 ):
     metadata = None
-    for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
+    # Public word-audio is always the normal word track. Segmented/follow-read
+    # playback must go through the dedicated follow-read endpoints.
+    for request_info in _resolve_word_audio_request_candidates(w):
         metadata = _fetch_word_audio_metadata_with_cache_fallback(
             file_name=request_info['file_name'],
             model=request_info['model'],
@@ -207,7 +209,7 @@ def head_word_audio_proxy(
     pronunciation_mode: str | None = Query(default=None),
 ):
     metadata = None
-    for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
+    for request_info in _resolve_word_audio_request_candidates(w):
         metadata = _fetch_word_audio_metadata_with_cache_fallback(
             file_name=request_info['file_name'],
             model=request_info['model'],
@@ -227,33 +229,7 @@ def get_word_audio_proxy(
     pronunciation_mode: str | None = Query(default=None),
     phonetic: str | None = Query(default=None),
 ):
-    normalized_mode = (pronunciation_mode or '').strip().lower()
-    if normalized_mode in {'word-segmented', 'phonetic-segments', 'phonetic_segments'}:
-        for request_info in _resolve_word_audio_request_candidates(w, pronunciation_mode=pronunciation_mode):
-            cached_payload = _fetch_word_audio_content_with_cache_fallback(
-                file_name=request_info['file_name'],
-                model=request_info['model'],
-                voice=request_info['voice'],
-                request=request,
-            )
-            if cached_payload is not None:
-                return _audio_content_response(cached_payload, source='oss')
-        if cache_only == '1':
-            return JSONResponse(status_code=404, content={'error': 'word audio cache miss'})
-        payload = {
-            'text': w.strip(),
-            'provider': 'azure',
-            'content_mode': 'word-segmented',
-        }
-        normalized_phonetic = (phonetic or '').strip()
-        if normalized_phonetic:
-            payload['phonetic'] = normalized_phonetic
-        return _proxy_generic_tts_response(
-            generate_tts_audio(
-                payload,
-                headers=build_forward_headers(request, target_service_name='tts-media-service'),
-            )
-        )
+    _ = pronunciation_mode, phonetic
     request_candidates = _resolve_word_audio_request_candidates(w)
     request_info = request_candidates[0]
     for candidate in request_candidates:

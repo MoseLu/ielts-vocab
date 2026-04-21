@@ -308,7 +308,7 @@ def test_gateway_get_word_audio_proxy_generates_audio_on_cache_miss(monkeypatch)
     }
 
 
-def test_gateway_get_word_audio_proxy_generates_segmented_audio(monkeypatch):
+def test_gateway_get_word_audio_proxy_ignores_segmented_query_on_cache_miss(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
     seen: dict[str, object] = {}
@@ -323,19 +323,19 @@ def test_gateway_get_word_audio_proxy_generates_segmented_audio(monkeypatch):
         seen.update(kwargs)
         return FakeResponse()
 
-    monkeypatch.setattr(
-        module,
-        '_resolve_word_audio_request_candidates',
-        lambda word, pronunciation_mode=None: [{
+    def fake_resolve_candidates(word, pronunciation_mode=None):
+        seen['pronunciation_mode'] = pronunciation_mode
+        return [{
             'word': word,
             'normalized_word': 'phenomenon',
             'provider': 'azure',
-            'model': 'azure-rest:test@azure-word-segmented-v1',
+            'model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
             'voice': 'en-GB-RyanNeural',
             'file_name': 'phenomenon.mp3',
-            'pronunciation_mode': 'word-segmented',
-        }],
-    )
+            'pronunciation_mode': 'word',
+        }]
+
+    monkeypatch.setattr(module, '_resolve_word_audio_request_candidates', fake_resolve_candidates)
     monkeypatch.setattr(module, 'fetch_word_audio_content', lambda **kwargs: None)
     monkeypatch.setattr(module, 'generate_tts_audio', fake_generate_tts_audio)
 
@@ -347,42 +347,45 @@ def test_gateway_get_word_audio_proxy_generates_segmented_audio(monkeypatch):
     assert response.status_code == 200
     assert response.content == b'ID3DATA'
     assert response.headers['x-audio-bytes'] == '7'
+    assert seen['pronunciation_mode'] is None
     assert seen['payload'] == {
         'text': 'phenomenon',
         'provider': 'azure',
-        'content_mode': 'word-segmented',
-        'phonetic': '/fəˈnɒmɪnən/',
+        'model': 'azure-rest:test',
+        'voice_id': 'en-GB-RyanNeural',
+        'content_mode': 'word',
     }
 
 
-def test_gateway_get_word_audio_proxy_prefers_cached_segmented_audio(monkeypatch):
+def test_gateway_get_word_audio_proxy_ignores_segmented_query_for_cached_audio(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
+    seen: dict[str, object] = {}
 
-    monkeypatch.setattr(
-        module,
-        '_resolve_word_audio_request_candidates',
-        lambda word, pronunciation_mode=None: [
+    def fake_resolve_candidates(word, pronunciation_mode=None):
+        seen['pronunciation_mode'] = pronunciation_mode
+        return [
             {
                 'word': word,
                 'normalized_word': 'brain',
                 'provider': 'azure',
-                'model': 'azure-rest:test@azure-word-segmented-v1',
+                'model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
                 'voice': 'en-GB-RyanNeural',
                 'file_name': 'brain-ryan.mp3',
-                'pronunciation_mode': 'word-segmented',
+                'pronunciation_mode': 'word',
             },
             {
                 'word': word,
                 'normalized_word': 'brain',
                 'provider': 'azure',
-                'model': 'azure-rest:test@azure-word-segmented-v1',
+                'model': 'azure-rest:test@azure-word-v5-ielts-rp-female-onset-buffer',
                 'voice': 'en-GB-LibbyNeural',
                 'file_name': 'brain-libby.mp3',
-                'pronunciation_mode': 'word-segmented',
+                'pronunciation_mode': 'word',
             },
-        ],
-    )
+        ]
+
+    monkeypatch.setattr(module, '_resolve_word_audio_request_candidates', fake_resolve_candidates)
 
     def fake_fetch_word_audio_content(**kwargs):
         if kwargs['voice'] == 'en-GB-LibbyNeural':
@@ -411,6 +414,7 @@ def test_gateway_get_word_audio_proxy_prefers_cached_segmented_audio(monkeypatch
     assert response.status_code == 200
     assert response.content == b'ID3CACHED'
     assert response.headers['x-audio-source'] == 'oss'
+    assert seen['pronunciation_mode'] is None
 
 
 def test_gateway_head_example_audio_proxy_maps_legacy_headers(monkeypatch):

@@ -281,10 +281,9 @@ def get_word_audio():
     if not raw or len(raw) > 160:
         return jsonify({'error': 'invalid w'}), 400
     cache_only = request.args.get('cache_only') == '1' or request.headers.get('X-Audio-Cache-Only') == '1'
-    pronunciation_mode = _normalize_word_audio_pronunciation_mode(request.args.get('pronunciation_mode'))
-    phonetic = (request.args.get('phonetic') or '').strip()
-    if not phonetic or phonetic == '/暂无音标/':
-        phonetic = None
+    # Keep /word-audio strictly on the normal word track. Follow-read and
+    # segmented playback have dedicated endpoints and must not leak here.
+    pronunciation_mode = 'word'
 
     key = normalize_word_key(raw)
     identity_candidates = _resolve_word_audio_identity_candidates(pronunciation_mode)
@@ -373,7 +372,7 @@ def get_word_audio():
                 voice,
                 provider=provider,
                 content_mode=content_mode,
-                phonetic=phonetic if content_mode == 'word-segmented' else None,
+                phonetic=None,
             )
             write_bytes_atomically(path, audio_bytes)
         except Exception as exc:
