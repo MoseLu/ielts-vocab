@@ -7,8 +7,21 @@ import type { WordListActionControls } from './types'
 const playWordAudioMock = vi.fn()
 
 vi.mock('./WordListDetailPanel', () => ({
-  default: ({ open, selectedWord }: { open: boolean; selectedWord: { word: string } | null }) =>
-    open ? <div data-testid="wordlist-detail-panel">{selectedWord?.word}</div> : null,
+  default: ({
+    open,
+    selectedWord,
+    onPickLocalWord,
+  }: {
+    open: boolean
+    selectedWord: { word: string } | null
+    onPickLocalWord: (word: string) => void
+  }) =>
+    open ? (
+      <div data-testid="wordlist-detail-panel">
+        {selectedWord?.word}
+        <button type="button" onClick={() => onPickLocalWord('beta')}>pick beta</button>
+      </div>
+    ) : null,
 }))
 
 vi.mock('./utils.audio', () => ({
@@ -132,12 +145,41 @@ describe('WordListPanel', () => {
 
     fireEvent.keyDown(window, { key: 'ArrowDown' })
     expect(screen.getByTestId('wordlist-detail-panel')).toHaveTextContent('beta')
+    expect(playWordAudioMock).toHaveBeenLastCalledWith('beta', expect.objectContaining({ playbackSpeed: expect.any(String), volume: expect.any(String) }))
 
     fireEvent.keyDown(window, { key: 'ArrowDown' })
     expect(screen.getByTestId('wordlist-detail-panel')).toHaveTextContent('gamma')
+    expect(playWordAudioMock).toHaveBeenLastCalledWith('gamma', expect.objectContaining({ playbackSpeed: expect.any(String), volume: expect.any(String) }))
 
     fireEvent.keyDown(window, { key: 'ArrowUp' })
     expect(screen.getByTestId('wordlist-detail-panel')).toHaveTextContent('beta')
+    expect(playWordAudioMock).toHaveBeenLastCalledWith('beta', expect.objectContaining({ playbackSpeed: expect.any(String), volume: expect.any(String) }))
+  })
+
+  it('plays audio when a local word is selected from the detail panel', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <WordListPanel
+        show
+        vocabulary={[
+          { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
+          { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
+        ]}
+        queue={[0, 1]}
+        queueIndex={0}
+        wordStatuses={{}}
+        onClose={() => {}}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: '查看 alpha 详情' }))
+    playWordAudioMock.mockClear()
+
+    await user.click(screen.getByRole('button', { name: 'pick beta' }))
+
+    expect(screen.getByTestId('wordlist-detail-panel')).toHaveTextContent('beta')
+    expect(playWordAudioMock).toHaveBeenCalledWith('beta', expect.objectContaining({ playbackSpeed: expect.any(String), volume: expect.any(String) }))
   })
 
   it('treats words before the restored queue index as completed in the list', () => {

@@ -41,6 +41,10 @@ export default function WordListPanel({
       volume: String(settings.volume ?? DEFAULT_SETTINGS.volume),
     }
   }, [])
+  const playListWord = useCallback((word: string) => {
+    if (!word.trim()) return
+    void playWordAudio(word, wordAudioSettings)
+  }, [wordAudioSettings])
 
   const visibleWords = useMemo(
     () => queue
@@ -59,14 +63,18 @@ export default function WordListPanel({
     return entries
   }, [visibleWords])
 
-  const openWordDetails = useCallback((word: Word) => {
+  const openWordDetails = useCallback((word: Word, options: { playAudio?: boolean } = {}) => {
+    if (options.playAudio) {
+      playListWord(word.word)
+    }
+
     setSelectedDetailState(previous => {
       if (previous && normalizeWordKey(previous.word.word) === normalizeWordKey(word.word)) {
         return { word, version: previous.version + 1 }
       }
       return { word, version: 0 }
     })
-  }, [])
+  }, [playListWord])
 
   const selectedDetailIndex = useMemo(() => {
     if (!selectedDetailState) return -1
@@ -81,7 +89,7 @@ export default function WordListPanel({
     const baseIndex = selectedDetailIndex >= 0 ? selectedDetailIndex : fallbackIndex
     const nextIndex = Math.min(Math.max(baseIndex + direction, 0), visibleWords.length - 1)
     const nextWord = visibleWords[nextIndex]
-    if (nextWord) openWordDetails(nextWord)
+    if (nextWord) openWordDetails(nextWord, { playAudio: true })
   }, [openWordDetails, queueIndex, selectedDetailIndex, visibleWords])
 
   const closeWordDetails = () => {
@@ -139,13 +147,8 @@ export default function WordListPanel({
   const handlePickLocalWord = (word: string) => {
     const localWord = visibleWordMap.get(normalizeWordKey(word))
     if (localWord) {
-      openWordDetails(localWord)
+      openWordDetails(localWord, { playAudio: true })
     }
-  }
-
-  const playListWord = (word: string) => {
-    if (!word.trim()) return
-    void playWordAudio(word, wordAudioSettings)
   }
 
   useEffect(() => {
@@ -228,8 +231,7 @@ export default function WordListPanel({
                   }}
                   onClick={() => {
                     focusPlaybackSuppressionRef.current = null
-                    playListWord(w.word)
-                    openWordDetails(w)
+                    openWordDetails(w, { playAudio: true })
                   }}
                 >
                   <div className="wordlist-item-status">
