@@ -1,5 +1,6 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 from models import (
     AdminProjectedDailySummary,
@@ -13,8 +14,10 @@ from models import (
     db,
 )
 from platform_sdk.admin_projection_bootstrap import bootstrap_admin_projection_snapshots
+from platform_sdk import admin_overview_application as sdk_admin_overview_application
 from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 from services import admin_user_detail_repository
+from services import admin_overview_service
 from services.books_structure_service import get_book_chapter_count, get_book_word_count
 
 
@@ -33,6 +36,38 @@ def login_user(client, username, password='password123'):
         'password': password,
     })
     assert response.status_code == 200
+
+
+def test_collect_session_word_samples_handles_timezone_aware_events(monkeypatch):
+    def run_case(module):
+        session_start = datetime(2026, 4, 7, 4, 44, 23)
+        session = SimpleNamespace(
+            id=901,
+            started_at=session_start,
+            ended_at=session_start + timedelta(minutes=10),
+            duration_seconds=600,
+        )
+        event = SimpleNamespace(
+            word='coherent',
+            occurred_at=(session_start + timedelta(minutes=4)).replace(tzinfo=timezone.utc),
+        )
+
+        def fake_events(user_id, *, lower_bound, upper_bound):
+            assert user_id == 12
+            assert lower_bound.tzinfo is None
+            assert upper_bound.tzinfo is None
+            return [event]
+
+        monkeypatch.setattr(
+            module.admin_user_detail_repository,
+            'list_learning_events_for_sessions',
+            fake_events,
+        )
+        return module.collect_session_word_samples(12, [session])
+
+    expected = {901: {'studied_words': ['coherent'], 'studied_words_total': 1}}
+    assert run_case(sdk_admin_overview_application) == expected
+    assert run_case(admin_overview_service) == expected
 
 
 def test_admin_user_detail_includes_session_end_and_word_samples(client, app):

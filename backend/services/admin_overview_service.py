@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from platform_sdk.cross_service_boundary import build_strict_internal_contract_error
 from services import (
@@ -57,14 +57,22 @@ def resolve_session_end(session) -> datetime | None:
     return session.started_at
 
 
+def _as_naive_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
+
+
 def collect_session_word_samples(user_id: int, sessions, sample_limit: int = 6) -> dict:
     session_windows = []
     lower_bound = None
     upper_bound = None
 
     for session in sessions:
-        start = session.started_at
-        end = resolve_session_end(session)
+        start = _as_naive_utc(session.started_at)
+        end = _as_naive_utc(resolve_session_end(session))
         if not start or not end:
             continue
         session_windows.append({
@@ -94,7 +102,7 @@ def collect_session_word_samples(user_id: int, sessions, sample_limit: int = 6) 
     )
 
     for event in events:
-        event_time = event.occurred_at
+        event_time = _as_naive_utc(event.occurred_at)
         word = (event.word or '').strip()
         if not event_time or not word:
             continue

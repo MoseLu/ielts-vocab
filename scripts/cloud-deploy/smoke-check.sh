@@ -135,6 +135,39 @@ if response.status_code != 200:
     )
     raise SystemExit(1)
 print('admin overview projection passed')
+
+users_response = requests.get(
+    f'http://127.0.0.1:{port}/api/admin/users?page=1&per_page=20',
+    headers=headers,
+    timeout=timeout,
+)
+if users_response.status_code != 200:
+    print(
+        f'admin users probe failed: status={users_response.status_code} '
+        f'body={users_response.text[:300]}',
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
+users = users_response.json().get('users') or []
+if not users:
+    print('admin detail projection skipped: no users returned')
+    raise SystemExit(0)
+
+target_user_id = int(users[0]['id'])
+detail_response = requests.get(
+    f'http://127.0.0.1:{port}/api/admin/users/{target_user_id}?wrong_words_sort=last_error',
+    headers=headers,
+    timeout=timeout,
+)
+if detail_response.status_code != 200:
+    print(
+        f'admin detail probe failed: status={detail_response.status_code} '
+        f'user_id={target_user_id} body={detail_response.text[:300]}',
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+print('admin detail projection passed')
 PY
 }
 
