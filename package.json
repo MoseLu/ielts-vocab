@@ -2,6 +2,11 @@
   "name": "ielts-vocab-workspace",
   "private": true,
   "packageManager": "pnpm@9.0.0",
+  "pnpm": {
+    "overrides": {
+      "rollup": "4.59.0"
+    }
+  },
   "scripts": {
     "dev": "pnpm --dir frontend dev",
     "build": "pnpm --dir frontend build",
