@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -14,8 +15,7 @@ if str(BACKEND_PATH) not in sys.path:
 if str(SDK_PATH) not in sys.path:
     sys.path.insert(0, str(SDK_PATH))
 
-from app import create_app
-from platform_sdk.admin_projection_bootstrap import bootstrap_admin_projection_snapshots
+from platform_sdk.runtime_env import load_split_service_env
 
 
 def parse_args() -> argparse.Namespace:
@@ -28,11 +28,27 @@ def parse_args() -> argparse.Namespace:
         default='text',
         help='Output format.',
     )
+    parser.add_argument(
+        '--env-file',
+        help='Optional microservices env file. Defaults to MICROSERVICES_ENV_FILE or backend/.env.microservices.local.',
+    )
+    parser.add_argument(
+        '--service-name',
+        default='admin-ops-service',
+        help='Split service context to load before connecting to storage.',
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    if args.env_file:
+        os.environ['MICROSERVICES_ENV_FILE'] = str(Path(args.env_file).resolve())
+    load_split_service_env(service_name=args.service_name)
+
+    from app import create_app
+    from platform_sdk.admin_projection_bootstrap import bootstrap_admin_projection_snapshots
+
     app = create_app()
     with app.app_context():
         summary = bootstrap_admin_projection_snapshots()

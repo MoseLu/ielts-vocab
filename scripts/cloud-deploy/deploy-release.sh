@@ -13,6 +13,21 @@ previous_release=""
 previous_current=""
 release_dir=""
 
+bootstrap_admin_projections() {
+  local release_path="${1:?release path is required}"
+  local bootstrap_script="${release_path}/scripts/bootstrap-admin-projections.py"
+
+  require_file "${bootstrap_script}"
+  log "Bootstrapping admin projections"
+  CURRENT_SERVICE_NAME="admin-ops-service" \
+  MICROSERVICES_ENV_FILE="${MICROSERVICES_ENV_FILE}" \
+  PYTHONPATH="${release_path}/backend:${release_path}/packages/platform-sdk:${PYTHONPATH:-}" \
+    "${VENV_DIR}/bin/python" "${bootstrap_script}" \
+      --service-name "admin-ops-service" \
+      --env-file "${MICROSERVICES_ENV_FILE}" \
+      --format text
+}
+
 rollback_after_switch() {
   if [[ "${switched}" != "true" ]]; then
     return 0
@@ -77,6 +92,7 @@ require_file "${schema_migration_script}"
 run_backup_script
 log "Applying split-service schema migrations"
 "${VENV_DIR}/bin/python" "${schema_migration_script}" --env-file "${MICROSERVICES_ENV_FILE}"
+bootstrap_admin_projections "${release_dir}"
 if [[ -e "${CURRENT_LINK}" && ! -L "${CURRENT_LINK}" ]]; then
   previous_current="$(stage_current_directory_as_legacy_release "${timestamp}")"
   if [[ -z "${previous_release}" ]]; then

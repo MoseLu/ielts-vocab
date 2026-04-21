@@ -8,6 +8,7 @@ SMOKE_HTTP_SLOT="${SMOKE_HTTP_SLOT:-}"
 SMOKE_SKIP_NGINX="${SMOKE_SKIP_NGINX:-false}"
 SMOKE_SKIP_WORKERS="${SMOKE_SKIP_WORKERS:-false}"
 SMOKE_AI_PROBE_USER_ID="${SMOKE_AI_PROBE_USER_ID:-1}"
+SMOKE_ADMIN_PROBE_USER_ID="${SMOKE_ADMIN_PROBE_USER_ID:-1}"
 SMOKE_MAX_WAIT_SECONDS="${SMOKE_MAX_WAIT_SECONDS:-90}"
 SMOKE_RETRY_DELAY_SECONDS="${SMOKE_RETRY_DELAY_SECONDS:-2}"
 CURL_MAX_TIME_SECONDS="${CURL_MAX_TIME_SECONDS:-5}"
@@ -89,9 +90,58 @@ check_host_url() {
   wait_for_curl "${label}" -H "Host: ${SMOKE_HOST}" "http://127.0.0.1${path}"
 }
 
+check_admin_overview_probe() {
+  local release_dir="${1:?release dir is required}"
+  log "Smoke check: admin overview projection"
+  BACKEND_ENV_FILE="${BACKEND_ENV_FILE}" \
+  MICROSERVICES_ENV_FILE="${MICROSERVICES_ENV_FILE}" \
+  ADMIN_OPS_SERVICE_PORT="${ADMIN_OPS_SERVICE_PORT}" \
+  SMOKE_ADMIN_PROBE_USER_ID="${SMOKE_ADMIN_PROBE_USER_ID}" \
+  CURL_MAX_TIME_SECONDS="${CURL_MAX_TIME_SECONDS}" \
+  PYTHONPATH="${release_dir}/backend:${release_dir}/packages/platform-sdk:${PYTHONPATH:-}" \
+    "${VENV_DIR}/bin/python" - <<'PY'
+import os
+import sys
+
+import requests
+from dotenv import load_dotenv
+
+from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
+
+backend_env = os.environ.get('BACKEND_ENV_FILE') or ''
+microservices_env = os.environ.get('MICROSERVICES_ENV_FILE') or ''
+if backend_env:
+    load_dotenv(backend_env, override=False)
+if microservices_env:
+    load_dotenv(microservices_env, override=True)
+
+port = os.environ.get('ADMIN_OPS_SERVICE_PORT') or '8108'
+user_id = int(os.environ.get('SMOKE_ADMIN_PROBE_USER_ID') or '1')
+timeout = float(os.environ.get('CURL_MAX_TIME_SECONDS') or '5')
+headers = create_internal_auth_headers_for_user(
+    user_id=user_id,
+    is_admin=True,
+    username='smoke-admin',
+)
+response = requests.get(
+    f'http://127.0.0.1:{port}/api/admin/overview',
+    headers=headers,
+    timeout=timeout,
+)
+if response.status_code != 200:
+    print(
+        f'admin overview probe failed: status={response.status_code} body={response.text[:300]}',
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+print('admin overview projection passed')
+PY
+}
+
 require_command curl
 require_command systemctl
 require_file "${VALIDATE_BROKER_SCRIPT}"
+require_file "${VENV_DIR}/bin/python"
 
 if [[ -z "${SMOKE_HTTP_SLOT}" ]]; then
   SMOKE_HTTP_SLOT="$(active_http_slot)"
@@ -126,6 +176,7 @@ check_url "http://127.0.0.1:${TTS_MEDIA_SERVICE_PORT}/ready" "tts-media-service 
 check_url "http://127.0.0.1:${ASR_SERVICE_PORT}/ready" "asr-service ready"
 check_url "http://127.0.0.1:${NOTES_SERVICE_PORT}/ready" "notes-service ready"
 check_url "http://127.0.0.1:${ADMIN_OPS_SERVICE_PORT}/ready" "admin-ops-service ready"
+check_admin_overview_probe "${smoke_release}"
 
 if [[ "${SMOKE_SKIP_NGINX}" != "true" ]]; then
   check_url "http://127.0.0.1:${SPEECH_SERVICE_PORT}/ready" "asr-socketio ready"
