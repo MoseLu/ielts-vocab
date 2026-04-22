@@ -29,6 +29,14 @@ bootstrap_admin_projections() {
       --format text
 }
 
+should_bootstrap_admin_projections() {
+  case "${DEPLOY_BOOTSTRAP_ADMIN_PROJECTIONS:-false}" in
+    1|true|TRUE|yes|YES) return 0 ;;
+    ''|0|false|FALSE|no|NO) return 1 ;;
+    *) fail "Invalid DEPLOY_BOOTSTRAP_ADMIN_PROJECTIONS value: ${DEPLOY_BOOTSTRAP_ADMIN_PROJECTIONS}" ;;
+  esac
+}
+
 rollback_after_failure() {
   if [[ "${switched}" != "true" ]]; then
     if [[ -n "${target_slot}" ]]; then
@@ -97,7 +105,11 @@ require_file "${schema_migration_script}"
 run_backup_script
 log "Applying split-service schema migrations"
 "${VENV_DIR}/bin/python" "${schema_migration_script}" --env-file "${MICROSERVICES_ENV_FILE}"
-bootstrap_admin_projections "${release_dir}"
+if should_bootstrap_admin_projections; then
+  bootstrap_admin_projections "${release_dir}"
+else
+  log "Skipping admin projection bootstrap during deploy"
+fi
 if [[ -e "${CURRENT_LINK}" && ! -L "${CURRENT_LINK}" ]]; then
   previous_current="$(stage_current_directory_as_legacy_release "${timestamp}")"
   if [[ -z "${previous_release}" ]]; then
