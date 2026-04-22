@@ -11,7 +11,6 @@ import type { ErrorReviewRoundResults } from '../../../components/practice/error
 import { applyScopedWordsLoad, loadErrorModeData, loadQuickMemoryReviewQueue, resolvePracticeWordsForMode } from './practicePageDataLoaders'
 
 interface UsePracticePageDataParams {
-  user: unknown
   userId: string | number | null
   currentDay?: number
   mode?: PracticeMode
@@ -22,7 +21,7 @@ interface UsePracticePageDataParams {
   reviewMode: boolean
   errorMode: boolean
   isCustomPracticeScope: boolean
-  searchParams: URLSearchParams
+  searchParamsKey: string
   settings: {
     shuffle?: boolean
     reviewInterval?: string
@@ -30,9 +29,6 @@ interface UsePracticePageDataParams {
   }
   navigate: (to: string) => void
   showToast?: (message: string, type?: 'success' | 'error' | 'info') => void
-  vocabulary: Word[]
-  queue: number[]
-  queueIndex: number
   setVocabulary: Dispatch<SetStateAction<Word[]>>
   setQueue: Dispatch<SetStateAction<number[]>>
   setQueueIndex: Dispatch<SetStateAction<number>>
@@ -64,7 +60,6 @@ interface UsePracticePageDataParams {
 }
 
 export function usePracticePageData({
-  user,
   userId,
   currentDay,
   mode,
@@ -75,7 +70,7 @@ export function usePracticePageData({
   reviewMode,
   errorMode,
   isCustomPracticeScope,
-  searchParams,
+  searchParamsKey,
   settings,
   navigate,
   showToast,
@@ -112,6 +107,8 @@ export function usePracticePageData({
   const activeScopedLoadKeyRef = useRef<string | null>(null)
   const lastAppliedScopedLoadRef = useRef<{ key: string | null; generation: number }>({ key: null, generation: 0 })
   const scopedQueueWordsCacheRef = useRef<Record<string, string[]>>({})
+  const runtimeRefs = useRef({ beginSession, onListeningModeFallback, showToast })
+  runtimeRefs.current = { beginSession, onListeningModeFallback, showToast }
 
   useEffect(() => {
     if (!resolvedPracticeBookId) {
@@ -181,6 +178,7 @@ export function usePracticePageData({
 
   useEffect(() => {
     let cancelled = false
+    const currentSearchParams = new URLSearchParams(searchParamsKey)
     errorProgressHydratedRef.current = false
     setNoListeningPresets(false)
     setReviewQueueError(null)
@@ -230,7 +228,7 @@ export function usePracticePageData({
         setReviewContext,
         setReviewQueueError,
         setCurrentChapterTitle,
-        showToast,
+        showToast: runtimeRefs.current.showToast,
         isCancelled: () => cancelled,
       })
 
@@ -243,9 +241,9 @@ export function usePracticePageData({
 
     if (errorMode) {
       void loadErrorModeData({
-        user,
+        user: userId == null ? undefined : { id: userId },
         userId,
-        searchParams,
+        searchParams: currentSearchParams,
         mode,
         shuffle: settings.shuffle,
         setResumeProgress,
@@ -263,8 +261,8 @@ export function usePracticePageData({
         setLastState,
         setWordStatuses,
         errorProgressHydratedRef,
-        beginSession,
-        showToast,
+        beginSession: runtimeRefs.current.beginSession,
+        showToast: runtimeRefs.current.showToast,
         isCancelled: () => cancelled,
       })
 
@@ -284,7 +282,7 @@ export function usePracticePageData({
             mode,
             isCustomPracticeScope,
             setNoListeningPresets,
-            onListeningModeFallback,
+            onListeningModeFallback: runtimeRefs.current.onListeningModeFallback,
           })
           if (!words || !canApplyScopedLoad()) return
           const progress = await loadChapterProgressSnapshot(bookId, chapterId)
@@ -313,7 +311,7 @@ export function usePracticePageData({
             setLastState,
             setWordStatuses,
             setResumeProgress,
-            beginSession,
+            beginSession: runtimeRefs.current.beginSession,
           })
         })
         .catch(() => {
@@ -336,7 +334,7 @@ export function usePracticePageData({
             mode,
             isCustomPracticeScope,
             setNoListeningPresets,
-            onListeningModeFallback,
+            onListeningModeFallback: runtimeRefs.current.onListeningModeFallback,
           })
           if (!words || !canApplyScopedLoad()) return
           const progress = await loadBookProgressSnapshot(bookId)
@@ -365,7 +363,7 @@ export function usePracticePageData({
             setLastState,
             setWordStatuses,
             setResumeProgress,
-            beginSession,
+            beginSession: runtimeRefs.current.beginSession,
           })
         })
         .catch(() => {
@@ -392,7 +390,7 @@ export function usePracticePageData({
           mode,
           isCustomPracticeScope,
           setNoListeningPresets,
-          onListeningModeFallback,
+          onListeningModeFallback: runtimeRefs.current.onListeningModeFallback,
         })
         if (!words || !canApplyScopedLoad()) return
         const saved: Record<string, ProgressData> = JSON.parse(localStorage.getItem('day_progress') || '{}')
@@ -437,7 +435,7 @@ export function usePracticePageData({
           setLastState,
           setWordStatuses,
           setResumeProgress,
-          beginSession,
+          beginSession: runtimeRefs.current.beginSession,
         })
       })
       .catch(() => {
@@ -450,7 +448,6 @@ export function usePracticePageData({
       cancelled = true
     }
   }, [
-    beginSession,
     bookId,
     chapterId,
     currentDay,
@@ -460,11 +457,10 @@ export function usePracticePageData({
     errorRoundResultsRef,
     mode,
     navigate,
-    onListeningModeFallback,
     queueRef,
     reviewMode,
     reviewOffset,
-    searchParams,
+    searchParamsKey,
     setResumeProgress,
     setCorrectCount,
     setCurrentChapterTitle,
@@ -484,9 +480,7 @@ export function usePracticePageData({
     settings.reviewInterval,
     settings.reviewLimit,
     settings.shuffle,
-    showToast,
     uniqueAnsweredRef,
-    user,
     userId,
     vocabRef,
     wordsLearnedBaselineRef,

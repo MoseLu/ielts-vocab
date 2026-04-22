@@ -122,7 +122,6 @@ function PracticePage({
   })
 
   usePracticePageData({
-    user,
     userId,
     currentDay,
     mode: practiceMode,
@@ -133,13 +132,10 @@ function PracticePage({
     reviewMode,
     errorMode,
     isCustomPracticeScope,
-    searchParams,
+    searchParamsKey: searchParams.toString(),
     settings,
     navigate,
     showToast,
-    vocabulary,
-    queue,
-    queueIndex,
     setVocabulary,
     setQueue,
     setQueueIndex,
