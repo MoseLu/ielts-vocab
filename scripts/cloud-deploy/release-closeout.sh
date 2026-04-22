@@ -18,6 +18,17 @@ require_command bash
 require_command tee
 require_command mkdir
 
+source_runtime_env_files() {
+  set -a
+  # shellcheck source=/dev/null
+  source "${BACKEND_ENV_FILE}"
+  # shellcheck source=/dev/null
+  source "${MICROSERVICES_ENV_FILE}"
+  set +a
+}
+
+source_runtime_env_files
+
 mkdir -p "${CLOSEOUT_LOG_DIR}"
 
 log "Release closeout starting"
