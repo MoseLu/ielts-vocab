@@ -183,7 +183,7 @@ install_release_dependencies() {
   run_deploy_job "node-install" env \
     CI=1 \
     npm_config_jobs="${DEPLOY_BUILD_NPM_JOBS}" \
-    pnpm --dir "${release_dir}" install --frozen-lockfile --workspace-concurrency=1
+    pnpm --dir "${release_dir}" install --frozen-lockfile
   log "Building frontend under deploy resource limits"
   run_deploy_job "frontend-build" env \
     CI=1 \
