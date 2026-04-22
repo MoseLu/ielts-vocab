@@ -72,6 +72,7 @@ extract_dir="$(mktemp -d "${RELEASES_ROOT}/artifact-${timestamp}-XXXXXX")"
 write_deploy_lock "${release_label:-artifact}"
 
 tar -xzf "${artifact_path}" -C "${extract_dir}"
+find "${extract_dir}/scripts/cloud-deploy" -maxdepth 1 -type f -name '*.sh' -exec chmod +x {} +
 install_runtime_systemd_units "${extract_dir}"
 install_release_python_dependencies "${extract_dir}"
 
@@ -88,11 +89,11 @@ fi
 
 release_dir="${RELEASES_ROOT}/${timestamp}-$(printf '%s' "${release_label}" | cut -c1-12)"
 previous_current="$(current_target_path)"
-schema_migration_script="${extract_dir}/scripts/run-service-schema-migrations.py"
-
-require_file "${schema_migration_script}"
 mv "${extract_dir}" "${release_dir}"
 extract_dir="${release_dir}"
+schema_migration_script="${release_dir}/scripts/run-service-schema-migrations.py"
+
+require_file "${schema_migration_script}"
 
 run_backup_script
 log "Applying split-service schema migrations"
