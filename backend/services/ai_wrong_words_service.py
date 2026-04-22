@@ -18,6 +18,7 @@ from services.ai_custom_books_service import (
     merge_wrong_word_dimension_states,
     normalize_wrong_word_counter,
 )
+from services.learning_activity_service import rebuild_learning_activity_rollups, record_learning_activity
 from services.ai_route_support_service import _decorate_wrong_words_with_quick_memory_progress
 from services.learning_events import record_learning_event
 from services.study_sessions import normalize_chapter_id
@@ -178,6 +179,7 @@ def sync_wrong_words_response(user_id: int, body: dict | None) -> tuple[dict, in
 
     record_cache: dict[str, UserWrongWord] = {}
     processed_words: set[str] = set()
+    touched_scopes: set[tuple[str, str, str]] = set()
     updated = 0
     for word_payload in words:
         word_value = str(word_payload.get('word') or '').strip()
@@ -204,10 +206,26 @@ def sync_wrong_words_response(user_id: int, body: dict | None) -> tuple[dict, in
                     'dimension_states': json.loads(record.dimension_state or '{}'),
                 },
             )
+            scope = record_learning_activity(
+                user_id=user_id,
+                book_id=book_id,
+                mode=source_mode,
+                chapter_id=chapter_id,
+                wrong_word_delta=wrong_delta,
+                rebuild_rollups=False,
+            )
+            touched_scopes.add((scope['book_id'], scope['mode'], scope['chapter_id']))
         if word_value not in processed_words:
             processed_words.add(word_value)
             updated += 1
 
+    for book_scope, mode_scope, chapter_scope in touched_scopes:
+        rebuild_learning_activity_rollups(
+            user_id=user_id,
+            book_id=book_scope or None,
+            mode=mode_scope or None,
+            chapter_id=chapter_scope or None,
+        )
     ai_wrong_word_repository.commit()
     return {'updated': updated}, 200
 

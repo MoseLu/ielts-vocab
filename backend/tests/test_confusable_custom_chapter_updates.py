@@ -18,7 +18,7 @@ def test_update_confusable_custom_chapter_replaces_words_and_resets_progress(cli
 
     save_progress = client.post(
         f'/api/books/ielts_confusable_match/chapters/{chapter_id}/progress',
-        json={'words_learned': 3, 'correct_count': 3, 'wrong_count': 0, 'is_completed': True},
+        json={'mode': 'match', 'words_learned': 3, 'correct_count': 3, 'wrong_count': 0, 'is_completed': True},
     )
     assert save_progress.status_code == 200
 

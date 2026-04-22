@@ -6,6 +6,7 @@ from services.books_favorites_service import (
     _favorite_word_count,
     _is_favorites_book,
 )
+from services.learning_activity_service import normalize_learning_mode, record_learning_activity
 from services.books_user_state_repository import (
     commit as _commit_user_state,
     create_user_added_book,
@@ -33,7 +34,7 @@ def save_chapter_mode_progress_response(
     data: dict | None,
 ) -> tuple[dict, int]:
     payload = data or {}
-    mode = payload.get('mode')
+    mode = normalize_learning_mode(payload.get('mode'))
     if not mode:
         return {'error': '缺少 mode 参数'}, 400
 
@@ -61,6 +62,15 @@ def save_chapter_mode_progress_response(
             correct_count=after_snapshot['correct_count'],
             wrong_count=after_snapshot['wrong_count'],
             payload={'is_completed': after_snapshot['is_completed']},
+        )
+        record_learning_activity(
+            user_id=user_id,
+            book_id=book_id,
+            mode=mode,
+            chapter_id=str(chapter_id),
+            correct_count=after_snapshot['correct_count'],
+            wrong_count=after_snapshot['wrong_count'],
+            is_completed=after_snapshot['is_completed'],
         )
 
     _commit_user_state()

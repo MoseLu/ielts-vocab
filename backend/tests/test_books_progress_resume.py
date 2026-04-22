@@ -12,6 +12,7 @@ def test_chapter_progress_persists_and_clears_resume_snapshot(client, app):
     _register_user(client)
 
     save_response = client.post('/api/books/ielts_reading_premium/chapters/chapter-a/progress', json={
+        'mode': 'meaning',
         'current_index': 3,
         'words_learned': 5,
         'correct_count': 4,
@@ -31,6 +32,7 @@ def test_chapter_progress_persists_and_clears_resume_snapshot(client, app):
     assert payload['queue_words'] == ['alpha', 'beta', 'gamma']
 
     clear_response = client.post('/api/books/ielts_reading_premium/chapters/chapter-a/progress', json={
+        'mode': 'meaning',
         'clear_session_snapshot': True,
         'current_index': 0,
         'answered_words': [],

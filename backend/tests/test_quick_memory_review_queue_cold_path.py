@@ -89,6 +89,78 @@ def test_backend_review_queue_skips_global_pool_when_lookup_hits():
     assert payload['words'][0]['dueState'] == 'due'
 
 
+def test_backend_review_queue_uses_filtered_scope_when_record_context_differs():
+    now_ms = 10_000
+    entries = [
+        _build_vocab_entry(
+            word='benefit',
+            book_id='ielts_reading_premium',
+            chapter_id='2',
+        ),
+        _build_vocab_entry(
+            word='benefit',
+            book_id='ielts_comprehensive',
+            chapter_id='39',
+        ),
+    ]
+
+    def resolve_vocab_entry(word_key: str, *, book_id: str | None = None, chapter_id: str | None = None):
+        assert word_key == 'benefit'
+        candidates = entries
+        if book_id is not None and chapter_id is not None:
+            for entry in candidates:
+                if entry['book_id'] == book_id and entry['chapter_id'] == chapter_id:
+                    return dict(entry)
+            return None
+        if book_id is not None:
+            for entry in candidates:
+                if entry['book_id'] == book_id:
+                    return dict(entry)
+            return None
+        if chapter_id is not None:
+            for entry in candidates:
+                if entry['chapter_id'] == chapter_id:
+                    return dict(entry)
+            return None
+        return dict(candidates[0])
+
+    payload = build_review_queue_payload(
+        user_id=1,
+        limit=10,
+        offset=0,
+        within_days=3,
+        due_only=True,
+        book_id_filter='ielts_comprehensive',
+        chapter_id_filter='39',
+        now_ms=now_ms,
+        normalize_chapter_id=lambda value: str(value) if value is not None else None,
+        load_user_quick_memory_records=lambda _user_id: [
+            _build_row(
+                word='benefit',
+                next_review=now_ms - 1,
+                book_id='ielts_reading_premium',
+                chapter_id='2',
+            ),
+        ],
+        resolve_quick_memory_vocab_entry=resolve_vocab_entry,
+        get_global_vocab_pool=lambda: [],
+    )
+
+    assert [word['word'] for word in payload['words']] == ['benefit']
+    assert payload['words'][0]['book_id'] == 'ielts_comprehensive'
+    assert payload['words'][0]['chapter_id'] == '39'
+    assert payload['summary']['selected_context'] == {
+        'book_id': 'ielts_comprehensive',
+        'book_title': 'Book A',
+        'chapter_id': '39',
+        'chapter_title': 'Chapter 39',
+        'due_count': 1,
+        'upcoming_count': 0,
+        'total_count': 1,
+        'next_review': now_ms - 1,
+    }
+
+
 def test_platform_vocab_catalog_builds_pool_and_lookup_from_single_snapshot(monkeypatch):
     platform_vocab_catalog.get_global_vocab_pool.cache_clear()
     platform_vocab_catalog.get_quick_memory_vocab_lookup.cache_clear()
@@ -152,3 +224,83 @@ def test_platform_review_queue_skips_global_pool_when_lookup_hits(monkeypatch):
     assert payload['summary']['due_count'] == 1
     assert payload['words'][0]['word'] == 'alpha'
     assert payload['words'][0]['dueState'] == 'due'
+
+
+def test_platform_review_queue_uses_filtered_scope_when_record_context_differs(monkeypatch):
+    now_ms = 10_000
+    entries = [
+        _build_vocab_entry(
+            word='benefit',
+            book_id='ielts_reading_premium',
+            chapter_id='2',
+        ),
+        _build_vocab_entry(
+            word='benefit',
+            book_id='ielts_comprehensive',
+            chapter_id='39',
+        ),
+    ]
+
+    def resolve_vocab_entry(word_key: str, *, book_id: str | None = None, chapter_id: str | None = None):
+        assert word_key == 'benefit'
+        candidates = entries
+        if book_id is not None and chapter_id is not None:
+            for entry in candidates:
+                if entry['book_id'] == book_id and entry['chapter_id'] == chapter_id:
+                    return dict(entry)
+            return None
+        if book_id is not None:
+            for entry in candidates:
+                if entry['book_id'] == book_id:
+                    return dict(entry)
+            return None
+        if chapter_id is not None:
+            for entry in candidates:
+                if entry['chapter_id'] == chapter_id:
+                    return dict(entry)
+            return None
+        return dict(candidates[0])
+
+    monkeypatch.setattr(
+        learning_core_quick_memory,
+        '_load_quick_memory_rows',
+        lambda _user_id: [
+            _build_row(
+                word='benefit',
+                next_review=now_ms - 1,
+                book_id='ielts_reading_premium',
+                chapter_id='2',
+            ),
+        ],
+    )
+    monkeypatch.setattr(
+        learning_core_quick_memory,
+        'resolve_quick_memory_vocab_entry',
+        resolve_vocab_entry,
+    )
+    monkeypatch.setattr(learning_core_quick_memory, 'get_global_vocab_pool', lambda: [])
+
+    payload = learning_core_quick_memory._build_review_queue_payload(
+        user_id=1,
+        limit=10,
+        offset=0,
+        within_days=3,
+        due_only=True,
+        book_id_filter='ielts_comprehensive',
+        chapter_id_filter='39',
+        now_ms=now_ms,
+    )
+
+    assert [word['word'] for word in payload['words']] == ['benefit']
+    assert payload['words'][0]['book_id'] == 'ielts_comprehensive'
+    assert payload['words'][0]['chapter_id'] == '39'
+    assert payload['summary']['selected_context'] == {
+        'book_id': 'ielts_comprehensive',
+        'book_title': 'Book A',
+        'chapter_id': '39',
+        'chapter_title': 'Chapter 39',
+        'due_count': 1,
+        'upcoming_count': 0,
+        'total_count': 1,
+        'next_review': now_ms - 1,
+    }

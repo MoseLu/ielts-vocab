@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from service_models.learning_core_models import db
 
+from platform_sdk.ai_vocab_catalog_application import resolve_unique_quick_memory_vocab_context
 from platform_sdk.ai_text_support import normalize_word_key
 from platform_sdk.learning_repository_adapters import (
     learning_stats_repository,
@@ -176,6 +177,7 @@ def quick_memory_word_stats(user_id: int, *, now_utc: datetime | None = None) ->
         user_id,
         list_records=quick_memory_record_repository.list_user_quick_memory_records,
         commit=quick_memory_record_repository.commit,
+        resolve_vocab_context=resolve_unique_quick_memory_vocab_context,
     )
     today_new = 0
     today_review = 0

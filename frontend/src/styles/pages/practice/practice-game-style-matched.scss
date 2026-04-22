@@ -39,14 +39,14 @@
   height: auto;
   object-fit: cover;
   opacity: 0.92;
-  z-index: 2;
+  z-index: var(--layer-above);
 }
 
 .practice-game-map__landmark,
 .practice-game-map__node,
 .practice-game-map__hero,
 .practice-game-map__mentor {
-  z-index: 3;
+  z-index: var(--layer-prominent);
 }
 
 .practice-game-map__title span {
@@ -84,12 +84,12 @@
 }
 
 .practice-game-mode__scene-image {
-  z-index: 0;
+  z-index: var(--layer-base);
   opacity: 0.92;
 }
 
 .practice-game-mode__scene-overlay {
-  z-index: 1;
+  z-index: var(--layer-raised);
 }
 
 .practice-game-speaking__status {

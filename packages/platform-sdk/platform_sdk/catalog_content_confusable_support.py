@@ -7,6 +7,7 @@ from flask import current_app, request
 
 from platform_sdk.catalog_runtime_adapters import books_confusable_repository
 from platform_sdk.catalog_provider_adapter import load_book_vocabulary, resolve_current_user
+from services.learning_activity_service import delete_learning_activity_scope
 
 if TYPE_CHECKING:
     from models import User
@@ -337,6 +338,11 @@ def update_confusable_custom_chapter_response(user_id: int, chapter_id: int, wor
         chapter_id=chapter_id,
     )
     books_confusable_repository.delete_user_chapter_mode_progress(
+        user_id=user_id,
+        book_id=CONFUSABLE_MATCH_BOOK_ID,
+        chapter_id=chapter_id,
+    )
+    delete_learning_activity_scope(
         user_id=user_id,
         book_id=CONFUSABLE_MATCH_BOOK_ID,
         chapter_id=chapter_id,

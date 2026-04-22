@@ -73,6 +73,7 @@ describe('QuickMemoryMode partial chapter progress', () => {
       expect(apiFetchMock).toHaveBeenCalledWith('/api/books/book-1/chapters/1/progress', {
         method: 'POST',
         body: JSON.stringify({
+          mode: 'quickmemory',
           current_index: 1,
           correct_count: 1,
           wrong_count: 0,

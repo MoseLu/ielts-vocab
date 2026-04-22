@@ -9,7 +9,7 @@ import jwt
 from fastapi.testclient import TestClient
 
 from services.books_favorites_service import FAVORITES_BOOK_ID
-from models import User, db
+from models import User, UserLearningChapterRollup, UserLearningDailyLedger, db
 from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 
 
@@ -117,7 +117,7 @@ def test_learning_core_service_book_progress_and_mode_round_trip(monkeypatch, tm
     )
     save_chapter = client.post(
         '/api/books/ielts_reading_premium/chapters/chapter-a/progress',
-        json={'words_learned': 30, 'correct_count': 22, 'wrong_count': 8, 'is_completed': False},
+        json={'mode': 'meaning', 'words_learned': 30, 'correct_count': 22, 'wrong_count': 8, 'is_completed': False},
         headers=_auth_headers(token),
     )
     save_mode = client.post(
@@ -138,6 +138,20 @@ def test_learning_core_service_book_progress_and_mode_round_trip(monkeypatch, tm
     assert get_book.json()['progress']['current_index'] == 30
     assert get_chapter.status_code == 200
     assert get_chapter.json()['chapter_progress']['chapter-a']['modes']['meaning']['accuracy'] == 75
+    with module.learning_core_flask_app.app_context():
+        assert UserLearningDailyLedger.query.filter_by(
+            book_id='ielts_reading_premium',
+            mode='meaning',
+            chapter_id='chapter-a',
+        ).first() is not None
+        rollup = UserLearningChapterRollup.query.filter_by(
+            book_id='ielts_reading_premium',
+            mode='meaning',
+            chapter_id='chapter-a',
+        ).first()
+        assert rollup is not None
+        assert rollup.correct_count == 6
+        assert rollup.wrong_count == 2
 
 
 def test_learning_core_service_my_books_round_trip(monkeypatch, tmp_path):

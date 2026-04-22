@@ -13,6 +13,24 @@ from service_models.learner_profile_models import (
     UserStudySession,
     UserWrongWord,
 )
+from services.learning_activity_compat import (
+    list_book_rollup_compat_rows,
+    list_chapter_rollup_compat_rows,
+)
+
+
+def _merge_book_progress_records(base_records, override_records):
+    merged = {record.book_id: record for record in base_records}
+    for record in override_records:
+        merged[record.book_id] = record
+    return list(merged.values())
+
+
+def _merge_chapter_progress_records(base_records, override_records):
+    merged = {(record.book_id, str(record.chapter_id)): record for record in base_records}
+    for record in override_records:
+        merged[(record.book_id, str(record.chapter_id))] = record
+    return list(merged.values())
 
 
 def list_user_analytics_sessions(
@@ -138,7 +156,10 @@ def list_user_book_progress_rows(user_id: int, *, book_id: str | None = None):
     query = UserBookProgress.query.filter_by(user_id=user_id)
     if book_id:
         query = query.filter_by(book_id=book_id)
-    return query.all()
+    rollups = list_book_rollup_compat_rows(user_id)
+    if book_id:
+        rollups = [row for row in rollups if row.book_id == book_id]
+    return _merge_book_progress_records(query.all(), rollups)
 
 
 def list_user_chapter_progress_rows(
@@ -162,9 +183,18 @@ def list_user_chapter_progress_rows(
             else UserChapterProgress.updated_at.asc()
         )
         query = query.order_by(order_clause)
+    rollups = list_chapter_rollup_compat_rows(user_id, book_id=book_id)
+    if updated_since is not None:
+        rollups = [row for row in rollups if row.updated_at and row.updated_at >= updated_since]
+    rows = _merge_chapter_progress_records(query.all(), rollups)
+    if order_by_updated:
+        rows.sort(
+            key=lambda row: row.updated_at or datetime.min,
+            reverse=descending,
+        )
     if limit is not None:
-        query = query.limit(limit)
-    return query.all()
+        rows = rows[:limit]
+    return rows
 
 
 def list_custom_books_for_ids(user_id: int, book_ids):

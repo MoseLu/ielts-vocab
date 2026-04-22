@@ -58,13 +58,31 @@ def build_review_queue_payload(
         word_key = (row.word or '').strip().lower()
         stored_book_id = (row.book_id or '').strip() or None
         stored_chapter_id = normalize_chapter_id(row.chapter_id)
+        has_scope_filter = book_id_filter is not None or chapter_id_filter is not None
+        lookup_book_id = (
+            book_id_filter
+            if book_id_filter is not None
+            else (None if chapter_id_filter is not None else stored_book_id)
+        )
+        lookup_chapter_id = (
+            chapter_id_filter
+            if chapter_id_filter is not None
+            else (stored_chapter_id if book_id_filter is None else None)
+        )
         vocab_item = resolve_quick_memory_vocab_entry(
             word_key,
-            book_id=stored_book_id,
-            chapter_id=stored_chapter_id,
+            book_id=lookup_book_id,
+            chapter_id=lookup_chapter_id,
         )
         fallback_item = None
         if not vocab_item:
+            if has_scope_filter and not _matches_review_scope(
+                stored_book_id,
+                stored_chapter_id,
+                book_id_filter=book_id_filter,
+                chapter_id_filter=chapter_id_filter,
+            ):
+                continue
             if pool_by_word is None:
                 pool_by_word = {
                     (item.get('word') or '').strip().lower(): item
@@ -75,8 +93,14 @@ def build_review_queue_payload(
         if not vocab_item and not fallback_item:
             continue
 
-        effective_book_id = stored_book_id or (vocab_item or {}).get('book_id')
-        effective_chapter_id = stored_chapter_id or normalize_chapter_id((vocab_item or {}).get('chapter_id'))
+        if has_scope_filter and vocab_item:
+            effective_book_id = (vocab_item or {}).get('book_id') or stored_book_id
+            effective_chapter_id = normalize_chapter_id((vocab_item or {}).get('chapter_id'))
+            if effective_chapter_id is None:
+                effective_chapter_id = stored_chapter_id
+        else:
+            effective_book_id = stored_book_id or (vocab_item or {}).get('book_id')
+            effective_chapter_id = stored_chapter_id or normalize_chapter_id((vocab_item or {}).get('chapter_id'))
         if book_id_filter and effective_book_id != book_id_filter:
             continue
         if chapter_id_filter and effective_chapter_id != chapter_id_filter:
@@ -179,3 +203,17 @@ def build_review_queue_payload(
             'selected_context': selected_context,
         },
     }
+
+
+def _matches_review_scope(
+    book_id: str | None,
+    chapter_id: str | None,
+    *,
+    book_id_filter: str | None,
+    chapter_id_filter: str | None,
+) -> bool:
+    if book_id_filter and book_id != book_id_filter:
+        return False
+    if chapter_id_filter and chapter_id != chapter_id_filter:
+        return False
+    return True

@@ -126,6 +126,7 @@ describe('usePracticePageControls saveProgress', () => {
     expect(apiFetchMock).toHaveBeenCalledWith('/api/books/book-1/chapters/chapter-1/progress', {
       method: 'POST',
       body: JSON.stringify({
+        mode: 'dictation',
         current_index: 1,
         correct_count: 1,
         wrong_count: 0,
@@ -159,6 +160,7 @@ describe('usePracticePageControls saveProgress', () => {
     expect(apiFetchMock).toHaveBeenCalledWith('/api/books/book-1/chapters/chapter-1/progress', {
       method: 'POST',
       body: JSON.stringify({
+        mode: 'dictation',
         current_index: 0,
         correct_count: 0,
         wrong_count: 0,

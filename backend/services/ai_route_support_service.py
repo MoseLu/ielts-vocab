@@ -263,6 +263,7 @@ def load_user_quick_memory_records(user_id: int):
         user_id,
         list_records=quick_memory_record_repository.list_user_quick_memory_records,
         commit=quick_memory_record_repository.commit,
+        resolve_vocab_context=ai_vocab_catalog_service._resolve_unique_quick_memory_vocab_context,
     )
 
 

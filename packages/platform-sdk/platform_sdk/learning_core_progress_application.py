@@ -19,6 +19,59 @@ from platform_sdk.learning_repository_adapters import (
     learning_event_repository,
     legacy_progress_repository,
 )
+from services.learning_activity_service import (
+    get_book_rollup_compat_row,
+    list_book_rollup_compat_rows,
+    list_chapter_mode_rollup_compat_rows,
+    list_chapter_rollup_compat_rows,
+    normalize_learning_mode,
+    record_learning_activity,
+)
+
+
+def _merge_book_progress_records(base_records, override_records):
+    merged = {record.book_id: record for record in base_records}
+    for record in override_records:
+        merged[record.book_id] = record
+    return merged
+
+
+def _merge_chapter_progress_records(base_records, override_records):
+    merged = {
+        (record.book_id, str(record.chapter_id)): record
+        for record in base_records
+    }
+    for record in override_records:
+        merged[(record.book_id, str(record.chapter_id))] = record
+    return list(merged.values())
+
+
+def _merge_mode_progress_records(base_records, override_records):
+    merged = {
+        (str(record.chapter_id), record.mode): record
+        for record in base_records
+    }
+    for record in override_records:
+        merged[(str(record.chapter_id), record.mode)] = record
+    return list(merged.values())
+
+
+def _infer_chapter_progress_mode(user_id, book_id, chapter_id, payload) -> str:
+    explicit_mode = normalize_learning_mode(payload.get('mode'))
+    if explicit_mode:
+        return explicit_mode
+
+    matching_modes = {
+        normalize_learning_mode(record.mode)
+        for record in list_user_chapter_mode_progress_rows(user_id, book_id=book_id)
+        if str(record.chapter_id) == str(chapter_id) and normalize_learning_mode(record.mode)
+    }
+    matching_modes.update({
+        normalize_learning_mode(record.mode)
+        for record in list_chapter_mode_rollup_compat_rows(user_id, book_id=book_id)
+        if str(record.chapter_id) == str(chapter_id) and normalize_learning_mode(record.mode)
+    })
+    return next(iter(matching_modes)) if len(matching_modes) == 1 else ''
 
 
 def _dump_progress_words(values) -> str | None:
@@ -26,6 +79,16 @@ def _dump_progress_words(values) -> str | None:
         return None
     normalized = [str(value).strip() for value in values if str(value).strip()]
     return json.dumps(normalized, ensure_ascii=False) if normalized else None
+
+
+def _load_progress_words(raw_value) -> list[str]:
+    if not isinstance(raw_value, str) or not raw_value.strip():
+        return []
+    try:
+        parsed = json.loads(raw_value)
+    except Exception:
+        return []
+    return [str(value).strip() for value in parsed if str(value).strip()]
 
 
 def list_legacy_progress(user_id: int) -> list[dict]:
@@ -65,9 +128,15 @@ def build_user_progress_response(user_id: int):
     progress_records = list_user_book_progress_rows(user_id)
     chapter_records = list_user_chapter_progress_rows(user_id)
 
-    progress_by_book = {record.book_id: record for record in progress_records}
+    progress_by_book = _merge_book_progress_records(
+        progress_records,
+        list_book_rollup_compat_rows(user_id),
+    )
     chapters_by_book = defaultdict(list)
-    for record in chapter_records:
+    for record in _merge_chapter_progress_records(
+        chapter_records,
+        list_chapter_rollup_compat_rows(user_id),
+    ):
         chapters_by_book[record.book_id].append(record)
 
     progress_dict = {}
@@ -85,11 +154,13 @@ def build_user_progress_response(user_id: int):
 
 def build_book_progress_response(user_id: int, book_id):
     progress = get_user_book_progress(user_id, book_id)
+    rollup_progress = get_book_rollup_compat_row(user_id, book_id)
     chapter_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
+    rollup_chapter_records = list_chapter_rollup_compat_rows(user_id, book_id=book_id)
     effective_progress = serialize_effective_book_progress(
         book_id,
-        progress_record=progress,
-        chapter_records=chapter_records,
+        progress_record=rollup_progress or progress,
+        chapter_records=_merge_chapter_progress_records(chapter_records, rollup_chapter_records),
         user_id=user_id,
     )
     return {'progress': effective_progress}, 200
@@ -139,14 +210,24 @@ def save_book_progress_response(user_id: int, data: dict | None):
             wrong_count=after_snapshot['wrong_count'],
             payload={'is_completed': after_snapshot['is_completed']},
         )
+        record_learning_activity(
+            user_id=user_id,
+            book_id=book_id,
+            mode=payload.get('mode'),
+            current_index=after_snapshot['current_index'],
+            correct_count=after_snapshot['correct_count'],
+            wrong_count=after_snapshot['wrong_count'],
+            is_completed=after_snapshot['is_completed'],
+        )
 
     _commit_user_state()
 
     chapter_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
+    rollup_chapter_records = list_chapter_rollup_compat_rows(user_id, book_id=book_id)
     effective_progress = serialize_effective_book_progress(
         book_id,
-        progress_record=progress,
-        chapter_records=chapter_records,
+        progress_record=get_book_rollup_compat_row(user_id, book_id) or progress,
+        chapter_records=_merge_chapter_progress_records(chapter_records, rollup_chapter_records),
         user_id=user_id,
     )
     return {'progress': effective_progress}, 200
@@ -155,14 +236,16 @@ def save_book_progress_response(user_id: int, data: dict | None):
 def build_chapter_progress_response(user_id: int, book_id):
     progress_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
     mode_records = list_user_chapter_mode_progress_rows(user_id, book_id=book_id)
+    rollup_progress_records = list_chapter_rollup_compat_rows(user_id, book_id=book_id)
+    rollup_mode_records = list_chapter_mode_rollup_compat_rows(user_id, book_id=book_id)
 
     progress_dict = {}
-    for record in progress_records:
+    for record in _merge_chapter_progress_records(progress_records, rollup_progress_records):
         payload = record.to_dict()
         payload['modes'] = {}
         progress_dict[str(record.chapter_id)] = payload
 
-    for record in mode_records:
+    for record in _merge_mode_progress_records(mode_records, rollup_mode_records):
         key = str(record.chapter_id)
         if key not in progress_dict:
             progress_dict[key] = {'modes': {}}
@@ -173,6 +256,10 @@ def build_chapter_progress_response(user_id: int, book_id):
 
 def save_chapter_progress_response(user_id: int, book_id, chapter_id, data: dict | None):
     payload = data or {}
+    mode = _infer_chapter_progress_mode(user_id, book_id, chapter_id, payload)
+    if not mode:
+        return {'error': 'mode is required for chapter progress'}, 400
+
     progress = get_user_chapter_progress(user_id, book_id, chapter_id)
     if not progress:
         progress = create_user_chapter_progress(user_id, book_id, chapter_id)
@@ -183,6 +270,11 @@ def save_chapter_progress_response(user_id: int, book_id, chapter_id, data: dict
         'correct_count': progress.correct_count or 0,
         'wrong_count': progress.wrong_count or 0,
         'is_completed': bool(progress.is_completed),
+    }
+    session_snapshot_before = {
+        'current_index': max(0, int(progress.session_current_index or 0)),
+        'answered_words': _load_progress_words(progress.session_answered_words),
+        'queue_words': _load_progress_words(progress.session_queue_words),
     }
 
     if 'words_learned' in payload:
@@ -212,12 +304,32 @@ def save_chapter_progress_response(user_id: int, book_id, chapter_id, data: dict
             user_id=user_id,
             event_type='chapter_progress_updated',
             source='chapter_progress',
+            mode=mode,
             book_id=book_id,
             chapter_id=str(chapter_id),
             item_count=after_snapshot['words_learned'],
             correct_count=after_snapshot['correct_count'],
             wrong_count=after_snapshot['wrong_count'],
             payload={'is_completed': after_snapshot['is_completed']},
+        )
+    session_snapshot_after = {
+        'current_index': max(0, int(progress.session_current_index or 0)),
+        'answered_words': _load_progress_words(progress.session_answered_words),
+        'queue_words': _load_progress_words(progress.session_queue_words),
+    }
+    if after_snapshot != before_snapshot or session_snapshot_after != session_snapshot_before:
+        record_learning_activity(
+            user_id=user_id,
+            book_id=book_id,
+            mode=mode,
+            chapter_id=str(chapter_id),
+            current_index=session_snapshot_after['current_index'],
+            words_learned=after_snapshot['words_learned'],
+            correct_count=after_snapshot['correct_count'],
+            wrong_count=after_snapshot['wrong_count'],
+            is_completed=after_snapshot['is_completed'],
+            answered_words=session_snapshot_after['answered_words'],
+            queue_words=session_snapshot_after['queue_words'],
         )
 
     _commit_user_state()

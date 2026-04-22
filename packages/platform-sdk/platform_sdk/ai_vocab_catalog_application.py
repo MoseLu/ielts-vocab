@@ -92,17 +92,20 @@ def get_quick_memory_vocab_lookup() -> dict[str, list[dict]]:
     return lookup
 
 
+def get_quick_memory_vocab_entries(word_key: str) -> list[dict]:
+    return [dict(entry) for entry in (get_quick_memory_vocab_lookup().get(word_key) or [])]
+
+
 get_global_vocab_pool.cache_clear = _clear_quick_memory_vocab_catalog_cache
 get_quick_memory_vocab_lookup.cache_clear = _clear_quick_memory_vocab_catalog_cache
 
 
-def resolve_quick_memory_vocab_entry(
-    word_key: str,
+def _select_quick_memory_vocab_entry(
+    entries: list[dict],
     *,
     book_id: str | None = None,
     chapter_id: str | None = None,
 ) -> dict | None:
-    entries = get_quick_memory_vocab_lookup().get(word_key) or []
     if not entries:
         return None
 
@@ -122,3 +125,30 @@ def resolve_quick_memory_vocab_entry(
                 return dict(entry)
 
     return dict(entries[0])
+
+
+def resolve_unique_quick_memory_vocab_context(word_key: str) -> tuple[str | None, str | None] | None:
+    contexts = {
+        (
+            (entry.get('book_id') or '').strip() or None,
+            normalize_chapter_id(entry.get('chapter_id')),
+        )
+        for entry in get_quick_memory_vocab_entries(word_key)
+        if (entry.get('book_id') or '').strip() or normalize_chapter_id(entry.get('chapter_id')) is not None
+    }
+    if len(contexts) != 1:
+        return None
+    return next(iter(contexts))
+
+
+def resolve_quick_memory_vocab_entry(
+    word_key: str,
+    *,
+    book_id: str | None = None,
+    chapter_id: str | None = None,
+) -> dict | None:
+    return _select_quick_memory_vocab_entry(
+        get_quick_memory_vocab_entries(word_key),
+        book_id=book_id,
+        chapter_id=chapter_id,
+    )

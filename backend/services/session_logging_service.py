@@ -6,6 +6,7 @@ from platform_sdk.learning_core_event_application import queue_study_session_log
 from platform_sdk.study_session_support import resolve_session_activity_capped_end
 from service_models.learning_core_models import UserStudySession
 from services import learning_event_repository
+from services.learning_activity_service import record_learning_activity
 from services import study_session_repository
 from services.learning_events import record_learning_event
 
@@ -129,6 +130,21 @@ def _queue_study_session_logged_event_if_needed(session: UserStudySession) -> No
     queue_study_session_logged_event(session)
 
 
+def _record_study_session_rollups(*, user_id: int, session: UserStudySession, occurred_at: datetime | None) -> None:
+    if session is None or not session.has_activity():
+        return
+    record_learning_activity(
+        user_id=user_id,
+        book_id=session.book_id,
+        mode=session.mode,
+        chapter_id=session.chapter_id,
+        occurred_at=occurred_at,
+        item_delta=session.words_studied or 0,
+        duration_delta=session.duration_seconds or 0,
+        session_delta=1,
+    )
+
+
 def _apply_session_stats(
     session: UserStudySession,
     *,
@@ -242,6 +258,11 @@ def persist_study_session(
                 session=session,
                 occurred_at=session.ended_at or ended_at,
             )
+            _record_study_session_rollups(
+                user_id=user_id,
+                session=session,
+                occurred_at=session.ended_at or ended_at,
+            )
             _queue_study_session_logged_event_if_needed(session)
             study_session_repository.commit()
             return {'id': session.id}, 200
@@ -310,6 +331,11 @@ def persist_study_session(
             session=pending,
             occurred_at=pending.ended_at,
         )
+        _record_study_session_rollups(
+            user_id=user_id,
+            session=pending,
+            occurred_at=pending.ended_at,
+        )
         _queue_study_session_logged_event_if_needed(pending)
         study_session_repository.commit()
         return {'id': pending.id}, 200
@@ -343,6 +369,11 @@ def persist_study_session(
         )
     study_session_repository.flush()
     _record_study_session_event(
+        user_id=user_id,
+        session=session,
+        occurred_at=session.ended_at or session.started_at,
+    )
+    _record_study_session_rollups(
         user_id=user_id,
         session=session,
         occurred_at=session.ended_at or session.started_at,

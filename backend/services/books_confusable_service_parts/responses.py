@@ -1,4 +1,5 @@
 from services import books_confusable_repository
+from services.learning_activity_service import delete_learning_activity_scope
 
 
 def create_confusable_custom_chapters_response(user_id: int, groups):
@@ -113,6 +114,11 @@ def update_confusable_custom_chapter_response(user_id: int, chapter_id: int, wor
         chapter_id=chapter_id,
     )
     books_confusable_repository.delete_user_chapter_mode_progress(
+        user_id=user_id,
+        book_id=CONFUSABLE_MATCH_BOOK_ID,
+        chapter_id=chapter_id,
+    )
+    delete_learning_activity_scope(
         user_id=user_id,
         book_id=CONFUSABLE_MATCH_BOOK_ID,
         chapter_id=chapter_id,

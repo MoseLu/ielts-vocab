@@ -4,6 +4,10 @@ from typing import TYPE_CHECKING
 
 from platform_sdk.quick_memory_schedule_support import resolve_quick_memory_next_review_ms
 from services import ai_quick_memory_repository, ai_smart_word_stat_repository
+from services.learning_activity_service import (
+    rebuild_learning_activity_rollups,
+    record_learning_activity,
+)
 from services.ai_metric_tracking_service import record_smart_dimension_delta_event
 from services.study_sessions import normalize_chapter_id
 
@@ -51,6 +55,7 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
     if not isinstance(records_in, list):
         return {'error': 'records must be a list'}, 400
 
+    touched_scopes: set[tuple[str, str, str]] = set()
     for record_payload in records_in:
         word = _normalize_record_word(record_payload.get('word'))
         if not word:
@@ -128,7 +133,24 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
                         'fuzzy_count': current_snapshot['fuzzy_count'],
                     },
                 )
+                scope = record_learning_activity(
+                    user_id=user_id,
+                    book_id=current_snapshot['book_id'],
+                    mode='quickmemory',
+                    chapter_id=current_snapshot['chapter_id'],
+                    item_delta=1,
+                    review_delta=1,
+                    rebuild_rollups=False,
+                )
+                touched_scopes.add((scope['book_id'], scope['mode'], scope['chapter_id']))
 
+    for book_id, mode, chapter_id in touched_scopes:
+        rebuild_learning_activity_rollups(
+            user_id=user_id,
+            book_id=book_id or None,
+            mode=mode or None,
+            chapter_id=chapter_id or None,
+        )
     try:
         ai_quick_memory_repository.commit()
     except Exception:

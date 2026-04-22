@@ -160,7 +160,7 @@ export function usePracticePageControls({
       persistBookProgressSnapshot(bookId, progressData, queueWords)
       apiFetch('/api/books/progress', {
         method: 'POST',
-        body: JSON.stringify({ book_id: bookId, ...progressData }),
+        body: JSON.stringify({ book_id: bookId, mode, ...progressData }),
       }).catch(() => showToast?.('进度保存失败，请检查网络连接', 'error'))
       return
     }
@@ -177,7 +177,7 @@ export function usePracticePageControls({
       persistChapterProgressSnapshot(bookId, chapterId, chapterProgress)
       apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
         method: 'POST',
-        body: JSON.stringify({ ...chapterProgress }),
+        body: JSON.stringify({ mode, ...chapterProgress }),
       }).catch(() => {})
 
       if (mode && correct + wrong > 0) {
@@ -274,7 +274,7 @@ export function usePracticePageControls({
     try {
       await apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
         method: 'POST',
-        body: JSON.stringify(resetSnapshot),
+        body: JSON.stringify({ mode, ...resetSnapshot }),
       })
     } catch {
       showToast?.('重置进度失败，请检查网络连接', 'error')

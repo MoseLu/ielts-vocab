@@ -4,9 +4,17 @@ from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
 from platform_sdk.local_time_support import get_app_timezone
+from platform_sdk.study_session_support import normalize_chapter_id
 
 QUICK_MEMORY_REVIEW_INTERVALS_DAYS = (1, 1, 4, 7, 14, 30)
 QUICK_MEMORY_MASTERY_TARGET = len(QUICK_MEMORY_REVIEW_INTERVALS_DAYS)
+
+
+def _normalize_optional_str(value) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
 
 
 def compute_quick_memory_next_review_ms(
@@ -88,10 +96,50 @@ def normalize_quick_memory_record_schedule(record) -> bool:
     return True
 
 
-def normalize_quick_memory_rows(rows) -> bool:
+def normalize_quick_memory_record_context(
+    record,
+    *,
+    resolve_vocab_context: Callable[[str], tuple[str | None, str | None] | None] | None = None,
+) -> bool:
+    if resolve_vocab_context is None:
+        return False
+
+    current_book_id = _normalize_optional_str(getattr(record, 'book_id', None))
+    current_chapter_id = normalize_chapter_id(getattr(record, 'chapter_id', None))
+    if current_book_id and current_chapter_id is not None:
+        return False
+
+    word_key = _normalize_optional_str(getattr(record, 'word', None))
+    if not word_key:
+        return False
+
+    resolved_context = resolve_vocab_context(word_key.lower())
+    if not resolved_context:
+        return False
+
+    resolved_book_id, resolved_chapter_id = resolved_context
+    changed = False
+    if not current_book_id and resolved_book_id:
+        record.book_id = resolved_book_id
+        changed = True
+    if current_chapter_id is None and resolved_chapter_id is not None:
+        record.chapter_id = resolved_chapter_id
+        changed = True
+    return changed
+
+
+def normalize_quick_memory_rows(
+    rows,
+    *,
+    resolve_vocab_context: Callable[[str], tuple[str | None, str | None] | None] | None = None,
+) -> bool:
     changed = False
     for row in rows:
         changed = normalize_quick_memory_record_schedule(row) or changed
+        changed = normalize_quick_memory_record_context(
+            row,
+            resolve_vocab_context=resolve_vocab_context,
+        ) or changed
     return changed
 
 
@@ -100,8 +148,12 @@ def load_and_normalize_quick_memory_records(
     *,
     list_records: Callable[[int], list],
     commit: Callable[[], None] | None = None,
+    resolve_vocab_context: Callable[[str], tuple[str | None, str | None] | None] | None = None,
 ):
     rows = list_records(user_id)
-    if normalize_quick_memory_rows(rows) and commit is not None:
+    if normalize_quick_memory_rows(
+        rows,
+        resolve_vocab_context=resolve_vocab_context,
+    ) and commit is not None:
         commit()
     return rows

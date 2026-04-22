@@ -150,6 +150,7 @@ export function persistConfusableMatchProgress({
   void apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
     method: 'POST',
     body: JSON.stringify({
+      mode: 'match',
       current_index: snapshot.current_index,
       correct_count: snapshot.correct_count,
       wrong_count: snapshot.wrong_count,

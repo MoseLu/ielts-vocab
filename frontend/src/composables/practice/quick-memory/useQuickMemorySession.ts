@@ -113,7 +113,7 @@ export function useQuickMemorySession({
 
     apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
       method: 'POST',
-      body: JSON.stringify(progressData),
+      body: JSON.stringify({ mode: 'quickmemory', ...progressData }),
     }).catch(showSaveError)
 
     apiFetch(`/api/books/${bookId}/chapters/${chapterId}/mode-progress`, {
@@ -168,7 +168,7 @@ export function useQuickMemorySession({
     persistChapterProgressSnapshot(bookId, chapterId, partialProgress)
     apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
       method: 'POST',
-      body: JSON.stringify(partialProgress),
+      body: JSON.stringify({ mode: 'quickmemory', ...partialProgress }),
     }).catch(showSaveError)
   }, [bookId, chapterId, done, index, queueWords, results, reviewMode, showSaveError])
 

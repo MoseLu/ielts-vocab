@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from platform_sdk.ai_vocab_catalog_application import resolve_unique_quick_memory_vocab_context
 from platform_sdk.learning_repository_adapters import quick_memory_record_repository
 from platform_sdk.local_time_support import resolve_local_day_window, utc_naive_to_epoch_ms, utc_now_naive
 from platform_sdk.quick_memory_schedule_support import load_and_normalize_quick_memory_records
@@ -38,6 +39,7 @@ def _load_quick_memory_rows(user_id: int):
         user_id,
         list_records=quick_memory_record_repository.list_user_quick_memory_records,
         commit=quick_memory_record_repository.commit,
+        resolve_vocab_context=resolve_unique_quick_memory_vocab_context,
     )
 
 
