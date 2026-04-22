@@ -160,6 +160,9 @@ def _scene_theme(game_state: dict) -> str:
         return 'boss'
     if current_node.get('nodeType') == 'speaking_reward':
         return 'reward'
+    level_kind = current_node.get('levelKind')
+    if level_kind in {'spelling', 'pronunciation', 'definition', 'speaking', 'example'}:
+        return str(level_kind)
     dimension = current_node.get('dimension')
     if dimension in {'meaning', 'listening', 'speaking', 'dictation', 'recognition'}:
         return str(dimension)

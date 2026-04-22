@@ -4,12 +4,24 @@ import { vi } from 'vitest'
 import GameMode from './GameMode'
 
 const fetchGamePracticeStateMock = vi.fn()
+const startGamePracticeSessionMock = vi.fn()
 const submitWordMasteryAttemptMock = vi.fn()
 
 vi.mock('../../../lib/gamePractice', () => ({
   fetchGamePracticeState: (...args: unknown[]) => fetchGamePracticeStateMock(...args),
+  startGamePracticeSession: (...args: unknown[]) => startGamePracticeSessionMock(...args),
   submitWordMasteryAttempt: (...args: unknown[]) => submitWordMasteryAttemptMock(...args),
 }))
+
+function buildLevelCards(activeKind: 'spelling' | 'pronunciation' | 'definition' | 'speaking' | 'example' = 'spelling') {
+  return [
+    { kind: 'spelling', dimension: 'dictation', label: '拼写强化', subtitle: '听音后完整拼出目标词', assetKey: 'spell', step: 1, status: activeKind === 'spelling' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'pronunciation', dimension: 'speaking', label: '发音训练', subtitle: '跟读单词并完成发音判定', assetKey: 'pronunciation', step: 2, status: activeKind === 'pronunciation' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'definition', dimension: 'meaning', label: '释义理解', subtitle: '把词义和场景绑定起来', assetKey: 'definition', step: 3, status: activeKind === 'definition' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'speaking', dimension: 'recognition', label: '口语录音', subtitle: '开口使用目标词完成短句', assetKey: 'speaking', step: 4, status: activeKind === 'speaking' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'example', dimension: 'listening', label: '例句应用', subtitle: '在语境中选出正确用词', assetKey: 'example', step: 5, status: activeKind === 'example' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+  ] as const
+}
 
 function buildWordState(imageStatus: 'queued' | 'ready' | 'failed') {
   return {
@@ -38,10 +50,12 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed') {
       title: 'a couple of',
       subtitle: 'phrase. 两个；几个',
       status: 'pending',
-      dimension: 'recognition',
+      dimension: 'dictation',
+      levelKind: 'spelling',
+      levelLabel: '拼写强化',
       promptText: null,
       targetWords: ['a couple of'],
-      failedDimensions: [],
+      failedDimensions: ['dictation'],
       bossFailures: 0,
       rewardFailures: 0,
       lastEncounterType: null,
@@ -84,6 +98,8 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed') {
       subtitle: '段末结算口语试炼',
       status: 'locked',
       dimension: 'speaking',
+      levelKind: 'speaking',
+      levelLabel: '口语录音',
       promptText: '围绕 a couple of 做一段 30 秒复述。',
       targetWords: ['a couple of', 'ability'],
       failedDimensions: [],
@@ -100,6 +116,8 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed') {
       subtitle: '非阻塞奖励口语关',
       status: 'locked',
       dimension: 'speaking',
+      levelKind: 'speaking',
+      levelLabel: '口语录音',
       promptText: '用 a couple of 造一句更完整的英语表达。',
       targetWords: ['a couple of'],
       failedDimensions: [],
@@ -108,12 +126,51 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed') {
       lastEncounterType: null,
       word: null,
     },
+    levelCards: buildLevelCards('spelling'),
+    rewards: {
+      coins: 120,
+      diamonds: 0,
+      exp: 180,
+      stars: 0,
+      chest: 'normal',
+      bestHits: 0,
+    },
+    session: {
+      status: 'active',
+      score: 0,
+      hits: 0,
+      bestHits: 0,
+      hintsRemaining: 2,
+      hintUsage: 0,
+      energy: 3,
+      energyMax: 5,
+      nextEnergyAt: null,
+      enabledBoosts: { spellingBoost: true, applicationBoost: true },
+      resultOverlay: null,
+      boostModule: null,
+    },
+    launcher: {
+      lessonId: 'lesson-1',
+      title: '第 1 试炼段',
+      estimatedMinutes: 5,
+      energyCost: 2,
+      passScore: 70,
+      segmentIndex: 0,
+      boosts: { spellingBoost: true, applicationBoost: true },
+    },
+    animationPayload: {
+      sceneTheme: 'spelling',
+      mascotState: 'idle',
+      feedbackTone: null,
+      showResultLayer: false,
+    },
+    boostModule: null,
     recoveryPanel: {
       queue: [{
         nodeKey: 'word:allow',
         nodeType: 'word',
         title: 'allow',
-        subtitle: 'meaning / dictation',
+        subtitle: 'definition / spelling',
         failedDimensions: ['meaning', 'dictation'],
         bossFailures: 0,
         rewardFailures: 0,
@@ -124,7 +181,7 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed') {
         nodeKey: 'word:allow',
         nodeType: 'word',
         title: 'allow',
-        subtitle: 'meaning / dictation',
+        subtitle: 'definition / spelling',
         failedDimensions: ['meaning', 'dictation'],
         bossFailures: 0,
         rewardFailures: 0,
@@ -134,80 +191,9 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed') {
         nodeKey: 'word:allow',
         nodeType: 'word',
         title: 'allow',
-        subtitle: 'meaning / dictation',
+        subtitle: 'definition / spelling',
         failedDimensions: ['meaning', 'dictation'],
         bossFailures: 0,
-        rewardFailures: 0,
-        updatedAt: '2026-04-16T08:00:00',
-      },
-    },
-  } as const
-}
-
-function buildBossState() {
-  return {
-    ...buildWordState('queued'),
-    currentNode: {
-      nodeType: 'speaking_boss',
-      nodeKey: 'speaking_boss:0',
-      segmentIndex: 0,
-      title: '第 1 段 Boss关',
-      subtitle: '段末结算口语试炼',
-      status: 'pending',
-      dimension: 'speaking',
-      promptText: '围绕 a couple of、ability 做一段 30 秒复述，要求自然串联这些词。',
-      targetWords: ['a couple of', 'ability'],
-      failedDimensions: [],
-      bossFailures: 2,
-      rewardFailures: 0,
-      lastEncounterType: 'speaking_boss',
-      word: null,
-    },
-    nodeType: 'speaking_boss',
-    segment: {
-      index: 1,
-      title: '第 1 试炼段',
-      clearedWords: 5,
-      totalWords: 5,
-      bossStatus: 'pending',
-      rewardStatus: 'locked',
-    },
-    speakingBoss: {
-      nodeType: 'speaking_boss',
-      nodeKey: 'speaking_boss:0',
-      segmentIndex: 0,
-      title: '第 1 段 Boss关',
-      subtitle: '段末结算口语试炼',
-      status: 'pending',
-      dimension: 'speaking',
-      promptText: '围绕 a couple of、ability 做一段 30 秒复述，要求自然串联这些词。',
-      targetWords: ['a couple of', 'ability'],
-      failedDimensions: [],
-      bossFailures: 2,
-      rewardFailures: 0,
-      lastEncounterType: 'speaking_boss',
-      word: null,
-    },
-    recoveryPanel: {
-      queue: [],
-      bossQueue: [{
-        nodeKey: 'speaking_boss:0',
-        nodeType: 'speaking_boss',
-        title: '第 1 段',
-        subtitle: 'speaking_boss',
-        failedDimensions: [],
-        bossFailures: 2,
-        rewardFailures: 0,
-        updatedAt: '2026-04-16T08:00:00',
-      }],
-      recentMisses: [],
-      resumeNode: {
-        nodeKey: 'speaking_boss:0',
-        nodeType: 'speaking_boss',
-        title: '第 1 段',
-        subtitle: 'speaking_boss',
-        failedDimensions: [],
-        bossFailures: 2,
         rewardFailures: 0,
         updatedAt: '2026-04-16T08:00:00',
       },
@@ -218,18 +204,14 @@ function buildBossState() {
 describe('GameMode', () => {
   beforeEach(() => {
     fetchGamePracticeStateMock.mockReset()
+    startGamePracticeSessionMock.mockReset()
     submitWordMasteryAttemptMock.mockReset()
   })
 
-  it('renders the ready scene card for the active word node', async () => {
+  it('renders the active spelling mission with image scene and level deck', async () => {
     fetchGamePracticeStateMock.mockResolvedValue(buildWordState('ready'))
 
-    render(
-      <GameMode
-        bookId="ielts_reading_premium"
-        chapterId="1"
-      />,
-    )
+    render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
 
     await waitFor(() => expect(fetchGamePracticeStateMock).toHaveBeenCalledWith({
       bookId: 'ielts_reading_premium',
@@ -240,41 +222,85 @@ describe('GameMode', () => {
       'src',
       'https://oss.example/a-couple-of.png',
     )
+    expect(screen.getAllByText('拼写强化').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: '播放单词' })).toBeInTheDocument()
     expect(screen.getByText('独立错词体系')).toBeInTheDocument()
     expect(screen.getByText('整本词书 0/3375 已通关')).toBeInTheDocument()
-    expect(screen.queryByText('待复习队列')).not.toBeInTheDocument()
-    expect(screen.queryByText('已就绪')).not.toBeInTheDocument()
   })
 
-  it('shows the queued placeholder when the scene card is still generating', async () => {
+  it('shows the generation placeholder when the scene image is not ready', async () => {
     fetchGamePracticeStateMock.mockResolvedValue(buildWordState('queued'))
 
-    render(
-      <GameMode
-        bookId="ielts_reading_premium"
-        chapterId="1"
-      />,
-    )
+    render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
 
-    expect(await screen.findByText('雷达扫描中')).toBeInTheDocument()
-    expect(screen.getByText('排队生成')).toBeInTheDocument()
-    expect(screen.getByText('场景构建中，稍后会补上更贴词义的画面。')).toBeInTheDocument()
+    expect(await screen.findByText('场景生成中')).toBeInTheDocument()
+    expect(screen.getByText('完成当前维度即可点亮关卡。')).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: 'a couple of 词义场景' })).not.toBeInTheDocument()
   })
 
-  it('renders the boss mission card when the campaign advances to a speaking boss node', async () => {
-    fetchGamePracticeStateMock.mockResolvedValue(buildBossState())
+  it('renders the launcher map when the session is waiting to start', async () => {
+    fetchGamePracticeStateMock.mockResolvedValue({
+      ...buildWordState('ready'),
+      session: {
+        status: 'launcher',
+        score: 0,
+        hits: 0,
+        bestHits: 0,
+        hintsRemaining: 2,
+        hintUsage: 0,
+        energy: 3,
+        energyMax: 5,
+        nextEnergyAt: null,
+        enabledBoosts: { spellingBoost: true, applicationBoost: true },
+        resultOverlay: null,
+        boostModule: null,
+      },
+    })
 
-    render(
-      <GameMode
-        bookId="ielts_reading_premium"
-        chapterId="1"
-      />,
-    )
+    render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
 
-    expect((await screen.findAllByText('口语 Boss')).length).toBeGreaterThan(0)
-    expect(screen.getByText('闯过 Boss')).toBeInTheDocument()
-    expect(screen.getByText('稍后重打')).toBeInTheDocument()
-    expect(screen.getByText('Boss 重打队列')).toBeInTheDocument()
-    expect(screen.getAllByText('a couple of').length).toBeGreaterThan(0)
+    expect(await screen.findByRole('button', { name: /开始词关/ })).toBeInTheDocument()
+    expect(screen.getByText('五维词关')).toBeInTheDocument()
+    expect(screen.getByText('体力')).toBeInTheDocument()
+    expect(screen.getByText('当前章节')).toBeInTheDocument()
+  })
+
+  it('renders the result overlay when the segment settles into result mode', async () => {
+    fetchGamePracticeStateMock.mockResolvedValue({
+      ...buildWordState('ready'),
+      rewards: {
+        coins: 280,
+        diamonds: 10,
+        exp: 210,
+        stars: 3,
+        chest: 'golden',
+        bestHits: 4,
+      },
+      session: {
+        status: 'result',
+        score: 96,
+        hits: 4,
+        bestHits: 4,
+        hintsRemaining: 1,
+        hintUsage: 1,
+        energy: 1,
+        energyMax: 5,
+        nextEnergyAt: null,
+        enabledBoosts: { spellingBoost: true, applicationBoost: true },
+        resultOverlay: {
+          title: '试炼达线',
+          score: 96,
+          passed: true,
+        },
+        boostModule: null,
+      },
+    })
+
+    render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
+
+    expect(await screen.findByRole('heading', { name: '试炼达线' })).toBeInTheDocument()
+    expect(screen.getByText('通关成功')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '继续词关' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '回到地图' })).toBeInTheDocument()
   })
 })

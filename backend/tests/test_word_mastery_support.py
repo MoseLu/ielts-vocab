@@ -27,6 +27,12 @@ def _load_game_state(client):
     return response.get_json()
 
 
+def _start_game_session(client):
+    response = client.post('/api/ai/practice/game/session/start', json=GAME_SCOPE)
+    assert response.status_code == 200
+    return response.get_json()['game_state']
+
+
 def _build_word_payload(word_payload: dict) -> dict:
     return {
         'word': word_payload['word'],
@@ -113,8 +119,31 @@ def test_game_attempts_use_independent_campaign_wrong_word_ledger(client, app):
         assert wrong_payload['failed_dimensions'] == ['recognition']
 
 
+def test_game_session_start_returns_session_bundle_and_level_rewards(client):
+    _register_and_login(client, username='game-session-user')
+
+    initial_state = _load_game_state(client)
+    assert initial_state['session']['status'] == 'launcher'
+    assert len(initial_state['levelCards']) == 5
+    assert initial_state['rewards']['coins'] >= 80
+
+    started_state = _start_game_session(client)
+    assert started_state['session']['status'] == 'active'
+    assert started_state['session']['energy'] == initial_state['session']['energy'] - 2
+    assert started_state['launcher']['energyCost'] == 2
+    assert started_state['animationPayload']['sceneTheme'] in {'spelling', 'pronunciation', 'definition', 'speaking', 'example'}
+    assert [card['kind'] for card in started_state['levelCards']] == [
+        'spelling',
+        'pronunciation',
+        'definition',
+        'speaking',
+        'example',
+    ]
+
+
 def test_pronunciation_check_syncs_speaking_mastery_without_classic_wrong_word_projection(client, app):
     _register_and_login(client, username='speaking-mastery-user')
+    _start_game_session(client)
 
     response = client.post('/api/ai/pronunciation-check', json={
         'word': 'dynamic',
@@ -126,6 +155,11 @@ def test_pronunciation_check_syncs_speaking_mastery_without_classic_wrong_word_p
     payload = response.get_json()
     assert payload['passed'] is True
     assert payload['mastery_state']['dimension_states']['speaking']['pass_streak'] >= 1
+    assert payload['mastery_state']['scoreDelta'] == 20
+
+    refreshed_state = _load_game_state(client)
+    assert refreshed_state['session']['status'] == 'active'
+    assert refreshed_state['session']['score'] == 20
 
     with app.app_context():
         mastery_state = UserWordMasteryState.query.filter_by(word='dynamic').one()

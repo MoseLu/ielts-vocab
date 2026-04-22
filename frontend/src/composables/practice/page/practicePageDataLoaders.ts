@@ -89,10 +89,11 @@ export async function loadQuickMemoryReviewQueue({
     const reviewLimit = configuredLimit === 0
       ? QUICK_MEMORY_REVIEW_BATCH_SIZE
       : Math.max(1, configuredLimit)
+    const requestOffset = Math.max(0, reviewOffset)
     const params = new URLSearchParams({
       limit: String(reviewLimit),
       within_days: String(reviewWindowDays),
-      offset: String(reviewOffset),
+      offset: String(requestOffset),
       scope: 'due',
     })
     if (bookId) params.set('book_id', bookId)

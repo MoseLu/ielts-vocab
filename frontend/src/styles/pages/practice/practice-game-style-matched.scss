@@ -1,0 +1,140 @@
+.practice-game-map__picture,
+.practice-game-map__layer,
+.practice-game-mode__scene-backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+.practice-game-map__picture {
+  display: block;
+}
+
+.practice-game-map__layer,
+.practice-game-mode__scene-backdrop {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.practice-game-map__layer {
+  pointer-events: none;
+}
+
+.practice-game-map__layer--far {
+  inset: auto 0 58% 0;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.78;
+}
+
+.practice-game-map__layer--mid {
+  inset: auto 0 46% 0;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.86;
+}
+
+.practice-game-map__layer--front {
+  inset: auto 0 0 0;
+  height: auto;
+  object-fit: cover;
+  opacity: 0.92;
+  z-index: 2;
+}
+
+.practice-game-map__landmark,
+.practice-game-map__node,
+.practice-game-map__hero,
+.practice-game-map__mentor {
+  z-index: 3;
+}
+
+.practice-game-map__title span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-8);
+}
+
+.practice-game-map__title span img,
+.practice-game-map__dock-meta-item img {
+  width: var(--size-18);
+  height: var(--size-18);
+}
+
+.practice-game-map__dock-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-10);
+}
+
+.practice-game-map__dock-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-6);
+  padding: var(--size-8) var(--size-10);
+  border-radius: var(--size-16);
+  background: color-mix(in srgb, var(--surface-subtle) var(--mix-94), transparent);
+  color: var(--text-secondary);
+  font-size: var(--size-12);
+  font-weight: 700;
+}
+
+.practice-game-mode__scene-backdrop {
+  opacity: 0.9;
+}
+
+.practice-game-mode__scene-image {
+  z-index: 0;
+  opacity: 0.92;
+}
+
+.practice-game-mode__scene-overlay {
+  z-index: 1;
+}
+
+.practice-game-speaking__status {
+  display: grid;
+  justify-items: center;
+  gap: var(--size-8);
+  text-align: center;
+}
+
+.practice-game-speaking__status strong {
+  font-size: var(--size-18);
+  line-height: 1.2;
+}
+
+.practice-game-speaking__icon {
+  width: clamp(var(--size-64), 8vw, var(--size-96));
+  height: auto;
+  filter: drop-shadow(0 var(--size-8) var(--size-16) color-mix(in srgb, var(--surface-base) var(--mix-16), transparent));
+}
+
+@media (max-width: 960px) {
+  .practice-game-map__dock-meta {
+    flex-direction: column;
+  }
+
+  .practice-game-map__layer--far {
+    inset: auto 0 62% 0;
+  }
+
+  .practice-game-map__layer--mid {
+    inset: auto 0 49% 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .practice-game-map__title span {
+    justify-content: center;
+  }
+
+  .practice-game-map__dock-meta-item {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .practice-game-speaking__icon {
+    width: var(--size-72);
+  }
+}

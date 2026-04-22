@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { fetchGamePracticeState, submitWordMasteryAttempt } from '../../../lib/gamePractice'
+import { fetchGamePracticeState, startGamePracticeSession, submitWordMasteryAttempt } from '../../../lib/gamePractice'
 import type { GameCampaignState } from '../../../lib'
 import { GameCampaignHud, GameLessonCard, RecoveryDock } from './GameModeChrome'
+import { GameLevelDeck } from './game-mode/GameLevelDeck'
+import { GameMapShell } from './game-mode/GameMapShell'
+import { GameResultOverlay } from './game-mode/GameResultOverlay'
 import {
   SpeakingMissionScreen,
   WordMissionScreen,
   buildGameScope,
   buildWordPayload,
 } from './GameModeSections'
+import { getLevelKind } from './game-mode/gameData'
 
 interface GameModeProps {
   bookId: string | null
@@ -21,6 +25,12 @@ interface BattleBannerState {
   message: string
 }
 
+interface AttemptMeta {
+  inputMode?: string
+  hintUsed?: boolean
+  boostType?: string
+}
+
 export default function GameMode({
   bookId,
   chapterId,
@@ -31,9 +41,11 @@ export default function GameMode({
   const [answerInput, setAnswerInput] = useState('')
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isStarting, setIsStarting] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [banner, setBanner] = useState<BattleBannerState | null>(null)
+  const [showMapAfterResult, setShowMapAfterResult] = useState(false)
   const bannerTimerRef = useRef<number | null>(null)
   const scope = useMemo(
     () => buildGameScope({ bookId, chapterId, day: currentDay }),
@@ -91,10 +103,26 @@ export default function GameMode({
     }
   }, [])
 
-  const submitWordNode = useCallback(async (passed: boolean) => {
+  const startSession = useCallback(async () => {
+    setIsStarting(true)
+    setError(null)
+    try {
+      const response = await startGamePracticeSession(scope)
+      setState(response.game_state)
+      setShowMapAfterResult(false)
+      setBattleBanner(null)
+    } catch (startError) {
+      setError(startError instanceof Error ? startError.message : '词关启动失败')
+    } finally {
+      setIsStarting(false)
+    }
+  }, [scope, setBattleBanner])
+
+  const submitWordNode = useCallback(async (passed: boolean, meta: AttemptMeta = {}) => {
     if (!state?.currentNode || state.currentNode.nodeType !== 'word' || !state.currentNode.word || !state.currentNode.dimension) {
       return
     }
+    const levelKind = getLevelKind(state.currentNode)
     setIsSubmitting(true)
     setError(null)
     try {
@@ -106,8 +134,12 @@ export default function GameMode({
         word: state.currentNode.word.word,
         dimension: state.currentNode.dimension,
         passed,
-        sourceMode: state.currentNode.dimension === 'speaking' ? 'speaking' : 'game',
+        sourceMode: levelKind === 'pronunciation' ? 'speaking' : 'game',
         wordPayload: buildWordPayload(state.currentNode.word),
+        levelKind,
+        hintUsed: Boolean(meta.hintUsed),
+        inputMode: meta.inputMode ?? (levelKind === 'spelling' ? 'typing' : 'pointer'),
+        boostType: meta.boostType ?? null,
       })
       setState(response.game_state)
       setBattleBanner({
@@ -123,7 +155,7 @@ export default function GameMode({
     }
   }, [scope.bookId, scope.chapterId, scope.day, setBattleBanner, state])
 
-  const submitSpeakingNode = useCallback(async (passed: boolean) => {
+  const submitSpeakingNode = useCallback(async (passed: boolean, meta: AttemptMeta = {}) => {
     if (!state?.currentNode || state.currentNode.nodeType === 'word') return
     setIsSubmitting(true)
     setError(null)
@@ -137,6 +169,9 @@ export default function GameMode({
         promptText: state.currentNode.promptText,
         passed,
         sourceMode: 'game',
+        levelKind: 'speaking',
+        hintUsed: Boolean(meta.hintUsed),
+        inputMode: meta.inputMode ?? 'speech',
       })
       setState(response.game_state)
       setBattleBanner({
@@ -178,12 +213,42 @@ export default function GameMode({
 
   const currentNode = state.currentNode
   const activeWord = currentNode.word
+  const sessionStatus = state.session?.status ?? 'active'
+  const activeKind = getLevelKind(currentNode)
+  const levelCards = state.levelCards ?? []
+
+  if (sessionStatus === 'result' && !showMapAfterResult) {
+    return (
+      <section className="practice-game-mode">
+        <GameResultOverlay
+          state={state}
+          onContinue={() => void startSession()}
+          onBackToMap={() => setShowMapAfterResult(true)}
+        />
+      </section>
+    )
+  }
+
+  if (sessionStatus === 'launcher' || showMapAfterResult) {
+    return (
+      <GameMapShell
+        state={state}
+        isStarting={isStarting}
+        error={error}
+        onStart={() => void startSession()}
+        onBackToPlan={onBackToPlan}
+      />
+    )
+  }
 
   return (
     <section className="practice-game-mode">
       <div className="practice-game-mode__chrome">
         <GameCampaignHud state={state} currentNode={currentNode} onBackToPlan={onBackToPlan} />
         <GameLessonCard state={state} currentNode={currentNode} />
+        {levelCards.length > 0 ? (
+          <GameLevelDeck cards={levelCards} activeKind={activeKind} />
+        ) : null}
       </div>
 
       <div className="practice-game-mode__body">

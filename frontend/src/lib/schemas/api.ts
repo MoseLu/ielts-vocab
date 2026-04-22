@@ -211,6 +211,15 @@ export const GameCampaignDimensionSchema = z.enum([
 ])
 export type GameCampaignDimension = z.infer<typeof GameCampaignDimensionSchema>
 
+export const GameLevelKindSchema = z.enum([
+  'spelling',
+  'pronunciation',
+  'definition',
+  'speaking',
+  'example',
+])
+export type GameLevelKind = z.infer<typeof GameLevelKindSchema>
+
 export const GameNodeTypeSchema = z.enum([
   'word',
   'speaking_boss',
@@ -254,6 +263,8 @@ export const GameCampaignNodeSchema = z.object({
   subtitle: z.string().nullable().optional().default(null),
   status: z.enum(['locked', 'ready', 'pending', 'passed']),
   dimension: GameCampaignDimensionSchema.nullable().optional().default(null),
+  levelKind: GameLevelKindSchema.nullable().optional().default(null),
+  levelLabel: z.string().nullable().optional().default(null),
   promptText: z.string().nullable().optional().default(null),
   targetWords: z.array(z.string()).default([]),
   failedDimensions: z.array(GameCampaignDimensionSchema).default([]),
@@ -275,6 +286,64 @@ export const GameCampaignRecoveryItemSchema = z.object({
   updatedAt: z.string().nullable().optional().default(null),
 })
 export type GameCampaignRecoveryItem = z.infer<typeof GameCampaignRecoveryItemSchema>
+
+export const GameLevelCardSchema = z.object({
+  kind: GameLevelKindSchema,
+  dimension: GameCampaignDimensionSchema,
+  label: z.string(),
+  subtitle: z.string(),
+  assetKey: z.string(),
+  step: z.number().int().positive(),
+  status: z.enum(['locked', 'ready', 'active', 'pending', 'passed']),
+  passStreak: z.number().int().nonnegative(),
+  attemptCount: z.number().int().nonnegative(),
+})
+export type GameLevelCard = z.infer<typeof GameLevelCardSchema>
+
+export const GameSessionSchema = z.object({
+  status: z.enum(['launcher', 'active', 'result']).catch('launcher'),
+  score: z.number().int().catch(0),
+  hits: z.number().int().catch(0),
+  bestHits: z.number().int().catch(0),
+  hintsRemaining: z.number().int().catch(0),
+  hintUsage: z.number().int().catch(0),
+  energy: z.number().int().catch(0),
+  energyMax: z.number().int().catch(5),
+  nextEnergyAt: z.string().nullable().optional().default(null),
+  enabledBoosts: z.record(z.string(), z.boolean()).catch({}),
+  resultOverlay: z.record(z.string(), z.unknown()).nullable().optional().default(null),
+  boostModule: z.record(z.string(), z.unknown()).nullable().optional().default(null),
+})
+export type GameSession = z.infer<typeof GameSessionSchema>
+
+export const GameLauncherSchema = z.object({
+  lessonId: z.string().catch('lesson-1'),
+  title: z.string().catch('五维词关'),
+  estimatedMinutes: z.number().int().catch(5),
+  energyCost: z.number().int().catch(2),
+  passScore: z.number().int().catch(70),
+  segmentIndex: z.number().int().nonnegative().catch(0),
+  boosts: z.record(z.string(), z.boolean()).catch({}),
+})
+export type GameLauncher = z.infer<typeof GameLauncherSchema>
+
+export const GameRewardSummarySchema = z.object({
+  coins: z.number().int().catch(0),
+  diamonds: z.number().int().catch(0),
+  exp: z.number().int().catch(0),
+  stars: z.number().int().catch(0),
+  chest: z.enum(['normal', 'sapphire', 'golden', 'special']).catch('normal'),
+  bestHits: z.number().int().catch(0),
+})
+export type GameRewardSummary = z.infer<typeof GameRewardSummarySchema>
+
+export const GameAnimationPayloadSchema = z.object({
+  sceneTheme: z.string().nullable().optional().default(null),
+  mascotState: z.string().nullable().optional().default(null),
+  feedbackTone: z.string().nullable().optional().default(null),
+  showResultLayer: z.boolean().catch(false),
+})
+export type GameAnimationPayload = z.infer<typeof GameAnimationPayloadSchema>
 
 export const GameCampaignStateSchema = z.object({
   scope: z.object({
@@ -303,6 +372,19 @@ export const GameCampaignStateSchema = z.object({
   nodeType: GameNodeTypeSchema.nullable(),
   speakingBoss: GameCampaignNodeSchema.nullable(),
   speakingReward: GameCampaignNodeSchema.nullable(),
+  levelCards: z.array(GameLevelCardSchema).default([]),
+  rewards: GameRewardSummarySchema.optional().default({
+    coins: 0,
+    diamonds: 0,
+    exp: 0,
+    stars: 0,
+    chest: 'normal',
+    bestHits: 0,
+  }),
+  session: GameSessionSchema.optional(),
+  launcher: GameLauncherSchema.optional(),
+  animationPayload: GameAnimationPayloadSchema.optional(),
+  boostModule: z.record(z.string(), z.unknown()).nullable().optional().default(null),
   recoveryPanel: z.object({
     queue: z.array(GameCampaignRecoveryItemSchema),
     bossQueue: z.array(GameCampaignRecoveryItemSchema),
@@ -324,114 +406,11 @@ export const GameCampaignAttemptResponseSchema = z.object({
 })
 export type GameCampaignAttemptResponse = z.infer<typeof GameCampaignAttemptResponseSchema>
 
+export const GameCampaignStartResponseSchema = z.object({
+  game_state: GameCampaignStateSchema,
+})
+export type GameCampaignStartResponse = z.infer<typeof GameCampaignStartResponseSchema>
+
 export type GamePracticeWord = GameCampaignWord
 export type GamePracticeState = GameCampaignState
 export type GamePracticeAttemptResponse = GameCampaignAttemptResponse
-
-export const AISpeakingSimulationResponseSchema = z.object({
-  part: z.number().int(),
-  topic: z.string(),
-  question: z.string(),
-  follow_ups: z.array(z.string()),
-})
-export type AISpeakingSimulationResponse = z.infer<typeof AISpeakingSimulationResponseSchema>
-
-export const AIReviewPlanResponseSchema = z.object({
-  level: z.string(),
-  mastery_rule: z.string().optional(),
-  priority_dimension: z.string().optional(),
-  priority_reason: z.string().optional(),
-  plan: z.array(z.string()),
-  dimensions: z.array(z.object({
-    key: z.string().optional(),
-    label: z.string().optional(),
-    status: z.string().optional(),
-    status_label: z.string().optional(),
-    schedule_label: z.string().optional(),
-    next_action: z.string().optional(),
-  })).optional(),
-})
-export type AIReviewPlanResponse = z.infer<typeof AIReviewPlanResponseSchema>
-
-export const AISpeakingPromptsResponseSchema = z.object({
-  promptText: z.string(),
-  followUps: z.array(z.string()),
-  recommendedDurationSeconds: z.number().int().positive(),
-})
-export type AISpeakingPromptsResponse = z.infer<typeof AISpeakingPromptsResponseSchema>
-
-export const AISpeakingDimensionBandsSchema = z.object({
-  fluency: z.number(),
-  lexical: z.number(),
-  grammar: z.number(),
-  pronunciation: z.number(),
-})
-export type AISpeakingDimensionBands = z.infer<typeof AISpeakingDimensionBandsSchema>
-
-export const AISpeakingRawScoresSchema = z.object({
-  fluency: z.number().int(),
-  lexical: z.number().int(),
-  grammar: z.number().int(),
-  pronunciation: z.number().int(),
-})
-export type AISpeakingRawScores = z.infer<typeof AISpeakingRawScoresSchema>
-
-export const AISpeakingFeedbackSchema = z.object({
-  summary: z.string(),
-  strengths: z.array(z.string()).default([]),
-  priorities: z.array(z.string()).default([]),
-  dimensionFeedback: z.object({
-    fluency: z.string(),
-    lexical: z.string(),
-    grammar: z.string(),
-    pronunciation: z.string(),
-  }),
-})
-export type AISpeakingFeedback = z.infer<typeof AISpeakingFeedbackSchema>
-
-export const AISpeakingMetricsSchema = z.object({
-  durationSeconds: z.number().int().nullable().optional(),
-  wordCount: z.number().int().nonnegative(),
-  uniqueWordCount: z.number().int().nonnegative(),
-  typeTokenRatio: z.number(),
-  estimatedWpm: z.number().int().nullable().optional(),
-  targetWordsAttempted: z.number().int().nonnegative(),
-  targetWordsUsed: z.array(z.string()).default([]),
-  rawScores: AISpeakingRawScoresSchema.optional(),
-})
-export type AISpeakingMetrics = z.infer<typeof AISpeakingMetricsSchema>
-
-export const AISpeakingAssessmentResponseSchema = z.object({
-  assessmentId: z.number().int(),
-  part: z.number().int(),
-  topic: z.string(),
-  promptText: z.string(),
-  targetWords: z.array(z.string()).default([]),
-  transcript: z.string(),
-  overallBand: z.number(),
-  dimensionBands: AISpeakingDimensionBandsSchema,
-  feedback: AISpeakingFeedbackSchema,
-  metrics: AISpeakingMetricsSchema,
-  provider: z.string().nullable().optional().default(null),
-  model: z.string().nullable().optional().default(null),
-  createdAt: z.string().nullable().optional().default(null),
-})
-export type AISpeakingAssessmentResponse = z.infer<typeof AISpeakingAssessmentResponseSchema>
-
-export const AISpeakingHistoryItemSchema = z.object({
-  assessmentId: z.number().int(),
-  part: z.number().int(),
-  topic: z.string(),
-  promptText: z.string(),
-  targetWords: z.array(z.string()).default([]),
-  transcriptExcerpt: z.string(),
-  overallBand: z.number(),
-  dimensionBands: AISpeakingDimensionBandsSchema,
-  createdAt: z.string().nullable().optional().default(null),
-})
-export type AISpeakingHistoryItem = z.infer<typeof AISpeakingHistoryItemSchema>
-
-export const AISpeakingHistoryResponseSchema = z.object({
-  items: z.array(AISpeakingHistoryItemSchema),
-})
-export type AISpeakingHistoryResponse = z.infer<typeof AISpeakingHistoryResponseSchema>

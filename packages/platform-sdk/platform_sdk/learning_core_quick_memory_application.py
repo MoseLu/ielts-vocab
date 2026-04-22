@@ -128,6 +128,7 @@ def _build_review_queue_payload(
         within_days=within_days,
         book_id_filter=book_id_filter,
         chapter_id_filter=chapter_id_filter,
+        due_only=due_only,
     )
 
 
@@ -203,6 +204,7 @@ def _serialize_review_queue(
     within_days: int,
     book_id_filter: str | None,
     chapter_id_filter: str | None,
+    due_only: bool,
 ) -> dict:
     combined_words = due_words + upcoming_words
     selected = combined_words[offset:offset + limit] if limit is not None else combined_words[offset:]
@@ -229,7 +231,7 @@ def _serialize_review_queue(
             'limit': limit,
             'total_count': total_count,
             'has_more': has_more,
-            'next_offset': next_offset if has_more else None,
+            'next_offset': 0 if due_only and has_more else (next_offset if has_more else None),
             'contexts': contexts,
             'selected_context': _select_review_context(
                 context_map,

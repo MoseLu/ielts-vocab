@@ -70,6 +70,8 @@ export default function QuickMemoryMode({
   const sessionLoggedRef = useRef(false)
   const pendingRecordSyncRef = useRef<Record<string, QuickMemoryRecordState>>({})
   const recordSyncInFlightRef = useRef(false)
+  const recordSyncPromiseRef = useRef<Promise<void> | null>(null)
+  const continueReviewInFlightRef = useRef(false)
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
   const queueWords = queue.map(queueIndex => vocabulary[queueIndex]?.word).filter((word): word is string => Boolean(word))
@@ -94,6 +96,7 @@ export default function QuickMemoryMode({
     sessionLoggedRef,
     pendingRecordSyncRef,
     recordSyncInFlightRef,
+    recordSyncPromiseRef,
   })
 
   useQuickMemorySession({
@@ -350,6 +353,20 @@ export default function QuickMemoryMode({
     setDone(false)
   }, [onIndexChange, resetCurrentSessionSegment])
 
+  const handleContinueReview = useCallback(async () => {
+    if (!onContinueReview || continueReviewInFlightRef.current) return
+    continueReviewInFlightRef.current = true
+    try {
+      await flushPendingRecordSync()
+      await reconcileQuickMemoryRecordsWithBackend({ force: true })
+      onContinueReview()
+    } catch {
+      showToast('复习记录同步失败，请稍后重试', 'error')
+    } finally {
+      continueReviewInFlightRef.current = false
+    }
+  }, [flushPendingRecordSync, onContinueReview, showToast])
+
   if (!currentWord && !done) {
     return <div className="qm-empty">暂无单词</div>
   }
@@ -365,7 +382,7 @@ export default function QuickMemoryMode({
         bookChapters={bookChapters}
         reviewMode={reviewMode}
         reviewHasMore={reviewHasMore}
-        onContinueReview={onContinueReview}
+        onContinueReview={onContinueReview ? handleContinueReview : undefined}
         buildChapterPath={buildChapterPath}
         sessionDurationSeconds={completedSessionDurationSecondsRef.current}
         onRestart={handleRestart}

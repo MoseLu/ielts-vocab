@@ -1,0 +1,102 @@
+[
+  {
+    "file": "map_background_desktop.png",
+    "category": "map",
+    "description": "Desktop map background (style-matched) 1920x1080"
+  },
+  {
+    "file": "map_background_tablet.png",
+    "category": "map",
+    "description": "Tablet map background (style-matched) 1536x1024"
+  },
+  {
+    "file": "map_background_mobile.png",
+    "category": "map",
+    "description": "Mobile map background (style-matched) 1080x1920"
+  },
+  {
+    "file": "map_layer_far.png",
+    "category": "map_layer",
+    "description": "Parallax far layer (style-matched) 1920px width"
+  },
+  {
+    "file": "map_layer_mid.png",
+    "category": "map_layer",
+    "description": "Parallax middle layer (style-matched) 1920px width"
+  },
+  {
+    "file": "map_layer_front.png",
+    "category": "map_layer",
+    "description": "Parallax front layer (style-matched) 1920px width"
+  },
+  {
+    "file": "scene_spell.png",
+    "category": "scene",
+    "description": "Spelling dimension background (style-matched) 1600x900"
+  },
+  {
+    "file": "scene_pronunciation.png",
+    "category": "scene",
+    "description": "Pronunciation dimension background (style-matched) 1600x900"
+  },
+  {
+    "file": "scene_definition.png",
+    "category": "scene",
+    "description": "Definition dimension background (style-matched) 1600x900"
+  },
+  {
+    "file": "scene_speaking.png",
+    "category": "scene",
+    "description": "Speaking dimension background (style-matched) 1600x900"
+  },
+  {
+    "file": "scene_example.png",
+    "category": "scene",
+    "description": "Example dimension background (style-matched) 1600x900"
+  },
+  {
+    "file": "mic_idle.png",
+    "category": "icon",
+    "description": "Microphone idle icon (style-matched)"
+  },
+  {
+    "file": "mic_recording.png",
+    "category": "icon",
+    "description": "Microphone recording icon (style-matched)"
+  },
+  {
+    "file": "mic_recognizing.png",
+    "category": "icon",
+    "description": "Microphone recognizing icon (style-matched)"
+  },
+  {
+    "file": "mic_permission_fail.png",
+    "category": "icon",
+    "description": "Microphone permission fail icon (style-matched)"
+  },
+  {
+    "file": "mic_disconnected.png",
+    "category": "icon",
+    "description": "Microphone disconnected icon (style-matched)"
+  },
+  {
+    "file": "icon_notebook.png",
+    "category": "icon",
+    "description": "Notebook icon (style-matched)"
+  },
+  {
+    "file": "icon_target.png",
+    "category": "icon",
+    "description": "Target icon (style-matched)"
+  },
+  {
+    "file": "icon_reward.png",
+    "category": "icon",
+    "description": "Reward trophy icon (style-matched)"
+  },
+  {
+    "file": "icon_current.png",
+    "category": "icon",
+    "description": "Current location icon (style-matched)"
+  }
+]

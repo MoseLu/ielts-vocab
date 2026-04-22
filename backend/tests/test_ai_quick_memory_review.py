@@ -397,20 +397,21 @@ def test_quick_memory_review_queue_can_limit_to_due_scope(client, app, monkeypat
                 last_seen=now_ms - 4_000,
                 known_count=1,
                 unknown_count=0,
-                next_review=now_ms + 86_400_000,
+                next_review=now_ms - 1_000,
                 fuzzy_count=0,
             ),
         ])
         db.session.commit()
 
-    res = client.get('/api/ai/quick-memory/review-queue?limit=10&within_days=3&scope=due')
+    res = client.get('/api/ai/quick-memory/review-queue?limit=1&within_days=3&scope=due')
 
     assert res.status_code == 200
     data = res.get_json()
     assert [word['word'] for word in data['words']] == ['alpha']
-    assert data['summary']['due_count'] == 1
+    assert data['summary']['due_count'] == 2
     assert data['summary']['upcoming_count'] == 0
-    assert data['summary']['total_count'] == 1
+    assert data['summary']['total_count'] == 2
+    assert data['summary']['next_offset'] == 0
 
 
 def test_quick_memory_review_queue_filters_by_book_and_chapter(client, app, monkeypatch):

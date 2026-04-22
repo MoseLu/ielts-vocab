@@ -286,8 +286,7 @@ export function usePracticePageControls({
   }, [settings])
 
   const handleContinueReview = useCallback(() => {
-    const nextOffset = reviewSummary?.next_offset
-    if (!reviewSummary?.has_more || nextOffset == null) return
+    if (!reviewSummary?.has_more) return
     setVocabulary([])
     vocabRef.current = []
     setQueue([])
@@ -298,7 +297,7 @@ export function usePracticePageControls({
     setPreviousWord(null)
     setLastState(null)
     setWordStatuses({})
-    setReviewOffset(nextOffset)
+    setReviewOffset(current => (current === 0 ? -1 : 0))
   }, [queueRef, reviewSummary, setCorrectCount, setLastState, setPreviousWord, setQueue, setQueueIndex, setReviewOffset, setVocabulary, setWordStatuses, setWrongCount, vocabRef])
 
   const buildChapterPath = useCallback((nextChapterId: string | number) => {

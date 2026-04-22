@@ -3,6 +3,7 @@ from platform_sdk.ai_practice_application import (
     correction_feedback_api_response,
     correct_text_api_response,
     game_attempt_api_response,
+    game_session_start_api_response,
     game_state_api_response,
     greet_api_response,
     ielts_example_api_response,
@@ -74,6 +75,12 @@ def collocation_practice(current_user):
 @token_required
 def practice_game_state(current_user):
     return game_state_api_response(current_user, request.args)
+
+
+@ai_bp.route('/practice/game/session/start', methods=['POST'])
+@token_required
+def practice_game_session_start(current_user):
+    return game_session_start_api_response(current_user, request.get_json(silent=True) or {})
 
 
 @ai_bp.route('/practice/game/attempt', methods=['POST'])

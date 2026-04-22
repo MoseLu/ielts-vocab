@@ -17,6 +17,7 @@ interface QuickMemoryModeSessionArgs {
   sessionLoggedRef: React.MutableRefObject<boolean>
   pendingRecordSyncRef: React.MutableRefObject<Record<string, QuickMemoryRecordState>>
   recordSyncInFlightRef: React.MutableRefObject<boolean>
+  recordSyncPromiseRef: React.MutableRefObject<Promise<void> | null>
 }
 
 function summarizeResults(results: SessionResult[]) {
@@ -40,6 +41,7 @@ export function useQuickMemoryModeSession({
   sessionLoggedRef,
   pendingRecordSyncRef,
   recordSyncInFlightRef,
+  recordSyncPromiseRef,
 }: QuickMemoryModeSessionArgs) {
   useEffect(() => {
     bookIdRef.current = bookId
@@ -73,15 +75,17 @@ export function useQuickMemoryModeSession({
   }, [bookIdRef, chapterIdRef, sessionIdRef, sessionLastActiveAtRef, sessionStartRef])
 
   const flushPendingRecordSync = useCallback((keepalive = false) => {
-    if (recordSyncInFlightRef.current) return
+    if (recordSyncInFlightRef.current) {
+      return recordSyncPromiseRef.current ?? Promise.resolve()
+    }
 
     const pendingEntries = Object.entries(pendingRecordSyncRef.current)
-    if (!pendingEntries.length) return
+    if (!pendingEntries.length) return Promise.resolve()
 
     pendingRecordSyncRef.current = {}
     recordSyncInFlightRef.current = true
 
-    void syncQuickMemoryRecordsToBackend(
+    const syncTask = syncQuickMemoryRecordsToBackend(
       pendingEntries.map(([word, record]) => ({ word, record })),
       { keepalive },
     ).catch(() => {
@@ -91,8 +95,11 @@ export function useQuickMemoryModeSession({
       }
     }).finally(() => {
       recordSyncInFlightRef.current = false
+      recordSyncPromiseRef.current = null
     })
-  }, [pendingRecordSyncRef, recordSyncInFlightRef])
+    recordSyncPromiseRef.current = syncTask
+    return syncTask
+  }, [pendingRecordSyncRef, recordSyncInFlightRef, recordSyncPromiseRef])
 
   const accumulateCompletedDuration = useCallback((durationSeconds: number) => {
     completedSessionDurationSecondsRef.current = Math.max(

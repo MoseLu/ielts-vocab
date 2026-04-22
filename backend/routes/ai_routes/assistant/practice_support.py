@@ -4,6 +4,7 @@ from services.ai_practice_support_service import (
     correction_feedback_response as _correction_feedback_response,
     correct_text_response as _correct_text_response,
     game_attempt_response as _game_attempt_response,
+    game_session_start_response as _game_session_start_response,
     game_state_response as _game_state_response,
     greet_response as _greet_response,
     ielts_example_response as _ielts_example_response,
@@ -75,6 +76,12 @@ def collocation_practice(current_user):
 @token_required
 def practice_game_state(current_user):
     return _game_state_response(current_user, request.args)
+
+
+@ai_bp.route('/practice/game/session/start', methods=['POST'])
+@token_required
+def practice_game_session_start(current_user):
+    return _game_session_start_response(current_user, request.get_json(silent=True) or {})
 
 
 @ai_bp.route('/practice/game/attempt', methods=['POST'])

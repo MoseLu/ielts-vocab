@@ -144,7 +144,7 @@ describe('PracticePage quick-memory review mode pagination', () => {
     localStorage.clear()
   })
 
-  it('loads the next review batch after the current 20-word batch is finished', async () => {
+  it('reloads the due queue head after the current review batch is finished', async () => {
     const user = userEvent.setup()
     localStorage.setItem('app_settings', JSON.stringify({
       reviewInterval: '3',
@@ -153,27 +153,29 @@ describe('PracticePage quick-memory review mode pagination', () => {
       shuffle: true,
     }))
 
+    let reviewQueueRequests = 0
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=0&scope=due') {
-        return Promise.resolve({
-          words: [
-            { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
-            { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
-          ],
-          summary: {
-            due_count: 4,
-            upcoming_count: 0,
-            returned_count: 2,
-            review_window_days: 3,
-            offset: 0,
-            limit: 2,
-            total_count: 4,
-            has_more: true,
-            next_offset: 2,
-          },
-        })
-      }
-      if (url === '/api/ai/quick-memory/review-queue?limit=2&within_days=3&offset=2&scope=due') {
+        reviewQueueRequests += 1
+        if (reviewQueueRequests === 1) {
+          return Promise.resolve({
+            words: [
+              { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha def' },
+              { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
+            ],
+            summary: {
+              due_count: 4,
+              upcoming_count: 0,
+              returned_count: 2,
+              review_window_days: 3,
+              offset: 0,
+              limit: 2,
+              total_count: 4,
+              has_more: true,
+              next_offset: 0,
+            },
+          })
+        }
         return Promise.resolve({
           words: [
             { word: 'gamma', phonetic: '/g/', pos: 'n.', definition: 'gamma def' },
@@ -184,9 +186,9 @@ describe('PracticePage quick-memory review mode pagination', () => {
             upcoming_count: 0,
             returned_count: 2,
             review_window_days: 3,
-            offset: 2,
+            offset: 0,
             limit: 2,
-            total_count: 4,
+            total_count: 2,
             has_more: false,
             next_offset: null,
           },
@@ -210,6 +212,7 @@ describe('PracticePage quick-memory review mode pagination', () => {
     await waitFor(() => {
       expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('reviewWords:gamma,delta')
     })
+    expect(apiFetchMock.mock.calls.some(([url]) => String(url).includes('offset=2'))).toBe(false)
   })
 
   it('forces quick-memory mode for direct due-review links and pages unlimited batches at 100 words', async () => {

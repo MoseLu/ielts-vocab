@@ -174,7 +174,7 @@ def build_review_queue_payload(
             'limit': limit,
             'total_count': total_count,
             'has_more': has_more,
-            'next_offset': next_offset if has_more else None,
+            'next_offset': 0 if due_only and has_more else (next_offset if has_more else None),
             'contexts': contexts,
             'selected_context': selected_context,
         },

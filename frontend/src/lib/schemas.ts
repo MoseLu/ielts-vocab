@@ -1,4 +1,5 @@
 export * from './schemas/api'
+export * from './schemas/ai-speaking'
 export * from './schemas/core'
 export * from './schemas/exams'
 export * from './schemas/home-todo'

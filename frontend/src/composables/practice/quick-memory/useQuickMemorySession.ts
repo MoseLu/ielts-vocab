@@ -21,7 +21,7 @@ interface QuickMemorySessionLifecycleArgs {
   chapterIdRef: React.MutableRefObject<string | null>
   sessionIdRef: React.MutableRefObject<number | null>
   sessionLoggedRef: React.MutableRefObject<boolean>
-  flushPendingRecordSync: (keepalive?: boolean) => void
+  flushPendingRecordSync: (keepalive?: boolean) => void | Promise<void>
   completeCurrentSession: () => Promise<number>
   syncSessionSnapshot: (patch?: {
     activeAt?: number

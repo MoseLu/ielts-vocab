@@ -14,6 +14,7 @@ from platform_sdk.ai_practice_lexical_application import (
 )
 from platform_sdk.ai_practice_game_application import (
     game_attempt_response,
+    game_session_start_response,
     game_state_response,
 )
 from platform_sdk.ai_practice_speaking_application import (
@@ -58,6 +59,10 @@ def collocation_practice_api_response(current_user, args):
 
 def game_state_api_response(current_user, args):
     return game_state_response(current_user, args)
+
+
+def game_session_start_api_response(current_user, body: dict | None):
+    return game_session_start_response(current_user, body or {})
 
 
 def game_attempt_api_response(current_user, body: dict | None):

@@ -4,16 +4,15 @@ import re
 from flask import jsonify
 
 from platform_sdk.ai_word_image_application import enrich_game_state_with_word_image
-from platform_sdk.ai_practice_game_application import game_session_start_response as _game_session_start_response
 from platform_sdk.learning_repository_adapters import (
     learning_event_repository,
     learning_stats_repository,
 )
 from platform_sdk.learner_profile_builder_adapter import build_learner_profile
+from services.game_campaign_session import start_game_campaign_session
 from services.word_mastery_service import (
     build_game_practice_state,
     update_game_campaign_attempt,
-    update_word_mastery_attempt,
 )
 from services.ai_route_support_service import _normalize_chapter_id, _normalize_word_list, _track_metric
 from services.ai_vocab_catalog_service import _get_global_vocab_pool
@@ -81,8 +80,9 @@ def pronunciation_check_response(current_user, body):
         learning_event_repository.rollback()
         logging.warning("[AI] Failed to record pronunciation check: %s", exc)
     try:
-        mastery_state = update_word_mastery_attempt(
+        mastery_state = update_game_campaign_attempt(
             current_user.id,
+            node_type='word',
             word=word,
             dimension='speaking',
             passed=passed,
@@ -204,7 +204,18 @@ def game_state_response(current_user, args):
 
 
 def game_session_start_response(current_user, body):
-    return _game_session_start_response(current_user, body)
+    payload = body or {}
+    try:
+        game_state = start_game_campaign_session(
+            current_user.id,
+            book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
+            chapter_id=_normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
+            day=payload.get('day'),
+            enabled_boosts=payload.get('enabledBoosts') if isinstance(payload.get('enabledBoosts'), dict) else None,
+        )
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    return jsonify({'game_state': enrich_game_state_with_word_image(game_state)}), 200
 
 
 def game_attempt_response(current_user, body):

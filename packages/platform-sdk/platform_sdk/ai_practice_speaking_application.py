@@ -86,7 +86,7 @@ def pronunciation_check_response(current_user, body: dict | None):
             'chapterId': chapter_id,
             'wordPayload': {'word': word},
         })
-        result['mastery_state'] = mastery_payload.get('state')
+        result['mastery_state'] = mastery_payload.get('mastery_state') or mastery_payload.get('state')
     except Exception as exc:
         logging.warning('[AI] Failed to sync speaking mastery: %s', exc)
     track_metric(current_user.id, 'pronunciation_check_used', {'word': word, 'score': score})

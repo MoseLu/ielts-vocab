@@ -1,11 +1,14 @@
 import {
   GameCampaignAttemptResponseSchema,
+  GameCampaignStartResponseSchema,
   GameCampaignStateSchema,
   apiFetch,
   safeParse,
   type GameCampaignAttemptResponse,
   type GameCampaignDimension,
+  type GameCampaignStartResponse,
   type GameCampaignState,
+  type GameLevelKind,
   type GameNodeType,
   type Word,
 } from './index'
@@ -25,6 +28,10 @@ interface SubmitWordMasteryAttemptInput extends GamePracticeScope {
   promptText?: string | null
   sourceMode?: string | null
   wordPayload?: Partial<Word> | null
+  levelKind?: GameLevelKind | null
+  hintUsed?: boolean | null
+  inputMode?: string | null
+  boostType?: string | null
 }
 
 function buildScopeParams(scope: GamePracticeScope): URLSearchParams {
@@ -41,6 +48,22 @@ export async function fetchGamePracticeState(scope: GamePracticeScope): Promise<
   const parsed = safeParse(GameCampaignStateSchema, raw)
   if (!parsed.success) {
     throw new Error('五维闯关状态响应格式错误')
+  }
+  return parsed.data
+}
+
+export async function startGamePracticeSession(scope: GamePracticeScope): Promise<GameCampaignStartResponse> {
+  const raw = await apiFetch('/api/ai/practice/game/session/start', {
+    method: 'POST',
+    body: JSON.stringify({
+      bookId: scope.bookId ?? undefined,
+      chapterId: scope.chapterId ?? undefined,
+      day: scope.day ?? undefined,
+    }),
+  })
+  const parsed = safeParse(GameCampaignStartResponseSchema, raw)
+  if (!parsed.success) {
+    throw new Error('五维闯关启动响应格式错误')
   }
   return parsed.data
 }
@@ -62,6 +85,10 @@ export async function submitWordMasteryAttempt(
       chapterId: input.chapterId ?? undefined,
       day: input.day ?? undefined,
       wordPayload: input.wordPayload ?? undefined,
+      levelKind: input.levelKind ?? undefined,
+      hintUsed: input.hintUsed ?? undefined,
+      inputMode: input.inputMode ?? undefined,
+      boostType: input.boostType ?? undefined,
     }),
   })
   const parsed = safeParse(GameCampaignAttemptResponseSchema, raw)

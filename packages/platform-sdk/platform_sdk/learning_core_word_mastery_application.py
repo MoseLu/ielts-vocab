@@ -104,6 +104,7 @@ def post_learning_core_word_mastery_attempt_response(user_id: int, body: dict | 
     )
     return {
         'state': _normalize_game_attempt_state(state, node_type=node_type),
+        'mastery_state': state if node_type == 'word' else None,
         'scoreDelta': int(state.get('scoreDelta') or 0),
         'hits': int(state.get('hits') or 0),
         'bestHits': int(state.get('bestHits') or 0),

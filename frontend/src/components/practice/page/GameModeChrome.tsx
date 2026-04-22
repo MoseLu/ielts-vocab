@@ -4,6 +4,7 @@ import type {
   GameCampaignState,
 } from '../../../lib'
 import { NODE_STATUS_LABELS, NODE_TYPE_LABELS, getChallengeStep } from './GameModeSections'
+import { LEVEL_KIND_LABELS, getLevelKind } from './game-mode/gameData'
 
 function RecoveryStat({
   title,
@@ -24,7 +25,7 @@ function RecoveryStat({
 
 function getLessonLabel(currentNode: GameCampaignNode) {
   if (currentNode.nodeType !== 'word' || !currentNode.dimension) return NODE_TYPE_LABELS[currentNode.nodeType]
-  return `${getChallengeStep(currentNode)}/5 ${currentNode.dimension === 'speaking' ? '口语' : NODE_TYPE_LABELS.word}`
+  return `${getChallengeStep(currentNode)}/5 ${LEVEL_KIND_LABELS[getLevelKind(currentNode)]}`
 }
 
 export function GameCampaignHud({
@@ -49,7 +50,7 @@ export function GameCampaignHud({
       </button>
 
       <div className="practice-game-mode__hud-copy">
-        <span className="practice-game-mode__hud-eyebrow">五维战役</span>
+        <span className="practice-game-mode__hud-eyebrow">五维词关</span>
         <strong>{state.campaign.title}</strong>
         <span>{state.campaign.scopeLabel}</span>
       </div>
@@ -57,6 +58,7 @@ export function GameCampaignHud({
       <div className="practice-game-mode__hud-meta">
         <span>整本词书 {state.campaign.passedWords}/{state.campaign.totalWords} 已通关</span>
         <span>当前第 {state.campaign.currentSegment}/{Math.max(state.campaign.totalSegments, 1)} 段</span>
+        <span>分数 {state.session?.score ?? 0} · 连击 {state.session?.hits ?? 0}</span>
         <span>{NODE_TYPE_LABELS[currentNode.nodeType]}</span>
       </div>
     </header>
