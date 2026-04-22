@@ -29,8 +29,12 @@ bootstrap_admin_projections() {
       --format text
 }
 
-rollback_after_switch() {
+rollback_after_failure() {
   if [[ "${switched}" != "true" ]]; then
+    if [[ -n "${target_slot}" ]]; then
+      log "Stopping HTTP ${target_slot} slot after failed pre-switch step"
+      stop_http_slot_services "${target_slot}" || true
+    fi
     return 0
   fi
   log "Attempting rollback after failed post-switch step"
@@ -54,7 +58,7 @@ rollback_after_switch() {
   fi
 }
 
-trap 'status=$?; if (( status != 0 )); then rollback_after_switch; fi' EXIT
+trap 'status=$?; if (( status != 0 )); then rollback_after_failure; fi' EXIT
 
 require_command git
 require_command tar
