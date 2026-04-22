@@ -1,10 +1,22 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiFetch, setAuthSessionActive } from './index'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { __setApiBaseOverrideForTests, apiFetch, apiRequest, buildApiUrl, setAuthSessionActive } from './index'
 
-describe('apiFetch', () => {
+describe('api helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setAuthSessionActive(true)
+    __setApiBaseOverrideForTests(null)
+  })
+
+  afterEach(() => {
+    __setApiBaseOverrideForTests(null)
+  })
+
+  it('builds request urls from the configured api base', () => {
+    __setApiBaseOverrideForTests('https://api.example.com/base/')
+
+    expect(buildApiUrl('/api/books/my')).toBe('https://api.example.com/base/api/books/my')
+    expect(buildApiUrl('https://cdn.example.com/file.mp3')).toBe('https://cdn.example.com/file.mp3')
   })
 
   it('does not retry the original request when token refresh fails', async () => {
@@ -77,5 +89,21 @@ describe('apiFetch', () => {
 
     const headers = new Headers(vi.mocked(global.fetch).mock.calls[0]?.[1]?.headers)
     expect(headers.get('Content-Type')).toBeNull()
+  })
+
+  it('applies the configured api base to raw requests', async () => {
+    __setApiBaseOverrideForTests('https://api.example.com')
+    setAuthSessionActive(false)
+    vi.mocked(global.fetch).mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+    await apiRequest('/api/auth/logout', { method: 'POST', skipAuthRefresh: true })
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.example.com/api/auth/logout',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+      }),
+    )
   })
 })

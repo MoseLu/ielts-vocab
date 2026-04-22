@@ -3,6 +3,7 @@ import {
   stopManagedAudio,
   warmupManagedAudio,
 } from '../../components/practice/utils.audio.playback'
+import { apiRequest } from '../../lib'
 
 const AI_GREETING_TTS_PAYLOAD = {
   emotion: 'neutral',
@@ -31,7 +32,7 @@ export async function playAIGreetingAudio(text: string): Promise<boolean> {
   stopManagedAudio()
 
   try {
-    const response = await fetch('/api/tts/generate', {
+    const response = await apiRequest('/api/tts/generate', {
       method: 'POST',
       cache: 'no-store',
       headers: {

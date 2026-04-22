@@ -1,7 +1,7 @@
 // ── Utility Functions ────────────────────────────────────────────────────────────
 
 const RAW_API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim() ?? ''
-const NORMALIZED_API_BASE = RAW_API_BASE.replace(/\/+$/, '')
+let _apiBaseOverride: string | null = null
 
 // LocalStorage helpers with type safety
 export function getStorageItem<T>(key: string, defaultValue: T): T {
@@ -22,11 +22,16 @@ export function removeStorageItem(key: string): void {
 }
 
 export function buildApiUrl(path: string): string {
+  const normalizedApiBase = (_apiBaseOverride ?? RAW_API_BASE).replace(/\/+$/, '')
   if (/^https?:\/\//i.test(path)) return path
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  if (!NORMALIZED_API_BASE) return normalizedPath
-  if (normalizedPath.startsWith('/api/')) return `${NORMALIZED_API_BASE}${normalizedPath}`
-  return `${NORMALIZED_API_BASE}${normalizedPath}`
+  if (!normalizedApiBase) return normalizedPath
+  if (normalizedPath.startsWith('/api/')) return `${normalizedApiBase}${normalizedPath}`
+  return `${normalizedApiBase}${normalizedPath}`
+}
+
+export function __setApiBaseOverrideForTests(value: string | null): void {
+  _apiBaseOverride = value?.trim() ? value.trim() : null
 }
 
 // ── Secure API fetch — HttpOnly cookie mode ───────────────────────────────────
@@ -89,7 +94,7 @@ async function _doRefresh(): Promise<void> {
   // blip) without immediately treating them as token expiry.
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const r = await fetch('/api/auth/refresh', {
+      const r = await fetch(buildApiUrl('/api/auth/refresh'), {
         method: 'POST',
         credentials: 'include',
         signal: AbortSignal.timeout(10_000),
@@ -106,6 +111,66 @@ async function _doRefresh(): Promise<void> {
       await new Promise(res => setTimeout(res, 1500))
     }
   }
+}
+
+interface ApiRequestOptions extends RequestInit {
+  skipAuthRefresh?: boolean
+}
+
+function _shouldRefreshResponse(url: string, response: Response, skipAuthRefresh: boolean): boolean {
+  return (
+    !skipAuthRefresh &&
+    _authSessionActive &&
+    response.status === 401 &&
+    !url.includes('/api/auth/login') &&
+    !url.includes('/api/auth/register') &&
+    !url.includes('/api/auth/refresh') &&
+    !url.includes('/api/auth/logout')
+  )
+}
+
+async function _performApiRequest(url: string, options: RequestInit): Promise<Response> {
+  const headers = _buildHeaders(options)
+  const timeoutSignal = AbortSignal.timeout(30_000)
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, timeoutSignal])
+    : timeoutSignal
+  const init: RequestInit = { ...options, headers, credentials: 'include', signal }
+  return fetch(url, init)
+}
+
+export async function apiRequest(
+  url: string,
+  options: ApiRequestOptions = {},
+): Promise<Response> {
+  const requestUrl = buildApiUrl(url)
+  const { skipAuthRefresh = false, ...requestOptions } = options
+  const response = await _performApiRequest(requestUrl, requestOptions)
+
+  if (_shouldRefreshResponse(requestUrl, response, skipAuthRefresh)) {
+    const refreshResult = await refreshAuthSession()
+    if (refreshResult === 'success') {
+      const retry = await _performApiRequest(requestUrl, requestOptions)
+      if (retry.status === 401) {
+        if (_authSessionActive) {
+          window.dispatchEvent(new CustomEvent('auth:session-expired'))
+        }
+        throw new Error('登录已过期，请重新登录')
+      }
+      return retry
+    }
+
+    if (refreshResult === 'auth_failed') {
+      if (_authSessionActive) {
+        window.dispatchEvent(new CustomEvent('auth:session-expired'))
+      }
+      throw new Error('登录已过期，请重新登录')
+    }
+
+    throw new Error('服务暂时不可用，请稍后重试')
+  }
+
+  return response
 }
 
 export async function refreshAuthSession(): Promise<'success' | 'auth_failed' | 'temporarily_unavailable'> {
@@ -170,54 +235,15 @@ export async function apiFetch<T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const headers = _buildHeaders(options)
-  // Merge caller's signal with a 30 s timeout so requests never hang forever
-  const timeoutSignal = AbortSignal.timeout(30_000)
-  const signal = options.signal
-    ? AbortSignal.any([options.signal, timeoutSignal])
-    : timeoutSignal
-  const init: RequestInit = { ...options, headers, credentials: 'include', signal }
-
-  const response = await fetch(url, init)
-
-  // Silent token refresh on 401 (but not for auth endpoints themselves)
-  if (
-    _authSessionActive &&
-    response.status === 401 &&
-    !url.includes('/api/auth/login') &&
-    !url.includes('/api/auth/register') &&
-    !url.includes('/api/auth/refresh') &&
-    !url.includes('/api/auth/logout')
-  ) {
-    const refreshResult = await refreshAuthSession()
-    if (refreshResult === 'success') {
-      const retry = await fetch(url, init)
-      if (retry.status === 401) {
-        if (_authSessionActive) {
-          window.dispatchEvent(new CustomEvent('auth:session-expired'))
-        }
-        throw new Error('登录已过期，请重新登录')
-      }
-      if (!retry.ok) {
-        const err = await retry.json().catch(() => ({ error: '请求失败，请稍后重试' }))
-        throw new Error(_buildApiErrorMessage(retry.status, err))
-      }
-      return retry.json() as Promise<T>
-    }
-
-    if (refreshResult === 'auth_failed') {
-      if (_authSessionActive) {
-        window.dispatchEvent(new CustomEvent('auth:session-expired'))
-      }
-      throw new Error('登录已过期，请重新登录')
-    }
-
-    throw new Error('服务暂时不可用，请稍后重试')
-  }
+  const response = await apiRequest(url, options)
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: '请求失败，请稍后重试' }))
     throw new Error(_buildApiErrorMessage(response.status, error))
+  }
+
+  if (response.status === 204) {
+    return undefined as T
   }
 
   return response.json() as Promise<T>

@@ -13,6 +13,7 @@
     "lint": "eslint .. --config ./eslint.config.mjs --max-warnings=0",
     "preview": "vite preview",
     "test": "pnpm run verify:repo-guards && vitest run",
+    "test:coverage": "pnpm run verify:repo-guards && vitest run --coverage --coverage.thresholds.lines=55",
     "test:watch": "pnpm run verify:repo-guards && vitest",
     "test:e2e": "playwright test",
     "verify:repo-guards": "pnpm run check:file-lines && pnpm run check:design-tokens && pnpm run check:style-discipline && pnpm run lint"

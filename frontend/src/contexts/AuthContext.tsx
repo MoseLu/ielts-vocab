@@ -8,6 +8,7 @@ import type { User } from '../types'
 import { STORAGE_KEYS } from '../constants'
 import {
   apiFetch,
+  apiRequest,
   refreshAuthSession,
   safeParse,
   LoginSchema,
@@ -204,10 +205,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     _clearUser()
     // Ask the server to revoke tokens and clear cookies, but do not trigger refresh logic
-    await fetch('/api/auth/logout', {
+    await apiRequest('/api/auth/logout', {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      skipAuthRefresh: true,
     }).catch(() => {})
   }, [])
 

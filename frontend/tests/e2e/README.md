@@ -31,6 +31,11 @@ pnpm test:e2e
 
 `frontend/playwright.config.ts` now auto-starts only the frontend dev server. Keep the split backend running on `gateway-bff:8000` before launching the suite.
 
+### Run the CI smoke subset:
+```bash
+pnpm --dir frontend exec playwright test tests/e2e/smoke.spec.ts
+```
+
 ### Run specific test file:
 ```bash
 pnpm --dir frontend exec playwright test auth.spec.ts
@@ -72,6 +77,7 @@ pnpm --dir frontend exec playwright show-report
 10. **admin.spec.ts** - Admin dashboard
 11. **settings.spec.ts** - Practice settings and preferences
 12. **integration.spec.ts** - Full user journey integration tests
+13. **smoke.spec.ts** - CI smoke subset for login page, redirect, register, and logout
 
 ### Routes Covered:
 
@@ -89,6 +95,7 @@ pnpm --dir frontend exec playwright show-report
 ### Features Tested:
 
 - ✅ User authentication (login, register, logout)
+- ✅ CI smoke path (login page, unauthenticated redirect, register -> shell -> logout)
 - ✅ Route navigation and redirects
 - ✅ Vocabulary book and chapter selection
 - ✅ Practice modes (smart, listening, meaning, dictation, radio, quickmemory)
@@ -146,3 +153,8 @@ Add to your CI pipeline:
     name: playwright-report
     path: playwright-report/
 ```
+
+The Windows split-runtime smoke path in this repository uses:
+
+- `scripts/ci/windows-split-runtime-smoke.ps1`
+- `frontend/tests/e2e/smoke.spec.ts`

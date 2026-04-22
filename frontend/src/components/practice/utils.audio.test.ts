@@ -1,4 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+vi.mock('../../lib', async () => ({
+  ...(await vi.importActual<typeof import('../../lib')>('../../lib')),
+  apiRequest: (url: string, options?: RequestInit) => globalThis.fetch(url, options),
+  buildApiUrl: (path: string) => path,
+}))
+
 import {
   __resetAudioStateForTests,
   playExampleAudio,
@@ -21,11 +27,7 @@ const createWordAudioMetadataResponse = ({
   byteLength = 3,
   cacheKey = 'cache-v1',
   signedUrl = 'https://oss.example.com/audio.mp3?signature=1',
-}: {
-  byteLength?: number
-  cacheKey?: string
-  signedUrl?: string | null
-} = {}) => ({
+}: { byteLength?: number; cacheKey?: string; signedUrl?: string | null } = {}) => ({
   ok: true,
   json: vi.fn().mockResolvedValue({
     byte_length: byteLength,

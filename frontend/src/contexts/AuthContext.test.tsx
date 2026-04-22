@@ -5,6 +5,7 @@ import { STORAGE_KEYS } from '../constants'
 import { AuthProvider, useAuth } from './AuthContext'
 
 const apiFetchMock = vi.fn()
+const apiRequestMock = vi.fn()
 const showToastMock = vi.fn()
 
 vi.mock('../lib', async () => {
@@ -12,6 +13,7 @@ vi.mock('../lib', async () => {
   return {
     ...actual,
     apiFetch: (...args: unknown[]) => apiFetchMock(...args),
+    apiRequest: (...args: unknown[]) => apiRequestMock(...args),
   }
 })
 
@@ -34,6 +36,7 @@ describe('useAuth', () => {
   beforeEach(() => {
     localStorage.clear()
     apiFetchMock.mockReset()
+    apiRequestMock.mockReset()
     showToastMock.mockReset()
     vi.mocked(global.fetch).mockReset()
   })
@@ -51,6 +54,7 @@ describe('AuthProvider', () => {
   beforeEach(() => {
     localStorage.clear()
     apiFetchMock.mockReset()
+    apiRequestMock.mockReset()
     showToastMock.mockReset()
     vi.mocked(global.fetch).mockReset()
   })
@@ -215,7 +219,7 @@ describe('AuthProvider', () => {
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
     localStorage.setItem('my_books', JSON.stringify(['book-1']))
     apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
-    vi.mocked(global.fetch).mockResolvedValueOnce(new Response(null, { status: 204 }))
+    apiRequestMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
 
     const { result } = renderHook(() => useAuth(), { wrapper })
 
@@ -227,10 +231,9 @@ describe('AuthProvider', () => {
       await result.current.logout()
     })
 
-    expect(vi.mocked(global.fetch)).toHaveBeenLastCalledWith('/api/auth/logout', {
+    expect(apiRequestMock).toHaveBeenLastCalledWith('/api/auth/logout', {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      skipAuthRefresh: true,
     })
     expect(result.current.isAuthenticated).toBe(false)
     expect(result.current.user).toBeNull()
@@ -243,7 +246,7 @@ describe('AuthProvider', () => {
 
     let resolveLogout: (() => void) | null = null
     apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
-    vi.mocked(global.fetch).mockImplementationOnce(
+    apiRequestMock.mockImplementationOnce(
       () =>
         new Promise(resolve => {
           resolveLogout = () => resolve(new Response(null, { status: 204 }))

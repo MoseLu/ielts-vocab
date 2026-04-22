@@ -104,6 +104,15 @@ def _resolve_database_uri(base_dir: str) -> str:
 
     return 'sqlite:///' + _resolve_sqlite_db_path(base_dir)
 
+
+def _resolve_app_env() -> str:
+    return (
+        os.environ.get('APP_ENV')
+        or os.environ.get('FLASK_ENV')
+        or os.environ.get('ENV')
+        or 'development'
+    ).strip().lower()
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
@@ -131,6 +140,8 @@ class Config:
     DB_BACKUP_KEEP = max(1, int(os.environ.get('DB_BACKUP_KEEP', '10')))
     DB_BACKUP_ON_START = os.environ.get('DB_BACKUP_ON_START', 'true').lower() == 'true'
     DB_BACKUP_STARTUP_MIN_AGE_SECONDS = max(0, int(os.environ.get('DB_BACKUP_STARTUP_MIN_AGE_SECONDS', '300')))
+    APP_ENV = _resolve_app_env()
+    ALLOW_MOCK_EMAIL_DELIVERY = APP_ENV in {'development', 'dev', 'local', 'test', 'testing'}
 
     # JWT — access token + long-lived refresh token
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
@@ -167,7 +178,16 @@ class Config:
 
     # Current email verification delivery mode. Until a real mailer is wired up,
     # codes are only written to backend logs and must never be echoed in API responses.
-    EMAIL_CODE_DELIVERY_MODE = os.environ.get('EMAIL_CODE_DELIVERY_MODE', 'mock').strip().lower()
+    EMAIL_CODE_DELIVERY_MODE = _getenv('EMAIL_CODE_DELIVERY_MODE', 'mock').lower()
+    if EMAIL_CODE_DELIVERY_MODE not in {'mock', 'smtp'}:
+        raise ValueError('EMAIL_CODE_DELIVERY_MODE must be one of: mock, smtp')
+    SMTP_HOST = _getenv('SMTP_HOST')
+    SMTP_PORT = max(1, int(_getenv('SMTP_PORT', '587') or '587'))
+    SMTP_USERNAME = _getenv('SMTP_USERNAME')
+    SMTP_PASSWORD = _getenv('SMTP_PASSWORD')
+    SMTP_FROM_EMAIL = _getenv('SMTP_FROM_EMAIL') or SMTP_USERNAME
+    SMTP_USE_TLS = _getenv('SMTP_USE_TLS', 'true').lower() == 'true'
+    SMTP_USE_SSL = _getenv('SMTP_USE_SSL', 'false').lower() == 'true'
 
     # Login rate-limiting: max N failures per IP before 15-min lockout
     LOGIN_MAX_ATTEMPTS = 10

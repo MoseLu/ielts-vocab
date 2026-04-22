@@ -75,9 +75,9 @@ sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deplo
 sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/validate-broker-runtime.sh
 ```
 
-The validation wrapper checks `systemctl is-active --quiet redis`, `systemctl is-active --quiet rabbitmq-server`, and then runs [validate_wave5_broker_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/validate_wave5_broker_runtime.py) against `/etc/ielts-vocab/microservices.env`.
+The validation wrapper checks `systemctl is-active --quiet redis`, `systemctl is-active --quiet rabbitmq-server`, and then runs [validate_wave5_broker_runtime.py](../../scripts/validate_wave5_broker_runtime.py) against `/etc/ielts-vocab/microservices.env`.
 
-`preflight-check.sh` now also runs [validate_speaking_band_thresholds.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/validate_speaking_band_thresholds.py) against the same env file. If `SPEAKING_ASSESSMENT_BAND_THRESHOLDS_JSON` is unset, preflight keeps the built-in defaults; if it is set but the JSON shape is invalid, preflight fails before the release starts.
+`preflight-check.sh` now also runs [validate_speaking_band_thresholds.py](../../scripts/validate_speaking_band_thresholds.py) against the same env file. If `SPEAKING_ASSESSMENT_BAND_THRESHOLDS_JSON` is unset, preflight keeps the built-in defaults; if it is set but the JSON shape is invalid, preflight fails before the release starts.
 
 The first real remote rollout was executed on `2026-04-11` against `119.29.182.134`: broker env keys were added to `/etc/ielts-vocab/microservices.env`, `redis` plus `rabbitmq-server` were installed and enabled, and `validate-broker-runtime.sh`, `preflight-check.sh`, and `smoke-check.sh` all passed.
 
@@ -114,7 +114,7 @@ The HTTP browser path now uses `ielts-http-slot@<slot>.<service>` units for `gat
 
 ## GitHub Actions Production Deploy
 
-Workflow file: [deploy-production.yml](/F:/enterprise-workspace/projects/ielts-vocab/.github/workflows/deploy-production.yml)
+Workflow file: [deploy-production.yml](../../.github/workflows/deploy-production.yml)
 
 Required GitHub `production` environment secrets:
 
@@ -223,6 +223,14 @@ Turn a captured Wave 4 raw log into a markdown record with:
 /opt/ielts-vocab/venv/bin/python /opt/ielts-vocab/current/scripts/create-wave4-remote-record.py --log-path /var/log/ielts-vocab/wave4/<captured-log>.log --host 119.29.182.134
 /opt/ielts-vocab/venv/bin/python /opt/ielts-vocab/current/scripts/create-wave4-remote-record.py --log-path /var/log/ielts-vocab/wave4/shared-sqlite-override-<timestamp>.log --host 119.29.182.134 --command "sudo APP_HOME=/opt/ielts-vocab SHARED_SQLITE_OVERRIDE_RECORD_PATH=/var/log/ielts-vocab/wave4/shared-sqlite-override-<timestamp>.log bash /opt/ielts-vocab/current/scripts/cloud-deploy/restart-services-with-shared-sqlite-override.sh notes-service"
 ```
+
+Post-deploy closeout now has a dedicated wrapper:
+
+```bash
+sudo APP_HOME=/opt/ielts-vocab SMOKE_HOST=axiomaticworld.com bash /opt/ielts-vocab/current/scripts/cloud-deploy/release-closeout.sh
+```
+
+That wrapper runs post-switch smoke, bounded storage drill, and `run-wave5-projection-cutover.py --verify-only`, then stores raw logs under `/var/log/ielts-vocab/release-closeout/<timestamp>/`.
 
 Manual rollback:
 

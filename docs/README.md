@@ -47,32 +47,33 @@ docs/
 
 ### Architecture
 
-- [architecture-audit.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/audits/architecture-audit.md)
-- [2026-03-28-tts-batch-generation-design.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/specs/2026-03-28-tts-batch-generation-design.md)
-- [architecture-spec-template.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/specs/templates/architecture-spec-template.md)
+- [architecture-audit.md](./architecture/audits/architecture-audit.md)
+- [2026-03-28-tts-batch-generation-design.md](./architecture/specs/2026-03-28-tts-batch-generation-design.md)
+- [architecture-spec-template.md](./architecture/specs/templates/architecture-spec-template.md)
 
 ### Governance
 
-- [ui-governance-log.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/governance/ui-governance-log.md)
+- [ui-governance-log.md](./governance/ui-governance-log.md)
 
 ### Milestones
 
-- [README.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/milestones/README.md)
-- [2026-q1-platform-foundation.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/milestones/2026-q1-platform-foundation.md)
-- [milestone-template.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/milestones/templates/milestone-template.md)
+- [README.md](./milestones/README.md)
+- [2026-q1-platform-foundation.md](./milestones/2026-q1-platform-foundation.md)
+- [milestone-template.md](./milestones/templates/milestone-template.md)
 
 ### Operations
 
-- [agent-browser-guide.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/agent-browser-guide.md)
-- [frontend-automation-setup.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/frontend-automation-setup.md)
+- [agent-browser-guide.md](./operations/agent-browser-guide.md)
+- [release-closeout-checklist.md](./operations/release-closeout-checklist.md)
+- [frontend-automation-setup.md](./operations/frontend-automation-setup.md)
 
 ### Planning
 
-- [product-requirements-document.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/product-requirements-document.md)
-- [ui-redesign-plan.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/ui-redesign-plan.md)
-- [2026-03-28-tts-batch-generation-plan.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/implementation/2026-03-28-tts-batch-generation-plan.md)
-- [implementation-plan-template.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/implementation/templates/implementation-plan-template.md)
+- [product-requirements-document.md](./planning/product-requirements-document.md)
+- [ui-redesign-plan.md](./planning/ui-redesign-plan.md)
+- [2026-03-28-tts-batch-generation-plan.md](./planning/implementation/2026-03-28-tts-batch-generation-plan.md)
+- [implementation-plan-template.md](./planning/implementation/templates/implementation-plan-template.md)
 
 ### Logs
 
-- [20260331-084123-batch-submit.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/logs/submit/20260331-084123-batch-submit.md)
+- [20260331-084123-batch-submit.md](./logs/submit/20260331-084123-batch-submit.md)

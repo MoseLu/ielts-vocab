@@ -6,7 +6,7 @@ Last updated: 2026-04-11 13:48:35 +08:00
 
 Wave 5 introduces one shared contract registry for the first domain events that will move cross-service reads away from shared PostgreSQL shadow tables.
 
-The checked-in contract registry lives in [domain_event_contracts.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/domain_event_contracts.py), and the shared outbox helpers live in [outbox_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/outbox_runtime.py).
+The checked-in contract registry lives in [domain_event_contracts.py](../../packages/platform-sdk/platform_sdk/domain_event_contracts.py), and the shared outbox helpers live in [outbox_runtime.py](../../packages/platform-sdk/platform_sdk/outbox_runtime.py).
 
 ## Contract Set
 
@@ -27,7 +27,7 @@ Each service now has dedicated event tables in its own schema boundary:
 - `<service>_inbox_events` stores consumer-side idempotency and processing status.
 - `admin_projection_cursors` stores replay progress for admin read-side rebuilds.
 
-The model declarations live in [eventing_models.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/model_definitions/eventing_models.py), and the service bootstrap plan is extended in [service_table_plan.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/service_table_plan.py).
+The model declarations live in [eventing_models.py](../../backend/model_definitions/eventing_models.py), and the service bootstrap plan is extended in [service_table_plan.py](../../packages/platform-sdk/platform_sdk/service_table_plan.py).
 
 Some publishers also materialize a service-owned write fact before queueing the event, such as `tts_media_assets` for TTS cache/materialization state and `ai_prompt_runs` for completed AI prompt executions. Some consumers also materialize service-owned read facts from subscribed events, such as `notes_projected_study_sessions`, `notes_projected_wrong_words`, and `notes_projected_prompt_runs` inside `notes-service`, and `ai_projected_wrong_words` plus `ai_projected_daily_summaries` inside `ai-execution-service`.
 

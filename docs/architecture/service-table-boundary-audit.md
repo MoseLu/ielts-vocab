@@ -4,14 +4,14 @@ Last updated: 2026-04-10
 
 ## Purpose
 
-This Wave 4 audit is the table-level companion to [service-ownership-matrix.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/service-ownership-matrix.md).
+This Wave 4 audit is the table-level companion to [service-ownership-matrix.md](./service-ownership-matrix.md).
 
 It answers two questions for every SQLAlchemy table in the split backend:
 
 1. Which service is the single authoritative owner for writes?
 2. Which non-owning services still mount that table as `read-only` or `transitional` access?
 
-The checked-in source of truth lives in [service_table_plan.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/service_table_plan.py), and regression coverage must keep every current table classified exactly once as owned.
+The checked-in source of truth lives in [service_table_plan.py](../../packages/platform-sdk/platform_sdk/service_table_plan.py), and regression coverage must keep every current table classified exactly once as owned.
 
 ## Access Labels
 

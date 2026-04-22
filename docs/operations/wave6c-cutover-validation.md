@@ -117,7 +117,7 @@ Do not leave the compatibility path running as the normal local baseline after t
 
 The remaining monolith browser route surface is now archived in one explicit manifest:
 
-- [monolith_compat_manifest.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/monolith_compat_manifest.py)
+- [monolith_compat_manifest.py](../../backend/monolith_compat_manifest.py)
 
 You can print the current compatibility route inventory as JSON with:
 

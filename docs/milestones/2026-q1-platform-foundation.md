@@ -35,9 +35,9 @@ These changes moved the product away from isolated feature pages and toward a sh
 
 ## Related Docs
 
-- [docs/architecture/audits/architecture-audit.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/audits/architecture-audit.md)
-- [docs/governance/ui-governance-log.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/governance/ui-governance-log.md)
-- [docs/planning/ui-redesign-plan.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/ui-redesign-plan.md)
+- [docs/architecture/audits/architecture-audit.md](../architecture/audits/architecture-audit.md)
+- [docs/governance/ui-governance-log.md](../governance/ui-governance-log.md)
+- [docs/planning/ui-redesign-plan.md](../planning/ui-redesign-plan.md)
 
 ## Open Ends
 

@@ -10,14 +10,14 @@ This implementation reuses the existing Aliyun OSS private bucket strategy inste
 
 ## Source of Truth
 
-- Shared SDK package: [packages/platform-sdk/platform_sdk/storage/aliyun_oss.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/storage/aliyun_oss.py)
-- Backward-compatible TTS wrapper: [backend/services/word_tts_oss.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/services/word_tts_oss.py)
-- Shared ASR runtime package: [packages/platform-sdk/platform_sdk/asr_runtime/__init__.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/__init__.py)
-- Shared learning-core runtime: [packages/platform-sdk/platform_sdk/learning_core_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_runtime.py)
-- Shared catalog-content runtime: [packages/platform-sdk/platform_sdk/catalog_content_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/catalog_content_runtime.py)
-- Shared AI runtime: [packages/platform-sdk/platform_sdk/ai_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/ai_runtime.py)
-- Shared notes runtime: [packages/platform-sdk/platform_sdk/notes_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/notes_runtime.py)
-- Shared admin-ops runtime: [packages/platform-sdk/platform_sdk/admin_ops_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/admin_ops_runtime.py)
+- Shared SDK package: [packages/platform-sdk/platform_sdk/storage/aliyun_oss.py](../../../packages/platform-sdk/platform_sdk/storage/aliyun_oss.py)
+- Backward-compatible TTS wrapper: [backend/services/word_tts_oss.py](../../../backend/services/word_tts_oss.py)
+- Shared ASR runtime package: [packages/platform-sdk/platform_sdk/asr_runtime/__init__.py](../../../packages/platform-sdk/platform_sdk/asr_runtime/__init__.py)
+- Shared learning-core runtime: [packages/platform-sdk/platform_sdk/learning_core_runtime.py](../../../packages/platform-sdk/platform_sdk/learning_core_runtime.py)
+- Shared catalog-content runtime: [packages/platform-sdk/platform_sdk/catalog_content_runtime.py](../../../packages/platform-sdk/platform_sdk/catalog_content_runtime.py)
+- Shared AI runtime: [packages/platform-sdk/platform_sdk/ai_runtime.py](../../../packages/platform-sdk/platform_sdk/ai_runtime.py)
+- Shared notes runtime: [packages/platform-sdk/platform_sdk/notes_runtime.py](../../../packages/platform-sdk/platform_sdk/notes_runtime.py)
+- Shared admin-ops runtime: [packages/platform-sdk/platform_sdk/admin_ops_runtime.py](../../../packages/platform-sdk/platform_sdk/admin_ops_runtime.py)
 
 ## Environment Variables
 
@@ -82,15 +82,15 @@ Example-audio now uses the service namespace by default:
 
 The following FastAPI scaffolds now exist and expose `/health`, `/ready`, and `/version`:
 
-- [apps/gateway-bff/main.py](/F:/enterprise-workspace/projects/ielts-vocab/apps/gateway-bff/main.py)
-- [services/identity-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/identity-service/main.py)
-- [services/learning-core-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/learning-core-service/main.py)
-- [services/catalog-content-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/catalog-content-service/main.py)
-- [services/ai-execution-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/ai-execution-service/main.py)
-- [services/tts-media-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/tts-media-service/main.py)
-- [services/asr-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/asr-service/main.py)
-- [services/notes-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/notes-service/main.py)
-- [services/admin-ops-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/admin-ops-service/main.py)
+- [apps/gateway-bff/main.py](../../../apps/gateway-bff/main.py)
+- [services/identity-service/main.py](../../../services/identity-service/main.py)
+- [services/learning-core-service/main.py](../../../services/learning-core-service/main.py)
+- [services/catalog-content-service/main.py](../../../services/catalog-content-service/main.py)
+- [services/ai-execution-service/main.py](../../../services/ai-execution-service/main.py)
+- [services/tts-media-service/main.py](../../../services/tts-media-service/main.py)
+- [services/asr-service/main.py](../../../services/asr-service/main.py)
+- [services/notes-service/main.py](../../../services/notes-service/main.py)
+- [services/admin-ops-service/main.py](../../../services/admin-ops-service/main.py)
 
 ## Active Compatibility Slices
 
@@ -167,43 +167,43 @@ These compatibility routes preserve the existing browser-facing URLs while shift
 
 Realtime speech ownership has also moved out of `backend/speech_service.py`:
 
-- New service entry: [services/asr-service/socketio_main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/asr-service/socketio_main.py)
-- Shared runtime builder: [packages/platform-sdk/platform_sdk/asr_runtime/socketio_service.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/socketio_service.py)
-- Legacy compatibility shim: [backend/speech_service.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/speech_service.py)
+- New service entry: [services/asr-service/socketio_main.py](../../../services/asr-service/socketio_main.py)
+- Shared runtime builder: [packages/platform-sdk/platform_sdk/asr_runtime/socketio_service.py](../../../packages/platform-sdk/platform_sdk/asr_runtime/socketio_service.py)
+- Legacy compatibility shim: [backend/speech_service.py](../../../backend/speech_service.py)
 
 Identity runtime ownership now follows the same pattern:
 
-- Shared runtime builder: [platform_sdk/identity_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/identity_runtime.py)
-- Service entry: [services/identity-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/identity-service/main.py)
+- Shared runtime builder: [platform_sdk/identity_runtime.py](../../../packages/platform-sdk/platform_sdk/identity_runtime.py)
+- Service entry: [services/identity-service/main.py](../../../services/identity-service/main.py)
 
 Learning-core runtime now follows the same compatibility pattern for user progress and book-library state:
 
-- Shared runtime builder: [platform_sdk/learning_core_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_runtime.py)
-- Service entry: [services/learning-core-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/learning-core-service/main.py)
+- Shared runtime builder: [platform_sdk/learning_core_runtime.py](../../../packages/platform-sdk/platform_sdk/learning_core_runtime.py)
+- Service entry: [services/learning-core-service/main.py](../../../services/learning-core-service/main.py)
 
 Catalog-content runtime now owns the content-facing `books` and `vocabulary` compatibility routes:
 
-- Shared runtime builder: [platform_sdk/catalog_content_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/catalog_content_runtime.py)
-- Service entry: [services/catalog-content-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/catalog-content-service/main.py)
+- Shared runtime builder: [platform_sdk/catalog_content_runtime.py](../../../packages/platform-sdk/platform_sdk/catalog_content_runtime.py)
+- Service entry: [services/catalog-content-service/main.py](../../../services/catalog-content-service/main.py)
 
 Notes runtime now follows the same compatibility pattern for notes, summaries, and export flows:
 
-- Shared runtime builder: [platform_sdk/notes_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/notes_runtime.py)
-- Service entry: [services/notes-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/notes-service/main.py)
+- Shared runtime builder: [platform_sdk/notes_runtime.py](../../../packages/platform-sdk/platform_sdk/notes_runtime.py)
+- Service entry: [services/notes-service/main.py](../../../services/notes-service/main.py)
 
 Admin-ops runtime now owns the admin compatibility routes:
 
-- Shared runtime builder: [platform_sdk/admin_ops_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/admin_ops_runtime.py)
-- Service entry: [services/admin-ops-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/admin-ops-service/main.py)
+- Shared runtime builder: [platform_sdk/admin_ops_runtime.py](../../../packages/platform-sdk/platform_sdk/admin_ops_runtime.py)
+- Service entry: [services/admin-ops-service/main.py](../../../services/admin-ops-service/main.py)
 
 AI runtime now follows the same compatibility pattern for prompt helpers, learning context, wrong words, quick-memory sync, study sessions, and chat endpoints:
 
-- Shared runtime builder: [platform_sdk/ai_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/ai_runtime.py)
-- Service entry: [services/ai-execution-service/main.py](/F:/enterprise-workspace/projects/ielts-vocab/services/ai-execution-service/main.py)
+- Shared runtime builder: [platform_sdk/ai_runtime.py](../../../packages/platform-sdk/platform_sdk/ai_runtime.py)
+- Service entry: [services/ai-execution-service/main.py](../../../services/ai-execution-service/main.py)
 
 Gateway browser-compatible proxy routes are now centralized in:
 
-- [platform_sdk/gateway_browser_routes.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/gateway_browser_routes.py)
+- [platform_sdk/gateway_browser_routes.py](../../../packages/platform-sdk/platform_sdk/gateway_browser_routes.py)
 
 The shared gateway proxy now preserves streaming `text/event-stream` responses so `/api/ai/ask/stream` can pass through `gateway-bff` without collapsing into a buffered JSON-style response.
 
@@ -211,7 +211,7 @@ The shared gateway proxy now preserves streaming `text/event-stream` responses s
 
 - `/v1/media/example-audio/metadata` checks OSS first, then legacy local cache if needed
 - `/v1/media/example-audio/content` serves OSS payloads when present and writes newly generated audio to OSS instead of treating local disk as the primary store
-- [backfill_example_audio_to_oss.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/backfill_example_audio_to_oss.py) uploads legacy `backend/tts_cache/*.mp3` files into the service-owned OSS namespace
+- [backfill_example_audio_to_oss.py](../../../scripts/backfill_example_audio_to_oss.py) uploads legacy `backend/tts_cache/*.mp3` files into the service-owned OSS namespace
 
 `notes-service` export responses now also emit object references when OSS is configured:
 

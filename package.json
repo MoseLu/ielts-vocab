@@ -10,12 +10,14 @@
   "scripts": {
     "dev": "pnpm --dir frontend dev",
     "build": "pnpm --dir frontend build",
+    "check:docs": "node scripts/check-doc-links.mjs",
     "check:file-lines": "node scripts/check-file-line-limits.mjs",
     "check:design-tokens": "node scripts/check-design-token-usage.mjs",
     "check:style-discipline": "node scripts/check-style-discipline.mjs",
     "lint": "pnpm --dir frontend lint",
     "preview": "pnpm --dir frontend preview",
     "test": "pnpm --dir frontend test",
+    "test:coverage": "pnpm --dir frontend test:coverage",
     "test:watch": "pnpm --dir frontend test:watch",
     "test:e2e": "pnpm --dir frontend test:e2e",
     "verify:repo-guards": "pnpm --dir frontend verify:repo-guards"

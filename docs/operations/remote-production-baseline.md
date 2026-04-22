@@ -79,7 +79,7 @@ sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deplo
 
 Status snapshot on `2026-04-11`: the broker baseline was provisioned successfully on `119.29.182.134`, and both the updated `preflight-check.sh` and `smoke-check.sh` passed with broker validation enabled.
 
-The deployed release path on `119.29.182.134` now includes the worker-aware [run-service.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/run-service.sh) contract, so deploy/rollback/smoke can manage worker units when the target release contains those entrypoints. This baseline freezes the always-on browser-path units above; Wave 5 worker activity should still be verified from the deploy and smoke evidence for each release instead of assumed from this static list alone.
+The deployed release path on `119.29.182.134` now includes the worker-aware [run-service.sh](../../scripts/cloud-deploy/run-service.sh) contract, so deploy/rollback/smoke can manage worker units when the target release contains those entrypoints. This baseline freezes the always-on browser-path units above; Wave 5 worker activity should still be verified from the deploy and smoke evidence for each release instead of assumed from this static list alone.
 
 ## PostgreSQL backup path
 

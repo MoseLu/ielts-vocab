@@ -17,7 +17,7 @@ Split services now resolve RabbitMQ config in this order:
 3. `<SERVICE_PREFIX>_RABBITMQ_HOST`, `_PORT`, `_USER`, `_PASSWORD`, `_VHOST`, `_SSL`
 4. generic `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST`, `RABBITMQ_SSL`
 
-The checked-in example file [backend/.env.microservices.local.example](/F:/enterprise-workspace/projects/ielts-vocab/backend/.env.microservices.local.example) now includes:
+The checked-in example file [backend/.env.microservices.local.example](../../backend/.env.microservices.local.example) now includes:
 
 - shared host, port, user, password, and vhost defaults for the local broker
 - a shared `RABBITMQ_DOMAIN_EXCHANGE`

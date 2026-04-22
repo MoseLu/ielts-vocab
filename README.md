@@ -17,9 +17,9 @@
 - 前端：React 19 + TypeScript + Vite
 - 样式：SCSS + CSS Variables
 - 校验：Zod
-- 后端：Flask + SQLite + Waitress
+- 后端：Flask + FastAPI service wrappers + PostgreSQL split runtime
 - 实时：Flask-SocketIO + Socket.IO
-- 鉴权：JWT + localStorage
+- 鉴权：HttpOnly Cookie + JWT refresh session
 - 语音：独立 `speech_service.py` + DashScope 相关适配
 
 ## 仓库结构
@@ -86,7 +86,7 @@ https://axiomaticworld.com
 -> nginx
 -> vite preview :3002
 -> /api -> gateway-bff :8000
--> gateway-bff -> services :8101-8108
+-> gateway-bff -> split services :8101-8108
 -> /socket.io -> asr-socketio :5001
 ```
 
@@ -268,6 +268,7 @@ pytest backend/tests/test_source_text_integrity.py -q
 
 ## 主要接口
 
+- 浏览器入口：`gateway-bff -> /api/* -> services`
 - `/api/auth`：注册、登录、登出、当前用户、邮箱绑定与恢复
 - `/api/books`：词书、章节、单词详情、进度、熟词/收藏/易混词
 - `/api/ai`：AI 助手、学习统计、学习画像、错词、练习支撑、速记同步

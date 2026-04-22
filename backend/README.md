@@ -110,7 +110,9 @@ Rules:
 
 ## Documentation
 
-- API reference: [API.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/API.md)
-- Detailed layer architecture: [backend-layered-architecture.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/backend-layered-architecture.md)
-- Service ownership matrix: [service-ownership-matrix.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/service-ownership-matrix.md)
-- Gateway service contracts: [gateway-service-contracts.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/gateway-service-contracts.md)
+- API reference: [API.md](./API.md)
+- Detailed layer architecture: [backend-layered-architecture.md](../docs/architecture/backend-layered-architecture.md)
+- Service ownership matrix: [service-ownership-matrix.md](../docs/architecture/service-ownership-matrix.md)
+- Gateway service contracts: [gateway-service-contracts.md](../docs/architecture/gateway-service-contracts.md)
+
+Browser-facing auth now assumes `HttpOnly Cookie + gateway-bff` as the canonical contract. Any user-facing API example should reference `/api/*` through `gateway-bff`, not a browser-side header-token flow.

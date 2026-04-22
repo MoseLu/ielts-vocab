@@ -1,321 +1,65 @@
-# IELTS Vocabulary API 文档
+# IELTS Vocabulary API
 
 ## 架构索引
 
-- 后端总览: [README.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/README.md)
-- 后端分层架构: [backend-layered-architecture.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/backend-layered-architecture.md)
+- 后端总览: [README.md](./README.md)
+- 后端分层架构: [backend-layered-architecture.md](../docs/architecture/backend-layered-architecture.md)
+- 网关契约: [gateway-service-contracts.md](../docs/architecture/gateway-service-contracts.md)
 
-## 基础信息
+## 当前浏览器契约
 
-- **Base URL**: `http://localhost:8000/api`
-- **认证方式**: JWT Token (Bearer Token)
-- **请求格式**: JSON
-- **响应格式**: JSON
+- Browser Base URL: `http://127.0.0.1:8000/api`
+- 浏览器入口: `gateway-bff -> /api/* -> split services`
+- 浏览器鉴权: `HttpOnly Cookie + JWT access/refresh session`
+- 请求格式: 绝大多数接口是 `JSON`；音频、导出、流式接口会返回二进制或流
+- 兼容说明: `backend/app.py :5000` 仅保留给 rollback drill / monolith compatibility，不再是默认浏览器 API 路径
 
-浏览器兼容入口默认通过 `gateway-bff` 暴露；`backend/app.py` 的 `5000` 端口只保留为兼容 monolith 参考路径。
+浏览器端不应自行持有浏览器侧 access token，也不应手动拼装 `Authorization` 头。认证 cookie 由服务端设置，前端统一通过 `credentials: include` 发送。
 
-## 认证接口
+## 认证链路
 
-### 注册用户
+### 注册与登录
 
-```
-POST /api/auth/register
-```
+- `POST /api/auth/register`
+- `POST /api/auth/login`
 
-**请求体:**
-```json
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "username": "username"
-}
-```
+成功时服务端会：
 
-**响应:**
-```json
-{
-  "message": "Registration successful",
-  "token": "eyJhbGci...",
-  "user": {
-    "id": 1,
-    "email": "user@example.com",
-    "username": "username",
-    "created_at": "2026-03-13T05:58:57"
-  }
-}
-```
+1. 设置 `access_token` 与 `refresh_token` 两个 HttpOnly cookies。
+2. 返回当前用户快照。
+3. 返回 `access_expires_in`，供前端做会话保活。
 
-**状态码:**
-- 201: 注册成功
-- 400: 输入验证失败
-- 400: 邮箱已被注册
+### 会话探测与刷新
 
----
+- `GET /api/auth/me`
+- `POST /api/auth/refresh`
 
-### 登录
+前端在以下场景使用这条链路：
 
-```
-POST /api/auth/login
-```
-
-**请求体:**
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**响应:**
-```json
-{
-  "message": "Login successful",
-  "token": "eyJhbGci...",
-  "user": {
-    "id": 1,
-    "email": "user@example.com",
-    "username": "username",
-    "created_at": "2026-03-13T05:58:57"
-  }
-}
-```
-
-**状态码:**
-- 200: 登录成功
-- 400: 缺少邮箱或密码
-- 401: 邮箱或密码错误
-
----
+1. 页面加载时用 `/api/auth/me` 验证 cookie 会话。
+2. 遇到业务接口 `401` 时，先走一次 silent refresh。
+3. refresh 成功后重试原请求；失败则清理本地用户状态。
 
 ### 登出
 
-```
-POST /api/auth/logout
-```
+- `POST /api/auth/logout`
 
-**请求头:**
-```
-Authorization: Bearer <token>
-```
+登出会撤销相关 token 并清理 cookie；浏览器侧不需要也不应该额外携带 header token。
 
-**响应:**
-```json
-{
-  "message": "Logout successful"
-}
-```
+## 主要接口分组
 
-**状态码:**
-- 200: 登出成功
-- 401: 未认证或Token无效
+- `/api/auth`: 注册、登录、登出、当前用户、邮箱绑定与密码恢复
+- `/api/books`: 词书、章节、单词详情、进度、收藏、熟词、易混词
+- `/api/progress`: 兼容进度接口，仍保留给旧学习流
+- `/api/ai`: AI 助手、学习统计、学习画像、错词、练习支持与口语评分
+- `/api/notes`: 日志、总结、导出、任务
+- `/api/tts`: 单词/例句音频、批量生成状态、媒体探针
+- `/api/admin`: 管理员运营接口
+- `/socket.io/*`: 独立 ASR Socket.IO 通道，由 nginx 直接代理到 `:5001`
 
----
+## 响应与错误约定
 
-### 获取当前用户
-
-```
-GET /api/auth/me
-```
-
-**请求头:**
-```
-Authorization: Bearer <token>
-```
-
-**响应:**
-```json
-{
-  "user": {
-    "id": 1,
-    "email": "user@example.com",
-    "username": "username",
-    "created_at": "2026-03-13T05:58:57"
-  }
-}
-```
-
-**状态码:**
-- 200: 成功
-- 401: 未认证或Token无效
-
----
-
-## 进度接口
-
-### 获取所有进度
-
-```
-GET /api/progress
-```
-
-**请求头:**
-```
-Authorization: Bearer <token>
-```
-
-**响应:**
-```json
-{
-  "progress": [
-    {
-      "id": 1,
-      "user_id": 1,
-      "day": 1,
-      "current_index": 50,
-      "correct_count": 45,
-      "wrong_count": 5,
-      "updated_at": "2026-03-13T05:59:24"
-    }
-  ]
-}
-```
-
-**状态码:**
-- 200: 成功
-- 401: 未认证或Token无效
-
----
-
-### 保存进度
-
-```
-POST /api/progress
-```
-
-**请求头:**
-```
-Authorization: Bearer <token>
-```
-
-**请求体:**
-```json
-{
-  "day": 1,
-  "current_index": 50,
-  "correct_count": 45,
-  "wrong_count": 5
-}
-```
-
-**说明:**
-- `day`: 必需，学习天数 (1-30)
-- `current_index`: 当前单词索引
-- `correct_count`: 正确数量
-- `wrong_count`: 错误数量
-
-**响应:**
-```json
-{
-  "message": "Progress saved",
-  "progress": {
-    "id": 1,
-    "user_id": 1,
-    "day": 1,
-    "current_index": 50,
-    "correct_count": 45,
-    "wrong_count": 5,
-    "updated_at": "2026-03-13T05:59:24"
-  }
-}
-```
-
-**状态码:**
-- 200: 保存成功
-- 400: 缺少必要参数
-- 401: 未认证或Token无效
-
----
-
-### 获取指定天数进度
-
-```
-GET /api/progress/<day>
-```
-
-**请求头:**
-```
-Authorization: Bearer <token>
-```
-
-**响应:**
-```json
-{
-  "progress": {
-    "id": 1,
-    "user_id": 1,
-    "day": 1,
-    "current_index": 50,
-    "correct_count": 45,
-    "wrong_count": 5,
-    "updated_at": "2026-03-13T05:59:24"
-  }
-}
-```
-
-**状态码:**
-- 200: 成功
-- 404: 未找到该天进度
-- 401: 未认证或Token无效
-
----
-
-## 词汇接口
-
-### 获取所有词汇
-
-```
-GET /api/vocabulary
-```
-
-**响应:**
-```json
-{
-  "vocabulary": [
-    {
-      "id": 1,
-      "day": 1,
-      "word": "abandon",
-      "phonetic": "/əˈbændən/",
-      "pos": "v.",
-      "definition": "放弃；遗弃"
-    }
-  ]
-}
-```
-
----
-
-### 获取指定天词汇
-
-```
-GET /api/vocabulary/day/<day>
-```
-
-**响应:**
-```json
-{
-  "vocabulary": [
-    {
-      "id": 1,
-      "day": 1,
-      "word": "abandon",
-      "phonetic": "/əˈbændən/",
-      "pos": "v.",
-      "definition": "放弃；遗弃"
-    }
-  ]
-}
-```
-
-**状态码:**
-- 200: 成功
-- 400: 天数无效 (1-30)
-
----
-
-## 错误响应格式
-
-所有错误响应都遵循以下格式:
+常规错误响应仍采用：
 
 ```json
 {
@@ -323,10 +67,18 @@ GET /api/vocabulary/day/<day>
 }
 ```
 
-**常见状态码:**
-- 200: 成功
-- 201: 创建成功
-- 400: 客户端错误 (验证失败)
-- 401: 未认证 (Token无效)
-- 404: 资源不存在
-- 500: 服务器错误
+常见状态码：
+
+- `200`: 成功
+- `201`: 创建成功
+- `400`: 参数错误或校验失败
+- `401`: 会话无效或已过期
+- `403`: 权限不足
+- `404`: 资源不存在
+- `429`: 速率限制
+- `503`: 下游服务或严格内部契约暂时不可用
+
+## 进一步参考
+
+- 生产部署与运维: [cloud-microservices-deployment.md](../docs/operations/cloud-microservices-deployment.md)
+- Release closeout: [release-closeout-checklist.md](../docs/operations/release-closeout-checklist.md)

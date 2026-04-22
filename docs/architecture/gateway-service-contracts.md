@@ -235,7 +235,7 @@ Every extracted service must expose:
 
 ## Related Docs
 
-- Service ownership matrix: [service-ownership-matrix.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/service-ownership-matrix.md)
-- Layered source architecture: [backend-layered-architecture.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/backend-layered-architecture.md)
-- ASR runtime contract: [asr-http-socketio-contract.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/operations/asr-http-socketio-contract.md)
-- Backend migration TODO: [backend/TODO.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/TODO.md)
+- Service ownership matrix: [service-ownership-matrix.md](./service-ownership-matrix.md)
+- Layered source architecture: [backend-layered-architecture.md](./backend-layered-architecture.md)
+- ASR runtime contract: [asr-http-socketio-contract.md](../operations/asr-http-socketio-contract.md)
+- Backend migration TODO: [backend/TODO.md](../../backend/TODO.md)

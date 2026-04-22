@@ -9,8 +9,8 @@ Use this folder for product and execution-oriented plans.
 
 ## Current Docs
 
-- [product-requirements-document.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/product-requirements-document.md): current product baseline, goals, scope, and success criteria
-- [ui-redesign-plan.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/ui-redesign-plan.md): phased UI polish plan for the current product surface
+- [product-requirements-document.md](./product-requirements-document.md): current product baseline, goals, scope, and success criteria
+- [ui-redesign-plan.md](./ui-redesign-plan.md): phased UI polish plan for the current product surface
 
 ## Rules
 

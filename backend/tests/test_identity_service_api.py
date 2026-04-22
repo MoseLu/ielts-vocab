@@ -79,3 +79,27 @@ def test_identity_service_forgot_password_returns_generic_payload(monkeypatch, t
     assert response.status_code == 200
     assert response.json()['delivery_mode'] == 'mock'
     assert '验证码' in response.json()['message']
+
+
+def test_identity_service_forgot_password_fails_closed_when_mock_is_used_in_production(monkeypatch, tmp_path):
+    _configure_identity_env(monkeypatch, tmp_path)
+    monkeypatch.setenv('APP_ENV', 'production')
+    monkeypatch.setenv('EMAIL_CODE_DELIVERY_MODE', 'mock')
+    module = _load_identity_service_module('identity_service_forgot_production_mock')
+    client = TestClient(module.app)
+
+    register_response = client.post(
+        '/api/auth/register',
+        json={
+            'username': 'service-bob',
+            'password': 'password123',
+            'email': 'service-bob@example.com',
+        },
+    )
+
+    assert register_response.status_code == 201
+
+    response = client.post('/api/auth/forgot-password', json={'email': 'service-bob@example.com'})
+
+    assert response.status_code == 503
+    assert response.json() == {'error': '邮箱服务未配置'}

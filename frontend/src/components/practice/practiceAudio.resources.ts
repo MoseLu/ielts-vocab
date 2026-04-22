@@ -1,4 +1,4 @@
-import { buildApiUrl } from '../../lib'
+import { apiRequest, buildApiUrl } from '../../lib'
 import type { ExampleAudioRequest, FollowSequenceAudioRequest, PracticeAudioRequest, PreparedAudioAsset, PreparedAudioClip, WordAudioRequest } from './practiceAudio.types'
 
 type AudioBinaryEntry = {
@@ -150,14 +150,14 @@ async function validateCachedEntry(
 }
 
 function buildWordAudioMetadataUrl(word: string): string {
-  return `/api/tts/word-audio/metadata?${new URLSearchParams({ w: word.trim() }).toString()}`
+  return buildApiUrl(`/api/tts/word-audio/metadata?${new URLSearchParams({ w: word.trim() }).toString()}`)
 }
 
 function buildWordAudioUrl(word: string, cacheKey: string | null): string {
   const params = new URLSearchParams({ w: word.trim() })
   params.set('cache_only', '1')
   if (cacheKey) params.set('v', cacheKey)
-  return `/api/tts/word-audio?${params.toString()}`
+  return buildApiUrl(`/api/tts/word-audio?${params.toString()}`)
 }
 
 async function fetchWordAudioCacheProbe(url: string, method: 'GET' | 'HEAD'): Promise<Response> {
@@ -171,7 +171,7 @@ async function fetchWordAudioCacheProbe(url: string, method: 'GET' | 'HEAD'): Pr
   const timeoutId = globalThis.setTimeout(() => controller.abort(), WORD_AUDIO_CACHE_PROBE_TIMEOUT_MS)
   request.signal = controller.signal
   try {
-    return await fetch(url, request)
+    return await apiRequest(url, request)
   } finally {
     globalThis.clearTimeout(timeoutId)
   }
@@ -179,7 +179,7 @@ async function fetchWordAudioCacheProbe(url: string, method: 'GET' | 'HEAD'): Pr
 
 async function fetchWordAudioMetadata(word: string): Promise<WordAudioMetadata> {
   try {
-    const response = await fetch(buildWordAudioMetadataUrl(word), {
+    const response = await apiRequest(buildWordAudioMetadataUrl(word), {
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
@@ -274,12 +274,12 @@ function buildExampleAudioUrl(sentence: string, word: string, cacheKey: string |
   const trimmedWord = word.trim()
   if (trimmedWord) params.set('word', trimmedWord)
   if (cacheKey) params.set('v', cacheKey)
-  return `/api/tts/example-audio?${params.toString()}`
+  return buildApiUrl(`/api/tts/example-audio?${params.toString()}`)
 }
 
 async function fetchExampleAudioMetadata(sentence: string, word: string): Promise<AudioMetadata> {
   try {
-    const response = await fetch('/api/tts/example-audio', {
+    const response = await apiRequest('/api/tts/example-audio', {
       method: 'POST',
       cache: 'no-store',
       headers: {
@@ -311,7 +311,7 @@ async function ensureExampleAudioEntry(
   const existingRequest = exampleBinaryRequestCache.get(key)
   if (existingRequest) return existingRequest
   const nextRequest = fetchValidatedAudioEntry(async () =>
-    fetch('/api/tts/example-audio', {
+    apiRequest('/api/tts/example-audio', {
       method: 'POST',
       cache: 'no-store',
       headers: {
@@ -339,7 +339,7 @@ async function ensureFollowClipEntry(
   const existingRequest = followBinaryRequestCache.get(cacheKey)
   if (existingRequest) return existingRequest
   const nextRequest = fetchValidatedAudioEntry(async () =>
-    fetch(clipUrl, {
+    apiRequest(clipUrl, {
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },

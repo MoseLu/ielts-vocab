@@ -1,4 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('../../lib', async () => {
+  const actual = await vi.importActual<typeof import('../../lib')>('../../lib')
+  return {
+    ...actual,
+    apiRequest: (url: string, options?: RequestInit) => globalThis.fetch(url, options),
+    buildApiUrl: (path: string) => path,
+  }
+})
+
 import { __resetAudioStateForTests, playWordAudio, stopAudio } from './utils'
 
 class BlockingAudio {

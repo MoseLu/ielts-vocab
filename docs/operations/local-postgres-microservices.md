@@ -58,7 +58,7 @@ Keep `backend/.env` as the shared application secret/config source.
 
 Load `backend/.env.microservices.local` after it when starting the split services so the service-specific database URLs win over the default SQLite fallback.
 
-If you do not want generated credentials yet, copy [backend/.env.microservices.local.example](/F:/enterprise-workspace/projects/ielts-vocab/backend/.env.microservices.local.example) into a local untracked env file and fill the passwords yourself.
+If you do not want generated credentials yet, copy [backend/.env.microservices.local.example](../../backend/.env.microservices.local.example) into a local untracked env file and fill the passwords yourself.
 
 ## One-Command Backend Startup
 
@@ -84,7 +84,7 @@ record the drill output instead of treating the fallback as a daily startup path
 
 ## Schema Bootstrap And Data Migration
 
-The repository now includes [migrate-sqlite-to-microservice-postgres.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/migrate-sqlite-to-microservice-postgres.py).
+The repository now includes [migrate-sqlite-to-microservice-postgres.py](../../scripts/migrate-sqlite-to-microservice-postgres.py).
 
 Use it to inspect the per-service table plan:
 

@@ -191,7 +191,7 @@ If a new endpoint needs a database query and provider call, do not place both di
 
 ## Document Index
 
-- Backend overview: [backend/README.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/README.md)
-- API contracts: [backend/API.md](/F:/enterprise-workspace/projects/ielts-vocab/backend/API.md)
-- Service ownership matrix: [service-ownership-matrix.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/service-ownership-matrix.md)
-- Gateway service contracts: [gateway-service-contracts.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/architecture/gateway-service-contracts.md)
+- Backend overview: [backend/README.md](../../backend/README.md)
+- API contracts: [backend/API.md](../../backend/API.md)
+- Service ownership matrix: [service-ownership-matrix.md](./service-ownership-matrix.md)
+- Gateway service contracts: [gateway-service-contracts.md](./gateway-service-contracts.md)

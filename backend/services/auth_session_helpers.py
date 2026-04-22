@@ -61,8 +61,14 @@ def is_mock_email_delivery(app) -> bool:
     return (app.config.get('EMAIL_CODE_DELIVERY_MODE') or 'mock') == 'mock'
 
 
+def allow_mock_email_delivery(app) -> bool:
+    return bool(app.config.get('ALLOW_MOCK_EMAIL_DELIVERY', False) or app.config.get('TESTING', False))
+
+
 def verification_code_message(app, *, generic: bool) -> str:
     if is_mock_email_delivery(app):
+        if not allow_mock_email_delivery(app):
+            return '邮箱服务未配置，请稍后再试'
         prefix = '如果该邮箱已注册，验证码已生成' if generic else '验证码已生成'
         return f'{prefix}，开发环境请查看后端日志（有效期10分钟）'
     prefix = '如果该邮箱已注册，验证码已发送' if generic else '验证码已发送'

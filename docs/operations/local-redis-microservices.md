@@ -17,7 +17,7 @@ Split services now resolve Redis config in this order:
 3. `<SERVICE_PREFIX>_REDIS_HOST`, `_PORT`, `_DB`, `_PASSWORD`, `_SSL`
 4. generic `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_PASSWORD`, `REDIS_SSL`
 
-The checked-in example file [backend/.env.microservices.local.example](/F:/enterprise-workspace/projects/ielts-vocab/backend/.env.microservices.local.example) now includes:
+The checked-in example file [backend/.env.microservices.local.example](../../backend/.env.microservices.local.example) now includes:
 
 - shared host and port for the local Redis runtime
 - one logical Redis DB index per split service
