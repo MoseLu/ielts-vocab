@@ -35,8 +35,6 @@ BOOTSTRAP_TOPIC = '__bootstrap__'
 REPO_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_PATH = REPO_ROOT / 'backend'
 REQUIRED_SERVICES = (
-    'identity-service',
-    'learning-core-service',
     'admin-ops-service',
     'notes-service',
     'ai-execution-service',
@@ -61,19 +59,19 @@ GROUP_SPECS: dict[str, dict[str, ProjectionStatusSpec]] = {
     'admin': {
         'user_directory': ProjectionStatusSpec(
             projection_name=USER_DIRECTORY_PROJECTION,
-            source=TableCountSpec('identity-service', 'users'),
+            source=TableCountSpec('admin-ops-service', 'users'),
             projected=TableCountSpec('admin-ops-service', 'admin_projected_users'),
             cursor=TableCountSpec('admin-ops-service', 'admin_projection_cursors'),
         ),
         'study_sessions': ProjectionStatusSpec(
             projection_name=STUDY_SESSION_ANALYTICS_PROJECTION,
-            source=TableCountSpec('learning-core-service', 'user_study_sessions'),
+            source=TableCountSpec('admin-ops-service', 'user_study_sessions'),
             projected=TableCountSpec('admin-ops-service', 'admin_projected_study_sessions'),
             cursor=TableCountSpec('admin-ops-service', 'admin_projection_cursors'),
         ),
         'wrong_words': ProjectionStatusSpec(
             projection_name=WRONG_WORD_DIRECTORY_PROJECTION,
-            source=TableCountSpec('learning-core-service', 'user_wrong_words'),
+            source=TableCountSpec('admin-ops-service', 'user_wrong_words'),
             projected=TableCountSpec('admin-ops-service', 'admin_projected_wrong_words'),
             cursor=TableCountSpec('admin-ops-service', 'admin_projection_cursors'),
         ),
@@ -81,13 +79,13 @@ GROUP_SPECS: dict[str, dict[str, ProjectionStatusSpec]] = {
     'notes': {
         'study_sessions': ProjectionStatusSpec(
             projection_name=NOTES_STUDY_SESSION_CONTEXT_PROJECTION,
-            source=TableCountSpec('learning-core-service', 'user_study_sessions'),
+            source=TableCountSpec('notes-service', 'user_study_sessions'),
             projected=TableCountSpec('notes-service', 'notes_projected_study_sessions'),
             cursor=TableCountSpec('notes-service', 'notes_projection_cursors'),
         ),
         'wrong_words': ProjectionStatusSpec(
             projection_name=NOTES_WRONG_WORD_CONTEXT_PROJECTION,
-            source=TableCountSpec('learning-core-service', 'user_wrong_words'),
+            source=TableCountSpec('notes-service', 'user_wrong_words'),
             projected=TableCountSpec('notes-service', 'notes_projected_wrong_words'),
             cursor=TableCountSpec('notes-service', 'notes_projection_cursors'),
         ),
@@ -95,13 +93,13 @@ GROUP_SPECS: dict[str, dict[str, ProjectionStatusSpec]] = {
     'ai': {
         'wrong_words': ProjectionStatusSpec(
             projection_name=AI_WRONG_WORD_CONTEXT_PROJECTION,
-            source=TableCountSpec('learning-core-service', 'user_wrong_words'),
+            source=TableCountSpec('ai-execution-service', 'user_wrong_words'),
             projected=TableCountSpec('ai-execution-service', 'ai_projected_wrong_words'),
             cursor=TableCountSpec('ai-execution-service', 'ai_projection_cursors'),
         ),
         'daily_summaries': ProjectionStatusSpec(
             projection_name=AI_DAILY_SUMMARY_CONTEXT_PROJECTION,
-            source=TableCountSpec('notes-service', 'user_daily_summaries'),
+            source=TableCountSpec('ai-execution-service', 'user_daily_summaries'),
             projected=TableCountSpec('ai-execution-service', 'ai_projected_daily_summaries'),
             cursor=TableCountSpec('ai-execution-service', 'ai_projection_cursors'),
         ),

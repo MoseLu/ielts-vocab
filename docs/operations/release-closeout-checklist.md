@@ -59,7 +59,7 @@ The bounded storage drill resolves its source snapshot in this order:
 
 Routine release closeout now runs the bounded storage drill with `CLOSEOUT_RUN_STORAGE_PARITY=false` by default. That keeps the artifact/reference checks and smoke path in the closeout, while avoiding false failures against an archival SQLite snapshot after live PostgreSQL writes continue in production. Set `CLOSEOUT_RUN_STORAGE_PARITY=true` only when you also have a fresh canonical SQLite snapshot for the current production state.
 
-The projection verify step now runs in split-runtime mode by default. It checks the `identity-service`, `learning-core-service`, `admin-ops-service`, `notes-service`, and `ai-execution-service` databases directly via the sourced service env vars, so the closeout no longer reports a false green/red result from a release-local `backend/database.sqlite`.
+The projection verify step now runs in split-runtime mode by default. It checks the `admin-ops-service`, `notes-service`, and `ai-execution-service` databases directly via the sourced service env vars, and compares each projection against the service-local shadow source tables that the bootstrap flow actually uses. That keeps the closeout aligned with the real cutover contract instead of reporting a false green/red result from a release-local `backend/database.sqlite`.
 
 By default the bounded storage drill uses:
 

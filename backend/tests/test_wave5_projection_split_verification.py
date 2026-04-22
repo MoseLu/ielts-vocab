@@ -66,35 +66,23 @@ def test_collect_split_runtime_status_uses_service_owned_databases(monkeypatch, 
     monkeypatch.setenv('SECRET_KEY', 'test-secret')
     monkeypatch.setenv('JWT_SECRET_KEY', 'test-jwt-secret')
 
-    identity_db = tmp_path / 'identity.sqlite'
-    learning_db = tmp_path / 'learning.sqlite'
     admin_db = tmp_path / 'admin.sqlite'
     notes_db = tmp_path / 'notes.sqlite'
     ai_db = tmp_path / 'ai.sqlite'
 
     _create_db(
-        identity_db,
-        [
-            'CREATE TABLE users (id INTEGER PRIMARY KEY)',
-            'INSERT INTO users (id) VALUES (1)',
-        ],
-    )
-    _create_db(
-        learning_db,
-        [
-            'CREATE TABLE user_study_sessions (id INTEGER PRIMARY KEY)',
-            'CREATE TABLE user_wrong_words (id INTEGER PRIMARY KEY)',
-            'INSERT INTO user_study_sessions (id) VALUES (1), (2)',
-            'INSERT INTO user_wrong_words (id) VALUES (1), (2), (3)',
-        ],
-    )
-    _create_db(
         admin_db,
         [
+            'CREATE TABLE users (id INTEGER PRIMARY KEY)',
+            'CREATE TABLE user_study_sessions (id INTEGER PRIMARY KEY)',
+            'CREATE TABLE user_wrong_words (id INTEGER PRIMARY KEY)',
             'CREATE TABLE admin_projected_users (id INTEGER PRIMARY KEY)',
             'CREATE TABLE admin_projected_study_sessions (id INTEGER PRIMARY KEY)',
             'CREATE TABLE admin_projected_wrong_words (id INTEGER PRIMARY KEY)',
             'CREATE TABLE admin_projection_cursors (projection_name TEXT PRIMARY KEY, last_topic TEXT, last_processed_at TEXT)',
+            'INSERT INTO users (id) VALUES (1)',
+            'INSERT INTO user_study_sessions (id) VALUES (1), (2)',
+            'INSERT INTO user_wrong_words (id) VALUES (1), (2), (3)',
             "INSERT INTO admin_projected_users (id) VALUES (1)",
             "INSERT INTO admin_projected_study_sessions (id) VALUES (1), (2)",
             "INSERT INTO admin_projected_wrong_words (id) VALUES (1), (2), (3)",
@@ -106,13 +94,15 @@ def test_collect_split_runtime_status_uses_service_owned_databases(monkeypatch, 
     _create_db(
         notes_db,
         [
+            'CREATE TABLE user_study_sessions (id INTEGER PRIMARY KEY)',
+            'CREATE TABLE user_wrong_words (id INTEGER PRIMARY KEY)',
             'CREATE TABLE notes_projected_study_sessions (id INTEGER PRIMARY KEY)',
             'CREATE TABLE notes_projected_wrong_words (id INTEGER PRIMARY KEY)',
             'CREATE TABLE notes_projection_cursors (projection_name TEXT PRIMARY KEY, last_topic TEXT, last_processed_at TEXT)',
-            'CREATE TABLE user_daily_summaries (id INTEGER PRIMARY KEY)',
+            'INSERT INTO user_study_sessions (id) VALUES (1), (2)',
+            'INSERT INTO user_wrong_words (id) VALUES (1), (2), (3)',
             'INSERT INTO notes_projected_study_sessions (id) VALUES (1), (2)',
             'INSERT INTO notes_projected_wrong_words (id) VALUES (1), (2), (3)',
-            'INSERT INTO user_daily_summaries (id) VALUES (1), (2), (3), (4)',
             "INSERT INTO notes_projection_cursors (projection_name, last_topic, last_processed_at) VALUES ('notes.study-session-context.bootstrap', '__bootstrap__', '2026-04-22T04:00:00')",
             "INSERT INTO notes_projection_cursors (projection_name, last_topic, last_processed_at) VALUES ('notes.wrong-word-context.bootstrap', '__bootstrap__', '2026-04-22T04:00:00')",
         ],
@@ -120,9 +110,13 @@ def test_collect_split_runtime_status_uses_service_owned_databases(monkeypatch, 
     _create_db(
         ai_db,
         [
+            'CREATE TABLE user_wrong_words (id INTEGER PRIMARY KEY)',
+            'CREATE TABLE user_daily_summaries (id INTEGER PRIMARY KEY)',
             'CREATE TABLE ai_projected_wrong_words (id INTEGER PRIMARY KEY)',
             'CREATE TABLE ai_projected_daily_summaries (id INTEGER PRIMARY KEY)',
             'CREATE TABLE ai_projection_cursors (projection_name TEXT PRIMARY KEY, last_topic TEXT, last_processed_at TEXT)',
+            'INSERT INTO user_wrong_words (id) VALUES (1), (2), (3)',
+            'INSERT INTO user_daily_summaries (id) VALUES (1), (2), (3), (4)',
             'INSERT INTO ai_projected_wrong_words (id) VALUES (1), (2), (3)',
             'INSERT INTO ai_projected_daily_summaries (id) VALUES (1), (2), (3), (4)',
             "INSERT INTO ai_projection_cursors (projection_name, last_topic, last_processed_at) VALUES ('ai.wrong-word-context.bootstrap', '__bootstrap__', '2026-04-22T04:00:00')",
@@ -130,8 +124,6 @@ def test_collect_split_runtime_status_uses_service_owned_databases(monkeypatch, 
         ],
     )
 
-    _set_service_sqlite(monkeypatch, 'identity-service', identity_db)
-    _set_service_sqlite(monkeypatch, 'learning-core-service', learning_db)
     _set_service_sqlite(monkeypatch, 'admin-ops-service', admin_db)
     _set_service_sqlite(monkeypatch, 'notes-service', notes_db)
     _set_service_sqlite(monkeypatch, 'ai-execution-service', ai_db)
