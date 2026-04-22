@@ -127,6 +127,90 @@ def test_validate_word_audio_oss_parity_reports_content_type_mismatch(monkeypatc
     assert 'content_type_mismatch: 1' in output
 
 
+def test_validate_word_audio_oss_parity_ignores_missing_everywhere_by_default(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    support_module = _load_module(SUPPORT_PATH, 'test_word_audio_oss_support_validate_missing_everywhere')
+    validate_module = _load_module(VALIDATE_PATH, 'test_validate_word_audio_oss_parity_missing_everywhere')
+
+    record = support_module.WordAudioRecord(
+        index=1,
+        word='hello',
+        normalized_word='hello',
+        model='model-a',
+        voice='voice-a',
+        cache_file=tmp_path / 'example.mp3',
+        object_key='projects/ielts-vocab/word-tts-cache/model-a-voice-a/example.mp3',
+    )
+    drift = support_module.WordAudioAuditResult(
+        record=record,
+        status=support_module.MISSING_EVERYWHERE,
+        local_byte_length=None,
+        oss_byte_length=None,
+        oss_content_type=None,
+    )
+
+    monkeypatch.setattr(validate_module.support.runtime, '_bucket_signature', lambda: ('a', 'b', 'c', 'd', 'e'))
+    monkeypatch.setattr(validate_module.support, 'resolve_book_ids', lambda selected: None)
+    monkeypatch.setattr(validate_module.support, 'iter_word_audio_audit_results', lambda book_ids: iter([drift]))
+
+    original_argv = sys.argv
+    try:
+        sys.argv = ['validate_word_audio_oss_parity.py']
+        exit_code = validate_module.main()
+    finally:
+        sys.argv = original_argv
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert '[missing_everywhere]' not in output
+    assert 'missing_everywhere: 1' in output
+
+
+def test_validate_word_audio_oss_parity_can_require_materialized_cache(
+    monkeypatch,
+    tmp_path,
+    capsys,
+):
+    support_module = _load_module(SUPPORT_PATH, 'test_word_audio_oss_support_validate_require_materialized')
+    validate_module = _load_module(VALIDATE_PATH, 'test_validate_word_audio_oss_parity_require_materialized')
+
+    record = support_module.WordAudioRecord(
+        index=1,
+        word='hello',
+        normalized_word='hello',
+        model='model-a',
+        voice='voice-a',
+        cache_file=tmp_path / 'example.mp3',
+        object_key='projects/ielts-vocab/word-tts-cache/model-a-voice-a/example.mp3',
+    )
+    drift = support_module.WordAudioAuditResult(
+        record=record,
+        status=support_module.MISSING_EVERYWHERE,
+        local_byte_length=None,
+        oss_byte_length=None,
+        oss_content_type=None,
+    )
+
+    monkeypatch.setattr(validate_module.support.runtime, '_bucket_signature', lambda: ('a', 'b', 'c', 'd', 'e'))
+    monkeypatch.setattr(validate_module.support, 'resolve_book_ids', lambda selected: None)
+    monkeypatch.setattr(validate_module.support, 'iter_word_audio_audit_results', lambda book_ids: iter([drift]))
+
+    original_argv = sys.argv
+    try:
+        sys.argv = ['validate_word_audio_oss_parity.py', '--require-materialized']
+        exit_code = validate_module.main()
+    finally:
+        sys.argv = original_argv
+
+    output = capsys.readouterr().out
+    assert exit_code == 1
+    assert '[missing_everywhere] projects/ielts-vocab/word-tts-cache/model-a-voice-a/example.mp3 word=hello' in output
+    assert 'missing_everywhere: 1' in output
+
+
 def test_backfill_word_audio_can_dry_run_missing_upload(monkeypatch, tmp_path, capsys):
     support_module = _load_module(SUPPORT_PATH, 'test_word_audio_oss_support_backfill')
     backfill_module = _load_module(BACKFILL_PATH, 'test_backfill_word_audio_to_oss')

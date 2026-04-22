@@ -33,6 +33,14 @@ def parse_args() -> argparse.Namespace:
         action='store_true',
         help='Also print records that are already present in OSS.',
     )
+    parser.add_argument(
+        '--require-materialized',
+        action='store_true',
+        help=(
+            'Treat missing word-audio bytes in both OSS and local cache as validation failures. '
+            'Leave disabled for the default on-demand materialization runtime.'
+        ),
+    )
     return parser.parse_args()
 
 
@@ -51,6 +59,21 @@ def _print_result(result) -> None:
             f'oss={result.oss_content_type}'
         )
     print(f'[{result.status}] {record.object_key} word={record.word}{detail}')
+
+
+def _is_blocking_status(status: str, *, require_materialized: bool) -> bool:
+    if status in {
+        support.MISSING_IN_OSS,
+        support.SIZE_MISMATCH,
+        support.CONTENT_TYPE_MISMATCH,
+    }:
+        return True
+    if require_materialized and status in {
+        support.MISSING_EVERYWHERE,
+        support.INVALID_LOCAL_MISSING_IN_OSS,
+    }:
+        return True
+    return False
 
 
 def main() -> int:
@@ -74,7 +97,10 @@ def main() -> int:
             break
 
         stats[result.status] += 1
-        if args.verbose or result.has_drift:
+        if args.verbose or _is_blocking_status(
+            result.status,
+            require_materialized=args.require_materialized,
+        ):
             _print_result(result)
 
     print('Summary:')
@@ -89,8 +115,13 @@ def main() -> int:
         stats[support.MISSING_IN_OSS]
         or stats[support.SIZE_MISMATCH]
         or stats[support.CONTENT_TYPE_MISMATCH]
-        or stats[support.MISSING_EVERYWHERE]
-        or stats[support.INVALID_LOCAL_MISSING_IN_OSS]
+        or (
+            args.require_materialized
+            and (
+                stats[support.MISSING_EVERYWHERE]
+                or stats[support.INVALID_LOCAL_MISSING_IN_OSS]
+            )
+        )
     ) else 0
 
 

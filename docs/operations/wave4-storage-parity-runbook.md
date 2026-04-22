@@ -207,6 +207,7 @@ python .\scripts\repair_notes_export_oss_reference.py --user-id 1 --format txt -
 ```bash
 python .\scripts\validate_word_audio_oss_parity.py
 python .\scripts\validate_word_audio_oss_parity.py --book-id ielts_reading_premium --limit 200 --verbose
+python .\scripts\validate_word_audio_oss_parity.py --require-materialized --book-id ielts_reading_premium --limit 200
 ```
 
 - word-audio OSS repair uses the local canonical cache as the primary source and can fall back to the current OSS payload when only `content_type` metadata drift needs repair:
@@ -218,6 +219,7 @@ python .\scripts\backfill_word_audio_to_oss.py --repair-size-mismatch --repair-c
 ```
 
 - the deployed remote drill can run the same word-audio repair flow inline with `DRILL_RUN_WORD_AUDIO_REPAIR=true`
+- by default, word-audio validation treats `missing_everywhere` as informational, because the cache/OSS set may still be lazily materialized on demand; use `--require-materialized` only when auditing a fully warmed cache set
 - example-audio OSS metadata drift can now be validated via:
 
 ```bash
