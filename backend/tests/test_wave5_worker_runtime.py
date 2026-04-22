@@ -35,6 +35,28 @@ def test_domain_worker_runtime_uses_once_mode_and_batch_limit_env(monkeypatch):
     assert calls == [7]
 
 
+def test_domain_worker_runtime_wraps_steps_in_service_app_context(monkeypatch):
+    events: list[str] = []
+
+    class FakeContext:
+        def __enter__(self):
+            events.append('enter')
+
+        def __exit__(self, exc_type, exc, traceback):
+            events.append('exit')
+
+    monkeypatch.setattr(domain_worker_runtime, 'worker_app_context', lambda: FakeContext())
+
+    processed = domain_worker_runtime.run_polling_worker(
+        worker_name='wave5.context-worker',
+        step=lambda limit: events.append(f'step:{limit}') or 1,
+        argv=['--once'],
+    )
+
+    assert processed == 1
+    assert events == ['enter', 'step:50', 'exit']
+
+
 def test_identity_outbox_publisher_runtime_uses_identity_service_contract(monkeypatch):
     captured: dict = {}
 

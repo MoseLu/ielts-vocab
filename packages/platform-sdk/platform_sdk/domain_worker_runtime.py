@@ -4,6 +4,8 @@ import os
 import time
 from collections.abc import Callable, Sequence
 
+from platform_sdk.service_worker_app_context import worker_app_context
+
 
 BATCH_LIMIT_ENV = 'DOMAIN_EVENT_WORKER_BATCH_LIMIT'
 IDLE_SLEEP_ENV = 'DOMAIN_EVENT_WORKER_IDLE_SECONDS'
@@ -46,14 +48,16 @@ def run_polling_worker(
     error_sleep_seconds = _read_float_env(ERROR_SLEEP_ENV, default_error_sleep_seconds)
 
     if run_once:
-        processed = step(batch_limit)
+        with worker_app_context():
+            processed = step(batch_limit)
         print(f'[{worker_name}] processed {processed} item(s) in one-shot mode.')
         return processed
 
     print(f'[{worker_name}] starting with batch_limit={batch_limit}.')
     while True:
         try:
-            processed = step(batch_limit)
+            with worker_app_context():
+                processed = step(batch_limit)
         except KeyboardInterrupt:
             print(f'[{worker_name}] stopping on keyboard interrupt.')
             return 0
