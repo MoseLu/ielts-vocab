@@ -19,6 +19,7 @@ DEPLOY_BUILD_MEMORY_MAX="${DEPLOY_BUILD_MEMORY_MAX:-1536M}"
 DEPLOY_BUILD_NICE="${DEPLOY_BUILD_NICE:-15}"
 DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB="${DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB:-512}"
 DEPLOY_BUILD_NPM_JOBS="${DEPLOY_BUILD_NPM_JOBS:-1}"
+RELEASE_ARTIFACT_ENV_FILE="${RELEASE_ARTIFACT_ENV_FILE:-.release-artifact.env}"
 
 HTTP_SERVICE_UNITS=(
   "gateway-bff"
@@ -126,10 +127,17 @@ ensure_python_runtime() {
 }
 
 ensure_node_runtime() {
+  local corepack_cmd=""
   require_command node
-  require_command corepack
-  corepack enable
-  corepack prepare pnpm@9.0.0 --activate
+  if command -v corepack.cmd >/dev/null 2>&1; then
+    corepack_cmd="corepack.cmd"
+  elif command -v corepack >/dev/null 2>&1; then
+    corepack_cmd="corepack"
+  else
+    fail "Missing required command: corepack"
+  fi
+  "${corepack_cmd}" enable
+  "${corepack_cmd}" prepare pnpm@9.0.0 --activate
 }
 
 run_deploy_job() {
@@ -170,15 +178,19 @@ clear_deploy_lock() {
   rm -f "${DEPLOY_LOCK_FILE}"
 }
 
-install_release_dependencies() {
+install_release_python_dependencies() {
   local release_dir="${1:?release dir is required}"
   ensure_python_runtime
-  ensure_node_runtime
   log "Installing Python dependencies under deploy resource limits"
   run_deploy_job "python-deps" "${VENV_DIR}/bin/pip" install \
     -r "${release_dir}/backend/requirements.txt" \
     -r "${release_dir}/services/requirements.txt"
   run_deploy_job "platform-sdk" "${VENV_DIR}/bin/pip" install -e "${release_dir}/packages/platform-sdk"
+}
+
+build_release_frontend() {
+  local release_dir="${1:?release dir is required}"
+  ensure_node_runtime
   log "Installing workspace dependencies under deploy resource limits"
   run_deploy_job "node-install" env \
     CI=1 \
@@ -190,6 +202,36 @@ install_release_dependencies() {
     npm_config_jobs="${DEPLOY_BUILD_NPM_JOBS}" \
     NODE_OPTIONS="--max-old-space-size=${DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB}" \
     pnpm --dir "${release_dir}" build
+}
+
+install_release_dependencies() {
+  local release_dir="${1:?release dir is required}"
+  install_release_python_dependencies "${release_dir}"
+  build_release_frontend "${release_dir}"
+}
+
+release_artifact_env_path() {
+  local release_dir="${1:?release dir is required}"
+  printf '%s/%s\n' "${release_dir}" "${RELEASE_ARTIFACT_ENV_FILE}"
+}
+
+read_release_artifact_value() {
+  local release_dir="${1:?release dir is required}"
+  local key="${2:?key is required}"
+  local env_file=""
+
+  env_file="$(release_artifact_env_path "${release_dir}")"
+  if [[ ! -f "${env_file}" ]]; then
+    printf '\n'
+    return 0
+  fi
+  awk -F= -v target="${key}" '$1 == target { sub(/^[^=]+=*/, "", $0); print $0; exit }' "${env_file}"
+}
+
+release_has_prebuilt_frontend() {
+  local release_dir="${1:?release dir is required}"
+  [[ -d "${release_dir}/dist" ]] || return 1
+  [[ "$(read_release_artifact_value "${release_dir}" "prebuilt_dist")" == "true" ]]
 }
 
 hydrate_release_git_index() {

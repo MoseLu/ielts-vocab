@@ -12,6 +12,7 @@ Deploy `ielts-vocab` to `119.29.182.134` as a single-server production baseline:
 - domain HTTP services run as single-instance `ielts-service@...` units on `8000` and `8101-8108`
 - PostgreSQL stores service-owned and bootstrap shadow tables
 - GitHub Actions deploys `main` by SSHing into the server and running a release-based rollout
+- GitHub Actions now builds a release artifact off-host, uploads it by SSH, and the server activates that artifact without rebuilding the frontend
 
 ## Runtime Layout
 
@@ -152,17 +153,19 @@ Recommended GitHub branch rules:
 The production workflow does this on each `main` release:
 
 1. Checks out the target ref from GitHub.
-2. Uploads the latest deploy scripts to a temporary directory on the server.
-3. Runs `preflight-check.sh <git-ref>` on the server to verify sudo, env files, broker baseline, nginx, systemd, and git access.
-4. Runs `deploy-release.sh <git-ref>` on the server.
-5. The server fetches the target commit from `/opt/ielts-vocab/repository`.
-6. A new immutable release directory is created under `/opt/ielts-vocab/releases`.
+2. Builds a release artifact with `scripts/cloud-deploy/build-release-artifact.sh`, including a prebuilt `dist/`.
+3. Uploads the artifact plus the latest deploy scripts to a temporary directory on the server.
+4. Runs `preflight-check.sh <git-ref>` on the server to verify sudo, env files, broker baseline, nginx, systemd, and git access.
+5. Runs `deploy-release-artifact.sh <artifact-path> <commit-sha>` on the server.
+6. The server extracts the artifact into a new immutable release directory under `/opt/ielts-vocab/releases`.
 7. PostgreSQL backup runs before the service restart.
 8. The release runs `scripts/run-service-schema-migrations.py` against the split-service databases before `current` switches.
 9. `/opt/ielts-vocab/current` and `/var/www/ielts-vocab/current` switch to the new immutable release.
 10. nginx is reloaded to keep `/api/*` on `127.0.0.1:8000`, then `ielts-service@...` units restart in place.
-11. The deploy smoke checks the restarted single-instance services and stops any leftover `ielts-http-slot@...` units from older releases.
+11. The deploy smoke checks the restarted single-instance services, verifies `ielts-health-watchdog.timer`, and stops any leftover `ielts-http-slot@...` units from older releases.
 12. If post-switch verification fails, deploy points `current` back to the previous release and restarts the single-instance services.
+
+This removes the slowest production-host steps from the steady-state release path: the server no longer runs `pnpm install` or `pnpm build` during normal deploys.
 
 ## Manual Deploy and Rollback
 
@@ -170,6 +173,14 @@ Manual production deploy:
 
 ```bash
 sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/deploy-release.sh main
+```
+
+Preferred artifact deploy:
+
+```bash
+bash scripts/cloud-deploy/build-release-artifact.sh HEAD /tmp/ielts-vocab-release.tgz
+scp /tmp/ielts-vocab-release.tgz <host>:/tmp/ielts-vocab-release.tgz
+ssh <host> "sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/deploy-release-artifact.sh /tmp/ielts-vocab-release.tgz <commit-sha>"
 ```
 
 Manual service-schema migration run:

@@ -46,6 +46,21 @@ jobs:
         with:
           ref: ${{ needs.resolve-ref.outputs.git_ref }}
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Build release artifact
+        shell: bash
+        run: |
+          corepack enable
+          artifact_path="${RUNNER_TEMP}/ielts-vocab-release.tgz"
+          bash scripts/cloud-deploy/build-release-artifact.sh HEAD "${artifact_path}"
+          echo "ARTIFACT_PATH=${artifact_path}" >> "$GITHUB_ENV"
+          echo "COMMIT_SHA=$(git rev-parse --verify HEAD)" >> "$GITHUB_ENV"
+
       - name: Configure SSH access
         shell: bash
         env:
@@ -67,9 +82,15 @@ jobs:
           remote_tmp="/tmp/ielts-vocab-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "rm -rf '${remote_tmp}' && mkdir -p '${remote_tmp}'"
           scp \
+            "${ARTIFACT_PATH}" \
             scripts/validate_speaking_band_thresholds.py \
+            scripts/cloud-deploy/build-release-artifact.sh \
+            scripts/cloud-deploy/deploy-release-artifact.sh \
             scripts/cloud-deploy/deploy-release.sh \
+            scripts/cloud-deploy/health-watchdog.sh \
             scripts/cloud-deploy/http-slot-common.sh \
+            scripts/cloud-deploy/ielts-health-watchdog.service \
+            scripts/cloud-deploy/ielts-health-watchdog.timer \
             scripts/cloud-deploy/preflight-check.sh \
             scripts/cloud-deploy/release-common.sh \
             scripts/cloud-deploy/rollback-release.sh \
@@ -92,7 +113,6 @@ jobs:
       - name: Run production deployment
         shell: bash
         env:
-          GIT_REF: ${{ needs.resolve-ref.outputs.git_ref }}
           PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
           PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
           PROD_APP_HOME: ${{ vars.PROD_APP_HOME }}
@@ -100,5 +120,5 @@ jobs:
         run: |
           app_home="${PROD_APP_HOME:-/opt/ielts-vocab}"
           smoke_host="${PROD_SMOKE_HOST:-axiomaticworld.com}"
-          remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; cleanup(){ run_privileged rm -rf '${REMOTE_TMP}'; }; trap cleanup EXIT; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' SMOKE_HOST='${smoke_host}' bash '${REMOTE_TMP}/deploy-release.sh' '${GIT_REF}'"
+          remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; cleanup(){ run_privileged rm -rf '${REMOTE_TMP}'; }; trap cleanup EXIT; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' SMOKE_HOST='${smoke_host}' bash '${REMOTE_TMP}/deploy-release-artifact.sh' '${REMOTE_TMP}/ielts-vocab-release.tgz' '${COMMIT_SHA}'"
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "${remote_cmd}"
