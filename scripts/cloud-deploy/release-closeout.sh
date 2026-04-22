@@ -57,7 +57,9 @@ log "Log directory: ${CLOSEOUT_LOG_DIR}"
 {
   log "Running projection verify"
   PYTHONPATH="${CURRENT_LINK}/backend:${CURRENT_LINK}/packages/platform-sdk:${PYTHONPATH:-}" \
-    "${VENV_DIR}/bin/python" "${CURRENT_LINK}/scripts/run-wave5-projection-cutover.py" --verify-only
+    "${VENV_DIR}/bin/python" "${CURRENT_LINK}/scripts/run-wave5-projection-cutover.py" \
+      --runtime "${CLOSEOUT_PROJECTION_RUNTIME:-split}" \
+      --verify-only
 } 2>&1 | tee "${CLOSEOUT_LOG_DIR}/projection-verify.log"
 
 log "Release closeout completed successfully"
