@@ -57,6 +57,8 @@ The bounded storage drill resolves its source snapshot in this order:
 - `backend/database.sqlite`
 - newest `APP_HOME/source/*.sqlite`
 
+Routine release closeout now runs the bounded storage drill with `CLOSEOUT_RUN_STORAGE_PARITY=false` by default. That keeps the artifact/reference checks and smoke path in the closeout, while avoiding false failures against an archival SQLite snapshot after live PostgreSQL writes continue in production. Set `CLOSEOUT_RUN_STORAGE_PARITY=true` only when you also have a fresh canonical SQLite snapshot for the current production state.
+
 By default the bounded storage drill uses:
 
 - `DRILL_EXAMPLE_AUDIO_BOOK_ID=ielts_reading_premium`

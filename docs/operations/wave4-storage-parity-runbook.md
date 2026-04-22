@@ -137,6 +137,8 @@ sudo APP_HOME=/opt/ielts-vocab DRILL_ROLLBACK_TARGET=/opt/ielts-vocab/releases/<
 
 If the active release artifact no longer carries `backend/database.sqlite`, keep a canonical snapshot under `/opt/ielts-vocab/source/*.sqlite` or set `DRILL_SOURCE_SQLITE` explicitly for the remote operator run.
 
+For routine production release closeout, prefer `CLOSEOUT_RUN_STORAGE_PARITY=false` and keep full SQLite parity as an explicit operator drill. Once split PostgreSQL is the live write source, an archival SQLite snapshot will naturally drift unless you refresh it first.
+
 When a remote repair or rollback drill must temporarily restart only selected guarded services against the shared SQLite fallback, use:
 
 ```bash

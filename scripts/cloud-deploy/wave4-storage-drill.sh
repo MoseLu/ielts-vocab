@@ -9,6 +9,7 @@ DRILL_RECORD_PATH="${DRILL_RECORD_PATH:-}"
 DRILL_RECORD_ACTIVE="${DRILL_RECORD_ACTIVE:-false}"
 DRILL_SCOPE="${DRILL_SCOPE:-owned}"
 DRILL_RUN_REPAIR="${DRILL_RUN_REPAIR:-false}"
+DRILL_RUN_STORAGE_PARITY="${DRILL_RUN_STORAGE_PARITY:-true}"
 DRILL_SOURCE_SQLITE="${DRILL_SOURCE_SQLITE:-}"
 DRILL_RUN_SMOKE="${DRILL_RUN_SMOKE:-true}"
 DRILL_RUN_NOTES_EXPORT_VALIDATION="${DRILL_RUN_NOTES_EXPORT_VALIDATION:-true}"
@@ -234,7 +235,11 @@ main() {
   log "Wave 4 remote storage drill starting"
   log "Current release: $(current_target_path)"
   validate_rollback_target "${DRILL_ROLLBACK_TARGET}"
-  run_storage_parity_check
+  if bool_is_true "${DRILL_RUN_STORAGE_PARITY}"; then
+    run_storage_parity_check
+  else
+    log "Skipping SQLite parity validation because DRILL_RUN_STORAGE_PARITY=false"
+  fi
 
   if oss_configured; then
     if bool_is_true "${DRILL_RUN_NOTES_EXPORT_REPAIR}"; then
