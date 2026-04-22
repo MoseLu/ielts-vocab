@@ -1,6 +1,6 @@
 # Remote Production Baseline
 
-Last updated: 2026-04-11 20:32:06 +08:00
+Last updated: 2026-04-22 22:55:00 +08:00
 
 ## Scope
 
@@ -8,15 +8,15 @@ This document freezes the current remote production baseline on `119.29.182.134`
 
 ## Active systemd units
 
-- `ielts-http-slot@<active-slot>.gateway-bff`
-- `ielts-http-slot@<active-slot>.identity-service`
-- `ielts-http-slot@<active-slot>.learning-core-service`
-- `ielts-http-slot@<active-slot>.catalog-content-service`
-- `ielts-http-slot@<active-slot>.ai-execution-service`
-- `ielts-http-slot@<active-slot>.tts-media-service`
-- `ielts-http-slot@<active-slot>.asr-service`
-- `ielts-http-slot@<active-slot>.notes-service`
-- `ielts-http-slot@<active-slot>.admin-ops-service`
+- `ielts-service@gateway-bff`
+- `ielts-service@identity-service`
+- `ielts-service@learning-core-service`
+- `ielts-service@catalog-content-service`
+- `ielts-service@ai-execution-service`
+- `ielts-service@tts-media-service`
+- `ielts-service@asr-service`
+- `ielts-service@notes-service`
+- `ielts-service@admin-ops-service`
 - `ielts-service@asr-socketio`
 - `redis`
 - `rabbitmq-server`
@@ -25,21 +25,19 @@ This document freezes the current remote production baseline on `119.29.182.134`
 
 - nginx serves frontend assets from `/var/www/ielts-vocab/current`
 - `https://axiomaticworld.com/` -> nginx `:80` -> active release `dist` symlink
-- `https://axiomaticworld.com/api/*` -> nginx -> active HTTP slot `gateway-bff`
+- `https://axiomaticworld.com/api/*` -> nginx -> `gateway-bff` on `127.0.0.1:8000`
 - `https://axiomaticworld.com/socket.io/*` -> nginx -> ASR Socket.IO on `127.0.0.1:5001`
-- Active HTTP slot readiness ports:
-  - `blue`: `gateway-bff` `18000`, services `18101-18108`
-  - `green`: `gateway-bff` `28000`, services `28101-28108`
+- Active readiness ports:
+  - `gateway-bff`: `8000`
+  - services: `8101-8108`
   - `asr-socketio`: `5001`
 
 ## Env-file locations
 
 - Shared production secrets: `/etc/ielts-vocab/backend.env`
 - Service PostgreSQL URLs, split-service ports, and Wave 5 Redis/RabbitMQ settings: `/etc/ielts-vocab/microservices.env`
-- HTTP slot port and same-slot URL overlays: `/etc/ielts-vocab/http-slots/<blue|green>.env`
 - Release root: `/opt/ielts-vocab/current`
-- HTTP slot release roots: `/opt/ielts-vocab/http-slots/<blue|green>/current`
-- Deploy state records: `/opt/ielts-vocab/deploy-state/active-http-slot`, `last-good-release`, and `last-good-slot`
+- Deploy state records: `/opt/ielts-vocab/deploy-state/last-good-release`
 - Git fetch root for deploys: `/opt/ielts-vocab/repository`
 
 ## GitHub access baseline
@@ -79,7 +77,7 @@ sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deplo
 
 Status snapshot on `2026-04-11`: the broker baseline was provisioned successfully on `119.29.182.134`, and both the updated `preflight-check.sh` and `smoke-check.sh` passed with broker validation enabled.
 
-The deployed release path on `119.29.182.134` now includes the worker-aware [run-service.sh](../../scripts/cloud-deploy/run-service.sh) contract, so deploy/rollback/smoke can manage worker units when the target release contains those entrypoints. This baseline freezes the always-on browser-path units above; Wave 5 worker activity should still be verified from the deploy and smoke evidence for each release instead of assumed from this static list alone.
+The deployed release path on `119.29.182.134` now uses the worker-aware [run-service.sh](../../scripts/cloud-deploy/run-service.sh) contract for both browser-path services and workers. Deploy/rollback restarts the single-instance `ielts-service@...` set in place and then stops any leftover `ielts-http-slot@...` units from older blue/green releases.
 
 ## PostgreSQL backup path
 
@@ -136,12 +134,11 @@ Wave 4 record generation command:
 Every remote rollout must keep these checks green:
 
 - broker env plus Redis/RabbitMQ connectivity through `validate-broker-runtime.sh`
-- active-slot `gateway-bff` and HTTP service `/ready` checks from `/etc/ielts-vocab/http-slots/<slot>.env`
+- `gateway-bff` and HTTP service `/ready` checks on `127.0.0.1:8000` and `127.0.0.1:8101-8108`
 - `http://127.0.0.1:5001/ready`
 - `http://127.0.0.1/` with `Host: axiomaticworld.com`
 - `http://127.0.0.1/api/books` with `Host: axiomaticworld.com`
-- `smoke-check.sh` reads the active HTTP slot and substitutes its generated port assignments when `/opt/ielts-vocab/deploy-state/active-http-slot` exists.
-- Pre-switch slot validation uses `SMOKE_HTTP_SLOT=<slot> SMOKE_SKIP_NGINX=true SMOKE_SKIP_WORKERS=true` and must include the AI dependency probe, including the quick-memory review-queue chain.
+- `smoke-check.sh` defaults to the single-instance ports above; temporary `SMOKE_HTTP_SLOT=<slot>` overrides remain only for cleanup or historical troubleshooting.
 
 ## External smoke flow
 

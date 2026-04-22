@@ -250,6 +250,11 @@ restart_service_units() {
   done
 }
 
+stop_all_http_slot_services() {
+  stop_http_slot_services blue
+  stop_http_slot_services green
+}
+
 restart_single_instance_units() {
   local target_release=""
   local service

@@ -37,9 +37,6 @@ if [[ ! -d "${probe_repo}/.git" && -d "${CURRENT_LINK}/.git" ]]; then
 fi
 
 [[ -f /etc/systemd/system/ielts-service@.service ]] || fail "Missing systemd template: /etc/systemd/system/ielts-service@.service"
-if [[ ! -f /etc/systemd/system/ielts-http-slot@.service ]]; then
-  log "HTTP slot systemd template will be installed by the next deploy"
-fi
 
 log "Checking git access for ${git_ref}"
 git -C "${probe_repo}" ls-remote --exit-code origin HEAD >/dev/null

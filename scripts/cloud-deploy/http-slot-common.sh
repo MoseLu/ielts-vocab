@@ -311,6 +311,20 @@ record_legacy_http_activation() {
   : > "${LAST_GOOD_SLOT_FILE}"
 }
 
+record_single_release_activation() {
+  local release_dir="${1:?release dir is required}"
+  local previous_release="${2:-}"
+  mkdir -p "${DEPLOY_STATE_DIR}"
+  rm -f "${ACTIVE_HTTP_SLOT_FILE}"
+  printf '%s\n' "${release_dir}" > "${ACTIVE_HTTP_RELEASE_FILE}"
+  if [[ -n "${previous_release}" && "${previous_release}" != "${release_dir}" ]]; then
+    printf '%s\n' "${previous_release}" > "${LAST_GOOD_RELEASE_FILE}"
+  else
+    printf '%s\n' "${release_dir}" > "${LAST_GOOD_RELEASE_FILE}"
+  fi
+  : > "${LAST_GOOD_SLOT_FILE}"
+}
+
 activate_http_slot_release() {
   local slot="${1:?slot is required}"
   local release_dir="${2:?release dir is required}"

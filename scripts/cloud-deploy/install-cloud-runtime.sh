@@ -115,9 +115,6 @@ if [[ -f "${env_dir}/microservices.env" ]]; then
   "${app_root}/scripts/cloud-deploy/provision-broker-runtime.sh" "${env_dir}/microservices.env"
 fi
 cp "${app_root}/scripts/cloud-deploy/ielts-service@.service" /etc/systemd/system/
-install_http_slot_systemd_template "${app_root}"
-write_http_slot_env blue
-write_http_slot_env green
 ensure_nginx_gateway_upstream
 if [[ -f /etc/nginx/conf.d/ielts-vocab.conf ]] && grep -q 'managed by Certbot' /etc/nginx/conf.d/ielts-vocab.conf; then
   echo "Preserving existing Certbot-managed nginx site config."

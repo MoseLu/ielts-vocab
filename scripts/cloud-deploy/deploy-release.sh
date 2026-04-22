@@ -7,9 +7,6 @@ source "${script_dir}/release-common.sh"
 git_ref="${1:?git ref is required}"
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 switched=false
-target_slot=""
-previous_slot=""
-previous_release=""
 previous_current=""
 release_dir=""
 
@@ -39,30 +36,17 @@ should_bootstrap_admin_projections() {
 
 rollback_after_failure() {
   if [[ "${switched}" != "true" ]]; then
-    if [[ -n "${target_slot}" ]]; then
-      log "Stopping HTTP ${target_slot} slot after failed pre-switch step"
-      stop_http_slot_services "${target_slot}" || true
-    fi
     return 0
   fi
-  log "Attempting rollback after failed post-switch step"
-  if [[ -n "${previous_slot}" && -n "${previous_release}" ]]; then
-    set_http_slot_release "${previous_slot}" "${previous_release}"
-    write_http_slot_env "${previous_slot}"
-    start_http_slot_services "${previous_slot}"
-    activate_http_slot_release "${previous_slot}" "${previous_release}" "${target_slot}" "${release_dir}" "current"
-  elif [[ -n "${previous_current}" && -d "${previous_current}" ]]; then
+  if [[ -n "${previous_current}" && -d "${previous_current}" ]]; then
+    log "Attempting rollback to previous single-release deployment"
+    set_current_release "${previous_current}"
     switch_frontend_to_release "${previous_current}"
     write_nginx_gateway_upstream_for_port "8000"
     nginx -t >/dev/null && systemctl reload nginx
-    record_legacy_http_activation "${previous_current}"
-  fi
-  if [[ -n "${previous_current}" && -d "${previous_current}" ]]; then
-    set_current_release "${previous_current}"
-    restart_single_instance_units || true
-  fi
-  if [[ -n "${target_slot}" ]]; then
-    stop_http_slot_services "${target_slot}"
+    record_single_release_activation "${previous_current}"
+    restart_service_units || true
+    stop_all_http_slot_services || true
   fi
 }
 
@@ -84,14 +68,6 @@ prepare_repository_root
 commit_sha="$(fetch_git_commit "${git_ref}")"
 release_dir="${RELEASES_ROOT}/${timestamp}-$(printf '%s' "${commit_sha}" | cut -c1-12)"
 previous_current="$(current_target_path)"
-previous_slot="$(active_http_slot)"
-if [[ -n "${previous_slot}" ]]; then
-  previous_release="$(http_slot_release_path "${previous_slot}")"
-fi
-if [[ -z "${previous_release}" ]]; then
-  previous_release="${previous_current}"
-fi
-target_slot="$(inactive_http_slot "${previous_slot}")"
 schema_migration_script="${release_dir}/scripts/run-service-schema-migrations.py"
 
 log "Preparing release ${release_dir} from ${commit_sha}"
@@ -112,37 +88,22 @@ else
 fi
 if [[ -e "${CURRENT_LINK}" && ! -L "${CURRENT_LINK}" ]]; then
   previous_current="$(stage_current_directory_as_legacy_release "${timestamp}")"
-  if [[ -z "${previous_release}" ]]; then
-    previous_release="${previous_current}"
-  fi
 fi
 
-log "Preparing HTTP ${target_slot} slot"
-install_http_slot_systemd_template "${release_dir}"
-set_http_slot_release "${target_slot}" "${release_dir}"
-write_http_slot_env "${target_slot}"
-start_http_slot_services "${target_slot}"
-
-log "Running pre-switch smoke checks for HTTP ${target_slot} slot"
-SMOKE_HTTP_SLOT="${target_slot}" \
-SMOKE_SKIP_NGINX=true \
-SMOKE_SKIP_WORKERS=true \
-VALIDATE_BROKER_SCRIPT="${release_dir}/scripts/cloud-deploy/validate-broker-runtime.sh" \
-  "${release_dir}/scripts/cloud-deploy/smoke-check.sh"
-
-log "Switching frontend and API traffic to HTTP ${target_slot} slot"
-activate_http_slot_release "${target_slot}" "${release_dir}" "${previous_slot}" "${previous_release}"
-switched=true
+log "Activating single-release deployment"
 set_current_release "${release_dir}"
-restart_single_instance_units
-if [[ -n "${previous_slot}" && "${previous_slot}" != "${target_slot}" ]]; then
-  stop_http_slot_services "${previous_slot}"
-fi
-stop_legacy_http_units
+switch_frontend_to_release "${release_dir}"
+write_nginx_gateway_upstream_for_port "8000"
+nginx -t >/dev/null
+systemctl reload nginx
+record_single_release_activation "${release_dir}" "${previous_current}"
+switched=true
+restart_service_units
+stop_all_http_slot_services
 
 log "Running post-switch smoke checks"
 "${release_dir}/scripts/cloud-deploy/smoke-check.sh"
 
-cleanup_old_releases "${release_dir}" "${previous_release}"
+cleanup_old_releases "${release_dir}" "${previous_current}"
 log "Deployment completed successfully: ${release_dir}"
 trap - EXIT
