@@ -18,11 +18,14 @@ from services.learning_activity_compat import (
     CompatChapterProgress,
     collapse_book_chapter_snapshots,
     get_book_rollup_compat_row,
+    get_chapter_mode_rollup_compat_row,
+    get_chapter_rollup_compat_row,
     list_book_rollup_compat_rows,
     list_chapter_mode_rollup_compat_rows,
     list_chapter_rollup_compat_rows,
 )
 from services.books_structure_service import get_book_word_count
+from services.legacy_day_progress_compat import LEGACY_DAY_PROGRESS_PREFIX
 from services.local_time import utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 
 
@@ -383,7 +386,15 @@ def _rebuild_book_rollup(*, user_id: int, book_id: str) -> None:
 
 def _rebuild_user_rollup(*, user_id: int) -> None:
     book_rows = UserLearningBookRollup.query.filter_by(user_id=user_id).all()
-    direct_rows = UserLearningDailyLedger.query.filter_by(user_id=user_id, book_id='').all()
+    direct_rows = (
+        UserLearningDailyLedger.query
+        .filter(
+            UserLearningDailyLedger.user_id == user_id,
+            UserLearningDailyLedger.book_id == '',
+            ~UserLearningDailyLedger.chapter_id.like(f'{LEGACY_DAY_PROGRESS_PREFIX}%'),
+        )
+        .all()
+    )
     if not book_rows and not direct_rows:
         _delete_rollup_if_present(UserLearningUserRollup, user_id=user_id)
         return

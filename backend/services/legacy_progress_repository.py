@@ -1,14 +1,19 @@
 from __future__ import annotations
 
-from service_models.learning_core_models import UserProgress, db
+from service_models.learning_core_models import db
+from services.legacy_day_progress_compat import (
+    get_legacy_day_progress,
+    list_legacy_day_progress_rows,
+    save_legacy_day_progress,
+)
 
 
 def list_user_progress_rows(user_id: int):
-    return UserProgress.query.filter_by(user_id=user_id).all()
+    return list_legacy_day_progress_rows(user_id)
 
 
 def get_user_progress(user_id: int, day: int):
-    return UserProgress.query.filter_by(user_id=user_id, day=day).first()
+    return get_legacy_day_progress(user_id, day)
 
 
 def create_user_progress(
@@ -19,15 +24,13 @@ def create_user_progress(
     correct_count: int,
     wrong_count: int,
 ):
-    progress = UserProgress(
-        user_id=user_id,
+    return save_legacy_day_progress(
+        user_id,
         day=day,
         current_index=current_index,
         correct_count=correct_count,
         wrong_count=wrong_count,
     )
-    db.session.add(progress)
-    return progress
 
 
 def commit() -> None:

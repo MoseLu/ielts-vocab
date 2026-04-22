@@ -9,7 +9,16 @@ import jwt
 from fastapi.testclient import TestClient
 
 from services.books_favorites_service import FAVORITES_BOOK_ID
-from models import User, UserLearningChapterRollup, UserLearningDailyLedger, db
+from models import (
+    User,
+    UserBookProgress,
+    UserChapterModeProgress,
+    UserChapterProgress,
+    UserLearningChapterRollup,
+    UserLearningDailyLedger,
+    UserProgress,
+    db,
+)
 from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
 
 
@@ -152,6 +161,10 @@ def test_learning_core_service_book_progress_and_mode_round_trip(monkeypatch, tm
         assert rollup is not None
         assert rollup.correct_count == 6
         assert rollup.wrong_count == 2
+        assert UserProgress.query.count() == 0
+        assert UserBookProgress.query.count() == 0
+        assert UserChapterProgress.query.count() == 0
+        assert UserChapterModeProgress.query.count() == 0
 
 
 def test_learning_core_service_my_books_round_trip(monkeypatch, tmp_path):

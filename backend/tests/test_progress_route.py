@@ -1,3 +1,10 @@
+from models import UserLearningDailyLedger, UserProgress
+from services.legacy_day_progress_compat import (
+    LEGACY_DAY_PROGRESS_PREFIX,
+    LEGACY_DAY_PROGRESS_SENTINEL_DATE,
+)
+
+
 def register_and_login(client, username='legacy-progress-user', password='password123'):
     register = client.post('/api/auth/register', json={
         'username': username,
@@ -16,7 +23,7 @@ class TestLegacyProgressRoute:
         assert response.status_code == 200
         assert response.get_json()['progress'] == []
 
-    def test_save_and_get_day_progress(self, client):
+    def test_save_and_get_day_progress(self, client, app):
         register_and_login(client, username='legacy-progress-save-user')
 
         save = client.post('/api/progress', json={
@@ -32,6 +39,15 @@ class TestLegacyProgressRoute:
         assert save.get_json()['progress']['day'] == 3
         assert day.status_code == 200
         assert day.get_json()['progress']['current_index'] == 18
+        with app.app_context():
+            assert UserProgress.query.count() == 0
+            ledger = UserLearningDailyLedger.query.filter_by(
+                book_id='',
+                mode='',
+                chapter_id=f'{LEGACY_DAY_PROGRESS_PREFIX}3',
+                learning_date=LEGACY_DAY_PROGRESS_SENTINEL_DATE,
+            ).one()
+            assert ledger.current_index == 18
 
     def test_save_progress_requires_day(self, client):
         register_and_login(client, username='legacy-progress-missing-day-user')

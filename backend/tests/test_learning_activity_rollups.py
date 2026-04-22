@@ -2,16 +2,24 @@ from datetime import datetime
 
 from models import (
     User,
+    UserBookProgress,
     UserChapterModeProgress,
     UserChapterProgress,
+    UserLearningEvent,
     UserLearningBookRollup,
     UserLearningChapterRollup,
     UserLearningDailyLedger,
     UserLearningUserRollup,
+    UserProgress,
     UserStudySession,
+    UserWrongWord,
     db,
 )
 from services.learning_activity_backfill import backfill_learning_activity_rollups
+from services.learning_activity_cutover import (
+    learning_activity_cutover_report,
+    purge_deprecated_learning_progress,
+)
 from services.learning_activity_service import record_learning_activity
 
 
@@ -75,6 +83,8 @@ def test_chapter_progress_writes_five_level_rollups(client, app):
         user_rollup = UserLearningUserRollup.query.filter_by(user_id=user_id).one()
         assert user_rollup.book_count == 1
         assert user_rollup.words_learned == 5
+        assert UserChapterProgress.query.count() == 0
+        assert UserChapterModeProgress.query.count() == 0
 
 
 def test_chapter_progress_requires_resolved_mode(client):
@@ -128,6 +138,9 @@ def test_same_chapter_keeps_modes_separate_in_rollups(client, app):
     modes = progress.get_json()['chapter_progress']['2']['modes']
     assert modes['quickmemory']['correct_count'] == 1
     assert modes['meaning']['wrong_count'] == 2
+    with app.app_context():
+        assert UserChapterProgress.query.count() == 0
+        assert UserChapterModeProgress.query.count() == 0
 
 
 def test_learning_date_uses_local_day_boundaries(app):
@@ -212,3 +225,87 @@ def test_backfill_learning_activity_rollups_is_idempotent(app):
         assert rollup.words_learned == 3
         assert rollup.correct_count == 2
         assert rollup.duration_seconds == 60
+
+
+def test_wrong_words_backfill_keeps_subledger_out_of_main_ledger(app):
+    with app.app_context():
+        user = User(username='learning-rollup-wrong-word')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.flush()
+        db.session.add(UserWrongWord(
+            user_id=user.id,
+            word='abandon',
+            definition='give up',
+            wrong_count=3,
+        ))
+        db.session.commit()
+
+        summary = backfill_learning_activity_rollups(user_ids=[user.id])
+
+        assert summary['wrong_words'] == 1
+        assert UserLearningDailyLedger.query.filter_by(user_id=user.id).count() == 0
+
+        db.session.add(UserLearningEvent(
+            user_id=user.id,
+            event_type='wrong_word_recorded',
+            source='wrong_words',
+            book_id='book-wrong',
+            mode='meaning',
+            chapter_id='1',
+            item_count=1,
+            wrong_count=1,
+            occurred_at=datetime(2026, 4, 22, 3, 0),
+        ))
+        db.session.commit()
+
+        backfill_learning_activity_rollups(user_ids=[user.id])
+
+        ledger = UserLearningDailyLedger.query.filter_by(
+            user_id=user.id,
+            book_id='book-wrong',
+            mode='meaning',
+            chapter_id='1',
+        ).one()
+        assert ledger.wrong_word_count == 1
+        assert ledger.items_studied == 1
+
+
+def test_cutover_purges_deprecated_progress_tables(app):
+    with app.app_context():
+        user = User(username='learning-rollup-cutover')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.flush()
+        db.session.add(UserProgress(user_id=user.id, day=1, current_index=2))
+        db.session.add(UserBookProgress(user_id=user.id, book_id='book-old', current_index=3))
+        db.session.add(UserChapterProgress(
+            user_id=user.id,
+            book_id='book-old',
+            chapter_id='1',
+            words_learned=2,
+        ))
+        db.session.add(UserChapterModeProgress(
+            user_id=user.id,
+            book_id='book-old',
+            chapter_id='1',
+            mode='meaning',
+            correct_count=1,
+        ))
+        db.session.commit()
+
+        purged = purge_deprecated_learning_progress(user_ids=[user.id])
+        report = learning_activity_cutover_report(user_ids=[user.id])
+
+        assert purged == {
+            'user_progress': 1,
+            'user_book_progress': 1,
+            'user_chapter_progress': 1,
+            'user_chapter_mode_progress': 1,
+        }
+        assert report['deprecated_rows'] == {
+            'user_progress': 0,
+            'user_book_progress': 0,
+            'user_chapter_progress': 0,
+            'user_chapter_mode_progress': 0,
+        }

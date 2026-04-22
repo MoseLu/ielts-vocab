@@ -1,8 +1,15 @@
-from services import legacy_progress_repository
+from __future__ import annotations
+
+from service_models.learning_core_models import db
+from services.legacy_day_progress_compat import (
+    get_legacy_day_progress,
+    list_legacy_day_progress_rows,
+    save_legacy_day_progress,
+)
 
 
 def list_legacy_progress(user_id: int) -> list[dict]:
-    progress_rows = legacy_progress_repository.list_user_progress_rows(user_id)
+    progress_rows = list_legacy_day_progress_rows(user_id)
     return [row.to_dict() for row in progress_rows]
 
 
@@ -12,30 +19,19 @@ def save_legacy_progress(user_id: int, payload: dict | None) -> dict:
     if not day:
         raise ValueError('Day is required')
 
-    current_index = data.get('current_index', 0)
-    correct_count = data.get('correct_count', 0)
-    wrong_count = data.get('wrong_count', 0)
-
-    progress = legacy_progress_repository.get_user_progress(user_id, day)
-    if progress:
-        progress.current_index = current_index
-        progress.correct_count = correct_count
-        progress.wrong_count = wrong_count
-    else:
-        progress = legacy_progress_repository.create_user_progress(
-            user_id,
-            day=day,
-            current_index=current_index,
-            correct_count=correct_count,
-            wrong_count=wrong_count,
-        )
-
-    legacy_progress_repository.commit()
+    progress = save_legacy_day_progress(
+        user_id,
+        day=day,
+        current_index=data.get('current_index', 0),
+        correct_count=data.get('correct_count', 0),
+        wrong_count=data.get('wrong_count', 0),
+    )
+    db.session.commit()
     return progress.to_dict()
 
 
 def get_legacy_progress_for_day(user_id: int, day: int) -> dict | None:
-    progress = legacy_progress_repository.get_user_progress(user_id, day)
-    if not progress:
+    progress = get_legacy_day_progress(user_id, day)
+    if progress is None:
         return None
     return progress.to_dict()

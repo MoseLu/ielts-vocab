@@ -12,6 +12,7 @@ from services.books_structure_service import (
 )
 from services.learning_activity_service import (
     get_book_rollup_compat_row,
+    get_chapter_rollup_compat_row,
     list_book_rollup_compat_rows,
     list_chapter_mode_rollup_compat_rows,
     list_chapter_rollup_compat_rows,
@@ -20,10 +21,6 @@ from services.learning_activity_service import (
 )
 from services.books_user_state_repository import (
     commit as _commit_user_state,
-    create_user_book_progress,
-    create_user_chapter_progress,
-    get_user_book_progress,
-    get_user_chapter_progress,
     list_user_book_progress_rows,
     list_user_chapter_mode_progress_rows,
     list_user_chapter_progress_rows,
@@ -115,15 +112,57 @@ def _infer_chapter_progress_mode(user_id, book_id, chapter_id, payload) -> str:
 
     matching_modes = {
         normalize_learning_mode(record.mode)
-        for record in list_user_chapter_mode_progress_rows(user_id, book_id=book_id)
-        if str(record.chapter_id) == str(chapter_id) and normalize_learning_mode(record.mode)
-    }
-    matching_modes.update({
-        normalize_learning_mode(record.mode)
         for record in list_chapter_mode_rollup_compat_rows(user_id, book_id=book_id)
         if str(record.chapter_id) == str(chapter_id) and normalize_learning_mode(record.mode)
-    })
+    }
     return next(iter(matching_modes)) if len(matching_modes) == 1 else ''
+
+
+def _book_snapshot(record) -> dict:
+    return {
+        'current_index': max(0, int(getattr(record, 'current_index', 0) or 0)),
+        'correct_count': max(0, int(getattr(record, 'correct_count', 0) or 0)),
+        'wrong_count': max(0, int(getattr(record, 'wrong_count', 0) or 0)),
+        'is_completed': bool(getattr(record, 'is_completed', False)),
+    }
+
+
+def _chapter_snapshot(record) -> dict:
+    return {
+        'words_learned': max(0, int(getattr(record, 'words_learned', 0) or 0)),
+        'correct_count': max(0, int(getattr(record, 'correct_count', 0) or 0)),
+        'wrong_count': max(0, int(getattr(record, 'wrong_count', 0) or 0)),
+        'is_completed': bool(getattr(record, 'is_completed', False)),
+    }
+
+
+def _chapter_session_snapshot(record) -> dict:
+    return {
+        'current_index': max(0, int(getattr(record, 'session_current_index', 0) or 0)),
+        'answered_words': _load_progress_words(getattr(record, 'session_answered_words', None)),
+        'queue_words': _load_progress_words(getattr(record, 'session_queue_words', None)),
+    }
+
+
+def _chapter_progress_response_payload(user_id, book_id, chapter_id, snapshot, session_snapshot):
+    record = get_chapter_rollup_compat_row(user_id, book_id=book_id, chapter_id=chapter_id)
+    if record is not None:
+        return record.to_dict()
+    total = snapshot['correct_count'] + snapshot['wrong_count']
+    return {
+        'user_id': user_id,
+        'book_id': book_id,
+        'chapter_id': chapter_id,
+        'current_index': session_snapshot['current_index'],
+        'words_learned': snapshot['words_learned'],
+        'correct_count': snapshot['correct_count'],
+        'wrong_count': snapshot['wrong_count'],
+        'accuracy': round(snapshot['correct_count'] / total * 100) if total > 0 else 0,
+        'is_completed': snapshot['is_completed'],
+        'answered_words': session_snapshot['answered_words'],
+        'queue_words': session_snapshot['queue_words'],
+        'updated_at': None,
+    }
 
 
 def build_chapter_words_response(book_id, chapter_id):
@@ -284,13 +323,13 @@ def build_user_progress_response(user_id):
 
 
 def build_book_progress_response(user_id, book_id):
-    progress = get_user_book_progress(user_id, book_id)
-    chapter_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
     rollup_progress = get_book_rollup_compat_row(user_id, book_id)
+    legacy_progress = next(iter(list_user_book_progress_rows(user_id, book_id=book_id)), None)
+    chapter_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
     rollup_chapter_records = list_chapter_rollup_compat_rows(user_id, book_id=book_id)
     effective_progress = serialize_effective_book_progress(
         book_id,
-        progress_record=rollup_progress or progress,
+        progress_record=rollup_progress or legacy_progress,
         chapter_records=_merge_chapter_progress_records(chapter_records, rollup_chapter_records),
         user_id=user_id,
     )
@@ -303,32 +342,20 @@ def save_book_progress_response(user_id, data):
     if not book_id:
         return {'error': 'book_id is required'}, 400
 
-    progress = get_user_book_progress(user_id, book_id)
-    if not progress:
-        progress = create_user_book_progress(user_id, book_id)
-
-    before_snapshot = {
-        'current_index': progress.current_index or 0,
-        'correct_count': progress.correct_count or 0,
-        'wrong_count': progress.wrong_count or 0,
-        'is_completed': bool(progress.is_completed),
-    }
-
+    before_snapshot = _book_snapshot(get_book_rollup_compat_row(user_id, book_id))
+    after_snapshot = dict(before_snapshot)
     if 'current_index' in payload:
-        progress.current_index = max(progress.current_index or 0, int(payload['current_index'] or 0))
+        after_snapshot['current_index'] = max(
+            before_snapshot['current_index'],
+            int(payload['current_index'] or 0),
+        )
     if 'correct_count' in payload:
-        progress.correct_count = payload['correct_count']
+        after_snapshot['correct_count'] = int(payload['correct_count'] or 0)
     if 'wrong_count' in payload:
-        progress.wrong_count = payload['wrong_count']
+        after_snapshot['wrong_count'] = int(payload['wrong_count'] or 0)
     if 'is_completed' in payload:
-        progress.is_completed = payload['is_completed']
+        after_snapshot['is_completed'] = bool(payload['is_completed'])
 
-    after_snapshot = {
-        'current_index': progress.current_index or 0,
-        'correct_count': progress.correct_count or 0,
-        'wrong_count': progress.wrong_count or 0,
-        'is_completed': bool(progress.is_completed),
-    }
     if after_snapshot != before_snapshot:
         record_learning_event(
             user_id=user_id,
@@ -352,13 +379,12 @@ def save_book_progress_response(user_id, data):
 
     _commit_user_state()
 
-    chapter_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
     rollup_progress = get_book_rollup_compat_row(user_id, book_id)
     rollup_chapter_records = list_chapter_rollup_compat_rows(user_id, book_id=book_id)
     effective_progress = serialize_effective_book_progress(
         book_id,
-        progress_record=rollup_progress or progress,
-        chapter_records=_merge_chapter_progress_records(chapter_records, rollup_chapter_records),
+        progress_record=rollup_progress,
+        chapter_records=rollup_chapter_records,
         user_id=user_id,
     )
     return {'progress': effective_progress}, 200
@@ -391,50 +417,47 @@ def save_chapter_progress_response(user_id, book_id, chapter_id, data):
     if not resolved_mode:
         return {'error': '缺少 mode 参数，且无法从现有章节模式记录中推断'}, 400
 
-    progress = get_user_chapter_progress(user_id, book_id, chapter_id)
-    if not progress:
-        progress = create_user_chapter_progress(user_id, book_id, chapter_id)
+    progress = get_chapter_rollup_compat_row(user_id, book_id=book_id, chapter_id=chapter_id)
     clear_session_snapshot = bool(payload.get('clear_session_snapshot'))
-
-    before_snapshot = {
-        'words_learned': progress.words_learned or 0,
-        'correct_count': progress.correct_count or 0,
-        'wrong_count': progress.wrong_count or 0,
-        'is_completed': bool(progress.is_completed),
-    }
-    session_snapshot_before = {
-        'current_index': max(0, int(progress.session_current_index or 0)),
-        'answered_words': _load_progress_words(progress.session_answered_words),
-        'queue_words': _load_progress_words(progress.session_queue_words),
-    }
+    before_snapshot = _chapter_snapshot(progress)
+    session_snapshot_before = _chapter_session_snapshot(progress)
+    after_snapshot = dict(before_snapshot)
+    session_snapshot_after = dict(session_snapshot_before)
 
     if 'words_learned' in payload:
-        progress.words_learned = max(progress.words_learned or 0, int(payload['words_learned'] or 0))
+        after_snapshot['words_learned'] = max(
+            before_snapshot['words_learned'],
+            int(payload['words_learned'] or 0),
+        )
     if 'correct_count' in payload:
-        progress.correct_count = payload['correct_count']
+        after_snapshot['correct_count'] = int(payload['correct_count'] or 0)
     if 'wrong_count' in payload:
-        progress.wrong_count = payload['wrong_count']
+        after_snapshot['wrong_count'] = int(payload['wrong_count'] or 0)
     if 'is_completed' in payload:
-        progress.is_completed = payload['is_completed']
+        after_snapshot['is_completed'] = bool(payload['is_completed'])
     if 'current_index' in payload or clear_session_snapshot:
-        progress.session_current_index = 0 if clear_session_snapshot else max(0, int(payload.get('current_index') or 0))
+        session_snapshot_after['current_index'] = (
+            0 if clear_session_snapshot else max(0, int(payload.get('current_index') or 0))
+        )
     if 'answered_words' in payload or clear_session_snapshot:
-        progress.session_answered_words = None if clear_session_snapshot else _dump_progress_words(payload.get('answered_words'))
+        session_snapshot_after['answered_words'] = [] if clear_session_snapshot else [
+            str(value).strip()
+            for value in (payload.get('answered_words') or [])
+            if str(value).strip()
+        ]
     if 'queue_words' in payload or clear_session_snapshot:
-        progress.session_queue_words = None if clear_session_snapshot else _dump_progress_words(payload.get('queue_words'))
-
-    after_snapshot = {
-        'words_learned': progress.words_learned or 0,
-        'correct_count': progress.correct_count or 0,
-        'wrong_count': progress.wrong_count or 0,
-        'is_completed': bool(progress.is_completed),
-    }
+        session_snapshot_after['queue_words'] = [] if clear_session_snapshot else [
+            str(value).strip()
+            for value in (payload.get('queue_words') or [])
+            if str(value).strip()
+        ]
 
     if after_snapshot != before_snapshot:
         record_learning_event(
             user_id=user_id,
             event_type='chapter_progress_updated',
             source='chapter_progress',
+            mode=resolved_mode,
             book_id=book_id,
             chapter_id=str(chapter_id),
             item_count=after_snapshot['words_learned'],
@@ -442,11 +465,6 @@ def save_chapter_progress_response(user_id, book_id, chapter_id, data):
             wrong_count=after_snapshot['wrong_count'],
             payload={'is_completed': after_snapshot['is_completed']},
         )
-    session_snapshot_after = {
-        'current_index': max(0, int(progress.session_current_index or 0)),
-        'answered_words': _load_progress_words(progress.session_answered_words),
-        'queue_words': _load_progress_words(progress.session_queue_words),
-    }
     if after_snapshot != before_snapshot or session_snapshot_after != session_snapshot_before:
         record_learning_activity(
             user_id=user_id,
@@ -454,7 +472,7 @@ def save_chapter_progress_response(user_id, book_id, chapter_id, data):
             mode=resolved_mode,
             chapter_id=str(chapter_id),
             current_index=session_snapshot_after['current_index'],
-            words_learned=progress.words_learned or 0,
+            words_learned=after_snapshot['words_learned'],
             correct_count=after_snapshot['correct_count'],
             wrong_count=after_snapshot['wrong_count'],
             is_completed=after_snapshot['is_completed'],
@@ -463,4 +481,12 @@ def save_chapter_progress_response(user_id, book_id, chapter_id, data):
         )
 
     _commit_user_state()
-    return {'progress': progress.to_dict()}, 200
+    return {
+        'progress': _chapter_progress_response_payload(
+            user_id,
+            book_id,
+            chapter_id,
+            after_snapshot,
+            session_snapshot_after,
+        ),
+    }, 200

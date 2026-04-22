@@ -8,22 +8,36 @@ from platform_sdk.learning_core_favorites_support import (
 from platform_sdk.books_user_state_repository_adapter import (
     commit as _commit_user_state,
     create_user_added_book,
-    create_user_chapter_mode_progress,
     delete_row as _delete_user_state_row,
     get_user_added_book,
-    get_user_chapter_mode_progress,
     list_user_added_books,
 )
 from platform_sdk.learning_event_support import record_learning_event as queue_learning_event
 from platform_sdk.learning_repository_adapters import learning_event_repository
-from services.learning_activity_service import normalize_learning_mode, record_learning_activity
+from services.learning_activity_service import (
+    get_chapter_mode_rollup_compat_row,
+    normalize_learning_mode,
+    record_learning_activity,
+)
 
 
 def _mode_progress_snapshot(record) -> dict:
     return {
-        'correct_count': record.correct_count or 0,
-        'wrong_count': record.wrong_count or 0,
-        'is_completed': bool(record.is_completed),
+        'correct_count': max(0, int(getattr(record, 'correct_count', 0) or 0)),
+        'wrong_count': max(0, int(getattr(record, 'wrong_count', 0) or 0)),
+        'is_completed': bool(getattr(record, 'is_completed', False)),
+    }
+
+
+def _mode_progress_payload(mode: str, snapshot: dict) -> dict:
+    total = snapshot['correct_count'] + snapshot['wrong_count']
+    return {
+        'mode': mode,
+        'correct_count': snapshot['correct_count'],
+        'wrong_count': snapshot['wrong_count'],
+        'accuracy': round(snapshot['correct_count'] / total * 100) if total > 0 else 0,
+        'is_completed': snapshot['is_completed'],
+        'updated_at': None,
     }
 
 
@@ -38,19 +52,21 @@ def save_chapter_mode_progress_response(
     if not mode:
         return {'error': '缺少 mode 参数'}, 400
 
-    record = get_user_chapter_mode_progress(user_id, book_id, chapter_id, mode)
-    if not record:
-        record = create_user_chapter_mode_progress(user_id, book_id, chapter_id, mode)
-
+    record = get_chapter_mode_rollup_compat_row(
+        user_id,
+        book_id=book_id,
+        chapter_id=chapter_id,
+        mode=mode,
+    )
     before_snapshot = _mode_progress_snapshot(record)
+    after_snapshot = dict(before_snapshot)
     if 'correct_count' in payload:
-        record.correct_count = payload['correct_count']
+        after_snapshot['correct_count'] = max(0, int(payload['correct_count'] or 0))
     if 'wrong_count' in payload:
-        record.wrong_count = payload['wrong_count']
+        after_snapshot['wrong_count'] = max(0, int(payload['wrong_count'] or 0))
     if 'is_completed' in payload:
-        record.is_completed = payload['is_completed']
+        after_snapshot['is_completed'] = bool(payload['is_completed'])
 
-    after_snapshot = _mode_progress_snapshot(record)
     if after_snapshot != before_snapshot:
         queue_learning_event(
             add_learning_event=learning_event_repository.add_learning_event,
@@ -75,7 +91,15 @@ def save_chapter_mode_progress_response(
         )
 
     _commit_user_state()
-    return {'mode_progress': record.to_dict()}, 200
+    updated = get_chapter_mode_rollup_compat_row(
+        user_id,
+        book_id=book_id,
+        chapter_id=chapter_id,
+        mode=mode,
+    )
+    return {
+        'mode_progress': updated.to_dict() if updated is not None else _mode_progress_payload(mode, after_snapshot),
+    }, 200
 
 
 def build_my_books_response(user_id: int) -> tuple[dict, int]:

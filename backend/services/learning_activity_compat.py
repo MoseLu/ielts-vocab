@@ -183,6 +183,19 @@ def list_chapter_rollup_compat_rows(
     return collapse_book_chapter_snapshots(query.all())
 
 
+def get_chapter_rollup_compat_row(
+    user_id: int,
+    *,
+    book_id: str,
+    chapter_id,
+) -> CompatChapterProgress | None:
+    normalized_chapter_id = str(chapter_id)
+    for row in list_chapter_rollup_compat_rows(user_id, book_id=book_id):
+        if str(row.chapter_id) == normalized_chapter_id:
+            return row
+    return None
+
+
 def list_chapter_mode_rollup_compat_rows(
     user_id: int,
     *,
@@ -208,3 +221,18 @@ def list_chapter_mode_rollup_compat_rows(
         )
         for row in rows
     ]
+
+
+def get_chapter_mode_rollup_compat_row(
+    user_id: int,
+    *,
+    book_id: str,
+    chapter_id,
+    mode: str,
+) -> CompatChapterModeProgress | None:
+    normalized_chapter_id = str(chapter_id)
+    normalized_mode = str(mode or '').strip()
+    for row in list_chapter_mode_rollup_compat_rows(user_id, book_id=book_id):
+        if str(row.chapter_id) == normalized_chapter_id and row.mode == normalized_mode:
+            return row
+    return None

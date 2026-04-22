@@ -35,9 +35,7 @@ def get_user_book_progress(user_id: int, book_id):
 
 
 def create_user_book_progress(user_id: int, book_id):
-    record = UserBookProgress(user_id=user_id, book_id=book_id)
-    db.session.add(record)
-    return record
+    raise RuntimeError('user_book_progress is frozen; write user_learning_* rollups instead')
 
 
 def list_user_chapter_progress_rows(user_id: int, *, book_id=None):
@@ -56,13 +54,7 @@ def get_user_chapter_progress(user_id: int, book_id, chapter_id):
 
 
 def create_user_chapter_progress(user_id: int, book_id, chapter_id):
-    record = UserChapterProgress(
-        user_id=user_id,
-        book_id=book_id,
-        chapter_id=chapter_id,
-    )
-    db.session.add(record)
-    return record
+    raise RuntimeError('user_chapter_progress is frozen; write user_learning_* rollups instead')
 
 
 def list_user_chapter_mode_progress_rows(user_id: int, *, book_id=None):
@@ -82,14 +74,7 @@ def get_user_chapter_mode_progress(user_id: int, book_id, chapter_id, mode):
 
 
 def create_user_chapter_mode_progress(user_id: int, book_id, chapter_id, mode):
-    record = UserChapterModeProgress(
-        user_id=user_id,
-        book_id=book_id,
-        chapter_id=chapter_id,
-        mode=mode,
-    )
-    db.session.add(record)
-    return record
+    raise RuntimeError('user_chapter_mode_progress is frozen; write user_learning_* rollups instead')
 
 
 def delete_row(record) -> None:

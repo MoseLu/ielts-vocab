@@ -31,7 +31,6 @@ _EVENT_TYPES_COVERED_BY_PRIMARY_SOURCES = {
     'chapter_progress_updated',
     'chapter_mode_progress_updated',
     'quick_memory_review',
-    'wrong_word_recorded',
 }
 
 
@@ -132,6 +131,11 @@ def _backfill_events(user_ids: list[int], summary: dict) -> None:
             occurred_at=row.occurred_at,
             item_delta=_safe_int(row.item_count),
             duration_delta=_safe_int(row.duration_seconds),
+            wrong_word_delta=(
+                _safe_int(row.wrong_count)
+                if row.event_type == 'wrong_word_recorded'
+                else 0
+            ),
         )
         summary['learning_events'] += 1
 
@@ -156,13 +160,9 @@ def _backfill_quick_memory(user_ids: list[int], summary: dict) -> None:
 
 
 def _backfill_wrong_words(user_ids: list[int], summary: dict) -> None:
-    for row in _scoped_query(UserWrongWord, user_ids).all():
-        _record(
-            summary,
-            user_id=row.user_id,
-            occurred_at=row.updated_at,
-            wrong_word_delta=_safe_int(row.wrong_count, default=1),
-        )
+    # Wrong-word rows are a functional sub-ledger, not the hierarchy truth source.
+    # Only scoped wrong_word_recorded events should flow into the five-level ledgers.
+    for _row in _scoped_query(UserWrongWord, user_ids).all():
         summary['wrong_words'] += 1
 
 
