@@ -82,7 +82,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--source-sqlite',
-        default=str(DEFAULT_SOURCE_SQLITE),
+        default=None,
         help='Path to the canonical SQLite database snapshot.',
     )
     parser.add_argument(
@@ -196,15 +196,17 @@ def print_report(report: ServiceRepairReport) -> None:
 
 def main() -> int:
     args = parse_args()
-    source_sqlite = Path(args.source_sqlite).resolve()
     env_file = Path(args.env_file).resolve()
+    source_sqlite = _validate_script.resolve_source_sqlite_path(
+        args.source_sqlite,
+        env_file=env_file,
+    )
     service_names = _validate_script.resolve_service_names(args.services, scope=args.scope)
 
-    if not source_sqlite.exists():
-        raise FileNotFoundError(f'SQLite source not found: {source_sqlite}')
     if not env_file.exists():
         raise FileNotFoundError(f'Env file not found: {env_file}')
 
+    print(f'[source-sqlite] {source_sqlite}')
     source_engine = create_engine(f'sqlite:///{source_sqlite.as_posix()}')
     any_remaining_mismatch = False
 

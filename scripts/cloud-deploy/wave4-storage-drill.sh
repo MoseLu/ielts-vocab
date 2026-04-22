@@ -9,6 +9,7 @@ DRILL_RECORD_PATH="${DRILL_RECORD_PATH:-}"
 DRILL_RECORD_ACTIVE="${DRILL_RECORD_ACTIVE:-false}"
 DRILL_SCOPE="${DRILL_SCOPE:-owned}"
 DRILL_RUN_REPAIR="${DRILL_RUN_REPAIR:-false}"
+DRILL_SOURCE_SQLITE="${DRILL_SOURCE_SQLITE:-}"
 DRILL_RUN_SMOKE="${DRILL_RUN_SMOKE:-true}"
 DRILL_RUN_NOTES_EXPORT_VALIDATION="${DRILL_RUN_NOTES_EXPORT_VALIDATION:-true}"
 DRILL_RUN_NOTES_EXPORT_REPAIR="${DRILL_RUN_NOTES_EXPORT_REPAIR:-false}"
@@ -193,6 +194,9 @@ run_storage_parity_check() {
     "--scope" "${DRILL_SCOPE}"
     "--env-file" "${MICROSERVICES_ENV_FILE}"
   )
+  if [[ -n "${DRILL_SOURCE_SQLITE}" ]]; then
+    args+=("--source-sqlite" "${DRILL_SOURCE_SQLITE}")
+  fi
 
   if bool_is_true "${DRILL_RUN_REPAIR}"; then
     if run_python_script "scripts/validate_microservice_storage_parity.py" "${args[@]}"; then

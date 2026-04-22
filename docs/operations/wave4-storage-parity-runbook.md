@@ -80,6 +80,13 @@ Exit code:
 - `0`: all selected tables match
 - `1`: at least one table mismatched
 
+Default source resolution order:
+
+- explicit `--source-sqlite`
+- `SOURCE_SQLITE_PATH` or `SQLITE_DB_PATH`
+- `backend/database.sqlite`
+- newest `APP_HOME/source/*.sqlite` snapshot on the host
+
 ## Parity Repair
 
 When a selected service drifts from the canonical SQLite snapshot, repair it with:
@@ -121,11 +128,14 @@ Useful remote variants:
 
 ```bash
 sudo APP_HOME=/opt/ielts-vocab DRILL_RUN_REPAIR=true bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
+sudo APP_HOME=/opt/ielts-vocab DRILL_SOURCE_SQLITE=/opt/ielts-vocab/source/production-repair-20260410.sqlite bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
 sudo APP_HOME=/opt/ielts-vocab DRILL_RUN_NOTES_EXPORT_REPAIR=true DRILL_NOTES_USER_ID=1 DRILL_NOTES_START_DATE=2026-03-30 DRILL_NOTES_END_DATE=2026-03-30 bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
 sudo APP_HOME=/opt/ielts-vocab DRILL_RUN_WORD_AUDIO_REPAIR=true DRILL_WORD_AUDIO_BOOK_ID=ielts_reading_premium DRILL_WORD_AUDIO_LIMIT=200 bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
 sudo APP_HOME=/opt/ielts-vocab DRILL_NOTES_USER_ID=1 DRILL_NOTES_START_DATE=2026-03-30 DRILL_NOTES_END_DATE=2026-03-30 bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
 sudo APP_HOME=/opt/ielts-vocab DRILL_ROLLBACK_TARGET=/opt/ielts-vocab/releases/<timestamp>-<sha> bash /opt/ielts-vocab/current/scripts/cloud-deploy/wave4-storage-drill.sh
 ```
+
+If the active release artifact no longer carries `backend/database.sqlite`, keep a canonical snapshot under `/opt/ielts-vocab/source/*.sqlite` or set `DRILL_SOURCE_SQLITE` explicitly for the remote operator run.
 
 When a remote repair or rollback drill must temporarily restart only selected guarded services against the shared SQLite fallback, use:
 

@@ -228,9 +228,10 @@ Post-deploy closeout now has a dedicated wrapper:
 
 ```bash
 sudo APP_HOME=/opt/ielts-vocab SMOKE_HOST=axiomaticworld.com bash /opt/ielts-vocab/current/scripts/cloud-deploy/release-closeout.sh
+sudo APP_HOME=/opt/ielts-vocab SMOKE_HOST=axiomaticworld.com CLOSEOUT_SOURCE_SQLITE=/opt/ielts-vocab/source/production-repair-20260410.sqlite bash /opt/ielts-vocab/current/scripts/cloud-deploy/release-closeout.sh
 ```
 
-That wrapper runs post-switch smoke, bounded storage drill, and `run-wave5-projection-cutover.py --verify-only`, then stores raw logs under `/var/log/ielts-vocab/release-closeout/<timestamp>/`.
+That wrapper runs post-switch smoke, bounded storage drill, and `run-wave5-projection-cutover.py --verify-only`, then stores raw logs under `/var/log/ielts-vocab/release-closeout/<timestamp>/`. The bounded storage drill now resolves its SQLite snapshot from `CLOSEOUT_SOURCE_SQLITE` / `DRILL_SOURCE_SQLITE`, then `SOURCE_SQLITE_PATH` / `SQLITE_DB_PATH`, then `backend/database.sqlite`, then the newest `APP_HOME/source/*.sqlite`.
 
 Manual rollback:
 

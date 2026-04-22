@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +30,7 @@ from platform_sdk.service_table_plan import (
 
 DEFAULT_SOURCE_SQLITE = BACKEND_PATH / 'database.sqlite'
 DEFAULT_ENV_FILE = BACKEND_PATH / '.env.microservices.local'
+SOURCE_SQLITE_ENV_KEYS = ('SOURCE_SQLITE_PATH', 'SQLITE_DB_PATH')
 
 
 @dataclass(frozen=True)
@@ -68,8 +70,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--source-sqlite',
-        default=str(DEFAULT_SOURCE_SQLITE),
-        help='Path to the legacy SQLite database.',
+        default=None,
+        help=(
+            'Path to the legacy SQLite database. Defaults to explicit env overrides, '
+            'backend/database.sqlite, then the newest APP_HOME/source/*.sqlite snapshot.'
+        ),
     )
     parser.add_argument(
         '--env-file',
@@ -81,6 +86,102 @@ def parse_args() -> argparse.Namespace:
 
 def service_env_prefix(service_name: str) -> str:
     return service_name.replace('-', '_').upper()
+
+
+def _read_dotenv_values(path: Path) -> dict[str, str]:
+    return {
+        key: value.strip()
+        for key, value in dotenv_values(path).items()
+        if key and value
+    }
+
+
+def _discover_app_home() -> Path | None:
+    configured = (os.getenv('APP_HOME') or '').strip()
+    if configured:
+        path = Path(configured).expanduser()
+        if path.exists():
+            return path.resolve()
+
+    resolved_root = REPO_ROOT.resolve()
+    for candidate in (resolved_root, *resolved_root.parents):
+        if (candidate / 'source').is_dir():
+            return candidate
+    return None
+
+
+def _latest_sqlite_snapshot(directory: Path) -> Path | None:
+    snapshots = sorted(
+        (path for path in directory.glob('*.sqlite') if path.is_file()),
+        key=lambda path: (path.stat().st_mtime, path.name),
+        reverse=True,
+    )
+    if snapshots:
+        return snapshots[0]
+    return None
+
+
+def _candidate_source_sqlite_paths(*, env_file: Path | None) -> list[Path]:
+    env_values: dict[str, str] = {}
+    if BACKEND_PATH.joinpath('.env').exists():
+        env_values.update(_read_dotenv_values(BACKEND_PATH / '.env'))
+
+    backend_env_file = (os.getenv('BACKEND_ENV_FILE') or '').strip()
+    if backend_env_file:
+        backend_env_path = Path(backend_env_file).expanduser()
+        if backend_env_path.exists():
+            env_values.update(_read_dotenv_values(backend_env_path))
+
+    if env_file is not None and env_file.exists():
+        env_values.update(_read_dotenv_values(env_file))
+
+    candidates: list[Path] = []
+    for key in SOURCE_SQLITE_ENV_KEYS:
+        value = (os.getenv(key) or env_values.get(key) or '').strip()
+        if value:
+            candidates.append(Path(value).expanduser())
+
+    candidates.append(DEFAULT_SOURCE_SQLITE)
+
+    app_home = _discover_app_home()
+    if app_home is not None:
+        latest_snapshot = _latest_sqlite_snapshot(app_home / 'source')
+        if latest_snapshot is not None:
+            candidates.append(latest_snapshot)
+
+    unique_candidates: list[Path] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_candidates.append(candidate)
+    return unique_candidates
+
+
+def resolve_source_sqlite_path(
+    raw_source_sqlite: str | None,
+    *,
+    env_file: Path | None,
+) -> Path:
+    if raw_source_sqlite:
+        candidate = Path(raw_source_sqlite).expanduser().resolve()
+        if candidate.exists():
+            return candidate
+        raise FileNotFoundError(f'SQLite source not found: {candidate}')
+
+    candidates = _candidate_source_sqlite_paths(env_file=env_file)
+    for candidate in candidates:
+        resolved = candidate.expanduser().resolve()
+        if resolved.exists():
+            return resolved
+
+    searched = ', '.join(str(candidate) for candidate in candidates) or '<none>'
+    raise FileNotFoundError(
+        'SQLite source not found. Checked: '
+        f'{searched}. Set --source-sqlite or SOURCE_SQLITE_PATH to the canonical snapshot.'
+    )
 
 
 def _env_value(env_values: dict[str, str], service_name: str, name: str) -> str:
@@ -233,15 +334,14 @@ def print_service_report(service_name: str, target_url: str, results: list[Table
 
 def main() -> int:
     args = parse_args()
-    source_sqlite = Path(args.source_sqlite).resolve()
     env_file = Path(args.env_file).resolve()
+    source_sqlite = resolve_source_sqlite_path(args.source_sqlite, env_file=env_file)
     service_names = resolve_service_names(args.services, scope=args.scope)
 
-    if not source_sqlite.exists():
-        raise FileNotFoundError(f'SQLite source not found: {source_sqlite}')
     if not env_file.exists():
         raise FileNotFoundError(f'Env file not found: {env_file}')
 
+    print(f'[source-sqlite] {source_sqlite}')
     source_engine = create_engine(f'sqlite:///{source_sqlite.as_posix()}')
     any_mismatch = False
 

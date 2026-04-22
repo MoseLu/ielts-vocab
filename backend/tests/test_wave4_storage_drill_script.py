@@ -221,6 +221,34 @@ def test_wave4_storage_drill_can_run_example_audio_repair(tmp_path):
     assert 'validate_example_audio_oss_parity.py --book-id ielts_reading_premium --limit 5' in result.stdout
 
 
+def test_wave4_storage_drill_forwards_explicit_source_sqlite_override(tmp_path):
+    bash = _find_bash()
+    if bash is None:
+        pytest.skip('bash is not available')
+
+    cloud_dir, app_home, _ = _setup_fake_cloud_deploy_dir(tmp_path)
+    source_sqlite = app_home / 'source' / 'canonical.sqlite'
+    _write_file(source_sqlite, '')
+
+    result = subprocess.run(
+        [bash, str(cloud_dir / 'wave4-storage-drill.sh')],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            'APP_HOME': app_home.as_posix(),
+            'PYTHON_BIN': (app_home / 'fake-python.sh').as_posix(),
+            'DRILL_RUN_SMOKE': 'false',
+            'DRILL_SOURCE_SQLITE': source_sqlite.as_posix(),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert f'validate_microservice_storage_parity.py --scope owned --env-file {app_home.as_posix()}/microservices.env --source-sqlite {source_sqlite.as_posix()}' in result.stdout
+
+
 def test_wave4_storage_drill_continues_into_repair_when_initial_parity_validation_fails(tmp_path):
     bash = _find_bash()
     if bash is None:

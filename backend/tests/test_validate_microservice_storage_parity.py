@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from pathlib import Path
 import sys
 
+import pytest
 from sqlalchemy import create_engine
 
 from models import db
@@ -112,3 +114,39 @@ def test_load_target_database_url_builds_postgres_uri_from_env_parts(tmp_path):
         'postgresql://identity:p%40ss+word@127.0.0.1:5432/'
         'ielts_identity_service?sslmode=disable'
     )
+
+
+def test_resolve_source_sqlite_path_falls_back_to_latest_app_home_snapshot(
+    tmp_path,
+    monkeypatch,
+):
+    module = _load_script_module()
+    app_home = tmp_path / 'app-home'
+    source_dir = app_home / 'source'
+    source_dir.mkdir(parents=True)
+    older_snapshot = source_dir / '20260410.sqlite'
+    newer_snapshot = source_dir / '20260411.sqlite'
+    older_snapshot.write_text('', encoding='utf-8')
+    newer_snapshot.write_text('', encoding='utf-8')
+    os.utime(older_snapshot, (1, 1))
+    os.utime(newer_snapshot, (2, 2))
+
+    monkeypatch.setenv('APP_HOME', app_home.as_posix())
+    monkeypatch.delenv('SOURCE_SQLITE_PATH', raising=False)
+    monkeypatch.delenv('SQLITE_DB_PATH', raising=False)
+    monkeypatch.delenv('BACKEND_ENV_FILE', raising=False)
+    monkeypatch.setattr(module, 'DEFAULT_SOURCE_SQLITE', tmp_path / 'missing.sqlite')
+
+    resolved = module.resolve_source_sqlite_path(None, env_file=tmp_path / 'missing.env')
+
+    assert resolved == newer_snapshot.resolve()
+
+
+def test_resolve_source_sqlite_path_raises_for_missing_explicit_override(tmp_path):
+    module = _load_script_module()
+
+    with pytest.raises(FileNotFoundError, match='SQLite source not found:'):
+        module.resolve_source_sqlite_path(
+            str(tmp_path / 'missing.sqlite'),
+            env_file=tmp_path / 'missing.env',
+        )

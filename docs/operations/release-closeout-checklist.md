@@ -41,6 +41,7 @@ sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deplo
 
 ```bash
 sudo APP_HOME=/opt/ielts-vocab SMOKE_HOST=axiomaticworld.com bash /opt/ielts-vocab/current/scripts/cloud-deploy/release-closeout.sh
+sudo APP_HOME=/opt/ielts-vocab SMOKE_HOST=axiomaticworld.com CLOSEOUT_SOURCE_SQLITE=/opt/ielts-vocab/source/production-repair-20260410.sqlite bash /opt/ielts-vocab/current/scripts/cloud-deploy/release-closeout.sh
 ```
 
 This pack runs:
@@ -48,6 +49,13 @@ This pack runs:
 1. post-switch `smoke-check.sh`
 2. bounded `wave4-storage-drill.sh`
 3. `run-wave5-projection-cutover.py --verify-only`
+
+The bounded storage drill resolves its source snapshot in this order:
+
+- explicit `CLOSEOUT_SOURCE_SQLITE` / `DRILL_SOURCE_SQLITE`
+- `SOURCE_SQLITE_PATH` or `SQLITE_DB_PATH`
+- `backend/database.sqlite`
+- newest `APP_HOME/source/*.sqlite`
 
 By default the bounded storage drill uses:
 
