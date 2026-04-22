@@ -110,6 +110,25 @@ systemctl enable --now ielts-service@asr-socketio
 
 The HTTP browser path now uses the same `ielts-service@...` unit family as the workers. `deploy-release.sh` switches `/opt/ielts-vocab/current`, reloads nginx to `127.0.0.1:8000`, restarts the single running service set, and then stops any leftover `ielts-http-slot@...` units from older blue/green releases.
 
+To keep the `2C4G` production host responsive during deploys, release dependency install/build now runs inside a constrained `systemd-run` scope. The default guardrail is:
+
+- `CPUQuota=50%`
+- `MemoryHigh=1280M`
+- `MemoryMax=1536M`
+- `Nice=15`
+- `NODE_OPTIONS=--max-old-space-size=512`
+
+Those defaults can be overridden with `DEPLOY_BUILD_*` env vars if the host profile changes, but the normal release path should no longer let `pnpm install/build` starve `sshd`, `nginx`, or the already-running app processes.
+
+Production also now includes a watchdog timer:
+
+```bash
+systemctl status ielts-health-watchdog.timer
+systemctl status ielts-health-watchdog.service
+```
+
+The timer runs once per minute, skips while `deploy-release.sh` is active, and restarts `nginx` plus the single-instance `ielts-service@...` units after three consecutive local health-check failures.
+
 ## GitHub Actions Production Deploy
 
 Workflow file: [deploy-production.yml](../../.github/workflows/deploy-production.yml)
@@ -242,5 +261,6 @@ The release smoke script checks:
 - `http://127.0.0.1:5001/ready`
 - `http://127.0.0.1/` with `Host: axiomaticworld.com`
 - `http://127.0.0.1/api/books` with `Host: axiomaticworld.com`
+- `ielts-health-watchdog.timer` is active after the release switch
 
 After DNS points to `119.29.182.134`, verify `https://axiomaticworld.com/`, `/api/books`, login refresh, `GET /api/ai/quick-memory/review-queue?limit=0&within_days=1&offset=0&scope=due`, AI streaming, TTS media, and realtime speech.

@@ -1,0 +1,11 @@
+[Unit]
+Description=IELTS Vocab runtime health watchdog
+After=network-online.target nginx.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/ielts-vocab/bin/health-watchdog.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

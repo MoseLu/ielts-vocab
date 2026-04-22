@@ -237,4 +237,7 @@ else
   log "Skipping Wave 5 worker unit smoke for pre-switch HTTP slot validation"
 fi
 
+log "Smoke check: health watchdog timer active"
+wait_for_systemd_unit "ielts-health-watchdog.timer" "health watchdog timer active"
+
 log "Smoke checks passed"

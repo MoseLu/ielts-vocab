@@ -11,6 +11,14 @@ BACKEND_ENV_FILE="${BACKEND_ENV_FILE:-/etc/ielts-vocab/backend.env}"
 MICROSERVICES_ENV_FILE="${MICROSERVICES_ENV_FILE:-/etc/ielts-vocab/microservices.env}"
 SMOKE_HOST="${SMOKE_HOST:-axiomaticworld.com}"
 RELEASE_RETENTION_COUNT="${RELEASE_RETENTION_COUNT:-5}"
+DEPLOY_RUNTIME_DIR="${DEPLOY_RUNTIME_DIR:-/run/ielts-vocab}"
+DEPLOY_LOCK_FILE="${DEPLOY_LOCK_FILE:-${DEPLOY_RUNTIME_DIR}/deploy.lock}"
+DEPLOY_BUILD_CPU_QUOTA="${DEPLOY_BUILD_CPU_QUOTA:-50%}"
+DEPLOY_BUILD_MEMORY_HIGH="${DEPLOY_BUILD_MEMORY_HIGH:-1280M}"
+DEPLOY_BUILD_MEMORY_MAX="${DEPLOY_BUILD_MEMORY_MAX:-1536M}"
+DEPLOY_BUILD_NICE="${DEPLOY_BUILD_NICE:-15}"
+DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB="${DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB:-512}"
+DEPLOY_BUILD_NPM_JOBS="${DEPLOY_BUILD_NPM_JOBS:-1}"
 
 HTTP_SERVICE_UNITS=(
   "gateway-bff"
@@ -66,7 +74,7 @@ require_file() {
 source "${BASH_SOURCE[0]%/*}/http-slot-common.sh"
 
 ensure_release_directories() {
-  mkdir -p "${APP_HOME}" "${RELEASES_ROOT}" "${WEB_ROOT}"
+  mkdir -p "${APP_HOME}" "${RELEASES_ROOT}" "${WEB_ROOT}" "${DEPLOY_RUNTIME_DIR}"
   ensure_http_slot_directories
 }
 
@@ -124,16 +132,64 @@ ensure_node_runtime() {
   corepack prepare pnpm@9.0.0 --activate
 }
 
+run_deploy_job() {
+  local label="${1:?label is required}"
+  shift
+
+  if ! command -v systemd-run >/dev/null 2>&1; then
+    "$@"
+    return 0
+  fi
+
+  local unit_name="ielts-release-${label}-$(date +%s)-$$"
+  systemd-run --quiet --wait --collect --pipe \
+    --service-type=exec \
+    --unit "${unit_name}" \
+    -p CPUAccounting=yes \
+    -p MemoryAccounting=yes \
+    -p CPUQuota="${DEPLOY_BUILD_CPU_QUOTA}" \
+    -p MemoryHigh="${DEPLOY_BUILD_MEMORY_HIGH}" \
+    -p MemoryMax="${DEPLOY_BUILD_MEMORY_MAX}" \
+    -p Nice="${DEPLOY_BUILD_NICE}" \
+    -p IOSchedulingClass=best-effort \
+    -p IOSchedulingPriority=7 \
+    -p TasksMax=256 \
+    "$@"
+}
+
+write_deploy_lock() {
+  mkdir -p "${DEPLOY_RUNTIME_DIR}"
+  cat > "${DEPLOY_LOCK_FILE}" <<EOF
+pid=$$
+started_at=$(date +%s)
+release_ref=${1:-unknown}
+EOF
+}
+
+clear_deploy_lock() {
+  rm -f "${DEPLOY_LOCK_FILE}"
+}
+
 install_release_dependencies() {
   local release_dir="${1:?release dir is required}"
   ensure_python_runtime
   ensure_node_runtime
-  "${VENV_DIR}/bin/pip" install \
+  log "Installing Python dependencies under deploy resource limits"
+  run_deploy_job "python-deps" "${VENV_DIR}/bin/pip" install \
     -r "${release_dir}/backend/requirements.txt" \
     -r "${release_dir}/services/requirements.txt"
-  "${VENV_DIR}/bin/pip" install -e "${release_dir}/packages/platform-sdk"
-  pnpm --dir "${release_dir}" install --frozen-lockfile
-  pnpm --dir "${release_dir}" build
+  run_deploy_job "platform-sdk" "${VENV_DIR}/bin/pip" install -e "${release_dir}/packages/platform-sdk"
+  log "Installing workspace dependencies under deploy resource limits"
+  run_deploy_job "node-install" env \
+    CI=1 \
+    npm_config_jobs="${DEPLOY_BUILD_NPM_JOBS}" \
+    pnpm --dir "${release_dir}" install --frozen-lockfile --workspace-concurrency=1
+  log "Building frontend under deploy resource limits"
+  run_deploy_job "frontend-build" env \
+    CI=1 \
+    npm_config_jobs="${DEPLOY_BUILD_NPM_JOBS}" \
+    NODE_OPTIONS="--max-old-space-size=${DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB}" \
+    pnpm --dir "${release_dir}" build
 }
 
 hydrate_release_git_index() {
@@ -297,4 +353,35 @@ install_http_slot_systemd_template() {
   chmod +x "${APP_HOME}/bin/run-http-slot-service.sh"
   cp "${template_path}" /etc/systemd/system/
   systemctl daemon-reload
+}
+
+install_runtime_systemd_units() {
+  local release_dir="${1:?release dir is required}"
+  local fallback_dir="${BASH_SOURCE[0]%/*}"
+  local service_template="${release_dir}/scripts/cloud-deploy/ielts-service@.service"
+  local watchdog_service="${release_dir}/scripts/cloud-deploy/ielts-health-watchdog.service"
+  local watchdog_timer="${release_dir}/scripts/cloud-deploy/ielts-health-watchdog.timer"
+  local watchdog_script="${release_dir}/scripts/cloud-deploy/health-watchdog.sh"
+
+  [[ -f "${service_template}" ]] || service_template="${fallback_dir}/ielts-service@.service"
+  [[ -f "${watchdog_service}" ]] || watchdog_service="${fallback_dir}/ielts-health-watchdog.service"
+  [[ -f "${watchdog_timer}" ]] || watchdog_timer="${fallback_dir}/ielts-health-watchdog.timer"
+  [[ -f "${watchdog_script}" ]] || watchdog_script="${fallback_dir}/health-watchdog.sh"
+
+  require_file "${service_template}"
+  require_file "${watchdog_service}"
+  require_file "${watchdog_timer}"
+  require_file "${watchdog_script}"
+
+  mkdir -p "${APP_HOME}/bin" "${DEPLOY_RUNTIME_DIR}"
+  cp "${service_template}" /etc/systemd/system/
+  cp "${watchdog_service}" /etc/systemd/system/
+  cp "${watchdog_timer}" /etc/systemd/system/
+  cp "${watchdog_script}" "${APP_HOME}/bin/health-watchdog.sh"
+  chmod +x "${APP_HOME}/bin/health-watchdog.sh"
+  systemctl daemon-reload
+}
+
+enable_runtime_watchdog_timer() {
+  systemctl enable --now ielts-health-watchdog.timer
 }

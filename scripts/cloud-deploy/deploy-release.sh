@@ -50,7 +50,7 @@ rollback_after_failure() {
   fi
 }
 
-trap 'status=$?; if (( status != 0 )); then rollback_after_failure; fi' EXIT
+trap 'status=$?; if (( status != 0 )); then rollback_after_failure; fi; clear_deploy_lock' EXIT
 
 require_command git
 require_command tar
@@ -63,6 +63,7 @@ require_command nginx
 require_file "${BACKEND_ENV_FILE}"
 require_file "${MICROSERVICES_ENV_FILE}"
 ensure_release_directories
+write_deploy_lock "${git_ref}"
 prepare_repository_root
 
 commit_sha="$(fetch_git_commit "${git_ref}")"
@@ -75,6 +76,7 @@ mkdir -p "${release_dir}"
 git -C "${REPOSITORY_ROOT}" archive "${commit_sha}" | tar -xf - -C "${release_dir}"
 hydrate_release_git_index "${release_dir}"
 find "${release_dir}/scripts/cloud-deploy" -maxdepth 1 -type f -name '*.sh' -exec chmod +x {} +
+install_runtime_systemd_units "${release_dir}"
 install_release_dependencies "${release_dir}"
 require_file "${schema_migration_script}"
 
@@ -98,6 +100,7 @@ nginx -t >/dev/null
 systemctl reload nginx
 record_single_release_activation "${release_dir}" "${previous_current}"
 switched=true
+enable_runtime_watchdog_timer
 restart_service_units
 stop_all_http_slot_services
 
@@ -106,4 +109,5 @@ log "Running post-switch smoke checks"
 
 cleanup_old_releases "${release_dir}" "${previous_current}"
 log "Deployment completed successfully: ${release_dir}"
+clear_deploy_lock
 trap - EXIT

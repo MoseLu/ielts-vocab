@@ -99,15 +99,8 @@ if [[ ! -d "${repository_root}/.git" && -d "${app_root}/.git" ]]; then
   git clone --no-hardlinks "${app_root}" "${repository_root}"
 fi
 
-python3 -m venv "${venv_dir}"
-"${venv_dir}/bin/pip" install --upgrade pip wheel
-"${venv_dir}/bin/pip" install -r "${app_root}/backend/requirements.txt" -r "${app_root}/services/requirements.txt"
-"${venv_dir}/bin/pip" install -e "${app_root}/packages/platform-sdk"
-
-corepack enable
-corepack prepare pnpm@9.0.0 --activate
-pnpm --dir "${app_root}" install --frozen-lockfile
-pnpm --dir "${app_root}" build
+install_runtime_systemd_units "${app_root}"
+install_release_dependencies "${app_root}"
 switch_frontend_to_release "${app_root}"
 
 chmod +x "${app_root}/scripts/cloud-deploy/"*.sh
@@ -122,7 +115,7 @@ else
   cp "${app_root}/scripts/cloud-deploy/ielts-vocab.nginx.conf" /etc/nginx/conf.d/ielts-vocab.conf
 fi
 
-systemctl daemon-reload
+enable_runtime_watchdog_timer
 nginx -t
 
 cat >/etc/cron.d/ielts-vocab-postgres-backup <<'CRON'
