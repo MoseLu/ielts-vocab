@@ -1,14 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { __setApiBaseOverrideForTests, apiFetch, apiRequest, buildApiUrl, setAuthSessionActive } from './index'
+import {
+  __setApiBaseOverrideForTests,
+  apiFetch,
+  apiRequest,
+  buildApiUrl,
+  setAuthAccessExpiry,
+  setAuthSessionActive,
+} from './index'
 
 describe('api helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setAuthSessionActive(true)
+    setAuthAccessExpiry(null)
     __setApiBaseOverrideForTests(null)
   })
 
   afterEach(() => {
+    setAuthAccessExpiry(null)
     __setApiBaseOverrideForTests(null)
   })
 
@@ -40,6 +49,61 @@ describe('api helpers', () => {
       expect.objectContaining({ method: 'POST', credentials: 'include' }),
     )
     expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent))
+  })
+
+  it('refreshes an expired session before sending the protected request', async () => {
+    setAuthAccessExpiry(0)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ user: { id: 1 }, access_expires_in: 900 }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+
+    await apiFetch<{ ok: boolean }>('/api/books/my')
+
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      '/api/auth/refresh',
+      expect.objectContaining({ method: 'POST', credentials: 'include' }),
+    )
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      '/api/books/my',
+      expect.objectContaining({ credentials: 'include' }),
+    )
+  })
+
+  it('deduplicates the preflight refresh across concurrent protected requests', async () => {
+    setAuthAccessExpiry(0)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ user: { id: 1 }, access_expires_in: 900 }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+
+    await Promise.all([
+      apiRequest('/api/books/my'),
+      apiRequest('/api/books/progress'),
+    ])
+
+    expect(global.fetch).toHaveBeenCalledTimes(3)
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      '/api/auth/refresh',
+      expect.objectContaining({ method: 'POST', credentials: 'include' }),
+    )
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      '/api/books/my',
+      expect.objectContaining({ credentials: 'include' }),
+    )
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      3,
+      '/api/books/progress',
+      expect.objectContaining({ credentials: 'include' }),
+    )
   })
 
   it('keeps the local session when token refresh is temporarily unavailable', async () => {

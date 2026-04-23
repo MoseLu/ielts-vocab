@@ -27,6 +27,7 @@ export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRAC
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
   AUTH_USER: 'auth_user',
+  AUTH_ACCESS_EXPIRES_AT: 'auth_access_expires_at',
   CURRENT_DAY: 'current_day',
   CURRENT_MODE: 'current_mode',
   APP_SETTINGS: 'app_settings',

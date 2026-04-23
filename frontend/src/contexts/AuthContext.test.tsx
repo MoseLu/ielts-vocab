@@ -2,6 +2,7 @@ import React from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { STORAGE_KEYS } from '../constants'
+import { setAuthAccessExpiry } from '../lib'
 import { AuthProvider, useAuth } from './AuthContext'
 
 const apiFetchMock = vi.fn()
@@ -35,6 +36,7 @@ const mockUser = {
 describe('useAuth', () => {
   beforeEach(() => {
     localStorage.clear()
+    setAuthAccessExpiry(null)
     apiFetchMock.mockReset()
     apiRequestMock.mockReset()
     showToastMock.mockReset()
@@ -53,6 +55,7 @@ describe('useAuth', () => {
 describe('AuthProvider', () => {
   beforeEach(() => {
     localStorage.clear()
+    setAuthAccessExpiry(null)
     apiFetchMock.mockReset()
     apiRequestMock.mockReset()
     showToastMock.mockReset()
@@ -89,6 +92,7 @@ describe('AuthProvider', () => {
 
     expect(result.current.isAuthenticated).toBe(true)
     expect(result.current.user).toMatchObject(mockUser)
+    expect(Number(localStorage.getItem(STORAGE_KEYS.AUTH_ACCESS_EXPIRES_AT))).toBeGreaterThan(Date.now())
   })
 
   it('clears a cached user when /api/auth/me reports no active session', async () => {

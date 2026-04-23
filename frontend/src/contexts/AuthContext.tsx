@@ -10,6 +10,7 @@ import {
   apiFetch,
   apiRequest,
   refreshAuthSession,
+  setAuthAccessExpiry,
   safeParse,
   LoginSchema,
   RegisterSchema,
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /** Schedule a proactive token refresh 60 s before the access token expires. */
   const _scheduleRefresh = useCallback((expiresInSeconds: number) => {
+    setAuthAccessExpiry(expiresInSeconds)
     if (_refreshTimer.current) clearTimeout(_refreshTimer.current)
     const delay = Math.max(0, (expiresInSeconds - 60) * 1000)
     _refreshTimer.current = setTimeout(async () => {

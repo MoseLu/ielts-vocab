@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from '../constants'
+
 // ── Utility Functions ────────────────────────────────────────────────────────────
 
 const RAW_API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim() ?? ''
@@ -43,11 +45,78 @@ export function __setApiBaseOverrideForTests(value: string | null): void {
 
 let _refreshing: Promise<void> | null = null
 let _authSessionActive = false
+let _authAccessExpiresAt = _readAuthAccessExpiry()
 const AUTH_REFRESH_AUTH_FAILED = 'auth_failed'
 const AUTH_REFRESH_TEMPORARILY_UNAVAILABLE = 'temporarily_unavailable'
+const AUTH_ACCESS_REFRESH_SKEW_MS = 5_000
 
 export function setAuthSessionActive(active: boolean): void {
   _authSessionActive = active
+  if (!active) {
+    setAuthAccessExpiry(null)
+  }
+}
+
+export function setAuthAccessExpiry(expiresInSeconds: number | null | undefined): void {
+  if (typeof expiresInSeconds !== 'number' || !Number.isFinite(expiresInSeconds)) {
+    _authAccessExpiresAt = null
+    localStorage.removeItem(STORAGE_KEYS.AUTH_ACCESS_EXPIRES_AT)
+    return
+  }
+
+  _authAccessExpiresAt = Date.now() + Math.max(0, expiresInSeconds) * 1000
+  localStorage.setItem(STORAGE_KEYS.AUTH_ACCESS_EXPIRES_AT, String(_authAccessExpiresAt))
+}
+
+function _readAuthAccessExpiry(): number | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTH_ACCESS_EXPIRES_AT)
+    const value = raw ? Number(raw) : NaN
+    return Number.isFinite(value) ? value : null
+  } catch {
+    return null
+  }
+}
+
+function _isAuthRoute(url: string): boolean {
+  return (
+    url.includes('/api/auth/login') ||
+    url.includes('/api/auth/register') ||
+    url.includes('/api/auth/refresh') ||
+    url.includes('/api/auth/logout')
+  )
+}
+
+function _shouldPreemptivelyRefresh(url: string, skipAuthRefresh: boolean): boolean {
+  return (
+    !skipAuthRefresh &&
+    _authSessionActive &&
+    _authAccessExpiresAt !== null &&
+    Date.now() >= (_authAccessExpiresAt - AUTH_ACCESS_REFRESH_SKEW_MS) &&
+    !_isAuthRoute(url)
+  )
+}
+
+function _throwForRefreshFailure(refreshResult: 'auth_failed' | 'temporarily_unavailable'): never {
+  if (refreshResult === 'auth_failed') {
+    if (_authSessionActive) {
+      window.dispatchEvent(new CustomEvent('auth:session-expired'))
+    }
+    throw new Error('登录已过期，请重新登录')
+  }
+
+  throw new Error('服务暂时不可用，请稍后重试')
+}
+
+async function _ensureFreshSession(url: string, skipAuthRefresh: boolean): Promise<void> {
+  if (!_shouldPreemptivelyRefresh(url, skipAuthRefresh)) {
+    return
+  }
+
+  const refreshResult = await refreshAuthSession()
+  if (refreshResult !== 'success') {
+    _throwForRefreshFailure(refreshResult)
+  }
 }
 
 async function _attemptRefresh(): Promise<void> {
@@ -99,7 +168,15 @@ async function _doRefresh(): Promise<void> {
         credentials: 'include',
         signal: AbortSignal.timeout(10_000),
       })
-      if (r.ok) return
+      if (r.ok) {
+        const payload = await r.json().catch(() => null)
+        setAuthAccessExpiry(
+          payload && typeof payload === 'object' && 'access_expires_in' in payload
+            ? Number(payload.access_expires_in)
+            : null,
+        )
+        return
+      }
       // A real 401 means the token is genuinely expired — don't retry
       if (r.status === 401) throw new Error(AUTH_REFRESH_AUTH_FAILED)
       // Any other HTTP error: fall through to retry
@@ -122,10 +199,7 @@ function _shouldRefreshResponse(url: string, response: Response, skipAuthRefresh
     !skipAuthRefresh &&
     _authSessionActive &&
     response.status === 401 &&
-    !url.includes('/api/auth/login') &&
-    !url.includes('/api/auth/register') &&
-    !url.includes('/api/auth/refresh') &&
-    !url.includes('/api/auth/logout')
+    !_isAuthRoute(url)
   )
 }
 
@@ -145,6 +219,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const requestUrl = buildApiUrl(url)
   const { skipAuthRefresh = false, ...requestOptions } = options
+  await _ensureFreshSession(requestUrl, skipAuthRefresh)
   const response = await _performApiRequest(requestUrl, requestOptions)
 
   if (_shouldRefreshResponse(requestUrl, response, skipAuthRefresh)) {
@@ -160,14 +235,7 @@ export async function apiRequest(
       return retry
     }
 
-    if (refreshResult === 'auth_failed') {
-      if (_authSessionActive) {
-        window.dispatchEvent(new CustomEvent('auth:session-expired'))
-      }
-      throw new Error('登录已过期，请重新登录')
-    }
-
-    throw new Error('服务暂时不可用，请稍后重试')
+    _throwForRefreshFailure(refreshResult)
   }
 
   return response
