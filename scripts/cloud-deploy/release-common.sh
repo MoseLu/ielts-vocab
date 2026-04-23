@@ -372,6 +372,7 @@ restart_service_units() {
   systemctl daemon-reload
 
   for service in "${CORE_SERVICE_UNITS[@]}"; do
+    systemctl enable "ielts-service@${service}" >/dev/null 2>&1 || true
     systemctl restart "ielts-service@${service}"
   done
 
@@ -400,6 +401,7 @@ restart_single_instance_units() {
   systemctl daemon-reload
 
   for service in "${SINGLE_INSTANCE_CORE_UNITS[@]}"; do
+    systemctl enable "ielts-service@${service}" >/dev/null 2>&1 || true
     systemctl restart "ielts-service@${service}"
   done
 
