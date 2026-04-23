@@ -11,23 +11,29 @@ def _read(relative_path: str) -> str:
 
 
 WAVE5_WORKER_CASES = {
-    'identity-outbox-publisher': ('services/identity-service', 'outbox_publisher.py'),
-    'learning-core-outbox-publisher': ('services/learning-core-service', 'outbox_publisher.py'),
-    'ai-execution-outbox-publisher': ('services/ai-execution-service', 'outbox_publisher.py'),
-    'ai-wrong-word-projection-worker': ('services/ai-execution-service', 'wrong_word_projection_worker.py'),
-    'ai-daily-summary-projection-worker': ('services/ai-execution-service', 'daily_summary_projection_worker.py'),
-    'notes-outbox-publisher': ('services/notes-service', 'outbox_publisher.py'),
-    'notes-study-session-projection-worker': ('services/notes-service', 'study_session_projection_worker.py'),
-    'notes-wrong-word-projection-worker': ('services/notes-service', 'wrong_word_projection_worker.py'),
-    'notes-prompt-run-projection-worker': ('services/notes-service', 'prompt_run_projection_worker.py'),
-    'tts-media-outbox-publisher': ('services/tts-media-service', 'outbox_publisher.py'),
-    'admin-user-projection-worker': ('services/admin-ops-service', 'user_projection_worker.py'),
-    'admin-study-session-projection-worker': ('services/admin-ops-service', 'study_session_projection_worker.py'),
-    'admin-daily-summary-projection-worker': ('services/admin-ops-service', 'daily_summary_projection_worker.py'),
-    'admin-prompt-run-projection-worker': ('services/admin-ops-service', 'prompt_run_projection_worker.py'),
-    'admin-tts-media-projection-worker': ('services/admin-ops-service', 'tts_media_projection_worker.py'),
-    'admin-wrong-word-projection-worker': ('services/admin-ops-service', 'wrong_word_projection_worker.py'),
+    'core-eventing-worker': ('services/identity-service', 'eventing_worker.py'),
+    'notes-domain-worker': ('services/notes-service', 'domain_worker.py'),
+    'ai-execution-domain-worker': ('services/ai-execution-service', 'domain_worker.py'),
+    'admin-ops-domain-worker': ('services/admin-ops-service', 'domain_worker.py'),
 }
+REPLACED_GROUP_WORKERS = (
+    'identity-outbox-publisher',
+    'learning-core-outbox-publisher',
+    'tts-media-outbox-publisher',
+    'ai-execution-outbox-publisher',
+    'ai-wrong-word-projection-worker',
+    'ai-daily-summary-projection-worker',
+    'notes-outbox-publisher',
+    'notes-study-session-projection-worker',
+    'notes-wrong-word-projection-worker',
+    'notes-prompt-run-projection-worker',
+    'admin-user-projection-worker',
+    'admin-study-session-projection-worker',
+    'admin-daily-summary-projection-worker',
+    'admin-prompt-run-projection-worker',
+    'admin-tts-media-projection-worker',
+    'admin-wrong-word-projection-worker',
+)
 
 
 def test_run_service_routes_wave5_worker_units_to_python_entrypoints():
@@ -44,11 +50,16 @@ def test_release_common_enables_workers_only_for_worker_aware_releases():
 
     assert 'CORE_SERVICE_UNITS=(' in script
     assert 'WAVE5_WORKER_UNITS=(' in script
+    assert 'REPLACED_GROUP_WORKER_UNITS=(' in script
     assert 'release_supports_wave5_workers()' in script
     assert 'grep -Fq "  ${worker})"' in script
+    assert 'disable_replaced_group_workers()' in script
     assert 'systemctl enable "ielts-service@${worker}"' in script
     assert 'systemctl disable --now "ielts-service@${worker}"' in script
+    assert 'disable_replaced_group_workers' in script
     for worker_name in WAVE5_WORKER_CASES:
+        assert f'"{worker_name}"' in script
+    for worker_name in REPLACED_GROUP_WORKERS:
         assert f'"{worker_name}"' in script
 
 
@@ -59,4 +70,4 @@ def test_smoke_check_gates_on_worker_unit_health_when_release_supports_them():
     assert 'wait_for_systemd_unit()' in script
     assert 'release_supports_wave5_workers "${current_release}"' in script
     assert 'wait_for_systemd_unit "ielts-service@${worker}" "${worker} active"' in script
-    assert 'Skipping Wave 5 worker unit smoke because current release does not support worker units' in script
+    assert 'Skipping canonical worker unit smoke because current release does not support worker units' in script

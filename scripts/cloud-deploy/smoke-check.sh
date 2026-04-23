@@ -232,9 +232,9 @@ if [[ "${SMOKE_SKIP_WORKERS}" != "true" ]] && [[ -n "${current_release}" && -d "
     wait_for_systemd_unit "ielts-service@${worker}" "${worker} active"
   done
 elif [[ "${SMOKE_SKIP_WORKERS}" != "true" ]]; then
-  log "Skipping Wave 5 worker unit smoke because current release does not support worker units"
+  log "Skipping canonical worker unit smoke because current release does not support worker units"
 else
-  log "Skipping Wave 5 worker unit smoke for pre-switch HTTP slot validation"
+  log "Skipping canonical worker unit smoke for pre-switch HTTP slot validation"
 fi
 
 log "Smoke check: health watchdog timer active"

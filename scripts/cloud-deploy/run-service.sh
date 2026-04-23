@@ -60,11 +60,17 @@ case "${service_name}" in
     export SPEECH_SERVICE_PORT="${SPEECH_SERVICE_PORT:-5001}"
     run_python_script "services/asr-service" "socketio_main.py"
     ;;
+  core-eventing-worker)
+    run_python_script "services/identity-service" "eventing_worker.py"
+    ;;
   identity-outbox-publisher)
     run_python_script "services/identity-service" "outbox_publisher.py"
     ;;
   learning-core-outbox-publisher)
     run_python_script "services/learning-core-service" "outbox_publisher.py"
+    ;;
+  ai-execution-domain-worker)
+    run_python_script "services/ai-execution-service" "domain_worker.py"
     ;;
   ai-execution-outbox-publisher)
     run_python_script "services/ai-execution-service" "outbox_publisher.py"
@@ -78,6 +84,9 @@ case "${service_name}" in
   notes-outbox-publisher)
     run_python_script "services/notes-service" "outbox_publisher.py"
     ;;
+  notes-domain-worker)
+    run_python_script "services/notes-service" "domain_worker.py"
+    ;;
   notes-study-session-projection-worker)
     run_python_script "services/notes-service" "study_session_projection_worker.py"
     ;;
@@ -89,6 +98,9 @@ case "${service_name}" in
     ;;
   tts-media-outbox-publisher)
     run_python_script "services/tts-media-service" "outbox_publisher.py"
+    ;;
+  admin-ops-domain-worker)
+    run_python_script "services/admin-ops-service" "domain_worker.py"
     ;;
   admin-user-projection-worker)
     run_python_script "services/admin-ops-service" "user_projection_worker.py"

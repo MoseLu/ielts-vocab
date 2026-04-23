@@ -36,24 +36,8 @@ SINGLE_INSTANCE_CORE_UNITS=(
   "asr-socketio"
 )
 CORE_SERVICE_UNITS=("${HTTP_SERVICE_UNITS[@]}" "${SINGLE_INSTANCE_CORE_UNITS[@]}")
-WAVE5_WORKER_UNITS=(
-  "identity-outbox-publisher"
-  "learning-core-outbox-publisher"
-  "ai-execution-outbox-publisher"
-  "ai-wrong-word-projection-worker"
-  "ai-daily-summary-projection-worker"
-  "notes-outbox-publisher"
-  "notes-study-session-projection-worker"
-  "notes-wrong-word-projection-worker"
-  "notes-prompt-run-projection-worker"
-  "tts-media-outbox-publisher"
-  "admin-user-projection-worker"
-  "admin-study-session-projection-worker"
-  "admin-daily-summary-projection-worker"
-  "admin-prompt-run-projection-worker"
-  "admin-tts-media-projection-worker"
-  "admin-wrong-word-projection-worker"
-)
+WAVE5_WORKER_UNITS=("core-eventing-worker" "notes-domain-worker" "ai-execution-domain-worker" "admin-ops-domain-worker")
+REPLACED_GROUP_WORKER_UNITS=("identity-outbox-publisher" "learning-core-outbox-publisher" "tts-media-outbox-publisher" "ai-execution-outbox-publisher" "ai-wrong-word-projection-worker" "ai-daily-summary-projection-worker" "notes-outbox-publisher" "notes-study-session-projection-worker" "notes-wrong-word-projection-worker" "notes-prompt-run-projection-worker" "admin-user-projection-worker" "admin-study-session-projection-worker" "admin-daily-summary-projection-worker" "admin-prompt-run-projection-worker" "admin-tts-media-projection-worker" "admin-wrong-word-projection-worker")
 
 log() {
   printf '[%s] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"
@@ -325,13 +309,15 @@ set_current_release() {
 
 run_backup_script() {
   local backup_script=""
-  if [[ -x "${CURRENT_LINK}/scripts/cloud-deploy/backup-postgres.sh" ]]; then
+  if [[ -f "${CURRENT_LINK}/scripts/cloud-deploy/backup-postgres.sh" ]]; then
     backup_script="${CURRENT_LINK}/scripts/cloud-deploy/backup-postgres.sh"
-  elif [[ -x "${REPOSITORY_ROOT}/scripts/cloud-deploy/backup-postgres.sh" ]]; then
+  elif [[ -f "${REPOSITORY_ROOT}/scripts/cloud-deploy/backup-postgres.sh" ]]; then
     backup_script="${REPOSITORY_ROOT}/scripts/cloud-deploy/backup-postgres.sh"
+  elif [[ -n "${script_dir:-}" && -f "${script_dir}/backup-postgres.sh" ]]; then
+    backup_script="${script_dir}/backup-postgres.sh"
   fi
   [[ -n "${backup_script}" ]] || fail "Could not find backup-postgres.sh"
-  "${backup_script}" "${MICROSERVICES_ENV_FILE}"
+  bash "${backup_script}" "${MICROSERVICES_ENV_FILE}"
 }
 
 cleanup_old_releases() {
@@ -367,6 +353,13 @@ release_supports_wave5_workers() {
   done
 }
 
+disable_replaced_group_workers() {
+  local worker
+  for worker in "${REPLACED_GROUP_WORKER_UNITS[@]}"; do
+    systemctl disable --now "ielts-service@${worker}" >/dev/null 2>&1 || true
+  done
+}
+
 restart_service_units() {
   local target_release=""
   systemctl daemon-reload
@@ -382,12 +375,14 @@ restart_service_units() {
       systemctl enable "ielts-service@${worker}" >/dev/null 2>&1 || true
       systemctl restart "ielts-service@${worker}"
     done
+    disable_replaced_group_workers
     return 0
   fi
 
   for worker in "${WAVE5_WORKER_UNITS[@]}"; do
     systemctl disable --now "ielts-service@${worker}" >/dev/null 2>&1 || true
   done
+  disable_replaced_group_workers
 }
 
 stop_all_http_slot_services() {
@@ -411,12 +406,14 @@ restart_single_instance_units() {
       systemctl enable "ielts-service@${service}" >/dev/null 2>&1 || true
       systemctl restart "ielts-service@${service}"
     done
+    disable_replaced_group_workers
     return 0
   fi
 
   for service in "${WAVE5_WORKER_UNITS[@]}"; do
     systemctl disable --now "ielts-service@${service}" >/dev/null 2>&1 || true
   done
+  disable_replaced_group_workers
 }
 
 install_http_slot_systemd_template() {

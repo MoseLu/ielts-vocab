@@ -90,7 +90,6 @@ fi
 release_dir="${RELEASES_ROOT}/${timestamp}-$(printf '%s' "${release_label}" | cut -c1-12)"
 previous_current="$(current_target_path)"
 mv "${extract_dir}" "${release_dir}"
-extract_dir="${release_dir}"
 schema_migration_script="${release_dir}/scripts/run-service-schema-migrations.py"
 
 require_file "${schema_migration_script}"
