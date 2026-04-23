@@ -3,9 +3,9 @@ export const gameAsset = {
     large: '/game/map_large.png',
     small: '/game/map_small.png',
     backgrounds: {
-      desktop: '/game/map_background_desktop.png',
-      tablet: '/game/map_background_tablet.png',
-      mobile: '/game/map_background_mobile.png',
+      desktop: '/game/map_campaign_main.png',
+      tablet: '/game/map_campaign_main.png',
+      mobile: '/game/map_campaign_main.png',
     },
     layers: {
       far: '/game/map_layer_far.png',
@@ -55,6 +55,8 @@ export const gameAsset = {
     notebook: '/game/icon_notebook.png',
     reward: '/game/icon_reward.png',
     target: '/game/icon_target.png',
+    settings: '/game/icon_settings.png',
+    shop: '/game/icon_shop.png',
   },
   character: {
     boyIdle: '/game/hero_boy_idle.png',
@@ -97,6 +99,15 @@ export const gameAsset = {
     plant: '/game/dec_plant.png',
     sparkle: '/game/dec_sparkle.png',
     banner: '/game/dec_banner.png',
+  },
+  menu: {
+    bag: '/game/bag.png',
+    task: '/game/scroll.png',
+    achievement: '/game/badge_crown.png',
+    shop: '/game/icon_shop.png',
+    rank: '/game/badge_star.png',
+    settings: '/game/icon_settings.png',
+    mail: '/game/scroll.png',
   },
   mic: {
     idle: '/game/mic_idle.png',

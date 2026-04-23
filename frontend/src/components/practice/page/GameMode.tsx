@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchGamePracticeState, startGamePracticeSession, submitWordMasteryAttempt } from '../../../lib/gamePractice'
-import type { GameCampaignState } from '../../../lib'
-import { GameCampaignHud, GameLessonCard, RecoveryDock } from './GameModeChrome'
-import { GameLevelDeck } from './game-mode/GameLevelDeck'
+import type { GameCampaignState, GameCampaignDimension, GameLevelCard, GameLevelKind } from '../../../lib'
 import { GameMapShell } from './game-mode/GameMapShell'
 import { GameResultOverlay } from './game-mode/GameResultOverlay'
 import {
@@ -10,14 +8,18 @@ import {
   WordMissionScreen,
   buildGameScope,
   buildWordPayload,
+  getChallengeStep,
 } from './GameModeSections'
-import { getLevelKind } from './game-mode/gameData'
+import { LEVEL_KIND_LABELS, LEVEL_KIND_ORDER, getLevelKind } from './game-mode/gameData'
 
 interface GameModeProps {
   bookId: string | null
   chapterId: string | null
   currentDay?: number
+  surface?: 'map' | 'mission'
   onBackToPlan?: () => void
+  onEnterMission?: () => void
+  onExitToMap?: () => void
 }
 
 interface BattleBannerState {
@@ -31,11 +33,50 @@ interface AttemptMeta {
   boostType?: string
 }
 
+const KIND_TO_DIMENSION: Record<GameLevelKind, GameCampaignDimension> = {
+  spelling: 'dictation',
+  pronunciation: 'speaking',
+  definition: 'meaning',
+  speaking: 'recognition',
+  example: 'listening',
+}
+
+function buildFallbackLevelCards(state: GameCampaignState): GameLevelCard[] {
+  const currentNode = state.currentNode
+  if (!currentNode) return []
+  const activeKind = getLevelKind(currentNode)
+  const activeStep = Math.max(1, getChallengeStep(currentNode))
+
+  return LEVEL_KIND_ORDER.map((kind, index) => {
+    const step = index + 1
+    let status: GameLevelCard['status'] = 'locked'
+    if (step < activeStep) status = 'passed'
+    if (step === activeStep) status = 'active'
+    if (currentNode.status === 'pending' && step === activeStep) status = 'pending'
+    if (currentNode.status === 'ready' && step === activeStep) status = 'ready'
+
+    return {
+      kind,
+      dimension: KIND_TO_DIMENSION[kind],
+      label: LEVEL_KIND_LABELS[kind],
+      subtitle: state.segment.title,
+      assetKey: kind,
+      step,
+      status,
+      passStreak: step < activeStep ? 4 : kind === activeKind ? Math.min(4, Math.max(1, state.session?.hits ?? 0)) : 0,
+      attemptCount: kind === activeKind ? 1 : 0,
+    }
+  })
+}
+
 export default function GameMode({
   bookId,
   chapterId,
   currentDay,
+  surface = 'mission',
   onBackToPlan,
+  onEnterMission,
+  onExitToMap,
 }: GameModeProps) {
   const [state, setState] = useState<GameCampaignState | null>(null)
   const [answerInput, setAnswerInput] = useState('')
@@ -47,6 +88,7 @@ export default function GameMode({
   const [banner, setBanner] = useState<BattleBannerState | null>(null)
   const [showMapAfterResult, setShowMapAfterResult] = useState(false)
   const bannerTimerRef = useRef<number | null>(null)
+  const autoStartedNodeRef = useRef<string | null>(null)
   const scope = useMemo(
     () => buildGameScope({ bookId, chapterId, day: currentDay }),
     [bookId, chapterId, currentDay],
@@ -111,12 +153,33 @@ export default function GameMode({
       setState(response.game_state)
       setShowMapAfterResult(false)
       setBattleBanner(null)
+      return true
     } catch (startError) {
       setError(startError instanceof Error ? startError.message : '词关启动失败')
+      return false
     } finally {
       setIsStarting(false)
     }
   }, [scope, setBattleBanner])
+
+  const enterMission = useCallback(async () => {
+    if (!state?.currentNode) return
+    if (state.session?.status === 'active') {
+      onEnterMission?.()
+      return
+    }
+    const started = await startSession()
+    if (started) onEnterMission?.()
+  }, [onEnterMission, startSession, state])
+
+  useEffect(() => {
+    const nodeKey = state?.currentNode?.nodeKey
+    const sessionStatus = state?.session?.status ?? 'active'
+    if (surface !== 'mission' || !nodeKey || sessionStatus !== 'launcher' || isStarting) return
+    if (autoStartedNodeRef.current === nodeKey) return
+    autoStartedNodeRef.current = nodeKey
+    void startSession()
+  }, [isStarting, startSession, state?.currentNode?.nodeKey, state?.session?.status, surface])
 
   const submitWordNode = useCallback(async (passed: boolean, meta: AttemptMeta = {}) => {
     if (!state?.currentNode || state.currentNode.nodeType !== 'word' || !state.currentNode.word || !state.currentNode.dimension) {
@@ -214,8 +277,22 @@ export default function GameMode({
   const currentNode = state.currentNode
   const activeWord = currentNode.word
   const sessionStatus = state.session?.status ?? 'active'
-  const activeKind = getLevelKind(currentNode)
-  const levelCards = state.levelCards ?? []
+  const levelCards = state.levelCards.length > 0 ? state.levelCards : buildFallbackLevelCards(state)
+
+  if (surface === 'map') {
+    return (
+      <section className="practice-game-mode practice-game-mode--map">
+        <GameMapShell
+          state={state}
+          levelCards={levelCards}
+          isStarting={isStarting}
+          error={error}
+          onStart={() => void enterMission()}
+          onBackToPlan={onBackToPlan}
+        />
+      </section>
+    )
+  }
 
   if (sessionStatus === 'result' && !showMapAfterResult) {
     return (
@@ -223,16 +300,27 @@ export default function GameMode({
         <GameResultOverlay
           state={state}
           onContinue={() => void startSession()}
-          onBackToMap={() => setShowMapAfterResult(true)}
+          onBackToMap={() => {
+            if (onExitToMap) {
+              onExitToMap()
+              return
+            }
+            setShowMapAfterResult(true)
+          }}
         />
       </section>
     )
   }
 
-  if (sessionStatus === 'launcher' || showMapAfterResult) {
+  if (sessionStatus === 'launcher') {
+    return <section className="practice-game-mode practice-game-mode--loading">正在进入词关...</section>
+  }
+
+  if (showMapAfterResult) {
     return (
       <GameMapShell
         state={state}
+        levelCards={levelCards}
         isStarting={isStarting}
         error={error}
         onStart={() => void startSession()}
@@ -242,17 +330,8 @@ export default function GameMode({
   }
 
   return (
-    <section className="practice-game-mode">
-      <div className="practice-game-mode__chrome">
-        <GameCampaignHud state={state} currentNode={currentNode} onBackToPlan={onBackToPlan} />
-        <GameLessonCard state={state} currentNode={currentNode} />
-        {levelCards.length > 0 ? (
-          <GameLevelDeck cards={levelCards} activeKind={activeKind} />
-        ) : null}
-      </div>
-
-      <div className="practice-game-mode__body">
-        <div className="practice-game-mode__mission">
+    <section className="practice-game-mode practice-game-mode--mission">
+      <div className="practice-game-mode__mission">
         {currentNode.nodeType === 'word' && activeWord ? (
           <WordMissionScreen
             node={currentNode}
@@ -277,8 +356,6 @@ export default function GameMode({
             onSubmitNode={submitSpeakingNode}
           />
         )}
-        </div>
-        <RecoveryDock recoveryPanel={state.recoveryPanel} onResume={() => void refreshState()} />
       </div>
     </section>
   )

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 
 import GameMode from './GameMode'
@@ -208,7 +208,7 @@ describe('GameMode', () => {
     submitWordMasteryAttemptMock.mockReset()
   })
 
-  it('renders the active spelling mission with image scene and level deck', async () => {
+  it('renders the active spelling mission without map chrome', async () => {
     fetchGamePracticeStateMock.mockResolvedValue(buildWordState('ready'))
 
     render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
@@ -224,8 +224,8 @@ describe('GameMode', () => {
     )
     expect(screen.getAllByText('拼写强化').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: '播放单词' })).toBeInTheDocument()
-    expect(screen.getByText('独立错词体系')).toBeInTheDocument()
-    expect(screen.getByText('整本词书 0/3375 已通关')).toBeInTheDocument()
+    expect(screen.queryByText('独立错词体系')).not.toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: '五维词关地图' })).not.toBeInTheDocument()
   })
 
   it('shows the generation placeholder when the scene image is not ready', async () => {
@@ -238,9 +238,11 @@ describe('GameMode', () => {
     expect(screen.queryByRole('img', { name: 'a couple of 词义场景' })).not.toBeInTheDocument()
   })
 
-  it('renders the launcher map when the session is waiting to start', async () => {
+  it('renders the main game map as invisible scene entrances on the map surface', async () => {
+    const onEnterMission = vi.fn()
+    const activeState = buildWordState('ready')
     fetchGamePracticeStateMock.mockResolvedValue({
-      ...buildWordState('ready'),
+      ...activeState,
       session: {
         status: 'launcher',
         score: 0,
@@ -256,13 +258,43 @@ describe('GameMode', () => {
         boostModule: null,
       },
     })
+    startGamePracticeSessionMock.mockResolvedValue({ game_state: activeState })
+
+    render(
+      <GameMode
+        bookId="ielts_reading_premium"
+        chapterId="1"
+        surface="map"
+        onEnterMission={onEnterMission}
+      />,
+    )
+
+    expect(await screen.findByRole('img', { name: '五维词关地图' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '返回学习计划' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /开始词关/ })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '进入 1/5 拼写强化' }))
+
+    await waitFor(() => expect(startGamePracticeSessionMock).toHaveBeenCalled())
+    expect(onEnterMission).toHaveBeenCalled()
+  })
+
+  it('auto-starts a direct mission route instead of rendering the map launcher', async () => {
+    const activeState = buildWordState('ready')
+    fetchGamePracticeStateMock.mockResolvedValue({
+      ...activeState,
+      session: {
+        ...activeState.session,
+        status: 'launcher',
+      },
+    })
+    startGamePracticeSessionMock.mockResolvedValue({ game_state: activeState })
 
     render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
 
-    expect(await screen.findByRole('button', { name: /开始词关/ })).toBeInTheDocument()
-    expect(screen.getByText('五维词关')).toBeInTheDocument()
-    expect(screen.getByText('体力')).toBeInTheDocument()
-    expect(screen.getByText('当前章节')).toBeInTheDocument()
+    expect(await screen.findByText('正在进入词关...')).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: '五维词关地图' })).not.toBeInTheDocument()
+    await waitFor(() => expect(startGamePracticeSessionMock).toHaveBeenCalled())
   })
 
   it('renders the result overlay when the segment settles into result mode', async () => {

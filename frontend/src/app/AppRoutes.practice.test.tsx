@@ -5,7 +5,9 @@ import { vi } from 'vitest'
 import { AppRoutes } from './AppRoutes'
 
 const showToastMock = vi.fn()
-const gameCampaignPageMock = vi.fn(() => <div>game-campaign-page</div>)
+const gameCampaignPageMock = vi.fn((props: { surface?: 'map' | 'mission' }) => (
+  <div>game-campaign-page {props.surface}</div>
+))
 const practicePageMock = vi.fn((props: {
   user?: { id: number; username: string }
   showToast?: (message: string, type?: 'info' | 'success' | 'error') => void
@@ -35,7 +37,7 @@ vi.mock('../components/practice/PracticePage', () => ({
   default: (props: unknown) => practicePageMock(props),
 }))
 vi.mock('../components/game/page/GameCampaignPage', () => ({
-  default: () => gameCampaignPageMock(),
+  default: (props: { surface?: 'map' | 'mission' }) => gameCampaignPageMock(props),
 }))
 
 vi.mock('../components/ai-chat/page/AIChatPanel', () => ({ default: () => null }))
@@ -99,7 +101,25 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('game-campaign-page')).toBeInTheDocument()
+    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
+    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({ surface: 'map' })
+    expect(practicePageMock).not.toHaveBeenCalled()
+  })
+
+  it('mounts the independent game mission page on /game/mission', async () => {
+    render(
+      <MemoryRouter initialEntries={['/game/mission?book=book-1&chapter=2']}>
+        <AppRoutes
+          mode="meaning"
+          currentDay={1}
+          onModeChange={vi.fn()}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
+    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({ surface: 'mission' })
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 
@@ -115,7 +135,8 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('game-campaign-page')).toBeInTheDocument()
+    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
+    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({ surface: 'map' })
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 })

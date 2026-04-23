@@ -260,7 +260,15 @@ export function AppRoutes({
                   path="/game"
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <GameCampaignPage />
+                      <GameCampaignPage surface="map" />
+                    </AuthenticatedRoute>
+                  )}
+                />
+                <Route
+                  path="/game/mission"
+                  element={(
+                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                      <GameCampaignPage surface="mission" />
                     </AuthenticatedRoute>
                   )}
                 />

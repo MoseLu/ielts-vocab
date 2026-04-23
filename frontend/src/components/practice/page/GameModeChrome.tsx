@@ -4,7 +4,50 @@ import type {
   GameCampaignState,
 } from '../../../lib'
 import { NODE_STATUS_LABELS, NODE_TYPE_LABELS, getChallengeStep } from './GameModeSections'
+import { gameAsset } from './game-mode/gameAssets'
 import { LEVEL_KIND_LABELS, getLevelKind } from './game-mode/gameData'
+
+const FALLBACK_REWARDS = {
+  coins: 0,
+  diamonds: 0,
+  exp: 0,
+  stars: 0,
+  chest: 'normal',
+  bestHits: 0,
+} as const
+
+function ResourceChip({
+  icon,
+  value,
+  label,
+}: {
+  icon: string
+  value: string | number
+  label: string
+}) {
+  return (
+    <span className="practice-game-mode__resource-chip" aria-label={`${label} ${value}`}>
+      <img src={icon} alt="" aria-hidden="true" />
+      <strong>{value}</strong>
+      <small>{label}</small>
+    </span>
+  )
+}
+
+function StarStrip({ earned }: { earned: number }) {
+  return (
+    <span className="practice-game-mode__star-strip" aria-label={`${earned}/3 星`}>
+      {[0, 1, 2].map(index => (
+        <img
+          key={index}
+          src={index < earned ? gameAsset.reward.star1 : gameAsset.reward.starGrey1}
+          alt=""
+          aria-hidden="true"
+        />
+      ))}
+    </span>
+  )
+}
 
 function RecoveryStat({
   title,
@@ -16,6 +59,7 @@ function RecoveryStat({
   const item = items[0]
   return (
     <article className="practice-game-mode__recovery-stat">
+      <img src={gameAsset.icons.restart} alt="" aria-hidden="true" />
       <span>{title}</span>
       <strong>{items.length}</strong>
       <small>{item ? item.title : '当前为空'}</small>
@@ -37,16 +81,16 @@ export function GameCampaignHud({
   currentNode: GameCampaignNode
   onBackToPlan?: () => void
 }) {
+  const rewards = state.rewards ?? FALLBACK_REWARDS
+  const energy = state.session?.energy ?? 0
+  const energyMax = state.session?.energyMax ?? 5
+  const playerLevel = Math.max(1, state.campaign.clearedSegments + 1)
+
   return (
     <header className="practice-game-mode__hud">
       <button type="button" className="practice-game-mode__hud-brand" onClick={() => onBackToPlan?.()}>
-        <img
-          src="/images/logo.png"
-          alt="Logo"
-          className="practice-game-mode__hud-brand-logo"
-          onError={event => { event.currentTarget.style.display = 'none' }}
-        />
-        <span>雅思冲刺</span>
+        <img src={gameAsset.character.boyIdle} alt="" className="practice-game-mode__hud-brand-logo" aria-hidden="true" />
+        <span>Lv.{playerLevel}</span>
       </button>
 
       <div className="practice-game-mode__hud-copy">
@@ -56,6 +100,10 @@ export function GameCampaignHud({
       </div>
 
       <div className="practice-game-mode__hud-meta">
+        <ResourceChip icon={gameAsset.reward.energy} value={`${energy}/${energyMax}`} label="体力" />
+        <ResourceChip icon={gameAsset.reward.coin} value={rewards.coins} label="金币" />
+        <ResourceChip icon={gameAsset.reward.diamond} value={rewards.diamonds} label="宝石" />
+        <ResourceChip icon={gameAsset.menu.mail} value="Mail" label="信箱" />
         <span>整本词书 {state.campaign.passedWords}/{state.campaign.totalWords} 已通关</span>
         <span>当前第 {state.campaign.currentSegment}/{Math.max(state.campaign.totalSegments, 1)} 段</span>
         <span>分数 {state.session?.score ?? 0} · 连击 {state.session?.hits ?? 0}</span>
@@ -72,12 +120,20 @@ export function GameLessonCard({
   state: GameCampaignState
   currentNode: GameCampaignNode
 }) {
+  const rewards = state.rewards ?? FALLBACK_REWARDS
+  const earnedStars = Math.min(3, Math.max(0, rewards.stars || state.session?.hits || 0))
+
   return (
     <section className="practice-game-mode__lesson-card">
       <div className="practice-game-mode__lesson-copy">
         <span className="practice-game-mode__lesson-eyebrow">Lesson {state.segment.index}</span>
         <strong>{state.segment.title}</strong>
         <span>{getLessonLabel(currentNode)} · 本段词链 {state.segment.clearedWords}/{state.segment.totalWords}</span>
+      </div>
+
+      <div className="practice-game-mode__lesson-score">
+        <StarStrip earned={earnedStars} />
+        <span>关卡奖励 x{rewards.coins || 200}</span>
       </div>
 
       <div className="practice-game-mode__lesson-chips">
