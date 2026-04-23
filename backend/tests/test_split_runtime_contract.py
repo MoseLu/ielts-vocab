@@ -16,45 +16,38 @@ def _read(relative_path: str) -> str:
 
 
 def test_start_project_uses_split_runtime_as_default_backend_path():
-    start_project = _read('start-project.ps1')
-    start_monolith_compat = _read('start-monolith-compat.ps1')
-    start_microservices = _read('start-microservices.ps1')
+    start_project = _read('start-project.sh')
+    start_monolith_compat = _read('start-monolith-compat.sh')
+    start_microservices = _read('start-microservices.sh')
 
-    assert 'start-microservices.ps1' in start_project
-    assert 'AllowSharedSplitServiceSqliteServices' not in start_project
-    assert 'UseMonolithCompatibility' in start_project
-    assert 'MonolithCompatSurface' in start_project
+    assert 'start-microservices.sh' in start_project
+    assert 'ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES' not in start_project
+    assert '--use-monolith-compatibility' in start_project
+    assert '--monolith-compat-surface' in start_project
     assert 'ALLOW_MONOLITH_COMPAT_RUNTIME=1' in start_project
     assert 'Gateway API:' in start_project
-    assert 'start-monolith-compat.ps1' in start_project
+    assert 'start-monolith-compat.sh' in start_project
     assert 'resolve-monolith-compat-route-groups.py' in start_project
-    assert 'Compatibility surface:' in start_project
-    assert 'Compatibility probe:' in start_project
-    assert 'AllowDirtyCompatibilityDrill' in start_project
-    assert 'MonolithCompatBackendPort = 5000' in start_project
-    assert 'Write-CompatibilityDrillCodeState' in start_project
-    assert 'Dirty drill override:' in start_project
-    assert 'Use either -MonolithCompatRouteGroups or -MonolithCompatSurface, not both.' in start_project
-    assert '$resolvedMonolithCompatProbePath = \'/api/books/stats\'' in start_project
-    assert '$legacyMonolithPort = $MonolithCompatBackendPort' in start_project
-    assert 'Wait-HttpReady -Url "http://127.0.0.1:$legacyMonolithPort$resolvedMonolithCompatProbePath"' in start_project
-    assert 'set "BACKEND_PORT={0}"' in start_project
-    assert 'set "VITE_API_PROXY_TARGET=http://127.0.0.1:{0}"' in start_project
-    assert 'Legacy backend/app.py on port $legacyMonolithPort is compatibility-only.' in start_project
-    assert '$gatewayPort = 8000' in start_project
-    assert 'http://127.0.0.1:$gatewayPort' in start_project
-    assert 'start-microservices.ps1 failed.' in start_project
-    assert "'-AllowSharedSplitServiceSqliteServices'" not in start_project
-    assert 'MonolithCompatSurface' in start_monolith_compat
-    assert 'AllowDirtyCompatibilityDrill' in start_monolith_compat
-    assert 'MonolithCompatBackendPort = 5000' in start_monolith_compat
-    assert '-AllowDirtyCompatibilityDrill:$AllowDirtyCompatibilityDrill' in start_monolith_compat
-    assert '-MonolithCompatBackendPort $MonolithCompatBackendPort' in start_monolith_compat
+    assert '--allow-dirty-compatibility-drill' in start_project
+    assert '--monolith-compat-backend-port' in start_project
+    assert '--skip-frontend-build' in start_project
+    assert 'Use either --monolith-compat-route-groups or --monolith-compat-surface, not both.' in start_project
+    assert 'http://127.0.0.1:${monolith_compat_backend_port}' in start_project
+    assert 'http://127.0.0.1:${gateway_port}' in start_project
+    assert 'Legacy backend/app.py on port ${monolith_compat_backend_port} is compatibility-only.' in start_project
+    assert 'pnpm --dir "${root}/frontend" build' in start_project
+    assert 'node "${root}/frontend/node_modules/vite/bin/vite.js" preview' in start_project
+    assert '--use-monolith-compatibility' in start_monolith_compat
+    assert 'start-project.sh' in start_monolith_compat
     assert 'ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES' not in start_microservices
-    assert 'Shared SQLite override services:' not in start_microservices
-    assert 'function Stop-WorkerCommandTrees' in start_microservices
-    assert "Get-CimInstance Win32_Process -Filter \"Name = 'cmd.exe'\"" in start_microservices
-    assert 'Stop-WorkerCommandTrees -Definitions $workerDefinitions' in start_microservices
+    assert 'core-eventing-worker' in start_microservices
+    assert 'notes-domain-worker' in start_microservices
+    assert 'ai-execution-domain-worker' in start_microservices
+    assert 'admin-ops-domain-worker' in start_microservices
+    assert 'lsof -tiTCP:' in start_microservices
+    assert 'scripts/start-local-postgres-microservices.sh' in start_microservices
+    assert 'scripts/start-local-redis-microservices.sh' in start_microservices
+    assert 'scripts/start-local-rabbitmq-microservices.sh' in start_microservices
 
 
 def test_monolith_app_archives_compatibility_runtime_outside_main_shell():
@@ -118,3 +111,34 @@ def test_rollback_only_tts_admin_surface_stays_out_of_browser_code_paths():
     for raw_path in ROLLBACK_ONLY_TTS_ADMIN_PATHS:
         assert raw_path not in gateway_source
         assert raw_path not in frontend_sources
+
+
+def test_simple_wsgi_services_use_starlette_shells_instead_of_fastapi_shells():
+    for relative_path in (
+        'services/identity-service/main.py',
+        'services/learning-core-service/main.py',
+        'services/catalog-content-service/main.py',
+        'services/notes-service/main.py',
+        'services/admin-ops-service/main.py',
+    ):
+        source = _read(relative_path)
+        assert 'from a2wsgi import WSGIMiddleware' in source
+        assert 'create_service_shell_app(' in source
+
+
+def test_ai_and_asr_services_use_starlette_shells_for_lightweight_runtime_contracts():
+    ai_source = _read('services/ai-execution-service/main.py')
+    asr_source = _read('services/asr-service/main.py')
+
+    assert 'from a2wsgi import WSGIMiddleware' in ai_source
+    assert 'from starlette.requests import Request' in ai_source
+    assert 'create_service_shell_app(' in ai_source
+    assert "app.add_route('/internal/ops/ai-dependencies'" in ai_source
+    assert ai_source.index("app.add_route('/internal/ops/ai-dependencies'") < ai_source.index(
+        "app.mount('/', WSGIMiddleware(ai_flask_app))"
+    )
+
+    assert 'from starlette.datastructures import UploadFile' in asr_source
+    assert 'from starlette.requests import Request' in asr_source
+    assert 'create_service_shell_app(' in asr_source
+    assert "app.add_route('/v1/speech/transcribe'" in asr_source

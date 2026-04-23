@@ -39,7 +39,7 @@ This document freezes the split runtime contract for speech features so local st
 
 ### Local runtime
 
-- `start-microservices.ps1` must launch both `asr-service` on `8106` and `asr-socketio` on `5001`.
+- `start-microservices.sh` must launch both `asr-service` on `8106` and `asr-socketio` on `5001`.
 - Local proxy behavior stays split:
   - `/api/*` goes to `gateway-bff` on `8000`
   - `/socket.io/*` goes directly to `asr-socketio` on `5001`
@@ -60,9 +60,9 @@ This document freezes the split runtime contract for speech features so local st
 - HTTP transcription failures are governed by the gateway upstream timeout/retry/circuit-breaker policy for `asr-service`.
 - Realtime Socket.IO traffic does not use gateway retries; reconnect behavior stays at the browser and Socket.IO transport layer.
 - Any port or namespace change must be reflected together in:
-  - `start-microservices.ps1`
-  - `start-project.bat`
-  - `start-project.ps1`
+  - `start-microservices.sh`
+  - `start-project.sh`
+  - `start-monolith-compat.sh`
   - `nginx.conf.example`
   - remote systemd and nginx rollout docs
 

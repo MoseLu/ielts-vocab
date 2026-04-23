@@ -40,7 +40,7 @@ def run_server():
 if __name__ == '__main__':
     require_explicit_monolith_compat_runtime(
         runtime_label='backend/speech_service.py',
-        startup_hint='start-monolith-compat.ps1',
+        startup_hint='start-monolith-compat.sh',
     )
     print_banner()
     run_server()

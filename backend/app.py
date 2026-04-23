@@ -108,7 +108,7 @@ def _print_banner(host: str, port: int) -> None:
 
 def _print_compatibility_notice() -> None:
     print("[Compat] backend/app.py is a rollback and compatibility runtime.")
-    print("         Preferred local backend path is start-project.ps1 -> gateway-bff (:8000).")
+    print("         Preferred local backend path is ./start-project.sh -> gateway-bff (:8000).")
 
 
 def _run_backend_server(flask_app: Flask, host: str, port: int) -> None:
@@ -133,7 +133,7 @@ def _run_backend_server(flask_app: Flask, host: str, port: int) -> None:
 if __name__ == '__main__':
     require_explicit_monolith_compat_runtime(
         runtime_label='backend/app.py',
-        startup_hint='start-monolith-compat.ps1',
+        startup_hint='start-monolith-compat.sh',
     )
     backend_host = _get_backend_host()
     backend_port = _get_backend_port()

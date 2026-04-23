@@ -15,7 +15,6 @@ if str(BACKEND_PATH) not in sys.path:
     sys.path.insert(0, str(BACKEND_PATH))
 
 import config as backend_config
-from platform_sdk.catalog_search_runtime_adapter import prime_global_word_search_catalog
 from platform_sdk.catalog_content_transport import catalog_content_bp
 from routes.middleware import init_middleware
 from platform_sdk.service_schema import bootstrap_service_schema
@@ -55,6 +54,5 @@ def create_catalog_content_flask_app(config_class=None) -> Flask:
     with app.app_context():
         bootstrap_service_schema('catalog-content-service')
         ensure_word_catalog_memory_note_column(engine=db.engine, session=db.session)
-        prime_global_word_search_catalog()
 
     return app

@@ -91,6 +91,38 @@ def test_ai_execution_service_health_endpoint(monkeypatch, tmp_path):
     assert response.json()['ai_compatibility'] is True
 
 
+def test_ai_execution_service_dependency_probe_route(monkeypatch, tmp_path):
+    _configure_ai_env(monkeypatch, tmp_path)
+    module = _load_ai_execution_service_module('ai_execution_service_dependency_probe')
+    client = TestClient(module.app)
+
+    monkeypatch.setattr(
+        module,
+        '_load_ai_dependency_probe_support',
+        lambda: (
+            lambda *args, **kwargs: ({'stats': {}}, 200),
+            lambda *args, **kwargs: ({'records': []}, 200),
+            lambda *args, **kwargs: {'ok': True},
+            lambda *args, **kwargs: ({'stats': {}}, 200),
+        ),
+    )
+
+    response = client.get('/internal/ops/ai-dependencies', params={'user_id': '1'})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        'status': 'ready',
+        'service': 'ai-execution-service',
+        'dependencies': {
+            'learning_stats': True,
+            'learner_profile_context': True,
+            'quick_memory_review_queue': True,
+            'learner_profile_stats': True,
+        },
+        'errors': {},
+    }
+
+
 def test_ai_execution_service_context_route(monkeypatch, tmp_path):
     _configure_ai_env(monkeypatch, tmp_path)
     module = _load_ai_execution_service_module('ai_execution_service_context')

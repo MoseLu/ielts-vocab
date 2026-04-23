@@ -5,8 +5,9 @@ import shutil
 import sys
 from pathlib import Path
 
-from fastapi import File, UploadFile
-from fastapi.responses import JSONResponse
+from starlette.datastructures import UploadFile
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -15,7 +16,7 @@ if str(SDK_PATH) not in sys.path:
     sys.path.insert(0, str(SDK_PATH))
 
 from platform_sdk.runtime_env import load_split_service_env
-from platform_sdk.service_app import create_service_app
+from platform_sdk.service_app import create_service_shell_app
 from platform_sdk.asr_runtime import (
     ASRServiceError,
     get_dashscope_api_key,
@@ -39,7 +40,7 @@ class UploadedAudioAdapter:
             shutil.copyfileobj(self._upload.file, output)
 
 
-app = create_service_app(
+app = create_service_shell_app(
     service_name='asr-service',
     version='0.1.0',
     readiness_checks={'dashscope_api_key': _dashscope_api_key_configured},
@@ -47,18 +48,22 @@ app = create_service_app(
 )
 
 
-@app.post('/v1/speech/transcribe')
-def transcribe_speech(audio: UploadFile | None = File(default=None)):
-    if audio is None:
+async def transcribe_speech(request: Request):
+    form = await request.form()
+    audio = form.get('audio')
+    if not isinstance(audio, UploadFile):
         return JSONResponse(status_code=400, content={'error': '未收到音频文件'})
     try:
         text = transcribe_uploaded_audio(UploadedAudioAdapter(audio))
-        return {'text': text}
+        return JSONResponse(content={'text': text})
     except ASRServiceError as error:
         return JSONResponse(
             status_code=error.status_code,
             content={'error': f'识别失败: {error}'},
         )
+
+
+app.add_route('/v1/speech/transcribe', transcribe_speech, methods=['POST'])
 
 
 if __name__ == '__main__':

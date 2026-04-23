@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi.middleware.wsgi import WSGIMiddleware
+from a2wsgi import WSGIMiddleware
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -17,18 +17,12 @@ from platform_sdk.runtime_env import load_split_service_env
 load_split_service_env(service_name='learning-core-service')
 
 from platform_sdk.database_readiness import make_sqlalchemy_readiness_check
-from platform_sdk.ai_vocab_catalog_application import get_quick_memory_vocab_lookup
 from platform_sdk.learning_core_runtime import create_learning_core_flask_app
-from platform_sdk.service_app import create_service_app
-
-try:
-    get_quick_memory_vocab_lookup()
-except Exception:
-    pass
+from platform_sdk.service_app import create_service_shell_app
 
 learning_core_flask_app = create_learning_core_flask_app()
 
-app = create_service_app(
+app = create_service_shell_app(
     service_name='learning-core-service',
     version='0.1.0',
     readiness_checks={

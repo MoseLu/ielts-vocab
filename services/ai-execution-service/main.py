@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import os
 import sys
+from functools import lru_cache
 from pathlib import Path
 
-from fastapi import Query
-from fastapi.middleware.wsgi import WSGIMiddleware
-from fastapi.responses import JSONResponse
+from a2wsgi import WSGIMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -20,21 +21,32 @@ load_split_service_env(service_name='ai-execution-service')
 
 from platform_sdk.ai_runtime import create_ai_flask_app
 from platform_sdk.database_readiness import make_sqlalchemy_readiness_check
-from platform_sdk.learner_profile_application_support import (
-    build_learner_profile_response as build_local_learner_profile_response,
-)
-from platform_sdk.learning_core_quick_memory_read_adapter import (
-    build_quick_memory_review_queue_response,
-)
-from platform_sdk.learning_core_internal_client import (
-    fetch_learning_core_context_payload,
-    fetch_learning_core_learning_stats_response,
-)
-from platform_sdk.service_app import create_service_app
+from platform_sdk.service_app import create_service_shell_app
 
 ai_flask_app = create_ai_flask_app()
 
-app = create_service_app(
+
+@lru_cache(maxsize=1)
+def _load_ai_dependency_probe_support():
+    from platform_sdk.learner_profile_application_support import (
+        build_learner_profile_response as build_local_learner_profile_response,
+    )
+    from platform_sdk.learning_core_internal_client import (
+        fetch_learning_core_context_payload,
+        fetch_learning_core_learning_stats_response,
+    )
+    from platform_sdk.learning_core_quick_memory_read_adapter import (
+        build_quick_memory_review_queue_response,
+    )
+
+    return (
+        build_local_learner_profile_response,
+        build_quick_memory_review_queue_response,
+        fetch_learning_core_context_payload,
+        fetch_learning_core_learning_stats_response,
+    )
+
+app = create_service_shell_app(
     service_name='ai-execution-service',
     version='0.1.0',
     readiness_checks={
@@ -44,10 +56,42 @@ app = create_service_app(
 )
 
 
-@app.get('/internal/ops/ai-dependencies')
-def get_ai_dependency_probe(user_id: int = Query(default=1, ge=1)):
+def _resolve_probe_user_id(request: Request) -> int:
+    raw_user_id = request.query_params.get('user_id', '1').strip() or '1'
+    try:
+        user_id = int(raw_user_id)
+    except ValueError as exc:
+        raise ValueError('user_id must be a positive integer') from exc
+    if user_id < 1:
+        raise ValueError('user_id must be a positive integer')
+    return user_id
+
+
+async def get_ai_dependency_probe(request: Request):
+    try:
+        user_id = _resolve_probe_user_id(request)
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=422,
+            content={
+                'detail': [
+                    {
+                        'type': 'value_error',
+                        'loc': ['query', 'user_id'],
+                        'msg': str(exc),
+                        'input': request.query_params.get('user_id'),
+                    }
+                ]
+            },
+        )
     checks: dict[str, bool] = {}
     errors: dict[str, str] = {}
+    (
+        build_local_learner_profile_response,
+        build_quick_memory_review_queue_response,
+        fetch_learning_core_context_payload,
+        fetch_learning_core_learning_stats_response,
+    ) = _load_ai_dependency_probe_support()
     with ai_flask_app.app_context():
         try:
             _payload, status = fetch_learning_core_learning_stats_response(
@@ -104,6 +148,7 @@ def get_ai_dependency_probe(user_id: int = Query(default=1, ge=1)):
     )
 
 
+app.add_route('/internal/ops/ai-dependencies', get_ai_dependency_probe, methods=['GET'])
 app.mount('/', WSGIMiddleware(ai_flask_app))
 
 

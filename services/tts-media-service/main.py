@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 from pathlib import Path
 
 from fastapi import Body, HTTPException, Query, Request
@@ -39,13 +40,8 @@ from platform_sdk.storage import (
     join_object_key,
     resolve_object_metadata,
 )
-from platform_sdk.tts_media_event_application import record_tts_media_materialization
 from platform_sdk.tts_media_runtime import create_tts_media_flask_app
 import runtime_helpers as runtime
-from services.follow_read_timeline_service import (
-    build_follow_read_payload,
-    generate_follow_read_chunked_audio_bytes,
-)
 
 DEFAULT_WORD_TTS_OSS_PREFIX = 'projects/ielts-vocab/word-tts-cache'
 _AUDIO_BYTES_HEADER = 'X-Audio-Bytes'
@@ -54,6 +50,16 @@ _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _MEDIA_ID_HEADER = 'X-Media-Id'
 _SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
 tts_media_flask_app = create_tts_media_flask_app()
+
+
+@lru_cache(maxsize=1)
+def _load_follow_read_support():
+    from services.follow_read_timeline_service import (
+        build_follow_read_payload as _build_follow_read_payload,
+        generate_follow_read_chunked_audio_bytes as _generate_follow_read_chunked_audio_bytes,
+    )
+
+    return _build_follow_read_payload, _generate_follow_read_chunked_audio_bytes
 
 
 def _event_headers(request: Request) -> dict[str, str]:
@@ -76,12 +82,29 @@ def _request_user_id(request: Request) -> int | None:
 
 
 def _record_tts_media_materialization(request: Request, **payload) -> None:
+    from platform_sdk.tts_media_event_application import record_tts_media_materialization
+
     with tts_media_flask_app.app_context():
         record_tts_media_materialization(
             user_id=_request_user_id(request),
             headers=_event_headers(request),
             **payload,
         )
+
+
+def build_follow_read_payload(*, word: str, phonetic: str | None, definition: str | None, pos: str | None) -> dict:
+    build_payload, _ = _load_follow_read_support()
+    return build_payload(
+        word=word,
+        phonetic=phonetic,
+        definition=definition,
+        pos=pos,
+    )
+
+
+def generate_follow_read_chunked_audio_bytes(*, word: str, phonetic: str | None):
+    _, generate_audio = _load_follow_read_support()
+    return generate_audio(word=word, phonetic=phonetic)
 
 
 def _materialization_callback(request: Request):

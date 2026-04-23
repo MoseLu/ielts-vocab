@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file=services/requirements.lock.txt services/requirements.txt
 #
+a2wsgi==1.10.10
+    # via -r services/requirements.txt
 aliyun-python-sdk-core==2.16.0
     # via
     #   aliyun-python-sdk-kms
