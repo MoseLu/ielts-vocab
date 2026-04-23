@@ -87,6 +87,11 @@ def is_quota_exhausted_error(message: str | Exception | None) -> bool:
     return any(re.search(pattern, text) for pattern in QUOTA_EXHAUSTED_PATTERNS)
 
 
+def is_rate_limit_error(message: str | Exception | None) -> bool:
+    text = str(message or '').lower()
+    return any(re.search(pattern, text) for pattern in RATE_LIMIT_PATTERNS)
+
+
 def _recommended_max_tokens(word_count: int) -> int:
     if word_count <= 1:
         return 1200

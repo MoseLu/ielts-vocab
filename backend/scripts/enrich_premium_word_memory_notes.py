@@ -17,6 +17,9 @@ from scripts.catalog_content_script_runtime import create_catalog_content_script
 from services.word_detail_llm_client import DISABLE_FALLBACK_PROVIDER
 from services.word_memory_note_enrichment import (
     DEFAULT_BATCH_SIZE,
+    DEFAULT_RATE_LIMIT_BASE_SLEEP_SECONDS,
+    DEFAULT_RATE_LIMIT_MAX_ATTEMPTS,
+    DEFAULT_RATE_LIMIT_MAX_SLEEP_SECONDS,
     PREMIUM_BOOK_IDS,
     enrich_premium_book_memory_notes,
 )
@@ -61,13 +64,31 @@ parser.add_argument('--progress-file', type=str, default='', help='批次级实�
 parser.add_argument('--batch-size', type=int, default=DEFAULT_BATCH_SIZE, help='每批请求的单词数')
 parser.add_argument('--limit', type=int, default=None, help='仅处理前 N 个去重词')
 parser.add_argument('--start-at', type=int, default=0, help='从第 N 个去重词开始')
-parser.add_argument('--sleep', type=float, default=0.2, help='批次间隔秒数')
+parser.add_argument('--sleep', type=float, default=1.0, help='批次间隔秒数')
 parser.add_argument('--overwrite', action='store_true', help='覆盖已有联想记忆')
 parser.add_argument('--no-fallback', action='store_true', help='禁用 provider 自动回退')
 parser.add_argument('--provider', type=str, default='dashscope', help='LLM provider')
 parser.add_argument('--model', type=str, default='qwen3.6-plus', help='主模型，支持逗号分隔优先级链')
 parser.add_argument('--fallback-provider', type=str, default='', help='失败时切换的备用 provider')
 parser.add_argument('--fallback-model', type=str, default='', help='失败时切换的备用模型')
+parser.add_argument(
+    '--rate-limit-max-attempts',
+    type=int,
+    default=DEFAULT_RATE_LIMIT_MAX_ATTEMPTS,
+    help='429/529 限速时的最大重试次数；0 表示一直重试',
+)
+parser.add_argument(
+    '--rate-limit-base-sleep',
+    type=float,
+    default=DEFAULT_RATE_LIMIT_BASE_SLEEP_SECONDS,
+    help='429/529 首次退避秒数',
+)
+parser.add_argument(
+    '--rate-limit-max-sleep',
+    type=float,
+    default=DEFAULT_RATE_LIMIT_MAX_SLEEP_SECONDS,
+    help='429/529 单次最大退避秒数',
+)
 args = parser.parse_args()
 
 
@@ -109,6 +130,8 @@ def main() -> int:
         'failure_details': [],
         'quota_exhausted': False,
         'stop_reason': '',
+        'rate_limit_retries': 0,
+        'rate_limit_wait_seconds': 0.0,
         'total_batches': 0,
         'completed_batches': 0,
         'word_count': 0,
@@ -128,6 +151,12 @@ def main() -> int:
             model=args.model or None,
             fallback_provider=fallback_provider,
             fallback_model=fallback_model,
+            rate_limit_max_attempts=max(0, args.rate_limit_max_attempts),
+            rate_limit_base_sleep_seconds=max(1.0, args.rate_limit_base_sleep),
+            rate_limit_max_sleep_seconds=max(
+                max(1.0, args.rate_limit_base_sleep),
+                args.rate_limit_max_sleep,
+            ),
             progress_callback=write_progress,
         )
 

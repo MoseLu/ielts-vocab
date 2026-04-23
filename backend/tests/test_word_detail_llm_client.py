@@ -144,8 +144,22 @@ def test_raise_for_api_error_uses_structured_message():
 def test_is_quota_exhausted_error_matches_common_tokens():
     assert client.is_quota_exhausted_error('MiniMax http 403: quota exhausted')
     assert client.is_quota_exhausted_error('额度已用完')
+    assert client.is_quota_exhausted_error(
+        'your current token plan not support model, MiniMax-M2.7 (2061)',
+    )
+    assert not client.is_quota_exhausted_error(
+        'minimax-primary http 429: usage limit exceeded (2056)',
+    )
     assert not client.is_quota_exhausted_error('temporary network timeout')
     assert not client.is_quota_exhausted_error('LLM result missing words: quietness, quirk, quotation')
+
+
+def test_is_rate_limit_error_matches_http_429_and_529():
+    assert client.is_rate_limit_error('minimax-primary http 429: usage limit exceeded (2056)')
+    assert client.is_rate_limit_error('minimax-primary http 529: 当前时段请求拥挤，请稍后再试 (2064)')
+    assert not client.is_rate_limit_error(
+        'your current token plan not support model, MiniMax-M2.7 (2061)',
+    )
 
 
 def test_extract_json_block_prefers_outer_object_over_nested_array():

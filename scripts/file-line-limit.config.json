@@ -6,6 +6,7 @@
     "pnpm-lock.yaml"
   ],
   "baseline": {
+    "backend/services/word_memory_note_enrichment.py": 513,
     "backend/scripts/run_word_tts_full_batch.py": 516,
     "backend/tests/test_gateway_bff_tts_proxy.py": 651,
     "frontend/src/components/practice/utils.audio.playback.ts": 508,

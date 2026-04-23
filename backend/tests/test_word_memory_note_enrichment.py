@@ -26,6 +26,39 @@ def _seed_catalog():
     ]
 
 
+def test_collect_memory_word_seeds_reads_catalog_entries(monkeypatch):
+    class _FakeRecord:
+        def __init__(self, word, book_refs, definition='定义'):
+            self.word = word
+            self.normalized_word = word.lower()
+            self.phonetic = '/test/'
+            self.pos = 'n.'
+            self.definition = definition
+            self._book_refs = book_refs
+
+        def get_examples(self):
+            return [{'en': f'{self.word} example', 'zh': '例句'}]
+
+        def get_book_refs(self):
+            return list(self._book_refs)
+
+    monkeypatch.setattr(
+        word_memory_note_enrichment.word_catalog_repository,
+        'list_all_word_catalog_entries',
+        lambda: [
+            _FakeRecord('zeta', [{'book_id': 'ielts_reading_premium'}]),
+            _FakeRecord('alpha', [{'book_id': 'ielts_listening_premium'}]),
+            _FakeRecord('other', [{'book_id': 'ielts_comprehensive'}]),
+        ],
+    )
+
+    seeds = word_memory_note_enrichment.collect_memory_word_seeds()
+
+    assert [seed['normalized_word'] for seed in seeds] == ['alpha', 'zeta']
+    assert seeds[0]['book_ids'] == ['ielts_listening_premium']
+    assert seeds[1]['book_ids'] == ['ielts_reading_premium']
+
+
 def test_memory_note_enrichment_persists_server_notes(app, monkeypatch):
     monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _seed_catalog)
     monkeypatch.setattr(word_memory_note_enrichment, 'request_memory_note_batch', lambda *_args, **_kwargs: {
@@ -135,3 +168,66 @@ def test_memory_note_enrichment_emits_progress_updates(app, monkeypatch):
         assert snapshots
         assert snapshots[-1]['enriched'] == 2
         assert snapshots[-1]['completed_batches'] == snapshots[-1]['total_batches'] == 2
+
+
+def test_memory_note_enrichment_retries_rate_limit_until_success(app, monkeypatch):
+    monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _seed_catalog)
+    sleeps = []
+    attempts = {'count': 0}
+
+    def fake_request(*_args, **_kwargs):
+        attempts['count'] += 1
+        if attempts['count'] == 1:
+            raise RuntimeError('minimax-primary http 429: usage limit exceeded (2056)')
+        return {
+            'stout': {
+                'word': 'stout',
+                'badge': '联想',
+                'text': '先想一个人站得又稳又壮，再把“粗壮的；结实的”这个意思挂上去。',
+            },
+        }
+
+    monkeypatch.setattr(word_memory_note_enrichment, 'request_memory_note_batch', fake_request)
+    monkeypatch.setattr(word_memory_note_enrichment.time, 'sleep', lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr(word_memory_note_enrichment.random, 'uniform', lambda *_args: 0.0)
+
+    with app.app_context():
+        stats = word_memory_note_enrichment.enrich_premium_book_memory_notes(
+            words=['stout'],
+            batch_size=1,
+            overwrite=True,
+            sleep_seconds=0,
+            rate_limit_base_sleep_seconds=3,
+            rate_limit_max_sleep_seconds=30,
+        )
+
+        assert attempts['count'] == 2
+        assert stats['enriched'] == 1
+        assert stats['failed'] == 0
+        assert stats['rate_limit_retries'] == 1
+        assert stats['rate_limit_wait_seconds'] == 3
+        assert sleeps == [3]
+
+
+def test_memory_note_enrichment_stops_on_real_quota_exhaustion(app, monkeypatch):
+    monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _seed_catalog)
+    monkeypatch.setattr(
+        word_memory_note_enrichment,
+        'request_memory_note_batch',
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError('your current token plan not support model, MiniMax-M2.7 (2061)'),
+        ),
+    )
+
+    with app.app_context():
+        stats = word_memory_note_enrichment.enrich_premium_book_memory_notes(
+            words=['stout'],
+            batch_size=1,
+            overwrite=True,
+            sleep_seconds=0,
+        )
+
+        assert stats['quota_exhausted'] is True
+        assert 'token plan not support model' in stats['stop_reason']
+        assert stats['failed'] == 1
+        assert stats['enriched'] == 0

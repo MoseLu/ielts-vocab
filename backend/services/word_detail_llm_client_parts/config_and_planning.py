@@ -17,6 +17,21 @@ DEFAULT_DASHSCOPE_MODEL = 'qwen-turbo'
 DEFAULT_MODEL_MAX_TOKENS = 3200
 DEFAULT_DASHSCOPE_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
 DEFAULT_MINIMAX_BASE_URL = 'https://api.minimaxi.com/v1'
+RATE_LIMIT_PATTERNS = (
+    r'\brate limit\b',
+    r'\btoo many requests\b',
+    r'\busage limit\b',
+    r'\brequest limit\b',
+    r'\btry again later\b',
+    r'http 429',
+    r'http 529',
+    r'\b2056\b',
+    r'\b2064\b',
+    r'请求过于频繁',
+    r'请求频繁',
+    r'请求拥挤',
+    r'稍后再试',
+)
 QUOTA_EXHAUSTED_PATTERNS = (
     r'\bquota exhausted\b',
     r'\binsufficient quota\b',
@@ -25,6 +40,10 @@ QUOTA_EXHAUSTED_PATTERNS = (
     r'\bfree tier\b',
     r'\bbalance insufficient\b',
     r'\bquota exceeded\b',
+    r'\btoken plan\b',
+    r'\bnot support model\b',
+    r'\b2061\b',
+    r'\b2062\b',
     r'额度不足',
     r'额度已用完',
     r'免费额度',
