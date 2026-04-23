@@ -1,68 +1,32 @@
 .practice-game-mode__battle-screen {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(var(--size-400), var(--size-480));
-  gap: var(--size-24);
+  grid-template-columns: minmax(0, 1.2fr) minmax(var(--size-360), 0.92fr);
+  gap: var(--size-20);
   align-items: stretch;
 }
 
 .practice-game-mode__scene {
   position: relative;
-  min-height: clamp(var(--size-640), calc(100vh - var(--size-320)), var(--size-800));
-  padding: var(--size-24);
-  border-radius: var(--size-36);
+  min-height: clamp(var(--size-620), calc(100vh - var(--size-320)), var(--size-780));
+  padding: var(--size-22);
+  border-radius: var(--size-34);
   overflow: hidden;
+  border: var(--size-1) solid color-mix(in srgb, var(--warning) var(--mix-16), var(--border-strong));
   background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--accent-light) var(--mix-86), transparent), transparent 56%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-accent) var(--mix-90), var(--surface-base)) 0%,
-      var(--surface-base) 100%
-    );
+    radial-gradient(circle at top, color-mix(in srgb, var(--info) var(--mix-16), transparent), transparent 54%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-92), var(--surface-muted)) 0%, color-mix(in srgb, var(--surface-code) var(--mix-84), var(--surface-base)) 100%);
   display: grid;
   align-content: space-between;
   gap: var(--size-16);
-}
-
-.practice-game-mode__scene--meaning,
-.practice-game-mode__scene--recognition {
-  background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--warning-bg) var(--mix-78), transparent), transparent 54%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--warning-bg) var(--mix-88), var(--surface-accent)) 0%,
-      color-mix(in srgb, var(--accent) var(--mix-18), var(--warning-bg)) 18%,
-      color-mix(in srgb, var(--warning-bg) var(--mix-60), var(--surface-base)) 60%,
-      color-mix(in srgb, var(--surface-accent) var(--mix-78), var(--surface-base)) 100%
-    );
-}
-
-.practice-game-mode__scene--listening {
-  background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--surface-base) var(--mix-30), transparent), transparent 52%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--info-bg) var(--mix-90), var(--surface-base)) 0%,
-      color-mix(in srgb, var(--info) var(--mix-24), var(--surface-base)) 38%,
-      var(--surface-base) 100%
-    );
-}
-
-.practice-game-mode__scene--speaking,
-.practice-game-mode__scene--dictation,
-.practice-game-mode__scene--boss {
-  background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--surface-base) var(--mix-58), transparent), transparent 50%),
-    linear-gradient(
-      180deg,
-      var(--surface-base) 0%,
-      color-mix(in srgb, var(--surface-muted) var(--mix-38), var(--surface-base)) 100%
-    );
+  box-shadow:
+    inset 0 0 0 var(--size-1) color-mix(in srgb, var(--surface-base) var(--mix-8), transparent),
+    var(--shadow-floating);
 }
 
 .practice-game-mode__scene.is-failed {
   background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--surface-accent) var(--mix-92), transparent), transparent 52%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-accent) var(--mix-82), var(--surface-base)) 0%, var(--surface-base) 100%);
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent) var(--mix-18), transparent), transparent 52%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-92), var(--surface-muted)) 0%, color-mix(in srgb, var(--surface-code) var(--mix-74), var(--accent-light)) 100%);
 }
 
 .practice-game-mode__scene-image,
@@ -79,12 +43,7 @@
 
 .practice-game-mode__scene-overlay {
   background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-base) var(--mix-18), transparent) 0%,
-      color-mix(in srgb, var(--surface-base) var(--mix-56), transparent) 46%,
-      color-mix(in srgb, var(--surface-base) var(--mix-94), transparent) 100%
-    );
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-18), transparent) 0%, color-mix(in srgb, var(--surface-code) var(--mix-58), transparent) 50%, color-mix(in srgb, var(--surface-code) var(--mix-94), transparent) 100%);
 }
 
 .practice-game-mode__scene-head,
@@ -111,15 +70,13 @@
 }
 
 .practice-game-mode__scene-head span,
-.practice-game-mode__scene-audio {
+.practice-game-mode__scene-audio,
+.practice-game-mode__token-chip {
   padding: var(--size-8) var(--size-12);
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface-base) var(--mix-70), transparent);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-12), transparent);
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-78), transparent);
   backdrop-filter: blur(var(--size-12));
-}
-
-.practice-game-mode__scene-head span {
-  color: var(--text-secondary);
   font-weight: 700;
 }
 
@@ -131,7 +88,7 @@
   width: min(100%, var(--size-480));
   padding: var(--size-20) var(--size-24);
   border-radius: var(--size-24);
-  background: color-mix(in srgb, var(--surface-base) var(--mix-78), transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-base) var(--mix-16), transparent) 0%, color-mix(in srgb, var(--surface-base) var(--mix-10), transparent) 100%);
   backdrop-filter: blur(var(--size-16));
   display: grid;
   gap: var(--size-6);
@@ -141,8 +98,8 @@
 
 .practice-game-mode__scene-bubble strong,
 .practice-game-mode__scene-coach strong {
-  font-size: clamp(var(--size-28), 8vw, var(--size-44));
-  line-height: 0.95;
+  font-size: clamp(var(--size-28), 8vw, var(--size-42));
+  line-height: 0.96;
 }
 
 .practice-game-mode__scene-bubble span,
@@ -152,7 +109,7 @@
 .practice-game-mode__choice span,
 .practice-game-mode__sheet-eyebrow,
 .practice-game-mode__error {
-  color: var(--text-secondary);
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-68), transparent);
 }
 
 .practice-game-mode__scene-coach {
@@ -168,8 +125,6 @@
   z-index: var(--layer-raised);
   justify-self: center;
   border: none;
-  color: var(--text-primary);
-  font-weight: 700;
   cursor: pointer;
 }
 
@@ -191,26 +146,21 @@
   gap: var(--size-8);
 }
 
-.practice-game-mode__token-chip {
-  padding: var(--size-8) var(--size-12);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface-base) var(--mix-74), transparent);
-  font-size: var(--size-13);
-  font-weight: 700;
-}
-
 .practice-game-mode__sheet {
   position: relative;
   z-index: var(--layer-above);
-  padding: var(--size-24);
-  border-radius: var(--size-36);
-  background: color-mix(in srgb, var(--surface-elevated) var(--mix-98), transparent);
-  border: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-16), transparent);
+  padding: var(--size-22);
+  border-radius: var(--size-32);
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--warning) var(--mix-10), transparent), transparent 26%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-base) var(--mix-10), transparent) 0%, color-mix(in srgb, var(--surface-code) var(--mix-88), var(--surface-base)) 100%);
+  border: var(--size-1) solid color-mix(in srgb, var(--warning) var(--mix-14), var(--border-strong));
   box-shadow: var(--shadow-floating);
   display: grid;
   gap: var(--size-16);
   min-height: 100%;
   align-content: start;
+  color: var(--text-inverse);
 }
 
 .practice-game-mode__sheet-head {
@@ -227,55 +177,11 @@
   line-height: 1.25;
 }
 
-.practice-game-mode__dimension-row {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--size-8);
-}
-
-.practice-game-mode__dimension-chip {
-  padding: var(--size-10) var(--size-8);
-  border-radius: var(--size-18);
-  background: color-mix(in srgb, var(--surface-muted) var(--mix-90), transparent);
-  display: grid;
-  gap: var(--size-4);
-  text-align: center;
-}
-
-.practice-game-mode__dimension-chip span {
-  color: var(--text-secondary);
-  font-size: var(--size-12);
-}
-
-.practice-game-mode__dimension-chip strong {
-  font-size: var(--size-18);
-  line-height: 1;
-}
-
-.practice-game-mode__dimension-chip.is-active {
-  background: color-mix(in srgb, var(--accent-light) var(--mix-94), transparent);
-  box-shadow: inset 0 0 0 var(--size-1) color-mix(in srgb, var(--accent) var(--mix-30), transparent);
-}
-
-.practice-game-mode__dimension-chip.is-passed {
-  background: color-mix(in srgb, var(--success-bg) var(--mix-90), transparent);
-  color: var(--success-strong);
-}
-
 .practice-game-mode__task,
 .practice-game-mode__button-row,
 .practice-game-mode__input-row {
   display: grid;
   gap: var(--size-12);
-}
-
-.practice-game-mode__callout {
-  padding: var(--size-18);
-  border-radius: var(--size-22);
-  background: color-mix(in srgb, var(--surface-subtle) var(--mix-94), transparent);
-  font-size: clamp(var(--size-30), 8vw, var(--size-40));
-  font-weight: 800;
-  text-align: center;
 }
 
 .practice-game-mode__choice-grid {
@@ -284,11 +190,18 @@
   gap: var(--size-10);
 }
 
+.practice-game-mode__choice,
+.practice-game-mode__input,
+.practice-game-speaking__transcript,
+.practice-game-mode__example-sentence {
+  border: var(--size-1) solid color-mix(in srgb, var(--warning) var(--mix-14), var(--border-strong));
+  background: color-mix(in srgb, var(--surface-base) var(--mix-10), transparent);
+  color: var(--text-inverse);
+}
+
 .practice-game-mode__choice {
   padding: var(--size-14);
-  border: var(--size-2) solid color-mix(in srgb, var(--border-strong) var(--mix-20), transparent);
   border-radius: var(--size-18);
-  background: color-mix(in srgb, var(--surface-subtle) var(--mix-96), transparent);
   display: grid;
   gap: var(--size-4);
   text-align: left;
@@ -301,8 +214,8 @@
 }
 
 .practice-game-mode__choice.is-selected {
-  border-color: color-mix(in srgb, var(--accent) var(--mix-40), transparent);
-  background: color-mix(in srgb, var(--accent-light) var(--mix-94), transparent);
+  border-color: color-mix(in srgb, var(--warning) var(--mix-42), transparent);
+  background: color-mix(in srgb, var(--warning) var(--mix-16), transparent);
 }
 
 .practice-game-mode__input-row {
@@ -313,9 +226,7 @@
 .practice-game-mode__input {
   min-height: var(--size-48);
   padding: 0 var(--size-14);
-  border: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-26), transparent);
   border-radius: var(--size-16);
-  background: var(--surface-elevated);
   font-size: var(--size-16);
 }
 
@@ -325,11 +236,7 @@
   padding: 0 var(--size-18);
   border: none;
   border-radius: var(--size-16);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--success) var(--mix-70), var(--success-bg)) 0%,
-    var(--success) 100%
-  );
+  background: linear-gradient(180deg, color-mix(in srgb, var(--success) var(--mix-74), var(--success-bg)) 0%, color-mix(in srgb, var(--success) var(--mix-92), var(--info)) 100%);
   color: var(--surface-base);
   font-size: var(--size-15);
   font-weight: 800;
@@ -337,8 +244,11 @@
 }
 
 .practice-game-mode__action.is-secondary {
-  background: color-mix(in srgb, var(--surface-muted) var(--mix-92), transparent);
-  color: var(--text-primary);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--warning) var(--mix-72), var(--accent)) 0%, color-mix(in srgb, var(--accent) var(--mix-90), var(--warning)) 100%);
+}
+
+.practice-game-mode__action.is-recording {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) var(--mix-82), var(--warning)) 0%, color-mix(in srgb, var(--accent) var(--mix-96), var(--warning)) 100%);
 }
 
 .practice-game-mode__banner,
@@ -349,18 +259,18 @@
 }
 
 .practice-game-mode__banner.is-success {
-  background: color-mix(in srgb, var(--success-bg) var(--mix-92), transparent);
-  color: var(--success-strong);
+  background: color-mix(in srgb, var(--success) var(--mix-22), transparent);
+  color: var(--text-inverse);
 }
 
 .practice-game-mode__banner.is-warning {
-  background: color-mix(in srgb, var(--accent-light) var(--mix-96), transparent);
-  color: var(--accent-dark);
+  background: color-mix(in srgb, var(--accent) var(--mix-20), transparent);
+  color: var(--text-inverse);
 }
 
 .practice-game-mode__error {
-  background: color-mix(in srgb, var(--error-bg) var(--mix-94), transparent);
-  color: var(--error-strong);
+  background: color-mix(in srgb, var(--accent) var(--mix-18), transparent);
+  color: var(--text-inverse);
 }
 
 .practice-pronunciation {
@@ -379,5 +289,163 @@
 
   .practice-game-mode__sheet {
     min-height: auto;
+  }
+}
+
+.practice-game-mode--mission {
+  min-height: 100vh;
+  padding: 0;
+  overflow: hidden;
+  align-content: stretch;
+  background: var(--surface-code);
+}
+
+.practice-game-mode--mission::before {
+  display: none;
+}
+
+.practice-game-mode--mission .practice-game-mode__mission,
+.practice-game-mode--mission .practice-game-mode__battle-screen {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.practice-game-mode--mission .practice-game-mode__battle-screen {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.practice-game-mode--mission .practice-game-mode__scene {
+  position: absolute;
+  inset: 0;
+  min-height: 100vh;
+  padding: clamp(var(--size-18), 3vw, var(--size-42));
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface-code);
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-backdrop,
+.practice-game-mode--mission .practice-game-mode__scene-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-overlay {
+  background:
+    radial-gradient(circle at 70% 22%, color-mix(in srgb, var(--surface-base) var(--mix-10), transparent), transparent 24%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-18), transparent) 0%, color-mix(in srgb, var(--surface-code) var(--mix-42), transparent) 48%, color-mix(in srgb, var(--surface-code) var(--mix-82), transparent) 100%);
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-head {
+  position: absolute;
+  top: clamp(var(--size-18), 2.6vw, var(--size-34));
+  left: clamp(var(--size-18), 2.6vw, var(--size-34));
+  right: clamp(var(--size-18), 2.6vw, var(--size-34));
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-head span {
+  background: color-mix(in srgb, var(--surface-code) var(--mix-52), transparent);
+  box-shadow: 0 var(--size-8) var(--size-18) color-mix(in srgb, var(--surface-code) var(--mix-28), transparent);
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-bubble,
+.practice-game-mode--mission .practice-game-mode__scene-coach {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  width: min(62vw, var(--size-680));
+  border: none;
+  border-radius: var(--size-28);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-18), transparent);
+  box-shadow: 0 var(--size-18) var(--size-40) color-mix(in srgb, var(--surface-code) var(--mix-34), transparent);
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-caption {
+  position: absolute;
+  left: clamp(var(--size-22), 4vw, var(--size-64));
+  bottom: clamp(var(--size-184), 21vh, var(--size-240));
+  width: min(44vw, var(--size-520));
+  text-shadow: 0 var(--size-2) var(--size-10) color-mix(in srgb, var(--surface-code) var(--mix-76), transparent);
+}
+
+.practice-game-mode--mission .practice-game-mode__sheet {
+  position: absolute;
+  left: clamp(var(--size-22), 4vw, var(--size-64));
+  right: clamp(var(--size-22), 4vw, var(--size-64));
+  bottom: clamp(var(--size-22), 4vh, var(--size-42));
+  min-height: auto;
+  padding: clamp(var(--size-18), 2.4vw, var(--size-30));
+  border: none;
+  border-radius: var(--size-28);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-base) var(--mix-16), transparent) 0%, color-mix(in srgb, var(--surface-code) var(--mix-68), transparent) 100%);
+  box-shadow: 0 var(--size-18) var(--size-42) color-mix(in srgb, var(--surface-code) var(--mix-42), transparent);
+  backdrop-filter: blur(var(--size-12));
+}
+
+.practice-game-mode--mission .practice-game-mode__sheet-head {
+  align-items: center;
+}
+
+.practice-game-mode--mission .practice-game-mode__sheet-head strong {
+  font-size: clamp(var(--size-22), 2.4vw, var(--size-34));
+}
+
+.practice-game-mode--mission .practice-game-mode__task {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.practice-game-mode--mission .practice-game-mode__input-row {
+  grid-template-columns: minmax(0, 1fr) minmax(var(--size-120), auto);
+}
+
+.practice-game-mode--mission .practice-game-mode__choice-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.practice-game-mode--mission .practice-game-mode__choice,
+.practice-game-mode--mission .practice-game-mode__input,
+.practice-game-mode--mission .practice-game-speaking__transcript,
+.practice-game-mode--mission .practice-game-mode__example-sentence {
+  background: color-mix(in srgb, var(--surface-code) var(--mix-42), transparent);
+  box-shadow: inset 0 0 0 var(--size-1) color-mix(in srgb, var(--surface-base) var(--mix-8), transparent);
+}
+
+@media (max-width: 900px) {
+  .practice-game-mode--mission {
+    overflow: auto;
+  }
+
+  .practice-game-mode--mission .practice-game-mode__battle-screen {
+    min-height: 100vh;
+  }
+
+  .practice-game-mode--mission .practice-game-mode__scene {
+    min-height: 100vh;
+  }
+
+  .practice-game-mode--mission .practice-game-mode__scene-bubble,
+  .practice-game-mode--mission .practice-game-mode__scene-coach {
+    top: 36%;
+    width: min(86vw, var(--size-520));
+  }
+
+  .practice-game-mode--mission .practice-game-mode__scene-caption {
+    display: none;
+  }
+
+  .practice-game-mode--mission .practice-game-mode__sheet {
+    left: var(--size-12);
+    right: var(--size-12);
+    bottom: var(--size-12);
+  }
+
+  .practice-game-mode--mission .practice-game-mode__choice-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,19 +1,22 @@
 .practice-game-result {
-  width: min(100%, var(--size-880));
+  width: min(100%, var(--size-900));
   min-height: min(72vh, var(--size-720));
   margin: 0 auto;
   padding: var(--size-32);
   border-radius: var(--size-36);
   background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--accent-light) var(--mix-82), transparent), transparent 30%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) var(--mix-98), transparent) 0%, var(--surface-base) 100%);
-  border: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-16), transparent);
-  box-shadow: var(--shadow-floating);
+    radial-gradient(circle at top, color-mix(in srgb, var(--warning) var(--mix-18), transparent), transparent 26%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-94), var(--surface-muted)) 0%, color-mix(in srgb, var(--surface-code) var(--mix-82), var(--surface-base)) 100%);
+  border: var(--size-1) solid color-mix(in srgb, var(--warning) var(--mix-16), var(--border-strong));
+  box-shadow:
+    inset 0 0 0 var(--size-1) color-mix(in srgb, var(--surface-base) var(--mix-8), transparent),
+    var(--shadow-overlay);
   display: grid;
   justify-items: center;
   align-content: center;
   gap: var(--size-20);
   text-align: center;
+  color: var(--text-inverse);
 }
 
 .practice-game-result__medal {
@@ -46,7 +49,7 @@
 .practice-game-result__copy p {
   margin: 0;
   max-width: var(--size-560);
-  color: var(--text-secondary);
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-68), transparent);
 }
 
 .practice-game-result__rewards {
@@ -60,7 +63,7 @@
   min-width: var(--size-104);
   padding: var(--size-10) var(--size-14);
   border-radius: var(--size-18);
-  background: color-mix(in srgb, var(--surface-subtle) var(--mix-94), transparent);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-12), transparent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -84,13 +87,12 @@
   min-width: clamp(var(--size-160), 24vw, var(--size-220));
   padding: 0 var(--size-20);
   border-radius: var(--size-18);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) var(--mix-76), var(--accent-light)) 0%, var(--accent) 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--success) var(--mix-74), var(--success-bg)) 0%, color-mix(in srgb, var(--success) var(--mix-92), var(--info)) 100%);
   color: var(--surface-base);
 }
 
 .practice-game-result__actions .is-secondary {
-  background: color-mix(in srgb, var(--surface-muted) var(--mix-92), transparent);
-  color: var(--text-primary);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--warning) var(--mix-72), var(--accent)) 0%, color-mix(in srgb, var(--accent) var(--mix-90), var(--warning)) 100%);
 }
 
 .practice-game-speaking,
@@ -104,7 +106,7 @@
 .practice-game-mode__coach-line {
   padding: var(--size-16);
   border-radius: var(--size-20);
-  background: color-mix(in srgb, var(--surface-subtle) var(--mix-94), transparent);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-10), transparent);
 }
 
 .practice-game-speaking p,
@@ -112,9 +114,14 @@
   margin: 0;
 }
 
+.practice-game-speaking p,
+.practice-game-speaking__transcript,
+.practice-game-mode__coach-line span {
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-72), transparent);
+}
+
 .practice-game-speaking__transcript {
   min-height: var(--size-92);
-  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -134,7 +141,6 @@
 }
 
 .practice-game-mode__coach-line span {
-  color: var(--text-secondary);
   font-size: var(--size-14);
 }
 
@@ -144,104 +150,13 @@
   line-height: 1.45;
 }
 
-.practice-game-mode__scene--definition {
-  background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--warning-bg) var(--mix-78), transparent), transparent 54%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--warning-bg) var(--mix-88), var(--surface-accent)) 0%,
-      color-mix(in srgb, var(--accent) var(--mix-18), var(--warning-bg)) 18%,
-      color-mix(in srgb, var(--warning-bg) var(--mix-60), var(--surface-base)) 60%,
-      color-mix(in srgb, var(--surface-accent) var(--mix-78), var(--surface-base)) 100%
-    );
-}
-
-.practice-game-mode__scene--example {
-  background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--surface-base) var(--mix-30), transparent), transparent 52%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--info-bg) var(--mix-90), var(--surface-base)) 0%,
-      color-mix(in srgb, var(--info) var(--mix-24), var(--surface-base)) 38%,
-      var(--surface-base) 100%
-    );
-}
-
-.practice-game-mode__scene--spelling,
-.practice-game-mode__scene--pronunciation {
-  background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--surface-base) var(--mix-58), transparent), transparent 50%),
-    linear-gradient(
-      180deg,
-      var(--surface-base) 0%,
-      color-mix(in srgb, var(--surface-muted) var(--mix-38), var(--surface-base)) 100%
-    );
-}
-
-@media (max-width: 1180px) {
-  .practice-game-level-deck {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 960px) {
-  .practice-game-map {
-    padding: var(--size-18);
-    border-radius: var(--size-28);
-  }
-
-  .practice-game-map__hud,
-  .practice-game-map__dock {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .practice-game-map__stats {
-    justify-content: start;
-  }
-
-  .practice-game-map__world {
-    min-height: var(--size-480);
-  }
-
-  .practice-game-map__node:nth-of-type(1) { left: 6%; bottom: 12%; }
-  .practice-game-map__node:nth-of-type(2) { left: 24%; bottom: 31%; }
-  .practice-game-map__node:nth-of-type(3) { left: 42%; bottom: 20%; }
-  .practice-game-map__node:nth-of-type(4) { left: 58%; bottom: 36%; }
-  .practice-game-map__node:nth-of-type(5) { right: 6%; bottom: 16%; }
-
-  .practice-game-result {
-    padding: var(--size-24);
-    min-height: auto;
-  }
-}
-
 @media (max-width: 640px) {
-  .practice-game-level-deck {
-    grid-template-columns: 1fr;
-  }
-
-  .practice-game-map__world {
-    min-height: var(--size-420);
-  }
-
-  .practice-game-map__node {
-    width: clamp(var(--size-76), 28vw, var(--size-96));
-    padding: var(--size-8);
-  }
-
-  .practice-game-map__hero,
-  .practice-game-map__mentor {
-    width: var(--size-88);
-  }
-
   .practice-game-result__actions,
   .practice-game-result__rewards {
     width: 100%;
   }
 
-  .practice-game-result__actions button,
-  .practice-game-map__start {
+  .practice-game-result__actions button {
     width: 100%;
   }
 
