@@ -48,7 +48,7 @@ pnpm exec playwright test --ui
 1. Start the split backend:
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
+./start-microservices.sh
 ```
 
 2. Start the frontend:

@@ -18,7 +18,7 @@ test('smoke: unauthenticated home redirects to login', async ({ page }) => {
 
 test('smoke: register, land on app shell, then logout', async ({ page }) => {
   const uniqueSuffix = Date.now().toString()
-  const username = `smoke-user-${uniqueSuffix}`
+  const username = `smoke_user_${uniqueSuffix}`
   const email = `smoke-${uniqueSuffix}@example.com`
   const password = 'password123'
 
@@ -30,7 +30,7 @@ test('smoke: register, land on app shell, then logout', async ({ page }) => {
   await page.fill('input[placeholder="再次输入密码"]', password)
   await page.getByRole('button', { name: '注册' }).click()
 
-  await page.waitForURL(url => !url.pathname.startsWith('/login'))
+  await page.waitForURL(url => !['/login', '/register', '/forgot-password'].includes(url.pathname))
   await expect(page.locator('.header')).toBeVisible()
   await page.locator('.user-btn').click()
   await page.getByRole('button', { name: '退出登录' }).click()

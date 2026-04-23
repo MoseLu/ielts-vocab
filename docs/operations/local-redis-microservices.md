@@ -35,27 +35,21 @@ The local Redis baseline is no longer only infrastructure scaffolding.
 
 Run the Redis runtime directly:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start-local-redis-microservices.ps1
+```bash
+./scripts/start-local-redis-microservices.sh
 ```
 
 Or start the whole split backend:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
+```bash
+./start-microservices.sh
 ```
 
-`start-microservices.ps1` now starts the local Redis runtime before bringing up the HTTP services unless `-SkipRedis` is passed.
+`start-microservices.sh` now starts the local Redis runtime before bringing up the HTTP services unless `--skip-redis` is passed.
 
 ## Binary Resolution
 
-The Redis startup script resolves the server binary in this order:
-
-1. `-RedisServerPath`
-2. `REDIS_SERVER_PATH`
-3. `redis-server` on `PATH`
-
-If none are available, the script fails with a clear error instead of silently skipping Redis startup.
+The Redis startup script uses the bundled runtime env first and then resolves `redis-server` and `redis-cli` from `PATH`. If either binary is unavailable, the script fails with a clear error instead of silently skipping Redis startup.
 
 ## Verification
 

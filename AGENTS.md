@@ -16,7 +16,7 @@ Last updated: 2026-04-12 11:18:00 +08:00
 - Keep `pytest backend/tests/test_source_text_integrity.py -q` green after backend or text-heavy edits.
 - Treat the remote cloud chain as canonical for domain/runtime bugs: `axiomaticworld.com -> nginx(:443/:80) -> active HTTP slot gateway-bff(:18000|:28000) -> downstream services(:18101-18108|:28101-28108)`, with `/socket.io` proxied to ASR Socket.IO on `:5001`.
 - Use the local split runtime only for reproduction: preview UI on `3002`, browser API ingress on `8000`, downstream services on `8101-8108`, and speech Socket.IO on `5001`.
-- When touching runtime startup, keep `start-project.bat` and `start-project.ps1` aligned with `frontend/vite.config.ts`, `nginx.conf.example`, and the real service ports.
+- When touching runtime startup, keep `start-project.sh`, `start-microservices.sh`, and `start-monolith-compat.sh` aligned with `frontend/vite.config.ts`, `nginx.conf.example`, and the real service ports.
 
 ## Current Focus
 - Keep the post-Wave microservice baseline stable: normal split startup no longer exposes shared-`SQLite` override flags, service boot env loading is file-driven, tts/asr migration baselines are registered, gateway/internal auth is stricter, OSS artifact validation is green, and `scripts/repo_summary.py` is restored.
@@ -51,13 +51,13 @@ Last updated: 2026-04-12 11:18:00 +08:00
 - Added the Wave 5 remote broker rollout baseline: [provision-postgres.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/provision-postgres.sh) now writes canonical `REDIS_*` plus `RABBITMQ_*` settings into `/etc/ielts-vocab/microservices.env`, [install-cloud-runtime.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/install-cloud-runtime.sh) now installs and enables `redis` plus `rabbitmq-server`, [provision-broker-runtime.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/provision-broker-runtime.sh) now provisions the remote local-host broker baseline, and [validate-broker-runtime.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/validate-broker-runtime.sh) is now wired into remote validation.
 - Tightened Wave 5 broker validation so missing broker env no longer hides behind code defaults: [validate_wave5_broker_runtime.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/validate_wave5_broker_runtime.py) now requires explicit broker settings, [backend/.env.microservices.local](/F:/enterprise-workspace/projects/ielts-vocab/backend/.env.microservices.local) now carries the local Redis/RabbitMQ baseline, and remote [preflight-check.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/preflight-check.sh) plus [smoke-check.sh](/F:/enterprise-workspace/projects/ielts-vocab/scripts/cloud-deploy/smoke-check.sh) now validate broker env, systemd units, and runtime connectivity before the HTTP smoke path.
 - Closed the code-side Wave 4 storage/artifact parity tooling: shared-`SQLite` scoped-override restart records, remote storage drill plus rollback evidence flow, and `notes export`, `example-audio`, plus `word-audio` `OSS` validate/repair operators are now all documented and wired into the remote runbook.
-- Added a Wave 5 `notes-service <- learning.wrong_word.updated` consumer path: `notes_projected_wrong_words` now materializes wrong-word facts from events, `start-microservices.ps1` now boots `notes-wrong-word-projection-worker`, and `notes_summary_context_repository` now prefers that projection once per-user state catches up.
-- Added a Wave 5 `ai-execution-service <- notes.summary.generated` consumer path: `ai_projected_daily_summaries` now materializes notes summary facts from events, `start-microservices.ps1` now boots `ai-daily-summary-projection-worker`, `/internal/notes/summaries` is available for service-auth reads, and AI context now falls back to projected summaries when `notes-service` is unavailable.
-- Added a Wave 5 `ai-execution-service <- learning.wrong_word.updated` consumer path: `ai_projected_wrong_words` now materializes wrong-word facts from events, `start-microservices.ps1` now boots `ai-wrong-word-projection-worker`, and AI wrong-word reads plus the `get_wrong_words` tool now fall back to that projection when `learning-core-service` is unavailable.
-- Added a Wave 5 `notes-service <- ai.prompt_run.completed` consumer path: `notes_projected_prompt_runs` now materializes AI prompt-run facts from events, notes summary generation reads that projection into a new `当天 AI 使用痕迹` section, and `start-microservices.ps1` now boots `notes-prompt-run-projection-worker`.
-- Added a Wave 5 `notes-service <- learning.session.logged` consumer path: `notes_projected_study_sessions` now materializes study-session context from events, `notes_summary_context_repository` prefers that projection once it catches up, and `start-microservices.ps1` now boots `notes-study-session-projection-worker`.
+- Added a Wave 5 `notes-service <- learning.wrong_word.updated` consumer path: `notes_projected_wrong_words` now materializes wrong-word facts from events, `start-microservices.sh` now boots the grouped `notes-domain-worker`, and `notes_summary_context_repository` now prefers that projection once per-user state catches up.
+- Added a Wave 5 `ai-execution-service <- notes.summary.generated` consumer path: `ai_projected_daily_summaries` now materializes notes summary facts from events, `start-microservices.sh` now boots the grouped `ai-execution-domain-worker`, `/internal/notes/summaries` is available for service-auth reads, and AI context now falls back to projected summaries when `notes-service` is unavailable.
+- Added a Wave 5 `ai-execution-service <- learning.wrong_word.updated` consumer path: `ai_projected_wrong_words` now materializes wrong-word facts from events, `start-microservices.sh` now boots the grouped `ai-execution-domain-worker`, and AI wrong-word reads plus the `get_wrong_words` tool now fall back to that projection when `learning-core-service` is unavailable.
+- Added a Wave 5 `notes-service <- ai.prompt_run.completed` consumer path: `notes_projected_prompt_runs` now materializes AI prompt-run facts from events, notes summary generation reads that projection into a new `当天 AI 使用痕迹` section, and `start-microservices.sh` now boots the grouped `notes-domain-worker`.
+- Added a Wave 5 `notes-service <- learning.session.logged` consumer path: `notes_projected_study_sessions` now materializes study-session context from events, `notes_summary_context_repository` prefers that projection once it catches up, and `start-microservices.sh` now boots the grouped `notes-domain-worker`.
 - Added Wave 5 `tts.media.generated` and `ai.prompt_run.completed` end-to-end local event flows with service-owned materialization tables, real outbox publisher workers, and admin projection workers, and exposed recent prompt-run plus TTS-media metrics in admin overview.
-- `start-microservices.ps1` now boots `ai-execution-outbox-publisher`, `ai-wrong-word-projection-worker`, `ai-daily-summary-projection-worker`, `notes-study-session-projection-worker`, `notes-prompt-run-projection-worker`, and `admin-prompt-run-projection-worker` alongside the earlier Wave 5 workers.
+- `start-microservices.sh` now boots the canonical grouped worker set: `core-eventing-worker`, `notes-domain-worker`, `ai-execution-domain-worker`, and `admin-ops-domain-worker`.
 - Split speech handling out of the main Flask app into `backend/speech_service.py` on port `5001`, and updated proxy/startup flow accordingly.
 - Added quick-memory reconciliation before learning-stats fetches so newer local records reach the backend before dashboard reads.
 - Fixed the due-review timezone skew that undercounted recently due words in `learning-stats` and `learner-profile`.
@@ -176,13 +176,13 @@ cd backend
 pip install -r requirements.txt
 
 # Canonical split backend startup
-powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
+./start-microservices.sh
 
 # Monolith compatibility rollback drill
-powershell -ExecutionPolicy Bypass -File .\start-monolith-compat.ps1
+./start-monolith-compat.sh
 
 # One-click local production-style startup
-start-project.bat
+./start-project.sh
 ```
 
 ## Test Account

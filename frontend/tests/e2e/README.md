@@ -14,7 +14,7 @@
 
 3. **Start split backend:**
    ```bash
-   powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
+   ./start-microservices.sh
    ```
 
 4. **Start frontend server:**
@@ -154,7 +154,7 @@ Add to your CI pipeline:
     path: playwright-report/
 ```
 
-The Windows split-runtime smoke path in this repository uses:
+The Mac split-runtime smoke path in this repository uses:
 
-- `scripts/ci/windows-split-runtime-smoke.ps1`
+- `scripts/ci/mac-split-runtime-smoke.sh`
 - `frontend/tests/e2e/smoke.spec.ts`

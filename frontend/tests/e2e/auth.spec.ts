@@ -6,7 +6,7 @@
 //
 // Start servers (two terminals):
 //   Terminal 1: pnpm run dev          # frontend at http://localhost:3020
-//   Terminal 2: powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
+//   Terminal 2: ./start-microservices.sh
 //
 // Run tests:
 //   pnpm exec playwright test

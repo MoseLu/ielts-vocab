@@ -27,27 +27,21 @@ The checked-in example file [backend/.env.microservices.local.example](../../bac
 
 Run the RabbitMQ runtime directly:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start-local-rabbitmq-microservices.ps1
+```bash
+./scripts/start-local-rabbitmq-microservices.sh
 ```
 
 Or start the whole split backend:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
+```bash
+./start-microservices.sh
 ```
 
-`start-microservices.ps1` now starts the local RabbitMQ runtime before bringing up the HTTP services unless `-SkipRabbit` is passed.
+`start-microservices.sh` now starts the local RabbitMQ runtime before bringing up the HTTP services unless `--skip-rabbit` is passed.
 
 ## Binary Resolution
 
-The RabbitMQ startup script resolves the server binary in this order:
-
-1. `-RabbitMQServerPath`
-2. `RABBITMQ_SERVER_PATH`
-3. `rabbitmq-server.bat` or `rabbitmq-server` on `PATH`
-
-If none are available, the script fails with a clear error instead of silently skipping broker startup.
+The RabbitMQ startup script uses the bundled runtime env first and then resolves `rabbitmq-server` and `rabbitmq-diagnostics` from `PATH`. If those binaries are unavailable, the script fails with a clear error instead of silently skipping broker startup.
 
 ## Verification
 

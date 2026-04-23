@@ -21,8 +21,8 @@ Upgrade the current split-compatible backend into a standard microservice backen
 - [已完成] Add shared split-service env loading from `backend/.env` plus `backend/.env.microservices.local`.
 - [已完成] Add one-command local startup for `gateway-bff + all backend services`, with target-port reservation during boot to avoid Windows dynamic-port collisions.
 - [已完成] Add database-backed `/ready` checks for every stateful service.
-- [已完成] Add Redis local runtime and shared config: [start-local-redis-microservices.ps1](../../scripts/start-local-redis-microservices.ps1), [local-redis-microservices.md](../operations/local-redis-microservices.md), and [redis_runtime.py](../../packages/platform-sdk/platform_sdk/redis_runtime.py).
-- [已完成] Add RabbitMQ local runtime and shared config: [start-local-rabbitmq-microservices.ps1](../../scripts/start-local-rabbitmq-microservices.ps1), [local-rabbitmq-microservices.md](../operations/local-rabbitmq-microservices.md), and [rabbitmq_runtime.py](../../packages/platform-sdk/platform_sdk/rabbitmq_runtime.py).
+- [已完成] Add Redis local runtime and shared config: [start-local-redis-microservices.sh](../../scripts/start-local-redis-microservices.sh), [local-redis-microservices.md](../operations/local-redis-microservices.md), and [redis_runtime.py](../../packages/platform-sdk/platform_sdk/redis_runtime.py).
+- [已完成] Add RabbitMQ local runtime and shared config: [start-local-rabbitmq-microservices.sh](../../scripts/start-local-rabbitmq-microservices.sh), [local-rabbitmq-microservices.md](../operations/local-rabbitmq-microservices.md), and [rabbitmq_runtime.py](../../packages/platform-sdk/platform_sdk/rabbitmq_runtime.py).
 - [已完成] Standardize internal request headers: `X-Request-Id`, `X-Trace-Id`, `X-User-Id`, `X-User-Scopes`, `X-Service-Name`.
 - [已完成] Add shared internal service auth/JWT package for gateway-to-service calls.
 
@@ -68,7 +68,7 @@ Upgrade the current split-compatible backend into a standard microservice backen
 Wave 6 is split here into two delivery seams: Wave 6A closes edge hardening at the gateway and ASR boundary, and Wave 6B promotes the split-service startup path into the canonical runtime contract.
 
 - [已完成] Browser `/api/*` compatibility now routes through `gateway-bff`.
-- [已完成] Remove direct browser access assumptions from backend monolith startup by switching `start-project.ps1`, `frontend/vite.config.ts`, `frontend/playwright.config.ts`, `nginx.conf.example`, and the runtime docs to the `gateway-bff :8000 -> services` contract, with static regression coverage in [test_split_runtime_contract.py](../../backend/tests/test_split_runtime_contract.py).
+- [已完成] Remove direct browser access assumptions from backend monolith startup by switching `start-project.sh`, `frontend/vite.config.ts`, `frontend/playwright.config.ts`, `nginx.conf.example`, and the runtime docs to the `gateway-bff :8000 -> services` contract, with static regression coverage in [test_split_runtime_contract.py](../../backend/tests/test_split_runtime_contract.py).
 - [进行中] Move auth context validation to gateway-issued internal headers/JWT.
 - [已完成] Add timeout, retry, and circuit-breaker policy per downstream service in [gateway_upstream.py](../../packages/platform-sdk/platform_sdk/gateway_upstream.py), [http_proxy.py](../../packages/platform-sdk/platform_sdk/http_proxy.py), and [gateway_browser_routes.py](../../packages/platform-sdk/platform_sdk/gateway_browser_routes.py).
 - [已完成] Add streaming pass-through tests for AI and media endpoints under gateway in [test_http_proxy.py](../../backend/tests/test_http_proxy.py), [test_gateway_bff_ai_proxy.py](../../backend/tests/test_gateway_bff_ai_proxy.py), and [test_gateway_bff_tts_proxy.py](../../backend/tests/test_gateway_bff_tts_proxy.py).

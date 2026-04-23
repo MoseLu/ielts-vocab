@@ -62,9 +62,9 @@ vocabulary_data/            # 词书与词汇数据
 AGENTS.md                   # 仓库级工作约束
 MILESTONE.md                # 里程碑总览
 TODO.md                     # 当前任务清单
-start-project.bat           # Windows 一键启动入口
-start-project.ps1           # 本地生产式启动脚本
-start-microservices.ps1     # split backend 默认启动脚本
+scripts/setup-mac-runtime.sh # macOS 本地 runtime 安装脚本
+start-project.sh            # 本地生产式启动脚本
+start-microservices.sh      # split backend 默认启动脚本
 ```
 
 ## 运行拓扑
@@ -96,31 +96,22 @@ https://axiomaticworld.com
 
 ### 1. 安装依赖
 
+macOS 本地 runtime：
+
+```bash
+./scripts/setup-mac-runtime.sh
+```
+
 前端依赖：
 
 ```bash
 pnpm install
 ```
 
-后端依赖：
-
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
 ### 2. 一键启动
 
-Windows 下优先使用：
-
 ```bash
-start-project.bat
-```
-
-或者直接运行：
-
-```bash
-powershell -ExecutionPolicy Bypass -File .\start-project.ps1
+./start-project.sh
 ```
 
 这个脚本会按当前约定启动：
@@ -136,42 +127,10 @@ powershell -ExecutionPolicy Bypass -File .\start-project.ps1
 默认 split backend：
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1
+./start-microservices.sh
 ```
 
-本地 Redis 现在会优先按这几个来源自动发现：
-
-- `REDIS_SERVER_PATH`
-- `RedisService` / `redis-server` 已在 `PATH`
-- `F:\software\Redis-*`、`D:\software\Redis-*`、`C:\software\Redis-*`
-
-如果你这台机器和默认搜索根不一致，可以额外设置：
-
-```powershell
-$env:REDIS_SEARCH_ROOTS='E:\tools;F:\software'
-```
-
-本地 RabbitMQ 现在也会自动发现：
-
-- `RABBITMQ_SERVER_PATH`
-- `F:\software\RabbitMQ-*`、`D:\software\RabbitMQ-*`、`C:\software\RabbitMQ-*`
-- `ERLANG_HOME`
-- `erl.exe` 已在 `PATH`
-- `C:\Program Files`、`F:\software`、`D:\software`、`C:\software` 下的常见 Erlang 安装目录
-
-如果 RabbitMQ 或 Erlang 不在这些默认位置，也可以显式覆盖：
-
-```powershell
-$env:RABBITMQ_SEARCH_ROOTS='E:\tools;F:\software'
-$env:ERLANG_SEARCH_ROOTS='C:\Program Files;E:\tools'
-```
-
-需要针对单个 split service 进行 shared SQLite repair / rollback drill 时，可以显式传服务级 override：
-
-```bash
-powershell -ExecutionPolicy Bypass -File .\start-microservices.ps1 -AllowSharedSplitServiceSqliteServices notes-service
-powershell -ExecutionPolicy Bypass -File .\start-project.ps1 -AllowSharedSplitServiceSqliteServices notes-service
-```
+`scripts/setup-mac-runtime.sh` 会在用户目录下安装 `python/nodejs/postgresql/redis-server/rabbitmq-server`，并准备 `pnpm`。
 
 前端开发：
 
@@ -188,13 +147,13 @@ pnpm preview
 兼容 monolith 入口仅保留给迁移/回归参考，不再是默认浏览器 API 路径：
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\start-monolith-compat.ps1
+./start-monolith-compat.sh
 ```
 
 如果要做更窄的 rollback 演练，可以直接用 surface 预设：
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\start-monolith-compat.ps1 -MonolithCompatSurface rollback
+./start-monolith-compat.sh --monolith-compat-surface rollback
 ```
 
 这个 preset 当前会收窄到 `tts-admin`，并把兼容链路的 readiness canary 切到 `/api/tts/books-summary`，不会再错误依赖 `/api/books/stats`。
@@ -202,26 +161,25 @@ powershell -ExecutionPolicy Bypass -File .\start-monolith-compat.ps1 -MonolithCo
 如果当前分支为了 `wave6c` 收尾而保持 dirty working tree，可以只对这条 compatibility drill 显式放宽 Git gate：
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\start-monolith-compat.ps1 -MonolithCompatSurface rollback -AllowDirtyCompatibilityDrill
+./start-monolith-compat.sh --monolith-compat-surface rollback --allow-dirty-compatibility-drill
 ```
 
 启动后，建议再跑专门的 rollback drill 校验：
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\scripts\validate-wave6c-rollback-drill.ps1
+pwsh ./scripts/validate-wave6c-rollback-drill.ps1
 ```
 
 如果宿主环境不允许绑定兼容 backend 的默认 `5000` 端口，可以显式换到别的本地端口，例如：
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\start-monolith-compat.ps1 -MonolithCompatSurface rollback -AllowDirtyCompatibilityDrill -MonolithCompatBackendPort 5050
-powershell -ExecutionPolicy Bypass -File .\scripts\validate-wave6c-rollback-drill.ps1 -LocalBackendBase http://127.0.0.1:5050
+./start-monolith-compat.sh --monolith-compat-surface rollback --allow-dirty-compatibility-drill --monolith-compat-backend-port 5050
 ```
 
 Wave 6C cutover 校验建议使用：
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\scripts\validate-wave6c-cutover.ps1 -SkipRemote
+pwsh ./scripts/validate-wave6c-cutover.ps1 -SkipRemote
 ```
 
 这个校验包会同时检查本地生产式链路和默认 browser compatibility route coverage；rollback-only 的 `tts-admin` 会单独作为信息摘要输出。
