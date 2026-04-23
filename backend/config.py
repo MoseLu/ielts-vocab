@@ -113,6 +113,23 @@ def _resolve_app_env() -> str:
         or 'development'
     ).strip().lower()
 
+
+def _build_sqlalchemy_engine_options(database_uri: str, service_name: str) -> dict[str, int | bool]:
+    if not database_uri.startswith('postgresql://'):
+        return {}
+    if not service_name or service_name == 'backend-monolith':
+        return {}
+    if _getenv('SQLALCHEMY_DISABLE_SMALL_POOL', 'false').lower() == 'true':
+        return {}
+    return {
+        'pool_pre_ping': True,
+        'pool_use_lifo': True,
+        'pool_size': max(1, int(_getenv('SQLALCHEMY_POOL_SIZE', '1') or '1')),
+        'max_overflow': max(0, int(_getenv('SQLALCHEMY_MAX_OVERFLOW', '1') or '1')),
+        'pool_timeout': max(1, int(_getenv('SQLALCHEMY_POOL_TIMEOUT_SECONDS', '15') or '15')),
+        'pool_recycle': max(30, int(_getenv('SQLALCHEMY_POOL_RECYCLE_SECONDS', '1800') or '1800')),
+    }
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
@@ -133,6 +150,10 @@ class Config:
     )
     DATABASE_BACKEND = 'postgresql' if SQLALCHEMY_DATABASE_URI.startswith('postgresql://') else 'sqlite'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = _build_sqlalchemy_engine_options(
+        SQLALCHEMY_DATABASE_URI,
+        CURRENT_SERVICE_NAME,
+    )
     ALLOW_DESTRUCTIVE_DB_OPERATIONS = os.environ.get('ALLOW_DESTRUCTIVE_DB_OPERATIONS', 'false').lower() == 'true'
     DB_BACKUP_ENABLED = os.environ.get('DB_BACKUP_ENABLED', 'true').lower() == 'true'
     DB_BACKUP_DIR = _resolve_backup_dir(BASE_DIR, SQLITE_DB_PATH)

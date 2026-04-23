@@ -3,8 +3,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from flask import Blueprint
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_PATH = REPO_ROOT / 'backend'
@@ -13,8 +11,6 @@ if str(BACKEND_PATH) not in sys.path:
 
 from platform_sdk.module_loader import load_split_module_files
 
-
-ai_bp = Blueprint('ai', __name__)
 
 load_split_module_files(
     __file__,

@@ -47,6 +47,15 @@ def _clear_database_env(monkeypatch):
         'ADMIN_OPS_SERVICE_DATABASE_URL',
         'ADMIN_OPS_SERVICE_SQLALCHEMY_DATABASE_URI',
         'ADMIN_OPS_SERVICE_SQLITE_DB_PATH',
+        'SQLALCHEMY_DISABLE_SMALL_POOL',
+        'SQLALCHEMY_POOL_SIZE',
+        'SQLALCHEMY_MAX_OVERFLOW',
+        'SQLALCHEMY_POOL_TIMEOUT_SECONDS',
+        'SQLALCHEMY_POOL_RECYCLE_SECONDS',
+        'NOTES_SERVICE_SQLALCHEMY_POOL_SIZE',
+        'NOTES_SERVICE_SQLALCHEMY_MAX_OVERFLOW',
+        'NOTES_SERVICE_SQLALCHEMY_POOL_TIMEOUT_SECONDS',
+        'NOTES_SERVICE_SQLALCHEMY_POOL_RECYCLE_SECONDS',
         'ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES',
         'ALLOW_SHARED_SPLIT_SERVICE_SQLITE',
     ):
@@ -71,12 +80,21 @@ def test_config_defaults_to_sqlite_when_no_database_env_is_set(monkeypatch):
 
 def test_config_uses_generic_database_url(monkeypatch):
     _clear_database_env(monkeypatch)
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'identity-service')
     monkeypatch.setenv('DATABASE_URL', 'postgres://demo:secret@127.0.0.1:5432/ielts_demo')
 
     config = _reload_config(monkeypatch)
 
     assert config.Config.DATABASE_BACKEND == 'postgresql'
     assert config.Config.SQLALCHEMY_DATABASE_URI == 'postgresql://demo:secret@127.0.0.1:5432/ielts_demo'
+    assert config.Config.SQLALCHEMY_ENGINE_OPTIONS == {
+        'pool_pre_ping': True,
+        'pool_use_lifo': True,
+        'pool_size': 1,
+        'max_overflow': 1,
+        'pool_timeout': 15,
+        'pool_recycle': 1800,
+    }
 
 
 def test_config_prefers_service_specific_database_url(monkeypatch):
@@ -175,3 +193,33 @@ def test_service_scoped_shared_sqlite_override_does_not_unlock_other_service(mon
 
     with pytest.raises(ValueError, match='shared SQLite fallback'):
         _reload_config(monkeypatch)
+
+
+def test_monolith_postgres_runtime_keeps_default_engine_options(monkeypatch):
+    _clear_database_env(monkeypatch)
+    monkeypatch.setenv('DATABASE_URL', 'postgresql://demo:secret@127.0.0.1:5432/ielts_demo')
+
+    config = _reload_config(monkeypatch)
+
+    assert config.Config.SQLALCHEMY_ENGINE_OPTIONS == {}
+
+
+def test_service_scoped_postgres_pool_env_overrides_default_small_pool(monkeypatch):
+    _clear_database_env(monkeypatch)
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'notes-service')
+    monkeypatch.setenv('DATABASE_URL', 'postgresql://demo:secret@127.0.0.1:5432/ielts_demo')
+    monkeypatch.setenv('NOTES_SERVICE_SQLALCHEMY_POOL_SIZE', '2')
+    monkeypatch.setenv('NOTES_SERVICE_SQLALCHEMY_MAX_OVERFLOW', '0')
+    monkeypatch.setenv('NOTES_SERVICE_SQLALCHEMY_POOL_TIMEOUT_SECONDS', '9')
+    monkeypatch.setenv('NOTES_SERVICE_SQLALCHEMY_POOL_RECYCLE_SECONDS', '90')
+
+    config = _reload_config(monkeypatch)
+
+    assert config.Config.SQLALCHEMY_ENGINE_OPTIONS == {
+        'pool_pre_ping': True,
+        'pool_use_lifo': True,
+        'pool_size': 2,
+        'max_overflow': 0,
+        'pool_timeout': 9,
+        'pool_recycle': 90,
+    }
