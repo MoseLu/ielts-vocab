@@ -1,0 +1,99 @@
+.practice-game-mode--mission .practice-game-mode__scene-caption,
+.practice-game-mode--mission .practice-game-mode__sheet-head {
+  display: none;
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-bubble,
+.practice-game-mode--mission .practice-game-mode__scene-coach {
+  top: 40%;
+  background: color-mix(in srgb, var(--surface-code) var(--mix-26), transparent);
+  backdrop-filter: blur(var(--size-10));
+}
+
+.practice-game-mode--mission .practice-game-mode__coach-line {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  z-index: var(--layer-raised);
+  transform: translateX(-50%);
+  width: min(62vw, var(--size-620));
+  border: none;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-14), transparent);
+  box-shadow: 0 var(--size-10) var(--size-24) color-mix(in srgb, var(--surface-code) var(--mix-26), transparent);
+}
+
+.practice-game-mode--mission .practice-game-mode__sheet {
+  left: 50%;
+  right: auto;
+  bottom: clamp(var(--size-24), 5vh, var(--size-52));
+  width: min(86vw, var(--size-960));
+  transform: translateX(-50%);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.practice-game-mode--mission .practice-game-mode__task,
+.practice-game-mode--mission .practice-game-speaking {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: var(--size-14);
+}
+
+.practice-game-mode--mission .practice-game-speaking__status {
+  padding: var(--size-10) var(--size-18);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-44), transparent);
+  box-shadow: 0 var(--size-10) var(--size-24) color-mix(in srgb, var(--surface-code) var(--mix-28), transparent);
+}
+
+.practice-game-mode--mission .practice-game-speaking p {
+  width: min(100%, var(--size-760));
+  padding: 0 var(--size-16);
+  text-align: left;
+  text-shadow: 0 var(--size-2) var(--size-10) color-mix(in srgb, var(--surface-code) var(--mix-76), transparent);
+}
+
+.practice-game-mode--mission .practice-game-speaking__transcript,
+.practice-game-mode--mission .practice-game-mode__example-sentence {
+  width: min(100%, var(--size-860));
+  min-height: var(--size-72);
+  border-radius: var(--size-24);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-56), transparent);
+  box-shadow: 0 var(--size-12) var(--size-26) color-mix(in srgb, var(--surface-code) var(--mix-30), transparent);
+}
+
+.practice-game-mode--mission .practice-game-mode__input-row {
+  width: min(100%, var(--size-860));
+  grid-template-columns: minmax(0, 1fr) minmax(var(--size-132), auto);
+}
+
+.practice-game-mode--mission .practice-game-mode__action {
+  min-width: min(var(--size-280), 100%);
+  border-radius: var(--radius-pill);
+}
+
+.practice-game-mode--mission .practice-game-mode__choice-grid {
+  width: min(100%, var(--size-960));
+}
+
+@media (max-width: 900px) {
+  .practice-game-mode--mission .practice-game-mode__scene-bubble,
+  .practice-game-mode--mission .practice-game-mode__scene-coach {
+    top: 34%;
+  }
+
+  .practice-game-mode--mission .practice-game-mode__coach-line {
+    top: 12%;
+    width: calc(100vw - var(--size-24));
+    border-radius: var(--size-20);
+  }
+
+  .practice-game-mode--mission .practice-game-mode__input-row {
+    grid-template-columns: 1fr;
+  }
+}
