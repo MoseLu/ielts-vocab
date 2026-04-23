@@ -2,17 +2,21 @@ from __future__ import annotations
 
 from platform_sdk import (
     admin_daily_summary_projection_runtime,
+    admin_ops_domain_worker_runtime,
     admin_prompt_run_projection_runtime,
     admin_tts_media_projection_runtime,
     admin_wrong_word_projection_runtime,
     admin_study_session_projection_runtime,
     admin_user_projection_runtime,
     ai_daily_summary_projection_runtime,
+    ai_execution_domain_worker_runtime,
     ai_execution_outbox_publisher_runtime,
     ai_wrong_word_projection_runtime,
+    core_eventing_worker_runtime,
     domain_worker_runtime,
     identity_outbox_publisher_runtime,
     learning_core_outbox_publisher_runtime,
+    notes_domain_worker_runtime,
     notes_outbox_publisher_runtime,
     notes_prompt_run_projection_runtime,
     notes_study_session_projection_runtime,
@@ -45,7 +49,11 @@ def test_domain_worker_runtime_wraps_steps_in_service_app_context(monkeypatch):
         def __exit__(self, exc_type, exc, traceback):
             events.append('exit')
 
-    monkeypatch.setattr(domain_worker_runtime, 'worker_app_context', lambda: FakeContext())
+    monkeypatch.setattr(
+        domain_worker_runtime,
+        'worker_app_context',
+        lambda **_: FakeContext(),
+    )
 
     processed = domain_worker_runtime.run_polling_worker(
         worker_name='wave5.context-worker',
@@ -55,6 +63,156 @@ def test_domain_worker_runtime_wraps_steps_in_service_app_context(monkeypatch):
 
     assert processed == 1
     assert events == ['enter', 'step:50', 'exit']
+
+
+def test_domain_worker_runtime_runs_multi_step_once_and_sums_processed(monkeypatch):
+    calls: list[tuple[str, int]] = []
+
+    processed = domain_worker_runtime.run_multi_step_polling_worker(
+        worker_name='wave5.multi-step-worker',
+        steps=(
+            ('step-a', lambda limit: calls.append(('step-a', limit)) or 2),
+            ('step-b', lambda limit: calls.append(('step-b', limit)) or 3),
+        ),
+        argv=['--once'],
+    )
+
+    assert processed == 5
+    assert calls == [('step-a', 50), ('step-b', 50)]
+
+
+def test_domain_worker_runtime_passes_step_service_name_into_worker_context(monkeypatch):
+    events: list[str] = []
+
+    class FakeContext:
+        def __init__(self, service_name: str | None):
+            self._service_name = service_name
+
+        def __enter__(self):
+            events.append(f'enter:{self._service_name}')
+
+        def __exit__(self, exc_type, exc, traceback):
+            events.append(f'exit:{self._service_name}')
+
+    monkeypatch.setattr(
+        domain_worker_runtime,
+        'worker_app_context',
+        lambda service_name=None: FakeContext(service_name),
+    )
+
+    processed = domain_worker_runtime.run_multi_step_polling_worker(
+        worker_name='wave5.cross-service-worker',
+        steps=(
+            ('identity-step', 'identity-service', lambda limit: events.append(f'identity:{limit}') or 1),
+            ('tts-step', 'tts-media-service', lambda limit: events.append(f'tts:{limit}') or 2),
+        ),
+        argv=['--once'],
+    )
+
+    assert processed == 3
+    assert events == [
+        'enter:identity-service',
+        'identity:50',
+        'exit:identity-service',
+        'enter:tts-media-service',
+        'tts:50',
+        'exit:tts-media-service',
+    ]
+
+
+def test_domain_worker_runtime_keeps_running_after_one_step_fails(monkeypatch):
+    calls: list[str] = []
+
+    def fail_step(_limit: int) -> int:
+        calls.append('fail')
+        raise RuntimeError('boom')
+
+    def ok_step(_limit: int) -> int:
+        calls.append('ok')
+        return 4
+
+    processed, had_error = domain_worker_runtime._run_step_chain_once(
+        worker_name='wave5.chain-worker',
+        steps=(('fail-step', fail_step), ('ok-step', ok_step)),
+        batch_limit=9,
+    )
+
+    assert processed == 4
+    assert had_error is True
+    assert calls == ['fail', 'ok']
+
+
+def test_grouped_domain_workers_use_expected_step_sets(monkeypatch):
+    captured: list[tuple[str, tuple[str, ...]]] = []
+
+    def fake_run_multi_step_polling_worker(*, worker_name, steps, argv=None, **_kwargs):
+        captured.append((worker_name, tuple(step[0] for step in steps)))
+        return 0
+
+    monkeypatch.setattr(
+        core_eventing_worker_runtime,
+        'run_multi_step_polling_worker',
+        fake_run_multi_step_polling_worker,
+    )
+    monkeypatch.setattr(
+        notes_domain_worker_runtime,
+        'run_multi_step_polling_worker',
+        fake_run_multi_step_polling_worker,
+    )
+    monkeypatch.setattr(
+        ai_execution_domain_worker_runtime,
+        'run_multi_step_polling_worker',
+        fake_run_multi_step_polling_worker,
+    )
+    monkeypatch.setattr(
+        admin_ops_domain_worker_runtime,
+        'run_multi_step_polling_worker',
+        fake_run_multi_step_polling_worker,
+    )
+
+    core_eventing_worker_runtime.run_core_eventing_worker(argv=['--once'])
+    notes_domain_worker_runtime.run_notes_domain_worker(argv=['--once'])
+    ai_execution_domain_worker_runtime.run_ai_execution_domain_worker(argv=['--once'])
+    admin_ops_domain_worker_runtime.run_admin_ops_domain_worker(argv=['--once'])
+
+    assert captured == [
+        (
+            'core-eventing-worker',
+            (
+                'identity-outbox-publisher',
+                'learning-core-outbox-publisher',
+                'tts-media-outbox-publisher',
+            ),
+        ),
+        (
+            'notes-service.domain-worker',
+            (
+                'notes-outbox-publisher',
+                'notes-study-session-projection-worker',
+                'notes-wrong-word-projection-worker',
+                'notes-prompt-run-projection-worker',
+            ),
+        ),
+        (
+            'ai-execution-service.domain-worker',
+            (
+                'ai-execution-outbox-publisher',
+                'ai-wrong-word-projection-worker',
+                'ai-daily-summary-projection-worker',
+            ),
+        ),
+        (
+            'admin-ops-service.domain-worker',
+            (
+                'admin-user-projection-worker',
+                'admin-study-session-projection-worker',
+                'admin-daily-summary-projection-worker',
+                'admin-prompt-run-projection-worker',
+                'admin-tts-media-projection-worker',
+                'admin-wrong-word-projection-worker',
+            ),
+        ),
+    ]
 
 
 def test_identity_outbox_publisher_runtime_uses_identity_service_contract(monkeypatch):
