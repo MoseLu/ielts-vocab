@@ -178,14 +178,55 @@ clear_deploy_lock() {
   rm -f "${DEPLOY_LOCK_FILE}"
 }
 
+release_python_dependency_fingerprint() {
+  local release_dir="${1:?release dir is required}"
+  python3 - "${release_dir}" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+release_dir = pathlib.Path(sys.argv[1])
+manifest_paths = (
+    'backend/requirements.txt',
+    'services/requirements.txt',
+    'packages/platform-sdk/pyproject.toml',
+    'packages/platform-sdk/setup.py',
+    'packages/platform-sdk/setup.cfg',
+)
+
+digest = hashlib.sha256()
+for relative_path in manifest_paths:
+    path = release_dir / relative_path
+    if not path.is_file():
+        continue
+    digest.update(f'FILE:{relative_path}\n'.encode('utf-8'))
+    digest.update(path.read_bytes())
+    digest.update(b'\n')
+print(digest.hexdigest())
+PY
+}
+
+release_python_dependencies_match_current() {
+  local release_dir="${1:?release dir is required}"
+  local current_release=""
+  current_release="$(current_target_path)"
+  [[ -n "${current_release}" && -d "${current_release}" ]] || return 1
+  [[ "$(release_python_dependency_fingerprint "${current_release}")" == "$(release_python_dependency_fingerprint "${release_dir}")" ]]
+}
+
 install_release_python_dependencies() {
   local release_dir="${1:?release dir is required}"
   ensure_python_runtime
-  log "Installing Python dependencies under deploy resource limits"
-  run_deploy_job "python-deps" "${VENV_DIR}/bin/pip" install \
-    -r "${release_dir}/backend/requirements.txt" \
-    -r "${release_dir}/services/requirements.txt"
-  run_deploy_job "platform-sdk" "${VENV_DIR}/bin/pip" install -e "${release_dir}/packages/platform-sdk"
+  if release_python_dependencies_match_current "${release_dir}"; then
+    log "Python dependency manifests unchanged; skipping pip requirements install"
+  else
+    log "Installing Python dependencies under deploy resource limits"
+    run_deploy_job "python-deps" "${VENV_DIR}/bin/pip" install \
+      -r "${release_dir}/backend/requirements.txt" \
+      -r "${release_dir}/services/requirements.txt"
+  fi
+  log "Installing editable platform-sdk package"
+  run_deploy_job "platform-sdk" "${VENV_DIR}/bin/pip" install --no-deps -e "${release_dir}/packages/platform-sdk"
 }
 
 build_release_frontend() {
