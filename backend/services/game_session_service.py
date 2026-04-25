@@ -25,11 +25,16 @@ GAME_SCORE_WEIGHTS = {
 }
 
 _WHITESPACE_RE = re.compile(r'\s+')
+_GAME_SESSION_TABLES_READY = False
 
 
 def ensure_game_session_tables() -> None:
+    global _GAME_SESSION_TABLES_READY
+    if _GAME_SESSION_TABLES_READY:
+        return
     UserGameEnergyState.__table__.create(bind=db.engine, checkfirst=True)
     UserGameSessionState.__table__.create(bind=db.engine, checkfirst=True)
+    _GAME_SESSION_TABLES_READY = True
 
 
 def _json_loads(value, default):

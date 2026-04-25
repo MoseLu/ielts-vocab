@@ -126,6 +126,7 @@ def test_game_session_start_returns_session_bundle_and_level_rewards(client):
     assert initial_state['session']['status'] == 'launcher'
     assert len(initial_state['levelCards']) == 5
     assert initial_state['rewards']['coins'] >= 80
+    assert initial_state['hud'] == {'playerLevel': 1, 'levelProgressPercent': 0, 'unreadMessages': 0}
 
     started_state = _start_game_session(client)
     assert started_state['session']['status'] == 'active'

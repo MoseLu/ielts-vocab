@@ -254,6 +254,19 @@ def build_game_practice_state(
     normalized_book_id = normalize_optional_text(book_id)
     normalized_chapter_id = normalize_chapter_id(chapter_id)
     normalized_day = normalize_day(day)
+    ensure_word_mastery_table()
+    _ensure_game_wrong_word_table()
+    game_session_service.ensure_game_session_tables()
+    existing_records = _list_scope_word_mastery_states(
+        user_id,
+        book_id=normalized_book_id,
+        chapter_id=normalized_chapter_id,
+        day=normalized_day,
+    )
+    scope_game_wrong_words = game_wrong_word_repository.list_scope_game_wrong_words(
+        user_id,
+        scope_key=_scope_value(normalized_book_id, normalized_chapter_id, normalized_day),
+    )
     vocabulary = load_scope_vocabulary(
         book_id=normalized_book_id,
         chapter_id=normalized_chapter_id,
@@ -261,17 +274,6 @@ def build_game_practice_state(
     )
     word_keys = [normalize_word_text(item.get('word')) for item in vocabulary if normalize_word_text(item.get('word'))]
     source_maps = build_legacy_source_maps(user_id, word_keys)
-    existing_records = _list_scope_word_mastery_states(
-        user_id,
-        book_id=normalized_book_id,
-        chapter_id=normalized_chapter_id,
-        day=normalized_day,
-    )
-    _ensure_game_wrong_word_table()
-    scope_game_wrong_words = game_wrong_word_repository.list_scope_game_wrong_words(
-        user_id,
-        scope_key=_scope_value(normalized_book_id, normalized_chapter_id, normalized_day),
-    )
     record_map = {
         normalize_word_key(record.word): record
         for record in existing_records
@@ -484,6 +486,7 @@ def build_game_practice_state(
         'speakingReward': speaking_reward,
         'levelCards': level_cards,
         'rewards': _build_reward_summary(current_segment, session_bundle),
+        'hud': {'playerLevel': max(1, cleared_segments + 1), 'levelProgressPercent': min(100, max(0, round((safe_int(current_segment.get('clearedWords')) / max(1, safe_int(current_segment.get('totalWords')))) * 100))), 'unreadMessages': 0},
         'recoveryPanel': {
             'queue': queue_items[:8],
             'bossQueue': boss_queue_items[:6],
