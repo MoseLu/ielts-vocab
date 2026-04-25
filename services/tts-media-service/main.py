@@ -48,7 +48,7 @@ _AUDIO_BYTES_HEADER = 'X-Audio-Bytes'
 _AUDIO_CACHE_KEY_HEADER = 'X-Audio-Cache-Key'
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _MEDIA_ID_HEADER = 'X-Media-Id'
-_SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
+_SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v2'
 tts_media_flask_app = create_tts_media_flask_app()
 
 

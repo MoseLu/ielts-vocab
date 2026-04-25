@@ -110,7 +110,7 @@ _generating_words: bool = False
 _AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
 _AUDIO_SOURCE_HEADER = 'X-Audio-Source'
 _CURRENT_WORD_CACHE_TAG = 'azure-word-v6-ielts-rp-female-onset-buffer'
-_SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
+_SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v2'
 _LEGACY_WORD_CACHE_TAG = 'azure-word-v5-ielts-rp-female-onset-buffer'
 _LEGACY_NORMAL_WORD_VOICES = (
     'en-GB-LibbyNeural',

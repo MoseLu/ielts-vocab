@@ -37,7 +37,7 @@ from services.word_tts_full_batch_task import (
 load_dotenv(BACKEND_ROOT / '.env')
 DEFAULT_OSS_PREFIX = 'projects/ielts-vocab/word-tts-cache'
 SEGMENTED_OSS_PREFIX = f'{DEFAULT_OSS_PREFIX}/segmented'
-SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v1'
+SEGMENTED_WORD_CACHE_TAG = 'azure-word-segmented-v2'
 
 
 def _provider() -> str:

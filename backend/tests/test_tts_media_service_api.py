@@ -275,7 +275,7 @@ def test_tts_media_service_segmented_word_audio_metadata_uses_segmented_prefix(m
         '/v1/media/word-audio',
         params={
             'file_name': '155c13a07c89c23d.mp3',
-            'model': 'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-segmented-v1',
+            'model': 'azure-rest:audio-24khz-48kbitrate-mono-mp3@azure-word-segmented-v2',
             'voice': 'en-GB-LibbyNeural',
         },
     )
@@ -283,7 +283,7 @@ def test_tts_media_service_segmented_word_audio_metadata_uses_segmented_prefix(m
     assert response.status_code == 200
     assert response.json()['object_key'] == (
         'projects/ielts-vocab/word-tts-cache/segmented/'
-        'azure-rest-audio-24khz-48kbitrate-mono-mp3-azure-word-segmented-v1-en-gb-libbyneural/'
+        'azure-rest-audio-24khz-48kbitrate-mono-mp3-azure-word-segmented-v2-en-gb-libbyneural/'
         '155c13a07c89c23d.mp3'
     )
 

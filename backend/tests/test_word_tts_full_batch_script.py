@@ -10,7 +10,7 @@ def test_build_manifest_splits_words_into_1000_sized_packages():
         words,
         provider='azure',
         model='azure-rest:test',
-        cache_model='azure-rest:test@azure-word-segmented-v1',
+        cache_model='azure-rest:test@azure-word-segmented-v2',
         voice='en-GB-SoniaNeural',
         book_ids=None,
         package_size=1000,
@@ -19,7 +19,7 @@ def test_build_manifest_splits_words_into_1000_sized_packages():
 
     assert manifest['total_words'] == 2501
     assert manifest['total_packages'] == 3
-    assert manifest['cache_model'] == 'azure-rest:test@azure-word-segmented-v1'
+    assert manifest['cache_model'] == 'azure-rest:test@azure-word-segmented-v2'
     assert manifest['content_mode'] == 'word-segmented'
     assert 'mode=word-segmented' in manifest['task_identity']
     assert manifest['packages'][0]['count'] == 1000
@@ -104,7 +104,7 @@ def test_run_batch_generate_words_accepts_explicit_word_list(monkeypatch, tmp_pa
         ['Hello', 'World'],
         cache_dir=tmp_path,
         provider='azure',
-        model='azure-rest:test@azure-word-segmented-v1',
+        model='azure-rest:test@azure-word-segmented-v2',
         voice='libby',
         content_mode='word-segmented',
         phonetic_lookup=lambda word: f'/{word.lower()}/',

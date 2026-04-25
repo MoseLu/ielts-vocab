@@ -72,7 +72,7 @@ def test_resolve_segmented_word_audio_request_candidates_include_legacy_voice(mo
         'en-GB-RyanNeural',
         'en-GB-LibbyNeural',
     ]
-    assert candidates[0]['model'] == 'azure-rest:test@azure-word-segmented-v1'
+    assert candidates[0]['model'] == 'azure-rest:test@azure-word-segmented-v2'
 
 
 def test_resolve_normal_word_audio_request_candidates_include_legacy_cache_identities(monkeypatch):
