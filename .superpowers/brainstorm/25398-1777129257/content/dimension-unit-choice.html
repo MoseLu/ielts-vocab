@@ -1,0 +1,65 @@
+
+<h2>五维词关结构要改成什么单位？</h2>
+<p class="subtitle">我把代码现状和你说的目标拆成三个可选方向。核心区别是：地图上的一个节点，到底代表一个词、一个小段，还是干脆只保留题流。</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:16px;display:grid;gap:12px;background:#f7fbff;border-radius:12px;min-height:210px">
+        <div style="font-weight:800;color:#14213d">地图节点 = 1 个单词</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="padding:8px 12px;border-radius:999px;background:#dff6e7">tornado</span>
+          <span>→</span>
+          <span style="padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #cfd8e3">拼写 0/4</span>
+          <span style="padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #cfd8e3">发音 0/4</span>
+          <span style="padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #cfd8e3">释义 0/4</span>
+          <span style="padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #cfd8e3">口语 0/4</span>
+          <span style="padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #cfd8e3">例句 0/4</span>
+        </div>
+        <div style="height:8px;background:#d8e1ee;border-radius:999px;overflow:hidden"><div style="width:20%;height:100%;background:#36c36a"></div></div>
+        <div style="font-size:13px;color:#53606f">五维全达标后，才进入下一个单词节点。</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 每词五维节点</h3>
+      <p>推荐：最符合“每个单词都要考察五个维度”。地图进度按词推进，节点内部显示五维状态。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:16px;display:grid;gap:12px;background:#fffaf0;border-radius:12px;min-height:210px">
+        <div style="font-weight:800;color:#14213d">地图节点 = 1 个小段</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-size:12px;text-align:center">
+          <span style="padding:8px 4px;border-radius:8px;background:#fff;border:1px solid #e8d8a8">word 1<br>五维</span>
+          <span style="padding:8px 4px;border-radius:8px;background:#fff;border:1px solid #e8d8a8">word 2<br>五维</span>
+          <span style="padding:8px 4px;border-radius:8px;background:#fff;border:1px solid #e8d8a8">word 3<br>五维</span>
+          <span style="padding:8px 4px;border-radius:8px;background:#fff;border:1px solid #e8d8a8">word 4<br>五维</span>
+          <span style="padding:8px 4px;border-radius:8px;background:#fff;border:1px solid #e8d8a8">word 5<br>五维</span>
+        </div>
+        <div style="padding:10px;border-radius:10px;background:#ffe6b8">段末 Boss / 奖励仍保留</div>
+        <div style="font-size:13px;color:#6b5b2a">适合保留现有 5 词一段和 Boss 设计，但 UI 要把“段”与“维度”拆清楚。</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 每段五词，每词五维</h3>
+      <p>保留当前战役段落感；一个段包含多个词，每个词内部仍有五维。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:16px;display:grid;gap:12px;background:#f6f3ff;border-radius:12px;min-height:210px">
+        <div style="font-weight:800;color:#14213d">题流 = 当前词 + 当前维度</div>
+        <div style="height:80px;border-radius:14px;background:linear-gradient(180deg,#bde9f7,#eef8ff);display:grid;place-items:center;font-weight:800">tornado</div>
+        <div style="padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #d9d1ff">1/5 释义理解：根据语境选意思</div>
+        <button class="mock-button" style="width:100%">下一题</button>
+        <div style="font-size:13px;color:#5b5370">更像视频：先不强调地图，只强调连续题流。</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 视频式题流优先</h3>
+      <p>弱化地图和 Boss，用移动端连续题卡表达每词五维；改动体验最大。</p>
+    </div>
+  </div>
+</div>

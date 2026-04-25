@@ -1,0 +1,71 @@
+
+<h2>五维塔防词关：综合目标方向</h2>
+<p class="subtitle">目标不只是把“五关”改成“五维”，而是让每个单词成为一个防守节点：外层有塔防游戏推进，内层有专业训练题卡，同时 PC 和竖屏移动端都成立。</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">PC：战场总览 + 当前单词五维面板</div>
+    <div class="mockup-body">
+      <div style="display:grid;grid-template-columns:1.35fr .8fr;gap:14px;min-height:360px">
+        <div style="border-radius:12px;background:linear-gradient(180deg,#9bd7f2,#dff6d8);padding:18px;position:relative;overflow:hidden;border:1px solid #b9d7c2">
+          <div style="font-weight:800;color:#24364a;margin-bottom:12px">词汇防线 · 第 1 波</div>
+          <div style="height:8px;background:#ffffff88;border-radius:999px;margin:22px 20px;position:relative">
+            <span style="position:absolute;left:10%;top:-18px;background:#fff;border:2px solid #53b66d;border-radius:12px;padding:8px 10px;font-weight:800">tornado</span>
+            <span style="position:absolute;left:36%;top:-18px;background:#fff;border:2px solid #aab3c2;border-radius:12px;padding:8px 10px">vapor</span>
+            <span style="position:absolute;left:64%;top:-18px;background:#fff;border:2px solid #aab3c2;border-radius:12px;padding:8px 10px">typhoon</span>
+          </div>
+          <div style="position:absolute;left:24px;bottom:24px;display:flex;gap:8px">
+            <span style="background:#fff;padding:8px 10px;border-radius:10px">🌱 释义塔</span>
+            <span style="background:#fff;padding:8px 10px;border-radius:10px">🔊 听力塔</span>
+            <span style="background:#fff;padding:8px 10px;border-radius:10px">✍ 拼写塔</span>
+          </div>
+          <div style="position:absolute;right:24px;bottom:24px;background:#ffe8a3;border-radius:12px;padding:10px 14px;font-weight:800">阶段 Boss：保留为奖励/结算</div>
+        </div>
+        <div style="border-radius:12px;background:#fff;border:1px solid #d9e0ea;padding:16px;display:grid;gap:10px;align-content:start">
+          <div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:22px">tornado</strong><span style="font-size:12px;color:#667">当前词 1/5</span></div>
+          <div style="height:8px;border-radius:999px;background:#e5e9f0;overflow:hidden"><div style="width:40%;height:100%;background:#31c264"></div></div>
+          <div style="display:grid;gap:7px">
+            <div style="padding:9px;border-radius:8px;background:#e8f7ee">看图/语境选义 · 已过</div>
+            <div style="padding:9px;border-radius:8px;background:#eaf2ff">发音跟读 · 已过</div>
+            <div style="padding:9px;border-radius:8px;background:#fff8e8">听音辨词 · 当前</div>
+            <div style="padding:9px;border-radius:8px;background:#f6f7fb">拼写输入 · 待解锁</div>
+            <div style="padding:9px;border-radius:8px;background:#f6f7fb">语境填空/应用 · 待解锁</div>
+          </div>
+          <button class="mock-button">进入当前维度</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">移动竖屏：题卡优先 + 顶部防线进度</div>
+    <div class="mockup-body">
+      <div style="width:300px;max-width:100%;margin:auto;border-radius:28px;background:#f7f8fb;border:1px solid #d8dde8;overflow:hidden;box-shadow:0 18px 40px #0001">
+        <div style="height:86px;background:linear-gradient(180deg,#caeefb,#f7f8fb);padding:14px">
+          <div style="font-size:12px;color:#607084">词汇防线 · tornado · 3/5</div>
+          <div style="margin-top:12px;height:6px;background:#dde4ee;border-radius:999px"><div style="width:60%;height:100%;background:#31c264;border-radius:999px"></div></div>
+        </div>
+        <div style="padding:18px;display:grid;gap:14px">
+          <div style="height:170px;border-radius:18px;background:linear-gradient(180deg,#d9f3ff,#fff);display:grid;place-items:center;font-weight:800;color:#24364a">专业题卡场景图</div>
+          <div style="text-align:center"><strong style="font-size:24px">tornado</strong><div style="color:#667;font-size:13px">听音辨词</div></div>
+          <div style="display:grid;gap:8px">
+            <div style="background:#fff;border:1px solid #dce2ec;border-radius:10px;padding:10px;text-align:center">tornado</div>
+            <div style="background:#fff;border:1px solid #dce2ec;border-radius:10px;padding:10px;text-align:center">vapor</div>
+            <div style="background:#fff;border:1px solid #dce2ec;border-radius:10px;padding:10px;text-align:center">typhoon</div>
+          </div>
+          <button class="mock-button">确认</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>设计结论</h3>
+  <div class="options">
+    <div class="option selected" data-choice="hybrid" onclick="toggleSelect(this)">
+      <div class="letter">✓</div>
+      <div class="content"><h3>塔防外壳 + 专业五维题卡内核</h3><p>PC 展示战场和维度面板；移动端默认竖屏题卡，保留顶部防线/波次反馈。Boss 是阶段奖励，不再伪装成五维之一。</p></div>
+    </div>
+  </div>
+</div>
