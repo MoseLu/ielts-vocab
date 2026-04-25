@@ -9,6 +9,7 @@ import {
   NODE_TYPE_LABELS,
   buildDefinitionChoices,
   buildExampleChallenge,
+  buildListeningWordChoices,
   getChallengeStep,
   getLevelKind,
   getWaveNumber,
@@ -21,6 +22,14 @@ type AttemptMeta = {
   hintUsed?: boolean
   boostType?: string
 }
+
+const WORD_DIMENSION_ITEMS: Array<{ kind: GameLevelKind; dimension: keyof GameCampaignWord['dimension_states'] }> = [
+  { kind: 'definition', dimension: 'meaning' },
+  { kind: 'pronunciation', dimension: 'speaking' },
+  { kind: 'speaking', dimension: 'recognition' },
+  { kind: 'spelling', dimension: 'dictation' },
+  { kind: 'example', dimension: 'listening' },
+]
 
 function BattleBanner({
   tone,
@@ -58,6 +67,39 @@ function ChoiceGrid({
   )
 }
 
+function DimensionDefenseStrip({
+  word,
+  activeKind,
+}: {
+  word: GameCampaignWord
+  activeKind: GameLevelKind
+}) {
+  const completedCount = WORD_DIMENSION_ITEMS.filter(item => (
+    (word.dimension_states[item.dimension]?.pass_streak ?? 0) >= 1
+  )).length
+
+  return (
+    <section className="practice-game-mode__dimension-defense" aria-label="当前词五维防线">
+      <div className="practice-game-mode__dimension-defense-head">
+        <span>当前词五维防线</span>
+        <strong>{completedCount}/5</strong>
+      </div>
+      <div className="practice-game-mode__dimension-defense-row">
+        {WORD_DIMENSION_ITEMS.map(item => {
+          const passStreak = word.dimension_states[item.dimension]?.pass_streak ?? 0
+          const status = item.kind === activeKind ? '当前' : passStreak >= 1 ? '已过' : '待解锁'
+          return (
+            <span key={item.kind} className={`practice-game-mode__dimension-chip is-${status}`}>
+              <strong>{LEVEL_KIND_LABELS[item.kind]}</strong>
+              <small>{status}</small>
+            </span>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function sceneAssetForLevel(levelKind: GameLevelKind) {
   return gameAsset.scenes[levelKind]
 }
@@ -90,7 +132,7 @@ function WordScene({
       </div>
       <div className="practice-game-mode__coach-line">
         <img src={gameAsset.character.robot} alt="" aria-hidden="true" />
-        <span>{levelKind === 'example' ? '把词放回真实语境里。' : levelKind === 'speaking' ? '用目标词说出一句完整表达。' : '完成当前维度即可点亮关卡。'}</span>
+        <span>{levelKind === 'example' ? '把词放回真实语境里。' : levelKind === 'speaking' ? '听准目标词，守住这一波。' : '完成当前维度即可点亮关卡。'}</span>
       </div>
       <div className="practice-game-mode__scene-caption">
         <strong>{word.definition}</strong>
@@ -218,18 +260,22 @@ export function WordMissionScreen({
   if (!word) return null
   const levelKind = getLevelKind(node)
   const definitionChoices = buildDefinitionChoices(word)
+  const listeningChoices = buildListeningWordChoices(word)
   const exampleChallenge = buildExampleChallenge(word)
   const selectedDefinition = definitionChoices.find(choice => choice.key === selectedChoice)
+  const selectedListening = listeningChoices.find(choice => choice.key === selectedChoice)
   const selectedExample = exampleChallenge.choices.find(choice => choice.key === selectedChoice)
 
   return (
     <section className="practice-game-mode__battle-screen">
       <WordScene node={node} word={word} levelKind={levelKind} />
       <div className="practice-game-mode__sheet">
+        <DimensionDefenseStrip word={word} activeKind={levelKind} />
+
         <div className="practice-game-mode__sheet-head">
           <div>
             <span className="practice-game-mode__sheet-eyebrow">{LEVEL_KIND_LABELS[levelKind]}</span>
-            <strong>{node.levelLabel ?? LEVEL_KIND_LABELS[levelKind]}</strong>
+            <strong>{LEVEL_KIND_LABELS[levelKind]}</strong>
           </div>
           <span className="practice-game-mode__sheet-wave">第 {getWaveNumber(word)}/4 波</span>
         </div>
@@ -272,12 +318,13 @@ export function WordMissionScreen({
         ) : null}
 
         {levelKind === 'speaking' ? (
-          <SpeakingRecorder
-            targetWord={word.word}
-            prompt={`用 ${word.word} 说一句完整英文。`}
-            disabled={isSubmitting}
-            onEvaluated={passed => void onSubmitAttempt(passed, { inputMode: 'speech' })}
-          />
+          <div className="practice-game-mode__task">
+            <button type="button" className="practice-game-mode__action is-secondary" onClick={() => playGameWordAudio(word.word)}>播放单词</button>
+            <ChoiceGrid choices={listeningChoices} selectedChoice={selectedChoice} onSelectChoice={value => onSelectChoice(value)} />
+            <button type="button" className="practice-game-mode__action" onClick={() => void onSubmitAttempt(Boolean(selectedListening?.correct), { inputMode: 'choice' })} disabled={isSubmitting || !selectedListening}>
+              检查
+            </button>
+          </div>
         ) : null}
 
         {levelKind === 'example' ? (

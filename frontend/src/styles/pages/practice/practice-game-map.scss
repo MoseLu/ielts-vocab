@@ -5,7 +5,7 @@
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--info) var(--mix-18), transparent), transparent 30%),
+    radial-gradient(circle at 18% 8%, color-mix(in srgb, var(--info) var(--mix-20), transparent), transparent 32%),
     linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-96), var(--surface-muted)) 0%, color-mix(in srgb, var(--surface-code) var(--mix-88), var(--surface-base)) 100%);
 }
 
@@ -15,6 +15,7 @@
   height: min(calc(100vh - var(--size-32)), var(--size-1080));
   margin: auto;
   overflow: hidden;
+  border: var(--size-2) solid color-mix(in srgb, var(--surface-inverse) var(--mix-18), transparent);
   border-radius: var(--size-22);
   box-shadow: var(--shadow-overlay);
   background: var(--surface-code);
@@ -22,9 +23,21 @@
   animation: practice-game-map-rise 420ms ease-out both;
 }
 
+.practice-game-map::before {
+  position: absolute;
+  inset: 0;
+  z-index: var(--layer-raised);
+  content: '';
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-18), transparent), transparent 34%),
+    linear-gradient(0deg, color-mix(in srgb, var(--surface-code) var(--mix-20), transparent), transparent 28%);
+  pointer-events: none;
+}
+
 .practice-game-map__main-art {
   position: absolute;
   inset: 0;
+  z-index: var(--layer-base);
   display: block;
 }
 
@@ -40,23 +53,22 @@
   top: var(--size-14);
   left: var(--size-16);
   right: var(--size-16);
-  z-index: var(--layer-above);
+  z-index: var(--layer-local-overlay);
   display: flex;
   align-items: center;
   gap: var(--size-10);
-  pointer-events: none;
   animation: practice-game-map-hud 480ms ease-out 120ms both;
 }
 
 .practice-game-map__avatar,
 .practice-game-map__resource {
-  min-height: var(--size-40);
-  border: none;
+  min-height: var(--size-42);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-inverse) var(--mix-20), transparent);
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface-code) var(--mix-76), transparent);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-84), transparent);
   color: var(--text-inverse);
-  box-shadow: 0 var(--size-4) var(--size-10) color-mix(in srgb, var(--surface-code) var(--mix-44), transparent);
-  pointer-events: auto;
+  box-shadow: 0 var(--size-5) var(--size-14) color-mix(in srgb, var(--surface-code) var(--mix-30), transparent);
+  backdrop-filter: blur(var(--size-10));
 }
 
 .practice-game-map__avatar {
@@ -64,12 +76,13 @@
   align-items: center;
   gap: var(--size-8);
   padding: var(--size-4) var(--size-12) var(--size-4) var(--size-4);
+  font-weight: 800;
   cursor: pointer;
 }
 
 .practice-game-map__avatar img {
-  width: var(--size-34);
-  height: var(--size-34);
+  width: var(--size-48);
+  height: var(--size-48);
   object-fit: contain;
 }
 
@@ -78,166 +91,363 @@
   align-items: center;
   gap: var(--size-8);
   padding: 0 var(--size-12);
+  font-size: var(--size-13);
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .practice-game-map__resource img {
   width: var(--size-22);
   height: var(--size-22);
+  object-fit: contain;
+}
+
+.practice-game-map__resource strong {
+  color: color-mix(in srgb, var(--warning) var(--mix-88), var(--surface-inverse));
 }
 
 .practice-game-map__title {
   position: absolute;
-  top: var(--size-46);
+  top: var(--size-58);
   left: 50%;
-  z-index: var(--layer-above);
-  width: min(36%, var(--size-520));
+  z-index: var(--layer-local-overlay);
+  width: min(42%, var(--size-520));
   transform: translateX(-50%);
-  padding: var(--size-12) var(--size-36) var(--size-18);
-  background: url('/game/dec_banner.png') center / 100% 100% no-repeat;
+  padding: var(--size-12) var(--size-34) var(--size-18);
+  background: url('/game/campaign-dynamic/title_scroll_empty.png') center / 100% 100% no-repeat;
   display: grid;
   justify-items: center;
   gap: var(--size-2);
   text-align: center;
-  text-shadow: 0 var(--size-1) var(--size-2) color-mix(in srgb, var(--surface-code) var(--mix-62), transparent);
+  text-shadow: 0 var(--size-1) var(--size-2) color-mix(in srgb, var(--surface-code) var(--mix-40), transparent);
   animation: practice-game-map-title 520ms ease-out 180ms both;
 }
 
 .practice-game-map__title span {
-  color: color-mix(in srgb, var(--warning) var(--mix-82), var(--accent));
+  color: color-mix(in srgb, var(--warning) var(--mix-78), var(--accent));
   font-size: var(--size-12);
   font-weight: 800;
-  letter-spacing: 0.12em;
 }
 
 .practice-game-map__title strong {
-  font-size: clamp(var(--size-20), 2.2vw, var(--size-36));
-  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--text-primary) var(--mix-86), var(--accent));
+  font-size: clamp(var(--size-22), 2.2vw, var(--size-34));
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.practice-game-map__hotspots {
+.practice-game-map__progress {
+  position: absolute;
+  top: var(--size-130);
+  left: var(--size-18);
+  z-index: var(--layer-local-overlay);
+  width: min(26%, var(--size-360));
+  display: grid;
+  gap: var(--size-8);
+  padding: var(--size-14);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-inverse) var(--mix-18), transparent);
+  border-radius: var(--size-18);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-78), transparent);
+  box-shadow: 0 var(--size-12) var(--size-24) color-mix(in srgb, var(--surface-code) var(--mix-22), transparent);
+  backdrop-filter: blur(var(--size-10));
+}
+
+.practice-game-map__progress-line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--size-10);
+  font-size: var(--size-12);
+  font-weight: 800;
+}
+
+.practice-game-map__progress-line strong {
+  color: color-mix(in srgb, var(--warning) var(--mix-80), var(--surface-inverse));
+}
+
+.practice-game-map__bar {
+  height: var(--size-8);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface-inverse) var(--mix-16), transparent);
+}
+
+.practice-game-map__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--success), var(--warning));
+}
+
+.practice-game-map__bar.is-segment span {
+  background: linear-gradient(90deg, var(--info), var(--accent));
+}
+
+.practice-game-map__segment-path {
   position: absolute;
   inset: 0;
-  z-index: var(--layer-above);
+  z-index: var(--layer-overlay-local);
 }
 
-.practice-game-map__hotspot,
-.practice-game-map__chest,
-.practice-game-map__plan-hotspot {
+.practice-game-map__segment-node {
   position: absolute;
+  left: var(--map-node-x);
+  top: var(--map-node-y);
+  width: clamp(var(--size-76), 8vw, var(--size-132));
+  height: clamp(var(--size-76), 8vw, var(--size-132));
+  transform: translate(-50%, -50%);
   border: none;
-  background: transparent;
+  border-radius: var(--size-18);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-inverse) var(--mix-94), var(--info)), color-mix(in srgb, var(--info) var(--mix-70), var(--surface-code)));
+  color: var(--text-inverse);
+  box-shadow:
+    0 var(--size-8) var(--size-18) color-mix(in srgb, var(--surface-code) var(--mix-30), transparent),
+    inset 0 0 0 var(--size-3) color-mix(in srgb, var(--surface-inverse) var(--mix-56), transparent);
   cursor: pointer;
 }
 
-.practice-game-map__hotspot {
-  left: var(--map-hotspot-x);
-  top: var(--map-hotspot-y);
-  width: clamp(var(--size-64), 7vw, var(--size-112));
-  height: clamp(var(--size-64), 7vw, var(--size-112));
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
+.practice-game-map__segment-node::before {
+  position: absolute;
+  inset: var(--size-8);
+  content: '';
+  border-radius: var(--size-14);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-24), transparent);
 }
 
-.practice-game-map__hotspot:focus-visible,
-.practice-game-map__chest:focus-visible,
-.practice-game-map__plan-hotspot:focus-visible {
-  outline: var(--size-3) solid color-mix(in srgb, var(--warning) var(--mix-84), var(--accent));
-  outline-offset: var(--size-4);
+.practice-game-map__segment-node-art {
+  position: relative;
+  z-index: var(--layer-raised);
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
 }
 
-.practice-game-map__hotspot:hover {
-  box-shadow: 0 0 var(--size-28) color-mix(in srgb, var(--warning) var(--mix-42), transparent);
+.practice-game-map__segment-node-value {
+  font-size: clamp(var(--size-16), 1.8vw, var(--size-28));
+  font-weight: 900;
+  text-shadow: 0 var(--size-2) var(--size-4) color-mix(in srgb, var(--surface-code) var(--mix-54), transparent);
 }
 
-.practice-game-map__hotspot:disabled,
-.practice-game-map__chest:disabled,
-.practice-game-map__plan-hotspot:disabled {
+.practice-game-map__segment-node.is-cleared {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--success) var(--mix-62), var(--text-inverse)),
+    color-mix(in srgb, var(--success) var(--mix-68), var(--surface-code))
+  );
+}
+
+.practice-game-map__segment-node.is-active {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--warning) var(--mix-68), var(--text-inverse)),
+    color-mix(in srgb, var(--accent) var(--mix-80), var(--surface-code))
+  );
+  color: color-mix(in srgb, var(--text-primary) var(--mix-86), var(--accent));
+}
+
+.practice-game-map__segment-node.is-locked {
+  opacity: 0.92;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--icon-muted) var(--mix-72), var(--text-inverse)),
+    color-mix(in srgb, var(--icon-muted) var(--mix-70), var(--surface-code))
+  );
+}
+
+.practice-game-map__segment-node:disabled {
+  cursor: default;
+}
+
+.practice-game-map__reward-cover {
+  position: absolute;
+  right: 4%;
+  bottom: 10%;
+  z-index: var(--layer-local-overlay);
+  width: clamp(var(--size-96), 9vw, var(--size-144));
+  display: grid;
+  justify-items: center;
+  gap: var(--size-2);
+  padding: var(--size-8);
+  border-radius: var(--size-18);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-62), transparent);
+  box-shadow: 0 var(--size-10) var(--size-24) color-mix(in srgb, var(--surface-code) var(--mix-28), transparent);
+}
+
+.practice-game-map__reward-cover img {
+  width: 72%;
+  height: auto;
+}
+
+.practice-game-map__reward-cover strong {
+  font-size: clamp(var(--size-18), 1.8vw, var(--size-28));
+  line-height: 1;
+}
+
+.practice-game-map__current-word {
+  position: absolute;
+  left: 50%;
+  bottom: var(--size-20);
+  z-index: var(--layer-local-overlay);
+  width: min(52%, var(--size-720));
+  display: grid;
+  gap: var(--size-12);
+  padding: var(--size-16);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-inverse) var(--mix-18), transparent);
+  border-radius: var(--size-18);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-78), transparent);
+  box-shadow: 0 var(--size-12) var(--size-28) color-mix(in srgb, var(--surface-code) var(--mix-28), transparent);
+  transform: translateX(-50%);
+  backdrop-filter: blur(var(--size-12));
+}
+
+.practice-game-map__word-heading {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--size-8);
+}
+
+.practice-game-map__word-heading span,
+.practice-game-map__word-heading small {
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-76), transparent);
+  font-size: var(--size-12);
+  font-weight: 800;
+}
+
+.practice-game-map__word-heading strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-inverse);
+  font-size: clamp(var(--size-22), 2.4vw, var(--size-34));
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-game-map__dimension-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--size-8);
+}
+
+.practice-game-map__dimension {
+  min-width: 0;
+  min-height: var(--size-86);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--size-5);
+  padding: var(--size-8);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-inverse) var(--mix-16), transparent);
+  border-radius: var(--size-14);
+  background: color-mix(in srgb, var(--surface-inverse) var(--mix-12), transparent);
+  color: var(--text-inverse);
+  cursor: pointer;
+}
+
+.practice-game-map__dimension img {
+  width: var(--size-28);
+  height: var(--size-28);
+  object-fit: contain;
+}
+
+.practice-game-map__dimension span {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: var(--size-2);
+}
+
+.practice-game-map__dimension strong,
+.practice-game-map__dimension small,
+.practice-game-map__dimension em {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-game-map__dimension strong {
+  font-size: var(--size-12);
+}
+
+.practice-game-map__dimension small,
+.practice-game-map__dimension em {
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-70), transparent);
+  font-size: var(--size-11);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.practice-game-map__dimension.is-active,
+.practice-game-map__dimension.is-pending {
+  border-color: color-mix(in srgb, var(--warning) var(--mix-76), var(--surface-inverse));
+  background: color-mix(in srgb, var(--warning) var(--mix-22), var(--surface-code));
+}
+
+.practice-game-map__dimension.is-passed {
+  border-color: color-mix(in srgb, var(--success) var(--mix-76), var(--surface-inverse));
+  background: color-mix(in srgb, var(--success) var(--mix-24), var(--surface-code));
+}
+
+.practice-game-map__dimension:disabled {
+  cursor: default;
+  opacity: 0.76;
+}
+
+.practice-game-map__start {
+  position: absolute;
+  right: var(--size-18);
+  top: var(--size-128);
+  z-index: var(--layer-local-overlay);
+  min-width: var(--size-180);
+  min-height: var(--size-48);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-inverse) var(--mix-36), transparent);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--warning) var(--mix-92), var(--surface-inverse)), color-mix(in srgb, var(--accent) var(--mix-88), var(--warning)));
+  color: color-mix(in srgb, var(--text-primary) var(--mix-86), var(--accent));
+  font-weight: 900;
+  box-shadow: 0 var(--size-10) var(--size-20) color-mix(in srgb, var(--surface-code) var(--mix-26), transparent);
+  cursor: pointer;
+}
+
+.practice-game-map__start:disabled {
   cursor: not-allowed;
+  opacity: 0.72;
 }
 
-.practice-game-map__chest {
-  left: 90%;
-  top: 84%;
-  width: clamp(var(--size-84), 9vw, var(--size-136));
-  height: clamp(var(--size-64), 7vw, var(--size-108));
-  transform: translate(-50%, -50%);
+.practice-game-map__segment-node:not(:disabled):hover {
+  transform: translate(-50%, calc(-50% - var(--size-2)));
 }
 
-.practice-game-map__plan-hotspot {
-  left: 7%;
-  top: 7%;
-  width: clamp(var(--size-86), 10vw, var(--size-156));
-  height: clamp(var(--size-46), 5vw, var(--size-72));
-  transform: translate(-50%, -50%);
+.practice-game-map__start:not(:disabled):hover,
+.practice-game-map__dimension:not(:disabled):hover {
+  transform: translateY(calc(var(--size-2) * -1));
 }
 
 .practice-game-map__notice {
   position: absolute;
   left: 50%;
-  bottom: var(--size-18);
-  z-index: var(--layer-above);
+  bottom: var(--size-168);
+  z-index: var(--layer-local-overlay);
   transform: translateX(-50%);
   padding: var(--size-10) var(--size-16);
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface-code) var(--mix-72), transparent);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-82), transparent);
   color: var(--text-inverse);
   font-size: var(--size-13);
   font-weight: 800;
 }
 
-@media (max-width: 900px) {
-  .practice-game-mode--map {
-    padding: var(--size-10);
-  }
-
-  .practice-game-map {
-    width: 100%;
-    height: calc(100vh - var(--size-20));
-  }
-
-  .practice-game-map__hud {
-    flex-wrap: wrap;
-  }
-
-  .practice-game-map__title {
-    top: var(--size-92);
-    width: min(76%, var(--size-420));
-  }
-}
-
-@keyframes practice-game-map-rise {
-  from {
-    opacity: 0;
-    transform: scale(1.015);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes practice-game-map-hud {
-  from {
-    opacity: 0;
-    transform: translateY(calc(var(--size-8) * -1));
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes practice-game-map-title {
-  from {
-    opacity: 0;
-    transform: translate(-50%, calc(var(--size-10) * -1));
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
+.practice-game-map__avatar:focus-visible,
+.practice-game-map__segment-node:focus-visible,
+.practice-game-map__dimension:focus-visible,
+.practice-game-map__start:focus-visible {
+  outline: var(--size-3) solid color-mix(in srgb, var(--warning) var(--mix-84), var(--accent));
+  outline-offset: var(--size-4);
 }

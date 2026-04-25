@@ -36,6 +36,45 @@
   backdrop-filter: none;
 }
 
+.practice-game-mode__dimension-defense {
+  width: min(100%, var(--size-960));
+  display: grid;
+  gap: var(--size-10);
+  justify-self: center;
+  color: var(--text-inverse);
+}
+
+.practice-game-mode__dimension-defense-head,
+.practice-game-mode__dimension-defense-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-8);
+}
+
+.practice-game-mode__dimension-defense-head {
+  justify-content: space-between;
+  font-size: var(--size-13);
+  font-weight: 800;
+}
+
+.practice-game-mode__dimension-defense-row {
+  flex-wrap: wrap;
+}
+
+.practice-game-mode__dimension-chip {
+  min-width: var(--size-120);
+  padding: var(--size-8) var(--size-10);
+  border-radius: var(--size-14);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-52), transparent);
+  box-shadow: inset 0 0 0 var(--size-1) color-mix(in srgb, var(--surface-base) var(--mix-10), transparent);
+  display: grid;
+  gap: var(--size-2);
+}
+
+.practice-game-mode__dimension-chip small {
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-68), transparent);
+}
+
 .practice-game-mode--mission .practice-game-mode__task,
 .practice-game-mode--mission .practice-game-speaking {
   width: 100%;
@@ -95,5 +134,9 @@
 
   .practice-game-mode--mission .practice-game-mode__input-row {
     grid-template-columns: 1fr;
+  }
+
+  .practice-game-mode__dimension-chip {
+    flex: 1 1 var(--size-140);
   }
 }

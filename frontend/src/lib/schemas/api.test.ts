@@ -89,5 +89,10 @@ describe('GameCampaignStateSchema', () => {
     const parsed = GameCampaignStateSchema.safeParse(payload)
 
     expect(parsed.success).toBe(true)
+    expect(parsed.data?.hud).toEqual({
+      playerLevel: 1,
+      levelProgressPercent: 0,
+      unreadMessages: 0,
+    })
   })
 })

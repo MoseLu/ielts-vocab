@@ -337,6 +337,13 @@ export const GameRewardSummarySchema = z.object({
 })
 export type GameRewardSummary = z.infer<typeof GameRewardSummarySchema>
 
+export const GameCampaignHudSchema = z.object({
+  playerLevel: z.number().int().positive().catch(1),
+  levelProgressPercent: z.number().int().min(0).max(100).catch(0),
+  unreadMessages: z.number().int().nonnegative().catch(0),
+})
+export type GameCampaignHud = z.infer<typeof GameCampaignHudSchema>
+
 export const GameAnimationPayloadSchema = z.object({
   sceneTheme: z.string().nullable().optional().default(null),
   mascotState: z.string().nullable().optional().default(null),
@@ -383,6 +390,11 @@ export const GameCampaignStateSchema = z.object({
   }),
   session: GameSessionSchema.optional(),
   launcher: GameLauncherSchema.optional(),
+  hud: GameCampaignHudSchema.optional().default({
+    playerLevel: 1,
+    levelProgressPercent: 0,
+    unreadMessages: 0,
+  }),
   animationPayload: GameAnimationPayloadSchema.optional(),
   boostModule: z.record(z.string(), z.unknown()).nullable().optional().default(null),
   recoveryPanel: z.object({

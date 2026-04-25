@@ -1,7 +1,14 @@
 @use './practice-game-shell';
 @use './practice-game-stage';
 @use './practice-game-map';
+@use './practice-game-map-responsive';
 @use './practice-game-style-matched';
+@use './practice-game-map-redraw';
+@use './practice-game-map-slots';
+@use './practice-game-map-dynamic';
+@use './practice-game-map-polish';
+@use './practice-game-map-art-ui';
+@use './practice-game-map-battle-nodes';
 @use './practice-game-overlays';
 @use './practice-game-responsive';
 @use './practice-game-mission';

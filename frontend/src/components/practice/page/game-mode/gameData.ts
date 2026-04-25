@@ -10,19 +10,19 @@ import type {
 } from '../../../../lib'
 
 export const LEVEL_KIND_LABELS: Record<GameLevelKind, string> = {
-  spelling: '拼写强化',
-  pronunciation: '发音训练',
-  definition: '释义理解',
-  speaking: '口语录音',
-  example: '例句应用',
+  spelling: '拼写输入',
+  pronunciation: '发音跟读',
+  definition: '看图/语境选义',
+  speaking: '听音辨词',
+  example: '语境填空/应用',
 }
 
 export const DIMENSION_LABELS: Record<GameCampaignDimension, string> = {
-  recognition: '口语录音',
-  meaning: '释义理解',
-  listening: '例句应用',
-  speaking: '发音训练',
-  dictation: '拼写强化',
+  recognition: '听音辨词',
+  meaning: '看图/语境选义',
+  listening: '语境填空/应用',
+  speaking: '发音跟读',
+  dictation: '拼写输入',
 }
 
 export const NODE_TYPE_LABELS = {
@@ -95,6 +95,15 @@ export function buildDefinitionChoices(word: GameCampaignWord) {
     key: normalizeAnswer(candidate.word),
     label: candidate.definition,
     meta: candidate.pos,
+    correct: normalizeAnswer(candidate.word) === normalizeAnswer(word.word),
+  }))
+}
+
+export function buildListeningWordChoices(word: GameCampaignWord) {
+  return buildCandidatePool(word).map(candidate => ({
+    key: normalizeAnswer(candidate.word),
+    label: candidate.word,
+    meta: candidate.definition,
     correct: normalizeAnswer(candidate.word) === normalizeAnswer(word.word),
   }))
 }
