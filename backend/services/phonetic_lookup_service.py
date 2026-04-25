@@ -24,6 +24,15 @@ _WIKTIONARY_ENGLISH_SECTION_PATTERN = re.compile(
 _WIKTIONARY_IPA_PATTERN = re.compile(r'<span class="IPA(?: [^"]*)?">(.*?)</span>', re.S)
 
 
+def _rollback_catalog_session() -> None:
+    if not has_app_context():
+        return
+    try:
+        db.session.rollback()
+    except Exception:
+        return
+
+
 def normalize_word_key(value: object) -> str:
     if not isinstance(value, str):
         return ''
@@ -187,9 +196,13 @@ def _lookup_catalog_phonetics(words: list[str]) -> dict[str, str]:
         return {}
 
     found: dict[str, str] = {}
-    entries = WordCatalogEntry.query.filter(
-        WordCatalogEntry.normalized_word.in_(words),
-    ).all()
+    try:
+        entries = WordCatalogEntry.query.filter(
+            WordCatalogEntry.normalized_word.in_(words),
+        ).all()
+    except Exception:
+        _rollback_catalog_session()
+        return {}
     for entry in entries:
         phonetic = normalize_phonetic_text(entry.phonetic)
         if phonetic:
@@ -201,10 +214,14 @@ def _lookup_derivative_phonetics(words: list[str]) -> dict[str, str]:
     if not has_app_context() or not words:
         return {}
 
-    lowered_derivative = db.func.lower(WordDerivativeEntry.derivative_word)
-    rows = WordDerivativeEntry.query.filter(
-        lowered_derivative.in_(words),
-    ).all()
+    try:
+        lowered_derivative = db.func.lower(WordDerivativeEntry.derivative_word)
+        rows = WordDerivativeEntry.query.filter(
+            lowered_derivative.in_(words),
+        ).all()
+    except Exception:
+        _rollback_catalog_session()
+        return {}
 
     found: dict[str, str] = {}
     for row in rows:

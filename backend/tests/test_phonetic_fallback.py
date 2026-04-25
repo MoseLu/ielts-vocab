@@ -1,9 +1,36 @@
 import services.books_catalog_query_service as books_catalog_query_service
 import services.books_word_detail_service as books_word_detail_service
+import services.phonetic_lookup_service as phonetic_lookup_service
 from models import WordCatalogEntry
 
 
 class TestPhoneticFallback:
+    def test_catalog_phonetic_lookup_rolls_back_failed_split_catalog_read(self, monkeypatch):
+        rollbacks = []
+
+        class ColumnStub:
+            def in_(self, _words):
+                return object()
+
+        class BrokenQuery:
+            def filter(self, *_args, **_kwargs):
+                raise RuntimeError('catalog table unavailable')
+
+        class CatalogEntryStub:
+            normalized_word = ColumnStub()
+            query = BrokenQuery()
+
+        monkeypatch.setattr(phonetic_lookup_service, 'has_app_context', lambda: True)
+        monkeypatch.setattr(phonetic_lookup_service, 'WordCatalogEntry', CatalogEntryStub)
+        monkeypatch.setattr(
+            phonetic_lookup_service.db.session,
+            'rollback',
+            lambda: rollbacks.append('rollback'),
+        )
+
+        assert phonetic_lookup_service._lookup_catalog_phonetics(['quit']) == {}
+        assert rollbacks == ['rollback']
+
     def test_search_words_hydrates_missing_phonetic_from_local_lookup(self, client, monkeypatch):
         monkeypatch.setattr(books_catalog_query_service, '_global_word_search_catalog', None)
         monkeypatch.setattr(books_catalog_query_service, '_build_global_word_search_catalog', lambda: [{

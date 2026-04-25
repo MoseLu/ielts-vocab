@@ -2,6 +2,28 @@ from routes import books as books_routes
 from services import books_vocabulary_loader_service as vocabulary_loader_service
 
 
+def test_load_catalog_examples_rolls_back_failed_catalog_read(monkeypatch):
+    rollbacks = []
+
+    def fail_catalog_read():
+        raise RuntimeError('catalog unavailable')
+
+    monkeypatch.setattr(vocabulary_loader_service, '_catalog_examples_cache', None)
+    monkeypatch.setattr(
+        vocabulary_loader_service.word_catalog_repository,
+        'list_all_word_catalog_entries',
+        fail_catalog_read,
+    )
+    monkeypatch.setattr(
+        vocabulary_loader_service.word_catalog_repository,
+        'rollback',
+        lambda: rollbacks.append('rollback'),
+    )
+
+    assert vocabulary_loader_service.load_catalog_examples() == {}
+    assert rollbacks == ['rollback']
+
+
 def test_merge_examples_prefers_unified_short_examples_over_catalog_cache(monkeypatch):
     monkeypatch.setattr(vocabulary_loader_service, '_catalog_examples_cache', {
         'quit': [{'en': 'She quit the course early.', 'zh': '她提前退课了。'}],

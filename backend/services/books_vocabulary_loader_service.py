@@ -84,6 +84,7 @@ def load_catalog_examples():
             if normalized_word and examples:
                 loaded_examples[normalized_word] = examples
     except Exception:
+        word_catalog_repository.rollback()
         return {}
 
     _catalog_examples_cache = loaded_examples
