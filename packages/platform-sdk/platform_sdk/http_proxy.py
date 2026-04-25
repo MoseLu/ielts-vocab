@@ -115,6 +115,7 @@ async def proxy_browser_request(
         client = httpx.AsyncClient(
             timeout=policy.build_timeout(),
             follow_redirects=False,
+            trust_env=False,
         )
         stream_context = None
         try:

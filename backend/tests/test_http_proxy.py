@@ -45,10 +45,12 @@ class FakeStreamContext:
         return False
 
 
-def _make_async_client(outcomes, captured_calls, captured_timeouts):
+def _make_async_client(outcomes, captured_calls, captured_timeouts, captured_client_kwargs=None):
     class FakeAsyncClient:
         def __init__(self, *args, **kwargs):
             captured_timeouts.append(kwargs.get('timeout'))
+            if captured_client_kwargs is not None:
+                captured_client_kwargs.append(kwargs)
 
         def stream(self, method, url, params=None, content=None, headers=None):
             captured_calls.append(
@@ -247,3 +249,37 @@ def test_proxy_browser_request_opens_circuit_after_repeated_failures(monkeypatch
     assert third.status_code == 503
     assert third.json() == {'detail': 'catalog-content-service circuit open'}
     assert len(captured_calls) == 2
+
+
+def test_proxy_browser_request_disables_env_proxy_resolution(monkeypatch):
+    reset_gateway_upstream_state()
+    outcomes = [
+        FakeResponse(
+            status_code=200,
+            headers={'content-type': 'application/json'},
+            content=b'{"ok":true}',
+        ),
+    ]
+    captured_calls: list[dict[str, object]] = []
+    captured_timeouts: list[object] = []
+    captured_client_kwargs: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        http_proxy.httpx,
+        'AsyncClient',
+        _make_async_client(
+            outcomes,
+            captured_calls,
+            captured_timeouts,
+            captured_client_kwargs,
+        ),
+    )
+
+    app = _build_proxy_app(service_name='identity-service', upstream_path='/api/auth/me')
+    client = TestClient(app, base_url='https://axiomaticworld.com')
+
+    response = client.get('/proxy')
+
+    assert response.status_code == 200
+    assert response.json() == {'ok': True}
+    assert len(captured_client_kwargs) == 1
+    assert captured_client_kwargs[0]['trust_env'] is False
