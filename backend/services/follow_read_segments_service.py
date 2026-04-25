@@ -43,9 +43,11 @@ _LEGACY_SEGMENT_OVERRIDES = {
         {'letters': 'me', 'phonetic': 'mɪ', 'audio_phonetic': 'miː'},
         {'letters': 'non', 'phonetic': 'nən', 'audio_phonetic': 'nɔn'},
     ],
+    'oriented': [
+        {'letters': 'o', 'phonetic': 'ˈɔː', 'audio_phonetic': 'ɔː'}, {'letters': 'ri', 'phonetic': 'ri', 'audio_phonetic': 'ri'},
+        {'letters': 'en', 'phonetic': 'en', 'audio_phonetic': 'en'}, {'letters': 'ted', 'phonetic': 'tɪd', 'audio_phonetic': 'tɪd'},
+    ],
 }
-
-
 def reset_follow_read_segment_caches() -> None:
     reset_follow_read_segment_manifest_caches()
 

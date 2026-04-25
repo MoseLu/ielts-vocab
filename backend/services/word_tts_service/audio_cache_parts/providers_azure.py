@@ -48,6 +48,7 @@ _AZURE_WORDISH_TEXT_RE = re.compile(r"^[A-Za-z][A-Za-z' -]{0,79}$")
 _AZURE_SEGMENTED_CONTENT_MODES = {'word-segmented', 'phonetic-segments'}
 _AZURE_IPA_VOWELS = set('aeiouyɑɒæəɛɜɝɚɨɪʊʌɔœøɐʉʏɯɤ')
 _AZURE_IPA_NUCLEUS_CONTINUATIONS = {'ː', 'ˑ', '̯'}
+_AZURE_IPA_HIATUS_PAIRS = {'ie'}
 _AZURE_IPA_ONSETS = {
     'b', 'bl', 'br', 'd', 'dʒ', 'dj', 'dr', 'dw', 'f', 'fj', 'fl', 'fr',
     'g', 'gj', 'gl', 'gr', 'gw', 'h', 'hj', 'j', 'k', 'kj', 'kl', 'kr',
@@ -254,9 +255,14 @@ def azure_word_segment_break_ms() -> str:
 
 
 def _build_azure_word_pronunciation_lookup() -> dict[str, str]:
-    from services import books_catalog_service, books_registry_service
+    from services import books_catalog_service, books_registry_service, phonetic_lookup_service
 
     lookup: dict[str, str] = {}
+    for word, phonetic in phonetic_lookup_service.load_phonetic_overrides().items():
+        normalized_word = normalize_word_key(word)
+        normalized_phonetic = normalize_azure_ipa(phonetic)
+        if normalized_word and normalized_phonetic:
+            lookup[normalized_word] = normalized_phonetic
     for book in books_registry_service.list_vocab_books():
         vocabulary = books_catalog_service.load_book_vocabulary(book['id']) or []
         for entry in vocabulary:
@@ -329,6 +335,16 @@ def _boundary_after_nonstress_chars(middle: str, prefix_length: int) -> int:
     return len(middle)
 
 
+def _split_azure_hiatus_syllable(syllable: str) -> list[str]:
+    for index in range(1, len(syllable)):
+        if syllable[index - 1:index + 1] in _AZURE_IPA_HIATUS_PAIRS:
+            left = syllable[:index].strip()
+            right = syllable[index:].strip()
+            if left and right:
+                return [left, right]
+    return [syllable]
+
+
 def split_azure_ipa_syllables(phonetic: str | None) -> list[str]:
     normalized = normalize_azure_ipa(phonetic)
     if not normalized:
@@ -372,7 +388,10 @@ def split_azure_ipa_syllables(phonetic: str | None) -> list[str]:
     tail = normalized[syllable_start:].strip()
     if tail:
         syllables.append(tail)
-    return syllables or [normalized]
+    refined_syllables: list[str] = []
+    for syllable in syllables:
+        refined_syllables.extend(_split_azure_hiatus_syllable(syllable))
+    return refined_syllables or syllables or [normalized]
 
 
 def build_azure_ssml(

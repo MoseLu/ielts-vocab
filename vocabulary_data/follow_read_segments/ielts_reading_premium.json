@@ -42288,9 +42288,14 @@
           "audio_phonetic": "ɔː"
         },
         {
-          "letters": "rien",
-          "phonetic": "rien",
-          "audio_phonetic": "rien"
+          "letters": "ri",
+          "phonetic": "ri",
+          "audio_phonetic": "ri"
+        },
+        {
+          "letters": "en",
+          "phonetic": "en",
+          "audio_phonetic": "en"
         },
         {
           "letters": "ted",

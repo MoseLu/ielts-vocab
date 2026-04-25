@@ -21,6 +21,13 @@ def test_generate_auto_follow_read_segments_for_forced_monosyllables():
     assert [segment['letters'] for segment in generate_auto_follow_read_segments('science', '/ˈsaɪəns/')] == ['sci', 'ence']
 
 
+def test_generate_auto_follow_read_segments_preserves_oriented_ri():
+    segments = generate_auto_follow_read_segments('oriented', '/ˈɔːrientɪd/')
+
+    assert [segment['letters'] for segment in segments] == ['o', 'ri', 'en', 'ted']
+    assert [segment['audio_phonetic'] for segment in segments] == ['ɔː', 'ri', 'en', 'tɪd']
+
+
 def test_follow_read_cache_key_changes_when_fallback_text_changes():
     segments_a = [{'letters': 'sci', 'audio_phonetic': 'saɪ', 'fallback_text': 'sigh'}]
     segments_b = [{'letters': 'sci', 'audio_phonetic': 'saɪ', 'fallback_text': 'sci'}]

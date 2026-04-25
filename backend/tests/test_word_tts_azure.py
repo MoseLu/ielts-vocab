@@ -103,6 +103,15 @@ def test_split_azure_ipa_syllables_uses_onset_heuristic_when_boundaries_missing(
     ]
 
 
+def test_split_azure_ipa_syllables_preserves_oriented_ri_hiatus():
+    assert word_tts.split_azure_ipa_syllables('/ˈɔːrientɪd/') == [
+        'ˈɔː',
+        'ri',
+        'en',
+        'tɪd',
+    ]
+
+
 def test_build_azure_ssml_supports_segmented_word_mode(monkeypatch):
     monkeypatch.setenv('AZURE_TTS_WORD_SEGMENT_BREAK_MS', '180')
     monkeypatch.setenv('AZURE_TTS_WORD_LEADING_BREAK_MS', '100')
