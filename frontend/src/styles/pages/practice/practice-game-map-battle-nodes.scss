@@ -1,0 +1,91 @@
+.practice-game-map__segment-node,
+.practice-game-map__segment-node.is-cleared,
+.practice-game-map__segment-node.is-active,
+.practice-game-map__segment-node.is-locked {
+  background: transparent;
+  box-shadow: none;
+}
+
+.practice-game-map__segment-node {
+  filter:
+    drop-shadow(0 var(--size-14) var(--size-10) color-mix(in srgb, var(--surface-code) var(--mix-48), transparent))
+    drop-shadow(0 var(--size-3) 0 color-mix(in srgb, var(--surface-code) var(--mix-36), transparent));
+}
+
+.practice-game-map__segment-node-art {
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  clip-path: none;
+  box-shadow: none;
+  isolation: isolate;
+}
+
+.practice-game-map__segment-node-art::before,
+.practice-game-map__segment-node-art::after {
+  content: none;
+}
+
+.practice-game-map__segment-node-frame {
+  position: absolute;
+  inset: -24% -22% -18%;
+  width: 144%;
+  height: 142%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.practice-game-map__segment-node.is-active .practice-game-map__segment-node-frame {
+  filter:
+    drop-shadow(0 0 var(--size-16) color-mix(in srgb, var(--warning) var(--mix-60), transparent))
+    drop-shadow(0 var(--size-8) var(--size-6) color-mix(in srgb, var(--surface-code) var(--mix-42), transparent));
+}
+
+.practice-game-map__segment-node-value {
+  z-index: var(--layer-prominent);
+  min-width: 50%;
+  padding: var(--size-3) var(--size-8) var(--size-4);
+  border: var(--size-1) solid color-mix(in srgb, var(--text-inverse) var(--mix-42), transparent);
+  border-radius: var(--size-8);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-22), transparent), color-mix(in srgb, var(--surface-code) var(--mix-62), transparent));
+  color: var(--text-inverse);
+  text-align: center;
+  transform: translateY(calc(var(--size-8) * -1));
+}
+
+.practice-game-map__segment-node-stars {
+  position: absolute;
+  left: 50%;
+  bottom: 24%;
+  z-index: var(--layer-prominent);
+  transform: translateX(-50%);
+}
+
+.practice-game-map__segment-node-stars img {
+  width: clamp(var(--size-18), 1.7vw, var(--size-30));
+  height: clamp(var(--size-18), 1.7vw, var(--size-30));
+  object-fit: contain;
+  filter: drop-shadow(0 var(--size-2) var(--size-2) color-mix(in srgb, var(--surface-code) var(--mix-58), transparent));
+}
+
+.practice-game-map__segment-node-stars img + img {
+  margin-left: calc(var(--size-6) * -1);
+}
+
+@media (max-width: 820px) {
+  .practice-game-map__segment-node-frame {
+    inset: -22% -20% -16%;
+    width: 140%;
+    height: 138%;
+  }
+
+  .practice-game-map__segment-node-value {
+    min-width: 54%;
+    padding: var(--size-2) var(--size-5) var(--size-3);
+  }
+
+  .practice-game-map__segment-node-stars {
+    bottom: 23%;
+  }
+}

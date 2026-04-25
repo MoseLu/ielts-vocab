@@ -1,0 +1,114 @@
+@media (max-width: 1100px) {
+  .practice-game-map__title {
+    width: min(58%, var(--size-520));
+  }
+
+  .practice-game-map__progress {
+    width: min(34%, var(--size-360));
+  }
+
+  .practice-game-map__current-word {
+    width: min(72%, var(--size-720));
+  }
+}
+
+@media (max-width: 820px) {
+  .practice-game-mode--map {
+    padding: var(--size-10);
+  }
+
+  .practice-game-map {
+    width: 100%;
+    height: calc(100vh - var(--size-20));
+  }
+
+  .practice-game-map__hud {
+    left: var(--size-10);
+    right: var(--size-10);
+    flex-wrap: wrap;
+  }
+
+  .practice-game-map__resource {
+    min-height: var(--size-34);
+    padding: 0 var(--size-10);
+    font-size: var(--size-11);
+  }
+
+  .practice-game-map__title {
+    top: var(--size-116);
+    width: calc(100% - var(--size-32));
+  }
+
+  .practice-game-map__progress {
+    top: auto;
+    left: var(--size-10);
+    right: var(--size-10);
+    bottom: var(--size-236);
+    width: auto;
+  }
+
+  .practice-game-map__current-word {
+    left: var(--size-10);
+    right: var(--size-10);
+    bottom: var(--size-68);
+    width: auto;
+    padding: var(--size-12);
+    transform: none;
+  }
+
+  .practice-game-map__dimension-grid {
+    grid-template-columns: repeat(5, minmax(var(--size-48), 1fr));
+    overflow-x: auto;
+  }
+
+  .practice-game-map__dimension {
+    min-height: var(--size-76);
+  }
+
+  .practice-game-map__start {
+    top: auto;
+    right: var(--size-10);
+    bottom: var(--size-14);
+    min-width: var(--size-156);
+  }
+
+  .practice-game-map__reward-cover {
+    display: none;
+  }
+}
+
+@keyframes practice-game-map-rise {
+  from {
+    opacity: 0;
+    transform: scale(1.015);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes practice-game-map-hud {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--size-8) * -1));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes practice-game-map-title {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(var(--size-10) * -1));
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
