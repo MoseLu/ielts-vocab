@@ -1,11 +1,21 @@
-from models import UserGameWrongWord, UserWordMasteryState, UserWrongWord
+from models import UserGameEnergyState, UserGameWrongWord, UserWordMasteryState, UserWrongWord
 
 
 GAME_SCOPE = {
     'bookId': 'ielts_reading_premium',
     'chapterId': '1',
 }
-WORD_DIMENSIONS = ('recognition', 'meaning', 'listening', 'speaking', 'dictation')
+WORD_DIMENSIONS = ('recognition', 'meaning', 'dictation', 'speaking', 'listening')
+EXPECTED_GAME_THEMES = (
+    'study-campus',
+    'work-business',
+    'travel-transport',
+    'city-services',
+    'health-lifestyle',
+    'environment-nature',
+    'science-tech',
+    'society-culture',
+)
 
 
 def _register_and_login(client, username='word-mastery-user', password='password123'):
@@ -133,13 +143,126 @@ def test_game_session_start_returns_session_bundle_and_level_rewards(client):
     assert started_state['session']['energy'] == initial_state['session']['energy'] - 2
     assert started_state['launcher']['energyCost'] == 2
     assert started_state['animationPayload']['sceneTheme'] in {'spelling', 'pronunciation', 'definition', 'speaking', 'example'}
-    assert [card['kind'] for card in started_state['levelCards']] == [
-        'spelling',
-        'pronunciation',
-        'definition',
-        'speaking',
-        'example',
-    ]
+    assert [card['dimension'] for card in started_state['levelCards']] == list(WORD_DIMENSIONS)
+
+
+def test_game_session_without_energy_continues_without_rewards(client, app):
+    _register_and_login(client, username='game-zero-energy-user')
+    _load_game_state(client)
+    with app.app_context():
+        energy_state = UserGameEnergyState.query.one()
+        energy_state.energy = 0
+        energy_state.next_energy_at = None
+        from models import db
+        db.session.commit()
+
+    started_state = _start_game_session(client)
+
+    assert started_state['session']['status'] == 'active'
+    assert started_state['session']['energy'] == 0
+    assert started_state['session']['enabledBoosts']['rewardEligible'] is False
+    assert started_state['rewards']['coins'] == 0
+    assert started_state['rewards']['diamonds'] == 0
+    assert started_state['rewards']['exp'] == 0
+
+
+def test_game_state_exposes_task_focus_and_word_chain_map_path(client):
+    _register_and_login(client, username='game-task-focus-user')
+
+    response = client.get('/api/ai/practice/game/state', query_string={
+        **GAME_SCOPE,
+        'task': 'error-review',
+        'dimension': 'meaning',
+    })
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload['taskFocus'] == {
+        'task': 'error-review',
+        'dimension': 'meaning',
+        'book': 'ielts_reading_premium',
+        'chapter': '1',
+    }
+    assert payload['mapPath']['currentNodeKey'] == payload['currentNode']['nodeKey']
+    assert payload['mapPath']['nodes']
+    assert payload['mapPath']['nodes'][0]['nodeType'] == 'word'
+    assert payload['mapPath']['nodes'][0]['title']
+    assert {node['status'] for node in payload['mapPath']['nodes']} <= {
+        'locked',
+        'current',
+        'cleared',
+        'refill',
+        'boss',
+        'reward',
+    }
+    assert [card['dimension'] for card in payload['levelCards']] == list(WORD_DIMENSIONS)
+
+
+def test_failed_dimension_does_not_block_next_unstarted_dimension(client):
+    _register_and_login(client, username='game-nonblocking-user')
+
+    initial_state = _load_game_state(client)
+    current_node = initial_state['currentNode']
+    active_word = current_node['word']
+    assert current_node['dimension'] == 'recognition'
+
+    failed_attempt = _submit_word_attempt(
+        client,
+        active_word,
+        dimension='recognition',
+        passed=False,
+    )
+
+    next_node = failed_attempt['game_state']['currentNode']
+    assert failed_attempt['state']['failedDimensions'] == ['recognition']
+    assert next_node['nodeType'] == 'word'
+    assert next_node['word']['word'] == active_word['word']
+    assert next_node['dimension'] == 'meaning'
+    assert 'recognition' in next_node['failedDimensions']
+
+
+def test_game_theme_catalog_covers_paid_books_and_static_asset_contract(client):
+    _register_and_login(client, username='game-theme-user')
+
+    response = client.get('/api/ai/practice/game/themes')
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    themes = payload['themes']
+    assert [theme['id'] for theme in themes] == list(EXPECTED_GAME_THEMES)
+    assert payload['sourceBooks'] == ['ielts_reading_premium', 'ielts_listening_premium']
+    assert payload['pageSize'] == 8
+
+    total_words = sum(theme['wordCount'] for theme in themes)
+    assert total_words == payload['totalWords']
+    assert total_words >= 7000
+
+    for theme in themes:
+        assert theme['chapters']
+        assert len(theme['chapters']) <= payload['pageSize']
+        assert theme['totalChapters'] >= len(theme['chapters'])
+        assert theme['assets']['desktopMap'].startswith('/game/campaign-v2/themes/')
+        assert theme['assets']['mobileMap'].startswith('/game/campaign-v2/themes/')
+        assert theme['assets']['selectCard'].startswith('/game/campaign-v2/themes/')
+        assert theme['assets']['emptyState'].startswith('/game/campaign-v2/themes/')
+
+
+def test_game_state_accepts_theme_scope_fields(client):
+    _register_and_login(client, username='game-theme-state-user')
+
+    response = client.get('/api/ai/practice/game/state', query_string={
+        'themeId': 'science-tech',
+        'themeChapterId': 'science-tech-1',
+    })
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload['scope']['themeId'] == 'science-tech'
+    assert payload['scope']['themeChapterId'] == 'science-tech-1'
+    assert payload['theme']['id'] == 'science-tech'
+    assert payload['themeChapter']['id'] == 'science-tech-1'
+    assert payload['themeProgress']['pageSize'] == 8
+    assert payload['campaign']['scopeLabel'].startswith('科技科学')
 
 
 def test_pronunciation_check_syncs_speaking_mastery_without_classic_wrong_word_projection(client, app):

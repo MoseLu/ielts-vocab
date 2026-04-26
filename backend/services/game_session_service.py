@@ -54,6 +54,7 @@ def _normalize_enabled_boosts(value: dict | None) -> dict:
     return {
         'spellingBoost': bool(payload.get('spellingBoost', True)),
         'applicationBoost': bool(payload.get('applicationBoost', True)),
+        'rewardEligible': bool(payload.get('rewardEligible', True)),
     }
 
 
@@ -297,8 +298,7 @@ def start_game_session(
     now_utc = utc_now()
     energy_state = get_or_create_energy_state(user_id)
     _recover_energy(energy_state, now_utc=now_utc)
-    if int(energy_state.energy or 0) < GAME_SEGMENT_START_COST:
-        raise ValueError('energy is insufficient')
+    has_reward_energy = int(energy_state.energy or 0) >= GAME_SEGMENT_START_COST
     session = get_scope_game_session(user_id, scope_key=scope_key)
     if session is None:
         session = UserGameSessionState(
@@ -323,7 +323,9 @@ def start_game_session(
     session.hints_remaining = GAME_HINTS_PER_SEGMENT
     session.hint_usage = 0
     session.pass_score = GAME_SEGMENT_PASS_SCORE
-    session.enabled_boosts = _json_dumps(_normalize_enabled_boosts(enabled_boosts))
+    session_boosts = _normalize_enabled_boosts(enabled_boosts)
+    session_boosts['rewardEligible'] = has_reward_energy
+    session.enabled_boosts = _json_dumps(session_boosts)
     session.active_boost_module = None
     session.boss_completed = False
     session.reward_completed = False
@@ -332,7 +334,8 @@ def start_game_session(
     session.last_score_delta = 0
     session.result_overlay = None
 
-    energy_state.energy = max(0, int(energy_state.energy or 0) - GAME_SEGMENT_START_COST)
+    if has_reward_energy:
+        energy_state.energy = max(0, int(energy_state.energy or 0) - GAME_SEGMENT_START_COST)
     if int(energy_state.energy or 0) < int(energy_state.energy_max or GAME_ENERGY_MAX):
         energy_state.next_energy_at = energy_state.next_energy_at or _next_energy_time(now_utc)
     if int(energy_state.energy or 0) >= int(energy_state.energy_max or GAME_ENERGY_MAX):

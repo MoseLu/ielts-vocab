@@ -1,10 +1,20 @@
 from __future__ import annotations
 
-import json
 from math import ceil
 
 from service_models.learning_core_models import UserGameWrongWord, UserWordMasteryState, db
 from services import game_session_service, game_wrong_word_repository
+from services.game_theme_catalog_service import apply_theme_state_payload, build_theme_state_context
+from services.word_mastery_campaign_path import (
+    GAME_LEVELS,
+    active_game_level_for_states,
+    build_level_cards,
+    build_map_path,
+    build_task_focus,
+    failed_dimensions_for_states,
+    normalize_game_dimension,
+    normalize_game_task,
+)
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_support import (
     WORD_MASTERY_DIMENSIONS,
@@ -25,93 +35,12 @@ from services.word_mastery_support import (
 )
 
 GAME_SEGMENT_WORD_COUNT = 5
-GAME_LEVELS = (
-    {
-        'kind': 'spelling',
-        'dimension': 'dictation',
-        'label': '拼写强化',
-        'subtitle': '听音后完整拼出目标词',
-        'assetKey': 'spell',
-    },
-    {
-        'kind': 'pronunciation',
-        'dimension': 'speaking',
-        'label': '发音训练',
-        'subtitle': '跟读单词并完成发音判定',
-        'assetKey': 'pronunciation',
-    },
-    {
-        'kind': 'definition',
-        'dimension': 'meaning',
-        'label': '释义理解',
-        'subtitle': '把词义和场景绑定起来',
-        'assetKey': 'definition',
-    },
-    {
-        'kind': 'speaking',
-        'dimension': 'recognition',
-        'label': '口语录音',
-        'subtitle': '开口使用目标词完成短句',
-        'assetKey': 'speaking',
-    },
-    {
-        'kind': 'example',
-        'dimension': 'listening',
-        'label': '例句应用',
-        'subtitle': '在语境中选出正确用词',
-        'assetKey': 'example',
-    },
-)
-
-
-def _level_for_dimension(dimension: str | None) -> dict:
-    normalized = str(dimension or '').strip().lower()
-    return next((item for item in GAME_LEVELS if item['dimension'] == normalized), GAME_LEVELS[0])
-
-
-def _active_game_level_for_states(states: dict[str, dict], *, now_utc) -> dict | None:
-    for level in GAME_LEVELS:
-        dimension = level['dimension']
-        if dimension in states and is_pending_dimension_due(states[dimension], now_utc=now_utc):
-            return level
-    for level in GAME_LEVELS:
-        dimension = level['dimension']
-        if safe_int((states.get(dimension) or {}).get('pass_streak')) < 4:
-            return level
-    return None
-
-
-def _build_level_cards(entry: dict | None, *, active_dimension: str | None) -> list[dict]:
-    states = entry.get('states') if isinstance(entry, dict) else {}
-    cards = []
-    for index, level in enumerate(GAME_LEVELS, start=1):
-        dimension = level['dimension']
-        state = states.get(dimension) if isinstance(states, dict) else {}
-        pass_streak = safe_int((state or {}).get('pass_streak'))
-        if pass_streak >= 4:
-            status = 'passed'
-        elif active_dimension == dimension:
-            status = 'active'
-        elif pass_streak > 0:
-            status = 'pending'
-        else:
-            status = 'ready'
-        cards.append({
-            'kind': level['kind'],
-            'dimension': dimension,
-            'label': level['label'],
-            'subtitle': level['subtitle'],
-            'assetKey': level['assetKey'],
-            'step': index,
-            'status': status,
-            'passStreak': pass_streak,
-            'attemptCount': safe_int((state or {}).get('attempt_count')),
-        })
-    return cards
 
 
 def _build_reward_summary(current_segment: dict, session_bundle: dict) -> dict:
     session = session_bundle.get('session') if isinstance(session_bundle, dict) else {}
+    if not ((session or {}).get('enabledBoosts') or {}).get('rewardEligible', True):
+        return {'coins': 0, 'diamonds': 0, 'exp': 0, 'stars': 0, 'chest': 'normal', 'bestHits': 0}
     score = safe_int((session or {}).get('score'))
     best_hits = safe_int((session or {}).get('bestHits'))
     cleared_words = safe_int(current_segment.get('clearedWords'))
@@ -192,6 +121,7 @@ def _serialize_game_recovery_item(record: UserGameWrongWord) -> dict:
 
 def _build_word_node(entry: dict, *, segment_index: int, active_level: dict | None) -> dict:
     level = active_level or GAME_LEVELS[0]
+    failed_dimensions = failed_dimensions_for_states(entry['states'])
     return {
         'nodeType': 'word',
         'nodeKey': _word_node_key(entry['word']['word']),
@@ -204,7 +134,7 @@ def _build_word_node(entry: dict, *, segment_index: int, active_level: dict | No
         'levelLabel': level['label'],
         'promptText': None,
         'targetWords': [entry['word']['word']],
-        'failedDimensions': entry['summary']['pending_dimensions'],
+        'failedDimensions': failed_dimensions,
         'word': {
             **entry['word'],
             'overall_status': entry['summary']['overall_status'],
@@ -245,29 +175,33 @@ def _build_speaking_node(
 
 
 def build_game_practice_state(
-    user_id: int,
-    *,
-    book_id: str | None = None,
-    chapter_id: str | None = None,
-    day: int | None = None,
+    user_id: int, *, book_id: str | None = None, chapter_id: str | None = None,
+    day: int | None = None, theme_id: str | None = None, theme_chapter_id: str | None = None,
+    task: str | None = None, dimension: str | None = None,
 ) -> dict:
     normalized_book_id = normalize_optional_text(book_id)
     normalized_chapter_id = normalize_chapter_id(chapter_id)
     normalized_day = normalize_day(day)
+    normalized_task = normalize_game_task(task)
+    normalized_task_dimension = normalize_game_dimension(dimension)
+    theme_context = build_theme_state_context(theme_id=theme_id, theme_chapter_id=theme_chapter_id)
+    scope_book_id = theme_context['scopeBookId'] if theme_context else normalized_book_id
+    scope_chapter_id = theme_context['scopeChapterId'] if theme_context else normalized_chapter_id
+    scope_day = None if theme_context else normalized_day
     ensure_word_mastery_table()
     _ensure_game_wrong_word_table()
     game_session_service.ensure_game_session_tables()
     existing_records = _list_scope_word_mastery_states(
         user_id,
-        book_id=normalized_book_id,
-        chapter_id=normalized_chapter_id,
-        day=normalized_day,
+        book_id=scope_book_id,
+        chapter_id=scope_chapter_id,
+        day=scope_day,
     )
     scope_game_wrong_words = game_wrong_word_repository.list_scope_game_wrong_words(
         user_id,
-        scope_key=_scope_value(normalized_book_id, normalized_chapter_id, normalized_day),
+        scope_key=_scope_value(scope_book_id, scope_chapter_id, scope_day),
     )
-    vocabulary = load_scope_vocabulary(
+    vocabulary = theme_context['words'] if theme_context else load_scope_vocabulary(
         book_id=normalized_book_id,
         chapter_id=normalized_chapter_id,
         day=normalized_day,
@@ -313,10 +247,40 @@ def build_game_practice_state(
     def is_campaign_word_cleared(entry: dict) -> bool:
         return safe_int(entry['summary'].get('current_round')) >= 1
 
+    def _has_failed_dimension(entry: dict, selected_dimension: str | None = None) -> bool:
+        failed = failed_dimensions_for_states(entry['states'])
+        return selected_dimension in failed if selected_dimension else bool(failed)
+
+    def _has_due_review(entry: dict) -> bool:
+        return any(
+            safe_int(entry['states'][dimension].get('pass_streak')) > 0
+            and is_pending_dimension_due(entry['states'][dimension], now_utc=now_utc)
+            for dimension in WORD_MASTERY_DIMENSIONS
+        )
+
     def active_rank(entry: dict) -> tuple[int, int, str]:
         order = safe_int(entry.get('order'))
         status = entry['summary']['overall_status']
-        due = any(is_pending_dimension_due(entry['states'][dimension], now_utc=now_utc) for dimension in WORD_MASTERY_DIMENSIONS)
+        if normalized_task == 'error-review':
+            if _has_failed_dimension(entry, normalized_task_dimension):
+                return (0, order, entry['word']['word'])
+            if _has_failed_dimension(entry):
+                return (1, order, entry['word']['word'])
+            if status == 'new':
+                return (3, order, entry['word']['word'])
+            return (4, order, entry['word']['word'])
+        if normalized_task == 'due-review':
+            if _has_due_review(entry):
+                return (0, order, entry['word']['word'])
+            if status in {'unlocked', 'in_review'}:
+                return (1, order, entry['word']['word'])
+            if status == 'new':
+                return (3, order, entry['word']['word'])
+            return (4, order, entry['word']['word'])
+        due = any(
+            is_pending_dimension_due(entry['states'][dimension], now_utc=now_utc)
+            for dimension in WORD_MASTERY_DIMENSIONS
+        )
         if status == 'new':
             return (0, order, entry['word']['word'])
         if due:
@@ -326,7 +290,11 @@ def build_game_practice_state(
         return (3, order, entry['word']['word'])
 
     active_entry = min(entries, key=active_rank) if entries else None
-    active_level = _active_game_level_for_states(active_entry['states'], now_utc=now_utc) if active_entry else None
+    active_level = active_game_level_for_states(
+        active_entry['states'],
+        now_utc=now_utc,
+        preferred_dimension=normalized_task_dimension if normalized_task == 'error-review' else None,
+    ) if active_entry else None
     active_dimension = active_level['dimension'] if active_level else None
     total_words = len(entries)
     passed_words = sum(1 for entry in entries if is_campaign_word_cleared(entry))
@@ -434,17 +402,14 @@ def build_game_practice_state(
     level_card_entry = active_entry
     if level_card_entry is None and current_segment_entries:
         level_card_entry = current_segment_entries[0]
-    level_cards = _build_level_cards(level_card_entry, active_dimension=active_dimension)
+    level_cards = build_level_cards(level_card_entry, active_dimension=active_dimension)
     session_bundle = game_session_service.build_game_session_bundle(
         user_id,
-        scope_key=_scope_value(normalized_book_id, normalized_chapter_id, normalized_day),
-        game_state={
-            'segment': current_segment,
-            'currentNode': current_node,
-        },
-        book_id=normalized_book_id,
-        chapter_id=normalized_chapter_id,
-        day=normalized_day,
+        scope_key=_scope_value(scope_book_id, scope_chapter_id, scope_day),
+        game_state={'segment': current_segment, 'currentNode': current_node},
+        book_id=scope_book_id,
+        chapter_id=scope_chapter_id,
+        day=scope_day,
     )
 
     queue_items = [
@@ -464,12 +429,8 @@ def build_game_practice_state(
     ]
     resume_node = boss_queue_items[0] if boss_queue_items else (queue_items[0] if queue_items else (recent_miss_items[0] if recent_miss_items else None))
 
-    return {
-        'scope': {
-            'bookId': normalized_book_id,
-            'chapterId': normalized_chapter_id,
-            'day': normalized_day,
-        },
+    payload = {
+        'scope': {'bookId': normalized_book_id, 'chapterId': normalized_chapter_id, 'day': normalized_day},
         'campaign': {
             'title': current_node['title'] if current_node is not None else '五维战役',
             'scopeLabel': '整本词书战役' if normalized_book_id else '当前范围战役',
@@ -479,6 +440,20 @@ def build_game_practice_state(
             'clearedSegments': cleared_segments,
             'currentSegment': current_segment['index'],
         },
+        'taskFocus': build_task_focus(
+            task=normalized_task,
+            dimension=normalized_task_dimension,
+            book_id=normalized_book_id,
+            chapter_id=normalized_chapter_id,
+        ),
+        'mapPath': build_map_path(
+            entries,
+            active_entry_index=active_entry_index,
+            current_node=current_node,
+            speaking_boss=speaking_boss,
+            speaking_reward=speaking_reward,
+            window_size=GAME_SEGMENT_WORD_COUNT,
+        ),
         'segment': current_segment,
         'currentNode': current_node,
         'nodeType': node_type,
@@ -498,3 +473,4 @@ def build_game_practice_state(
         'activeLevelKind': current_node.get('levelKind') if isinstance(current_node, dict) else None,
         **session_bundle,
     }
+    return apply_theme_state_payload(payload, theme_context)

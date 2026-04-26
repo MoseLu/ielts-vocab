@@ -15,7 +15,7 @@ from services.books_progress_service import build_chapter_words_response
 from services.study_sessions import normalize_chapter_id
 
 
-WORD_MASTERY_DIMENSIONS = ('recognition', 'meaning', 'listening', 'speaking', 'dictation')
+WORD_MASTERY_DIMENSIONS = ('recognition', 'meaning', 'dictation', 'speaking', 'listening')
 WORD_MASTERY_DIMENSION_SEQUENCE = WORD_MASTERY_DIMENSIONS
 WORD_MASTERY_TARGET_STREAK = 4
 _REVIEW_DELAYS_BY_STREAK = (
