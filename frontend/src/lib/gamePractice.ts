@@ -2,12 +2,14 @@ import {
   GameCampaignAttemptResponseSchema,
   GameCampaignStartResponseSchema,
   GameCampaignStateSchema,
+  GameThemeCatalogSchema,
   apiFetch,
   safeParse,
   type GameCampaignAttemptResponse,
   type GameCampaignDimension,
   type GameCampaignStartResponse,
   type GameCampaignState,
+  type GameThemeCatalog,
   type GameLevelKind,
   type GameNodeType,
   type Word,
@@ -17,6 +19,10 @@ interface GamePracticeScope {
   bookId?: string | null
   chapterId?: string | null
   day?: number | null
+  themeId?: string | null
+  themeChapterId?: string | null
+  task?: string | null
+  taskDimension?: GameCampaignDimension | null
 }
 
 interface SubmitWordMasteryAttemptInput extends GamePracticeScope {
@@ -39,7 +45,24 @@ function buildScopeParams(scope: GamePracticeScope): URLSearchParams {
   if (scope.bookId) params.set('bookId', scope.bookId)
   if (scope.chapterId) params.set('chapterId', scope.chapterId)
   if (typeof scope.day === 'number') params.set('day', String(scope.day))
+  if (scope.themeId) params.set('themeId', scope.themeId)
+  if (scope.themeChapterId) params.set('themeChapterId', scope.themeChapterId)
+  if (scope.task) params.set('task', scope.task)
+  if (scope.taskDimension) params.set('dimension', scope.taskDimension)
   return params
+}
+
+export async function fetchGameThemeCatalog(scope: Pick<GamePracticeScope, 'themeId'> & { page?: number | null } = {}): Promise<GameThemeCatalog> {
+  const params = new URLSearchParams()
+  if (scope.themeId) params.set('themeId', scope.themeId)
+  if (typeof scope.page === 'number') params.set('page', String(scope.page))
+  const query = params.toString()
+  const raw = await apiFetch(`/api/ai/practice/game/themes${query ? `?${query}` : ''}`)
+  const parsed = safeParse(GameThemeCatalogSchema, raw)
+  if (!parsed.success) {
+    throw new Error('主题地图响应格式错误')
+  }
+  return parsed.data
 }
 
 export async function fetchGamePracticeState(scope: GamePracticeScope): Promise<GameCampaignState> {
@@ -59,6 +82,10 @@ export async function startGamePracticeSession(scope: GamePracticeScope): Promis
       bookId: scope.bookId ?? undefined,
       chapterId: scope.chapterId ?? undefined,
       day: scope.day ?? undefined,
+      themeId: scope.themeId ?? undefined,
+      themeChapterId: scope.themeChapterId ?? undefined,
+      task: scope.task ?? undefined,
+      taskDimension: scope.taskDimension ?? undefined,
     }),
   })
   const parsed = safeParse(GameCampaignStartResponseSchema, raw)
@@ -84,6 +111,10 @@ export async function submitWordMasteryAttempt(
       bookId: input.bookId ?? undefined,
       chapterId: input.chapterId ?? undefined,
       day: input.day ?? undefined,
+      themeId: input.themeId ?? undefined,
+      themeChapterId: input.themeChapterId ?? undefined,
+      task: input.task ?? undefined,
+      taskDimension: input.taskDimension ?? undefined,
       wordPayload: input.wordPayload ?? undefined,
       levelKind: input.levelKind ?? undefined,
       hintUsed: input.hintUsed ?? undefined,

@@ -149,9 +149,9 @@ export type WrongWordDimensionKey = typeof WRONG_WORD_DIMENSIONS[number]
 export const GAME_CAMPAIGN_DIMENSIONS = [
   'recognition',
   'meaning',
-  'listening',
-  'speaking',
   'dictation',
+  'speaking',
+  'listening',
 ] as const
 
 export type GameCampaignDimension = typeof GAME_CAMPAIGN_DIMENSIONS[number]
@@ -167,11 +167,11 @@ export type GameNodeType = typeof GAME_NODE_TYPES[number]
 export const GAME_CAMPAIGN_LABEL = '五维闯关'
 
 export const GAME_CAMPAIGN_DIMENSION_LABELS: Record<GameCampaignDimension, string> = {
-  recognition: '认词',
-  meaning: '释义',
-  listening: '听辨',
-  speaking: '口语',
-  dictation: '拼写',
+  recognition: '会认',
+  meaning: '会想',
+  dictation: '会写',
+  speaking: '会说',
+  listening: '语境应用',
 }
 
 export const WRONG_WORD_DIMENSION_TO_MODE: Record<WrongWordDimensionKey, CanonicalPracticeMode> = {

@@ -205,9 +205,9 @@ export type GamePracticeDimensionState = z.infer<typeof GamePracticeDimensionSta
 export const GameCampaignDimensionSchema = z.enum([
   'recognition',
   'meaning',
-  'listening',
-  'speaking',
   'dictation',
+  'speaking',
+  'listening',
 ])
 export type GameCampaignDimension = z.infer<typeof GameCampaignDimensionSchema>
 
@@ -337,27 +337,97 @@ export const GameRewardSummarySchema = z.object({
 })
 export type GameRewardSummary = z.infer<typeof GameRewardSummarySchema>
 
-export const GameCampaignHudSchema = z.object({
-  playerLevel: z.number().int().positive().catch(1),
-  levelProgressPercent: z.number().int().min(0).max(100).catch(0),
-  unreadMessages: z.number().int().nonnegative().catch(0),
-})
+export const GameCampaignHudSchema = z.object({ playerLevel: z.number().int().positive().catch(1), levelProgressPercent: z.number().int().min(0).max(100).catch(0), unreadMessages: z.number().int().nonnegative().catch(0) })
 export type GameCampaignHud = z.infer<typeof GameCampaignHudSchema>
 
-export const GameAnimationPayloadSchema = z.object({
-  sceneTheme: z.string().nullable().optional().default(null),
-  mascotState: z.string().nullable().optional().default(null),
-  feedbackTone: z.string().nullable().optional().default(null),
-  showResultLayer: z.boolean().catch(false),
+export const GameTaskFocusSchema = z.object({ task: z.enum(['due-review', 'error-review', 'continue-book', 'speaking', 'add-book']).catch('continue-book'), dimension: GameCampaignDimensionSchema.nullable().optional().default(null), book: z.string().nullable().optional().default(null), chapter: z.union([z.string(), z.number()]).nullable().optional().default(null) })
+export type GameTaskFocus = z.infer<typeof GameTaskFocusSchema>
+
+export const GameMapPathNodeSchema = z.object({
+  nodeType: GameNodeTypeSchema, nodeKey: z.string(), index: z.number().int().positive(), title: z.string(),
+  subtitle: z.string().nullable().optional().default(null),
+  status: z.enum(['locked', 'current', 'cleared', 'refill', 'boss', 'reward']),
+  dimension: GameCampaignDimensionSchema.nullable().optional().default(null),
+  failedDimensions: z.array(GameCampaignDimensionSchema).default([]),
 })
+export type GameMapPathNode = z.infer<typeof GameMapPathNodeSchema>
+
+export const GameMapPathSchema = z.object({
+  currentNodeKey: z.string().nullable().optional().default(null), totalNodes: z.number().int().nonnegative().catch(0), nodes: z.array(GameMapPathNodeSchema).default([]),
+})
+export type GameMapPath = z.infer<typeof GameMapPathSchema>
+
+export const GameAnimationPayloadSchema = z.object({ sceneTheme: z.string().nullable().optional().default(null), mascotState: z.string().nullable().optional().default(null), feedbackTone: z.string().nullable().optional().default(null), showResultLayer: z.boolean().catch(false) })
 export type GameAnimationPayload = z.infer<typeof GameAnimationPayloadSchema>
+
+export const GameThemeAssetSetSchema = z.object({
+  desktopMap: z.string(),
+  mobileMap: z.string(),
+  selectCard: z.string(),
+  emptyState: z.string(),
+  bossGate: z.string().optional(),
+  rewardNode: z.string().optional(),
+})
+export type GameThemeAssetSet = z.infer<typeof GameThemeAssetSetSchema>
+
+export const GameThemeChapterSchema = z.object({
+  id: z.string(),
+  themeId: z.string().optional().default(''),
+  title: z.string(),
+  subtitle: z.string().optional().catch(''),
+  wordCount: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  bookIds: z.array(z.string()).default([]),
+  sourceChapterCount: z.number().int().nonnegative().catch(0),
+  assets: z.record(z.string(), z.string()).default({}),
+})
+export type GameThemeChapter = z.infer<typeof GameThemeChapterSchema>
+
+export const GameThemeSummarySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  subtitle: z.string(),
+  description: z.string().optional().catch(''),
+  wordCount: z.number().int().nonnegative(),
+  totalChapters: z.number().int().nonnegative(),
+  currentPage: z.number().int().positive().catch(1),
+  totalPages: z.number().int().positive().catch(1),
+  chapters: z.array(GameThemeChapterSchema).default([]),
+  assets: GameThemeAssetSetSchema,
+})
+export type GameThemeSummary = z.infer<typeof GameThemeSummarySchema>
+
+export const GameThemeProgressSchema = z.object({
+  pageSize: z.number().int().positive(),
+  currentPage: z.number().int().positive(),
+  totalPages: z.number().int().positive(),
+  currentChapterIndex: z.number().int().nonnegative().optional().default(0),
+  totalChapters: z.number().int().nonnegative().optional().default(0),
+})
+export type GameThemeProgress = z.infer<typeof GameThemeProgressSchema>
+
+export const GameThemeCatalogSchema = z.object({
+  sourceBooks: z.array(z.string()),
+  pageSize: z.number().int().positive(),
+  totalWords: z.number().int().nonnegative(),
+  taxonomy: z.string().optional(),
+  themes: z.array(GameThemeSummarySchema),
+})
+export type GameThemeCatalog = z.infer<typeof GameThemeCatalogSchema>
 
 export const GameCampaignStateSchema = z.object({
   scope: z.object({
     bookId: z.string().nullable().optional(),
     chapterId: z.union([z.string(), z.number()]).nullable().optional(),
     day: z.number().int().nullable().optional(),
+    themeId: z.string().nullable().optional(),
+    themeChapterId: z.string().nullable().optional(),
   }),
+  theme: GameThemeSummarySchema.optional(),
+  themeChapter: GameThemeChapterSchema.optional(),
+  themeProgress: GameThemeProgressSchema.optional(),
+  taskFocus: GameTaskFocusSchema.optional(),
+  mapPath: GameMapPathSchema.optional(),
   campaign: z.object({
     title: z.string(),
     scopeLabel: z.string(),
