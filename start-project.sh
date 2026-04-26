@@ -5,11 +5,13 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="${script_dir}"
 allow_dirty_compatibility_drill=false
 use_monolith_compatibility=false
+use_lowmem_consolidated_runtime=false
 skip_redis=false
 skip_rabbit=false
 skip_frontend_build=false
 monolith_compat_route_groups=""
 monolith_compat_surface="all"
+lowmem_consolidated_route_surface="browser"
 monolith_compat_backend_port=5000
 frontend_port=3002
 gateway_port=8000
@@ -28,6 +30,10 @@ while (($#)); do
       ;;
     --use-monolith-compatibility)
       use_monolith_compatibility=true
+      shift
+      ;;
+    --use-lowmem-consolidated-runtime)
+      use_lowmem_consolidated_runtime=true
       shift
       ;;
     --skip-redis)
@@ -68,8 +74,12 @@ frontend_out="${log_dir}/frontend-preview.out.log"
 frontend_err="${log_dir}/frontend-preview.err.log"
 backend_out="${log_dir}/backend-compat.out.log"
 backend_err="${log_dir}/backend-compat.err.log"
+lowmem_backend_out="${log_dir}/backend-lowmem.out.log"
+lowmem_backend_err="${log_dir}/backend-lowmem.err.log"
 speech_out="${log_dir}/speech-compat.out.log"
 speech_err="${log_dir}/speech-compat.err.log"
+lowmem_speech_out="${log_dir}/speech-lowmem.out.log"
+lowmem_speech_err="${log_dir}/speech-lowmem.err.log"
 
 PATH="${runtime_prefix}/bin:${PATH}"
 export PATH
@@ -154,13 +164,13 @@ resolve_monolith_probe_path() {
     raw_json="$(python "${root}/scripts/resolve-monolith-compat-route-groups.py" --surface "${monolith_compat_surface}" --json)"
   fi
 
-  printf '%s' "${raw_json}" | python - <<'PY'
-import json
-import sys
-payload = json.load(sys.stdin)
-print(payload["probe_path"])
-PY
+  printf '%s' "${raw_json}" | python -c 'import json, sys; print(json.load(sys.stdin)["probe_path"])'
 }
+
+if [[ "${use_lowmem_consolidated_runtime}" == "true" && "${use_monolith_compatibility}" == "true" ]]; then
+  printf '[ERROR] Low-memory consolidated runtime cannot be combined with monolith compatibility.\n' >&2
+  exit 64
+fi
 
 ensure_runtime
 mkdir -p "${log_dir}"
@@ -188,6 +198,27 @@ if [[ "${use_monolith_compatibility}" == "true" ]]; then
   wait_http_ready 'compat backend probe' "http://127.0.0.1:${monolith_compat_backend_port}${local_probe_path}"
   wait_http_ready 'compat speech ready' "http://127.0.0.1:${speech_port}/ready"
   log "Legacy backend/app.py on port ${monolith_compat_backend_port} is compatibility-only."
+elif [[ "${use_lowmem_consolidated_runtime}" == "true" ]]; then
+  if [[ -n "${monolith_compat_route_groups}" || "${monolith_compat_surface}" != "all" ]]; then
+    printf '[ERROR] Low-memory consolidated runtime always uses the browser compatibility surface.\n' >&2
+    exit 64
+  fi
+  monolith_compat_surface="${lowmem_consolidated_route_surface}"
+  local_probe_path="$(resolve_monolith_probe_path)"
+  stop_port_listener "${gateway_port}"
+  stop_port_listener "${speech_port}"
+  export ALLOW_MONOLITH_COMPAT_RUNTIME=1
+  export LOWMEM_CONSOLIDATED_RUNTIME=1
+  export IELTS_BACKEND_RUNTIME_PROFILE=lowmem-consolidated
+  export MONOLITH_COMPAT_ROUTE_GROUPS="$(python "${root}/scripts/resolve-monolith-compat-route-groups.py" --surface "${lowmem_consolidated_route_surface}")"
+  export BACKEND_PORT="${gateway_port}"
+  export WAITRESS_THREADS="${WAITRESS_THREADS:-4}"
+  export VITE_API_PROXY_TARGET="http://127.0.0.1:${gateway_port}"
+  start_background 'backend-lowmem' "${lowmem_backend_out}" "${lowmem_backend_err}" python "${root}/backend/app.py"
+  start_background 'speech-lowmem' "${lowmem_speech_out}" "${lowmem_speech_err}" python "${root}/backend/speech_service.py"
+  wait_http_ready 'low-memory backend probe' "http://127.0.0.1:${gateway_port}${local_probe_path}"
+  wait_http_ready 'low-memory speech ready' "http://127.0.0.1:${speech_port}/ready"
+  log "Low-memory consolidated runtime is serving browser API traffic on port ${gateway_port}."
 else
   microservices_args=(--project-root "${root}" --skip-frontend-checks)
   if [[ "${skip_redis}" == "true" ]]; then
@@ -213,5 +244,10 @@ wait_http_ready 'preview api proxy' "http://127.0.0.1:${frontend_port}/api/books
 
 log 'Local production-style startup completed.'
 printf '       Frontend:           http://127.0.0.1:%s/login\n' "${frontend_port}"
-printf '       Gateway API:        http://127.0.0.1:%s\n' "${gateway_port}"
+if [[ "${use_lowmem_consolidated_runtime}" == "true" ]]; then
+  printf '       Low-memory API:     http://127.0.0.1:%s\n' "${gateway_port}"
+else
+  printf '       Gateway API:        http://127.0.0.1:%s\n' "${gateway_port}"
+fi
+printf '       Low-memory path:    ./start-lowmem.sh\n'
 printf '       Compatibility path: ./start-monolith-compat.sh\n'

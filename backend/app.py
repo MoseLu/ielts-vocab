@@ -107,6 +107,11 @@ def _print_banner(host: str, port: int) -> None:
 
 
 def _print_compatibility_notice() -> None:
+    if os.environ.get('LOWMEM_CONSOLIDATED_RUNTIME') == '1':
+        print("[Lowmem] backend/app.py is running browser API traffic in one consolidated process.")
+        print("         Logical service boundaries still use the browser compatibility surface only.")
+        return
+
     print("[Compat] backend/app.py is a rollback and compatibility runtime.")
     print("         Preferred local backend path is ./start-project.sh -> gateway-bff (:8000).")
 

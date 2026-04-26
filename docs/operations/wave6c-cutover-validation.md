@@ -61,6 +61,8 @@ The monolith is no longer the default local backend path. Use it only for an exp
 ./start-monolith-compat.sh
 ```
 
+For constrained local UI checks on small machines, use [low-memory consolidated runtime](./lowmem-consolidated-runtime.md) instead. It serves the browser surface on `:8000` and does not enable rollback-only route groups.
+
 That wrapper starts:
 
 - `backend/app.py :5000`

@@ -32,6 +32,8 @@ def test_start_project_uses_split_runtime_as_default_backend_path():
     assert '--monolith-compat-backend-port' in start_project
     assert '--skip-frontend-build' in start_project
     assert 'Use either --monolith-compat-route-groups or --monolith-compat-surface, not both.' in start_project
+    assert "python -c 'import json, sys; print(json.load(sys.stdin)[\"probe_path\"])'" in start_project
+    assert "python - <<'PY'" not in start_project
     assert 'http://127.0.0.1:${monolith_compat_backend_port}' in start_project
     assert 'http://127.0.0.1:${gateway_port}' in start_project
     assert 'Legacy backend/app.py on port ${monolith_compat_backend_port} is compatibility-only.' in start_project
@@ -48,6 +50,25 @@ def test_start_project_uses_split_runtime_as_default_backend_path():
     assert 'scripts/start-local-postgres-microservices.sh' in start_microservices
     assert 'scripts/start-local-redis-microservices.sh' in start_microservices
     assert 'scripts/start-local-rabbitmq-microservices.sh' in start_microservices
+
+
+def test_start_project_exposes_lowmem_consolidated_runtime_without_replacing_split_default():
+    start_project = _read('start-project.sh')
+    start_lowmem = _read('start-lowmem.sh') if (REPO_ROOT / 'start-lowmem.sh').exists() else ''
+
+    assert '--use-lowmem-consolidated-runtime' in start_project
+    assert 'use_lowmem_consolidated_runtime=true' in start_project
+    assert 'LOWMEM_CONSOLIDATED_RUNTIME=1' in start_project
+    assert 'IELTS_BACKEND_RUNTIME_PROFILE=lowmem-consolidated' in start_project
+    assert 'Low-memory API:' in start_project
+    assert 'http://127.0.0.1:${gateway_port}' in start_project
+    assert 'Low-memory consolidated runtime cannot be combined with monolith compatibility.' in start_project
+    assert 'lowmem_consolidated_route_surface="browser"' in start_project
+    assert 'BACKEND_PORT="${gateway_port}"' in start_project
+    assert 'start_background \'backend-lowmem\'' in start_project
+    assert 'start_background \'speech-lowmem\'' in start_project
+    assert '--use-lowmem-consolidated-runtime' in start_lowmem
+    assert 'start-project.sh' in start_lowmem
 
 
 def test_monolith_app_archives_compatibility_runtime_outside_main_shell():
