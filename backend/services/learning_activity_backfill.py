@@ -18,6 +18,7 @@ from service_models.learning_core_models import (
     UserWrongWord,
     db,
 )
+from services.local_time import utc_naive_to_local_date_key
 from services.learning_activity_service import (
     normalize_learning_mode,
     rebuild_learning_activity_rollups,
@@ -102,6 +103,23 @@ def _record(summary: dict, **kwargs) -> None:
     ))
 
 
+def _session_date_lookup(user_ids: list[int]) -> dict[tuple[int, str, str, str], str]:
+    lookup: dict[tuple[int, str, str, str], tuple[datetime, str]] = {}
+    for row in _scoped_query(UserStudySession, user_ids).all():
+        mode = normalize_learning_mode(row.mode)
+        if not mode:
+            continue
+        occurred_at = row.ended_at or row.started_at
+        learning_date = utc_naive_to_local_date_key(occurred_at) if occurred_at else ''
+        if not learning_date:
+            continue
+        key = (row.user_id, str(row.book_id or ''), mode, str(row.chapter_id or ''))
+        previous = lookup.get(key)
+        if previous is None or (occurred_at or datetime.min) >= previous[0]:
+            lookup[key] = (occurred_at or datetime.min, learning_date)
+    return {key: value[1] for key, value in lookup.items()}
+
+
 def _backfill_sessions(user_ids: list[int], summary: dict) -> None:
     for row in _scoped_query(UserStudySession, user_ids).all():
         _record(
@@ -175,11 +193,16 @@ def _mode_lookup(user_ids: list[int]) -> dict[tuple[int, str, str], set[str]]:
     return lookup
 
 
-def _backfill_chapter_modes(user_ids: list[int], summary: dict) -> None:
+def _backfill_chapter_modes(
+    user_ids: list[int],
+    summary: dict,
+    session_dates: dict[tuple[int, str, str, str], str],
+) -> None:
     for row in _scoped_query(UserChapterModeProgress, user_ids).all():
         mode = normalize_learning_mode(row.mode)
         if not mode:
             continue
+        scope_key = (row.user_id, str(row.book_id or ''), mode, str(row.chapter_id or ''))
         _record(
             summary,
             user_id=row.user_id,
@@ -187,6 +210,7 @@ def _backfill_chapter_modes(user_ids: list[int], summary: dict) -> None:
             mode=mode,
             chapter_id=row.chapter_id,
             occurred_at=row.updated_at,
+            learning_date=session_dates.get(scope_key),
             correct_count=_safe_int(row.correct_count),
             wrong_count=_safe_int(row.wrong_count),
             is_completed=bool(row.is_completed),
@@ -194,7 +218,11 @@ def _backfill_chapter_modes(user_ids: list[int], summary: dict) -> None:
         summary['chapter_mode_progress'] += 1
 
 
-def _backfill_chapters(user_ids: list[int], summary: dict) -> None:
+def _backfill_chapters(
+    user_ids: list[int],
+    summary: dict,
+    session_dates: dict[tuple[int, str, str, str], str],
+) -> None:
     mode_lookup = _mode_lookup(user_ids)
     for row in _scoped_query(UserChapterProgress, user_ids).all():
         modes = mode_lookup.get((row.user_id, str(row.book_id), str(row.chapter_id)), set())
@@ -209,7 +237,13 @@ def _backfill_chapters(user_ids: list[int], summary: dict) -> None:
             'is_completed': bool(row.is_completed),
         }
         if len(modes) == 1:
-            kwargs.update({'mode': next(iter(modes)), 'chapter_id': row.chapter_id})
+            mode = next(iter(modes))
+            scope_key = (row.user_id, str(row.book_id or ''), mode, str(row.chapter_id or ''))
+            kwargs.update({
+                'mode': mode,
+                'chapter_id': row.chapter_id,
+                'learning_date': session_dates.get(scope_key),
+            })
         _record(summary, **kwargs)
         summary['chapter_progress'] += 1
 
@@ -267,12 +301,13 @@ def backfill_learning_activity_rollups(user_ids=None, *, commit: bool = True) ->
         'touched_scopes': set(),
     }
     _clear_existing(target_user_ids)
+    session_dates = _session_date_lookup(target_user_ids)
     _backfill_sessions(target_user_ids, summary)
     _backfill_events(target_user_ids, summary)
     _backfill_quick_memory(target_user_ids, summary)
     _backfill_wrong_words(target_user_ids, summary)
-    _backfill_chapter_modes(target_user_ids, summary)
-    _backfill_chapters(target_user_ids, summary)
+    _backfill_chapter_modes(target_user_ids, summary, session_dates)
+    _backfill_chapters(target_user_ids, summary, session_dates)
     _backfill_books(target_user_ids, summary)
     db.session.flush()
     _rebuild_from_ledgers(target_user_ids, summary)
