@@ -21,6 +21,7 @@ export default function HomePage() {
     handleSelectBook,
     handleRemoveBook,
     handleSelectChapter,
+    handleStartTask,
     handleStartStudy,
     navigateToBooks,
     closeChapterModal,
@@ -72,7 +73,7 @@ export default function HomePage() {
               {taskList.length > 0 ? (
                 <ol className="study-todo-list" aria-label="今日待办列表">
                   {taskList.map(task => (
-                    <TodoTaskRow key={task.id} task={task} />
+                    <TodoTaskRow key={task.id} task={task} onStartTask={handleStartTask} />
                   ))}
                 </ol>
               ) : (

@@ -9,8 +9,10 @@ import {
 
 export function TodoTaskRow({
   task,
+  onStartTask,
 }: {
   task: DailyPlanTask
+  onStartTask?: (task: DailyPlanTask) => void
 }) {
   const isCompleted = task.status === 'completed'
   const taskSteps = task.steps ?? []
@@ -45,6 +47,11 @@ export function TodoTaskRow({
               {getTaskStateLabel(task)}
             </span>
           </div>
+          {!isCompleted ? (
+            <button type="button" className="study-todo-action" onClick={() => onStartTask?.(task)}>
+              {task.action.cta_label}
+            </button>
+          ) : null}
         </div>
       </div>
 

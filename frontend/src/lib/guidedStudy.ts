@@ -25,6 +25,7 @@ export interface StudyBookCard {
 export interface GuidedStudyActionRef {
   kind: GuidedActionKind
   ctaLabel: string
+  task?: 'add-book' | 'due-review' | 'error-review' | 'continue-book'
   mode?: GuidedPracticeMode
   bookId?: string
   dimension?: WrongWordDimension
@@ -244,6 +245,7 @@ export function buildGuidedStudySummary({
   if (!hasMyBooks) {
     primaryAction = {
       kind: 'add-book',
+      task: 'add-book',
       title: '先选一本词书，后面的学习顺序我来替你安排',
       description: '没有词书时，首页无法生成下一步。先添加一本词书，系统再自动引导你走复习、错词和新词主线。',
       ctaLabel: '去选词书',
@@ -252,33 +254,32 @@ export function buildGuidedStudySummary({
   } else if (dueReviewCount > 0) {
     primaryAction = {
       kind: 'due-review',
+      task: 'due-review',
       title: '先完成到期复习，再开始今天的新词',
       description: `${dueReviewCount} 个单词已经到复习点。先把艾宾浩斯复习清掉，新词学习才不会越学越乱。`,
-      ctaLabel: '开始到期复习',
+      ctaLabel: '进入五维复习',
       badge: `${dueReviewCount} 词到期`,
-      mode: 'quickmemory',
       tone: 'accent',
     }
   } else if (pendingWrongWordCount > 0) {
     primaryAction = {
       kind: 'error-review',
+      task: 'error-review',
       title: '先把错词清一轮，别让问题继续堆积',
       description: recommendedWrongDimension?.count
         ? `${pendingWrongWordCount} 个错词还在待清，建议优先处理「${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}」这类问题。`
         : `${pendingWrongWordCount} 个错词还在待清，先清错再推进新词会更稳。`,
       ctaLabel: recommendedWrongDimension?.count
         ? `先清${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}`
-        : '开始清错词',
+        : '清理错维回流',
       badge: `${pendingWrongWordCount} 个待清理`,
-      mode: recommendedWrongDimension?.dimension
-        ? normalizeWeakestMode(recommendedWrongDimension.dimension) ?? undefined
-        : undefined,
       dimension: recommendedWrongDimension?.count ? recommendedWrongDimension.dimension : undefined,
       tone: 'error',
     }
   } else if (hasIncompleteBook && activeBook) {
     primaryAction = {
       kind: 'continue-book',
+      task: 'continue-book',
       title: `继续推进《${activeBook.book.title}》的新词`,
       description: activeBook.isActive
         ? `当前已学 ${activeBook.currentIndex}/${activeBook.book.word_count} 词，还剩 ${activeBook.remainingWords} 词。沿着这一条主线继续即可。`
@@ -302,6 +303,7 @@ export function buildGuidedStudySummary({
   } else {
     primaryAction = {
       kind: 'continue-book',
+      task: 'continue-book',
       title: '当前主线任务已清空，可以自由选择一本词书继续巩固',
       description: '你现在没有到期复习，也没有待清错词。可以回到词书继续巩固，或者查看学习画像决定下一轮重点。',
       ctaLabel: '查看词书',
@@ -322,8 +324,8 @@ export function buildGuidedStudySummary({
       status: dueReviewCount > 0 ? 'current' : 'done',
       action: {
         kind: 'due-review',
-        ctaLabel: '开始复习',
-        mode: 'quickmemory',
+        task: 'due-review',
+        ctaLabel: '进入五维复习',
         disabled: dueReviewCount <= 0,
       },
     },
@@ -344,12 +346,10 @@ export function buildGuidedStudySummary({
           : 'current',
       action: {
         kind: 'error-review',
+        task: 'error-review',
         ctaLabel: recommendedWrongDimension?.count
           ? `清${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}`
-          : '开始清错',
-        mode: recommendedWrongDimension?.count
-          ? normalizeWeakestMode(recommendedWrongDimension.dimension) ?? undefined
-          : undefined,
+          : '清理错维回流',
         dimension: recommendedWrongDimension?.count ? recommendedWrongDimension.dimension : undefined,
         disabled: pendingWrongWordCount <= 0,
       },
@@ -375,6 +375,7 @@ export function buildGuidedStudySummary({
           : 'done',
       action: {
         kind: hasMyBooks ? 'continue-book' : 'add-book',
+        task: hasMyBooks ? 'continue-book' : 'add-book',
         ctaLabel: !hasMyBooks ? '去选词书' : hasIncompleteBook ? '继续词书' : '查看词书',
         bookId: activeBook?.book.id,
         disabled: hasMyBooks && !activeBook,

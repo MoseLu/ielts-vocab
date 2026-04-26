@@ -19,6 +19,22 @@ import {
   type StudyPlan,
 } from '../../../components/home/page/homePageModels'
 
+function buildTodoTaskEntryPath(task: DailyPlanTask): string {
+  const action = task.action
+  if (action.kind === 'add-book' || action.task === 'add-book') {
+    return '/books/create'
+  }
+  const taskKey = action.task || action.kind
+  const params = new URLSearchParams()
+  params.set('task', taskKey)
+  if (action.dimension) params.set('dimension', action.dimension)
+  if (action.book_id) params.set('book', action.book_id)
+  if (action.chapter_id !== null && action.chapter_id !== undefined && action.chapter_id !== '') {
+    params.set('chapter', String(action.chapter_id))
+  }
+  return `/game?${params.toString()}`
+}
+
 export function useHomePage() {
   const navigate = useNavigate()
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
@@ -110,6 +126,10 @@ export function useHomePage() {
     navigate(buildBookStudyEntryPath(selectedBook, entryMode))
   }, [navigate, selectedBook])
 
+  const handleStartTask = useCallback((task: DailyPlanTask) => {
+    navigate(buildTodoTaskEntryPath(task))
+  }, [navigate])
+
   const handleSelectChapter = useCallback((
     chapter: Chapter,
     startIndex: number,
@@ -152,6 +172,7 @@ export function useHomePage() {
     handleSelectBook,
     handleRemoveBook,
     handleSelectChapter,
+    handleStartTask,
     handleStartStudy,
     navigateToBooks: () => navigate('/books/create'),
     closeChapterModal,

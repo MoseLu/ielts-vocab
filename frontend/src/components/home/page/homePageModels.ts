@@ -1,5 +1,5 @@
 import type { LearningAlltime, LearnerProfile } from '../../../features/vocabulary/hooks'
-import { getPracticeModeLabel, PRACTICE_MODE_LABELS } from '../../../constants/practiceModes'
+import { getPracticeModeLabel } from '../../../constants/practiceModes'
 import {
   getWrongWordDimensionLabel,
   WRONG_WORD_DIMENSION_LABELS,
@@ -31,8 +31,10 @@ export interface StudyBookCard {
 export interface DailyPlanAction {
   kind: 'add-book' | 'due-review' | 'error-review' | 'continue-book' | 'speaking'
   cta_label: string
+  task?: 'add-book' | 'due-review' | 'error-review' | 'continue-book' | 'speaking' | null
   mode?: string | null
   book_id?: string | null
+  chapter_id?: string | number | null
   dimension?: string | null
 }
 
@@ -233,7 +235,7 @@ export function buildStudyGuidanceSection({
           {
             label: '怎么记入',
             items: [
-              `${allWrongDimensionLabels} 这四个模式维度会分开记录，不会互相抵消。`,
+              `${allWrongDimensionLabels} 这些能力维度会分开记录，不会互相抵消。`,
               `只要某一项还没连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次，这一项就还算“没清掉”。`,
             ],
           },
@@ -267,7 +269,7 @@ export function buildStudyGuidanceSection({
         facts: [
           `当前：${reviewBadge}`,
           `频次：${reviewCadence}`,
-          `复习库：${alltime?.qm_word_total ? `${alltime.qm_word_total} 词` : '从速记开始累计'}`,
+          `复习库：${alltime?.qm_word_total ? `${alltime.qm_word_total} 词` : '从五维复习累计'}`,
         ],
         sections: [
           {
@@ -289,7 +291,7 @@ export function buildStudyGuidanceSection({
           {
             label: '还要注意',
             items: [
-              `艾宾浩斯主要检查你还能不能认出这个词、回想出意思，不会替你检查 ${PRACTICE_MODE_LABELS.meaning}、${PRACTICE_MODE_LABELS.listening} 和 ${PRACTICE_MODE_LABELS.dictation}。`,
+              '到期复习会进入五维链路，但完成口径仍以今天到期窗口清零为准。',
               '所以“今日复习完成”只代表今天这一步做完了，不代表这个词已经没有漏洞。',
             ],
           },
@@ -298,12 +300,12 @@ export function buildStudyGuidanceSection({
       },
       {
         id: 'mode-metrics',
-        eyebrow: '多模式',
-        title: '每个模式看什么',
+        eyebrow: '五维防线',
+        title: '每个维度看什么',
         badge: weakestModeAccuracy == null
           ? weakestModeLabel
           : `${formatPercentLabel(weakestModeAccuracy, weakestModeLabel)} 当前弱项`,
-        description: '多模式不需要平均刷。先补准确率最低的模式，再让词书主线继续推进，效率更高。',
+        description: '五维防线不需要平均刷。先补准确率最低的维度，再让词书主线继续推进，效率更高。',
         facts: [
           `弱项：${weakestModeLabel}`,
           `准确率：${formatPercentLabel(weakestModeAccuracy, '画像同步中')}`,
@@ -311,23 +313,23 @@ export function buildStudyGuidanceSection({
         ],
         sections: [
           {
-            label: '模式完成是什么意思',
+            label: '维度完成是什么意思',
             items: [
-              '某一章显示这个模式已完成，意思是你已经把这一章在这个模式下完整练过一轮。',
+              '某个词显示这个维度已点亮，意思是它已经通过当前能力项的目标。',
               '系统会记住你这一轮的正确率和错题情况，但不会直接把它当成“已经彻底掌握”。',
             ],
           },
           {
             label: '章节完成怎么显示',
             items: [
-              '如果这一章已经有分模式记录，章节卡会按这些模式的完成情况来显示。',
-              '如果还没有分模式记录，就先按整章进度来显示完成状态。',
+              '如果这一章已经有分维度记录，章节卡会按这些维度的完成情况来显示。',
+              '如果还没有分维度记录，就先按整章进度来显示完成状态。',
             ],
           },
           {
             label: '还要注意',
             items: [
-              '所以模式完成目前只代表这轮练习做完了，不代表这些词以后都不会再错。',
+              '所以维度点亮目前只代表这轮能力项过关了，不代表这些词以后都不会再错。',
               '你还要结合错词本、到期复习和后面几次表现，才能看出它是不是真的稳定。',
             ],
           },
@@ -349,7 +351,7 @@ export function buildStudyGuidanceSection({
           {
             label: '现在已经做到',
             items: [
-              '新词学习、错词记录、错词回刷、到期复习、章节练习，这条学习链路现在已经有了。',
+              '到期复习、错维回流、主线新词都会进入同一套五维学习链路。',
               dueReviewCount > 0
                 ? `按今天的顺序，先处理 ${reviewBadge}，再清错词，最后推进 ${focusBookLabel}。`
                 : `今天没有到期积压，可以先清错词，再推进 ${focusBookLabel}。`,
@@ -358,8 +360,8 @@ export function buildStudyGuidanceSection({
           {
             label: '现在还缺什么',
             items: [
-              `现在还没有一场专门的“总检查”，去把${allWrongDimensionLabels}这四个模式维度一起复核一遍。`,
-              '所以你现在看到的“今日完成”“章节完成”“模式完成”，都只能理解为阶段过关。',
+              `现在还没有一场专门的“总检查”，去把${allWrongDimensionLabels}这些能力维度一起复核一遍。`,
+              '所以你现在看到的“今日完成”“章节完成”“维度点亮”，都只能理解为阶段过关。',
             ],
           },
           {
@@ -456,7 +458,7 @@ export function buildTaskGuidanceSteps(
 
   if (task.kind === 'due-review') {
     return buildStepItems(task, [
-      '打开速记复习队列，只处理到期这一组。',
+      '进入五维复习任务，只处理到期这一组。',
       `先完成 ${task.badge}，每个词都要做到能立刻回想释义。`,
       '完成标准：到期数量归零，回到首页后这一项才会自动勾选。',
     ])
@@ -465,7 +467,7 @@ export function buildTaskGuidanceSteps(
   if (task.kind === 'error-review') {
     const dimensionLabel = extractQuotedLabel(task.description)
     return buildStepItems(task, [
-      '进入错词强化，只看待清范围。',
+      '进入错维回流任务，只看待清范围。',
       dimensionLabel
         ? `先刷 ${dimensionLabel} 这一维，再补其他维度。`
         : '先把当前待清错词连续刷过一轮。',
@@ -484,7 +486,7 @@ export function buildTaskGuidanceSteps(
   const focusBookTitle = options?.focusBookTitle?.trim()
   const focusBookLabel = focusBookTitle ? `《${focusBookTitle}》` : '当前词书'
   return buildStepItems(task, [
-    `打开 ${focusBookLabel}，从当前章节继续。`,
+    `进入五维主线，继续推进 ${focusBookLabel}。`,
     '先完成至少一轮真实答题，让已学词数、正确数或错误数发生变化。',
     '完成标准：只点进去不算，回到首页后这一项自动勾选才算完成。',
   ])

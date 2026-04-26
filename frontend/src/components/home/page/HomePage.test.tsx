@@ -13,9 +13,11 @@ const navigationState = vi.hoisted(() => ({
   navigate: vi.fn(),
 }))
 
-const makeTask = (
-  overrides: Partial<HomeTodoItem> & Pick<HomeTodoItem, 'id' | 'kind' | 'title' | 'description' | 'badge'>,
-): HomeTodoItem => ({
+type TaskOverrides = Omit<Partial<HomeTodoItem>, 'action'> & Pick<HomeTodoItem, 'id' | 'kind' | 'title' | 'description' | 'badge'> & {
+  action?: Partial<HomeTodoItem['action']>
+}
+
+const makeTask = (overrides: TaskOverrides): HomeTodoItem => ({
   task_key: overrides.id,
   status: 'pending',
   completion_source: null,
@@ -24,15 +26,17 @@ const makeTask = (
     { id: `${overrides.id}-2`, label: '完成一轮练习', status: 'pending' },
     { id: `${overrides.id}-3`, label: '等待系统自动判定', status: 'pending' },
   ],
-  action: {
-    kind: overrides.kind,
-    cta_label: '去完成',
-    mode: null,
-    book_id: null,
-    dimension: null,
-  },
   carry_over_count: 0,
   ...overrides,
+  action: {
+    kind: overrides.action?.kind ?? overrides.kind,
+    cta_label: overrides.action?.cta_label ?? '去完成',
+    task: overrides.action?.task ?? overrides.kind,
+    mode: overrides.action?.mode ?? null,
+    book_id: overrides.action?.book_id ?? null,
+    chapter_id: overrides.action?.chapter_id ?? null,
+    dimension: overrides.action?.dimension ?? null,
+  },
 })
 
 const makeCompletedTask = (task: HomeTodoItem, completionSource: HomeTodoItem['completion_source']) => ({
@@ -55,13 +59,7 @@ const baseTasks = {
     title: '到期复习',
     description: '还有 6 个到期词需要先回顾。',
     badge: '6 词到期',
-    action: {
-      kind: 'due-review',
-      cta_label: '去复习',
-      mode: 'quickmemory',
-      book_id: null,
-      dimension: null,
-    },
+    action: { cta_label: '去复习' },
   }),
   errorReview: makeCompletedTask(makeTask({
     id: 'error-review',
@@ -69,13 +67,7 @@ const baseTasks = {
     title: '清错词',
     description: '当前没有待清理的错词。',
     badge: '已清空',
-    action: {
-      kind: 'error-review',
-      cta_label: '去清错词',
-      mode: 'meaning',
-      book_id: null,
-      dimension: 'meaning',
-    },
+    action: { cta_label: '去清错词', dimension: 'meaning' },
   }), 'already_clear'),
   continueBook: makeCompletedTask(makeTask({
     id: 'focus-book',
@@ -83,13 +75,7 @@ const baseTasks = {
     title: '推进词书',
     description: '继续《测试词书》，还剩 80 词。',
     badge: '20% 已完成',
-    action: {
-      kind: 'continue-book',
-      cta_label: '继续词书',
-      mode: null,
-      book_id: 'book-1',
-      dimension: null,
-    },
+    action: { cta_label: '继续词书', book_id: 'book-1', chapter_id: '2' },
   }), 'completed_today'),
   speaking: makeTask({
     id: 'speaking',
@@ -97,13 +83,7 @@ const baseTasks = {
     title: '口语任务',
     description: '完成一次发音检查和一句英文表达。',
     badge: '开始练口语',
-    action: {
-      kind: 'speaking',
-      cta_label: '去口语',
-      mode: null,
-      book_id: null,
-      dimension: null,
-    },
+    action: { cta_label: '去口语' },
   }),
 }
 
@@ -316,7 +296,7 @@ describe('HomePage', () => {
     expect(container.querySelector('.study-todo-summary')).toBeNull()
     expect(container.querySelectorAll('.study-todo-item.is-completed')).toHaveLength(2)
     expect(container.querySelector('.study-todo-head')).toBeNull()
-    expect(container.querySelectorAll('.study-todo-card-head .study-todo-action')).toHaveLength(0)
+    expect(container.querySelectorAll('.study-todo-card-head .study-todo-action')).toHaveLength(2)
     expect(container.querySelectorAll('.study-todo-progress')).toHaveLength(4)
     expect(container.querySelectorAll('.study-todo-progress.is-completed')).toHaveLength(2)
     expect(container.querySelectorAll('.study-todo-footer')).toHaveLength(0)
@@ -334,7 +314,7 @@ describe('HomePage', () => {
       expect.arrayContaining([
         expect.objectContaining({ title: '错词怎么减少' }),
         expect.objectContaining({ title: '复习怎样算完成' }),
-        expect.objectContaining({ title: '每个模式看什么' }),
+        expect.objectContaining({ title: '每个维度看什么' }),
         expect.objectContaining({ title: '系统还缺哪一关' }),
       ]),
     )
@@ -358,14 +338,51 @@ describe('HomePage', () => {
     expect(screen.getByText('清错词')).toBeInTheDocument()
   })
 
-  it('does not render navigation buttons inside todo rows', () => {
-    resetHomeTodos(cloneTasks([baseTasks.speaking]))
+  it('routes due review todos into the five-dimension game task', async () => {
+    const user = userEvent.setup()
+    resetHomeTodos(cloneTasks([baseTasks.dueReview]))
 
-    const { container } = render(<MemoryRouter><HomePage /></MemoryRouter>)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
 
-    expect(screen.queryByRole('button', { name: '去口语' })).not.toBeInTheDocument()
-    expect(container.querySelectorAll('.study-todo-action')).toHaveLength(0)
-    expect(navigationState.navigate).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: '去复习' }))
+
+    expect(navigationState.navigate).toHaveBeenCalledWith('/game?task=due-review')
+  })
+
+  it('routes error review todos with the recommended weak dimension', async () => {
+    const user = userEvent.setup()
+    resetHomeTodos([makeTask({
+      id: 'error-review',
+      kind: 'error-review',
+      title: '清错词',
+      description: '优先处理「默写模式」，还有 8 个词未过。',
+      badge: '8 个待清',
+      action: { cta_label: '去清错词', dimension: 'meaning' },
+    })])
+
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
+
+    await user.click(screen.getByRole('button', { name: '去清错词' }))
+
+    expect(navigationState.navigate).toHaveBeenCalledWith('/game?task=error-review&dimension=meaning')
+  })
+
+  it('routes continue-book todos with book and chapter scope', async () => {
+    const user = userEvent.setup()
+    resetHomeTodos([makeTask({
+      id: 'focus-book',
+      kind: 'continue-book',
+      title: '推进词书',
+      description: '继续《测试词书》，今天目标 20 个新词。',
+      badge: '0/20 今日新词',
+      action: { cta_label: '继续词书', book_id: 'book-1', chapter_id: '2' },
+    })])
+
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
+
+    await user.click(screen.getByRole('button', { name: '继续词书' }))
+
+    expect(navigationState.navigate).toHaveBeenCalledWith('/game?task=continue-book&book=book-1&chapter=2')
   })
 
   it('shows an explicit fallback when home todos fail instead of using learner profile tasks', () => {
@@ -408,20 +425,14 @@ describe('HomePage', () => {
         title: '添加词书',
         description: '先加入一本词书，首页才会生成今天的新词主线。',
         badge: '缺少词书',
-        action: {
-          kind: 'add-book',
-          cta_label: '去选词书',
-          mode: null,
-          book_id: null,
-          dimension: null,
-        },
+        action: { cta_label: '去选词书' },
       }),
     ]))
 
     render(<MemoryRouter><HomePage /></MemoryRouter>)
 
     expect(screen.getByText('添加词书')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '去选词书' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '去选词书' })).toBeInTheDocument()
   })
 
   it('shows confusable books in groups on the home book card', () => {

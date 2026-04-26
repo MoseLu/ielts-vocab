@@ -3,8 +3,10 @@ import { z } from 'zod'
 export const HomeTodoActionSchema = z.object({
   kind: z.enum(['add-book', 'due-review', 'error-review', 'continue-book', 'speaking']),
   cta_label: z.string(),
+  task: z.enum(['add-book', 'due-review', 'error-review', 'continue-book', 'speaking']).nullable().optional().default(null),
   mode: z.string().nullable().optional().default(null),
   book_id: z.string().nullable().optional().default(null),
+  chapter_id: z.union([z.string(), z.number()]).nullable().optional().default(null),
   dimension: z.string().nullable().optional().default(null),
 })
 export type HomeTodoAction = z.infer<typeof HomeTodoActionSchema>
