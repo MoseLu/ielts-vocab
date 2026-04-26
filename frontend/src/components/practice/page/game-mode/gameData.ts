@@ -10,19 +10,19 @@ import type {
 } from '../../../../lib'
 
 export const LEVEL_KIND_LABELS: Record<GameLevelKind, string> = {
-  spelling: '拼写输入',
-  pronunciation: '发音跟读',
-  definition: '看图/语境选义',
-  speaking: '听音辨词',
-  example: '语境填空/应用',
+  spelling: '会写',
+  pronunciation: '会说',
+  definition: '会想',
+  speaking: '会认',
+  example: '语境应用',
 }
 
 export const DIMENSION_LABELS: Record<GameCampaignDimension, string> = {
-  recognition: '听音辨词',
-  meaning: '看图/语境选义',
-  listening: '语境填空/应用',
-  speaking: '发音跟读',
-  dictation: '拼写输入',
+  recognition: '会认',
+  meaning: '会想',
+  dictation: '会写',
+  speaking: '会说',
+  listening: '语境应用',
 }
 
 export const NODE_TYPE_LABELS = {
@@ -39,10 +39,10 @@ export const NODE_STATUS_LABELS = {
 } as const
 
 export const LEVEL_KIND_ORDER: GameLevelKind[] = [
+  'speaking',
+  'definition',
   'spelling',
   'pronunciation',
-  'definition',
-  'speaking',
   'example',
 ]
 
@@ -148,15 +148,27 @@ export function buildGameScope({
   bookId,
   chapterId,
   day,
+  themeId,
+  themeChapterId,
+  task,
+  taskDimension,
 }: {
   bookId: string | null
   chapterId: string | null
   day?: number
+  themeId?: string | null
+  themeChapterId?: string | null
+  task?: string | null
+  taskDimension?: GameCampaignDimension | null
 }) {
   return {
     bookId,
-    chapterId: bookId ? null : chapterId,
+    chapterId,
     day,
+    themeId,
+    themeChapterId,
+    task,
+    taskDimension,
   }
 }
 

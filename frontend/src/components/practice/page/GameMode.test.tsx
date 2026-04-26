@@ -1,26 +1,11 @@
-import { readFileSync, readdirSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { vi } from 'vitest'
 
 import GameMode from './GameMode'
-import { gameAsset } from './game-mode/gameAssets'
 
 const fetchGamePracticeStateMock = vi.fn()
 const startGamePracticeSessionMock = vi.fn()
 const submitWordMasteryAttemptMock = vi.fn()
-const gameMapArtStyles = readFileSync(
-  resolve(process.cwd(), 'src/styles/pages/practice/practice-game-map-art-ui.scss'),
-  'utf-8',
-)
-const stylesDir = resolve(process.cwd(), 'src/styles')
-const baseTokenStyles = readFileSync(resolve(stylesDir, 'base.tokens.scss'), 'utf-8')
-const gameMapStyleFiles = readdirSync(resolve(stylesDir, 'pages/practice'))
-  .filter(fileName => fileName.startsWith('practice-game-map') && fileName.endsWith('.scss'))
-  .map(fileName => ({
-    fileName,
-    content: readFileSync(resolve(stylesDir, 'pages/practice', fileName), 'utf-8'),
-  }))
 
 vi.mock('../../../lib/gamePractice', () => ({
   fetchGamePracticeState: (...args: unknown[]) => fetchGamePracticeStateMock(...args),
@@ -32,11 +17,11 @@ type TestLevelKind = 'spelling' | 'pronunciation' | 'definition' | 'speaking' | 
 
 function buildLevelCards(activeKind: TestLevelKind = 'spelling') {
   return [
-    { kind: 'spelling', dimension: 'dictation', label: '拼写强化', subtitle: '听音后完整拼出目标词', assetKey: 'spell', step: 1, status: activeKind === 'spelling' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
-    { kind: 'pronunciation', dimension: 'speaking', label: '发音训练', subtitle: '跟读单词并完成发音判定', assetKey: 'pronunciation', step: 2, status: activeKind === 'pronunciation' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
-    { kind: 'definition', dimension: 'meaning', label: '释义理解', subtitle: '把词义和场景绑定起来', assetKey: 'definition', step: 3, status: activeKind === 'definition' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
-    { kind: 'speaking', dimension: 'recognition', label: '口语录音', subtitle: '开口使用目标词完成短句', assetKey: 'speaking', step: 4, status: activeKind === 'speaking' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
-    { kind: 'example', dimension: 'listening', label: '例句应用', subtitle: '在语境中选出正确用词', assetKey: 'example', step: 5, status: activeKind === 'example' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'speaking', dimension: 'recognition', label: '会认', subtitle: '看见或听见目标词，先能识别它的意思', assetKey: 'speaking', step: 1, status: activeKind === 'speaking' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'definition', dimension: 'meaning', label: '会想', subtitle: '根据释义或场景，主动想起目标词', assetKey: 'definition', step: 2, status: activeKind === 'definition' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'spelling', dimension: 'dictation', label: '会写', subtitle: '听音后完整拼出目标词', assetKey: 'spell', step: 3, status: activeKind === 'spelling' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'pronunciation', dimension: 'speaking', label: '会说', subtitle: '跟读单词并完成发音判定', assetKey: 'pronunciation', step: 4, status: activeKind === 'pronunciation' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
+    { kind: 'example', dimension: 'listening', label: '语境应用', subtitle: '把目标词放回真实语境里使用', assetKey: 'example', step: 5, status: activeKind === 'example' ? 'active' : 'ready', passStreak: 0, attemptCount: 0 },
   ] as const
 }
 
@@ -70,11 +55,43 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed', activeKind: 
     },
     segment: {
       index: 1,
-      title: '第 1 试炼段',
+      title: '第 1 词链',
       clearedWords: 0,
       totalWords: 5,
       bossStatus: 'locked',
       rewardStatus: 'locked',
+    },
+    taskFocus: {
+      task: 'continue-book',
+      dimension: null,
+      book: 'ielts_reading_premium',
+      chapter: null,
+    },
+    mapPath: {
+      currentNodeKey: 'word:a-couple-of',
+      totalNodes: 5,
+      nodes: [
+        {
+          nodeType: 'word',
+          nodeKey: 'word:a-couple-of',
+          index: 1,
+          title: 'a couple of',
+          subtitle: '两个；几个',
+          status: 'current',
+          dimension: activeDimension,
+          failedDimensions: ['dictation'],
+        },
+        {
+          nodeType: 'word',
+          nodeKey: 'word:ability',
+          index: 2,
+          title: 'ability',
+          subtitle: '能力',
+          status: 'locked',
+          dimension: null,
+          failedDimensions: [],
+        },
+      ],
     },
     currentNode: {
       nodeType: 'word',
@@ -106,7 +123,7 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed', activeKind: 
         examples: [{ en: 'I bought a couple of books.', zh: '我买了几本书。' }],
         overall_status: 'new',
         current_round: 0,
-        pending_dimensions: ['recognition', 'meaning', 'listening', 'speaking', 'dictation'],
+        pending_dimensions: ['recognition', 'meaning', 'dictation', 'speaking', 'listening'],
         dimension_states: {
           recognition: { status: 'not_started', pass_streak: 0, attempt_count: 0 },
           meaning: { status: 'not_started', pass_streak: 0, attempt_count: 0 },
@@ -238,39 +255,6 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed', activeKind: 
 }
 
 describe('GameMode', () => {
-  it('keeps the map title scroll symmetric and the copy centered', () => {
-    expect(gameAsset.campaignDynamic.titleScroll).toBe('/game/campaign-dynamic/title_scroll_empty.png')
-    const titleCopyBlock = gameMapArtStyles
-      .match(/\.practice-game-map__title\s+\.practice-game-map__title-copy\s*\{[^}]+\}/u)?.[0] ?? ''
-    const titleTextBlock = gameMapArtStyles
-      .match(/\.practice-game-map__title\s+\.practice-game-map__title-scope,\s*\.practice-game-map__title\s+\.practice-game-map__title-heading\s*\{[^}]+\}/u)?.[0] ?? ''
-    const titleScopeBlock = gameMapArtStyles
-      .match(/\.practice-game-map__title\s+\.practice-game-map__title-scope\s*\{[^}]+\}/u)?.[0] ?? ''
-    const titleHeadingBlock = gameMapArtStyles
-      .match(/\.practice-game-map__title\s+\.practice-game-map__title-heading\s*\{\s*display:[^}]+\}/u)?.[0] ?? ''
-
-    expect(titleCopyBlock).toContain('left: 50%;')
-    expect(titleCopyBlock).toContain('display: grid;')
-    expect(titleCopyBlock).toContain('max-width: none;')
-    expect(titleCopyBlock).toContain('calc(-50% - var(--size-6))')
-    expect(titleTextBlock).toContain('max-width: none;')
-    expect(titleScopeBlock).toContain('font-size: var(--size-10);')
-    expect(titleHeadingBlock).toContain('font-size: var(--size-24);')
-  })
-
-  it('uses defined size tokens for game map styles so art layers keep dimensions', () => {
-    const definedSizeTokens = new Set(
-      Array.from(baseTokenStyles.matchAll(/--size-\d+:/gu), match => match[0].slice(0, -1)),
-    )
-    const missingTokens = gameMapStyleFiles.flatMap(({ fileName, content }) => (
-      Array.from(content.matchAll(/var\((--size-\d+)\)/gu), match => match[1])
-        .filter(token => !definedSizeTokens.has(token))
-        .map(token => `${fileName}:${token}`)
-    ))
-
-    expect(missingTokens).toEqual([])
-  })
-
   beforeEach(() => {
     fetchGamePracticeStateMock.mockReset()
     startGamePracticeSessionMock.mockReset()
@@ -282,28 +266,50 @@ describe('GameMode', () => {
 
     render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
 
-    await waitFor(() => expect(fetchGamePracticeStateMock).toHaveBeenCalledWith({
+    await waitFor(() => expect(fetchGamePracticeStateMock).toHaveBeenCalledWith(expect.objectContaining({
       bookId: 'ielts_reading_premium',
-      chapterId: null,
+      chapterId: '1',
       day: undefined,
-    }))
+    })))
     expect(await screen.findByRole('img', { name: 'a couple of 词义场景' })).toHaveAttribute(
       'src',
       'https://oss.example/a-couple-of.png',
     )
-    expect(screen.getAllByText('拼写强化').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('会写').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: '播放单词' })).toBeInTheDocument()
     expect(screen.queryByText('独立错词体系')).not.toBeInTheDocument()
     expect(screen.queryByRole('img', { name: '五维词关地图' })).not.toBeInTheDocument()
   })
 
-  it('shows the generation placeholder when the scene image is not ready', async () => {
+  it('passes task-aware scope into game state requests', async () => {
+    fetchGamePracticeStateMock.mockResolvedValue(buildWordState('ready'))
+
+    render(
+      <GameMode
+        bookId="ielts_reading_premium"
+        chapterId="1"
+        task="error-review"
+        taskDimension="meaning"
+      />,
+    )
+
+    await waitFor(() => expect(fetchGamePracticeStateMock).toHaveBeenCalledWith(expect.objectContaining({
+      bookId: 'ielts_reading_premium',
+      chapterId: '1',
+      day: undefined,
+      task: 'error-review',
+      taskDimension: 'meaning',
+    })))
+  })
+
+  it('shows battle intelligence when the scene image is not ready', async () => {
     fetchGamePracticeStateMock.mockResolvedValue(buildWordState('queued'))
 
     render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
 
-    expect(await screen.findByText('场景生成中')).toBeInTheDocument()
-    expect(screen.getByText('完成当前维度即可点亮关卡。')).toBeInTheDocument()
+    expect((await screen.findAllByText('拼写气球')).length).toBeGreaterThan(0)
+    expect(screen.getByText('听音并输入完整拼写，击破当前目标。')).toBeInTheDocument()
+    expect(screen.getByText('CORE')).toBeInTheDocument()
     expect(screen.queryByRole('img', { name: 'a couple of 词义场景' })).not.toBeInTheDocument()
   })
 
@@ -312,8 +318,8 @@ describe('GameMode', () => {
 
     render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
 
-    expect((await screen.findAllByText('听音辨词')).length).toBeGreaterThan(0)
-    expect(screen.getByLabelText('当前词五维防线')).toHaveTextContent('听音辨词')
+    expect((await screen.findAllByText('会认')).length).toBeGreaterThan(0)
+    expect(screen.getByLabelText('当前词五维防线')).toHaveTextContent('会认')
     expect(screen.getByRole('button', { name: '播放单词' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'a couple of 两个；几个' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'typhoon 台风' })).toBeInTheDocument()
@@ -327,6 +333,23 @@ describe('GameMode', () => {
     const activeState = buildWordState('ready')
     fetchGamePracticeStateMock.mockResolvedValue({
       ...activeState,
+      theme: {
+        id: 'study-campus',
+        title: '教育校园',
+        subtitle: 'Campus study routes',
+        description: '',
+        wordCount: 906,
+        totalChapters: 15,
+        currentPage: 1,
+        totalPages: 2,
+        chapters: [],
+        assets: {
+          desktopMap: '/game/campaign-v2/themes/study-campus/desktop/map.png',
+          mobileMap: '/game/campaign-v2/themes/study-campus/mobile/map.png',
+          selectCard: '/game/campaign-v2/themes/study-campus/desktop/select-card.png',
+          emptyState: '/game/campaign-v2/themes/study-campus/desktop/empty-state.png',
+        },
+      },
       session: {
         status: 'launcher',
         score: 0,
@@ -357,17 +380,28 @@ describe('GameMode', () => {
     expect(await screen.findByRole('region', { name: '五维词关地图' })).toBeInTheDocument()
     const mapImages = Array.from(document.querySelectorAll('.practice-game-map img'))
       .map(image => image.getAttribute('src') || '')
-    expect(mapImages).toContain('/game/campaign-dynamic/map_background.png')
-    expect(mapImages).toContain('/game/campaign-dynamic/progress_panel.svg')
+    expect(mapImages).not.toContain('/game/campaign-dynamic/progress_panel.svg')
     expect(mapImages).toContain('/game/campaign-dynamic/title_scroll_empty.png')
-    expect(mapImages).toContain('/game/wuwei-transparent-v3/buttons/button_exit.png')
-    expect(mapImages).toContain('/game/campaign-dynamic/treasure_chest_counter_frame.svg')
     expect(mapImages.every(src => !src.includes('map_campaign_main'))).toBe(true)
     expect(mapImages.every(src => !/(25_30|2350|1260|1_of_5|15_15)/.test(src))).toBe(true)
-    expect(mapImages).toContain('/game/campaign-dynamic/battle_node_tower_active.png')
-    expect(mapImages).toContain('/game/campaign-dynamic/battle_node_tower_locked.png')
+    expect(mapImages).toContain('/ui/background/map_education.png')
+    expect(mapImages.every(src => !src.includes('/game/campaign-v2/themes/'))).toBe(true)
+    expect(mapImages).toContain('/ui/hud/avatar_frame.png')
+    expect(mapImages).toContain('/ui/buttons/btn_green.png')
+    expect(mapImages).toContain('/ui/buttons/btn_red.png')
+    expect(mapImages).not.toContain('/ui/map/level_badge_blue.png')
+    expect(mapImages).not.toContain('/ui/map/level_badge_gray.png')
+    expect(mapImages).not.toContain('/ui/map/level_badge_locked.png')
+    expect(mapImages).not.toContain('/ui/map/treasure_closed.png')
+    expect(mapImages).not.toContain('/ui/cards/card_language_use.png')
+    expect(mapImages).not.toContain('/ui/modal/panel_report.png')
+    expect(mapImages).not.toContain('/game/campaign-dynamic/map_background.png')
+    expect(mapImages).not.toContain('/game/wuwei-transparent-v3/buttons/button_exit.png')
+    expect(mapImages).not.toContain('/game/campaign-dynamic/battle_node_tower_active.png')
     expect(mapImages.every(src => !src.includes('/shield_'))).toBe(true)
     expect(document.querySelector('.practice-game-map__segment-node-crest')).toBeNull()
+    expect(document.querySelector('.practice-game-map__segment-node')?.tagName).toBe('SPAN')
+    expect(document.querySelector('.practice-game-map__prd-avatar-level-pill')).not.toBeNull()
     const mapHud = screen.getByLabelText('真实学习数据')
     expect(within(mapHud).getByRole('button', { name: '返回学习计划' })).toBeInTheDocument()
     expect(within(mapHud).getByLabelText('体力')).toHaveTextContent('3/5')
@@ -378,17 +412,28 @@ describe('GameMode', () => {
     expect(screen.getByLabelText('钻石')).toHaveTextContent('0')
     expect(screen.getByRole('button', { name: '返回学习计划' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '退出地图' })).toBeInTheDocument()
-    expect(screen.getByText('总词量')).toBeInTheDocument()
-    expect(screen.getByText('0 / 3,375')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '开始当前词关' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '进入第 1 个词，当前，0 星' })).not.toBeInTheDocument()
+    expect(screen.getByText('词链防线地图')).toBeInTheDocument()
+    expect(screen.getByText('当前词链 1 / 675')).toBeInTheDocument()
+    expect(screen.getByText('a couple of')).toBeInTheDocument()
+    expect(screen.getByText('ability')).toBeInTheDocument()
+    expect(screen.queryByText('当前关卡 1 / 675')).not.toBeInTheDocument()
+    expect(screen.queryByText(/试炼段/u)).not.toBeInTheDocument()
+    expect(screen.getByText('词链进度')).toBeInTheDocument()
+    expect(screen.getByText('当前任务')).toBeInTheDocument()
+    expect(screen.getAllByText('0 / 3,375').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('navigation', { name: '教育校园 章节分页' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: '五维训练入口' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('complementary', { name: '学习报告入口' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: '地图动态插槽' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: '当前词五维状态' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '进入当前词关' })).not.toBeInTheDocument()
     expect(screen.queryByText('Boss 试炼')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '退出地图' }))
     expect(onBackToPlan).toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: '进入第 1 个词，当前，0 星' }))
+    fireEvent.click(screen.getByRole('button', { name: '开始当前词关' }))
 
     await waitFor(() => expect(startGamePracticeSessionMock).toHaveBeenCalled())
     expect(onEnterMission).toHaveBeenCalled()

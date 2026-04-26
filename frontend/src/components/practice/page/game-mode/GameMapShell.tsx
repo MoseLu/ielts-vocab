@@ -1,5 +1,11 @@
 import type { CSSProperties } from 'react'
-import type { GameCampaignState, GameLevelCard } from '../../../../lib'
+import type { GameCampaignState, GameLevelCard, GameMapPathNode } from '../../../../lib'
+import {
+  PrdExitButton,
+  PrdMapHud,
+  PrdStartButton,
+  prdMapBackgroundForTheme,
+} from './GamePrdUi'
 import { gameAsset } from './gameAssets'
 
 type SegmentNodeStyle = CSSProperties & {
@@ -20,21 +26,27 @@ const SEGMENT_NODE_LAYOUT = [
   { x: 88, y: 40 },
 ] as const
 
-const SEGMENT_STATUS_LABEL = {
-  active: '当前',
+const MAP_NODE_STATUS_LABEL = {
+  current: '当前',
   cleared: '已亮',
   locked: '待练',
+  refill: '回流',
+  boss: 'Boss',
+  reward: '奖励',
 } as const
 
-type SegmentStatus = keyof typeof SEGMENT_STATUS_LABEL
+const MAP_NODE_STATUS_CLASS = {
+  current: 'active',
+  cleared: 'cleared',
+  locked: 'locked',
+  refill: 'active',
+  boss: 'active',
+  reward: 'cleared',
+} as const
+
+type MapNodeStatus = keyof typeof MAP_NODE_STATUS_LABEL
 
 const dynamicAsset = gameAsset.campaignDynamic
-
-function segmentBattleNodeAsset(status: SegmentStatus): string {
-  if (status === 'cleared') return dynamicAsset.battleNodes.cleared
-  if (status === 'active') return dynamicAsset.battleNodes.active
-  return dynamicAsset.battleNodes.locked
-}
 
 function formatCount(value: number): string {
   return Math.max(0, value).toLocaleString('zh-CN')
@@ -43,6 +55,15 @@ function formatCount(value: number): string {
 function progressPercent(done: number, total: number): number {
   if (total <= 0) return 0
   return Math.min(100, Math.max(0, Math.round((done / total) * 100)))
+}
+
+function taskFocusLabel(state: GameCampaignState): string {
+  const task = state.taskFocus?.task
+  if (task === 'due-review') return '到期复习'
+  if (task === 'error-review') return '错维回流'
+  if (task === 'speaking') return '口语补练'
+  if (task === 'add-book') return '添加词书'
+  return '主线新词'
 }
 
 export function GameMapShell({
@@ -59,6 +80,7 @@ export function GameMapShell({
   error: string | null
   onStart: () => void
   onBackToPlan?: () => void
+  onSelectThemeChapter?: (chapterId: string, page: number) => void
 }) {
   const session = state.session
   const energy = session?.energy ?? 0
@@ -87,31 +109,45 @@ export function GameMapShell({
     Math.max(0, currentSlot - Math.ceil(segmentSlotCount / 2)),
     Math.max(0, segmentTotal - segmentSlotCount),
   )
-  const segmentNodes = SEGMENT_NODE_LAYOUT.slice(0, segmentSlotCount).map(
-    (layout, index) => {
-      const nodeNumber = segmentSlotOffset + index + 1
-      const isCleared = nodeNumber <= segmentCleared
-      const isActive = nodeNumber === currentSlot && Boolean(state.currentNode)
-      const status: SegmentStatus = isCleared ? 'cleared' : isActive ? 'active' : 'locked'
-      return {
-        ...layout,
-        nodeNumber,
-        status,
-        stars: isCleared ? 3 : isActive ? activeNodeStars : 0,
-      }
-    },
+  const fallbackNodes: GameMapPathNode[] = SEGMENT_NODE_LAYOUT.slice(0, segmentSlotCount).map((_, index) => {
+    const nodeNumber = segmentSlotOffset + index + 1
+    const isCleared = nodeNumber <= segmentCleared
+    const isCurrent = nodeNumber === currentSlot && Boolean(state.currentNode)
+    return {
+      nodeType: 'word',
+      nodeKey: `fallback:${nodeNumber}`,
+      index: nodeNumber,
+      title: `词 ${nodeNumber}`,
+      subtitle: null,
+      status: isCleared ? 'cleared' : isCurrent ? 'current' : 'locked',
+      dimension: null,
+      failedDimensions: [],
+    }
+  })
+  const sourceNodes = state.mapPath?.nodes?.length ? state.mapPath.nodes : fallbackNodes
+  const segmentNodes = sourceNodes.slice(0, SEGMENT_NODE_LAYOUT.length).map(
+    (node, index) => ({
+      ...SEGMENT_NODE_LAYOUT[index],
+      ...node,
+      status: node.status as MapNodeStatus,
+      statusClass: MAP_NODE_STATUS_CLASS[node.status as MapNodeStatus],
+      statusLabel: MAP_NODE_STATUS_LABEL[node.status as MapNodeStatus],
+      stars: node.status === 'cleared' ? 3 : node.status === 'current' ? activeNodeStars : 0,
+    }),
   )
-  const routeStep = Math.min(Math.max(1, currentSlot - segmentSlotOffset), Math.max(1, segmentNodes.length))
+  const activeNodeIndex = Math.max(0, segmentNodes.findIndex(node => node.status === 'current'))
+  const routeStep = Math.min(Math.max(1, activeNodeIndex + 1), Math.max(1, segmentNodes.length))
   const routeProgress = segmentNodes.length <= 1 ? 0 : Math.round(((routeStep - 1) / (segmentNodes.length - 1)) * 100)
-  const canStart = energy > 0 && Boolean(state.currentNode)
-  const notice = error ?? (!canStart ? '当前没有可挑战词关或体力不足。' : null)
+  const canStart = Boolean(state.currentNode)
+  const notice = error ?? (!canStart ? '当前没有可挑战词关。' : null)
+  const prdMapBackground = prdMapBackgroundForTheme(state.theme?.id ?? state.scope.themeId)
 
   return (
     <section className="practice-game-map" aria-label="五维词关地图">
       <picture className="practice-game-map__main-art" aria-hidden="true">
-        <source media="(max-width: 640px)" srcSet={gameAsset.map.backgrounds.mobile} />
-        <source media="(max-width: 1100px)" srcSet={gameAsset.map.backgrounds.tablet} />
-        <img src={gameAsset.map.backgrounds.desktop} alt="" />
+        <source media="(max-width: 640px)" srcSet={prdMapBackground} />
+        <source media="(max-width: 1100px)" srcSet={prdMapBackground} />
+        <img src={prdMapBackground} alt="" />
       </picture>
 
       <div
@@ -135,121 +171,82 @@ export function GameMapShell({
         </svg>
       </div>
 
-      <header className="practice-game-map__hud" aria-label="真实学习数据">
-        <button
-          type="button"
-          className="practice-game-map__avatar"
-          onClick={() => onBackToPlan?.()}
-          aria-label="返回学习计划"
-        >
-          <span className="practice-game-map__avatar-frame">
-            <img src={dynamicAsset.avatar} alt="" aria-hidden="true" />
-          </span>
-          <span className="practice-game-map__avatar-meta">
-            <strong>Lv.{playerLevel}</strong>
-            <span className="practice-game-map__avatar-level" aria-hidden="true">
-              <span style={{ width: `${levelProgress}%` }} />
-            </span>
-          </span>
-        </button>
-        <span className="practice-game-map__counter is-energy" aria-label="体力">
-          <img src={dynamicAsset.counters.energy} alt="" aria-hidden="true" />
-          <strong>{energy}/{energyMax}</strong>
-        </span>
-        <span className="practice-game-map__counter is-coin" aria-label="金币">
-          <img src={dynamicAsset.counters.coin} alt="" aria-hidden="true" />
-          <strong>{formatCount(state.rewards.coins)}</strong>
-        </span>
-        <span className="practice-game-map__counter is-gem" aria-label="钻石">
-          <img src={dynamicAsset.counters.gem} alt="" aria-hidden="true" />
-          <strong>{formatCount(state.rewards.diamonds)}</strong>
-        </span>
-        <button type="button" className="practice-game-map__mail" aria-label={`站内信，${unreadMessages} 条未读`}>
-          <img src={dynamicAsset.mailButton} alt="" aria-hidden="true" />
-          {unreadMessages > 0 ? <strong>{formatCount(unreadMessages)}</strong> : null}
-        </button>
-      </header>
+      <PrdMapHud
+        avatar={dynamicAsset.avatar}
+        playerLevel={playerLevel}
+        levelProgress={levelProgress}
+        energy={energy}
+        energyMax={energyMax}
+        coins={state.rewards.coins}
+        diamonds={state.rewards.diamonds}
+        unreadMessages={unreadMessages}
+        onBackToPlan={onBackToPlan}
+      />
 
-      <button type="button" className="practice-game-map__exit" onClick={() => onBackToPlan?.()} aria-label="退出地图">
-        <img src={dynamicAsset.exitButton} alt="" aria-hidden="true" />
-        <span className="sr-only">退出</span>
-      </button>
+      <PrdExitButton onBackToPlan={onBackToPlan} />
 
       <div className="practice-game-map__title">
         <img className="practice-game-map__title-frame" src={dynamicAsset.titleScroll} alt="" aria-hidden="true" />
         <span className="practice-game-map__title-copy">
-          <span className="practice-game-map__title-scope">{state.campaign.scopeLabel} · 第 {currentSegment}/{totalSegments} 段</span>
-          <strong className="practice-game-map__title-heading">{state.segment.title}</strong>
+          <span className="practice-game-map__title-scope">词链防线地图</span>
+          <strong className="practice-game-map__title-heading">当前词链 {currentSegment} / {totalSegments}</strong>
         </span>
       </div>
 
       <section className="practice-game-map__progress" aria-label="词汇战役进度">
-        <img className="practice-game-map__progress-frame" src={dynamicAsset.progressPanel} alt="" aria-hidden="true" />
         <div className="practice-game-map__progress-content">
           <div className="practice-game-map__progress-line">
-            <span>总词量</span>
+            <span>词汇进度</span>
             <strong>{formatCount(passedWords)} / {formatCount(totalWords)}</strong>
           </div>
           <div className="practice-game-map__bar" aria-hidden="true">
             <span style={{ width: `${wordProgress}%` }} />
           </div>
           <div className="practice-game-map__progress-line">
-            <span>当前分段</span>
+            <span>词链进度</span>
             <strong>{currentSegment} / {totalSegments}</strong>
           </div>
           <div className="practice-game-map__bar is-segment" aria-hidden="true">
             <span style={{ width: `${segmentProgress}%` }} />
           </div>
+          <div className="practice-game-map__progress-line">
+            <span>当前任务</span>
+            <strong>{taskFocusLabel(state)}</strong>
+          </div>
         </div>
       </section>
 
-      <div className="practice-game-map__segment-path" aria-label={`当前分段 ${segmentCleared}/${segmentTotal} 个词`}>
+      <div className="practice-game-map__segment-path">
         {segmentNodes.map((node, index) => {
           return (
-            <button
-              key={node.nodeNumber}
-              type="button"
-              className={`practice-game-map__segment-node is-${node.status}`}
+            <span
+              key={node.nodeKey}
+              className={`practice-game-map__segment-node is-${node.statusClass}`}
               style={{
                 '--map-node-x': `${node.x}%`,
                 '--map-node-y': `${node.y}%`,
                 '--map-node-delay': `${index * 60}ms`,
               } as SegmentNodeStyle}
-              onClick={onStart}
-              disabled={node.status !== 'active' || !canStart || isStarting}
-              aria-label={`进入第 ${node.nodeNumber} 个词，${SEGMENT_STATUS_LABEL[node.status]}，${node.stars} 星`}
             >
               <span className="practice-game-map__segment-node-glow" aria-hidden="true" />
               <span className="practice-game-map__segment-node-art" data-status={node.status}>
-                <img
-                  className="practice-game-map__segment-node-frame"
-                  src={segmentBattleNodeAsset(node.status)}
-                  alt=""
-                  aria-hidden="true"
-                />
-                <span className="practice-game-map__segment-node-value">{node.nodeNumber}/{segmentTotal}</span>
-                <span className="practice-game-map__segment-node-stars" aria-hidden="true">
-                  {Array.from({ length: 3 }).map((_, starIndex) => (
-                    <img
-                      key={starIndex}
-                      src={starIndex < node.stars ? dynamicAsset.starFull : dynamicAsset.starEmpty}
-                      alt=""
-                      aria-hidden="true"
-                    />
-                  ))}
+                <span className="practice-game-map__segment-node-ring" aria-hidden="true" />
+                <span className="practice-game-map__segment-node-value">{node.index}</span>
+                <span className="practice-game-map__segment-node-state">{node.title}</span>
+                <span className="practice-game-map__segment-node-state">
+                  {node.statusLabel}
                 </span>
               </span>
-              <span className="practice-game-map__segment-node-badge">{SEGMENT_STATUS_LABEL[node.status]}</span>
-            </button>
+            </span>
           )
         })}
       </div>
 
-      <div className="practice-game-map__reward-cover" aria-hidden="true">
-        <img className="practice-game-map__reward-chest" src={dynamicAsset.treasureChestBase} alt="" />
-        <img className="practice-game-map__reward-frame" src={dynamicAsset.treasureChest} alt="" />
-        <strong>{segmentCleared}/{segmentTotal}</strong>
-      </div>
+      <PrdStartButton
+        canStart={canStart}
+        isStarting={isStarting}
+        onStart={onStart}
+      />
 
       {notice ? <div className="practice-game-map__notice">{notice}</div> : null}
     </section>

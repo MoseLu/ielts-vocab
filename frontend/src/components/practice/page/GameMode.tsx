@@ -17,9 +17,14 @@ interface GameModeProps {
   chapterId: string | null
   currentDay?: number
   surface?: 'map' | 'mission'
+  themeId?: string | null
+  themeChapterId?: string | null
+  task?: string | null
+  taskDimension?: GameCampaignDimension | null
   onBackToPlan?: () => void
   onEnterMission?: () => void
   onExitToMap?: () => void
+  onSelectThemeChapter?: (chapterId: string, page: number) => void
 }
 
 interface BattleBannerState {
@@ -74,9 +79,14 @@ export default function GameMode({
   chapterId,
   currentDay,
   surface = 'mission',
+  themeId,
+  themeChapterId,
+  task,
+  taskDimension,
   onBackToPlan,
   onEnterMission,
   onExitToMap,
+  onSelectThemeChapter,
 }: GameModeProps) {
   const [state, setState] = useState<GameCampaignState | null>(null)
   const [answerInput, setAnswerInput] = useState('')
@@ -90,8 +100,8 @@ export default function GameMode({
   const bannerTimerRef = useRef<number | null>(null)
   const autoStartedNodeRef = useRef<string | null>(null)
   const scope = useMemo(
-    () => buildGameScope({ bookId, chapterId, day: currentDay }),
-    [bookId, chapterId, currentDay],
+    () => buildGameScope({ bookId, chapterId, day: currentDay, themeId, themeChapterId, task, taskDimension }),
+    [bookId, chapterId, currentDay, task, taskDimension, themeChapterId, themeId],
   )
 
   const refreshState = useCallback(async () => {
@@ -193,6 +203,10 @@ export default function GameMode({
         bookId: scope.bookId,
         chapterId: scope.chapterId,
         day: scope.day,
+        themeId: scope.themeId,
+        themeChapterId: scope.themeChapterId,
+        task: scope.task,
+        taskDimension: scope.taskDimension,
         nodeType: 'word',
         word: state.currentNode.word.word,
         dimension: state.currentNode.dimension,
@@ -216,7 +230,7 @@ export default function GameMode({
     } finally {
       setIsSubmitting(false)
     }
-  }, [scope.bookId, scope.chapterId, scope.day, setBattleBanner, state])
+  }, [scope.bookId, scope.chapterId, scope.day, scope.task, scope.taskDimension, scope.themeChapterId, scope.themeId, setBattleBanner, state])
 
   const submitSpeakingNode = useCallback(async (passed: boolean, meta: AttemptMeta = {}) => {
     if (!state?.currentNode || state.currentNode.nodeType === 'word') return
@@ -227,6 +241,10 @@ export default function GameMode({
         bookId: scope.bookId,
         chapterId: scope.chapterId,
         day: scope.day,
+        themeId: scope.themeId,
+        themeChapterId: scope.themeChapterId,
+        task: scope.task,
+        taskDimension: scope.taskDimension,
         nodeType: state.currentNode.nodeType,
         segmentIndex: state.currentNode.segmentIndex,
         promptText: state.currentNode.promptText,
@@ -246,7 +264,7 @@ export default function GameMode({
     } finally {
       setIsSubmitting(false)
     }
-  }, [scope.bookId, scope.chapterId, scope.day, setBattleBanner, state])
+  }, [scope.bookId, scope.chapterId, scope.day, scope.task, scope.taskDimension, scope.themeChapterId, scope.themeId, setBattleBanner, state])
 
   const handleWordSpeakingEvaluated = useCallback((passed: boolean) => {
     void refreshState()
@@ -289,6 +307,7 @@ export default function GameMode({
           error={error}
           onStart={() => void enterMission()}
           onBackToPlan={onBackToPlan}
+          onSelectThemeChapter={onSelectThemeChapter}
         />
       </section>
     )
@@ -325,6 +344,7 @@ export default function GameMode({
         error={error}
         onStart={() => void startSession()}
         onBackToPlan={onBackToPlan}
+        onSelectThemeChapter={onSelectThemeChapter}
       />
     )
   }
@@ -346,6 +366,7 @@ export default function GameMode({
             onSelectChoice={setSelectedChoice}
             onSubmitAttempt={submitWordNode}
             onRefreshAfterSpeaking={handleWordSpeakingEvaluated}
+            onExitToMap={onExitToMap}
           />
         ) : (
           <SpeakingMissionScreen
@@ -354,6 +375,7 @@ export default function GameMode({
             banner={banner}
             error={error}
             onSubmitNode={submitSpeakingNode}
+            onExitToMap={onExitToMap}
           />
         )}
       </div>
