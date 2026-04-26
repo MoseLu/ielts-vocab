@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { useAuth, useToast } from '../contexts'
 import AuthPage from '../components/auth/page/AuthPage'
 import PracticePage from '../components/practice/PracticePage'
@@ -39,6 +39,7 @@ interface AppRoutesProps {
 
 const SPECIAL_PAGES = ['/login', '/register', '/forgot-password', '/terms', '/404']
 const CHROME_DEFER_MS = 1200
+const DEFAULT_GAME_THEME_ID = 'study-campus'
 
 function GuestOnlyRoute({
   isAuthenticated,
@@ -115,6 +116,11 @@ function PracticeRouteElement({
       />
     </AuthenticatedRoute>
   )
+}
+
+function GameRouteElement({ surface }: { surface: 'map' | 'mission' }) {
+  const { themeId } = useParams()
+  return <GameCampaignPage surface={surface} themeId={themeId} />
 }
 
 export function AppRoutes({
@@ -260,7 +266,31 @@ export function AppRoutes({
                   path="/game"
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <GameCampaignPage surface="map" />
+                      <GameCampaignPage surface="map" themeId={DEFAULT_GAME_THEME_ID} />
+                    </AuthenticatedRoute>
+                  )}
+                />
+                <Route
+                  path="/game/themes"
+                  element={(
+                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                      <GameCampaignPage surface="themes" />
+                    </AuthenticatedRoute>
+                  )}
+                />
+                <Route
+                  path="/game/themes/:themeId"
+                  element={(
+                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                      <GameRouteElement surface="map" />
+                    </AuthenticatedRoute>
+                  )}
+                />
+                <Route
+                  path="/game/themes/:themeId/mission"
+                  element={(
+                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
+                      <GameRouteElement surface="mission" />
                     </AuthenticatedRoute>
                   )}
                 />
