@@ -101,15 +101,21 @@ def test_build_home_todos_response_rolls_previous_pending_items_into_today_plan(
         assert payload['summary']['carry_over_count'] == 2
         assert [item['kind'] for item in payload['primary_items']] == [
             'due-review',
+            'error-review',
             'add-book',
             'speaking',
-            'error-review',
         ]
         assert payload['overflow_items'] == []
 
         tasks = _task_map(payload)
         assert tasks['due-review']['carry_over_count'] == 1
         assert tasks['speaking']['carry_over_count'] == 1
+        assert tasks['due-review']['action']['task'] == 'due-review'
+        assert tasks['due-review']['action']['mode'] is None
+        assert tasks['error-review']['action']['task'] == 'error-review'
+        assert tasks['error-review']['action']['dimension'] == 'meaning'
+        assert tasks['add-book']['action']['task'] == 'add-book'
+        assert tasks['speaking']['action']['task'] == 'speaking'
 
         previous_statuses = {
             item.task_key: item.status

@@ -59,6 +59,10 @@ def game_state_response(current_user, args):
     return _speaking_and_plans.game_state_response(current_user, args)
 
 
+def game_themes_response(current_user, args):
+    return _speaking_and_plans.game_themes_response(current_user, args)
+
+
 def game_session_start_response(current_user, body):
     return _speaking_and_plans.game_session_start_response(current_user, body)
 
@@ -96,6 +100,7 @@ __all__ = [
     'game_attempt_response',
     'game_session_start_response',
     'game_state_response',
+    'game_themes_response',
     'greet_response',
     'ielts_example_response',
     'pronunciation_check_response',

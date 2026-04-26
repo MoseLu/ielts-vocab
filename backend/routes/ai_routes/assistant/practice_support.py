@@ -12,6 +12,7 @@ def _load_ai_practice_route_support():
         game_attempt_response,
         game_session_start_response,
         game_state_response,
+        game_themes_response,
         greet_response,
         ielts_example_response,
         pronunciation_check_response,
@@ -30,6 +31,7 @@ def _load_ai_practice_route_support():
         'game_attempt_response': game_attempt_response,
         'game_session_start_response': game_session_start_response,
         'game_state_response': game_state_response,
+        'game_themes_response': game_themes_response,
         'greet_response': greet_response,
         'ielts_example_response': ielts_example_response,
         'pronunciation_check_response': pronunciation_check_response,
@@ -123,6 +125,12 @@ def collocation_practice(current_user):
 @token_required
 def practice_game_state(current_user):
     return _load_ai_practice_route_support()['game_state_response'](current_user, request.args)
+
+
+@ai_bp.route('/practice/game/themes', methods=['GET'])
+@token_required
+def practice_game_themes(current_user):
+    return _load_ai_practice_route_support()['game_themes_response'](current_user, request.args)
 
 
 @ai_bp.route('/practice/game/session/start', methods=['POST'])

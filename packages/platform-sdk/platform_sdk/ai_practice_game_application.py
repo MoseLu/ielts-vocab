@@ -7,6 +7,7 @@ from flask import jsonify
 from platform_sdk.ai_word_image_application import enrich_game_state_with_word_image
 from platform_sdk.learning_core_internal_client import (
     fetch_learning_core_game_state_response,
+    fetch_learning_core_game_themes_response,
     post_learning_core_game_session_start,
     post_learning_core_game_attempt,
 )
@@ -24,12 +25,24 @@ def game_state_response(current_user, args) -> tuple:
         return jsonify({'error': 'game state unavailable'}), 503
 
 
+def game_themes_response(current_user, args) -> tuple:
+    try:
+        return jsonify(fetch_learning_core_game_themes_response(current_user.id, args)), 200
+    except Exception as exc:
+        logging.warning('[AI] Failed to fetch game themes: %s', exc)
+        return jsonify({'error': 'game themes unavailable'}), 503
+
+
 def game_session_start_response(current_user, body: dict | None) -> tuple:
     payload = body or {}
     request_payload = {
         'bookId': str(payload.get('bookId') or '').strip() or None,
         'chapterId': normalize_chapter_id(payload.get('chapterId')),
         'day': payload.get('day'),
+        'themeId': str(payload.get('themeId') or '').strip() or None,
+        'themeChapterId': str(payload.get('themeChapterId') or '').strip() or None,
+        'task': str(payload.get('task') or '').strip() or None,
+        'taskDimension': str(payload.get('taskDimension') or payload.get('dimension') or '').strip() or None,
         'enabledBoosts': payload.get('enabledBoosts') if isinstance(payload.get('enabledBoosts'), dict) else None,
     }
     try:
@@ -66,6 +79,10 @@ def game_attempt_response(current_user, body: dict | None) -> tuple:
         'bookId': str(payload.get('bookId') or '').strip() or None,
         'chapterId': normalize_chapter_id(payload.get('chapterId')),
         'day': payload.get('day'),
+        'themeId': str(payload.get('themeId') or '').strip() or None,
+        'themeChapterId': str(payload.get('themeChapterId') or '').strip() or None,
+        'task': str(payload.get('task') or '').strip() or None,
+        'taskDimension': str(payload.get('taskDimension') or payload.get('task_dimension') or '').strip() or None,
         'hintUsed': bool(payload.get('hintUsed')),
         'inputMode': str(payload.get('inputMode') or '').strip() or None,
         'boostType': str(payload.get('boostType') or '').strip() or None,

@@ -6,17 +6,17 @@ from services.learner_profile import DIMENSION_LABELS
 
 TASK_ORDER = (
     'due-review',
-    'add-book',
-    'continue-book',
-    'speaking',
     'error-review',
+    'continue-book',
+    'add-book',
+    'speaking',
 )
 TASK_PRIORITY = {
     'due-review': 10,
-    'add-book': 20,
-    'continue-book': 20,
-    'speaking': 30,
-    'error-review': 40,
+    'error-review': 20,
+    'continue-book': 30,
+    'add-book': 35,
+    'speaking': 40,
 }
 SPEAKING_VARIANTS = frozenset({'needs_setup', 'due', 'strengthen'})
 MAINLINE_TARGET_NORMAL = 20
@@ -33,14 +33,6 @@ def ranked_items(items: list[UserHomeTodoItem]) -> list[UserHomeTodoItem]:
             int(item.id or 0),
         ),
     )
-
-
-def _mode_from_wrong_dimension(dimension: str | None) -> str | None:
-    if dimension == 'recognition':
-        return 'quickmemory'
-    if dimension in {'listening', 'meaning', 'dictation', 'speaking'}:
-        return dimension
-    return None
 
 
 def _completion_source(*, completed: bool, completed_today: bool) -> str | None:
@@ -132,7 +124,15 @@ def build_due_review_task(signals: dict, *, carry_over_count: int) -> dict:
         badge=f'{pending_count} 词到期' if pending_count > 0 else '已清空',
         status='completed' if completed else 'pending',
         completion_source=_completion_source(completed=completed, completed_today=done_today),
-        action={'kind': 'due-review', 'cta_label': '复习任务', 'mode': 'quickmemory', 'book_id': None, 'dimension': None},
+        action={
+            'kind': 'due-review',
+            'cta_label': '进入五维复习',
+            'task': 'due-review',
+            'mode': None,
+            'book_id': None,
+            'chapter_id': None,
+            'dimension': None,
+        },
         carry_over_count=carry_over_count,
         steps=steps,
     )
@@ -167,9 +167,11 @@ def build_error_review_task(signals: dict, *, carry_over_count: int) -> dict:
         completion_source=_completion_source(completed=completed, completed_today=done_today),
         action={
             'kind': 'error-review',
-            'cta_label': '清错词任务',
-            'mode': _mode_from_wrong_dimension(recommended_dimension),
+            'cta_label': '清理错维回流',
+            'task': 'error-review',
+            'mode': None,
             'book_id': None,
+            'chapter_id': None,
             'dimension': recommended_dimension,
         },
         carry_over_count=carry_over_count,
@@ -210,7 +212,15 @@ def build_mainline_task(signals: dict, *, carry_over_by_key: dict[str, int]) -> 
                 {'id': 'add-book', 'label': '添加 1 本有效词书', 'done': False},
                 {'id': 'start-mainline', 'label': '添加后明天起生成主线新词任务。', 'done': False},
             ]),
-            action={'kind': 'add-book', 'cta_label': '添加词书任务', 'mode': None, 'book_id': None, 'dimension': None},
+            action={
+                'kind': 'add-book',
+                'cta_label': '去选词书',
+                'task': 'add-book',
+                'mode': None,
+                'book_id': None,
+                'chapter_id': None,
+                'dimension': None,
+            },
             carry_over_count=carry_over_by_key.get('add-book', 0),
         )
 
@@ -240,9 +250,11 @@ def build_mainline_task(signals: dict, *, carry_over_by_key: dict[str, int]) -> 
         completion_source=_completion_source(completed=completed, completed_today=done_today),
         action={
             'kind': 'continue-book',
-            'cta_label': '词书任务',
+            'cta_label': '继续学习',
+            'task': 'continue-book',
             'mode': None,
             'book_id': focus_book.get('book_id'),
+            'chapter_id': focus_book.get('chapter_id'),
             'dimension': None,
         },
         carry_over_count=carry_over_by_key.get('continue-book', 0),
@@ -311,7 +323,15 @@ def build_speaking_task(
         badge='已完成' if completed else badge,
         status='completed' if completed else 'pending',
         completion_source=completion_source,
-        action={'kind': 'speaking', 'cta_label': '口语任务', 'mode': 'speaking', 'book_id': None, 'dimension': 'speaking'},
+        action={
+            'kind': 'speaking',
+            'cta_label': '口语补练',
+            'task': 'speaking',
+            'mode': None,
+            'book_id': None,
+            'chapter_id': None,
+            'dimension': 'speaking',
+        },
         carry_over_count=carry_over_count,
         steps=steps,
         evidence={

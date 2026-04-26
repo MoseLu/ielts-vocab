@@ -351,10 +351,29 @@ def fetch_learning_core_game_state_response(user_id: int, args) -> dict:
             'bookId': args.get('bookId'),
             'chapterId': args.get('chapterId'),
             'day': args.get('day'),
+            'themeId': args.get('themeId'),
+            'themeChapterId': args.get('themeChapterId'),
+            'task': args.get('task'),
+            'dimension': args.get('dimension'),
         },
     )
     if status != 200:
         raise RuntimeError(f'learning-core game-state request failed: {status}')
+    return payload
+
+
+def fetch_learning_core_game_themes_response(user_id: int, args) -> dict:
+    payload, status = _request_json(
+        'GET',
+        '/internal/learning/game/themes',
+        user_id=user_id,
+        params={
+            'themeId': args.get('themeId'),
+            'page': args.get('page'),
+        },
+    )
+    if status != 200:
+        raise RuntimeError(f'learning-core game-themes request failed: {status}')
     return payload
 
 

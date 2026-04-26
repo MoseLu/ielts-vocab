@@ -10,6 +10,7 @@ from platform_sdk.learning_repository_adapters import (
 )
 from platform_sdk.learner_profile_builder_adapter import build_learner_profile
 from services.game_campaign_session import start_game_campaign_session
+from services.game_theme_catalog_service import build_game_theme_catalog
 from services.word_mastery_service import (
     build_game_practice_state,
     update_game_campaign_attempt,
@@ -199,7 +200,19 @@ def game_state_response(current_user, args):
         book_id=str(args.get('bookId') or args.get('book_id') or '').strip() or None,
         chapter_id=_normalize_chapter_id(args.get('chapterId', args.get('chapter_id'))),
         day=args.get('day'),
+        theme_id=str(args.get('themeId') or args.get('theme_id') or '').strip() or None,
+        theme_chapter_id=str(args.get('themeChapterId') or args.get('theme_chapter_id') or '').strip() or None,
+        task=str(args.get('task') or '').strip() or None,
+        dimension=str(args.get('dimension') or '').strip() or None,
     ))
+    return jsonify(payload), 200
+
+
+def game_themes_response(current_user, args):
+    payload = build_game_theme_catalog(
+        theme_id=str(args.get('themeId') or args.get('theme_id') or '').strip() or None,
+        page=args.get('page'),
+    )
     return jsonify(payload), 200
 
 
@@ -211,6 +224,10 @@ def game_session_start_response(current_user, body):
             book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
             chapter_id=_normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
             day=payload.get('day'),
+            theme_id=str(payload.get('themeId') or payload.get('theme_id') or '').strip() or None,
+            theme_chapter_id=str(payload.get('themeChapterId') or payload.get('theme_chapter_id') or '').strip() or None,
+            task=str(payload.get('task') or '').strip() or None,
+            dimension=str(payload.get('taskDimension') or payload.get('task_dimension') or payload.get('dimension') or '').strip() or None,
             enabled_boosts=payload.get('enabledBoosts') if isinstance(payload.get('enabledBoosts'), dict) else None,
         )
     except ValueError as exc:
@@ -256,6 +273,10 @@ def game_attempt_response(current_user, body):
         book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
         chapter_id=_normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
         day=payload.get('day'),
+        theme_id=str(payload.get('themeId') or payload.get('theme_id') or '').strip() or None,
+        theme_chapter_id=str(payload.get('themeChapterId') or payload.get('theme_chapter_id') or '').strip() or None,
+        task=str(payload.get('task') or '').strip() or None,
+        dimension=str(payload.get('taskDimension') or payload.get('task_dimension') or '').strip() or None,
     ))
     failed_dimensions = state.get('failedDimensions')
     if not isinstance(failed_dimensions, list):

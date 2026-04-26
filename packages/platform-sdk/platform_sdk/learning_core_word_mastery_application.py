@@ -5,6 +5,7 @@ from services.word_mastery_service import (
     start_game_campaign_session,
     update_game_campaign_attempt,
 )
+from services.game_theme_catalog_service import build_game_theme_catalog
 from services.study_sessions import normalize_chapter_id
 
 
@@ -14,8 +15,19 @@ def build_learning_core_game_state_response(user_id: int, args) -> tuple[dict, i
         book_id=str(args.get('bookId') or args.get('book_id') or '').strip() or None,
         chapter_id=normalize_chapter_id(args.get('chapterId', args.get('chapter_id'))),
         day=args.get('day'),
+        theme_id=str(args.get('themeId') or args.get('theme_id') or '').strip() or None,
+        theme_chapter_id=str(args.get('themeChapterId') or args.get('theme_chapter_id') or '').strip() or None,
+        task=str(args.get('task') or '').strip() or None,
+        dimension=str(args.get('dimension') or '').strip() or None,
     )
     return payload, 200
+
+
+def build_learning_core_game_themes_response(args) -> tuple[dict, int]:
+    return build_game_theme_catalog(
+        theme_id=str(args.get('themeId') or args.get('theme_id') or '').strip() or None,
+        page=args.get('page'),
+    ), 200
 
 
 def post_learning_core_game_session_start_response(user_id: int, body: dict | None) -> tuple[dict, int]:
@@ -26,6 +38,10 @@ def post_learning_core_game_session_start_response(user_id: int, body: dict | No
             book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
             chapter_id=normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
             day=payload.get('day'),
+            theme_id=str(payload.get('themeId') or payload.get('theme_id') or '').strip() or None,
+            theme_chapter_id=str(payload.get('themeChapterId') or payload.get('theme_chapter_id') or '').strip() or None,
+            task=str(payload.get('task') or '').strip() or None,
+            dimension=str(payload.get('taskDimension') or payload.get('task_dimension') or payload.get('dimension') or '').strip() or None,
             enabled_boosts=payload.get('enabledBoosts') if isinstance(payload.get('enabledBoosts'), dict) else None,
         )
     except ValueError as exc:
@@ -101,6 +117,10 @@ def post_learning_core_word_mastery_attempt_response(user_id: int, body: dict | 
         book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
         chapter_id=normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
         day=payload.get('day'),
+        theme_id=str(payload.get('themeId') or payload.get('theme_id') or '').strip() or None,
+        theme_chapter_id=str(payload.get('themeChapterId') or payload.get('theme_chapter_id') or '').strip() or None,
+        task=str(payload.get('task') or '').strip() or None,
+        dimension=str(payload.get('taskDimension') or payload.get('task_dimension') or '').strip() or None,
     )
     return {
         'state': _normalize_game_attempt_state(state, node_type=node_type),
