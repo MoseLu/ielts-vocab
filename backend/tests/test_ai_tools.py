@@ -7,6 +7,7 @@ from services import ai_assistant_ask_service as ask_service
 from services import ai_assistant_tool_service as tool_service
 from services import ai_custom_books_service as custom_books_service
 from services import ai_vocab_catalog_service as vocab_catalog_service
+from services import ai_wrong_words_service as wrong_words_service
 
 
 def register_and_login(client, username='ai-tools-user', password='password123'):
@@ -347,6 +348,30 @@ def test_wrong_words_sync_deduplicates_same_word_within_one_request(client, app)
         records = UserWrongWord.query.filter_by(word='alpha').all()
         assert len(records) == 1
         assert records[0].wrong_count == 2
+
+
+def test_wrong_words_sync_normalizes_source_mode_alias_before_recording(client, monkeypatch):
+    register_and_login(client, username='wrong-words-mode-user')
+
+    captured = {}
+
+    def fake_record_learning_event(**kwargs):
+        captured['mode'] = kwargs.get('mode')
+
+    monkeypatch.setattr(wrong_words_service, 'record_learning_event', fake_record_learning_event)
+
+    response = client.post('/api/ai/wrong-words/sync', json={
+        'sourceMode': 'quick_memory',
+        'words': [{
+            'word': 'alpha',
+            'definition': '测试词',
+            'wrong_count': 1,
+            'meaning_wrong': 1,
+        }],
+    })
+
+    assert response.status_code == 200
+    assert captured['mode'] == 'quickmemory'
 
 
 def test_generate_book_accepts_text_response_payload(client, monkeypatch):

@@ -24,6 +24,26 @@ def register_and_login(client, username='event-user', password='password123'):
     assert res.status_code == 200
 
 
+def test_record_learning_event_normalizes_registered_mode_alias(app):
+    with app.app_context():
+        user = User(username='event-mode-user', email='event-mode-user@example.com')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.commit()
+
+        event = record_learning_event(
+            user_id=user.id,
+            event_type='wrong_word_recorded',
+            source='wrong_words',
+            mode='quick_memory',
+            word='effect',
+        )
+        db.session.commit()
+
+        assert event.mode == 'quickmemory'
+        assert UserLearningEvent.query.filter_by(mode='quickmemory').count() == 1
+
+
 def test_learner_profile_activity_summary_merges_events_from_multiple_sources(client, app, monkeypatch):
     register_and_login(client)
 
@@ -247,7 +267,7 @@ def test_smart_stats_sync_records_meaning_listening_and_writing_events(client, a
         'context': {
             'bookId': 'ielts_listening_premium',
             'chapterId': '4',
-            'mode': 'smart',
+            'mode': 'quick_memory',
         },
         'stats': [{
             'word': 'dynamic',
@@ -273,7 +293,7 @@ def test_smart_stats_sync_records_meaning_listening_and_writing_events(client, a
         assert listening_event.chapter_id == '4'
         assert listening_event.correct_count == 2
         assert listening_event.wrong_count == 1
-        assert listening_event.payload_dict()['source_mode'] == 'smart'
+        assert listening_event.payload_dict()['source_mode'] == 'quickmemory'
 
         writing_event = UserLearningEvent.query.filter_by(event_type='writing_review').first()
         assert writing_event is not None

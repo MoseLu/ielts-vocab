@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
+
 
 _PENDING_SESSION_REUSE_WINDOW_SECONDS = 5
 
@@ -66,9 +68,7 @@ def _quick_memory_word_stats(user_id: int):
 
 
 def _normalize_start_session_mode(value) -> str:
-    if isinstance(value, str):
-        return value.strip()[:30] or 'smart'
-    return 'smart'
+    return normalize_practice_mode_or_custom(value, default='smart') or 'smart'
 
 
 @ai_bp.route('/learning-stats', methods=['GET'])

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.quick_memory_schedule_support import resolve_quick_memory_next_review_ms
 from services import ai_quick_memory_repository, ai_smart_word_stat_repository
 from services.learning_activity_service import (
@@ -176,7 +177,7 @@ def sync_smart_stats_response(user_id: int, body: dict | None) -> tuple[dict, in
     record_chapter_id = normalize_chapter_id(
         context_dict.get('chapterId', context_dict.get('chapter_id'))
     )
-    source_mode = _normalize_optional_str(context_dict.get('mode'))
+    source_mode = normalize_practice_mode_or_custom(context_dict.get('mode'), default=None)
 
     for stat_payload in stats_in:
         word = _normalize_record_word(stat_payload.get('word'))

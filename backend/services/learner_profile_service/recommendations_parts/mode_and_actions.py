@@ -1,28 +1,12 @@
-_PROFILE_MODE_ORDER = (
-    'smart',
-    'listening',
-    'meaning',
-    'dictation',
-    'quickmemory',
-    'radio',
-    'errors',
+from platform_sdk.practice_mode_registry import (
+    get_practice_mode_label,
+    normalize_profile_practice_mode,
+    profile_practice_mode_sort_key,
 )
-_PROFILE_MODE_RANK = {mode: index for index, mode in enumerate(_PROFILE_MODE_ORDER)}
-_PROFILE_MODE_ALIASES = {
-    'choice': 'radio',
-    'select': 'radio',
-    'selection': 'radio',
-    'quick_memory': 'quickmemory',
-    'quick-memory': 'quickmemory',
-}
 
 
 def _normalize_profile_mode(value) -> str:
-    mode = (value or '').strip().lower()
-    if not mode:
-        return ''
-    normalized = _PROFILE_MODE_ALIASES.get(mode, mode)
-    return normalized if normalized in _PROFILE_MODE_RANK else ''
+    return normalize_profile_practice_mode(value)
 
 
 def _build_mode_summary(all_sessions) -> tuple[list[dict], dict | None]:
@@ -33,7 +17,7 @@ def _build_mode_summary(all_sessions) -> tuple[list[dict], dict | None]:
             continue
         bucket = mode_map.setdefault(mode, {
             'mode': mode,
-            'label': MODE_LABELS.get(mode, mode),
+            'label': get_practice_mode_label(mode, default=mode),
             'correct': 0,
             'wrong': 0,
             'words': 0,
@@ -59,7 +43,7 @@ def _build_mode_summary(all_sessions) -> tuple[list[dict], dict | None]:
             if weakest_mode is None or accuracy < weakest_mode['accuracy']:
                 weakest_mode = item
 
-    modes.sort(key=lambda item: (_PROFILE_MODE_RANK.get(item['mode'], 999), item['mode']))
+    modes.sort(key=lambda item: profile_practice_mode_sort_key(item['mode']))
     return modes, weakest_mode
 
 

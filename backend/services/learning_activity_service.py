@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 import json
 
+from platform_sdk.practice_mode_registry import PRACTICE_MODE_KEYS, normalize_practice_mode
 from service_models.learning_core_models import (
     UserLearningBookRollup,
     UserLearningChapterRollup,
@@ -30,22 +31,8 @@ from services.local_time import utc_naive_to_epoch_ms, utc_naive_to_local_date_k
 
 
 _KNOWN_LEARNING_MODES = {
-    'game',
-    'smart',
-    'quickmemory',
-    'listening',
-    'meaning',
-    'dictation',
-    'radio',
+    *PRACTICE_MODE_KEYS,
     'follow',
-    'errors',
-}
-_LEARNING_MODE_ALIASES = {
-    'choice': 'radio',
-    'select': 'radio',
-    'selection': 'radio',
-    'quick_memory': 'quickmemory',
-    'quick-memory': 'quickmemory',
 }
 
 
@@ -55,7 +42,7 @@ def normalize_learning_mode(value) -> str:
     raw_value = str(value).strip().lower()
     if not raw_value:
         return ''
-    normalized = _LEARNING_MODE_ALIASES.get(raw_value, raw_value)
+    normalized = normalize_practice_mode(raw_value) or raw_value
     if normalized in _KNOWN_LEARNING_MODES:
         return normalized
     return normalized[:30]

@@ -5,18 +5,9 @@ from collections import Counter
 from datetime import datetime
 
 from models import UserLearningEvent
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom, practice_mode_labels
 
-MODE_LABELS = {
-    'smart': '智能练习',
-    'game': '五维闯关',
-    'listening': '听音选义',
-    'meaning': '默写模式',
-    'dictation': '听写',
-    'speaking': '口语',
-    'radio': '随身听',
-    'quickmemory': '速记',
-    'errors': '错词强化',
-}
+MODE_LABELS = practice_mode_labels()
 
 SOURCE_LABELS = {
     'practice': '练习会话',
@@ -109,7 +100,7 @@ def record_learning_event(
         user_id=user_id,
         event_type=(event_type or '').strip()[:50] or 'activity',
         source=(source or '').strip()[:50] or 'unknown',
-        mode=(mode or '').strip()[:30] or None,
+        mode=normalize_practice_mode_or_custom(mode, default=None),
         book_id=(book_id or '').strip()[:100] or None,
         chapter_id=(str(chapter_id).strip() if chapter_id is not None else '')[:100] or None,
         word=(word or '').strip()[:100] or None,

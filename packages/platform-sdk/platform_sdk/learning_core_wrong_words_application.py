@@ -26,6 +26,7 @@ from platform_sdk.learning_core_service_repositories import (
     learning_event_repository,
 )
 from platform_sdk.learning_event_support import record_learning_event
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.study_session_support import normalize_chapter_id
 
 if TYPE_CHECKING:
@@ -383,11 +384,7 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
     payload = body or {}
     words = payload.get('words', [])
     source_mode_raw = payload.get('sourceMode')
-    source_mode = (
-        source_mode_raw.strip()[:30]
-        if isinstance(source_mode_raw, str) and source_mode_raw.strip()
-        else None
-    )
+    source_mode = normalize_practice_mode_or_custom(source_mode_raw, default=None)
     book_id = payload.get('bookId') or None
     chapter_id = normalize_chapter_id(payload.get('chapterId'))
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import calendar
 
+from platform_sdk.practice_mode_registry import get_practice_mode_label
 from services.ai_prompt_context_service import build_context_msg
 from services.local_time import current_local_datetime, format_event_time_for_ai
 
@@ -166,17 +167,10 @@ def build_learning_context_msg(ctx_data: dict, frontend_context: dict) -> str:
 
     if recent_sessions:
         parts.append("\n【最近练习记录（最新10条）】")
-        mode_zh = {
-            'smart': '智能',
-            'listening': '听音选义',
-            'meaning': '默写模式',
-            'dictation': '听写',
-            'radio': '随身听',
-            'quickmemory': '速记',
-        }
         for session in recent_sessions:
             date_str = (session.get('started_at') or '')[:10]
-            mode_label = mode_zh.get(session.get('mode', ''), session.get('mode', '未知'))
+            mode = session.get('mode', '')
+            mode_label = get_practice_mode_label(mode, default=mode or '未知', short=True)
             chapter_label = f"第{session.get('chapter_id', '?')}章" if session.get('chapter_id') else '全书'
             book_label = session.get('book_title') or session.get('book_id') or '?'
             duration_seconds = session.get('duration_seconds', 0) or 0

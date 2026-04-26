@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from platform_sdk.books_registry_adapter import books_registry_service
+from platform_sdk.practice_mode_registry import get_practice_mode_label
 
 
 def build_context_msg(ctx: dict) -> str:
@@ -98,15 +99,6 @@ def build_context_msg(ctx: dict) -> str:
 
     mode_performance = ctx.get('modePerformance')
     if mode_performance and isinstance(mode_performance, dict):
-        mode_labels = {
-            'smart': '智能练习',
-            'listening': '听音选义',
-            'meaning': '默写模式',
-            'dictation': '听写',
-            'radio': '随身听',
-            'quickmemory': '速记',
-            'errors': '错词强化',
-        }
         mode_summary = []
         for mode_key, stats in mode_performance.items():
             if not isinstance(stats, dict):
@@ -117,7 +109,7 @@ def build_context_msg(ctx: dict) -> str:
             if attempts <= 0:
                 continue
             accuracy = round(correct / attempts * 100)
-            label = mode_labels.get(str(mode_key), str(mode_key))
+            label = get_practice_mode_label(str(mode_key), default=str(mode_key))
             mode_summary.append(f"{label} {accuracy}%（{attempts} 次）")
         if mode_summary:
             parts.append('本地模式表现：' + '、'.join(mode_summary[:4]))

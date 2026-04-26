@@ -22,6 +22,7 @@ from services.learning_activity_service import rebuild_learning_activity_rollups
 from services.ai_route_support_service import _decorate_wrong_words_with_quick_memory_progress
 from services.learning_events import record_learning_event
 from services.study_sessions import normalize_chapter_id
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 
 if TYPE_CHECKING:
     from service_models.ai_route_models import UserWrongWord
@@ -166,11 +167,7 @@ def sync_wrong_words_response(user_id: int, body: dict | None) -> tuple[dict, in
     payload = body or {}
     words = payload.get('words', [])
     source_mode_raw = payload.get('sourceMode')
-    source_mode = (
-        source_mode_raw.strip()[:30]
-        if isinstance(source_mode_raw, str) and source_mode_raw.strip()
-        else None
-    )
+    source_mode = normalize_practice_mode_or_custom(source_mode_raw, default=None)
     book_id = payload.get('bookId') or None
     chapter_id = normalize_chapter_id(payload.get('chapterId'))
 

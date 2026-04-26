@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from platform_sdk.practice_mode_registry import practice_mode_labels
 from service_models.learning_core_models import UserQuickMemoryRecord
 from platform_sdk.quick_memory_schedule_support import load_and_normalize_quick_memory_records
 from services import ai_vocab_catalog_service, learner_profile_repository, quick_memory_record_repository
@@ -12,16 +13,7 @@ from services.study_sessions import (
     get_session_window_metrics,
 )
 
-MODE_LABELS = {
-    'game': '五维闯关',
-    'smart': '智能练习',
-    'listening': '听音选义',
-    'meaning': '默写模式',
-    'dictation': '听写',
-    'radio': '随身听',
-    'quickmemory': '速记',
-    'errors': '错词强化',
-}
+MODE_LABELS = practice_mode_labels()
 
 DIMENSION_LABELS = {
     'recognition': '认词',

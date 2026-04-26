@@ -9,6 +9,7 @@ from platform_sdk.learning_core_service_repositories import (
     study_session_repository,
 )
 from platform_sdk.learning_event_support import record_learning_event
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.study_session_support import (
     find_pending_session,
     normalize_chapter_id,
@@ -20,9 +21,7 @@ _PENDING_SESSION_REUSE_WINDOW_SECONDS = 5
 
 
 def _normalize_start_session_mode(value) -> str:
-    if isinstance(value, str):
-        return value.strip()[:30] or 'smart'
-    return 'smart'
+    return normalize_practice_mode_or_custom(value, default='smart') or 'smart'
 
 
 def _normalize_client_duration_seconds(
@@ -51,9 +50,7 @@ def _normalize_client_duration_seconds(
 
 
 def _normalize_mode(value) -> str | None:
-    if isinstance(value, str):
-        return value.strip()[:30] or None
-    return None
+    return normalize_practice_mode_or_custom(value, default=None)
 
 
 def _resolve_client_end(

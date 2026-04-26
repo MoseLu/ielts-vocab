@@ -9,6 +9,7 @@ from platform_sdk.learning_core_service_repositories import (
     learning_event_repository,
 )
 from platform_sdk.learning_event_support import record_learning_event
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.quick_memory_schedule_support import resolve_quick_memory_next_review_ms
 from platform_sdk.study_session_support import normalize_chapter_id
 
@@ -233,7 +234,7 @@ def sync_learning_core_smart_stats_response(user_id: int, body: dict | None) -> 
     record_chapter_id = normalize_chapter_id(
         context_dict.get('chapterId', context_dict.get('chapter_id'))
     )
-    source_mode = _normalize_optional_str(context_dict.get('mode'))
+    source_mode = normalize_practice_mode_or_custom(context_dict.get('mode'), default=None)
 
     for stat_payload in stats_in:
         word = _normalize_record_word(stat_payload.get('word'))

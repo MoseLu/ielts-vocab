@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from platform_sdk.learning_core_event_application import queue_study_session_logged_event
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.study_session_support import resolve_session_activity_capped_end
 from service_models.learning_core_models import UserStudySession
 from services import learning_event_repository
@@ -37,9 +38,7 @@ def normalize_client_duration_seconds(
 
 
 def _normalize_mode(value) -> str | None:
-    if isinstance(value, str):
-        return value.strip()[:30] or None
-    return None
+    return normalize_practice_mode_or_custom(value, default=None)
 
 
 def _resolve_client_end(

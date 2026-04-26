@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from platform_sdk.learning_core_internal_client import record_learning_core_event
+from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 
 
 def record_smart_dimension_delta_event(
@@ -26,6 +27,7 @@ def record_smart_dimension_delta_event(
 
     total_delta = delta_correct + delta_wrong
     passed = delta_correct > delta_wrong or (delta_correct > 0 and delta_wrong == 0)
+    normalized_source_mode = normalize_practice_mode_or_custom(source_mode, default=None)
     try:
         record_learning_core_event(
             user_id=user_id,
@@ -40,7 +42,7 @@ def record_smart_dimension_delta_event(
             wrong_count=delta_wrong,
             payload={
                 'passed': passed,
-                'source_mode': source_mode,
+                'source_mode': normalized_source_mode,
                 'total_correct': current_correct,
                 'total_wrong': current_wrong,
             },
@@ -80,7 +82,7 @@ def track_metric(user_id: int, metric: str, payload: dict | None = None):
     mode = None
     mode_candidate = safe_payload.get('mode')
     if isinstance(mode_candidate, str):
-        mode = mode_candidate.strip()[:30] or None
+        mode = normalize_practice_mode_or_custom(mode_candidate, default=None)
     elif metric == 'speaking_simulation_used':
         mode = 'speaking'
 
