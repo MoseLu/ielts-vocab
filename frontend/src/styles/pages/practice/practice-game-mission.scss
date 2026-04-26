@@ -1,142 +1,492 @@
+.practice-game-mode--mission {
+  --battle-panel: color-mix(in srgb, var(--surface-code) var(--mix-72), transparent);
+  --battle-panel-strong: color-mix(in srgb, var(--surface-code) var(--mix-88), var(--surface-muted));
+  --battle-line: color-mix(in srgb, var(--warning) var(--mix-54), var(--accent));
+  --battle-glow: color-mix(in srgb, var(--warning) var(--mix-34), transparent);
+  min-height: 100vh;
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface-code);
+}
+
+.practice-game-mode--mission .practice-game-mode__mission,
+.practice-game-mode--mission .practice-game-mode__battle-screen {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.practice-game-mode--mission .practice-game-mode__battle-screen {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.practice-game-mode--mission .practice-game-mode__scene {
+  position: absolute;
+  inset: 0;
+  min-height: 100vh;
+  padding: clamp(var(--size-16), 2vw, var(--size-32));
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-backdrop,
+.practice-game-mode--mission .practice-game-mode__scene-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-backdrop {
+  opacity: 0.94;
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-image {
+  opacity: 0.2;
+}
+
+.practice-game-mode--mission .practice-game-mode__scene-overlay {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--surface-code) var(--mix-24), transparent) var(--size-1), transparent var(--size-1)),
+    linear-gradient(0deg, color-mix(in srgb, var(--surface-code) var(--mix-20), transparent) var(--size-1), transparent var(--size-1)),
+    radial-gradient(circle at 20% 28%, color-mix(in srgb, var(--warning) var(--mix-22), transparent), transparent 22%),
+    radial-gradient(circle at 78% 42%, color-mix(in srgb, var(--info) var(--mix-16), transparent), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-code) var(--mix-12), transparent) 0%, color-mix(in srgb, var(--surface-code) var(--mix-38), transparent) 44%, color-mix(in srgb, var(--surface-code) var(--mix-82), transparent) 100%);
+  background-size:
+    var(--size-72) var(--size-72),
+    var(--size-72) var(--size-72),
+    auto,
+    auto,
+    auto;
+}
+
+.practice-game-mode__battle-hud,
+.practice-game-mode__objective-panel,
+.practice-game-mode__threat-route,
+.practice-game-mode--mission .practice-game-mode__sheet,
+.practice-game-mode--mission .practice-game-mode__coach-line,
+.practice-game-mode--mission .practice-game-mode__scene-head {
+  position: absolute;
+  z-index: var(--layer-prominent);
+}
+
+.practice-game-mode__battle-hud {
+  top: clamp(var(--size-14), 2vw, var(--size-24));
+  left: clamp(var(--size-14), 2vw, var(--size-24));
+  right: clamp(var(--size-14), 2vw, var(--size-24));
+  display: grid;
+  grid-template-columns: auto minmax(0, var(--size-320)) auto;
+  align-items: center;
+  gap: var(--size-12);
+}
+
+.practice-game-mode__battle-back,
+.practice-game-mode__battle-status,
+.practice-game-mode__wave-meter,
+.practice-game-mode__boss-health {
+  min-height: var(--size-44);
+  border-radius: var(--radius-pill);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-base) var(--mix-16), transparent);
+  background: var(--battle-panel);
+  color: var(--text-inverse);
+  box-shadow: 0 var(--size-10) var(--size-24) color-mix(in srgb, var(--surface-code) var(--mix-36), transparent);
+}
+
+.practice-game-mode__battle-back {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--size-72);
+  padding: 0 var(--size-18);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.practice-game-mode__battle-back.is-static {
+  cursor: default;
+}
+
+.practice-game-mode__battle-status {
+  display: grid;
+  justify-items: center;
+  padding: var(--size-6) var(--size-18);
+}
+
+.practice-game-mode__battle-status span,
+.practice-game-mode__objective-panel span,
+.practice-game-mode__tower-slot span,
+.practice-game-mode__enemy-token small,
+.practice-game-mode__dimension-chip small {
+  font-size: var(--size-12);
+  font-weight: 800;
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-70), transparent);
+}
+
+.practice-game-mode__battle-status strong {
+  font-size: var(--size-18);
+  line-height: 1;
+}
+
+.practice-game-mode__wave-meter {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: var(--size-6);
+  padding: 0 var(--size-14);
+}
+
+.practice-game-mode__wave-meter span {
+  width: var(--size-34);
+  height: var(--size-10);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-20), transparent);
+}
+
+.practice-game-mode__wave-meter span.is-lit {
+  background: linear-gradient(90deg, var(--warning), var(--accent));
+  box-shadow: 0 0 var(--size-16) var(--battle-glow);
+}
+
+.practice-game-mode__boss-health {
+  justify-self: end;
+  width: min(32vw, var(--size-320));
+  padding: var(--size-8);
+}
+
+.practice-game-mode__boss-health span {
+  display: block;
+  width: 72%;
+  height: 100%;
+  min-height: var(--size-18);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--error), var(--warning));
+}
+
+.practice-game-mode__threat-route {
+  left: clamp(var(--size-28), 6vw, var(--size-92));
+  right: min(42vw, var(--size-560));
+  top: 19vh;
+  bottom: 22vh;
+}
+
+.practice-game-mode__route-line {
+  position: absolute;
+  left: var(--size-12);
+  right: var(--size-16);
+  top: 48%;
+  height: var(--size-22);
+  border-radius: var(--radius-pill);
+  background:
+    linear-gradient(90deg, transparent 0%, var(--battle-line) 18%, color-mix(in srgb, var(--success) var(--mix-80), var(--info)) 74%, transparent 100%);
+  box-shadow:
+    0 0 var(--size-24) var(--battle-glow),
+    inset 0 0 0 var(--size-2) color-mix(in srgb, var(--surface-code) var(--mix-44), transparent);
+  transform: rotate(-7deg);
+}
+
+.practice-game-mode__defense-base,
+.practice-game-mode__tower-slot,
+.practice-game-mode__enemy-token {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  color: var(--text-inverse);
+  text-align: center;
+  box-shadow: 0 var(--size-16) var(--size-30) color-mix(in srgb, var(--surface-code) var(--mix-42), transparent);
+}
+
+.practice-game-mode__defense-base {
+  right: 0;
+  top: 38%;
+  width: clamp(var(--size-96), 12vw, var(--size-146));
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--success) var(--mix-72), var(--info)) 0%, color-mix(in srgb, var(--surface-code) var(--mix-84), var(--success)) 70%);
+  border: var(--size-4) solid color-mix(in srgb, var(--surface-base) var(--mix-40), transparent);
+}
+
+.practice-game-mode__defense-base strong {
+  font-size: clamp(var(--size-18), 2vw, var(--size-28));
+  letter-spacing: 0;
+}
+
+.practice-game-mode__tower-slot {
+  width: clamp(var(--size-108), 11vw, var(--size-148));
+  min-height: clamp(var(--size-80), 10vw, var(--size-116));
+  border-radius: var(--size-24);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-base) var(--mix-24), transparent), color-mix(in srgb, var(--surface-code) var(--mix-72), transparent));
+  border: var(--size-2) solid color-mix(in srgb, var(--warning) var(--mix-42), transparent);
+}
+
+.practice-game-mode__tower-slot::before {
+  content: '';
+  width: var(--size-40);
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--warning), var(--accent));
+  box-shadow: 0 0 var(--size-20) var(--battle-glow);
+}
+
+.practice-game-mode__tower-slot.is-left {
+  left: 14%;
+  top: 18%;
+}
+
+.practice-game-mode__tower-slot.is-right {
+  right: 18%;
+  bottom: 12%;
+}
+
+.practice-game-mode__enemy-token {
+  min-width: clamp(var(--size-132), 16vw, var(--size-220));
+  padding: var(--size-12) var(--size-16);
+  border-radius: var(--size-22);
+  border: var(--size-2) solid color-mix(in srgb, var(--accent) var(--mix-70), var(--warning));
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--surface-base) var(--mix-20), transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) var(--mix-72), var(--warning)), color-mix(in srgb, var(--surface-code) var(--mix-74), var(--accent)));
+}
+
+.practice-game-mode__enemy-token strong {
+  font-size: clamp(var(--size-20), 2.4vw, var(--size-34));
+  line-height: 1.08;
+}
+
+.practice-game-mode__enemy-token.is-front {
+  left: 43%;
+  top: 34%;
+}
+
+.practice-game-mode__enemy-token.is-back {
+  left: 18%;
+  bottom: 18%;
+  opacity: 0.82;
+}
+
+.practice-game-mode__objective-panel {
+  left: clamp(var(--size-18), 3vw, var(--size-48));
+  bottom: clamp(var(--size-22), 4vh, var(--size-48));
+  width: min(34vw, var(--size-410));
+  padding: var(--size-18);
+  border-radius: var(--size-24);
+  background: var(--battle-panel);
+  color: var(--text-inverse);
+  box-shadow: 0 var(--size-16) var(--size-36) color-mix(in srgb, var(--surface-code) var(--mix-36), transparent);
+}
+
+.practice-game-mode__objective-panel strong {
+  display: block;
+  margin-top: var(--size-4);
+  font-size: clamp(var(--size-24), 3vw, var(--size-40));
+  line-height: 1.05;
+}
+
+.practice-game-mode__objective-panel small,
+.practice-game-mode__objective-panel p {
+  color: color-mix(in srgb, var(--text-inverse) var(--mix-74), transparent);
+}
+
+.practice-game-mode__objective-panel p {
+  margin: var(--size-10) 0 0;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.practice-game-mode--mission .practice-game-mode__coach-line,
+.practice-game-mode--mission .practice-game-mode__scene-head,
 .practice-game-mode--mission .practice-game-mode__scene-caption,
-.practice-game-mode--mission .practice-game-mode__sheet-head {
+.practice-game-mode--mission .practice-game-mode__sheet-head,
+.practice-game-mode--mission .practice-game-mode__scene-bubble {
   display: none;
 }
 
-.practice-game-mode--mission .practice-game-mode__scene-bubble,
-.practice-game-mode--mission .practice-game-mode__scene-coach {
-  top: 40%;
-  background: color-mix(in srgb, var(--surface-code) var(--mix-26), transparent);
-  backdrop-filter: blur(var(--size-10));
-}
-
-.practice-game-mode--mission .practice-game-mode__coach-line {
-  position: absolute;
-  left: 50%;
-  top: 14%;
-  z-index: var(--layer-raised);
-  transform: translateX(-50%);
-  width: min(62vw, var(--size-620));
-  border: none;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface-base) var(--mix-14), transparent);
-  box-shadow: 0 var(--size-10) var(--size-24) color-mix(in srgb, var(--surface-code) var(--mix-26), transparent);
-}
-
 .practice-game-mode--mission .practice-game-mode__sheet {
-  left: 50%;
-  right: auto;
-  bottom: clamp(var(--size-24), 5vh, var(--size-52));
-  width: min(86vw, var(--size-960));
-  transform: translateX(-50%);
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-}
-
-.practice-game-mode__dimension-defense {
-  width: min(100%, var(--size-960));
-  display: grid;
-  gap: var(--size-10);
-  justify-self: center;
+  left: auto;
+  right: clamp(var(--size-18), 3vw, var(--size-48));
+  bottom: clamp(var(--size-18), 4vh, var(--size-48));
+  width: min(46vw, var(--size-590));
+  min-height: auto;
+  transform: none;
+  padding: var(--size-16);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-base) var(--mix-16), transparent);
+  border-radius: var(--size-24);
+  background: var(--battle-panel-strong);
+  box-shadow: 0 var(--size-18) var(--size-42) color-mix(in srgb, var(--surface-code) var(--mix-42), transparent);
   color: var(--text-inverse);
 }
 
-.practice-game-mode__dimension-defense-head,
-.practice-game-mode__dimension-defense-row {
-  display: flex;
-  align-items: center;
+.practice-game-mode__dimension-defense {
+  display: grid;
   gap: var(--size-8);
 }
 
 .practice-game-mode__dimension-defense-head {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   font-size: var(--size-13);
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .practice-game-mode__dimension-defense-row {
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--size-8);
 }
 
 .practice-game-mode__dimension-chip {
-  min-width: var(--size-120);
-  padding: var(--size-8) var(--size-10);
+  min-height: var(--size-78);
+  padding: var(--size-8);
   border-radius: var(--size-14);
-  background: color-mix(in srgb, var(--surface-code) var(--mix-52), transparent);
-  box-shadow: inset 0 0 0 var(--size-1) color-mix(in srgb, var(--surface-base) var(--mix-10), transparent);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-9), transparent);
+  border: var(--size-1) solid color-mix(in srgb, var(--surface-base) var(--mix-14), transparent);
   display: grid;
-  gap: var(--size-2);
+  justify-items: center;
+  align-content: center;
+  gap: var(--size-3);
+  text-align: center;
 }
 
-.practice-game-mode__dimension-chip small {
-  color: color-mix(in srgb, var(--text-inverse) var(--mix-68), transparent);
+.practice-game-mode__dimension-chip-core {
+  width: var(--size-22);
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-22), transparent);
+}
+
+.practice-game-mode__dimension-chip.is-active {
+  border-color: color-mix(in srgb, var(--warning) var(--mix-62), transparent);
+  background: color-mix(in srgb, var(--warning) var(--mix-18), transparent);
+}
+
+.practice-game-mode__dimension-chip.is-active .practice-game-mode__dimension-chip-core,
+.practice-game-mode__dimension-chip.is-passed .practice-game-mode__dimension-chip-core {
+  background: linear-gradient(180deg, var(--warning), var(--accent));
+  box-shadow: 0 0 var(--size-16) var(--battle-glow);
+}
+
+.practice-game-mode__dimension-chip.is-passed {
+  border-color: color-mix(in srgb, var(--success) var(--mix-42), transparent);
+}
+
+.practice-game-mode__dimension-chip strong {
+  font-size: var(--size-12);
+  line-height: 1.2;
 }
 
 .practice-game-mode--mission .practice-game-mode__task,
 .practice-game-mode--mission .practice-game-speaking {
   width: 100%;
   display: grid;
-  justify-items: center;
-  gap: var(--size-14);
+  gap: var(--size-12);
 }
 
-.practice-game-mode--mission .practice-game-speaking__status {
-  padding: var(--size-10) var(--size-18);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface-code) var(--mix-44), transparent);
-  box-shadow: 0 var(--size-10) var(--size-24) color-mix(in srgb, var(--surface-code) var(--mix-28), transparent);
+.practice-game-mode--mission .practice-game-mode__task.is-spelling {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
 }
 
-.practice-game-mode--mission .practice-game-speaking p {
-  width: min(100%, var(--size-760));
-  padding: 0 var(--size-16);
-  text-align: left;
-  text-shadow: 0 var(--size-2) var(--size-10) color-mix(in srgb, var(--surface-code) var(--mix-76), transparent);
-}
-
-.practice-game-mode--mission .practice-game-speaking__transcript,
-.practice-game-mode--mission .practice-game-mode__example-sentence {
-  width: min(100%, var(--size-860));
-  min-height: var(--size-72);
-  border-radius: var(--size-24);
-  background: color-mix(in srgb, var(--surface-code) var(--mix-56), transparent);
-  box-shadow: 0 var(--size-12) var(--size-26) color-mix(in srgb, var(--surface-code) var(--mix-30), transparent);
+.practice-game-mode--mission .practice-game-mode__task.is-pronunciation {
+  justify-items: stretch;
 }
 
 .practice-game-mode--mission .practice-game-mode__input-row {
-  width: min(100%, var(--size-860));
-  grid-template-columns: minmax(0, 1fr) minmax(var(--size-132), auto);
-}
-
-.practice-game-mode--mission .practice-game-mode__action {
-  min-width: min(var(--size-280), 100%);
-  border-radius: var(--radius-pill);
+  grid-template-columns: minmax(0, 1fr) minmax(var(--size-112), auto);
 }
 
 .practice-game-mode--mission .practice-game-mode__choice-grid {
-  width: min(100%, var(--size-960));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@media (max-width: 900px) {
-  .practice-game-mode--mission .practice-game-mode__scene-bubble,
-  .practice-game-mode--mission .practice-game-mode__scene-coach {
-    top: 34%;
+.practice-game-mode--mission .practice-game-mode__choice,
+.practice-game-mode--mission .practice-game-mode__input,
+.practice-game-mode--mission .practice-game-speaking__transcript,
+.practice-game-mode--mission .practice-game-mode__example-sentence {
+  background: color-mix(in srgb, var(--surface-base) var(--mix-10), transparent);
+  border-color: color-mix(in srgb, var(--surface-base) var(--mix-18), transparent);
+  box-shadow: inset 0 0 0 var(--size-1) color-mix(in srgb, var(--surface-code) var(--mix-24), transparent);
+}
+
+.practice-game-mode--mission .practice-game-mode__choice {
+  min-height: var(--size-82);
+  border-radius: var(--size-16);
+}
+
+.practice-game-mode--mission .practice-game-mode__choice.is-selected {
+  border-color: color-mix(in srgb, var(--warning) var(--mix-68), transparent);
+  background: color-mix(in srgb, var(--warning) var(--mix-18), transparent);
+}
+
+.practice-game-mode--mission .practice-game-mode__action {
+  min-height: var(--size-48);
+  border-radius: var(--size-14);
+  box-shadow: 0 var(--size-8) var(--size-18) color-mix(in srgb, var(--surface-code) var(--mix-28), transparent);
+}
+
+.practice-game-mode--mission .practice-game-speaking__status,
+.practice-game-mode--mission .practice-game-speaking__transcript {
+  justify-self: stretch;
+}
+
+@media (max-width: 1080px) {
+  .practice-game-mode__threat-route {
+    right: clamp(var(--size-24), 5vw, var(--size-80));
+    bottom: 34vh;
   }
 
-  .practice-game-mode--mission .practice-game-mode__coach-line {
-    top: 12%;
-    width: calc(100vw - var(--size-24));
-    border-radius: var(--size-20);
+  .practice-game-mode__objective-panel {
+    display: none;
   }
 
-  .practice-game-mode--mission .practice-game-mode__input-row {
+  .practice-game-mode--mission .practice-game-mode__sheet {
+    left: var(--size-16);
+    right: var(--size-16);
+    width: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .practice-game-mode--mission {
+    overflow: auto;
+  }
+
+  .practice-game-mode__battle-hud {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .practice-game-mode__wave-meter,
+  .practice-game-mode__boss-health {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
+  .practice-game-mode__threat-route {
+    left: var(--size-12);
+    right: var(--size-12);
+    top: 20vh;
+    bottom: 48vh;
+  }
+
+  .practice-game-mode__enemy-token.is-front {
+    left: 36%;
+    top: 30%;
+  }
+
+  .practice-game-mode__enemy-token.is-back,
+  .practice-game-mode__tower-slot.is-right {
+    display: none;
+  }
+
+  .practice-game-mode__dimension-defense-row {
+    grid-template-columns: repeat(5, minmax(var(--size-64), 1fr));
+    overflow-x: auto;
+  }
+
+  .practice-game-mode--mission .practice-game-mode__task.is-spelling,
+  .practice-game-mode--mission .practice-game-mode__input-row,
+  .practice-game-mode--mission .practice-game-mode__choice-grid {
     grid-template-columns: 1fr;
-  }
-
-  .practice-game-mode__dimension-chip {
-    flex: 1 1 var(--size-140);
   }
 }
