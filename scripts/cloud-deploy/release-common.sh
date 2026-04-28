@@ -215,7 +215,16 @@ install_release_python_dependencies() {
 
 build_release_frontend() {
   local release_dir="${1:?release dir is required}"
+  local asset_base=""
   ensure_node_runtime
+  set -a
+  [[ -f "${BACKEND_ENV_FILE}" ]] && source "${BACKEND_ENV_FILE}"
+  [[ -f "${MICROSERVICES_ENV_FILE}" ]] && source "${MICROSERVICES_ENV_FILE}"
+  set +a
+  asset_base="${FRONTEND_ASSET_BASE_URL:-${VITE_ASSET_BASE_URL:-}}"
+  if [[ -z "${asset_base}" && "${FRONTEND_ASSET_OSS_ENABLED:-false}" =~ ^(1|true|TRUE|yes|YES)$ && -n "${FRONTEND_ASSET_OSS_PUBLIC_BASE_URL:-}" ]]; then
+    asset_base="${FRONTEND_ASSET_OSS_PUBLIC_BASE_URL%/}/${FRONTEND_ASSET_OSS_PREFIX:-projects/ielts-vocab/frontend-assets}/"
+  fi
   log "Installing workspace dependencies under deploy resource limits"
   run_deploy_job "node-install" env \
     CI=1 \
@@ -224,9 +233,12 @@ build_release_frontend() {
   log "Building frontend under deploy resource limits"
   run_deploy_job "frontend-build" env \
     CI=1 \
+    FRONTEND_ASSET_BASE_URL="${asset_base}" \
+    VITE_ASSET_BASE_URL="${asset_base}" \
     npm_config_jobs="${DEPLOY_BUILD_NPM_JOBS}" \
     NODE_OPTIONS="--max-old-space-size=${DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB}" \
     pnpm --dir "${release_dir}" build
+  upload_frontend_assets_to_oss "${release_dir}" "${asset_base}"
 }
 
 install_release_dependencies() {
@@ -257,6 +269,17 @@ release_has_prebuilt_frontend() {
   local release_dir="${1:?release dir is required}"
   [[ -d "${release_dir}/dist" ]] || return 1
   [[ "$(read_release_artifact_value "${release_dir}" "prebuilt_dist")" == "true" ]]
+}
+
+upload_frontend_assets_to_oss() {
+  local release_dir="${1:?release dir is required}"
+  local asset_base="${2:-}"
+  log "Uploading frontend assets to OSS when configured"
+  run_deploy_job "frontend-asset-oss" env BACKEND_ENV_FILE="${BACKEND_ENV_FILE}" \
+    FRONTEND_ASSET_BASE_URL="${asset_base}" MICROSERVICES_ENV_FILE="${MICROSERVICES_ENV_FILE}" \
+    PYTHONPATH="${release_dir}/packages/platform-sdk:${PYTHONPATH:-}" \
+    "${VENV_DIR}/bin/python" "${release_dir}/scripts/upload-frontend-assets-to-oss.py" \
+    "${release_dir}" --backend-env-file "${BACKEND_ENV_FILE}" --env-file "${MICROSERVICES_ENV_FILE}"
 }
 
 hydrate_release_git_index() {

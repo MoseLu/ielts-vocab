@@ -10,6 +10,15 @@ const SPEECH_PROXY_TARGET =
   process.env.VITE_SPEECH_PROXY_TARGET?.trim() || 'http://localhost:5001'
 const rewriteSpeechSocketPath = (path: string) => path.replace(SPEECH_PROXY_PATH, '/socket.io')
 
+function resolveAssetBaseUrl() {
+  const configured =
+    process.env.VITE_ASSET_BASE_URL?.trim() ||
+    process.env.FRONTEND_ASSET_BASE_URL?.trim() ||
+    ''
+  if (!configured) return '/'
+  return configured.endsWith('/') ? configured : `${configured}/`
+}
+
 function buildProxyConfig() {
   return {
     '/api': {
@@ -37,6 +46,7 @@ function buildProxyConfig() {
 export default defineConfig({
   plugins: [react()],
   root: __dirname,
+  base: resolveAssetBaseUrl(),
   publicDir: 'assets',
   css: {
     preprocessorOptions: {
