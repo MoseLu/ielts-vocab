@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from models import UserGameEnergyState, UserGameWrongWord, UserWordMasteryState, UserWrongWord
 
 
@@ -221,8 +223,12 @@ def test_failed_dimension_does_not_block_next_unstarted_dimension(client):
     assert 'recognition' in next_node['failedDimensions']
 
 
-def test_game_theme_catalog_covers_paid_books_and_static_asset_contract(client):
+def test_game_theme_catalog_covers_paid_books_and_oss_asset_contract(client, monkeypatch):
     _register_and_login(client, username='game-theme-user')
+    monkeypatch.setattr(
+        'services.game_theme_catalog_service.resolve_object_metadata',
+        lambda **kwargs: SimpleNamespace(signed_url=f"https://oss.example/{kwargs['object_key']}"),
+    )
 
     response = client.get('/api/ai/practice/game/themes')
 
@@ -241,10 +247,11 @@ def test_game_theme_catalog_covers_paid_books_and_static_asset_contract(client):
         assert theme['chapters']
         assert len(theme['chapters']) <= payload['pageSize']
         assert theme['totalChapters'] >= len(theme['chapters'])
-        assert theme['assets']['desktopMap'].startswith('/game/campaign-v2/themes/')
-        assert theme['assets']['mobileMap'].startswith('/game/campaign-v2/themes/')
-        assert theme['assets']['selectCard'].startswith('/game/campaign-v2/themes/')
-        assert theme['assets']['emptyState'].startswith('/game/campaign-v2/themes/')
+        for asset_url in theme['assets'].values():
+            assert asset_url.startswith('https://oss.example/projects/ielts-vocab/game-assets/')
+            assert '/game/campaign-v2/' not in asset_url
+        for asset_url in theme['chapters'][0]['assets'].values():
+            assert asset_url.startswith('https://oss.example/projects/ielts-vocab/game-assets/')
 
 
 def test_game_state_accepts_theme_scope_fields(client):

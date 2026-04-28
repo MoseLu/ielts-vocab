@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from math import ceil
 
+from platform_sdk.storage.aliyun_oss import env_int, join_object_key, resolve_object_metadata
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_support import load_scope_vocabulary, normalize_optional_text, normalize_word_text
 
 SOURCE_BOOK_IDS = ('ielts_reading_premium', 'ielts_listening_premium')
 GAME_THEME_PAGE_SIZE = 8
 THEME_CHAPTER_WORD_COUNT = 64
+GAME_THEME_ASSET_OBJECT_PREFIX = 'projects/ielts-vocab/game-assets'
+GAME_THEME_ASSET_BUCKET_ENV = 'AXI_ALIYUN_OSS_PUBLIC_BUCKET'
 
 GAME_THEME_DEFINITIONS = (
     {
@@ -70,15 +74,48 @@ GAME_THEME_DEFINITIONS = (
 )
 
 
+def _game_theme_asset_prefix() -> str:
+    return (os.environ.get('GAME_THEME_ASSET_OSS_PREFIX') or GAME_THEME_ASSET_OBJECT_PREFIX).strip().strip('/')
+
+
+def _game_theme_asset_bucket_env() -> str:
+    configured = (os.environ.get('GAME_THEME_ASSET_OSS_BUCKET_ENV') or GAME_THEME_ASSET_BUCKET_ENV).strip()
+    return configured or GAME_THEME_ASSET_BUCKET_ENV
+
+
+def _game_asset_url(relative_path: str) -> str:
+    asset_path = relative_path.strip('/')
+    metadata = resolve_object_metadata(
+        object_key=join_object_key(prefix=_game_theme_asset_prefix(), file_name=asset_path),
+        file_name=asset_path.rsplit('/', 1)[-1],
+        bucket_env=_game_theme_asset_bucket_env(),
+        signed_url_expires_seconds=env_int('GAME_THEME_ASSET_OSS_SIGNED_URL_EXPIRES_SECONDS', 3600),
+        metadata_cache_ttl_seconds=env_int('GAME_THEME_ASSET_OSS_METADATA_CACHE_TTL_SECONDS', 300),
+    )
+    return metadata.signed_url if metadata is not None else ''
+
+
+def _theme_asset(theme_id: str, path: str) -> str:
+    return _game_asset_url(f'campaign-v2/themes/{theme_id}/{path}')
+
+
 def _theme_assets(theme_id: str) -> dict:
-    base = f'/game/campaign-v2/themes/{theme_id}'
     return {
-        'desktopMap': f'{base}/desktop/map.png',
-        'mobileMap': f'{base}/mobile/map.png',
-        'selectCard': f'{base}/desktop/select-card.png',
-        'emptyState': f'{base}/desktop/empty-state.png',
-        'bossGate': f'{base}/desktop/boss-gate.png',
-        'rewardNode': f'{base}/desktop/reward-node.png',
+        'desktopMap': _theme_asset(theme_id, 'desktop/map.png'),
+        'mobileMap': _theme_asset(theme_id, 'mobile/map.png'),
+        'selectCard': _theme_asset(theme_id, 'desktop/select-card.png'),
+        'emptyState': _theme_asset(theme_id, 'desktop/empty-state.png'),
+        'bossGate': _theme_asset(theme_id, 'desktop/boss-gate.png'),
+        'rewardNode': _theme_asset(theme_id, 'desktop/reward-node.png'),
+    }
+
+
+def _chapter_assets(theme_id: str) -> dict:
+    return {
+        'node': _theme_asset(theme_id, 'desktop/chapter-node.png'),
+        'lockedNode': _theme_asset(theme_id, 'desktop/chapter-node-locked.png'),
+        'currentNode': _theme_asset(theme_id, 'desktop/chapter-node-current.png'),
+        'completedNode': _theme_asset(theme_id, 'desktop/chapter-node-completed.png'),
     }
 
 
@@ -138,12 +175,7 @@ def _chapter_summary(theme: dict, chapter_index: int, chapter_words: list[dict])
         'page': ceil(chapter_number / GAME_THEME_PAGE_SIZE),
         'bookIds': book_ids,
         'sourceChapterCount': len(source_chapters),
-        'assets': {
-            'node': f"/game/campaign-v2/themes/{theme['id']}/desktop/chapter-node.png",
-            'lockedNode': f"/game/campaign-v2/themes/{theme['id']}/desktop/chapter-node-locked.png",
-            'currentNode': f"/game/campaign-v2/themes/{theme['id']}/desktop/chapter-node-current.png",
-            'completedNode': f"/game/campaign-v2/themes/{theme['id']}/desktop/chapter-node-completed.png",
-        },
+        'assets': {},
     }
 
 
@@ -170,7 +202,9 @@ def _compiled_theme_data() -> dict:
 
 
 def _public_chapter(chapter: dict) -> dict:
-    return {key: value for key, value in chapter.items() if key != 'words'}
+    payload = {key: value for key, value in chapter.items() if key != 'words'}
+    payload['assets'] = _chapter_assets(str(payload.get('themeId') or ''))
+    return payload
 
 
 def _safe_page(value) -> int:

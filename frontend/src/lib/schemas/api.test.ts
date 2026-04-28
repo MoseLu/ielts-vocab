@@ -167,10 +167,10 @@ describe('GameCampaignStateSchema', () => {
         wordCount: 930,
         totalChapters: 8,
         assets: {
-          desktopMap: '/game/campaign-v2/themes/science-tech/desktop/map.png',
-          mobileMap: '/game/campaign-v2/themes/science-tech/mobile/map.png',
-          selectCard: '/game/campaign-v2/themes/science-tech/desktop/select-card.png',
-          emptyState: '/game/campaign-v2/themes/science-tech/desktop/empty-state.png',
+          desktopMap: 'https://oss.example/game-assets/campaign-v2/themes/science-tech/desktop/map.png',
+          mobileMap: 'https://oss.example/game-assets/campaign-v2/themes/science-tech/mobile/map.png',
+          selectCard: 'https://oss.example/game-assets/campaign-v2/themes/science-tech/desktop/select-card.png',
+          emptyState: 'https://oss.example/game-assets/campaign-v2/themes/science-tech/desktop/empty-state.png',
         },
       },
       themeChapter: {
@@ -198,7 +198,7 @@ describe('GameCampaignStateSchema', () => {
 
     expect(parsed.success).toBe(true)
     expect(parsed.data?.scope.themeId).toBe('science-tech')
-    expect(parsed.data?.theme?.assets.desktopMap).toContain('/campaign-v2/')
+    expect(parsed.data?.theme?.assets.desktopMap).toContain('https://oss.example/')
     expect(parsed.data?.themeProgress?.pageSize).toBe(8)
   })
 })
@@ -227,10 +227,10 @@ describe('GameThemeCatalogSchema', () => {
             },
           ],
           assets: {
-            desktopMap: '/game/campaign-v2/themes/study-campus/desktop/map.png',
-            mobileMap: '/game/campaign-v2/themes/study-campus/mobile/map.png',
-            selectCard: '/game/campaign-v2/themes/study-campus/desktop/select-card.png',
-            emptyState: '/game/campaign-v2/themes/study-campus/desktop/empty-state.png',
+            desktopMap: 'https://oss.example/game-assets/campaign-v2/themes/study-campus/desktop/map.png',
+            mobileMap: 'https://oss.example/game-assets/campaign-v2/themes/study-campus/mobile/map.png',
+            selectCard: 'https://oss.example/game-assets/campaign-v2/themes/study-campus/desktop/select-card.png',
+            emptyState: 'https://oss.example/game-assets/campaign-v2/themes/study-campus/desktop/empty-state.png',
           },
         },
       ],
