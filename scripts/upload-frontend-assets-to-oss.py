@@ -61,6 +61,7 @@ def _object_acl() -> str:
 def _prepared_body_and_headers(path: Path, body: bytes) -> tuple[bytes, dict[str, str]]:
     headers = {
         'Content-Type': _content_type(path),
+        'Content-Disposition': f'inline; filename="{path.name}"',
         'Cache-Control': 'public, immutable',
     }
     if path.suffix.lower() in GZIP_SUFFIXES:

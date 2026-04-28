@@ -56,6 +56,8 @@ def test_frontend_asset_upload_gzips_text_assets(tmp_path, monkeypatch):
     css_object = fake_bucket.objects['projects/ielts-vocab/frontend-assets/assets/index.css']
     assert js_object['headers']['Content-Encoding'] == 'gzip'
     assert css_object['headers']['Content-Encoding'] == 'gzip'
+    assert js_object['headers']['Content-Disposition'] == 'inline; filename="index.js"'
+    assert css_object['headers']['Content-Disposition'] == 'inline; filename="index.css"'
     assert gzip.decompress(js_object['body']) == js_body
     assert gzip.decompress(css_object['body']) == css_body
 
@@ -84,6 +86,9 @@ def test_frontend_asset_upload_includes_prd_ui_templates(tmp_path, monkeypatch):
     ]
     assert ui_object['body'] == template_body
     assert ui_object['headers']['x-oss-object-acl'] == 'public-read'
+    assert ui_object['headers']['Content-Disposition'] == (
+        'inline; filename="word-chain-map-text-safe.png"'
+    )
 
 
 def test_vite_supports_configurable_frontend_asset_base_url():
