@@ -5,6 +5,15 @@ export const prdUiAsset = {
     classroomBlur: '/ui/background/classroom_blur.png',
     resultDimOverlay: '/ui/background/result_dim_overlay.png',
   },
+  templates: {
+    learningCenter: '/ui/templates/learning-center-text-safe.png',
+    wordChainMap: '/ui/templates/word-chain-map-text-safe.png',
+    mobileWordChainMap: '/ui/templates/mobile-word-chain-map-text-safe.png',
+    wordMission: '/ui/templates/word-mission-text-safe.png',
+    refillState: '/ui/templates/refill-state-text-safe.png',
+    stageSettlement: '/ui/templates/stage-settlement-text-safe.png',
+    mobileWordMission: '/ui/templates/mobile-word-mission-text-safe.png',
+  },
   hud: {
     avatarFrame: '/ui/hud/avatar_frame.png',
     resourcePill: '/ui/hud/resource_pill.png',

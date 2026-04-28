@@ -1,0 +1,110 @@
+{
+  "learningCenter": {
+    "image": "/ui/templates/learning-center-text-safe.png",
+    "naturalSize": { "width": 1586, "height": 992 },
+    "slots": [
+      { "id": "learningCenter.hero", "x": 470, "y": 116, "width": 650, "height": 134 },
+      { "id": "learningCenter.todayPlan", "x": 224, "y": 318, "width": 512, "height": 414 },
+      { "id": "learningCenter.actions", "x": 826, "y": 332, "width": 472, "height": 364 }
+    ]
+  },
+  "wordChainMap": {
+    "image": "/ui/templates/word-chain-map-text-safe.png",
+    "naturalSize": { "width": 1586, "height": 992 },
+    "slots": [
+      { "id": "map.hud.level", "x": 152, "y": 22, "width": 164, "height": 42 },
+      { "id": "map.hud.energy", "x": 772, "y": 28, "width": 150, "height": 32 },
+      { "id": "map.hud.coins", "x": 992, "y": 28, "width": 142, "height": 32 },
+      { "id": "map.hud.diamonds", "x": 1196, "y": 28, "width": 144, "height": 32 },
+      { "id": "map.title", "x": 474, "y": 142, "width": 464, "height": 82 },
+      { "id": "map.word.1", "x": 67, "y": 463, "width": 140, "height": 42 },
+      { "id": "map.word.2", "x": 286, "y": 461, "width": 156, "height": 42 },
+      { "id": "map.word.3", "x": 506, "y": 464, "width": 150, "height": 42 },
+      { "id": "map.word.4", "x": 687, "y": 467, "width": 150, "height": 42 },
+      { "id": "map.word.5", "x": 866, "y": 467, "width": 150, "height": 42 },
+      { "id": "map.boss", "x": 1045, "y": 476, "width": 150, "height": 42 },
+      { "id": "map.refill", "x": 493, "y": 670, "width": 150, "height": 42 },
+      { "id": "map.reward", "x": 1016, "y": 732, "width": 150, "height": 42 },
+      { "id": "map.side.title", "x": 1288, "y": 220, "width": 226, "height": 42 },
+      { "id": "map.side.task", "x": 1332, "y": 302, "width": 182, "height": 48 },
+      { "id": "map.side.word", "x": 1332, "y": 382, "width": 182, "height": 48 },
+      { "id": "map.side.segment", "x": 1332, "y": 462, "width": 182, "height": 48 },
+      { "id": "map.side.total", "x": 1332, "y": 542, "width": 182, "height": 48 },
+      { "id": "map.side.dimensions", "x": 1288, "y": 606, "width": 230, "height": 42 },
+      { "id": "map.side.progress", "x": 1292, "y": 630, "width": 222, "height": 8, "allowOverlap": true },
+      { "id": "map.action", "x": 1272, "y": 666, "width": 240, "height": 72, "allowOverlap": true },
+      { "id": "map.bottom.word", "x": 236, "y": 924, "width": 458, "height": 38 },
+      { "id": "map.bottom.progress", "x": 892, "y": 924, "width": 456, "height": 38 }
+    ]
+  },
+  "mobileWordChainMap": {
+    "image": "/ui/templates/mobile-word-chain-map-text-safe.png",
+    "naturalSize": { "width": 853, "height": 1844 },
+    "slots": [
+      { "id": "map.hud.level", "x": 70, "y": 32, "width": 180, "height": 56 },
+      { "id": "map.hud.energy", "x": 475, "y": 32, "width": 130, "height": 50 },
+      { "id": "map.hud.coins", "x": 100, "y": 98, "width": 160, "height": 48 },
+      { "id": "map.hud.diamonds", "x": 306, "y": 98, "width": 160, "height": 48 },
+      { "id": "map.title", "x": 116, "y": 190, "width": 620, "height": 120 },
+      { "id": "map.word.1", "x": 58, "y": 570, "width": 220, "height": 54 },
+      { "id": "map.word.2", "x": 350, "y": 610, "width": 220, "height": 54 },
+      { "id": "map.word.3", "x": 290, "y": 770, "width": 220, "height": 54 },
+      { "id": "map.word.4", "x": 510, "y": 930, "width": 220, "height": 54 },
+      { "id": "map.word.5", "x": 250, "y": 1080, "width": 220, "height": 54 },
+      { "id": "map.boss", "x": 500, "y": 1215, "width": 220, "height": 54 },
+      { "id": "map.refill", "x": 105, "y": 1255, "width": 220, "height": 54 },
+      { "id": "map.reward", "x": 380, "y": 1380, "width": 220, "height": 54, "allowOverlap": true },
+      { "id": "map.side.title", "x": 96, "y": 1328, "width": 660, "height": 60 },
+      { "id": "map.side.task", "x": 96, "y": 1398, "width": 315, "height": 68 },
+      { "id": "map.side.word", "x": 442, "y": 1398, "width": 315, "height": 68 },
+      { "id": "map.side.segment", "x": 96, "y": 1480, "width": 315, "height": 68 },
+      { "id": "map.side.total", "x": 442, "y": 1480, "width": 315, "height": 68 },
+      { "id": "map.side.dimensions", "x": 96, "y": 1562, "width": 315, "height": 40 },
+      { "id": "map.side.progress", "x": 442, "y": 1576, "width": 315, "height": 10, "allowOverlap": true },
+      { "id": "map.action", "x": 96, "y": 1710, "width": 660, "height": 92, "allowOverlap": true },
+      { "id": "map.bottom.word", "x": 96, "y": 1616, "width": 270, "height": 44 },
+      { "id": "map.bottom.progress", "x": 380, "y": 1616, "width": 376, "height": 44 }
+    ]
+  },
+  "wordMission": {
+    "image": "/ui/templates/word-mission-text-safe.png",
+    "naturalSize": { "width": 1586, "height": 992 },
+    "slots": [
+      { "id": "mission.hud", "x": 32, "y": 26, "width": 1488, "height": 68 },
+      { "id": "mission.route", "x": 96, "y": 168, "width": 880, "height": 458, "allowOverlap": true },
+      { "id": "mission.objective", "x": 432, "y": 292, "width": 720, "height": 174 },
+      { "id": "mission.answerPanel", "x": 64, "y": 650, "width": 1458, "height": 300 }
+    ]
+  },
+  "refillState": {
+    "image": "/ui/templates/refill-state-text-safe.png",
+    "naturalSize": { "width": 1586, "height": 992 },
+    "slots": [
+      { "id": "refill.hud", "x": 32, "y": 26, "width": 1488, "height": 68 },
+      { "id": "refill.list", "x": 142, "y": 196, "width": 650, "height": 540 },
+      { "id": "refill.objective", "x": 118, "y": 760, "width": 560, "height": 126 },
+      { "id": "refill.answerPanel", "x": 870, "y": 620, "width": 590, "height": 292 },
+      { "id": "refill.action", "x": 1012, "y": 802, "width": 320, "height": 86, "allowOverlap": true }
+    ]
+  },
+  "stageSettlement": {
+    "image": "/ui/templates/stage-settlement-text-safe.png",
+    "naturalSize": { "width": 1586, "height": 992 },
+    "slots": [
+      { "id": "settlement.medal", "x": 670, "y": 154, "width": 250, "height": 250 },
+      { "id": "settlement.copy", "x": 470, "y": 420, "width": 650, "height": 166 },
+      { "id": "settlement.rewards", "x": 496, "y": 620, "width": 598, "height": 96 },
+      { "id": "settlement.actions", "x": 470, "y": 764, "width": 650, "height": 88 }
+    ]
+  },
+  "mobileWordMission": {
+    "image": "/ui/templates/mobile-word-mission-text-safe.png",
+    "naturalSize": { "width": 853, "height": 1844 },
+    "slots": [
+      { "id": "mobileMission.hud", "x": 30, "y": 28, "width": 790, "height": 122 },
+      { "id": "mobileMission.route", "x": 54, "y": 234, "width": 744, "height": 604 },
+      { "id": "mobileMission.objective", "x": 58, "y": 918, "width": 736, "height": 254 },
+      { "id": "mobileMission.answerPanel", "x": 58, "y": 1260, "width": 736, "height": 482 }
+    ]
+  }
+}

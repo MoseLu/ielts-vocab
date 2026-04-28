@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "pnpm run verify:repo-guards && vite build",
     "check:file-lines": "pnpm --dir .. check:file-lines",
+    "check:game-template-layout": "node scripts/validate-game-template-layout.mjs",
     "check:design-tokens": "pnpm --dir .. check:design-tokens",
     "check:style-discipline": "pnpm --dir .. check:style-discipline",
     "lint": "eslint .. --config ./eslint.config.mjs --max-warnings=0",
@@ -16,7 +17,7 @@
     "test:coverage": "pnpm run verify:repo-guards && vitest run --coverage --coverage.thresholds.lines=55",
     "test:watch": "pnpm run verify:repo-guards && vitest",
     "test:e2e": "playwright test",
-    "verify:repo-guards": "pnpm run check:file-lines && pnpm run check:design-tokens && pnpm run check:style-discipline && pnpm run lint"
+    "verify:repo-guards": "pnpm run check:file-lines && pnpm run check:game-template-layout && pnpm run check:design-tokens && pnpm run check:style-discipline && pnpm run lint"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

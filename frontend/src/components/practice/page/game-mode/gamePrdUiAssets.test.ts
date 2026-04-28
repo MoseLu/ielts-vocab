@@ -29,7 +29,7 @@ describe('PRD UI asset map', () => {
     const expectedPaths = manifest.assets.map(asset => `/ui/${asset.path}`).sort()
     const actualPaths = flattenAssetPaths(prdUiAsset).sort()
 
-    expect(manifest.assetCount).toBe(48)
+    expect(manifest.assetCount).toBe(55)
     expect(prdUiAssetList.sort()).toEqual(expectedPaths)
     expect(actualPaths).toEqual(expectedPaths)
     for (const asset of manifest.assets) {
