@@ -110,7 +110,7 @@ export function isGameTemplateDebugLayoutEnabled(): boolean {
 export function validateGameTemplateLayouts(): string[] {
   const issues: string[] = []
   for (const [layoutId, layout] of Object.entries(GAME_TEMPLATE_LAYOUTS) as Array<[GameTemplateLayoutId, GameTemplateLayout]>) {
-    if (!layout.image.startsWith('/ui/templates/')) issues.push(`${layoutId}: image must use /ui/templates`)
+    if (!layout.image.startsWith('oss:game-template:')) issues.push(`${layoutId}: image must use an OSS template key`)
     if (layout.naturalSize.width <= 0 || layout.naturalSize.height <= 0) issues.push(`${layoutId}: invalid natural size`)
     for (const requiredSlot of REQUIRED_TEMPLATE_SLOTS[layoutId]) {
       if (!layout.slots.some(slot => slot.id === requiredSlot)) issues.push(`${layoutId}: missing required slot ${requiredSlot}`)

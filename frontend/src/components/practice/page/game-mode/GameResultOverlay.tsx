@@ -2,8 +2,6 @@ import type { GameCampaignState } from '../../../../lib'
 import { gameAsset } from './gameAssets'
 import { GameTemplateDebugLayer } from './GameTemplateDebugLayer'
 import { layoutSlotStyle } from './gameTemplateLayout'
-import { prdTemplateAsset } from './GamePrdUi'
-import { prdUiAsset } from './prdUiAssets'
 
 export function GameResultOverlay({
   state,
@@ -36,19 +34,13 @@ export function GameResultOverlay({
 
   return (
     <section className={`practice-game-result is-${passed ? 'passed' : 'pending'}`} aria-label="词关结算">
-      <img
-        className="practice-game-result__dim"
-        src={prdTemplateAsset(prdUiAsset.templates.stageSettlement)}
-        alt=""
-        aria-hidden="true"
-      />
+      <span className="practice-game-result__dim" aria-hidden="true" />
       <GameTemplateDebugLayer layoutId="stageSettlement" />
       <div
         className="practice-game-result__medal practice-template-slot"
         data-layout-slot="settlement.medal"
         style={layoutSlotStyle('stageSettlement', 'settlement.medal')}
       >
-        <img className="practice-game-result__medal-frame" src={prdUiAsset.modal.goldenMedal} alt="" aria-hidden="true" />
         <img className="practice-game-result__medal-chest" src={chestAsset} alt="" aria-hidden="true" />
         <strong>{score}</strong>
       </div>
@@ -66,8 +58,8 @@ export function GameResultOverlay({
         data-layout-slot="settlement.rewards"
         style={layoutSlotStyle('stageSettlement', 'settlement.rewards')}
       >
-        <span><img src={prdUiAsset.hud.iconCoin} alt="" aria-hidden="true" />x{rewards.coins}</span>
-        <span><img src={prdUiAsset.hud.iconGem} alt="" aria-hidden="true" />x{rewards.diamonds}</span>
+        <span><img src={gameAsset.reward.coin} alt="" aria-hidden="true" />x{rewards.coins}</span>
+        <span><img src={gameAsset.reward.diamond} alt="" aria-hidden="true" />x{rewards.diamonds}</span>
         <span><img src={gameAsset.reward.exp} alt="" aria-hidden="true" />x{rewards.exp}</span>
       </div>
       <div
@@ -76,11 +68,9 @@ export function GameResultOverlay({
         style={layoutSlotStyle('stageSettlement', 'settlement.actions')}
       >
         <button type="button" onClick={onContinue}>
-          <img src={prdUiAsset.buttons.gold} alt="" aria-hidden="true" />
           <span>继续词关</span>
         </button>
         <button type="button" className="is-secondary" onClick={onBackToMap}>
-          <img src={prdUiAsset.buttons.blue} alt="" aria-hidden="true" />
           <span>回到地图</span>
         </button>
       </div>

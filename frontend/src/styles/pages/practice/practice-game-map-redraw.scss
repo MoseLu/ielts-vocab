@@ -58,7 +58,9 @@
   width: min(46%, var(--size-520));
   min-height: var(--size-78);
   padding: var(--size-11) var(--size-40) var(--size-14);
-  background: url('/game/campaign-dynamic/title_scroll_empty.png') center / 100% 100% no-repeat;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card) var(--mix-96), var(--accent)), var(--surface-card)),
+    color-mix(in srgb, var(--accent) var(--mix-16), var(--surface-card));
   filter: drop-shadow(0 var(--size-8) var(--size-14) color-mix(in srgb, var(--surface-code) var(--mix-34), transparent));
 }
 

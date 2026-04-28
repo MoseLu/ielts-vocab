@@ -213,8 +213,15 @@ export function GameMapShell({
   ]
   const canStart = Boolean(state.currentNode)
   const notice = error ?? (!canStart ? '当前没有可挑战词关。' : null)
-  const prdMapBackground = prdMapBackgroundForTheme(state.theme?.id ?? state.scope.themeId)
-  const prdMobileMapBackground = prdMobileMapBackgroundForTheme(state.theme?.id ?? state.scope.themeId)
+  const prdMapBackground = prdMapBackgroundForTheme(
+    state.theme?.id ?? state.scope.themeId,
+    state.theme?.assets.desktopMap,
+  )
+  const prdMobileMapBackground = prdMobileMapBackgroundForTheme(
+    state.theme?.id ?? state.scope.themeId,
+    state.theme?.assets.mobileMap,
+    state.theme?.assets.desktopMap,
+  )
   const currentWord = activeWord || segmentNodes.find(node => node.status === 'current')?.title || '待选择'
   const bottomProgressLabel = [
     taskFocusLabel(state),

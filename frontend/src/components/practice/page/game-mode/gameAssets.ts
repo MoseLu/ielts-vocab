@@ -3,9 +3,9 @@ export const gameAsset = {
     large: '/game/map_large.png',
     small: '/game/map_small.png',
     backgrounds: {
-      desktop: '/game/campaign-dynamic/map_background.png',
-      tablet: '/game/campaign-dynamic/map_background.png',
-      mobile: '/game/campaign-dynamic/map_background.png',
+      desktop: '/game/map_background_desktop.png',
+      tablet: '/game/map_background_tablet.png',
+      mobile: '/game/map_background_mobile.png',
     },
     layers: {
       far: '/game/map_layer_far.png',
@@ -115,36 +115,6 @@ export const gameAsset = {
     recognizing: '/game/mic_recognizing.png',
     permissionFail: '/game/mic_permission_fail.png',
     disconnected: '/game/mic_disconnected.png',
-  },
-  campaignDynamic: {
-    avatar: '/game/campaign-dynamic/avatar_portrait.png',
-    levelPlaque: '/game/campaign-dynamic/level_plaque.png',
-    titleScroll: '/game/campaign-dynamic/title_scroll_empty.png',
-    progressPanel: '/game/campaign-dynamic/progress_panel.svg',
-    actionButton: '/game/campaign-dynamic/button_action_empty.png',
-    exitButton: '/game/wuwei-transparent-v3/buttons/button_exit.png',
-    counters: {
-      energy: '/game/campaign-dynamic/counter_energy.png',
-      coin: '/game/campaign-dynamic/counter_coin.png',
-      gem: '/game/campaign-dynamic/counter_gem.png',
-    },
-    mailButton: '/game/campaign-dynamic/mail_button.png',
-    shields: {
-      blue: '/game/campaign-dynamic/shield_blue.png',
-      silver: '/game/campaign-dynamic/shield_silver.png',
-      gold: '/game/campaign-dynamic/shield_gold.png',
-    },
-    battleNodes: {
-      active: '/game/campaign-dynamic/battle_node_tower_active.png',
-      locked: '/game/campaign-dynamic/battle_node_tower_locked.png',
-      cleared: '/game/campaign-dynamic/battle_node_tower_cleared.png',
-    },
-    treasureChestBase: '/game/campaign-dynamic/treasure_chest.png',
-    treasureChest: '/game/campaign-dynamic/treasure_chest_counter_frame.svg',
-    starFull: '/game/campaign-dynamic/star_full.png',
-    starEmpty: '/game/campaign-dynamic/star_empty.png',
-    bossBadge: '/game/campaign-dynamic/boss_badge.png',
-    recoveryBadge: '/game/campaign-dynamic/recovery_badge.png',
   },
 } as const
 

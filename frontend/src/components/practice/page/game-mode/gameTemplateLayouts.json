@@ -1,6 +1,6 @@
 {
   "learningCenter": {
-    "image": "/ui/templates/learning-center-text-safe.png",
+    "image": "oss:game-template:learning-center",
     "naturalSize": { "width": 1586, "height": 992 },
     "slots": [
       { "id": "learningCenter.hero", "x": 470, "y": 116, "width": 650, "height": 134 },
@@ -9,7 +9,7 @@
     ]
   },
   "wordChainMap": {
-    "image": "/ui/templates/word-chain-map-text-safe.png",
+    "image": "oss:game-template:word-chain-map",
     "naturalSize": { "width": 1586, "height": 992 },
     "slots": [
       { "id": "map.hud.level", "x": 152, "y": 22, "width": 164, "height": 42 },
@@ -38,7 +38,7 @@
     ]
   },
   "mobileWordChainMap": {
-    "image": "/ui/templates/mobile-word-chain-map-text-safe.png",
+    "image": "oss:game-template:mobile-word-chain-map",
     "naturalSize": { "width": 853, "height": 1844 },
     "slots": [
       { "id": "map.hud.level", "x": 70, "y": 32, "width": 180, "height": 56 },
@@ -67,7 +67,7 @@
     ]
   },
   "wordMission": {
-    "image": "/ui/templates/word-mission-text-safe.png",
+    "image": "oss:game-template:word-mission",
     "naturalSize": { "width": 1586, "height": 992 },
     "slots": [
       { "id": "mission.hud", "x": 32, "y": 26, "width": 1488, "height": 68 },
@@ -77,7 +77,7 @@
     ]
   },
   "refillState": {
-    "image": "/ui/templates/refill-state-text-safe.png",
+    "image": "oss:game-template:refill-state",
     "naturalSize": { "width": 1586, "height": 992 },
     "slots": [
       { "id": "refill.hud", "x": 32, "y": 26, "width": 1488, "height": 68 },
@@ -88,7 +88,7 @@
     ]
   },
   "stageSettlement": {
-    "image": "/ui/templates/stage-settlement-text-safe.png",
+    "image": "oss:game-template:stage-settlement",
     "naturalSize": { "width": 1586, "height": 992 },
     "slots": [
       { "id": "settlement.medal", "x": 670, "y": 154, "width": 250, "height": 250 },
@@ -98,7 +98,7 @@
     ]
   },
   "mobileWordMission": {
-    "image": "/ui/templates/mobile-word-mission-text-safe.png",
+    "image": "oss:game-template:mobile-word-mission",
     "naturalSize": { "width": 853, "height": 1844 },
     "slots": [
       { "id": "mobileMission.hud", "x": 30, "y": 28, "width": 790, "height": 122 },

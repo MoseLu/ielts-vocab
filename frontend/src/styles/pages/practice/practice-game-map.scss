@@ -114,7 +114,9 @@
   width: min(42%, var(--size-520));
   transform: translateX(-50%);
   padding: var(--size-12) var(--size-34) var(--size-18);
-  background: url('/game/campaign-dynamic/title_scroll_empty.png') center / 100% 100% no-repeat;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-card) var(--mix-94), var(--warning)), var(--surface-card)),
+    color-mix(in srgb, var(--warning) var(--mix-18), var(--surface-card));
   display: grid;
   justify-items: center;
   gap: var(--size-2);

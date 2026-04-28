@@ -110,7 +110,7 @@
 
 .practice-game-map__start {
   border: 0;
-  background: url('/game/campaign-dynamic/button_action_empty.png') center / 100% 100% no-repeat;
+  background: linear-gradient(180deg, var(--success), color-mix(in srgb, var(--success) var(--mix-70), var(--surface-code)));
   color: color-mix(in srgb, var(--surface-code) var(--mix-88), var(--warning));
   text-shadow: 0 var(--size-1) 0 color-mix(in srgb, var(--surface-inverse) var(--mix-56), transparent);
 }

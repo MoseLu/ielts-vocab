@@ -15,15 +15,15 @@ const requiredSlots = {
   mobileWordMission: ['mobileMission.hud', 'mobileMission.objective', 'mobileMission.answerPanel'],
 }
 
-function pngSize(path) {
-  const buffer = readFileSync(path)
-  if (buffer.toString('ascii', 1, 4) !== 'PNG') throw new Error(`${path} is not a PNG`)
-  return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) }
-}
-
-function assetPath(publicPath) {
-  if (!publicPath.startsWith('/ui/')) throw new Error(`Unsupported template asset path ${publicPath}`)
-  return resolve(frontendRoot, 'assets', publicPath.slice(1))
+function templateSize(layoutId, layout) {
+  if (!layout.image.startsWith('oss:game-template:')) {
+    throw new Error(`Unsupported template asset key ${layout.image}`)
+  }
+  const size = layout.naturalSize
+  if (!size || size.width <= 0 || size.height <= 0) {
+    throw new Error(`${layoutId}: invalid natural size`)
+  }
+  return size
 }
 
 function intersects(a, b) {
@@ -33,11 +33,7 @@ function intersects(a, b) {
 const issues = []
 
 for (const [layoutId, layout] of Object.entries(layouts)) {
-  const path = assetPath(layout.image)
-  const size = pngSize(path)
-  if (size.width !== layout.naturalSize.width || size.height !== layout.naturalSize.height) {
-    issues.push(`${layoutId}: expected ${layout.naturalSize.width}x${layout.naturalSize.height}, got ${size.width}x${size.height}`)
-  }
+  const size = templateSize(layoutId, layout)
   for (const requiredSlot of requiredSlots[layoutId] ?? []) {
     if (!layout.slots.some(slot => slot.id === requiredSlot)) issues.push(`${layoutId}: missing ${requiredSlot}`)
   }

@@ -2,8 +2,6 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-import { gameAsset } from './game-mode/gameAssets'
-
 const gameMapArtStyles = readFileSync(
   resolve(process.cwd(), 'src/styles/pages/practice/practice-game-map-art-ui.scss'),
   'utf-8',
@@ -19,7 +17,6 @@ const gameMapStyleFiles = readdirSync(resolve(stylesDir, 'pages/practice'))
 
 describe('GameMode map style contract', () => {
   it('keeps the map title scroll symmetric and the copy centered', () => {
-    expect(gameAsset.campaignDynamic.titleScroll).toBe('/game/campaign-dynamic/title_scroll_empty.png')
     const titleCopyBlock = gameMapArtStyles
       .match(/\.practice-game-map__title\s+\.practice-game-map__title-copy\s*\{[^}]+\}/u)?.[0] ?? ''
     const titleTextBlock = gameMapArtStyles

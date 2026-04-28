@@ -146,7 +146,7 @@ describe('GameMapShell', () => {
     expect(screen.getByLabelText('底部进度')).toHaveStyle({ '--template-mobile-slot-top': '87.6356%' })
     expect(document.querySelector('source[media="(max-width: 640px)"]')).toHaveAttribute(
       'srcset',
-      expect.stringContaining('/ui/templates/mobile-word-chain-map-text-safe.png'),
+      '/game/map_background_mobile.png',
     )
     expect(document.querySelector('[data-layout-slot="map.boss"] strong')).toHaveTextContent('Boss')
     expect(document.querySelector('[data-layout-slot="map.refill"] strong')).toHaveTextContent('回流')

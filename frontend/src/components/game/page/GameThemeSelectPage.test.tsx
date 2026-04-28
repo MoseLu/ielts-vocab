@@ -14,7 +14,7 @@ describe('GameThemeSelectPage', () => {
     mockedFetchGameThemeCatalog.mockReset()
   })
 
-  it('uses PRD map artwork instead of old campaign card placeholders', async () => {
+  it('uses OSS theme artwork from the backend catalog', async () => {
     mockedFetchGameThemeCatalog.mockResolvedValue({
       sourceBooks: ['ielts_reading_premium', 'ielts_listening_premium'],
       pageSize: 8,
@@ -31,10 +31,10 @@ describe('GameThemeSelectPage', () => {
           totalPages: 2,
           chapters: [],
           assets: {
-            desktopMap: '/game/campaign-v2/themes/study-campus/desktop/map.png',
-            mobileMap: '/game/campaign-v2/themes/study-campus/mobile/map.png',
-            selectCard: '/game/campaign-v2/themes/study-campus/desktop/select-card.png',
-            emptyState: '/game/campaign-v2/themes/study-campus/desktop/empty-state.png',
+            desktopMap: 'https://oss.example/game-assets/study-campus/desktop/map.png',
+            mobileMap: 'https://oss.example/game-assets/study-campus/mobile/map.png',
+            selectCard: 'https://oss.example/game-assets/study-campus/desktop/select-card.png',
+            emptyState: 'https://oss.example/game-assets/study-campus/desktop/empty-state.png',
           },
         },
         {
@@ -48,10 +48,10 @@ describe('GameThemeSelectPage', () => {
           totalPages: 2,
           chapters: [],
           assets: {
-            desktopMap: '/game/campaign-v2/themes/environment-nature/desktop/map.png',
-            mobileMap: '/game/campaign-v2/themes/environment-nature/mobile/map.png',
-            selectCard: '/game/campaign-v2/themes/environment-nature/desktop/select-card.png',
-            emptyState: '/game/campaign-v2/themes/environment-nature/desktop/empty-state.png',
+            desktopMap: 'https://oss.example/game-assets/environment-nature/desktop/map.png',
+            mobileMap: 'https://oss.example/game-assets/environment-nature/mobile/map.png',
+            selectCard: 'https://oss.example/game-assets/environment-nature/desktop/select-card.png',
+            emptyState: 'https://oss.example/game-assets/environment-nature/desktop/empty-state.png',
           },
         },
       ],
@@ -63,8 +63,10 @@ describe('GameThemeSelectPage', () => {
     const images = Array.from(campaign.querySelectorAll('img'))
     const imageSources = images.map(image => image.getAttribute('src'))
 
-    expect(imageSources).toContain('/ui/background/map_education.png')
-    expect(imageSources).toContain('/ui/background/map_environment.png')
+    expect(imageSources).toContain('https://oss.example/game-assets/study-campus/desktop/map.png')
+    expect(imageSources).toContain('https://oss.example/game-assets/study-campus/desktop/select-card.png')
+    expect(imageSources).toContain('https://oss.example/game-assets/environment-nature/desktop/select-card.png')
+    expect(imageSources.join(' ')).not.toContain('/ui/')
     expect(imageSources.join(' ')).not.toContain('/game/campaign-v2/')
   })
 })

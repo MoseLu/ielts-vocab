@@ -273,7 +273,7 @@ describe('GameMode', () => {
       day: undefined,
     })))
     expect(await screen.findByRole('img', { name: 'a couple of 词义场景' })).toHaveAttribute('src', 'https://oss.example/a-couple-of.png')
-    expect(document.querySelector('.practice-game-mode__scene-backdrop')).toHaveAttribute('src', '/ui/templates/word-mission-text-safe.png?v=20260427-mobile-map-1')
+    expect(document.querySelector('.practice-game-mode__scene-backdrop')).toHaveAttribute('src', '/game/scene_spell.png')
     expect(document.querySelector('.practice-game-mode__threat-route')?.childElementCount).toBe(0)
     expect(screen.getAllByText('会写').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: '播放单词' })).toBeInTheDocument()
@@ -346,10 +346,10 @@ describe('GameMode', () => {
         totalPages: 2,
         chapters: [],
         assets: {
-          desktopMap: '/game/campaign-v2/themes/study-campus/desktop/map.png',
-          mobileMap: '/game/campaign-v2/themes/study-campus/mobile/map.png',
-          selectCard: '/game/campaign-v2/themes/study-campus/desktop/select-card.png',
-          emptyState: '/game/campaign-v2/themes/study-campus/desktop/empty-state.png',
+          desktopMap: 'https://oss.example/game-assets/study-campus/desktop/map.png',
+          mobileMap: 'https://oss.example/game-assets/study-campus/mobile/map.png',
+          selectCard: 'https://oss.example/game-assets/study-campus/desktop/select-card.png',
+          emptyState: 'https://oss.example/game-assets/study-campus/desktop/empty-state.png',
         },
       },
       session: {
@@ -382,7 +382,7 @@ describe('GameMode', () => {
     expect(await screen.findByRole('region', { name: '五维词关地图' })).toBeInTheDocument()
     const mapImages = Array.from(document.querySelectorAll('.practice-game-map img'))
       .map(image => image.getAttribute('src') || '')
-    expect(mapImages).toEqual(['/ui/templates/word-chain-map-text-safe.png?v=20260427-mobile-map-1'])
+    expect(mapImages).toEqual(['https://oss.example/game-assets/study-campus/desktop/map.png'])
     expect(mapImages.every(src => !src.includes('map_campaign_main'))).toBe(true)
     expect(mapImages.every(src => !/(25_30|2350|1260|1_of_5|15_15)/.test(src))).toBe(true)
     expect(mapImages.every(src => !src.includes('/game/campaign-v2/themes/'))).toBe(true)
