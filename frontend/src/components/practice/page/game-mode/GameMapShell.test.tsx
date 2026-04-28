@@ -94,6 +94,25 @@ function buildState(nodes: GameMapPathNode[]): GameCampaignState {
 }
 
 describe('GameMapShell', () => {
+  it('renders the PRD game controls instead of the text-template HUD', () => {
+    render(
+      <GameMapShell
+        state={buildState([wordNode(1, 'language', 'current')])}
+        levelCards={[]}
+        isStarting={false}
+        error={null}
+        onStart={() => {}}
+      />,
+    )
+
+    expect(document.querySelector('.practice-game-map__prd-hud')).toBeInTheDocument()
+    expect(document.querySelector('.practice-game-map__prd-avatar')).toBeInTheDocument()
+    expect(document.querySelector('.practice-game-map__prd-start')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '开始当前词关' })).toBeInTheDocument()
+    expect(document.querySelector('.practice-game-map__template-avatar')).toBeNull()
+    expect(document.querySelector('.practice-game-map__template-action')).toBeNull()
+  })
+
   it('lays out repeated refill word nodes without stacking them on one map coordinate', () => {
     const nodes = [
       wordNode(1, 'language', 'current'),

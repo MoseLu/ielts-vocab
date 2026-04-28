@@ -1,5 +1,10 @@
 import type { GameCampaignState, GameLevelCard, GameMapPathNode } from '../../../../lib'
-import { prdMapBackgroundForTheme, prdMobileMapBackgroundForTheme } from './GamePrdUi'
+import {
+  PrdMapHud,
+  PrdStartButton,
+  prdMapBackgroundForTheme,
+  prdMobileMapBackgroundForTheme,
+} from './GamePrdUi'
 import { GameTemplateDebugLayer } from './GameTemplateDebugLayer'
 import { responsiveLayoutSlotStyle } from './gameTemplateLayout'
 
@@ -239,43 +244,21 @@ export function GameMapShell({
         </picture>
         <GameTemplateDebugLayer layoutId={DESKTOP_MAP_LAYOUT} mobileLayoutId={MOBILE_MAP_LAYOUT} />
 
-        <header className="practice-game-map__template-hud" aria-label="真实学习数据">
-          <button
-            type="button"
-            className="practice-game-map__template-field practice-game-map__template-avatar practice-template-slot"
-            onClick={() => onBackToPlan?.()}
-            aria-label="返回学习计划"
-            data-layout-slot="map.hud.level"
-            style={mapSlotStyle('map.hud.level')}
-          >
-            <strong>Lv.{playerLevel}</strong>
-            <span style={{ width: `${levelProgress}%` }} />
-          </button>
-          <span
-            className="practice-game-map__template-field practice-game-map__template-counter is-energy practice-template-slot"
-            aria-label="体力"
-            data-layout-slot="map.hud.energy"
-            style={mapSlotStyle('map.hud.energy')}
-          >
-            {energy}/{energyMax}
-          </span>
-          <span
-            className="practice-game-map__template-field practice-game-map__template-counter is-coin practice-template-slot"
-            aria-label="金币"
-            data-layout-slot="map.hud.coins"
-            style={mapSlotStyle('map.hud.coins')}
-          >
-            {formatCount(state.rewards.coins)}
-          </span>
-          <span
-            className="practice-game-map__template-field practice-game-map__template-counter is-gem practice-template-slot"
-            aria-label="钻石"
-            data-layout-slot="map.hud.diamonds"
-            style={mapSlotStyle('map.hud.diamonds')}
-          >
-            {formatCount(state.rewards.diamonds)}
-          </span>
-        </header>
+        <PrdMapHud
+          playerLevel={playerLevel}
+          levelProgress={levelProgress}
+          energy={energy}
+          energyMax={energyMax}
+          coins={state.rewards.coins}
+          diamonds={state.rewards.diamonds}
+          onBackToPlan={onBackToPlan}
+          slotStyles={{
+            avatar: mapSlotStyle('map.hud.level'),
+            energy: mapSlotStyle('map.hud.energy'),
+            coin: mapSlotStyle('map.hud.coins'),
+            gem: mapSlotStyle('map.hud.diamonds'),
+          }}
+        />
 
         <div
           className="practice-game-map__template-title practice-template-slot"
@@ -353,18 +336,9 @@ export function GameMapShell({
           >
             <span style={{ width: `${wordProgress}%` }} />
           </div>
-          <button
-            type="button"
-            className="practice-game-map__template-action practice-template-slot"
-            onClick={onStart}
-            disabled={!canStart || isStarting}
-            aria-label={isStarting ? '进入中' : '进入当前词'}
-            data-layout-slot="map.action"
-            style={mapSlotStyle('map.action')}
-          >
-            <strong>{isStarting ? '进入中' : '进入当前词'}</strong>
-          </button>
         </section>
+
+        <PrdStartButton canStart={canStart} isStarting={isStarting} onStart={onStart} />
 
         <div className="practice-game-map__segment-path">
           {segmentNodes.map((node, index) => (
