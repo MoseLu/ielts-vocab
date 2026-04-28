@@ -8,7 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from platform_sdk.storage import bucket_is_configured, join_object_key, put_object_bytes
+from platform_sdk.storage import bucket_is_configured, get_bucket, join_object_key
 
 
 DEFAULT_PREFIX = 'projects/ielts-vocab/frontend-assets'
@@ -52,6 +52,10 @@ def _bucket_env() -> str:
     return (os.environ.get('FRONTEND_ASSET_OSS_BUCKET_ENV') or 'AXI_ALIYUN_OSS_PUBLIC_BUCKET').strip()
 
 
+def _object_acl() -> str:
+    return (os.environ.get('FRONTEND_ASSET_OSS_OBJECT_ACL') or 'public-read').strip()
+
+
 def upload_frontend_assets(release_dir: Path) -> int:
     if not _enabled():
         print('[frontend-assets] OSS upload skipped: FRONTEND_ASSET_OSS_ENABLED is off')
@@ -59,6 +63,9 @@ def upload_frontend_assets(release_dir: Path) -> int:
     bucket_env = _bucket_env()
     if not bucket_is_configured(bucket_env=bucket_env):
         raise SystemExit(f'Frontend asset OSS upload enabled but bucket env is incomplete: {bucket_env}')
+    bucket = get_bucket(bucket_env=bucket_env)
+    if bucket is None:
+        raise SystemExit(f'Failed to create frontend asset OSS bucket client: {bucket_env}')
 
     dist_dir = release_dir / 'dist'
     assets_dir = dist_dir / 'assets'
@@ -70,16 +77,20 @@ def upload_frontend_assets(release_dir: Path) -> int:
         relative_path = file_path.relative_to(dist_dir).as_posix()
         object_key = join_object_key(prefix=_prefix(), file_name=relative_path)
         body = file_path.read_bytes()
-        metadata = put_object_bytes(
-            object_key=object_key,
-            body=body,
-            content_type=_content_type(file_path),
-            bucket_env=bucket_env,
-        )
-        if metadata is None:
+        headers = {'Content-Type': _content_type(file_path)}
+        object_acl = _object_acl()
+        if object_acl:
+            headers['x-oss-object-acl'] = object_acl
+        try:
+            bucket.put_object(object_key, body, headers=headers)
+        except Exception as exc:
+            raise SystemExit(f'Failed to upload frontend asset: {relative_path}') from exc
+        try:
+            bucket.get_object_meta(object_key)
+        except Exception as exc:
             raise SystemExit(f'Failed to upload frontend asset: {relative_path}')
         uploaded += 1
-    print(f'[frontend-assets] uploaded={uploaded} prefix={_prefix()} bucket_env={bucket_env}')
+    print(f'[frontend-assets] uploaded={uploaded} prefix={_prefix()} bucket_env={bucket_env} acl={_object_acl() or "default"}')
     return uploaded
 
 

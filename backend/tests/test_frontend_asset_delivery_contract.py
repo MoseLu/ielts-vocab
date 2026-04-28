@@ -27,6 +27,15 @@ def test_release_common_uploads_frontend_assets_to_oss_after_build():
     assert 'upload_frontend_assets_to_oss "${release_dir}"' in script
 
 
+def test_frontend_asset_upload_marks_objects_public_read():
+    script = _read('scripts/upload-frontend-assets-to-oss.py')
+
+    assert 'FRONTEND_ASSET_OSS_OBJECT_ACL' in script
+    assert "'public-read'" in script
+    assert "'x-oss-object-acl'" in script
+    assert 'bucket.put_object' in script
+
+
 def test_nginx_template_compresses_and_caches_static_assets():
     config = _read('scripts/cloud-deploy/ielts-vocab.nginx.conf')
 
