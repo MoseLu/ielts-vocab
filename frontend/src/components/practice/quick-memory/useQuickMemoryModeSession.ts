@@ -1,8 +1,13 @@
 import { useCallback, useEffect } from 'react'
 import * as AIChat from '../../../hooks/useAIChat'
-import { syncQuickMemoryRecordsToBackend } from '../../../lib/quickMemorySync'
+import {
+  retryPendingQuickMemorySync,
+  syncQuickMemoryRecordsToBackend,
+} from '../../../lib/quickMemorySync'
 import type { QuickMemoryRecordState } from '../../../lib/quickMemory'
 import type { QuickMemorySessionResult as SessionResult } from './QuickMemorySummary'
+
+const QUICK_MEMORY_PENDING_SYNC_RETRY_MS = 15000
 
 interface QuickMemoryModeSessionArgs {
   bookId: string | null
@@ -113,6 +118,19 @@ export function useQuickMemoryModeSession({
     sessionLastActiveAtRef.current = 0
     sessionIdRef.current = null
   }, [sessionIdRef, sessionLastActiveAtRef, sessionStartRef])
+
+  useEffect(() => {
+    const retryPendingSync = () => {
+      if (document.visibilityState === 'hidden') return
+      void retryPendingQuickMemorySync().catch(() => {})
+    }
+    const timerId = window.setInterval(retryPendingSync, QUICK_MEMORY_PENDING_SYNC_RETRY_MS)
+    window.addEventListener('online', retryPendingSync)
+    return () => {
+      window.clearInterval(timerId)
+      window.removeEventListener('online', retryPendingSync)
+    }
+  }, [])
 
   const prepareLearningSession = useCallback(async (activityAt = Date.now()) => {
     const summary = summarizeResults(resultsRef.current)

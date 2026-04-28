@@ -6,7 +6,9 @@ import {
 } from './quickMemory'
 import {
   reconcileQuickMemoryRecordsWithBackend,
+  retryPendingQuickMemorySync,
   resetQuickMemorySyncStateForTests,
+  syncQuickMemoryRecordsToBackend,
 } from './quickMemorySync'
 
 const apiFetchMock = vi.fn()
@@ -122,5 +124,37 @@ describe('quickMemorySync', () => {
 
     expect(apiFetchMock).not.toHaveBeenCalled()
     expect(result).toEqual({ uploadedCount: 0 })
+  })
+
+  it('persists failed quick-memory sync records and retries them later', async () => {
+    const record = {
+      status: 'known' as const,
+      firstSeen: 1000,
+      lastSeen: 5000,
+      knownCount: 2,
+      unknownCount: 0,
+      nextReview: 9000,
+      fuzzyCount: 0,
+      bookId: 'book-1',
+      chapterId: '1',
+    }
+    const pendingKey = `${getQuickMemoryStorageKey(42)}:pending_sync`
+
+    apiFetchMock.mockRejectedValueOnce(new Error('offline'))
+    await expect(syncQuickMemoryRecordsToBackend([{ word: 'Alpha', record }])).rejects.toThrow('offline')
+
+    expect(JSON.parse(localStorage.getItem(pendingKey) || '{}')).toMatchObject({
+      alpha: expect.objectContaining({ lastSeen: 5000, knownCount: 2 }),
+    })
+
+    apiFetchMock.mockResolvedValueOnce({})
+    const result = await retryPendingQuickMemorySync()
+
+    expect(result).toEqual({ uploadedCount: 1 })
+    expect(localStorage.getItem(pendingKey)).toBeNull()
+    const retryBody = JSON.parse(String(apiFetchMock.mock.calls[1]?.[1]?.body ?? '{}'))
+    expect(retryBody.records).toEqual([
+      expect.objectContaining({ word: 'alpha', lastSeen: 5000, knownCount: 2 }),
+    ])
   })
 })

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import QuickMemoryMode from './QuickMemoryMode'
@@ -319,6 +319,38 @@ describe('QuickMemoryMode', () => {
 
       expect(syncedWords).toEqual(expect.arrayContaining(['apple', 'banana']))
     })
+  })
+
+  it('retries failed quick-memory record sync while the practice page stays open', async () => {
+    vi.useFakeTimers()
+    let syncAttempts = 0
+    const pendingKey = `${getQuickMemoryStorageKey(1)}:pending_sync`
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/quick-memory') return Promise.resolve({ records: [] })
+      if (url !== '/api/ai/quick-memory/sync') return Promise.resolve({})
+      syncAttempts += 1
+      return syncAttempts === 1 ? Promise.reject(new Error('offline')) : Promise.resolve({})
+    })
+
+    const { container } = render(
+      <QuickMemoryMode {...{
+        vocabulary, queue: [0], settings, bookId: null, chapterId: null, bookChapters: [],
+        onModeChange: () => {}, onNavigate: () => {}, onWrongWord: () => {},
+      }} />,
+    )
+
+    await act(async () => {
+      fireEvent.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+      await Promise.resolve()
+    })
+    expect(localStorage.getItem(pendingKey)).toContain('apple')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15000)
+    })
+
+    expect(syncAttempts).toBeGreaterThanOrEqual(2)
+    expect(localStorage.getItem(pendingKey)).toBeNull()
   })
 
   it('keeps review-mode context for sync without overwriting full chapter progress', async () => {
