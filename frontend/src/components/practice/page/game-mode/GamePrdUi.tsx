@@ -1,10 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { GameLevelKind } from '../../../../lib'
-import { gameAsset } from './gameAssets'
-
-function firstAssetUrl(primary?: string | null, fallback = ''): string {
-  return typeof primary === 'string' && primary.trim() ? primary : fallback
-}
+import { prdUiAsset } from './prdUiAssets'
 
 type CounterKind = 'energy' | 'coin' | 'gem'
 
@@ -20,36 +16,35 @@ function formatCount(value: number): string {
 }
 
 function counterIcon(kind: CounterKind): string {
-  if (kind === 'energy') return gameAsset.reward.energy
-  if (kind === 'coin') return gameAsset.reward.coin
-  return gameAsset.reward.diamond
+  if (kind === 'energy') return prdUiAsset.hud.iconEnergy
+  if (kind === 'coin') return prdUiAsset.hud.iconCoin
+  return prdUiAsset.hud.iconGem
 }
 
 export function prdMapBackgroundForTheme(
   _themeId?: string | null,
-  desktopMap?: string | null,
+  _desktopMap?: string | null,
 ): string {
-  return firstAssetUrl(desktopMap, gameAsset.map.backgrounds.desktop)
+  return prdUiAsset.templates.wordChainMap
 }
 
 export function prdMobileMapBackgroundForTheme(
   _themeId?: string | null,
-  mobileMap?: string | null,
-  desktopMap?: string | null,
+  _mobileMap?: string | null,
+  _desktopMap?: string | null,
 ): string {
-  return firstAssetUrl(mobileMap, firstAssetUrl(desktopMap, gameAsset.map.backgrounds.mobile))
+  return prdUiAsset.templates.mobileWordChainMap
 }
 
 export function prdSceneBackdropForKind(
-  levelKind: GameLevelKind,
+  _levelKind: GameLevelKind,
   variant: 'mission' | 'refill' = 'mission',
 ): string {
-  if (variant === 'refill') return gameAsset.map.backgrounds.desktop
-  return gameAsset.scenes[levelKind]
+  return variant === 'refill' ? prdUiAsset.templates.refillState : prdUiAsset.templates.wordMission
 }
 
 export function prdMobileSceneBackdrop(): string {
-  return gameAsset.map.backgrounds.mobile
+  return prdUiAsset.templates.mobileWordMission
 }
 
 export function PrdMapHud({
@@ -88,11 +83,11 @@ export function PrdMapHud({
         style={slotStyles?.avatar}
       >
         <span className="practice-game-map__prd-avatar-portrait">
-          <img className="practice-game-map__prd-avatar-frame" src={gameAsset.ui.panelPurple} alt="" aria-hidden="true" />
-          <img className="practice-game-map__prd-avatar-photo" src={gameAsset.character.robot} alt="" aria-hidden="true" />
+          <img className="practice-game-map__prd-avatar-frame" src={prdUiAsset.hud.avatarFrame} alt="" aria-hidden="true" />
+          <img className="practice-game-map__prd-avatar-photo" src={prdUiAsset.icons.book} alt="" aria-hidden="true" />
         </span>
         <span className="practice-game-map__prd-avatar-level-pill">
-          <img className="practice-game-map__prd-avatar-pill" src={gameAsset.ui.panelBlue} alt="" aria-hidden="true" />
+          <img className="practice-game-map__prd-avatar-pill" src={prdUiAsset.hud.resourcePill} alt="" aria-hidden="true" />
           <strong>Lv.{playerLevel}</strong>
           <span className="practice-game-map__avatar-level" aria-hidden="true">
             <span style={{ width: `${levelProgress}%` }} />
@@ -107,7 +102,7 @@ export function PrdMapHud({
           data-layout-slot={`map.hud.${counter.kind === 'coin' ? 'coins' : counter.kind === 'gem' ? 'diamonds' : 'energy'}`}
           style={counter.style}
         >
-          <img className="practice-game-map__prd-counter-frame" src={gameAsset.ui.panelBlue} alt="" aria-hidden="true" />
+          <img className="practice-game-map__prd-counter-frame" src={prdUiAsset.hud.resourcePill} alt="" aria-hidden="true" />
           <img className="practice-game-map__prd-counter-icon" src={counterIcon(counter.kind)} alt="" aria-hidden="true" />
           <strong>{counter.value}</strong>
         </span>
@@ -134,7 +129,7 @@ export function PrdStartButton({
       disabled={disabled}
       aria-label={isStarting ? '进入中' : '开始当前词关'}
     >
-      <img src={disabled ? gameAsset.ui.panelPurple : gameAsset.ui.buttonGreen} alt="" aria-hidden="true" />
+      <img src={disabled ? prdUiAsset.buttons.disabled : prdUiAsset.buttons.green} alt="" aria-hidden="true" />
       <span>{isStarting ? '进入中' : '开始当前词关'}</span>
     </button>
   )
