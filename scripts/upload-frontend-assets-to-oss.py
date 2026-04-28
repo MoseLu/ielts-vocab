@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import mimetypes
 import os
 from pathlib import Path
@@ -12,6 +13,7 @@ from platform_sdk.storage import bucket_is_configured, get_bucket, join_object_k
 
 
 DEFAULT_PREFIX = 'projects/ielts-vocab/frontend-assets'
+GZIP_SUFFIXES = {'.css', '.js', '.json', '.svg'}
 TRUTHY = {'1', 'true', 'yes', 'on'}
 FALSY = {'', '0', 'false', 'no', 'off'}
 
@@ -56,6 +58,17 @@ def _object_acl() -> str:
     return (os.environ.get('FRONTEND_ASSET_OSS_OBJECT_ACL') or 'public-read').strip()
 
 
+def _prepared_body_and_headers(path: Path, body: bytes) -> tuple[bytes, dict[str, str]]:
+    headers = {
+        'Content-Type': _content_type(path),
+        'Cache-Control': 'public, immutable',
+    }
+    if path.suffix.lower() in GZIP_SUFFIXES:
+        headers['Content-Encoding'] = 'gzip'
+        return gzip.compress(body, compresslevel=9, mtime=0), headers
+    return body, headers
+
+
 def upload_frontend_assets(release_dir: Path) -> int:
     if not _enabled():
         print('[frontend-assets] OSS upload skipped: FRONTEND_ASSET_OSS_ENABLED is off')
@@ -77,7 +90,7 @@ def upload_frontend_assets(release_dir: Path) -> int:
         relative_path = file_path.relative_to(dist_dir).as_posix()
         object_key = join_object_key(prefix=_prefix(), file_name=relative_path)
         body = file_path.read_bytes()
-        headers = {'Content-Type': _content_type(file_path)}
+        body, headers = _prepared_body_and_headers(file_path, body)
         object_acl = _object_acl()
         if object_acl:
             headers['x-oss-object-acl'] = object_acl
