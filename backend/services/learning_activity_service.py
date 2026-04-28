@@ -156,6 +156,8 @@ def record_learning_activity(
     answered_words: list[str] | None = None,
     queue_words: list[str] | None = None,
     item_delta: int = 0,
+    correct_delta: int = 0,
+    wrong_delta: int = 0,
     duration_delta: int = 0,
     review_delta: int = 0,
     wrong_word_delta: int = 0,
@@ -199,6 +201,8 @@ def record_learning_activity(
     if queue_words is not None:
         ledger.queue_words = _serialize_word_list(queue_words)
 
+    ledger.correct_count = _safe_non_negative_int(ledger.correct_count) + _safe_non_negative_int(correct_delta)
+    ledger.wrong_count = _safe_non_negative_int(ledger.wrong_count) + _safe_non_negative_int(wrong_delta)
     ledger.items_studied = _safe_non_negative_int(ledger.items_studied) + _safe_non_negative_int(item_delta)
     ledger.duration_seconds = _safe_non_negative_int(ledger.duration_seconds) + _safe_non_negative_int(duration_delta)
     ledger.review_count = _safe_non_negative_int(ledger.review_count) + _safe_non_negative_int(review_delta)

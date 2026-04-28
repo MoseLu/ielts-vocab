@@ -202,6 +202,7 @@ export function usePracticePageActions({
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
 
     if (currentWord) {
+      const entry = errorMode ? 'error-review' : 'practice'
       void submitWordMasteryAttempt({
         bookId,
         chapterId,
@@ -209,6 +210,8 @@ export function usePracticePageActions({
         dimension,
         passed: isCorrect,
         sourceMode: analyticsMode,
+        entry,
+        task: errorMode ? 'error-review' : undefined,
         wordPayload: currentWord,
       }).catch(() => {})
       recordWordResult(currentWord.word, dimension, isCorrect)
@@ -225,6 +228,7 @@ export function usePracticePageActions({
     chapterId,
     correctCount,
     currentWord,
+    errorMode,
     goNext,
     prepareSessionForLearningAction,
     queue,
@@ -389,6 +393,8 @@ export function usePracticePageActions({
       dimension,
       passed: false,
       sourceMode: mode ?? 'smart',
+      entry: errorMode ? 'error-review' : 'practice',
+      task: errorMode ? 'error-review' : undefined,
       wordPayload: currentWord,
     }).catch(() => {})
     registerAnsweredWord(currentWord.word)
@@ -405,6 +411,7 @@ export function usePracticePageActions({
     chapterId,
     correctCount,
     currentWord,
+    errorMode,
     goNext,
     mode,
     prepareSessionForLearningAction,

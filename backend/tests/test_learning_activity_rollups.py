@@ -316,6 +316,55 @@ def test_wrong_words_backfill_keeps_subledger_out_of_main_ledger(app):
         assert ledger.items_studied == 1
 
 
+def test_practice_attempt_backfill_rebuilds_attempt_counts(app):
+    with app.app_context():
+        user = User(username='learning-rollup-practice-attempt')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.flush()
+        db.session.add_all([
+            UserLearningEvent(
+                user_id=user.id,
+                event_type='practice_attempt',
+                source='practice',
+                book_id='book-attempt',
+                mode='game',
+                chapter_id='1',
+                word='alpha',
+                item_count=1,
+                correct_count=1,
+                wrong_count=0,
+                occurred_at=datetime(2026, 4, 22, 3, 0),
+            ),
+            UserLearningEvent(
+                user_id=user.id,
+                event_type='practice_attempt',
+                source='practice',
+                book_id='book-attempt',
+                mode='game',
+                chapter_id='1',
+                word='beta',
+                item_count=1,
+                correct_count=0,
+                wrong_count=1,
+                occurred_at=datetime(2026, 4, 22, 3, 1),
+            ),
+        ])
+        db.session.commit()
+
+        backfill_learning_activity_rollups(user_ids=[user.id])
+
+        ledger = UserLearningDailyLedger.query.filter_by(
+            user_id=user.id,
+            book_id='book-attempt',
+            mode='game',
+            chapter_id='1',
+        ).one()
+        assert ledger.review_count == 2
+        assert ledger.correct_count == 1
+        assert ledger.wrong_count == 1
+
+
 def test_cutover_purges_deprecated_progress_tables(app):
     with app.app_context():
         user = User(username='learning-rollup-cutover')

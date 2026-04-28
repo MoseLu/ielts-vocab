@@ -28,6 +28,8 @@ from platform_sdk.learning_core_service_repositories import (
 from platform_sdk.learning_event_support import record_learning_event
 from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.study_session_support import normalize_chapter_id
+from services.learning_attempt_service import extract_wrong_word_dimension_attempts
+from services.word_mastery_service import update_word_mastery_attempt
 
 if TYPE_CHECKING:
     from models import UserWrongWord
@@ -231,7 +233,7 @@ def _snapshot_wrong_word_state(record: UserWrongWord) -> tuple:
     )
 
 
-def _apply_wrong_word_snapshot(record: UserWrongWord, payload: dict) -> tuple[int, int, bool]:
+def _apply_wrong_word_snapshot(record: UserWrongWord, payload: dict) -> tuple[int, int, bool, list[tuple[str, bool]]]:
     previous_record_state = _snapshot_wrong_word_state(record)
     previous_states = _build_wrong_word_dimension_states(record)
     previous_summary = _summarize_wrong_word_dimension_states(previous_states)
@@ -270,7 +272,8 @@ def _apply_wrong_word_snapshot(record: UserWrongWord, payload: dict) -> tuple[in
     if state_changed:
         record.updated_at = datetime.utcnow()
 
-    return previous_summary['wrong_count'], merged_summary['wrong_count'], state_changed
+    attempts = extract_wrong_word_dimension_attempts(previous_states, merged_states)
+    return previous_summary['wrong_count'], merged_summary['wrong_count'], state_changed, attempts
 
 
 def _clear_wrong_word_pending_states(states: dict) -> dict:
@@ -400,8 +403,23 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
             continue
 
         record = _get_or_create_wrong_word_record(user_id, word_value, word_payload, record_cache)
-        previous_wrong_count, current_wrong_count, state_changed = _apply_wrong_word_snapshot(record, word_payload)
+        previous_wrong_count, current_wrong_count, state_changed, attempts = _apply_wrong_word_snapshot(record, word_payload)
         wrong_delta = max(0, current_wrong_count - previous_wrong_count)
+        for dimension, passed in attempts:
+            update_word_mastery_attempt(
+                user_id=user_id,
+                word=record.word,
+                dimension=dimension,
+                passed=passed,
+                source_mode=source_mode or dimension,
+                book_id=book_id,
+                chapter_id=chapter_id,
+                entry='error-review',
+                task='error-review',
+                word_payload=word_payload,
+                seed_legacy=False,
+                commit=False,
+            )
         if source_mode and wrong_delta > 0:
             try:
                 _record_learning_core_event_locally(

@@ -32,7 +32,7 @@ from services.word_mastery_support import (
     update_word_metadata,
     utc_now,
 )
-
+from services.learning_attempt_service import record_practice_attempt_fact
 GAME_SEGMENT_WORD_COUNT = 5
 _GAME_WRONG_WORD_TABLE_READY = False
 
@@ -180,26 +180,6 @@ def _segment_prompt(segment_words: list[dict], *, is_boss: bool) -> str:
     return f'用 {keywords} 造一句更完整的英语表达，作为奖励加练。'
 
 
-def _serialize_game_recovery_item(record: UserGameWrongWord) -> dict:
-    payload = record.to_dict()
-    node_type = payload.get('node_type') or 'word'
-    failed_dimensions = payload.get('failed_dimensions') or []
-    title = payload.get('word') or (
-        f'第 {int(str(payload.get("node_key", "0")).split(":")[-1]) + 1} 段'
-    )
-    subtitle = ' / '.join(failed_dimensions) if failed_dimensions else (payload.get('last_encounter_type') or node_type)
-    return {
-        'nodeKey': payload.get('node_key') or '',
-        'nodeType': node_type,
-        'title': title,
-        'subtitle': subtitle,
-        'failedDimensions': failed_dimensions,
-        'bossFailures': payload.get('speaking_boss_failures') or 0,
-        'rewardFailures': payload.get('speaking_reward_failures') or 0,
-        'updatedAt': payload.get('updated_at'),
-    }
-
-
 def _upsert_speaking_node_attempt(
     user_id: int,
     *,
@@ -340,11 +320,17 @@ def update_word_mastery_attempt(
     chapter_id: str | None = None,
     day: int | None = None,
     word_payload: dict | None = None,
+    entry: str | None = None,
+    task: str | None = None,
+    client_attempt_id: str | None = None,
+    record_attempt: bool = True,
+    seed_legacy: bool = True, commit: bool = True,
 ) -> dict:
     normalized_dimension = str(dimension or '').strip().lower()
     if normalized_dimension not in WORD_MASTERY_DIMENSIONS:
         raise ValueError('invalid mastery dimension')
-    source_maps = build_legacy_source_maps(user_id, [word])
+    normalized_word = normalize_word_text(word)
+    source_maps = build_legacy_source_maps(user_id, [word]) if seed_legacy else {}
     record = get_or_create_word_mastery_state(
         user_id,
         word=word,
@@ -374,7 +360,26 @@ def update_word_mastery_attempt(
         record.passed_at = now_utc
     update_word_metadata(record, word_payload)
     _sync_game_wrong_word_projection(record, states)
-    db.session.commit()
+    if record_attempt:
+        record_practice_attempt_fact(
+            user_id=user_id,
+            word=normalized_word,
+            dimension=normalized_dimension,
+            passed=passed,
+            mode=source_mode or 'game',
+            entry=entry or source_mode or 'game',
+            source='practice',
+            book_id=book_id,
+            chapter_id=chapter_id,
+            task=task,
+            client_attempt_id=client_attempt_id,
+            payload={
+                'source_mode': source_mode,
+                'overall_status': summary['overall_status'],
+                'pending_dimensions': summary['pending_dimensions'],
+            },
+        )
+    db.session.commit() if commit else db.session.flush()
     return {
         **record.to_dict(),
         'dimension_states': states,
@@ -398,6 +403,9 @@ def update_game_campaign_attempt(
     hint_used: bool = False,
     input_mode: str | None = None,
     boost_type: str | None = None,
+    entry: str | None = None,
+    task: str | None = None,
+    client_attempt_id: str | None = None,
 ) -> dict:
     normalized_node_type = str(node_type or 'word').strip().lower() or 'word'
     if normalized_node_type == 'word':
@@ -415,6 +423,9 @@ def update_game_campaign_attempt(
             chapter_id=chapter_id,
             day=day,
             word_payload=word_payload,
+            entry=entry or task or 'game',
+            task=task,
+            client_attempt_id=client_attempt_id,
         )
         scope_state = build_game_practice_state(
             user_id,

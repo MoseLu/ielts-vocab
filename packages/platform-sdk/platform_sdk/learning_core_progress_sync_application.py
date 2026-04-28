@@ -12,6 +12,8 @@ from platform_sdk.learning_event_support import record_learning_event
 from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.quick_memory_schedule_support import resolve_quick_memory_next_review_ms
 from platform_sdk.study_session_support import normalize_chapter_id
+from services.learning_attempt_service import ensure_wrong_word_failure
+from services.word_mastery_service import update_word_mastery_attempt
 
 if TYPE_CHECKING:
     from models import UserQuickMemoryRecord
@@ -206,6 +208,27 @@ def sync_learning_core_quick_memory_response(user_id: int, body: dict | None) ->
                             'fuzzy_count': current_snapshot['fuzzy_count'],
                         },
                     )
+                    update_word_mastery_attempt(
+                        user_id=user_id,
+                        word=word,
+                        dimension='recognition',
+                        passed=status == 'known',
+                        book_id=current_snapshot['book_id'],
+                        chapter_id=current_snapshot['chapter_id'],
+                        source_mode='quickmemory',
+                        entry='due-review',
+                        task='due-review',
+                        word_payload=record_payload,
+                        seed_legacy=False,
+                        commit=False,
+                    )
+                    if status == 'unknown':
+                        ensure_wrong_word_failure(
+                            user_id=user_id,
+                            word=word,
+                            dimension='recognition',
+                            word_payload=record_payload,
+                        )
                 except Exception as exc:
                     logging.warning('[LEARNING_CORE] failed to record quick-memory event: %s', exc)
 

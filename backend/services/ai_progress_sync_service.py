@@ -5,12 +5,10 @@ from typing import TYPE_CHECKING
 from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.quick_memory_schedule_support import resolve_quick_memory_next_review_ms
 from services import ai_quick_memory_repository, ai_smart_word_stat_repository
-from services.learning_activity_service import (
-    rebuild_learning_activity_rollups,
-    record_learning_activity,
-)
+from services.learning_attempt_service import ensure_wrong_word_failure
 from services.ai_metric_tracking_service import record_smart_dimension_delta_event
 from services.study_sessions import normalize_chapter_id
+from services.word_mastery_service import update_word_mastery_attempt
 
 if TYPE_CHECKING:
     from service_models.learning_core_models import UserQuickMemoryRecord
@@ -56,7 +54,6 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
     if not isinstance(records_in, list):
         return {'error': 'records must be a list'}, 400
 
-    touched_scopes: set[tuple[str, str, str]] = set()
     for record_payload in records_in:
         word = _normalize_record_word(record_payload.get('word'))
         if not word:
@@ -134,24 +131,27 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
                         'fuzzy_count': current_snapshot['fuzzy_count'],
                     },
                 )
-                scope = record_learning_activity(
+                update_word_mastery_attempt(
                     user_id=user_id,
+                    word=word,
+                    dimension='recognition',
+                    passed=status == 'known',
                     book_id=current_snapshot['book_id'],
-                    mode='quickmemory',
                     chapter_id=current_snapshot['chapter_id'],
-                    item_delta=1,
-                    review_delta=1,
-                    rebuild_rollups=False,
+                    source_mode='quickmemory',
+                    entry='due-review',
+                    task='due-review',
+                    word_payload=record_payload,
+                    seed_legacy=False,
+                    commit=False,
                 )
-                touched_scopes.add((scope['book_id'], scope['mode'], scope['chapter_id']))
-
-    for book_id, mode, chapter_id in touched_scopes:
-        rebuild_learning_activity_rollups(
-            user_id=user_id,
-            book_id=book_id or None,
-            mode=mode or None,
-            chapter_id=chapter_id or None,
-        )
+                if status == 'unknown':
+                    ensure_wrong_word_failure(
+                        user_id=user_id,
+                        word=word,
+                        dimension='recognition',
+                        word_payload=record_payload,
+                    )
     try:
         ai_quick_memory_repository.commit()
     except Exception:

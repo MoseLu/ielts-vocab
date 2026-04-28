@@ -33,6 +33,8 @@ interface SubmitWordMasteryAttemptInput extends GamePracticeScope {
   segmentIndex?: number | null
   promptText?: string | null
   sourceMode?: string | null
+  entry?: string | null
+  clientAttemptId?: string | null
   wordPayload?: Partial<Word> | null
   levelKind?: GameLevelKind | null
   hintUsed?: boolean | null
@@ -108,6 +110,8 @@ export async function submitWordMasteryAttempt(
       segmentIndex: input.segmentIndex ?? undefined,
       promptText: input.promptText ?? undefined,
       sourceMode: input.sourceMode ?? 'game',
+      entry: input.entry ?? undefined,
+      clientAttemptId: input.clientAttemptId ?? undefined,
       bookId: input.bookId ?? undefined,
       chapterId: input.chapterId ?? undefined,
       day: input.day ?? undefined,

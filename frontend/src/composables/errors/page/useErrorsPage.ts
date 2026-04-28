@@ -65,14 +65,6 @@ function getWrongCountBounds(range: WrongCountRange): { minWrongCount?: number; 
   }
 }
 
-function resolvePracticeMode(dimFilter: DimFilter): string | null {
-  if (dimFilter === 'recognition') return 'quickmemory'
-  if (dimFilter === 'listening') return 'listening'
-  if (dimFilter === 'dictation') return 'dictation'
-  if (dimFilter === 'meaning') return 'meaning'
-  return null
-}
-
 export function useErrorsPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<ActiveTab>('words')
@@ -350,8 +342,11 @@ export function useErrorsPage() {
   }, [])
 
   const startSelectedPractice = useCallback(() => {
-    requestPracticeMode(resolvePracticeMode(dimFilter))
-    navigate(`/practice?mode=errors&${manualPracticeQuery}`)
+    requestPracticeMode('game')
+    const gameParams = new URLSearchParams(manualPracticeQuery)
+    gameParams.set('task', 'error-review')
+    if (dimFilter !== 'all') gameParams.set('dimension', dimFilter)
+    navigate(`/game?${gameParams.toString()}`)
   }, [dimFilter, manualPracticeQuery, navigate])
 
   const goToPlan = useCallback(() => {

@@ -108,6 +108,9 @@ def post_learning_core_word_mastery_attempt_response(user_id: int, body: dict | 
             hint_used=bool(payload.get('hintUsed', payload.get('hint_used'))),
             input_mode=str(payload.get('inputMode') or payload.get('input_mode') or '').strip() or None,
             boost_type=str(payload.get('boostType') or payload.get('boost_type') or '').strip() or None,
+            entry=str(payload.get('entry') or '').strip() or None,
+            task=str(payload.get('task') or '').strip() or None,
+            client_attempt_id=str(payload.get('clientAttemptId') or payload.get('client_attempt_id') or '').strip() or None,
         )
     except ValueError as exc:
         return {'error': str(exc)}, 400

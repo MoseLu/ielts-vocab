@@ -377,7 +377,7 @@ describe('ErrorsPage', () => {
     fireEvent.click(reviewButton)
 
     expect(navigateMock).toHaveBeenCalledWith(
-      '/practice?mode=errors&scope=pending&startDate=2026-04-07&endDate=2026-04-07&minWrong=6&maxWrong=10&selection=manual',
+      '/game?scope=pending&startDate=2026-04-07&endDate=2026-04-07&minWrong=6&maxWrong=10&selection=manual&task=error-review',
     )
   })
 

@@ -23,6 +23,7 @@ SOURCE_LABELS = {
 
 EVENT_LABELS = {
     'study_session': '练习会话',
+    'practice_attempt': '练习作答',
     'quick_memory_review': '速记复习',
     'meaning_review': '释义检查',
     'listening_review': '听力检查',
@@ -127,6 +128,16 @@ def _format_event_title(event: UserLearningEvent, payload: dict) -> str:
 
     if event.event_type == 'study_session':
         return f"{mode_label or event_label} {chapter_label}".strip()
+    if event.event_type == 'practice_attempt':
+        verdict = '通过' if payload.get('passed') or (event.correct_count or 0) > 0 else '待强化'
+        dimension = str(payload.get('dimension') or '').strip()
+        bits = [mode_label or event_label]
+        if event.word:
+            bits.append(event.word)
+        if dimension:
+            bits.append(dimension)
+        bits.append(verdict)
+        return ' '.join(bits)
     if event.event_type == 'quick_memory_review':
         status = payload.get('status')
         if event.word:

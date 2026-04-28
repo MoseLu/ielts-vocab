@@ -140,6 +140,26 @@ def _backfill_events(user_ids: list[int], summary: dict) -> None:
     for row in _scoped_query(UserLearningEvent, user_ids).all():
         if row.event_type in _EVENT_TYPES_COVERED_BY_PRIMARY_SOURCES:
             continue
+        if row.event_type == 'practice_attempt':
+            attempt_count = max(
+                1,
+                _safe_int(row.item_count),
+                _safe_int(row.correct_count) + _safe_int(row.wrong_count),
+            )
+            _record(
+                summary,
+                user_id=row.user_id,
+                book_id=row.book_id,
+                mode=row.mode,
+                chapter_id=row.chapter_id,
+                occurred_at=row.occurred_at,
+                correct_delta=_safe_int(row.correct_count),
+                wrong_delta=_safe_int(row.wrong_count),
+                review_delta=attempt_count,
+                duration_delta=_safe_int(row.duration_seconds),
+            )
+            summary['practice_attempts'] += 1
+            continue
         _record(
             summary,
             user_id=row.user_id,
@@ -291,6 +311,7 @@ def backfill_learning_activity_rollups(user_ids=None, *, commit: bool = True) ->
         'users': len(target_user_ids),
         'study_sessions': 0,
         'learning_events': 0,
+        'practice_attempts': 0,
         'quick_memory_records': 0,
         'wrong_words': 0,
         'chapter_mode_progress': 0,

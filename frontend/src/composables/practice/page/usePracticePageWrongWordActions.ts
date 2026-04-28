@@ -109,6 +109,8 @@ export function usePracticePageWrongWordActions({
         dimension: 'recognition',
         passed: record.status === 'known',
         sourceMode: 'quickmemory',
+        entry: 'due-review',
+        task: 'due-review',
         wordPayload: word,
       }).catch(() => {})
       apiFetch('/api/ai/wrong-words/sync', {

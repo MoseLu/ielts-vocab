@@ -1,6 +1,13 @@
 from types import SimpleNamespace
 
-from models import UserGameEnergyState, UserGameWrongWord, UserWordMasteryState, UserWrongWord
+from models import (
+    UserGameEnergyState,
+    UserGameWrongWord,
+    UserLearningDailyLedger,
+    UserLearningEvent,
+    UserWordMasteryState,
+    UserWrongWord,
+)
 
 
 GAME_SCOPE = {
@@ -65,7 +72,7 @@ def _submit_word_attempt(client, word_payload: dict, *, dimension: str, passed: 
         'word': word_payload['word'],
         'dimension': dimension,
         'passed': passed,
-        'sourceMode': 'speaking' if dimension == 'speaking' else 'game',
+        'sourceMode': 'game',
         'wordPayload': _build_word_payload(word_payload),
     })
     assert response.status_code == 200
@@ -129,6 +136,24 @@ def test_game_attempts_use_independent_campaign_wrong_word_ledger(client, app):
         wrong_payload = game_wrong_word.to_dict()
         assert wrong_payload['status'] == 'pending'
         assert wrong_payload['failed_dimensions'] == ['recognition']
+
+        attempts = UserLearningEvent.query.filter_by(
+            event_type='practice_attempt',
+            word=active_word['word'],
+            mode='game',
+        ).all()
+        assert len(attempts) == 6
+        assert attempts[0].wrong_count == 1
+        assert sum(event.correct_count for event in attempts) == 5
+
+        ledger = UserLearningDailyLedger.query.filter_by(
+            book_id=GAME_SCOPE['bookId'],
+            mode='game',
+            chapter_id=GAME_SCOPE['chapterId'],
+        ).one()
+        assert ledger.review_count == 6
+        assert ledger.correct_count == 5
+        assert ledger.wrong_count == 1
 
 
 def test_game_session_start_returns_session_bundle_and_level_rewards(client):

@@ -22,8 +22,8 @@ export function ebbRateToneClass(rate: number | null | undefined): string {
 }
 
 export function startEbbinghausReview(navigate: NavigateFunction): void {
-  requestPracticeMode('quickmemory')
-  navigate('/practice?review=due')
+  requestPracticeMode('game')
+  navigate('/game?task=due-review')
 }
 
 interface StatsSummaryCardsProps {
