@@ -109,8 +109,8 @@ export function useStatsPage() {
   }, [navigate])
 
   const startEbbinghausReview = useCallback(() => {
-    requestPracticeMode('game')
-    navigate('/game?task=due-review')
+    requestPracticeMode('quickmemory')
+    navigate('/practice?review=due')
   }, [navigate])
 
   return {

@@ -102,7 +102,7 @@ describe('StatsPage review action', () => {
     navigateMock.mockReset()
   })
 
-  it('starts the unified due-review task when the user clicks the Ebbinghaus review button', async () => {
+  it('starts the Ebbinghaus due review queue when the user clicks the review button', async () => {
     const user = userEvent.setup()
     const dispatchSpy = vi.spyOn(window, 'dispatchEvent')
 
@@ -112,8 +112,8 @@ describe('StatsPage review action', () => {
 
     expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({
       type: 'practice-mode-request',
-      detail: { mode: 'game' },
+      detail: { mode: 'quickmemory' },
     }))
-    expect(navigateMock).toHaveBeenCalledWith('/game?task=due-review')
+    expect(navigateMock).toHaveBeenCalledWith('/practice?review=due')
   })
 })

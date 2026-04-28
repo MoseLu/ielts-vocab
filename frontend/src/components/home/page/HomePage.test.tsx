@@ -338,7 +338,7 @@ describe('HomePage', () => {
     expect(screen.getByText('清错词')).toBeInTheDocument()
   })
 
-  it('routes due review todos into the five-dimension game task', async () => {
+  it('routes due review todos into the Ebbinghaus review queue', async () => {
     const user = userEvent.setup()
     resetHomeTodos(cloneTasks([baseTasks.dueReview]))
 
@@ -346,7 +346,7 @@ describe('HomePage', () => {
 
     await user.click(screen.getByRole('button', { name: '去复习' }))
 
-    expect(navigationState.navigate).toHaveBeenCalledWith('/game?task=due-review')
+    expect(navigationState.navigate).toHaveBeenCalledWith('/practice?review=due')
   })
 
   it('routes error review todos with the recommended weak dimension', async () => {
