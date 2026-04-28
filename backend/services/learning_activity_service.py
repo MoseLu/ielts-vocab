@@ -182,15 +182,17 @@ def record_learning_activity(
         learning_date=resolved_learning_date,
     )
 
+    preserve_completed_snapshot = bool(ledger.is_completed) and is_completed is False
+
     if current_index is not None:
         ledger.current_index = _safe_non_negative_int(current_index)
-    if words_learned is not None:
+    if words_learned is not None and not preserve_completed_snapshot:
         ledger.words_learned = _safe_non_negative_int(words_learned)
-    if correct_count is not None:
+    if correct_count is not None and not preserve_completed_snapshot:
         ledger.correct_count = _safe_non_negative_int(correct_count)
-    if wrong_count is not None:
+    if wrong_count is not None and not preserve_completed_snapshot:
         ledger.wrong_count = _safe_non_negative_int(wrong_count)
-    if is_completed is not None:
+    if is_completed is not None and not preserve_completed_snapshot:
         ledger.is_completed = bool(is_completed)
     if answered_words is not None:
         ledger.answered_words = _serialize_word_list(answered_words)

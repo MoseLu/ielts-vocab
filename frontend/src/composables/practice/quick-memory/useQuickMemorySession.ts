@@ -156,6 +156,7 @@ export function useQuickMemorySession({
 
   useEffect(() => {
     if (reviewMode || done || !bookId || !chapterId || index === 0) return
+    if (results.length === 0) return
     const summary = summarizeResults(results)
     const partialProgress = {
       current_index: index,

@@ -177,6 +177,51 @@ def test_learning_date_uses_local_day_boundaries(app):
         assert dates == {'2026-04-21', '2026-04-22'}
 
 
+def test_same_day_partial_snapshot_does_not_clear_completed_chapter_rollup(app):
+    with app.app_context():
+        user = User(username='learning-rollup-partial-resume')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.commit()
+
+        record_learning_activity(
+            user_id=user.id,
+            book_id='ielts_reading_premium',
+            mode='quickmemory',
+            chapter_id='28',
+            learning_date='2026-04-26',
+            current_index=64,
+            words_learned=64,
+            correct_count=45,
+            wrong_count=11,
+            is_completed=True,
+        )
+        record_learning_activity(
+            user_id=user.id,
+            book_id='ielts_reading_premium',
+            mode='quickmemory',
+            chapter_id='28',
+            learning_date='2026-04-26',
+            current_index=8,
+            words_learned=63,
+            correct_count=0,
+            wrong_count=0,
+            is_completed=False,
+        )
+        db.session.commit()
+
+        rollup = UserLearningChapterRollup.query.filter_by(
+            user_id=user.id,
+            book_id='ielts_reading_premium',
+            mode='quickmemory',
+            chapter_id='28',
+        ).one()
+        assert rollup.words_learned == 64
+        assert rollup.correct_count == 45
+        assert rollup.wrong_count == 11
+        assert rollup.is_completed is True
+
+
 def test_backfill_learning_activity_rollups_is_idempotent(app):
     with app.app_context():
         user = User(username='learning-rollup-backfill')

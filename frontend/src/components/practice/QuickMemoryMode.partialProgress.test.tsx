@@ -84,4 +84,41 @@ describe('QuickMemoryMode partial chapter progress', () => {
       })
     })
   })
+
+  it('does not sync an empty partial snapshot when resuming at a saved index', async () => {
+    const { container } = render(
+      <QuickMemoryMode
+        vocabulary={[
+          { word: 'apple', phonetic: '/apple/', pos: 'n.', definition: 'fruit' },
+          { word: 'banana', phonetic: '/banana/', pos: 'n.', definition: 'fruit' },
+        ]}
+        queue={[0, 1]}
+        settings={{}}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        initialIndex={1}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(container.querySelector('.qm-progress-label')).toHaveTextContent('2 / 2')
+    })
+
+    expect(apiFetchMock).not.toHaveBeenCalledWith('/api/books/book-1/chapters/1/progress', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'quickmemory',
+        current_index: 1,
+        correct_count: 0,
+        wrong_count: 0,
+        words_learned: 1,
+        is_completed: false,
+        queue_words: ['apple', 'banana'],
+      }),
+    })
+  })
 })
