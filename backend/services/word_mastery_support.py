@@ -113,7 +113,6 @@ def ensure_word_mastery_table() -> None:
     global _MASTER_TABLE_READY
     if _MASTER_TABLE_READY:
         return
-    UserWordMasteryState.__table__.create(bind=db.engine, checkfirst=True)
     _MASTER_TABLE_READY = True
 
 

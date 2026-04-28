@@ -12,7 +12,7 @@ from platform_sdk.internal_service_auth import (
 
 
 DEFAULT_LEARNING_CORE_SERVICE_URL = 'http://127.0.0.1:8102'
-DEFAULT_TIMEOUT_SECONDS = 5.0
+DEFAULT_TIMEOUT_SECONDS = float(os.environ.get('LEARNING_CORE_INTERNAL_TIMEOUT_SECONDS') or '15.0')
 AI_EXECUTION_SERVICE_NAME = 'ai-execution-service'
 ADMIN_OPS_SERVICE_NAME = 'admin-ops-service'
 

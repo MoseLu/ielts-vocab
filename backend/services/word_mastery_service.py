@@ -107,7 +107,6 @@ def ensure_game_wrong_word_table() -> None:
     global _GAME_WRONG_WORD_TABLE_READY
     if _GAME_WRONG_WORD_TABLE_READY:
         return
-    UserGameWrongWord.__table__.create(bind=db.engine, checkfirst=True)
     _GAME_WRONG_WORD_TABLE_READY = True
 
 

@@ -78,7 +78,7 @@ def _segment_prompt(segment_words: list[dict], *, is_boss: bool) -> str:
 
 
 def _ensure_game_wrong_word_table() -> None:
-    UserGameWrongWord.__table__.create(bind=db.engine, checkfirst=True)
+    return
 
 
 def _list_scope_word_mastery_states(
