@@ -271,6 +271,32 @@ def _apply_learning_core_progress_resume_patch(connection: sa.engine.Connection)
     return changes
 
 
+def _apply_ai_home_todo_plan_user_fk_patch(connection: sa.engine.Connection) -> list[str]:
+    inspector = sa.inspect(connection)
+    if 'user_home_todo_plans' not in inspector.get_table_names():
+        return []
+
+    matching_fks = [
+        fk for fk in inspector.get_foreign_keys('user_home_todo_plans')
+        if fk.get('referred_table') == 'users'
+        and fk.get('constrained_columns') == ['user_id']
+    ]
+    if not matching_fks:
+        return []
+
+    ops = _migration_ops(connection)
+    changes: list[str] = []
+    for fk in matching_fks:
+        fk_name = fk.get('name')
+        if not fk_name:
+            continue
+        with ops.batch_alter_table('user_home_todo_plans') as batch_op:
+            batch_op.drop_constraint(fk_name, type_='foreignkey')
+        changes.append(f'user_home_todo_plans.{fk_name}')
+
+    return changes
+
+
 SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
     'learning-core-service': (
         SchemaPatch(
@@ -294,6 +320,13 @@ SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
             revision='catalog_content_service_0002',
             description='Add custom book metadata and incomplete-word flags.',
             apply=_apply_custom_book_metadata_patch,
+        ),
+    ),
+    'ai-execution-service': (
+        SchemaPatch(
+            revision='ai_execution_service_0002',
+            description='Remove identity user FK from home todo plans.',
+            apply=_apply_ai_home_todo_plan_user_fk_patch,
         ),
     ),
 }

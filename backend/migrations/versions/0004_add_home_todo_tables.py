@@ -26,7 +26,6 @@ def upgrade():
         sa.Column('last_generated_at', sa.DateTime(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id']),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('user_id', 'plan_date', name='unique_user_home_todo_plan'),
     )

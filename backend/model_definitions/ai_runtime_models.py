@@ -314,7 +314,7 @@ class UserHomeTodoPlan(db.Model):
     __tablename__ = 'user_home_todo_plans'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, nullable=False, index=True)
     plan_date = db.Column(db.String(10), nullable=False, index=True)
     pending_count = db.Column(db.Integer, default=0, nullable=False)
     completed_count = db.Column(db.Integer, default=0, nullable=False)
