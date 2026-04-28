@@ -444,6 +444,7 @@ export const GameCampaignStateSchema = z.object({
     totalWords: z.number().int(),
     bossStatus: z.enum(['locked', 'ready', 'pending', 'passed']),
     rewardStatus: z.enum(['locked', 'ready', 'pending', 'passed']),
+    words: z.array(z.string()).optional().default([]),
   }),
   currentNode: GameCampaignNodeSchema.nullable(),
   nodeType: GameNodeTypeSchema.nullable(),

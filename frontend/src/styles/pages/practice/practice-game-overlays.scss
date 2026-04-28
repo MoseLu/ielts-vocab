@@ -46,6 +46,16 @@
   line-height: 1;
 }
 
+.practice-game-result__copy.practice-template-slot h2 {
+  font-size: clamp(var(--size-24), 3vw, var(--size-40));
+  line-height: 1.05;
+}
+
+.practice-game-result__copy.practice-template-slot p {
+  font-size: var(--size-13);
+  line-height: 1.35;
+}
+
 .practice-game-result__copy p {
   margin: 0;
   max-width: var(--size-560);

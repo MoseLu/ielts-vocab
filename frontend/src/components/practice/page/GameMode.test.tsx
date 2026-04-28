@@ -60,6 +60,7 @@ function buildWordState(imageStatus: 'queued' | 'ready' | 'failed', activeKind: 
       totalWords: 5,
       bossStatus: 'locked',
       rewardStatus: 'locked',
+      words: ['a couple of', 'ability', 'context', 'analysis', 'evidence'],
     },
     taskFocus: {
       task: 'continue-book',
@@ -271,13 +272,14 @@ describe('GameMode', () => {
       chapterId: '1',
       day: undefined,
     })))
-    expect(await screen.findByRole('img', { name: 'a couple of 词义场景' })).toHaveAttribute(
-      'src',
-      'https://oss.example/a-couple-of.png',
-    )
+    expect(await screen.findByRole('img', { name: 'a couple of 词义场景' })).toHaveAttribute('src', 'https://oss.example/a-couple-of.png')
+    expect(document.querySelector('.practice-game-mode__scene-backdrop')).toHaveAttribute('src', '/ui/templates/word-mission-text-safe.png?v=20260427-mobile-map-1')
+    expect(document.querySelector('.practice-game-mode__threat-route')?.childElementCount).toBe(0)
     expect(screen.getAllByText('会写').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: '播放单词' })).toBeInTheDocument()
     expect(screen.queryByText('独立错词体系')).not.toBeInTheDocument()
+    expect(screen.queryByText('CORE')).not.toBeInTheDocument()
+    ;['.practice-game-mode__tower-slot', '.practice-game-mode__enemy-token'].forEach(selector => expect(document.querySelector(selector)).toBeNull())
     expect(screen.queryByRole('img', { name: '五维词关地图' })).not.toBeInTheDocument()
   })
 
@@ -309,7 +311,7 @@ describe('GameMode', () => {
 
     expect((await screen.findAllByText('拼写气球')).length).toBeGreaterThan(0)
     expect(screen.getByText('听音并输入完整拼写，击破当前目标。')).toBeInTheDocument()
-    expect(screen.getByText('CORE')).toBeInTheDocument()
+    expect(screen.queryByText('CORE')).not.toBeInTheDocument()
     expect(screen.queryByRole('img', { name: 'a couple of 词义场景' })).not.toBeInTheDocument()
   })
 
@@ -380,48 +382,48 @@ describe('GameMode', () => {
     expect(await screen.findByRole('region', { name: '五维词关地图' })).toBeInTheDocument()
     const mapImages = Array.from(document.querySelectorAll('.practice-game-map img'))
       .map(image => image.getAttribute('src') || '')
-    expect(mapImages).not.toContain('/game/campaign-dynamic/progress_panel.svg')
-    expect(mapImages).toContain('/game/campaign-dynamic/title_scroll_empty.png')
+    expect(mapImages).toEqual(['/ui/templates/word-chain-map-text-safe.png?v=20260427-mobile-map-1'])
     expect(mapImages.every(src => !src.includes('map_campaign_main'))).toBe(true)
     expect(mapImages.every(src => !/(25_30|2350|1260|1_of_5|15_15)/.test(src))).toBe(true)
-    expect(mapImages).toContain('/ui/background/map_education.png')
     expect(mapImages.every(src => !src.includes('/game/campaign-v2/themes/'))).toBe(true)
-    expect(mapImages).toContain('/ui/hud/avatar_frame.png')
-    expect(mapImages).toContain('/ui/buttons/btn_green.png')
-    expect(mapImages).toContain('/ui/buttons/btn_red.png')
-    expect(mapImages).not.toContain('/ui/map/level_badge_blue.png')
-    expect(mapImages).not.toContain('/ui/map/level_badge_gray.png')
-    expect(mapImages).not.toContain('/ui/map/level_badge_locked.png')
-    expect(mapImages).not.toContain('/ui/map/treasure_closed.png')
-    expect(mapImages).not.toContain('/ui/cards/card_language_use.png')
-    expect(mapImages).not.toContain('/ui/modal/panel_report.png')
-    expect(mapImages).not.toContain('/game/campaign-dynamic/map_background.png')
-    expect(mapImages).not.toContain('/game/wuwei-transparent-v3/buttons/button_exit.png')
-    expect(mapImages).not.toContain('/game/campaign-dynamic/battle_node_tower_active.png')
+    const staleAssets = [
+      'progress_panel.svg', 'title_scroll_empty', 'avatar_frame', 'btn_green', 'btn_red',
+      'level_badge_', 'treasure_closed', 'card_language_use', 'panel_report',
+      'map_background', 'button_exit', 'battle_node_tower_active',
+    ]
+    expect(staleAssets.some(asset => mapImages.some(src => src.includes(asset)))).toBe(false)
     expect(mapImages.every(src => !src.includes('/shield_'))).toBe(true)
     expect(document.querySelector('.practice-game-map__segment-node-crest')).toBeNull()
     expect(document.querySelector('.practice-game-map__segment-node')?.tagName).toBe('SPAN')
-    expect(document.querySelector('.practice-game-map__prd-avatar-level-pill')).not.toBeNull()
+    expect(document.querySelector('.practice-game-map__prd-avatar-level-pill')).toBeNull()
+    expect(document.querySelector('.practice-game-map__template-hud')).not.toBeNull()
+    expect(document.querySelector('.practice-game-map__template-side')).not.toBeNull()
     const mapHud = screen.getByLabelText('真实学习数据')
     expect(within(mapHud).getByRole('button', { name: '返回学习计划' })).toBeInTheDocument()
     expect(within(mapHud).getByLabelText('体力')).toHaveTextContent('3/5')
     expect(within(mapHud).queryByRole('button', { name: '退出地图' })).not.toBeInTheDocument()
-    expect(document.querySelector('.practice-game-map__title-copy')).not.toBeNull()
+    expect(document.querySelector('.practice-game-map__template-title')).not.toBeNull()
+    expect(screen.getByLabelText('小段标题')).toBeInTheDocument()
     expect(screen.getByLabelText('体力')).toHaveTextContent('3/5')
     expect(screen.getByLabelText('金币')).toHaveTextContent('120')
     expect(screen.getByLabelText('钻石')).toHaveTextContent('0')
     expect(screen.getByRole('button', { name: '返回学习计划' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '退出地图' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '开始当前词关' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '退出地图' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '进入当前词' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '进入第 1 个词，当前，0 星' })).not.toBeInTheDocument()
-    expect(screen.getByText('词链防线地图')).toBeInTheDocument()
-    expect(screen.getByText('当前词链 1 / 675')).toBeInTheDocument()
-    expect(screen.getByText('a couple of')).toBeInTheDocument()
+    expect(screen.getByText('当前 5 词小段')).toBeInTheDocument()
+    expect(screen.getByText('第 1 小段 / 共 675 段')).toBeInTheDocument()
+    expect(screen.getAllByText('a couple of').length).toBeGreaterThan(0)
     expect(screen.getByText('ability')).toBeInTheDocument()
     expect(screen.queryByText('当前关卡 1 / 675')).not.toBeInTheDocument()
     expect(screen.queryByText(/试炼段/u)).not.toBeInTheDocument()
-    expect(screen.getByText('词链进度')).toBeInTheDocument()
+    ;['小段情报', '小段进度', '全链词汇进度'].forEach(text => expect(screen.getByText(text)).toBeInTheDocument())
+    expect(screen.getByText('0 / 5 词')).toBeInTheDocument()
+    expect(screen.getByText('主线新词 · 小段 1/675 · 全链 0/3,375')).toBeInTheDocument()
+    ;['词链防线地图', '当前词链 1 / 675', '词链进度'].forEach(text => expect(screen.queryByText(text)).not.toBeInTheDocument())
     expect(screen.getByText('当前任务')).toBeInTheDocument()
+    expect(screen.getByText('五维点亮')).toBeInTheDocument()
+    expect(screen.queryByText('回流数量')).not.toBeInTheDocument()
     expect(screen.getAllByText('0 / 3,375').length).toBeGreaterThan(0)
     expect(screen.queryByRole('navigation', { name: '教育校园 章节分页' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: '五维训练入口' })).not.toBeInTheDocument()
@@ -430,10 +432,10 @@ describe('GameMode', () => {
     expect(screen.queryByRole('region', { name: '当前词五维状态' })).not.toBeInTheDocument()
     expect(screen.queryByText('Boss 试炼')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: '退出地图' }))
+    fireEvent.click(screen.getByRole('button', { name: '返回学习计划' }))
     expect(onBackToPlan).toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: '开始当前词关' }))
+    fireEvent.click(screen.getByRole('button', { name: '进入当前词' }))
 
     await waitFor(() => expect(startGamePracticeSessionMock).toHaveBeenCalled())
     expect(onEnterMission).toHaveBeenCalled()
@@ -448,13 +450,13 @@ describe('GameMode', () => {
         status: 'launcher',
       },
     })
-    startGamePracticeSessionMock.mockResolvedValue({ game_state: activeState })
+    startGamePracticeSessionMock.mockReturnValue(new Promise(() => undefined))
 
     render(<GameMode bookId="ielts_reading_premium" chapterId="1" />)
 
-    expect(await screen.findByText('正在进入词关...')).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: '五维词关地图' })).not.toBeInTheDocument()
     await waitFor(() => expect(startGamePracticeSessionMock).toHaveBeenCalled())
+    expect(screen.queryByText('正在进入词关...')).not.toBeInTheDocument()
+    expect(document.querySelector('.loading-state--global')).not.toBeNull()
   })
 
   it('renders the result overlay when the segment settles into result mode', async () => {

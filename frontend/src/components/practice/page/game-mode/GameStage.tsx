@@ -3,8 +3,10 @@ import { useSpeechRecognition } from '../../../../hooks/useSpeechRecognition'
 import type { GameCampaignNode, GameCampaignWord, GameLevelKind } from '../../../../lib'
 import PracticePronunciationButton from '../PracticePronunciationButton'
 import { BattleTopHud, BossTopHud, ObjectivePanel, ThreatRoute } from './GameBattleHud'
-import { prdSceneBackdropForKind } from './GamePrdUi'
+import { prdMobileSceneBackdrop, prdSceneBackdropForKind } from './GamePrdUi'
+import { GameTemplateDebugLayer } from './GameTemplateDebugLayer'
 import { gameAsset } from './gameAssets'
+import { type GameTemplateLayoutId, layoutSlotStyle, responsiveLayoutSlotStyle } from './gameTemplateLayout'
 import {
   LEVEL_KIND_LABELS,
   NODE_STATUS_LABELS,
@@ -103,32 +105,72 @@ function DimensionDefenseStrip({
   )
 }
 
-function sceneAssetForLevel(levelKind: GameLevelKind) {
-  return prdSceneBackdropForKind(levelKind)
+function sceneAssetForLevel(levelKind: GameLevelKind, variant: 'mission' | 'refill' = 'mission') { return prdSceneBackdropForKind(levelKind, variant) }
+
+const MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT: Record<string, string> = {
+  'mission.hud': 'mobileMission.hud', 'mission.route': 'mobileMission.route',
+  'mission.objective': 'mobileMission.objective', 'mission.answerPanel': 'mobileMission.answerPanel',
+  'refill.hud': 'mobileMission.hud', 'refill.list': 'mobileMission.route',
+  'refill.objective': 'mobileMission.objective', 'refill.answerPanel': 'mobileMission.answerPanel',
+}
+
+function missionSlotStyle(layoutId: GameTemplateLayoutId, slotId: string) {
+  const mobileSlotId = MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[slotId]
+  if (!mobileSlotId) return layoutSlotStyle(layoutId, slotId)
+  return responsiveLayoutSlotStyle(layoutId, slotId, 'mobileWordMission', mobileSlotId)
 }
 
 function WordScene({
   node,
   word,
   levelKind,
+  layoutId,
+  sceneVariant = 'mission',
   onExitToMap,
 }: {
   node: GameCampaignNode
   word: GameCampaignWord
   levelKind: GameLevelKind
+  layoutId: Extract<GameTemplateLayoutId, 'wordMission' | 'refillState'>
+  sceneVariant?: 'mission' | 'refill'
   onExitToMap?: () => void
 }) {
   const image = word.image
   const showSceneImage = image.status === 'ready' && Boolean(image.url)
+  const [hudSlot, routeSlot, objectiveSlot] = layoutId === 'refillState'
+    ? ['refill.hud', 'refill.list', 'refill.objective']
+    : ['mission.hud', 'mission.route', 'mission.objective']
 
   return (
     <div className={`practice-game-mode__scene practice-game-mode__scene--${levelKind} is-${image.status}`}>
-      <img src={sceneAssetForLevel(levelKind)} alt="" aria-hidden="true" className="practice-game-mode__scene-backdrop" />
+      <picture aria-hidden="true">
+        <source media="(max-width: 640px)" srcSet={prdMobileSceneBackdrop()} />
+        <img src={sceneAssetForLevel(levelKind, sceneVariant)} alt="" className="practice-game-mode__scene-backdrop" />
+      </picture>
+      <GameTemplateDebugLayer layoutId={layoutId} mobileLayoutId="mobileWordMission" />
       {showSceneImage ? <img src={image.url ?? undefined} alt={image.alt} className="practice-game-mode__scene-image" /> : null}
       <div className="practice-game-mode__scene-overlay" />
-      <BattleTopHud node={node} word={word} levelKind={levelKind} onExitToMap={onExitToMap} />
-      <ThreatRoute word={word} levelKind={levelKind} />
-      <ObjectivePanel word={word} levelKind={levelKind} />
+      <BattleTopHud
+        node={node}
+        word={word}
+        levelKind={levelKind}
+        onExitToMap={onExitToMap}
+        slotId={hudSlot}
+        mobileSlotId={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[hudSlot]}
+        slotStyle={missionSlotStyle(layoutId, hudSlot)}
+      />
+      <ThreatRoute
+        slotId={routeSlot}
+        mobileSlotId={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[routeSlot]}
+        slotStyle={missionSlotStyle(layoutId, routeSlot)}
+      />
+      <ObjectivePanel
+        word={word}
+        levelKind={levelKind}
+        slotId={objectiveSlot}
+        mobileSlotId={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[objectiveSlot]}
+        slotStyle={missionSlotStyle(layoutId, objectiveSlot)}
+      />
       <div className="practice-game-mode__coach-line">
         <img src={gameAsset.character.robot} alt="" aria-hidden="true" />
         <span>{image.status === 'ready' ? '图像情报已同步。' : image.status === 'failed' ? '图像情报缺失，使用基础战场。' : '图像情报生成中，先守住当前波。'}</span>
@@ -237,6 +279,7 @@ export function WordMissionScreen({
   isSubmitting,
   banner,
   error,
+  forceRefillLayout = false,
   onAnswerChange,
   onSelectChoice,
   onSubmitAttempt,
@@ -251,6 +294,7 @@ export function WordMissionScreen({
   isSubmitting: boolean
   banner: { tone: 'success' | 'warning'; message: string } | null
   error: string | null
+  forceRefillLayout?: boolean
   onAnswerChange: (value: string) => void
   onSelectChoice: (value: string | null) => void
   onSubmitAttempt: (passed: boolean, meta?: AttemptMeta) => Promise<void>
@@ -266,11 +310,26 @@ export function WordMissionScreen({
   const selectedDefinition = definitionChoices.find(choice => choice.key === selectedChoice)
   const selectedListening = listeningChoices.find(choice => choice.key === selectedChoice)
   const selectedExample = exampleChallenge.choices.find(choice => choice.key === selectedChoice)
+  const useRefillLayout = forceRefillLayout || banner?.tone === 'warning' || Boolean(error)
+  const layoutId = useRefillLayout ? 'refillState' : 'wordMission'
+  const answerSlot = layoutId === 'refillState' ? 'refill.answerPanel' : 'mission.answerPanel'
 
   return (
     <section className="practice-game-mode__battle-screen">
-      <WordScene node={node} word={word} levelKind={levelKind} onExitToMap={onExitToMap} />
-      <div className="practice-game-mode__sheet">
+      <WordScene
+        node={node}
+        word={word}
+        levelKind={levelKind}
+        layoutId={layoutId}
+        sceneVariant={useRefillLayout ? 'refill' : 'mission'}
+        onExitToMap={onExitToMap}
+      />
+      <div
+        className="practice-game-mode__sheet practice-template-slot"
+        data-layout-slot={answerSlot}
+        data-mobile-layout-slot={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[answerSlot]}
+        style={missionSlotStyle(layoutId, answerSlot)}
+      >
         <DimensionDefenseStrip word={word} activeKind={levelKind} />
 
         <div className="practice-game-mode__sheet-head">
@@ -365,13 +424,25 @@ export function SpeakingMissionScreen({
 }) {
   const targetWord = node.targetWords[0] ?? ''
   const isBoss = node.nodeType === 'speaking_boss'
+  const layoutId = 'wordMission'
 
   return (
     <section className="practice-game-mode__battle-screen">
       <div className={`practice-game-mode__scene practice-game-mode__scene--boss${isBoss ? ' is-boss' : ''}`}>
-        <img src={prdSceneBackdropForKind('speaking')} alt="" aria-hidden="true" className="practice-game-mode__scene-backdrop" />
+        <picture aria-hidden="true">
+          <source media="(max-width: 640px)" srcSet={prdMobileSceneBackdrop()} />
+          <img src={prdSceneBackdropForKind('speaking')} alt="" className="practice-game-mode__scene-backdrop" />
+        </picture>
+        <GameTemplateDebugLayer layoutId={layoutId} mobileLayoutId="mobileWordMission" />
         <div className="practice-game-mode__scene-overlay" />
-        <BossTopHud node={node} isBoss={isBoss} onExitToMap={onExitToMap} />
+        <BossTopHud
+          node={node}
+          isBoss={isBoss}
+          onExitToMap={onExitToMap}
+          slotId="mission.hud"
+          mobileSlotId={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT['mission.hud']}
+          slotStyle={missionSlotStyle(layoutId, 'mission.hud')}
+        />
         <div className="practice-game-mode__scene-head">
           <span>{NODE_TYPE_LABELS[node.nodeType]}</span>
           <span>{isBoss ? `重打 ${node.bossFailures} 次` : `失手 ${node.rewardFailures} 次`}</span>
@@ -392,7 +463,12 @@ export function SpeakingMissionScreen({
         ) : null}
       </div>
 
-      <div className="practice-game-mode__sheet">
+      <div
+        className="practice-game-mode__sheet practice-template-slot"
+        data-layout-slot="mission.answerPanel"
+        data-mobile-layout-slot={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT['mission.answerPanel']}
+        style={missionSlotStyle(layoutId, 'mission.answerPanel')}
+      >
         <div className="practice-game-mode__sheet-head">
           <div>
             <span className="practice-game-mode__sheet-eyebrow">{NODE_TYPE_LABELS[node.nodeType]}</span>

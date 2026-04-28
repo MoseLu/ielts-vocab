@@ -41,7 +41,6 @@
 .practice-game-mode__hud,
 .practice-game-mode__lesson-card,
 .practice-game-mode__recovery-dock,
-.practice-game-mode--loading,
 .practice-game-mode--error,
 .practice-game-mode--done {
   position: relative;
@@ -82,7 +81,6 @@
   min-width: 0;
 }
 
-.practice-game-mode--loading,
 .practice-game-mode--error,
 .practice-game-mode--done {
   width: min(100%, var(--size-720));

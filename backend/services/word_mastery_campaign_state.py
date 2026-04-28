@@ -313,6 +313,7 @@ def build_game_practice_state(
         'totalWords': 0,
         'bossStatus': 'locked',
         'rewardStatus': 'locked',
+        'words': [],
     }
     boss_ready_index = None
     reward_ready_index = None
@@ -351,6 +352,7 @@ def build_game_practice_state(
                 'totalWords': len(segment_entries),
                 'bossStatus': boss_status,
                 'rewardStatus': reward_status,
+                'words': [entry['word']['word'] for entry in segment_entries],
             }
             speaking_boss = _build_speaking_node(
                 node_type='speaking_boss',

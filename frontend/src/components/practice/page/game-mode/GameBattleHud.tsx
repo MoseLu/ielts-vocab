@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { GameCampaignNode, GameCampaignWord, GameLevelKind } from '../../../../lib'
 import {
   LEVEL_KIND_LABELS,
@@ -35,22 +36,36 @@ const LEVEL_TACTICS: Record<GameLevelKind, { tower: string; threat: string; obje
   },
 }
 
+type TemplateSlotProps = {
+  slotId?: string
+  mobileSlotId?: string
+  slotStyle?: CSSProperties
+}
+
 export function BattleTopHud({
   node,
   word,
   levelKind,
   onExitToMap,
+  slotId,
+  mobileSlotId,
+  slotStyle,
 }: {
   node: GameCampaignNode
   word: GameCampaignWord
   levelKind: GameLevelKind
   onExitToMap?: () => void
-}) {
+} & TemplateSlotProps) {
   const step = getChallengeStep(node)
   const wave = getWaveNumber(word)
 
   return (
-    <header className="practice-game-mode__battle-hud">
+    <header
+      className={`practice-game-mode__battle-hud${slotId ? ' practice-template-slot' : ''}`}
+      data-layout-slot={slotId}
+      data-mobile-layout-slot={mobileSlotId}
+      style={slotStyle}
+    >
       {onExitToMap ? (
         <button type="button" className="practice-game-mode__battle-back" onClick={onExitToMap}>
           地图
@@ -75,13 +90,21 @@ export function BossTopHud({
   node,
   isBoss,
   onExitToMap,
+  slotId,
+  mobileSlotId,
+  slotStyle,
 }: {
   node: GameCampaignNode
   isBoss: boolean
   onExitToMap?: () => void
-}) {
+} & TemplateSlotProps) {
   return (
-    <header className="practice-game-mode__battle-hud">
+    <header
+      className={`practice-game-mode__battle-hud${slotId ? ' practice-template-slot' : ''}`}
+      data-layout-slot={slotId}
+      data-mobile-layout-slot={mobileSlotId}
+      style={slotStyle}
+    >
       {onExitToMap ? (
         <button type="button" className="practice-game-mode__battle-back" onClick={onExitToMap}>
           地图
@@ -99,45 +122,39 @@ export function BossTopHud({
 }
 
 export function ThreatRoute({
-  word,
-  levelKind,
+  slotId,
+  mobileSlotId,
+  slotStyle,
 }: {
-  word: GameCampaignWord
-  levelKind: GameLevelKind
-}) {
+} & TemplateSlotProps) {
   return (
-    <div className="practice-game-mode__threat-route" aria-hidden="true">
-      <span className="practice-game-mode__route-line" />
-      <span className="practice-game-mode__defense-base">
-        <strong>CORE</strong>
-      </span>
-      <span className="practice-game-mode__tower-slot is-left">
-        <span>{LEVEL_TACTICS[levelKind].tower}</span>
-      </span>
-      <span className="practice-game-mode__tower-slot is-right">
-        <span>{LEVEL_KIND_LABELS[levelKind]}</span>
-      </span>
-      <span className="practice-game-mode__enemy-token is-front">
-        <strong>{word.word}</strong>
-        <small>{LEVEL_TACTICS[levelKind].threat}</small>
-      </span>
-      <span className="practice-game-mode__enemy-token is-back">
-        <strong>{word.pos || 'IELTS'}</strong>
-        <small>干扰项</small>
-      </span>
-    </div>
+    <div
+      className={`practice-game-mode__threat-route${slotId ? ' practice-template-slot' : ''}`}
+      data-layout-slot={slotId}
+      data-mobile-layout-slot={mobileSlotId}
+      style={slotStyle}
+      aria-hidden="true"
+    />
   )
 }
 
 export function ObjectivePanel({
   word,
   levelKind,
+  slotId,
+  mobileSlotId,
+  slotStyle,
 }: {
   word: GameCampaignWord
   levelKind: GameLevelKind
-}) {
+} & TemplateSlotProps) {
   return (
-    <aside className="practice-game-mode__objective-panel">
+    <aside
+      className={`practice-game-mode__objective-panel${slotId ? ' practice-template-slot' : ''}`}
+      data-layout-slot={slotId}
+      data-mobile-layout-slot={mobileSlotId}
+      style={slotStyle}
+    >
       <span>{LEVEL_TACTICS[levelKind].threat}</span>
       <strong>{levelKind === 'spelling' ? word.definition : word.word}</strong>
       {word.phonetic ? <small>{word.phonetic}</small> : null}

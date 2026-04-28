@@ -50,19 +50,35 @@ const SIDE_ACTIONS = [
   { label: '排行', icon: prdUiAsset.icons.rank },
   { label: '设置', icon: prdUiAsset.icons.setting },
 ] as const
+const TEMPLATE_CACHE_VERSION = '20260427-mobile-map-1'
+
+export function prdTemplateAsset(path: string): string {
+  return `${path}?v=${TEMPLATE_CACHE_VERSION}`
+}
 
 function formatCount(value: number): string {
   return Math.max(0, value).toLocaleString('zh-CN')
 }
 
 export function prdMapBackgroundForTheme(themeId?: string | null): string {
-  return themeId === 'environment-nature'
-    ? prdUiAsset.background.mapEnvironment
-    : prdUiAsset.background.mapEducation
+  void themeId
+  return prdTemplateAsset(prdUiAsset.templates.wordChainMap)
 }
 
-export function prdSceneBackdropForKind(_levelKind: GameLevelKind): string {
-  return prdUiAsset.background.classroomBlur
+export function prdMobileMapBackgroundForTheme(themeId?: string | null): string {
+  void themeId
+  return prdTemplateAsset(prdUiAsset.templates.mobileWordChainMap)
+}
+
+export function prdSceneBackdropForKind(
+  _levelKind: GameLevelKind,
+  variant: 'mission' | 'refill' = 'mission',
+): string {
+  return prdTemplateAsset(variant === 'refill' ? prdUiAsset.templates.refillState : prdUiAsset.templates.wordMission)
+}
+
+export function prdMobileSceneBackdrop(): string {
+  return prdTemplateAsset(prdUiAsset.templates.mobileWordMission)
 }
 
 export function prdSegmentBadgeAsset(status: 'active' | 'cleared' | 'locked' | 'ready'): string {

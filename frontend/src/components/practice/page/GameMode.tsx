@@ -3,6 +3,7 @@ import { fetchGamePracticeState, startGamePracticeSession, submitWordMasteryAtte
 import type { GameCampaignState, GameCampaignDimension, GameLevelCard, GameLevelKind } from '../../../lib'
 import { GameMapShell } from './game-mode/GameMapShell'
 import { GameResultOverlay } from './game-mode/GameResultOverlay'
+import { Loading } from '../../ui'
 import {
   SpeakingMissionScreen,
   WordMissionScreen,
@@ -276,7 +277,7 @@ export default function GameMode({
   }, [refreshState, setBattleBanner])
 
   if (isLoading) {
-    return <section className="practice-game-mode practice-game-mode--loading">正在载入五维战役...</section>
+    return <Loading fullScreen />
   }
 
   if (error && !state) {
@@ -332,7 +333,7 @@ export default function GameMode({
   }
 
   if (sessionStatus === 'launcher') {
-    return <section className="practice-game-mode practice-game-mode--loading">正在进入词关...</section>
+    return <Loading fullScreen />
   }
 
   if (showMapAfterResult) {
@@ -362,6 +363,7 @@ export default function GameMode({
             isSubmitting={isSubmitting}
             banner={banner}
             error={error}
+            forceRefillLayout={state.taskFocus?.task === 'error-review'}
             onAnswerChange={setAnswerInput}
             onSelectChoice={setSelectedChoice}
             onSubmitAttempt={submitWordNode}
