@@ -81,12 +81,16 @@ def upload_frontend_assets(release_dir: Path) -> int:
         raise SystemExit(f'Failed to create frontend asset OSS bucket client: {bucket_env}')
 
     dist_dir = release_dir / 'dist'
-    assets_dir = dist_dir / 'assets'
-    if not assets_dir.is_dir():
-        raise SystemExit(f'Missing frontend assets directory: {assets_dir}')
+    if not dist_dir.is_dir():
+        raise SystemExit(f'Missing frontend dist directory: {dist_dir}')
 
     uploaded = 0
-    for file_path in sorted(path for path in assets_dir.rglob('*') if path.is_file()):
+    files = (
+        path
+        for path in dist_dir.rglob('*')
+        if path.is_file() and path.name != 'index.html' and not path.name.startswith('.')
+    )
+    for file_path in sorted(files):
         relative_path = file_path.relative_to(dist_dir).as_posix()
         object_key = join_object_key(prefix=_prefix(), file_name=relative_path)
         body = file_path.read_bytes()

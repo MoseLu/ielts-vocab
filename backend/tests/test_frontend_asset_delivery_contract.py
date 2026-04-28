@@ -60,6 +60,32 @@ def test_frontend_asset_upload_gzips_text_assets(tmp_path, monkeypatch):
     assert gzip.decompress(css_object['body']) == css_body
 
 
+def test_frontend_asset_upload_includes_prd_ui_templates(tmp_path, monkeypatch):
+    upload_module = _load_upload_module()
+    fake_bucket = _FakeBucket()
+    template_dir = tmp_path / 'dist' / 'ui' / 'templates'
+    template_dir.mkdir(parents=True)
+    template_body = b'fake-png-body'
+    (template_dir / 'word-chain-map-text-safe.png').write_bytes(template_body)
+    (tmp_path / 'dist' / 'index.html').write_text('<html></html>', encoding='utf-8')
+
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_ENABLED', 'true')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_BUCKET_ENV', 'FRONTEND_ASSET_OSS_BUCKET')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_BUCKET', 'fake-bucket')
+    monkeypatch.setattr(upload_module, 'bucket_is_configured', lambda **kwargs: True)
+    monkeypatch.setattr(upload_module, 'get_bucket', lambda **kwargs: fake_bucket)
+
+    uploaded = upload_module.upload_frontend_assets(tmp_path)
+
+    assert uploaded == 1
+    assert 'projects/ielts-vocab/frontend-assets/index.html' not in fake_bucket.objects
+    ui_object = fake_bucket.objects[
+        'projects/ielts-vocab/frontend-assets/ui/templates/word-chain-map-text-safe.png'
+    ]
+    assert ui_object['body'] == template_body
+    assert ui_object['headers']['x-oss-object-acl'] == 'public-read'
+
+
 def test_vite_supports_configurable_frontend_asset_base_url():
     config = _read('frontend/vite.config.ts')
 
