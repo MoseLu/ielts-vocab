@@ -53,6 +53,12 @@ jobs:
 
       - name: Build release artifact
         shell: bash
+        env:
+          FRONTEND_ASSET_BASE_URL: ${{ vars.FRONTEND_ASSET_BASE_URL }}
+          VITE_ASSET_BASE_URL: ${{ vars.VITE_ASSET_BASE_URL }}
+          FRONTEND_ASSET_OSS_ENABLED: ${{ vars.FRONTEND_ASSET_OSS_ENABLED }}
+          FRONTEND_ASSET_OSS_PUBLIC_BASE_URL: ${{ vars.FRONTEND_ASSET_OSS_PUBLIC_BASE_URL }}
+          FRONTEND_ASSET_OSS_PREFIX: ${{ vars.FRONTEND_ASSET_OSS_PREFIX }}
         run: |
           corepack enable
           artifact_path="${RUNNER_TEMP}/ielts-vocab-release.tgz"

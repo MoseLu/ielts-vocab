@@ -198,6 +198,14 @@ release_python_dependencies_match_current() {
   [[ "$(release_python_dependency_fingerprint "${current_release}")" == "$(release_python_dependency_fingerprint "${release_dir}")" ]]
 }
 
+resolve_frontend_asset_base() {
+  local asset_base="${FRONTEND_ASSET_BASE_URL:-${VITE_ASSET_BASE_URL:-}}"
+  if [[ -z "${asset_base}" && "${FRONTEND_ASSET_OSS_ENABLED:-false}" =~ ^(1|true|TRUE|yes|YES)$ && -n "${FRONTEND_ASSET_OSS_PUBLIC_BASE_URL:-}" ]]; then
+    asset_base="${FRONTEND_ASSET_OSS_PUBLIC_BASE_URL%/}/${FRONTEND_ASSET_OSS_PREFIX:-projects/ielts-vocab/frontend-assets}/"
+  fi
+  printf '%s\n' "${asset_base}"
+}
+
 install_release_python_dependencies() {
   local release_dir="${1:?release dir is required}"
   ensure_python_runtime
@@ -221,10 +229,7 @@ build_release_frontend() {
   [[ -f "${BACKEND_ENV_FILE}" ]] && source "${BACKEND_ENV_FILE}"
   [[ -f "${MICROSERVICES_ENV_FILE}" ]] && source "${MICROSERVICES_ENV_FILE}"
   set +a
-  asset_base="${FRONTEND_ASSET_BASE_URL:-${VITE_ASSET_BASE_URL:-}}"
-  if [[ -z "${asset_base}" && "${FRONTEND_ASSET_OSS_ENABLED:-false}" =~ ^(1|true|TRUE|yes|YES)$ && -n "${FRONTEND_ASSET_OSS_PUBLIC_BASE_URL:-}" ]]; then
-    asset_base="${FRONTEND_ASSET_OSS_PUBLIC_BASE_URL%/}/${FRONTEND_ASSET_OSS_PREFIX:-projects/ielts-vocab/frontend-assets}/"
-  fi
+  asset_base="$(resolve_frontend_asset_base)"
   log "Installing workspace dependencies under deploy resource limits"
   run_deploy_job "node-install" env \
     CI=1 \

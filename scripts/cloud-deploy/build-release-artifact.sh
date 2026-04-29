@@ -12,6 +12,7 @@ tmp_dir="$(mktemp -d)"
 stage_dir="${tmp_dir}/stage"
 stage_dir_native="${stage_dir}"
 commit_sha=""
+asset_base=""
 
 cleanup() {
   rm -rf "${tmp_dir}"
@@ -29,6 +30,7 @@ if command -v cygpath >/dev/null 2>&1; then
 fi
 
 commit_sha="$(git -C "${repo_root_native}" rev-parse --verify "${git_ref}^{commit}")"
+asset_base="$(resolve_frontend_asset_base)"
 
 if ! command -v pnpm >/dev/null 2>&1 || ! pnpm --version >/dev/null 2>&1; then
   ensure_node_runtime
@@ -40,10 +42,12 @@ git -C "${stage_dir_native}" add -A
 
 log "Building frontend artifact for ${commit_sha}"
 pnpm --dir "${stage_dir_native}" install --frozen-lockfile
-pnpm --dir "${stage_dir_native}" build
+env CI=1 FRONTEND_ASSET_BASE_URL="${asset_base}" VITE_ASSET_BASE_URL="${asset_base}" \
+  pnpm --dir "${stage_dir_native}" build
 cat > "${stage_dir}/${RELEASE_ARTIFACT_ENV_FILE}" <<EOF
 commit_sha=${commit_sha}
 prebuilt_dist=true
+frontend_asset_base_url=${asset_base}
 built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF
 

@@ -12,7 +12,7 @@ Deploy `ielts-vocab` to `119.29.182.134` as a single-server production baseline:
 - domain HTTP services run as single-instance `ielts-service@...` units on `8000` and `8101-8108`
 - PostgreSQL stores service-owned and bootstrap shadow tables
 - GitHub Actions deploys `main` by SSHing into the server and running a release-based rollout
-- GitHub Actions now builds a release artifact off-host, uploads it by SSH, and the server activates that artifact without rebuilding the frontend
+- GitHub Actions now builds a release artifact off-host with the production frontend asset base, uploads it by SSH, and the server activates that artifact without rebuilding the frontend
 
 ## Runtime Layout
 
@@ -144,6 +144,7 @@ Recommended GitHub `production` environment variables:
 
 - `PROD_APP_HOME`: defaults to `/opt/ielts-vocab`
 - `PROD_SMOKE_HOST`: defaults to `axiomaticworld.com`
+- `FRONTEND_ASSET_OSS_ENABLED`, `FRONTEND_ASSET_OSS_PUBLIC_BASE_URL`, and `FRONTEND_ASSET_OSS_PREFIX`: must match `/etc/ielts-vocab/microservices.env` when OSS frontend asset delivery is enabled
 
 Recommended GitHub branch rules:
 
@@ -153,17 +154,18 @@ Recommended GitHub branch rules:
 The production workflow does this on each `main` release:
 
 1. Checks out the target ref from GitHub.
-2. Builds a release artifact with `scripts/cloud-deploy/build-release-artifact.sh`, including a prebuilt `dist/`.
+2. Builds a release artifact with `scripts/cloud-deploy/build-release-artifact.sh`, including a prebuilt `dist/` and the frontend OSS asset-base marker.
 3. Uploads the artifact plus the latest deploy scripts to a temporary directory on the server.
 4. Runs `preflight-check.sh <git-ref>` on the server to verify sudo, env files, broker baseline, nginx, systemd, and git access.
 5. Runs `deploy-release-artifact.sh <artifact-path> <commit-sha>` on the server.
 6. The server extracts the artifact into a new immutable release directory under `/opt/ielts-vocab/releases`.
 7. PostgreSQL backup runs before the service restart.
 8. The release runs `scripts/run-service-schema-migrations.py` against the split-service databases before `current` switches.
-9. `/opt/ielts-vocab/current` and `/var/www/ielts-vocab/current` switch to the new immutable release.
-10. nginx is reloaded to keep `/api/*` on `127.0.0.1:8000`, then `ielts-service@...` units restart in place.
-11. The deploy smoke checks the restarted single-instance services, verifies `ielts-health-watchdog.timer`, and stops any leftover `ielts-http-slot@...` units from older releases.
-12. If post-switch verification fails, deploy points `current` back to the previous release and restarts the single-instance services.
+9. If frontend OSS delivery is enabled, the server verifies the artifact asset base matches production env and uploads the prebuilt `dist` assets to OSS before switching.
+10. `/opt/ielts-vocab/current` and `/var/www/ielts-vocab/current` switch to the new immutable release.
+11. nginx is reloaded to keep `/api/*` on `127.0.0.1:8000`, then `ielts-service@...` units restart in place.
+12. The deploy smoke checks the restarted single-instance services, verifies `ielts-health-watchdog.timer`, and stops any leftover `ielts-http-slot@...` units from older releases.
+13. If post-switch verification fails, deploy points `current` back to the previous release and restarts the single-instance services.
 
 This removes the slowest production-host steps from the steady-state release path: the server no longer runs `pnpm install` or `pnpm build` during normal deploys.
 

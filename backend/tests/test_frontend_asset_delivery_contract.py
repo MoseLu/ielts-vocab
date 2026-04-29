@@ -108,6 +108,20 @@ def test_release_common_uploads_frontend_assets_to_oss_after_build():
     assert 'upload_frontend_assets_to_oss "${release_dir}"' in script
 
 
+def test_release_artifact_path_builds_with_and_uploads_oss_assets():
+    build_script = _read('scripts/cloud-deploy/build-release-artifact.sh')
+    deploy_script = _read('scripts/cloud-deploy/deploy-release-artifact.sh')
+    workflow = _read('.github/workflows/deploy-production.yml')
+
+    assert 'resolve_frontend_asset_base' in build_script
+    assert 'FRONTEND_ASSET_BASE_URL="${asset_base}"' in build_script
+    assert 'VITE_ASSET_BASE_URL="${asset_base}"' in build_script
+    assert 'frontend_asset_base_url=${asset_base}' in build_script
+    assert 'upload_frontend_assets_to_oss "${release_dir}"' in deploy_script
+    assert 'FRONTEND_ASSET_OSS_PUBLIC_BASE_URL' in workflow
+    assert 'FRONTEND_ASSET_OSS_PREFIX' in workflow
+
+
 def test_frontend_asset_upload_marks_objects_public_read():
     script = _read('scripts/upload-frontend-assets-to-oss.py')
 

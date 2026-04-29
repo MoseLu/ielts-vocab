@@ -11,6 +11,8 @@ switched=false
 previous_current=""
 release_dir=""
 extract_dir=""
+asset_base=""
+artifact_asset_base=""
 
 bootstrap_admin_projections() {
   local release_path="${1:?release path is required}"
@@ -93,6 +95,15 @@ mv "${extract_dir}" "${release_dir}"
 schema_migration_script="${release_dir}/scripts/run-service-schema-migrations.py"
 
 require_file "${schema_migration_script}"
+set -a
+[[ -f "${BACKEND_ENV_FILE}" ]] && source "${BACKEND_ENV_FILE}"
+[[ -f "${MICROSERVICES_ENV_FILE}" ]] && source "${MICROSERVICES_ENV_FILE}"
+set +a
+asset_base="$(resolve_frontend_asset_base)"
+artifact_asset_base="$(read_release_artifact_value "${release_dir}" "frontend_asset_base_url")"
+if [[ -n "${asset_base}" && "${artifact_asset_base%/}/" != "${asset_base%/}/" ]]; then
+  fail "Artifact frontend asset base ${artifact_asset_base:-<empty>} does not match deploy asset base ${asset_base}"
+fi
 
 run_backup_script
 log "Applying split-service schema migrations"
@@ -105,6 +116,8 @@ fi
 if [[ -e "${CURRENT_LINK}" && ! -L "${CURRENT_LINK}" ]]; then
   previous_current="$(stage_current_directory_as_legacy_release "${timestamp}")"
 fi
+
+upload_frontend_assets_to_oss "${release_dir}" "${asset_base}"
 
 log "Activating single-release deployment from artifact"
 set_current_release "${release_dir}"
