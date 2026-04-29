@@ -68,3 +68,28 @@ def test_review_plan_uses_learning_core_wrong_word_count(app, monkeypatch):
 
     assert status == 200
     assert response.get_json()['wrong_words'] == 9
+
+
+def test_review_plan_uses_empty_profile_when_strict_ai_local_profile_fails(app, monkeypatch):
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
+    monkeypatch.delenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', raising=False)
+    monkeypatch.setattr(
+        ai_practice_speaking_application,
+        'build_learner_profile_payload',
+        lambda user_id: (_ for _ in ()).throw(RuntimeError('shared learning table missing')),
+    )
+    monkeypatch.setattr(
+        ai_practice_speaking_application,
+        'fetch_learning_core_wrong_word_count',
+        lambda user_id: 0,
+    )
+    monkeypatch.setattr(ai_practice_speaking_application, 'track_metric', lambda *args, **kwargs: None)
+
+    with app.app_context():
+        response, status = ai_practice_speaking_application.review_plan_response(SimpleNamespace(id=53))
+
+    assert status == 200
+    payload = response.get_json()
+    assert payload['wrong_words'] == 0
+    assert payload['dimensions'] == []
+    assert payload['plan'] == ['先补当前优先维度 10 分钟，再安排错词辨析和巩固复现。']

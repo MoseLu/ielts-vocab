@@ -248,3 +248,28 @@ def test_catalog_content_service_creates_confusable_custom_chapter(monkeypatch, 
     detail_payload = detail_response.json()
     assert detail_payload['chapter']['is_custom'] is True
     assert {word['word'] for word in detail_payload['words']} == {'whether', 'weather'}
+
+
+def test_catalog_content_service_confusable_custom_chapter_ids_are_global(monkeypatch, tmp_path):
+    _configure_catalog_env(monkeypatch, tmp_path)
+    module = _load_catalog_content_service_module('catalog_content_service_confusable_global_ids')
+    client = TestClient(module.app)
+    first_token = _create_user_and_token(module.catalog_content_flask_app, username='catalog-confusable-a')
+    second_token = _create_user_and_token(module.catalog_content_flask_app, username='catalog-confusable-b')
+
+    first_response = client.post(
+        '/api/books/ielts_confusable_match/custom-chapters',
+        json={'groups': [['whether', 'weather']]},
+        headers=_auth_headers(first_token),
+    )
+    second_response = client.post(
+        '/api/books/ielts_confusable_match/custom-chapters',
+        json={'groups': [['accept', 'except']]},
+        headers=_auth_headers(second_token),
+    )
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 201
+    first_id = first_response.json()['created_chapters'][0]['id']
+    second_id = second_response.json()['created_chapters'][0]['id']
+    assert second_id > first_id

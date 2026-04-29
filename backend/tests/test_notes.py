@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import jwt
 
+import services.notes_summary_job_service as notes_summary_job_service
 from models import User, UserDailySummary, UserLearningNote, UserStudySession, UserWrongWord
 
 
@@ -120,6 +121,22 @@ def test_generate_summary_job_reports_progress_and_completion(client, db, app, m
     assert data['progress'] == 100
     assert data['summary']['content'] == '第一段。第二段。'
     assert data['generated_chars'] >= 6
+
+
+def test_generate_summary_job_marks_failed_when_stream_errors(client, db, app, monkeypatch):
+    _token, user_id = _make_user_and_token(app, db, 'notes_job_failure_user')
+
+    def fail_stream(*_args, **_kwargs):
+        raise RuntimeError('provider unavailable')
+
+    monkeypatch.setattr('services.notes_summary_runtime.stream_summary_text', fail_stream)
+
+    job = notes_summary_job_service.create_summary_job(user_id, '2026-03-30')
+    notes_summary_job_service.run_summary_job(app, job['job_id'], user_id, '2026-03-30')
+
+    data = notes_summary_job_service.get_summary_job(job['job_id'])
+    assert data['status'] == 'failed'
+    assert data['error'] == 'provider unavailable'
 
 
 def test_generate_summary_job_reuses_running_job_for_same_date(client, db, app, monkeypatch):

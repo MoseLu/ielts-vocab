@@ -185,6 +185,39 @@ def test_notes_service_generate_summary_job_returns_strict_boundary_when_learnin
     assert response.json()['action'] == 'notes-summary-study-sessions-read'
 
 
+def test_notes_service_generate_summary_job_marks_failed_when_stream_errors(monkeypatch, tmp_path):
+    _configure_notes_env(monkeypatch, tmp_path)
+    module = _load_notes_service_module('notes_service_generate_job_failure')
+    user_id, _token = _create_user_and_token(module.notes_flask_app, username='notes-job-failure-user')
+
+    def fail_stream(*_args, **_kwargs):
+        raise RuntimeError('provider unavailable')
+
+    monkeypatch.setattr(
+        'services.notes_summary_context_repository.fetch_learning_core_notes_study_sessions',
+        lambda *args, **kwargs: [],
+    )
+    monkeypatch.setattr(
+        'services.notes_summary_context_repository.fetch_learning_core_notes_wrong_words',
+        lambda *args, **kwargs: [],
+    )
+    monkeypatch.setattr('platform_sdk.notes_summary_jobs_application.stream_summary_text', fail_stream)
+
+    from platform_sdk import notes_summary_jobs_application
+
+    job = notes_summary_jobs_application.create_summary_job(user_id, '2026-03-30')
+    notes_summary_jobs_application.run_summary_job(
+        module.notes_flask_app,
+        job['job_id'],
+        user_id,
+        '2026-03-30',
+    )
+
+    data = notes_summary_jobs_application.get_summary_job(job['job_id'])
+    assert data['status'] == 'failed'
+    assert data['error'] == 'provider unavailable'
+
+
 def test_notes_service_lists_internal_summaries(monkeypatch, tmp_path):
     _configure_notes_env(monkeypatch, tmp_path)
     module = _load_notes_service_module('notes_service_internal_summaries')

@@ -37,6 +37,13 @@ def get_custom_book_chapter(*, book_id: str, chapter_id: str):
     return CustomBookChapter.query.filter_by(book_id=book_id, id=chapter_id).first()
 
 
+def list_custom_book_chapter_ids() -> list[str]:
+    return [
+        str(row[0])
+        for row in db.session.query(CustomBookChapter.id).all()
+    ]
+
+
 def create_custom_book_chapter(
     *,
     chapter_id: str,

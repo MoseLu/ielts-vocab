@@ -1,6 +1,34 @@
 # Test Report
 
-Last updated: 2026-04-25
+Last updated: 2026-04-30
+
+## 2026-04-30 Production Public API Full Test
+
+Detailed report: `docs/operations/production-api-full-test-report-2026-04-30.md`
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| Public `/api/*` route baseline | PASS | `109/114` monolith route-methods covered by gateway; the 5 uncovered route-methods are legacy `tts-admin` and not publicly exposed. |
+| Authenticated production matrix | PARTIAL | 125 requests: 94 passed, 31 failed. Auth, learning, TTS, speech, admin, and exam groups passed. |
+| Targeted AI/notes retest | PARTIAL | 32 requests: 8 passed, 24 failed. Failures centered on AI upstream/gateway circuit, provider quota, and notes generation. |
+| Post-restart spot check | PARTIAL | 10 requests: 6 passed, 4 failed. Books/auth/AI context/similar-words recovered; AI ask, review queue, game themes, and confusable custom chapter still failed. |
+| Code-fix pass | PASS | Added local fixes for AI review-plan fallback, notes async job failure handling, and confusable custom chapter id collisions. Focused backend tests and repo guards passed. |
+
+Key findings:
+
+- `POST /api/books/ielts_confusable_match/custom-chapters` returned 500 in the full run and 504 after restart; catalog logs show cross-user duplicate `custom_book_chapters.id=1001`. Code now allocates custom chapter ids globally.
+- `GET /api/ai/review-plan` and notes context logs show missing production table `user_learning_book_rollups`; review-plan now degrades to an empty profile snapshot instead of 500 on learner-profile build failure.
+- Notes synchronous summary generation failed because MiniMax API key was unavailable; async generation returned 202 but its worker logged an app-context rollback error.
+- Notes async summary worker rollback now runs inside `app.app_context()` and records failed jobs instead of crashing the worker on generation errors.
+- `POST /api/ai/speaking/evaluate` reached provider logic but failed due to model free-tier exhaustion.
+- The run left production probe artifacts that cannot be deleted through public API: user `codex_api_probe_20260429175738`, custom book `custom_f84821e7d686`, and a `language` word note.
+
+Code-fix verification:
+
+- `pytest backend/tests/test_ai_execution_speaking_internal_clients.py backend/tests/test_notes.py backend/tests/test_notes_service_api.py backend/tests/test_catalog_content_service_api.py backend/tests/test_confusable_custom_chapter_updates.py backend/tests/test_confusable_custom_lookup.py -q` -> PASS, 27 passed.
+- `pnpm check:file-lines` -> PASS.
+- `pnpm lint` -> PASS.
+- `pytest backend/tests/test_source_text_integrity.py -q` -> PASS, 2 passed.
 
 ## Scope
 

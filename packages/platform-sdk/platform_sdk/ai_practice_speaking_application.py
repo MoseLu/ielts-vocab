@@ -149,7 +149,11 @@ def speaking_simulate_response(current_user, body: dict | None):
 
 
 def review_plan_response(current_user):
-    profile = build_learner_profile_payload(current_user.id)
+    try:
+        profile = build_learner_profile_payload(current_user.id)
+    except Exception as exc:
+        logging.warning('[AI] Failed to build review-plan learner profile: %s', exc)
+        profile = {}
     memory_system = profile.get('memory_system') or {}
     dimensions = memory_system.get('dimensions') or []
     plan = profile.get('next_actions') or []

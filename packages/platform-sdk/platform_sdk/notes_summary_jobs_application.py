@@ -140,8 +140,8 @@ def create_summary_job(user_id: int, target_date: str):
 
 
 def run_summary_job(app, job_id: str, user_id: int, target_date: str) -> None:
-    try:
-        with app.app_context():
+    with app.app_context():
+        try:
             update_summary_job(job_id, status='running', progress=8, message='正在收集学习记录...')
             existing = daily_summary_repository.get_daily_summary(user_id, target_date)
             context = _build_summary_context(user_id, target_date)
@@ -186,15 +186,15 @@ def run_summary_job(app, job_id: str, user_id: int, target_date: str) -> None:
                 summary=saved_summary.to_dict(),
                 error=None,
             )
-    except Exception as exc:
-        daily_summary_repository.rollback()
-        logging.exception("[Notes] Summary job failed for user=%s date=%s", user_id, target_date)
-        update_summary_job(
-            job_id,
-            status='failed',
-            message='生成失败，请重试',
-            error=str(exc) or '生成失败，请重试',
-        )
+        except Exception as exc:
+            daily_summary_repository.rollback()
+            logging.exception("[Notes] Summary job failed for user=%s date=%s", user_id, target_date)
+            update_summary_job(
+                job_id,
+                status='failed',
+                message='生成失败，请重试',
+                error=str(exc) or '生成失败，请重试',
+            )
 
 
 def generate_summary_response(user_id: int, body):

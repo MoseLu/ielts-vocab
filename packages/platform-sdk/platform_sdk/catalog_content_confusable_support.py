@@ -198,9 +198,9 @@ def get_confusable_custom_chapter(user_id: int | None, chapter_id: int):
 
 def next_confusable_custom_chapter_id(book) -> int:
     numeric_ids = []
-    for chapter in book.chapters:
+    for chapter_id in books_confusable_repository.list_custom_book_chapter_ids():
         try:
-            numeric_ids.append(int(str(chapter.id)))
+            numeric_ids.append(int(str(chapter_id)))
         except (TypeError, ValueError):
             continue
     return max([CONFUSABLE_CUSTOM_CHAPTER_OFFSET, *numeric_ids]) + 1
