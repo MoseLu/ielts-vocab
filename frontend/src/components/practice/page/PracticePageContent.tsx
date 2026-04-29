@@ -94,6 +94,7 @@ interface PracticePageContentProps {
   correctIndex: number
   handleOptionSelect: (index: number) => void
   handleMeaningRecallSubmit: (source?: SpellingSubmitSource) => void
+  handleFollowReadEvaluated: (passed: boolean) => Promise<void>
   handleContinueReview: () => void
 }
 
@@ -162,6 +163,7 @@ export function PracticePageContent({
   correctIndex,
   handleOptionSelect,
   handleMeaningRecallSubmit,
+  handleFollowReadEvaluated,
   handleContinueReview,
 }: PracticePageContentProps) {
   const progress = Math.min((queueIndex + 1) / Math.max(queue.length, 1), 1)
@@ -263,6 +265,7 @@ export function PracticePageContent({
         onStartRecording={startRecording}
         onStopRecording={stopRecording}
         onSessionInteraction={markFollowSessionInteraction}
+        onPronunciationEvaluated={(_word, result) => handleFollowReadEvaluated(result.passed)}
         favoriteSlot={favoriteButton}
       />
     )

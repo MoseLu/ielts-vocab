@@ -6,10 +6,15 @@ import FollowMode from './FollowMode'
 import type { Word } from './types'
 
 const fetchFollowReadWordMock = vi.fn()
+const evaluateFollowReadPronunciationMock = vi.fn()
 const fetchMock = vi.fn()
 
 vi.mock('./followReadApi', () => ({
   fetchFollowReadWord: (...args: unknown[]) => fetchFollowReadWordMock(...args),
+}))
+
+vi.mock('./followReadScoring', () => ({
+  evaluateFollowReadPronunciation: (...args: unknown[]) => evaluateFollowReadPronunciationMock(...args),
 }))
 
 class TestAudio {
@@ -53,6 +58,7 @@ function makeWord(): Word {
 describe('FollowMode', () => {
   beforeEach(() => {
     fetchFollowReadWordMock.mockReset()
+    evaluateFollowReadPronunciationMock.mockReset()
     fetchMock.mockReset()
     TestAudio.instances = []
     Object.defineProperty(globalThis, 'fetch', {
@@ -68,6 +74,7 @@ describe('FollowMode', () => {
     Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: vi.fn(), writable: true })
     Object.defineProperty(globalThis, 'AudioContext', { value: undefined, writable: true, configurable: true })
     Object.defineProperty(globalThis, 'webkitAudioContext', { value: undefined, writable: true, configurable: true })
+    Object.defineProperty(globalThis, 'MediaRecorder', { value: undefined, writable: true, configurable: true })
     Object.defineProperty(window, 'requestAnimationFrame', { value: vi.fn(() => 1), writable: true })
     Object.defineProperty(window, 'cancelAnimationFrame', { value: vi.fn(), writable: true })
   })
@@ -102,6 +109,8 @@ describe('FollowMode', () => {
     render(
       <FollowMode
         currentWord={makeWord()}
+        bookId="ielts"
+        chapterId="1"
         queueIndex={0}
         total={3}
         settings={{ volume: '60' }}
@@ -168,6 +177,8 @@ describe('FollowMode', () => {
     render(
       <FollowMode
         currentWord={makeWord()}
+        bookId="ielts"
+        chapterId="1"
         queueIndex={1}
         total={2}
         settings={{}}
@@ -189,5 +200,160 @@ describe('FollowMode', () => {
       expect(onCompleteSession).toHaveBeenCalled()
       expect(onIndexChange).toHaveBeenCalledWith(2)
     })
+  })
+
+  it('records local audio and shows three-band pronunciation feedback', async () => {
+    fetchFollowReadWordMock.mockResolvedValue({
+      word: 'phenomenon',
+      phonetic: '/fəˈnɒmɪnən/',
+      definition: '现象',
+      pos: 'n.',
+      audio_url: '/api/tts/word-audio?w=phenomenon',
+      audio_profile: 'full_chunk_full',
+      audio_playback_rate: 1,
+      chunk_audio_url: '/api/tts/follow-read-chunked-audio?w=phenomenon',
+      chunk_audio_profile: 'full_chunk_full_merged',
+      estimated_duration_ms: 4200,
+      audio_sequence: [
+        { id: 'follow-read-track', kind: 'follow', label: '完整示范 -> 拆分跟读 -> 完整回放', url: '/api/tts/follow-read-chunked-audio?w=phenomenon', playback_rate: 1, track_segments: true },
+      ],
+      segments: [{ id: 'seg-0', letter_start: 0, letter_end: 10, letters: 'phenomenon', phonetic: 'fəˈnɒmɪnən', start_ms: 950, end_ms: 2400 }],
+    })
+    evaluateFollowReadPronunciationMock.mockResolvedValue({
+      word: 'phenomenon',
+      score: 76,
+      band: 'near_pass',
+      passed: false,
+      transcript: 'phenomenon',
+      feedback: {
+        summary: '已经接近通过，再把中段元音读饱满。',
+        stress: '重音基本正确。',
+        vowel: '中段元音偏短。',
+        consonant: '辅音清晰。',
+        ending: '尾音需要收完整。',
+        rhythm: '节奏稳定。',
+      },
+      weakSegments: ['no'],
+      provider: 'dashscope',
+      model: 'qwen-audio-turbo',
+    })
+    const stream = { getTracks: () => [{ stop: vi.fn() }] } as unknown as MediaStream
+    const instances: Array<{ ondataavailable: ((event: BlobEvent) => void) | null; onstop: (() => void) | null }> = []
+    class TestMediaRecorder {
+      ondataavailable: ((event: BlobEvent) => void) | null = null
+      onstop: (() => void) | null = null
+      start = vi.fn()
+      stop = vi.fn(() => {
+        this.ondataavailable?.({ data: new Blob(['voice'], { type: 'audio/webm' }) } as BlobEvent)
+        this.onstop?.()
+      })
+      constructor() {
+        instances.push(this)
+      }
+    }
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+      configurable: true,
+    })
+    Object.defineProperty(globalThis, 'MediaRecorder', {
+      value: TestMediaRecorder,
+      configurable: true,
+    })
+
+    const user = userEvent.setup()
+    render(
+      <FollowMode
+        currentWord={makeWord()}
+        bookId="ielts"
+        chapterId="1"
+        queueIndex={0}
+        total={1}
+        settings={{}}
+        speechConnected={false}
+        speechRecording={false}
+        recognizedText=""
+        onIndexChange={vi.fn()}
+        onCompleteSession={vi.fn(() => Promise.resolve())}
+        onStartRecording={vi.fn(() => Promise.resolve())}
+        onStopRecording={vi.fn()}
+        onSessionInteraction={vi.fn(() => Promise.resolve())}
+      />,
+    )
+
+    await screen.findByText('/fəˈnɒmɪnən/')
+    await user.click(screen.getByRole('button', { name: '录音' }))
+    await user.click(screen.getByRole('button', { name: '停止' }))
+
+    await waitFor(() => {
+      expect(evaluateFollowReadPronunciationMock).toHaveBeenCalled()
+      expect(screen.getByText('76')).toBeInTheDocument()
+      expect(screen.getByText('接近通过')).toBeInTheDocument()
+    })
+    expect(instances.length).toBe(1)
+  })
+
+  it('does not report a pronunciation result when scoring fails', async () => {
+    fetchFollowReadWordMock.mockResolvedValue({
+      word: 'phenomenon',
+      phonetic: '/fəˈnɒmɪnən/',
+      definition: '现象',
+      pos: 'n.',
+      audio_url: '/api/tts/word-audio?w=phenomenon',
+      audio_profile: 'full_chunk_full',
+      audio_playback_rate: 1,
+      chunk_audio_url: '/api/tts/follow-read-chunked-audio?w=phenomenon',
+      chunk_audio_profile: 'full_chunk_full_merged',
+      estimated_duration_ms: 4200,
+      audio_sequence: [
+        { id: 'follow-read-track', kind: 'follow', label: '完整示范 -> 拆分跟读 -> 完整回放', url: '/api/tts/follow-read-chunked-audio?w=phenomenon', playback_rate: 1, track_segments: true },
+      ],
+      segments: [{ id: 'seg-0', letter_start: 0, letter_end: 10, letters: 'phenomenon', phonetic: 'fəˈnɒmɪnən', start_ms: 950, end_ms: 2400 }],
+    })
+    evaluateFollowReadPronunciationMock.mockRejectedValue(new Error('model unavailable'))
+    class TestMediaRecorder {
+      ondataavailable: ((event: BlobEvent) => void) | null = null
+      onstop: (() => void) | null = null
+      start = vi.fn()
+      stop = vi.fn(() => {
+        this.ondataavailable?.({ data: new Blob(['voice'], { type: 'audio/webm' }) } as BlobEvent)
+        this.onstop?.()
+      })
+    }
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }) },
+      configurable: true,
+    })
+    Object.defineProperty(globalThis, 'MediaRecorder', { value: TestMediaRecorder, configurable: true })
+
+    const user = userEvent.setup()
+    const onPronunciationEvaluated = vi.fn()
+    render(
+      <FollowMode
+        currentWord={makeWord()}
+        bookId="ielts"
+        chapterId="1"
+        queueIndex={0}
+        total={1}
+        settings={{}}
+        speechConnected={false}
+        speechRecording={false}
+        recognizedText=""
+        onIndexChange={vi.fn()}
+        onCompleteSession={vi.fn(() => Promise.resolve())}
+        onStartRecording={vi.fn(() => Promise.resolve())}
+        onStopRecording={vi.fn()}
+        onSessionInteraction={vi.fn(() => Promise.resolve())}
+        onPronunciationEvaluated={onPronunciationEvaluated}
+      />,
+    )
+
+    await screen.findByText('/fəˈnɒmɪnən/')
+    await user.click(screen.getByRole('button', { name: '录音' }))
+    await user.click(screen.getByRole('button', { name: '停止' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('跟读评分失败，请重新录一遍')).toBeInTheDocument()
+    })
+    expect(onPronunciationEvaluated).not.toHaveBeenCalled()
   })
 })

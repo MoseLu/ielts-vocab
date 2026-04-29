@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from platform_sdk import ai_speaking_assessment_application
+from platform_sdk import ai_follow_read_assessment_application
 
 
 def test_score_to_band_uses_half_band_thresholds():
@@ -79,3 +80,10 @@ def test_build_speaking_prompt_response_includes_target_words(app):
     assert 'dynamic, coherent' in payload['promptText']
     assert payload['recommendedDurationSeconds'] == 120
     assert len(payload['followUps']) == 2
+
+
+def test_follow_read_score_bands():
+    assert ai_follow_read_assessment_application.resolve_follow_read_score_band(59) == ('needs_work', False)
+    assert ai_follow_read_assessment_application.resolve_follow_read_score_band(60) == ('near_pass', False)
+    assert ai_follow_read_assessment_application.resolve_follow_read_score_band(79) == ('near_pass', False)
+    assert ai_follow_read_assessment_application.resolve_follow_read_score_band(80) == ('pass', True)

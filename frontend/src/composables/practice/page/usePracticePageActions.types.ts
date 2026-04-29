@@ -84,5 +84,6 @@ export interface UsePracticePageActionsResult {
   handleOptionSelect: (idx: number) => void
   handleSpellingSubmit: (source?: SpellingSubmitSource) => void
   handleMeaningRecallSubmit: (source?: SpellingSubmitSource) => void
+  handleFollowReadEvaluated: (passed: boolean) => Promise<void>
   handleSkip: () => void
 }

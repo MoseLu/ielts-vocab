@@ -104,6 +104,24 @@ describe('wrongWordsStore review mastery', () => {
     vi.useRealTimers()
   })
 
+  it('tracks follow-read failures and passes on the speaking dimension', () => {
+    const failed = addWrongWordToList([], {
+      word: 'alpha',
+      phonetic: '/a/',
+      pos: 'n.',
+      definition: 'alpha definition',
+    }, { dimension: 'speaking' })
+
+    expect(failed[0].pending_dimensions).toContain('speaking')
+    expect(getWrongWordDimensionHistoryWrong(failed[0], 'speaking')).toBe(1)
+    expect(isWrongWordPendingInDimension(failed[0], 'speaking')).toBe(true)
+
+    const reviewed = applyWrongWordReviewResult(failed, 'alpha', true, 'speaking')
+
+    expect(reviewed.words[0].dimension_states.speaking.pass_streak).toBe(1)
+    expect(reviewed.words[0].dimension_states.speaking.history_wrong).toBe(1)
+  })
+
   it('isolates wrong-word storage by authenticated user id', () => {
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 2 }))
     writeWrongWordsToStorage([makeWord({ word: 'admin-word' })], 2)

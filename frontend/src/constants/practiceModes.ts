@@ -141,6 +141,7 @@ export const WRONG_WORD_DIMENSIONS = [
   'recognition',
   'meaning',
   'listening',
+  'speaking',
   'dictation',
 ] as const
 
@@ -178,6 +179,7 @@ export const WRONG_WORD_DIMENSION_TO_MODE: Record<WrongWordDimensionKey, Canonic
   recognition: 'quickmemory',
   meaning: 'meaning',
   listening: 'listening',
+  speaking: 'follow',
   dictation: 'dictation',
 }
 
@@ -185,6 +187,7 @@ const WRONG_WORD_DIMENSION_TITLES_META: Record<WrongWordDimensionKey, string> = 
   recognition: `${PRACTICE_MODE_LABELS.quickmemory}：看到英文单词时，能不能立刻认出中文意思`,
   meaning: `${PRACTICE_MODE_LABELS.meaning}：看到中文意思时，能不能主动默写出英文单词`,
   listening: `${PRACTICE_MODE_LABELS.listening}：听到发音后，能不能判断它对应的意思`,
+  speaking: `${PRACTICE_MODE_LABELS.follow}：跟读单词时，发音能不能接近标准录音`,
   dictation: `${PRACTICE_MODE_LABELS.dictation}：听到发音后，能不能把单词完整拼出来`,
 }
 

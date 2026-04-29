@@ -11,6 +11,7 @@ import {
 const LEGACY_DIMENSION_KEY_MAP: Record<Exclude<WrongWordDimension, 'recognition'>, string> = {
   meaning: 'meaning',
   listening: 'listening',
+  speaking: 'speaking',
   dictation: 'dictation',
 }
 

@@ -366,6 +366,55 @@ export function usePracticePageActions({
     spellingResult,
   ])
 
+  const handleFollowReadEvaluated = useCallback(async (passed: boolean) => {
+    if (!currentWord) return
+    await prepareSessionForLearningAction()
+    const nextCorrect = passed ? correctCount + 1 : correctCount
+    const nextWrong = passed ? wrongCount : wrongCount + 1
+    setCorrectCount(nextCorrect)
+    setWrongCount(nextWrong)
+    if (passed) sessionCorrectRef.current += 1
+    else sessionWrongRef.current += 1
+    registerAnsweredWord(currentWord.word)
+    syncCurrentSessionSnapshot(Date.now())
+    saveProgress(nextCorrect, nextWrong, { advanceToNext: false })
+    setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: passed ? 'correct' : 'wrong' }))
+    void submitWordMasteryAttempt({
+      bookId,
+      chapterId,
+      word: currentWord.word,
+      dimension: 'speaking',
+      passed,
+      sourceMode: 'follow',
+      entry: errorMode ? 'error-review' : 'practice',
+      task: errorMode ? 'error-review' : undefined,
+      wordPayload: currentWord,
+    }).catch(() => {})
+    if (!passed) saveWrongWord(currentWord)
+    recordErrorReviewOutcome(currentWord, passed)
+    recordModeAnswer('follow', passed)
+  }, [
+    bookId,
+    chapterId,
+    correctCount,
+    currentWord,
+    errorMode,
+    prepareSessionForLearningAction,
+    queue,
+    queueIndex,
+    recordErrorReviewOutcome,
+    registerAnsweredWord,
+    saveProgress,
+    saveWrongWord,
+    syncCurrentSessionSnapshot,
+    wrongCount,
+    setCorrectCount,
+    setWordStatuses,
+    setWrongCount,
+    sessionCorrectRef,
+    sessionWrongRef,
+  ])
+
   const handleSkip = useCallback(async () => {
     if (!currentWord) return
     await prepareSessionForLearningAction()
@@ -438,6 +487,7 @@ export function usePracticePageActions({
     handleOptionSelect,
     handleSpellingSubmit,
     handleMeaningRecallSubmit,
+    handleFollowReadEvaluated,
     handleSkip,
   }
 }

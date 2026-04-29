@@ -341,6 +341,7 @@ interface PracticePageFollowLayoutProps extends SharedModeLayoutProps {
   onStartRecording: () => Promise<void>
   onStopRecording: () => void
   onSessionInteraction: () => Promise<void>
+  onPronunciationEvaluated?: Parameters<typeof FollowMode>[0]['onPronunciationEvaluated']
 }
 
 export function PracticePageFollowLayout(props: PracticePageFollowLayoutProps) {
@@ -377,6 +378,7 @@ export function PracticePageFollowLayout(props: PracticePageFollowLayoutProps) {
     onStartRecording,
     onStopRecording,
     onSessionInteraction,
+    onPronunciationEvaluated,
   } = props
 
   return (
@@ -414,6 +416,8 @@ export function PracticePageFollowLayout(props: PracticePageFollowLayoutProps) {
       )}
       <FollowMode
         currentWord={currentWord}
+        bookId={practiceBookId}
+        chapterId={practiceChapterId}
         queueIndex={queueIndex}
         total={queue.length}
         settings={settings}
@@ -426,6 +430,7 @@ export function PracticePageFollowLayout(props: PracticePageFollowLayoutProps) {
         onStartRecording={onStartRecording}
         onStopRecording={onStopRecording}
         onSessionInteraction={onSessionInteraction}
+        onPronunciationEvaluated={onPronunciationEvaluated}
       />
     </div>
   )

@@ -314,6 +314,7 @@ function PracticePage({
     handleOptionSelect,
     handleSpellingSubmit,
     handleMeaningRecallSubmit,
+    handleFollowReadEvaluated,
     handleSkip,
   } = usePracticePageActions({
     user,
@@ -478,6 +479,7 @@ function PracticePage({
         correctIndex={correctIndex}
         handleOptionSelect={handleOptionSelect}
         handleMeaningRecallSubmit={handleMeaningRecallSubmit}
+        handleFollowReadEvaluated={handleFollowReadEvaluated}
         handleContinueReview={handleContinueReview}
       />
       <PracticeResumeOverlay

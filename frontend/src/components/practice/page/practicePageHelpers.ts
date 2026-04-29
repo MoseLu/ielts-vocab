@@ -70,6 +70,7 @@ export function resolveWrongWordDimensionForPractice(
 ): WrongWordDimension {
   if (mode === 'quickmemory') return 'recognition'
   if (mode === 'listening') return 'listening'
+  if (mode === 'follow') return 'speaking'
   if (mode === 'dictation') return 'dictation'
   if (mode === 'meaning') return 'meaning'
 

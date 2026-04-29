@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from models import AISpeakingAssessment, User, db
 from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
-from platform_sdk import ai_speaking_assessment_application
+from platform_sdk import ai_follow_read_assessment_application, ai_speaking_assessment_application
 
 
 SERVICE_PATH = (
@@ -202,6 +202,69 @@ def test_ai_execution_service_speaking_evaluate_returns_model_validation_error(m
 
     assert response.status_code == 502
     assert response.json() == {'error': '评分模型返回了无效 JSON'}
+
+
+def test_ai_execution_service_follow_read_evaluate_records_speaking_attempt(monkeypatch, tmp_path):
+    _configure_ai_env(monkeypatch, tmp_path)
+    module = _load_ai_execution_service_module('ai_execution_service_follow_read_evaluate')
+    client = TestClient(module.app)
+    token = _create_user_and_token(module.ai_flask_app, username='ai-follow-read')
+    recorded: dict[str, dict] = {}
+
+    monkeypatch.setattr(
+        ai_follow_read_assessment_application,
+        '_run_follow_read_assessment',
+        lambda **kwargs: ({
+            'score': 76,
+            'transcript': 'phenomenon',
+            'feedback': {
+                'summary': 'Close but not passed.',
+                'stress': 'Stress is close.',
+                'vowel': 'Open the middle vowel.',
+                'consonant': 'Consonants are clear.',
+                'ending': 'Finish the final sound.',
+                'rhythm': 'Rhythm is steady.',
+            },
+            'weak_segments': ['no'],
+        }, 'qwen-audio-turbo'),
+    )
+    monkeypatch.setattr(
+        ai_follow_read_assessment_application,
+        'record_learning_core_event',
+        lambda user_id, **kwargs: recorded.setdefault('event', {'user_id': user_id, **kwargs}),
+    )
+    monkeypatch.setattr(
+        ai_follow_read_assessment_application,
+        'post_learning_core_game_attempt',
+        lambda user_id, data: recorded.setdefault('attempt', {'user_id': user_id, 'data': data}) or {'mastery_state': {'overall_status': 'in_review'}},
+    )
+
+    response = client.post(
+        '/api/ai/follow-read/evaluate',
+        data={
+            'word': 'phenomenon',
+            'phonetic': '/fəˈnɒmɪnən/',
+            'bookId': 'book-1',
+            'chapterId': '2',
+            'durationSeconds': '4',
+        },
+        files={
+            'audio': ('user.webm', b'user-audio', 'audio/webm'),
+            'referenceAudio': ('reference.mp3', b'reference-audio', 'audio/mpeg'),
+        },
+        headers=_auth_headers(token),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload['score'] == 76
+    assert payload['band'] == 'near_pass'
+    assert payload['passed'] is False
+    assert payload['weakSegments'] == ['no']
+    assert recorded['event']['event_type'] == 'follow_read_pronunciation_check'
+    assert recorded['event']['mode'] == 'follow'
+    assert recorded['attempt']['data']['dimension'] == 'speaking'
+    assert recorded['attempt']['data']['sourceMode'] == 'follow'
 
 
 def test_ai_execution_service_speaking_evaluate_respects_custom_band_thresholds(monkeypatch, tmp_path):
