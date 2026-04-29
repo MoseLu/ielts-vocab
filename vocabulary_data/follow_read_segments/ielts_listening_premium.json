@@ -3964,9 +3964,14 @@
           "audio_phonetic": "priː"
         },
         {
-          "letters": "ciate",
-          "phonetic": "ʃieɪt",
-          "audio_phonetic": "ʃieɪt"
+          "letters": "cia",
+          "phonetic": "ʃi",
+          "audio_phonetic": "ʃi"
+        },
+        {
+          "letters": "te",
+          "phonetic": "eɪt",
+          "audio_phonetic": "eɪt"
         }
       ]
     },
@@ -4928,12 +4933,17 @@
           "audio_phonetic": "səʊ"
         },
         {
-          "letters": "cia",
-          "phonetic": "sieɪ",
-          "audio_phonetic": "sieɪ"
+          "letters": "ci",
+          "phonetic": "si",
+          "audio_phonetic": "si"
         },
         {
-          "letters": "ted",
+          "letters": "at",
+          "phonetic": "eɪ",
+          "audio_phonetic": "eɪ"
+        },
+        {
+          "letters": "ed",
           "phonetic": "tɪd",
           "audio_phonetic": "tɪd"
         }
@@ -19627,9 +19637,14 @@
           "audio_phonetic": "ren"
         },
         {
-          "letters": "tiate",
-          "phonetic": "ʃieɪt",
-          "audio_phonetic": "ʃieɪt"
+          "letters": "tia",
+          "phonetic": "ʃi",
+          "audio_phonetic": "ʃi"
+        },
+        {
+          "letters": "te",
+          "phonetic": "eɪt",
+          "audio_phonetic": "eɪt"
         }
       ]
     },
@@ -27898,22 +27913,27 @@
         }
       ]
     },
-    "for centuries|ˈsentʃəriz": {
+    "for centuries|fə ˈsentʃəriz": {
       "word": "for centuries",
-      "phonetic": "ˈsentʃəriz",
+      "phonetic": "fə ˈsentʃəriz",
       "segments": [
         {
           "letters": "for",
+          "phonetic": "fə",
+          "audio_phonetic": "fə"
+        },
+        {
+          "letters": "cen",
           "phonetic": "ˈsen",
           "audio_phonetic": "sen"
         },
         {
-          "letters": "cen",
+          "letters": "tu",
           "phonetic": "tʃə",
           "audio_phonetic": "tʃə"
         },
         {
-          "letters": "turies",
+          "letters": "ries",
           "phonetic": "riz",
           "audio_phonetic": "riz"
         }
@@ -41126,12 +41146,17 @@
           "audio_phonetic": "miː"
         },
         {
-          "letters": "dia",
-          "phonetic": "dieɪ",
-          "audio_phonetic": "dieɪ"
+          "letters": "di",
+          "phonetic": "di",
+          "audio_phonetic": "di"
         },
         {
-          "letters": "tor",
+          "letters": "at",
+          "phonetic": "eɪ",
+          "audio_phonetic": "eɪ"
+        },
+        {
+          "letters": "or",
           "phonetic": "tər",
           "audio_phonetic": "tər"
         }

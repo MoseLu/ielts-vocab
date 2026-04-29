@@ -2668,9 +2668,14 @@
           "audio_phonetic": "liː"
         },
         {
-          "letters": "viate",
-          "phonetic": "vieɪt",
-          "audio_phonetic": "vieɪt"
+          "letters": "via",
+          "phonetic": "vi",
+          "audio_phonetic": "vi"
+        },
+        {
+          "letters": "te",
+          "phonetic": "eɪt",
+          "audio_phonetic": "eɪt"
         }
       ]
     },
@@ -3873,9 +3878,14 @@
           "audio_phonetic": "priː"
         },
         {
-          "letters": "ciate",
-          "phonetic": "ʃieɪt",
-          "audio_phonetic": "ʃieɪt"
+          "letters": "cia",
+          "phonetic": "ʃi",
+          "audio_phonetic": "ʃi"
+        },
+        {
+          "letters": "te",
+          "phonetic": "eɪt",
+          "audio_phonetic": "eɪt"
         }
       ]
     },
@@ -5152,12 +5162,17 @@
           "audio_phonetic": "səʊ"
         },
         {
-          "letters": "cia",
-          "phonetic": "sieɪ",
-          "audio_phonetic": "sieɪ"
+          "letters": "ci",
+          "phonetic": "si",
+          "audio_phonetic": "si"
         },
         {
-          "letters": "ted",
+          "letters": "at",
+          "phonetic": "eɪ",
+          "audio_phonetic": "eɪ"
+        },
+        {
+          "letters": "ed",
           "phonetic": "tɪd",
           "audio_phonetic": "tɪd"
         }
@@ -17502,9 +17517,14 @@
           "audio_phonetic": "ren"
         },
         {
-          "letters": "tiate",
-          "phonetic": "ʃieɪt",
-          "audio_phonetic": "ʃieɪt"
+          "letters": "tia",
+          "phonetic": "ʃi",
+          "audio_phonetic": "ʃi"
+        },
+        {
+          "letters": "te",
+          "phonetic": "eɪt",
+          "audio_phonetic": "eɪt"
         }
       ]
     },
@@ -25618,22 +25638,27 @@
         }
       ]
     },
-    "for centuries|ˈsentʃəriz": {
+    "for centuries|fə ˈsentʃəriz": {
       "word": "for centuries",
-      "phonetic": "ˈsentʃəriz",
+      "phonetic": "fə ˈsentʃəriz",
       "segments": [
         {
           "letters": "for",
+          "phonetic": "fə",
+          "audio_phonetic": "fə"
+        },
+        {
+          "letters": "cen",
           "phonetic": "ˈsen",
           "audio_phonetic": "sen"
         },
         {
-          "letters": "cen",
+          "letters": "tu",
           "phonetic": "tʃə",
           "audio_phonetic": "tʃə"
         },
         {
-          "letters": "turies",
+          "letters": "ries",
           "phonetic": "riz",
           "audio_phonetic": "riz"
         }
@@ -30543,24 +30568,25 @@
         }
       ]
     },
-    "in a sense|way": {
+    "in a sense|ɪn ə sens": {
       "word": "in a sense",
-      "phonetic": "way",
+      "phonetic": "ɪn ə sens",
       "segments": [
         {
           "letters": "in",
-          "phonetic": "in",
-          "audio_phonetic": "in"
+          "phonetic": "ɪn",
+          "audio_phonetic": "ɪn"
         },
         {
           "letters": "a",
-          "phonetic": "a",
-          "audio_phonetic": "a"
+          "phonetic": "ə",
+          "audio_phonetic": "ə",
+          "fallback_text": "uh"
         },
         {
           "letters": "sense",
-          "phonetic": "way",
-          "audio_phonetic": "way"
+          "phonetic": "sens",
+          "audio_phonetic": "sens"
         }
       ]
     },
@@ -32070,22 +32096,27 @@
       "phonetic": "ɪˈnɪʃieɪtɪd",
       "segments": [
         {
-          "letters": "i",
+          "letters": "in",
           "phonetic": "ɪ",
           "audio_phonetic": "ɪ"
         },
         {
-          "letters": "ni",
+          "letters": "it",
           "phonetic": "ˈnɪ",
           "audio_phonetic": "nɪ"
         },
         {
-          "letters": "tia",
-          "phonetic": "ʃieɪ",
-          "audio_phonetic": "ʃieɪ"
+          "letters": "i",
+          "phonetic": "ʃi",
+          "audio_phonetic": "ʃi"
         },
         {
-          "letters": "ted",
+          "letters": "at",
+          "phonetic": "eɪ",
+          "audio_phonetic": "eɪ"
+        },
+        {
+          "letters": "ed",
           "phonetic": "tɪd",
           "audio_phonetic": "tɪd"
         }
@@ -32977,9 +33008,9 @@
         }
       ]
     },
-    "interact with|ˌɪntərˈækt": {
+    "interact with|ˌɪntərˈækt wɪð": {
       "word": "interact with",
-      "phonetic": "ˌɪntərˈækt",
+      "phonetic": "ˌɪntərˈækt wɪð",
       "segments": [
         {
           "letters": "in",
@@ -32987,14 +33018,19 @@
           "audio_phonetic": "ɪn"
         },
         {
-          "letters": "teract",
+          "letters": "te",
           "phonetic": "tə",
           "audio_phonetic": "tə"
         },
         {
-          "letters": "with",
+          "letters": "ract",
           "phonetic": "rˈækt",
           "audio_phonetic": "rækt"
+        },
+        {
+          "letters": "with",
+          "phonetic": "wɪð",
+          "audio_phonetic": "wɪð"
         }
       ]
     },
@@ -39997,9 +40033,14 @@
           "audio_phonetic": "ɡəʊ"
         },
         {
-          "letters": "tiate",
-          "phonetic": "ʃieɪt",
-          "audio_phonetic": "ʃieɪt"
+          "letters": "tia",
+          "phonetic": "ʃi",
+          "audio_phonetic": "ʃi"
+        },
+        {
+          "letters": "te",
+          "phonetic": "eɪt",
+          "audio_phonetic": "eɪt"
         }
       ]
     },
