@@ -86,8 +86,8 @@ jobs:
         run: |
           remote_tmp="/tmp/ielts-vocab-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "rm -rf '${remote_tmp}' && mkdir -p '${remote_tmp}'"
+          ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "cat > '${remote_tmp}/ielts-vocab-release.tgz'" < "${ARTIFACT_PATH}"
           scp \
-            "${ARTIFACT_PATH}" \
             scripts/validate_speaking_band_thresholds.py \
             scripts/cloud-deploy/build-release-artifact.sh \
             scripts/cloud-deploy/deploy-release-artifact.sh \
