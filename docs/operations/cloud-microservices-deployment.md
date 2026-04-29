@@ -139,12 +139,14 @@ Required GitHub `production` environment secrets:
 - `PROD_SSH_HOST`: production host, currently `119.29.182.134`
 - `PROD_SSH_USER`: SSH user for deploys
 - `PROD_SSH_PRIVATE_KEY`: private key that can SSH into the production host
+- `AXI_ALIYUN_OSS_ACCESS_KEY_ID`, `AXI_ALIYUN_OSS_ACCESS_KEY_SECRET`, `AXI_ALIYUN_OSS_PUBLIC_BUCKET`, and `AXI_ALIYUN_OSS_REGION`: public frontend asset bucket upload credentials for the Actions-side asset upload
+- optional OSS secrets: `AXI_ALIYUN_OSS_ENDPOINT` and `AXI_ALIYUN_OSS_STS_TOKEN`
 
 Recommended GitHub `production` environment variables:
 
 - `PROD_APP_HOME`: defaults to `/opt/ielts-vocab`
 - `PROD_SMOKE_HOST`: defaults to `axiomaticworld.com`
-- `FRONTEND_ASSET_OSS_ENABLED`, `FRONTEND_ASSET_OSS_PUBLIC_BASE_URL`, and `FRONTEND_ASSET_OSS_PREFIX`: must match `/etc/ielts-vocab/microservices.env` when OSS frontend asset delivery is enabled
+- `FRONTEND_ASSET_OSS_ENABLED`, `FRONTEND_ASSET_OSS_PUBLIC_BASE_URL`, and `FRONTEND_ASSET_OSS_PREFIX`: must match `/etc/ielts-vocab/microservices.env` when OSS frontend asset delivery is enabled. The public base must be a custom domain or CDN/custom domain that does not inject `Content-Disposition: attachment` / `x-oss-force-download: true`.
 
 Recommended GitHub branch rules:
 
@@ -154,14 +156,14 @@ Recommended GitHub branch rules:
 The production workflow does this on each `main` release:
 
 1. Checks out the target ref from GitHub.
-2. Builds a release artifact with `scripts/cloud-deploy/build-release-artifact.sh`, including a prebuilt `dist/` and the frontend OSS asset-base marker. The artifact omits `frontend/` source because the production server does not rebuild frontend assets on the artifact path.
-3. Uploads the artifact plus the latest deploy scripts to a temporary directory on the server.
+2. Builds the frontend with the production asset base, uploads non-`index.html` `dist/` assets to OSS from Actions, verifies representative public asset headers, and writes a release artifact that keeps only `dist/index.html` plus backend/runtime files when OSS upload is enabled.
+3. Uploads the artifact with `rsync --partial --progress`, logging artifact size and upload elapsed time, then uploads the latest deploy scripts to a temporary directory on the server.
 4. Runs `preflight-check.sh <git-ref>` on the server to verify sudo, env files, broker baseline, nginx, systemd, and git access.
 5. Runs `deploy-release-artifact.sh <artifact-path> <commit-sha>` on the server.
 6. The server extracts the artifact into a new immutable release directory under `/opt/ielts-vocab/releases`.
 7. PostgreSQL backup runs before the service restart.
 8. The release runs `scripts/run-service-schema-migrations.py` against the split-service databases before `current` switches.
-9. If frontend OSS delivery is enabled, the server verifies the artifact asset base matches production env and uploads the prebuilt `dist` assets to OSS before switching.
+9. If frontend OSS delivery was already completed by Actions, the server skips OSS upload and only verifies the artifact asset base matches production env; older full-dist artifacts still fall back to the server-side OSS upload path.
 10. `/opt/ielts-vocab/current` and `/var/www/ielts-vocab/current` switch to the new immutable release.
 11. nginx is reloaded to keep `/api/*` on `127.0.0.1:8000`, then `ielts-service@...` units restart in place.
 12. The deploy smoke checks the restarted single-instance services, verifies `ielts-health-watchdog.timer`, and stops any leftover `ielts-http-slot@...` units from older releases.
@@ -181,9 +183,15 @@ Preferred artifact deploy:
 
 ```bash
 bash scripts/cloud-deploy/build-release-artifact.sh HEAD /tmp/ielts-vocab-release.tgz
-scp /tmp/ielts-vocab-release.tgz <host>:/tmp/ielts-vocab-release.tgz
+rsync --partial --progress /tmp/ielts-vocab-release.tgz <host>:/tmp/ielts-vocab-release.tgz
 ssh <host> "sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts/cloud-deploy/deploy-release-artifact.sh /tmp/ielts-vocab-release.tgz <commit-sha>"
 ```
+
+Frontend OSS metadata checks:
+
+- `scripts/upload-frontend-assets-to-oss.py` uploads each non-HTML frontend asset with `Content-Disposition: inline`, correct `Content-Type`, immutable cache metadata, and public-read ACL by default.
+- After upload, the script HEAD-checks representative public JS, CSS, and image URLs and fails if the public response contains `Content-Disposition: attachment` or `x-oss-force-download: true`.
+- Aliyun documents that default OSS domains and transfer-acceleration domains can inject those download headers for browser access; use a bound custom domain or CDN/custom domain for `FRONTEND_ASSET_OSS_PUBLIC_BASE_URL`.
 
 Manual service-schema migration run:
 

@@ -1,5 +1,6 @@
 import { PageSkeleton, SegmentedControl } from '../../ui'
 import { AdminTableSkeleton, MiniBarChart, StatCard } from './AdminDashboardPrimitives'
+import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 import {
   bookLabels,
   fmtDate,
@@ -41,7 +42,7 @@ interface AdminDashboardViewProps {
   onSelectUser: (userId: number) => void
 }
 
-const DEFAULT_AVATAR_URL = '/default-avatar.jpg'
+const DEFAULT_AVATAR_URL = staticAssetUrl('/default-avatar.jpg')
 
 function resolveDisplayAvatarUrl(
   avatarUrl: string | null | undefined,

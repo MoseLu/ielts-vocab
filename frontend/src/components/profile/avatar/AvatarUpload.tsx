@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { apiFetch } from '../../../lib'
+import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 import { MicroLoading } from '../../ui'
 
 interface AvatarUploadProps {
@@ -107,7 +108,7 @@ function AvatarUpload({ user, onClose, onSave }: AvatarUploadProps) {
             {preview ? (
               <img src={preview} alt="头像预览" className="avatar-preview-img" />
             ) : (
-              <img src="/default-avatar.jpg" alt="默认头像" className="avatar-preview-img" />
+              <img src={staticAssetUrl('/default-avatar.jpg')} alt="默认头像" className="avatar-preview-img" />
             )}
           </div>
 

@@ -3,6 +3,7 @@ import SettingsPanel from '../../settings/SettingsPanel'
 import Popover from '../../ui/Popover'
 import { Scrollbar } from '../../ui/Scrollbar'
 import { useHeader } from '../../../composables/layout/navigation/useHeader'
+import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 import HeaderHelpModal from './HeaderHelpModal'
 import type { HeaderProps, PracticeMode } from './Header.types'
 
@@ -48,7 +49,7 @@ function Header({
     <header className="header">
       {/* Logo - left, aligned with sidebar width */}
       <div className="header-logo-area" onClick={() => navigateTo('/plan')}>
-        <img src="/images/logo.png" alt="Logo" className="header-logo-img" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+        <img src={staticAssetUrl('/images/logo.png')} alt="Logo" className="header-logo-img" onError={(e) => { e.currentTarget.style.display = 'none' }} />
         <span className="header-logo-text">雅思冲刺</span>
       </div>
 
@@ -174,7 +175,7 @@ function Header({
                   {user.avatar_url ? (
                     <img src={user.avatar_url} alt="avatar" className="user-avatar-img" />
                   ) : (
-                    <img src="/default-avatar.jpg" alt="avatar" className="user-avatar-img" />
+                    <img src={staticAssetUrl('/default-avatar.jpg')} alt="avatar" className="user-avatar-img" />
                   )}
                 </button>
               }
@@ -188,7 +189,7 @@ function Header({
                   {user.avatar_url ? (
                     <img src={user.avatar_url} alt="avatar" className="user-avatar-img" />
                   ) : (
-                    <img src="/default-avatar.jpg" alt="avatar" className="user-avatar-img" />
+                    <img src={staticAssetUrl('/default-avatar.jpg')} alt="avatar" className="user-avatar-img" />
                   )}
                   <div className="avatar-edit-hint">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

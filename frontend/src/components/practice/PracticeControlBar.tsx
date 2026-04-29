@@ -4,6 +4,7 @@ import {
   PRACTICE_CONTROL_MODE_LABELS,
   PRACTICE_CONTROL_MODES,
 } from '../../constants/practiceModes'
+import { staticAssetUrl } from '../../lib/staticAssetUrl'
 import { PRACTICE_WORD_LIST_ICON_PATH } from './controlIcons'
 import type { PracticeControlBarProps, PracticeMode } from './types'
 
@@ -84,7 +85,7 @@ export default function PracticeControlBar({
         title="返回学习中心"
       >
         <img
-          src="/images/logo.png"
+          src={staticAssetUrl('/images/logo.png')}
           alt="Logo"
           className="practice-ctrl-brand-logo"
           onError={(e) => { e.currentTarget.style.display = 'none' }}

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 
 export default function NotFoundPage() {
   const navigate = useNavigate()
@@ -6,7 +7,7 @@ export default function NotFoundPage() {
   return (
     <div className="special-page not-found-page">
       <div className="special-page-brand">
-        <img src="/images/logo.png" alt="IELTS Vocab" className="special-page-brand-logo" />
+        <img src={staticAssetUrl('/images/logo.png')} alt="IELTS Vocab" className="special-page-brand-logo" />
         <div className="special-page-brand-text">
           <span className="special-page-brand-title">雅思冲刺</span>
           <span className="special-page-brand-subtitle">IELTS Vocabulary</span>

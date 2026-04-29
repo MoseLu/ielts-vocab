@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import SettingsPanel from '../../settings/SettingsPanel'
 import BindEmailModal from './BindEmailModal'
 import { useProfilePage } from '../../../composables/profile/page/useProfilePage'
+import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 
 interface MenuItem {
   icon: ReactNode
@@ -82,7 +83,7 @@ export default function ProfilePage() {
             {user?.avatar_url ? (
               <img src={user.avatar_url} alt="avatar" className="profile-avatar-img" />
             ) : (
-              <img src="/default-avatar.jpg" alt="默认头像" className="profile-avatar-img" />
+              <img src={staticAssetUrl('/default-avatar.jpg')} alt="默认头像" className="profile-avatar-img" />
             )}
           </div>
           <div className="profile-user-info">

@@ -15,6 +15,7 @@ import {
 } from './AdminDashboard.types'
 import { AdminDashboardFavoriteWordsPanel } from './AdminDashboardFavoriteWordsPanel'
 import { MiniBarChart } from './AdminDashboardPrimitives'
+import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 
 type BookProgress = UserDetail['book_progress'][number]
 
@@ -58,7 +59,7 @@ interface AdminDashboardModalProps {
   }) => void
 }
 
-const DEFAULT_AVATAR_URL = '/default-avatar.jpg'
+const DEFAULT_AVATAR_URL = staticAssetUrl('/default-avatar.jpg')
 
 function resolveDisplayAvatarUrl(
   avatarUrl: string | null | undefined,

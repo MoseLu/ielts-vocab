@@ -1,10 +1,9 @@
+import { staticAssetUrl } from '../../../../lib/staticAssetUrl'
+
 const PRD_UI_CACHE_VERSION = '20260429-magic-ui-1'
 
 function assetPath(path: string): string {
-  const base = import.meta.env.BASE_URL || '/'
-  const normalizedBase = base.endsWith('/') ? base : `${base}/`
-  const cleanPath = path.replace(/^\/+/, '')
-  return `${normalizedBase}${cleanPath}?v=${PRD_UI_CACHE_VERSION}`
+  return `${staticAssetUrl(path)}?v=${PRD_UI_CACHE_VERSION}`
 }
 
 export function prdTemplateAsset(path: string): string {

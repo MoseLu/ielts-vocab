@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthPage } from '../../../composables/auth/page/useAuthPage'
+import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 import { UnderlineTabs } from '../../ui'
 
 function RequiredMark() {
@@ -137,7 +138,7 @@ export default function AuthPage() {
   return (
     <div className="auth-page special-page">
       <div className="special-page-brand">
-        <img src="/images/logo.png" alt="IELTS Vocab" className="special-page-brand-logo" />
+        <img src={staticAssetUrl('/images/logo.png')} alt="IELTS Vocab" className="special-page-brand-logo" />
         <div className="special-page-brand-text">
           <span className="special-page-brand-title">雅思冲刺</span>
           <span className="special-page-brand-subtitle">IELTS Vocabulary</span>

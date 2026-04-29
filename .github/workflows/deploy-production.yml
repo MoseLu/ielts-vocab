@@ -59,8 +59,17 @@ jobs:
           FRONTEND_ASSET_OSS_ENABLED: ${{ vars.FRONTEND_ASSET_OSS_ENABLED }}
           FRONTEND_ASSET_OSS_PUBLIC_BASE_URL: ${{ vars.FRONTEND_ASSET_OSS_PUBLIC_BASE_URL }}
           FRONTEND_ASSET_OSS_PREFIX: ${{ vars.FRONTEND_ASSET_OSS_PREFIX }}
+          FRONTEND_ASSET_OSS_CONNECT_TIMEOUT_SECONDS: ${{ vars.FRONTEND_ASSET_OSS_CONNECT_TIMEOUT_SECONDS }}
+          FRONTEND_ASSET_OSS_UPLOAD_RETRY_ATTEMPTS: ${{ vars.FRONTEND_ASSET_OSS_UPLOAD_RETRY_ATTEMPTS }}
+          AXI_ALIYUN_OSS_ACCESS_KEY_ID: ${{ secrets.AXI_ALIYUN_OSS_ACCESS_KEY_ID }}
+          AXI_ALIYUN_OSS_ACCESS_KEY_SECRET: ${{ secrets.AXI_ALIYUN_OSS_ACCESS_KEY_SECRET }}
+          AXI_ALIYUN_OSS_PUBLIC_BUCKET: ${{ secrets.AXI_ALIYUN_OSS_PUBLIC_BUCKET }}
+          AXI_ALIYUN_OSS_REGION: ${{ secrets.AXI_ALIYUN_OSS_REGION }}
+          AXI_ALIYUN_OSS_ENDPOINT: ${{ secrets.AXI_ALIYUN_OSS_ENDPOINT }}
+          AXI_ALIYUN_OSS_STS_TOKEN: ${{ secrets.AXI_ALIYUN_OSS_STS_TOKEN }}
         run: |
           corepack enable
+          python3 -m pip install python-dotenv -e packages/platform-sdk
           artifact_path="${RUNNER_TEMP}/ielts-vocab-release.tgz"
           bash scripts/cloud-deploy/build-release-artifact.sh HEAD "${artifact_path}"
           echo "ARTIFACT_PATH=${artifact_path}" >> "$GITHUB_ENV"
@@ -86,7 +95,13 @@ jobs:
         run: |
           remote_tmp="/tmp/ielts-vocab-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "rm -rf '${remote_tmp}' && mkdir -p '${remote_tmp}'"
-          ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "cat > '${remote_tmp}/ielts-vocab-release.tgz'" < "${ARTIFACT_PATH}"
+          artifact_upload_started="$(date +%s)"
+          artifact_size="$(du -h "${ARTIFACT_PATH}" | awk '{print $1}')"
+          echo "Uploading release artifact (${artifact_size}) with rsync --partial --progress"
+          rsync --partial --progress "${ARTIFACT_PATH}" \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/ielts-vocab-release.tgz"
+          artifact_upload_elapsed="$(( $(date +%s) - artifact_upload_started ))"
+          echo "Release artifact upload finished in ${artifact_upload_elapsed}s"
           scp \
             scripts/validate_speaking_band_thresholds.py \
             scripts/cloud-deploy/build-release-artifact.sh \

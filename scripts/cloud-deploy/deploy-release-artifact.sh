@@ -13,6 +13,7 @@ release_dir=""
 extract_dir=""
 asset_base=""
 artifact_asset_base=""
+artifact_frontend_assets_uploaded=""
 
 bootstrap_admin_projections() {
   local release_path="${1:?release path is required}"
@@ -104,6 +105,7 @@ artifact_asset_base="$(read_release_artifact_value "${release_dir}" "frontend_as
 if [[ -n "${asset_base}" && "${artifact_asset_base%/}/" != "${asset_base%/}/" ]]; then
   fail "Artifact frontend asset base ${artifact_asset_base:-<empty>} does not match deploy asset base ${asset_base}"
 fi
+artifact_frontend_assets_uploaded="$(read_release_artifact_value "${release_dir}" "frontend_assets_uploaded_to_oss")"
 
 run_backup_script
 log "Applying split-service schema migrations"
@@ -117,7 +119,11 @@ if [[ -e "${CURRENT_LINK}" && ! -L "${CURRENT_LINK}" ]]; then
   previous_current="$(stage_current_directory_as_legacy_release "${timestamp}")"
 fi
 
-upload_frontend_assets_to_oss "${release_dir}" "${asset_base}"
+if [[ "${artifact_frontend_assets_uploaded}" == "true" ]]; then
+  log "Skipping frontend OSS upload; artifact already uploaded assets"
+else
+  upload_frontend_assets_to_oss "${release_dir}" "${asset_base}"
+fi
 
 log "Activating single-release deployment from artifact"
 set_current_release "${release_dir}"

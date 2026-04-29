@@ -1,5 +1,6 @@
 import Popover from '../../ui/Popover'
 import { Scrollbar } from '../../ui/Scrollbar'
+import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 import { PRACTICE_WORD_LIST_ICON_PATH } from '../controlIcons'
 import type { Chapter } from '../types'
 
@@ -53,7 +54,7 @@ export function ConfusableMatchHeader({
           title="返回词书"
         >
           <img
-            src="/images/logo.png"
+            src={staticAssetUrl('/images/logo.png')}
             alt="Logo"
             className="practice-ctrl-brand-logo"
             onError={event => { event.currentTarget.style.display = 'none' }}
