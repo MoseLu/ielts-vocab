@@ -51,7 +51,7 @@ frontend_asset_base_url=${asset_base}
 built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF
 
-rm -rf "${stage_dir}/.git" "${stage_dir}/node_modules" "${stage_dir}/frontend/node_modules"
+rm -rf "${stage_dir}/.git" "${stage_dir}/node_modules" "${stage_dir}/frontend"
 mkdir -p "$(dirname "${output_path}")"
 tar -czf "${output_path}" -C "${stage_dir}" .
 log "Release artifact written to ${output_path}"

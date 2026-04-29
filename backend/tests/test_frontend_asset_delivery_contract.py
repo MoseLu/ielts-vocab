@@ -117,6 +117,7 @@ def test_release_artifact_path_builds_with_and_uploads_oss_assets():
     assert 'FRONTEND_ASSET_BASE_URL="${asset_base}"' in build_script
     assert 'VITE_ASSET_BASE_URL="${asset_base}"' in build_script
     assert 'frontend_asset_base_url=${asset_base}' in build_script
+    assert 'rm -rf "${stage_dir}/.git" "${stage_dir}/node_modules" "${stage_dir}/frontend"' in build_script
     assert 'upload_frontend_assets_to_oss "${release_dir}"' in deploy_script
     assert 'FRONTEND_ASSET_OSS_PUBLIC_BASE_URL' in workflow
     assert 'FRONTEND_ASSET_OSS_PREFIX' in workflow

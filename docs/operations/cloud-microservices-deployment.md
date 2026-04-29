@@ -154,7 +154,7 @@ Recommended GitHub branch rules:
 The production workflow does this on each `main` release:
 
 1. Checks out the target ref from GitHub.
-2. Builds a release artifact with `scripts/cloud-deploy/build-release-artifact.sh`, including a prebuilt `dist/` and the frontend OSS asset-base marker.
+2. Builds a release artifact with `scripts/cloud-deploy/build-release-artifact.sh`, including a prebuilt `dist/` and the frontend OSS asset-base marker. The artifact omits `frontend/` source because the production server does not rebuild frontend assets on the artifact path.
 3. Uploads the artifact plus the latest deploy scripts to a temporary directory on the server.
 4. Runs `preflight-check.sh <git-ref>` on the server to verify sudo, env files, broker baseline, nginx, systemd, and git access.
 5. Runs `deploy-release-artifact.sh <artifact-path> <commit-sha>` on the server.
