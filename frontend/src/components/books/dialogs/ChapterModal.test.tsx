@@ -187,7 +187,7 @@ describe('ChapterModal', () => {
     )
   })
 
-  it('offers an append entry for existing custom books', async () => {
+  it('offers an edit entry for existing custom books', async () => {
     const user = userEvent.setup()
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
@@ -206,7 +206,7 @@ describe('ChapterModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: '继续添加章节' }))
+    await user.click(screen.getByRole('button', { name: '编辑词书' }))
 
     expect(navigateMock).toHaveBeenCalledWith('/books/create?bookId=custom_1')
   })

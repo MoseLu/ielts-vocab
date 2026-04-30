@@ -409,7 +409,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
                 className="chapter-continue-btn"
                 onClick={() => navigate(`/books/create?bookId=${encodeURIComponent(String(book.id))}`)}
               >
-                继续添加章节
+                编辑词书
               </button>
             )}
             {isConfusableBook && (
