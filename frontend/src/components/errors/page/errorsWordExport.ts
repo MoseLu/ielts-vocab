@@ -16,9 +16,25 @@ function formatDateStamp(date: Date) {
   return `${year}${month}${day}`
 }
 
+function normalizeExportWord(value: string | null | undefined) {
+  return stringifyValue(value).toLocaleLowerCase('en')
+}
+
+export function sortWrongWordsForCsvExport(words: WrongWordRecord[]) {
+  return [...words].sort((left, right) => {
+    const leftWord = normalizeExportWord(left.word)
+    const rightWord = normalizeExportWord(right.word)
+    if (leftWord && !rightWord) return -1
+    if (!leftWord && rightWord) return 1
+    if (leftWord !== rightWord) return leftWord.localeCompare(rightWord, 'en')
+
+    return stringifyValue(left.definition).localeCompare(stringifyValue(right.definition), 'zh-Hans')
+  })
+}
+
 export function buildWrongWordsCsvExportContent(words: WrongWordRecord[]) {
   const header = ['单词', '音标', '释义']
-  const rows = words.map(word => [
+  const rows = sortWrongWordsForCsvExport(words).map(word => [
     stringifyValue(word.word),
     stringifyValue(word.phonetic) || '—',
     stringifyValue(word.definition) || '—',

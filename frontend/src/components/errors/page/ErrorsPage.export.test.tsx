@@ -73,6 +73,34 @@ describe('ErrorsPage export', () => {
     )
   })
 
+  it('sorts exported wrong words by word alphabetically', () => {
+    expect(buildWrongWordsCsvExportContent([
+      {
+        word: 'beta',
+        phonetic: '/b/',
+        pos: 'n.',
+        definition: '贝塔',
+        wrong_count: 5,
+      },
+      {
+        word: 'Assignment',
+        phonetic: '/əˈsaɪnmənt/',
+        pos: 'n.',
+        definition: '任务',
+        wrong_count: 3,
+      },
+      {
+        word: 'appearance',
+        phonetic: '/əˈpɪərəns/',
+        pos: 'n.',
+        definition: '出现',
+        wrong_count: 4,
+      },
+    ] as WrongWordRecord[])).toBe(
+      '单词,音标,释义\nappearance,/əˈpɪərəns/,出现\nAssignment,/əˈsaɪnmənt/,任务\nbeta,/b/,贝塔',
+    )
+  })
+
   it('exports checked wrong words as a word-phonetic-definition csv download', () => {
     render(
       <MemoryRouter>
