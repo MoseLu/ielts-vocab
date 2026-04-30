@@ -165,15 +165,25 @@ export function useErrorsPage() {
     })
   }, [appliedSearch, dimFilter, endDate, maxWrongCount, minWrongCount, scope, searchMode, startDate, visibleWords])
 
+  const hasActiveFilters = dimFilter !== 'all'
+    || Boolean(startDate)
+    || Boolean(endDate)
+    || wrongCountRange !== 'all'
+    || Boolean(appliedSearch)
   const selectedWordKeySet = useMemo(() => new Set(selectedWordKeys), [selectedWordKeys])
   const selectedWords = useMemo(() => {
     return words.filter(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
   }, [selectedWordKeySet, words])
-  const selectedFilteredWordCount = useMemo(() => {
-    return filteredWords.filter(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word))).length
+  const selectedFilteredWords = useMemo(() => {
+    return filteredWords.filter(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
   }, [filteredWords, selectedWordKeySet])
+  const selectedFilteredWordCount = useMemo(() => {
+    return selectedFilteredWords.length
+  }, [selectedFilteredWords])
   const selectedWordCount = selectedWords.length
   const selectedOutsideFilterCount = Math.max(0, selectedWordCount - selectedFilteredWordCount)
+  const actionSelectedWords = hasActiveFilters ? selectedFilteredWords : selectedWords
+  const actionSelectedWordCount = actionSelectedWords.length
   const allFilteredSelected = filteredWords.length > 0
     && filteredWords.every(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
   const totalPages = Math.max(1, Math.ceil(filteredWords.length / ERRORS_PAGE_SIZE))
@@ -187,11 +197,6 @@ export function useErrorsPage() {
   const pageStartIndex = filteredWords.length === 0 ? 0 : ((currentPage - 1) * ERRORS_PAGE_SIZE) + 1
   const pageEndIndex = Math.min(currentPage * ERRORS_PAGE_SIZE, filteredWords.length)
 
-  const hasActiveFilters = dimFilter !== 'all'
-    || Boolean(startDate)
-    || Boolean(endDate)
-    || wrongCountRange !== 'all'
-    || Boolean(appliedSearch)
   const canResetFilters = hasActiveFilters || Boolean(searchText) || searchMode != null
   const normalizedSearchText = useMemo(() => normalizeWrongWordSearchTerm(searchText), [searchText])
   const searchModeActionText = normalizedSearchText || appliedSearch
@@ -342,12 +347,13 @@ export function useErrorsPage() {
   }, [])
 
   const startSelectedPractice = useCallback(() => {
+    writeWrongWordsReviewSelectionToStorage(actionSelectedWords.map(word => word.word))
     requestPracticeMode('game')
     const gameParams = new URLSearchParams(manualPracticeQuery)
     gameParams.set('task', 'error-review')
     if (dimFilter !== 'all') gameParams.set('dimension', dimFilter)
     navigate(`/game?${gameParams.toString()}`)
-  }, [dimFilter, manualPracticeQuery, navigate])
+  }, [actionSelectedWords, dimFilter, manualPracticeQuery, navigate])
 
   const goToPlan = useCallback(() => {
     navigate('/plan')
@@ -374,6 +380,8 @@ export function useErrorsPage() {
     selectedWordKeySet,
     selectedWords,
     selectedWordCount,
+    actionSelectedWords,
+    actionSelectedWordCount,
     selectedFilteredWordCount,
     selectedOutsideFilterCount,
     allFilteredSelected,

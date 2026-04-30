@@ -45,8 +45,9 @@ export default function ErrorsPage() {
     dimCounts,
     filteredWords,
     selectedWordKeySet,
-    selectedWords,
     selectedWordCount,
+    actionSelectedWords,
+    actionSelectedWordCount,
     allFilteredSelected,
     allPaginatedSelected,
     hasActiveFilters,
@@ -105,10 +106,10 @@ export default function ErrorsPage() {
         <div className="errors-actions">
           <button
             className="errors-practice-btn"
-            disabled={selectedWordCount === 0}
+            disabled={actionSelectedWordCount === 0}
             onClick={startSelectedPractice}
           >
-            开始复习（{selectedWordCount}词）
+            开始复习（{actionSelectedWordCount}词）
           </button>
           <button
             className="errors-clear-btn"
@@ -126,8 +127,8 @@ export default function ErrorsPage() {
           </button>
           <button
             className="errors-clear-btn"
-            disabled={selectedWords.length === 0}
-            onClick={() => downloadWrongWordsCsvExport(selectedWords)}
+            disabled={actionSelectedWords.length === 0}
+            onClick={() => downloadWrongWordsCsvExport(actionSelectedWords)}
           >
             导出已勾选 CSV
           </button>
