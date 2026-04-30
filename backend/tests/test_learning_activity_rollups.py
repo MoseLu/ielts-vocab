@@ -222,6 +222,90 @@ def test_same_day_partial_snapshot_does_not_clear_completed_chapter_rollup(app):
         assert rollup.is_completed is True
 
 
+def test_book_rollup_ignores_direct_completion_when_chapters_are_incomplete(app):
+    with app.app_context():
+        user = User(username='learning-rollup-stale-book-complete')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.commit()
+
+        record_learning_activity(
+            user_id=user.id,
+            book_id='ielts_listening_premium',
+            learning_date='2026-04-20',
+            current_index=3894,
+            words_learned=3894,
+            correct_count=3000,
+            wrong_count=100,
+            is_completed=True,
+        )
+        record_learning_activity(
+            user_id=user.id,
+            book_id='ielts_listening_premium',
+            mode='quickmemory',
+            chapter_id='1',
+            learning_date='2026-04-29',
+            words_learned=53,
+            correct_count=53,
+            wrong_count=0,
+            is_completed=True,
+        )
+        record_learning_activity(
+            user_id=user.id,
+            book_id='ielts_listening_premium',
+            mode='quickmemory',
+            chapter_id='72',
+            learning_date='2026-04-29',
+            words_learned=2,
+            correct_count=2,
+            wrong_count=0,
+            is_completed=False,
+        )
+        db.session.commit()
+
+        rollup = UserLearningBookRollup.query.filter_by(
+            user_id=user.id,
+            book_id='ielts_listening_premium',
+        ).one()
+        assert rollup.current_index == 55
+        assert rollup.words_learned == 55
+        assert rollup.is_completed is False
+
+
+def test_book_rollup_clamps_to_total_when_all_chapters_are_completed(app, monkeypatch):
+    import services.learning_activity_service as learning_activity_service
+
+    monkeypatch.setattr(learning_activity_service, 'get_book_word_count', lambda *_args, **_kwargs: 100)
+    monkeypatch.setattr(learning_activity_service, 'get_book_chapter_count', lambda *_args, **_kwargs: 2)
+
+    with app.app_context():
+        user = User(username='learning-rollup-completed-chapter-clamp')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.commit()
+
+        for chapter_id, words_learned in (('1', 40), ('2', 55)):
+            record_learning_activity(
+                user_id=user.id,
+                book_id='fake-two-chapter-book',
+                mode='quickmemory',
+                chapter_id=chapter_id,
+                words_learned=words_learned,
+                correct_count=words_learned,
+                wrong_count=0,
+                is_completed=True,
+            )
+        db.session.commit()
+
+        rollup = UserLearningBookRollup.query.filter_by(
+            user_id=user.id,
+            book_id='fake-two-chapter-book',
+        ).one()
+        assert rollup.current_index == 100
+        assert rollup.words_learned == 100
+        assert rollup.is_completed is True
+
+
 def test_backfill_learning_activity_rollups_is_idempotent(app):
     with app.app_context():
         user = User(username='learning-rollup-backfill')

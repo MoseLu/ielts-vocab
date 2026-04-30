@@ -25,7 +25,7 @@ from services.learning_activity_compat import (
     list_chapter_mode_rollup_compat_rows,
     list_chapter_rollup_compat_rows,
 )
-from services.books_structure_service import get_book_word_count
+from services.books_structure_service import get_book_chapter_count, get_book_word_count
 from services.legacy_day_progress_compat import LEGACY_DAY_PROGRESS_PREFIX
 from services.local_time import utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
 
@@ -346,13 +346,19 @@ def _rebuild_book_rollup(*, user_id: int, book_id: str) -> None:
     chapter_words_learned = sum(row.words_learned for row in collapsed_chapters)
     chapter_correct_count = sum(row.correct_count for row in collapsed_chapters)
     chapter_wrong_count = sum(row.wrong_count for row in collapsed_chapters)
+    total_words = get_book_word_count(book_id, user_id=user_id)
+    total_chapters = get_book_chapter_count(book_id, user_id=user_id)
+    completed_chapters = sum(1 for row in collapsed_chapters if bool(row.is_completed))
+    all_chapters_completed = total_chapters > 0 and completed_chapters >= total_chapters
 
     rollup = _upsert_rollup(UserLearningBookRollup, user_id=user_id, book_id=book_id)
-    rollup.current_index = max(
-        _safe_non_negative_int(getattr(latest_direct, 'current_index', 0)),
-        chapter_words_learned,
-    )
-    rollup.words_learned = chapter_words_learned
+    if collapsed_chapters:
+        rollup.current_index = total_words if all_chapters_completed and total_words > 0 else chapter_words_learned
+        if total_words > 0:
+            rollup.current_index = min(rollup.current_index, total_words)
+    else:
+        rollup.current_index = _safe_non_negative_int(getattr(latest_direct, 'current_index', 0))
+    rollup.words_learned = rollup.current_index
     rollup.correct_count = max(
         _safe_non_negative_int(getattr(latest_direct, 'correct_count', 0)),
         chapter_correct_count,
@@ -361,9 +367,12 @@ def _rebuild_book_rollup(*, user_id: int, book_id: str) -> None:
         _safe_non_negative_int(getattr(latest_direct, 'wrong_count', 0)),
         chapter_wrong_count,
     )
-    total_words = get_book_word_count(book_id, user_id=user_id)
-    rollup.is_completed = bool(getattr(latest_direct, 'is_completed', False)) or (
-        total_words > 0 and rollup.current_index >= total_words
+    rollup.is_completed = all_chapters_completed or (
+        not collapsed_chapters
+        and (
+            bool(getattr(latest_direct, 'is_completed', False))
+            or (total_words > 0 and rollup.current_index >= total_words)
+        )
     )
     rollup.mode_count = len({row.mode for row in chapter_rows if str(row.mode or '').strip()})
     rollup.last_learning_date = _max_date_key(
