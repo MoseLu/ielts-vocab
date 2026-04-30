@@ -20,6 +20,7 @@ from platform_sdk.catalog_content_custom_books_application import (
     create_catalog_content_custom_book_response,
     get_catalog_content_custom_book_response,
     list_catalog_content_custom_books_response,
+    update_catalog_content_custom_book_response,
 )
 from platform_sdk.catalog_content_confusable_application import (
     CONFUSABLE_MATCH_BOOK_ID,
@@ -112,6 +113,17 @@ def get_custom_book(current_user, book_id):
     return jsonify(payload), status
 
 
+@catalog_content_bp.route('/api/books/custom-books/<book_id>', methods=['PUT'])
+@token_required
+def update_custom_book(current_user, book_id):
+    payload, status = update_catalog_content_custom_book_response(
+        current_user.id,
+        book_id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
 @catalog_content_bp.route('/api/books/custom-books/<book_id>/chapters', methods=['POST'])
 @token_required
 def append_custom_book_chapters(current_user, book_id):
@@ -172,6 +184,17 @@ def list_internal_custom_books(current_user):
 @token_required
 def get_internal_custom_book(current_user, book_id):
     payload, status = get_catalog_content_custom_book_response(current_user.id, book_id)
+    return jsonify(payload), status
+
+
+@catalog_content_bp.route('/internal/catalog/custom-books/<book_id>', methods=['PUT'])
+@token_required
+def update_internal_custom_book(current_user, book_id):
+    payload, status = update_catalog_content_custom_book_response(
+        current_user.id,
+        book_id,
+        request.get_json(silent=True),
+    )
     return jsonify(payload), status
 
 

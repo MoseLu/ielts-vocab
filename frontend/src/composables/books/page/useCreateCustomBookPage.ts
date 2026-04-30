@@ -17,6 +17,12 @@ type ImportMode = 'manual' | 'csv'
 interface CustomBookChapterSummary {
   id: string
   title: string
+  words?: Array<{
+    word?: string
+    phonetic?: string
+    pos?: string
+    definition?: string
+  }>
 }
 
 interface CreateCustomBookResponse {
@@ -50,10 +56,10 @@ function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
 export function useCreateCustomBookPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const appendBookId = searchParams.get('bookId')?.trim() ?? ''
-  const isAppendMode = appendBookId.length > 0
+  const editBookId = searchParams.get('bookId')?.trim() ?? ''
+  const isEditMode = editBookId.length > 0
   const { showToast } = useToast()
-  const [title, setTitle] = useState(isAppendMode ? '' : '我的自定义词书')
+  const [title, setTitle] = useState(isEditMode ? '' : '我的自定义词书')
   const [educationStage, setEducationStage] = useState('abroad')
   const [examType, setExamType] = useState('ielts')
   const [ieltsSkill, setIeltsSkill] = useState('listening')
@@ -61,7 +67,7 @@ export function useCreateCustomBookPage() {
   const [shareEnabled, setShareEnabled] = useState(false)
   const [importMode, setImportMode] = useState<ImportMode>('manual')
   const [chapters, setChapters] = useState<CustomBookChapterDraft[]>(() => (
-    isAppendMode ? [] : [createChapterDraft(1, { content: '' })]
+    isEditMode ? [] : [createChapterDraft(1, { content: '' })]
   ))
   const [chapterIndexBase, setChapterIndexBase] = useState(0)
   const [existingChapterCount, setExistingChapterCount] = useState(0)
@@ -71,33 +77,44 @@ export function useCreateCustomBookPage() {
   const [csvSummary, setCsvSummary] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [isLoadingExistingBook, setIsLoadingExistingBook] = useState(isAppendMode)
-  const [hasLoadedExistingBook, setHasLoadedExistingBook] = useState(!isAppendMode)
+  const [isLoadingExistingBook, setIsLoadingExistingBook] = useState(isEditMode)
+  const [hasLoadedExistingBook, setHasLoadedExistingBook] = useState(!isEditMode)
 
   const totalWords = countDraftWords(chapters)
 
   useEffect(() => {
-    if (!isAppendMode) return
+    if (!isEditMode) return
 
     let isCancelled = false
     setIsLoadingExistingBook(true)
     setHasLoadedExistingBook(false)
     setFormError(null)
 
-    void apiFetch<ExistingCustomBookResponse>(`/api/books/custom-books/${appendBookId}`)
+    void apiFetch<ExistingCustomBookResponse>(`/api/books/custom-books/${editBookId}`)
       .then(book => {
         if (isCancelled) return
-        const loadedChapterCount = book.chapters?.length ?? 0
+        const loadedChapters = book.chapters ?? []
         setTitle(book.title?.trim() || '我的自定义词书')
         setEducationStage(book.education_stage || 'abroad')
         setExamType(book.exam_type || 'ielts')
         setIeltsSkill(book.ielts_skill || 'listening')
         setChapterWordTarget(Math.max(1, Number(book.chapter_word_target) || DEFAULT_CHAPTER_WORD_TARGET))
         setShareEnabled(Boolean(book.share_enabled))
-        setChapterIndexBase(loadedChapterCount)
-        setExistingChapterCount(loadedChapterCount)
+        setChapterIndexBase(0)
+        setExistingChapterCount(loadedChapters.length)
         setExistingWordCount(Math.max(0, Number(book.word_count) || 0))
-        setChapters([createChapterDraft(loadedChapterCount + 1, { content: '' })])
+        setChapters(loadedChapters.length > 0
+          ? loadedChapters.map((chapter, index) => createChapterDraft(index + 1, {
+              id: chapter.id,
+              title: chapter.title,
+              entries: (chapter.words ?? []).map(word => ({
+                word: String(word.word || ''),
+                phonetic: word.phonetic,
+                pos: word.pos,
+                definition: word.definition,
+              })).filter(word => word.word),
+            }))
+          : [createChapterDraft(1, { content: '' })])
         setHasLoadedExistingBook(true)
       })
       .catch(error => {
@@ -111,7 +128,7 @@ export function useCreateCustomBookPage() {
     return () => {
       isCancelled = true
     }
-  }, [appendBookId, isAppendMode])
+  }, [editBookId, isEditMode])
 
   const addChapter = useCallback(() => {
     setChapters(current => [...current, createChapterDraft(chapterIndexBase + current.length + 1)])
@@ -192,8 +209,8 @@ export function useCreateCustomBookPage() {
   }, [chapterIndexBase, chapterWordTarget])
 
   const saveBook = useCallback(async () => {
-    if (isAppendMode && !hasLoadedExistingBook) {
-      setFormError('当前词书尚未加载完成，暂时不能追加章节')
+    if (isEditMode && !hasLoadedExistingBook) {
+      setFormError('当前词书尚未加载完成，暂时不能保存修改')
       return
     }
     if (!title.trim()) {
@@ -217,17 +234,17 @@ export function useCreateCustomBookPage() {
         chapterWordTarget,
         chapters,
       })
-      const endpoint = isAppendMode
-        ? `/api/books/custom-books/${appendBookId}/chapters`
+      const endpoint = isEditMode
+        ? `/api/books/custom-books/${editBookId}`
         : '/api/books/custom-books'
       const created = await apiFetch<CreateCustomBookResponse>(endpoint, {
-        method: 'POST',
+        method: isEditMode ? 'PUT' : 'POST',
         body: JSON.stringify(payload),
       })
       const bookId = created.bookId ?? created.book?.id
       if (!bookId) throw new Error('保存结果缺少词书 ID')
 
-      if (!isAppendMode) {
+      if (!isEditMode) {
         await apiFetch('/api/books/my', {
           method: 'POST',
           body: JSON.stringify({ book_id: bookId }),
@@ -236,11 +253,11 @@ export function useCreateCustomBookPage() {
 
       const incompleteCount = created.book?.incomplete_word_count ?? 0
       const createdCount = Math.max(1, created.created_count ?? chapters.filter(chapter => chapter.entries.length > 0).length)
-      const successMessage = isAppendMode
+      const successMessage = isEditMode
         ? (
             incompleteCount > 0
-              ? `已新增 ${createdCount} 个章节，词书中仍有 ${incompleteCount} 个词条待补全`
-              : `已新增 ${createdCount} 个章节`
+              ? `词书修改已保存，仍有 ${incompleteCount} 个词条待补全`
+              : '词书修改已保存'
           )
         : (
             incompleteCount > 0
@@ -248,21 +265,21 @@ export function useCreateCustomBookPage() {
               : '词书已创建'
           )
       showToast(successMessage, 'success')
-      navigate(isAppendMode ? '/books' : '/plan')
+      navigate(isEditMode ? '/books' : '/plan')
     } catch (error) {
       setFormError(error instanceof Error ? error.message : '词书保存失败')
     } finally {
       setIsSaving(false)
     }
   }, [
-    appendBookId,
+    editBookId,
     chapterWordTarget,
     chapters,
     educationStage,
     examType,
     hasLoadedExistingBook,
     ieltsSkill,
-    isAppendMode,
+    isEditMode,
     navigate,
     shareEnabled,
     showToast,
@@ -286,7 +303,7 @@ export function useCreateCustomBookPage() {
     draggedChapterId,
     csvSummary,
     formError,
-    isAppendMode,
+    isAppendMode: isEditMode,
     isSaving,
     isLoadingExistingBook,
     totalWords,
@@ -308,6 +325,6 @@ export function useCreateCustomBookPage() {
     handleDrop,
     handleCsvFile,
     saveBook,
-    cancel: () => navigate(isAppendMode ? '/books' : '/plan'),
+    cancel: () => navigate(isEditMode ? '/books' : '/plan'),
   }
 }

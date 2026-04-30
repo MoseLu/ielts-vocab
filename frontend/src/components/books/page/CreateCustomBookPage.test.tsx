@@ -98,7 +98,7 @@ describe('CreateCustomBookPage', () => {
     expect(navigateMock).toHaveBeenCalledWith('/plan')
   })
 
-  it('loads an existing custom book and saves new chapters through the append endpoint', async () => {
+  it('loads an existing custom book and saves added chapters through the update endpoint', async () => {
     const user = userEvent.setup()
     apiFetchMock
       .mockResolvedValueOnce({
@@ -111,34 +111,79 @@ describe('CreateCustomBookPage', () => {
         share_enabled: false,
         chapter_word_target: 30,
         chapters: [
-          { id: 'custom_9_1', title: '第1章' },
-          { id: 'custom_9_2', title: '第2章' },
+          { id: 'custom_9_1', title: '第1章', words: [{ id: 1, word: 'abandon' }] },
+          { id: 'custom_9_2', title: '第2章', words: [{ id: 2, word: 'ability' }] },
         ],
       })
       .mockResolvedValueOnce({
         bookId: 'custom_9',
-        created_count: 1,
         book: { id: 'custom_9', incomplete_word_count: 0 },
       })
 
     renderPage(['/books/create?bookId=custom_9'])
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: '继续为词书补充新章节' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: '编辑自定义词书' })).toBeInTheDocument()
     })
     const titleInput = await screen.findByDisplayValue('听力补充词书')
     expect(titleInput).toBeDisabled()
+    expect(screen.getByDisplayValue('abandon')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('ability')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '添加章节' }))
     expect(screen.getByLabelText('章节 3')).toBeInTheDocument()
 
-    await user.type(screen.getByLabelText('单词内容'), 'meticulous')
-    await user.click(screen.getByRole('button', { name: '保存新增章节' }))
+    await user.type(screen.getAllByLabelText('单词内容')[2], 'meticulous')
+    await user.click(screen.getByRole('button', { name: '保存词书修改' }))
 
     await waitFor(() => {
-      expect(apiFetchMock).toHaveBeenCalledWith('/api/books/custom-books/custom_9/chapters', expect.objectContaining({
-        method: 'POST',
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/books/custom-books/custom_9', expect.objectContaining({
+        method: 'PUT',
       }))
     })
+    expect(apiFetchMock.mock.calls[1][1].body).toContain('abandon')
+    expect(apiFetchMock.mock.calls[1][1].body).toContain('meticulous')
     expect(apiFetchMock).not.toHaveBeenCalledWith('/api/books/my', expect.anything())
+    expect(navigateMock).toHaveBeenCalledWith('/books')
+  })
+
+  it('loads existing custom book chapters for editing and saves changes through the update endpoint', async () => {
+    const user = userEvent.setup()
+    apiFetchMock
+      .mockResolvedValueOnce({
+        id: 'custom_9',
+        title: '听力补充词书',
+        word_count: 2,
+        education_stage: 'abroad',
+        exam_type: 'ielts',
+        ielts_skill: 'listening',
+        share_enabled: false,
+        chapter_word_target: 30,
+        chapters: [{
+          id: 'custom_9_1',
+          title: '旧章节',
+          words: [{ id: 1, word: 'abandon' }],
+        }],
+      })
+      .mockResolvedValueOnce({
+        bookId: 'custom_9',
+        book: { id: 'custom_9', incomplete_word_count: 0 },
+      })
+
+    renderPage(['/books/create?bookId=custom_9'])
+
+    expect(await screen.findByDisplayValue('旧章节')).toBeInTheDocument()
+    const wordInput = await screen.findByDisplayValue('abandon')
+    await user.clear(wordInput)
+    await user.type(wordInput, 'coherent')
+    await user.click(screen.getByRole('button', { name: '保存词书修改' }))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/books/custom-books/custom_9', expect.objectContaining({
+        method: 'PUT',
+      }))
+    })
+    expect(apiFetchMock.mock.calls[1][1].body).toContain('coherent')
     expect(navigateMock).toHaveBeenCalledWith('/books')
   })
 })

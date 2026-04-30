@@ -312,10 +312,13 @@ def _next_custom_book_chapter_sequence(book) -> int:
     return max(max_sequence, len(book.chapters))
 
 
-def _append_custom_book_chapters(book, chapters: list[dict[str, Any]], words_by_chapter: dict[str, list[dict[str, Any]]]):
+def _append_custom_book_chapters(book, chapters: list[dict[str, Any]], words_by_chapter: dict[str, list[dict[str, Any]]], *, sequence_base: int | None = None, sort_order_base: int | None = None):
     created_chapters = []
-    next_sequence = _next_custom_book_chapter_sequence(book)
-    next_sort_order = max((int(chapter.sort_order or 0) for chapter in book.chapters), default=-1) + 1
+    next_sequence = _next_custom_book_chapter_sequence(book) if sequence_base is None else sequence_base
+    next_sort_order = (
+        max((int(chapter.sort_order or 0) for chapter in book.chapters), default=-1) + 1
+        if sort_order_base is None else sort_order_base
+    )
     total_words_added = 0
 
     for index, chapter_payload in enumerate(chapters):
@@ -439,6 +442,48 @@ def append_custom_book_chapters_response(
     }, 201
 
 
+def update_custom_book_response(user_id: int, book_id: str, body: dict[str, Any] | None) -> tuple[dict[str, Any], int]:
+    book = get_custom_book_for_user(user_id, book_id)
+    if not book:
+        return {'error': 'Book not found'}, 404
+
+    payload = body if isinstance(body, dict) else {}
+    metadata = _normalize_custom_book_meta(payload)
+    try:
+        prepared_content = _prepare_custom_book_content(payload)
+    except ValueError as exc:
+        return {'error': str(exc)}, 400
+
+    try:
+        next_sequence = _next_custom_book_chapter_sequence(book)
+        book.title = metadata['title']
+        book.description = metadata['description']
+        book.education_stage = metadata['education_stage'] or None
+        book.exam_type = metadata['exam_type'] or None
+        book.ielts_skill = metadata['ielts_skill'] or None
+        book.share_enabled = metadata['share_enabled']
+        book.chapter_word_target = metadata['chapter_word_target']
+        book.word_count = 0
+        ai_custom_book_repository.delete_custom_book_chapters(book)
+        updated_chapters = _append_custom_book_chapters(
+            book,
+            prepared_content['chapters'],
+            prepared_content['words_by_chapter'],
+            sequence_base=next_sequence,
+            sort_order_base=0,
+        )
+        ai_custom_book_repository.commit()
+        updated_book = ai_custom_book_repository.get_custom_book(user_id, book_id)
+        if updated_book is None:
+            raise RuntimeError('updated custom book is missing')
+    except Exception:
+        ai_custom_book_repository.rollback()
+        raise
+
+    detail = serialize_custom_book_detail(updated_book)
+    return {'bookId': updated_book.id, 'book': detail, 'title': detail['title'],
+            'description': detail['description'], 'updated_count': len(updated_chapters),
+            'chapters': detail['chapters'], 'words': build_custom_book_vocabulary_entries(updated_book)}, 200
 def list_custom_books_response(user_id: int) -> tuple[dict[str, Any], int]:
     books = list_custom_books_for_user(user_id)
     return {'books': [serialize_custom_book_summary(book) for book in books]}, 200

@@ -46,15 +46,15 @@ function OptionGroup({ label, value, options, disabled = false, onChange }: Opti
 export default function CreateCustomBookPage() {
   const page = useCreateCustomBookPage()
   const chapterNumberOffset = page.chapterIndexBase
-  const titleLabel = page.isAppendMode ? '继续为词书补充新章节' : '创建一本可立即学习的词书'
+  const titleLabel = page.isAppendMode ? '编辑自定义词书' : '创建一本可立即学习的词书'
   const description = page.isAppendMode
     ? (
         page.isLoadingExistingBook
           ? '正在读取现有词书信息...'
-          : `新内容会追加到《${page.title || '当前词书'}》，当前已有 ${page.existingChapterCount} 章、${page.existingWordCount} 个词。`
+          : `正在编辑《${page.title || '当前词书'}》，当前已有 ${page.existingChapterCount} 章、${page.existingWordCount} 个词。`
       )
     : '按章节粘贴单词，或导入 UTF-8 CSV；保存后会加入“我的词书”。'
-  const saveLabel = page.isAppendMode ? '保存新增章节' : '保存词书'
+  const saveLabel = page.isAppendMode ? '保存词书修改' : '保存词书'
   const metaDisabled = page.isAppendMode || page.isLoadingExistingBook
 
   return (

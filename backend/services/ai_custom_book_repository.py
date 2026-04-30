@@ -136,6 +136,13 @@ def create_custom_book_word(
     return record
 
 
+def delete_custom_book_chapters(book) -> None:
+    for chapter in list(book.chapters):
+        db.session.delete(chapter)
+    db.session.flush()
+    db.session.expire(book, ['chapters'])
+
+
 def list_custom_books(user_id: int):
     return _run_custom_book_read(
         action='list_custom_books',

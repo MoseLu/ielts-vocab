@@ -23,6 +23,7 @@ from services.custom_book_catalog_service import (
     create_custom_book_response as _create_custom_book_response,
     get_custom_book_response as _get_custom_book_response,
     list_custom_books_response as _list_custom_books_response,
+    update_custom_book_response as _update_custom_book_response,
 )
 
 
@@ -63,6 +64,13 @@ def list_custom_books(current_user):
 @token_required
 def get_custom_book(current_user, book_id):
     payload, status = _get_custom_book_response(current_user.id, book_id)
+    return jsonify(payload), status
+
+
+@books_bp.route('/custom-books/<book_id>', methods=['PUT'])
+@token_required
+def update_custom_book(current_user, book_id):
+    payload, status = _update_custom_book_response(current_user.id, book_id, request.get_json())
     return jsonify(payload), status
 
 
