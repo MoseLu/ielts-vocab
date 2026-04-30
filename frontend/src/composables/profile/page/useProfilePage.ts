@@ -8,6 +8,7 @@ export function useProfilePage() {
   const navigate = useNavigate()
   const [showSettings, setShowSettings] = useState(false)
   const [showBindEmail, setShowBindEmail] = useState(false)
+  const [showWishPool, setShowWishPool] = useState(false)
 
   const handleLogout = useCallback(() => {
     logout()
@@ -27,7 +28,9 @@ export function useProfilePage() {
     hasEmail,
     showSettings,
     showBindEmail,
+    showWishPool,
     setShowSettings,
+    setShowWishPool,
     openBindEmail: () => setShowBindEmail(true),
     closeBindEmail: () => setShowBindEmail(false),
     goToVocabTest: () => navigate('/vocab-test'),

@@ -3,6 +3,7 @@ import SettingsPanel from '../../settings/SettingsPanel'
 import BindEmailModal from './BindEmailModal'
 import { useProfilePage } from '../../../composables/profile/page/useProfilePage'
 import { staticAssetUrl } from '../../../lib/staticAssetUrl'
+import FeatureWishPoolModal from '../wishes/FeatureWishPoolModal'
 
 interface MenuItem {
   icon: ReactNode
@@ -16,7 +17,9 @@ export default function ProfilePage() {
     hasEmail,
     showSettings,
     showBindEmail,
+    showWishPool,
     setShowSettings,
+    setShowWishPool,
     openBindEmail,
     closeBindEmail,
     goToVocabTest,
@@ -52,7 +55,7 @@ export default function ProfilePage() {
         </svg>
       ),
       label: '功能许愿池',
-      action: () => handlePlaceholder('功能许愿池'),
+      action: () => setShowWishPool(true),
     },
     {
       icon: (
@@ -132,6 +135,10 @@ export default function ProfilePage() {
 
       {showBindEmail && (
         <BindEmailModal onClose={closeBindEmail} />
+      )}
+
+      {showWishPool && (
+        <FeatureWishPoolModal onClose={() => setShowWishPool(false)} />
       )}
     </div>
   )
