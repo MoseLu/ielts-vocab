@@ -17,11 +17,34 @@ from platform_sdk.ai_speaking_assessment_support import (
     _resolve_speaking_model,
 )
 from platform_sdk.asr_runtime import get_dashscope_api_key
+from platform_sdk.follow_read_acoustic_fallback import (
+    AcousticFallbackError,
+    score_follow_read_acoustic_fallback,
+)
 from platform_sdk.learning_core_internal_client import (
     post_learning_core_game_attempt,
     record_learning_core_event,
 )
 from platform_sdk.study_session_support import normalize_chapter_id
+
+
+_DASHSCOPE_FREE_TIER_EXHAUSTED_MARKERS = (
+    'free tier of the model has been exhausted',
+    'use free tier only',
+    'allocationquota.freetieronly',
+)
+_DASHSCOPE_FREE_TIER_EXHAUSTED_MESSAGE = (
+    'AI 评分服务额度已用尽，请在 DashScope 控制台关闭“只使用免费额度”'
+    '或更换可用 API Key 后再试。'
+)
+
+
+def _normalize_follow_read_error(exc: SpeakingAssessmentError) -> tuple[str, int]:
+    message = str(exc)
+    normalized = message.lower()
+    if any(marker in normalized for marker in _DASHSCOPE_FREE_TIER_EXHAUSTED_MARKERS):
+        return _DASHSCOPE_FREE_TIER_EXHAUSTED_MESSAGE, 503
+    return message, exc.status_code
 
 
 def resolve_follow_read_score_band(score: int | float) -> tuple[str, bool]:
@@ -113,6 +136,28 @@ def _write_temp_audio(upload, *, fallback_name: str) -> tuple[str, str]:
         return temp_file.name, filename
 
 
+def _try_follow_read_acoustic_fallback(
+    *,
+    audio_path: str | None,
+    reference_path: str | None,
+    word: str,
+    phonetic: str | None,
+) -> tuple[dict, str] | None:
+    if not audio_path:
+        return None
+    try:
+        fallback = score_follow_read_acoustic_fallback(
+            audio_path=audio_path,
+            reference_audio_path=reference_path,
+            word=word,
+            phonetic=phonetic,
+        )
+    except AcousticFallbackError as exc:
+        logging.warning('[AI] Follow-read acoustic fallback failed: %s', exc)
+        return None
+    return fallback, str(fallback.get('model') or 'local-acoustic-v1')
+
+
 def evaluate_follow_read_response(current_user, form, files):
     audio = files.get('audio') if hasattr(files, 'get') else None
     if audio is None:
@@ -126,10 +171,11 @@ def evaluate_follow_read_response(current_user, form, files):
     duration_seconds = int(float(form.get('durationSeconds') or 0)) if hasattr(form, 'get') else 0
     reference_audio = files.get('referenceAudio') if hasattr(files, 'get') else None
     temp_paths: list[str] = []
+    audio_path = None
+    reference_path = None
     try:
         audio_path, _ = _write_temp_audio(audio, fallback_name='follow-read-user.webm')
         temp_paths.append(audio_path)
-        reference_path = None
         if reference_audio is not None:
             reference_path, _ = _write_temp_audio(reference_audio, fallback_name='follow-read-reference.mp3')
             temp_paths.append(reference_path)
@@ -140,10 +186,29 @@ def evaluate_follow_read_response(current_user, form, files):
             phonetic=phonetic,
         )
     except SpeakingAssessmentError as exc:
-        return jsonify({'error': str(exc)}), exc.status_code
+        fallback_result = _try_follow_read_acoustic_fallback(
+            audio_path=audio_path,
+            reference_path=reference_path,
+            word=word,
+            phonetic=phonetic,
+        )
+        if fallback_result is not None:
+            result, model = fallback_result
+        else:
+            message, status_code = _normalize_follow_read_error(exc)
+            return jsonify({'error': message}), status_code
     except Exception as exc:
         logging.exception('[AI] Follow-read assessment failed: %s', exc)
-        return jsonify({'error': '跟读评分暂时不可用，请稍后重试'}), 500
+        fallback_result = _try_follow_read_acoustic_fallback(
+            audio_path=audio_path,
+            reference_path=reference_path,
+            word=word,
+            phonetic=phonetic,
+        )
+        if fallback_result is not None:
+            result, model = fallback_result
+        else:
+            return jsonify({'error': '跟读评分暂时不可用，请稍后重试'}), 500
     finally:
         for temp_path in temp_paths:
             try:
@@ -160,9 +225,11 @@ def evaluate_follow_read_response(current_user, form, files):
         'transcript': result['transcript'],
         'feedback': result['feedback'],
         'weakSegments': result['weak_segments'],
-        'provider': 'dashscope',
+        'provider': result.get('provider') or 'dashscope',
         'model': model,
     }
+    if result.get('confidence'):
+        payload['confidence'] = result['confidence']
     try:
         record_learning_core_event(
             current_user.id,

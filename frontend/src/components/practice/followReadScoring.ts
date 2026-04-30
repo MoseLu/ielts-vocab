@@ -21,6 +21,7 @@ export const FollowReadPronunciationResponseSchema = z.object({
   weakSegments: z.array(z.string()).optional(),
   provider: z.string().optional(),
   model: z.string().optional(),
+  confidence: z.string().optional(),
 })
 
 export type FollowReadPronunciationResponse = z.infer<typeof FollowReadPronunciationResponseSchema>

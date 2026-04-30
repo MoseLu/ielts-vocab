@@ -4,6 +4,7 @@ import json
 
 from platform_sdk import ai_speaking_assessment_application
 from platform_sdk import ai_follow_read_assessment_application
+from platform_sdk import ai_speaking_assessment_support
 
 
 def test_score_to_band_uses_half_band_thresholds():
@@ -11,6 +12,12 @@ def test_score_to_band_uses_half_band_thresholds():
     assert ai_speaking_assessment_application._score_to_band(76) == 7.5
     assert ai_speaking_assessment_application._score_to_band(62) == 6.5
     assert ai_speaking_assessment_application._score_to_band(0) == 0.0
+
+
+def test_speaking_assessment_default_model_uses_available_omni_flash(monkeypatch):
+    monkeypatch.delenv('SPEAKING_ASSESSMENT_MODEL', raising=False)
+
+    assert ai_speaking_assessment_support._resolve_speaking_model() == 'qwen3.5-omni-flash-2026-03-15'
 
 
 def test_score_to_band_uses_custom_thresholds_from_env(monkeypatch):
@@ -87,3 +94,17 @@ def test_follow_read_score_bands():
     assert ai_follow_read_assessment_application.resolve_follow_read_score_band(60) == ('near_pass', False)
     assert ai_follow_read_assessment_application.resolve_follow_read_score_band(79) == ('near_pass', False)
     assert ai_follow_read_assessment_application.resolve_follow_read_score_band(80) == ('pass', True)
+
+
+def test_follow_read_free_tier_exhausted_error_is_actionable():
+    message, status_code = ai_follow_read_assessment_application._normalize_follow_read_error(
+        ai_follow_read_assessment_application.SpeakingAssessmentError(
+            'The free tier of the model has been exhausted. '
+            'Please disable the "use free tier only" mode.',
+            status_code=502,
+        )
+    )
+
+    assert status_code == 503
+    assert 'DashScope 控制台' in message
+    assert 'API Key' in message

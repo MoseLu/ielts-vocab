@@ -208,8 +208,11 @@ export default function FollowMode({
       })
       setScoreResult(result)
       await onPronunciationEvaluated?.(currentWord, result)
-    } catch {
-      setError('跟读评分失败，请重新录一遍')
+    } catch (err) {
+      const message = err instanceof Error && err.message.trim()
+        ? err.message.trim()
+        : '跟读评分失败，请稍后重试'
+      setError(message)
     } finally {
       setScoring(false)
     }
@@ -288,6 +291,7 @@ export default function FollowMode({
     : scoreResult?.band === 'near_pass'
       ? '接近通过'
       : '需要重读'
+  const scoreModeLabel = scoreResult?.provider === 'fallback-acoustic' ? '基础评分' : null
 
   return (
     <div className="follow-mode">
@@ -340,6 +344,7 @@ export default function FollowMode({
             <div className={`follow-recording-note follow-recording-note--${scoreResult.band}`}>
               <strong>{Math.round(scoreResult.score)}</strong>
               <span>{scoreLabel}</span>
+              {scoreModeLabel && <span>{scoreModeLabel}</span>}
               <span>{scoreResult.feedback.summary}</span>
             </div>
           )}

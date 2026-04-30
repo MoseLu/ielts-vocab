@@ -234,8 +234,9 @@ describe('FollowMode', () => {
         rhythm: '节奏稳定。',
       },
       weakSegments: ['no'],
-      provider: 'dashscope',
-      model: 'qwen-audio-turbo',
+      provider: 'fallback-acoustic',
+      model: 'local-acoustic-v1',
+      confidence: 'low',
     })
     const stream = { getTracks: () => [{ stop: vi.fn() }] } as unknown as MediaStream
     const instances: Array<{ ondataavailable: ((event: BlobEvent) => void) | null; onstop: (() => void) | null }> = []
@@ -288,6 +289,7 @@ describe('FollowMode', () => {
       expect(evaluateFollowReadPronunciationMock).toHaveBeenCalled()
       expect(screen.getByText('76')).toBeInTheDocument()
       expect(screen.getByText('接近通过')).toBeInTheDocument()
+      expect(screen.getByText('基础评分')).toBeInTheDocument()
     })
     expect(instances.length).toBe(1)
   })
@@ -309,7 +311,7 @@ describe('FollowMode', () => {
       ],
       segments: [{ id: 'seg-0', letter_start: 0, letter_end: 10, letters: 'phenomenon', phonetic: 'fəˈnɒmɪnən', start_ms: 950, end_ms: 2400 }],
     })
-    evaluateFollowReadPronunciationMock.mockRejectedValue(new Error('model unavailable'))
+    evaluateFollowReadPronunciationMock.mockRejectedValue(new Error('AI 评分服务额度已用尽，请在 DashScope 控制台处理。'))
     class TestMediaRecorder {
       ondataavailable: ((event: BlobEvent) => void) | null = null
       onstop: (() => void) | null = null
@@ -352,7 +354,7 @@ describe('FollowMode', () => {
     await user.click(screen.getByRole('button', { name: '停止' }))
 
     await waitFor(() => {
-      expect(screen.getByText('跟读评分失败，请重新录一遍')).toBeInTheDocument()
+      expect(screen.getByText('AI 评分服务额度已用尽，请在 DashScope 控制台处理。')).toBeInTheDocument()
     })
     expect(onPronunciationEvaluated).not.toHaveBeenCalled()
   })

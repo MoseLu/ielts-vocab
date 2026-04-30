@@ -15,7 +15,7 @@ from platform_sdk.gateway_media_proxy import transcribe_speech_upload
 
 DEFAULT_TOPIC = 'education'
 DEFAULT_PASS_BAND = 6.0
-DEFAULT_SPEAKING_MODEL = 'qwen-audio-turbo'
+DEFAULT_SPEAKING_MODEL = 'qwen3.5-omni-flash-2026-03-15'
 BAND_THRESHOLDS_ENV = 'SPEAKING_ASSESSMENT_BAND_THRESHOLDS_JSON'
 MAX_HISTORY_LIMIT = 20
 JSON_BLOCK_RE = re.compile(r'```json\s*(.*?)```', re.IGNORECASE | re.DOTALL)
