@@ -1,21 +1,23 @@
 /* ── Vocab Test Page ──────────────────────────────────────────────────────── */
 
 .vocab-test {
-    min-height: 100vh;
-    background: var(--bg-color);
+    min-height: 100%;
+    background: var(--surface-subtle);
     display: flex;
     flex-direction: column;
-    padding-top: env(safe-area-inset-top);
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+    padding: var(--space-xl);
 }
 
 /* Header */
 .vocab-test-header {
     display: flex;
     align-items: center;
-    padding: var(--size-10);
-    gap: var(--size-10);
-    border-bottom: var(--size-1) solid var(--border);
-    background: var(--bg-color);
+    width: min(100%, var(--size-720));
+    gap: var(--space-md);
+    background: transparent;
     flex-shrink: 0;
 }
 
@@ -57,24 +59,17 @@
 
 /* Progress bar */
 .vocab-test-progress {
-    height: var(--size-3);
-    width: 100%;
-    border: none;
-    background: var(--border);
+    min-width: var(--size-72);
+    padding: var(--size-6) var(--space-md);
+    border: var(--size-1) solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    color: var(--text-secondary);
+    font-size: var(--size-14);
+    font-weight: 700;
+    text-align: center;
+    margin-left: auto;
     flex-shrink: 0;
-    appearance: none;
-}
-
-.vocab-test-progress::-webkit-progress-bar {
-    background: var(--border);
-}
-
-.vocab-test-progress::-webkit-progress-value {
-    background: var(--accent);
-}
-
-.vocab-test-progress::-moz-progress-bar {
-    background: var(--accent);
 }
 
 /* Badge */
@@ -98,6 +93,19 @@
 }
 
 /* Play area */
+.vocab-test-card {
+    width: min(100%, var(--size-720));
+    margin: 0 auto;
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    border: var(--size-1) solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface-base);
+    box-shadow: var(--shadow-soft);
+}
+
 .vocab-test-play-area {
     display: flex;
     flex-direction: column;
@@ -125,6 +133,28 @@
     box-shadow: var(--glow-accent-strong);
 }
 .vocab-test-play-btn:active { transform: scale(0.96); }
+.vocab-test-audio {
+    width: var(--size-72);
+    height: var(--size-72);
+    margin: 0 auto;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    color: var(--text-inverse);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--glow-accent);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background var(--transition-fast);
+}
+.vocab-test-audio:hover {
+    transform: translateY(calc(var(--size-1) * -1));
+    background: var(--accent-hover);
+    box-shadow: var(--glow-accent-strong);
+}
+.vocab-test-audio:active { transform: scale(0.96); }
+.vocab-test-audio svg { width: var(--size-32); height: var(--size-32); }
 .vocab-test-hint {
     font-size: var(--size-14);
     color: var(--text-tertiary);
@@ -134,39 +164,40 @@
 .vocab-test-options {
     display: flex;
     flex-direction: column;
-    gap: var(--size-10);
-    padding: 0 var(--size-10) var(--size-10);
-    flex: 1;
+    gap: var(--space-md);
 }
 
-.vocab-test-opt {
+.vocab-test-option {
     display: flex;
     align-items: flex-start;
-    gap: var(--size-10);
-    padding: var(--size-10);
-    background: var(--bg-secondary);
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--surface-muted);
     border: calc(var(--size-3) / 2) solid var(--border);
     border-radius: var(--radius-lg);
     cursor: pointer;
     text-align: left;
     transition: var(--motion-transition-interactive-fast);
     width: 100%;
+    color: var(--text-primary);
+    font-size: var(--size-14);
+    line-height: 1.5;
 }
-.vocab-test-opt:hover:not(:disabled) {
+.vocab-test-option:hover:not(:disabled) {
     border-color: var(--accent);
     background: var(--accent-light);
 }
-.vocab-test-opt:disabled { cursor: default; }
-.vocab-test-opt.correct {
+.vocab-test-option:disabled { cursor: default; }
+.vocab-test-option.correct {
     border-color: var(--success);
     background: rgba(var(--success-rgb), var(--alpha-8));
 }
-.vocab-test-opt.wrong {
+.vocab-test-option.wrong {
     border-color: var(--error);
     background: rgba(var(--error-rgb), var(--alpha-8));
 }
 
-.opt-indicator {
+.vocab-test-option-index {
     width: var(--size-24);
     height: var(--size-24);
     border-radius: var(--radius-sm);
@@ -179,14 +210,49 @@
     justify-content: center;
     flex-shrink: 0;
 }
-.vocab-test-opt.correct .opt-indicator { background: var(--success); color: var(--text-inverse); }
-.vocab-test-opt.wrong .opt-indicator { background: var(--error); color: var(--text-inverse); }
+.vocab-test-option.correct .vocab-test-option-index { background: var(--success); color: var(--text-inverse); }
+.vocab-test-option.wrong .vocab-test-option-index { background: var(--error); color: var(--text-inverse); }
 
-.opt-text {
-    font-size: var(--size-14);
-    color: var(--text-primary);
-    line-height: 1.5;
+.vocab-test-option span:last-child {
     flex: 1;
+}
+
+.vocab-test-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+}
+
+.vocab-test-secondary,
+.vocab-test-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--size-40);
+    padding: 0 var(--space-xl);
+    border-radius: var(--radius-lg);
+    font-size: var(--size-14);
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--motion-transition-interactive-fast);
+}
+
+.vocab-test-secondary {
+    border: var(--size-1) solid var(--border);
+    background: var(--surface-base);
+    color: var(--text-secondary);
+}
+.vocab-test-secondary:hover { background: var(--surface-hover); color: var(--text-primary); }
+
+.vocab-test-primary {
+    border: var(--size-1) solid var(--accent);
+    background: var(--accent);
+    color: var(--text-inverse);
+}
+.vocab-test-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.vocab-test-primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 /* Feedback */
@@ -378,5 +444,3 @@
 }
 .result-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .result-btn:not(.primary):hover { background: var(--bg-secondary); color: var(--text-primary); }
-
-

@@ -1,4 +1,6 @@
 import React from 'react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
@@ -96,5 +98,28 @@ describe('VocabTestPage', () => {
     })
 
     expect(playWordAudio).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps rendered quiz controls covered by the design-token stylesheet', () => {
+    const stylesheet = readFileSync(
+      resolve(__dirname, '../../../styles/pages/vocab-test/index.scss'),
+      'utf8',
+    )
+
+    expect(stylesheet).toContain('.vocab-test-card')
+    expect(stylesheet).toContain('.vocab-test-audio')
+    expect(stylesheet).toContain('.vocab-test-option')
+    expect(stylesheet).toContain('.vocab-test-option-index')
+    expect(stylesheet).toContain('.vocab-test-secondary')
+    expect(stylesheet).toContain('.vocab-test-primary')
+  })
+
+  it('centers the active quiz surface in the available page height', () => {
+    const stylesheet = readFileSync(
+      resolve(__dirname, '../../../styles/pages/vocab-test/index.scss'),
+      'utf8',
+    )
+
+    expect(stylesheet).toMatch(/\.vocab-test\s*\{[^}]*justify-content:\s*center;/s)
   })
 })
