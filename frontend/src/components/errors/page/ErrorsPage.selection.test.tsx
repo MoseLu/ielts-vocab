@@ -97,6 +97,6 @@ describe('ErrorsPage selected filtered actions', () => {
 
     const storedWords = JSON.parse(localStorage.getItem(getWrongWordsReviewSelectionStorageKey()) ?? '[]')
     expect(storedWords).toEqual(['due', 'demand'])
-    expect(navigateMock).toHaveBeenCalledWith('/game?scope=pending&selection=manual&task=error-review')
+    expect(navigateMock).toHaveBeenCalledWith('/practice?mode=errors&scope=pending&selection=manual')
   })
 })

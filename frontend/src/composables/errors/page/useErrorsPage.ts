@@ -24,7 +24,6 @@ import {
   writeWrongWordsReviewSelectionToStorage,
 } from '../../../features/vocabulary/wrongWordsStore'
 import { apiFetch } from '../../../lib'
-import { requestPracticeMode } from '../../practice/page/practiceModeEvents'
 import {
   dedupeWrongWordKeys,
   getScopedWrongWordDimensions,
@@ -348,12 +347,12 @@ export function useErrorsPage() {
 
   const startSelectedPractice = useCallback(() => {
     writeWrongWordsReviewSelectionToStorage(actionSelectedWords.map(word => word.word))
-    requestPracticeMode('game')
-    const gameParams = new URLSearchParams(manualPracticeQuery)
-    gameParams.set('task', 'error-review')
-    if (dimFilter !== 'all') gameParams.set('dimension', dimFilter)
-    navigate(`/game?${gameParams.toString()}`)
-  }, [actionSelectedWords, dimFilter, manualPracticeQuery, navigate])
+    const params = new URLSearchParams({ mode: 'errors' })
+    new URLSearchParams(manualPracticeQuery).forEach((value, key) => {
+      params.set(key, value)
+    })
+    navigate(`/practice?${params.toString()}`)
+  }, [actionSelectedWords, manualPracticeQuery, navigate])
 
   const goToPlan = useCallback(() => {
     navigate('/plan')
