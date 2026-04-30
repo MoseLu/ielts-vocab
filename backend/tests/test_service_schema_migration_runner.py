@@ -103,7 +103,7 @@ def test_learning_core_migration_runner_converts_chapter_ids_to_strings(tmp_path
 
     result = module.migrate_service_schema('learning-core-service', env_file=env_path)
 
-    assert result['version_after'] == 'learning_core_service_0004'
+    assert result['version_after'] == 'learning_core_service_0005'
     assert result['applied_patches'][0]['revision'] == 'learning_core_service_0002'
 
     engine, inspector = _sqlite_inspector(database_path)
@@ -127,7 +127,7 @@ def test_learning_core_migration_runner_converts_chapter_ids_to_strings(tmp_path
                 sa.text('SELECT version_num FROM alembic_version_learning_core_service')
             ).scalar_one()
         assert str(chapter_id_value) == '3'
-        assert version_value == 'learning_core_service_0004'
+        assert version_value == 'learning_core_service_0005'
     finally:
         engine.dispose()
 
@@ -166,7 +166,7 @@ def test_learning_core_migration_runner_adds_chapter_resume_snapshot_columns(tmp
 
     result = module.migrate_service_schema('learning-core-service', env_file=env_path)
 
-    assert result['version_after'] == 'learning_core_service_0004'
+    assert result['version_after'] == 'learning_core_service_0005'
     assert [patch['revision'] for patch in result['applied_patches']] == ['learning_core_service_0004']
 
     engine, inspector = _sqlite_inspector(database_path)
@@ -242,8 +242,11 @@ def test_learning_core_migration_runner_adds_shadow_custom_book_metadata_columns
 
     result = module.migrate_service_schema('learning-core-service', env_file=env_path)
 
-    assert result['version_after'] == 'learning_core_service_0004'
-    assert [patch['revision'] for patch in result['applied_patches']] == ['learning_core_service_0003']
+    assert result['version_after'] == 'learning_core_service_0005'
+    assert [patch['revision'] for patch in result['applied_patches']] == [
+        'learning_core_service_0003',
+        'learning_core_service_0005',
+    ]
 
     engine, inspector = _sqlite_inspector(database_path)
     try:
@@ -256,22 +259,23 @@ def test_learning_core_migration_runner_adds_shadow_custom_book_metadata_columns
             'share_enabled',
             'chapter_word_target',
         }.issubset(custom_book_columns)
-        assert 'is_incomplete' in custom_word_columns
+        assert {'is_incomplete', 'sort_order'}.issubset(custom_word_columns)
 
         with engine.connect() as connection:
             share_enabled, chapter_word_target = connection.execute(sa.text(
                 "SELECT share_enabled, chapter_word_target FROM custom_books WHERE id = 'custom_1'"
             )).one()
-            is_incomplete = connection.execute(sa.text(
-                "SELECT is_incomplete FROM custom_book_words WHERE id = 1"
-            )).scalar_one()
+            is_incomplete, sort_order = connection.execute(sa.text(
+                "SELECT is_incomplete, sort_order FROM custom_book_words WHERE id = 1"
+            )).one()
             version_value = connection.execute(
                 sa.text('SELECT version_num FROM alembic_version_learning_core_service')
             ).scalar_one()
         assert int(share_enabled or 0) == 0
         assert int(chapter_word_target or 0) == 15
         assert int(is_incomplete or 0) == 0
-        assert version_value == 'learning_core_service_0004'
+        assert int(sort_order or 0) == 0
+        assert version_value == 'learning_core_service_0005'
     finally:
         engine.dispose()
 
@@ -342,8 +346,11 @@ def test_catalog_content_migration_runner_adds_custom_book_metadata_columns(tmp_
     first_result = module.migrate_service_schema('catalog-content-service', env_file=env_path)
     second_result = module.migrate_service_schema('catalog-content-service', env_file=env_path)
 
-    assert first_result['version_after'] == 'catalog_content_service_0002'
-    assert first_result['applied_patches'][0]['revision'] == 'catalog_content_service_0002'
+    assert first_result['version_after'] == 'catalog_content_service_0003'
+    assert [patch['revision'] for patch in first_result['applied_patches']] == [
+        'catalog_content_service_0002',
+        'catalog_content_service_0003',
+    ]
     assert second_result['applied_patches'] == []
 
     engine, inspector = _sqlite_inspector(database_path)
@@ -357,22 +364,23 @@ def test_catalog_content_migration_runner_adds_custom_book_metadata_columns(tmp_
             'share_enabled',
             'chapter_word_target',
         }.issubset(custom_book_columns)
-        assert 'is_incomplete' in custom_word_columns
+        assert {'is_incomplete', 'sort_order'}.issubset(custom_word_columns)
 
         with engine.connect() as connection:
             share_enabled, chapter_word_target = connection.execute(sa.text(
                 "SELECT share_enabled, chapter_word_target FROM custom_books WHERE id = 'custom_1'"
             )).one()
-            is_incomplete = connection.execute(sa.text(
-                "SELECT is_incomplete FROM custom_book_words WHERE id = 1"
-            )).scalar_one()
+            is_incomplete, sort_order = connection.execute(sa.text(
+                "SELECT is_incomplete, sort_order FROM custom_book_words WHERE id = 1"
+            )).one()
             version_value = connection.execute(
                 sa.text('SELECT version_num FROM alembic_version_catalog_content_service')
             ).scalar_one()
         assert int(share_enabled or 0) == 0
         assert int(chapter_word_target or 0) == 15
         assert int(is_incomplete or 0) == 0
-        assert version_value == 'catalog_content_service_0002'
+        assert int(sort_order or 0) == 0
+        assert version_value == 'catalog_content_service_0003'
     finally:
         engine.dispose()
 
@@ -394,7 +402,7 @@ def test_migration_runner_uses_database_env_without_loading_app_secrets(tmp_path
 
     result = module.migrate_service_schema('catalog-content-service', env_file=env_path)
 
-    assert result['version_after'] == 'catalog_content_service_0002'
+    assert result['version_after'] == 'catalog_content_service_0003'
     engine, inspector = _sqlite_inspector(database_path)
     try:
         assert 'custom_books' in inspector.get_table_names()
@@ -402,7 +410,7 @@ def test_migration_runner_uses_database_env_without_loading_app_secrets(tmp_path
             version_value = connection.execute(
                 sa.text('SELECT version_num FROM alembic_version_catalog_content_service')
             ).scalar_one()
-        assert version_value == 'catalog_content_service_0002'
+        assert version_value == 'catalog_content_service_0003'
     finally:
         engine.dispose()
 

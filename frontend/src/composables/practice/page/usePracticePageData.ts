@@ -8,7 +8,7 @@ import { LearnerProfileSchema, type LearnerProfile as BackendLearnerProfile } fr
 import { loadBookProgressSnapshot, loadChapterProgressSnapshot } from '../../../components/practice/progressStorage'
 import { type ReviewQueueContext, type ReviewQueueSummary } from '../../../components/practice/page/practicePageHelpers'
 import type { ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
-import { applyScopedWordsLoad, loadErrorModeData, loadQuickMemoryReviewQueue, resolvePracticeWordsForMode } from './practicePageDataLoaders'
+import { applyScopedWordsLoad, buildCanonicalWordListPath, loadErrorModeData, loadQuickMemoryReviewQueue, resolvePracticeWordsForMode } from './practicePageDataLoaders'
 
 interface UsePracticePageDataParams {
   userId: string | number | null
@@ -272,7 +272,7 @@ export function usePracticePageData({
     }
 
     if (bookId && chapterId) {
-      fetch(buildApiUrl(`/api/books/${bookId}/chapters/${chapterId}`))
+      fetch(buildApiUrl(buildCanonicalWordListPath(bookId, chapterId)))
         .then(res => res.json())
         .then(async (data: { words?: Word[] }) => {
           if (!canApplyScopedLoad()) return
@@ -292,7 +292,7 @@ export function usePracticePageData({
             progress,
             chapterId,
             mode,
-            shuffle: settings.shuffle,
+            shuffle: false,
             scopedLoadKey,
             scopedLoadGeneration,
             canApplyScopedLoad,
@@ -324,7 +324,7 @@ export function usePracticePageData({
 
     if (bookId) {
       setResumeProgress(null)
-      fetch(buildApiUrl(`/api/books/${bookId}/words?per_page=100`))
+      fetch(buildApiUrl(buildCanonicalWordListPath(bookId)))
         .then(res => res.json())
         .then(async (data: { words?: Word[] }) => {
           if (!canApplyScopedLoad()) return
@@ -344,7 +344,7 @@ export function usePracticePageData({
             progress,
             chapterId,
             mode,
-            shuffle: settings.shuffle,
+            shuffle: false,
             scopedLoadKey,
             scopedLoadGeneration,
             canApplyScopedLoad,

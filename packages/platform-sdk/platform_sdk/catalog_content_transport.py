@@ -22,6 +22,7 @@ from platform_sdk.catalog_content_custom_books_application import (
     list_catalog_content_custom_books_response,
     update_catalog_content_custom_book_response,
 )
+from platform_sdk.catalog_content_word_list_resolver import build_word_list_response
 from platform_sdk.catalog_content_confusable_application import (
     CONFUSABLE_MATCH_BOOK_ID,
     create_confusable_custom_chapters_response,
@@ -85,6 +86,18 @@ def get_word_details():
     payload, status = build_word_details_response(
         request.args.get('word'),
         resolve_optional_current_user(),
+    )
+    return jsonify(payload), status
+
+
+@catalog_content_bp.route('/api/books/word-list', methods=['GET'])
+def get_word_list():
+    payload, status = build_word_list_response(
+        scope=request.args.get('scope', 'book'),
+        book_id=request.args.get('book_id'),
+        chapter_id=request.args.get('chapter_id'),
+        selected_words=request.args.getlist('selected_words[]') or request.args.getlist('selected_words'),
+        order=request.args.get('order', 'canonical'),
     )
     return jsonify(payload), status
 

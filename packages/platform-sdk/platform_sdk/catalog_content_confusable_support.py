@@ -266,13 +266,14 @@ def create_confusable_custom_chapters_response(user_id: int, groups):
             word_count=len(words),
             sort_order=existing_chapter_count + index - 1,
         )
-        for word in words:
+        for word_index, word in enumerate(words):
             books_confusable_repository.create_custom_book_word(
                 chapter_id=chapter_id,
                 word=word['word'],
                 phonetic=word['phonetic'],
                 pos=word['pos'],
                 definition=word['definition'],
+                sort_order=word_index,
             )
 
         total_words_added += len(words)
@@ -317,13 +318,14 @@ def update_confusable_custom_chapter_response(user_id: int, chapter_id: int, wor
         books_confusable_repository.delete_row(word)
     books_confusable_repository.flush()
 
-    for word in resolved_words:
+    for word_index, word in enumerate(resolved_words):
         books_confusable_repository.create_custom_book_word(
             chapter_id=str(chapter_id),
             word=word['word'],
             phonetic=word['phonetic'],
             pos=word['pos'],
             definition=word['definition'],
+            sort_order=word_index,
         )
 
     if custom_chapter.book:

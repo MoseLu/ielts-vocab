@@ -248,6 +248,40 @@ def _apply_custom_book_metadata_patch(connection: sa.engine.Connection) -> list[
     return changes
 
 
+def _apply_custom_book_word_sort_order_patch(connection: sa.engine.Connection) -> list[str]:
+    inspector = sa.inspect(connection)
+    if 'custom_book_words' not in inspector.get_table_names():
+        return []
+
+    ops = _migration_ops(connection)
+    columns = {column['name'] for column in inspector.get_columns('custom_book_words')}
+    changes: list[str] = []
+    if 'sort_order' not in columns:
+        ops.add_column(
+            'custom_book_words',
+            sa.Column('sort_order', sa.Integer(), nullable=False, server_default=sa.text('0')),
+        )
+        changes.append('custom_book_words.sort_order')
+
+    ranked = sa.text("""
+        SELECT id, chapter_id
+        FROM custom_book_words
+        ORDER BY chapter_id ASC, id ASC
+    """)
+    current_chapter = None
+    current_order = 0
+    for word_id, chapter_id in connection.execute(ranked):
+        if chapter_id != current_chapter:
+            current_chapter = chapter_id
+            current_order = 0
+        connection.execute(
+            sa.text('UPDATE custom_book_words SET sort_order = :sort_order WHERE id = :id'),
+            {'sort_order': current_order, 'id': word_id},
+        )
+        current_order += 1
+    return changes
+
+
 def _apply_learning_core_progress_resume_patch(connection: sa.engine.Connection) -> list[str]:
     inspector = sa.inspect(connection)
     if 'user_chapter_progress' not in inspector.get_table_names():
@@ -314,12 +348,22 @@ SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
             description='Add resumable chapter-progress snapshot columns.',
             apply=_apply_learning_core_progress_resume_patch,
         ),
+        SchemaPatch(
+            revision='learning_core_service_0005',
+            description='Add custom book word import sort order.',
+            apply=_apply_custom_book_word_sort_order_patch,
+        ),
     ),
     'catalog-content-service': (
         SchemaPatch(
             revision='catalog_content_service_0002',
             description='Add custom book metadata and incomplete-word flags.',
             apply=_apply_custom_book_metadata_patch,
+        ),
+        SchemaPatch(
+            revision='catalog_content_service_0003',
+            description='Add custom book word import sort order.',
+            apply=_apply_custom_book_word_sort_order_patch,
         ),
     ),
     'ai-execution-service': (

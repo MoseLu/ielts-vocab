@@ -26,6 +26,7 @@ from platform_sdk.learning_core_favorites_support import (
     _serialize_favorite_words,
 )
 from platform_sdk.catalog_content_service_repositories import custom_book_catalog_service
+from platform_sdk.catalog_content_word_list_resolver import build_word_list_response
 
 
 WORD_NOTE_LIMIT = 500
@@ -132,111 +133,21 @@ def _build_favorites_chapter_words_response(chapter_id):
 
 
 def build_chapter_words_response(book_id, chapter_id):
-    if _is_favorites_book(book_id):
-        return _build_favorites_chapter_words_response(chapter_id)
-
-    current_user = confusable_support.resolve_optional_current_user()
-    custom_book = custom_book_catalog_service.get_custom_book_for_user(
-        current_user.id if current_user else None,
-        book_id,
+    payload, status = build_word_list_response(
+        scope='book',
+        book_id=book_id,
+        chapter_id=chapter_id,
     )
-    if not custom_book and not _find_book(book_id):
-        return {'error': 'Book not found'}, 404
-
-    if confusable_support.is_confusable_match_book(book_id):
-        custom_chapter = confusable_support.get_confusable_custom_chapter(
-            current_user.id if current_user else None,
-            chapter_id,
-        )
-        if custom_chapter:
-            return {
-                'chapter': {
-                    'id': chapter_id,
-                    'title': custom_chapter.title,
-                    'word_count': int(custom_chapter.word_count or len(custom_chapter.words)),
-                    'group_count': 1,
-                    'is_custom': True,
-                },
-                'words': confusable_support.serialize_confusable_custom_words(custom_chapter),
-            }, 200
-
-    chapters_data = load_book_chapters(book_id)
-    if not chapters_data:
-        return {'error': 'Chapters not available for this book'}, 404
-
-    chapter = next(
-        (
-            entry
-            for entry in chapters_data.get('chapters', [])
-            if _chapter_id_matches(entry.get('id'), chapter_id)
-        ),
-        None,
-    )
-    if not chapter:
-        return {'error': 'Chapter not found'}, 404
-
-    words = load_book_vocabulary(book_id)
-    if words is None:
-        return {'error': 'Failed to load chapter'}, 500
-
-    chapter_words = [
-        _strip_chapter_fields(word)
-        for word in words
-        if _chapter_id_matches(word.get('chapter_id'), chapter_id)
-    ]
-    return {'chapter': chapter, 'words': chapter_words}, 200
+    if status != 200:
+        return payload, status
+    return {'chapter': payload['chapter'], 'words': payload['words']}, 200
 
 
 def build_book_words_response(book_id, page=1, per_page=100):
-    if _is_favorites_book(book_id):
-        current_user = confusable_support.resolve_optional_current_user()
-        if not current_user:
-            return {'error': 'Book not found'}, 404
-
-        words = _serialize_favorite_words(current_user.id)
-        if not words:
-            return {'error': 'Book not found'}, 404
-        paginated = _paginate_items(words, page, per_page)
-        return {
-            'words': paginated['items'],
-            'total': paginated['total'],
-            'page': paginated['page'],
-            'per_page': paginated['per_page'],
-            'total_pages': paginated['total_pages'],
-        }, 200
-
-    current_user = confusable_support.resolve_optional_current_user()
-    if (
-        not custom_book_catalog_service.get_custom_book_for_user(current_user.id if current_user else None, book_id)
-        and not _find_book(book_id)
-    ):
-        return {'error': 'Book not found'}, 404
-
-    words = load_book_vocabulary(book_id)
-    if words is None:
-        return {'error': 'Failed to load vocabulary'}, 500
-
-    if confusable_support.is_confusable_match_book(book_id):
-        custom_book = (
-            confusable_support.get_confusable_custom_book(current_user.id)
-            if current_user else None
-        )
-        if custom_book:
-            custom_words = []
-            for chapter in custom_book.chapters:
-                try:
-                    custom_chapter_id = int(str(chapter.id))
-                except (TypeError, ValueError):
-                    continue
-                for word in confusable_support.serialize_confusable_custom_words(chapter):
-                    custom_words.append({
-                        **word,
-                        'chapter_id': custom_chapter_id,
-                        'chapter_title': chapter.title,
-                    })
-            if custom_words:
-                words = [*words, *custom_words]
-
+    payload, status = build_word_list_response(scope='book', book_id=book_id)
+    if status != 200:
+        return payload, status
+    words = payload['words']
     paginated = _paginate_items(words, page, per_page)
     return {
         'words': paginated['items'],

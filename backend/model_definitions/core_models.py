@@ -396,7 +396,8 @@ class CustomBookChapter(db.Model):
     sort_order = db.Column(db.Integer, default=0)
 
     words = db.relationship('CustomBookWord', backref='chapter', lazy=True,
-                             cascade='all, delete-orphan')
+                             cascade='all, delete-orphan',
+                             order_by='CustomBookWord.sort_order, CustomBookWord.id')
 
     def to_dict(self):
         return {
@@ -420,6 +421,7 @@ class CustomBookWord(db.Model):
     pos = db.Column(db.String(50), nullable=True)
     definition = db.Column(db.Text, nullable=False)
     is_incomplete = db.Column(db.Boolean, nullable=False, default=False)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
 
     def to_dict(self):
         return {
@@ -430,6 +432,7 @@ class CustomBookWord(db.Model):
             'pos': self.pos,
             'definition': self.definition,
             'is_incomplete': bool(self.is_incomplete),
+            'sort_order': int(self.sort_order or 0),
         }
 
 

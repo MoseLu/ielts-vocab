@@ -135,6 +135,7 @@ def create_custom_book_word(
     pos: str,
     definition: str,
     is_incomplete: bool = False,
+    sort_order: int = 0,
 ):
     record = CustomBookWord(
         chapter_id=chapter_id,
@@ -143,6 +144,7 @@ def create_custom_book_word(
         pos=pos,
         definition=definition,
         is_incomplete=is_incomplete,
+        sort_order=sort_order,
     )
     db.session.add(record)
     return record
@@ -185,7 +187,7 @@ def list_custom_book_words_for_chapter_ids(chapter_ids):
         fallback=[],
         query=lambda: CustomBookWord.query.filter(
             CustomBookWord.chapter_id.in_(normalized_ids),
-        ).all(),
+        ).order_by(CustomBookWord.sort_order.asc(), CustomBookWord.id.asc()).all(),
     )
 
 

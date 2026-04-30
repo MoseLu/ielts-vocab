@@ -21,6 +21,12 @@ const QUICK_MEMORY_REVIEW_BATCH_SIZE = 100
 
 type ToastFn = (message: string, type?: 'success' | 'error' | 'info') => void
 
+export function buildCanonicalWordListPath(bookId: string, chapterId?: string | null): string {
+  const params = new URLSearchParams({ scope: 'book', book_id: bookId })
+  if (chapterId) params.set('chapter_id', chapterId)
+  return `/api/books/word-list?${params.toString()}`
+}
+
 interface ScopedLoadStateRef {
   key: string | null
   generation: number

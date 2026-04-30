@@ -4,11 +4,10 @@ import uuid
 from typing import Any
 
 from services import ai_custom_book_repository, phonetic_lookup_service
-from services.word_catalog_service import ensure_word_catalog_entry
+from services.custom_book_word_import import build_custom_book_import_index, resolve_custom_book_word
 
 
 DEFAULT_CHAPTER_WORD_TARGET = 15
-PLACEHOLDER_DEFINITION = '待补充释义'
 DEFAULT_CUSTOM_BOOK_TITLE = '自定义词书'
 
 _STUDY_TYPE_MAP = {
@@ -216,7 +215,8 @@ def _normalize_words(payload: dict[str, Any], chapter_ids: list[str]) -> list[di
 
     fallback_chapter_id = chapter_ids[0] if chapter_ids else 'chapter-1'
     normalized: list[dict[str, Any]] = []
-    for word_data in raw_words:
+    chapter_index_by_id = {chapter_id: index for index, chapter_id in enumerate(chapter_ids)}
+    for input_index, word_data in enumerate(raw_words):
         if not isinstance(word_data, dict):
             continue
         word = _clean_text(word_data.get('word'))
@@ -231,44 +231,10 @@ def _normalize_words(payload: dict[str, Any], chapter_ids: list[str]) -> list[di
             'phonetic': phonetic_lookup_service.normalize_phonetic_text(word_data.get('phonetic')),
             'pos': _clean_text(word_data.get('pos')),
             'definition': _clean_text(word_data.get('definition', word_data.get('translation'))),
+            'input_index': input_index,
+            'chapter_index': chapter_index_by_id.get(chapter_id, 0),
         })
     return normalized
-
-
-def _resolve_word_entry(word_payload: dict[str, Any]) -> dict[str, Any]:
-    word = word_payload['word']
-    phonetic = word_payload['phonetic']
-    pos = word_payload['pos']
-    definition = word_payload['definition']
-
-    try:
-        catalog_entry, _changed = ensure_word_catalog_entry(word)
-    except Exception:
-        catalog_entry = None
-
-    if catalog_entry is not None:
-        if not phonetic:
-            phonetic = phonetic_lookup_service.normalize_phonetic_text(catalog_entry.phonetic)
-        if not pos:
-            pos = _clean_text(catalog_entry.pos)
-        if not definition:
-            definition = _clean_text(catalog_entry.definition)
-
-    if not phonetic:
-        try:
-            phonetic = phonetic_lookup_service.resolve_phonetic(word, allow_remote=True) or ''
-        except Exception:
-            phonetic = ''
-
-    is_incomplete = not phonetic or not pos or not definition
-    return {
-        'chapter_id': word_payload['chapter_id'],
-        'word': word,
-        'phonetic': phonetic,
-        'pos': pos,
-        'definition': definition or PLACEHOLDER_DEFINITION,
-        'is_incomplete': is_incomplete,
-    }
 
 
 def _prepare_custom_book_content(payload: dict[str, Any]) -> dict[str, Any]:
@@ -282,8 +248,21 @@ def _prepare_custom_book_content(payload: dict[str, Any]) -> dict[str, Any]:
         chapter_ids = ['chapter-1']
 
     words_by_chapter: dict[str, list[dict[str, Any]]] = {chapter_id: [] for chapter_id in chapter_ids}
+    rejected_words: list[dict[str, Any]] = []
+    import_index = build_custom_book_import_index()
     for word_payload in words:
-        words_by_chapter.setdefault(word_payload['chapter_id'], []).append(_resolve_word_entry(word_payload))
+        resolved_word, rejected_word = resolve_custom_book_word(
+            word_payload,
+            source_order=len(words_by_chapter.setdefault(word_payload['chapter_id'], [])),
+            input_index=word_payload['input_index'],
+            chapter_index=word_payload['chapter_index'],
+            import_index=import_index,
+        )
+        if rejected_word:
+            rejected_words.append(rejected_word)
+            continue
+        if resolved_word:
+            words_by_chapter[word_payload['chapter_id']].append(resolved_word)
 
     non_empty_chapters = [
         chapter
@@ -296,6 +275,7 @@ def _prepare_custom_book_content(payload: dict[str, Any]) -> dict[str, Any]:
     return {
         'chapters': non_empty_chapters,
         'words_by_chapter': words_by_chapter,
+        'rejected_words': rejected_words,
     }
 
 
@@ -331,7 +311,7 @@ def _append_custom_book_chapters(book, chapters: list[dict[str, Any]], words_by_
             sort_order=next_sort_order + index,
         )
         total_words_added += len(chapter_words)
-        for word_entry in chapter_words:
+        for word_index, word_entry in enumerate(chapter_words):
             ai_custom_book_repository.create_custom_book_word(
                 chapter_id=chapter.id,
                 word=word_entry['word'],
@@ -339,11 +319,19 @@ def _append_custom_book_chapters(book, chapters: list[dict[str, Any]], words_by_
                 pos=word_entry['pos'],
                 definition=word_entry['definition'],
                 is_incomplete=word_entry['is_incomplete'],
+                sort_order=int(word_entry.get('source_order', word_index)),
             )
         created_chapters.append(chapter)
 
     book.word_count = int(book.word_count or 0) + total_words_added
     return created_chapters
+
+
+def _accepted_words_from_content(prepared_content: dict[str, Any]) -> list[dict[str, Any]]:
+    accepted_words: list[dict[str, Any]] = []
+    for chapter in prepared_content['chapters']:
+        accepted_words.extend(prepared_content['words_by_chapter'].get(chapter['id'], []))
+    return accepted_words
 
 
 def create_custom_book_response(user_id: int, body: dict[str, Any] | None) -> tuple[dict[str, Any], int]:
@@ -394,6 +382,8 @@ def create_custom_book_response(user_id: int, body: dict[str, Any] | None) -> tu
         ],
         'chapters': detail['chapters'],
         'words': build_custom_book_vocabulary_entries(created_book),
+        'accepted_words': _accepted_words_from_content(prepared_content),
+        'rejected_words': prepared_content['rejected_words'],
     }, 201
 
 
@@ -439,6 +429,8 @@ def append_custom_book_chapters_response(
         ],
         'chapters': detail['chapters'],
         'words': build_custom_book_vocabulary_entries(updated_book),
+        'accepted_words': _accepted_words_from_content(prepared_content),
+        'rejected_words': prepared_content['rejected_words'],
     }, 201
 
 
@@ -483,7 +475,9 @@ def update_custom_book_response(user_id: int, book_id: str, body: dict[str, Any]
     detail = serialize_custom_book_detail(updated_book)
     return {'bookId': updated_book.id, 'book': detail, 'title': detail['title'],
             'description': detail['description'], 'updated_count': len(updated_chapters),
-            'chapters': detail['chapters'], 'words': build_custom_book_vocabulary_entries(updated_book)}, 200
+            'chapters': detail['chapters'], 'words': build_custom_book_vocabulary_entries(updated_book),
+            'accepted_words': _accepted_words_from_content(prepared_content),
+            'rejected_words': prepared_content['rejected_words']}, 200
 def list_custom_books_response(user_id: int) -> tuple[dict[str, Any], int]:
     books = list_custom_books_for_user(user_id)
     return {'books': [serialize_custom_book_summary(book) for book in books]}, 200

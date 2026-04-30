@@ -70,6 +70,7 @@ def create_custom_book_word(
     phonetic: str,
     pos: str,
     definition: str,
+    sort_order: int = 0,
 ):
     record = CustomBookWord(
         chapter_id=chapter_id,
@@ -77,6 +78,7 @@ def create_custom_book_word(
         phonetic=phonetic,
         pos=pos,
         definition=definition,
+        sort_order=sort_order,
     )
     db.session.add(record)
     return record

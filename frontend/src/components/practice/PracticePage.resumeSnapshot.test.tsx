@@ -130,7 +130,7 @@ describe('PracticePage remote resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/book-1/chapters/1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -188,7 +188,7 @@ describe('PracticePage remote resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/book-1/chapters/1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -318,11 +318,10 @@ describe('PracticePage remote resume snapshot', () => {
     })
   })
 
-  it('reuses the first shuffled queue during StrictMode reloads for the same scope', async () => {
+  it('keeps canonical chapter order during StrictMode reloads for the same scope', async () => {
     sessionHookValue.settings = { shuffle: true }
     const randomSpy = vi.spyOn(Math, 'random')
-    const randomValues = [0.9, 0.9, 0.0, 0.9]
-    randomSpy.mockImplementation(() => randomValues.shift() ?? 0.5)
+    randomSpy.mockImplementation(() => 0.9)
 
     const chapterWords = [
       { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha' },
@@ -338,7 +337,7 @@ describe('PracticePage remote resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/book-1/chapters/1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
         fetchCount += 1
         if (fetchCount === 1) {
           return Promise.resolve({ ok: true, json: async () => ({ words: chapterWords }) } as Response)
@@ -379,7 +378,48 @@ describe('PracticePage remote resume snapshot', () => {
       expect(screen.getByTestId('current-word')).toHaveTextContent('alpha')
       expect(screen.getByTestId('queue-index')).toHaveTextContent('0')
     })
-    expect(randomSpy).toHaveBeenCalledTimes(2)
+    expect(randomSpy).not.toHaveBeenCalled()
     randomSpy.mockRestore()
+  })
+
+  it('loads whole-book practice from the canonical word-list endpoint', async () => {
+    sessionHookValue.settings = { shuffle: true }
+    const requestedUrls: string[] = []
+    const bookWords = Array.from({ length: 105 }, (_, index) => ({
+      word: index === 0 ? 'alpha' : `word-${index}`,
+      phonetic: '/w/',
+      pos: 'n.',
+      definition: `definition-${index}`,
+    }))
+
+    vi.mocked(fetch).mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input)
+      requestedUrls.push(url)
+      if (url === '/api/books/book-1/chapters') {
+        return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
+      }
+      if (url === '/api/books/word-list?scope=book&book_id=book-1') {
+        return Promise.resolve({ ok: true, json: async () => ({ words: bookWords }) } as Response)
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`))
+    })
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/books/progress/book-1') return Promise.resolve({})
+      return Promise.resolve({})
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?book=book-1']}>
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-word')).toHaveTextContent('alpha')
+    })
+    expect(requestedUrls).toContain('/api/books/word-list?scope=book&book_id=book-1')
+    expect(requestedUrls.some(url => url.includes('/words?per_page=100'))).toBe(false)
   })
 })
