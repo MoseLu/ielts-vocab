@@ -117,3 +117,53 @@ def test_gateway_word_feedback_proxy_routes_to_admin_ops_service(monkeypatch):
     assert captured['path'] == '/api/books/word-feedback'
     forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
     assert 'authorization' not in forwarded
+
+
+def test_gateway_feature_wishes_proxy_routes_to_admin_ops_service(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app, base_url='https://axiomaticworld.com')
+    captured: dict[str, object] = {}
+
+    async def fake_proxy_browser_request(**kwargs):
+        captured.update(kwargs)
+        return browser_routes.Response(
+            b'{"items":[],"total":0}',
+            status_code=200,
+            media_type='application/json',
+        )
+
+    monkeypatch.setattr(browser_routes, 'proxy_browser_request', fake_proxy_browser_request)
+
+    response = client.get('/api/feature-wishes?search=card', headers={'Authorization': 'Bearer learner-token'})
+
+    assert response.status_code == 200
+    assert captured['base_url'] == browser_routes.admin_ops_service_url()
+    assert captured['path'] == '/api/feature-wishes'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded
+
+
+def test_gateway_feature_wish_edit_proxy_routes_to_admin_ops_service(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app, base_url='https://axiomaticworld.com')
+    captured: dict[str, object] = {}
+
+    async def fake_proxy_browser_request(**kwargs):
+        captured.update(kwargs)
+        return browser_routes.Response(
+            b'{"message":"ok"}',
+            status_code=200,
+            media_type='application/json',
+        )
+
+    monkeypatch.setattr(browser_routes, 'proxy_browser_request', fake_proxy_browser_request)
+
+    response = client.put(
+        '/api/feature-wishes/12',
+        headers={'Authorization': 'Bearer learner-token'},
+        json={'title': 'new title', 'content': 'new content'},
+    )
+
+    assert response.status_code == 200
+    assert captured['base_url'] == browser_routes.admin_ops_service_url()
+    assert captured['path'] == '/api/feature-wishes/12'

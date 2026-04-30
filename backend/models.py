@@ -16,6 +16,7 @@ load_split_module_files(
         'model_definitions/note_models.py',
         'model_definitions/notes_runtime_models.py',
         'model_definitions/eventing_models.py',
+        'model_definitions/feature_wish_models.py',
     ),
     globals(),
 )

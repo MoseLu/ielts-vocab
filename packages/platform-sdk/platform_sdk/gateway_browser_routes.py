@@ -222,6 +222,23 @@ async def word_feedback_proxy(request: Request):
         unavailable_detail='admin ops service unavailable',
     )
 
+@browser_compat_router.api_route('/api/feature-wishes', methods=['GET', 'POST'])
+async def feature_wishes_proxy(request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path='/api/feature-wishes',
+        unavailable_detail='admin ops service unavailable',
+    )
+
+@browser_compat_router.put('/api/feature-wishes/{wish_id}')
+async def feature_wish_detail_proxy(wish_id: int, request: Request):
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path=f'/api/feature-wishes/{wish_id}',
+        unavailable_detail='admin ops service unavailable',
+    )
 
 @browser_compat_router.api_route('/api/exams', methods=['GET'])
 async def exams_proxy(request: Request):

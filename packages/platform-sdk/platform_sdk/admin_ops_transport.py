@@ -9,6 +9,7 @@ from routes.middleware import admin_required, token_required
 
 admin_bp = Blueprint('admin', __name__)
 books_feedback_bp = Blueprint('books_feedback', __name__)
+feature_wishes_bp = Blueprint('feature_wishes', __name__)
 
 
 @lru_cache(maxsize=1)
@@ -39,6 +40,17 @@ def _load_word_feedback_support():
     )
 
     return build_word_feedback_list_response, submit_word_feedback_response
+
+
+@lru_cache(maxsize=1)
+def _load_feature_wish_support():
+    from platform_sdk.feature_wish_application import (
+        create_feature_wish_response,
+        list_feature_wishes_response,
+        update_feature_wish_response,
+    )
+
+    return list_feature_wishes_response, create_feature_wish_response, update_feature_wish_response
 
 
 @admin_bp.route('/overview', methods=['GET'])
@@ -109,4 +121,39 @@ def get_word_feedback(current_user):
 def submit_word_feedback(current_user):
     _, submit_word_feedback_response = _load_word_feedback_support()
     payload, status = submit_word_feedback_response(current_user, request.get_json() or {})
+    return jsonify(payload), status
+
+
+@feature_wishes_bp.route('', methods=['GET'])
+@token_required
+def list_feature_wishes(current_user):
+    list_feature_wishes_response, _, _ = _load_feature_wish_support()
+    payload, status = list_feature_wishes_response(current_user, request.args)
+    return jsonify(payload), status
+
+
+@feature_wishes_bp.route('', methods=['POST'])
+@token_required
+def create_feature_wish(current_user):
+    _, create_feature_wish_response, _ = _load_feature_wish_support()
+    payload, status = create_feature_wish_response(
+        current_user,
+        request.get_json(silent=True),
+        request.form,
+        request.files,
+    )
+    return jsonify(payload), status
+
+
+@feature_wishes_bp.route('/<int:wish_id>', methods=['PUT'])
+@token_required
+def update_feature_wish(current_user, wish_id):
+    _, _, update_feature_wish_response = _load_feature_wish_support()
+    payload, status = update_feature_wish_response(
+        current_user,
+        wish_id,
+        request.get_json(silent=True),
+        request.form,
+        request.files,
+    )
     return jsonify(payload), status
