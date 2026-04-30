@@ -150,7 +150,6 @@ interface LoadErrorModeDataOptions {
   userId: string | number | null
   searchParams: URLSearchParams
   mode?: PracticeMode
-  shuffle?: boolean
   setResumeProgress: Dispatch<SetStateAction<ProgressData | null>>
   setNoListeningPresets: Dispatch<SetStateAction<boolean>>
   setVocabulary: Dispatch<SetStateAction<Word[]>>
@@ -176,7 +175,6 @@ export async function loadErrorModeData({
   userId,
   searchParams,
   mode,
-  shuffle,
   setResumeProgress,
   setNoListeningPresets,
   setVocabulary,
@@ -205,14 +203,18 @@ export async function loadErrorModeData({
     })
     if (isCancelled()) return
 
-    const selectedWrongWordKeys = searchParams.get('selection') === 'manual'
-      ? new Set(readWrongWordsReviewSelectionFromStorage(userId))
+    const selectedWrongWordOrder = searchParams.get('selection') === 'manual'
+      ? readWrongWordsReviewSelectionFromStorage(userId)
       : null
-    const filteredWrongWords = selectedWrongWordKeys
-      ? wrongWords.filter(word => {
-          const key = normalizeOptionWordKey(word.word)
-          return key ? selectedWrongWordKeys.has(key) : false
-        })
+    const wrongWordsByKey = new Map(
+      wrongWords
+        .map(word => [normalizeOptionWordKey(word.word), word] as const)
+        .filter((entry): entry is readonly [string, typeof wrongWords[number]] => Boolean(entry[0])),
+    )
+    const filteredWrongWords = selectedWrongWordOrder
+      ? selectedWrongWordOrder
+          .map(wordKey => wrongWordsByKey.get(wordKey))
+          .filter((word): word is typeof wrongWords[number] => Boolean(word))
       : filterWrongWords(
           wrongWords,
           parseWrongWordsFiltersFromSearchParams(searchParams),
@@ -232,8 +234,8 @@ export async function loadErrorModeData({
     }))
     const words = filterVocabularyForMode(savedWords, mode)
     const indices = Array.from({ length: words.length }, (_, index) => index)
-    const fallbackQueue = shuffle !== false ? shuffleArray(indices) : indices
-    const savedProgress = selectedWrongWordKeys ? null : readWrongWordsProgress(mode, userId)
+    const fallbackQueue = indices
+    const savedProgress = selectedWrongWordOrder ? null : readWrongWordsProgress(mode, userId)
     const nextQueue = savedProgress?.is_completed
       ? fallbackQueue
       : buildWrongWordsQueue(words, savedProgress?.queue_words) ?? fallbackQueue

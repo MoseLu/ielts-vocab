@@ -245,7 +245,6 @@ export function usePracticePageData({
         userId,
         searchParams: currentSearchParams,
         mode,
-        shuffle: settings.shuffle,
         setResumeProgress,
         setNoListeningPresets,
         setVocabulary,

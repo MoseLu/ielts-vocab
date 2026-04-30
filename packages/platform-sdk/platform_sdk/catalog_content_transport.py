@@ -98,6 +98,7 @@ def get_word_list():
         chapter_id=request.args.get('chapter_id'),
         selected_words=request.args.getlist('selected_words[]') or request.args.getlist('selected_words'),
         order=request.args.get('order', 'canonical'),
+        request_args=request.args,
     )
     return jsonify(payload), status
 

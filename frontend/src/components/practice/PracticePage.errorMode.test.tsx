@@ -7,6 +7,7 @@ import { setGlobalLearningContext } from '../../contexts/AIChatContext'
 import { chooseSmartDimension, loadSmartStats } from '../../lib/smartMode'
 import { STORAGE_KEYS } from '../../constants'
 import {
+  getWrongWordsReviewSelectionStorageKey,
   getWrongWordsProgressStorageKey,
   getWrongWordsStorageKey,
 } from '../../features/vocabulary/wrongWordsStore'
@@ -82,6 +83,14 @@ vi.mock('../../lib', async () => {
     ...actual,
     apiFetch: (...args: unknown[]) => apiFetchMock(...args),
     buildApiUrl: (path: string) => path,
+  }
+})
+
+vi.mock('./utils', async () => {
+  const actual = await vi.importActual<typeof import('./utils')>('./utils')
+  return {
+    ...actual,
+    shuffleArray: <T,>(items: T[]): T[] => [...items].reverse(),
   }
 })
 
@@ -247,6 +256,45 @@ describe('PracticePage error mode', () => {
 
     render(
       <MemoryRouter initialEntries={['/practice?mode=errors']}>
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:beta')
+    })
+  })
+
+  it('keeps the wrong-word review queue in canonical order by default', async () => {
+    seedScopedWrongWords(42, [
+      { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 1 },
+      { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 1 },
+    ])
+
+    apiFetchMock.mockResolvedValue({ words: [] })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?mode=errors']}>
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:alpha')
+    })
+  })
+
+  it('keeps manual wrong-word review selection in user selection order', async () => {
+    seedScopedWrongWords(42, [
+      { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 1 },
+      { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 1 },
+    ])
+    localStorage.setItem(getWrongWordsReviewSelectionStorageKey(42), JSON.stringify(['beta', 'alpha']))
+
+    apiFetchMock.mockResolvedValue({ words: [] })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?mode=errors&selection=manual']}>
         <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
       </MemoryRouter>,
     )

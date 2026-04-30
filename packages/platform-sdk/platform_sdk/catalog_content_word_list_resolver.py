@@ -4,11 +4,15 @@ from typing import Any
 
 from platform_sdk import catalog_content_confusable_support as confusable_support
 from platform_sdk.catalog_content_service_repositories import custom_book_catalog_service
+from platform_sdk.ai_wrong_words_application import build_wrong_words_response
 from platform_sdk.catalog_provider_adapter import (
     get_vocab_book,
     load_book_chapters,
     load_book_vocabulary,
     normalize_word_key,
+)
+from platform_sdk.learning_core_quick_memory_read_adapter import (
+    build_quick_memory_review_queue_response,
 )
 from platform_sdk.learning_core_favorites_support import (
     FAVORITES_BOOK_ID,
@@ -166,8 +170,176 @@ def _selected_word_list(selected_words: list[str]) -> tuple[dict, int]:
     return _build_payload(book=None, chapter=None, words=words), 200
 
 
-def _build_payload(*, book: dict | None, chapter: dict | None, words: list[dict]) -> dict:
+def _row_to_wrong_word(row) -> dict:
+    if isinstance(row, dict):
+        return {
+            'word': row.get('word', ''),
+            'phonetic': row.get('phonetic', ''),
+            'pos': row.get('pos', ''),
+            'definition': row.get('definition', ''),
+        }
     return {
+        'word': getattr(row, 'word', ''),
+        'phonetic': getattr(row, 'phonetic', ''),
+        'pos': getattr(row, 'pos', ''),
+        'definition': getattr(row, 'definition', ''),
+    }
+
+
+def _row_id_value(row) -> int:
+    value = row.get('id') if isinstance(row, dict) else getattr(row, 'id', 0)
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _wrong_selection_word_list(selected_words: list[str] | None) -> tuple[dict, int]:
+    user_id = _current_user_id()
+    if not user_id and not selected_words:
+        return {'error': 'Book not found'}, 404
+
+    wrong_payload, wrong_status = build_wrong_words_response(user_id, detail_mode='full') if user_id else ({'words': []}, 200)
+    if wrong_status != 200 and not selected_words:
+        return wrong_payload, wrong_status
+    rows = wrong_payload.get('words') or []
+    wrong_by_key = {
+        normalize_word_key(_row_to_wrong_word(row).get('word')): _row_to_wrong_word(row)
+        for row in rows
+    }
+    if selected_words:
+        raw_words = [
+            wrong_by_key.get(normalize_word_key(word), {
+                'word': word,
+                'phonetic': '',
+                'pos': '',
+                'definition': '',
+            })
+            for word in selected_words
+            if normalize_word_key(word)
+        ]
+    elif user_id:
+        raw_words = [_row_to_wrong_word(row) for row in sorted(
+            rows,
+            key=_row_id_value,
+        )]
+
+    words = [
+        _copy_word(word, source_order=index, fallback_chapter_id='wrong-selection')
+        for index, word in enumerate(raw_words)
+    ]
+    return _build_payload(
+        book={'id': 'wrong-selection', 'title': '自选错词本'},
+        chapter={
+            'id': 'wrong-selection',
+            'title': '自选错词本',
+            'word_count': len(words),
+            'is_custom': True,
+        },
+        words=words,
+    ), 200
+
+
+def _quickmemory_args(request_args: Any | None) -> dict[str, str]:
+    raw = request_args or {}
+    return {
+        'limit': str(raw.get('limit', '0')),
+        'offset': str(raw.get('offset', '0')),
+        'within_days': str(raw.get('within_days', '30')),
+        'scope': str(raw.get('review_scope', 'due')),
+        'book_id': str(raw.get('book_id', '') or ''),
+        'chapter_id': str(raw.get('chapter_id', '') or ''),
+    }
+
+
+def _chapter_sort_value(value: Any) -> tuple[int, int | str]:
+    try:
+        return (0, int(value))
+    except (TypeError, ValueError):
+        return (1, str(value or ''))
+
+
+def _build_source_order_lookup(words: list[dict]) -> dict[tuple[str, str, str], int]:
+    book_ids = sorted({
+        str(word.get('book_id') or '').strip()
+        for word in words
+        if str(word.get('book_id') or '').strip()
+    })
+    lookup: dict[tuple[str, str, str], int] = {}
+    for book_id in book_ids:
+        for index, word in enumerate(load_book_vocabulary(book_id) or []):
+            word_key = normalize_word_key(word.get('word'))
+            if not word_key:
+                continue
+            lookup.setdefault(
+                (book_id, str(word.get('chapter_id') or ''), word_key),
+                index,
+            )
+    return lookup
+
+
+def _quickmemory_sort_key(
+    word: dict,
+    fallback_index: int,
+    source_order_lookup: dict[tuple[str, str, str], int],
+) -> tuple[str, tuple[int, int | str], int, int]:
+    book_id = str(word.get('book_id') or '')
+    chapter_id = str(word.get('chapter_id') or '')
+    word_key = normalize_word_key(word.get('word'))
+    explicit_source_order = word.get('source_order')
+    try:
+        source_order = int(explicit_source_order)
+    except (TypeError, ValueError):
+        source_order = source_order_lookup.get((book_id, chapter_id, word_key), fallback_index)
+    return (book_id, _chapter_sort_value(chapter_id), source_order, fallback_index)
+
+
+def _quickmemory_word_list(request_args: Any | None = None) -> tuple[dict, int]:
+    user_id = _current_user_id()
+    if not user_id:
+        return {'error': 'Book not found'}, 404
+
+    payload, status = build_quick_memory_review_queue_response(
+        user_id,
+        _quickmemory_args(request_args),
+    )
+    if status != 200:
+        return payload, status
+
+    raw_words = list(payload.get('words') or [])
+    source_order_lookup = _build_source_order_lookup(raw_words)
+    sorted_words = [
+        word
+        for _, word in sorted(
+            enumerate(raw_words),
+            key=lambda item: _quickmemory_sort_key(item[1], item[0], source_order_lookup),
+        )
+    ]
+    words = [
+        _copy_word(word, source_order=index, fallback_chapter_id=word.get('chapter_id'))
+        for index, word in enumerate(sorted_words)
+    ]
+    return _build_payload(
+        book={'id': 'quickmemory', 'title': '艾宾浩斯复习'},
+        chapter={
+            'id': 'quickmemory',
+            'title': '艾宾浩斯复习',
+            'word_count': len(words),
+            'is_custom': True,
+        },
+        words=words,
+        extra={'summary': payload.get('summary')},
+    ), 200
+
+
+def _build_payload(
+    *,
+    book: dict | None,
+    chapter: dict | None,
+    words: list[dict],
+    extra: dict | None = None,
+) -> dict:
+    payload = {
         'book': book,
         'chapter': chapter,
         'words': words,
@@ -176,6 +348,9 @@ def _build_payload(*, book: dict | None, chapter: dict | None, words: list[dict]
         'order': 'canonical',
         'total': len(words),
     }
+    if extra:
+        payload.update(extra)
+    return payload
 
 
 def build_word_list_response(
@@ -185,6 +360,7 @@ def build_word_list_response(
     chapter_id: Any = None,
     selected_words: list[str] | None = None,
     order: str = 'canonical',
+    request_args: Any | None = None,
 ) -> tuple[dict, int]:
     if order != 'canonical':
         return {'error': 'Only canonical order is supported'}, 400
@@ -192,8 +368,12 @@ def build_word_list_response(
     normalized_scope = str(scope or 'book').strip() or 'book'
     if normalized_scope == 'favorites':
         return _favorites_word_list(chapter_id)
-    if normalized_scope in {'wrong-selection', 'quickmemory'} and selected_words:
-        return _selected_word_list(selected_words)
+    if normalized_scope == 'quickmemory':
+        if selected_words:
+            return _selected_word_list(selected_words)
+        return _quickmemory_word_list(request_args)
+    if normalized_scope == 'wrong-selection':
+        return _wrong_selection_word_list(selected_words)
     if normalized_scope in {'book', 'confusable'}:
         resolved_book_id = book_id or (FAVORITES_BOOK_ID if normalized_scope == 'favorites' else None)
         if normalized_scope == 'confusable' and not resolved_book_id:
