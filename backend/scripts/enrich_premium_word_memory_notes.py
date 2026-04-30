@@ -21,8 +21,8 @@ from services.word_memory_note_enrichment import (
     DEFAULT_RATE_LIMIT_MAX_ATTEMPTS,
     DEFAULT_RATE_LIMIT_MAX_SLEEP_SECONDS,
     PREMIUM_BOOK_IDS,
-    enrich_premium_book_memory_notes,
 )
+from services.word_memory_note_file_generation import enrich_premium_book_memory_note_file
 
 
 def _load_words_from_files(paths: list[str]) -> list[str]:
@@ -51,16 +51,37 @@ def _write_summary(path_value: str | None, stats: dict) -> None:
     )
 
 
+def _compact_summary_payload(payload: dict) -> dict:
+    coverage = payload.get('coverage')
+    if not isinstance(coverage, dict) or 'missing_words' not in coverage:
+        return payload
+    missing_words = coverage.get('missing_words') or []
+    return {
+        **payload,
+        'coverage': {
+            'total_words': coverage.get('total_words', 0),
+            'covered_words': coverage.get('covered_words', 0),
+            'missing_count': len(missing_words),
+            'missing_sample': missing_words[:20],
+        },
+    }
+
+
 def _utc_now_iso() -> str:
     return datetime.now(tz=timezone.utc).isoformat()
 
 
-parser = argparse.ArgumentParser(description='批量重跑付费词书联想记忆')
+DEFAULT_OUTPUT_FILE = BACKEND_ROOT.parent / 'vocabulary_data' / 'premium_word_mnemonics.json'
+
+
+parser = argparse.ArgumentParser(description='批量生成付费词书主助记 JSON')
 parser.add_argument('--book', action='append', default=[], help='指定词书 id，可重复传入')
 parser.add_argument('--word', action='append', default=[], help='只处理指定单词，可重复传入')
 parser.add_argument('--words-file', action='append', default=[], help='从文件读取单词列表，每行一个')
+parser.add_argument('--output-file', type=str, default=str(DEFAULT_OUTPUT_FILE), help='输出助记 JSON 文件')
 parser.add_argument('--summary-file', type=str, default='', help='输出本次执行统计 JSON')
 parser.add_argument('--progress-file', type=str, default='', help='批次级实时进度 JSON；默认沿用 summary-file')
+parser.add_argument('--failure-file', type=str, default='', help='输出失败词清单 JSON')
 parser.add_argument('--batch-size', type=int, default=DEFAULT_BATCH_SIZE, help='每批请求的单词数')
 parser.add_argument('--limit', type=int, default=None, help='仅处理前 N 个去重词')
 parser.add_argument('--start-at', type=int, default=0, help='从第 N 个去重词开始')
@@ -139,7 +160,8 @@ def main() -> int:
 
     app = create_catalog_content_script_app()
     with app.app_context():
-        stats = enrich_premium_book_memory_notes(
+        stats = enrich_premium_book_memory_note_file(
+            output_path=args.output_file,
             book_ids=tuple(args.book) if args.book else PREMIUM_BOOK_IDS,
             words=selected_words or None,
             batch_size=max(1, args.batch_size),
@@ -157,6 +179,8 @@ def main() -> int:
                 max(1.0, args.rate_limit_base_sleep),
                 args.rate_limit_max_sleep,
             ),
+            progress_path=progress_path or None,
+            failure_path=args.failure_file or None,
             progress_callback=write_progress,
         )
 
@@ -166,6 +190,7 @@ def main() -> int:
         'updated_at': _utc_now_iso(),
         'progress_state': 'completed',
     }
+    final_payload = _compact_summary_payload(final_payload)
     _write_summary(progress_path or None, final_payload)
     if args.summary_file and args.summary_file != progress_path:
         _write_summary(args.summary_file, final_payload)
@@ -175,6 +200,8 @@ def main() -> int:
     print(f"requested={stats['requested']} pending={stats['pending']}")
     print(f"enriched={stats['enriched']} failed={stats['failed']}")
     print(f"word_count={stats['word_count']}")
+    print(f"covered={stats['coverage']['covered_words']}/{stats['coverage']['total_words']}")
+    print(f"badges={json.dumps(stats['badge_distribution'], ensure_ascii=False, sort_keys=True)}")
     if stats.get('quota_exhausted'):
         print(f"quota_exhausted=1 reason={stats.get('stop_reason') or ''}")
     return 0 if stats['failed'] == 0 else 2

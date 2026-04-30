@@ -1,7 +1,7 @@
 import type { WordDetailResponse, WordSearchResult } from '../../../lib'
 
 export type WordMemoryNote = {
-  badge: '谐音' | '联想'
+  badge: '助记' | '联想' | '词根词缀' | '辨析' | '串记' | '扩展' | '谐音' | '词源' | '口诀'
   text: string
 }
 

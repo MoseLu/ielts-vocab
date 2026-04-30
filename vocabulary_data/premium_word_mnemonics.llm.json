@@ -1,0 +1,2605 @@
+{
+  "book_ids": [
+    "ielts_listening_premium",
+    "ielts_reading_premium"
+  ],
+  "generated_at": "2026-04-30T14:57:31.219500+00:00",
+  "items": {
+    "ability": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "able能+ity名词后缀=能力，有本事就是有能力",
+      "word": "ability"
+    },
+    "above": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象一只鸟在树的上方飞，那就是above（在…上面）",
+      "word": "above"
+    },
+    "according": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac(往)+cord(心)——心都朝向一起去，一切符合计划。",
+      "word": "according"
+    },
+    "account": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac对+count数，对账就要把每一笔账数清楚，账户管理离不开算账",
+      "word": "account"
+    },
+    "across": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "站在十字路口cross，穿过去就是across，强调从一边到另一边",
+      "word": "across"
+    },
+    "activities": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "act(行动)+iv+ities——行动起来的状态就是各种活动。",
+      "word": "activities"
+    },
+    "added": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "add加加上ed就是它的过去式，表示测验里老师又“增加”了新题目",
+      "word": "added"
+    },
+    "addition": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "add（加）+ -ition名词后缀=加上去的东西，也就是\"附加物\"或\"增加\"的部分。",
+      "word": "addition"
+    },
+    "adults": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "把adult的d换成s表示复数，就像儿童(kids)和成人(adults)的对比场景。",
+      "word": "adults"
+    },
+    "affect": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "影响谐音挨飞刻ta，影响就像被飞快地刻上痕迹。",
+      "word": "affect"
+    },
+    "against": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "联想\"对着干\"，你反对我我反对你，背靠背对着干就是对抗",
+      "word": "against"
+    },
+    "allow": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "allow谐音\"二老\"——二老允许了吗？二老点头才算允许。",
+      "word": "allow"
+    },
+    "almost": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音“欧码斯特”——离终点就差一点点，几乎到了。",
+      "word": "almost"
+    },
+    "along": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "顺着路一直走下去，想象沿着河边走的画面就是沿着",
+      "word": "along"
+    },
+    "already": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "already谐音\"我已经得\"，all ready全准备好了→已经做完了",
+      "word": "already"
+    },
+    "amount": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "amount谐音'额馒头'——一屋子馒头数不清，数量多到让人头秃",
+      "word": "amount"
+    },
+    "analyses": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ana-分开+lyse松开，把东西拆开细看，就是\"分析\"和\"剖析\"",
+      "word": "analyses"
+    },
+    "ancient": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anci=old古老，-ent形容词后缀。想古董特别老 → 古代的、古老的。",
+      "word": "ancient"
+    },
+    "appear": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appear谐音“阿皮尔”，想象阿皮尔突然出现，让你觉得（显得）眼熟。",
+      "word": "appear"
+    },
+    "approach": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "走近问题才能找到解决方法，approach就是“接近/处理问题的方法”",
+      "word": "approach"
+    },
+    "argues": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音\"啊，GUI子\"，像在法庭上激烈争吵，坚持自己的主张",
+      "word": "argues"
+    },
+    "aspects": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "spect=spect看，a-加强→从不同角度“看到”一个问题→方面。例：consider all aspects考虑所有方面。",
+      "word": "aspects"
+    },
+    "associated": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "associate是'联想'，加ed变成'被联想的'，所以是'相关的、有关联的'。",
+      "word": "associated"
+    },
+    "attention": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at-ten-tion，想象十个人同时\"注意\"你，你的注意力被分散了",
+      "word": "attention"
+    },
+    "average": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "源自古法语average，商人共同分担损失的做法，引申为算出一笔大家都能接受的费用——平均数。",
+      "word": "average"
+    },
+    "basic": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "把basic谐音成\"贝斯可\"，想象一栋楼最重要的\"贝斯\"（base）可不能少——就是\"基本的\"。",
+      "word": "basic"
+    },
+    "behaviour": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "be-是使，haviour即having——使你展现出来的样子，就是行为。",
+      "word": "behaviour"
+    },
+    "benefit": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "benefit谐音“帮你福”，帮助别人最终也会给你带来好处和利益。",
+      "word": "benefit"
+    },
+    "benefits": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "benefit加s指多方面的好处，如员工福利（employee benefits）就是各种利益。",
+      "word": "benefits"
+    },
+    "brain": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "大脑像电脑的CPU，决定你的运算脑力，脑子越强处理越快。",
+      "word": "brain"
+    },
+    "brought": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "brought谐音\"不劳特\"——不劳动就不能把东西带来，记住这个不规则变化。",
+      "word": "brought"
+    },
+    "business": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "busy（忙）+ ness（名词），忙忙碌碌的状态就是“生意”场。关联“商业”。",
+      "word": "business"
+    },
+    "carried": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "carry搬运→用手臂支撑着带走就是运载，carried就是搬走了。",
+      "word": "carried"
+    },
+    "certain": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "certain谐音\"色腾\"，想象一个颜色确定的腾图画面→对答案很确定，也可记cert(确定)+ain形容词后缀",
+      "word": "certain"
+    },
+    "challenge": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "站在悬崖边，前面是未知和困难，鼓起勇气纵身一跃，这就是挑战自我的感觉。",
+      "word": "challenge"
+    },
+    "claim": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象你去保险公司大喊「可理赔！」——这个声音就是claim索赔的行为，记住大声说出来主张权利。",
+      "word": "claim"
+    },
+    "climate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "clim倾斜，地球倾斜角度不同，形成各地气候（climate）。",
+      "word": "climate"
+    },
+    "communication": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "comm共同+unic连接→连接你我互通有无，就是交流通信。",
+      "word": "communication"
+    },
+    "community": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "com(共同)+mun(公共)+ity，大家共同拥有公共服务的地方，就是社区。",
+      "word": "community"
+    },
+    "compared": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "compare就是比一比，加上d表示已经比过了，结果是“比较的”状态。",
+      "word": "compared"
+    },
+    "completely": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "complete完整+ly变副词，完全地就是完完整整、没有遗漏地。",
+      "word": "completely"
+    },
+    "conditions": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "环境、要求、条款……这些不同面孔都叫\"条件\"，要看语境判断具体指哪个",
+      "word": "conditions"
+    },
+    "conduct": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "con一起+duct引导，把人引导到一起就是\"实施\"组织；把电流引导过去就是\"传导\"。",
+      "word": "conduct"
+    },
+    "conducted": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "con一起+duct引导，把大家引导到一起做事→实施、组织",
+      "word": "conducted"
+    },
+    "considered": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "脑中将各种因素转一圈，仔细权衡后再给出看法，这个过程就是\"考虑\"或\"认为\"",
+      "word": "considered"
+    },
+    "containing": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "con全部+tain持+ing，全部拿在手里就是包含，这个盒子里包含所有零件。",
+      "word": "containing"
+    },
+    "continue": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "con（一起）+ tinu（握住）→ 持续握住不放就是继续，连续不断。雨将持续一整天。",
+      "word": "continue"
+    },
+    "control": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "手里握着一个遥控器，随时随地control控制电视、空调，声音、频道都听你的。",
+      "word": "control"
+    },
+    "crops": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象金黄麦田里等待收割的庄稼，画面里全是饱满的农作物",
+      "word": "crops"
+    },
+    "culture": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "cult培养+ure名词，文化就是精神层面的培养和修养。",
+      "word": "culture"
+    },
+    "current": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "词根curr=跑/流，-ent是形容词后缀，在流动的就是「流通的」，正在跑的就是「当前的」趋势。",
+      "word": "current"
+    },
+    "damage": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "dam大坝+age年代→大坝年久失修就会“坏”→损害、破坏。例：cause damage to crops损害农作物。",
+      "word": "damage"
+    },
+    "dealing": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "deal处理+ing，正在处理问题就是应付困难，做买卖就是交易。",
+      "word": "dealing"
+    },
+    "decades": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "deca是十，decade十年，decades就是几十年的时间。",
+      "word": "decades"
+    },
+    "decisions": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音'地审慎思'，做决定需要深思熟虑",
+      "word": "decisions"
+    },
+    "degrees": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "degree是单个学位/度数，degrees就是它的复数形式，像30 degrees就是30度，挂在墙上很多度",
+      "word": "degrees"
+    },
+    "demand": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "老板demand就是要求你做某事，市场上demand高说明需求量大。",
+      "word": "demand"
+    },
+    "described": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "de下+scribe写→把特征逐个写下来，就是描述",
+      "word": "described"
+    },
+    "despite": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音\"地死派特\"→尽管地死派特也继续干→尽管",
+      "word": "despite"
+    },
+    "determined": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "de表加强+term边界+ine确定，划定边界不更改，就是坚决的、有决心的。",
+      "word": "determined"
+    },
+    "died": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "die是死亡，died就是die了，过去式躺着不动了，人已经过去了",
+      "word": "died"
+    },
+    "differences": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "different是不同，+ence变成名词，不同之处就是差异",
+      "word": "differences"
+    },
+    "directly": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "direct直接+ly副词后缀，直接地就是不做中间人，直达目标",
+      "word": "directly"
+    },
+    "discovered": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "discover是发现，想象拨开尘土找到宝藏的画面，发现就这么记。",
+      "word": "discovered"
+    },
+    "disease": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "dis-否定+ease舒适=不舒适。身体不舒适就是生病 → 疾病。",
+      "word": "disease"
+    },
+    "draw": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "draw谐音“捉”→把手捉住拉过来→提取；抽签也用draw，拔河也是draw拉。",
+      "word": "draw"
+    },
+    "driven": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "drive是“开车/驱使”，-en后缀表“被…的”。被发动机驱着往前冲的人 → 发愤图强的。",
+      "word": "driven"
+    },
+    "due": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "发音像\"丢\"→东西到期要\"丢\"掉或给出去→应给的、到期的",
+      "word": "due"
+    },
+    "economic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "eco家+nomic法则，管理家庭/社会的法则就是经济",
+      "word": "economic"
+    },
+    "education": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "拆成e+du+cation，“一读”就能“开窍”，这就是education教育的作用。",
+      "word": "education"
+    },
+    "effective": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ef出+fect做+ive形容词→做出效果来的，就是有效的",
+      "word": "effective"
+    },
+    "effort": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ef出+fort强，把力量逼出来就是“努力”，少付出就少收获",
+      "word": "effort"
+    },
+    "encouraging": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "en(使)+courage(勇气)→使人充满勇气→encouraging 鼓舞人心的",
+      "word": "encouraging"
+    },
+    "energy": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "手机没电了插上充电宝，屏幕显示“正在充电”，这就是energy，能量让一切运转。",
+      "word": "energy"
+    },
+    "engineering": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "engine发动机+-ering=如何造出发动机，研究这个就是\"工程\"学",
+      "word": "engineering"
+    },
+    "entire": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "en（进入）+ tire（拉、拽）→把全部东西都拉出来→整个的、全部的",
+      "word": "entire"
+    },
+    "environment": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "environ周围+ment场所=环境，我们周围的地方就是环境",
+      "word": "environment"
+    },
+    "environmental": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "environ=环境，-ment名词后缀，-al形容词后缀→环境的",
+      "word": "environmental"
+    },
+    "essential": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "essence本质+ial形容词，本质的当然是必需的，essential就是缺它不可的。",
+      "word": "essential"
+    },
+    "established": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "e出+stab稳定，像钉子扎稳地基，事情就建立稳固了",
+      "word": "established"
+    },
+    "estimated": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "estimate是估计，estimated就是已经估算过的，比如项目预算已估算",
+      "word": "estimated"
+    },
+    "events": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "event是单数，加s变成events，指多起大小事件。",
+      "word": "events"
+    },
+    "eventually": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "e出+vent走+ual+ly，走出事件的尽头，一切尘埃落定→终于/最后。",
+      "word": "eventually"
+    },
+    "ever": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "Have you ever...? 这是经典的曾经问句，用来询问过去的经历",
+      "word": "ever"
+    },
+    "evidence": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "e(出)+vide(看)——看出来的、能看见的事实就是证据。",
+      "word": "evidence"
+    },
+    "exist": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ex出+ist表人→存在的人事物，恐龙已经不存在了(exist out)",
+      "word": "exist"
+    },
+    "existing": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "exist表示“存在”，加上-ing变成形容词，表示“正在存在的”，即现存的、现有的",
+      "word": "existing"
+    },
+    "expected": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "expect（期待）的过去式/过去分词形态，结果是“预期的”。看到“ed”结尾就知道事情已被人期待过。",
+      "word": "expected"
+    },
+    "experiments": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "实验需要反复尝试，从一次次试错中摸索规律。",
+      "word": "experiments"
+    },
+    "experts": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "expert = ex（出）+ pert（尝试经验）= 多次尝试有经验的人 = 专家，复数加s",
+      "word": "experts"
+    },
+    "explains": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "老师把知识点ex往外说plain，让你说s清楚，就是说明讲解的意思",
+      "word": "explains"
+    },
+    "factors": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "factor谐音'法克特'，像一串数字相乘得出结果，这些乘数就是'因素'。",
+      "word": "factors"
+    },
+    "failed": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "failed听起来像“废了得”，废了就是失败、搞砸了，没能及格。",
+      "word": "failed"
+    },
+    "fall": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音\"摔\"，东西摔下来就是下降，秋天树叶也会fall",
+      "word": "fall"
+    },
+    "farmers": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "看到头戴草帽的人在田间干活，立刻想到农夫们的日常",
+      "word": "farmers"
+    },
+    "farming": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "farm是农场，farming就是农场里干活的画面——农事、耕作、养殖都在里面。",
+      "word": "farming"
+    },
+    "field": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象一片广阔的田地，那就是你施展拳脚的领域和场地。",
+      "word": "field"
+    },
+    "figure": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象一个重要人物figure站在黑板前，手指点着数字，一步步帮你弄懂难题。",
+      "word": "figure"
+    },
+    "finally": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "终于等到好消息——考试考了好几次finally通过了，开心！",
+      "word": "finally"
+    },
+    "focus": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "focus谐音“飞扣死”，投篮精准聚焦命中点，比喻集中注意力到核心焦点上。",
+      "word": "focus"
+    },
+    "following": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "following questions = \"以下\"问题，follow本身是跟随，follow+ing就是跟着说的，即下列的",
+      "word": "following"
+    },
+    "forests": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "forest变复数直接加s，很多forest就是forests。想象航拍时看到一片又一片森林的画面。",
+      "word": "forests"
+    },
+    "fully": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "full满的+y副词后缀，满满地就是完全地、彻底地",
+      "word": "fully"
+    },
+    "function": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "发音像“放颗心”，机器能放颗心进去正常运转，说明它有function功能。",
+      "word": "function"
+    },
+    "future": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "fut=to be，将存在；ure是名词后缀，将要存在的东西就是未来，你未来的自己还没存在呢。",
+      "word": "future"
+    },
+    "games": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "game加s复数形式，就像book→books一样简单。记：玩game·s = 做游戏。",
+      "word": "games"
+    },
+    "generation": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "gen=出生/产生，ate=动词后缀，一代代被产生出来，所以是一代/产生",
+      "word": "generation"
+    },
+    "genetic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "gene是\"出生、基因\"的词根，加上tic形容词后缀，就是基因的、遗传学的。",
+      "word": "genetic"
+    },
+    "global": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "globe是地球球，加上al就是全球的，球级别的范围",
+      "word": "global"
+    },
+    "government": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "govern管理+ment后缀→政府就是管理国家的地方，记住政府要管事。",
+      "word": "government"
+    },
+    "ground": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ground和grind同源，想象大石头被磨平(grind)后铺在大地上，就是地面和土地。",
+      "word": "ground"
+    },
+    "growth": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "growth从动词grow（成长）扩展而来，记住了grow就记住了growth表示增长的意思。",
+      "word": "growth"
+    },
+    "happens": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "happens谐音\"还喷死\"，画面：意外事故还喷死血→这事就这么发生了，记住它是happen的第三人称单数形式",
+      "word": "happens"
+    },
+    "heart": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "heart谐音'哈特'，想象拳击手哈特靠强大心脏，打出一记记重拳，心脏就是力量泵",
+      "word": "heart"
+    },
+    "held": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "hold的过去式：会议被“握住”在那一天进行，就是“举行”了。",
+      "word": "held"
+    },
+    "highly": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "highly = high（高）+ ly，程度很高地 → 非常、极其。比如“highly recommended”就是“强烈推荐”。",
+      "word": "highly"
+    },
+    "history": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "his他+story故事，所有人的故事连起来就是历史",
+      "word": "history"
+    },
+    "huge": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "音似\"巨大\"，谐音直接对应中文含义，一听就知道是\"巨大的\"",
+      "word": "huge"
+    },
+    "hundreds": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "hundreds后面加s表示数以百计，强调数量很多很多人或物",
+      "word": "hundreds"
+    },
+    "identified": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "identity身份，确认身份就是鉴定、认出来，identify的过去式",
+      "word": "identified"
+    },
+    "impact": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "im-进，pact=pack/press——把力量压进去，产生强力冲击和影响。",
+      "word": "impact"
+    },
+    "improve": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "im入+prove证明，把东西改进让它变得更好，值得证明有进步",
+      "word": "improve"
+    },
+    "increasingly": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "每一天都比前一天更多，事情就这样日益变化。",
+      "word": "increasingly"
+    },
+    "indicate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "in里面+dic说+ate→从里面说出来让人明白→表明、指示",
+      "word": "indicate"
+    },
+    "industry": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "indus=进入，stry=结构，工人们进入结构里→行业/工业",
+      "word": "industry"
+    },
+    "influence": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音“in服轮思”，有影响力的人让你心服口服跟着思考",
+      "word": "influence"
+    },
+    "instance": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "in进入+stance姿态→放入一个具体姿态里=例子、情况",
+      "word": "instance"
+    },
+    "instead": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "instead of 喝可乐，in stead 找杯水——用一样东西“代替”另一样",
+      "word": "instead"
+    },
+    "international": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "inter在之间+national国家的，国家之间的就是国际的",
+      "word": "international"
+    },
+    "introduced": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "把新人或新事物引进入场，就像 introduce 把你领进门介绍给大家",
+      "word": "introduced"
+    },
+    "issue": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象新闻发布会上\"议题\"被抛出供讨论，这就是issue——问题、议题或发行",
+      "word": "issue"
+    },
+    "itself": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "它自己本身，镜子里的它就是它自己，强调自身。",
+      "word": "itself"
+    },
+    "knowledge": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "知识谐音那里知，知识就在那里等着你去知道。",
+      "word": "knowledge"
+    },
+    "lack": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音\"来可\"，什么都没有可来的，就是缺乏短缺",
+      "word": "lack"
+    },
+    "language": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "lang像\"浪\"，guage像\"瓜\"——浪子抱着瓜练说话，就是学语言。",
+      "word": "language"
+    },
+    "likely": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "像（like）一样的情况，可能性就高，就是可能的。",
+      "word": "likely"
+    },
+    "limited": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "limit限制+ed形容词，我们的时间和资源都是有限的。",
+      "word": "limited"
+    },
+    "loss": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "lose丢失+s名词后缀，丢出去的东西回不来→损失/亏损。",
+      "word": "loss"
+    },
+    "major": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "major谐音\"没辙\"，大麻烦是很major主要的问题，没辙了",
+      "word": "major"
+    },
+    "management": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "manage是管理动作，加ment变成名词management就是管理事务的行为",
+      "word": "management"
+    },
+    "market": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象走进一个熙熙攘攘的露天market市场，四周摊位林立，叫卖声此起彼伏。",
+      "word": "market"
+    },
+    "material": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "mate伙伴+rial材料，做事的伙伴材料就是原料、素材",
+      "word": "material"
+    },
+    "measures": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "量尺寸measure后才能制定措施，先测量再行动。",
+      "word": "measures"
+    },
+    "medical": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "medical = medic(医术) + al(形容词) → 医疗的、医术的。去医院就是接受medical treatment。",
+      "word": "medical"
+    },
+    "methods": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "method 变复数加 s，多个 methods 就是“各种方法”",
+      "word": "methods"
+    },
+    "metre": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "meter谐音“米特”，就是测量长度的单位→米/公尺。",
+      "word": "metre"
+    },
+    "model": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "model三个意思：做模型、穿时装当模特、做人榜样成模范",
+      "word": "model"
+    },
+    "modern": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "mod是mode的变体，mode指做事的方式/模式，ern是形容词后缀，追上时代“做事方式”的就是现代的。",
+      "word": "modern"
+    },
+    "mountains": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "mountains = mountain + s，群山峰峦叠嶂，一座座山连成山脉",
+      "word": "mountains"
+    },
+    "movement": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "move移动+ment名词后缀=movement，动作活动或社会运动，乐章也是movement的一个含义",
+      "word": "movement"
+    },
+    "national": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象天安门升旗的场景，那是 national“国家的”象征",
+      "word": "national"
+    },
+    "nature": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "natu出生+ure后缀，出生时就有的东西就是本性（nature）。",
+      "word": "nature"
+    },
+    "nearest": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "near是「近的」，加最高级-est变成「最近的」，就像tall→tallest一样规则变化。",
+      "word": "nearest"
+    },
+    "nearly": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "near是“接近”，nearly就是“接近地”，自然引申为几乎、将近。",
+      "word": "nearly"
+    },
+    "normal": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "normal谐音“脑毛”，正常人的脑袋都长毛，这是正常的一般现象。",
+      "word": "normal"
+    },
+    "objects": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "桌上摆着各种objects（物体），每个都是具体的item，一眼就能看到它们。",
+      "word": "objects"
+    },
+    "observed": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ob加强+serv服务，眼睛一直伺候着看→observe观察，observed是它的过去式。",
+      "word": "observed"
+    },
+    "occur": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象事件像流水一样跑到你面前，就是“发生”了。",
+      "word": "occur"
+    },
+    "ocean": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音「欧申」→想象欧洲申根国都靠海，大声喊「哦，海！」来记住海洋",
+      "word": "ocean"
+    },
+    "opportunity": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音“偶抛贪你梯”，机会难得像捡到把梯子要赶紧抓住",
+      "word": "opportunity"
+    },
+    "organisations": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "organisations = organisation + s，是它的复数，意思是多个组织或机构团体。",
+      "word": "organisations"
+    },
+    "original": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "origin起源+al形容词，起始的版本就是original原来的、原版的。",
+      "word": "original"
+    },
+    "parents": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "词根par=生产，ents=...的人，合起来就是「生育我们的人」父母，很好记。",
+      "word": "parents"
+    },
+    "passed": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "pass是\"通过\"，-ed表示已完成，这事已经\"通过\"了/\"度过\"了",
+      "word": "passed"
+    },
+    "pattern": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "pat是轻拍，tern是燕鸥，轻轻拍一只燕鸥，它的羽毛排列很有规律图案。",
+      "word": "pattern"
+    },
+    "performance": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "per完全+form形状+ance，把某种形态完整做出来→表演/表现。",
+      "word": "performance"
+    },
+    "perhaps": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "per=每个，haps=运气(hap的复数)，每个运气都可能轮到你→或许、可能，也许就这样了",
+      "word": "perhaps"
+    },
+    "period": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "per（每）+ i + od（天）。每过一天算一段，串起来就是时期。",
+      "word": "period"
+    },
+    "physical": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "phys-=body身体，加上ical变成“身体相关的”，所以是身体的、肉体的",
+      "word": "physical"
+    },
+    "popular": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "pop流行+ular形容词后缀，流行的事物大家都爱，大众都欢迎",
+      "word": "popular"
+    },
+    "positive": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "pos像竖起的大拇指，代表肯定；加上-itive形容词后缀，表示'积极的、正面的'态度",
+      "word": "positive"
+    },
+    "potential": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "p-o-t-e-n-t-i-a-l谐音\"破tennis球\"，别小看它——破旧的球也有被修好、发挥潜力的可能。",
+      "word": "potential"
+    },
+    "power": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "power谐音'怕我'——有权有势才让人怕，权力就是力量，能当电源供能。",
+      "word": "power"
+    },
+    "present": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "“提前”(pre)送来的东西放在眼前，表示“目前的”或“在场的”。",
+      "word": "present"
+    },
+    "pressure": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "press压+ure名词后缀，想象被巨石压在下面喘不过气来，感受压力",
+      "word": "pressure"
+    },
+    "previously": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "pre前+vi路+ously表副词→走在路之前→以前，他以前在这里工作。",
+      "word": "previously"
+    },
+    "primary": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "词根prim=第一，-ary是形容词后缀，属于「第一的」就是最「首要的」，最初级的就是「初等的」。",
+      "word": "primary"
+    },
+    "products": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "pro（向前）+ duct（引导）→ 引导出来的东西就是产品。这些产品非常受欢迎。",
+      "word": "products"
+    },
+    "program": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "编程就是给电脑安排一套程序，像排节目一样让机器有序运作。",
+      "word": "program"
+    },
+    "protect": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "pro-前+tect覆盖→在前面盖住，像撑伞一样\"保护\"你",
+      "word": "protect"
+    },
+    "proved": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "prove证明，加上字母d表过去式，证明了就是得到证实。",
+      "word": "proved"
+    },
+    "published": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "把作品铺开摆出来给大家看，就是出版、发布。",
+      "word": "published"
+    },
+    "quality": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "qual（特性）+ity名词后缀，事物的特性就是质量，品质好坏看本质",
+      "word": "quality"
+    },
+    "quickly": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "画面是兔子蹦得飞快，quick是快，加上ly变副词\"迅速地\"",
+      "word": "quickly"
+    },
+    "raised": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "raise举起就是往上提，想象把手r高高举a起is来de，就提升上去了。",
+      "word": "raised"
+    },
+    "range": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音'润之'——想象水流汇成河，范围很广，包括从A到B的一系列事物。",
+      "word": "range"
+    },
+    "rapidly": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "rapid（快速的）+ ly 副词后缀，表示'快速地'。想象 rapid 的发音像'瑞皮德'，做事非常快利落。",
+      "word": "rapidly"
+    },
+    "rate": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "rate比率、rate速度，birth rate出生率，unemployment rate失业率都带rate",
+      "word": "rate"
+    },
+    "reach": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "伸手去够东西，够到了就是 reach，引申为到达、达到。",
+      "word": "reach"
+    },
+    "reason": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "reason和season发音相近——四季轮回必有原因，想想背后的理由。",
+      "word": "reason"
+    },
+    "recognise": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "re再+cogn知道+ise=再次知道→认出来、认出。",
+      "word": "recognise"
+    },
+    "recorded": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "record是记录，recorded就是被记录/录制下来了，也可作形容词'已记录的'。",
+      "word": "recorded"
+    },
+    "reduce": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "re-回+duce引导，把数量往回拉，就是减少（reduce）。",
+      "word": "reduce"
+    },
+    "region": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "reg统治+ion地方，统治者管辖的地方就是某个地区或区域。",
+      "word": "region"
+    },
+    "related": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象一家人围坐聊天，每个人都和其他人有血缘关系，都是“相关的”。",
+      "word": "related"
+    },
+    "relatively": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "relative相对的+ly地，相对地就是比较而言地",
+      "word": "relatively"
+    },
+    "remains": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "re（回）+ main（留）。放回去还留下，意思就是剩下了。",
+      "word": "remains"
+    },
+    "report": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "消息“再”次被“搬”回来，就是做报告或进行报道。",
+      "word": "report"
+    },
+    "required": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "re（反复）+ quire（要求），反复被要求做的事就是“必需的”。关联“必要”。",
+      "word": "required"
+    },
+    "resources": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "re再+source来源，源源不断的来源→资源，国家缺乏natural resources自然资源",
+      "word": "resources"
+    },
+    "response": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "别人冲你扔球，你re-spond（re重新+spond送）把球接住——这就是“反应”或“答复”。",
+      "word": "response"
+    },
+    "return": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "去图书馆把书还回去，就是return，re-是回，turn是转，合起来就是转回来归还。",
+      "word": "return"
+    },
+    "revealed": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "reveal就像掀开(re-)面纱(veal)，把隐藏的东西显示出来——revealed就是已经揭露了。",
+      "word": "revealed"
+    },
+    "scale": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象天平上的刻度（scale），秤砣移动衡量规模大小，一目了然",
+      "word": "scale"
+    },
+    "science": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "science谐音\"赛先生\"，民国时期对科学的称呼→科学",
+      "word": "science"
+    },
+    "scientific": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "sci=知道，ence是名词后缀，science是“知识”；给知识加上ific“做...的”，合起来就是科学的",
+      "word": "scientific"
+    },
+    "sense": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "sens感觉+e，五官有感觉才能感知意义、觉察到东西",
+      "word": "sense"
+    },
+    "services": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "service加s就是各种服务，比如金融服务、通信服务等多种多样的服务项目",
+      "word": "services"
+    },
+    "several": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象和几个（several）朋友一起打篮球，这些不同的人都是你的伙伴。",
+      "word": "several"
+    },
+    "share": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象把一块蛋糕\"切\"成几份分给大家吃，就是\"分享\"和\"共享\"",
+      "word": "share"
+    },
+    "significant": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "sign（符号）+ ific（产生...的）+ ant——能产生意义的，就是重大的、显著的。",
+      "word": "significant"
+    },
+    "similar": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "si-mil-ar，谐音像“戏迷啦”——两个戏迷长得像极了，就是“类似的”",
+      "word": "similar"
+    },
+    "single": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "sing唱+le——独自一人唱歌，没有同伴 → 单一的、单独的、单身的。",
+      "word": "single"
+    },
+    "site": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "site谐音“塞特”，想象特（special）地方，就是某个特定的“位置、场所”。",
+      "word": "site"
+    },
+    "situation": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象sit坐在u坐在a里，坐在里面才能看清当前的情况和形势。",
+      "word": "situation"
+    },
+    "skills": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "skills谐音“死记”。死记硬背不如掌握真正实用的技能和技巧。",
+      "word": "skills"
+    },
+    "society": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "社会是个大社团，society的成员来自各个社交圈层，联系在一起形成整体。",
+      "word": "society"
+    },
+    "soon": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "soon谐音\"速\"，速度很快→不久；很快，我们很快就要离开了。",
+      "word": "soon"
+    },
+    "source": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象一股泉水从地面涌出(sourc-=surf变体，水面翻涌)，这就是source，溪流、信息的源头。",
+      "word": "source"
+    },
+    "speaking": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "speak是说话，+ing进行时，说话中→正在讲话或发言",
+      "word": "speaking"
+    },
+    "specific": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "spect=看，ific=使…的，使你能看清楚的→具体的、明确的，而不是模糊笼统的。",
+      "word": "specific"
+    },
+    "spread": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象把东西「四泼」在大地上——像喷洒一样向四周「传播」开来，就是扩散的意思。",
+      "word": "spread"
+    },
+    "stage": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "stage既是舞台也是阶段，人生像演戏分阶段在舞台上进行",
+      "word": "stage"
+    },
+    "standard": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象一根stand站着的硬ard标杆，大家都要达标，这就是标准。考试有standard procedure，按标准来。",
+      "word": "standard"
+    },
+    "strategy": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "strat层+egy表行为，层层规划布局就是strategy（策略），像下棋要提前想好几步。",
+      "word": "strategy"
+    },
+    "stress": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "stress谐音“死踹死”→像被人死死踩压的感觉→压力、重压。你感受到stress了吗？",
+      "word": "stress"
+    },
+    "structure": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "struct是建造，ure是名词后缀，建造出来的结果就是结构/建筑物，很好理解",
+      "word": "structure"
+    },
+    "subjects": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "sub（下面）+ ject（扔）→ 被扔到眼前作为研究对象的就是学科和主题。",
+      "word": "subjects"
+    },
+    "success": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "suc-下+cess走，success是不断走下去走到成功；近义词串记：success、achieve、triumph",
+      "word": "success"
+    },
+    "successful": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "success成功加ful变形容词，成功的反义词是failed失败的。",
+      "word": "successful"
+    },
+    "supply": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音“四铺里”——四家店铺都在供应货物，供给到位了。",
+      "word": "supply"
+    },
+    "support": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音'死趴他'——死死趴在他身上，就是给他支撑和拥护。",
+      "word": "support"
+    },
+    "surface": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "sur上+face脸，表面的意思就是浮在上面的那张脸，露出来给人看",
+      "word": "surface"
+    },
+    "surprising": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "surprise惊喜+ing形容词化，令人吃惊的；想象突然收到意外礼物的表情",
+      "word": "surprising"
+    },
+    "survive": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "sur超过+viv生命，超越了死亡的就是幸存、存活下来。",
+      "word": "survive"
+    },
+    "teaching": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "teach+ing正在发生的动作。teach是教，teaching就是正在教学这件事。",
+      "word": "teaching"
+    },
+    "technology": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "techne（技艺）+ ology（学科）→ 技术，即运用技艺的学问。科技改变生活。",
+      "word": "technology"
+    },
+    "temperatures": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "temp是\"温度\"词根，加上-ature表示状态，复数指各种温度值",
+      "word": "temperatures"
+    },
+    "tend": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "tend词根本身就是“延伸、倾向”的意思，想象方向一致的趋势 → 往往会、趋向。照料则是向某物伸出手去照顾。",
+      "word": "tend"
+    },
+    "term": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "term谐音\"特目\"——特指那个名目，term就是术语的意思。",
+      "word": "term"
+    },
+    "tested": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "就像产品盖上“已测试”合格章，tested就是经检验合格的、被证明没问题的。",
+      "word": "tested"
+    },
+    "theory": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "theory谐音'戏里'，理论theoria原指希腊人看戏后的观察思考。",
+      "word": "theory"
+    },
+    "therefore": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "因果链要记牢：原因 there（那）在前，结果 fore（后）跟随，所以 therefore 是“因此”。",
+      "word": "therefore"
+    },
+    "thousands": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "成千上万，画面感：数千只鸟密密麻麻飞过头顶。",
+      "word": "thousands"
+    },
+    "throughout": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "through（穿过）+ out（出去），从头穿到外，就是“遍及”各处、一直“自始至终”。",
+      "word": "throughout"
+    },
+    "thus": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "Thus发音像'撒斯'，想象撒出去的结果就这样，所以它意思是'因此'。",
+      "word": "thus"
+    },
+    "together": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "to(去)+gether(像gather收集)，东西都收集到一起来，就是大家一起、齐心协力地做某事。",
+      "word": "together"
+    },
+    "trade": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象去市场做买卖、交换东西，就是trade（贸易/交易）。",
+      "word": "trade"
+    },
+    "training": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "train谐音'踹'，训练就是被踹着往前跑，被逼着进步提升。",
+      "word": "training"
+    },
+    "transport": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "trans转移+port携带，把东西从这里运到那里就是运输",
+      "word": "transport"
+    },
+    "types": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "type打字，不同类型type+s，就像不同的打字风格",
+      "word": "types"
+    },
+    "typically": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "typical典型的+ly副词后缀，典型的情况往往就是这样",
+      "word": "typically"
+    },
+    "understanding": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "\"昂德斯坦丁\"——仰头细思定能理解学问。",
+      "word": "understanding"
+    },
+    "upon": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象一个物体在另一个物体的up（在）上面——那就是“在…之上”。场景：梯子的每一级都upon下面一级。",
+      "word": "upon"
+    },
+    "usually": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "通常谐音友秀了，一般发生的事朋友秀了又秀。",
+      "word": "usually"
+    },
+    "variety": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "vary（变化）+ ety 名词后缀，表示'多样化'。想象一个市场里有vary种不同的商品，品种繁多。",
+      "word": "variety"
+    },
+    "various": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "various = var(变化) + ious(性质) → 多变化的 → 各种各样的东西。",
+      "word": "various"
+    },
+    "view": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "view谐音“悟”，眼睛“悟”到的东西就是风景或视野，多看多悟才有见解。",
+      "word": "view"
+    },
+    "warming": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "warm是暖和，+ing表示进行中，就是\"正在升温\"。全球变暖global __warming__，地球在发烧。",
+      "word": "warming"
+    },
+    "western": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "west是西方，加后缀ern变成形容词western（西方的）",
+      "word": "western"
+    },
+    "whether": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "whether谐音\"喂饿的\"，问别人\"whether饿了\"→是否要吃",
+      "word": "whether"
+    },
+    "whole": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "把hole(洞)填满，就是whole(全部)",
+      "word": "whole"
+    },
+    "within": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "within像“围内”，围起来的内部，所以东西“在…内”动弹不得。关联“内部”。",
+      "word": "within"
+    },
+    "without": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "without谐音“无贼头”，想象身边没有小偷头目，就意味着“没有任何”危险。关联“缺少”。",
+      "word": "without"
+    },
+    "workers": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "workers是work工作 + er人 → 工人、工作者。工厂里的workers就是员工。",
+      "word": "workers"
+    }
+  },
+  "manifest_version": 1
+}

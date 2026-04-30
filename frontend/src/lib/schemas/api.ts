@@ -120,7 +120,7 @@ export const WordDetailBookRefSchema = z.object({
 export type WordDetailBookRef = z.infer<typeof WordDetailBookRefSchema>
 
 export const WordMemoryDetailSchema = z.object({
-  badge: z.enum(['谐音', '联想']),
+  badge: z.enum(['助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀']),
   text: z.string(),
   source: z.string().catch('').optional(),
   updated_at: z.string().nullable().optional(),

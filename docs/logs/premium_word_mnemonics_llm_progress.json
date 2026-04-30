@@ -1,0 +1,238 @@
+{
+  "started_at": "2026-04-30T14:26:39.647488+00:00",
+  "book_ids": [
+    "ielts_listening_premium",
+    "ielts_reading_premium"
+  ],
+  "provider": "minimax",
+  "model": "MiniMax-M2.7",
+  "batch_size": 4,
+  "limit": null,
+  "start_at": 0,
+  "overwrite": false,
+  "progress_state": "running",
+  "requested": 5493,
+  "pending": 5303,
+  "enriched": 73,
+  "failed": 27,
+  "failed_words": [
+    "brain",
+    "until",
+    "among",
+    "handed",
+    "concerned",
+    "extremely",
+    "ate",
+    "surprising",
+    "traditional",
+    "deep",
+    "force",
+    "achieve",
+    "wide",
+    "complex",
+    "members",
+    "psychologist",
+    "break",
+    "either",
+    "especially",
+    "maintain",
+    "cent",
+    "feeding",
+    "advanced",
+    "planet",
+    "encourage",
+    "towards",
+    "chemical"
+  ],
+  "failure_details": [
+    {
+      "word": "brain",
+      "reason": "memory note too short for brain"
+    },
+    {
+      "word": "until",
+      "reason": "memory note missing definition anchor for until"
+    },
+    {
+      "word": "among",
+      "reason": "memory note missing definition anchor for among"
+    },
+    {
+      "word": "handed",
+      "reason": "memory note missing definition anchor for handed"
+    },
+    {
+      "word": "concerned",
+      "reason": "memory note too long for concerned"
+    },
+    {
+      "word": "extremely",
+      "reason": "memory note too long for extremely"
+    },
+    {
+      "word": "ate",
+      "reason": "memory note missing definition anchor for ate"
+    },
+    {
+      "word": "surprising",
+      "reason": "memory note missing definition anchor for surprising"
+    },
+    {
+      "word": "traditional",
+      "reason": "memory note missing definition anchor for traditional"
+    },
+    {
+      "word": "deep",
+      "reason": "memory note missing definition anchor for deep"
+    },
+    {
+      "word": "force",
+      "reason": "memory note too short for force"
+    },
+    {
+      "word": "achieve",
+      "reason": "memory note too long for achieve"
+    },
+    {
+      "word": "wide",
+      "reason": "memory note missing definition anchor for wide"
+    },
+    {
+      "word": "complex",
+      "reason": "memory note missing definition anchor for complex"
+    },
+    {
+      "word": "members",
+      "reason": "minimax/MiniMax-M2.7: HTTPSConnectionPool(host='api.minimaxi.com', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))"
+    },
+    {
+      "word": "psychologist",
+      "reason": "minimax/MiniMax-M2.7: HTTPSConnectionPool(host='api.minimaxi.com', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))"
+    },
+    {
+      "word": "break",
+      "reason": "memory note missing definition anchor for break"
+    },
+    {
+      "word": "either",
+      "reason": "memory note missing definition anchor for either"
+    },
+    {
+      "word": "especially",
+      "reason": "minimax/MiniMax-M2.7: HTTPSConnectionPool(host='api.minimaxi.com', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))"
+    },
+    {
+      "word": "maintain",
+      "reason": "minimax/MiniMax-M2.7: HTTPSConnectionPool(host='api.minimaxi.com', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))"
+    },
+    {
+      "word": "cent",
+      "reason": "memory note missing definition anchor for cent"
+    },
+    {
+      "word": "feeding",
+      "reason": "memory note missing definition anchor for feeding"
+    },
+    {
+      "word": "advanced",
+      "reason": "memory note too long for advanced"
+    },
+    {
+      "word": "planet",
+      "reason": "memory note too short for planet"
+    },
+    {
+      "word": "encourage",
+      "reason": "memory note too long for encourage"
+    },
+    {
+      "word": "towards",
+      "reason": "memory note missing definition anchor for towards"
+    },
+    {
+      "word": "chemical",
+      "reason": "memory note too long for chemical"
+    }
+  ],
+  "total_batches": 1326,
+  "completed_batches": 25,
+  "coverage": {
+    "total_words": 5493,
+    "covered_words": 265,
+    "missing_count": 5228,
+    "missing_sample": [
+      "a big difference",
+      "a bit",
+      "a couple of",
+      "a dozen",
+      "a few",
+      "a few more",
+      "a great deal of",
+      "a head",
+      "a host of",
+      "a lot",
+      "a lot of",
+      "a night",
+      "a range of",
+      "a result of",
+      "a series of",
+      "a set of",
+      "a small number of",
+      "a sort of",
+      "a variety of",
+      "a whole range of"
+    ]
+  },
+  "badge_distribution": {
+    "串记": 9,
+    "助记": 60,
+    "扩展": 27,
+    "联想": 40,
+    "词根词缀": 81,
+    "词源": 7,
+    "谐音": 41
+  },
+  "sample_items": [
+    {
+      "word": "ability",
+      "badge": "词根词缀",
+      "text": "able能+ity名词后缀=能力，有本事就是有能力"
+    },
+    {
+      "word": "above",
+      "badge": "助记",
+      "text": "想象一只鸟在树的上方飞，那就是above（在…上面）"
+    },
+    {
+      "word": "according",
+      "badge": "联想",
+      "text": "ac(往)+cord(心)——心都朝向一起去，一切符合计划。"
+    },
+    {
+      "word": "account",
+      "badge": "联想",
+      "text": "ac对+count数，对账就要把每一笔账数清楚，账户管理离不开算账"
+    },
+    {
+      "word": "across",
+      "badge": "联想",
+      "text": "站在十字路口cross，穿过去就是across，强调从一边到另一边"
+    },
+    {
+      "word": "activities",
+      "badge": "联想",
+      "text": "act(行动)+iv+ities——行动起来的状态就是各种活动。"
+    },
+    {
+      "word": "added",
+      "badge": "扩展",
+      "text": "add加加上ed就是它的过去式，表示测验里老师又“增加”了新题目"
+    },
+    {
+      "word": "addition",
+      "badge": "词根词缀",
+      "text": "add（加）+ -ition名词后缀=加上去的东西，也就是\"附加物\"或\"增加\"的部分。"
+    }
+  ],
+  "updated_at": "2026-04-30T14:57:31.230865+00:00"
+}

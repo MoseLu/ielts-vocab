@@ -4,6 +4,7 @@ from services import (
     books_vocabulary_loader_service,
     notes_word_note_repository,
     phonetic_lookup_service,
+    premium_word_mnemonic_catalog,
     word_catalog_repository,
 )
 from services.word_catalog_service import ensure_word_catalog_entry, normalize_word_key
@@ -47,6 +48,9 @@ def build_word_details_response(raw_word: str, current_user) -> tuple[dict, int]
         word_catalog_repository.commit()
 
     catalog_payload = catalog_entry.to_dict()
+    memory_note = catalog_payload.get('memory') or (
+        premium_word_mnemonic_catalog.get_premium_word_mnemonic(normalized_word)
+    )
     examples = books_vocabulary_loader_service.resolve_unified_examples(
         word,
         fallback_examples=catalog_payload['examples'],
@@ -58,7 +62,7 @@ def build_word_details_response(raw_word: str, current_user) -> tuple[dict, int]
         'pos': catalog_payload['pos'],
         'definition': catalog_payload['definition'],
         'root': catalog_payload['root'],
-        'memory': catalog_payload.get('memory'),
+        'memory': memory_note,
         'english': catalog_payload['english'],
         'examples': examples,
         'derivatives': catalog_payload['derivatives'],

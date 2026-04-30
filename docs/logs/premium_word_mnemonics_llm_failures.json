@@ -1,0 +1,142 @@
+{
+  "failed_count": 27,
+  "failed_words_tail": [
+    "brain",
+    "until",
+    "among",
+    "handed",
+    "concerned",
+    "extremely",
+    "ate",
+    "surprising",
+    "traditional",
+    "deep",
+    "force",
+    "achieve",
+    "wide",
+    "complex",
+    "members",
+    "psychologist",
+    "break",
+    "either",
+    "especially",
+    "maintain",
+    "cent",
+    "feeding",
+    "advanced",
+    "planet",
+    "encourage",
+    "towards",
+    "chemical"
+  ],
+  "failure_details_tail": [
+    {
+      "reason": "memory note too short for brain",
+      "word": "brain"
+    },
+    {
+      "reason": "memory note missing definition anchor for until",
+      "word": "until"
+    },
+    {
+      "reason": "memory note missing definition anchor for among",
+      "word": "among"
+    },
+    {
+      "reason": "memory note missing definition anchor for handed",
+      "word": "handed"
+    },
+    {
+      "reason": "memory note too long for concerned",
+      "word": "concerned"
+    },
+    {
+      "reason": "memory note too long for extremely",
+      "word": "extremely"
+    },
+    {
+      "reason": "memory note missing definition anchor for ate",
+      "word": "ate"
+    },
+    {
+      "reason": "memory note missing definition anchor for surprising",
+      "word": "surprising"
+    },
+    {
+      "reason": "memory note missing definition anchor for traditional",
+      "word": "traditional"
+    },
+    {
+      "reason": "memory note missing definition anchor for deep",
+      "word": "deep"
+    },
+    {
+      "reason": "memory note too short for force",
+      "word": "force"
+    },
+    {
+      "reason": "memory note too long for achieve",
+      "word": "achieve"
+    },
+    {
+      "reason": "memory note missing definition anchor for wide",
+      "word": "wide"
+    },
+    {
+      "reason": "memory note missing definition anchor for complex",
+      "word": "complex"
+    },
+    {
+      "reason": "minimax/MiniMax-M2.7: HTTPSConnectionPool(host='api.minimaxi.com', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))",
+      "word": "members"
+    },
+    {
+      "reason": "minimax/MiniMax-M2.7: HTTPSConnectionPool(host='api.minimaxi.com', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))",
+      "word": "psychologist"
+    },
+    {
+      "reason": "memory note missing definition anchor for break",
+      "word": "break"
+    },
+    {
+      "reason": "memory note missing definition anchor for either",
+      "word": "either"
+    },
+    {
+      "reason": "minimax/MiniMax-M2.7: HTTPSConnectionPool(host='api.minimaxi.com', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))",
+      "word": "especially"
+    },
+    {
+      "reason": "minimax/MiniMax-M2.7: HTTPSConnectionPool(host='api.minimaxi.com', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))",
+      "word": "maintain"
+    },
+    {
+      "reason": "memory note missing definition anchor for cent",
+      "word": "cent"
+    },
+    {
+      "reason": "memory note missing definition anchor for feeding",
+      "word": "feeding"
+    },
+    {
+      "reason": "memory note too long for advanced",
+      "word": "advanced"
+    },
+    {
+      "reason": "memory note too short for planet",
+      "word": "planet"
+    },
+    {
+      "reason": "memory note too long for encourage",
+      "word": "encourage"
+    },
+    {
+      "reason": "memory note missing definition anchor for towards",
+      "word": "towards"
+    },
+    {
+      "reason": "memory note too long for chemical",
+      "word": "chemical"
+    }
+  ]
+}

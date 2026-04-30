@@ -174,7 +174,7 @@ class WordCatalogEntry(db.Model):
 
         badge = str(payload.get('badge') or '').strip()
         text = str(payload.get('text') or '').strip()
-        if badge not in {'谐音', '联想'} or not text:
+        if badge not in {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀'} or not text:
             return None
 
         source = str(payload.get('source') or '').strip()

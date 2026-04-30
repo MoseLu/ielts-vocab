@@ -12,6 +12,7 @@ TARGET_BOOKS = {
     'ielts_reading_premium': 'ielts_reading_premium.json',
     'ielts_listening_premium': 'ielts_listening_premium.json',
 }
+MEMORY_BADGES = {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀'}
 WORD_RE = re.compile(r"^[a-z]+(?:[-'][a-z]+|')*(?: [a-z]+(?:[-'][a-z]+|')*)*$")
 FORBIDDEN_DEFINITION_TOKENS = (
     '人名',
@@ -50,6 +51,17 @@ def _build_book_phonetic_map(filename: str) -> dict[str, str]:
         for chapter in payload['chapters']
         for entry in chapter['words']
     }
+
+
+def _premium_word_union() -> dict[str, set[str]]:
+    words: dict[str, set[str]] = {}
+    for book_id, filename in TARGET_BOOKS.items():
+        payload = _load_book_payload(filename)
+        for chapter in payload['chapters']:
+            for entry in chapter['words']:
+                normalized = normalize_premium_word(entry.get('word'))
+                words.setdefault(normalized, set()).add(book_id)
+    return words
 
 
 def test_premium_books_have_synced_metadata_and_no_phrase_chapters():
@@ -92,6 +104,38 @@ def test_premium_books_only_keep_clean_single_word_entries():
                 seen_words.add(word)
 
         assert violations == []
+
+
+def test_premium_word_mnemonics_cover_paid_book_union():
+    payload = json.loads((VOCAB_ROOT / 'premium_word_mnemonics.json').read_text(encoding='utf-8'))
+    expected_words = _premium_word_union()
+    items = payload.get('items') or {}
+    violations: list[str] = []
+
+    if set(payload.get('book_ids') or []) != set(TARGET_BOOKS):
+        violations.append('manifest-book-ids')
+    if payload.get('manifest_version') != 1:
+        violations.append('manifest-version')
+    if set(items) != set(expected_words):
+        missing = sorted(set(expected_words) - set(items))[:20]
+        stale = sorted(set(items) - set(expected_words))[:20]
+        violations.append(f'word-set mismatch missing={missing} stale={stale}')
+
+    for word, book_ids in expected_words.items():
+        item = items.get(word) or {}
+        text = str(item.get('text') or '').strip()
+        if item.get('word') != word:
+            violations.append(f'{word}:word')
+        if item.get('badge') not in MEMORY_BADGES:
+            violations.append(f'{word}:badge')
+        if not text or not re.search(r'[\u4e00-\u9fff]', text):
+            violations.append(f'{word}:text')
+        if set(item.get('book_ids') or []) != book_ids:
+            violations.append(f'{word}:book_ids')
+        if item.get('source') != 'premium_word_mnemonics':
+            violations.append(f'{word}:source')
+
+    assert violations == []
 
 
 def test_known_premium_phonetic_regressions_stay_fixed():

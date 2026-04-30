@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { WordDetailResponse, WordSearchResult } from '../../../lib'
+import { WordDetailResponseSchema, type WordDetailResponse, type WordSearchResult } from '../../../lib'
 import { buildWordMemoryNote } from './globalWordMemoryNote'
 
 function buildResult(overrides: Partial<WordSearchResult> = {}): WordSearchResult {
@@ -109,5 +109,23 @@ describe('buildWordMemoryNote', () => {
 
     expect(note.badge).toBe('联想')
     expect(note.text).toBe('先想象自己把责任扛在肩上，再把“责任；职责”这个意思挂上去。')
+  })
+
+  it('accepts newer server-provided memory badges', () => {
+    const response = buildDetail({
+      memory: {
+        badge: '词根词缀',
+        text: '先抓 spons 这个“承诺”线索，再落到“责任；职责”。',
+        source: 'premium_word_mnemonics',
+      },
+    })
+    const parsed = WordDetailResponseSchema.parse(response)
+    const note = buildWordMemoryNote({
+      detailData: parsed,
+      result: buildResult({ word: 'responsibility', definition: '责任；职责' }),
+    })
+
+    expect(note.badge).toBe('词根词缀')
+    expect(note.text).toContain('责任')
   })
 })

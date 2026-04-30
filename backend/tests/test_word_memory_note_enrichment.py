@@ -1,4 +1,7 @@
+import json
+
 import services.books_catalog_service as books_catalog_service
+import services.word_memory_note_file_generation as word_memory_note_file_generation
 import services.word_memory_note_enrichment as word_memory_note_enrichment
 from models import WordCatalogEntry
 
@@ -64,7 +67,7 @@ def test_memory_note_enrichment_persists_server_notes(app, monkeypatch):
     monkeypatch.setattr(word_memory_note_enrichment, 'request_memory_note_batch', lambda *_args, **_kwargs: {
         'stout': {
             'word': 'stout',
-            'badge': '联想',
+            'badge': '词根词缀',
             'text': '先想一个人站得又稳又壮，再把“粗壮的；结实的”这个意思挂上去。',
         },
         'a bit': {
@@ -87,8 +90,40 @@ def test_memory_note_enrichment_persists_server_notes(app, monkeypatch):
         stout = WordCatalogEntry.query.filter_by(normalized_word='stout').first()
         phrase = WordCatalogEntry.query.filter_by(normalized_word='a bit').first()
         assert stout.get_memory_note()['source'] == 'llm_memory'
+        assert stout.get_memory_note()['badge'] == '词根词缀'
         assert '粗壮的' in stout.get_memory_note()['text']
         assert '稍微' in phrase.get_memory_note()['text']
+
+
+def test_memory_note_file_generation_writes_json_items(app, monkeypatch, tmp_path):
+    monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _seed_catalog)
+    monkeypatch.setattr(word_memory_note_enrichment, 'request_memory_note_batch', lambda *_args, **_kwargs: {
+        'stout': {
+            'word': 'stout',
+            'badge': '词根词缀',
+            'text': '先想一个人站得又稳又壮，再把“粗壮的；结实的”这个意思挂上去。',
+        },
+        'a bit': {
+            'word': 'a bit',
+            'badge': '扩展',
+            'text': '想象老师说再等一小会儿，就是“稍微；有点”这么一点点。',
+        },
+    })
+    output_path = tmp_path / 'premium_word_mnemonics.json'
+
+    with app.app_context():
+        stats = word_memory_note_file_generation.enrich_premium_book_memory_note_file(
+            output_path=output_path,
+            batch_size=2,
+            overwrite=True,
+            sleep_seconds=0,
+        )
+
+    payload = json.loads(output_path.read_text(encoding='utf-8'))
+    assert stats['enriched'] == 2
+    assert stats['coverage']['missing_words'] == []
+    assert payload['items']['stout']['badge'] == '词根词缀'
+    assert payload['items']['a bit']['book_ids'] == ['ielts_listening_premium']
 
 
 def test_memory_note_enrichment_rejects_formulaic_phrase_output(app, monkeypatch):

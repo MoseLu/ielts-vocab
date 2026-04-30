@@ -1,6 +1,9 @@
+import json
+
 import services.legacy_word_detail_migration as legacy_word_detail_migration
 import services.books_catalog_service as books_catalog_service
 import services.books_vocabulary_loader_service as books_vocabulary_loader_service
+import services.premium_word_mnemonic_catalog as premium_word_mnemonic_catalog
 import services.word_detail_enrichment as word_detail_enrichment
 from services.word_catalog_service import ensure_word_catalog_entry
 from models import (
@@ -167,6 +170,99 @@ class TestWordDetails:
         assert data['memory']['badge'] == '联想'
         assert data['memory']['text'] == '先想一个人突然 quit 离场，把“停止；离开”这个意思一起记住。'
         assert data['memory']['source'] == 'llm_memory'
+
+    def test_word_details_fall_back_to_premium_json_memory_note(self, client, monkeypatch, tmp_path):
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _mock_catalog)
+        data_path = tmp_path / 'premium_word_mnemonics.json'
+        data_path.write_text(json.dumps({
+            'manifest_version': 1,
+            'book_ids': ['ielts_reading_premium', 'ielts_listening_premium'],
+            'generated_at': '2026-04-30T00:00:00Z',
+            'items': {
+                'quit': {
+                    'word': 'quit',
+                    'badge': '词根词缀',
+                    'text': '把 quit 看成完整词形，记住它常落在“停止；离开”的动作上。',
+                    'book_ids': ['ielts_reading_premium'],
+                    'source': 'premium_word_mnemonics',
+                },
+            },
+        }, ensure_ascii=False), encoding='utf-8')
+        monkeypatch.setattr(premium_word_mnemonic_catalog, 'PREMIUM_WORD_MNEMONICS_PATH', data_path)
+        premium_word_mnemonic_catalog.clear_premium_mnemonic_cache()
+
+        res = client.get('/api/books/word-details?word=quit')
+
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['memory']['badge'] == '词根词缀'
+        assert data['memory']['text'] == '把 quit 看成完整词形，记住它常落在“停止；离开”的动作上。'
+        assert data['memory']['source'] == 'premium_word_mnemonics'
+
+    def test_word_details_premium_json_matches_simple_inflections(self, client, monkeypatch, tmp_path):
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', lambda: [])
+        data_path = tmp_path / 'premium_word_mnemonics.json'
+        data_path.write_text(json.dumps({
+            'manifest_version': 1,
+            'book_ids': ['ielts_reading_premium', 'ielts_listening_premium'],
+            'generated_at': '2026-04-30T00:00:00Z',
+            'items': {
+                'estimated': {
+                    'word': 'estimated',
+                    'badge': '词根词缀',
+                    'text': '先抓 estimated 的词形尾巴，再把它落到“估计的”这个意思上。',
+                    'book_ids': ['ielts_reading_premium'],
+                    'source': 'premium_word_mnemonics',
+                },
+            },
+        }, ensure_ascii=False), encoding='utf-8')
+        monkeypatch.setattr(premium_word_mnemonic_catalog, 'PREMIUM_WORD_MNEMONICS_PATH', data_path)
+        premium_word_mnemonic_catalog.clear_premium_mnemonic_cache()
+
+        res = client.get('/api/books/word-details?word=estimate')
+
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['memory']['badge'] == '词根词缀'
+        assert '估计的' in data['memory']['text']
+
+    def test_word_details_db_memory_note_overrides_premium_json(self, client, app, monkeypatch, tmp_path):
+        monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', _mock_catalog)
+        data_path = tmp_path / 'premium_word_mnemonics.json'
+        data_path.write_text(json.dumps({
+            'manifest_version': 1,
+            'book_ids': ['ielts_reading_premium', 'ielts_listening_premium'],
+            'generated_at': '2026-04-30T00:00:00Z',
+            'items': {
+                'quit': {
+                    'word': 'quit',
+                    'badge': '扩展',
+                    'text': '看到 quit 时，先把它放进“停止；离开”的退出场景里。',
+                    'book_ids': ['ielts_reading_premium'],
+                    'source': 'premium_word_mnemonics',
+                },
+            },
+        }, ensure_ascii=False), encoding='utf-8')
+        monkeypatch.setattr(premium_word_mnemonic_catalog, 'PREMIUM_WORD_MNEMONICS_PATH', data_path)
+        premium_word_mnemonic_catalog.clear_premium_mnemonic_cache()
+
+        with app.app_context():
+            catalog_entry, changed = ensure_word_catalog_entry('quit')
+            if changed:
+                db.session.commit()
+            catalog_entry.set_memory_note({
+                'badge': '辨析',
+                'text': '把 quit 和 quiet 分开：quit 是“停止；离开”，quiet 才是安静。',
+                'source': 'manual_memory',
+            })
+            db.session.commit()
+
+        res = client.get('/api/books/word-details?word=quit')
+
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['memory']['badge'] == '辨析'
+        assert data['memory']['source'] == 'manual_memory'
 
     def test_word_details_fall_back_to_placeholder_derivatives(self, client, monkeypatch):
         monkeypatch.setattr(books_catalog_service, '_build_global_word_search_catalog', lambda: [])
