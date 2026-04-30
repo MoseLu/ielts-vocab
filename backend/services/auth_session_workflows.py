@@ -16,6 +16,19 @@ from services.auth_session_helpers import (
     validate_email,
 )
 
+PASSWORD_POLICY_ERROR = '密码至少8个字符，并包含大写字母、小写字母、数字中的至少2种'
+
+
+def _password_meets_register_policy(password: str) -> bool:
+    if len(password) < 8:
+        return False
+    categories = sum((
+        any(char.isupper() for char in password),
+        any(char.islower() for char in password),
+        any(char.isdigit() for char in password),
+    ))
+    return categories >= 2
+
 
 def perform_register(app, request, data: dict) -> tuple[dict, int, int | None]:
     email = (data.get('email') or '').strip()
@@ -28,9 +41,9 @@ def perform_register(app, request, data: dict) -> tuple[dict, int, int | None]:
     if len(username) < 3:
         log_registration_audit(app, request, outcome='rejected', reason='short_username', username=username, email=email)
         return {'error': '用户名至少3个字符'}, 400, None
-    if not password or len(password) < 6:
+    if not password or not _password_meets_register_policy(password):
         log_registration_audit(app, request, outcome='rejected', reason='short_password', username=username, email=email)
-        return {'error': '密码至少6个字符'}, 400, None
+        return {'error': PASSWORD_POLICY_ERROR}, 400, None
     if auth_repository.get_user_by_username(username):
         log_registration_audit(app, request, outcome='rejected', reason='duplicate_username', username=username, email=email)
         return {'error': '用户名已被使用'}, 400, None

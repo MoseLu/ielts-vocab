@@ -84,10 +84,18 @@ class TestRegister:
     def test_register_short_password(self, client):
         res = client.post('/api/auth/register', json={
             'username': 'alice',
-            'password': '12345',
+            'password': 'a1B2345',
         })
         assert res.status_code == 400
-        assert '6个字符' in res.get_json()['error']
+        assert '至少8个字符' in res.get_json()['error']
+
+    def test_register_requires_two_password_categories(self, client):
+        res = client.post('/api/auth/register', json={
+            'username': 'alice',
+            'password': 'password',
+        })
+        assert res.status_code == 400
+        assert '至少2种' in res.get_json()['error']
 
     def test_register_duplicate_username(self, client):
         client.post('/api/auth/register', json={'username': 'alice', 'password': 'password123'})
