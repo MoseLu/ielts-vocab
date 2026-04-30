@@ -128,7 +128,7 @@ def test_feature_wish_visibility_search_and_owner_edit(monkeypatch, tmp_path):
     blocked_edit = client.put(
         f"/api/feature-wishes/{learner_create.json()['wish']['id']}",
         headers=admin_headers,
-        json={'title': '管理员不能改别人的愿望', 'content': '即使是管理员也不行'},
+        json={'title': '管理员不能改别人的 bug', 'content': '即使是管理员也不行'},
     )
     owner_edit = client.put(
         f"/api/feature-wishes/{learner_create.json()['wish']['id']}",
@@ -145,6 +145,33 @@ def test_feature_wish_visibility_search_and_owner_edit(monkeypatch, tmp_path):
     assert blocked_edit.status_code == 403
     assert owner_edit.status_code == 200
     assert owner_edit.json()['wish']['title'] == '错题清单自动整理增强版'
+
+
+def test_feature_wish_admin_can_delete_any_wish(monkeypatch, tmp_path):
+    _configure_admin_env(monkeypatch, tmp_path)
+    module = _load_admin_ops_service_module('admin_ops_service_feature_wish_delete')
+    client = TestClient(module.app)
+    users = _seed_users(module.admin_ops_flask_app)
+    learner_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['learner']))
+    other_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['other']))
+    admin_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['admin']))
+
+    created = client.post(
+        '/api/feature-wishes',
+        headers=learner_headers,
+        json={'title': '可删除 bug', 'content': '管理员可以清理这条 bug'},
+    )
+    wish_id = created.json()['wish']['id']
+
+    blocked_delete = client.delete(f'/api/feature-wishes/{wish_id}', headers=other_headers)
+    admin_delete = client.delete(f'/api/feature-wishes/{wish_id}', headers=admin_headers)
+    admin_list = client.get('/api/feature-wishes', headers=admin_headers)
+
+    assert created.status_code == 201
+    assert blocked_delete.status_code == 403
+    assert admin_delete.status_code == 200
+    assert admin_delete.json()['message'] == 'bug 已删除'
+    assert admin_list.json()['total'] == 0
 
 
 def test_feature_wish_image_upload_creates_resized_oss_variants(monkeypatch, tmp_path):
@@ -175,7 +202,7 @@ def test_feature_wish_image_upload_creates_resized_oss_variants(monkeypatch, tmp
     response = client.post(
         '/api/feature-wishes',
         headers=learner_headers,
-        data={'title': '图片许愿', 'content': '上传三张以内参考图'},
+        data={'title': '图片 bug', 'content': '上传三张以内参考图'},
         files=[
             ('images', ('wish.png', _png_bytes(), 'image/png')),
             ('images', ('wish-2.png', _png_bytes(), 'image/png')),

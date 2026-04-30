@@ -231,7 +231,7 @@ async def feature_wishes_proxy(request: Request):
         unavailable_detail='admin ops service unavailable',
     )
 
-@browser_compat_router.put('/api/feature-wishes/{wish_id}')
+@browser_compat_router.api_route('/api/feature-wishes/{wish_id}', methods=['PUT', 'DELETE'])
 async def feature_wish_detail_proxy(wish_id: int, request: Request):
     return await _proxy_service_request(
         request=request,

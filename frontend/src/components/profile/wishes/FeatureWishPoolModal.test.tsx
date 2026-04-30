@@ -19,6 +19,7 @@ const wishesResponse = {
       created_at: '2026-04-30T01:24:00',
       updated_at: '2026-04-30T01:24:00',
       can_edit: true,
+      can_delete: true,
       images: [{
         id: 10,
         thumbnail_url: 'https://oss.example.com/thumb.png',
@@ -35,6 +36,7 @@ const wishesResponse = {
       created_at: '2026-04-29T13:10:00',
       updated_at: '2026-04-29T13:10:00',
       can_edit: false,
+      can_delete: false,
       images: [],
     },
   ],
@@ -64,22 +66,43 @@ describe('FeatureWishPoolModal', () => {
     const { baseElement } = render(<FeatureWishPoolModal onClose={vi.fn()} />)
 
     await screen.findByText('错题清单自动整理')
-    fireEvent.click(screen.getByLabelText('展开愿望：错题清单自动整理'))
+    fireEvent.click(screen.getByLabelText('展开 bug：错题清单自动整理'))
 
     expect(baseElement.querySelector('.feature-wish-detail')).not.toBeNull()
     const image = baseElement.querySelector('.feature-wish-detail__image') as HTMLImageElement
     expect(image.src).toBe('https://oss.example.com/full.png')
-    expect(screen.getByLabelText('返回愿望列表')).toBeInTheDocument()
+    expect(screen.getByLabelText('返回 bug 列表')).toBeInTheDocument()
   })
 
   it('sends search text to the backend query', async () => {
     render(<FeatureWishPoolModal onClose={vi.fn()} />)
     await screen.findByText('错题清单自动整理')
 
-    fireEvent.change(screen.getByPlaceholderText('搜索愿望名'), { target: { value: '口语' } })
+    fireEvent.change(screen.getByPlaceholderText('搜索 bug 标题'), { target: { value: '口语' } })
 
     await waitFor(() => {
       expect(apiFetchMock).toHaveBeenLastCalledWith('/api/feature-wishes?search=%E5%8F%A3%E8%AF%AD')
     })
+  })
+
+  it('lets admins delete a wish and refreshes the list', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    apiFetchMock
+      .mockResolvedValueOnce(wishesResponse)
+      .mockResolvedValueOnce({ message: 'bug 已删除' })
+      .mockResolvedValueOnce({ items: [wishesResponse.items[1]], total: 1 })
+
+    render(<FeatureWishPoolModal onClose={vi.fn()} />)
+    await screen.findByText('错题清单自动整理')
+
+    fireEvent.click(screen.getByLabelText('删除 bug：错题清单自动整理'))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/feature-wishes/1', { method: 'DELETE' })
+    })
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenLastCalledWith('/api/feature-wishes')
+    })
+    confirmSpy.mockRestore()
   })
 })

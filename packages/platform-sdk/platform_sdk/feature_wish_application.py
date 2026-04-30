@@ -11,8 +11,8 @@ def _normalize_text(value, *, max_length: int) -> str:
     return ' '.join(str(value or '').split())[:max_length]
 
 
-def _wish_payload(wish, *, viewer_user_id: int) -> dict:
-    return wish.to_dict(viewer_user_id=viewer_user_id)
+def _wish_payload(wish, *, viewer_user_id: int, viewer_is_admin: bool = False) -> dict:
+    return wish.to_dict(viewer_user_id=viewer_user_id, viewer_is_admin=viewer_is_admin)
 
 
 def list_feature_wishes_response(current_user, args) -> tuple[dict, int]:
@@ -23,7 +23,13 @@ def list_feature_wishes_response(current_user, args) -> tuple[dict, int]:
         search=search,
     )
     return {
-        'items': [_wish_payload(row, viewer_user_id=int(current_user.id)) for row in rows],
+        'items': [
+            _wish_payload(
+                row,
+                viewer_user_id=int(current_user.id),
+                viewer_is_admin=bool(current_user.is_admin),
+            ) for row in rows
+        ],
         'total': total,
     }, 200
 
@@ -37,9 +43,9 @@ def _read_body(payload: dict | None, form) -> tuple[str, str]:
 
 def _validate_wish_text(title: str, content: str) -> tuple[dict, int] | None:
     if not title:
-        return {'error': '愿望名不能为空'}, 400
+        return {'error': 'bug 标题不能为空'}, 400
     if not content:
-        return {'error': '愿望内容不能为空'}, 400
+        return {'error': 'bug 内容不能为空'}, 400
     return None
 
 
@@ -67,7 +73,7 @@ def _store_uploaded_images(*, current_user, wish_id: int, files) -> tuple[list[d
 def _image_count_error(files) -> tuple[dict, int] | None:
     uploads = list(files.getlist('images')) if files else []
     if len(uploads) > MAX_IMAGES_PER_WISH:
-        return {'error': '每个愿望最多上传三张图片'}, 400
+        return {'error': '每个 bug 最多上传三张图片'}, 400
     return None
 
 
@@ -90,15 +96,22 @@ def create_feature_wish_response(current_user, payload: dict | None, form, files
         return image_error
     if stored_images:
         wish = feature_wish_repository.replace_images(wish=wish, images=stored_images)
-    return {'message': '愿望已提交', 'wish': _wish_payload(wish, viewer_user_id=int(current_user.id))}, 201
+    return {
+        'message': 'bug 已提交',
+        'wish': _wish_payload(
+            wish,
+            viewer_user_id=int(current_user.id),
+            viewer_is_admin=bool(current_user.is_admin),
+        ),
+    }, 201
 
 
 def update_feature_wish_response(current_user, wish_id: int, payload: dict | None, form, files) -> tuple[dict, int]:
     wish = feature_wish_repository.get_wish(wish_id)
     if wish is None:
-        return {'error': '愿望不存在'}, 404
+        return {'error': 'bug 不存在'}, 404
     if int(wish.user_id) != int(current_user.id):
-        return {'error': '只能编辑自己的愿望'}, 403
+        return {'error': '只能编辑自己的 bug'}, 403
     title, content = _read_body(payload, form)
     error = _validate_wish_text(title, content)
     if error is not None:
@@ -112,4 +125,21 @@ def update_feature_wish_response(current_user, wish_id: int, payload: dict | Non
         if image_error is not None:
             return image_error
         wish = feature_wish_repository.replace_images(wish=wish, images=stored_images)
-    return {'message': '愿望已更新', 'wish': _wish_payload(wish, viewer_user_id=int(current_user.id))}, 200
+    return {
+        'message': 'bug 已更新',
+        'wish': _wish_payload(
+            wish,
+            viewer_user_id=int(current_user.id),
+            viewer_is_admin=bool(current_user.is_admin),
+        ),
+    }, 200
+
+
+def delete_feature_wish_response(current_user, wish_id: int) -> tuple[dict, int]:
+    if not bool(current_user.is_admin):
+        return {'error': '只有管理员可以删除 bug'}, 403
+    wish = feature_wish_repository.get_wish(wish_id)
+    if wish is None:
+        return {'error': 'bug 不存在'}, 404
+    feature_wish_repository.delete_wish(wish)
+    return {'message': 'bug 已删除'}, 200

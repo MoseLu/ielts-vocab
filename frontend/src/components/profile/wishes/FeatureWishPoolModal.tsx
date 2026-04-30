@@ -19,6 +19,7 @@ interface FeatureWish {
   created_at: string | null
   updated_at: string | null
   can_edit: boolean
+  can_delete: boolean
   images: FeatureWishImage[]
 }
 
@@ -29,6 +30,11 @@ interface FeatureWishListResponse {
 
 interface FeatureWishMutationResponse {
   wish: FeatureWish
+  error?: string
+}
+
+interface FeatureWishDeleteResponse {
+  message?: string
   error?: string
 }
 
@@ -74,6 +80,18 @@ function EditIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path d="M12 20h9" />
       <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+  )
+}
+
+function DeleteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M6 6l1 14h10l1-14" />
+      <path d="M10 11v5" />
+      <path d="M14 11v5" />
     </svg>
   )
 }
@@ -153,7 +171,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
       const data = await apiFetch<FeatureWishListResponse>(url)
       setWishes(data.items)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '愿望加载失败')
+      setError(err instanceof Error ? err.message : 'bug 加载失败')
     } finally {
       setLoading(false)
     }
@@ -189,16 +207,16 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
   const handleFiles = (files: FileList | null) => {
     const nextFiles = Array.from(files ?? []).slice(0, 3)
     setDraftFiles(nextFiles)
-    if ((files?.length ?? 0) > 3) setError('每个愿望最多上传三张图片')
+    if ((files?.length ?? 0) > 3) setError('每个 bug 最多上传三张图片')
   }
 
   const handleSubmit = async () => {
     if (!draftTitle.trim() || !draftContent.trim()) {
-      setError('愿望名和愿望内容不能为空')
+      setError('bug 标题和 bug 内容不能为空')
       return
     }
     if (draftFiles.length > 3) {
-      setError('每个愿望最多上传三张图片')
+      setError('每个 bug 最多上传三张图片')
       return
     }
     const body = new FormData()
@@ -217,7 +235,23 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
       if (selectedWish && data.wish.id === selectedWish.id) setSelectedWish(data.wish)
       await loadWishes(search)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '愿望保存失败')
+      setError(err instanceof Error ? err.message : 'bug 保存失败')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (wish: FeatureWish) => {
+    if (!window.confirm(`确认删除 bug：${wish.title}？`)) return
+    setSubmitting(true)
+    setError('')
+    try {
+      await apiFetch<FeatureWishDeleteResponse>(`/api/feature-wishes/${wish.id}`, { method: 'DELETE' })
+      if (selectedWish?.id === wish.id) setSelectedWish(null)
+      if (editingWish?.id === wish.id) closeForm()
+      await loadWishes(search)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'bug 删除失败')
     } finally {
       setSubmitting(false)
     }
@@ -225,14 +259,14 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
 
   const modal = (
     <div className="feature-wish-modal-overlay" onClick={event => event.target === event.currentTarget && onClose()}>
-      <div className="feature-wish-modal" role="dialog" aria-modal="true" aria-label="功能许愿池">
+      <div className="feature-wish-modal" role="dialog" aria-modal="true" aria-label="Bug反馈">
         <div className="feature-wish-modal__header">
-          <div className="feature-wish-modal__title">功能许愿池</div>
+          <div className="feature-wish-modal__title">Bug反馈</div>
           <div className="feature-wish-modal__actions">
-            <IconButton label="新增愿望" className="feature-wish-modal__icon-button" onClick={() => openForm('create')}>
+            <IconButton label="新增 bug" className="feature-wish-modal__icon-button" onClick={() => openForm('create')}>
               <PlusIcon />
             </IconButton>
-            <IconButton label="关闭功能许愿池" className="feature-wish-modal__icon-button" onClick={onClose}>
+            <IconButton label="关闭 Bug反馈" className="feature-wish-modal__icon-button" onClick={onClose}>
               <CloseIcon />
             </IconButton>
           </div>
@@ -244,7 +278,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
               value={search}
               onChange={event => setSearch(event.target.value)}
               className="feature-wish-search"
-              placeholder="搜索愿望名"
+              placeholder="搜索 bug 标题"
             />
           </div>
         )}
@@ -253,7 +287,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
           {selectedWish ? (
             <div className="feature-wish-detail">
               <div className="feature-wish-detail__header">
-                <IconButton label="返回愿望列表" className="feature-wish-detail__back" onClick={() => setSelectedWish(null)}>
+                <IconButton label="返回 bug 列表" className="feature-wish-detail__back" onClick={() => setSelectedWish(null)}>
                   <BackIcon />
                 </IconButton>
                 <div className="feature-wish-detail__heading">
@@ -262,11 +296,18 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
                     {formatDateTime(selectedWish.created_at)} · {selectedWish.username}
                   </div>
                 </div>
-                {selectedWish.can_edit && (
-                  <IconButton label={`编辑愿望：${selectedWish.title}`} className="feature-wish-detail__edit" onClick={() => openForm('edit', selectedWish)}>
-                    <EditIcon />
-                  </IconButton>
-                )}
+                <div className="feature-wish-detail__actions">
+                  {selectedWish.can_edit && (
+                    <IconButton label={`编辑 bug：${selectedWish.title}`} className="feature-wish-detail__edit" onClick={() => openForm('edit', selectedWish)}>
+                      <EditIcon />
+                    </IconButton>
+                  )}
+                  {selectedWish.can_delete && (
+                    <IconButton label={`删除 bug：${selectedWish.title}`} className="feature-wish-detail__delete" onClick={() => void handleDelete(selectedWish)} disabled={submitting}>
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
+                </div>
               </div>
               <div className="feature-wish-detail__content">
                 <div className="feature-wish-detail__gallery">
@@ -283,16 +324,16 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
               </div>
             </div>
           ) : loading ? (
-            <div className="feature-wish-state"><MicroLoading text="加载愿望中..." /></div>
+            <div className="feature-wish-state"><MicroLoading text="加载 bug 中..." /></div>
           ) : wishes.length === 0 ? (
-            <div className="feature-wish-state">暂无愿望</div>
+            <div className="feature-wish-state">暂无 bug</div>
           ) : (
             <div className="feature-wish-grid">
               {wishes.map(wish => (
                 <article key={wish.id} className="feature-wish-card">
                   <div className="feature-wish-card__media">
                     <WishMedia wish={wish} />
-                    <IconButton label={`展开愿望：${wish.title}`} className="feature-wish-card__expand" onClick={() => setSelectedWish(wish)}>
+                    <IconButton label={`展开 bug：${wish.title}`} className="feature-wish-card__expand" onClick={() => setSelectedWish(wish)}>
                       <ExpandIcon />
                     </IconButton>
                   </div>
@@ -303,8 +344,13 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
                   <div className="feature-wish-card__footer">
                     <span>{formatDateTime(wish.created_at)} · {wish.username}</span>
                     {wish.can_edit && (
-                      <IconButton label={`编辑愿望：${wish.title}`} className="feature-wish-card__edit" onClick={() => openForm('edit', wish)}>
+                      <IconButton label={`编辑 bug：${wish.title}`} className="feature-wish-card__edit" onClick={() => openForm('edit', wish)}>
                         <EditIcon />
+                      </IconButton>
+                    )}
+                    {wish.can_delete && (
+                      <IconButton label={`删除 bug：${wish.title}`} className="feature-wish-card__delete" onClick={() => void handleDelete(wish)} disabled={submitting}>
+                        <DeleteIcon />
                       </IconButton>
                     )}
                   </div>
@@ -320,13 +366,13 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
           <div className="feature-wish-form-panel">
             <div className="feature-wish-form">
               <div className="feature-wish-form__header">
-                <strong>{formMode === 'edit' ? '编辑愿望' : '新增愿望'}</strong>
+                <strong>{formMode === 'edit' ? '编辑 bug' : '新增 bug'}</strong>
                 <IconButton label="关闭编辑" className="feature-wish-modal__icon-button" onClick={closeForm} disabled={submitting}>
                   <CloseIcon />
                 </IconButton>
               </div>
-              <input value={draftTitle} onChange={event => setDraftTitle(event.target.value)} placeholder="愿望名" />
-              <textarea value={draftContent} onChange={event => setDraftContent(event.target.value)} placeholder="愿望内容" />
+              <input value={draftTitle} onChange={event => setDraftTitle(event.target.value)} placeholder="bug 标题" />
+              <textarea value={draftContent} onChange={event => setDraftContent(event.target.value)} placeholder="bug 内容" />
               <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={event => handleFiles(event.target.files)} />
               <div className="feature-wish-form__hint">最多上传 3 张图片；编辑时不选择图片会保留原图。</div>
               {draftFiles.length > 0 && (

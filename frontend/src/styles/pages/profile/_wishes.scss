@@ -44,8 +44,10 @@
 .feature-wish-modal__icon-button,
 .feature-wish-card__expand,
 .feature-wish-card__edit,
+.feature-wish-card__delete,
 .feature-wish-detail__back,
-.feature-wish-detail__edit {
+.feature-wish-detail__edit,
+.feature-wish-detail__delete {
   width: var(--size-32);
   height: var(--size-32);
   display: inline-flex;
@@ -61,8 +63,10 @@
 .feature-wish-modal__icon-button svg,
 .feature-wish-card__expand svg,
 .feature-wish-card__edit svg,
+.feature-wish-card__delete svg,
 .feature-wish-detail__back svg,
-.feature-wish-detail__edit svg {
+.feature-wish-detail__edit svg,
+.feature-wish-detail__delete svg {
   width: var(--size-16);
   height: var(--size-16);
 }
@@ -70,8 +74,10 @@
 .feature-wish-modal__icon-button:hover,
 .feature-wish-card__expand:hover,
 .feature-wish-card__edit:hover,
+.feature-wish-card__delete:hover,
 .feature-wish-detail__back:hover,
-.feature-wish-detail__edit:hover {
+.feature-wish-detail__edit:hover,
+.feature-wish-detail__delete:hover {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-light);
@@ -207,6 +213,11 @@
 .feature-wish-detail__heading {
   flex: 1;
   min-width: 0;
+}
+
+.feature-wish-detail__actions {
+  display: flex;
+  gap: var(--size-8);
 }
 
 .feature-wish-detail__title {

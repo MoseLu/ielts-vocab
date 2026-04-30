@@ -20,7 +20,7 @@ class FeatureWish(db.Model):
         order_by='FeatureWishImage.sort_order',
     )
 
-    def to_dict(self, *, viewer_user_id: int | None = None):
+    def to_dict(self, *, viewer_user_id: int | None = None, viewer_is_admin: bool = False):
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -32,6 +32,7 @@ class FeatureWish(db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'images': [image.to_dict() for image in self.images],
             'can_edit': viewer_user_id is not None and int(viewer_user_id) == int(self.user_id),
+            'can_delete': bool(viewer_is_admin),
         }
 
 

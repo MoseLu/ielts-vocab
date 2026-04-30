@@ -49,6 +49,11 @@ def update_wish(*, wish: FeatureWish, title: str, content: str) -> FeatureWish:
     return wish
 
 
+def delete_wish(wish: FeatureWish) -> None:
+    db.session.delete(wish)
+    db.session.commit()
+
+
 def replace_images(*, wish: FeatureWish, images: list[dict]) -> FeatureWish:
     wish.images = []
     db.session.flush()
