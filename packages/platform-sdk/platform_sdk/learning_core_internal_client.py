@@ -342,6 +342,48 @@ def sync_learning_core_wrong_words(user_id: int, data: dict | None) -> dict:
     return payload
 
 
+def sync_learning_core_book_progress(user_id: int, data: dict | None) -> tuple[dict, int]:
+    payload, status = _request_json(
+        'POST',
+        '/api/books/progress',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'learning-core book-progress sync request failed: {status}')
+    return payload, status
+
+
+def sync_learning_core_chapter_progress(
+    user_id: int,
+    *,
+    book_id: str,
+    chapter_id: str,
+    data: dict | None,
+) -> tuple[dict, int]:
+    payload, status = _request_json(
+        'POST',
+        f'/api/books/{book_id}/chapters/{chapter_id}/progress',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'learning-core chapter-progress sync request failed: {status}')
+    return payload, status
+
+
+def sync_learning_core_day_progress(user_id: int, data: dict | None) -> tuple[dict, int]:
+    payload, status = _request_json(
+        'POST',
+        '/api/progress',
+        user_id=user_id,
+        json_body=data if isinstance(data, dict) else {},
+    )
+    if _is_boundary_error_status(status):
+        raise RuntimeError(f'learning-core day-progress sync request failed: {status}')
+    return payload, status
+
+
 def fetch_learning_core_game_state_response(user_id: int, args) -> dict:
     payload, status = _request_json(
         'GET',

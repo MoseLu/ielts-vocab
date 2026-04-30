@@ -15,6 +15,7 @@ from platform_sdk.learning_repository_adapters import (
     learning_event_repository,
     legacy_progress_repository,
 )
+from models import UserLearningBookRollup
 from services.learning_activity_service import (
     get_book_rollup_compat_row,
     get_chapter_rollup_compat_row,
@@ -205,6 +206,24 @@ def build_book_progress_response(user_id: int, book_id):
     return {'progress': effective_progress}, 200
 
 
+def _preserve_migrated_book_progress(user_id: int, payload: dict) -> None:
+    book_id = payload.get('book_id')
+    if not book_id:
+        return
+    rollup = UserLearningBookRollup.query.filter_by(user_id=user_id, book_id=book_id).first()
+    if rollup is None:
+        return
+    rollup.current_index = max(int(rollup.current_index or 0), int(payload.get('current_index') or 0))
+    rollup.words_learned = max(int(rollup.words_learned or 0), rollup.current_index)
+    if 'correct_count' in payload:
+        rollup.correct_count = max(int(rollup.correct_count or 0), int(payload.get('correct_count') or 0))
+    if 'wrong_count' in payload:
+        rollup.wrong_count = max(int(rollup.wrong_count or 0), int(payload.get('wrong_count') or 0))
+    if 'is_completed' in payload:
+        rollup.is_completed = bool(rollup.is_completed or payload.get('is_completed'))
+    _commit_user_state()
+
+
 def save_book_progress_response(user_id: int, data: dict | None):
     payload = data or {}
     book_id = payload.get('book_id')
@@ -248,6 +267,8 @@ def save_book_progress_response(user_id: int, data: dict | None):
         )
 
     _commit_user_state()
+    if payload.get('preserve_migrated_snapshot'):
+        _preserve_migrated_book_progress(user_id, payload)
 
     rollup_progress = get_book_rollup_compat_row(user_id, book_id)
     rollup_chapter_records = list_chapter_rollup_compat_rows(user_id, book_id=book_id)

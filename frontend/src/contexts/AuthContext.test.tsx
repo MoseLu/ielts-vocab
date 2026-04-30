@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './AuthContext'
 
 const apiFetchMock = vi.fn()
 const apiRequestMock = vi.fn()
+const migrateLegacyLocalStorageMock = vi.fn()
 const showToastMock = vi.fn()
 
 vi.mock('../lib', async () => {
@@ -17,6 +18,10 @@ vi.mock('../lib', async () => {
     apiRequest: (...args: unknown[]) => apiRequestMock(...args),
   }
 })
+
+vi.mock('../lib/localStorageMigration', () => ({
+  runLegacyLocalStorageMigration: (...args: unknown[]) => migrateLegacyLocalStorageMock(...args),
+}))
 
 vi.mock('./ToastContext', () => ({
   useToast: () => ({ showToast: showToastMock }),
@@ -39,6 +44,8 @@ describe('useAuth', () => {
     setAuthAccessExpiry(null)
     apiFetchMock.mockReset()
     apiRequestMock.mockReset()
+    migrateLegacyLocalStorageMock.mockReset()
+    migrateLegacyLocalStorageMock.mockResolvedValue({ completed: true, attempted: false })
     showToastMock.mockReset()
     vi.mocked(global.fetch).mockReset()
   })
@@ -58,6 +65,8 @@ describe('AuthProvider', () => {
     setAuthAccessExpiry(null)
     apiFetchMock.mockReset()
     apiRequestMock.mockReset()
+    migrateLegacyLocalStorageMock.mockReset()
+    migrateLegacyLocalStorageMock.mockResolvedValue({ completed: true, attempted: false })
     showToastMock.mockReset()
     vi.mocked(global.fetch).mockReset()
   })
@@ -93,6 +102,7 @@ describe('AuthProvider', () => {
     expect(result.current.isAuthenticated).toBe(true)
     expect(result.current.user).toMatchObject(mockUser)
     expect(Number(localStorage.getItem(STORAGE_KEYS.AUTH_ACCESS_EXPIRES_AT))).toBeGreaterThan(Date.now())
+    expect(migrateLegacyLocalStorageMock).toHaveBeenCalledWith(mockUser)
   })
 
   it('clears a cached user when /api/auth/me reports no active session', async () => {
@@ -201,6 +211,7 @@ describe('AuthProvider', () => {
     expect(result.current.user).toMatchObject(mockUser)
     expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH_USER) ?? 'null')).toMatchObject(mockUser)
     expect(localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)).toBeNull()
+    expect(migrateLegacyLocalStorageMock).toHaveBeenCalledWith(mockUser)
   })
 
   it('rejects invalid login responses', async () => {

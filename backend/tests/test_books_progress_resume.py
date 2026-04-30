@@ -1,4 +1,4 @@
-from models import UserChapterProgress
+from models import UserLearningChapterRollup
 
 
 def _register_user(client, username='progress-resume-user'):
@@ -46,11 +46,12 @@ def test_chapter_progress_persists_and_clears_resume_snapshot(client, app):
     assert cleared['words_learned'] == 5
 
     with app.app_context():
-        record = UserChapterProgress.query.filter_by(
+        record = UserLearningChapterRollup.query.filter_by(
             book_id='ielts_reading_premium',
+            mode='meaning',
             chapter_id='chapter-a',
         ).one()
         assert record.words_learned == 5
-        assert int(record.session_current_index or 0) == 0
-        assert record.session_answered_words is None
-        assert record.session_queue_words is None
+        assert int(record.current_index or 0) == 0
+        assert record.answered_words == '[]'
+        assert record.queue_words == '[]'

@@ -9,6 +9,13 @@ from services.learning_attempt_service import ensure_wrong_word_failure
 from services.ai_metric_tracking_service import record_smart_dimension_delta_event
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_service import update_word_mastery_attempt
+from services.ai_wrong_words_service import sync_wrong_words_response
+from services.books_progress_service import (
+    save_book_progress_response,
+    save_chapter_progress_response,
+)
+from services.legacy_progress_service import save_legacy_progress
+from service_models.learning_core_models import UserLearningBookRollup, db
 
 if TYPE_CHECKING:
     from service_models.learning_core_models import UserQuickMemoryRecord
@@ -286,3 +293,152 @@ def sync_smart_stats_response(user_id: int, body: dict | None) -> tuple[dict, in
         ai_smart_word_stat_repository.rollback()
         raise
     return {'ok': True}, 200
+
+
+def _source_result(ok: bool, migrated_count: int = 0, error: str | None = None) -> dict:
+    result = {'ok': ok, 'migrated_count': migrated_count}
+    if error:
+        result['error'] = error
+    return result
+
+
+def _sync_progress_records(user_id: int, source_name: str, records: list[dict]) -> tuple[dict, int]:
+    migrated = 0
+    for record in records:
+        if source_name == 'book_progress':
+            payload, status = save_book_progress_response(user_id, record)
+            _preserve_migrated_book_progress(user_id, record)
+        elif source_name == 'chapter_progress':
+            book_id = str(record.get('book_id') or '').strip()
+            chapter_id = str(record.get('chapter_id') or '').strip()
+            if not book_id or not chapter_id:
+                return {'error': 'book_id and chapter_id are required'}, 400
+            payload, status = save_chapter_progress_response(user_id, book_id, chapter_id, record)
+        else:
+            try:
+                day = int(record.get('day') or 0)
+            except Exception:
+                day = 0
+            if day <= 0:
+                return {'error': 'day is required'}, 400
+            try:
+                payload = {'progress': save_legacy_progress(user_id, record)}
+                status = 200
+            except ValueError as error:
+                return {'error': str(error)}, 400
+        if status >= 400:
+            return payload, status
+        migrated += 1
+    return {'ok': True, 'migrated_count': migrated}, 200
+
+
+def _preserve_migrated_book_progress(user_id: int, record: dict) -> None:
+    book_id = record.get('book_id')
+    if not book_id:
+        return
+    rollup = UserLearningBookRollup.query.filter_by(user_id=user_id, book_id=book_id).first()
+    if rollup is None:
+        return
+    rollup.current_index = max(
+        int(rollup.current_index or 0),
+        _safe_non_negative_int(record.get('current_index')),
+    )
+    rollup.words_learned = max(int(rollup.words_learned or 0), rollup.current_index)
+    if 'correct_count' in record:
+        rollup.correct_count = max(
+            int(rollup.correct_count or 0),
+            _safe_non_negative_int(record.get('correct_count')),
+        )
+    if 'wrong_count' in record:
+        rollup.wrong_count = max(
+            int(rollup.wrong_count or 0),
+            _safe_non_negative_int(record.get('wrong_count')),
+        )
+    if 'is_completed' in record:
+        rollup.is_completed = bool(rollup.is_completed or record.get('is_completed'))
+    db.session.commit()
+
+
+def _run_migration_source(user_id: int, source_name: str, source_payload: dict) -> tuple[dict, int]:
+    if source_name in {'smart_word_stats', 'smart_word_stats_pending'}:
+        stats = source_payload.get('stats', [])
+        if not isinstance(stats, list):
+            return {'error': 'stats must be a list'}, 400
+        payload, status = sync_smart_stats_response(user_id, {'stats': stats})
+        if status >= 400:
+            return payload, status
+        return {'ok': True, 'migrated_count': len(stats)}, 200
+
+    if source_name == 'quick_memory_records':
+        records = source_payload.get('records', [])
+        if not isinstance(records, list):
+            return {'error': 'records must be a list'}, 400
+        payload, status = sync_quick_memory_response(
+            user_id,
+            {'source': 'local_storage_migration_v1_once', 'records': records},
+        )
+        if status >= 400:
+            return payload, status
+        return {'ok': True, 'migrated_count': len(records)}, 200
+
+    if source_name == 'wrong_words':
+        words = source_payload.get('words', [])
+        if not isinstance(words, list):
+            return {'error': 'words must be an array'}, 400
+        payload, status = sync_wrong_words_response(
+            user_id,
+            {'sourceMode': 'local_storage_migration_v1_once', 'words': words},
+        )
+        if status >= 400:
+            return payload, status
+        return {'ok': True, 'migrated_count': len(words)}, 200
+
+    if source_name in {'book_progress', 'chapter_progress', 'day_progress'}:
+        records = source_payload.get('records', [])
+        if not isinstance(records, list):
+            return {'error': 'records must be a list'}, 400
+        return _sync_progress_records(user_id, source_name, records)
+
+    return {'error': 'unsupported migration source'}, 400
+
+
+def run_local_storage_migration_response(user_id: int, body: dict | None) -> tuple[dict, int]:
+    payload = body or {}
+    sources = payload.get('sources') or {}
+    if not isinstance(sources, dict):
+        return {'error': 'sources must be an object'}, 400
+
+    source_order = {
+        'smart_word_stats': 10,
+        'smart_word_stats_pending': 20,
+        'quick_memory_records': 30,
+        'wrong_words': 40,
+        'chapter_progress': 50,
+        'book_progress': 60,
+        'day_progress': 70,
+    }
+    results = {}
+    ordered_sources = sorted(
+        sources.items(),
+        key=lambda item: source_order.get(item[0], 100),
+    )
+    for source_name, source_payload in ordered_sources:
+        if not isinstance(source_payload, dict):
+            results[source_name] = _source_result(False, error='source payload must be an object')
+            continue
+        try:
+            result_payload, status = _run_migration_source(user_id, source_name, source_payload)
+            results[source_name] = (
+                _source_result(True, result_payload.get('migrated_count', 0))
+                if status < 400
+                else _source_result(False, error=str(result_payload.get('error') or f'status {status}'))
+            )
+        except Exception as exc:
+            results[source_name] = _source_result(False, error=str(exc))
+
+    return {
+        # One-shot browser-local-storage backfill. Clients set a user-scoped
+        # marker after every submitted source succeeds and should not re-run it.
+        'migration_task': 'local_storage_migration_v1_once',
+        'sources': results,
+    }, 200

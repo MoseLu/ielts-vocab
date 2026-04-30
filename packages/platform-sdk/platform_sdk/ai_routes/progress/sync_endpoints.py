@@ -1,5 +1,6 @@
 from platform_sdk.ai_sync_application import (
     build_smart_stats_api_response,
+    run_local_storage_migration_api_response,
     sync_quick_memory_api_response,
     sync_smart_stats_api_response,
 )
@@ -30,4 +31,15 @@ def get_smart_stats(current_user: User):
 def sync_smart_stats(current_user: User):
     """Bulk upsert smart-mode word stats. Accepts {stats: [{word, listening, meaning, dictation}]}."""
     payload, status = sync_smart_stats_api_response(current_user.id, request.get_json() or {})
+    return jsonify(payload), status
+
+
+@ai_bp.route('/local-storage-migration', methods=['POST'])
+@token_required
+def run_local_storage_migration(current_user: User):
+    """One-shot migration for legacy browser localStorage learning keys."""
+    payload, status = run_local_storage_migration_api_response(
+        current_user.id,
+        request.get_json() or {},
+    )
     return jsonify(payload), status

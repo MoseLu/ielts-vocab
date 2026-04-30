@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from platform_sdk.ai_progress_sync_application import (
     build_smart_stats_response,
+    run_local_storage_migration_response,
     sync_quick_memory_response,
     sync_smart_stats_response,
 )
@@ -48,3 +49,7 @@ def build_smart_stats_api_response(user_id: int) -> tuple[dict, int]:
 
 def sync_smart_stats_api_response(user_id: int, body: dict | None) -> tuple[dict, int]:
     return sync_smart_stats_response(user_id, body or {})
+
+
+def run_local_storage_migration_api_response(user_id: int, body: dict | None) -> tuple[dict, int]:
+    return run_local_storage_migration_response(user_id, body or {})

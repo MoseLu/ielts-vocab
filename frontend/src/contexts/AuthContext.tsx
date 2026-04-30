@@ -17,6 +17,7 @@ import {
   UserSchema,
   setAuthSessionActive,
 } from '../lib'
+import { runLegacyLocalStorageMigration } from '../lib/localStorageMigration'
 import { useToast } from './ToastContext'
 
 interface AuthContextValue {
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthSessionActive(true)
     setUser(u)
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(u))
+    void runLegacyLocalStorageMigration(u).catch(() => {})
   }
 
   const _clearUser = () => {
