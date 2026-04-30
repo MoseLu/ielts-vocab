@@ -1,7 +1,5 @@
 .practice-session-layout--follow {
-    background:
-        radial-gradient(circle at 18% 10%, rgba(var(--accent-rgb), var(--alpha-8)), transparent 28%),
-        var(--bg-color);
+    background: var(--bg-color);
 }
 
 .follow-mode {
@@ -11,14 +9,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(var(--size-18), 3vh, var(--size-28));
-    padding: clamp(var(--size-20), 4vw, var(--size-40)) clamp(var(--size-16), 4vw, var(--size-36)) calc(var(--size-24) + env(safe-area-inset-bottom));
+    gap: var(--size-28);
+    padding: clamp(var(--size-28), 4.2vw, var(--size-42)) clamp(var(--size-30), 5vw, var(--size-56)) clamp(var(--size-36), 6.2vw, var(--size-50));
     color: var(--text-primary);
     overflow: hidden auto;
 }
 
 .follow-stage {
-    width: min(100%, var(--size-980));
+    width: min(100%, var(--practice-shell-max-width, var(--size-860)));
     display: block;
 }
 
@@ -28,14 +26,13 @@
 
 .follow-focus-panel {
     width: 100%;
-    min-height: clamp(var(--size-420), 56vh, var(--size-560));
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: clamp(var(--size-16), 2.4vw, var(--size-24));
-    padding: clamp(var(--size-24), 4vw, var(--size-38));
-    border-radius: var(--size-34);
-    background: color-mix(in srgb, var(--surface-elevated) var(--mix-96), transparent);
+    gap: var(--size-24);
+    padding: clamp(var(--size-32), 4.2vw, var(--size-36)) clamp(var(--size-28), 4vw, var(--size-34));
+    border-radius: var(--size-36);
+    background: var(--surface-elevated);
     border: var(--size-1) solid var(--surface-border-strong);
     box-shadow: var(--shadow-panel);
 }
@@ -50,7 +47,7 @@
     display: grid;
     grid-template-columns: minmax(var(--size-96), 1fr) auto minmax(var(--size-96), 1fr);
     gap: var(--size-12);
-    margin-bottom: clamp(var(--size-12), 2vw, var(--size-18));
+    margin-bottom: var(--size-18);
 }
 
 .follow-mode-kicker {
@@ -66,7 +63,7 @@
     color: var(--text-tertiary);
     font-size: var(--size-14);
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0;
 }
 
 .follow-favorite-slot {
@@ -77,10 +74,10 @@
 
 .follow-word-row {
     max-width: 100%;
-    font-size: clamp(3rem, 6.5vw, 5.4rem);
-    line-height: 1.04;
+    font-size: var(--size-72);
+    line-height: 1.08;
     font-weight: 800;
-    letter-spacing: calc(var(--size-1) * -1);
+    letter-spacing: 0;
     color: var(--text-primary);
     text-align: center;
     overflow-wrap: anywhere;
@@ -118,7 +115,7 @@
     color: var(--text-secondary);
     background: var(--bg-secondary);
     border: var(--size-1) solid var(--border);
-    font-size: clamp(var(--size-14), 1.6vw, var(--size-18));
+    font-size: var(--size-16);
     font-weight: 700;
     transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
@@ -136,10 +133,10 @@
 .follow-definition-row {
     margin: 0 auto;
     width: min(100%, var(--size-760));
-    padding-top: clamp(var(--size-14), 2vw, var(--size-20));
+    padding-top: var(--size-20);
     border-top: var(--size-1) solid var(--border);
     color: var(--text-secondary);
-    font-size: clamp(var(--size-16), 1.7vw, var(--size-20));
+    font-size: var(--size-18);
     line-height: 1.7;
     justify-content: center;
 }
@@ -178,8 +175,8 @@
 }
 
 .follow-recording-note--near_pass {
-    background: color-mix(in srgb, var(--warning) var(--mix-10), transparent);
-    border-color: color-mix(in srgb, var(--warning) var(--mix-24), transparent);
+    background: var(--warning-bg);
+    border-color: var(--warning);
     color: var(--warning);
 }
 
@@ -191,11 +188,11 @@
 
 .follow-controls {
     justify-content: center;
-    gap: clamp(var(--size-8), 1.8vw, var(--size-14));
+    gap: var(--size-14);
     width: min(100%, var(--size-760));
     padding: var(--size-10);
     border-radius: var(--radius-full);
-    background: color-mix(in srgb, var(--surface-elevated) var(--mix-96), transparent);
+    background: var(--surface-elevated);
     border: var(--size-1) solid var(--surface-border-strong);
     box-shadow: var(--shadow-sm);
 }
@@ -208,29 +205,44 @@
 }
 
 .follow-nav-btn {
+    flex: 0 0 var(--size-96);
     min-width: var(--size-96);
     height: var(--size-46);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--size-16);
     border-radius: var(--radius-full);
     color: var(--text-secondary);
-    background: transparent;
+    background: var(--bg-secondary);
+    border: var(--size-1) solid var(--border);
+    box-shadow: var(--shadow-sm);
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .follow-main-btn {
-    min-width: clamp(var(--size-112), 18vw, var(--size-150));
+    flex: 0 0 var(--size-150);
+    width: var(--size-150);
+    min-width: var(--size-150);
     height: var(--size-52);
     border-radius: var(--radius-full);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--size-8);
+    padding: 0 var(--size-20);
     color: var(--text-inverse);
     background: var(--accent);
     font-weight: 800;
     box-shadow: 0 var(--size-10) var(--size-22) rgba(var(--accent-rgb), var(--alpha-18));
+    white-space: nowrap;
 }
 
 .follow-main-btn--record {
+    flex-basis: var(--size-128);
+    width: var(--size-128);
+    min-width: var(--size-128);
     color: var(--text-primary);
     background: var(--bg-secondary);
     border: var(--size-1) solid var(--border);
@@ -258,6 +270,12 @@
     transform: translateY(calc(var(--size-2) * -1));
 }
 
+.follow-nav-btn:not(:disabled):hover {
+    color: var(--accent);
+    border-color: rgba(var(--accent-rgb), var(--alpha-24));
+    background: rgba(var(--accent-rgb), var(--alpha-8));
+}
+
 .follow-nav-btn:disabled,
 .follow-main-btn:disabled {
     cursor: not-allowed;
@@ -271,9 +289,8 @@
     }
 
     .follow-focus-panel {
-        min-height: min(68svh, var(--size-560));
         border-radius: var(--size-26);
-        padding: clamp(var(--size-20), 6vw, var(--size-30));
+        padding: var(--size-30) var(--size-20);
     }
 
     .follow-panel-top {
@@ -281,7 +298,7 @@
     }
 
     .follow-word-row {
-        font-size: clamp(2.7rem, 15vw, 4.8rem);
+        font-size: var(--size-56);
     }
 
     .follow-definition-row,
@@ -291,6 +308,12 @@
     }
 
     .follow-controls {
+        display: grid;
+        grid-template-columns:
+            minmax(var(--size-72), 1fr)
+            minmax(var(--size-104), 1.1fr)
+            minmax(var(--size-104), 1.1fr)
+            minmax(var(--size-72), 1fr);
         position: fixed;
         left: var(--size-12);
         right: var(--size-12);
@@ -301,14 +324,16 @@
     }
 
     .follow-nav-btn {
+        width: 100%;
         min-width: auto;
         padding-inline: var(--size-10);
         font-size: var(--size-13);
     }
 
     .follow-main-btn {
+        width: 100%;
         min-width: 0;
-        flex: 1;
+        flex: none;
         height: var(--size-52);
     }
 }
