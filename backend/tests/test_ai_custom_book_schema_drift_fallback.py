@@ -18,12 +18,23 @@ class _BrokenSqliteCustomBookQuery:
         )
 
 
+class _MissingPostgresCustomBookQuery:
+    def filter_by(self, **_kwargs):
+        raise RuntimeError(
+            'psycopg2.errors.UndefinedTable: relation "custom_books" does not exist',
+        )
+
+
 class _BrokenCustomBook:
     query = _BrokenCustomBookQuery()
 
 
 class _BrokenSqliteCustomBook:
     query = _BrokenSqliteCustomBookQuery()
+
+
+class _MissingPostgresCustomBook:
+    query = _MissingPostgresCustomBookQuery()
 
 
 def test_get_custom_book_returns_none_when_metadata_columns_are_missing(app, monkeypatch):
@@ -35,6 +46,13 @@ def test_get_custom_book_returns_none_when_metadata_columns_are_missing(app, mon
 
 def test_get_custom_book_returns_none_on_sqlite_schema_drift(app, monkeypatch):
     monkeypatch.setattr(ai_custom_book_repository, 'CustomBook', _BrokenSqliteCustomBook)
+
+    with app.app_context():
+        assert ai_custom_book_repository.get_custom_book(7, 'book-a') is None
+
+
+def test_get_custom_book_returns_none_when_table_is_missing(app, monkeypatch):
+    monkeypatch.setattr(ai_custom_book_repository, 'CustomBook', _MissingPostgresCustomBook)
 
     with app.app_context():
         assert ai_custom_book_repository.get_custom_book(7, 'book-a') is None
