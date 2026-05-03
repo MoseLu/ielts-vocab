@@ -1,0 +1,10 @@
+platform :ios, '15.1'
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+
+target 'IeltsVocabMobile' do
+  config = use_native_modules!
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+end
