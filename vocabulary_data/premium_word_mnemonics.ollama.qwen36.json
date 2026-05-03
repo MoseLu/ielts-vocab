@@ -3,7 +3,7 @@
     "ielts_listening_premium",
     "ielts_reading_premium"
   ],
-  "generated_at": "2026-05-03T21:53:26.211104+00:00",
+  "generated_at": "2026-05-03T22:03:33.503152+00:00",
   "items": {
     "a big difference": {
       "badge": "扩展",
@@ -2982,6 +2982,582 @@
       "source": "premium_word_mnemonics",
       "text": "as-表朝向，-spect 表看，合起来是朝某个方向看过去的样子或方面，如 consider all aspects of the problem 考虑问题的各个方面。",
       "word": "aspects"
+    },
+    "aspirations": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aspire 源自拉丁语 aspirare（吹向），核心义为向上追求，aspirations 即指对成功或目标的强烈渴望。",
+      "word": "aspirations"
+    },
+    "aspirin": {
+      "badge": "谐音",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "谐音“阿斯匹林”，想象头痛时吞下它，疼痛立刻“阿斯匹林”般消散，记住这是镇痛解热消炎药。",
+      "word": "aspirin"
+    },
+    "assembled": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as-表朝向，semble 表结合，assembled 指零件朝一处结合完成装配，或人群集合在一起。",
+      "word": "assembled"
+    },
+    "asserts": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "asserts 强调坚定主张或维护权利，区别于 admit 承认或 assume 假设，如 asserts her rights 维护权利。",
+      "word": "asserts"
+    },
+    "assessed": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as- 表加强，sess 表坐，原指坐在旁边观察评判，assessed 即评估。",
+      "word": "assessed"
+    },
+    "assessment": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as 表加强，sess 表坐，ment 是名词后缀，原指坐在旁边观察记录，引申为评估评定。",
+      "word": "assessment"
+    },
+    "assets": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "asset 单数指资产或有用的人，assets 是复数，常指公司或国家的总资产，如 sell assets 出售资产。",
+      "word": "assets"
+    },
+    "assigned": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "assign 分配任务，assigned 指已分配或指定的，如 assigned seat 指定座位，assigned homework 布置的作业。",
+      "word": "assigned"
+    },
+    "assignment": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as 表加强，sign 标记，ment 名词后缀，合起来是打上标记的任务，如课堂作业或分配的工作。",
+      "word": "assignment"
+    },
+    "assignments": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "assign 分配任务，assignment 指分配出的作业或任务，复数 assignments 即多项作业，如 all assignments 所有作业。",
+      "word": "assignments"
+    },
+    "assist": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义是帮忙，扩展 assist 助手 assistant，协助 assist in doing，援助 assistance，考试常考 assist sb with sth 帮某人做某事。",
+      "word": "assist"
+    },
+    "assistance": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义为帮助，源自 assist 协助，扩展 assist 动词、assistant 助手、assist in doing 协助做某事，考试常考 assist 与 help 近义辨析。",
+      "word": "assistance"
+    },
+    "assistant": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as 表加强，sist 表站立，合起来是站在旁边协助的人，即助理或助手。",
+      "word": "assistant"
+    },
+    "associated": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "associate 联合，-ed 表状态，指有关联的；搭配 be associated with 表示与…相关，如 study associated with research。",
+      "word": "associated"
+    },
+    "association": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as 表加强，soci 表同伴，-ation 是名词后缀，合起来指同伴间的联系，引申为协会或心理联想。",
+      "word": "association"
+    },
+    "assume": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as 表加强，sume 表拿取，合起来是拿过来当作事实，即假定；常搭配 assume responsibility 承担责任。",
+      "word": "assume"
+    },
+    "assumed": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as- 加强，sume 取，合起来是拿过来当作真的，如 assume responsibility 承担（假定由自己负责的）责任。",
+      "word": "assumed"
+    },
+    "assumption": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as 表加强，sume 取，assumption 是拿来做依据的假设；常考 take for granted 的假设，如 his assumption 他的假设。",
+      "word": "assumption"
+    },
+    "assured": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as- 加强，sure 确定，合起来是彻底确定；assure 向…保证，assured 既表确定的，也指过去式。",
+      "word": "assured"
+    },
+    "astonishing": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a- 表加强，ston 源自 stone 石头，-ish 形容词后缀，原指如被石头击中般震惊，引申为令人惊讶的。",
+      "word": "astonishing"
+    },
+    "astronomer": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "astro 表星星，-nomy 表学科，合起来是研究星星的学科天文学，加上 -er 指人，即天文学家。",
+      "word": "astronomer"
+    },
+    "astronomical": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "astro 表星星，nomic 表管理，原指天文学的，引申为像星星数量一样巨大的。",
+      "word": "astronomical"
+    },
+    "at all times": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at all times 强调每时每刻，常与 always 近义辨析，扩展搭配 at any time 随时，at no time 绝不，at times 有时。",
+      "word": "at all times"
+    },
+    "at any time": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at any time 指任何时候，常与 can/could 连用表示随时可做某事，如 at any time of day 一天中的任何时刻。",
+      "word": "at any time"
+    },
+    "at first": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at first 表起先，与 later 后来形成时间对比，如 At first the lesson seemed difficult. 起先觉得难，后来可能变简单。",
+      "word": "at first"
+    },
+    "at least": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at least 表示至少，如 at least five people 至少五人，强调数量底线。",
+      "word": "at least"
+    },
+    "at present": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at present 表现在，对比 at the present time 或 currently；常与 at the moment 互换，用于正式语境描述当前状态。",
+      "word": "at present"
+    },
+    "at risk": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at risk 指处境危险，常与 species 物种、children 儿童连用，如 many species are at risk today 许多物种正面临危险。",
+      "word": "at risk"
+    },
+    "at some stage": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "stage 表阶段，at some stage 指在某个阶段，常与 face challenges 搭配，如大多数人在某个阶段都会面临挑战。",
+      "word": "at some stage"
+    },
+    "at the end of": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "画面：道路尽头（end of the road）的图书馆，对应“在...结尾/末端”的空间位置，如 at the end of the road。",
+      "word": "at the end of"
+    },
+    "at the moment": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at the moment 表此刻，同义扩展 now, currently, at present, right now，考试阅读替换高频。",
+      "word": "at the moment"
+    },
+    "at this stage": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "stage 表阶段，at this stage 指眼下或现阶段，常与 premature（过早）或 final（最终）搭配，如 at this stage of development 在现阶段。",
+      "word": "at this stage"
+    },
+    "ate": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ate 是 eat 的过去式，表示“吃”。记住 eat 的过去式 ate 发音为 /et/，与 letter A 的发音相同，可联想为“吃了A（苹果）”。",
+      "word": "ate"
+    },
+    "athletes": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "athlete 是运动员，athletes 是其复数形式，指多名运动员；常见搭配如 professional athletes（职业运动员）和 Olympic athletes（奥运选手）。",
+      "word": "athletes"
+    },
+    "athletic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "athlet 是运动员，-ic 表形容词，合起来指运动员常有的身强力壮或运动的。",
+      "word": "athletic"
+    },
+    "atlas": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "源自希腊神话大力神 Atlas 擎天，引申为汇集地图的地图册，如 She found France in the atlas。",
+      "word": "atlas"
+    },
+    "atmosphere": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "atmo 表气，sphere 表球，合起来是地球大气层；引申为环境气氛，如 a warm atmosphere 温馨的氛围。",
+      "word": "atmosphere"
+    },
+    "atmospheric": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "atmo 表大气，sphere 表球层，合起来指大气的；如 atmospheric conditions 大气条件。",
+      "word": "atmospheric"
+    },
+    "atoms": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "atom 原子，atoms 是其复数形式，指构成物质的基本微粒，如 Atoms are too small to see. 原子小到看不见。",
+      "word": "atoms"
+    },
+    "attached": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attach 是系上、附加，attached 作形容词表附属的或依恋的，如 attached document 附件，be attached to 依恋某人。",
+      "word": "attached"
+    },
+    "attack": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attack 指主动发起的武力或言语攻击，如敌人攻击城市；对比 assault 侧重突然暴力袭击，criticize 仅指批评。",
+      "word": "attack"
+    },
+    "attacks": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attack 作名词表疾病或情绪的突然发作，如 asthma attacks 哮喘发作；也可指军事攻击或网络攻击。",
+      "word": "attacks"
+    },
+    "attempt": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attempt 强调经过努力尝试，比 try 更正式，常接 to do 或名词，如 attempt to solve 试图解决。",
+      "word": "attempt"
+    },
+    "attend": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at 表朝向，tend 表伸展，合起来是身体朝向某处即出席参加，引申为注意照料。",
+      "word": "attend"
+    },
+    "attendance": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attend 表出席，-ance 表状态，attendance 即出席的状态，如 regular school attendance 规律的上学出勤。",
+      "word": "attendance"
+    },
+    "attended": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attend 表参加或注意，attended 是 attend 的过去式，如 attended a meeting 指参加会议，attended to 指照顾或处理。",
+      "word": "attended"
+    },
+    "attention": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at 表方向，ten 源自 tend 表伸展，合起来是精神向某处伸展即注意；pay attention 集中注意力，attention to 关注某事。",
+      "word": "attention"
+    },
+    "attention to": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attention to 是固定搭配，核心义为“注意；关注”，常与 pay 连用，如 pay attention to the details 注意细节。",
+      "word": "attention to"
+    },
+    "attic": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "想象屋顶阁楼（attic）里堆满旧书，存放不常用的物品，对应中文义“阁楼；顶楼”。",
+      "word": "attic"
+    },
+    "attitude": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at 表方向，tit 表头，-ude 表状态，合起来是头朝向某处的姿态，引申为对事物的态度或看法。",
+      "word": "attitude"
+    },
+    "attitudes": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "at 朝向，titude 状态，朝向某事的状态即态度，如 attitudes toward work 对工作的态度。",
+      "word": "attitudes"
+    },
+    "attract": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attract 由 at 表朝向，tract 表拉，合起来是拉向自己，即吸引。如 attract students 吸引学生。",
+      "word": "attract"
+    },
+    "attracted": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attract 源自拉丁语，前缀 at- 表“朝向”，tract 表“拉”，合起来是“拉向自己”即吸引；attracted 是其过去式，如海报吸引学生。",
+      "word": "attracted"
+    },
+    "attractive": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "attract 吸引，-ive 形容词后缀，合起来表示有吸引力的，如 an attractive salary 有吸引力的薪水。",
+      "word": "attractive"
+    },
+    "attributed": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "tri 表三，tribute 表给予，原指古罗马将战利品分给三部分，引申为把原因归于某处，如 success attributed to hard work 成功归于努力。",
+      "word": "attributed"
+    },
+    "audience": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aud 表听，-ience 是名词后缀，audience 原指听的人，现指观众或听众，如 the audience gave a standing ovation 观众全体起立鼓掌。",
+      "word": "audience"
+    },
+    "audio": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "词根 audi 表听，audio 即音频的，如 audio equipment 音频设备，与 video 视频相对。",
+      "word": "audio"
+    },
+    "auditorium": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aud 听，itorium 表地点，合起来是听声音的礼堂。",
+      "word": "auditorium"
+    },
+    "auditory": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aud 表听，-itory 是形容词后缀，auditory 指听觉的，如 auditory skills 听觉技能。",
+      "word": "auditory"
+    },
+    "aunt": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aunt 姨，扩展 uncle 叔伯舅，auntie 阿姨，aunt's son 表兄/弟，aunt's daughter 表姐/妹，家庭称谓成串记。",
+      "word": "aunt"
+    },
+    "author": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "author 是作者，衍生出 authority 权威（作者即某领域权威），authorise 授权（作者有权决定）。",
+      "word": "author"
     }
   },
   "manifest_version": 1

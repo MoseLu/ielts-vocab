@@ -13,13 +13,16 @@
   "progress_state": "running",
   "requested": 5493,
   "pending": 5493,
-  "enriched": 316,
-  "failed": 4,
+  "enriched": 377,
+  "failed": 7,
   "failed_words": [
     "although",
     "amid",
     "army",
-    "as though"
+    "as though",
+    "at the back",
+    "at the back of",
+    "attempt to"
   ],
   "failure_details": [
     {
@@ -37,45 +40,58 @@
     {
       "word": "as though",
       "reason": "memory note missing definition anchor for as though"
+    },
+    {
+      "word": "at the back",
+      "reason": "memory note missing definition anchor for at the back"
+    },
+    {
+      "word": "at the back of",
+      "reason": "memory note missing definition anchor for at the back of"
+    },
+    {
+      "word": "attempt to",
+      "reason": "memory note missing definition anchor for attempt to"
     }
   ],
   "total_batches": 86,
-  "completed_batches": 5,
+  "completed_batches": 6,
   "coverage": {
     "total_words": 5493,
-    "covered_words": 316,
-    "missing_count": 5177,
+    "covered_words": 377,
+    "missing_count": 5116,
     "missing_sample": [
       "although",
       "amid",
       "army",
       "as though",
-      "aspirations",
-      "aspirin",
-      "assembled",
-      "asserts",
-      "assessed",
-      "assessment",
-      "assets",
-      "assigned",
-      "assignment",
-      "assignments",
-      "assist",
-      "assistance",
-      "assistant",
-      "associated",
-      "association",
-      "assume"
+      "at the back",
+      "at the back of",
+      "attempt to",
+      "authority",
+      "automated",
+      "automatic",
+      "automatically",
+      "automation",
+      "automobiles",
+      "autonomous",
+      "autonomy",
+      "autumn",
+      "availability",
+      "avenue",
+      "average",
+      "avocado"
     ]
   },
   "badge_distribution": {
     "串记": 3,
-    "助记": 9,
-    "扩展": 124,
-    "联想": 14,
-    "词根词缀": 142,
-    "词源": 4,
-    "辨析": 20
+    "助记": 11,
+    "扩展": 145,
+    "联想": 16,
+    "词根词缀": 172,
+    "词源": 6,
+    "谐音": 1,
+    "辨析": 23
   },
   "sample_items": [
     {
@@ -119,5 +135,5 @@
       "text": "a head 作每人解时，常与价格连用如 ten dollars a head 每人十美元；作一头高解时，指物体高出地面的高度。"
     }
   ],
-  "updated_at": "2026-05-03T21:53:26.221615+00:00"
+  "updated_at": "2026-05-03T22:03:33.515004+00:00"
 }

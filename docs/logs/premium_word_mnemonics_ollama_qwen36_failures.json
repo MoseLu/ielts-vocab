@@ -1,10 +1,13 @@
 {
-  "failed_count": 4,
+  "failed_count": 7,
   "failed_words_tail": [
     "although",
     "amid",
     "army",
-    "as though"
+    "as though",
+    "at the back",
+    "at the back of",
+    "attempt to"
   ],
   "failure_details_tail": [
     {
@@ -22,6 +25,18 @@
     {
       "reason": "memory note missing definition anchor for as though",
       "word": "as though"
+    },
+    {
+      "reason": "memory note missing definition anchor for at the back",
+      "word": "at the back"
+    },
+    {
+      "reason": "memory note missing definition anchor for at the back of",
+      "word": "at the back of"
+    },
+    {
+      "reason": "memory note missing definition anchor for attempt to",
+      "word": "attempt to"
     }
   ]
 }
