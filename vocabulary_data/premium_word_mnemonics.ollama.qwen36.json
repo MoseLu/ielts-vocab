@@ -1,0 +1,2988 @@
+{
+  "book_ids": [
+    "ielts_listening_premium",
+    "ielts_reading_premium"
+  ],
+  "generated_at": "2026-05-03T21:53:26.211104+00:00",
+  "items": {
+    "a big difference": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "big difference 表明显差异，对比 slight difference 微小差别，make a big difference 是雅思听力高频搭配，指产生重大影响。",
+      "word": "a big difference"
+    },
+    "a bit": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a bit 表示有点、稍微，如 I am a bit tired 我今天有点累，可作程度副词修饰形容词。",
+      "word": "a bit"
+    },
+    "a couple of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a couple of 表两个或几个，扩展 couple 指夫妻或一对，a couple of friends 指几个朋友，注意与 a few 表几个但数量更模糊的区别。",
+      "word": "a couple of"
+    },
+    "a dozen": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "dozen 表一打（12个），a dozen eggs 是一打鸡蛋，注意 dozen 前无 a 时后接 of，如 two dozen eggs。",
+      "word": "a dozen"
+    },
+    "a few": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a few 表肯定“几个/少许”，修饰可数名词复数；对比 a little 修饰不可数，few 表否定“几乎没有”。",
+      "word": "a few"
+    },
+    "a few more": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a few 表少量，more 表额外，合起来是“再要几个”，如 I need a few more minutes 表示还需要几分钟。",
+      "word": "a few more"
+    },
+    "a great deal of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "deal 本意是交易，a great deal 原指大量交易，引申为大量。常接不可数名词，如 a great deal of time/money，替换 much。",
+      "word": "a great deal of"
+    },
+    "a head": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a head 作每人解时，常与价格连用如 ten dollars a head 每人十美元；作一头高解时，指物体高出地面的高度。",
+      "word": "a head"
+    },
+    "a host of": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "host 本义是主人，主人招待一大群客人，引申为许多；搭配 problems 表示带来了一大堆问题。",
+      "word": "a host of"
+    },
+    "a lot": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a lot 表程度非常，如 a lot of 接名词表大量，a lot 单独作副词修饰动词，考试常考其比较级 a lot more。",
+      "word": "a lot"
+    },
+    "a lot of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a lot of 表许多，后接可数或不可数名词，如 a lot of homework 许多作业，同义替换 many 或 much。",
+      "word": "a lot of"
+    },
+    "a night": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a night 指一个夜晚，如 spend a night 住一晚，常与 at/in 连用表示住宿场景。",
+      "word": "a night"
+    },
+    "a range of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "range 本指一系列或范围，a range of 固定搭配指一系列或一套，如 a range of choices 一系列选择。",
+      "word": "a range of"
+    },
+    "a result of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义为“...的结果”，常接负面原因，如 a result of careless driving 粗心驾驶的结果，对比 by result of 错误用法。",
+      "word": "a result of"
+    },
+    "a series of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a series of 指一连串或一系列，常接可数名词复数，如 a series of tests 一连串测试，强调事件或项目按顺序发生。",
+      "word": "a series of"
+    },
+    "a set of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a set of 表一组，常接 tools 工具、rules 规则、questions 问题，如 a set of new questions 一组新问题。",
+      "word": "a set of"
+    },
+    "a small number of": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a small number of 修饰可数名词，指一小部分；对比 a large amount of 修饰不可数名词，考试阅读中注意区分可数与不可数搭配。",
+      "word": "a small number of"
+    },
+    "a sort of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "sort 表种类，a sort of 指一种或有点，如 a sort of special sauce 是一种特殊的酱汁。",
+      "word": "a sort of"
+    },
+    "a variety of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "variety 表种类，a variety of 指多种多样的，如 a variety of courses 各种课程，区别于 a number of 仅表数量。",
+      "word": "a variety of"
+    },
+    "a whole range of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "range 表范围，a whole range of 指整个范围，搭配 variety 表种类，强调 variety of 各种各样的多样性。",
+      "word": "a whole range of"
+    },
+    "a wide range": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "wide range 指范围宽广，常搭配 of 引出内容，如 a wide range of choices 各式各样的选择，强调种类多。",
+      "word": "a wide range"
+    },
+    "a wide variety of": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "variety 表种类，a wide variety of 是固定搭配，指种类丰富，如 a wide variety of books 各种各样的书。",
+      "word": "a wide variety of"
+    },
+    "abandoned": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ab 表离开，band 是带子，-ed 表状态，离开带子即被遗弃，如 abandoned house 被遗弃的房子。",
+      "word": "abandoned"
+    },
+    "ability": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义是能做某事的内在能力，常接 to do 或 of doing。同族有 able 能干的、enable 使能够、disable 使丧失能力。",
+      "word": "ability"
+    },
+    "aboard": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a- 表在…上，board 指船板或甲板，合起来即登上船、车、飞机等交通工具。",
+      "word": "aboard"
+    },
+    "above": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "above 表在…上面，上述的，常与 mentioned 搭配成 above mentioned 指上述提到的，与 below 相对。",
+      "word": "above"
+    },
+    "abroad": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a- 表向，brod 古义为道路，合起来就是走向远方，引申为在国外或出国，如 study abroad 出国留学。",
+      "word": "abroad"
+    },
+    "absence": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ab 表离开，sence 表存在，离开存在即缺席或缺乏，如 his absence 他的缺席。",
+      "word": "absence"
+    },
+    "absolute": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ab 表离开，sol 表站立，合起来是脱离外界干扰的，引申为完全的、绝对的信心。",
+      "word": "absolute"
+    },
+    "absolutely": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "abs 表离开，olute 来自 solv 松开，原义是彻底松开束缚，引申为绝对地、完全地，如 absolutely the best 表示毫无保留地最好。",
+      "word": "absolutely"
+    },
+    "absorb": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ab 表离开，sorb 表吸收，合起来指把东西吸进体内，如海绵吸水，也引申为全神贯注理解知识。",
+      "word": "absorb"
+    },
+    "abstract": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ab 表离开，tract 表拉，拉离具体事物就是抽象的；作名词指从全文中拉出的摘要。",
+      "word": "abstract"
+    },
+    "abundance": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ab 表朝向，bund 表涌出，-ance 是名词后缀，合起来指大量涌出，对应丰富充足，如 an abundance of flowers 花朵丰富。",
+      "word": "abundance"
+    },
+    "abundant": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ab 表朝向，bund 表边界，原指水满溢出边界，引申为丰富的充裕的，如 abundant sunshine 阳光充足。",
+      "word": "abundant"
+    },
+    "abuse": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ab 表离开，use 是用，离开正当用途就是滥用或虐待，如 abuse power 滥用权力。",
+      "word": "abuse"
+    },
+    "academia": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "academia 指学术界，同根 academic 是学术的，academician 是院士，常与 in academia 搭配表示在学术圈里。",
+      "word": "academia"
+    },
+    "academic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "academy 是学院，-ic 表形容词，academic 指学院的，引申为学术的或指大学教师学者。",
+      "word": "academic"
+    },
+    "academy": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "acad 源自希腊学者聚集的阿卡德米学园，emy 表地点，合指专门培养人才的学院，如 music academy 音乐学院。",
+      "word": "academy"
+    },
+    "accelerate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac- 表方向，celerate 源自 celer 快速，合起来就是加速；acceleration 是名词加速。",
+      "word": "accelerate"
+    },
+    "accept": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表朝向，cept 表拿，合起来是朝你伸手去拿，引申为接受或认可，如 accept the job offer 接受工作邀请。",
+      "word": "accept"
+    },
+    "acceptable": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "accept 表接受，-able 表可…的，合起来是可接受的，如 acceptable standards 可接受的标准。",
+      "word": "acceptable"
+    },
+    "acceptance": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac-表朝向，cept 表拿取，合起来是伸手去拿并认可，如 his acceptance was immediate 指他立刻接受。",
+      "word": "acceptance"
+    },
+    "access": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表朝向，cess 表走，合起来是走向某处从而获得接触或使用的权利，如 access this room 进入房间。",
+      "word": "access"
+    },
+    "accessible": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "access 表进入，accessible 指可进入的或易接近的，如图书馆 accessible to all 对所有人开放，也可指信息简单易懂。",
+      "word": "accessible"
+    },
+    "accidental": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表加强，cident 表落下，accident 是意外事故，accidental 指由意外导致的偶然的。",
+      "word": "accidental"
+    },
+    "accidentally": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 加强 + cident 降临 + -ally 副词后缀，原指事件突然降临，引申为意外地，如 accidentally deleted 不小心删除。",
+      "word": "accidentally"
+    },
+    "accidents": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表朝向，cid 表发生，accident 指偶然发生的事故，复数 accidents 指多起事故，如 traffic accidents 交通事故。",
+      "word": "accidents"
+    },
+    "accommodate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表加强，com 表共同，mod 表方式，ate 动词后缀，合起来是调整方式让大家共同舒适，引申为容纳或提供住宿。",
+      "word": "accommodate"
+    },
+    "accommodation": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表加强，mod 表居住，ation 是名词后缀，合起来指加强居住条件，即住处或膳宿。",
+      "word": "accommodation"
+    },
+    "accompanied": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表朝向，company 是同伴，accompany 即走向同伴去陪伴，accompanied 是伴随或伴奏的过去分词。",
+      "word": "accompanied"
+    },
+    "accomplish": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表加强，com 表共同，plish 表完成，合起来就是齐心协力把事做成，实现目标。",
+      "word": "accomplish"
+    },
+    "accomplished": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表加强，com 表共同，plish 表完成，合起来就是彻底完成，引申为技艺高超的。",
+      "word": "accomplished"
+    },
+    "accomplishment": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac-表加强，complet 表完成，-ment 是名词后缀，合起来指完成某事后的成就或完成状态。",
+      "word": "accomplishment"
+    },
+    "according": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "accord 表一致，according to 是固定搭配，意为“根据”或“符合”，如 according to the plan 符合计划。",
+      "word": "according"
+    },
+    "according to": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "根据最新研究，根据常接数据或消息源，如 according to the report，注意与 in accordance with 近义辨析。",
+      "word": "according to"
+    },
+    "account": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表加强，count 是数，合起来是仔细数账目，引申为账户或说明，如 account for 解释原因。",
+      "word": "account"
+    },
+    "account for": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "account for 表占比例或解释原因，如 Young people account for most users. 年轻人占大多数用户。",
+      "word": "account for"
+    },
+    "accumulate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表朝向，cumul 表堆积，累加在一起就是积累。积累财富 wealth 或经验 experience 都可用此词。",
+      "word": "accumulate"
+    },
+    "accuracy": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义为精确准确。同根词 accurate 准确的，accurately 准确地，accuracy 精确性准确度。",
+      "word": "accuracy"
+    },
+    "accurate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac- 表加强，cur 表关心，准确就是反复关心细节，如 accurate data 精确数据。",
+      "word": "accurate"
+    },
+    "achieve": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a- 表加强，chive 源自拉丁语 capere（拿取），合起来是牢牢拿到手，引申为完成目标或获得成就。",
+      "word": "achieve"
+    },
+    "achievement": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "achieve 表达成，-ment 是名词后缀，合起来指达成目标后的成就或成绩。",
+      "word": "achievement"
+    },
+    "acid": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "acid 酸性的，核心义是腐蚀性强；扩展 acid rain 酸雨、acid test 关键考验，考试常考其引申义“尖锐的”。",
+      "word": "acid"
+    },
+    "acknowledge": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表朝向，know 是知道，合起来是让对方知道即承认；acknowledge 常接事实或错误，如承认报告中的错误。",
+      "word": "acknowledge"
+    },
+    "acknowledged": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表朝向，know 是知道，edge 是边缘，合起来是走到知道的范围边缘，引申为公开承认。",
+      "word": "acknowledged"
+    },
+    "acknowledgement": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ack 表朝向，know 是知道，-ment 是名词后缀，合起来是让对方知道你的存在或心意，常用于收到礼物或帮助后的致谢。",
+      "word": "acknowledgement"
+    },
+    "acoustics": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "acous 表听，-ics 表学科，acoustics 指声学或音响效果，如 concert hall 的 acoustics 指厅内声音传播效果。",
+      "word": "acoustics"
+    },
+    "acquire": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac-表朝向，quire 表寻找，合起来是朝着目标寻找并得到，对应获得技能或知识，如 acquire skills。",
+      "word": "acquire"
+    },
+    "acres": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "acres 是 acre 的复数，指英亩（面积单位），常用于描述农场、土地面积，如 cover fifty acres 占地五十英亩。",
+      "word": "acres"
+    },
+    "across": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ac 表朝向，cross 是十字/交叉，合起来是朝交叉方向穿过，如 bird flew across the river 鸟横穿河流。",
+      "word": "across"
+    },
+    "act": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "act 源自 agere 表驱动，核心义是行动或表现，如 act quickly 迅速行动，也可指 n. 法令或戏剧中的幕。",
+      "word": "act"
+    },
+    "act as": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "act as 充当，如 act as a guide 充当指南；扩展 act for 代理，act on 遵循，act out 上演。",
+      "word": "act as"
+    },
+    "action": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "action 指具体行动，take action 采取行动，action movie 动作片，in action 行动中。",
+      "word": "action"
+    },
+    "activated": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "activate 表激活，activated 是过去分词，指被激活的或活性化的，如烟雾激活警报器。",
+      "word": "activated"
+    },
+    "activation": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "动词 activate 表激活，加后缀 -ion 变名词 activation 指激活的过程或状态，如激活码 activation code。",
+      "word": "activation"
+    },
+    "active": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "active 活跃的，来自 act 行动，action 是行动，actively 是积极地，保持 active 就是持续行动不偷懒。",
+      "word": "active"
+    },
+    "activists": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "activist 指为某事业奔走呼号的积极分子，复数 activists 即一群活动家；同族 active 积极的，action 行动，常出现在环保、人权等社会议题语境中。",
+      "word": "activists"
+    },
+    "activities": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "activity 的复数，指具体活动。常见搭配：outdoor activities 户外活动，school activities 学校活动。",
+      "word": "activities"
+    },
+    "actor": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "act 表行动，actor 是行动的人即演员，同族 actress 指女演员，action 是行动，active 是积极的。",
+      "word": "actor"
+    },
+    "actors": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "actor 是演员，actors 是其复数，指多位男演员或演员群体，如 the actors performed on the main stage 男演员们在主舞台表演。",
+      "word": "actors"
+    },
+    "adapt": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，apt 表合适，合起来就是调整自身朝向合适环境，如动物适应生存或改编剧本。",
+      "word": "adapt"
+    },
+    "adapt to": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "adapt to 适应，adapt 本身是调整，to 指向目标，如 adapt to local culture 适应当地文化；扩展 adaptability 适应性，adaptable 可适应的。",
+      "word": "adapt to"
+    },
+    "adaptation": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，apt 表合适，-ation 是名词后缀，合起来是朝向合适状态的过程，即适应；也可指将小说改编为电影的作品。",
+      "word": "adaptation"
+    },
+    "adapted": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，apt 表合适，adapt 是使合适即适应，adapted 是已适应或改编成的状态。",
+      "word": "adapted"
+    },
+    "adapter": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "adapt 改编，adapter 是适配器或改编者，如电源适配器可转电压，也可指改编者。",
+      "word": "adapter"
+    },
+    "adaptive": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "adapt 是适应，-ive 表形容词，adaptive 指有适应能力的；同族 adaptability 适应力，adaptation 改编或适应。",
+      "word": "adaptive"
+    },
+    "add": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，-d 为词干，合起来指向某物添加。如 add salt 往汤里加盐，add 补充说时用于引出额外信息。",
+      "word": "add"
+    },
+    "add to": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "add to 表增加，扩展搭配 add to the pressure 增加压力，add to the confusion 加剧混乱，考试常考其抽象层面的累积效应。",
+      "word": "add to"
+    },
+    "added": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "add 加，added 作动词是增加，作形容词指附加的；如 added value 附加值，added weight 额外分量。",
+      "word": "added"
+    },
+    "addiction": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，dict 表说，原指被命令束缚，现指对某事上瘾，如 addiction to smoking 吸烟成瘾。",
+      "word": "addiction"
+    },
+    "addicts": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "addict 作动词是沉迷，加复数 -s 成 addicts 瘾君子；drug addicts 吸毒者，需 medical help 医疗帮助。",
+      "word": "addicts"
+    },
+    "addition": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "add 是增加，addition 是增加物或补充，如 a great addition 很好的补充；同族还有 additional 额外的。",
+      "word": "addition"
+    },
+    "additional": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "add 加，-ition 名词后缀，-al 形容词后缀，addition 是增加，additional 就是额外的；对比 extra 强调多余，additional 侧重补充所需。",
+      "word": "additional"
+    },
+    "address": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，dress 表整理，合起来是朝问题方向整理，引申为解决；也可指写地址或发表演讲。",
+      "word": "address"
+    },
+    "adept": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，deft 表灵巧，合起来就是朝着灵巧方向发展的，形容对某事非常擅长或熟练。",
+      "word": "adept"
+    },
+    "adequate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，equ 表相等，-ate 是形容词后缀，合起来是“达到相等标准”即足够的，如 adequate for university study 足以应对大学学习。",
+      "word": "adequate"
+    },
+    "adjust": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，just 表公正/合适，合起来就是调整到合适的状态，如 adjust my schedule 调整日程。",
+      "word": "adjust"
+    },
+    "adjustable": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "adjust 是调整，-able 表可…的，adjustable 就是可调整的；搭配 adjustable height 可调节高度，如办公椅可升降。",
+      "word": "adjustable"
+    },
+    "administered": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad-表方向，min-表手，-ister表执行，合起来是动手执行管理；administered 指过去给予或管理，如护士接种疫苗。",
+      "word": "administered"
+    },
+    "administration": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表方向，min 表服务，istr 表执行，ation 是名词后缀，合起来指执行管理事务的行政或管理部门。",
+      "word": "administration"
+    },
+    "administrative": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad-表方向，ministr 表服务，-ative 是形容词后缀，合起来指负责服务与管理的行政的，如 administrative tasks 行政任务。",
+      "word": "administrative"
+    },
+    "administrator": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "admin 表加强，istr 表服务，ator 表人，合起来是加强服务的人即管理人员，常处理日常事务。",
+      "word": "administrator"
+    },
+    "admission": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，mit 表放，合起来是放进来允许进入，如大学入学 admission；也可指承认错误。",
+      "word": "admission"
+    },
+    "admit": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad-表朝向，mit 表放，合起来是放自己进入某处，引申为承认错误。常搭配 admit to doing 承认做了某事。",
+      "word": "admit"
+    },
+    "adolescents": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，les 表生长，合指正朝成年生长的青少年，如 adolescents 需要学校支持。",
+      "word": "adolescents"
+    },
+    "adopt": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "adopt 采纳方案或技术，adopt 孩子；adapt 适应环境，勿混。",
+      "word": "adopt"
+    },
+    "adopted": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，opt 表选择，adopt 即选择并接纳，adopted 指收养或采纳。",
+      "word": "adopted"
+    },
+    "adults": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "adult 指成熟的个体，adults 是其复数形式，指多个成人。对比 child（儿童），adults 强调已具备完全行为能力的人群，如 adults need sleep。",
+      "word": "adults"
+    },
+    "advance": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，vance 来自拉丁语 vadere 行走，合起来是向前走，引申为前进、提前或发展。",
+      "word": "advance"
+    },
+    "advanced": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "advance 表前进，advanced 作形容词指技术或水平“先进的、高级的”，如 advanced technology 先进技术。",
+      "word": "advanced"
+    },
+    "advancement": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表方向，vance 表前进，-ment 是名词后缀，合起来指向前走的进步或职位晋升。",
+      "word": "advancement"
+    },
+    "advantage": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，vantage 源自 view 看，合起来是“朝有利方向看”的优势；advantage over 表示比…有优势。",
+      "word": "advantage"
+    },
+    "advent": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，vent 表来，合起来是到来，如 the advent of the internet 互联网的到来。",
+      "word": "advent"
+    },
+    "adventure": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad-表朝向，venture 源自拉丁语 venturus（将到来），合起来指走向未知的冒险经历，如 adventure stories 冒险故事。",
+      "word": "adventure"
+    },
+    "adverse": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad-表朝向，vers 表转，转向不利方向即不利的；adverse conditions 指不利条件，常与 weather、effects 搭配。",
+      "word": "adverse"
+    },
+    "adversity": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，vers 表转向，合起来指命运转向不利方向，即逆境，常与 in adversity 搭配。",
+      "word": "adversity"
+    },
+    "advert": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "advert 是 advertisement 的口语简写，指电视或网络上的广告。",
+      "word": "advert"
+    },
+    "advertise": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，vert 表转，合起来是转向注意，引申为登广告，常见搭配 advertise online 在网上登广告。",
+      "word": "advertise"
+    },
+    "advertisement": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad-表向，vert 表转，合起来是转向大众注意。扩展：advertise 动词广告，advertiser 广告商，ad 口语缩写。",
+      "word": "advertisement"
+    },
+    "advertising": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "advertise 是打广告，advertising 是广告活动或广告业，如广告在现代商业中起重要作用。",
+      "word": "advertising"
+    },
+    "advice": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "advice 是不可数名词，指建议或意见，不可加 s；对比可数名词 advise 是动词，表示建议。",
+      "word": "advice"
+    },
+    "advise": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，vis 表看，合起来是朝对方看去给出意见，即向…提出建议；劝告。",
+      "word": "advise"
+    },
+    "advisor": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "advisor 顾问，advice 建议，advise 建议，advisory 咨询的，adviser 顾问。",
+      "word": "advisor"
+    },
+    "advocates": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ad 表朝向，voc 表声音， advocates 是发出声音支持的人，即提倡者。",
+      "word": "advocates"
+    },
+    "aerobic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aer 表空气，-obic 表性质，合起来指需空气的，引申为有氧的，如 aerobic exercise 有氧运动。",
+      "word": "aerobic"
+    },
+    "aesthetic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aesthet 表感知，ic 是形容词后缀，合起来指与感知美相关的审美的；常搭配 aesthetic sense 审美感。",
+      "word": "aesthetic"
+    },
+    "affect": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "affect 作动词指主动影响，如天气影响心情；勿与名词 effect 混淆，后者表结果或影响。",
+      "word": "affect"
+    },
+    "afflicted": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "af- 表加强，flict 表打击，合起来指被持续打击而受折磨的，如 be afflicted by drought 遭受干旱折磨。",
+      "word": "afflicted"
+    },
+    "afford": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "afford 强调经济上买得起或时间精力上负担得起，常与 can/could 连用，区别于 simply buy 仅指购买动作。",
+      "word": "afford"
+    },
+    "affordable": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "afford 是买得起，加 -able 变形容词，指价格合适、支付得起的，如 affordable housing 负担得起的住房。",
+      "word": "affordable"
+    },
+    "afraid": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a- 表状态，fray 源自拉丁语 frendere 磨牙（恐惧时咬牙），afraid 即处于恐惧磨牙的状态，对应害怕的。",
+      "word": "afraid"
+    },
+    "afterwards": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "after 表之后，-wards 表方向，合起来指时间上的后来或然后，如 afterwards to review 复习演示材料。",
+      "word": "afterwards"
+    },
+    "again": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a 表再次，gain 表获得，合起来是再次获得，对应再次；又一次。",
+      "word": "again"
+    },
+    "against": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "against 核心是“反向接触”，lean against 靠在墙上，fight against 反对，against the wind 逆风，画面是身体或意志顶着外力。",
+      "word": "against"
+    },
+    "agencies": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "agency 是代理处，复数 agencies 指多个代理机构，如 job agencies 职业介绍所。",
+      "word": "agencies"
+    },
+    "agency": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "agent 代理人，agency 是机构或代理处，如 government agency 政府机构。",
+      "word": "agency"
+    },
+    "agenda": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ag 表加强，enda 表要做的事，议程就是会议中要优先处理的事项，如 the political agenda 政治议程。",
+      "word": "agenda"
+    },
+    "agent": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "agent 核心是“中介者”，如 travel agent 旅行代理人；同族 agency 指代理机构，agent 也可指药剂或动因。",
+      "word": "agent"
+    },
+    "agents": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "agent 是代理，复数 agents 指多个代理人；常见搭配 travel agents 旅行社代理，help you book 帮你预订。",
+      "word": "agents"
+    },
+    "ages": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "age 表年龄或时代，ages 作复数指漫长的岁月或时代，如 over the ages 在漫长的岁月中。",
+      "word": "ages"
+    },
+    "aggressive": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ag-表朝向，gress 表走，合起来是朝前走，引申为有进取心或攻击性。",
+      "word": "aggressive"
+    },
+    "ago": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ago 表“以前”，常与时间段连用，如 three years ago 三年前，强调从过去某点回溯到现在。",
+      "word": "ago"
+    },
+    "agree": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "agree 强调双方意见一致或达成共识，如 agree with sb 同意某人观点；区别于 accept 侧重接受事实，consent 侧重正式许可。",
+      "word": "agree"
+    },
+    "agreement": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "agree 表同意，-ment 是名词后缀，合起来指双方意见一致的协议或共识。",
+      "word": "agreement"
+    },
+    "agricultural": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "agri 表田地，culture 表耕作，合起来指农业的，如 agricultural methods 农业方法。",
+      "word": "agricultural"
+    },
+    "agriculture": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "agri 表田地，culture 表耕作，合起来就是田地里耕作的农业。",
+      "word": "agriculture"
+    },
+    "ahead": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ahead 表“在前、提前”，画面是走在前面。Plan ahead 提前计划，可联想考试前复习，避免问题。",
+      "word": "ahead"
+    },
+    "aid": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义为帮助，常与 help 近义但更正式。扩展搭配：first aid 急救，aid sb with sth 协助某事，financial aid 经济援助。",
+      "word": "aid"
+    },
+    "ailment": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ail 表生病，ment 是名词后缀，合起来指小病或轻病，如 minor ailment 小恙。",
+      "word": "ailment"
+    },
+    "aim to": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aim 本意是瞄准，aim to 就是瞄准某个目标去做，如 aim to finish 瞄准完成，表示打算或目标在于某事。",
+      "word": "aim to"
+    },
+    "aims": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aim 作动词是瞄准、旨在，aims 是其复数名词，指具体设定的目标或目的，如 our main aims are clear 我们的主要目标很明确。",
+      "word": "aims"
+    },
+    "air": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "air 指空气或空中，常见搭配 fresh air 新鲜空气，扩展 air conditioning 空调，airline 航空公司。",
+      "word": "air"
+    },
+    "air conditioning": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "air conditioning 指空调系统，常缩写为 AC；扩展搭配 central air conditioning 中央空调，helps keep the room cool 帮助保持房间凉爽。",
+      "word": "air conditioning"
+    },
+    "air pollution": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "air pollution 指空气污染，常与 reduce 减排、tackle 治理搭配，如 reduce air pollution 减少空气污染。",
+      "word": "air pollution"
+    },
+    "aircraft": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aircraft 是航空器总称，单复数同形。扩展：airplane 指普通飞机，helicopter 指直升机，spacecraft 指航天器。",
+      "word": "aircraft"
+    },
+    "airline": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "air 空气+line 航线，指在航线上飞行的航空公司，如 airline ticket 机票。",
+      "word": "airline"
+    },
+    "airlines": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "airline 是航空公司，复数 airlines 指多家航司；常见搭配 international airlines 国际航空公司，help airlines 帮助航空公司。",
+      "word": "airlines"
+    },
+    "airport": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "air 是空气，port 是港口，合起来就是飞机起降的航空港，如 airport lounge 机场休息室。",
+      "word": "airport"
+    },
+    "alarm": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "警报响起时心跳加速，alarm 作动词指使惊恐，如 news alarm the team 消息令团队惊恐。",
+      "word": "alarm"
+    },
+    "alarming": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "al 表加强，arm 是武装，-ing 表状态，合起来是武装到让人惊恐的，如 The news is alarming 消息令人恐慌。",
+      "word": "alarming"
+    },
+    "alcohol": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "源自阿拉伯语 al-kuhl（粉末/精华），原指精细的蒸馏物，现专指含酒精的饮料或酒精本身。",
+      "word": "alcohol"
+    },
+    "alert": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "al 表加强，ert 源自 alertus 警觉，合起来即高度警觉的；alert 作名词指警报，作动词指使警惕。",
+      "word": "alert"
+    },
+    "algae": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "藻类在温暖水中快速生长，想象池塘里绿色的藻类覆盖水面。",
+      "word": "algae"
+    },
+    "alien": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ali 表其他，alien 指外来的、陌生的，如 alien visitor 外星人，与 familiar 熟悉的形成对比。",
+      "word": "alien"
+    },
+    "aligned": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "align 表排列整齐，aligned 指观点或利益与经理想法一致，同族有 alignment 对齐。",
+      "word": "aligned"
+    },
+    "alike": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "alike 作表语或后置定语，强调两者或多者相似，如 twins look alike；同根名词 similarity 表相似性，注意不与 similar 混用，similar 可前置修饰名词。",
+      "word": "alike"
+    },
+    "alive": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "alive 作表语强调活着的生命状态或活跃，如 be alive；对比 living 可前置定语，live 多指现场直播。",
+      "word": "alive"
+    },
+    "all around": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "all around 表周围，扩展 look all around 四处看，与 all over 四处覆盖近义，注意 all around 更强调环绕感。",
+      "word": "all around"
+    },
+    "all over": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "all over 表示到处或结束，如 The mess is all over the floor 指地板上到处都是混乱，场景画面感强。",
+      "word": "all over"
+    },
+    "all year round": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "all year round 指一年到头，与 all year long 同义，常搭配 warm/cold 等形容词描述气候或状态。",
+      "word": "all year round"
+    },
+    "allergic": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "allergy 过敏，allergic 过敏的，allergen 过敏原，be allergic to 对…过敏。",
+      "word": "allergic"
+    },
+    "allergies": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "allergy 是过敏症，复数 allergies 指多种过敏源；常见搭配 food allergies 食物过敏，sneeze 打喷嚏是典型症状。",
+      "word": "allergies"
+    },
+    "alleviate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "al 表加强，lev 是轻，ate 动词后缀，合起来就是让负担变轻，对应减轻疼痛或缓解压力。",
+      "word": "alleviate"
+    },
+    "allocate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "al 表加强，locate 表放置，合起来就是把资源加强放置到指定位置，如 allocate time 分配时间。",
+      "word": "allocate"
+    },
+    "allocated": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "allocate 分配，allocation 分配方案，allocator 分配者，reallocate 重新分配，government allocated funds 政府拨款。",
+      "word": "allocated"
+    },
+    "allow": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "allow 强调规则或权威正式许可，permit 偏法律允许，let 最口语化；allow sb to do 是考试高频结构。",
+      "word": "allow"
+    },
+    "allow for": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "allow for 表示考虑到或留出余地，如 allow for delays 留出延误时间，allow for cost 考虑成本。",
+      "word": "allow for"
+    },
+    "almost": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "al 像 all 表全部，most 表最多，合起来是差一点就全部，几乎完成。",
+      "word": "almost"
+    },
+    "alone": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "alone 强调客观上的“单独”无陪伴，如 She lives alone；lonely 侧重主观“孤独”感，两者不可混用。",
+      "word": "alone"
+    },
+    "along": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "along 表沿着，联想画面：人沿着河岸走。along with 是固定搭配，意为“除…之外还”，如 along with tech 指除了技术之外。",
+      "word": "along"
+    },
+    "alongside": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "along 表沿着，side 表旁边，合起来指在…旁边或与…一起，如新公园建在河边。",
+      "word": "alongside"
+    },
+    "alphabet": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "源自希腊字母 alpha 和 beta，合起来就是字母表，如 children learn the alphabet in school 孩子们在学校学习字母表。",
+      "word": "alphabet"
+    },
+    "already": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "al 全 + ready 准备好，事情已准备齐全，状态已经达成，如 The movie has already started 电影已经开始了。",
+      "word": "already"
+    },
+    "alright": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "al 表全部，right 表正确，合起来是全部正确，引申为状况良好或表示同意好吧。",
+      "word": "alright"
+    },
+    "alter": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "alter 指对已有事物做局部改动或调整，如 alter a dress 改衣服；区别于 change 彻底改变或 replace 替换。",
+      "word": "alter"
+    },
+    "alteration": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "alter 表改变，加后缀 -ation 变名词，指对政策、计划等的修改，如 alteration to the policy。",
+      "word": "alteration"
+    },
+    "altered": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "al 表加强，ter 表边界，合起来是改变边界即变更；如 design was altered 指设计被修改。",
+      "word": "altered"
+    },
+    "alternative": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "alter 表另一个，-ative 表形容词，合起来指供替代的选择，如 We have no alternative but to wait 别无选择只能等待。",
+      "word": "alternative"
+    },
+    "alternatively": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义为“另一种选择”，源自 alternate 交替。常与 or 连用或单独使用，表示“或者；作为一种选择”，如 alternatively, hand them in at the office。",
+      "word": "alternatively"
+    },
+    "altitude": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "alt 表高，itude 是名词后缀，altitude 指海拔高度，如高海拔使呼吸困难。",
+      "word": "altitude"
+    },
+    "altogether": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "all 表全部，together 表一起，合起来就是全部加在一起，引申为总共或完全。",
+      "word": "altogether"
+    },
+    "amateur": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "am 表方向，ateur 表人，合起来指非职业方向的人即业余爱好者，如 amateur chess player 业余棋手。",
+      "word": "amateur"
+    },
+    "amazing": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a- 表加强，maze 迷宫，原指让人迷失方向，引申为令人惊异的。",
+      "word": "amazing"
+    },
+    "amazon": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "Amazon 是南美洲最大河流，流经雨林，联想其庞大水量与地理重要性，助记“亚马逊河”。",
+      "word": "amazon"
+    },
+    "amazonian": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "Amazonian 指亚马逊的，源自 Amazon 亚马逊河/雨林，常搭配 Amazonian rainforest 亚马逊雨林或 Amazonian tribes 亚马逊部落。",
+      "word": "amazonian"
+    },
+    "amber": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "琥珀 amber 是远古松脂化石，呈温暖琥珀色，如 amber gemstone 在光下发光。",
+      "word": "amber"
+    },
+    "ambitions": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "amb 表朝向，ition 表行为，合起来是朝目标前进的野心或抱负，如 her ambitions led her to study abroad 她的抱负促使她留学。",
+      "word": "ambitions"
+    },
+    "ambitious": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "amb 表向、向里，it 表走，ambitious 原指走在前面的人，引申为有雄心的，如 ambitious student 有雄心的学生。",
+      "word": "ambitious"
+    },
+    "among": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "among 表在…之间，画面是站在朋友中间，强调三者及以上群体中的位置。",
+      "word": "among"
+    },
+    "amongst": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "amongst 是 among 的正式变体，两者都表示“在…当中”，amongst 更常用于文学或正式语境，如 She was amongst the best students.",
+      "word": "amongst"
+    },
+    "amount": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "a-表向，mount 山，合起来是向山上堆叠，引申为数量或总额；a large amount of 后接不可数名词，如 a large amount of work。",
+      "word": "amount"
+    },
+    "an increase in": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "an increase in 表在……方面的增加，如 an increase in population 人口增长，也可扩展为 a rise in 或 a growth in 同义替换。",
+      "word": "an increase in"
+    },
+    "analyse": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "analyse 分析，同族 analysis 分析（名词），analytical 分析的（形容词），常用于 analyse data 分析数据。",
+      "word": "analyse"
+    },
+    "analyses": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "analyses 是 analysis 的复数，指多项分析结果；如 the analyses show clear patterns 分析显示数据中明显的模式。",
+      "word": "analyses"
+    },
+    "analysis": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ana 表向上、完全，lysis 表松开，合起来是彻底拆开来看，对应分析。",
+      "word": "analysis"
+    },
+    "analysts": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "analyst 指分析者，复数加 s 成 analysts；同族有 analyze 分析、analysis 分析过程，金融分析师常研究市场趋势。",
+      "word": "analysts"
+    },
+    "analytical": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义为分析，来自 analyze 动词，扩展同族词 analysis 名词分析，analytically 副词地，常用于 analytical mind 善于分析的头脑。",
+      "word": "analytical"
+    },
+    "ancestors": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "an 前缀表强调，cestor 源自拉丁语 cōnsēsor（祖先），ancestors 即祖先，如 Our ancestors lived very different lives.",
+      "word": "ancestors"
+    },
+    "ancestral": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ancest 是祖先，-or 表人，ancestral 是祖先的，如 ancestral home 祖屋。",
+      "word": "ancestral"
+    },
+    "ancient": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "an 表强调，cent 表世纪，ancient 指跨越多个世纪的古代历史，如 ancient history 古代史。",
+      "word": "ancient"
+    },
+    "anger": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "愤怒时心跳加速、面红耳赤，如 His anger was obvious to everyone 所示，这种强烈情绪常通过表情或行为明显流露。",
+      "word": "anger"
+    },
+    "angle": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "angle 指角度或视角，扩展 angle of view 视角，from a new angle 从新角度，多角度思考问题。",
+      "word": "angle"
+    },
+    "animal": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "animal 核心义是动物，扩展 animal kingdom 动物王国，animal rights 动物权利，animal lover 动物爱好者。",
+      "word": "animal"
+    },
+    "animals": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "animal 是动物，animals 是其复数，指多种动物，如 wild animals 野生动物，需保护免受伤害。",
+      "word": "animals"
+    },
+    "announced": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "an 表加强，nounce 表说，announce 是正式宣布，announced 即已宣布，如学校宣布新政策。",
+      "word": "announced"
+    },
+    "annoying": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "an- 表加强，noy 来自老法语 nuire 伤害，-ing 表状态，合起来是让人心里不舒服的讨厌的。",
+      "word": "annoying"
+    },
+    "annual": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ann 表年，-ual 是形容词后缀，annual 即每年的，如 annual report 年度报告。",
+      "word": "annual"
+    },
+    "annual fee": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "annual 年，fee 费用，annual fee 年费，如 gym annual fee 健身房年费。",
+      "word": "annual fee"
+    },
+    "antarctic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anti 表相反，arc 表弯曲（指地球弧线），合起来指地球另一端与北极相对的南极的。",
+      "word": "antarctic"
+    },
+    "anthropologist": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anthrop 表人，-logy 表学科，-ist 表人，合起来是研究人的学科专家即人类学家。",
+      "word": "anthropologist"
+    },
+    "anthropologists": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anthropo 表人，-logist 表专家，anthropologists 即研究人类社会的专家人类学家。",
+      "word": "anthropologists"
+    },
+    "anthropology": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anthrop 表人，-ology 表学科，合起来即研究人的学科人类学，如 study anthropology 学习人类学。",
+      "word": "anthropology"
+    },
+    "anti": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anti 表反对，anti-war 反战，anti-smoking 禁烟，anti-virus 杀毒软件，anti 常作前缀或形容词表对立。",
+      "word": "anti"
+    },
+    "antibiotics": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anti 表对抗，biotic 表生命，合起来是对抗微生物的生命物质，即抗生素，常用于治疗细菌感染。",
+      "word": "antibiotics"
+    },
+    "anticipated": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anticipate 预料，加 -ed 成 anticipated 表预期的；搭配 anticipate doing 预料做某事，如 anticipated results 预期结果。",
+      "word": "anticipated"
+    },
+    "antivirus": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anti 表反对，virus 是病毒，合起来即抗病毒的，如 antivirus software 防毒软件。",
+      "word": "antivirus"
+    },
+    "anxiety": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anx 表焦虑，-iety 是名词后缀，anxiety 指考试焦虑或强烈渴望。",
+      "word": "anxiety"
+    },
+    "anxious": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anx 表痛苦/不安，-ious 是形容词后缀，合起来是内心不安的焦虑的，常接 about 担心某事。",
+      "word": "anxious"
+    },
+    "anybody": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anybody 指任何人，anyone 同义但更正式，anybody 更口语化，anybody 和 anyone 在疑问句和否定句中常互换使用。",
+      "word": "anybody"
+    },
+    "anymore": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anymore 多用于否定句或疑问句表“不再”，对比 anymore 与 still，still 表持续，anymore 表终止。",
+      "word": "anymore"
+    },
+    "anyone": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "anyone 指任何人，anybody 同义替换，any 表任何，one 表人，三者组合即任何人。",
+      "word": "anyone"
+    },
+    "anytime": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "any 任何 + time 时间，组合为 anytime 在任何时间，如 anytime you like 表示无论何时，随时。",
+      "word": "anytime"
+    },
+    "anyway": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "any 任何+way 方式，任何方式都行，表示“不管怎样”；用于转折或总结，如“反正我要迟到，先喝咖啡”。",
+      "word": "anyway"
+    },
+    "anywhere": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "any 表任何，where 表地点，组合即任何地点；对比 somewhere 某处、nowhere 无处、everywhere 到处，考试常考否定句与疑问句中的 any- 系列。",
+      "word": "anywhere"
+    },
+    "apart": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap 表朝向，part 表部分，合起来是朝不同方向分开，指空间上相隔或状态上分开，如 buildings stand apart 建筑相距很远。",
+      "word": "apart"
+    },
+    "apart from": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apart from 表“除…之外”（含或排除），常与 except for 辨析：except for 多指细节修正，apart from 可表“除了…还有”或“除了…全无”。",
+      "word": "apart from"
+    },
+    "apartments": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apart 表分开，-ment 是名词后缀，合起来指被分开的独立居住单元即公寓。",
+      "word": "apartments"
+    },
+    "apes": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ape 是猿，apes 是其复数形式，指多种猿类；常与 human beings 对比，强调灵长类与人类的共同特征。",
+      "word": "apes"
+    },
+    "apologize": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apo 表远离，log 表言语，ize 动词后缀，合起来是远离冒犯性言语，即道歉。",
+      "word": "apologize"
+    },
+    "apparently": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap 表朝向，parent 是父母，字面是面向父母显露出来，引申为表面上看起来或显然。",
+      "word": "apparently"
+    },
+    "appeal": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appeal 作名词指吸引力或诉请，作动词指呼吁或上诉；辨析 appeal to 表吸引或诉诸，与 attract 仅表吸引不同，后者无法律或情感诉求义。",
+      "word": "appeal"
+    },
+    "appeal to": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appeal to 呼吁或吸引，核心是引起注意或兴趣；扩展 appeal 呼吁、appealing 有吸引力的、appeal to 对...有吸引力。",
+      "word": "appeal to"
+    },
+    "appear": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appear 强调从隐藏到可见的“出现”或主观“显得”，区别于客观展示的 show 或呈现的 appear as。",
+      "word": "appear"
+    },
+    "appear to": {
+      "badge": "助记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appear to 似乎，画面是事物浮出水面初现轮廓，如 The results appear to support the hypothesis，用于学术语境表推测。",
+      "word": "appear to"
+    },
+    "appearance": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appear 出现，加 -ance 变名词 appearance 指外表或露面，如面试中的 appearance 指外在表现。",
+      "word": "appearance"
+    },
+    "appliances": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appliances 指家用电器，如 washing machine 洗衣机、refrigerator 冰箱、vacuum cleaner 吸尘器，常与 energy-efficient 节能搭配。",
+      "word": "appliances"
+    },
+    "applicant": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apply 申请，加后缀 -ant 表人，applicant 即申请人，如 job applicant 求职者。",
+      "word": "applicant"
+    },
+    "application form": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "application 申请，form 表格，合起来是申请表；常见搭配 resume（简历）和 cover letter（求职信），面试前需填好 application form。",
+      "word": "application form"
+    },
+    "applications": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apply 是应用，application 是具体应用或申请，app 是手机应用，applicable 是适用的。",
+      "word": "applications"
+    },
+    "applied": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apply 表应用或申请，applied 是过去分词或形容词，applied science 指应用科学，applied knowledge 指实用知识。",
+      "word": "applied"
+    },
+    "apply": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apply 表申请或应用，派生 application 申请表，applicant 申请人，applicable 可适用的，牢记 apply for 申请某物。",
+      "word": "apply"
+    },
+    "apply for": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apply for 申请，搭配 apply for a visa 申请签证，apply for a scholarship 申请奖学金，apply for membership 申请会员资格。",
+      "word": "apply for"
+    },
+    "apply to": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "apply to 表适用于或运用，搭配 apply for 表申请，apply oneself to 表专心于某事，考试常考 apply to 与 apply for 的区别。",
+      "word": "apply to"
+    },
+    "appointed": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appoint 表指定，appointed 作动词指被任命（如 appointed as manager），作形容词指约定的（如 an appointed time）或指定的。",
+      "word": "appointed"
+    },
+    "appointment": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap 表朝向，point 指向，合起来指向特定时间地点即约定；appointment 也指正式任命，如 job appointment。",
+      "word": "appointment"
+    },
+    "appointments": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "appointment 指正式约定，appointments 是其复数，如 schedule appointments 安排约会，常用于商务或医疗场景。",
+      "word": "appointments"
+    },
+    "appreciate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap- 表加强，preci 表价值，-ate 动词后缀，合起来是“看出价值”从而引申为欣赏、感激或理解。",
+      "word": "appreciate"
+    },
+    "appreciation": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap-表加强，preci 表价值，-ation 名词后缀，合起来是对价值的认可，即欣赏或理解。",
+      "word": "appreciation"
+    },
+    "apprenticeship": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap-表朝向，prent 来自 Latin prens 抓牢，-iceship 表身份状态，合起来指被师傅抓牢学习的学徒期。",
+      "word": "apprenticeship"
+    },
+    "approach": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap 表朝向，proach 源自 pro 向前，合起来是朝前走即靠近；作名词指处理问题的方法，如 a new teaching approach 新的教学方法。",
+      "word": "approach"
+    },
+    "appropriate": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap-表朝向，propri 表自己的，合起来是朝向自己的，引申为符合身份或场合的适当的。",
+      "word": "appropriate"
+    },
+    "approved": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "approve 表认可，approved 作动词是已批准，作形容词指经核准的；搭配 approved plan 核准计划，approved supplier 认证供应商。",
+      "word": "approved"
+    },
+    "approximately": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ap 表朝向，prox 表接近，-imate 表状态，-ly 表副词，合起来是“接近目标”的状态，引申为大约、大概。",
+      "word": "approximately"
+    },
+    "aquatic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aqu 表水，-atic 是形容词后缀，aquatic 指水生的或水中的，如 aquatic plants 水生植物。",
+      "word": "aquatic"
+    },
+    "aquifers": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aqua 是水，ifer 表承载者，aquifers 就是能储存和输送地下水的含水层。",
+      "word": "aquifers"
+    },
+    "archaeological": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "archaeology 考古学，archaeologist 考古学家，archaeological 考古学的，常修饰 evidence 证据或 site 遗址。",
+      "word": "archaeological"
+    },
+    "archaeologists": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "archaeo 表古代，ology 表学科，archaeology 是考古学，archaeologists 就是研究古代遗存的考古学家。",
+      "word": "archaeologists"
+    },
+    "archaeology": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "archaeo 表古老，logy 表学科，合起来是研究古代遗存的考古学，常与 history 对比侧重实物证据。",
+      "word": "archaeology"
+    },
+    "archipelago": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "源自希腊语 archi-（主要的）+ pelagos（海），指主要海域中的群岛，如爱琴海群岛。",
+      "word": "archipelago"
+    },
+    "architects": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arch 表首要，tect 表覆盖建造，architects 是主导建造的建筑师，也指项目的设计者。",
+      "word": "architects"
+    },
+    "architectural": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "architect 建筑师，architecture 建筑学，architectural 建筑学的，常修饰 style 风格或 design 设计。",
+      "word": "architectural"
+    },
+    "architecture": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arch 表首要，tect 表建造，合为建筑学；其从业者 architect 是建筑师，注意与 abstract 抽象的形近差异。",
+      "word": "architecture"
+    },
+    "archives": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "archive 单数指档案或存档，archives 常指档案室或档案馆，如 school archives 学校档案室。",
+      "word": "archives"
+    },
+    "arctic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "词根 arkt 源自希腊语熊（大熊星座），北极因有熊座而得名，arctic 即指北极地区或北极的。",
+      "word": "arctic"
+    },
+    "arena": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arena 本义是古罗马竞技场，引申为活动舞台或领域，如 political arena 政治舞台，也可指体育馆内的比赛场地。",
+      "word": "arena"
+    },
+    "argue": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "argue 强调为说服对方而激烈争论或提出理由，如 argue about policy；区别于 state 仅客观陈述事实。",
+      "word": "argue"
+    },
+    "argues": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "argues 强调用理由说服他人，如 argues that 主张；辨析 argue with 侧重争吵，argue for 侧重支持某观点。",
+      "word": "argues"
+    },
+    "argument": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "argu 表争辩，-ment 是名词后缀，合起来指争论或辩论中提出的论点。",
+      "word": "argument"
+    },
+    "arid": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arid 源自词根 ar- 表干燥，指气候或土地极度缺水，如 arid climate 干旱气候。",
+      "word": "arid"
+    },
+    "arise": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arise 源自 rise 升起，ar- 表向上，合起来指问题或情况从底层向上浮现出现，如 Problems arise 问题出现。",
+      "word": "arise"
+    },
+    "arising": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arise 表出现，arising 是其现在分词，指问题或情况正在发生，如 Problems are arising 问题正出现。",
+      "word": "arising"
+    },
+    "aristotle": {
+      "badge": "词源",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arist 表最好，tele 表终极，合指追求终极真理的“最好的人”，即亚里士多德。",
+      "word": "aristotle"
+    },
+    "arithmetic": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arith 表数字，-metic 表技艺，组合为算术。常与 geometry（几何）对举，是数学基础分支。",
+      "word": "arithmetic"
+    },
+    "arms": {
+      "badge": "辨析",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arms 作“手臂”时指肢体，作“武器”时是兵器总称，如 arms race 军备竞赛，注意与单数 arm 区分。",
+      "word": "arms"
+    },
+    "aromas": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aroma 指香气，复数 aromas 强调多种香味；搭配 rich aromas 浓郁香气，常与 food 或 coffee 连用。",
+      "word": "aromas"
+    },
+    "around the world": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "around the world 指世界各地，常与 exist、spread、travel 搭配，如 traditions exist around the world。",
+      "word": "around the world"
+    },
+    "arousal": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ar 表向，rouse 唤醒，arousal 是唤醒的状态，如情绪唤起影响决策。",
+      "word": "arousal"
+    },
+    "arrange": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ar 表加强，range 是排列，arrange 就是加强排列，引申为安排会议或整理物品。",
+      "word": "arrange"
+    },
+    "arranged": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ar 加强，range 范围，arrange 把事物放入合适范围即安排，arranged 是安排好的状态，如会议被安排妥当。",
+      "word": "arranged"
+    },
+    "arrangement": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ar- 表方向，range 是排列，ment 是名词后缀，合起来指把事物按顺序排列好的安排或商定。",
+      "word": "arrangement"
+    },
+    "arrangements": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arrange 是安排，arrangement 指具体的安排事项，复数 arrangements 常指旅行、会议等具体安排，如 travel arrangements。",
+      "word": "arrangements"
+    },
+    "array": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "核心义是整齐排列，引申为大批。搭配 wide array of 表示大量，如 a wide array of products 各种各样的产品。",
+      "word": "array"
+    },
+    "arrival": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "来自 arrive 到达，arrival 指到达的行为或到达的人，如 the arrival of spring 春天的到来。",
+      "word": "arrival"
+    },
+    "arrive": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arrive at/in 表到达，搭配名词如 arrive at a conclusion 得出结论，注意与 reach 直接加宾语的区别。",
+      "word": "arrive"
+    },
+    "arrive in": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arrive in 后接大地点如城市国家，对比 arrive at 接小地点如车站，搭配 arrive in London 抵达伦敦。",
+      "word": "arrive in"
+    },
+    "arrived": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "arrive 表到达，arrived 是过去式或形容词“已到达的”。搭配 arrive at/in 表抵达某地，如 arrived passengers 指已抵达的旅客。",
+      "word": "arrived"
+    },
+    "arrow": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "箭头指向目标，如 Follow the arrow 跟着箭头走，联想箭矢或指示方向的箭头。",
+      "word": "arrow"
+    },
+    "art": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "art 艺术，artistic 艺术的，artist 艺术家，artwork 艺术品，art gallery 美术馆。",
+      "word": "art"
+    },
+    "art gallery": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "art gallery 指展出艺术品的画廊或美术馆，常与 art museum 近义，但 gallery 更侧重展览空间而非收藏。",
+      "word": "art gallery"
+    },
+    "artefacts": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "art 艺术+fact 制作，人工制品是古人艺术制作的产物，如博物馆展出的古代 artefacts。",
+      "word": "artefacts"
+    },
+    "article": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "art 表部分，icle 小词缀，合起来指文章或合同中的条款。",
+      "word": "article"
+    },
+    "artificial": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "art 表技巧，-ificial 是形容词后缀，合起来指靠技巧而非自然生成的，即人造的，如 artificial grass 人造草坪。",
+      "word": "artificial"
+    },
+    "artistic": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "artistic 艺术的，来自 artist 艺术家，常见搭配 artistic talent 艺术天赋，指具备审美与创作能力。",
+      "word": "artistic"
+    },
+    "artists": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "artist 艺术家，复数加 s 变 artists 多位艺术家；常见搭配 art gallery 艺术画廊，指展示绘画雕塑的展览空间。",
+      "word": "artists"
+    },
+    "as a whole": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as a whole 整体来看，对比 in general 泛指一般情况，强调把各部分合起来看整体；扩展 whole 作形容词表完整的，如 the whole truth 全部真相。",
+      "word": "as a whole"
+    },
+    "as far as": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as far as 表程度或范围，如 as far as I know 就我所知，as far as the river 远到河边。",
+      "word": "as far as"
+    },
+    "as high as": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as high as 高达，强调数量或程度极高，如 unemployment rose as high as 20% 失业率高达20%，常与数字连用表峰值。",
+      "word": "as high as"
+    },
+    "as long as": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as long as 表只要，引导条件从句；as long as 表长达，后接时间段，如 as long as two hours。",
+      "word": "as long as"
+    },
+    "as much as": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as much as 表数量对等，如 I have as much as you do 我有的和你一样多；扩展 as many as 修饰可数名词，as well as 表“也”。",
+      "word": "as much as"
+    },
+    "as well as": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as well as 表“也”，常接名词或动名词，如 plays football as well as basketball，强调后者同样重要。",
+      "word": "as well as"
+    },
+    "ascending": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ascend 表上升，ascending 是上升的；同族 descend 下降，ascent 名词上升，descend 下降。",
+      "word": "ascending"
+    },
+    "ascertaining": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "cert 表确定，a- 加强，ascertain 是查明确定，ascertaining 即正在查明原因或事实。",
+      "word": "ascertaining"
+    },
+    "ash": {
+      "badge": "扩展",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ash 灰，fire ash 火灰，ashtray 烟灰缸，ashamed 羞愧如蒙灰",
+      "word": "ash"
+    },
+    "aside": {
+      "badge": "串记",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "aside 在旁边，对比 aside 与 aside 形近词 aside 易混，注意 aside 是副词表位置，不要与 aside 混淆。",
+      "word": "aside"
+    },
+    "ask about": {
+      "badge": "联想",
+      "book_ids": [
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "ask about 询问，面试经理 ask about 工作经验，求职场景常考搭配。",
+      "word": "ask about"
+    },
+    "aspects": {
+      "badge": "词根词缀",
+      "book_ids": [
+        "ielts_reading_premium",
+        "ielts_listening_premium"
+      ],
+      "source": "premium_word_mnemonics",
+      "text": "as-表朝向，-spect 表看，合起来是朝某个方向看过去的样子或方面，如 consider all aspects of the problem 考虑问题的各个方面。",
+      "word": "aspects"
+    }
+  },
+  "manifest_version": 1
+}

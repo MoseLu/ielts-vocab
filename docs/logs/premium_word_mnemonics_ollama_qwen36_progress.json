@@ -1,0 +1,123 @@
+{
+  "started_at": "2026-05-03T21:01:58.478715+00:00",
+  "book_ids": [
+    "ielts_listening_premium",
+    "ielts_reading_premium"
+  ],
+  "provider": "ollama",
+  "model": "qwen3.6-35b-a3b:q5_k_m",
+  "batch_size": 64,
+  "limit": null,
+  "start_at": 0,
+  "overwrite": true,
+  "progress_state": "running",
+  "requested": 5493,
+  "pending": 5493,
+  "enriched": 316,
+  "failed": 4,
+  "failed_words": [
+    "although",
+    "amid",
+    "army",
+    "as though"
+  ],
+  "failure_details": [
+    {
+      "word": "although",
+      "reason": "memory note missing definition anchor for although"
+    },
+    {
+      "word": "amid",
+      "reason": "memory note missing definition anchor for amid"
+    },
+    {
+      "word": "army",
+      "reason": "memory note missing definition anchor for army"
+    },
+    {
+      "word": "as though",
+      "reason": "memory note missing definition anchor for as though"
+    }
+  ],
+  "total_batches": 86,
+  "completed_batches": 5,
+  "coverage": {
+    "total_words": 5493,
+    "covered_words": 316,
+    "missing_count": 5177,
+    "missing_sample": [
+      "although",
+      "amid",
+      "army",
+      "as though",
+      "aspirations",
+      "aspirin",
+      "assembled",
+      "asserts",
+      "assessed",
+      "assessment",
+      "assets",
+      "assigned",
+      "assignment",
+      "assignments",
+      "assist",
+      "assistance",
+      "assistant",
+      "associated",
+      "association",
+      "assume"
+    ]
+  },
+  "badge_distribution": {
+    "串记": 3,
+    "助记": 9,
+    "扩展": 124,
+    "联想": 14,
+    "词根词缀": 142,
+    "词源": 4,
+    "辨析": 20
+  },
+  "sample_items": [
+    {
+      "word": "a big difference",
+      "badge": "扩展",
+      "text": "big difference 表明显差异，对比 slight difference 微小差别，make a big difference 是雅思听力高频搭配，指产生重大影响。"
+    },
+    {
+      "word": "a bit",
+      "badge": "助记",
+      "text": "a bit 表示有点、稍微，如 I am a bit tired 我今天有点累，可作程度副词修饰形容词。"
+    },
+    {
+      "word": "a couple of",
+      "badge": "扩展",
+      "text": "a couple of 表两个或几个，扩展 couple 指夫妻或一对，a couple of friends 指几个朋友，注意与 a few 表几个但数量更模糊的区别。"
+    },
+    {
+      "word": "a dozen",
+      "badge": "扩展",
+      "text": "dozen 表一打（12个），a dozen eggs 是一打鸡蛋，注意 dozen 前无 a 时后接 of，如 two dozen eggs。"
+    },
+    {
+      "word": "a few",
+      "badge": "辨析",
+      "text": "a few 表肯定“几个/少许”，修饰可数名词复数；对比 a little 修饰不可数，few 表否定“几乎没有”。"
+    },
+    {
+      "word": "a few more",
+      "badge": "助记",
+      "text": "a few 表少量，more 表额外，合起来是“再要几个”，如 I need a few more minutes 表示还需要几分钟。"
+    },
+    {
+      "word": "a great deal of",
+      "badge": "扩展",
+      "text": "deal 本意是交易，a great deal 原指大量交易，引申为大量。常接不可数名词，如 a great deal of time/money，替换 much。"
+    },
+    {
+      "word": "a head",
+      "badge": "扩展",
+      "text": "a head 作每人解时，常与价格连用如 ten dollars a head 每人十美元；作一头高解时，指物体高出地面的高度。"
+    }
+  ],
+  "updated_at": "2026-05-03T21:53:26.221615+00:00"
+}

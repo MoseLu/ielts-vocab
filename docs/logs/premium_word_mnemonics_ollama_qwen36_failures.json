@@ -1,0 +1,27 @@
+{
+  "failed_count": 4,
+  "failed_words_tail": [
+    "although",
+    "amid",
+    "army",
+    "as though"
+  ],
+  "failure_details_tail": [
+    {
+      "reason": "memory note missing definition anchor for although",
+      "word": "although"
+    },
+    {
+      "reason": "memory note missing definition anchor for amid",
+      "word": "amid"
+    },
+    {
+      "reason": "memory note missing definition anchor for army",
+      "word": "army"
+    },
+    {
+      "reason": "memory note missing definition anchor for as though",
+      "word": "as though"
+    }
+  ]
+}
