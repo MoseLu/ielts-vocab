@@ -160,8 +160,10 @@ start_logged_process() {
     export BACKEND_ENV_FILE="${backend_env}"
     export MICROSERVICES_ENV_FILE="${microservices_env}"
     export PYTHONPATH="${root}/backend:${root}/packages/platform-sdk${PYTHONPATH:+:${PYTHONPATH}}"
-    nohup bash -lc "${command_line}" >>"${stdout_log}" 2>>"${stderr_log}" &
-    echo $! > "${pidfile}"
+    nohup bash -c "${command_line}" >>"${stdout_log}" 2>>"${stderr_log}" &
+    process_pid=$!
+    echo "${process_pid}" > "${pidfile}"
+    disown "${process_pid}" >/dev/null 2>&1 || true
   )
 }
 

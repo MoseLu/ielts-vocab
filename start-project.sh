@@ -147,7 +147,8 @@ start_background() {
   printf -v command_line '%q ' "$@"
   : > "${stdout_log}"
   : > "${stderr_log}"
-  nohup bash -lc "${command_line}" >>"${stdout_log}" 2>>"${stderr_log}" < /dev/null &
+  nohup bash -c "${command_line}" >>"${stdout_log}" 2>>"${stderr_log}" < /dev/null &
+  disown "$!" >/dev/null 2>&1 || true
   log "Started ${label}"
 }
 
