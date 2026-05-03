@@ -10,6 +10,8 @@ from platform_sdk.local_time_support import utc_naive_to_epoch_ms, utc_now_naive
 from platform_sdk.quick_memory_schedule_support import load_and_normalize_quick_memory_records
 from platform_sdk.study_session_support import normalize_chapter_id
 
+REVIEW_QUEUE_FULL_CONTEXT_RESOLVE_LIMIT = 500
+
 
 def _parse_review_queue_options(args, *, now_ms: int) -> dict:
     try:
@@ -38,12 +40,12 @@ def _parse_review_queue_options(args, *, now_ms: int) -> dict:
     }
 
 
-def _load_quick_memory_rows(user_id: int):
+def _load_quick_memory_rows(user_id: int, *, resolve_context: bool = True):
     return load_and_normalize_quick_memory_records(
         user_id,
         list_records=quick_memory_record_repository.list_user_quick_memory_records,
         commit=quick_memory_record_repository.commit,
-        resolve_vocab_context=resolve_unique_quick_memory_vocab_context,
+        resolve_vocab_context=resolve_unique_quick_memory_vocab_context if resolve_context else None,
     )
 
 
@@ -76,28 +78,52 @@ def _build_review_queue_payload(
     due_words = []
     upcoming_words = []
     context_map: dict[tuple[str, str], dict] = {}
+    has_scope_filter = book_id_filter is not None or chapter_id_filter is not None
+    try:
+        raw_rows = _load_quick_memory_rows(user_id, resolve_context=False)
+    except TypeError:
+        raw_rows = _load_quick_memory_rows(user_id)
     rows = sorted(
-        [row for row in _load_quick_memory_rows(user_id) if (row.next_review or 0) > 0],
+        [row for row in raw_rows if (row.next_review or 0) > 0],
         key=lambda row: row.next_review or 0,
     )
 
+    candidates = []
     for row in rows:
-        word_key = (row.word or '').strip().lower()
         stored_book_id = (row.book_id or '').strip() or None
         stored_chapter_id = normalize_chapter_id(row.chapter_id)
-        has_scope_filter = book_id_filter is not None or chapter_id_filter is not None
-        lookup_book_id = (
-            book_id_filter
-            if book_id_filter is not None
-            else (None if chapter_id_filter is not None else stored_book_id)
+        next_review = row.next_review or 0
+        if next_review <= now_ms:
+            due_state = 'due'
+        elif next_review <= window_end_ms:
+            if due_only:
+                continue
+            due_state = 'upcoming'
+        else:
+            continue
+        candidates.append({
+            'row': row,
+            'word_key': (row.word or '').strip().lower(),
+            'stored_book_id': stored_book_id,
+            'stored_chapter_id': stored_chapter_id,
+            'due_state': due_state,
+        })
+
+    resolve_all = len(candidates) <= REVIEW_QUEUE_FULL_CONTEXT_RESOLVE_LIMIT or limit is None
+    selected_candidates = candidates if resolve_all else candidates[offset:offset + limit]
+
+    for candidate in selected_candidates:
+        row = candidate['row']
+        stored_book_id = candidate['stored_book_id']
+        stored_chapter_id = candidate['stored_chapter_id']
+        lookup_book_id = book_id_filter if book_id_filter is not None else (
+            None if chapter_id_filter is not None else stored_book_id
         )
-        lookup_chapter_id = (
-            chapter_id_filter
-            if chapter_id_filter is not None
-            else (stored_chapter_id if book_id_filter is None else None)
+        lookup_chapter_id = chapter_id_filter if chapter_id_filter is not None else (
+            stored_chapter_id if book_id_filter is None else None
         )
         vocab_item = resolve_quick_memory_vocab_entry(
-            word_key,
+            candidate['word_key'],
             book_id=lookup_book_id,
             chapter_id=lookup_chapter_id,
         )
@@ -116,7 +142,7 @@ def _build_review_queue_payload(
                     for item in get_global_vocab_pool()
                     if (item.get('word') or '').strip()
                 }
-            fallback_item = pool_by_word.get(word_key)
+            fallback_item = pool_by_word.get(candidate['word_key'])
         if not vocab_item and not fallback_item:
             continue
         item = _build_review_queue_item(
@@ -147,6 +173,21 @@ def _build_review_queue_payload(
         (due_words if item['dueState'] == 'due' else upcoming_words).append(item)
         _update_context_map(context_map, item)
 
+    if not resolve_all:
+        context_map = {}
+        for candidate in candidates:
+            if not candidate['stored_book_id'] or candidate['stored_chapter_id'] is None:
+                continue
+            item = {
+                'book_id': candidate['stored_book_id'],
+                'book_title': candidate['stored_book_id'],
+                'chapter_id': candidate['stored_chapter_id'],
+                'chapter_title': f"第{candidate['stored_chapter_id']}章",
+                'nextReview': candidate['row'].next_review or 0,
+                'dueState': candidate['due_state'],
+            }
+            _update_context_map(context_map, item)
+
     return _serialize_review_queue(
         due_words=due_words,
         upcoming_words=upcoming_words,
@@ -157,6 +198,10 @@ def _build_review_queue_payload(
         book_id_filter=book_id_filter,
         chapter_id_filter=chapter_id_filter,
         due_only=due_only,
+        preselected=not resolve_all,
+        due_count_override=sum(1 for candidate in candidates if candidate['due_state'] == 'due') if not resolve_all else None,
+        upcoming_count_override=sum(1 for candidate in candidates if candidate['due_state'] == 'upcoming') if not resolve_all else None,
+        total_count_override=len(candidates) if not resolve_all else None,
     )
 
 
@@ -231,10 +276,16 @@ def _serialize_review_queue(
     book_id_filter: str | None,
     chapter_id_filter: str | None,
     due_only: bool,
+    preselected: bool = False,
+    due_count_override: int | None = None,
+    upcoming_count_override: int | None = None,
+    total_count_override: int | None = None,
 ) -> dict:
     combined_words = due_words + upcoming_words
-    selected = combined_words[offset:offset + limit] if limit is not None else combined_words[offset:]
-    total_count = len(combined_words)
+    selected = combined_words if preselected else (
+        combined_words[offset:offset + limit] if limit is not None else combined_words[offset:]
+    )
+    total_count = total_count_override if total_count_override is not None else len(combined_words)
     next_offset = offset + len(selected)
     has_more = next_offset < total_count
     contexts = sorted(
@@ -249,8 +300,8 @@ def _serialize_review_queue(
     return {
         'words': selected,
         'summary': {
-            'due_count': len(due_words),
-            'upcoming_count': len(upcoming_words),
+            'due_count': due_count_override if due_count_override is not None else len(due_words),
+            'upcoming_count': upcoming_count_override if upcoming_count_override is not None else len(upcoming_words),
             'returned_count': len(selected),
             'review_window_days': within_days,
             'offset': offset,
