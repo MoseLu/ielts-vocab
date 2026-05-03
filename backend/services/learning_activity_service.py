@@ -25,6 +25,7 @@ from services.learning_activity_compat import (
     list_chapter_mode_rollup_compat_rows,
     list_chapter_rollup_compat_rows,
 )
+from services.learning_activity_daily_ledger import get_or_create_daily_ledger
 from services.books_structure_service import get_book_chapter_count, get_book_word_count
 from services.legacy_day_progress_compat import LEGACY_DAY_PROGRESS_PREFIX
 from services.local_time import utc_naive_to_epoch_ms, utc_naive_to_local_date_key, utc_now_naive
@@ -108,38 +109,6 @@ def _apply_rollup_totals(target, *, source_rows) -> None:
     target.last_learning_date = _max_date_key(getattr(row, 'learning_date', None) for row in source_rows)
 
 
-def _get_or_create_daily_ledger(
-    *,
-    user_id: int,
-    book_id: str,
-    mode: str,
-    chapter_id: str,
-    learning_date: str,
-) -> UserLearningDailyLedger:
-    ledger = (
-        UserLearningDailyLedger.query
-        .filter_by(
-            user_id=user_id,
-            book_id=book_id,
-            mode=mode,
-            chapter_id=chapter_id,
-            learning_date=learning_date,
-        )
-        .first()
-    )
-    if ledger is not None:
-        return ledger
-    ledger = UserLearningDailyLedger(
-        user_id=user_id,
-        book_id=book_id,
-        mode=mode,
-        chapter_id=chapter_id,
-        learning_date=learning_date,
-    )
-    db.session.add(ledger)
-    return ledger
-
-
 def record_learning_activity(
     *,
     user_id: int,
@@ -176,7 +145,7 @@ def record_learning_activity(
     if not resolved_learning_date:
         resolved_learning_date = utc_now_naive().strftime('%Y-%m-%d')
 
-    ledger = _get_or_create_daily_ledger(
+    ledger = get_or_create_daily_ledger(
         user_id=user_id,
         book_id=normalized_book_id,
         mode=normalized_mode,

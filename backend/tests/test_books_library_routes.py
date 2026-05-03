@@ -1,4 +1,4 @@
-from models import UserChapterModeProgress
+from models import UserChapterModeProgress, UserLearningChapterRollup, UserLearningDailyLedger
 
 
 def _register_user(client, username='library-user'):
@@ -43,7 +43,7 @@ class TestChapterModeProgress:
         assert payload['accuracy'] == 80
 
         with app.app_context():
-            records = UserChapterModeProgress.query.filter_by(
+            records = UserLearningChapterRollup.query.filter_by(
                 book_id='ielts_reading_premium',
                 chapter_id='chapter-a',
                 mode='meaning',
@@ -51,3 +51,10 @@ class TestChapterModeProgress:
             assert len(records) == 1
             assert records[0].correct_count == 4
             assert records[0].wrong_count == 1
+            ledgers = UserLearningDailyLedger.query.filter_by(
+                book_id='ielts_reading_premium',
+                chapter_id='chapter-a',
+                mode='meaning',
+            ).all()
+            assert len(ledgers) == 1
+            assert UserChapterModeProgress.query.count() == 0
