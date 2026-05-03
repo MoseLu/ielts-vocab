@@ -10,6 +10,7 @@ const gameCampaignPageMock = vi.fn((props: { surface?: 'themes' | 'map' | 'missi
 ))
 const practicePageMock = vi.fn((props: {
   user?: { id: number; username: string }
+  mode?: string
   showToast?: (message: string, type?: 'info' | 'success' | 'error') => void
 }) => (
   <button
@@ -87,6 +88,26 @@ describe('AppRoutes practice route', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'practice-page' }))
     expect(showToastMock).toHaveBeenCalledWith('favorite-clicked', 'success')
+  })
+
+  it('honors a classic practice mode from the route query', () => {
+    const onModeChange = vi.fn()
+
+    render(
+      <MemoryRouter initialEntries={['/practice?book=custom_1&chapter=custom_1_2&mode=quickmemory']}>
+        <AppRoutes
+          mode="listening"
+          currentDay={1}
+          onModeChange={onModeChange}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(practicePageMock.mock.calls[0]?.[0]).toMatchObject({
+      mode: 'quickmemory',
+    })
+    expect(onModeChange).toHaveBeenCalledWith('quickmemory')
   })
 
   it('mounts the independent game campaign page on /game', async () => {

@@ -1,0 +1,71 @@
+.errors-custom-book-modal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-14);
+}
+
+.errors-custom-book-summary {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.errors-custom-book-muted {
+    margin: 0;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+}
+
+.errors-custom-book-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-8);
+    max-height: var(--size-240);
+    overflow-y: auto;
+}
+
+.errors-custom-book-option {
+    display: flex;
+    align-items: center;
+    gap: var(--size-10);
+    padding: var(--size-10) var(--size-12);
+    border: var(--size-1) solid var(--border);
+    border-radius: var(--radius-8);
+    background: var(--bg-secondary);
+    cursor: pointer;
+}
+
+.errors-custom-book-option:has(input:checked) {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) var(--mix-8), var(--bg-secondary));
+}
+
+.errors-custom-book-option span {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--size-2);
+}
+
+.errors-custom-book-option strong {
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: var(--size-14);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.errors-custom-book-option small {
+    color: var(--text-tertiary);
+    font-size: var(--size-12);
+}
+
+.errors-custom-book-error {
+    padding: var(--size-8) var(--size-10);
+    border-radius: var(--radius-8);
+    background: color-mix(in srgb, var(--error) var(--mix-8), transparent);
+    color: var(--error);
+    font-size: var(--size-13);
+    line-height: 1.5;
+}

@@ -139,4 +139,21 @@ describe('wrongWordsFilters', () => {
 
     expect(result.map(word => word.word)).toEqual(['st', 'mist', 'toast', 'forest'])
   })
+
+  it('matches contains search against the word body only', () => {
+    expect(matchesWrongWordSearchTerm({
+      word: 'invite',
+      definition: 'ask someone',
+    }, 'vit', 'contains')).toBe(true)
+
+    expect(matchesWrongWordSearchTerm({
+      word: 'vital',
+      definition: 'vit clue',
+    }, 'vit', 'contains')).toBe(true)
+
+    expect(matchesWrongWordSearchTerm({
+      word: 'toast',
+      definition: 'contains vit here',
+    }, 'vit', 'contains')).toBe(false)
+  })
 })

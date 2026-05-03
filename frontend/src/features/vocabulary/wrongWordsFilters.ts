@@ -10,7 +10,7 @@ import {
 } from './wrongWordsStore'
 
 export type WrongWordDimensionFilter = 'all' | WrongWordDimension
-export type WrongWordSearchMode = 'prefix' | 'suffix'
+export type WrongWordSearchMode = 'prefix' | 'contains' | 'suffix'
 
 export interface WrongWordFilters {
   scope?: WrongWordCollectionScope
@@ -27,7 +27,8 @@ export function normalizeWrongWordSearchTerm(value?: string): string {
 }
 
 function normalizeWrongWordSearchMode(value?: WrongWordSearchMode): WrongWordSearchMode {
-  return value === 'suffix' ? 'suffix' : 'prefix'
+  if (value === 'suffix' || value === 'contains') return value
+  return 'prefix'
 }
 
 function getWrongWordSearchRank<T extends Partial<WrongWordRecord>>(
@@ -58,7 +59,9 @@ function getWrongWordSearchRank<T extends Partial<WrongWordRecord>>(
   const mode = normalizeWrongWordSearchMode(searchMode)
   const matches = mode === 'suffix'
     ? normalizedWord.endsWith(normalizedSearch)
-    : normalizedWord.startsWith(normalizedSearch)
+    : mode === 'contains'
+      ? normalizedWord.includes(normalizedSearch)
+      : normalizedWord.startsWith(normalizedSearch)
   if (matches) return 100 + normalizedWord.length
 
   return Number.MAX_SAFE_INTEGER
@@ -121,7 +124,9 @@ export function matchesWrongWordSearchTerm<T extends Partial<WrongWordRecord>>(
   const mode = normalizeWrongWordSearchMode(searchMode)
   return mode === 'suffix'
     ? normalizedWord.endsWith(normalizedSearch)
-    : normalizedWord.startsWith(normalizedSearch)
+    : mode === 'contains'
+      ? normalizedWord.includes(normalizedSearch)
+      : normalizedWord.startsWith(normalizedSearch)
 }
 
 export function compareWrongWordSearchResults<T extends Partial<WrongWordRecord>>(

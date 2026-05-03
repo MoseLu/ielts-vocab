@@ -2,6 +2,7 @@
 @use './faq';
 @use './progress';
 @use './word-list';
+@use './custom-book-export';
 
 /* Page: Error Book (错词本) */
 
@@ -481,5 +482,4 @@
         justify-content: flex-start;
     }
 }
-
 

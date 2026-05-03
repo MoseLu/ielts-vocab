@@ -6,7 +6,8 @@ import PracticePage from '../components/practice/PracticePage'
 import Toast from '../components/ui/Toast'
 import { Loading } from '../components/ui/Loading'
 import { ScrollToTop } from './ScrollToTop'
-import type { PracticeMode } from '../components/layout/navigation/Header'
+import type { PracticeMode as HeaderPracticeMode } from '../components/layout/navigation/Header'
+import type { PracticeMode as PracticePageMode } from '../components/practice/types'
 
 const AdminDashboard = lazy(() => import('../components/admin/page/AdminDashboard'))
 const AIChatPanel = lazy(() => import('../components/ai-chat/page/AIChatPanel'))
@@ -73,10 +74,26 @@ function ChromeSlot({
   return <Suspense fallback={null}>{children}</Suspense>
 }
 
-function normalizeHeaderMode(mode: string): PracticeMode {
+const PRACTICE_ROUTE_QUERY_MODES = new Set<PracticePageMode>([
+  'smart',
+  'listening',
+  'meaning',
+  'dictation',
+  'follow',
+  'radio',
+  'quickmemory',
+])
+
+function normalizeHeaderMode(mode: string): HeaderPracticeMode {
   return ['smart', 'listening', 'meaning', 'dictation', 'follow', 'radio'].includes(mode)
-    ? (mode as PracticeMode)
+    ? (mode as HeaderPracticeMode)
     : 'smart'
+}
+
+function normalizePracticeRouteMode(value: string | null): PracticePageMode | null {
+  return PRACTICE_ROUTE_QUERY_MODES.has(value as PracticePageMode)
+    ? value as PracticePageMode
+    : null
 }
 
 function PracticeRouteElement({
@@ -98,6 +115,13 @@ function PracticeRouteElement({
 }) {
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
+  const routeMode = normalizePracticeRouteMode(searchParams.get('mode'))
+
+  useEffect(() => {
+    if (!routeMode || routeMode === mode) return
+    onModeChange(routeMode)
+  }, [mode, onModeChange, routeMode])
+
   if (searchParams.get('mode') === 'game') {
     searchParams.delete('mode')
     const query = searchParams.toString()
@@ -109,7 +133,7 @@ function PracticeRouteElement({
       <PracticePage
         user={user ?? undefined}
         currentDay={currentDay ?? undefined}
-        mode={mode as PracticeMode}
+        mode={routeMode ?? (mode as PracticePageMode)}
         onModeChange={nextMode => onModeChange(nextMode)}
         onDayChange={onDayChange}
         showToast={showToast}

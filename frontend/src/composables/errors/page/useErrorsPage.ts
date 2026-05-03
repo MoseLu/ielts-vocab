@@ -30,6 +30,7 @@ import {
   isSameWrongWordKeyList,
   normalizeWrongWordKey,
 } from '../../../components/errors/page/errorsPageHelpers'
+import { useWrongWordsCustomBookExport } from './useWrongWordsCustomBookExport'
 
 export type ActiveTab = 'words' | 'real'
 export type DimFilter = 'all' | WrongWordDimension
@@ -209,6 +210,12 @@ export function useErrorsPage() {
     maxWrongCount,
   })
   const manualPracticeQuery = practiceQuery ? `${practiceQuery}&selection=manual` : 'selection=manual'
+  const customBookExport = useWrongWordsCustomBookExport({
+    words: actionSelectedWords,
+    appliedSearch,
+    searchMode,
+    navigate,
+  })
 
   useEffect(() => {
     setPage(1)
@@ -414,6 +421,7 @@ export function useErrorsPage() {
     clearSelectedWords,
     resetFilters,
     startSelectedPractice,
+    customBookExport,
     goToPlan,
   }
 }

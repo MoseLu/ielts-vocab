@@ -10,6 +10,7 @@ import { Page, PageContent, PageHeader } from '../../layout'
 import { EmptyState, PageSkeleton, SegmentedControl, UnderlineTabs } from '../../ui'
 import { useErrorsPage, type WrongCountRange } from '../../../composables/errors/page/useErrorsPage'
 import { ErrorsFAQCard } from './ErrorsFAQCard'
+import { ErrorsCustomBookExportModal } from './ErrorsCustomBookExportModal'
 import { ErrorsSearchWordItem } from './ErrorsSearchWordItem'
 import { ErrorsWordItem } from './ErrorsWordItem'
 import { downloadWrongWordsCsvExport } from './errorsWordExport'
@@ -24,6 +25,7 @@ const WRONG_COUNT_RANGE_OPTIONS: Array<{ value: WrongCountRange; label: string }
 
 const SEARCH_MODE_OPTIONS: Array<{ value: WrongWordSearchMode; label: string }> = [
   { value: 'prefix', label: '词头' },
+  { value: 'contains', label: '词中' },
   { value: 'suffix', label: '词尾' },
 ]
 
@@ -78,6 +80,7 @@ export default function ErrorsPage() {
     clearSelectedWords,
     resetFilters,
     startSelectedPractice,
+    customBookExport,
     goToPlan,
   } = useErrorsPage()
   const isSearchMode = Boolean(appliedSearch)
@@ -85,6 +88,8 @@ export default function ErrorsPage() {
     ? ''
     : searchMode === 'prefix'
       ? `词头匹配“${appliedSearch}”`
+      : searchMode === 'contains'
+        ? `词中匹配“${appliedSearch}”`
       : searchMode === 'suffix'
         ? `词尾匹配“${appliedSearch}”`
         : `搜索“${appliedSearch}”`
@@ -131,6 +136,13 @@ export default function ErrorsPage() {
             onClick={() => downloadWrongWordsCsvExport(actionSelectedWords)}
           >
             导出已勾选 CSV
+          </button>
+          <button
+            className="errors-clear-btn"
+            disabled={actionSelectedWordCount === 0}
+            onClick={customBookExport.open}
+          >
+            保存到自定义词书
           </button>
           <button
             className="errors-clear-btn"
@@ -411,6 +423,7 @@ export default function ErrorsPage() {
           </div>
         )}
       </PageContent>
+      <ErrorsCustomBookExportModal exportState={customBookExport} />
     </Page>
   )
 }
