@@ -134,7 +134,7 @@ describe('PracticePage quick-memory resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/book-1/chapters/1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -185,5 +185,57 @@ describe('PracticePage quick-memory resume snapshot', () => {
       expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('initialIndex:0')
     })
     expect(resetChapterProgressMock).toHaveBeenCalled()
+  })
+
+  it('starts from the first word when the route requests a fresh quick-memory run', async () => {
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/books/custom_1/chapters') {
+        return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 'custom_1_2', title: 'C words' }] }) } as Response)
+      }
+      if (url === '/api/books/word-list?scope=book&book_id=custom_1&chapter_id=custom_1_2') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            words: [
+              { word: 'cable', phonetic: '/c/', pos: 'n.', definition: '电缆' },
+              { word: 'campus', phonetic: '/c/', pos: 'n.', definition: '校园' },
+            ],
+          }),
+        } as Response)
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`))
+    })
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/books/custom_1/chapters/progress') {
+        return Promise.resolve({
+          chapter_progress: {
+            custom_1_2: {
+              current_index: 1,
+              correct_count: 134,
+              wrong_count: 0,
+              is_completed: false,
+              words_learned: 134,
+              queue_words: ['cable', 'campus'],
+            },
+          },
+        })
+      }
+      return Promise.resolve({})
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?book=custom_1&chapter=custom_1_2&mode=quickmemory&restart=1']}>
+        <PracticePage user={{ id: 42 }} mode="quickmemory" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quickmemory-mode')).toHaveTextContent('initialIndex:0')
+    })
+    expect(screen.queryByText('上次有未完成的快记练习，要从中断位置继续吗？')).toBeNull()
+    expect(apiFetchMock).not.toHaveBeenCalledWith('/api/books/custom_1/chapters/progress')
   })
 })

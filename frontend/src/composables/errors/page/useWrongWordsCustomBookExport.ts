@@ -141,6 +141,7 @@ export function useWrongWordsCustomBookExport({
       book: savedTarget.bookId,
       chapter: savedTarget.chapterId,
       mode: 'quickmemory',
+      restart: '1',
     })
     close()
     navigate(`/practice?${params.toString()}`)

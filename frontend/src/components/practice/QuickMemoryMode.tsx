@@ -151,6 +151,9 @@ export default function QuickMemoryMode({
     clearInterval(timerRef.current)
     stopAudio()
     const answeredWord = currentWord
+    if (shouldPlayRevealAudio && answeredWord) {
+      void playWordAudio(answeredWord.word, settings, () => {}, QUICK_MEMORY_PLAYBACK_OPTIONS)
+    }
 
     const actionAt = Date.now()
     if (countAsActivity) {
@@ -201,7 +204,6 @@ export default function QuickMemoryMode({
       onWrongWord(answeredWord)
     }
 
-    if (shouldPlayRevealAudio && answeredWord) void playWordAudio(answeredWord.word, settings, () => {}, QUICK_MEMORY_PLAYBACK_OPTIONS)
   }, [
     bookId,
     chapterId,

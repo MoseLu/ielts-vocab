@@ -15,6 +15,7 @@ const cancelSessionMock = vi.fn(() => Promise.resolve())
 const flushStudySessionOnPageHideMock = vi.fn()
 const touchStudySessionActivityMock = vi.fn()
 const updateStudySessionSnapshotMock = vi.fn()
+let prepareStudySessionForLearningActionValue: unknown = undefined
 const playWordAudioMock = vi.fn(() => Promise.resolve(true))
 const playSlowWordAudioMock = vi.fn(() => Promise.resolve(true))
 const prepareWordAudioPlaybackMock = vi.fn(() => Promise.resolve(true))
@@ -32,7 +33,7 @@ vi.mock('./utils', () => ({
 
 vi.mock('../../hooks/useAIChat', () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
-  prepareStudySessionForLearningAction: undefined,
+  get prepareStudySessionForLearningAction() { return prepareStudySessionForLearningActionValue },
   finalizeStudySessionSegment: undefined,
   isStudySessionActive: undefined,
   resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
@@ -84,6 +85,7 @@ describe('QuickMemoryMode audio behavior', () => {
     flushStudySessionOnPageHideMock.mockClear()
     touchStudySessionActivityMock.mockClear()
     updateStudySessionSnapshotMock.mockClear()
+    prepareStudySessionForLearningActionValue = undefined
     playWordAudioMock.mockClear()
     playWordAudioMock.mockImplementation(() => Promise.resolve(true))
     playSlowWordAudioMock.mockClear()
@@ -153,6 +155,35 @@ describe('QuickMemoryMode audio behavior', () => {
     })
     expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
     expect(playSlowWordAudioMock).not.toHaveBeenCalled()
+  })
+
+  it('starts reveal audio before waiting for session preparation', async () => {
+    vi.useFakeTimers()
+    let resolvePrepare!: () => void
+    const preparedSession = {
+      segmented: false,
+      startedAt: Date.now(),
+      lastActiveAt: Date.now(),
+      sessionId: 1,
+    }
+    const preparePromise = new Promise<typeof preparedSession>(resolve => { resolvePrepare = () => resolve(preparedSession) })
+    const prepareStudySessionMock = vi.fn(() => preparePromise)
+    prepareStudySessionForLearningActionValue = prepareStudySessionMock
+
+    renderQuickMemoryMode({ word: 'within', phonetic: '/wɪˈðɪn/', pos: 'prep.', definition: 'inside' })
+
+    await act(async () => {
+      screen.getByRole('button', { name: '认识' }).click()
+      await Promise.resolve()
+    })
+
+    expect(prepareStudySessionMock).toHaveBeenCalled()
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
+
+    await act(async () => {
+      resolvePrepare()
+      await preparePromise
+    })
   })
 
   it('replays the current word audio from the shared shortcut and the toolbar button, but not by clicking the word', async () => {

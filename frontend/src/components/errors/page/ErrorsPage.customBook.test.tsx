@@ -117,6 +117,6 @@ describe('ErrorsPage custom book export', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: '前往快速记忆' }))
 
-    expect(navigateMock).toHaveBeenCalledWith('/practice?book=custom_1&chapter=custom_1_2&mode=quickmemory')
+    expect(navigateMock).toHaveBeenCalledWith('/practice?book=custom_1&chapter=custom_1_2&mode=quickmemory&restart=1')
   })
 })

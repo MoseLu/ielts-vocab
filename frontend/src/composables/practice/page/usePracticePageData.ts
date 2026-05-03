@@ -179,6 +179,7 @@ export function usePracticePageData({
   useEffect(() => {
     let cancelled = false
     const currentSearchParams = new URLSearchParams(searchParamsKey)
+    const restartRequested = currentSearchParams.get('restart') === '1'
     errorProgressHydratedRef.current = false
     setNoListeningPresets(false)
     setReviewQueueError(null)
@@ -284,7 +285,7 @@ export function usePracticePageData({
             onListeningModeFallback: runtimeRefs.current.onListeningModeFallback,
           })
           if (!words || !canApplyScopedLoad()) return
-          const progress = await loadChapterProgressSnapshot(bookId, chapterId)
+          const progress = restartRequested ? null : await loadChapterProgressSnapshot(bookId, chapterId)
           if (!canApplyScopedLoad()) return
           applyScopedWordsLoad({
             words,
@@ -336,7 +337,7 @@ export function usePracticePageData({
             onListeningModeFallback: runtimeRefs.current.onListeningModeFallback,
           })
           if (!words || !canApplyScopedLoad()) return
-          const progress = await loadBookProgressSnapshot(bookId)
+          const progress = restartRequested ? null : await loadBookProgressSnapshot(bookId)
           if (!canApplyScopedLoad()) return
           applyScopedWordsLoad({
             words,
