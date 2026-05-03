@@ -136,6 +136,21 @@ export function buildWrongWordsQueue(words: Word[], queueWords?: string[]): numb
   return restoredQueue.length ? restoredQueue : null
 }
 
+export function isWrongWordsProgressForWords(
+  progress: WrongWordsProgressData | null,
+  words: Word[],
+): boolean {
+  const queueWords = progress?.queue_words
+  if (!queueWords?.length || !words.length) return false
+
+  const currentWordKeys = new Set(words.map(word => word.word.trim().toLowerCase()))
+  const queueWordKeys = new Set(queueWords.map(word => word.trim().toLowerCase()))
+  if ([...queueWordKeys].some(word => !currentWordKeys.has(word))) return false
+  if ((progress.round ?? 1) > 1) return true
+
+  return currentWordKeys.size === queueWordKeys.size
+}
+
 export function persistWrongWordsProgress(
   snapshot: WrongWordsProgressData,
   userId?: string | number | null,

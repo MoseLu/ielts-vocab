@@ -304,6 +304,67 @@ describe('PracticePage error mode', () => {
     })
   })
 
+  it('restores manual wrong-word review progress for the same selected words', async () => {
+    seedScopedWrongWords(42, [
+      { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition', wrong_count: 1 },
+      { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition', wrong_count: 1 },
+      { word: 'gamma', phonetic: '/g/', pos: 'n.', definition: 'gamma definition', wrong_count: 1 },
+    ])
+    localStorage.setItem(getWrongWordsReviewSelectionStorageKey(42), JSON.stringify(['beta', 'gamma']))
+    seedScopedWrongWordsProgress(42, {
+      _last: {
+        current_index: 1,
+        correct_count: 1,
+        wrong_count: 0,
+        is_completed: false,
+        queue_words: ['beta', 'gamma'],
+        mode: 'meaning',
+      },
+    })
+
+    apiFetchMock.mockResolvedValue({ words: [] })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?mode=errors&selection=manual']}>
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:gamma')
+    })
+  })
+
+  it('ignores saved wrong-word progress from a different word list', async () => {
+    seedScopedWrongWords(42, [
+      { word: 'cable', phonetic: '/c1/', pos: 'n.', definition: 'cable definition', wrong_count: 1 },
+      { word: 'campus', phonetic: '/c2/', pos: 'n.', definition: 'campus definition', wrong_count: 1 },
+      { word: 'canvas', phonetic: '/c3/', pos: 'n.', definition: 'canvas definition', wrong_count: 1 },
+    ])
+    seedScopedWrongWordsProgress(42, {
+      _last: {
+        current_index: 2,
+        correct_count: 12,
+        wrong_count: 3,
+        is_completed: false,
+        queue_words: ['delta', 'demo', 'device'],
+        mode: 'meaning',
+      },
+    })
+
+    apiFetchMock.mockResolvedValue({ words: [] })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?mode=errors']}>
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:cable')
+    })
+  })
+
   it('accepts typed english recall answers in meaning mode and advances on correct submit', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false, repeatWrong: false }))
     seedScopedWrongWords(42, [

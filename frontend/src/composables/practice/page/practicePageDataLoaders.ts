@@ -10,6 +10,7 @@ import {
   buildWrongWordsQueue,
   createResetProgressState,
   filterVocabularyForMode,
+  isWrongWordsProgressForWords,
   normalizeOptionWordKey,
   readWrongWordsProgress,
   type ReviewQueueContext,
@@ -235,7 +236,8 @@ export async function loadErrorModeData({
     const words = filterVocabularyForMode(savedWords, mode)
     const indices = Array.from({ length: words.length }, (_, index) => index)
     const fallbackQueue = indices
-    const savedProgress = selectedWrongWordOrder ? null : readWrongWordsProgress(mode, userId)
+    const candidateProgress = readWrongWordsProgress(mode, userId)
+    const savedProgress = isWrongWordsProgressForWords(candidateProgress, words) ? candidateProgress : null
     const nextQueue = savedProgress?.is_completed
       ? fallbackQueue
       : buildWrongWordsQueue(words, savedProgress?.queue_words) ?? fallbackQueue
