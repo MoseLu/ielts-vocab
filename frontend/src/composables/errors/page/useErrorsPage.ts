@@ -31,6 +31,7 @@ import {
   normalizeWrongWordKey,
 } from '../../../components/errors/page/errorsPageHelpers'
 import { useWrongWordsCustomBookExport } from './useWrongWordsCustomBookExport'
+import { readAppSettingsFromStorage } from '../../../lib/appSettings'
 
 export type ActiveTab = 'words' | 'real'
 export type DimFilter = 'all' | WrongWordDimension
@@ -41,7 +42,7 @@ interface ApplySearchOptions {
   searchText?: string
 }
 
-const ERRORS_PAGE_SIZE = 10
+const DEFAULT_ERRORS_PAGE_SIZE = 10
 
 function formatDateInput(date: Date): string {
   const year = date.getFullYear()
@@ -65,6 +66,15 @@ function getWrongCountBounds(range: WrongCountRange): { minWrongCount?: number; 
   }
 }
 
+function readWrongWordsPageSize(): number {
+  const settings = readAppSettingsFromStorage()
+  if (settings.reviewLimitCustomized !== true) return DEFAULT_ERRORS_PAGE_SIZE
+  if (settings.reviewLimit === 'unlimited') return DEFAULT_ERRORS_PAGE_SIZE
+
+  const limit = Number.parseInt(String(settings.reviewLimit), 10)
+  return Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_ERRORS_PAGE_SIZE
+}
+
 export function useErrorsPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<ActiveTab>('words')
@@ -82,6 +92,7 @@ export function useErrorsPage() {
   const [selectedWordKeys, setSelectedWordKeys] = useState<string[]>(
     () => readWrongWordsReviewSelectionFromStorage(),
   )
+  const [pageSize] = useState(readWrongWordsPageSize)
   const searchRequestIdRef = useRef(0)
   const remoteSearchTermRef = useRef('')
   const { words, loading } = useWrongWords({ includeDetails: false })
@@ -186,16 +197,16 @@ export function useErrorsPage() {
   const actionSelectedWordCount = actionSelectedWords.length
   const allFilteredSelected = filteredWords.length > 0
     && filteredWords.every(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
-  const totalPages = Math.max(1, Math.ceil(filteredWords.length / ERRORS_PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(filteredWords.length / pageSize))
   const currentPage = Math.min(page, totalPages)
   const paginatedWords = useMemo(() => {
-    const offset = (currentPage - 1) * ERRORS_PAGE_SIZE
-    return filteredWords.slice(offset, offset + ERRORS_PAGE_SIZE)
-  }, [currentPage, filteredWords])
+    const offset = (currentPage - 1) * pageSize
+    return filteredWords.slice(offset, offset + pageSize)
+  }, [currentPage, filteredWords, pageSize])
   const allPaginatedSelected = paginatedWords.length > 0
     && paginatedWords.every(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
-  const pageStartIndex = filteredWords.length === 0 ? 0 : ((currentPage - 1) * ERRORS_PAGE_SIZE) + 1
-  const pageEndIndex = Math.min(currentPage * ERRORS_PAGE_SIZE, filteredWords.length)
+  const pageStartIndex = filteredWords.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1
+  const pageEndIndex = Math.min(currentPage * pageSize, filteredWords.length)
 
   const canResetFilters = hasActiveFilters || Boolean(searchText) || searchMode != null
   const normalizedSearchText = useMemo(() => normalizeWrongWordSearchTerm(searchText), [searchText])

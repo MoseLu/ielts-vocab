@@ -412,6 +412,38 @@ describe('ErrorsPage', () => {
     expect(screen.getByRole('button', { name: '开始复习（15词）' })).toBeInTheDocument()
   })
 
+  it('uses the customized review limit as the wrong-word page size', () => {
+    localStorage.setItem('app_settings', JSON.stringify({
+      reviewLimit: '50',
+      reviewLimitCustomized: true,
+    }))
+    hooksState.wrongWords.words = Array.from({ length: 55 }, (_, index) => ({
+      word: `word-${index + 1}`,
+      phonetic: `/w${index + 1}/`,
+      pos: 'n.',
+      definition: `definition-${index + 1}`,
+      wrong_count: 5,
+      first_wrong_at: '2026-04-07T02:00:00.000Z',
+      meaning_wrong: 5,
+    }))
+
+    const { container } = render(
+      <MemoryRouter>
+        <ErrorsPage />
+      </MemoryRouter>,
+    )
+
+    const scopeRow = container.querySelector('.errors-scope-row')
+    expect(scopeRow).not.toBeNull()
+    expect(within(scopeRow as HTMLElement).getByText('1-50/55')).toBeInTheDocument()
+    expect(screen.getByLabelText('选择 word-50')).toBeInTheDocument()
+    expect(screen.queryByLabelText('选择 word-51')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '全选当前页' }))
+
+    expect(screen.getByRole('button', { name: '开始复习（50词）' })).toBeInTheDocument()
+  })
+
   it('paginates large wrong-word lists instead of rendering everything at once', () => {
     hooksState.wrongWords.words = Array.from({ length: 105 }, (_, index) => ({
       word: `word-${index + 1}`,
