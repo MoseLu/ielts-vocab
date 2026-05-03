@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -14,9 +15,11 @@ MINIMAX_PRIMARY_PROVIDER = 'minimax-primary'
 MINIMAX_SECONDARY_PROVIDER = 'minimax-secondary'
 DEFAULT_MINIMAX_MODEL = 'MiniMax-M2.7'
 DEFAULT_DASHSCOPE_MODEL = 'qwen-turbo'
+DEFAULT_OLLAMA_MODEL = 'qwen3.5:35b-a3b'
 DEFAULT_MODEL_MAX_TOKENS = 3200
 DEFAULT_DASHSCOPE_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
 DEFAULT_MINIMAX_BASE_URL = 'https://api.minimaxi.com/v1'
+DEFAULT_OLLAMA_BASE_URL = 'http://127.0.0.1:11434'
 RATE_LIMIT_PATTERNS = (
     r'\brate limit\b',
     r'\btoo many requests\b',
@@ -76,8 +79,23 @@ _MINIMAX_BASE_URL = (
     or _ENV.get('ANTHROPIC_BASE_URL')
     or DEFAULT_MINIMAX_BASE_URL
 ).strip().rstrip('/')
-_MINIMAX_PRIMARY_KEY = _ENV.get('MINIMAX_API_KEY', '').strip()
-_MINIMAX_SECONDARY_KEY = _ENV.get('MINIMAX_API_KEY_2', '').strip()
+_OLLAMA_BASE_URL = (
+    os.environ.get('OLLAMA_BASE_URL')
+    or _ENV.get('OLLAMA_BASE_URL')
+    or os.environ.get('OLLAMA_HOST')
+    or _ENV.get('OLLAMA_HOST')
+    or DEFAULT_OLLAMA_BASE_URL
+).strip().rstrip('/')
+if _OLLAMA_BASE_URL and '://' not in _OLLAMA_BASE_URL:
+    _OLLAMA_BASE_URL = f'http://{_OLLAMA_BASE_URL}'
+_MINIMAX_PRIMARY_KEY = (
+    os.environ.get('MINIMAX_API_KEY')
+    or _ENV.get('MINIMAX_API_KEY', '')
+).strip()
+_MINIMAX_SECONDARY_KEY = (
+    os.environ.get('MINIMAX_API_KEY_2')
+    or _ENV.get('MINIMAX_API_KEY_2', '')
+).strip()
 
 
 def _is_minimax_provider(provider: str) -> bool:
@@ -103,12 +121,16 @@ def resolve_model(provider: str, model: str | None) -> str:
         return configured
     if provider == 'dashscope':
         return DEFAULT_DASHSCOPE_MODEL
+    if provider == 'ollama':
+        return DEFAULT_OLLAMA_MODEL
     if _is_minimax_provider(provider):
         return DEFAULT_MINIMAX_MODEL
     return DEFAULT_MINIMAX_MODEL
 
 
 def _default_fallback_provider(provider: str) -> str | None:
+    if provider == 'ollama':
+        return None
     if provider == 'dashscope':
         return 'minimax'
     if _is_minimax_provider(provider) and _DASHSCOPE_API_KEY:

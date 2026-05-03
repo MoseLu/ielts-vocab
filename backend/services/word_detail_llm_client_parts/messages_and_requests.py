@@ -1,5 +1,6 @@
 def extract_json_block(raw: str) -> str:
     text = str(raw or '').strip()
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
     if not text:
         raise ValueError('LLM returned empty text')
 
@@ -137,7 +138,7 @@ def _request_minimax(
     payload = {
         'model': model,
         'messages': messages,
-        'max_tokens': max_tokens,
+        'max_completion_tokens': max_tokens,
         'temperature': 0.1,
     }
     headers = {
@@ -204,6 +205,44 @@ def _request_dashscope(messages: list[dict], model: str, max_tokens: int) -> str
     return str(content or '')
 
 
+def _request_ollama(messages: list[dict], model: str, max_tokens: int) -> str:
+    payload = {
+        'model': model,
+        'messages': messages,
+        'stream': False,
+        'think': False,
+        'keep_alive': '30m',
+        'options': {
+            'temperature': 0.1,
+            'num_ctx': 4096,
+            'num_predict': max_tokens,
+        },
+    }
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(
+        f'{_OLLAMA_BASE_URL}/api/chat',
+        json=payload,
+        headers=headers,
+        timeout=600,
+    )
+    _raise_for_api_error(response, 'ollama')
+
+    data = response.json()
+    message = data.get('message') or {}
+    content = message.get('content', '')
+    if isinstance(content, list):
+        text = ''.join(
+            str(item.get('text') or '')
+            for item in content
+            if isinstance(item, dict)
+        ).strip()
+    else:
+        text = str(content or '').strip()
+    if not text:
+        raise ValueError('Ollama response missing message content')
+    return text
+
+
 def _request_provider_messages(
     messages: list[dict],
     *,
@@ -213,6 +252,8 @@ def _request_provider_messages(
 ) -> str:
     if provider == 'dashscope':
         return _request_dashscope(messages, model, max_tokens)
+    if provider == 'ollama':
+        return _request_ollama(messages, model, max_tokens)
     if provider == MINIMAX_SECONDARY_PROVIDER:
         return _request_minimax(
             messages,

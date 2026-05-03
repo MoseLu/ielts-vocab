@@ -88,6 +88,7 @@ parser.add_argument('--start-at', type=int, default=0, help='从第 N 个去重�
 parser.add_argument('--sleep', type=float, default=1.0, help='批次间隔秒数')
 parser.add_argument('--overwrite', action='store_true', help='覆盖已有联想记忆')
 parser.add_argument('--no-fallback', action='store_true', help='禁用 provider 自动回退')
+parser.add_argument('--single-word-max-attempts', type=int, default=3, help='单词级重试最大次数')
 parser.add_argument('--provider', type=str, default='dashscope', help='LLM provider')
 parser.add_argument('--model', type=str, default='qwen3.6-plus', help='主模型，支持逗号分隔优先级链')
 parser.add_argument('--fallback-provider', type=str, default='', help='失败时切换的备用 provider')
@@ -179,6 +180,7 @@ def main() -> int:
                 max(1.0, args.rate_limit_base_sleep),
                 args.rate_limit_max_sleep,
             ),
+            single_word_max_attempts=max(1, args.single_word_max_attempts),
             progress_path=progress_path or None,
             failure_path=args.failure_file or None,
             progress_callback=write_progress,

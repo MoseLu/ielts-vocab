@@ -138,6 +138,52 @@ def test_premium_word_mnemonics_cover_paid_book_union():
     assert violations == []
 
 
+def test_premium_word_mnemonic_quality_regressions_stay_fixed():
+    payload = json.loads((VOCAB_ROOT / 'premium_word_mnemonics.json').read_text(encoding='utf-8'))
+    items = payload.get('items') or {}
+
+    expected_text = {
+        'mate': 'mate 核心是“配在一起”：人是伙伴/伴侣，动物是交配；workmate、schoolmate、teammate 都是同伴。',
+        'demographic': 'demo 表“人群”，graphic 表“图表/描述”，合起来就是人口统计的、人口的。',
+        'secrete': 'secret 是秘密，secrete 可记“把东西藏起来”；在生物语境中是腺体分泌液体。',
+        'accommodation': 'accommodate 是“容纳/提供住宿”，accommodation 就是住处或住宿安排。',
+        'have a look': 'have a look 是固定口语表达，意思是“看一下”。',
+        'quit': 'quit 比 quiet 少一个 e，e 退出队伍，记“离开；停止；辞职”。',
+        'quiz': 'quiz 常出现在课堂或节目语境，指知识竞赛或小测验。',
+        'quiet': 'quiet 比 quit 多一个 e，像嘘声拉长让环境安静下来，记“安静的”。',
+        'quick': 'quick 和 quit/quiet 同属 qu 开头易混词，quick 只记速度“快的；迅速的”。',
+        'quote': 'quote 作动词是引用或报价，作名词是引文或报价；阅读中看价格还是文字出处。',
+        'in a sense': 'in a sense 是固定表达，意思是“在某种意义上；从某种角度说”。',
+    }
+
+    assert {
+        word: (items.get(word) or {}).get('text')
+        for word in expected_text
+    } == expected_text
+
+
+def test_premium_word_mnemonics_avoid_known_low_quality_patterns():
+    payload = json.loads((VOCAB_ROOT / 'premium_word_mnemonics.json').read_text(encoding='utf-8'))
+    items = payload.get('items') or {}
+    bad_pattern = re.compile(
+        r'阿康|阿不|阿得|阿瑞|阿瓦|阿太|不斯特|飞扣死|亏特|'
+        r'一妈急死|大拜死|砍破|哈夫 阿 路克|连体婴|耳光|屎|撒尿|'
+        r'派特|推下楼梯|moro\(人\)|crete 意为制造|de\(向下\)\+moro|bri-像|grave\(坟墓\)|'
+        r'发音像|音似|听起来像|常见变体|词形变体|核心词义|'
+        r'按语境确定含义|放进真实场景里记|先抓核心义|放回句子判断|核心义仍是|记住它常落在|'
+        r'\ba\s*[+＋]\s*bit\b|\bab\s*[+＋]\s*road\b|'
+        r'[A-Za-z]+\([^)]{1,20}\)\s*[+＋]|[A-Za-z]+\s*[-–—]\s*像|'
+        r'\b[A-Za-z]{1,6}-像|[-–—]>|->|→'
+    )
+    violations = [
+        f'{word}:{item.get("text")}'
+        for word, item in items.items()
+        if item.get('badge') == '谐音' or bad_pattern.search(str(item.get('text') or ''))
+    ]
+
+    assert violations == []
+
+
 def test_known_premium_phonetic_regressions_stay_fixed():
     expected = {
         'ielts_listening_premium.json': {

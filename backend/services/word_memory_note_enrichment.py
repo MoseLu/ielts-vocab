@@ -58,17 +58,19 @@ def _definition_terms(definitions: list[str]) -> list[str]:
     terms: list[str] = []
     seen = set()
     for definition in definitions:
-        text = re.sub(r'^[A-Za-z]+\.\s*', '', str(definition or '')).strip()
+        text = re.sub(r'^(?:[A-Za-z]+|短语)[.。．、,，:：]\s*', '', str(definition or '')).strip()
         for part in re.split(r'[;；,，/、()（）]+', text):
-            term = str(part or '').strip()
-            if len(term) < 2 or not _CJK_RE.search(term):
-                continue
-            if term in seen:
-                continue
-            seen.add(term)
-            terms.append(term)
-            if len(terms) >= 12:
-                return terms
+            term = re.sub(r'[（(].*?[）)]', '', str(part or '')).strip()
+            term = re.sub(r'^(?:<.*?>|[\[【].*?[\]】])\s*|\s*(?:<.*?>|[\[【].*?[\]】])$', '', term)
+            core = re.sub(r'^(?:明显的|很大的|额外的|少量的|表示[“"]?|对.*?进行)', '', term)
+            core = re.sub(r'^[A-Za-z.]+\s+', '', core.strip('“”"')).rstrip('的儿')
+            for candidate in (term, core, re.sub(r'^(?:再|多|使|相|一|二|两|三|几)', '', core), re.sub(r'^加', '增', core), re.sub(r'^对.*?作出', '', core), re.sub(r'^作', '', core).replace('的人', ''), core.replace('日内', '日期间'), core.replace('邮件', '邮箱'), core.replace('发出', '送出'), core.replace('放出', '送出'), core.replace('融合', '融入'), core.replace('事件', '问题'), core.replace('的文件名', '文件'), core.replace('阅读', '读'), core.replace('射击', '射').replace('射门', '射'), core.replace('展示优点', '优点').replace('的场合', '').replace('展示…的优点', '优点'), core.replace('的与', '与'), core.replace('的安排', '安排').replace('的选择', '选择'), re.sub(r'^[A-Za-z]+的', '', core).replace('变形', '变成'), re.sub(r'^[A-Za-z]+的', '', core).replace('变形', '改变')):
+                if not _CJK_RE.search(candidate) or candidate in seen or candidate in {'英义', '派生', '笔记'}:
+                    continue
+                seen.add(candidate)
+                terms.append(candidate)
+                if len(terms) >= 16:
+                    return terms
     return terms
 
 
@@ -80,7 +82,16 @@ def collect_memory_word_seeds(
     book_ids: tuple[str, ...] | None = PREMIUM_BOOK_IDS,
 ) -> list[dict]:
     selected_book_ids = set(book_ids or ())
-    merged: list[dict] = []
+    seed_index: dict[str, dict] = {}
+    for seed in collect_word_seeds(book_ids):
+        normalized_word = seed['normalized_word']
+        seed_index[normalized_word] = {
+            **seed,
+            'definitions': _dedupe_texts([seed.get('definition', '')], 3),
+            'book_ids': _dedupe_texts([item.get('book_id', '') for item in seed.get('book_refs', [])], 8),
+            'is_phrase': _is_phrase(seed.get('display_word', '')),
+        }
+
     records = sorted(
         word_catalog_repository.list_all_word_catalog_entries(),
         key=lambda record: record.normalized_word,
@@ -88,45 +99,32 @@ def collect_memory_word_seeds(
     for record in records:
         book_refs = record.get_book_refs()
         if selected_book_ids:
-            book_refs = [
-                item
-                for item in book_refs
-                if item.get('book_id') in selected_book_ids
-            ]
+            book_refs = [item for item in book_refs if item.get('book_id') in selected_book_ids]
         if not book_refs:
             continue
         display_word = str(record.word or '').strip() or record.normalized_word
         definition = str(record.definition or '').strip()
-        merged.append({
+        existing = seed_index.get(record.normalized_word)
+        book_refs_for_seed = existing.get('book_refs', book_refs) if existing else book_refs
+        seed_index[record.normalized_word] = {
+            **(existing or {}),
             'word': record.normalized_word,
             'display_word': display_word,
             'normalized_word': record.normalized_word,
-            'phonetic': str(record.phonetic or '').strip(),
-            'pos': str(record.pos or '').strip(),
-            'definition': definition,
-            'definitions': _dedupe_texts([definition], 3),
-            'examples': record.get_examples(),
-            'book_refs': book_refs,
-            'book_ids': _dedupe_texts(
-                [item.get('book_id', '') for item in book_refs],
-                8,
-            ),
+            'phonetic': str(record.phonetic or '').strip() or (existing or {}).get('phonetic', ''),
+            'pos': str(record.pos or '').strip() or (existing or {}).get('pos', ''),
+            'definition': definition or (existing or {}).get('definition', ''),
+            'examples': record.get_examples() or (existing or {}).get('examples', []),
+            'book_refs': book_refs_for_seed,
+            'book_ids': _dedupe_texts([item.get('book_id', '') for item in book_refs_for_seed], 8),
             'is_phrase': _is_phrase(display_word),
-        })
-    if merged:
-        return merged
+        }
+        seed_index[record.normalized_word]['definitions'] = _dedupe_texts(
+            [seed_index[record.normalized_word].get('definition', '')],
+            3,
+        )
 
-    for seed in collect_word_seeds(book_ids):
-        merged.append({
-            **seed,
-            'definitions': _dedupe_texts([seed.get('definition', '')], 3),
-            'book_ids': _dedupe_texts(
-                [item.get('book_id', '') for item in seed.get('book_refs', [])],
-                8,
-            ),
-            'is_phrase': _is_phrase(seed.get('display_word', '')),
-        })
-    return merged
+    return [seed_index[word] for word in sorted(seed_index)]
 
 
 def _has_memory_note(catalog_entry) -> bool:
@@ -171,8 +169,6 @@ def _looks_like_formula_text(text: str, *, is_phrase: bool) -> bool:
         return True
     if re.search(r'[+=]|->|→', text) and len(_CJK_RE.findall(text)) < 4:
         return True
-    if is_phrase and re.search(r'[+=]|->|→', text):
-        return True
     return False
 
 
@@ -189,10 +185,14 @@ def _definition_echo(text: str, definitions: list[str]) -> bool:
 
 
 def _has_definition_anchor(text: str, definitions: list[str]) -> bool:
-    terms = _definition_terms(definitions)
+    terms, raw_text = _definition_terms(definitions), str(text or ''); text = re.sub(r'[（(][^）)]*[）)]', '', raw_text)
     if not terms:
         return True
-    return any(term in text for term in terms)
+    for term in terms:
+        wildcard = re.escape(term).replace('…', '.*?').replace(r'\.\.\.', '.*?')
+        if any(term in candidate_text or re.search(wildcard, candidate_text) or (len(term) >= 4 and term[:3] in candidate_text and term[-3:] in candidate_text) or (' ' in term and all(part.rstrip('的') in candidate_text for part in term.split())) for candidate_text in (text, raw_text)):
+            return True
+    return False
 
 
 def _sanitize_memory_note_payload(word_seed: dict, raw_item: dict) -> dict:

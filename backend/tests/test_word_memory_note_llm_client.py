@@ -5,6 +5,27 @@ def _normalize_word(value: str | None) -> str:
     return str(value or '').strip().lower()
 
 
+def test_memory_system_prompt_rejects_forced_phonetic_transliteration():
+    prompt = word_memory_note_llm_client._memory_system_prompt()
+
+    assert '只有谐音自然顺口时才用 谐音' in prompt
+    assert '禁止使用拗口生造音译' in prompt
+    assert '辨析用于近义/易混词差异' in prompt
+    assert '扩展用于同根、派生、复合词或固定搭配' in prompt
+    assert '类型规则：词根词缀要写真实前缀/词根/后缀' in prompt
+    assert '辨析要比较近义词的使用边界' in prompt
+    assert '不要补 -ain 这类假后缀' in prompt
+    assert '禁止把没有真实语义关系的形近词硬连' in prompt
+    assert 'certain 必须只写 cert 表确定' in prompt
+    assert '每条 text 都必须有真实可回忆的钩子' in prompt
+    assert '多义词要覆盖或点明核心义群' in prompt
+    assert '禁止使用拗口生造音译、伪词根、假拆分或编造人名地名' in prompt
+    assert '除非释义本身包含死亡、杀死、致命等义' in prompt
+    assert '禁止模板句：先抓核心义、放回句子判断' in prompt
+    assert '禁止只写没有中文解释的词根词缀链' in prompt
+    assert '派生词、复数词、现在分词不能只写' in prompt
+
+
 def test_normalize_memory_items_uses_default_word_for_single_payload():
     items = word_memory_note_llm_client._normalize_memory_items(
         {
