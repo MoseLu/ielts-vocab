@@ -232,6 +232,13 @@ def normalize_audio_payload(data) -> bytes | None:
         return bytes(data)
     if isinstance(data, list):
         return bytes(data)
+    if isinstance(data, dict):
+        encoded = data.get('base64Pcm') or data.get('base64_pcm')
+        if isinstance(encoded, str):
+            try:
+                return base64.b64decode(encoded, validate=True)
+            except Exception:
+                return None
     return None
 
 

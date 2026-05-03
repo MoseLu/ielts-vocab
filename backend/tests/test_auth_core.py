@@ -260,6 +260,88 @@ class TestLogout:
         assert res.status_code == 401
 
 
+class TestMobileAuth:
+    def test_mobile_login_returns_bearer_tokens_without_set_cookie(self, client, app):
+        client.post('/api/auth/register', json={
+            'username': 'mobile-user',
+            'password': 'password123',
+            'email': 'mobile@example.com',
+        })
+
+        res = client.post('/api/auth/mobile/login', json={
+            'email': 'mobile@example.com',
+            'password': 'password123',
+        })
+
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['token_type'] == 'Bearer'
+        assert data['access_token']
+        assert data['refresh_token']
+        assert data['access_expires_in'] == app.config['JWT_ACCESS_TOKEN_EXPIRES']
+        assert data['refresh_expires_in'] == app.config['JWT_REFRESH_TOKEN_EXPIRES']
+        assert data['user']['username'] == 'mobile-user'
+        assert res.headers.getlist('Set-Cookie') == []
+        access_payload = jwt.decode(
+            data['access_token'],
+            app.config['JWT_SECRET_KEY'],
+            algorithms=['HS256'],
+        )
+        assert access_payload['type'] == 'access'
+        assert access_payload['username'] == 'mobile-user'
+
+    def test_mobile_refresh_rotates_refresh_token(self, client, app):
+        client.post('/api/auth/register', json={
+            'username': 'mobile-refresh',
+            'password': 'password123',
+            'email': 'mobile-refresh@example.com',
+        })
+        login = client.post('/api/auth/mobile/login', json={
+            'email': 'mobile-refresh@example.com',
+            'password': 'password123',
+        }).get_json()
+
+        res = client.post('/api/auth/mobile/refresh', json={
+            'refresh_token': login['refresh_token'],
+        })
+
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['access_token']
+        assert data['refresh_token']
+        assert data['refresh_token'] != login['refresh_token']
+
+        replay = client.post('/api/auth/mobile/refresh', json={
+            'refresh_token': login['refresh_token'],
+        })
+        assert replay.status_code == 401
+
+    def test_mobile_logout_revokes_access_and_refresh_tokens(self, client):
+        client.post('/api/auth/register', json={
+            'username': 'mobile-logout',
+            'password': 'password123',
+        })
+        login = client.post('/api/auth/mobile/login', json={
+            'email': 'mobile-logout',
+            'password': 'password123',
+        }).get_json()
+
+        res = client.post(
+            '/api/auth/mobile/logout',
+            json={'refresh_token': login['refresh_token']},
+            headers=auth_header(login['access_token']),
+        )
+
+        assert res.status_code == 200
+        refresh = client.post('/api/auth/mobile/refresh', json={
+            'refresh_token': login['refresh_token'],
+        })
+        assert refresh.status_code == 401
+        me = client.get('/api/auth/me', headers=auth_header(login['access_token']))
+        assert me.status_code == 200
+        assert me.get_json()['authenticated'] is False
+
+
 class TestMe:
     def test_get_me_authenticated(self, client, app):
         client.post('/api/auth/register', json={

@@ -13,6 +13,7 @@ from routes.middleware import optional_token_required, token_required
 from services.auth_session_service import (
     get_current_user_payload as _service_get_current_user_payload,
     clear_auth_cookies as _service_clear_auth_cookies,
+    make_mobile_token_payload as _service_make_mobile_token_payload,
     perform_login as _service_perform_login,
     perform_logout as _service_perform_logout,
     perform_refresh as _service_perform_refresh,
@@ -49,6 +50,15 @@ def login():
     return response
 
 
+@auth_bp.route('/mobile/login', methods=['POST'])
+def mobile_login():
+    payload, status, user_id = _service_perform_login(_app, request, request.get_json() or {})
+    if user_id is None:
+        return jsonify(payload), status
+    token_payload = _service_make_mobile_token_payload(_app, user_id)
+    return jsonify({**payload, **token_payload}), status
+
+
 @auth_bp.route('/refresh', methods=['POST'])
 def refresh():
     payload, status, user_id = _service_perform_refresh(_app, request.cookies.get('refresh_token'))
@@ -56,6 +66,17 @@ def refresh():
     if user_id is not None:
         _service_set_auth_cookies(_app, response, user_id)
     return response
+
+
+@auth_bp.route('/mobile/refresh', methods=['POST'])
+def mobile_refresh():
+    data = request.get_json() or {}
+    refresh_token = (data.get('refresh_token') or '').strip()
+    payload, status, user_id = _service_perform_refresh(_app, refresh_token)
+    if user_id is None:
+        return jsonify(payload), status
+    token_payload = _service_make_mobile_token_payload(_app, user_id)
+    return jsonify({**payload, **token_payload}), status
 
 
 @auth_bp.route('/logout', methods=['POST'])
@@ -70,6 +91,18 @@ def logout(current_user):
     response = make_response(jsonify(payload), status)
     _service_clear_auth_cookies(_app, response)
     return response
+
+
+@auth_bp.route('/mobile/logout', methods=['POST'])
+@token_required
+def mobile_logout(current_user):
+    del current_user
+    data = request.get_json(silent=True) or {}
+    auth_header = request.headers.get('Authorization', '')
+    access_token = auth_header[7:] if auth_header.startswith('Bearer ') else ''
+    refresh_token = (data.get('refresh_token') or '').strip()
+    payload, status = _service_perform_logout(_app, access_token, refresh_token)
+    return jsonify(payload), status
 
 
 @auth_bp.route('/me', methods=['GET'])

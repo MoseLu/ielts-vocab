@@ -163,6 +163,22 @@ def make_refresh_token(app, user_id: int) -> tuple[str, str, datetime]:
     return token, jti, expires_at
 
 
+def make_mobile_token_payload(app, user_id: int) -> dict:
+    access_token, access_jti, access_exp = make_access_token(app, user_id)
+    refresh_token, refresh_jti, refresh_exp = make_refresh_token(app, user_id)
+    return {
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'token_type': 'Bearer',
+        'access_expires_in': app.config['JWT_ACCESS_TOKEN_EXPIRES'],
+        'refresh_expires_in': app.config['JWT_REFRESH_TOKEN_EXPIRES'],
+        'access_jti': access_jti,
+        'refresh_jti': refresh_jti,
+        'access_expires_at': access_exp.isoformat(),
+        'refresh_expires_at': refresh_exp.isoformat(),
+    }
+
+
 def _should_use_secure_cookies(app) -> bool:
     if not app.config['COOKIE_SECURE']:
         return False

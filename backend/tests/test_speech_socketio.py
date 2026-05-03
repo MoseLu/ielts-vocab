@@ -1,5 +1,7 @@
 import threading
+from datetime import datetime, timedelta
 
+import jwt
 import pytest
 import websocket
 
@@ -54,6 +56,46 @@ def test_resolve_socketio_async_mode_prefers_websocket_capable_runtimes(monkeypa
     assert resolve_socketio_async_mode() == 'gevent'
 
 
+def test_socketio_rejects_missing_mobile_token_when_jwt_secret_is_configured(monkeypatch):
+    monkeypatch.setenv('JWT_SECRET_KEY', 'socket-secret')
+
+    client = socketio.test_client(app, namespace='/speech')
+
+    assert not client.is_connected('/speech')
+
+
+def test_socketio_accepts_mobile_bearer_token(monkeypatch):
+    monkeypatch.setenv('JWT_SECRET_KEY', 'socket-secret')
+    token = jwt.encode(
+        {
+            'user_id': 42,
+            'type': 'access',
+            'jti': 'socket-jti',
+            'exp': datetime.utcnow() + timedelta(minutes=10),
+            'iat': datetime.utcnow(),
+            'username': 'mobile-user',
+            'email': '',
+            'is_admin': False,
+            'scopes': ['user'],
+        },
+        'socket-secret',
+        algorithm='HS256',
+    )
+
+    client = socketio.test_client(
+        app,
+        namespace='/speech',
+        auth={'token': token},
+    )
+    received = client.get_received('/speech')
+
+    assert client.is_connected('/speech')
+    connected_event = next(event for event in received if event['name'] == 'connected')
+    assert connected_event['args'][0]['authenticated'] is True
+    assert connected_event['args'][0]['user_id'] == 42
+    client.disconnect(namespace='/speech')
+
+
 def test_extract_partial_transcript_supports_string_stash():
     assert asr_service._extract_partial_transcript({
         'text': '',
@@ -61,7 +103,15 @@ def test_extract_partial_transcript_supports_string_stash():
     }) == 'The widespread adoption'
 
 
-def test_stop_recognition_ignores_closed_connection_errors():
+def test_normalize_audio_payload_accepts_mobile_base64_pcm():
+    assert asr_service.normalize_audio_payload({'base64Pcm': 'AQIDBA=='}) == b'\x01\x02\x03\x04'
+    assert asr_service.normalize_audio_payload({'base64_pcm': 'BQY='}) == b'\x05\x06'
+    assert asr_service.normalize_audio_payload({'base64Pcm': 'not-valid'}) is None
+
+
+def test_stop_recognition_ignores_closed_connection_errors(monkeypatch):
+    monkeypatch.delenv('JWT_SECRET_KEY', raising=False)
+
     class ClosedWebSocket:
         def close(self):
             return None
@@ -104,6 +154,8 @@ def test_stop_recognition_ignores_closed_connection_errors():
 
 
 def test_start_recognition_replaces_existing_session(monkeypatch):
+    monkeypatch.delenv('JWT_SECRET_KEY', raising=False)
+
     class ExistingWebSocket:
         def __init__(self):
             self.close_calls = 0

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 
 from . import base
 from .base import (
@@ -31,14 +32,43 @@ from .realtime_session_state_runtime import (
     sync_realtime_session_snapshot,
 )
 from platform_sdk.socketio_async import spawn_background
+from platform_sdk.internal_service_auth import decode_external_access_token
+
+
+def _extract_socket_auth_token(auth, request) -> str:
+    if isinstance(auth, dict):
+        raw_token = str(auth.get('token') or auth.get('access_token') or '').strip()
+        if raw_token:
+            return raw_token[7:] if raw_token.startswith('Bearer ') else raw_token
+        auth_header = str(auth.get('authorization') or auth.get('Authorization') or '').strip()
+        if auth_header.startswith('Bearer '):
+            return auth_header[7:]
+
+    header_value = request.headers.get('Authorization', '')
+    if header_value.startswith('Bearer '):
+        return header_value[7:]
+    return request.cookies.get('access_token') or ''
+
+
+def _socket_auth_payload(auth, request):
+    secret = (os.environ.get('JWT_SECRET_KEY') or '').strip()
+    if not secret:
+        return {}
+    token = _extract_socket_auth_token(auth, request)
+    return decode_external_access_token(token, secret=secret)
 
 
 def register_socketio_events(socketio) -> None:
     base.socketio_instance = socketio
 
     @socketio.on('connect', namespace=SOCKET_NAMESPACE)
-    def handle_connect():
+    def handle_connect(auth=None):
         from flask import request
+
+        auth_payload = _socket_auth_payload(auth, request)
+        if auth_payload is None:
+            print(f"[Speech] Rejected unauthenticated client: {request.sid}")
+            return False
 
         print(f"[Speech] Client connected: {request.sid}")
         _emit_socketio_event(
@@ -48,6 +78,8 @@ def register_socketio_events(socketio) -> None:
             {
                 'message': 'Connected to speech recognition service',
                 'api_configured': bool(get_dashscope_api_key()),
+                'authenticated': bool(auth_payload),
+                'user_id': auth_payload.get('user_id') if auth_payload else None,
             },
         )
 
