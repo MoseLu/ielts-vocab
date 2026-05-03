@@ -5,6 +5,7 @@ from platform_sdk import notes_word_note_repository_adapter as word_note_reposit
 from platform_sdk.catalog_runtime_adapters import (
     books_vocabulary_loader_service,
     phonetic_lookup_service,
+    premium_word_mnemonic_catalog,
     word_catalog_repository,
 )
 from platform_sdk.catalog_provider_adapter import (
@@ -222,6 +223,9 @@ def build_word_details_response(raw_word: str, current_user) -> tuple[dict, int]
         word_catalog_repository.commit()
 
     catalog_payload = catalog_entry.to_dict()
+    memory_note = catalog_payload.get('memory') or (
+        premium_word_mnemonic_catalog.get_premium_word_mnemonic(normalized_word)
+    )
     examples = books_vocabulary_loader_service.resolve_unified_examples(
         word,
         fallback_examples=catalog_payload['examples'],
@@ -233,6 +237,7 @@ def build_word_details_response(raw_word: str, current_user) -> tuple[dict, int]
         'pos': catalog_payload['pos'],
         'definition': catalog_payload['definition'],
         'root': catalog_payload['root'],
+        'memory': memory_note,
         'english': catalog_payload['english'],
         'examples': examples,
         'derivatives': catalog_payload['derivatives'],

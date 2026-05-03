@@ -220,6 +220,8 @@ def test_catalog_content_service_word_details(monkeypatch, tmp_path):
     assert payload['phonetic'] == '/kwɪt/'
     assert payload['examples'][0]['en'] == 'Quit before the deadline.'
     assert payload['books'][0]['book_id'] == 'book-a'
+    assert payload['memory']['source'] == 'premium_word_mnemonics'
+    assert payload['memory']['text']
 
 
 def test_catalog_content_service_creates_confusable_custom_chapter(monkeypatch, tmp_path):
