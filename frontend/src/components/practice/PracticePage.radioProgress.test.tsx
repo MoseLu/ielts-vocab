@@ -129,7 +129,7 @@ describe('PracticePage radio progress sync', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/book-1/chapters/1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
         return Promise.resolve({
           ok: true,
           json: async () => ({

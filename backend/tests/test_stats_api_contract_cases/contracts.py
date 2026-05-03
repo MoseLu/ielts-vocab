@@ -121,7 +121,7 @@ def test_learning_stats_contract_matches_mixed_data_aggregation(client, app, mon
             'phonetic': '/kaɪnd/',
             'pos': 'n.',
             'word_mastery_status': 'new',
-            'pending_dimensions': ['recognition', 'meaning', 'listening', 'dictation'],
+            'pending_dimensions': ['recognition', 'meaning', 'listening', 'speaking', 'dictation'],
             'recognition_wrong': 0,
             'listening_wrong': 1,
             'meaning_wrong': 4,
@@ -133,7 +133,7 @@ def test_learning_stats_contract_matches_mixed_data_aggregation(client, app, mon
             'phonetic': '/ɪˈfekt/',
             'pos': 'n.',
             'word_mastery_status': 'new',
-            'pending_dimensions': ['recognition', 'meaning', 'listening', 'dictation'],
+            'pending_dimensions': ['recognition', 'meaning', 'listening', 'speaking', 'dictation'],
             'recognition_wrong': 0,
             'listening_wrong': 2,
             'meaning_wrong': 2,
@@ -314,7 +314,7 @@ def test_learner_profile_contract_matches_summary_modes_and_activity_counts(clie
     assert recognition['status'] == 'due'
 
     mode_map = {item['mode']: item for item in data['mode_breakdown']}
-    assert list(item['mode'] for item in data['mode_breakdown']) == ['listening', 'meaning', 'quickmemory']
+    assert list(item['mode'] for item in data['mode_breakdown']) == ['quickmemory', 'listening', 'meaning']
     assert mode_map['listening']['words'] == 130
     assert mode_map['listening']['sessions'] == 13
     assert mode_map['listening']['accuracy'] == 63
