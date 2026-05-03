@@ -3,8 +3,10 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from math import ceil
+from threading import RLock
+from urllib.parse import urlsplit, urlunsplit
 
-from platform_sdk.storage.aliyun_oss import env_int, join_object_key, resolve_object_metadata
+from platform_sdk.storage.aliyun_oss import build_endpoint, env_int, join_object_key, resolve_object_metadata
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_support import load_scope_vocabulary, normalize_optional_text, normalize_word_text
 
@@ -13,6 +15,8 @@ GAME_THEME_PAGE_SIZE = 8
 THEME_CHAPTER_WORD_COUNT = 64
 GAME_THEME_ASSET_OBJECT_PREFIX = 'projects/ielts-vocab/game-assets'
 GAME_THEME_ASSET_BUCKET_ENV = 'AXI_ALIYUN_OSS_PUBLIC_BUCKET'
+GAME_THEME_ASSET_PUBLIC_BASE_URL_ENV = 'GAME_THEME_ASSET_PUBLIC_BASE_URL'
+_THEME_DATA_LOCK = RLock()
 
 GAME_THEME_DEFINITIONS = (
     {
@@ -83,10 +87,39 @@ def _game_theme_asset_bucket_env() -> str:
     return configured or GAME_THEME_ASSET_BUCKET_ENV
 
 
+def _game_asset_object_key(relative_path: str) -> str:
+    return join_object_key(prefix=_game_theme_asset_prefix(), file_name=relative_path.strip('/'))
+
+
+def _game_theme_asset_public_base_url() -> str:
+    configured = (os.environ.get(GAME_THEME_ASSET_PUBLIC_BASE_URL_ENV) or '').strip().rstrip('/')
+    if configured:
+        return configured
+
+    bucket_name = (os.environ.get(_game_theme_asset_bucket_env()) or '').strip()
+    region = (os.environ.get('AXI_ALIYUN_OSS_REGION') or '').strip()
+    endpoint = (os.environ.get('AXI_ALIYUN_OSS_ENDPOINT') or '').strip()
+    if not bucket_name or not region:
+        return ''
+
+    parsed = urlsplit(build_endpoint(region, endpoint))
+    host = parsed.netloc
+    if not host:
+        return ''
+    if not host.startswith(f'{bucket_name}.'):
+        host = f'{bucket_name}.{host}'
+    return urlunsplit((parsed.scheme or 'https', host, '', '', '')).rstrip('/')
+
+
 def _game_asset_url(relative_path: str) -> str:
     asset_path = relative_path.strip('/')
+    object_key = _game_asset_object_key(asset_path)
+    public_base_url = _game_theme_asset_public_base_url()
+    if public_base_url:
+        return f'{public_base_url}/{object_key}'
+
     metadata = resolve_object_metadata(
-        object_key=join_object_key(prefix=_game_theme_asset_prefix(), file_name=asset_path),
+        object_key=object_key,
         file_name=asset_path.rsplit('/', 1)[-1],
         bucket_env=_game_theme_asset_bucket_env(),
         signed_url_expires_seconds=env_int('GAME_THEME_ASSET_OSS_SIGNED_URL_EXPIRES_SECONDS', 3600),
@@ -180,7 +213,7 @@ def _chapter_summary(theme: dict, chapter_index: int, chapter_words: list[dict])
 
 
 @lru_cache(maxsize=1)
-def _compiled_theme_data() -> dict:
+def _compile_theme_data_once() -> dict:
     source_words = _load_source_words()
     buckets = {theme['id']: [] for theme in GAME_THEME_DEFINITIONS}
     for order, item in enumerate(source_words):
@@ -199,6 +232,11 @@ def _compiled_theme_data() -> dict:
             chapter_map[summary['id']] = chapters[-1]
         themes.append({**theme, 'wordCount': len(theme_words), 'chapters': chapters})
     return {'themes': themes, 'chapterMap': chapter_map, 'totalWords': len(source_words)}
+
+
+def _compiled_theme_data() -> dict:
+    with _THEME_DATA_LOCK:
+        return _compile_theme_data_once()
 
 
 def _public_chapter(chapter: dict) -> dict:

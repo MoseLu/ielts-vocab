@@ -1,3 +1,5 @@
+import time
+from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 
 from models import (
@@ -250,6 +252,8 @@ def test_failed_dimension_does_not_block_next_unstarted_dimension(client):
 
 def test_game_theme_catalog_covers_paid_books_and_oss_asset_contract(client, monkeypatch):
     _register_and_login(client, username='game-theme-user')
+    monkeypatch.delenv('GAME_THEME_ASSET_PUBLIC_BASE_URL', raising=False)
+    monkeypatch.delenv('AXI_ALIYUN_OSS_PUBLIC_BUCKET', raising=False)
     monkeypatch.setattr(
         'services.game_theme_catalog_service.resolve_object_metadata',
         lambda **kwargs: SimpleNamespace(signed_url=f"https://oss.example/{kwargs['object_key']}"),
@@ -277,6 +281,61 @@ def test_game_theme_catalog_covers_paid_books_and_oss_asset_contract(client, mon
             assert '/game/campaign-v2/' not in asset_url
         for asset_url in theme['chapters'][0]['assets'].values():
             assert asset_url.startswith('https://oss.example/projects/ielts-vocab/game-assets/')
+
+
+def test_game_theme_catalog_uses_public_base_without_metadata_probe(client, monkeypatch):
+    _register_and_login(client, username='game-theme-public-base-user')
+    monkeypatch.setenv('GAME_THEME_ASSET_PUBLIC_BASE_URL', 'https://oss.example/public')
+
+    def fail_metadata_probe(**_kwargs):
+        raise AssertionError('theme catalog should not probe OSS metadata when public base is configured')
+
+    monkeypatch.setattr(
+        'services.game_theme_catalog_service.resolve_object_metadata',
+        fail_metadata_probe,
+    )
+
+    response = client.get('/api/ai/practice/game/themes')
+
+    assert response.status_code == 200
+    first_theme = response.get_json()['themes'][0]
+    assert first_theme['assets']['desktopMap'].startswith(
+        'https://oss.example/public/projects/ielts-vocab/game-assets/'
+    )
+    assert first_theme['chapters'][0]['assets']['node'].startswith(
+        'https://oss.example/public/projects/ielts-vocab/game-assets/'
+    )
+
+
+def test_game_theme_catalog_compiles_once_for_concurrent_cold_requests(monkeypatch):
+    from services import game_theme_catalog_service as service
+
+    service._compile_theme_data_once.cache_clear()
+    calls = {'count': 0}
+
+    def slow_load_source_words():
+        calls['count'] += 1
+        time.sleep(0.05)
+        return [{
+            'word': 'school',
+            'definition': 'school research campus',
+            'pos': 'noun',
+            'chapter_title': 'academic study',
+            'book_id': 'ielts_reading_premium',
+            'chapter_id': '1',
+            'source_order': 1,
+        }]
+
+    monkeypatch.setenv('GAME_THEME_ASSET_PUBLIC_BASE_URL', 'https://oss.example/public')
+    monkeypatch.setattr(service, '_load_source_words', slow_load_source_words)
+    try:
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            results = list(executor.map(lambda _index: service.build_game_theme_catalog(), range(3)))
+    finally:
+        service._compile_theme_data_once.cache_clear()
+
+    assert calls['count'] == 1
+    assert [result['totalWords'] for result in results] == [1, 1, 1]
 
 
 def test_game_state_accepts_theme_scope_fields(client):
