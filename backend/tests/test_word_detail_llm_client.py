@@ -185,7 +185,7 @@ def test_request_ollama_uses_local_chat_endpoint(monkeypatch):
     assert calls[0]['json']['model'] == 'qwen3.5:35b-a3b'
     assert calls[0]['json']['stream'] is False
     assert calls[0]['json']['think'] is False
-    assert 'format' not in calls[0]['json']
+    assert calls[0]['json']['format'] == 'json'
     assert calls[0]['json']['options']['num_ctx'] == 4096
     assert calls[0]['json']['options']['num_predict'] == 64
     assert calls[0]['headers'] == {'Content-Type': 'application/json'}

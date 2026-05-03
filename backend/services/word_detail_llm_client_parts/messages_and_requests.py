@@ -211,6 +211,7 @@ def _request_ollama(messages: list[dict], model: str, max_tokens: int) -> str:
         'messages': messages,
         'stream': False,
         'think': False,
+        'format': 'json',
         'keep_alive': '30m',
         'options': {
             'temperature': 0.1,

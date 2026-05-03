@@ -140,6 +140,13 @@ def _parse_single_word_text_fallback(raw_text: str, default_word: str) -> dict:
     }
 
 
+def _max_tokens_for_memory_note_batch(provider: str, word_count: int) -> int:
+    requested = max(500, 320 + (word_count * 180))
+    if str(provider or '').strip().lower() == 'ollama':
+        return min(8192, max(1200, 480 + (word_count * 240)))
+    return min(2048, requested)
+
+
 def request_memory_note_batch(
     word_seeds: list[dict],
     *,
@@ -155,7 +162,10 @@ def request_memory_note_batch(
         if single_word
         else _build_messages(word_seeds)
     )
-    max_tokens = min(2048, max(500, 320 + (len(word_seeds) * 180)))
+    max_tokens = _max_tokens_for_memory_note_batch(
+        provider,
+        len(word_seeds),
+    )
     errors = []
 
     for current_provider, current_model in request_plan(

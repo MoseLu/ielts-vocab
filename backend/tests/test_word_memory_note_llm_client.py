@@ -125,3 +125,14 @@ def test_request_memory_note_batch_accepts_single_word_plain_text_fallback(monke
 
     assert items['a bit']['badge'] == '联想'
     assert items['a bit']['text'] == '想一下只差一点点，就是“稍微；有点”。'
+
+
+def test_ollama_memory_batches_allow_larger_json_outputs():
+    assert word_memory_note_llm_client._max_tokens_for_memory_note_batch(
+        'ollama',
+        32,
+    ) > 2048
+    assert word_memory_note_llm_client._max_tokens_for_memory_note_batch(
+        'dashscope',
+        32,
+    ) == 2048
