@@ -95,6 +95,7 @@ jobs:
             backend/tests/test_ai_quick_memory_review.py \
             backend/tests/test_learning_stats.py \
             backend/tests/test_stats_api_contract.py \
+            backend/tests/test_release_risk_user_journey.py \
             backend/tests/test_progress_route.py \
             backend/tests/test_books_progress_resume.py \
             backend/tests/test_ai_speaking_assessment_application.py \

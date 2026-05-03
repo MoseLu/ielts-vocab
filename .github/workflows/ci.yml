@@ -191,8 +191,8 @@ jobs:
         if: steps.frontend_audit.outcome == 'failure'
         run: echo "::warning::pnpm audit reported frontend production dependency findings. Review before release closeout."
 
-  windows-split-runtime-smoke:
-    runs-on: windows-latest
+  mac-split-runtime-smoke:
+    runs-on: macos-latest
     env:
       SECRET_KEY: ci-secret-key-please-change-in-real-env
       JWT_SECRET_KEY: ci-jwt-secret-key-please-change-in-real-env
@@ -228,6 +228,6 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm --dir frontend exec playwright install chromium
 
-      - name: Run Windows split runtime smoke
-        shell: pwsh
-        run: .\scripts\ci\windows-split-runtime-smoke.ps1 -ProjectRoot $PWD
+      - name: Run macOS split runtime smoke
+        shell: bash
+        run: bash scripts/ci/mac-split-runtime-smoke.sh "$PWD"

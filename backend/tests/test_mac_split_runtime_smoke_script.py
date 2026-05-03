@@ -16,3 +16,10 @@ def test_mac_split_runtime_smoke_script_uses_shell_runtime_chain():
     assert 'pnpm --dir frontend exec playwright test tests/e2e/smoke.spec.ts --project=chromium' in script
     assert 'backend/.env.microservices.local.example' in script
     assert "curl -s -o /dev/null -w '%{http_code}'" in script
+
+
+def test_ci_split_runtime_smoke_references_existing_script():
+    workflow = _read('.github/workflows/ci.yml')
+
+    assert 'mac-split-runtime-smoke.sh' in workflow
+    assert 'windows-split-runtime-smoke.ps1' not in workflow
