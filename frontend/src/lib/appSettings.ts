@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS, STORAGE_KEYS } from '../constants'
 import type { AppSettings } from '../types'
 
 const VALID_REVIEW_INTERVALS = new Set(['1', '3', '7'])
+export const APP_SETTINGS_CHANGED_EVENT = 'app-settings-changed'
 function asSettingsRecord(value: unknown): AppSettings {
   return typeof value === 'object' && value !== null
     ? (value as AppSettings)
@@ -55,5 +56,8 @@ export function readAppSettingsFromStorage(): AppSettings {
 export function writeAppSettingsToStorage(settings: AppSettings): AppSettings {
   const normalized = normalizeAppSettings(settings)
   localStorage.setItem(STORAGE_KEYS.APP_SETTINGS, JSON.stringify(normalized))
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(APP_SETTINGS_CHANGED_EVENT, { detail: normalized }))
+  }
   return normalized
 }

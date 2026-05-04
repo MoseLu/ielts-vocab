@@ -1,63 +1,14 @@
 import { useEffect, useRef } from 'react'
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type { Chapter, LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../components/practice/types'
+import type { Chapter, ProgressData, Word } from '../../../components/practice/types'
 import { apiFetch, buildApiUrl } from '../../../lib'
 import { loadSmartStats, loadSmartStatsFromBackend } from '../../../lib/smartMode'
 import { safeParse } from '../../../lib/validation'
-import { LearnerProfileSchema, type LearnerProfile as BackendLearnerProfile } from '../../../lib/schemas'
+import { LearnerProfileSchema } from '../../../lib/schemas'
 import { loadBookProgressSnapshot, loadChapterProgressSnapshot } from '../../../components/practice/progressStorage'
-import { type ReviewQueueContext, type ReviewQueueSummary } from '../../../components/practice/page/practicePageHelpers'
-import type { ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
-import { applyScopedWordsLoad, buildCanonicalWordListPath, loadErrorModeData, loadQuickMemoryReviewQueue, resolvePracticeWordsForMode } from './practicePageDataLoaders'
-
-interface UsePracticePageDataParams {
-  userId: string | number | null
-  currentDay?: number
-  mode?: PracticeMode
-  bookId: string | null
-  chapterId: string | null
-  resolvedPracticeBookId: string | null
-  resolvedPracticeChapterId: string | null
-  reviewMode: boolean
-  errorMode: boolean
-  isCustomPracticeScope: boolean
-  searchParamsKey: string
-  settings: {
-    shuffle?: boolean
-    reviewInterval?: string
-    reviewLimit?: string
-  }
-  navigate: (to: string) => void
-  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void
-  setVocabulary: Dispatch<SetStateAction<Word[]>>
-  setQueue: Dispatch<SetStateAction<number[]>>
-  setQueueIndex: Dispatch<SetStateAction<number>>
-  setCorrectCount: Dispatch<SetStateAction<number>>
-  setWrongCount: Dispatch<SetStateAction<number>>
-  setPreviousWord: Dispatch<SetStateAction<Word | null>>
-  setLastState: Dispatch<SetStateAction<LastState | null>>
-  setBookChapters: Dispatch<SetStateAction<Chapter[]>>
-  setCurrentChapterTitle: Dispatch<SetStateAction<string>>
-  setWordStatuses: Dispatch<SetStateAction<WordStatuses>>
-  setResumeProgress: Dispatch<SetStateAction<ProgressData | null>>
-  setBackendLearnerProfile: Dispatch<SetStateAction<BackendLearnerProfile | null>>
-  setReviewOffset: Dispatch<SetStateAction<number>>
-  reviewOffset: number
-  setReviewSummary: Dispatch<SetStateAction<ReviewQueueSummary | null>>
-  setReviewContext: Dispatch<SetStateAction<ReviewQueueContext | null>>
-  setReviewQueueError: Dispatch<SetStateAction<string | null>>
-  setQuickMemoryReviewQueueResolved: Dispatch<SetStateAction<boolean>>
-  setNoListeningPresets: Dispatch<SetStateAction<boolean>>
-  setErrorReviewRound: Dispatch<SetStateAction<number>>
-  vocabRef: MutableRefObject<Word[]>
-  queueRef: MutableRefObject<number[]>
-  wordsLearnedBaselineRef: MutableRefObject<number>
-  uniqueAnsweredRef: MutableRefObject<Set<string>>
-  errorProgressHydratedRef: MutableRefObject<boolean>
-  errorRoundResultsRef: MutableRefObject<ErrorReviewRoundResults>
-  beginSession: (context?: { bookId?: string | null; chapterId?: string | null }) => void
-  onListeningModeFallback: () => void
-}
+import { buildCanonicalWordListPath, loadErrorModeData, loadQuickMemoryReviewQueue } from './practicePageDataLoaders'
+import { applyScopedWordsLoad, resolvePracticeWordsForMode } from './practicePageScopedLoad'
+import { resolvePracticeGroupSize } from './practicePageGrouping'
+import type { UsePracticePageDataParams } from './practicePageDataTypes'
 
 export function usePracticePageData({
   userId,
@@ -94,8 +45,11 @@ export function usePracticePageData({
   setQuickMemoryReviewQueueResolved,
   setNoListeningPresets,
   setErrorReviewRound,
+  setPracticeGroup,
   vocabRef,
   queueRef,
+  chapterGroupStartRef,
+  chapterQueueWordsRef,
   wordsLearnedBaselineRef,
   uniqueAnsweredRef,
   errorProgressHydratedRef,
@@ -183,6 +137,14 @@ export function usePracticePageData({
     errorProgressHydratedRef.current = false
     setNoListeningPresets(false)
     setReviewQueueError(null)
+    const chapterGroupSize = bookId && chapterId
+      ? resolvePracticeGroupSize(settings)
+      : null
+    if (reviewMode || errorMode || !chapterId) {
+      chapterGroupStartRef.current = 0
+      chapterQueueWordsRef.current = []
+      setPracticeGroup(null)
+    }
     const scopedLoadKey = reviewMode || errorMode
       ? null
       : JSON.stringify({
@@ -191,6 +153,7 @@ export function usePracticePageData({
           bookId,
           chapterId,
           shuffle: settings.shuffle ?? null,
+          chapterGroupSize,
         })
     const scopedLoadGeneration = scopedLoadGenerationRef.current + 1
     scopedLoadGenerationRef.current = scopedLoadGeneration
@@ -293,6 +256,7 @@ export function usePracticePageData({
             chapterId,
             mode,
             shuffle: false,
+            groupSize: chapterGroupSize,
             scopedLoadKey,
             scopedLoadGeneration,
             canApplyScopedLoad,
@@ -300,6 +264,8 @@ export function usePracticePageData({
             scopedQueueWordsCacheRef,
             queueRef,
             vocabRef,
+            chapterGroupStartRef,
+            chapterQueueWordsRef,
             wordsLearnedBaselineRef,
             uniqueAnsweredRef,
             setVocabulary,
@@ -311,6 +277,7 @@ export function usePracticePageData({
             setLastState,
             setWordStatuses,
             setResumeProgress,
+            setPracticeGroup,
             beginSession: runtimeRefs.current.beginSession,
           })
         })
@@ -345,6 +312,7 @@ export function usePracticePageData({
             chapterId,
             mode,
             shuffle: false,
+            groupSize: null,
             scopedLoadKey,
             scopedLoadGeneration,
             canApplyScopedLoad,
@@ -352,6 +320,8 @@ export function usePracticePageData({
             scopedQueueWordsCacheRef,
             queueRef,
             vocabRef,
+            chapterGroupStartRef,
+            chapterQueueWordsRef,
             wordsLearnedBaselineRef,
             uniqueAnsweredRef,
             setVocabulary,
@@ -363,6 +333,7 @@ export function usePracticePageData({
             setLastState,
             setWordStatuses,
             setResumeProgress,
+            setPracticeGroup,
             beginSession: runtimeRefs.current.beginSession,
           })
         })
@@ -417,6 +388,7 @@ export function usePracticePageData({
           chapterId,
           mode,
           shuffle: settings.shuffle,
+          groupSize: null,
           scopedLoadKey,
           scopedLoadGeneration,
           canApplyScopedLoad,
@@ -424,6 +396,8 @@ export function usePracticePageData({
           scopedQueueWordsCacheRef,
           queueRef,
           vocabRef,
+          chapterGroupStartRef,
+          chapterQueueWordsRef,
           wordsLearnedBaselineRef,
           uniqueAnsweredRef,
           setVocabulary,
@@ -435,6 +409,7 @@ export function usePracticePageData({
           setLastState,
           setWordStatuses,
           setResumeProgress,
+          setPracticeGroup,
           beginSession: runtimeRefs.current.beginSession,
         })
       })
@@ -453,6 +428,8 @@ export function usePracticePageData({
     currentDay,
     errorMode,
     isCustomPracticeScope,
+    chapterGroupStartRef,
+    chapterQueueWordsRef,
     errorProgressHydratedRef,
     errorRoundResultsRef,
     mode,
@@ -468,6 +445,7 @@ export function usePracticePageData({
     setLastState,
     setNoListeningPresets,
     setPreviousWord,
+    setPracticeGroup,
     setQueue,
     setQueueIndex,
     setQuickMemoryReviewQueueResolved,
@@ -479,6 +457,7 @@ export function usePracticePageData({
     setWrongCount,
     settings.reviewInterval,
     settings.reviewLimit,
+    settings.reviewLimitCustomized,
     settings.shuffle,
     uniqueAnsweredRef,
     userId,

@@ -382,6 +382,66 @@ describe('PracticePage remote resume snapshot', () => {
     randomSpy.mockRestore()
   })
 
+  it('opens a chapter at the configured group containing saved progress', async () => {
+    sessionHookValue.settings = {
+      shuffle: false,
+      reviewLimit: '2',
+      reviewLimitCustomized: true,
+    }
+
+    vi.mocked(fetch).mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/books/book-1/chapters') {
+        return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
+      }
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            words: ['alpha', 'beta', 'gamma', 'delta', 'echo'].map(word => ({
+              word,
+              phonetic: `/${word}/`,
+              pos: 'n.',
+              definition: word,
+            })),
+          }),
+        } as Response)
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`))
+    })
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/books/book-1/chapters/progress') {
+        return Promise.resolve({
+          chapter_progress: {
+            1: {
+              current_index: 3,
+              correct_count: 3,
+              wrong_count: 0,
+              is_completed: false,
+              words_learned: 3,
+              answered_words: ['alpha', 'beta', 'gamma'],
+              queue_words: ['alpha', 'beta', 'gamma', 'delta', 'echo'],
+            },
+          },
+        })
+      }
+      return Promise.resolve({})
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?book=book-1&chapter=1']}>
+        <PracticePage user={{ id: 42 }} mode="meaning" showToast={() => {}} onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-word')).toHaveTextContent('delta')
+      expect(screen.getByTestId('queue-index')).toHaveTextContent('1')
+    })
+  })
+
   it('loads whole-book practice from the canonical word-list endpoint', async () => {
     sessionHookValue.settings = { shuffle: true }
     const requestedUrls: string[] = []

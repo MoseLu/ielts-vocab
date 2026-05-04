@@ -19,8 +19,10 @@ describe('PracticePageCompletedState session duration', () => {
         reviewSummary={null}
         vocabulary={[]}
         errorRoundResults={{}}
+        practiceGroup={null}
         onContinueReview={() => {}}
         onContinueErrorReview={() => {}}
+        onContinueChapterGroup={() => {}}
       />,
     )
 
@@ -45,8 +47,10 @@ describe('PracticePageCompletedState session duration', () => {
         reviewSummary={null}
         vocabulary={[]}
         errorRoundResults={{}}
+        practiceGroup={null}
         onContinueReview={() => {}}
         onContinueErrorReview={() => {}}
+        onContinueChapterGroup={() => {}}
       />,
     )
 
@@ -72,8 +76,10 @@ describe('PracticePageCompletedState session duration', () => {
         reviewSummary={null}
         vocabulary={[]}
         errorRoundResults={{}}
+        practiceGroup={null}
         onContinueReview={() => {}}
         onContinueErrorReview={() => {}}
+        onContinueChapterGroup={() => {}}
       />,
     )
 
@@ -81,6 +87,35 @@ describe('PracticePageCompletedState session duration', () => {
     expect(screen.getByText('1分32秒')).toBeInTheDocument()
     expect(screen.getByText('跟读模式只记录学习时长，不计入测试正确率、错词或掌握度。')).toBeInTheDocument()
     expect(screen.queryByText('正确率')).not.toBeInTheDocument()
+  })
+
+  it('offers the next chapter group when a grouped chapter batch finishes', () => {
+    const onContinueChapterGroup = vi.fn()
+
+    render(
+      <PracticePageCompletedState
+        navigate={vi.fn()}
+        bookId="book-1"
+        chapterId="1"
+        correctCount={50}
+        wrongCount={0}
+        errorMode={false}
+        errorReviewRound={1}
+        reviewMode={false}
+        sessionDurationSeconds={null}
+        reviewSummary={null}
+        vocabulary={[]}
+        errorRoundResults={{}}
+        practiceGroup={{ start: 50, end: 100, total: 202, groupSize: 50 }}
+        onContinueReview={() => {}}
+        onContinueErrorReview={() => {}}
+        onContinueChapterGroup={onContinueChapterGroup}
+      />,
+    )
+
+    expect(screen.getByText('当前分组已完成，还可以继续练习 102 个本章单词。')).toBeInTheDocument()
+    screen.getByRole('button', { name: '继续下一组（还有 102 个）' }).click()
+    expect(onContinueChapterGroup).toHaveBeenCalled()
   })
 })
 

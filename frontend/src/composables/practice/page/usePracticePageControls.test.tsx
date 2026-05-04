@@ -44,6 +44,8 @@ function createParams(overrides: Partial<Parameters<typeof usePracticePageContro
     correctCountRef: { current: 0 },
     wrongCountRef: { current: 0 },
     uniqueAnsweredRef: { current: new Set<string>() },
+    chapterGroupStartRef: { current: 0 },
+    chapterQueueWordsRef: { current: [] },
     errorProgressHydratedRef: { current: false },
     errorRoundResultsRef: { current: {} },
     vocabRef: { current: [createWord()] },
@@ -61,6 +63,7 @@ function createParams(overrides: Partial<Parameters<typeof usePracticePageContro
     setWordStatuses: vi.fn() as Dispatch<SetStateAction<WordStatuses>>,
     setReviewOffset: vi.fn(),
     setErrorReviewRound: vi.fn(),
+    setPracticeGroup: vi.fn(),
     ...overrides,
   }
 }
@@ -140,6 +143,48 @@ describe('usePracticePageControls saveProgress', () => {
       current_index: 1,
       answered_words: ['alpha'],
       queue_words: ['alpha', 'beta'],
+    })
+  })
+
+  it('stores grouped chapter progress using the full chapter queue', () => {
+    const { result } = renderHook(() => usePracticePageControls(createParams({
+      mode: 'dictation',
+      bookId: 'book-1',
+      chapterId: 'chapter-1',
+      queue: [1, 2],
+      queueIndex: 0,
+      vocabulary: [
+        { ...createWord(), word: 'alpha' },
+        { ...createWord(), word: 'beta' },
+        { ...createWord(), word: 'gamma' },
+        { ...createWord(), word: 'delta' },
+      ],
+      uniqueAnsweredRef: { current: new Set(['beta']) },
+      chapterGroupStartRef: { current: 1 },
+      chapterQueueWordsRef: { current: ['alpha', 'beta', 'gamma', 'delta'] },
+      computeChapterWordsLearned: vi.fn(() => 1),
+    })))
+
+    act(() => {
+      result.current.saveProgress(1, 0)
+    })
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/books/book-1/chapters/chapter-1/progress', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'dictation',
+        current_index: 2,
+        correct_count: 1,
+        wrong_count: 0,
+        is_completed: false,
+        words_learned: 1,
+        answered_words: ['beta'],
+        queue_words: ['alpha', 'beta', 'gamma', 'delta'],
+      }),
+    })
+    expect(JSON.parse(localStorage.getItem('chapter_progress') || '{}')['book-1_chapter-1']).toMatchObject({
+      current_index: 2,
+      queue_words: ['alpha', 'beta', 'gamma', 'delta'],
     })
   })
 

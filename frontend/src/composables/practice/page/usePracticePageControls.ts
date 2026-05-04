@@ -7,7 +7,7 @@ import {
   persistChapterProgressSnapshot,
 } from '../../../components/practice/progressStorage'
 import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
-import { persistWrongWordsProgress } from '../../../components/practice/page/practicePageHelpers'
+import { buildWrongWordsQueue, persistWrongWordsProgress } from '../../../components/practice/page/practicePageHelpers'
 import type {
   LastState,
   AppSettings,
@@ -17,6 +17,12 @@ import type {
   WordStatuses,
 } from '../../../components/practice/types'
 import { resolveWordPlaybackSettings } from '../../../components/practice/wordPlayback'
+import {
+  resolvePracticeGroupSize,
+  resolvePracticeGroupWindow,
+  sliceQueueForPracticeGroup,
+  type PracticeGroupWindow,
+} from './practicePageGrouping'
 
 interface UsePracticePageControlsParams {
   mode?: PracticeMode
@@ -45,6 +51,8 @@ interface UsePracticePageControlsParams {
   correctCountRef: MutableRefObject<number>
   wrongCountRef: MutableRefObject<number>
   uniqueAnsweredRef: MutableRefObject<Set<string>>
+  chapterGroupStartRef: MutableRefObject<number>
+  chapterQueueWordsRef: MutableRefObject<string[]>
   errorProgressHydratedRef: MutableRefObject<boolean>
   errorRoundResultsRef: MutableRefObject<ErrorReviewRoundResults>
   vocabRef: MutableRefObject<Word[]>
@@ -62,6 +70,7 @@ interface UsePracticePageControlsParams {
   setWordStatuses: Dispatch<SetStateAction<WordStatuses>>
   setReviewOffset: Dispatch<SetStateAction<number>>
   setErrorReviewRound: Dispatch<SetStateAction<number>>
+  setPracticeGroup: Dispatch<SetStateAction<PracticeGroupWindow | null>>
 }
 
 interface UsePracticePageControlsResult {
@@ -100,6 +109,8 @@ export function usePracticePageControls({
   correctCountRef,
   wrongCountRef,
   uniqueAnsweredRef,
+  chapterGroupStartRef,
+  chapterQueueWordsRef,
   errorProgressHydratedRef,
   errorRoundResultsRef,
   vocabRef,
@@ -117,6 +128,7 @@ export function usePracticePageControls({
   setWordStatuses,
   setReviewOffset,
   setErrorReviewRound,
+  setPracticeGroup,
 }: UsePracticePageControlsParams): UsePracticePageControlsResult {
   const hasValidCurrentDay = Number.isInteger(currentDay ?? null) && (currentDay ?? 0) > 0
 
@@ -129,6 +141,13 @@ export function usePracticePageControls({
     const queueWords = queue
       .map(index => vocabulary[index]?.word)
       .filter((word): word is string => Boolean(word))
+    const chapterQueueWords = chapterQueueWordsRef.current.length
+      ? chapterQueueWordsRef.current
+      : queueWords
+    const chapterQueueLength = chapterQueueWords.length || vocabulary.length
+    const chapterCurrentIndex = chapterId
+      ? Math.min(chapterGroupStartRef.current + nextIndex, chapterQueueLength)
+      : nextIndex
 
     if (errorMode) {
       persistWrongWordsProgress({
@@ -147,10 +166,10 @@ export function usePracticePageControls({
       chapterId
       && vocabulary.length > 0
       && uniqueAnsweredRef.current.size >= vocabulary.length
-      && nextIndex >= queue.length,
+      && chapterCurrentIndex >= chapterQueueLength,
     )
     const progressData = {
-      current_index: nextIndex,
+      current_index: chapterId ? chapterCurrentIndex : nextIndex,
       correct_count: correct,
       wrong_count: wrong,
       is_completed: chapterId ? chapterDone : (advanceToNext && correct + wrong >= vocabulary.length),
@@ -172,7 +191,7 @@ export function usePracticePageControls({
         ...progressData,
         words_learned: wordsLearned,
         answered_words: answeredWords,
-        queue_words: queueWords,
+        queue_words: chapterQueueWords,
       }
       persistChapterProgressSnapshot(bookId, chapterId, chapterProgress)
       apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
@@ -219,6 +238,8 @@ export function usePracticePageControls({
     errorMode,
     errorReviewRound,
     hasValidCurrentDay,
+    chapterGroupStartRef,
+    chapterQueueWordsRef,
     mode,
     queue,
     queueIndex,
@@ -259,6 +280,12 @@ export function usePracticePageControls({
     const queueWords = queue
       .map(index => vocabulary[index]?.word)
       .filter((word): word is string => Boolean(word))
+    const fullQueue = buildWrongWordsQueue(vocabulary, chapterQueueWordsRef.current) ?? queue
+    const firstGroup = resolvePracticeGroupWindow(fullQueue.length, resolvePracticeGroupSize(settings), 0)
+    const resetQueue = sliceQueueForPracticeGroup(fullQueue, firstGroup)
+    const resetQueueWords = chapterQueueWordsRef.current.length
+      ? chapterQueueWordsRef.current
+      : queueWords
     const resetSnapshot = {
       current_index: 0,
       correct_count: 0,
@@ -266,9 +293,14 @@ export function usePracticePageControls({
       is_completed: false,
       words_learned: 0,
       answered_words: [],
-      queue_words: queueWords,
+      queue_words: resetQueueWords,
     }
 
+    chapterGroupStartRef.current = firstGroup?.start ?? 0
+    setPracticeGroup(firstGroup)
+    setQueue(resetQueue)
+    queueRef.current = resetQueue
+    setQueueIndex(0)
     persistChapterProgressSnapshot(bookId, chapterId, resetSnapshot)
 
     try {
@@ -279,7 +311,21 @@ export function usePracticePageControls({
     } catch {
       showToast?.('重置进度失败，请检查网络连接', 'error')
     }
-  }, [bookId, chapterId, queue, showToast, vocabulary])
+  }, [
+    bookId,
+    chapterId,
+    chapterGroupStartRef,
+    chapterQueueWordsRef,
+    mode,
+    queue,
+    queueRef,
+    setPracticeGroup,
+    setQueue,
+    setQueueIndex,
+    settings,
+    showToast,
+    vocabulary,
+  ])
 
   const playWord = useCallback<WordPlaybackHandler>((word, options) => {
     playWordUtil(word, resolveWordPlaybackSettings(settings, options))

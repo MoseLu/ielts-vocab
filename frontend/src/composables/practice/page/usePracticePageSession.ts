@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
 import type { AppSettings, PracticeMode, RadioQuickSettings } from '../../../components/practice/types'
 import * as AIChat from '../../../hooks/useAIChat'
-import { readAppSettingsFromStorage, writeAppSettingsToStorage } from '../../../lib/appSettings'
+import { APP_SETTINGS_CHANGED_EVENT, readAppSettingsFromStorage, writeAppSettingsToStorage } from '../../../lib/appSettings'
 import { syncSmartStatsToBackend } from '../../../lib/smartMode'
 
 interface UsePracticePageSessionParams {
@@ -111,6 +111,15 @@ export function usePracticePageSession({
   useEffect(() => { wrongCountRef.current = wrongCount }, [wrongCount])
   useEffect(() => { sessionBookIdRef.current = practiceBookId }, [practiceBookId])
   useEffect(() => { sessionChapterIdRef.current = practiceChapterId }, [practiceChapterId])
+  useEffect(() => {
+    const handleSettingsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<AppSettings>).detail
+      setSettings(detail ?? readAppSettingsFromStorage())
+    }
+
+    window.addEventListener(APP_SETTINGS_CHANGED_EVENT, handleSettingsChanged)
+    return () => window.removeEventListener(APP_SETTINGS_CHANGED_EVENT, handleSettingsChanged)
+  }, [])
 
   const getCurrentSegmentWordsStudied = useCallback((sessionMode = activeSessionModeRef.current) => (
     sessionMode === 'radio'

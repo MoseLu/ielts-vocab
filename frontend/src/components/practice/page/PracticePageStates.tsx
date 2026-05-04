@@ -9,6 +9,7 @@ import SettingsPanel from '../../settings/SettingsPanel'
 import { PageSkeleton } from '../../ui'
 import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../errorReviewSession'
 import { PracticeRoundSummary } from './PracticeRoundSummary'
+import type { PracticeGroupWindow } from '../../../composables/practice/page/practicePageGrouping'
 function formatSessionDuration(seconds: number): string {
   const safeSeconds = Math.max(0, Math.round(seconds))
   const hours = Math.floor(safeSeconds / 3600)
@@ -102,8 +103,10 @@ interface PracticePageCompletedStateProps {
   reviewSummary: ReviewQueueSummary | null
   vocabulary: Word[]
   errorRoundResults: ErrorReviewRoundResults
+  practiceGroup: PracticeGroupWindow | null
   onContinueReview: () => void
   onContinueErrorReview: () => void
+  onContinueChapterGroup: () => void
 }
 export function PracticePageCompletedState({
   navigate,
@@ -119,8 +122,10 @@ export function PracticePageCompletedState({
   reviewSummary,
   vocabulary,
   errorRoundResults,
+  practiceGroup,
   onContinueReview,
   onContinueErrorReview,
+  onContinueChapterGroup,
 }: PracticePageCompletedStateProps) {
   const reviewRemaining = reviewSummary?.has_more
     ? reviewSummary.total_count - reviewSummary.offset - reviewSummary.returned_count
@@ -132,6 +137,9 @@ export function PracticePageCompletedState({
   const totalAnswered = correctCount + wrongCount
   const accuracy = totalAnswered > 0 ? `${Math.round((correctCount / totalAnswered) * 100)}%` : '0%'
   const isFollowMode = mode === 'follow'
+  const chapterGroupRemaining = !errorMode && !reviewMode && !isFollowMode && practiceGroup?.groupSize && practiceGroup.end < practiceGroup.total
+    ? practiceGroup.total - practiceGroup.end
+    : 0
   const contextLabel = isFollowMode
     ? '跟读练习'
     : errorMode
@@ -151,6 +159,8 @@ export function PracticePageCompletedState({
       ? (reviewSummary?.has_more
           ? `当前批次已完成，还可以继续复习 ${Math.max(reviewRemaining, 0)} 个到期单词。`
           : '当前批次的到期单词已经清完。')
+      : chapterGroupRemaining > 0
+        ? `当前分组已完成，还可以继续练习 ${chapterGroupRemaining} 个本章单词。`
       : null
   const actions = []
 
@@ -164,6 +174,12 @@ export function PracticePageCompletedState({
     actions.push({
       label: `继续复习${reviewRemaining > 0 ? `（还有 ${reviewRemaining} 个）` : ''}`,
       onClick: onContinueReview,
+      tone: 'primary' as const,
+    })
+  } else if (chapterGroupRemaining > 0) {
+    actions.push({
+      label: `继续下一组（还有 ${chapterGroupRemaining} 个）`,
+      onClick: onContinueChapterGroup,
       tone: 'primary' as const,
     })
   }

@@ -2,13 +2,10 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import type { LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../components/practice/types'
 import { DEFAULT_SETTINGS } from '../../../constants'
 import { apiFetch } from '../../../lib'
-import { loadSmartStats, buildSmartQueue } from '../../../lib/smartMode'
 import { filterWrongWords, parseWrongWordsFiltersFromSearchParams } from '../../../features/vocabulary/wrongWordsFilters'
 import { loadWrongWords, readWrongWordsReviewSelectionFromStorage } from '../../../features/vocabulary/wrongWordsStore'
-import { shuffleArray } from '../../../components/practice/utils'
 import {
   buildWrongWordsQueue,
-  createResetProgressState,
   filterVocabularyForMode,
   isWrongWordsProgressForWords,
   normalizeOptionWordKey,
@@ -26,11 +23,6 @@ export function buildCanonicalWordListPath(bookId: string, chapterId?: string | 
   const params = new URLSearchParams({ scope: 'book', book_id: bookId })
   if (chapterId) params.set('chapter_id', chapterId)
   return `/api/books/word-list?${params.toString()}`
-}
-
-interface ScopedLoadStateRef {
-  key: string | null
-  generation: number
 }
 
 interface QuickMemoryReviewQueueOptions {
@@ -264,134 +256,6 @@ export async function loadErrorModeData({
   }
 }
 
-interface ResolvePracticeWordsForModeOptions {
-  rawWords: Word[]
-  mode?: PracticeMode
-  isCustomPracticeScope: boolean
-  setNoListeningPresets: Dispatch<SetStateAction<boolean>>
-  onListeningModeFallback: () => void
-}
-
-export function resolvePracticeWordsForMode({
-  rawWords,
-  mode,
-  isCustomPracticeScope,
-  setNoListeningPresets,
-  onListeningModeFallback,
-}: ResolvePracticeWordsForModeOptions): Word[] | null {
-  const words = filterVocabularyForMode(rawWords, mode)
-  const listeningUnavailable = mode === 'listening' && words.length === 0 && rawWords.length > 0
-
-  if (listeningUnavailable && isCustomPracticeScope) {
-    setNoListeningPresets(false)
-    onListeningModeFallback()
-    return null
-  }
-
-  setNoListeningPresets(listeningUnavailable)
-  return words
-}
-
-interface ApplyScopedWordsLoadOptions {
-  words: Word[]
-  progress: ProgressData | null
-  chapterId: string | null
-  mode?: PracticeMode
-  shuffle?: boolean
-  scopedLoadKey: string | null
-  scopedLoadGeneration: number
-  canApplyScopedLoad: () => boolean
-  lastAppliedScopedLoadRef: MutableRefObject<ScopedLoadStateRef>
-  scopedQueueWordsCacheRef: MutableRefObject<Record<string, string[]>>
-  queueRef: MutableRefObject<number[]>
-  vocabRef: MutableRefObject<Word[]>
-  wordsLearnedBaselineRef: MutableRefObject<number>
-  uniqueAnsweredRef: MutableRefObject<Set<string>>
-  setVocabulary: Dispatch<SetStateAction<Word[]>>
-  setQueue: Dispatch<SetStateAction<number[]>>
-  setQueueIndex: Dispatch<SetStateAction<number>>
-  setCorrectCount: Dispatch<SetStateAction<number>>
-  setWrongCount: Dispatch<SetStateAction<number>>
-  setPreviousWord: Dispatch<SetStateAction<Word | null>>
-  setLastState: Dispatch<SetStateAction<LastState | null>>
-  setWordStatuses: Dispatch<SetStateAction<WordStatuses>>
-  setResumeProgress: Dispatch<SetStateAction<ProgressData | null>>
-  beginSession: (context?: { bookId?: string | null; chapterId?: string | null }) => void
-}
-
-export function applyScopedWordsLoad({
-  words,
-  progress,
-  chapterId,
-  mode,
-  shuffle,
-  scopedLoadKey,
-  scopedLoadGeneration,
-  canApplyScopedLoad,
-  lastAppliedScopedLoadRef,
-  scopedQueueWordsCacheRef,
-  queueRef,
-  vocabRef,
-  wordsLearnedBaselineRef,
-  uniqueAnsweredRef,
-  setVocabulary,
-  setQueue,
-  setQueueIndex,
-  setCorrectCount,
-  setWrongCount,
-  setPreviousWord,
-  setLastState,
-  setWordStatuses,
-  setResumeProgress,
-  beginSession,
-}: ApplyScopedWordsLoadOptions) {
-  const cachedQueueWords = scopedLoadKey != null
-    ? scopedQueueWordsCacheRef.current[scopedLoadKey]
-    : undefined
-  const previousQueueWords = lastAppliedScopedLoadRef.current.key === scopedLoadKey
-    ? queueRef.current
-      .map(index => vocabRef.current[index]?.word)
-      .filter((word): word is string => Boolean(word))
-    : []
-  const nextQueue = buildWrongWordsQueue(words, progress?.queue_words)
-    ?? (cachedQueueWords?.length ? buildWrongWordsQueue(words, cachedQueueWords) : null)
-    ?? (previousQueueWords.length ? buildWrongWordsQueue(words, previousQueueWords) : null)
-    ?? buildModeQueue(words, mode, shuffle)
-
-  if (scopedLoadKey != null) {
-    scopedQueueWordsCacheRef.current[scopedLoadKey] = nextQueue
-      .map(index => words[index]?.word)
-      .filter((word): word is string => Boolean(word))
-  }
-
-  if (!canApplyScopedLoad()) return
-
-  queueRef.current = nextQueue
-  setVocabulary(words)
-  vocabRef.current = words
-  setQueue(nextQueue)
-  resetScopedProgress({
-    progress,
-    words,
-    chapterId,
-    queueRef,
-    wordsLearnedBaselineRef,
-    uniqueAnsweredRef,
-    setResumeProgress,
-    setQueueIndex,
-    setCorrectCount,
-    setWrongCount,
-    setPreviousWord,
-    setLastState,
-    setWordStatuses,
-  })
-  lastAppliedScopedLoadRef.current = {
-    key: scopedLoadKey,
-    generation: scopedLoadGeneration,
-  }
-  beginSession()
-}
-
 function buildQuickMemoryFallbackContext(
   words: Word[],
   summary?: ReviewQueueSummary,
@@ -416,66 +280,4 @@ function buildQuickMemoryFallbackContext(
     total_count: summary?.total_count ?? words.length,
     next_review: Number(firstWord.nextReview ?? 0),
   }
-}
-
-function buildModeQueue(words: Word[], mode?: PracticeMode, shuffle?: boolean) {
-  const indices = Array.from({ length: words.length }, (_, index) => index)
-  if (mode === 'smart') {
-    return buildSmartQueue(words.map(word => word.word), loadSmartStats())
-  }
-
-  return shuffle !== false ? shuffleArray(indices) : indices
-}
-
-interface ResetScopedProgressOptions {
-  progress: ProgressData | null
-  words: Word[]
-  chapterId: string | null
-  queueRef: MutableRefObject<number[]>
-  wordsLearnedBaselineRef: MutableRefObject<number>
-  uniqueAnsweredRef: MutableRefObject<Set<string>>
-  setResumeProgress: Dispatch<SetStateAction<ProgressData | null>>
-  setQueueIndex: Dispatch<SetStateAction<number>>
-  setCorrectCount: Dispatch<SetStateAction<number>>
-  setWrongCount: Dispatch<SetStateAction<number>>
-  setPreviousWord: Dispatch<SetStateAction<Word | null>>
-  setLastState: Dispatch<SetStateAction<LastState | null>>
-  setWordStatuses: Dispatch<SetStateAction<WordStatuses>>
-}
-
-function resetScopedProgress({
-  progress,
-  words,
-  chapterId,
-  queueRef,
-  wordsLearnedBaselineRef,
-  uniqueAnsweredRef,
-  setResumeProgress,
-  setQueueIndex,
-  setCorrectCount,
-  setWrongCount,
-  setPreviousWord,
-  setLastState,
-  setWordStatuses,
-}: ResetScopedProgressOptions) {
-  if (!progress) {
-    setResumeProgress(null)
-    setQueueIndex(0)
-    setCorrectCount(0)
-    setWrongCount(0)
-    wordsLearnedBaselineRef.current = 0
-    uniqueAnsweredRef.current = new Set()
-    return
-  }
-
-  const restored = createResetProgressState(queueRef.current.length, progress, chapterId, words.length)
-  setQueueIndex(restored.queueIndex)
-  setCorrectCount(restored.correctCount)
-  setWrongCount(restored.wrongCount)
-  setPreviousWord(null)
-  setLastState(null)
-  setWordStatuses({})
-  setResumeProgress(progress.is_completed ? null : progress)
-  wordsLearnedBaselineRef.current = restored.wordsLearnedBaseline
-  uniqueAnsweredRef.current = restored.answeredWords
 }

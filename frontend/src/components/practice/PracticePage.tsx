@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { AppSettings, Chapter, LastState, OptionItem, PracticeMode, PracticePageProps, ProgressData, SmartDimension, Word, WordStatuses } from './types'
 import { usePracticePageSession } from '../../composables/practice/page/usePracticePageSession'
@@ -15,7 +15,12 @@ import { PracticePageContent } from './page/PracticePageContent'
 import type { ErrorReviewRoundResults } from './errorReviewSession'
 import { PracticeResumeOverlay } from './page/PracticeResumeOverlay'
 import { PracticePageCompletedState, PracticePageLoadingState } from './page/PracticePageStates'
-import { readUserId, type ReviewQueueContext, type ReviewQueueSummary } from './page/practicePageHelpers'
+import { buildWrongWordsQueue, readUserId, type ReviewQueueContext, type ReviewQueueSummary } from './page/practicePageHelpers'
+import {
+  resolvePracticeGroupWindow,
+  sliceQueueForPracticeGroup,
+  type PracticeGroupWindow,
+} from '../../composables/practice/page/practicePageGrouping'
 export type { PracticeMode, Word, AppSettings, Chapter }
 function PracticePage({
   user,
@@ -64,10 +69,12 @@ function PracticePage({
   const [reviewSummary, setReviewSummary] = useState<ReviewQueueSummary | null>(null)
   const [reviewContext, setReviewContext] = useState<ReviewQueueContext | null>(null)
   const [reviewQueueError, setReviewQueueError] = useState<string | null>(null)
+  const [practiceGroup, setPracticeGroup] = useState<PracticeGroupWindow | null>(null)
   const [quickMemoryReviewQueueResolved, setQuickMemoryReviewQueueResolved] = useState(false), [noListeningPresets, setNoListeningPresets] = useState(false)
   const [errorReviewRound, setErrorReviewRound] = useState(1)
   const [smartDimension, setSmartDimension] = useState<SmartDimension>('meaning')
   const vocabRef = useRef<Word[]>([]), queueRef = useRef<number[]>([])
+  const chapterGroupStartRef = useRef(0), chapterQueueWordsRef = useRef<string[]>([])
   const errorProgressHydratedRef = useRef(false), errorRoundResultsRef = useRef<ErrorReviewRoundResults>({})
   const resolvedPracticeBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId, resolvedPracticeChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
   const { isCustomPracticeScope, practiceMode, handleCustomListeningFallback } = useCustomListeningFallback({
@@ -156,8 +163,11 @@ function PracticePage({
     setQuickMemoryReviewQueueResolved,
     setNoListeningPresets,
     setErrorReviewRound,
+    setPracticeGroup,
     vocabRef,
     queueRef,
+    chapterGroupStartRef,
+    chapterQueueWordsRef,
     wordsLearnedBaselineRef,
     uniqueAnsweredRef,
     errorProgressHydratedRef,
@@ -247,6 +257,8 @@ function PracticePage({
     correctCountRef,
     wrongCountRef,
     uniqueAnsweredRef,
+    chapterGroupStartRef,
+    chapterQueueWordsRef,
     errorProgressHydratedRef,
     errorRoundResultsRef,
     vocabRef,
@@ -264,7 +276,47 @@ function PracticePage({
     setWordStatuses,
     setReviewOffset,
     setErrorReviewRound,
+    setPracticeGroup,
   })
+  const handleContinueChapterGroup = useCallback(() => {
+    if (!practiceGroup?.groupSize || practiceGroup.end >= practiceGroup.total) return
+    const fullQueue = buildWrongWordsQueue(vocabulary, chapterQueueWordsRef.current)
+      ?? Array.from({ length: vocabulary.length }, (_, index) => index)
+    const nextGroup = resolvePracticeGroupWindow(fullQueue.length, practiceGroup.groupSize, practiceGroup.end)
+    const nextQueue = sliceQueueForPracticeGroup(fullQueue, nextGroup)
+    if (!nextGroup || !nextQueue.length || nextGroup.start <= practiceGroup.start) return
+
+    chapterGroupStartRef.current = nextGroup.start
+    setPracticeGroup(nextGroup)
+    queueRef.current = nextQueue
+    setQueue(nextQueue)
+    setQueueIndex(0)
+    setCorrectCount(0)
+    setWrongCount(0)
+    setPreviousWord(null)
+    setLastState(null)
+    setWordStatuses({})
+    setSelectedAnswer(null)
+    setWrongSelections([])
+    setShowResult(false)
+    setSpellingInput('')
+    setSpellingResult(null)
+    setSpellingFeedbackLocked(false)
+    setSpellingFeedbackDismissing(false)
+    setSpellingFeedbackSnapshot(null)
+    completedSessionDurationSecondsRef.current = null
+    beginSession({ bookId, chapterId })
+  }, [
+    beginSession,
+    bookId,
+    chapterId,
+    chapterGroupStartRef,
+    chapterQueueWordsRef,
+    completedSessionDurationSecondsRef,
+    practiceGroup,
+    queueRef,
+    vocabulary,
+  ])
   const completeFollowSession = async () => { completedSessionDurationSecondsRef.current = await completeCurrentSession() }
   const {
     handlePracticeWordIndexChange,
@@ -409,6 +461,8 @@ function PracticePage({
       errorRoundResults={errorRoundResultsRef.current}
       onContinueReview={handleContinueReview}
       onContinueErrorReview={handleContinueErrorReview}
+      practiceGroup={practiceGroup}
+      onContinueChapterGroup={handleContinueChapterGroup}
     />
   )
 
