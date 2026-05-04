@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
+from platform_sdk.learning_core_deadlock_retry import run_learning_core_deadlock_retry
 from platform_sdk.learning_core_context_application import build_learning_core_context_payload
 from platform_sdk.learning_core_admin_detail_application import (
     list_internal_admin_book_progress_response,
@@ -231,9 +232,9 @@ def get_internal_quick_memory_review_queue(current_user):
 @learning_core_bp.route('/internal/learning/quick-memory/sync', methods=['POST'])
 @token_required
 def post_internal_quick_memory_sync(current_user):
-    payload, status = sync_learning_core_quick_memory_response(
-        current_user.id,
-        request.get_json(silent=True),
+    payload, status = run_learning_core_deadlock_retry(
+        lambda: sync_learning_core_quick_memory_response(current_user.id, request.get_json(silent=True)),
+        operation='quick-memory-sync',
     )
     return jsonify(payload), status
 
@@ -248,9 +249,9 @@ def get_internal_smart_stats(current_user):
 @learning_core_bp.route('/internal/learning/smart-stats/sync', methods=['POST'])
 @token_required
 def post_internal_smart_stats_sync(current_user):
-    payload, status = sync_learning_core_smart_stats_response(
-        current_user.id,
-        request.get_json(silent=True),
+    payload, status = run_learning_core_deadlock_retry(
+        lambda: sync_learning_core_smart_stats_response(current_user.id, request.get_json(silent=True)),
+        operation='smart-stats-sync',
     )
     return jsonify(payload), status
 
@@ -269,9 +270,9 @@ def get_internal_wrong_words(current_user):
 @learning_core_bp.route('/internal/learning/wrong-words/sync', methods=['POST'])
 @token_required
 def post_internal_wrong_words_sync(current_user):
-    payload, status = sync_learning_core_wrong_words_response(
-        current_user.id,
-        request.get_json(silent=True),
+    payload, status = run_learning_core_deadlock_retry(
+        lambda: sync_learning_core_wrong_words_response(current_user.id, request.get_json(silent=True)),
+        operation='wrong-words-sync',
     )
     return jsonify(payload), status
 
@@ -314,9 +315,9 @@ def post_internal_game_session_start(current_user):
 @learning_core_bp.route('/internal/learning/game/attempt', methods=['POST'])
 @token_required
 def post_internal_game_attempt(current_user):
-    payload, status = post_learning_core_word_mastery_attempt_response(
-        current_user.id,
-        request.get_json(silent=True),
+    payload, status = run_learning_core_deadlock_retry(
+        lambda: post_learning_core_word_mastery_attempt_response(current_user.id, request.get_json(silent=True)),
+        operation='game-attempt',
     )
     return jsonify(payload), status
 
