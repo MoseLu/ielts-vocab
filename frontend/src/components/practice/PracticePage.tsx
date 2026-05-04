@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { AppSettings, Chapter, LastState, OptionItem, PracticeMode, PracticePageProps, ProgressData, SmartDimension, Word, WordStatuses } from './types'
 import { usePracticePageSession } from '../../composables/practice/page/usePracticePageSession'
@@ -11,16 +11,13 @@ import { usePracticeResumePrompt } from '../../composables/practice/page/usePrac
 import { usePracticeSpellingFeedback } from '../../composables/practice/page/usePracticeSpellingFeedback'
 import { usePracticePageWordActions } from '../../composables/practice/page/usePracticePageWordActions'
 import { useCustomListeningFallback } from '../../composables/practice/page/useCustomListeningFallback'
+import { usePracticeChapterGroupControls } from '../../composables/practice/page/usePracticeChapterGroupControls'
 import { PracticePageContent } from './page/PracticePageContent'
 import type { ErrorReviewRoundResults } from './errorReviewSession'
 import { PracticeResumeOverlay } from './page/PracticeResumeOverlay'
 import { PracticePageCompletedState, PracticePageLoadingState } from './page/PracticePageStates'
-import { buildWrongWordsQueue, readUserId, type ReviewQueueContext, type ReviewQueueSummary } from './page/practicePageHelpers'
-import {
-  resolvePracticeGroupWindow,
-  sliceQueueForPracticeGroup,
-  type PracticeGroupWindow,
-} from '../../composables/practice/page/practicePageGrouping'
+import { readUserId, type ReviewQueueContext, type ReviewQueueSummary } from './page/practicePageHelpers'
+import type { PracticeGroupWindow } from '../../composables/practice/page/practicePageGrouping'
 export type { PracticeMode, Word, AppSettings, Chapter }
 function PracticePage({
   user,
@@ -76,6 +73,10 @@ function PracticePage({
   const vocabRef = useRef<Word[]>([]), queueRef = useRef<number[]>([])
   const chapterGroupStartRef = useRef(0), chapterQueueWordsRef = useRef<string[]>([])
   const errorProgressHydratedRef = useRef(false), errorRoundResultsRef = useRef<ErrorReviewRoundResults>({})
+  const practiceCoreSetters = {
+    setVocabulary, setQueue, setQueueIndex, setCorrectCount, setWrongCount,
+    setPreviousWord, setLastState, setWordStatuses, setPracticeGroup,
+  }
   const resolvedPracticeBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId, resolvedPracticeChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
   const { isCustomPracticeScope, practiceMode, handleCustomListeningFallback } = useCustomListeningFallback({
     requestedPracticeMode, currentDay, bookId, chapterId, resolvedPracticeBookId, resolvedPracticeChapterId, reviewMode, errorMode, showToast, onModeChange,
@@ -143,16 +144,9 @@ function PracticePage({
     settings,
     navigate,
     showToast,
-    setVocabulary,
-    setQueue,
-    setQueueIndex,
-    setCorrectCount,
-    setWrongCount,
-    setPreviousWord,
-    setLastState,
+    ...practiceCoreSetters,
     setBookChapters,
     setCurrentChapterTitle,
-    setWordStatuses,
     setResumeProgress,
     setBackendLearnerProfile,
     setReviewOffset,
@@ -163,7 +157,6 @@ function PracticePage({
     setQuickMemoryReviewQueueResolved,
     setNoListeningPresets,
     setErrorReviewRound,
-    setPracticeGroup,
     vocabRef,
     queueRef,
     chapterGroupStartRef,
@@ -257,6 +250,7 @@ function PracticePage({
     correctCountRef,
     wrongCountRef,
     uniqueAnsweredRef,
+    ...practiceCoreSetters,
     chapterGroupStartRef,
     chapterQueueWordsRef,
     errorProgressHydratedRef,
@@ -266,57 +260,29 @@ function PracticePage({
     startSpeechRecording,
     stopSpeechRecording,
     speechConnected,
-    setVocabulary,
-    setQueue,
-    setQueueIndex,
-    setCorrectCount,
-    setWrongCount,
-    setPreviousWord,
-    setLastState,
-    setWordStatuses,
     setReviewOffset,
     setErrorReviewRound,
-    setPracticeGroup,
   })
-  const handleContinueChapterGroup = useCallback(() => {
-    if (!practiceGroup?.groupSize || practiceGroup.end >= practiceGroup.total) return
-    const fullQueue = buildWrongWordsQueue(vocabulary, chapterQueueWordsRef.current)
-      ?? Array.from({ length: vocabulary.length }, (_, index) => index)
-    const nextGroup = resolvePracticeGroupWindow(fullQueue.length, practiceGroup.groupSize, practiceGroup.end)
-    const nextQueue = sliceQueueForPracticeGroup(fullQueue, nextGroup)
-    if (!nextGroup || !nextQueue.length || nextGroup.start <= practiceGroup.start) return
-
-    chapterGroupStartRef.current = nextGroup.start
-    setPracticeGroup(nextGroup)
-    queueRef.current = nextQueue
-    setQueue(nextQueue)
-    setQueueIndex(0)
-    setCorrectCount(0)
-    setWrongCount(0)
-    setPreviousWord(null)
-    setLastState(null)
-    setWordStatuses({})
-    setSelectedAnswer(null)
-    setWrongSelections([])
-    setShowResult(false)
-    setSpellingInput('')
-    setSpellingResult(null)
-    setSpellingFeedbackLocked(false)
-    setSpellingFeedbackDismissing(false)
-    setSpellingFeedbackSnapshot(null)
-    completedSessionDurationSecondsRef.current = null
-    beginSession({ bookId, chapterId })
-  }, [
-    beginSession,
+  const handleContinueChapterGroup = usePracticeChapterGroupControls({
     bookId,
     chapterId,
+    practiceGroup,
+    vocabulary,
+    queueRef,
     chapterGroupStartRef,
     chapterQueueWordsRef,
     completedSessionDurationSecondsRef,
-    practiceGroup,
-    queueRef,
-    vocabulary,
-  ])
+    beginSession,
+    ...practiceCoreSetters,
+    setSelectedAnswer,
+    setWrongSelections,
+    setShowResult,
+    setSpellingInput,
+    setSpellingResult,
+    setSpellingFeedbackLocked,
+    setSpellingFeedbackDismissing,
+    setSpellingFeedbackSnapshot,
+  })
   const completeFollowSession = async () => { completedSessionDurationSecondsRef.current = await completeCurrentSession() }
   const {
     handlePracticeWordIndexChange,
@@ -436,33 +402,20 @@ function PracticePage({
     <PracticePageLoadingState
       navigate={navigate}
       mode={requestedPracticeMode === 'listening' && isCustomPracticeScope && noListeningPresets ? 'meaning' : practiceMode}
-      noListeningPresets={noListeningPresets}
-      reviewMode={reviewMode}
-      reviewQueueError={reviewQueueError}
-      quickMemoryReviewQueueResolved={quickMemoryReviewQueueResolved}
+      noListeningPresets={noListeningPresets} reviewMode={reviewMode}
+      reviewQueueError={reviewQueueError} quickMemoryReviewQueueResolved={quickMemoryReviewQueueResolved}
     />
   )
 
   if (!currentWord) return (
     <PracticePageCompletedState
-      navigate={navigate}
-      bookId={bookId}
-      chapterId={chapterId}
-      currentDay={currentDay}
-      correctCount={correctCount}
-      wrongCount={wrongCount}
-      errorMode={errorMode}
-      errorReviewRound={errorReviewRound}
-      reviewMode={reviewMode}
-      sessionDurationSeconds={completedSessionDurationSecondsRef.current}
-      reviewSummary={reviewSummary}
-      mode={practiceMode}
-      vocabulary={vocabulary}
-      errorRoundResults={errorRoundResultsRef.current}
-      onContinueReview={handleContinueReview}
-      onContinueErrorReview={handleContinueErrorReview}
-      practiceGroup={practiceGroup}
-      onContinueChapterGroup={handleContinueChapterGroup}
+      navigate={navigate} bookId={bookId} chapterId={chapterId} currentDay={currentDay} mode={practiceMode}
+      correctCount={correctCount} wrongCount={wrongCount} errorMode={errorMode}
+      errorReviewRound={errorReviewRound} reviewMode={reviewMode}
+      sessionDurationSeconds={completedSessionDurationSecondsRef.current} reviewSummary={reviewSummary}
+      vocabulary={vocabulary} errorRoundResults={errorRoundResultsRef.current}
+      onContinueReview={handleContinueReview} onContinueErrorReview={handleContinueErrorReview}
+      practiceGroup={practiceGroup} onContinueChapterGroup={handleContinueChapterGroup}
     />
   )
 
@@ -537,11 +490,8 @@ function PracticePage({
         handleContinueReview={handleContinueReview}
       />
       <PracticeResumeOverlay
-        isOpen={resumePromptOpen}
-        message={resumeMessage}
-        continueLabel={resumeContinueLabel}
-        onContinue={handleResumeContinue}
-        onRestart={handleResumeRestart}
+        isOpen={resumePromptOpen} message={resumeMessage} continueLabel={resumeContinueLabel}
+        onContinue={handleResumeContinue} onRestart={handleResumeRestart}
       />
     </>
   )

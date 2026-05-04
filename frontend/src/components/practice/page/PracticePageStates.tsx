@@ -9,6 +9,7 @@ import SettingsPanel from '../../settings/SettingsPanel'
 import { PageSkeleton } from '../../ui'
 import { buildNextErrorReviewWords, type ErrorReviewRoundResults } from '../errorReviewSession'
 import { PracticeRoundSummary } from './PracticeRoundSummary'
+import type { ReviewQueueSummary } from './practicePageHelpers'
 import type { PracticeGroupWindow } from '../../../composables/practice/page/practicePageGrouping'
 function formatSessionDuration(seconds: number): string {
   const safeSeconds = Math.max(0, Math.round(seconds))
@@ -18,17 +19,6 @@ function formatSessionDuration(seconds: number): string {
   if (hours > 0) return minutes > 0 ? `${hours}小时${minutes}分` : `${hours}小时`
   if (minutes > 0) return remainingSeconds > 0 ? `${minutes}分${remainingSeconds}秒` : `${minutes}分`
   return `${remainingSeconds}秒`
-}
-interface ReviewQueueSummary {
-  due_count: number
-  upcoming_count: number
-  returned_count: number
-  review_window_days: number
-  offset: number
-  limit: number | null
-  total_count: number
-  has_more: boolean
-  next_offset: number | null
 }
 interface PracticePageLoadingStateProps {
   navigate: NavigateFunction
