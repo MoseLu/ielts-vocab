@@ -14,9 +14,9 @@ from services import (
 from services.custom_book_catalog_service import (
     build_custom_book_vocabulary_entries,
     get_custom_book_for_user,
-    list_custom_books_for_user,
     serialize_custom_book_summary,
 )
+from services.wrong_word_custom_book_catalog_service import list_visible_custom_books
 
 
 _global_word_search_catalog = None
@@ -203,7 +203,7 @@ def build_books_response(category=None, level=None, study_type=None):
         payload_books = [favorite_book, *payload_books]
     if user_id is not None:
         payload_books = [
-            *[serialize_custom_book_summary(book) for book in list_custom_books_for_user(user_id)],
+            *[serialize_custom_book_summary(book) for book in list_visible_custom_books(user_id)],
             *payload_books,
         ]
 

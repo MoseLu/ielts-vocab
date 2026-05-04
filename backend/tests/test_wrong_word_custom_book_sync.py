@@ -1,6 +1,9 @@
+from types import SimpleNamespace
+
 from models import CustomBook, CustomBookChapter, CustomBookWord, User, db
 from platform_sdk import learning_core_internal_client
 from platform_sdk.learning_core_wrong_words_application import sync_learning_core_wrong_words_response
+from services import books_catalog_query_service
 from services.custom_book_catalog_service import (
     get_custom_book_response,
     list_custom_books_response,
@@ -218,6 +221,17 @@ def test_catalog_read_syncs_system_book_from_learning_core_snapshot(app, monkeyp
         )
 
         payload, status = list_custom_books_response(user.id)
+        monkeypatch.setattr(
+            books_catalog_query_service.books_confusable_service,
+            'resolve_optional_current_user',
+            lambda: SimpleNamespace(id=user.id),
+        )
+        monkeypatch.setattr(
+            books_catalog_query_service,
+            '_build_optional_favorite_book',
+            lambda user_id: None,
+        )
+        books_payload, books_status = books_catalog_query_service.build_books_response()
         book = _load_wrong_word_book(user.id)
         legacy_payload, legacy_status = get_custom_book_response(user.id, legacy_book.id)
         update_payload, update_status = update_custom_book_response(user.id, legacy_book.id, {
@@ -236,6 +250,13 @@ def test_catalog_read_syncs_system_book_from_learning_core_snapshot(app, monkeyp
         assert status == 200
         assert build_wrong_word_custom_book_id(user.id) in [item['id'] for item in payload['books']]
         assert legacy_book.id not in [item['id'] for item in payload['books']]
+        assert books_status == 200
+        visible_wrong_books = [
+            item
+            for item in books_payload['books']
+            if item.get('title') == '错词本'
+        ]
+        assert [item['id'] for item in visible_wrong_books] == [build_wrong_word_custom_book_id(user.id)]
         assert len(updated_book.chapters) == 28
         assert updated_book.word_count == 5
         assert _chapter_words(updated_book, 'A') == ['ability', 'alpha']
