@@ -94,15 +94,17 @@ function buildBookCards(
       }
     })
     .sort((left, right) => {
-      if (left.isComplete !== right.isComplete) return left.isComplete ? 1 : -1
+      const percentDiff = right.progressPercent - left.progressPercent
+      if (percentDiff !== 0) return percentDiff
+
       if (left.isActive !== right.isActive) return left.isActive ? -1 : 1
+
+      const progressDiff = right.currentIndex - left.currentIndex
+      if (progressDiff !== 0) return progressDiff
 
       const updatedDiff = parseTimestamp(progressMap[right.book.id]?.updatedAt)
         - parseTimestamp(progressMap[left.book.id]?.updatedAt)
       if (updatedDiff !== 0) return updatedDiff
-
-      const progressDiff = right.currentIndex - left.currentIndex
-      if (progressDiff !== 0) return progressDiff
 
       return left.book.title.localeCompare(right.book.title, 'zh-CN')
     })
