@@ -440,6 +440,10 @@ def update_custom_book_response(user_id: int, book_id: str, body: dict[str, Any]
         return {'error': 'Book not found'}, 404
 
     payload = body if isinstance(body, dict) else {}
+    from services.wrong_word_custom_book_service import is_wrong_word_custom_book_for_user
+    if is_wrong_word_custom_book_for_user(user_id, book_id):
+        from services.wrong_word_custom_book_update_service import update_wrong_word_custom_book_response
+        return update_wrong_word_custom_book_response(user_id, book, payload)
     metadata = _normalize_custom_book_meta(payload)
     try:
         prepared_content = _prepare_custom_book_content(payload)

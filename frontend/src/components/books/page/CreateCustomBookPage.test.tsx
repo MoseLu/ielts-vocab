@@ -186,4 +186,42 @@ describe('CreateCustomBookPage', () => {
     expect(apiFetchMock.mock.calls[1][1].body).toContain('coherent')
     expect(navigateMock).toHaveBeenCalledWith('/books')
   })
+
+  it('keeps wrong-word system chapters out of the editable custom book draft', async () => {
+    const user = userEvent.setup()
+    apiFetchMock
+      .mockResolvedValueOnce({
+        id: 'wrong_words_7',
+        title: '错词本',
+        word_count: 2,
+        chapters: [
+          { id: 'wrong_words_7_a', title: 'A', words: [{ id: 1, word: 'abandon' }] },
+          { id: 'wrong_words_7_b', title: 'B', words: [{ id: 2, word: 'beta' }] },
+          { id: 'wrong_words_7_27', title: '用户章节', words: [{ id: 3, word: 'ability' }] },
+        ],
+      })
+      .mockResolvedValueOnce({
+        bookId: 'wrong_words_7',
+        book: { id: 'wrong_words_7', incomplete_word_count: 0 },
+      })
+
+    renderPage(['/books/create?bookId=wrong_words_7'])
+
+    expect(await screen.findByDisplayValue('ability')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('abandon')).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue('beta')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '保存词书修改' }))
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/books/custom-books/wrong_words_7', expect.objectContaining({
+        method: 'PUT',
+      }))
+    })
+    const body = apiFetchMock.mock.calls[1][1].body
+    expect(body).toContain('ability')
+    expect(body).not.toContain('abandon')
+    expect(body).not.toContain('wrong_words_7_a')
+    expect(navigateMock).toHaveBeenCalledWith('/books')
+  })
 })

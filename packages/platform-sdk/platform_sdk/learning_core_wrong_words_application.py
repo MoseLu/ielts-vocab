@@ -29,6 +29,7 @@ from platform_sdk.learning_event_support import record_learning_event
 from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.study_session_support import normalize_chapter_id
 from services.learning_attempt_service import extract_wrong_word_dimension_attempts
+from services.wrong_word_custom_book_service import sync_wrong_word_custom_book
 from services.word_mastery_service import update_word_mastery_attempt
 
 if TYPE_CHECKING:
@@ -447,6 +448,7 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
             updated += 1
 
     try:
+        sync_wrong_word_custom_book(user_id)
         ai_wrong_word_repository.commit()
     except Exception:
         ai_wrong_word_repository.rollback()
@@ -458,7 +460,12 @@ def clear_learning_core_wrong_word_response(user_id: int, word: str) -> tuple[di
     record = ai_wrong_word_repository.get_user_wrong_word(user_id, word)
     if record and _clear_pending_state_for_record(record):
         queue_wrong_word_updated_event(record)
-        ai_wrong_word_repository.commit()
+        try:
+            sync_wrong_word_custom_book(user_id)
+            ai_wrong_word_repository.commit()
+        except Exception:
+            ai_wrong_word_repository.rollback()
+            raise
     return {'message': '已移出未过错词'}, 200
 
 
@@ -467,5 +474,10 @@ def clear_learning_core_wrong_words_response(user_id: int) -> tuple[dict, int]:
     for record in records:
         if _clear_pending_state_for_record(record):
             queue_wrong_word_updated_event(record)
-    ai_wrong_word_repository.commit()
+    try:
+        sync_wrong_word_custom_book(user_id)
+        ai_wrong_word_repository.commit()
+    except Exception:
+        ai_wrong_word_repository.rollback()
+        raise
     return {'message': '已清空未过错词'}, 200

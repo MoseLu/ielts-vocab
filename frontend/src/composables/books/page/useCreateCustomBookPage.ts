@@ -53,6 +53,16 @@ function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
   return next
 }
 
+function isWrongWordCustomBook(bookId: string): boolean {
+  return bookId.startsWith('wrong_words_')
+}
+
+function isWrongWordSystemChapter(bookId: string, chapterId: string): boolean {
+  const prefix = `${bookId}_`
+  const suffix = chapterId.startsWith(prefix) ? chapterId.slice(prefix.length) : ''
+  return /^[a-z]$/.test(suffix)
+}
+
 export function useCreateCustomBookPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -94,17 +104,22 @@ export function useCreateCustomBookPage() {
       .then(book => {
         if (isCancelled) return
         const loadedChapters = book.chapters ?? []
+        const loadedBookId = book.id || editBookId
+        const isWrongWordBook = isWrongWordCustomBook(loadedBookId)
+        const editableChapters = isWrongWordBook
+          ? loadedChapters.filter(chapter => !isWrongWordSystemChapter(loadedBookId, chapter.id))
+          : loadedChapters
         setTitle(book.title?.trim() || '我的自定义词书')
         setEducationStage(book.education_stage || 'abroad')
         setExamType(book.exam_type || 'ielts')
         setIeltsSkill(book.ielts_skill || 'listening')
         setChapterWordTarget(Math.max(1, Number(book.chapter_word_target) || DEFAULT_CHAPTER_WORD_TARGET))
         setShareEnabled(Boolean(book.share_enabled))
-        setChapterIndexBase(0)
+        setChapterIndexBase(isWrongWordBook ? loadedChapters.length : 0)
         setExistingChapterCount(loadedChapters.length)
         setExistingWordCount(Math.max(0, Number(book.word_count) || 0))
-        setChapters(loadedChapters.length > 0
-          ? loadedChapters.map((chapter, index) => createChapterDraft(index + 1, {
+        setChapters(editableChapters.length > 0
+          ? editableChapters.map((chapter, index) => createChapterDraft(index + 1, {
               id: chapter.id,
               title: chapter.title,
               entries: (chapter.words ?? []).map(word => ({
@@ -114,7 +129,7 @@ export function useCreateCustomBookPage() {
                 definition: word.definition,
               })).filter(word => word.word),
             }))
-          : [createChapterDraft(1, { content: '' })])
+          : [createChapterDraft(isWrongWordBook ? loadedChapters.length + 1 : 1, { content: '' })])
         setHasLoadedExistingBook(true)
       })
       .catch(error => {

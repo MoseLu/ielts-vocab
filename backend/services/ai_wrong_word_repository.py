@@ -44,3 +44,7 @@ def create_user_wrong_word(
 
 def commit() -> None:
     db.session.commit()
+
+
+def rollback() -> None:
+    db.session.rollback()

@@ -23,6 +23,7 @@ from services.learning_attempt_service import extract_wrong_word_dimension_attem
 from services.ai_route_support_service import _decorate_wrong_words_with_quick_memory_progress
 from services.learning_events import record_learning_event
 from services.study_sessions import normalize_chapter_id
+from services.wrong_word_custom_book_service import sync_wrong_word_custom_book
 from services.word_mastery_service import update_word_mastery_attempt
 from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 
@@ -241,7 +242,12 @@ def sync_wrong_words_response(user_id: int, body: dict | None) -> tuple[dict, in
             mode=mode_scope or None,
             chapter_id=chapter_scope or None,
         )
-    ai_wrong_word_repository.commit()
+    try:
+        sync_wrong_word_custom_book(user_id)
+        ai_wrong_word_repository.commit()
+    except Exception:
+        ai_wrong_word_repository.rollback()
+        raise
     return {'updated': updated}, 200
 
 
@@ -249,7 +255,12 @@ def clear_wrong_word_response(user_id: int, word: str) -> tuple[dict, int]:
     record = ai_wrong_word_repository.get_user_wrong_word(user_id, word)
     if record:
         _clear_pending_state_for_record(record)
-        ai_wrong_word_repository.commit()
+        try:
+            sync_wrong_word_custom_book(user_id)
+            ai_wrong_word_repository.commit()
+        except Exception:
+            ai_wrong_word_repository.rollback()
+            raise
     return {'message': '已移出未过错词'}, 200
 
 
@@ -257,5 +268,10 @@ def clear_wrong_words_response(user_id: int) -> tuple[dict, int]:
     records = ai_wrong_word_repository.list_user_wrong_words(user_id)
     for record in records:
         _clear_pending_state_for_record(record)
-    ai_wrong_word_repository.commit()
+    try:
+        sync_wrong_word_custom_book(user_id)
+        ai_wrong_word_repository.commit()
+    except Exception:
+        ai_wrong_word_repository.rollback()
+        raise
     return {'message': '已清空未过错词'}, 200
