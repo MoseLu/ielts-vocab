@@ -21,3 +21,4 @@ Use this folder for documents that describe the system structure itself.
 - `service-ownership-matrix.md`: first-pass authoritative write ownership and service decomposition matrix.
 - `service-table-boundary-audit.md`: Wave 4 table-level ownership audit, including read-only and transitional shared access.
 - `gateway-service-contracts.md`: gateway-to-service contract skeleton for the first extraction wave.
+- `specs/2026-05-05-practice-mode-data-flow-roadmap.md`: practice mode, review mode, game, progress, mastery, session, stats, and todo data-flow roadmap.
