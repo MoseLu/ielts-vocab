@@ -404,3 +404,61 @@ class AdminWordFeedback(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
+
+
+class FrontendErrorLog(db.Model):
+    __tablename__ = 'frontend_error_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    source = db.Column(db.String(40), nullable=False, index=True)
+    severity = db.Column(db.String(20), nullable=False, index=True)
+    status_code = db.Column(db.Integer, nullable=True, index=True)
+    method = db.Column(db.String(12), nullable=True)
+    request_url = db.Column(db.Text, nullable=True)
+    route_path = db.Column(db.String(255), nullable=True, index=True)
+    message = db.Column(db.Text, nullable=False)
+    error_name = db.Column(db.String(120), nullable=True)
+    stack = db.Column(db.Text, nullable=True)
+    component_stack = db.Column(db.Text, nullable=True)
+    response_excerpt = db.Column(db.Text, nullable=True)
+    fingerprint = db.Column(db.String(128), nullable=False, index=True)
+    browser_session_id = db.Column(db.String(80), nullable=True, index=True)
+    app_version = db.Column(db.String(80), nullable=True, index=True)
+    user_agent = db.Column(db.Text, nullable=True)
+    user_id = db.Column(db.Integer, nullable=True, index=True)
+    username = db.Column(db.String(100), nullable=True)
+    context_json = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    def context_payload(self) -> dict:
+        try:
+            payload = json.loads(self.context_json or '{}')
+        except Exception:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'event_id': self.event_id,
+            'source': self.source,
+            'severity': self.severity,
+            'status_code': self.status_code,
+            'method': self.method,
+            'request_url': self.request_url,
+            'route_path': self.route_path,
+            'message': self.message,
+            'error_name': self.error_name,
+            'stack': self.stack,
+            'component_stack': self.component_stack,
+            'response_excerpt': self.response_excerpt,
+            'fingerprint': self.fingerprint,
+            'browser_session_id': self.browser_session_id,
+            'app_version': self.app_version,
+            'user_agent': self.user_agent,
+            'user_id': self.user_id,
+            'username': self.username,
+            'context': self.context_payload(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }

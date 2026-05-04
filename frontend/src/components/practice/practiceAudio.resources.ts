@@ -161,20 +161,12 @@ function buildWordAudioUrl(word: string, cacheKey: string | null): string {
 }
 
 async function fetchWordAudioCacheProbe(url: string, method: 'GET' | 'HEAD'): Promise<Response> {
-  const request: RequestInit = {
+  return apiRequest(url, {
     method,
     cache: 'no-store',
     headers: { 'Cache-Control': 'no-cache' },
-  }
-  if (typeof AbortController === 'undefined') return fetch(url, request)
-  const controller = new AbortController()
-  const timeoutId = globalThis.setTimeout(() => controller.abort(), WORD_AUDIO_CACHE_PROBE_TIMEOUT_MS)
-  request.signal = controller.signal
-  try {
-    return await apiRequest(url, request)
-  } finally {
-    globalThis.clearTimeout(timeoutId)
-  }
+    timeoutMs: WORD_AUDIO_CACHE_PROBE_TIMEOUT_MS,
+  })
 }
 
 async function fetchWordAudioMetadata(word: string): Promise<WordAudioMetadata> {

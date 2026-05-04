@@ -1,4 +1,5 @@
 import { startTransition, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { apiRequest } from '../../lib'
 import type { AppSettings, Word } from './types'
 import {
   fetchFollowReadWord,
@@ -187,7 +188,7 @@ export default function FollowMode({
   const fetchReferenceAudio = async (): Promise<Blob | null> => {
     const url = payload?.chunk_audio_url || payload?.audio_url
     if (!url) return null
-    const response = await fetch(url)
+    const response = await apiRequest(url)
     if (!response.ok) return null
     if (typeof response.blob !== 'function') return null
     return response.blob()

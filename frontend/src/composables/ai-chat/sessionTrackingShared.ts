@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { apiFetch, safeParse } from '../../lib'
+import { apiFetch, apiRequest, safeParse } from '../../lib'
 
 const ActiveStudySessionSchema = z.object({
   version: z.literal(1),
@@ -244,9 +244,8 @@ export function sendStudySessionBeacon(url: string, payload: unknown): boolean {
 }
 
 export function postStudySessionKeepalive(url: string, payload: unknown): void {
-  fetch(url, {
+  void apiRequest(url, {
     method: 'POST',
-    credentials: 'include',
     keepalive: true,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

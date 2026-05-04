@@ -119,6 +119,30 @@ def test_gateway_word_feedback_proxy_routes_to_admin_ops_service(monkeypatch):
     assert 'authorization' not in forwarded
 
 
+def test_gateway_frontend_error_log_proxy_routes_to_admin_ops_service(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app, base_url='https://axiomaticworld.com')
+    captured: dict[str, object] = {}
+
+    async def fake_proxy_browser_request(**kwargs):
+        captured.update(kwargs)
+        return browser_routes.Response(
+            b'{"ok":true,"event_id":"event-1"}',
+            status_code=201,
+            media_type='application/json',
+        )
+
+    monkeypatch.setattr(browser_routes, 'proxy_browser_request', fake_proxy_browser_request)
+
+    response = client.post('/api/ops/frontend-error-logs', json={'event_id': 'event-1'})
+
+    assert response.status_code == 201
+    assert captured['base_url'] == browser_routes.admin_ops_service_url()
+    assert captured['path'] == '/api/ops/frontend-error-logs'
+    forwarded = build_forward_headers(captured['request'], target_service_name=captured['service_name'])
+    assert 'authorization' not in forwarded
+
+
 def test_gateway_feature_wishes_proxy_routes_to_admin_ops_service(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app, base_url='https://axiomaticworld.com')

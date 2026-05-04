@@ -38,6 +38,7 @@ ASR_EVENTING_TABLES = frozenset({
     'asr_inbox_events',
 })
 ADMIN_OPS_EVENTING_TABLES = frozenset({
+    'frontend_error_logs',
     'admin_word_feedback',
     'feature_wishes',
     'feature_wish_images',

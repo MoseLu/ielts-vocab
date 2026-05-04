@@ -15,7 +15,7 @@ if str(BACKEND_PATH) not in sys.path:
     sys.path.insert(0, str(BACKEND_PATH))
 
 import config as backend_config
-from platform_sdk.admin_ops_transport import admin_bp, books_feedback_bp, feature_wishes_bp
+from platform_sdk.admin_ops_transport import admin_bp, books_feedback_bp, feature_wishes_bp, ops_bp
 from platform_sdk.exam_transport import admin_exam_bp, exam_attempt_bp, exam_bp
 from platform_sdk.service_schema import bootstrap_service_schema
 from routes.middleware import init_middleware
@@ -48,6 +48,7 @@ def create_admin_ops_flask_app(config_class=None) -> Flask:
 
     init_middleware(app)
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(ops_bp, url_prefix='/api/ops')
     app.register_blueprint(admin_exam_bp, url_prefix='/api/admin')
     app.register_blueprint(books_feedback_bp, url_prefix='/api/books')
     app.register_blueprint(feature_wishes_bp, url_prefix='/api/feature-wishes')

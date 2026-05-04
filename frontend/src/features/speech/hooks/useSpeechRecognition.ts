@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
+import { reportFrontendError } from '../../../lib/errorReporting'
 import type {
   CallbacksRef,
   ConnectedPayload,
@@ -283,7 +284,7 @@ export function useSpeechRecognition({
     })
     socket.on('recognition_error', (data: RecognitionErrorPayload) => {
       if (!isCurrentRecognitionEvent(data)) return
-      console.error('[Speech] Error:', data.error)
+      reportFrontendError({ source: 'manual', severity: 'warning', message: data.error || 'Speech recognition error', context: { event: 'recognition_error' } })
       if (isProcessingRef.current && !hasTranscriptRef.current && !hasMicSignalRef.current) {
         callbacksRef.current.onError?.(SPEECH_NO_SIGNAL_MESSAGE)
         finishRecognitionSession()
@@ -410,7 +411,7 @@ export function useSpeechRecognition({
       callbacksRef.current.onLevel?.(SPEECH_IDLE_LEVEL)
       setIsRecording(true)
     } catch (error: unknown) {
-      console.error('[Speech] Error:', error)
+      reportFrontendError({ source: 'manual', severity: 'warning', message: error instanceof Error ? error.message : 'Speech capture error', errorName: error instanceof Error ? error.name : undefined, stack: error instanceof Error ? error.stack : undefined, context: { event: 'speech_capture_error' } })
       isRecordingRef.current = false
       cleanupAudioResources()
       syncProcessingState(false)

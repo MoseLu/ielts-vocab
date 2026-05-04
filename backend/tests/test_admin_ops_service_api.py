@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -10,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from models import User, UserStudySession, db
 from platform_sdk.internal_service_auth import create_internal_auth_headers_for_user
+from service_models.eventing_models import FrontendErrorLog
 
 
 SERVICE_PATH = (
@@ -181,3 +183,84 @@ def test_admin_ops_service_submits_and_lists_word_feedback(monkeypatch, tmp_path
     assert list_response.json()['total'] == 1
     assert list_response.json()['items'][0]['username'] == 'admin-ops-learner'
     assert list_response.json()['items'][0]['feedback_type_labels'] == ['翻译不准', '音频发音问题']
+
+
+def test_admin_ops_service_records_and_lists_frontend_error_logs(monkeypatch, tmp_path):
+    _configure_admin_env(monkeypatch, tmp_path)
+    module = _load_admin_ops_service_module('admin_ops_service_frontend_error_logs')
+    client = TestClient(module.app)
+    learner_id, admin_token = _create_admin_token(module.admin_ops_flask_app)
+    learner_token = _create_access_token(
+        module.admin_ops_flask_app,
+        user_id=learner_id,
+        is_admin=False,
+        username='admin-ops-learner',
+        email='learner@example.com',
+    )
+
+    anonymous_response = client.post(
+        '/api/ops/frontend-error-logs',
+        json={
+            'event_id': 'anonymous-401',
+            'source': 'http',
+            'severity': 'warning',
+            'status_code': 401,
+            'method': 'GET',
+            'request_url': '/api/books/my',
+            'message': 'HTTP 401 unauthorized',
+        },
+    )
+    logged_response = client.post(
+        '/api/ops/frontend-error-logs',
+        headers={**_auth_headers(learner_token), 'User-Agent': 'Vitest Browser'},
+        json={
+            'event_id': 'learner-503',
+            'source': 'http',
+            'status_code': 503,
+            'method': 'GET',
+            'request_url': '/api/ai/learner-profile?token=abc&email=alice@example.com&safe=1',
+            'route_path': '/api/ai/learner-profile',
+            'message': 'Profile failed for alice@example.com',
+            'stack': 'x' * 9000,
+            'response_excerpt': 'backend down for alice@example.com',
+            'fingerprint': 'fp-503',
+            'browser_session_id': 'browser-1',
+            'context': {
+                'password': 'secret',
+                'email_address': 'alice@example.com',
+                'nested': {'authToken': 'abc'},
+            },
+        },
+    )
+    list_response = client.get(
+        '/api/admin/frontend-error-logs?severity=error&q=learner-profile&since_hours=1',
+        headers=_auth_headers(admin_token),
+    )
+    denied_response = client.get(
+        '/api/admin/frontend-error-logs',
+        headers=_auth_headers(learner_token),
+    )
+
+    assert anonymous_response.status_code == 201
+    assert logged_response.status_code == 201
+    assert list_response.status_code == 200
+    assert list_response.json()['total'] == 1
+    assert list_response.json()['items'][0]['event_id'] == 'learner-503'
+    assert denied_response.status_code == 403
+
+    with module.admin_ops_flask_app.app_context():
+        anonymous = FrontendErrorLog.query.filter_by(event_id='anonymous-401').one()
+        logged = FrontendErrorLog.query.filter_by(event_id='learner-503').one()
+
+    assert anonymous.user_id is None
+    assert logged.user_id == learner_id
+    assert logged.username == 'admin-ops-learner'
+    assert 'abc' not in logged.request_url
+    assert 'alice@example.com' not in logged.request_url
+    assert '[redacted-email]' in logged.message
+    assert '[redacted-email]' in logged.response_excerpt
+    assert len(logged.stack) == 8000
+    context = json.loads(logged.context_json)
+    assert context['password'] == '[redacted]'
+    assert context['email_address'] == '[redacted]'
+    assert context['nested']['authToken'] == '[redacted]'

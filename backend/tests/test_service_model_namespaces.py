@@ -62,6 +62,7 @@ def test_catalog_and_admin_model_namespaces_stay_explicit():
     assert hasattr(catalog_content_models, 'CustomBook')
     assert hasattr(admin_ops_models, 'UserStudySession')
     assert hasattr(admin_ops_models, 'UserWrongWord')
+    assert hasattr(admin_ops_models, 'FrontendErrorLog')
 
 
 
@@ -76,6 +77,7 @@ def test_eventing_models_expose_outbox_and_inbox_state():
     assert hasattr(eventing_models, 'AdminProjectedStudySession')
     assert hasattr(eventing_models, 'AdminProjectedUser')
     assert hasattr(eventing_models, 'TTSMediaAsset')
+    assert hasattr(eventing_models, 'FrontendErrorLog')
 
 
 

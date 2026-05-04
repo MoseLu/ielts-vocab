@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  __resetErrorReportingForTests,
+  __setErrorReportingEnabledForTests,
+} from './errorReporting'
+import {
   __setApiBaseOverrideForTests,
   apiFetch,
   apiRequest,
@@ -14,11 +18,14 @@ describe('api helpers', () => {
     setAuthSessionActive(true)
     setAuthAccessExpiry(null)
     __setApiBaseOverrideForTests(null)
+    __resetErrorReportingForTests()
+    __setErrorReportingEnabledForTests(false)
   })
 
   afterEach(() => {
     setAuthAccessExpiry(null)
     __setApiBaseOverrideForTests(null)
+    __resetErrorReportingForTests()
   })
 
   it('builds request urls from the configured api base', () => {
@@ -135,6 +142,27 @@ describe('api helpers', () => {
     await expect(apiFetch('/api/auth/login', { method: 'POST' })).rejects.toThrow(
       '登录尝试过于频繁，请 14分37秒后再试',
     )
+  })
+
+  it('reports final failed responses without using apiRequest recursively', async () => {
+    __setErrorReportingEnabledForTests(true)
+    setAuthSessionActive(false)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'down' }), { status: 503 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 201 }))
+
+    await expect(apiFetch('/api/books/my?token=secret')).rejects.toThrow('down')
+
+    await vi.waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2))
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      '/api/ops/frontend-error-logs',
+      expect.objectContaining({ keepalive: true, credentials: 'include' }),
+    )
+    const reportBody = JSON.parse(String(vi.mocked(global.fetch).mock.calls[1]?.[1]?.body))
+    expect(reportBody.status_code).toBe(503)
+    expect(reportBody.severity).toBe('error')
+    expect(reportBody.request_url).not.toContain('secret')
   })
 
   it('does not force json content-type for FormData uploads', async () => {

@@ -1,4 +1,4 @@
-import { buildApiUrl } from '../../lib'
+import { apiRequest } from '../../lib'
 import type { LearningContext } from '../../types'
 
 export type AIStreamEvent =
@@ -31,14 +31,13 @@ export async function streamAIReply(params: {
   context: LearningContext
   onEvent: (event: AIStreamEvent) => void | Promise<void>
 }): Promise<void> {
-  const response = await fetch(buildApiUrl('/api/ai/ask/stream'), {
+  const response = await apiRequest('/api/ai/ask/stream', {
     method: 'POST',
-    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
     },
-    signal: AbortSignal.timeout(180_000),
+    timeoutMs: 180_000,
     body: JSON.stringify({
       message: params.message,
       context: params.context,

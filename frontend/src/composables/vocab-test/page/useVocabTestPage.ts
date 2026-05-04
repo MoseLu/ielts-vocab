@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Word } from '../../../components/practice/types'
 import { playWordAudio, shuffleArray } from '../../../components/practice/utils'
+import { apiFetch } from '../../../lib'
 
 const TEST_WORD_COUNT = 20
 const LISTENING_BOOK_ID = 'ielts_listening_premium'
@@ -72,8 +73,7 @@ export function useVocabTestPage() {
     setWrongWords([])
 
     try {
-      const response = await fetch(`/api/books/${LISTENING_BOOK_ID}/words?per_page=200`)
-      const data = await response.json() as { words?: Word[] }
+      const data = await apiFetch<{ words?: Word[] }>(`/api/books/${LISTENING_BOOK_ID}/words?per_page=200`)
       const words = data.words || []
       if (words.length < 4) {
         setError('词汇量不足，无法生成测试')

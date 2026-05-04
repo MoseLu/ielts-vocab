@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from '../constants'
+import { reportHttpResponseError, reportNetworkError } from './errorReporting'
 
 // ── Utility Functions ────────────────────────────────────────────────────────────
 
@@ -192,6 +193,7 @@ async function _doRefresh(): Promise<void> {
 
 interface ApiRequestOptions extends RequestInit {
   skipAuthRefresh?: boolean
+  timeoutMs?: number
 }
 
 function _shouldRefreshResponse(url: string, response: Response, skipAuthRefresh: boolean): boolean {
@@ -203,9 +205,13 @@ function _shouldRefreshResponse(url: string, response: Response, skipAuthRefresh
   )
 }
 
-async function _performApiRequest(url: string, options: RequestInit): Promise<Response> {
+async function _performApiRequest(
+  url: string,
+  options: RequestInit,
+  timeoutMs = 30_000,
+): Promise<Response> {
   const headers = _buildHeaders(options)
-  const timeoutSignal = AbortSignal.timeout(30_000)
+  const timeoutSignal = AbortSignal.timeout(timeoutMs)
   const signal = options.signal
     ? AbortSignal.any([options.signal, timeoutSignal])
     : timeoutSignal
@@ -213,31 +219,68 @@ async function _performApiRequest(url: string, options: RequestInit): Promise<Re
   return fetch(url, init)
 }
 
+function _requestMethod(options: RequestInit): string {
+  return (options.method || 'GET').toUpperCase()
+}
+
+function _reportHttpFailure(url: string, options: RequestInit, response: Response): void {
+  if (response.ok) return
+  reportHttpResponseError({
+    requestUrl: url,
+    method: _requestMethod(options),
+    response,
+  })
+}
+
 export async function apiRequest(
   url: string,
   options: ApiRequestOptions = {},
 ): Promise<Response> {
   const requestUrl = buildApiUrl(url)
-  const { skipAuthRefresh = false, ...requestOptions } = options
+  const { skipAuthRefresh = false, timeoutMs, ...requestOptions } = options
   await _ensureFreshSession(requestUrl, skipAuthRefresh)
-  const response = await _performApiRequest(requestUrl, requestOptions)
+  let response: Response
+  try {
+    response = await _performApiRequest(requestUrl, requestOptions, timeoutMs)
+  } catch (error) {
+    reportNetworkError({
+      requestUrl,
+      method: _requestMethod(requestOptions),
+      error,
+    })
+    throw error
+  }
 
   if (_shouldRefreshResponse(requestUrl, response, skipAuthRefresh)) {
     const refreshResult = await refreshAuthSession()
     if (refreshResult === 'success') {
-      const retry = await _performApiRequest(requestUrl, requestOptions)
+      let retry: Response
+      try {
+        retry = await _performApiRequest(requestUrl, requestOptions, timeoutMs)
+      } catch (error) {
+        reportNetworkError({
+          requestUrl,
+          method: _requestMethod(requestOptions),
+          error,
+        })
+        throw error
+      }
       if (retry.status === 401) {
+        _reportHttpFailure(requestUrl, requestOptions, retry)
         if (_authSessionActive) {
           window.dispatchEvent(new CustomEvent('auth:session-expired'))
         }
         throw new Error('登录已过期，请重新登录')
       }
+      _reportHttpFailure(requestUrl, requestOptions, retry)
       return retry
     }
 
+    _reportHttpFailure(requestUrl, requestOptions, response)
     _throwForRefreshFailure(refreshResult)
   }
 
+  _reportHttpFailure(requestUrl, requestOptions, response)
   return response
 }
 
@@ -301,7 +344,7 @@ function _buildApiErrorMessage(
 
 export async function apiFetch<T>(
   url: string,
-  options: RequestInit = {}
+  options: ApiRequestOptions = {}
 ): Promise<T> {
   const response = await apiRequest(url, options)
 

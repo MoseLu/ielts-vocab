@@ -15,6 +15,7 @@ from routes.progress import progress_bp
 from routes.speech import speech_bp
 from routes.tts import tts_admin_bp, tts_bp
 from routes.vocabulary import vocabulary_bp
+from platform_sdk.admin_ops_transport import ops_bp
 
 
 @dataclass(frozen=True)
@@ -102,6 +103,13 @@ MONOLITH_COMPAT_ROUTE_GROUPS: tuple[MonolithCompatRouteGroup, ...] = (
         rationale='legacy admin browser compatibility surface',
         probe_path='/api/admin/overview',
         init_hook=init_admin,
+    ),
+    MonolithCompatRouteGroup(
+        name='ops',
+        url_prefix='/api/ops',
+        blueprint=ops_bp,
+        rationale='legacy frontend error-log compatibility surface',
+        probe_path='/api/ops/frontend-error-logs',
     ),
 )
 

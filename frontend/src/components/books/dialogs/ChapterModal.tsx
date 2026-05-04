@@ -6,7 +6,7 @@ import {
   SPECIAL_BOOK_MODE_META,
 } from '../../../constants/practiceModes'
 import { useResponsiveChapterSkeletonCount } from '../../../hooks/useResponsiveSkeletonCount'
-import { apiFetch, buildApiUrl } from '../../../lib'
+import { apiFetch } from '../../../lib'
 import type { BookEntryMode } from '../../../lib'
 import { Skeleton } from '../../ui'
 import { Scrollbar } from '../../ui/Scrollbar'
@@ -220,16 +220,13 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(buildApiUrl(`/api/books/${book.id}/chapters`))
-        if (!response.ok) throw new Error('加载章节失败')
-
-        const data = await response.json()
+        const data = await apiFetch<{ chapters?: Chapter[] }>(`/api/books/${book.id}/chapters`)
         setChapters(data.chapters || [])
 
         if (user) {
           try {
             const progressData = await apiFetch<{ chapter_progress?: Record<string | number, ChapterProgress> }>(
-              buildApiUrl(`/api/books/${book.id}/chapters/progress`),
+              `/api/books/${book.id}/chapters/progress`,
             )
             setChapterProgress(progressData.chapter_progress || {})
           } catch {

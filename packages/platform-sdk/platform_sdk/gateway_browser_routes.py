@@ -73,6 +73,15 @@ async def _proxy_service_request(
     )
 
 
+async def _proxy_admin_ops_request(request: Request, path: str) -> Response:
+    return await _proxy_service_request(
+        request=request,
+        base_url=admin_ops_service_url(),
+        path=path,
+        unavailable_detail='admin ops service unavailable',
+    )
+
+
 @browser_compat_router.api_route('/api/auth/{auth_path:path}', methods=['GET', 'POST', 'PUT'])
 async def auth_proxy(auth_path: str, request: Request):
     return await _proxy_service_request(
@@ -215,89 +224,49 @@ async def familiar_proxy(request: Request):
 
 @browser_compat_router.post('/api/books/word-feedback')
 async def word_feedback_proxy(request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path='/api/books/word-feedback',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, '/api/books/word-feedback')
 
 @browser_compat_router.api_route('/api/feature-wishes', methods=['GET', 'POST'])
 async def feature_wishes_proxy(request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path='/api/feature-wishes',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, '/api/feature-wishes')
 
 @browser_compat_router.api_route('/api/feature-wishes/{wish_id}', methods=['PUT', 'DELETE'])
 async def feature_wish_detail_proxy(wish_id: int, request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path=f'/api/feature-wishes/{wish_id}',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, f'/api/feature-wishes/{wish_id}')
+
+
+@browser_compat_router.post('/api/ops/frontend-error-logs')
+async def frontend_error_logs_proxy(request: Request):
+    return await _proxy_admin_ops_request(request, '/api/ops/frontend-error-logs')
 
 @browser_compat_router.api_route('/api/exams', methods=['GET'])
 async def exams_proxy(request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path='/api/exams',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, '/api/exams')
 
 
 @browser_compat_router.api_route('/api/exams/{paper_id}', methods=['GET'])
 async def exam_detail_proxy(paper_id: int, request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path=f'/api/exams/{paper_id}',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, f'/api/exams/{paper_id}')
 
 
 @browser_compat_router.post('/api/exams/{paper_id}/attempts')
 async def exam_attempt_proxy(paper_id: int, request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path=f'/api/exams/{paper_id}/attempts',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, f'/api/exams/{paper_id}/attempts')
 
 
 @browser_compat_router.patch('/api/exam-attempts/{attempt_id}/responses')
 async def exam_attempt_responses_proxy(attempt_id: int, request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path=f'/api/exam-attempts/{attempt_id}/responses',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, f'/api/exam-attempts/{attempt_id}/responses')
 
 
 @browser_compat_router.post('/api/exam-attempts/{attempt_id}/submit')
 async def exam_attempt_submit_proxy(attempt_id: int, request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path=f'/api/exam-attempts/{attempt_id}/submit',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, f'/api/exam-attempts/{attempt_id}/submit')
 
 
 @browser_compat_router.get('/api/exam-attempts/{attempt_id}/result')
 async def exam_attempt_result_proxy(attempt_id: int, request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path=f'/api/exam-attempts/{attempt_id}/result',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, f'/api/exam-attempts/{attempt_id}/result')
 
 
 @browser_compat_router.put('/api/books/word-details/note')
@@ -492,9 +461,4 @@ async def notes_export_proxy(request: Request):
 
 @browser_compat_router.api_route('/api/admin/{admin_path:path}', methods=['GET', 'POST'])
 async def admin_proxy(admin_path: str, request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=admin_ops_service_url(),
-        path=f'/api/admin/{admin_path}',
-        unavailable_detail='admin ops service unavailable',
-    )
+    return await _proxy_admin_ops_request(request, f'/api/admin/{admin_path}')

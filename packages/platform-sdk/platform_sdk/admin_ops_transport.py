@@ -4,10 +4,11 @@ from functools import lru_cache
 
 from flask import Blueprint, jsonify, request
 
-from routes.middleware import admin_required, token_required
+from routes.middleware import admin_required, optional_token_required, token_required
 
 
 admin_bp = Blueprint('admin', __name__)
+ops_bp = Blueprint('ops', __name__)
 books_feedback_bp = Blueprint('books_feedback', __name__)
 feature_wishes_bp = Blueprint('feature_wishes', __name__)
 
@@ -40,6 +41,16 @@ def _load_word_feedback_support():
     )
 
     return build_word_feedback_list_response, submit_word_feedback_response
+
+
+@lru_cache(maxsize=1)
+def _load_frontend_error_log_support():
+    from platform_sdk.frontend_error_log_application import (
+        create_frontend_error_log_response,
+        list_frontend_error_logs_response,
+    )
+
+    return create_frontend_error_log_response, list_frontend_error_logs_response
 
 
 @lru_cache(maxsize=1)
@@ -118,6 +129,27 @@ def get_word_feedback(current_user):
     build_word_feedback_list_response, _ = _load_word_feedback_support()
     payload, status = build_word_feedback_list_response(
         limit=min(int(request.args.get('limit', 50)), 100),
+    )
+    return jsonify(payload), status
+
+
+@admin_bp.route('/frontend-error-logs', methods=['GET'])
+@admin_required
+def list_frontend_error_logs(current_user):
+    del current_user
+    _, list_frontend_error_logs_response = _load_frontend_error_log_support()
+    payload, status = list_frontend_error_logs_response(request.args)
+    return jsonify(payload), status
+
+
+@ops_bp.route('/frontend-error-logs', methods=['POST'])
+@optional_token_required
+def create_frontend_error_log(current_user):
+    create_frontend_error_log_response, _ = _load_frontend_error_log_support()
+    payload, status = create_frontend_error_log_response(
+        current_user,
+        request.get_json(silent=True),
+        user_agent=request.headers.get('User-Agent', ''),
     )
     return jsonify(payload), status
 

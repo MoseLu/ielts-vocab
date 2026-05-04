@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Chapter, ProgressData, Word } from '../../../components/practice/types'
-import { apiFetch, buildApiUrl } from '../../../lib'
+import { apiFetch } from '../../../lib'
 import { loadSmartStats, loadSmartStatsFromBackend } from '../../../lib/smartMode'
 import { safeParse } from '../../../lib/validation'
 import { LearnerProfileSchema } from '../../../lib/schemas'
@@ -72,8 +72,7 @@ export function usePracticePageData({
 
     let cancelled = false
 
-    fetch(buildApiUrl(`/api/books/${resolvedPracticeBookId}/chapters`))
-      .then(r => r.json())
+    apiFetch<{ chapters?: Chapter[] }>(`/api/books/${resolvedPracticeBookId}/chapters`)
       .then((d: { chapters?: Chapter[] }) => {
         if (cancelled) return
         const chapters = d.chapters || []
@@ -235,8 +234,7 @@ export function usePracticePageData({
     }
 
     if (bookId && chapterId) {
-      fetch(buildApiUrl(buildCanonicalWordListPath(bookId, chapterId)))
-        .then(res => res.json())
+      apiFetch<{ words?: Word[] }>(buildCanonicalWordListPath(bookId, chapterId))
         .then(async (data: { words?: Word[] }) => {
           if (!canApplyScopedLoad()) return
           const rawWords = data.words || []
@@ -291,8 +289,7 @@ export function usePracticePageData({
 
     if (bookId) {
       setResumeProgress(null)
-      fetch(buildApiUrl(buildCanonicalWordListPath(bookId)))
-        .then(res => res.json())
+      apiFetch<{ words?: Word[] }>(buildCanonicalWordListPath(bookId))
         .then(async (data: { words?: Word[] }) => {
           if (!canApplyScopedLoad()) return
           const rawWords = data.words || []
@@ -351,8 +348,7 @@ export function usePracticePageData({
       return
     }
 
-    fetch(buildApiUrl(`/api/vocabulary/day/${currentDay}`))
-      .then(res => res.json())
+    apiFetch<{ vocabulary?: Word[]; words?: Word[] }>(`/api/vocabulary/day/${currentDay}`)
       .then(async (data: { vocabulary?: Word[]; words?: Word[] }) => {
         if (!canApplyScopedLoad()) return
         const rawWords = data.vocabulary || data.words || []

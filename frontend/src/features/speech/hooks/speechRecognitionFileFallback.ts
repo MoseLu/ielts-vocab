@@ -1,4 +1,4 @@
-import { buildApiUrl } from '../../../lib'
+import { apiRequest } from '../../../lib'
 import {
   buildWavBlobFromPcmChunks,
   buildRecordedAudioFilename,
@@ -48,11 +48,10 @@ async function transcribeRecordedAudio(audioBlob: Blob, filename: string) {
   const formData = new FormData()
   formData.append('audio', audioBlob, filename)
 
-  const response = await fetch(buildApiUrl('/api/speech/transcribe'), {
+  const response = await apiRequest('/api/speech/transcribe', {
     method: 'POST',
     body: formData,
-    credentials: 'include',
-    signal: AbortSignal.timeout(45_000),
+    timeoutMs: 45_000,
   })
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {

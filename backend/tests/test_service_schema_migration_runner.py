@@ -415,7 +415,7 @@ def test_migration_runner_uses_database_env_without_loading_app_secrets(tmp_path
         engine.dispose()
 
 
-def test_admin_ops_migration_runner_bootstraps_word_feedback_table(tmp_path, monkeypatch):
+def test_admin_ops_migration_runner_bootstraps_ops_owned_tables(tmp_path, monkeypatch):
     module = _load_script_module()
     database_path = tmp_path / 'admin-ops.sqlite'
     env_path = _write_env_file(tmp_path, service_name='admin-ops-service', database_path=database_path)
@@ -428,7 +428,9 @@ def test_admin_ops_migration_runner_bootstraps_word_feedback_table(tmp_path, mon
     assert result['version_after'] == 'admin_ops_service_0001'
     engine, inspector = _sqlite_inspector(database_path)
     try:
-        assert 'admin_word_feedback' in inspector.get_table_names()
+        table_names = set(inspector.get_table_names())
+        assert 'admin_word_feedback' in table_names
+        assert 'frontend_error_logs' in table_names
         with engine.connect() as connection:
             version_value = connection.execute(
                 sa.text('SELECT version_num FROM alembic_version_admin_ops_service')

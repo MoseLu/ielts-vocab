@@ -13,6 +13,7 @@ import {
   BookProgressSchema,
   ProgressMapSchema,
 } from '../../../lib'
+import { reportFrontendError } from '../../../lib/errorReporting'
 import { useAuth } from '../../../contexts'
 
 const API_BASE = '/api/books'
@@ -31,10 +32,7 @@ export function useVocabBooks() {
     const fetchBooks = async () => {
       try {
         setLoading(true)
-        const response = await fetch(API_BASE)
-        if (!response.ok) throw new Error('Failed to fetch books')
-
-        const raw = await response.json()
+        const raw = await apiFetch<unknown>(API_BASE)
 
         // Validate API response with Zod
         const result = safeParse(BooksListResponseSchema, raw)
@@ -68,10 +66,7 @@ export function useBookWords(bookId: string, page = 1, perPage = 100) {
     const fetchWords = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`${API_BASE}/${bookId}/words?page=${page}&per_page=${perPage}`)
-        if (!response.ok) throw new Error('Failed to fetch words')
-
-        const raw = await response.json()
+        const raw = await apiFetch<unknown>(`${API_BASE}/${bookId}/words?page=${page}&per_page=${perPage}`)
 
         // Validate API response with Zod
         const result = safeParse(WordsListResponseSchema, raw)
@@ -135,14 +130,20 @@ export function useBookProgress(bookId: string) {
 
       const result = safeParse(z.object({ progress: BookProgressSchema }), raw)
       if (!result.success) {
-        console.error('Progress save validation failed:', result.errors)
+        reportFrontendError({
+          source: 'http',
+          severity: 'warning',
+          method: 'POST',
+          requestUrl: `${API_BASE}/progress`,
+          message: 'Progress save validation failed',
+          context: { errors: result.errors },
+        })
         return null
       }
 
       setProgress(result.data.progress)
       return result.data.progress
-    } catch (err) {
-      console.error('Failed to save progress:', err)
+    } catch {
       return null
     }
   }, [bookId, user])

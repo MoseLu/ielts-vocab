@@ -1,4 +1,4 @@
-import { apiFetch, buildApiUrl, buildBookPracticePath } from '../../../lib'
+import { apiFetch, buildBookPracticePath } from '../../../lib'
 import {
   buildMatchGroups,
   buildRoundCards,
@@ -40,12 +40,7 @@ export async function loadConfusableMatchPageData({
   groupsPerRound: number
   navigate: NavigateFn
 }): Promise<LoadedConfusableMatchData> {
-  const chaptersResponse = await fetch(buildApiUrl(`/api/books/${bookId}/chapters`))
-  if (!chaptersResponse.ok) {
-    throw new Error('加载章节失败')
-  }
-
-  const chaptersData = await chaptersResponse.json() as ChaptersResponse
+  const chaptersData = await apiFetch<ChaptersResponse>(`/api/books/${bookId}/chapters`)
   const chapters = chaptersData.chapters ?? []
 
   if (!chapterId) {
@@ -69,10 +64,7 @@ export async function loadConfusableMatchPageData({
   }
 
   const [chapterWordsData, progressData] = await Promise.all([
-    fetch(buildApiUrl(`/api/books/${bookId}/chapters/${chapterId}`)).then(async response => {
-      if (!response.ok) throw new Error('加载辨析词汇失败')
-      return response.json() as Promise<ChapterWordsResponse>
-    }),
+    apiFetch<ChapterWordsResponse>(`/api/books/${bookId}/chapters/${chapterId}`),
     apiFetch<ChapterProgressResponse>(`/api/books/${bookId}/chapters/progress`).catch((): ChapterProgressResponse => ({})),
   ])
 

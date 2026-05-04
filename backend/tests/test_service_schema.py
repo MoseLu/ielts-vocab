@@ -111,6 +111,7 @@ def test_event_only_services_become_stateful_via_eventing_tables():
         'admin_projected_wrong_words',
         'admin_projected_study_sessions',
         'admin_projected_users',
+        'frontend_error_logs',
     }
 
 
