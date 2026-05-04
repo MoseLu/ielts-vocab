@@ -315,6 +315,7 @@ def fetch_learning_core_wrong_words_response(
     *,
     search_value=None,
     detail_mode=None,
+    source_service_name: str = AI_EXECUTION_SERVICE_NAME,
 ) -> dict:
     payload, status = _request_json(
         'GET',
@@ -324,6 +325,7 @@ def fetch_learning_core_wrong_words_response(
             'search': search_value,
             'details': detail_mode,
         },
+        source_service_name=source_service_name,
     )
     if status != 200:
         raise RuntimeError(f'learning-core wrong-words request failed: {status}')

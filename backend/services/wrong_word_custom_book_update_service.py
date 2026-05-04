@@ -8,7 +8,6 @@ from services.wrong_word_custom_book_service import (
     WRONG_WORD_CUSTOM_BOOK_TITLE,
     delete_user_managed_chapters,
     is_wrong_word_system_chapter_id,
-    sync_wrong_word_custom_book,
 )
 
 
@@ -56,7 +55,8 @@ def update_wrong_word_custom_book_response(user_id: int, book, body: dict[str, A
     payload = _payload_for_user_chapters(book.id, body if isinstance(body, dict) else {})
     if not payload['words']:
         try:
-            sync_wrong_word_custom_book(user_id)
+            from services.wrong_word_custom_book_catalog_service import sync_wrong_word_custom_book_for_catalog_session
+            sync_wrong_word_custom_book_for_catalog_session(user_id)
             ai_custom_book_repository.commit()
         except Exception:
             ai_custom_book_repository.rollback()
@@ -89,7 +89,8 @@ def update_wrong_word_custom_book_response(user_id: int, book, body: dict[str, A
             sequence_base=next_sequence,
             sort_order_base=26,
         )
-        sync_wrong_word_custom_book(user_id)
+        from services.wrong_word_custom_book_catalog_service import sync_wrong_word_custom_book_for_catalog_session
+        sync_wrong_word_custom_book_for_catalog_session(user_id)
         ai_custom_book_repository.commit()
         updated_book = ai_custom_book_repository.get_custom_book(user_id, book.id)
         if updated_book is None:

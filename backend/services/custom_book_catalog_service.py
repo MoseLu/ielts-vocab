@@ -150,7 +150,9 @@ def build_custom_book_vocabulary_entries(book) -> list[dict[str, Any]]:
 def get_custom_book_for_user(user_id: int | None, book_id: str | None):
     if user_id is None or not book_id:
         return None
-    return ai_custom_book_repository.get_custom_book(user_id, str(book_id))
+    book = ai_custom_book_repository.get_custom_book(user_id, str(book_id))
+    from services.wrong_word_custom_book_catalog_service import resolve_custom_book_for_read
+    return resolve_custom_book_for_read(user_id, str(book_id), book)
 
 
 def list_custom_books_for_user(user_id: int | None):
@@ -441,7 +443,7 @@ def update_custom_book_response(user_id: int, book_id: str, body: dict[str, Any]
 
     payload = body if isinstance(body, dict) else {}
     from services.wrong_word_custom_book_service import is_wrong_word_custom_book_for_user
-    if is_wrong_word_custom_book_for_user(user_id, book_id):
+    if is_wrong_word_custom_book_for_user(user_id, str(getattr(book, 'id', book_id))):
         from services.wrong_word_custom_book_update_service import update_wrong_word_custom_book_response
         return update_wrong_word_custom_book_response(user_id, book, payload)
     metadata = _normalize_custom_book_meta(payload)
@@ -483,7 +485,8 @@ def update_custom_book_response(user_id: int, book_id: str, body: dict[str, Any]
             'accepted_words': _accepted_words_from_content(prepared_content),
             'rejected_words': prepared_content['rejected_words']}, 200
 def list_custom_books_response(user_id: int) -> tuple[dict[str, Any], int]:
-    books = list_custom_books_for_user(user_id)
+    from services.wrong_word_custom_book_catalog_service import list_visible_custom_books
+    books = list_visible_custom_books(user_id)
     return {'books': [serialize_custom_book_summary(book) for book in books]}, 200
 
 

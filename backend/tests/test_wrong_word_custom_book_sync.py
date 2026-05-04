@@ -1,6 +1,11 @@
 from models import CustomBook, CustomBookChapter, CustomBookWord, User, db
+from platform_sdk import learning_core_internal_client
 from platform_sdk.learning_core_wrong_words_application import sync_learning_core_wrong_words_response
-from services.custom_book_catalog_service import update_custom_book_response
+from services.custom_book_catalog_service import (
+    get_custom_book_response,
+    list_custom_books_response,
+    update_custom_book_response,
+)
 from services.wrong_word_custom_book_service import build_wrong_word_custom_book_id
 
 
@@ -149,3 +154,95 @@ def test_wrong_word_custom_book_update_preserves_system_chapters(app):
         assert updated_book.word_count == 2
         assert _chapter_words(updated_book, 'A') == ['abandon']
         assert _chapter_words(updated_book, '用户章节') == ['ability']
+
+
+def test_catalog_read_syncs_system_book_from_learning_core_snapshot(app, monkeypatch):
+    with app.app_context():
+        user = _create_user(username='wrong-book-catalog-user')
+        legacy_book = CustomBook(
+            id='custom_legacy_wrong_words',
+            user_id=user.id,
+            title='错词本',
+            description='old export',
+            word_count=2,
+        )
+        db.session.add(legacy_book)
+        db.session.flush()
+        db.session.add(CustomBookChapter(
+            id='custom_legacy_wrong_words_manual',
+            book_id=legacy_book.id,
+            title='STR',
+            word_count=1,
+            sort_order=0,
+        ))
+        db.session.add(CustomBookChapter(
+            id='custom_legacy_wrong_words_a',
+            book_id=legacy_book.id,
+            title='字母a开头',
+            word_count=1,
+            sort_order=1,
+        ))
+        db.session.flush()
+        db.session.add(CustomBookWord(
+            chapter_id='custom_legacy_wrong_words_manual',
+            word='strategy',
+            phonetic='',
+            pos='',
+            definition='plan',
+            sort_order=0,
+        ))
+        db.session.add(CustomBookWord(
+            chapter_id='custom_legacy_wrong_words_a',
+            word='alpha',
+            phonetic='',
+            pos='',
+            definition='old first',
+            sort_order=0,
+        ))
+        db.session.commit()
+
+        def fake_wrong_words(user_id, **kwargs):
+            assert kwargs['source_service_name'] == 'catalog-content-service'
+            return {
+                'words': [
+                    {'word': 'beta', 'definition': 'second'},
+                    {'word': 'ability', 'definition': 'skill'},
+                    {'word': 'alpha', 'definition': 'first'},
+                ],
+            }
+
+        monkeypatch.setattr(
+            learning_core_internal_client,
+            'fetch_learning_core_wrong_words_response',
+            fake_wrong_words,
+        )
+
+        payload, status = list_custom_books_response(user.id)
+        book = _load_wrong_word_book(user.id)
+        legacy_payload, legacy_status = get_custom_book_response(user.id, legacy_book.id)
+        update_payload, update_status = update_custom_book_response(user.id, legacy_book.id, {
+            'title': 'stale edit',
+            'chapters': [
+                {'id': f'{book.id}_a', 'title': 'Edited A'},
+                {'id': 'stale-extra', 'title': '用户补充'},
+            ],
+            'words': [
+                {'chapterId': f'{book.id}_a', 'word': 'alter'},
+                {'chapterId': 'stale-extra', 'word': 'supplement', 'definition': 'extra'},
+            ],
+        })
+        updated_book = _load_wrong_word_book(user.id)
+
+        assert status == 200
+        assert build_wrong_word_custom_book_id(user.id) in [item['id'] for item in payload['books']]
+        assert legacy_book.id not in [item['id'] for item in payload['books']]
+        assert len(updated_book.chapters) == 28
+        assert updated_book.word_count == 5
+        assert _chapter_words(updated_book, 'A') == ['ability', 'alpha']
+        assert _chapter_words(updated_book, 'B') == ['beta']
+        assert _chapter_words(updated_book, 'STR') == ['strategy']
+        assert _chapter_words(updated_book, '用户补充') == ['supplement']
+        assert legacy_status == 200
+        assert legacy_payload['id'] == build_wrong_word_custom_book_id(user.id)
+        assert update_status == 200
+        assert update_payload['bookId'] == build_wrong_word_custom_book_id(user.id)
