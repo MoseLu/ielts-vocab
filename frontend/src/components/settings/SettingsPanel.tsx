@@ -126,6 +126,11 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
     }
   }
 
+  const updateReviewLimit = (value: string) => {
+    const normalizedValue = value.trim()
+    updateSetting('reviewLimit', (normalizedValue || 'unlimited') as AppSettings['reviewLimit'])
+  }
+
   const onOverlayClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) onClose()
@@ -375,16 +380,28 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                 </div>
                 <div className="settings-item">
                   <div className="settings-item-info">
-                    <div className="settings-item-title">复习数量</div>
-                    <div className="settings-item-desc">控制到期复习批次，也控制章节内分组大小</div>
+                    <div className="settings-item-title">每组数量</div>
+                    <div className="settings-item-desc">控制到期复习批次，也控制错词本和章节练习分组大小</div>
                   </div>
-                  <select className="settings-select" value={settings.reviewLimit} onChange={(e) => updateSetting('reviewLimit', e.target.value)}>
-                    <option value="unlimited">不设上限</option>
-                    <option value="10">10个</option>
-                    <option value="20">20个</option>
-                    <option value="50">50个</option>
-                    <option value="100">100个</option>
-                  </select>
+                  <div className="settings-number-control">
+                    <input
+                      className="settings-number-input"
+                      type="number"
+                      min="1"
+                      step="1"
+                      inputMode="numeric"
+                      value={settings.reviewLimit === 'unlimited' ? '' : settings.reviewLimit}
+                      placeholder="不限"
+                      onChange={(e) => updateReviewLimit(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className={`settings-chip-button ${settings.reviewLimit === 'unlimited' ? 'active' : ''}`}
+                      onClick={() => updateReviewLimit('unlimited')}
+                    >
+                      不限
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

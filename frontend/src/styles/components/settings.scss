@@ -306,6 +306,51 @@
     box-shadow: var(--focus-ring);
 }
 
+.settings-number-control {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.settings-number-input {
+    width: var(--size-100);
+    background: var(--surface-muted);
+    border: var(--size-1) solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--size-14);
+    color: var(--text-primary);
+    transition: var(--motion-transition-interactive-fast);
+}
+
+.settings-number-input:hover {
+    border-color: var(--accent);
+}
+
+.settings-number-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+}
+
+.settings-chip-button {
+    border: var(--size-1) solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    color: var(--text-secondary);
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--size-14);
+    cursor: pointer;
+    transition: var(--motion-transition-interactive-fast);
+}
+
+.settings-chip-button:hover,
+.settings-chip-button.active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--text-inverse);
+}
+
 /* Range Slider */
 .settings-slider {
     appearance: none;
@@ -377,5 +422,4 @@
 .settings-panel.active {
     display: block;
 }
-
 

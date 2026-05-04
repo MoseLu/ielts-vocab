@@ -27,4 +27,16 @@ describe('normalizeAppSettings', () => {
       reviewLimitCustomized: true,
     })
   })
+
+  it('accepts a custom positive review batch limit', () => {
+    expect(
+      normalizeAppSettings({
+        reviewLimit: '37',
+        reviewLimitCustomized: true,
+      }),
+    ).toMatchObject({
+      reviewLimit: '37',
+      reviewLimitCustomized: true,
+    })
+  })
 })

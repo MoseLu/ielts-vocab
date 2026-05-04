@@ -122,7 +122,8 @@ export function applyScopedWordsLoad({
   const fullQueueWords = fullQueue
     .map(index => words[index]?.word)
     .filter((word): word is string => Boolean(word))
-  const currentIndex = progress?.is_completed ? 0 : (progress?.current_index ?? 0)
+  const normalizedProgress = normalizeProgressForQueue(progress, fullQueue.length)
+  const currentIndex = normalizedProgress?.is_completed ? 0 : (normalizedProgress?.current_index ?? 0)
   const practiceGroup = chapterId
     ? resolvePracticeGroupWindow(fullQueue.length, groupSize ?? null, currentIndex)
     : null
@@ -142,7 +143,7 @@ export function applyScopedWordsLoad({
   vocabRef.current = words
   setQueue(nextQueue)
   resetScopedProgress({
-    progress,
+    progress: normalizedProgress,
     words,
     chapterId,
     queueLength: nextQueue.length,
@@ -162,6 +163,32 @@ export function applyScopedWordsLoad({
     generation: scopedLoadGeneration,
   }
   beginSession()
+}
+
+export function isProgressCompleteForQueue(progress: ProgressData | null, queueLength: number): boolean {
+  if (!progress?.is_completed) return false
+  const safeQueueLength = Math.max(0, Math.floor(queueLength))
+  if (safeQueueLength <= 0) return true
+
+  const currentIndex = Number(progress.current_index)
+  if (Number.isFinite(currentIndex) && currentIndex >= safeQueueLength) return true
+
+  const wordsLearned = Number(progress.words_learned)
+  if (Number.isFinite(wordsLearned) && wordsLearned >= safeQueueLength) return true
+
+  const answeredWords = Array.isArray(progress.answered_words) ? progress.answered_words.length : 0
+  return answeredWords >= safeQueueLength
+}
+
+function normalizeProgressForQueue(
+  progress: ProgressData | null,
+  queueLength: number,
+): ProgressData | null {
+  if (!progress) return null
+  return {
+    ...progress,
+    is_completed: isProgressCompleteForQueue(progress, queueLength),
+  }
 }
 
 function buildModeQueue(words: Word[], mode?: PracticeMode, shuffle?: boolean) {
