@@ -370,7 +370,9 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     )
   }
 
-  const totalWords = chapters.reduce((sum, chapter) => sum + (chapter.word_count ?? 0), 0)
+  const totalWords = isCustomBook
+    ? Math.max(0, Number(book.word_count) || 0)
+    : chapters.reduce((sum, chapter) => sum + (chapter.word_count ?? 0), 0)
   const totalGroups = chapters.reduce((sum, chapter) => sum + (chapter.group_count ?? 0), 0)
   const subtitle = isConfusableBook
     ? `${chapters.length} 章节 · ${totalGroups} 组`

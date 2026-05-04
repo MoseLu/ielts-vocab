@@ -38,10 +38,18 @@ def _clean_word_text(value) -> str:
     return str(value or '').strip()
 
 
+def _word_key_from_text(value) -> str:
+    return _clean_word_text(value).lower()
+
+
 def _row_value(record: Any, key: str):
     if isinstance(record, dict):
         return record.get(key)
     return getattr(record, key, None)
+
+
+def _word_key(record: Any) -> str:
+    return _word_key_from_text(_row_value(record, 'word'))
 
 
 def _word_sort_key(record: Any) -> tuple[str, str]:
@@ -59,6 +67,15 @@ def _word_chapter_letter(record: Any) -> str:
 def _list_wrong_words_for_book(user_id: int) -> list[UserWrongWord]:
     rows = UserWrongWord.query.filter_by(user_id=user_id).all()
     return sorted(rows, key=_word_sort_key)
+
+
+def _dedupe_wrong_word_rows(rows: list[Any]) -> list[Any]:
+    unique_rows: dict[str, Any] = {}
+    for row in sorted(rows, key=_word_sort_key):
+        key = _word_key(row)
+        if key and key not in unique_rows:
+            unique_rows[key] = row
+    return list(unique_rows.values())
 
 
 def _has_legacy_wrong_word_books(user_id: int, book_id: str) -> bool:
@@ -191,7 +208,7 @@ def _migrate_legacy_user_chapters(user_id: int, book: CustomBook) -> None:
             next_sort_order += 1
 
 
-def _count_user_managed_words(book_id: str) -> int:
+def _user_managed_word_keys(book_id: str) -> set[str]:
     system_chapter_ids = {
         build_wrong_word_custom_chapter_id(book_id, letter)
         for letter in WRONG_WORD_CUSTOM_BOOK_LETTERS
@@ -202,10 +219,14 @@ def _count_user_managed_words(book_id: str) -> int:
         if row[0] not in system_chapter_ids
     ]
     if not user_chapter_ids:
-        return 0
-    return int(
-        CustomBookWord.query.filter(CustomBookWord.chapter_id.in_(user_chapter_ids)).count()
-    )
+        return set()
+    return {
+        _word_key_from_text(word)
+        for word, in db.session.query(CustomBookWord.word)
+        .filter(CustomBookWord.chapter_id.in_(user_chapter_ids))
+        .all()
+        if _word_key_from_text(word)
+    }
 
 
 def delete_user_managed_chapters(book: CustomBook) -> None:
@@ -218,7 +239,7 @@ def delete_user_managed_chapters(book: CustomBook) -> None:
 
 
 def sync_wrong_word_custom_book_from_rows(user_id: int, rows: list[Any]) -> None:
-    rows = sorted(rows, key=_word_sort_key)
+    rows = _dedupe_wrong_word_rows(rows)
     book_id = build_wrong_word_custom_book_id(user_id)
     existing_book = CustomBook.query.filter_by(id=book_id, user_id=user_id).first()
     if not rows and existing_book is None and not _has_legacy_wrong_word_books(user_id, book_id):
@@ -229,18 +250,18 @@ def sync_wrong_word_custom_book_from_rows(user_id: int, rows: list[Any]) -> None
     _migrate_legacy_user_chapters(user_id, book)
     grouped = _group_wrong_words_by_letter(rows)
     chapter_ids = [chapter.id for chapter in chapters.values()]
-    user_managed_word_count = _count_user_managed_words(book.id)
+    user_managed_word_keys = _user_managed_word_keys(book.id)
     CustomBookWord.query.filter(CustomBookWord.chapter_id.in_(chapter_ids)).delete(
         synchronize_session=False,
     )
 
-    total_words = 0
+    system_word_keys: set[str] = set()
     for letter in WRONG_WORD_CUSTOM_BOOK_LETTERS:
         chapter = chapters[letter]
         chapter_rows = grouped[letter]
         chapter.word_count = len(chapter_rows)
-        total_words += len(chapter_rows)
         for sort_order, row in enumerate(chapter_rows):
+            system_word_keys.add(_word_key(row))
             db.session.add(CustomBookWord(
                 chapter_id=chapter.id,
                 word=_clean_word_text(_row_value(row, 'word')),
@@ -251,7 +272,7 @@ def sync_wrong_word_custom_book_from_rows(user_id: int, rows: list[Any]) -> None
                 sort_order=sort_order,
             ))
 
-    book.word_count = total_words + user_managed_word_count
+    book.word_count = len(system_word_keys | user_managed_word_keys)
     db.session.flush()
 
 

@@ -210,4 +210,30 @@ describe('ChapterModal', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/books/create?bookId=custom_1')
   })
+
+  it('uses the server distinct total for custom book subtitles', async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        chapters: [
+          { id: 'wrong_words_1_a', title: 'A', word_count: 20 },
+          { id: 'wrong_words_1_manual', title: 'STR', word_count: 5 },
+        ],
+      }),
+    } as Response)
+    apiFetchMock.mockResolvedValue({ chapter_progress: {} })
+
+    render(
+      <ChapterModal
+        book={{ id: 'wrong_words_1', title: '错词本', word_count: 20, is_custom_book: true }}
+        progress={{ current_index: 0 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('2 章节 · 20 词')).toBeInTheDocument()
+    })
+  })
 })

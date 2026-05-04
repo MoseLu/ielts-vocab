@@ -211,6 +211,8 @@ def test_catalog_read_syncs_system_book_from_learning_core_snapshot(app, monkeyp
                     {'word': 'beta', 'definition': 'second'},
                     {'word': 'ability', 'definition': 'skill'},
                     {'word': 'alpha', 'definition': 'first'},
+                    {'word': 'alpha', 'definition': 'duplicate first'},
+                    {'word': 'strategy', 'definition': 'plan'},
                 ],
             }
 
@@ -261,6 +263,7 @@ def test_catalog_read_syncs_system_book_from_learning_core_snapshot(app, monkeyp
         assert updated_book.word_count == 5
         assert _chapter_words(updated_book, 'A') == ['ability', 'alpha']
         assert _chapter_words(updated_book, 'B') == ['beta']
+        assert _chapter_words(updated_book, 'S') == ['strategy']
         assert _chapter_words(updated_book, 'STR') == ['strategy']
         assert _chapter_words(updated_book, '用户补充') == ['supplement']
         assert legacy_status == 200
