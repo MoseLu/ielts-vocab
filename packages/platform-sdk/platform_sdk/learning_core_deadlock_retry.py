@@ -10,22 +10,38 @@ from service_models.learning_core_models import db
 
 T = TypeVar('T')
 DEADLOCK_SQLSTATE = '40P01'
+UNIQUE_VIOLATION_SQLSTATE = '23505'
+RETRYABLE_UNIQUE_CONSTRAINTS = {'unique_user_scope_word_mastery_state'}
 DEFAULT_DEADLOCK_ATTEMPTS = 3
 
 
-def _is_deadlock_error(exc: BaseException) -> bool:
+def _iter_exception_chain(exc: BaseException):
     checked: set[int] = set()
     current: BaseException | None = exc
     while current is not None and id(current) not in checked:
         checked.add(id(current))
+        yield current
+        current = current.__cause__ or current.__context__
+
+
+def _is_retryable_write_conflict(exc: BaseException) -> bool:
+    for current in _iter_exception_chain(exc):
         original = getattr(current, 'orig', None)
         if getattr(original, 'pgcode', None) == DEADLOCK_SQLSTATE:
             return True
+        if getattr(original, 'pgcode', None) == UNIQUE_VIOLATION_SQLSTATE:
+            constraint = getattr(getattr(original, 'diag', None), 'constraint_name', '')
+            if constraint in RETRYABLE_UNIQUE_CONSTRAINTS:
+                return True
         original_text = str(original).lower()
         current_text = str(current).lower()
         if 'deadlock detected' in original_text or 'deadlock detected' in current_text:
             return True
-        current = current.__cause__
+        if (
+            'unique_user_scope_word_mastery_state' in original_text
+            or 'unique_user_scope_word_mastery_state' in current_text
+        ):
+            return True
     return False
 
 
@@ -40,11 +56,11 @@ def run_learning_core_deadlock_retry(
             return action()
         except Exception as exc:
             is_last_attempt = attempt_index >= attempts - 1
-            if not _is_deadlock_error(exc) or is_last_attempt:
+            if not _is_retryable_write_conflict(exc) or is_last_attempt:
                 raise
             db.session.rollback()
             logging.warning(
-                '[LEARNING_CORE] deadlock during %s; retrying attempt %s/%s',
+                '[LEARNING_CORE] retryable write conflict during %s; retrying attempt %s/%s',
                 operation,
                 attempt_index + 2,
                 attempts,

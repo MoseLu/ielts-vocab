@@ -11,7 +11,10 @@
     border: var(--size-1) solid color-mix(in srgb, var(--accent) var(--mix-14), var(--border-strong));
     border-radius: var(--radius-16);
     isolation: isolate;
-    overflow: hidden;
+    max-height: calc(100dvh - var(--size-24));
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable both-edges;
     background:
         linear-gradient(
             180deg,
