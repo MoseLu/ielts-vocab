@@ -376,7 +376,7 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">复习数量</div>
-                    <div className="settings-item-desc">默认连续分页加载，不会一次性拉取全部到期单词</div>
+                    <div className="settings-item-desc">控制到期复习批次，也会作为错词本分组大小</div>
                   </div>
                   <select className="settings-select" value={settings.reviewLimit} onChange={(e) => updateSetting('reviewLimit', e.target.value)}>
                     <option value="unlimited">不设上限</option>
