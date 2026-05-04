@@ -55,6 +55,26 @@ function buildStoredSnapshot(progressData: ProgressData): ProgressData {
   }
 }
 
+function progressUpdatedAt(progress: ProgressData | null): number {
+  const value = progress?.updatedAt ?? progress?.updated_at
+  if (!value) return 0
+  const timestamp = Date.parse(value)
+  return Number.isNaN(timestamp) ? 0 : timestamp
+}
+
+function pickLatestProgressSnapshot(
+  stored: ProgressData | null,
+  remote: ProgressData | null,
+): ProgressData | null {
+  if (!stored) return remote
+  if (!remote) return stored
+
+  const storedUpdatedAt = progressUpdatedAt(stored)
+  const remoteUpdatedAt = progressUpdatedAt(remote)
+  if (remoteUpdatedAt > storedUpdatedAt) return remote
+  return stored
+}
+
 export function readStoredChapterProgressSnapshot(
   bookId: string,
   chapterId: string | number,
@@ -98,13 +118,12 @@ export function clearChapterProgressSnapshot(
 
 export async function loadBookProgressSnapshot(bookId: string): Promise<ProgressData | null> {
   const stored = readStoredProgressMap(STORAGE_KEYS.BOOK_PROGRESS)[bookId] ?? null
-  if (stored) return stored
 
   try {
     const remote = await apiFetch<{ progress?: ProgressData }>(`/api/books/progress/${bookId}`)
-    return remote.progress ?? null
+    return pickLatestProgressSnapshot(stored, remote.progress ?? null)
   } catch {
-    return null
+    return stored
   }
 }
 
@@ -113,14 +132,13 @@ export async function loadChapterProgressSnapshot(
   chapterId: string | number,
 ): Promise<ProgressData | null> {
   const stored = readStoredChapterProgressSnapshot(bookId, chapterId)
-  if (stored) return stored
 
   try {
     const remote = await apiFetch<{ chapter_progress?: Record<string, ProgressData> }>(
       `/api/books/${bookId}/chapters/progress`,
     )
-    return remote.chapter_progress?.[String(chapterId)] ?? null
+    return pickLatestProgressSnapshot(stored, remote.chapter_progress?.[String(chapterId)] ?? null)
   } catch {
-    return null
+    return stored
   }
 }

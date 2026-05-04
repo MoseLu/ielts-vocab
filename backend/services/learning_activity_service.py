@@ -89,6 +89,20 @@ def _latest_row(rows):
     )
 
 
+def _has_session_snapshot(row) -> bool:
+    if row is None:
+        return False
+    return (
+        _safe_non_negative_int(getattr(row, 'current_index', 0)) > 0
+        or getattr(row, 'answered_words', None) is not None
+        or getattr(row, 'queue_words', None) is not None
+    )
+
+
+def _latest_session_snapshot_row(rows):
+    return _latest_row([row for row in rows if _has_session_snapshot(row)])
+
+
 def _max_datetime(values) -> datetime | None:
     candidates = [value for value in values if value is not None]
     return max(candidates) if candidates else None
@@ -228,6 +242,7 @@ def _rebuild_chapter_rollup(*, user_id: int, book_id: str, mode: str, chapter_id
         return
 
     latest_row = _latest_row(rows)
+    latest_session_row = _latest_session_snapshot_row(rows) or latest_row
     rollup = _upsert_rollup(
         UserLearningChapterRollup,
         user_id=user_id,
@@ -235,13 +250,13 @@ def _rebuild_chapter_rollup(*, user_id: int, book_id: str, mode: str, chapter_id
         mode=mode,
         chapter_id=chapter_id,
     )
-    rollup.current_index = _safe_non_negative_int(getattr(latest_row, 'current_index', 0))
+    rollup.current_index = _safe_non_negative_int(getattr(latest_session_row, 'current_index', 0))
     rollup.words_learned = max(_safe_non_negative_int(row.words_learned) for row in rows)
     rollup.correct_count = max(_safe_non_negative_int(row.correct_count) for row in rows)
     rollup.wrong_count = max(_safe_non_negative_int(row.wrong_count) for row in rows)
     rollup.is_completed = any(bool(row.is_completed) for row in rows)
-    rollup.answered_words = getattr(latest_row, 'answered_words', None)
-    rollup.queue_words = getattr(latest_row, 'queue_words', None)
+    rollup.answered_words = getattr(latest_session_row, 'answered_words', None)
+    rollup.queue_words = getattr(latest_session_row, 'queue_words', None)
     rollup.last_learning_date = _max_date_key(row.learning_date for row in rows)
     rollup.last_activity_at = _max_datetime(_latest_instant(row) for row in rows)
     _apply_rollup_totals(rollup, source_rows=rows)

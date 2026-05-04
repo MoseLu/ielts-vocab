@@ -114,6 +114,20 @@ def _latest_row(rows):
     )
 
 
+def _has_session_snapshot(row) -> bool:
+    if row is None:
+        return False
+    return (
+        _safe_non_negative_int(getattr(row, 'current_index', 0)) > 0
+        or getattr(row, 'answered_words', None) is not None
+        or getattr(row, 'queue_words', None) is not None
+    )
+
+
+def _latest_session_snapshot_row(rows):
+    return _latest_row([row for row in rows if _has_session_snapshot(row)])
+
+
 def _max_datetime(values) -> datetime | None:
     candidates = [value for value in values if value is not None]
     return max(candidates) if candidates else None
@@ -127,6 +141,7 @@ def collapse_book_chapter_snapshots(rows: list[UserLearningChapterRollup]) -> li
     collapsed: list[CompatChapterProgress] = []
     for (book_id, chapter_id), chapter_rows in by_chapter.items():
         latest_row = _latest_row(chapter_rows)
+        latest_session_row = _latest_session_snapshot_row(chapter_rows) or latest_row
         collapsed.append(CompatChapterProgress(
             user_id=latest_row.user_id if latest_row else 0,
             book_id=book_id,
@@ -135,9 +150,9 @@ def collapse_book_chapter_snapshots(rows: list[UserLearningChapterRollup]) -> li
             correct_count=max(_safe_non_negative_int(row.correct_count) for row in chapter_rows),
             wrong_count=max(_safe_non_negative_int(row.wrong_count) for row in chapter_rows),
             is_completed=any(bool(row.is_completed) for row in chapter_rows),
-            session_current_index=_safe_non_negative_int(getattr(latest_row, 'current_index', 0)),
-            session_answered_words=getattr(latest_row, 'answered_words', None),
-            session_queue_words=getattr(latest_row, 'queue_words', None),
+            session_current_index=_safe_non_negative_int(getattr(latest_session_row, 'current_index', 0)),
+            session_answered_words=getattr(latest_session_row, 'answered_words', None),
+            session_queue_words=getattr(latest_session_row, 'queue_words', None),
             updated_at=_max_datetime(_latest_instant(row) for row in chapter_rows),
         ))
     return sorted(collapsed, key=lambda row: (row.book_id, str(row.chapter_id)))

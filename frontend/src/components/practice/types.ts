@@ -93,6 +93,7 @@ export interface ProgressData {
   /** 恢复进度用：保存练习队列顺序，防止重新洗牌后进度失效 */
   queue_words?: string[]
   updatedAt?: string
+  updated_at?: string
 }
 
 export interface AppSettings {
