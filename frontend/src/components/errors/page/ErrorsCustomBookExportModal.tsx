@@ -17,8 +17,6 @@ export function ErrorsCustomBookExportModal({ exportState }: ErrorsCustomBookExp
     saving,
     error,
     chapterTitle,
-    chapterCount,
-    chunkSize,
     wordCount,
     savedTarget,
     setSelectedBookId,
@@ -37,9 +35,7 @@ export function ErrorsCustomBookExportModal({ exportState }: ErrorsCustomBookExp
       {phase === 'success' ? (
         <div className="errors-custom-book-modal">
           <p className="errors-custom-book-summary">
-            {savedTarget?.chapterCount && savedTarget.chapterCount > 1
-              ? `已生成 ${savedTarget.chapterCount} 个章节，每章最多 ${chunkSize} 个词。`
-              : `已生成章节「${chapterTitle}」。`}
+            已生成章节「{chapterTitle}」。
             {savedTarget?.rejectedCount ? `有 ${savedTarget.rejectedCount} 个词未导入。` : ''}
           </p>
           <div className="ui-modal__actions">
@@ -54,9 +50,7 @@ export function ErrorsCustomBookExportModal({ exportState }: ErrorsCustomBookExp
       ) : (
         <div className="errors-custom-book-modal">
           <p className="errors-custom-book-summary">
-            {chapterCount > 1
-              ? `将 ${wordCount} 个词按每组 ${chunkSize} 个保存为 ${chapterCount} 个章节。`
-              : `将 ${wordCount} 个词保存为章节「${chapterTitle}」。`}
+            将 {wordCount} 个词保存为章节「{chapterTitle}」。
           </p>
 
           {loadingBooks ? (

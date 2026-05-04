@@ -3,7 +3,6 @@ import type { NavigateFunction } from 'react-router-dom'
 import type { WrongWordSearchMode } from '../../../features/vocabulary/wrongWordsFilters'
 import type { WrongWordRecord } from '../../../features/vocabulary/wrongWordsStore'
 import { apiFetch } from '../../../lib'
-import { readAppSettingsFromStorage } from '../../../lib/appSettings'
 
 const EXPORT_CHAPTER_ID = 'wrong-word-export'
 
@@ -31,17 +30,6 @@ interface UseWrongWordsCustomBookExportOptions {
   navigate: NavigateFunction
 }
 
-interface WrongWordsCustomBookExportPayload {
-  chapters: Array<{ id: string; title: string }>
-  words: Array<{
-    chapterId: string
-    word: string
-    phonetic: string
-    pos: string
-    definition: string
-  }>
-}
-
 export function buildWrongWordsCustomBookChapterTitle(
   appliedSearch: string,
   searchMode: WrongWordSearchMode | null,
@@ -58,47 +46,6 @@ function stringifyWordField(value: string | null | undefined): string {
   return String(value ?? '').trim()
 }
 
-export function readWrongWordsExportChunkSize(): number | null {
-  const settings = readAppSettingsFromStorage()
-  if (settings.reviewLimitCustomized !== true) return null
-  if (settings.reviewLimit === 'unlimited') return null
-
-  const limit = Number.parseInt(String(settings.reviewLimit), 10)
-  return Number.isFinite(limit) && limit > 0 ? limit : null
-}
-
-export function countWrongWordsExportChapters(wordCount: number, chunkSize: number | null): number {
-  if (wordCount <= 0) return 0
-  if (!chunkSize) return 1
-  return Math.max(1, Math.ceil(wordCount / chunkSize))
-}
-
-export function buildWrongWordsCustomBookExportPayload(
-  words: WrongWordRecord[],
-  chapterTitle: string,
-  chunkSize: number | null,
-): WrongWordsCustomBookExportPayload {
-  const chapterCount = countWrongWordsExportChapters(words.length, chunkSize)
-  const safeChunkSize = chunkSize && chapterCount > 1 ? chunkSize : Math.max(1, words.length)
-  const chapters = Array.from({ length: chapterCount }, (_, index) => ({
-    id: chapterCount > 1 ? `${EXPORT_CHAPTER_ID}-${index + 1}` : EXPORT_CHAPTER_ID,
-    title: chapterCount > 1 ? `${chapterTitle}（${index + 1}/${chapterCount}）` : chapterTitle,
-  }))
-  const payloadWords = words.flatMap((word, index) => {
-    const chapter = chapters[Math.floor(index / safeChunkSize)]
-    if (!chapter) return []
-    return [{
-      chapterId: chapter.id,
-      word: stringifyWordField(word.word),
-      phonetic: stringifyWordField(word.phonetic),
-      pos: stringifyWordField(word.pos),
-      definition: stringifyWordField(word.definition),
-    }]
-  })
-
-  return { chapters, words: payloadWords }
-}
-
 export function useWrongWordsCustomBookExport({
   words,
   appliedSearch,
@@ -112,20 +59,10 @@ export function useWrongWordsCustomBookExport({
   const [loadingBooks, setLoadingBooks] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [savedTarget, setSavedTarget] = useState<{
-    bookId: string
-    chapterId: string
-    chapterCount: number
-    rejectedCount: number
-  } | null>(null)
+  const [savedTarget, setSavedTarget] = useState<{ bookId: string; chapterId: string; rejectedCount: number } | null>(null)
   const chapterTitle = useMemo(
     () => buildWrongWordsCustomBookChapterTitle(appliedSearch, searchMode),
     [appliedSearch, searchMode],
-  )
-  const chunkSize = useMemo(readWrongWordsExportChunkSize, [isOpen, words.length])
-  const chapterCount = useMemo(
-    () => countWrongWordsExportChapters(words.length, chunkSize),
-    [chunkSize, words.length],
   )
 
   const loadBooks = useCallback(async () => {
@@ -166,14 +103,19 @@ export function useWrongWordsCustomBookExport({
     setSaving(true)
     setError('')
     try {
-      const exportPayload = buildWrongWordsCustomBookExportPayload(words, chapterTitle, chunkSize)
       const response = await apiFetch<AppendCustomBookChaptersResponse>(
         `/api/books/custom-books/${encodeURIComponent(selectedBookId)}/chapters`,
         {
           method: 'POST',
           body: JSON.stringify({
-            chapters: exportPayload.chapters,
-            words: exportPayload.words,
+            chapters: [{ id: EXPORT_CHAPTER_ID, title: chapterTitle }],
+            words: words.map(word => ({
+              chapterId: EXPORT_CHAPTER_ID,
+              word: stringifyWordField(word.word),
+              phonetic: stringifyWordField(word.phonetic),
+              pos: stringifyWordField(word.pos),
+              definition: stringifyWordField(word.definition),
+            })),
           }),
         },
       )
@@ -183,7 +125,6 @@ export function useWrongWordsCustomBookExport({
       setSavedTarget({
         bookId: response.bookId || selectedBookId,
         chapterId,
-        chapterCount: exportPayload.chapters.length,
         rejectedCount: Array.isArray(response.rejected_words) ? response.rejected_words.length : 0,
       })
       setPhase('success')
@@ -192,7 +133,7 @@ export function useWrongWordsCustomBookExport({
     } finally {
       setSaving(false)
     }
-  }, [chapterTitle, chunkSize, selectedBookId, words])
+  }, [chapterTitle, selectedBookId, words])
 
   const openQuickMemory = useCallback(() => {
     if (!savedTarget) return
@@ -215,8 +156,6 @@ export function useWrongWordsCustomBookExport({
     saving,
     error,
     chapterTitle,
-    chapterCount,
-    chunkSize,
     wordCount: words.length,
     savedTarget,
     setSelectedBookId,
