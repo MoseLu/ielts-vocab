@@ -198,4 +198,57 @@ describe('api helpers', () => {
       }),
     )
   })
+
+  it('adds trace and idempotency headers when request metadata is provided', async () => {
+    setAuthSessionActive(false)
+    vi.mocked(global.fetch).mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+
+    await apiRequest('/api/ai/practice/game/attempt', {
+      method: 'POST',
+      traceId: 'practice:trace-1234',
+      idempotencyKey: 'practice:42:smart:book-1:abandon:meaning:1',
+      body: JSON.stringify({ passed: true }),
+    })
+
+    const headers = new Headers(vi.mocked(global.fetch).mock.calls[0]?.[1]?.headers)
+    expect(headers.get('X-Trace-Id')).toBe('practice:trace-1234')
+    expect(headers.get('Idempotency-Key')).toBe('practice:42:smart:book-1:abandon:meaning:1')
+  })
+
+  it('preserves trace and idempotency headers across auth-refresh retries', async () => {
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ user: { id: 1 }, access_expires_in: 900 }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+
+    await apiRequest('/api/books/progress', {
+      method: 'POST',
+      traceId: 'practice:retry-trace',
+      idempotencyKey: 'practice:42:meaning:book-1:abandon:meaning:2',
+      body: JSON.stringify({ book_id: 'book-1' }),
+    })
+
+    const firstHeaders = new Headers(vi.mocked(global.fetch).mock.calls[0]?.[1]?.headers)
+    const refreshHeaders = new Headers(vi.mocked(global.fetch).mock.calls[1]?.[1]?.headers)
+    const retryHeaders = new Headers(vi.mocked(global.fetch).mock.calls[2]?.[1]?.headers)
+    expect(firstHeaders.get('X-Trace-Id')).toBe('practice:retry-trace')
+    expect(firstHeaders.get('Idempotency-Key')).toBe('practice:42:meaning:book-1:abandon:meaning:2')
+    expect(refreshHeaders.get('X-Trace-Id')).toBeNull()
+    expect(refreshHeaders.get('Idempotency-Key')).toBeNull()
+    expect(retryHeaders.get('X-Trace-Id')).toBe('practice:retry-trace')
+    expect(retryHeaders.get('Idempotency-Key')).toBe('practice:42:meaning:book-1:abandon:meaning:2')
+  })
+
+  it('does not require request metadata on read requests', async () => {
+    setAuthSessionActive(false)
+    vi.mocked(global.fetch).mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+
+    await apiRequest('/api/books/my')
+
+    const headers = new Headers(vi.mocked(global.fetch).mock.calls[0]?.[1]?.headers)
+    expect(headers.get('X-Trace-Id')).toBeNull()
+    expect(headers.get('Idempotency-Key')).toBeNull()
+  })
 })

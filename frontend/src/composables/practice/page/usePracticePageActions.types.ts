@@ -72,6 +72,7 @@ export interface UsePracticePageActionsParams {
   spellingRetryTimerRef: MutableRefObject<number | null>
   sessionCorrectRef: MutableRefObject<number>
   sessionWrongRef: MutableRefObject<number>
+  sessionIdRef: MutableRefObject<number | null>
   completedSessionDurationSecondsRef: MutableRefObject<number | null>
   errorRoundResultsRef: MutableRefObject<ErrorReviewRoundResults>
 }

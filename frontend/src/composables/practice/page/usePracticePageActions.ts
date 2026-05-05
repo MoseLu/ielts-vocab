@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
 import { recordWordResult } from '../../../lib/smartMode'
-import { submitWordMasteryAttempt } from '../../../lib/gamePractice'
 import { recordModeAnswer } from '../../../hooks/useAIChat'
 import type {
   PracticeMode,
@@ -13,6 +12,7 @@ import type {
   UsePracticePageActionsResult,
 } from './usePracticePageActions.types'
 import { usePracticePageWrongWordActions } from './usePracticePageWrongWordActions'
+import { usePracticeWordMasterySubmitter } from './usePracticeWordMasterySubmitter'
 
 export function usePracticePageActions({
   user,
@@ -21,6 +21,7 @@ export function usePracticePageActions({
   smartDimension,
   bookId,
   chapterId,
+  currentDay,
   currentWord,
   queue,
   queueIndex,
@@ -63,6 +64,7 @@ export function usePracticePageActions({
   setWrongCount,
   setWordStatuses,
   spellingRetryTimerRef,
+  sessionIdRef,
   sessionCorrectRef,
   sessionWrongRef,
   completedSessionDurationSecondsRef,
@@ -82,6 +84,15 @@ export function usePracticePageActions({
     errorMode,
     showToast,
     errorRoundResultsRef,
+  })
+  const submitPracticeWordMastery = usePracticeWordMasterySubmitter({
+    userId,
+    bookId,
+    chapterId,
+    currentDay,
+    currentWord,
+    errorMode,
+    sessionIdRef,
   })
 
   const goNext = useCallback(async (wasCorrect: boolean) => {
@@ -188,6 +199,7 @@ export function usePracticePageActions({
 
     const nextCorrect = isCorrect ? correctCount + 1 : correctCount
     const nextWrong = isCorrect ? wrongCount : wrongCount + 1
+    const attemptIndex = sessionCorrectRef.current + sessionWrongRef.current
 
     setCorrectCount(nextCorrect)
     setWrongCount(nextWrong)
@@ -202,18 +214,13 @@ export function usePracticePageActions({
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: isCorrect ? 'correct' : 'wrong' }))
 
     if (currentWord) {
-      const entry = errorMode ? 'error-review' : 'practice'
-      void submitWordMasteryAttempt({
-        bookId,
-        chapterId,
-        word: currentWord.word,
+      submitPracticeWordMastery({
         dimension,
+        analyticsMode,
         passed: isCorrect,
-        sourceMode: analyticsMode,
-        entry,
-        task: errorMode ? 'error-review' : undefined,
-        wordPayload: currentWord,
-      }).catch(() => {})
+        result: isCorrect ? 'correct' : 'wrong',
+        attemptIndex,
+      })
       recordWordResult(currentWord.word, dimension, isCorrect)
       if (!isCorrect) saveWrongWord(currentWord)
       recordErrorReviewOutcome(currentWord, isCorrect)
@@ -224,11 +231,8 @@ export function usePracticePageActions({
     if (!advanceToNext) return
     window.setTimeout(() => { void goNext(isCorrect) }, completionDelayMs)
   }, [
-    bookId,
-    chapterId,
     correctCount,
     currentWord,
-    errorMode,
     goNext,
     prepareSessionForLearningAction,
     queue,
@@ -237,6 +241,7 @@ export function usePracticePageActions({
     registerAnsweredWord,
     saveProgress,
     saveWrongWord,
+    submitPracticeWordMastery,
     syncCurrentSessionSnapshot,
     wrongCount,
     setCorrectCount,
@@ -369,6 +374,7 @@ export function usePracticePageActions({
   const handleFollowReadEvaluated = useCallback(async (passed: boolean) => {
     if (!currentWord) return
     await prepareSessionForLearningAction()
+    const attemptIndex = sessionCorrectRef.current + sessionWrongRef.current
     const nextCorrect = passed ? correctCount + 1 : correctCount
     const nextWrong = passed ? wrongCount : wrongCount + 1
     setCorrectCount(nextCorrect)
@@ -379,26 +385,19 @@ export function usePracticePageActions({
     syncCurrentSessionSnapshot(Date.now())
     saveProgress(nextCorrect, nextWrong, { advanceToNext: false })
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: passed ? 'correct' : 'wrong' }))
-    void submitWordMasteryAttempt({
-      bookId,
-      chapterId,
-      word: currentWord.word,
+    submitPracticeWordMastery({
       dimension: 'speaking',
+      analyticsMode: 'follow',
       passed,
-      sourceMode: 'follow',
-      entry: errorMode ? 'error-review' : 'practice',
-      task: errorMode ? 'error-review' : undefined,
-      wordPayload: currentWord,
-    }).catch(() => {})
+      result: passed ? 'correct' : 'wrong',
+      attemptIndex,
+    })
     if (!passed) saveWrongWord(currentWord)
     recordErrorReviewOutcome(currentWord, passed)
     recordModeAnswer('follow', passed)
   }, [
-    bookId,
-    chapterId,
     correctCount,
     currentWord,
-    errorMode,
     prepareSessionForLearningAction,
     queue,
     queueIndex,
@@ -406,6 +405,7 @@ export function usePracticePageActions({
     registerAnsweredWord,
     saveProgress,
     saveWrongWord,
+    submitPracticeWordMastery,
     syncCurrentSessionSnapshot,
     wrongCount,
     setCorrectCount,
@@ -433,19 +433,16 @@ export function usePracticePageActions({
       return
     }
 
+    const attemptIndex = sessionCorrectRef.current + sessionWrongRef.current
     saveWrongWord(currentWord)
     recordErrorReviewOutcome(currentWord, false)
-    void submitWordMasteryAttempt({
-      bookId,
-      chapterId,
-      word: currentWord.word,
+    submitPracticeWordMastery({
       dimension,
+      analyticsMode: mode ?? 'smart',
       passed: false,
-      sourceMode: mode ?? 'smart',
-      entry: errorMode ? 'error-review' : 'practice',
-      task: errorMode ? 'error-review' : undefined,
-      wordPayload: currentWord,
-    }).catch(() => {})
+      result: 'skipped',
+      attemptIndex,
+    })
     registerAnsweredWord(currentWord.word)
     const nextWrong = wrongCount + 1
     setWrongCount(nextWrong)
@@ -456,11 +453,8 @@ export function usePracticePageActions({
     setWordStatuses(prev => ({ ...prev, [queue[queueIndex]]: 'wrong' }))
     void goNext(false)
   }, [
-    bookId,
-    chapterId,
     correctCount,
     currentWord,
-    errorMode,
     goNext,
     mode,
     prepareSessionForLearningAction,
@@ -472,6 +466,7 @@ export function usePracticePageActions({
     saveWrongWord,
     smartDimension,
     syncCurrentSessionSnapshot,
+    submitPracticeWordMastery,
     wrongCount,
     wrongSelections.length,
     setWordStatuses,

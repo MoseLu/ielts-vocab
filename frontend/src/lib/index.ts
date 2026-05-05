@@ -194,6 +194,30 @@ async function _doRefresh(): Promise<void> {
 interface ApiRequestOptions extends RequestInit {
   skipAuthRefresh?: boolean
   timeoutMs?: number
+  traceId?: string
+  idempotencyKey?: string
+}
+
+function _headersToRecord(headers: HeadersInit | undefined): Record<string, string> {
+  if (headers instanceof Headers) return Object.fromEntries(headers.entries())
+  if (Array.isArray(headers)) return Object.fromEntries(headers)
+  return (headers as Record<string, string>) || {}
+}
+
+function _withRequestMetadataHeaders(
+  options: RequestInit,
+  traceId?: string,
+  idempotencyKey?: string,
+): RequestInit {
+  if (!traceId && !idempotencyKey) return options
+  return {
+    ...options,
+    headers: {
+      ..._headersToRecord(options.headers),
+      ...(traceId ? { 'X-Trace-Id': traceId } : {}),
+      ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+    },
+  }
 }
 
 function _shouldRefreshResponse(url: string, response: Response, skipAuthRefresh: boolean): boolean {
@@ -237,7 +261,14 @@ export async function apiRequest(
   options: ApiRequestOptions = {},
 ): Promise<Response> {
   const requestUrl = buildApiUrl(url)
-  const { skipAuthRefresh = false, timeoutMs, ...requestOptions } = options
+  const {
+    skipAuthRefresh = false,
+    timeoutMs,
+    traceId,
+    idempotencyKey,
+    ...rawRequestOptions
+  } = options
+  const requestOptions = _withRequestMetadataHeaders(rawRequestOptions, traceId, idempotencyKey)
   await _ensureFreshSession(requestUrl, skipAuthRefresh)
   let response: Response
   try {

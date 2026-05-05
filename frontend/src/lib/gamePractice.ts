@@ -40,6 +40,8 @@ interface SubmitWordMasteryAttemptInput extends GamePracticeScope {
   hintUsed?: boolean | null
   inputMode?: string | null
   boostType?: string | null
+  traceId?: string | null
+  idempotencyKey?: string | null
 }
 
 function buildScopeParams(scope: GamePracticeScope): URLSearchParams {
@@ -100,8 +102,11 @@ export async function startGamePracticeSession(scope: GamePracticeScope): Promis
 export async function submitWordMasteryAttempt(
   input: SubmitWordMasteryAttemptInput,
 ): Promise<GameCampaignAttemptResponse> {
+  const idempotencyKey = input.idempotencyKey ?? input.clientAttemptId ?? undefined
   const raw = await apiFetch('/api/ai/practice/game/attempt', {
     method: 'POST',
+    traceId: input.traceId ?? undefined,
+    idempotencyKey,
     body: JSON.stringify({
       word: input.word ?? undefined,
       dimension: input.dimension ?? undefined,
@@ -111,7 +116,8 @@ export async function submitWordMasteryAttempt(
       promptText: input.promptText ?? undefined,
       sourceMode: input.sourceMode ?? 'game',
       entry: input.entry ?? undefined,
-      clientAttemptId: input.clientAttemptId ?? undefined,
+      clientAttemptId: idempotencyKey,
+      traceId: input.traceId ?? undefined,
       bookId: input.bookId ?? undefined,
       chapterId: input.chapterId ?? undefined,
       day: input.day ?? undefined,
