@@ -106,7 +106,12 @@ def _custom_confusable_words(book_id: str, user_id: int | None) -> list[dict]:
     return words
 
 
-def _book_word_list(book_id: str, chapter_id: Any = None) -> tuple[dict, int]:
+def _book_word_list(
+    book_id: str,
+    chapter_id: Any = None,
+    *,
+    include_dictionary: bool = True,
+) -> tuple[dict, int]:
     if _is_favorites_book(book_id):
         return _favorites_word_list(chapter_id)
 
@@ -134,6 +139,7 @@ def _book_word_list(book_id: str, chapter_id: Any = None) -> tuple[dict, int]:
                     'is_custom': True,
                 },
                 words=words,
+                include_dictionary=include_dictionary,
             ), 200
 
     chapters_data = load_book_chapters(book_id) or {}
@@ -158,6 +164,7 @@ def _book_word_list(book_id: str, chapter_id: Any = None) -> tuple[dict, int]:
         book=custom_book_catalog_service.serialize_custom_book_summary(custom_book) if custom_book else book,
         chapter=chapter,
         words=words,
+        include_dictionary=include_dictionary,
     ), 200
 
 
@@ -338,16 +345,18 @@ def _build_payload(
     chapter: dict | None,
     words: list[dict],
     extra: dict | None = None,
+    include_dictionary: bool = True,
 ) -> dict:
     payload = {
         'book': book,
         'chapter': chapter,
         'words': words,
-        'dictionary': _dictionary_from_words(words),
         'rejected_words': _empty_rejected_words(),
         'order': 'canonical',
         'total': len(words),
     }
+    if include_dictionary:
+        payload['dictionary'] = _dictionary_from_words(words)
     if extra:
         payload.update(extra)
     return payload
@@ -361,6 +370,7 @@ def build_word_list_response(
     selected_words: list[str] | None = None,
     order: str = 'canonical',
     request_args: Any | None = None,
+    include_dictionary: bool = True,
 ) -> tuple[dict, int]:
     if order != 'canonical':
         return {'error': 'Only canonical order is supported'}, 400
@@ -380,5 +390,5 @@ def build_word_list_response(
             resolved_book_id = confusable_support.CONFUSABLE_MATCH_BOOK_ID
         if not resolved_book_id:
             return {'error': 'book_id is required'}, 400
-        return _book_word_list(str(resolved_book_id), chapter_id)
+        return _book_word_list(str(resolved_book_id), chapter_id, include_dictionary=include_dictionary)
     return {'error': f'Unsupported scope: {normalized_scope}'}, 400

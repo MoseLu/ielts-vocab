@@ -120,12 +120,15 @@
   backdrop-filter: blur(var(--size-6));
 }
 
-.game-theme-select__card-map {
+.game-theme-select__card::before {
+  content: '';
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--warning) var(--mix-18), transparent), color-mix(in srgb, var(--success) var(--mix-26), transparent)),
+    var(--theme-card-image, none);
+  background-position: center;
+  background-size: cover;
   transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
@@ -222,8 +225,8 @@
   position: relative;
 }
 
-.game-theme-select__card:hover .game-theme-select__card-map,
-.game-theme-select__card:focus-visible .game-theme-select__card-map {
+.game-theme-select__card:hover::before,
+.game-theme-select__card:focus-visible::before {
   transform: scale(1.04);
 }
 

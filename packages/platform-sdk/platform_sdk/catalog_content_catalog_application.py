@@ -138,6 +138,7 @@ def build_chapter_words_response(book_id, chapter_id):
         scope='book',
         book_id=book_id,
         chapter_id=chapter_id,
+        include_dictionary=False,
     )
     if status != 200:
         return payload, status
@@ -145,7 +146,7 @@ def build_chapter_words_response(book_id, chapter_id):
 
 
 def build_book_words_response(book_id, page=1, per_page=100):
-    payload, status = build_word_list_response(scope='book', book_id=book_id)
+    payload, status = build_word_list_response(scope='book', book_id=book_id, include_dictionary=False)
     if status != 200:
         return payload, status
     words = payload['words']

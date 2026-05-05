@@ -214,8 +214,32 @@ def clear_cached_metadata(*, object_key: str | None = None) -> None:
             _OBJECT_METADATA_CACHE.pop(key, None)
 
 
-def _signed_url(bucket: oss2.Bucket, object_key: str, expires_seconds: int) -> str:
+def _signed_url(
+    bucket: oss2.Bucket,
+    object_key: str,
+    expires_seconds: int,
+    query_params: dict[str, str] | None = None,
+) -> str:
+    if query_params:
+        return bucket.sign_url('GET', object_key, expires_seconds, params=query_params, slash_safe=True)
     return bucket.sign_url('GET', object_key, expires_seconds, slash_safe=True)
+
+
+def sign_object_url(
+    *,
+    object_key: str,
+    bucket: oss2.Bucket | None = None,
+    bucket_env: str = 'AXI_ALIYUN_OSS_PRIVATE_BUCKET',
+    signed_url_expires_seconds: int = DEFAULT_SIGNED_URL_EXPIRES_SECONDS,
+    query_params: dict[str, str] | None = None,
+) -> str:
+    bucket = bucket or get_bucket(bucket_env=bucket_env)
+    if bucket is None:
+        return ''
+    try:
+        return _signed_url(bucket, object_key, signed_url_expires_seconds, query_params)
+    except Exception:
+        return ''
 
 
 def _resolved_bucket_name(bucket: oss2.Bucket, bucket_env: str) -> str:

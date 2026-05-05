@@ -73,7 +73,7 @@ export function useVocabTestPage() {
     setWrongWords([])
 
     try {
-      const data = await apiFetch<{ words?: Word[] }>(`/api/books/${LISTENING_BOOK_ID}/words?per_page=200`)
+      const data = await apiFetch<{ words?: Word[] }>(`/api/books/${LISTENING_BOOK_ID}/words?per_page=80`)
       const words = data.words || []
       if (words.length < 4) {
         setError('词汇量不足，无法生成测试')

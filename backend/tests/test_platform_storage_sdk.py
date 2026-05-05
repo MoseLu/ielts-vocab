@@ -11,6 +11,53 @@ def test_build_service_object_key_uses_service_namespace():
     assert key == 'tts-media-service/en-gb-libbyneural/daily-summary/sample.mp3'
 
 
+def test_sign_object_url_uses_bucket_signature_without_metadata_probe(monkeypatch):
+    calls = []
+
+    class FakeBucket:
+        def sign_url(self, method, object_key, expires, slash_safe=True):
+            calls.append((method, object_key, expires, slash_safe))
+            return f'https://oss.example.com/{object_key}?signature=1'
+
+    monkeypatch.setattr(aliyun_oss, 'get_bucket', lambda **_kwargs: FakeBucket())
+
+    signed_url = aliyun_oss.sign_object_url(
+        object_key='game/theme/map.png',
+        bucket_env='AXI_ALIYUN_OSS_PUBLIC_BUCKET',
+        signed_url_expires_seconds=1800,
+    )
+
+    assert signed_url == 'https://oss.example.com/game/theme/map.png?signature=1'
+    assert calls == [('GET', 'game/theme/map.png', 1800, True)]
+
+
+def test_sign_object_url_can_include_signed_query_params(monkeypatch):
+    calls = []
+
+    class FakeBucket:
+        def sign_url(self, method, object_key, expires, params=None, slash_safe=True):
+            calls.append((method, object_key, expires, params, slash_safe))
+            return f"https://oss.example.com/{object_key}?x-oss-process={params['x-oss-process']}&signature=1"
+
+    monkeypatch.setattr(aliyun_oss, 'get_bucket', lambda **_kwargs: FakeBucket())
+
+    signed_url = aliyun_oss.sign_object_url(
+        object_key='game/theme/select-card.png',
+        bucket_env='AXI_ALIYUN_OSS_PUBLIC_BUCKET',
+        signed_url_expires_seconds=900,
+        query_params={'x-oss-process': 'image/resize,w_520/format,webp/quality,q_78'},
+    )
+
+    assert 'x-oss-process=image/resize,w_520/format,webp/quality,q_78' in signed_url
+    assert calls == [(
+        'GET',
+        'game/theme/select-card.png',
+        900,
+        {'x-oss-process': 'image/resize,w_520/format,webp/quality,q_78'},
+        True,
+    )]
+
+
 def test_put_fetch_and_delete_object_lifecycle(monkeypatch):
     stored = {}
 

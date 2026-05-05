@@ -271,6 +271,17 @@ describe('HomePage', () => {
     expect(container.querySelector('.study-center-shell')).toBeNull()
   })
 
+  it('does not block book cards on slow stats or todo requests', () => {
+    hooksState.learningStats.loading = true
+    hooksState.homeTodos.loading = true
+
+    const { container } = render(<MemoryRouter><HomePage /></MemoryRouter>)
+
+    expect(container.querySelector('.page-skeleton--books')).toBeNull()
+    expect(container.querySelector('.study-center-shell')).not.toBeNull()
+    expect(screen.getAllByText('测试词书').length).toBeGreaterThan(0)
+  })
+
   it('renders the compact homepage from the independent todo API', () => {
     const { container } = render(<MemoryRouter><HomePage /></MemoryRouter>)
 

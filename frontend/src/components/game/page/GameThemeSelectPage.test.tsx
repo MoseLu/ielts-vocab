@@ -14,7 +14,7 @@ describe('GameThemeSelectPage', () => {
     mockedFetchGameThemeCatalog.mockReset()
   })
 
-  it('uses OSS theme artwork from the backend catalog', async () => {
+  it('prefers packaged select-card artwork for known themes', async () => {
     mockedFetchGameThemeCatalog.mockResolvedValue({
       sourceBooks: ['ielts_reading_premium', 'ielts_listening_premium'],
       pageSize: 8,
@@ -60,13 +60,46 @@ describe('GameThemeSelectPage', () => {
     render(<GameThemeSelectPage onSelectTheme={vi.fn()} />)
 
     const campaign = await screen.findByLabelText('IELTS 主题战役')
-    const images = Array.from(campaign.querySelectorAll('img'))
-    const imageSources = images.map(image => image.getAttribute('src'))
+    const cards = Array.from(campaign.querySelectorAll<HTMLButtonElement>('.game-theme-select__card'))
+    const cardArtwork = cards.map(card => card.getAttribute('style') ?? '')
 
-    expect(imageSources).toContain('https://oss.example/game-assets/study-campus/desktop/map.png')
-    expect(imageSources).toContain('https://oss.example/game-assets/study-campus/desktop/select-card.png')
-    expect(imageSources).toContain('https://oss.example/game-assets/environment-nature/desktop/select-card.png')
-    expect(imageSources.join(' ')).not.toContain('/ui/')
-    expect(imageSources.join(' ')).not.toContain('/game/campaign-v2/')
+    expect(cardArtwork[0]).toContain('/game/themes/select-card/study-campus.webp')
+    expect(cardArtwork[1]).toContain('/game/themes/select-card/environment-nature.webp')
+    expect(cardArtwork.join(' ')).not.toContain('https://oss.example')
+    expect(cardArtwork.join(' ')).not.toContain('/game/campaign-v2/')
+    expect(campaign.querySelector('img')).toBeNull()
+  })
+
+  it('falls back to catalog artwork for unknown themes', async () => {
+    mockedFetchGameThemeCatalog.mockResolvedValue({
+      sourceBooks: ['ielts_reading_premium'],
+      pageSize: 8,
+      totalWords: 120,
+      themes: [
+        {
+          id: 'custom-theme',
+          title: '自定义主题',
+          subtitle: 'Custom route',
+          description: '',
+          wordCount: 120,
+          totalChapters: 2,
+          currentPage: 1,
+          totalPages: 1,
+          chapters: [],
+          assets: {
+            desktopMap: '',
+            mobileMap: '',
+            selectCard: 'https://oss.example/game-assets/custom-theme/desktop/select-card.png',
+            emptyState: '',
+          },
+        },
+      ],
+    })
+
+    render(<GameThemeSelectPage onSelectTheme={vi.fn()} />)
+
+    const campaign = await screen.findByLabelText('IELTS 主题战役')
+    const card = campaign.querySelector<HTMLButtonElement>('.game-theme-select__card')
+    expect(card?.getAttribute('style')).toContain('https://oss.example/game-assets/custom-theme/desktop/select-card.png')
   })
 })

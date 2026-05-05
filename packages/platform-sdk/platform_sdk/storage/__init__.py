@@ -20,6 +20,7 @@ from .aliyun_oss import (
     put_object_bytes,
     resolve_object_metadata,
     sanitize_segment,
+    sign_object_url,
 )
 
 __all__ = [
@@ -44,4 +45,5 @@ __all__ = [
     'put_object_bytes',
     'resolve_object_metadata',
     'sanitize_segment',
+    'sign_object_url',
 ]

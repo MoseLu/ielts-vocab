@@ -10,6 +10,34 @@ const SPEECH_PROXY_TARGET =
   process.env.VITE_SPEECH_PROXY_TARGET?.trim() || 'http://localhost:5001'
 const rewriteSpeechSocketPath = (path: string) => path.replace(SPEECH_PROXY_PATH, '/socket.io')
 
+function manualChunks(id: string) {
+  if (!id.includes('/node_modules/')) return undefined
+  if (
+    id.includes('/react/') ||
+    id.includes('/react-dom/') ||
+    id.includes('/react-router') ||
+    id.includes('/scheduler/')
+  ) {
+    return 'vendor-react'
+  }
+  if (id.includes('/zod/')) return 'vendor-validation'
+  if (id.includes('/@floating-ui/')) return 'vendor-floating'
+  if (
+    id.includes('/socket.io-client/') ||
+    id.includes('/socket.io-parser/') ||
+    id.includes('/engine.io-client/') ||
+    id.includes('/engine.io-parser/') ||
+    id.includes('/xmlhttprequest-ssl/') ||
+    id.includes('/@socket.io/') ||
+    id.includes('/debug/') ||
+    id.includes('/ms/')
+  ) {
+    return 'vendor-socket'
+  }
+  if (id.includes('/dompurify/') || id.includes('/marked/')) return 'vendor-markdown'
+  return undefined
+}
+
 function resolveAssetBaseUrl() {
   const configured =
     process.env.VITE_ASSET_BASE_URL?.trim() ||
@@ -74,6 +102,11 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks,
+      },
+    },
   },
   preview: {
     host: true,

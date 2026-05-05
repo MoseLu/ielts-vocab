@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { fetchGameThemeCatalog } from '../../../lib/gamePractice'
+import { GAME_THEME_SELECT_CARD_ASSETS } from '../../../lib/gameThemeCardAssets'
 import type { GameThemeCatalog, GameThemeSummary } from '../../../lib'
 
 interface GameThemeSelectPageProps {
@@ -8,6 +9,11 @@ interface GameThemeSelectPageProps {
 
 function formatCount(value: number): string {
   return Math.max(0, value).toLocaleString('zh-CN')
+}
+
+function cardArtworkStyle(theme: GameThemeSummary): CSSProperties {
+  const url = GAME_THEME_SELECT_CARD_ASSETS[theme.id] || theme.assets.selectCard || theme.assets.desktopMap
+  return url ? { '--theme-card-image': `url("${url}")` } as CSSProperties : {}
 }
 
 export default function GameThemeSelectPage({ onSelectTheme }: GameThemeSelectPageProps) {
@@ -38,11 +44,8 @@ export default function GameThemeSelectPage({ onSelectTheme }: GameThemeSelectPa
   if (error || !catalog) {
     return <section className="game-theme-select is-error">{error ?? '主题地图加载失败'}</section>
   }
-  const backdrop = catalog.themes[0]?.assets.desktopMap || catalog.themes[0]?.assets.selectCard || ''
-
   return (
     <section className="game-theme-select" aria-label="IELTS 主题战役">
-      {backdrop ? <img className="game-theme-select__backdrop" src={backdrop} alt="" aria-hidden="true" /> : null}
       <header className="game-theme-select__header">
         <span>IELTS 五维闯关</span>
         <h1>选择主题地图</h1>
@@ -55,14 +58,9 @@ export default function GameThemeSelectPage({ onSelectTheme }: GameThemeSelectPa
             type="button"
             className="game-theme-select__card"
             data-theme={theme.id}
+            style={cardArtworkStyle(theme)}
             onClick={() => onSelectTheme(theme)}
           >
-            <img
-              className="game-theme-select__card-map"
-              src={theme.assets.selectCard || theme.assets.desktopMap}
-              alt=""
-              aria-hidden="true"
-            />
             <span className="game-theme-select__badge" aria-hidden="true">
               {index + 1}
             </span>

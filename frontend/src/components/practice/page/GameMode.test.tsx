@@ -273,7 +273,7 @@ describe('GameMode', () => {
       day: undefined,
     })))
     expect(await screen.findByRole('img', { name: 'a couple of 词义场景' })).toHaveAttribute('src', 'https://oss.example/a-couple-of.png')
-    expect(document.querySelector('.practice-game-mode__scene-backdrop')).toHaveAttribute('src', '/ui/templates/word-mission-text-safe.png?v=20260429-magic-ui-1')
+    expect(document.querySelector('.practice-game-mode__scene-backdrop')).toHaveAttribute('src', '/ui/templates/word-mission-text-safe.avif?v=20260505-template-avif-1')
     expect(document.querySelector('.practice-game-mode__threat-route')?.childElementCount).toBe(0)
     expect(screen.getAllByText('会写').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: '播放单词' })).toBeInTheDocument()
@@ -381,7 +381,7 @@ describe('GameMode', () => {
 
     expect(await screen.findByRole('region', { name: '五维词关地图' })).toBeInTheDocument()
     const mapImages = Array.from(document.querySelectorAll('.practice-game-map img')).map(image => image.getAttribute('src') || '')
-    expect(mapImages).toContain('/ui/templates/word-chain-map-text-safe.png?v=20260429-magic-ui-1')
+    expect(mapImages).toContain('/ui/templates/word-chain-map-text-safe.avif?v=20260505-template-avif-1')
     expect(mapImages.every(src => !src.includes('/game/'))).toBe(true)
     expect(mapImages.every(src => !src.includes('map_campaign_main'))).toBe(true)
     expect(mapImages.every(src => !/(25_30|2350|1260|1_of_5|15_15)/.test(src))).toBe(true)

@@ -4,9 +4,8 @@ import os
 from functools import lru_cache
 from math import ceil
 from threading import RLock
-from urllib.parse import urlsplit, urlunsplit
 
-from platform_sdk.storage.aliyun_oss import build_endpoint, env_int, join_object_key, resolve_object_metadata
+from platform_sdk.storage.aliyun_oss import env_int, join_object_key, sign_object_url
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_support import load_scope_vocabulary, normalize_optional_text, normalize_word_text
 
@@ -16,6 +15,8 @@ THEME_CHAPTER_WORD_COUNT = 64
 GAME_THEME_ASSET_OBJECT_PREFIX = 'projects/ielts-vocab/game-assets'
 GAME_THEME_ASSET_BUCKET_ENV = 'AXI_ALIYUN_OSS_PUBLIC_BUCKET'
 GAME_THEME_ASSET_PUBLIC_BASE_URL_ENV = 'GAME_THEME_ASSET_PUBLIC_BASE_URL'
+GAME_THEME_SELECT_CARD_OSS_PROCESS_ENV = 'GAME_THEME_SELECT_CARD_OSS_PROCESS'
+DEFAULT_GAME_THEME_SELECT_CARD_OSS_PROCESS = 'image/resize,w_520/format,webp/quality,q_78'
 _THEME_DATA_LOCK = RLock()
 
 GAME_THEME_DEFINITIONS = (
@@ -92,51 +93,37 @@ def _game_asset_object_key(relative_path: str) -> str:
 
 
 def _game_theme_asset_public_base_url() -> str:
-    configured = (os.environ.get(GAME_THEME_ASSET_PUBLIC_BASE_URL_ENV) or '').strip().rstrip('/')
-    if configured:
-        return configured
-
-    bucket_name = (os.environ.get(_game_theme_asset_bucket_env()) or '').strip()
-    region = (os.environ.get('AXI_ALIYUN_OSS_REGION') or '').strip()
-    endpoint = (os.environ.get('AXI_ALIYUN_OSS_ENDPOINT') or '').strip()
-    if not bucket_name or not region:
-        return ''
-
-    parsed = urlsplit(build_endpoint(region, endpoint))
-    host = parsed.netloc
-    if not host:
-        return ''
-    if not host.startswith(f'{bucket_name}.'):
-        host = f'{bucket_name}.{host}'
-    return urlunsplit((parsed.scheme or 'https', host, '', '', '')).rstrip('/')
+    return (os.environ.get(GAME_THEME_ASSET_PUBLIC_BASE_URL_ENV) or '').strip().rstrip('/')
 
 
-def _game_asset_url(relative_path: str) -> str:
+def _select_card_image_process() -> str:
+    return (os.environ.get(GAME_THEME_SELECT_CARD_OSS_PROCESS_ENV) or DEFAULT_GAME_THEME_SELECT_CARD_OSS_PROCESS).strip()
+
+
+def _game_asset_url(relative_path: str, *, image_process: str | None = None) -> str:
     asset_path = relative_path.strip('/')
     object_key = _game_asset_object_key(asset_path)
     public_base_url = _game_theme_asset_public_base_url()
     if public_base_url:
         return f'{public_base_url}/{object_key}'
 
-    metadata = resolve_object_metadata(
+    return sign_object_url(
         object_key=object_key,
-        file_name=asset_path.rsplit('/', 1)[-1],
         bucket_env=_game_theme_asset_bucket_env(),
         signed_url_expires_seconds=env_int('GAME_THEME_ASSET_OSS_SIGNED_URL_EXPIRES_SECONDS', 3600),
-        metadata_cache_ttl_seconds=env_int('GAME_THEME_ASSET_OSS_METADATA_CACHE_TTL_SECONDS', 300),
+        query_params={'x-oss-process': image_process} if image_process else None,
     )
-    return metadata.signed_url if metadata is not None else ''
 
 
-def _theme_asset(theme_id: str, path: str) -> str:
-    return _game_asset_url(f'campaign-v2/themes/{theme_id}/{path}')
+def _theme_asset(theme_id: str, path: str, *, image_process: str | None = None) -> str:
+    return _game_asset_url(f'campaign-v2/themes/{theme_id}/{path}', image_process=image_process)
 
 
 def _theme_assets(theme_id: str) -> dict:
     return {
         'desktopMap': _theme_asset(theme_id, 'desktop/map.png'),
         'mobileMap': _theme_asset(theme_id, 'mobile/map.png'),
-        'selectCard': _theme_asset(theme_id, 'desktop/select-card.png'),
+        'selectCard': _theme_asset(theme_id, 'desktop/select-card.png', image_process=_select_card_image_process()),
         'emptyState': _theme_asset(theme_id, 'desktop/empty-state.png'),
         'bossGate': _theme_asset(theme_id, 'desktop/boss-gate.png'),
         'rewardNode': _theme_asset(theme_id, 'desktop/reward-node.png'),

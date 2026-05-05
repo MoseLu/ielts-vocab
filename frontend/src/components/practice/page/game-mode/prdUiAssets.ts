@@ -1,6 +1,6 @@
 import { staticAssetUrl } from '../../../../lib/staticAssetUrl'
 
-const PRD_UI_CACHE_VERSION = '20260429-magic-ui-1'
+const PRD_UI_CACHE_VERSION = '20260505-template-avif-1'
 
 function assetPath(path: string): string {
   return `${staticAssetUrl(path)}?v=${PRD_UI_CACHE_VERSION}`
@@ -18,13 +18,13 @@ export const prdUiAsset = {
     resultDimOverlay: assetPath('/ui/background/result_dim_overlay.png'),
   },
   templates: {
-    learningCenter: prdTemplateAsset('/ui/templates/learning-center-text-safe.png'),
-    wordChainMap: prdTemplateAsset('/ui/templates/word-chain-map-text-safe.png'),
-    mobileWordChainMap: prdTemplateAsset('/ui/templates/mobile-word-chain-map-text-safe.png'),
-    wordMission: prdTemplateAsset('/ui/templates/word-mission-text-safe.png'),
-    refillState: prdTemplateAsset('/ui/templates/refill-state-text-safe.png'),
-    stageSettlement: prdTemplateAsset('/ui/templates/stage-settlement-text-safe.png'),
-    mobileWordMission: prdTemplateAsset('/ui/templates/mobile-word-mission-text-safe.png'),
+    learningCenter: prdTemplateAsset('/ui/templates/learning-center-text-safe.avif'),
+    wordChainMap: prdTemplateAsset('/ui/templates/word-chain-map-text-safe.avif'),
+    mobileWordChainMap: prdTemplateAsset('/ui/templates/mobile-word-chain-map-text-safe.avif'),
+    wordMission: prdTemplateAsset('/ui/templates/word-mission-text-safe.avif'),
+    refillState: prdTemplateAsset('/ui/templates/refill-state-text-safe.avif'),
+    stageSettlement: prdTemplateAsset('/ui/templates/stage-settlement-text-safe.avif'),
+    mobileWordMission: prdTemplateAsset('/ui/templates/mobile-word-mission-text-safe.avif'),
   },
   hud: {
     avatarFrame: assetPath('/ui/hud/avatar_frame.png'),

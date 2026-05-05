@@ -92,6 +92,7 @@ def get_word_details():
 
 @catalog_content_bp.route('/api/books/word-list', methods=['GET'])
 def get_word_list():
+    include_dictionary = str(request.args.get('include_dictionary', '1')).lower() not in {'0', 'false', 'no'}
     payload, status = build_word_list_response(
         scope=request.args.get('scope', 'book'),
         book_id=request.args.get('book_id'),
@@ -99,6 +100,7 @@ def get_word_list():
         selected_words=request.args.getlist('selected_words[]') or request.args.getlist('selected_words'),
         order=request.args.get('order', 'canonical'),
         request_args=request.args,
+        include_dictionary=include_dictionary,
     )
     return jsonify(payload), status
 

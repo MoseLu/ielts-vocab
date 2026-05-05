@@ -176,10 +176,14 @@
     white-space: normal;
 }
 .study-todo-subtitle {
+    display: -webkit-box;
     min-width: 0;
-    font-size: var(--size-14);
-    line-height: 1.55;
+    overflow: hidden;
     color: var(--text-secondary);
+    font-size: var(--size-13);
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
 }
 .study-todo-title-meta {
     display: inline-flex;
@@ -482,6 +486,5 @@
     line-height: 1.08;
     letter-spacing: -0.03em;
 }
-
 
 

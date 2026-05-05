@@ -55,6 +55,7 @@ describe('VocabTestPage', () => {
   it('only auto-plays the first question once after load', async () => {
     vi.useFakeTimers()
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
       json: async () => ({ words: sampleWords }),
     } as Response)
 
@@ -77,6 +78,7 @@ describe('VocabTestPage', () => {
   it('cancels pending auto-play when the user manually replays audio', async () => {
     vi.useFakeTimers()
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
       json: async () => ({ words: sampleWords }),
     } as Response)
 

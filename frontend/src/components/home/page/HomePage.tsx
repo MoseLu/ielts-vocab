@@ -39,6 +39,10 @@ export default function HomePage() {
   return (
     <div className="study-center-page">
       <div className="page-content" ref={containerRef}>
+        <header className="study-center-masthead">
+          <h1>学习中心 · 今日计划</h1>
+        </header>
+
         <PageReady
           ready={!isInitialLoading}
           fallback={<PageSkeleton variant="books" itemCount={skeletonCount} bookMinWidth={260} />}

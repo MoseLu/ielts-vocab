@@ -45,7 +45,9 @@ vi.mock('../components/ai-chat/page/AIChatPanel', () => ({ default: () => null }
 vi.mock('../components/layout/navigation/GlobalWordSearch', () => ({ default: () => null }))
 vi.mock('../components/layout/navigation/BottomNav', () => ({ default: () => null }))
 vi.mock('../components/layout/navigation/Header', () => ({ default: () => null }))
-vi.mock('../components/layout/navigation/LeftSidebar', () => ({ default: () => null }))
+vi.mock('../components/layout/navigation/LeftSidebar', () => ({
+  default: () => <aside data-testid="left-sidebar" className="left-sidebar" />,
+}))
 vi.mock('../components/ui/Toast', () => ({ default: () => null }))
 vi.mock('./ScrollToTop', () => ({ ScrollToTop: () => null }))
 vi.mock('../components/admin/page/AdminDashboard', () => ({ default: () => null }))
@@ -67,6 +69,59 @@ describe('AppRoutes practice route', () => {
     showToastMock.mockReset()
     practicePageMock.mockClear()
     gameCampaignPageMock.mockClear()
+  })
+
+  it('renders the sidebar shell immediately on authenticated app routes', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/plan']}>
+        <AppRoutes
+          mode="meaning"
+          currentDay={1}
+          onModeChange={vi.fn()}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByTestId('left-sidebar')).toBeInTheDocument()
+    expect(container.querySelector('.app-body')).toBeTruthy()
+    expect(container.querySelector('.practice-fullscreen')).toBeFalsy()
+  })
+
+  it('does not render the sidebar shell on fullscreen practice surfaces', async () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/game']}>
+        <AppRoutes
+          mode="meaning"
+          currentDay={1}
+          onModeChange={vi.fn()}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByTestId('left-sidebar')).toBeNull()
+    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
+    expect(container.querySelector('.practice-fullscreen')).toBeTruthy()
+    expect(container.querySelector('.app-body')).toBeFalsy()
+  })
+
+  it('keeps the legacy speaking redirect in the fullscreen shell', async () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/speaking']}>
+        <AppRoutes
+          mode="meaning"
+          currentDay={1}
+          onModeChange={vi.fn()}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByTestId('left-sidebar')).toBeNull()
+    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
+    expect(container.querySelector('.practice-fullscreen')).toBeTruthy()
+    expect(container.querySelector('.app-body')).toBeFalsy()
   })
 
   it('passes the authenticated user and shared showToast into PracticePage', () => {
@@ -200,7 +255,10 @@ describe('AppRoutes practice route', () => {
     )
 
     expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
-    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({ surface: 'mission' })
+    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({
+      surface: 'mission',
+      themeId: 'study-campus',
+    })
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 

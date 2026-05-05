@@ -2,34 +2,36 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { useAuth, useToast } from '../contexts'
 import AuthPage from '../components/auth/page/AuthPage'
+import CreateCustomBookPage from '../components/books/page/CreateCustomBookPage'
+import ErrorsPage from '../components/errors/page/ErrorsPage'
 import PracticePage from '../components/practice/PracticePage'
 import Toast from '../components/ui/Toast'
 import { Loading } from '../components/ui/Loading'
 import { ScrollToTop } from './ScrollToTop'
+import LeftSidebar from '../components/layout/navigation/LeftSidebar'
+import AdminDashboard from '../components/admin/page/AdminDashboard'
+import ExamsLibraryPage from '../components/exams/page/ExamsLibraryPage'
+import GameCampaignPage from '../components/game/page/GameCampaignPage'
+import HomePage from '../components/home/page/HomePage'
+import LearningJournalPage from '../components/journal/page/LearningJournalPage'
+import NotFoundPage from '../components/not-found/page/NotFoundPage'
+import ConfusableMatchPage from '../components/practice/ConfusableMatchPage'
+import ProfilePage from '../components/profile/page/ProfilePage'
+import StatsPage from '../components/stats/page/StatsPage'
+import TermsPage from '../components/terms/page/TermsPage'
+import VocabBookPage from '../components/books/page/VocabBookPage'
+import VocabTestPage from '../components/vocab-test/page/VocabTestPage'
+import { prdUiAsset } from '../components/practice/page/game-mode/prdUiAssets'
+import { GAME_THEME_SELECT_CARD_URLS } from '../lib/gameThemeCardAssets'
 import type { PracticeMode as HeaderPracticeMode } from '../components/layout/navigation/Header'
 import type { PracticeMode as PracticePageMode } from '../components/practice/types'
 
-const AdminDashboard = lazy(() => import('../components/admin/page/AdminDashboard'))
 const AIChatPanel = lazy(() => import('../components/ai-chat/page/AIChatPanel'))
-const CreateCustomBookPage = lazy(() => import('../components/books/page/CreateCustomBookPage'))
-const VocabBookPage = lazy(() => import('../components/books/page/VocabBookPage'))
-const ErrorsPage = lazy(() => import('../components/errors/page/ErrorsPage'))
 const ExamAttemptPage = lazy(() => import('../components/exams/page/ExamAttemptPage'))
-const ExamsLibraryPage = lazy(() => import('../components/exams/page/ExamsLibraryPage'))
-const GameCampaignPage = lazy(() => import('../components/game/page/GameCampaignPage'))
-const HomePage = lazy(() => import('../components/home/page/HomePage'))
-const LearningJournalPage = lazy(() => import('../components/journal/page/LearningJournalPage'))
 const BottomNav = lazy(() => import('../components/layout/navigation/BottomNav'))
 const GlobalWordSearch = lazy(() => import('../components/layout/navigation/GlobalWordSearch'))
 const Header = lazy(() => import('../components/layout/navigation/Header'))
-const LeftSidebar = lazy(() => import('../components/layout/navigation/LeftSidebar'))
 const SelectionWordLookup = lazy(() => import('../components/layout/navigation/SelectionWordLookup'))
-const NotFoundPage = lazy(() => import('../components/not-found/page/NotFoundPage'))
-const ConfusableMatchPage = lazy(() => import('../components/practice/ConfusableMatchPage'))
-const ProfilePage = lazy(() => import('../components/profile/page/ProfilePage'))
-const StatsPage = lazy(() => import('../components/stats/page/StatsPage'))
-const TermsPage = lazy(() => import('../components/terms/page/TermsPage'))
-const VocabTestPage = lazy(() => import('../components/vocab-test/page/VocabTestPage'))
 
 interface AppRoutesProps {
   mode: string
@@ -64,6 +66,32 @@ function AuthenticatedRoute({
 
 function RouteFallback() {
   return <Loading fullScreen />
+}
+
+function preloadImage(href: string, type?: string) {
+  if (typeof document === 'undefined' || !href) return
+  const existing = Array.from(
+    document.head.querySelectorAll<HTMLLinkElement>('link[rel="preload"][as="image"]'),
+  ).some(link => link.href === new URL(href, window.location.href).href)
+  if (existing) return
+  const link = document.createElement('link')
+  link.rel = 'preload'
+  link.as = 'image'
+  link.href = href
+  if (type) link.type = type
+  document.head.appendChild(link)
+}
+
+function preloadGameRouteAssets(pathname: string) {
+  if (pathname === '/game/themes') {
+    GAME_THEME_SELECT_CARD_URLS.forEach(url => preloadImage(url, 'image/webp'))
+  }
+  if (pathname.includes('/mission')) {
+    preloadImage(prdUiAsset.templates.wordMission, 'image/avif')
+  }
+  if (pathname === '/game' || /^\/game\/themes\/[^/]+$/.test(pathname)) {
+    preloadImage(prdUiAsset.templates.wordChainMap, 'image/avif')
+  }
 }
 
 function ChromeSlot({
@@ -159,7 +187,8 @@ export function AppRoutes({
   const isPractice = location.pathname.startsWith('/practice')
   const isGame = location.pathname.startsWith('/game')
   const isExamAttemptSurface = /^\/exams\/\d+$/.test(location.pathname)
-  const isPracticeSurface = isPractice || isGame || isExamAttemptSurface
+  const isLegacySpeakingRoute = location.pathname === '/speaking'
+  const isPracticeSurface = isPractice || isGame || isExamAttemptSurface || isLegacySpeakingRoute
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
   const shouldShowBottomNav = Boolean(user) && !isPracticeSurface && !isSpecialPage
   const [chromeReady, setChromeReady] = useState(false)
@@ -185,6 +214,10 @@ export function AppRoutes({
     }
   }, [isPracticeSurface, isSpecialPage, user])
 
+  useEffect(() => {
+    preloadGameRouteAssets(location.pathname)
+  }, [location.pathname])
+
   if (isLoading) {
     return <Loading fullScreen />
   }
@@ -209,9 +242,7 @@ export function AppRoutes({
 
       <div className={isPracticeSurface || isSpecialPage ? 'practice-fullscreen' : 'app-body'}>
         {user && !isPracticeSurface && !isSpecialPage && (
-          <ChromeSlot>
-            <LeftSidebar />
-          </ChromeSlot>
+          <LeftSidebar />
         )}
 
         <main className={isPracticeSurface || isSpecialPage ? 'practice-fullscreen-main' : 'main'}>
@@ -322,7 +353,7 @@ export function AppRoutes({
                   path="/game/mission"
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <GameCampaignPage surface="mission" />
+                      <GameCampaignPage surface="mission" themeId={DEFAULT_GAME_THEME_ID} />
                     </AuthenticatedRoute>
                   )}
                 />

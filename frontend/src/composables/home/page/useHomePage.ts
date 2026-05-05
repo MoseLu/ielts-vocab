@@ -19,6 +19,12 @@ import {
   type StudyPlan,
 } from '../../../components/home/page/homePageModels'
 
+const HOME_LEARNING_STATS_OPTIONS = {
+  pollIntervalMs: 0,
+  blockInitialQuickMemoryReconcile: false,
+  blockOnLearnerProfile: false,
+} as const
+
 function buildTodoTaskEntryPath(task: DailyPlanTask): string {
   const action = task.action
   if (action.kind === 'add-book' || action.task === 'add-book') {
@@ -51,11 +57,10 @@ export function useHomePage() {
   const { books, loading: booksLoading } = useVocabBooks()
   const { progressMap, loading: progressLoading } = useAllBookProgress()
   const { myBookIds, loading: myBooksLoading, addBook, removeBook } = useMyBooks()
-  const { learnerProfile, alltime, loading: learningStatsLoading } = useLearningStats(7, 'all', 'all')
+  const { learnerProfile, alltime } = useLearningStats(7, 'all', 'all', HOME_LEARNING_STATS_OPTIONS)
   const {
     primaryItems,
     overflowItems,
-    loading: homeTodosLoading,
     error: homeTodosError,
   } = useHomeTodos()
   const { containerRef, count: skeletonCount } = useResponsivePageSkeletonCount({
@@ -63,7 +68,7 @@ export function useHomePage() {
     gap: 10,
   })
 
-  const isInitialLoading = booksLoading || progressLoading || myBooksLoading || learningStatsLoading || homeTodosLoading
+  const isInitialLoading = booksLoading || progressLoading || myBooksLoading
 
   const bookCards = useMemo(() => (
     buildStudyBookCards(
