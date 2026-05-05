@@ -54,6 +54,7 @@ def record_practice_attempt_fact(
     chapter_id: str | None = None,
     task: str | None = None,
     client_attempt_id: str | None = None,
+    trace_id: str | None = None,
     payload: dict | None = None,
 ) -> dict:
     normalized_mode = _normalize_mode(mode)
@@ -71,6 +72,7 @@ def record_practice_attempt_fact(
         'entry': normalized_entry,
         'task': _safe_positive_text(task),
         'client_attempt_id': _safe_positive_text(client_attempt_id),
+        'trace_id': _safe_positive_text(trace_id),
     }
     record_learning_event(
         user_id=user_id,

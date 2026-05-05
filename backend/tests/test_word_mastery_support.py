@@ -1,6 +1,5 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
-from types import SimpleNamespace
 
 from models import (
     UserGameEnergyState,
@@ -253,10 +252,17 @@ def test_failed_dimension_does_not_block_next_unstarted_dimension(client):
 def test_game_theme_catalog_covers_paid_books_and_oss_asset_contract(client, monkeypatch):
     _register_and_login(client, username='game-theme-user')
     monkeypatch.delenv('GAME_THEME_ASSET_PUBLIC_BASE_URL', raising=False)
-    monkeypatch.delenv('AXI_ALIYUN_OSS_PUBLIC_BUCKET', raising=False)
+    monkeypatch.setenv('AXI_ALIYUN_OSS_PUBLIC_BUCKET', 'private-theme-assets')
+    monkeypatch.setenv('AXI_ALIYUN_OSS_REGION', 'oss-cn-hangzhou')
+    signed_url_calls = []
+
+    def signed_asset_url(**kwargs):
+        signed_url_calls.append(kwargs)
+        return f"https://oss.example/{kwargs['object_key']}?Expires=3600&Signature=signed"
+
     monkeypatch.setattr(
-        'services.game_theme_catalog_service.resolve_object_metadata',
-        lambda **kwargs: SimpleNamespace(signed_url=f"https://oss.example/{kwargs['object_key']}"),
+        'services.game_theme_catalog_service.sign_object_url',
+        signed_asset_url,
     )
 
     response = client.get('/api/ai/practice/game/themes')
@@ -281,18 +287,25 @@ def test_game_theme_catalog_covers_paid_books_and_oss_asset_contract(client, mon
             assert '/game/campaign-v2/' not in asset_url
         for asset_url in theme['chapters'][0]['assets'].values():
             assert asset_url.startswith('https://oss.example/projects/ielts-vocab/game-assets/')
+    assert signed_url_calls
+    assert signed_url_calls[0]['bucket_env'] == 'AXI_ALIYUN_OSS_PUBLIC_BUCKET'
+    select_card_calls = [call for call in signed_url_calls if call['object_key'].endswith('/desktop/select-card.png')]
+    desktop_map_calls = [call for call in signed_url_calls if call['object_key'].endswith('/desktop/map.png')]
+    assert select_card_calls
+    assert all(call['query_params']['x-oss-process'].startswith('image/resize,w_520') for call in select_card_calls)
+    assert all(call.get('query_params') is None for call in desktop_map_calls)
 
 
 def test_game_theme_catalog_uses_public_base_without_metadata_probe(client, monkeypatch):
     _register_and_login(client, username='game-theme-public-base-user')
     monkeypatch.setenv('GAME_THEME_ASSET_PUBLIC_BASE_URL', 'https://oss.example/public')
 
-    def fail_metadata_probe(**_kwargs):
-        raise AssertionError('theme catalog should not probe OSS metadata when public base is configured')
+    def fail_signed_url_generation(**_kwargs):
+        raise AssertionError('theme catalog should not sign OSS URLs when public base is configured')
 
     monkeypatch.setattr(
-        'services.game_theme_catalog_service.resolve_object_metadata',
-        fail_metadata_probe,
+        'services.game_theme_catalog_service.sign_object_url',
+        fail_signed_url_generation,
     )
 
     response = client.get('/api/ai/practice/game/themes')

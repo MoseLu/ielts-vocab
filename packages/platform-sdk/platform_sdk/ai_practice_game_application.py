@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from flask import jsonify
+from flask import jsonify, request
 
 from platform_sdk.ai_word_image_application import enrich_game_state_with_word_image
 from platform_sdk.learning_core_internal_client import (
@@ -68,6 +68,10 @@ def game_attempt_response(current_user, body: dict | None) -> tuple:
     elif node_type not in {'speaking_boss', 'speaking_reward'}:
         return jsonify({'error': 'invalid nodeType'}), 400
 
+    client_attempt_id = str(
+        payload.get('clientAttemptId') or payload.get('client_attempt_id') or request.headers.get('Idempotency-Key') or ''
+    ).strip() or None
+    trace_id = str(payload.get('traceId') or payload.get('trace_id') or request.headers.get('X-Trace-Id') or '').strip() or None
     request_payload = {
         'nodeType': node_type,
         'word': word,
@@ -87,6 +91,8 @@ def game_attempt_response(current_user, body: dict | None) -> tuple:
         'inputMode': str(payload.get('inputMode') or '').strip() or None,
         'boostType': str(payload.get('boostType') or '').strip() or None,
         'wordPayload': payload.get('wordPayload') if isinstance(payload.get('wordPayload'), dict) else None,
+        'clientAttemptId': client_attempt_id,
+        'traceId': trace_id,
     }
     try:
         result = post_learning_core_game_attempt(current_user.id, request_payload)

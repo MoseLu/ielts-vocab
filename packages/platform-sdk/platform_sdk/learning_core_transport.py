@@ -315,8 +315,13 @@ def post_internal_game_session_start(current_user):
 @learning_core_bp.route('/internal/learning/game/attempt', methods=['POST'])
 @token_required
 def post_internal_game_attempt(current_user):
+    body = request.get_json(silent=True) or {}
+    if request.headers.get('Idempotency-Key') and not (body.get('clientAttemptId') or body.get('client_attempt_id')):
+        body = {**body, 'clientAttemptId': request.headers.get('Idempotency-Key')}
+    if request.headers.get('X-Trace-Id') and not (body.get('traceId') or body.get('trace_id')):
+        body = {**body, 'traceId': request.headers.get('X-Trace-Id')}
     payload, status = run_learning_core_deadlock_retry(
-        lambda: post_learning_core_word_mastery_attempt_response(current_user.id, request.get_json(silent=True)),
+        lambda: post_learning_core_word_mastery_attempt_response(current_user.id, body),
         operation='game-attempt',
     )
     return jsonify(payload), status

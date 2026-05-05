@@ -321,7 +321,7 @@ def update_word_mastery_attempt(
     word_payload: dict | None = None,
     entry: str | None = None,
     task: str | None = None,
-    client_attempt_id: str | None = None,
+    client_attempt_id: str | None = None, trace_id: str | None = None,
     record_attempt: bool = True,
     seed_legacy: bool = True, commit: bool = True,
 ) -> dict:
@@ -372,6 +372,7 @@ def update_word_mastery_attempt(
             chapter_id=chapter_id,
             task=task,
             client_attempt_id=client_attempt_id,
+            trace_id=trace_id,
             payload={
                 'source_mode': source_mode,
                 'overall_status': summary['overall_status'],
@@ -404,7 +405,7 @@ def update_game_campaign_attempt(
     boost_type: str | None = None,
     entry: str | None = None,
     task: str | None = None,
-    client_attempt_id: str | None = None,
+    client_attempt_id: str | None = None, trace_id: str | None = None,
 ) -> dict:
     normalized_node_type = str(node_type or 'word').strip().lower() or 'word'
     if normalized_node_type == 'word':
@@ -424,7 +425,7 @@ def update_game_campaign_attempt(
             word_payload=word_payload,
             entry=entry or task or 'game',
             task=task,
-            client_attempt_id=client_attempt_id,
+            client_attempt_id=client_attempt_id, trace_id=trace_id,
         )
         scope_state = build_game_practice_state(
             user_id,

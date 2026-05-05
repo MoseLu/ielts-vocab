@@ -5,6 +5,7 @@ from services.word_mastery_service import (
     start_game_campaign_session,
     update_game_campaign_attempt,
 )
+from services.practice_result_idempotency import apply_idempotent_practice_result
 from services.game_theme_catalog_service import build_game_theme_catalog
 from services.study_sessions import normalize_chapter_id
 
@@ -92,7 +93,7 @@ def post_learning_core_word_mastery_attempt_response(user_id: int, body: dict | 
     elif node_type not in {'speaking_boss', 'speaking_reward'}:
         return {'error': 'invalid nodeType'}, 400
 
-    try:
+    def apply_attempt() -> dict:
         state = update_game_campaign_attempt(
             user_id,
             node_type=node_type,
@@ -111,26 +112,37 @@ def post_learning_core_word_mastery_attempt_response(user_id: int, body: dict | 
             entry=str(payload.get('entry') or '').strip() or None,
             task=str(payload.get('task') or '').strip() or None,
             client_attempt_id=str(payload.get('clientAttemptId') or payload.get('client_attempt_id') or '').strip() or None,
+            trace_id=str(payload.get('traceId') or payload.get('trace_id') or '').strip() or None,
+        )
+
+        game_state = build_game_practice_state(
+            user_id,
+            book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
+            chapter_id=normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
+            day=payload.get('day'),
+            theme_id=str(payload.get('themeId') or payload.get('theme_id') or '').strip() or None,
+            theme_chapter_id=str(payload.get('themeChapterId') or payload.get('theme_chapter_id') or '').strip() or None,
+            task=str(payload.get('task') or '').strip() or None,
+            dimension=str(payload.get('taskDimension') or payload.get('task_dimension') or '').strip() or None,
+        )
+        return {
+            'state': _normalize_game_attempt_state(state, node_type=node_type),
+            'mastery_state': state if node_type == 'word' else None,
+            'scoreDelta': int(state.get('scoreDelta') or 0),
+            'hits': int(state.get('hits') or 0),
+            'bestHits': int(state.get('bestHits') or 0),
+            'resultOverlay': state.get('resultOverlay'),
+            'game_state': game_state,
+        }
+
+    try:
+        return apply_idempotent_practice_result(
+            user_id=user_id,
+            payload=payload,
+            mode=str(payload.get('sourceMode') or payload.get('source_mode') or '').strip() or 'game',
+            dimension=dimension,
+            word=word,
+            apply_result=apply_attempt,
         )
     except ValueError as exc:
         return {'error': str(exc)}, 400
-
-    game_state = build_game_practice_state(
-        user_id,
-        book_id=str(payload.get('bookId') or payload.get('book_id') or '').strip() or None,
-        chapter_id=normalize_chapter_id(payload.get('chapterId', payload.get('chapter_id'))),
-        day=payload.get('day'),
-        theme_id=str(payload.get('themeId') or payload.get('theme_id') or '').strip() or None,
-        theme_chapter_id=str(payload.get('themeChapterId') or payload.get('theme_chapter_id') or '').strip() or None,
-        task=str(payload.get('task') or '').strip() or None,
-        dimension=str(payload.get('taskDimension') or payload.get('task_dimension') or '').strip() or None,
-    )
-    return {
-        'state': _normalize_game_attempt_state(state, node_type=node_type),
-        'mastery_state': state if node_type == 'word' else None,
-        'scoreDelta': int(state.get('scoreDelta') or 0),
-        'hits': int(state.get('hits') or 0),
-        'bestHits': int(state.get('bestHits') or 0),
-        'resultOverlay': state.get('resultOverlay'),
-        'game_state': game_state,
-    }, 200
