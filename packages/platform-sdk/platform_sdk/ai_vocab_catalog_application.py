@@ -265,18 +265,27 @@ def _select_quick_memory_vocab_entry(
     return dict(entries[0])
 
 
-def resolve_unique_quick_memory_vocab_context(word_key: str) -> tuple[str | None, str | None] | None:
+def _unique_quick_memory_vocab_context_from_entries(
+    entries: list[dict],
+) -> tuple[str | None, str | None] | None:
     contexts = {
         (
             (entry.get('book_id') or '').strip() or None,
             normalize_chapter_id(entry.get('chapter_id')),
         )
-        for entry in get_quick_memory_vocab_entries(word_key)
+        for entry in entries
         if (entry.get('book_id') or '').strip() or normalize_chapter_id(entry.get('chapter_id')) is not None
     }
     if len(contexts) != 1:
         return None
     return next(iter(contexts))
+
+
+def resolve_unique_quick_memory_vocab_context(word_key: str) -> tuple[str | None, str | None] | None:
+    lightweight_entries = _get_lightweight_quick_memory_vocab_entries(word_key)
+    if lightweight_entries:
+        return _unique_quick_memory_vocab_context_from_entries(lightweight_entries)
+    return _unique_quick_memory_vocab_context_from_entries(get_quick_memory_vocab_entries(word_key))
 
 
 def resolve_quick_memory_vocab_entry(
