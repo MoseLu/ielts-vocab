@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import importlib.util
 from pathlib import Path
 
@@ -25,9 +26,14 @@ def _load_upload_module():
 class _FakeBucket:
     def __init__(self):
         self.objects = {}
+        self.put_count = 0
 
     def put_object(self, key, body, headers=None):
-        self.objects[key] = {'body': body, 'headers': headers or {}}
+        self.put_count += 1
+        object_headers = dict(headers or {})
+        object_headers['Content-Length'] = str(len(body))
+        object_headers['ETag'] = hashlib.md5(body).hexdigest()
+        self.objects[key] = {'body': body, 'headers': object_headers}
 
     def get_object_meta(self, key):
         return self.objects[key]
@@ -56,6 +62,7 @@ def test_frontend_asset_upload_gzips_text_assets(tmp_path, monkeypatch):
     css_object = fake_bucket.objects['projects/ielts-vocab/frontend-assets/assets/index.css']
     assert js_object['headers']['Content-Encoding'] == 'gzip'
     assert css_object['headers']['Content-Encoding'] == 'gzip'
+    assert js_object['headers']['Cache-Control'] == 'public, max-age=31536000, immutable'
     assert js_object['headers']['Content-Disposition'] == 'inline; filename="index.js"'
     assert css_object['headers']['Content-Disposition'] == 'inline; filename="index.css"'
     assert gzip.decompress(js_object['body']) == js_body
@@ -89,6 +96,35 @@ def test_frontend_asset_upload_includes_prd_ui_templates(tmp_path, monkeypatch):
     assert ui_object['headers']['Content-Disposition'] == (
         'inline; filename="word-chain-map-text-safe.png"'
     )
+
+
+def test_frontend_asset_upload_skips_unchanged_existing_objects(tmp_path, monkeypatch):
+    upload_module = _load_upload_module()
+    fake_bucket = _FakeBucket()
+    assets_dir = tmp_path / 'dist' / 'assets'
+    assets_dir.mkdir(parents=True)
+    asset_path = assets_dir / 'stable-image.png'
+    asset_path.write_bytes(b'stable-png-body')
+
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_ENABLED', 'true')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_BUCKET_ENV', 'FRONTEND_ASSET_OSS_BUCKET')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_BUCKET', 'fake-bucket')
+    monkeypatch.setattr(upload_module, 'bucket_is_configured', lambda **kwargs: True)
+    monkeypatch.setattr(upload_module, 'get_bucket', lambda **kwargs: fake_bucket)
+
+    first_uploaded = upload_module.upload_frontend_assets(tmp_path)
+    second_uploaded = upload_module.upload_frontend_assets(tmp_path)
+
+    assert first_uploaded == 1
+    assert second_uploaded == 0
+    assert fake_bucket.put_count == 1
+
+    asset_path.write_bytes(b'changed-png-body')
+
+    changed_uploaded = upload_module.upload_frontend_assets(tmp_path)
+
+    assert changed_uploaded == 1
+    assert fake_bucket.put_count == 2
 
 
 def test_vite_supports_configurable_frontend_asset_base_url():
@@ -172,6 +208,39 @@ def test_frontend_asset_public_header_verification_rejects_download_headers(monk
         raise AssertionError('expected public header verification to fail')
 
     assert seen_urls == ['https://static.example.com/base/assets/index.js']
+
+
+def test_frontend_asset_public_header_verification_requires_long_lived_cache(monkeypatch):
+    upload_module = _load_upload_module()
+
+    class FakeHeaders:
+        def get(self, key, default=None):
+            values = {
+                'Content-Disposition': 'inline',
+                'Cache-Control': 'public, immutable',
+            }
+            return values.get(key, default)
+
+    class FakeResponse:
+        headers = FakeHeaders()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+    monkeypatch.setenv('FRONTEND_ASSET_BASE_URL', 'https://static.example.com/base')
+    monkeypatch.setattr(upload_module.request, 'urlopen', lambda request, timeout: FakeResponse())
+
+    try:
+        upload_module.verify_public_delivery_headers([
+            ('assets/index.js', 'projects/ielts-vocab/frontend-assets/assets/index.js'),
+        ])
+    except SystemExit as exc:
+        assert 'missing long-lived immutable cache headers' in str(exc)
+    else:
+        raise AssertionError('expected public header verification to fail')
 
 
 def test_frontend_asset_upload_retries_transient_put_failures(tmp_path, monkeypatch):
@@ -275,4 +344,4 @@ def test_nginx_template_compresses_and_caches_static_assets():
     assert 'gzip_types' in config
     assert 'location /assets/' in config
     assert 'expires 1y;' in config
-    assert 'Cache-Control "public, immutable"' in config
+    assert 'Cache-Control "public, max-age=31536000, immutable"' in config
