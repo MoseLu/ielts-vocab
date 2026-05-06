@@ -104,7 +104,7 @@ def resolve_gateway_upstream_policy(
     if service_name == 'catalog-content-service':
         read_timeout_seconds = 5.0
         if normalized_path == '/api/books/search':
-            read_timeout_seconds = 15.0
+            read_timeout_seconds = 60.0
         if normalized_path.startswith('/api/books/custom-books'):
             read_timeout_seconds = 60.0
         return GatewayUpstreamPolicy(

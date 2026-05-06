@@ -141,7 +141,7 @@ def test_proxy_browser_request_uses_extended_timeout_for_books_search(monkeypatc
     assert response.status_code == 200
     assert response.json() == {'query': 'test', 'results': [], 'total': 0}
     assert len(captured_calls) == 1
-    assert captured_timeouts[0].read == 15.0
+    assert captured_timeouts[0].read == 60.0
 
 
 def test_proxy_browser_request_uses_extended_timeout_for_custom_books(monkeypatch):
