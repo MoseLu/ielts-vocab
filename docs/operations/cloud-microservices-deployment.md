@@ -189,7 +189,7 @@ ssh <host> "sudo APP_HOME=/opt/ielts-vocab bash /opt/ielts-vocab/current/scripts
 
 Frontend OSS metadata checks:
 
-- `scripts/upload-frontend-assets-to-oss.py` uploads each non-HTML frontend asset with `Content-Disposition: inline`, correct `Content-Type`, immutable cache metadata, and public-read ACL by default.
+- `scripts/upload-frontend-assets-to-oss.py` uploads each non-HTML frontend asset with `Content-Disposition: inline`, correct `Content-Type`, and immutable cache metadata. Object ACL is only sent when `FRONTEND_ASSET_OSS_OBJECT_ACL` is configured, so bucket-policy based public delivery keeps working.
 - After upload, the script HEAD-checks representative public JS, CSS, and image URLs and fails if the public response contains `Content-Disposition: attachment` or `x-oss-force-download: true`.
 - Aliyun documents that default OSS domains and transfer-acceleration domains can inject those download headers for browser access; use a bound custom domain or CDN/custom domain for `FRONTEND_ASSET_OSS_PUBLIC_BASE_URL`.
 

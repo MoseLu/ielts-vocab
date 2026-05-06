@@ -65,7 +65,7 @@ def _bucket_env() -> str:
 
 
 def _object_acl() -> str:
-    return (os.environ.get('FRONTEND_ASSET_OSS_OBJECT_ACL') or 'public-read').strip()
+    return (os.environ.get('FRONTEND_ASSET_OSS_OBJECT_ACL') or '').strip()
 
 
 def _connect_timeout_seconds() -> int:

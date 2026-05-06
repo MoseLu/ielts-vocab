@@ -92,7 +92,7 @@ def test_frontend_asset_upload_includes_prd_ui_templates(tmp_path, monkeypatch):
         'projects/ielts-vocab/frontend-assets/ui/templates/word-chain-map-text-safe.png'
     ]
     assert ui_object['body'] == template_body
-    assert ui_object['headers']['x-oss-object-acl'] == 'public-read'
+    assert 'x-oss-object-acl' not in ui_object['headers']
     assert ui_object['headers']['Content-Disposition'] == (
         'inline; filename="word-chain-map-text-safe.png"'
     )
@@ -328,13 +328,24 @@ def test_frontend_asset_upload_failure_reports_error_details(monkeypatch):
     assert 'Read timed out' in message
 
 
-def test_frontend_asset_upload_marks_objects_public_read():
-    script = _read('scripts/upload-frontend-assets-to-oss.py')
+def test_frontend_asset_upload_honors_configurable_object_acl(tmp_path, monkeypatch):
+    upload_module = _load_upload_module()
+    fake_bucket = _FakeBucket()
+    assets_dir = tmp_path / 'dist' / 'assets'
+    assets_dir.mkdir(parents=True)
+    (assets_dir / 'index.js').write_bytes(b'const ok = true;')
 
-    assert 'FRONTEND_ASSET_OSS_OBJECT_ACL' in script
-    assert "'public-read'" in script
-    assert "'x-oss-object-acl'" in script
-    assert 'bucket.put_object' in script
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_ENABLED', 'true')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_BUCKET_ENV', 'FRONTEND_ASSET_OSS_BUCKET')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_BUCKET', 'fake-bucket')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_OBJECT_ACL', 'public-read')
+    monkeypatch.setattr(upload_module, 'bucket_is_configured', lambda **kwargs: True)
+    monkeypatch.setattr(upload_module, 'get_bucket', lambda **kwargs: fake_bucket)
+
+    upload_module.upload_frontend_assets(tmp_path)
+
+    uploaded = fake_bucket.objects['projects/ielts-vocab/frontend-assets/assets/index.js']
+    assert uploaded['headers']['x-oss-object-acl'] == 'public-read'
 
 
 def test_nginx_template_compresses_and_caches_static_assets():
