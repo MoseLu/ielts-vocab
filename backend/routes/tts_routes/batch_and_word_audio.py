@@ -259,6 +259,24 @@ def _resolve_word_audio_identity_candidates(
     return candidates
 
 
+def _explicit_word_audio_phonetic(word: str) -> str | None:
+    try:
+        from services import phonetic_lookup_service
+
+        normalized = phonetic_lookup_service.normalize_word_key(word)
+        phonetic = phonetic_lookup_service.load_phonetic_overrides().get(normalized, '')
+        return phonetic_lookup_service.normalize_phonetic_text(phonetic) or None
+    except Exception:
+        return None
+
+
+def _apply_phonetic_audio_identity(model: str, phonetic: str | None) -> str:
+    if not phonetic:
+        return model
+    digest = hashlib.md5(f'ipa:{phonetic}'.encode('utf-8')).hexdigest()[:8]
+    return f'{model}@ipa-{digest}'
+
+
 @tts_bp.route('/word-audio', methods=['GET'])
 def get_word_audio():
     """
@@ -287,6 +305,15 @@ def get_word_audio():
 
     key = normalize_word_key(raw)
     identity_candidates = _resolve_word_audio_identity_candidates(pronunciation_mode)
+    explicit_phonetic = _explicit_word_audio_phonetic(raw)
+    if explicit_phonetic:
+        provider, model, voice, content_mode = identity_candidates[0]
+        identity_candidates = [(
+            provider,
+            _apply_phonetic_audio_identity(model, explicit_phonetic),
+            voice,
+            content_mode,
+        )]
     provider, model, voice, content_mode = identity_candidates[0]
     cache_dir = _word_tts_dir()
     path = word_tts_cache_path(cache_dir, key, model, voice)
@@ -372,7 +399,7 @@ def get_word_audio():
                 voice,
                 provider=provider,
                 content_mode=content_mode,
-                phonetic=None,
+                phonetic=explicit_phonetic,
             )
             write_bytes_atomically(path, audio_bytes)
         except Exception as exc:

@@ -1,4 +1,5 @@
 from routes import books as books_routes
+from services import books_favorites_service
 
 
 def register_and_login(client, username='favorite-user', password='password123'):
@@ -64,6 +65,26 @@ class TestFavoriteBooks:
         assert len(word_payload) == 1
         assert word_payload[0]['word'] == 'Abandon'
         assert word_payload[0]['book_id'] == books_routes.FAVORITES_BOOK_ID
+
+    def test_favorites_book_words_apply_phonetic_overrides(self, client, monkeypatch):
+        monkeypatch.setattr(
+            books_favorites_service.phonetic_lookup_service,
+            'lookup_local_phonetics',
+            lambda words: {'recipes': '/ˈresəpiz/'},
+        )
+        register_and_login(client, username='favorite-phonetic-user')
+        client.post('/api/books/favorites', json={
+            'word': 'recipes',
+            'phonetic': '/ˈresɪpsiːz/',
+            'pos': 'n.',
+            'definition': '食谱；配方',
+        })
+
+        words = client.get(f'/api/books/{books_routes.FAVORITES_BOOK_ID}/chapters/{books_routes.FAVORITES_CHAPTER_ID}')
+
+        assert words.status_code == 200
+        word_payload = words.get_json()['words']
+        assert word_payload[0]['phonetic'] == '/ˈresəpiz/'
 
     def test_remove_last_favorite_cleans_auto_book_membership(self, client):
         register_and_login(client, username='favorite-cleanup-user')

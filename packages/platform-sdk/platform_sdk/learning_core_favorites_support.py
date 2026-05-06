@@ -242,15 +242,40 @@ def _build_favorites_book_payload(user_id: int | None) -> dict | None:
     }
 
 
+def _favorite_phonetic_lookup(records) -> dict[str, str]:
+    try:
+        from services import phonetic_lookup_service
+    except Exception:
+        return {}
+
+    words = []
+    seen = set()
+    for record in records:
+        normalized = _normalize_favorite_word(getattr(record, 'word', None))
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        words.append(normalized)
+    if not words:
+        return {}
+    try:
+        return phonetic_lookup_service.lookup_local_phonetics(words)
+    except Exception:
+        return {}
+
+
 def _serialize_favorite_words(user_id: int | None) -> list[dict]:
     if not user_id:
         return []
 
+    records = list(_read_favorite_words(user_id))
+    phonetics = _favorite_phonetic_lookup(records)
     words: list[dict] = []
-    for record in _read_favorite_words(user_id):
+    for record in records:
+        normalized = _normalize_favorite_word(record.word)
         words.append({
             'word': record.word,
-            'phonetic': record.phonetic or '',
+            'phonetic': phonetics.get(normalized) or record.phonetic or '',
             'pos': record.pos or '',
             'definition': record.definition or '',
             'book_id': FAVORITES_BOOK_ID,
