@@ -1,5 +1,5 @@
 # Project Notes
-Last updated: 2026-04-12 11:18:00 +08:00
+Last updated: 2026-05-06 23:40:00 +08:00
 
 ## Repo Summary
 - IELTS vocabulary learning web app with React 19 + TypeScript + Vite on the frontend and Flask + SQLite on the backend.
@@ -21,7 +21,8 @@ Last updated: 2026-04-12 11:18:00 +08:00
 ## Current Focus
 - Keep the post-Wave microservice baseline stable: normal split startup no longer exposes shared-`SQLite` override flags, service boot env loading is file-driven, tts/asr migration baselines are registered, gateway/internal auth is stricter, OSS artifact validation is green, and `scripts/repo_summary.py` is restored.
 - Keep production-style local startup and proxy behavior stable after the speech-service split.
-- Keep Ebbinghaus due-review counts consistent across stats, learner profile, and review queue by using the same UTC-safe time conversion path.
+- Keep Ebbinghaus due-review, wrong-word recovery, and foundational practice modes (`smart`, `listening`, `meaning`, `dictation`, `follow`, `quickmemory`, `errors`) directly aligned with stats, learner profile, and review queue counts.
+- Keep five-dimension game and AI speaking assessment as an independent advanced mode family. Do not route foundational Ebbinghaus or wrong-word recovery into `/game`.
 - Continue study-center and homepage visual polish without regressing desktop/mobile layout.
 - Remaining post-cutover work is now primarily operational: code-side `admin / notes / ai` boundary cleanup is in place, the table audit is clean for normal split runtime, and the main unfinished item is the final remote release/deploy/preflight/smoke/storage-drill closeout.
 
@@ -148,10 +149,12 @@ pnpm-workspace.yaml         # Root workspace orchestration
 ## Key Features
 1. Authentication and user profile management
 2. Vocabulary books, chapters, and progress tracking
-3. Practice modes: `smart`, `listening`, `meaning`, `dictation`, `radio`, `quickmemory`, `errors`
-4. Guided study homepage and learner-profile driven recommendations
-5. AI assistant, journal, and daily summary flows
-6. Dedicated speech recognition service and TTS tooling
+3. Foundational practice modes: `smart`, `listening`, `meaning`, `dictation`, `follow`, `radio`, `quickmemory`, `errors`
+4. Ebbinghaus due review and wrong-word recovery linked directly to statistics and learner profile
+5. Independent advanced five-dimension / AI speaking mode family for paid or 2.0 rollout
+6. Guided study homepage and learner-profile driven recommendations
+7. AI assistant, journal, and daily summary flows
+8. Dedicated speech recognition service and TTS tooling
 
 ## Backend API
 - `/api/auth`: register, login, logout, avatar, current user

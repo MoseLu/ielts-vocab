@@ -1,6 +1,6 @@
 # Practice Mode Data Flow Roadmap
 
-Last updated: 2026-05-05
+Last updated: 2026-05-06
 
 ## Purpose
 
@@ -13,10 +13,17 @@ The product currently has five overlapping data planes:
 1. Catalog plane: words, books, chapters, confusable groups, and media metadata. Frontend reads this through `/api/books/*`, `/api/books/word-list`, and legacy `/api/vocabulary/day/*`. In split runtime these are routed through the gateway into `catalog-content-service` and `learning-core-service`.
 2. Practice runtime plane: the browser builds a queue, renders the selected mode, records local interaction state, and chooses which backend writes to perform.
 3. Progress plane: book/chapter/day progress and chapter mode progress. This is the resume and completion surface used by study center cards, chapter modal, and stats fallback.
-4. Mastery and review plane: quick memory records, wrong words, smart stats, and word mastery attempts. This is the source for due review, error review, five-dimension weakness, and game campaign state.
+4. Foundational mastery and review plane: quick memory/Ebbinghaus records, wrong words, smart stats, and word mastery attempts. This is the source for due review, error review, learner statistics, and profile recommendations.
 5. Analytics and recommendation plane: study sessions, learning events, rollups, learner profile, home todos, and downstream projections used by AI, notes, and admin surfaces.
 
-The most important mental model: normal practice modes are answer-centric; radio is session-centric; quickmemory owns its own Ebbinghaus record flow; errors is an overlay that reuses practice layouts but reads and writes wrong-word dimensions; game mode uses word mastery and campaign state instead of the generic progress queue.
+The most important mental model: foundational practice modes feed stats, wrong words, and Ebbinghaus; radio is session-centric; errors is an overlay that reuses practice layouts but reads and writes wrong-word dimensions; game mode is an advanced independent campaign that uses campaign state instead of the generic progress and Ebbinghaus queues.
+
+## Product Boundary
+
+- Foundational learning includes Ebbinghaus, wrong-word recovery, and the stats-linked modes `smart`, `listening`, `meaning`, `dictation`, `follow`, `quickmemory`, and `errors`.
+- Foundational due review starts at `/practice?review=due`; foundational wrong-word recovery starts from `/errors` or `/practice?mode=errors`.
+- Five-dimension and AI speaking assessment are advanced independent experiences, planned for paid capability or a 2.0 release. They must not absorb foundational Ebbinghaus or wrong-word entry points.
+- The `speaking` dimension can appear in foundational follow-read/wrong-word data and in advanced AI speaking/game data, but those are separate product surfaces.
 
 ## Runtime Topology
 
@@ -59,7 +66,7 @@ For practice data, `learning-core-service` is the authoritative write owner for 
 Study center starts work in two ways:
 
 1. Book cards call `buildBookStudyEntryPath`. Normal books go to `/practice`, game entry goes to `/game`, and `practice_mode=match` books go to `/practice/confusable`.
-2. Home todo tasks choose their route by task type. `due-review` routes to `/practice?review=due`; other learning tasks route to `/game?task=...` with optional dimension and scope.
+2. Home todo tasks choose their route by task type. Foundational `due-review` routes to `/practice?review=due`, foundational wrong-word recovery routes to the error-review surface, and advanced game tasks route to `/game?task=...` with optional dimension and scope.
 
 ## Mode Registry
 
@@ -70,15 +77,15 @@ There are two practical registries today:
 
 | Mode | User intent | Primary dimension | Queue source | Primary writes |
 | --- | --- | --- | --- | --- |
-| `smart` | Adaptive mixed practice | listening/meaning/dictation, chosen per word | Canonical word list, smart queue | progress, session, smart stats, word mastery, wrong words on failure |
-| `listening` | Hear word and choose meaning | listening | Canonical word list filtered to words with confusables | progress, session, word mastery, wrong words on failure |
-| `meaning` | Recall meaning | meaning | Canonical word list | progress, session, word mastery, wrong words on failure |
-| `dictation` | Spell from audio | dictation | Canonical word list | progress, session, word mastery, wrong words on failure |
-| `follow` | Follow-read pronunciation | speaking | Canonical word list | progress, session, word mastery, wrong words on failure |
+| `smart` | Adaptive mixed practice | listening/meaning/dictation, chosen per word | Canonical word list, smart queue | progress, session, smart stats, quick memory records, word mastery, wrong words on failure |
+| `listening` | Hear word and choose meaning | listening | Canonical word list filtered to words with confusables | progress, session, quick memory records, word mastery, wrong words on failure |
+| `meaning` | Recall meaning | meaning | Canonical word list | progress, session, quick memory records, word mastery, wrong words on failure |
+| `dictation` | Spell from audio | dictation | Canonical word list | progress, session, quick memory records, word mastery, wrong words on failure |
+| `follow` | Follow-read pronunciation | speaking | Canonical word list | progress, session, quick memory records, word mastery, wrong words on failure |
 | `radio` | Passive listening loop | none by default | Canonical word list | session and resume progress; optional favorite/speaking side actions |
 | `quickmemory` | Recognition/Ebbinghaus memory | recognition | Canonical word list or due review queue | quick memory records, session, progress only outside due review, wrong words on unknown |
-| `errors` | Clear pending wrong dimensions | selected wrong-word dimension | wrong-word store | wrong-word dimension updates, word mastery attempts, session, local error progress |
-| `game` | Five-dimension campaign | recognition/meaning/listening/dictation/speaking | game state from learning-core | word mastery, game wrong-word projection, game attempt metadata |
+| `errors` | Clear pending wrong dimensions | selected wrong-word dimension | wrong-word store | wrong-word dimension updates, quick memory records, word mastery attempts, session, local error progress |
+| `game` | Advanced five-dimension campaign | recognition/meaning/listening/dictation/speaking | game state from learning-core | campaign state, game wrong-word projection, game attempt metadata |
 | `match` | Confusable matching | custom `match` mode | chapter words grouped by confusable set | chapter progress and chapter mode progress |
 
 ## Generic Practice Load Flow
@@ -91,7 +98,7 @@ The generic `/practice` page has three phases.
 
 - `book` and `chapter` select a canonical book/chapter scope.
 - `mode=errors` activates error review.
-- `review=due` forces `quickmemory` review mode.
+- `review=due` loads the foundational Ebbinghaus due queue. Direct links default to `quickmemory`; an explicit supported `mode=` may render another foundational practice layout over the same due queue.
 - Missing mode defaults to `smart` unless review mode overrides it.
 
 ### 2. Load Data
@@ -180,7 +187,7 @@ Backend `persist_study_session` writes `UserStudySession`, records a `study_sess
 
 ## Quick Memory Flow
 
-Quick memory is the most independent mode.
+Quick memory is the storage adapter for the foundational Ebbinghaus schedule.
 
 Normal chapter quickmemory:
 
@@ -198,7 +205,9 @@ Due review quickmemory:
 3. It does not write chapter progress, because the scope is "due review" rather than "advance this chapter".
 4. Learning stats and learner profile reconcile quick-memory records before fetching stats so recent local records are not missed.
 
-Backend quick-memory sync updates `UserQuickMemoryRecord`, records `quick_memory_review` events when source is provided, updates recognition word mastery, and ensures wrong-word recognition failure for unknown answers.
+Other answer-centric foundational modes also update quick-memory records through the shared Ebbinghaus adapter so a learned word can return later without forcing the user through `quickmemory` first.
+
+Backend quick-memory sync updates `UserQuickMemoryRecord`, records `quick_memory_review` events when source is provided, preserves the source mode, updates word mastery, and ensures wrong-word recognition failure for unknown answers.
 
 ## Smart Mode Flow
 
@@ -230,13 +239,14 @@ Error review writes local `wrong_words_progress` for resume, but it does not wri
 
 ## Game Campaign Flow
 
-Game mode is a separate campaign engine, not the generic queue.
+Game mode is a separate advanced campaign engine, not the generic queue and not the foundational Ebbinghaus/wrong-word loop.
 
 Frontend:
 
 1. Reads `/api/ai/practice/game/state` for nodes, segments, boosts, failed dimensions, and campaign progress.
 2. Starts a campaign session with `/api/ai/practice/game/session/start`.
 3. Submits each word or speaking node to `/api/ai/practice/game/attempt`.
+4. Does not create or mutate quick-memory/Ebbinghaus records.
 
 Dimension mapping:
 
@@ -282,7 +292,7 @@ Backend builds:
 
 1. Learning stats from reportable `UserStudySession` rows, live pending session snapshots, chapter progress fallback, quick-memory summaries, wrong-word lists, chapter breakdowns, and word mastery summary.
 2. Learner profile from sessions, smart stats, wrong words, quick memory records, notes, learning events, and activity timeline.
-3. Home todos from learning-core signals: due review count, pending wrong words, focus book progress, activity today, weakest mode, and speaking activity.
+3. Home todos from learning-core signals: foundational due review count, pending wrong words, focus book progress, activity today, weakest mode, and separately tracked advanced speaking activity.
 
 Home todo ranking is fixed by priority: due review, error review, continue/add book, then speaking. The study center book card list is separate and currently sorted by completion percentage descending.
 
@@ -325,11 +335,11 @@ The one-shot migration route `/api/ai/local-storage-migration` processes smart s
 ## Current Confusing Boundaries
 
 1. `errors` appears in the canonical mode list but is not a `PracticeMode` type. This is correct today, but it is easy to misread.
-2. `quickmemory` sometimes means "chapter recognition practice" and sometimes means "due review". These have different progress writes.
+2. `quickmemory` is both a UI mode and the historical storage name for Ebbinghaus records. Treat the storage as the foundational Ebbinghaus schedule, not as a mode restriction.
 3. `radio` looks like a practice mode but is not answer-centric. It mainly affects session duration and words-studied counts.
 4. Chapter progress and chapter mode progress are separate writes. A mode can show accuracy even if resume snapshot semantics differ.
 5. Smart stats are local-first and sync later, so immediate weakness calculations can differ between local page state and backend stats until reconciliation.
-6. Game mode and generic practice both update mastery-like facts, but game does not use the generic `PracticePage` progress queue.
+6. Game mode and generic practice both update mastery-like facts, but game does not use the generic `PracticePage` progress queue and must not write foundational Ebbinghaus records.
 7. Confusable match writes `mode=match` progress but does not currently emit per-word mastery attempts.
 8. Stats has a fallback path from chapter progress when session data is absent. This is useful for compatibility but can hide missing session writes.
 9. AI routes often proxy to learning-core internally. When debugging, do not assume an `/api/ai/*` route means AI owns the underlying learning data.
@@ -338,14 +348,14 @@ The one-shot migration route `/api/ai/local-storage-migration` processes smart s
 
 ### Phase 1: Make the Mode Contract Explicit
 
-- Add a single documented mode matrix in code or generated docs that distinguishes `practice mode`, `review overlay`, `game task`, and `book practice_mode`.
+- Add a single documented mode matrix in code or generated docs that distinguishes foundational `practice mode`, `review overlay`, advanced `game task`, and book `practice_mode`.
 - Add a type-level guard for mode aliases and wrong-word dimension mappings.
 - Add a smoke test that every visible study-center entry route lands on the intended runtime: practice, game, confusable, or errors.
 
 ### Phase 2: Normalize Result Writes
 
 - Introduce a small frontend write contract such as `PracticeResultSink` for answer-centric modes.
-- Keep quickmemory, game, and match as explicit adapters rather than forcing them into the generic path.
+- Keep quickmemory, game, and match as explicit adapters; quickmemory belongs to the foundational Ebbinghaus plane, while game remains advanced and independent.
 - Make each adapter declare which planes it writes: progress, session, mastery, wrong words, smart stats, quick memory, or game state.
 
 ### Phase 3: Clarify Progress vs Session Semantics
@@ -358,7 +368,7 @@ The one-shot migration route `/api/ai/local-storage-migration` processes smart s
 
 - Add a per-attempt debug trace id from frontend answer commit through backend learning event, word mastery, wrong-word sync, and session update.
 - Add a developer-only route or script that shows "what changed" after one practice answer.
-- Add compact e2e coverage for one correct and one wrong answer in smart, listening, meaning, dictation, follow, quickmemory, errors, game, and match.
+- Add compact e2e coverage for one correct and one wrong answer in foundational smart, listening, meaning, dictation, follow, quickmemory, errors, plus separate game and match coverage.
 
 ### Phase 5: Retire Legacy Ambiguity
 
@@ -370,18 +380,19 @@ The one-shot migration route `/api/ai/local-storage-migration` processes smart s
 
 For any mode change, verify these questions:
 
-1. What route starts the mode?
-2. What queue source does it use?
-3. Which dimension does a correct/wrong answer affect?
-4. Does it write book/chapter/day progress?
-5. Does it write chapter mode progress?
-6. Does it write quick-memory records?
-7. Does it write wrong words?
-8. Does it submit word mastery attempts?
-9. Does it start/finalize a study session?
-10. Does it affect learner profile, home todos, or learning stats immediately, or only after sync/reconciliation?
-11. Does reload resume from backend, localStorage, or both?
-12. Does pagehide/offline handling preserve the most important write?
+1. Is the mode foundational or advanced?
+2. What route starts the mode?
+3. What queue source does it use?
+4. Which dimension does a correct/wrong answer affect?
+5. Does it write book/chapter/day progress?
+6. Does it write chapter mode progress?
+7. Does it write quick-memory/Ebbinghaus records?
+8. Does it write wrong words?
+9. Does it submit word mastery attempts?
+10. Does it start/finalize a study session?
+11. Does it affect learner profile, home todos, or learning stats immediately, or only after sync/reconciliation?
+12. Does reload resume from backend, localStorage, or both?
+13. Does pagehide/offline handling preserve the most important write?
 
 ## Source Map
 

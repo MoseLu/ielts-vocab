@@ -1,12 +1,12 @@
 # Five-Dimension Game Mode Next Steps Implementation Plan
 
-Last updated: 2026-04-26
+Last updated: 2026-05-06
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn the five-dimension game mode into an independent AI learning campaign where each word is a map node and the current word advances through five learning defenses.
+**Goal:** Turn the five-dimension game mode into an independent advanced AI learning campaign where each word is a map node and the current word advances through five learning defenses.
 
-**Architecture:** The backend campaign state owns task-aware word ordering, map-node windows, and per-word dimension progression. The platform SDK and frontend schema layers pass through `task`, `dimension`, `taskFocus`, and `mapPath` without breaking older responses. The frontend renders `/game` as a word-chain campaign map and `/game/mission` as the current word mission surface, while Todo rows only link into those game tasks.
+**Architecture:** The backend campaign state owns game word ordering, map-node windows, AI speaking assessment, and per-word dimension progression. The platform SDK and frontend schema layers pass through `task`, `dimension`, `taskFocus`, and `mapPath` without breaking older responses. The frontend renders `/game` as a word-chain campaign map and `/game/mission` as the current word mission surface. Foundational Ebbinghaus and wrong-word Todos continue to use the normal practice surfaces.
 
 **Tech Stack:** Flask service code, platform-sdk Python application adapters, React 19 + TypeScript + Vite, SCSS game assets, Zod API schemas, Pytest, Vitest, repo guard scripts.
 
@@ -15,7 +15,9 @@ Last updated: 2026-04-26
 ## Product Boundary
 
 - Five-dimension mode is an independent AI learning mode, not a combined launcher for `quickmemory`, `listening`, `meaning`, `dictation`, and `follow`.
-- Legacy practice modes remain as focused-practice or compatibility entries.
+- Five-dimension mode, including AI-scored speaking, is a candidate paid feature or 2.0 feature.
+- Foundational Ebbinghaus, wrong-word recovery, and stats-linked practice modes remain outside this campaign.
+- Legacy practice modes remain as foundational focused-practice entries.
 - `/practice?mode=game` continues to redirect to `/game`.
 - The locked dimension order is `recognition -> meaning -> dictation -> speaking -> listening`.
 - The storage key `listening` remains for the fifth dimension, while UI copy displays it as `语境应用`.
@@ -27,11 +29,12 @@ Last updated: 2026-04-26
 
 - `/game` opens the campaign map.
 - `/game/mission` opens the current word mission.
-- `/game?task=due-review` starts due review in five-dimension mode.
-- `/game?task=error-review&dimension=meaning` starts weak-dimension review.
+- `/practice?review=due` remains the canonical foundational Ebbinghaus due-review entry.
+- `/errors` and `/practice?mode=errors` remain the canonical foundational wrong-word recovery entries.
 - `/game?task=continue-book&book=...&chapter=...` continues a book/chapter path.
+- `/game?task=speaking` starts the advanced AI speaking campaign path when that feature is enabled.
 - `/game/mission?task=...` keeps the same query parameters for direct mission entry.
-- Todo rows only produce links. Backend task selection decides node priority.
+- Todo rows only produce links. Foundational Todo rows must not be remapped into `/game`.
 
 ## File Map
 
@@ -45,9 +48,10 @@ Last updated: 2026-04-26
 - Modify: `frontend/src/lib/schemas/api.ts`
   - Parses `taskFocus` and `mapPath.nodes` while preserving old `segment` fields.
 - Modify: `frontend/src/components/home/page/HomePageSections.tsx`
-  - Converts Todo action rows into game task links or CTAs.
+  - Converts only advanced game action rows into game task links or CTAs.
 - Modify: `packages/platform-sdk/platform_sdk/ai_home_todo_task_builders.py`
-  - Stops emitting `mode: quickmemory` for due review and emits five-dimension task semantics instead.
+  - Keeps foundational due-review and wrong-word actions on practice/error-review semantics.
+  - Emits five-dimension task semantics only for advanced game tasks.
 - Modify: `frontend/src/components/practice/page/game-mode/GameMapShell.tsx`
   - Reframes the desktop map as a word-chain defense map.
 - Modify: `frontend/src/components/practice/page/game-mode/GameStage.tsx`
@@ -124,8 +128,8 @@ Last updated: 2026-04-26
   Cover these inputs:
 
   ```text
-  task=due-review
-  task=error-review&dimension=meaning
+  task=speaking
+  task=continue-book&dimension=meaning
   task=continue-book&book=<book-id>&chapter=<chapter-id>
   ```
 
@@ -197,9 +201,10 @@ Last updated: 2026-04-26
   Cover these mappings:
 
   ```text
-  due-review -> /game?task=due-review
-  error-review + dimension=meaning -> /game?task=error-review&dimension=meaning
-  continue-book + book/chapter -> /game?task=continue-book&book=...&chapter=...
+  due-review -> /practice?review=due
+  error-review + dimension=meaning -> /practice?mode=errors&dimension=meaning
+  five-dimension speaking -> /game?task=speaking
+  five-dimension continue-book + book/chapter -> /game?task=continue-book&book=...&chapter=...
   add-book -> existing book/plan entry
   ```
 
@@ -207,13 +212,15 @@ Last updated: 2026-04-26
 
   Keep the helper local to `HomePageSections.tsx` unless multiple components need it. Encode query parameters through `URLSearchParams`.
 
-- [ ] **Step 3: Update due-review builder semantics**
+- [ ] **Step 3: Preserve foundational review builder semantics**
 
-  In `ai_home_todo_task_builders.py`, remove `mode: quickmemory` from the due-review action. Emit the five-dimension task action instead:
+  In `ai_home_todo_task_builders.py`, keep due-review and wrong-word recovery as foundational actions. Do not emit game task actions for them:
 
   ```python
-  {'kind': 'due-review', 'cta_label': '进入五维复习', 'task': 'due-review', 'dimension': None}
+  {'kind': 'due-review', 'cta_label': '去复习', 'task': 'due-review', 'mode': None}
   ```
+
+  Advanced five-dimension tasks must use their own task semantics, for example `task=speaking`.
 
 - [ ] **Step 4: Run home tests**
 
@@ -318,9 +325,10 @@ Last updated: 2026-04-26
 
 ## Acceptance Criteria
 
-- A learner entering from Todo or `/game` sees a word-chain campaign plus the current word's five-step learning progression.
+- A learner entering from an advanced game Todo or `/game` sees a word-chain campaign plus the current word's five-step learning progression.
 - The map nodes represent words, not five total game levels.
 - Wrong dimensions refill into review without trapping the learner on the same failed step.
-- `due-review`, `error-review`, and `continue-book` enter the same five-dimension game experience with task-aware priority.
+- Foundational `due-review` and wrong-word recovery do not enter the five-dimension game experience.
+- Advanced five-dimension entries, including AI speaking, enter the campaign experience with task-aware priority.
 - Existing legacy responses still parse and render.
 - Focused backend tests, focused frontend tests, and `verify:repo-guards` pass.

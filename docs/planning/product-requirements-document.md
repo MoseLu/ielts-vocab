@@ -1,6 +1,6 @@
 # IELTS Vocabulary Product Requirements Document
 
-Last updated: 2026-04-19
+Last updated: 2026-05-06
 Status: active baseline
 
 ## Purpose
@@ -20,7 +20,7 @@ The product should feel like a guided study companion rather than a static word 
 IELTS vocabulary learners commonly face four problems:
 
 1. Word lists are large, repetitive, and hard to prioritize.
-2. Learners do not get enough varied repetition across listening, meaning, dictation, recall, and speaking-related contexts.
+2. Learners do not get enough varied repetition across listening, meaning, dictation, recall, and follow-read contexts.
 3. Wrong words and weak areas are easy to forget because review is fragmented across pages or sessions.
 4. Learners need lightweight coaching and summaries, not just raw content.
 
@@ -37,6 +37,7 @@ IELTS vocabulary learners commonly face four problems:
 2. Provide high-stakes exam scoring or official proficiency prediction.
 3. Become a generic note-taking app unrelated to vocabulary learning.
 4. Depend on AI for every critical learning action; the core study loop must remain usable without AI output.
+5. Fold the advanced five-dimension or AI speaking experience into the foundational Ebbinghaus and wrong-word loops.
 
 ## Target Users
 
@@ -142,19 +143,21 @@ Requirements:
 
 Requirements:
 
-1. The product supports the current practice modes: `smart`, `listening`, `meaning`, `dictation`, `radio`, `quickmemory`, and `errors`.
-2. Each mode must feel intentionally different while sharing a consistent session shell and result tracking model.
-3. Practice results must feed learner progress, wrong-word capture, and future recommendations.
+1. The product supports the current foundational practice modes: `smart`, `listening`, `meaning`, `dictation`, `follow`, `radio`, `quickmemory`, and `errors`.
+2. Answer-centric foundational modes feed learner progress, wrong-word capture, Ebbinghaus scheduling, and future recommendations.
+3. `radio` remains passive-listening focused and should not be treated like an answer-scored mode.
 4. Audio-backed modes must provide dependable playback and clear feedback states.
+5. Five-dimension and AI speaking modes are advanced independent experiences, not replacements for the foundational practice shell.
 
 ### D. Review and learner profile
 
 Requirements:
 
-1. The product surfaces due review and recovery opportunities in visible user-facing locations.
-2. Learning statistics, mode mix, and wrong-word trends are available to the learner.
+1. The product surfaces Ebbinghaus due review and wrong-word recovery in visible user-facing locations.
+2. Learning statistics, mode mix, Ebbinghaus progress, and wrong-word trends are available to the learner.
 3. Learner-profile outputs should help explain weaknesses and drive recommended next steps.
 4. Time handling for due-review counts must remain consistent across stats, profile, and review queue.
+5. Advanced five-dimension and AI speaking metrics may have their own reporting, but must not redefine foundational stats.
 
 ### E. AI study assistance
 
@@ -216,7 +219,7 @@ The current product baseline is acceptable when:
 
 1. A learner can sign in, reach the home/study surface, and start a study action without manual workaround.
 2. Vocabulary browsing, chapter access, and at least one practice flow are stable on both desktop and mobile layouts.
-3. Wrong-word capture and due-review surfaces remain consistent with learner stats and profile outputs.
+3. Wrong-word capture and Ebbinghaus due-review surfaces remain consistent with learner stats and profile outputs.
 4. AI assistance, notes, and summaries are available without breaking the core learning loop when a secondary service is degraded.
 5. Audio and speech-related study flows are reachable through the canonical browser path.
 

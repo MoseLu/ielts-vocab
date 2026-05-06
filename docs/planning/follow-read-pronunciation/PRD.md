@@ -1,39 +1,36 @@
-# Follow-Read Pronunciation Scoring PRD
+# Follow-Read Pronunciation Boundary PRD
 
 ## Summary
 
-Upgrade the existing `follow` practice mode from guided playback into a scored pronunciation practice mode. Learners listen to the standard word audio, record their own pronunciation, and receive multimodal AI scoring that compares the user recording against the target word and reference pronunciation.
+Decision update, 2026-05-06: `follow` is a foundational practice mode. It belongs with smart, listening, meaning, dictation, quickmemory, and errors in the stats-linked learning loop. AI-scored speaking belongs to the independent five-dimension / speaking mode family planned for paid capability or a 2.0 release.
 
 ## Goals
 
-- Keep `follow` as the single entry point for follow-read practice.
-- Score each recorded attempt with three bands: `<60`, `60-79`, and `>=80`.
-- Count `>=80` as correct and `<80` as wrong in normal learning statistics.
+- Keep `follow` as the foundational entry point for follow-read practice.
+- Count assessed follow-read results in normal learning statistics.
 - Add wrong attempts to the wrong-word system under a dedicated `speaking` dimension.
-- Exclude follow-read results from Ebbinghaus and quick-memory review scheduling.
+- Feed follow-read results into the same Ebbinghaus / quick-memory schedule used by other foundational answer modes.
+- Keep AI pronunciation scoring out of `follow` unless a future product decision explicitly moves it back into the foundational tier.
 
 ## User Experience
 
 - The page keeps the current follow-read display: word, phonetic segments, meaning, progress, playback, recording, and navigation.
-- The learner plays the standard audio, records their pronunciation, then sees a score and feedback before moving on.
-- Score bands:
-  - `<60`: `needs_work`, shown as clearly inaccurate and counted wrong.
-  - `60-79`: `near_pass`, shown as close but not passed and counted wrong.
-  - `>=80`: `pass`, shown as passed and counted correct.
-- Scoring errors, empty audio, or model failures show retry feedback and do not change statistics or wrong-word state.
+- The learner should not be forced into a paid or AI-scored flow to complete foundational follow-read practice.
+- If advanced AI speaking is available, it should be presented as a separate advanced entry, not as the hidden scoring engine for `follow`.
 
 ## Data And Product Rules
 
 - Study sessions use `mode = follow`.
-- Correct/wrong counts are binary: only `>=80` is correct.
 - Wrong-word dimension is `speaking`; it must not reuse `listening`.
 - `speaking` wrong-word state uses the existing dimension-state structure rather than new scalar columns.
 - Passing a `speaking` wrong-word review increments that dimension's pass streak; failing resets the streak.
+- Follow-read results participate in Ebbinghaus scheduling through the shared quick-memory record path.
+- Advanced AI speaking results may write advanced campaign or AI assessment metrics, but must not replace foundational follow-read stats.
 
 ## Acceptance Criteria
 
-- A follow-read attempt below 60 returns `band = needs_work`, `passed = false`, and records a wrong `speaking` attempt.
-- A follow-read attempt from 60 through 79 returns `band = near_pass`, `passed = false`, and records a wrong `speaking` attempt.
-- A follow-read attempt at or above 80 returns `band = pass`, `passed = true`, and records a correct `speaking` attempt.
+- A failed follow-read attempt records a wrong `speaking` attempt.
+- A passed follow-read attempt records a correct `speaking` attempt.
 - Follow-read attempts appear in normal learning statistics and study sessions.
-- No follow-read attempt creates or mutates quick-memory/Ebbinghaus review records.
+- Follow-read attempts create or update Ebbinghaus review records.
+- AI-scored speaking is documented and implemented as an advanced independent mode, not as a mutation of `follow`.
