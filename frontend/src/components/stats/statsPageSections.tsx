@@ -1,6 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom'
 import type { MetricKey, RangeKey } from '../../features/vocabulary/hooks'
-import { requestPracticeMode } from '../../composables/practice/page/practiceModeEvents'
 
 export const RANGE_OPTIONS: Array<{ value: RangeKey; label: string }> = [
   { value: 7, label: '7天' },
@@ -22,7 +21,6 @@ export function ebbRateToneClass(rate: number | null | undefined): string {
 }
 
 export function startEbbinghausReview(navigate: NavigateFunction): void {
-  requestPracticeMode('quickmemory')
   navigate('/practice?review=due')
 }
 

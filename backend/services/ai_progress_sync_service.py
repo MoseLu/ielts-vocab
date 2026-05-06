@@ -32,6 +32,18 @@ def _normalize_optional_str(value) -> str | None:
     return normalized or None
 
 
+def _resolve_quick_memory_source_mode(payload: dict, source: str | None) -> str:
+    source_mode = normalize_practice_mode_or_custom(
+        payload.get('sourceMode') or payload.get('source_mode'),
+        default=None,
+    )
+    if source_mode:
+        return source_mode
+    if source in {'quickmemory', 'quick_memory', 'quick-memory'}:
+        return 'quickmemory'
+    return 'quickmemory'
+
+
 def _safe_non_negative_int(value, default: int = 0) -> int:
     try:
         return max(0, int(value or 0))
@@ -58,6 +70,7 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
     source = _normalize_optional_str(payload.get('source'))
     if source:
         source = source[:50]
+    source_mode = _resolve_quick_memory_source_mode(payload, source)
     if not isinstance(records_in, list):
         return {'error': 'records must be a list'}, 400
 
@@ -123,7 +136,7 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
                     user_id=user_id,
                     event_type='quick_memory_review',
                     source=source,
-                    mode='quickmemory',
+                    mode=source_mode,
                     book_id=current_snapshot['book_id'],
                     chapter_id=current_snapshot['chapter_id'],
                     word=word,
@@ -136,6 +149,7 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
                         'unknown_count': current_snapshot['unknown_count'],
                         'next_review': current_snapshot['next_review'],
                         'fuzzy_count': current_snapshot['fuzzy_count'],
+                        'source_mode': source_mode,
                     },
                 )
                 update_word_mastery_attempt(
@@ -145,7 +159,7 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
                     passed=status == 'known',
                     book_id=current_snapshot['book_id'],
                     chapter_id=current_snapshot['chapter_id'],
-                    source_mode='quickmemory',
+                    source_mode=source_mode,
                     entry='due-review',
                     task='due-review',
                     word_payload=record_payload,

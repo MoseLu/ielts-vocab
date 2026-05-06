@@ -130,6 +130,40 @@ def test_quick_memory_sync_records_unified_attempt_and_mastery(client, app):
         assert ledger.wrong_count == 1
 
 
+def test_quick_memory_sync_preserves_non_quickmemory_source_mode(client, app):
+    register_and_login(client, username='ebbinghaus-source-mode-user')
+
+    res = client.post('/api/ai/quick-memory/sync', json={
+        'source': 'practice',
+        'sourceMode': 'meaning',
+        'records': [{
+            'word': 'dynamic',
+            'bookId': 'book-a',
+            'chapterId': '2',
+            'status': 'known',
+            'firstSeen': 100,
+            'lastSeen': 200,
+            'knownCount': 1,
+            'unknownCount': 0,
+            'nextReview': 300,
+            'fuzzyCount': 0,
+        }],
+    })
+
+    assert res.status_code == 200
+    with app.app_context():
+        event = UserLearningEvent.query.filter_by(
+            event_type='quick_memory_review',
+            word='dynamic',
+        ).one()
+        assert event.source == 'practice'
+        assert event.mode == 'meaning'
+
+        state = UserWordMasteryState.query.filter_by(word='dynamic').one()
+        recognition = state.to_dict()['dimension_states']['recognition']
+        assert recognition['source_mode'] == 'meaning'
+
+
 def test_smart_stats_sync_and_get_round_trip(client, app):
     register_and_login(client, username='smart-stats-sync-user')
 

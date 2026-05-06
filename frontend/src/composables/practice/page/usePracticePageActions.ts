@@ -188,11 +188,13 @@ export function usePracticePageActions({
       analyticsMode,
       advanceToNext = true,
       completionDelayMs = 1200,
+      recordEbbinghaus = true,
     }: {
       dimension: SmartDimension
       analyticsMode: PracticeMode
       advanceToNext?: boolean
       completionDelayMs?: number
+      recordEbbinghaus?: boolean
     },
   ) => {
     await prepareSessionForLearningAction()
@@ -220,6 +222,7 @@ export function usePracticePageActions({
         passed: isCorrect,
         result: isCorrect ? 'correct' : 'wrong',
         attemptIndex,
+        recordEbbinghaus,
       })
       recordWordResult(currentWord.word, dimension, isCorrect)
       if (!isCorrect) saveWrongWord(currentWord)
@@ -282,6 +285,7 @@ export function usePracticePageActions({
     await commitAnswerResult(true, {
       dimension,
       analyticsMode: mode ?? 'smart',
+      recordEbbinghaus: wrongSelections.length === 0,
     })
   }, [
     choiceOptionsReady,
@@ -391,6 +395,7 @@ export function usePracticePageActions({
       passed,
       result: passed ? 'correct' : 'wrong',
       attemptIndex,
+      recordEbbinghaus: true,
     })
     if (!passed) saveWrongWord(currentWord)
     recordErrorReviewOutcome(currentWord, passed)
@@ -442,6 +447,7 @@ export function usePracticePageActions({
       passed: false,
       result: 'skipped',
       attemptIndex,
+      recordEbbinghaus: true,
     })
     registerAnsweredWord(currentWord.word)
     const nextWrong = wrongCount + 1

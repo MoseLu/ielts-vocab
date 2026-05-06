@@ -349,7 +349,7 @@ describe('HomePage', () => {
     expect(screen.getByText('清错词')).toBeInTheDocument()
   })
 
-  it('routes due review todos into the Ebbinghaus review queue', async () => {
+  it('routes due review todos into the Ebbinghaus practice review', async () => {
     const user = userEvent.setup()
     resetHomeTodos(cloneTasks([baseTasks.dueReview]))
 

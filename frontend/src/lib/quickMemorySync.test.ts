@@ -157,4 +157,28 @@ describe('quickMemorySync', () => {
       expect.objectContaining({ word: 'alpha', lastSeen: 5000, knownCount: 2 }),
     ])
   })
+
+  it('can tag Ebbinghaus syncs with the originating practice mode', async () => {
+    const record = {
+      status: 'known' as const,
+      firstSeen: 1000,
+      lastSeen: 5000,
+      knownCount: 2,
+      unknownCount: 0,
+      nextReview: 9000,
+      fuzzyCount: 0,
+    }
+    apiFetchMock.mockResolvedValueOnce({})
+
+    await syncQuickMemoryRecordsToBackend(
+      [{ word: 'Alpha', record }],
+      { source: 'practice', sourceMode: 'meaning' },
+    )
+
+    expect(JSON.parse(String(apiFetchMock.mock.calls[0]?.[1]?.body ?? '{}'))).toMatchObject({
+      source: 'practice',
+      sourceMode: 'meaning',
+      records: [expect.objectContaining({ word: 'alpha' })],
+    })
+  })
 })

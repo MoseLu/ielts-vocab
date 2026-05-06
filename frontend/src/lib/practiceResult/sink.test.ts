@@ -32,6 +32,7 @@ describe('practice result sink', () => {
         handledPlanes.push('progress')
       },
       session: () => { handledPlanes.push('session') },
+      quickMemory: () => { handledPlanes.push('quickMemory') },
       wordMastery: () => { handledPlanes.push('wordMastery') },
       smartStats: () => { handledPlanes.push('smartStats') },
       wrongWordsOnFailure: () => { handledPlanes.push('wrongWordsOnFailure') },
@@ -42,6 +43,7 @@ describe('practice result sink', () => {
     expect(handledPlanes).toEqual([
       'progress',
       'session',
+      'quickMemory',
       'wordMastery',
       'smartStats',
       'wrongWordsOnFailure',
@@ -68,6 +70,7 @@ describe('practice result sink', () => {
     expect(result.planes).toEqual(expect.arrayContaining([
       { plane: 'progress', status: 'ok' },
       { plane: 'session', status: 'ok' },
+      { plane: 'quickMemory', status: 'skipped' },
       { plane: 'wordMastery', status: 'skipped' },
       { plane: 'wrongWordsOnFailure', status: 'skipped' },
     ]))

@@ -50,7 +50,7 @@ export function PracticePageLoadingState({
       </div>
     )
   }
-  if (reviewMode && mode === 'quickmemory' && reviewQueueError) {
+  if (reviewMode && reviewQueueError) {
     return (
       <div className="practice-session-layout">
         <div className="practice-complete">
@@ -62,7 +62,7 @@ export function PracticePageLoadingState({
       </div>
     )
   }
-  if (reviewMode && mode === 'quickmemory' && quickMemoryReviewQueueResolved) {
+  if (reviewMode && quickMemoryReviewQueueResolved) {
     return (
       <div className="practice-session-layout">
         <div className="practice-complete">

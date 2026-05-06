@@ -41,6 +41,7 @@ describe('practice result mode contracts', () => {
     expect(smart.writes).toEqual(expect.arrayContaining([
       'progress',
       'session',
+      'quickMemory',
       'wordMastery',
       'smartStats',
       'wrongWordsOnFailure',
@@ -55,6 +56,7 @@ describe('practice result mode contracts', () => {
     expect(follow.writes).toEqual(expect.arrayContaining([
       'progress',
       'session',
+      'quickMemory',
       'wordMastery',
       'wrongWordsOnFailure',
     ]))
@@ -88,6 +90,7 @@ describe('practice result mode contracts', () => {
     expect(errors.progressPolicy).toBe('local-error-progress-only')
     expect(errors.writes).toEqual(expect.arrayContaining([
       'wrongWordDimensionState',
+      'quickMemory',
       'wordMastery',
       'session',
       'localErrorProgress',

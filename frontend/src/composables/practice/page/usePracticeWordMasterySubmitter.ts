@@ -1,5 +1,6 @@
 import { useCallback, type MutableRefObject } from 'react'
 import { submitWordMasteryAttempt } from '../../../lib/gamePractice'
+import { recordEbbinghausPracticeResult } from '../../../lib/ebbinghausReview'
 import { buildPracticeResultCommand } from '../../../lib/practiceResult/adapters'
 import { applyPracticeResult } from '../../../lib/practiceResult/sink'
 import type { PracticeRuntimeId } from '../../../lib/practiceResult/modeContracts'
@@ -24,6 +25,7 @@ interface SubmitPracticeWordMasteryInput {
   passed: boolean
   result: MasteryResult
   attemptIndex: number
+  recordEbbinghaus?: boolean
 }
 
 export function usePracticeWordMasterySubmitter({
@@ -55,6 +57,17 @@ export function usePracticeWordMasterySubmitter({
     })
 
     void applyPracticeResult(command, {
+      quickMemory: () => {
+        if (input.recordEbbinghaus === false) return
+        recordEbbinghausPracticeResult({
+          word: currentWord,
+          passed: input.passed,
+          sourceMode: input.analyticsMode,
+          bookId,
+          chapterId,
+          occurredAt: command.occurredAt,
+        })
+      },
       wordMastery: () => submitWordMasteryAttempt({
         bookId,
         chapterId,

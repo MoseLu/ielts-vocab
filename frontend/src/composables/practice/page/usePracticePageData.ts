@@ -165,11 +165,11 @@ export function usePracticePageData({
       )
     }
 
-    if (!reviewMode && Object.keys(loadSmartStats()).length === 0) {
+    if (mode !== 'quickmemory' && Object.keys(loadSmartStats()).length === 0) {
       void loadSmartStatsFromBackend()
     }
 
-    if (reviewMode && mode === 'quickmemory') {
+    if (reviewMode) {
       void loadQuickMemoryReviewQueue({
         bookId,
         chapterId,

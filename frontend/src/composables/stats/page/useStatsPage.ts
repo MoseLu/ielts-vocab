@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLearningStats, type MetricKey, type RangeKey } from '../../../features/vocabulary/hooks'
-import { requestPracticeMode } from '../../practice/page/practiceModeEvents'
 import {
   ebbinghausRateCaption,
   ebbinghausSummaryHelp,
@@ -109,7 +108,6 @@ export function useStatsPage() {
   }, [navigate])
 
   const startEbbinghausReview = useCallback(() => {
-    requestPracticeMode('quickmemory')
     navigate('/practice?review=due')
   }, [navigate])
 

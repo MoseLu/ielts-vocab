@@ -34,7 +34,8 @@ function PracticePage({
   const chapterId = searchParams.get('chapter')
   const errorMode = searchParams.get('mode') === 'errors'
   const reviewMode = searchParams.get('review') === 'due'
-  const requestedPracticeMode: PracticeMode = reviewMode ? 'quickmemory' : (mode ?? 'smart')
+  const reviewModeParam = searchParams.get('mode') ?? ''
+  const requestedPracticeMode: PracticeMode = reviewMode ? (['smart', 'listening', 'meaning', 'dictation', 'follow', 'radio', 'quickmemory'].includes(reviewModeParam) ? reviewModeParam as PracticeMode : 'quickmemory') : (mode ?? 'smart')
   const practiceBookId = reviewMode ? (bookId ?? null) : bookId, practiceChapterId = reviewMode ? (chapterId ?? null) : chapterId
   const [vocabulary, setVocabulary] = useState<Word[]>([])
   const [queue, setQueue] = useState<number[]>([])

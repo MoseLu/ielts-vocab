@@ -34,6 +34,7 @@ function buildTodoTaskEntryPath(task: DailyPlanTask): string {
   const params = new URLSearchParams()
   if (taskKey === 'due-review') {
     params.set('review', 'due')
+    if (action.mode) params.set('mode', action.mode)
     if (action.book_id) params.set('book', action.book_id)
     if (action.chapter_id !== null && action.chapter_id !== undefined && action.chapter_id !== '') {
       params.set('chapter', String(action.chapter_id))

@@ -90,6 +90,7 @@ export interface PracticeModeContract {
 const GENERIC_ANSWER_WRITES = [
   'progress',
   'session',
+  'quickMemory',
   'wordMastery',
   'smartStats',
   'wrongWordsOnFailure',
@@ -194,7 +195,7 @@ const CONTRACTS = {
     route: '/practice',
     queueSource: 'wrong-word-store',
     dimensionResolver: 'wrong-word-target-dimension',
-    writes: ['wrongWordDimensionState', 'wordMastery', 'session', 'localErrorProgress', 'modePerformance'],
+    writes: ['wrongWordDimensionState', 'quickMemory', 'wordMastery', 'session', 'localErrorProgress', 'modePerformance'],
     progressPolicy: 'local-error-progress-only',
     sessionPolicy: 'answer-centric-session',
     resumePolicy: 'wrong-word-local-progress',

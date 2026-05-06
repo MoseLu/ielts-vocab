@@ -18,6 +18,12 @@ export interface QuickMemoryReconcileResult {
   uploadedCount: number
 }
 
+interface QuickMemorySyncOptions {
+  keepalive?: boolean
+  source?: string
+  sourceMode?: string
+}
+
 interface ReconcileQuickMemoryOptions {
   skipIfLocalEmpty?: boolean
   minIntervalMs?: number
@@ -129,7 +135,7 @@ function buildQuickMemorySyncRecord(word: string, record: QuickMemoryRecordState
 
 export async function syncQuickMemoryRecordsToBackend(
   records: QuickMemorySyncEntry[],
-  options: { keepalive?: boolean } = {},
+  options: QuickMemorySyncOptions = {},
 ): Promise<void> {
   const entries = normalizeSyncEntries(records)
   if (!entries.length) return
@@ -140,7 +146,8 @@ export async function syncQuickMemoryRecordsToBackend(
     method: 'POST',
     keepalive: options.keepalive,
     body: JSON.stringify({
-      source: 'quickmemory',
+      source: options.source ?? 'quickmemory',
+      sourceMode: options.sourceMode ?? 'quickmemory',
       records: entries.map(({ word, record }) => buildQuickMemorySyncRecord(word, record)),
     }),
   })
