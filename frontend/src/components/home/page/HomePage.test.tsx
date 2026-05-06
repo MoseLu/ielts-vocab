@@ -285,6 +285,7 @@ describe('HomePage', () => {
   it('renders the compact homepage from the independent todo API', () => {
     const { container } = render(<MemoryRouter><HomePage /></MemoryRouter>)
 
+    expect(screen.queryByRole('heading', { name: '学习中心 · 今日计划' })).not.toBeInTheDocument()
     expect(screen.queryByText('今日待办')).not.toBeInTheDocument()
     expect(screen.queryByText('指标怎么达成')).not.toBeInTheDocument()
     expect(screen.getByText('到期复习')).toBeInTheDocument()

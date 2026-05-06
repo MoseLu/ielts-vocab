@@ -43,7 +43,7 @@ export function HomeScreen() {
   const summary = stats?.summary ?? stats?.alltime
 
   return (
-    <ScreenScaffold title="今日学习计划" subtitle="移动端 v1 聚焦学习者主链路。">
+    <ScreenScaffold title="今日学习计划" subtitle="聚焦学习者主链路。">
       <View style={styles.card}>
         {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}

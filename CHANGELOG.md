@@ -2,6 +2,17 @@
 
 All notable product, runtime, and operational changes are recorded here.
 
+## [1.2.2] - 2026-05-07
+
+### Fixed
+- Removed the accidental `学习中心 · 今日计划` masthead from the study-center page and added a regression check so it does not return.
+- Replaced user-visible development-environment verification-code messages with normal product copy in registration, password reset, and email binding flows.
+- Removed internal `v1` wording from the mobile home screen subtitle.
+- Hardened cold catalog search handling by isolating the search circuit breaker and serializing cold search catalog builds.
+
+### Validation
+- Verified file-line guards, frontend repo guards, focused home/auth tests, mobile tests, and targeted backend search/proxy tests.
+
 ## [1.2.1] - 2026-05-07
 
 ### Highlights

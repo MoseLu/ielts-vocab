@@ -226,7 +226,7 @@ export default function AuthPage() {
                 <input
                   type="email"
                   className={`auth-input ${registerForm.getFieldError('email') ? 'auth-input-error' : ''}`}
-                  placeholder="可选，开发环境下验证码会写入后端日志"
+                  placeholder="可选，用于找回密码和接收验证码"
                   value={registerForm.values.email ?? ''}
                   onChange={event => registerForm.setFieldValue('email' as any, event.target.value)}
                   onBlur={() => registerForm.setFieldTouched('email')}

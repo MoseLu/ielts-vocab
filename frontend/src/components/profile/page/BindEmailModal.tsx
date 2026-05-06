@@ -32,7 +32,7 @@ export default function BindEmailModal({ onClose }: BindEmailModalProps) {
           </button>
         </div>
 
-        <p className="bind-email-desc">当前开发环境验证码会写入后端日志。绑定邮箱后可用于后续找回密码和账号安全验证。</p>
+        <p className="bind-email-desc">绑定邮箱后可用于后续找回密码和账号安全验证。</p>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="bind-email-field">

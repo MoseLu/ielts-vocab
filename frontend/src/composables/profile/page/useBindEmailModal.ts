@@ -52,7 +52,7 @@ export function useBindEmailModal({ onClose }: UseBindEmailModalOptions) {
       await sendBindEmailCode(email)
       setCodeSent(true)
       startCountdown()
-      showToast('开发环境：验证码已写入后端日志', 'success')
+      showToast('验证码已发送，请查收', 'success')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : '发送失败，请稍后重试')
     } finally {
