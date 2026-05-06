@@ -21,6 +21,7 @@ class GatewayUpstreamPolicy:
     circuit_breaker_reset_seconds: float
     write_timeout_seconds: float = 10.0
     pool_timeout_seconds: float = 5.0
+    circuit_breaker_key: str | None = None
 
     def build_timeout(self) -> httpx.Timeout:
         return httpx.Timeout(
@@ -29,6 +30,9 @@ class GatewayUpstreamPolicy:
             write=self.write_timeout_seconds,
             pool=self.pool_timeout_seconds,
         )
+
+    def state_key(self) -> str:
+        return self.circuit_breaker_key or self.service_name
 
 
 @dataclass
@@ -110,6 +114,11 @@ def resolve_gateway_upstream_policy(
             retry_attempts=1,
             circuit_breaker_failures=3,
             circuit_breaker_reset_seconds=30.0,
+            circuit_breaker_key=(
+                f'{service_name}:books-search'
+                if normalized_path == '/api/books/search'
+                else None
+            ),
         )
 
     return GatewayUpstreamPolicy(
@@ -123,7 +132,7 @@ def resolve_gateway_upstream_policy(
 
 
 def before_gateway_upstream_attempt(policy: GatewayUpstreamPolicy) -> None:
-    state = _CIRCUIT_BREAKER_STATES.setdefault(policy.service_name, _CircuitBreakerState())
+    state = _CIRCUIT_BREAKER_STATES.setdefault(policy.state_key(), _CircuitBreakerState())
     now = time.monotonic()
     if state.opened_until_monotonic > now:
         raise GatewayCircuitOpenError(
@@ -136,13 +145,13 @@ def before_gateway_upstream_attempt(policy: GatewayUpstreamPolicy) -> None:
 
 
 def record_gateway_upstream_success(policy: GatewayUpstreamPolicy) -> None:
-    state = _CIRCUIT_BREAKER_STATES.setdefault(policy.service_name, _CircuitBreakerState())
+    state = _CIRCUIT_BREAKER_STATES.setdefault(policy.state_key(), _CircuitBreakerState())
     state.failures = 0
     state.opened_until_monotonic = 0.0
 
 
 def record_gateway_upstream_failure(policy: GatewayUpstreamPolicy) -> None:
-    state = _CIRCUIT_BREAKER_STATES.setdefault(policy.service_name, _CircuitBreakerState())
+    state = _CIRCUIT_BREAKER_STATES.setdefault(policy.state_key(), _CircuitBreakerState())
     state.failures += 1
     if state.failures < policy.circuit_breaker_failures:
         return

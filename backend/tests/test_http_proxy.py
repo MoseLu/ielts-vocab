@@ -282,6 +282,45 @@ def test_proxy_browser_request_opens_circuit_after_repeated_failures(monkeypatch
     assert len(captured_calls) == 2
 
 
+def test_catalog_books_search_circuit_is_isolated_from_other_catalog_routes(monkeypatch):
+    reset_gateway_upstream_state()
+    outcomes = [
+        httpx.ConnectError('connect failure'),
+        httpx.ConnectError('connect failure'),
+        httpx.ConnectError('connect failure'),
+        FakeResponse(
+            status_code=200,
+            headers={'content-type': 'application/json'},
+            content=b'{"query":"heavens","results":[],"total":0}',
+        ),
+    ]
+    captured_calls: list[dict[str, object]] = []
+    captured_timeouts: list[object] = []
+    monkeypatch.setattr(
+        http_proxy.httpx,
+        'AsyncClient',
+        _make_async_client(outcomes, captured_calls, captured_timeouts),
+    )
+
+    books_app = _build_proxy_app(service_name='catalog-content-service', upstream_path='/api/books')
+    books_client = TestClient(books_app, base_url='https://axiomaticworld.com')
+
+    first = books_client.get('/proxy')
+    second = books_client.get('/proxy')
+
+    assert first.status_code == 502
+    assert second.status_code == 503
+
+    search_app = _build_proxy_app(service_name='catalog-content-service', upstream_path='/api/books/search')
+    search_client = TestClient(search_app, base_url='https://axiomaticworld.com')
+
+    search = search_client.get('/proxy?q=heavens&limit=12')
+
+    assert search.status_code == 200
+    assert search.json() == {'query': 'heavens', 'results': [], 'total': 0}
+    assert captured_calls[-1]['url'] == 'http://upstream.test/api/books/search'
+
+
 def test_proxy_browser_request_disables_env_proxy_resolution(monkeypatch):
     reset_gateway_upstream_state()
     outcomes = [
