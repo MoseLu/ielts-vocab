@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 
 from services import (
     books_confusable_service,
@@ -20,6 +21,7 @@ from services.wrong_word_custom_book_catalog_service import list_visible_custom_
 
 
 _global_word_search_catalog = None
+_global_word_search_catalog_lock = threading.Lock()
 
 
 def _find_book(book_id):
@@ -221,23 +223,27 @@ def _build_global_word_search_catalog():
     if _global_word_search_catalog is not None:
         return _global_word_search_catalog
 
-    catalog = []
-    seen_keys = set()
-    for book in books_registry_service.list_vocab_books():
-        words = load_book_vocabulary(book['id']) or []
-        for word in words:
-            word_text = str(word.get('word') or '').strip()
-            if not word_text:
-                continue
-            chapter_id = word.get('chapter_id')
-            unique_key = (book['id'], str(chapter_id or ''), word_text.lower())
-            if unique_key in seen_keys:
-                continue
-            seen_keys.add(unique_key)
-            catalog.append({**word, 'book_id': book['id'], 'book_title': book['title']})
+    with _global_word_search_catalog_lock:
+        if _global_word_search_catalog is not None:
+            return _global_word_search_catalog
 
-    _global_word_search_catalog = catalog
-    return catalog
+        catalog = []
+        seen_keys = set()
+        for book in books_registry_service.list_vocab_books():
+            words = load_book_vocabulary(book['id']) or []
+            for word in words:
+                word_text = str(word.get('word') or '').strip()
+                if not word_text:
+                    continue
+                chapter_id = word.get('chapter_id')
+                unique_key = (book['id'], str(chapter_id or ''), word_text.lower())
+                if unique_key in seen_keys:
+                    continue
+                seen_keys.add(unique_key)
+                catalog.append({**word, 'book_id': book['id'], 'book_title': book['title']})
+
+        _global_word_search_catalog = catalog
+        return catalog
 
 
 def _match_word_search_entry(entry, normalized_query):
