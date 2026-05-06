@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { renderJournalMarkdown } from '../../../lib/journalMarkdown'
+import { renderAIResponseMarkdown } from '../../../lib/aiMarkdown'
 
 export const AIRobotSVG = () => (
   <svg viewBox="0 0 1024 1024" width="22" height="22" fill="currentColor" className="ai-robot-icon">
@@ -112,8 +112,8 @@ export function PlainTextBubble({ content }: { content: string }) {
 function MarkdownBubble({ content, className = '' }: { content: string; className?: string }) {
   return (
     <div
-      className={`ai-msg-bubble ai-markdown-content markdown-content ${className}`.trim()}
-      dangerouslySetInnerHTML={{ __html: renderJournalMarkdown(content) }}
+      className={`ai-msg-bubble ai-markdown-content ${className}`.trim()}
+      dangerouslySetInnerHTML={{ __html: renderAIResponseMarkdown(content) }}
     />
   )
 }
