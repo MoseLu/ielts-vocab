@@ -56,11 +56,12 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(var(--size-260), 1fr));
     gap: var(--size-10);
+    align-items: start;
 }
 
 .study-book-card {
     position: relative;
-    min-height: var(--size-196);
+    min-height: 0;
     padding: var(--size-14);
     display: grid;
     grid-template-rows: var(--size-64) auto var(--size-8) auto;
@@ -353,7 +354,6 @@
         grid-template-columns: 1fr;
     }
 
-    .study-book-card,
     .study-add-card {
         min-height: var(--size-180);
     }
@@ -376,5 +376,4 @@
         flex-direction: column;
     }
 }
-
 
