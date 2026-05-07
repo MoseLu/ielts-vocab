@@ -28,6 +28,7 @@ vi.mock('../../../hooks/useAIChat', () => ({
 }))
 
 vi.mock('../../../lib/appSettings', () => ({
+  APP_SETTINGS_CHANGED_EVENT: 'app-settings-changed',
   readAppSettingsFromStorage: () => ({}),
   writeAppSettingsToStorage: (value: unknown) => value,
 }))

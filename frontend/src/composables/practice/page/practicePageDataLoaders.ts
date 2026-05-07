@@ -1,5 +1,5 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type { LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../components/practice/types'
+import type { LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../features/practice/types'
 import { DEFAULT_SETTINGS } from '../../../constants'
 import { apiFetch } from '../../../lib'
 import { filterWrongWords, parseWrongWordsFiltersFromSearchParams } from '../../../features/vocabulary/wrongWordsFilters'
@@ -12,8 +12,8 @@ import {
   readWrongWordsProgress,
   type ReviewQueueContext,
   type ReviewQueueSummary,
-} from '../../../components/practice/page/practicePageHelpers'
-import type { ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
+} from '../../../features/practice/practiceSessionHelpers'
+import type { ErrorReviewRoundResults } from '../../../features/practice/errorReviewSession'
 
 const QUICK_MEMORY_REVIEW_BATCH_SIZE = 100
 

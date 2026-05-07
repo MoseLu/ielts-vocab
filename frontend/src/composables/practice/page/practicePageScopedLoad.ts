@@ -1,12 +1,12 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type { LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../components/practice/types'
+import type { LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../features/practice/types'
 import { loadSmartStats, buildSmartQueue } from '../../../lib/smartMode'
-import { shuffleArray } from '../../../components/practice/utils'
+import { shuffleArray } from '../../../features/practice/practiceOptions'
 import {
   buildWrongWordsQueue,
   createResetProgressState,
   filterVocabularyForMode,
-} from '../../../components/practice/page/practicePageHelpers'
+} from '../../../features/practice/practiceSessionHelpers'
 import {
   resolvePracticeGroupWindow,
   sliceQueueForPracticeGroup,
