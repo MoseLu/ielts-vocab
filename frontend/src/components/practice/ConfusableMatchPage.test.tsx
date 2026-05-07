@@ -91,6 +91,22 @@ describe('ConfusableMatchPage', () => {
       if (url.includes('/api/books/ielts_confusable_match/chapters/progress')) {
         return Promise.resolve({ chapter_progress: {} })
       }
+      if (url.includes('/api/books/ielts_confusable_match/chapters/1')) {
+        return Promise.resolve({
+          chapter: { id: 1, title: '音近词辨析', word_count: 4 },
+          words: [
+            { word: 'site', phonetic: '/saɪt/', pos: 'n.', definition: '位置；场所' },
+            { word: 'sight', phonetic: '/saɪt/', pos: 'n.', definition: '看见；景象；视力' },
+            { word: 'whether', phonetic: '/ˈweðə(r)/', pos: 'conj.', definition: '是否；不管；无论；' },
+            { word: 'weather', phonetic: '/ˈweðə(r)/', pos: 'n.', definition: '天气' },
+          ],
+        })
+      }
+      if (url.includes('/api/books/ielts_confusable_match/chapters')) {
+        return Promise.resolve({
+          chapters: [{ id: 1, title: '音近词辨析', word_count: 4 }],
+        })
+      }
       if (url.includes('/mode-progress') || url.includes('/progress')) {
         return Promise.resolve({})
       }
@@ -197,6 +213,20 @@ describe('ConfusableMatchPage', () => {
     apiFetchMock.mockImplementation((url: string) => {
       if (url.includes('/api/books/ielts_confusable_match/chapters/progress')) {
         return Promise.resolve({ chapter_progress: {} })
+      }
+      if (url.includes('/api/books/ielts_confusable_match/chapters/1001')) {
+        return Promise.resolve({
+          chapter: { id: 1001, title: '自定义易混组 01 · site / sight', word_count: 2, is_custom: true },
+          words: [
+            { word: 'site', phonetic: '/saɪt/', pos: 'n.', definition: '位置；场所', group_key: 'custom-1001' },
+            { word: 'sight', phonetic: '/saɪt/', pos: 'n.', definition: '看见；景象；视力', group_key: 'custom-1001' },
+          ],
+        })
+      }
+      if (url.includes('/api/books/ielts_confusable_match/chapters')) {
+        return Promise.resolve({
+          chapters: [{ id: 1001, title: '自定义易混组 01 · site / sight', word_count: 2, group_count: 1, is_custom: true }],
+        })
       }
       if (url.includes('/mode-progress') || url.includes('/progress')) {
         return Promise.resolve({})

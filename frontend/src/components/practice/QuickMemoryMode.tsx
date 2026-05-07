@@ -13,7 +13,8 @@ import {
   syncQuickMemoryRecordsToBackend,
 } from '../../lib/quickMemorySync'
 import { QuickMemoryCountdownRing } from './quick-memory/QuickMemoryCountdownRing'
-import { QuickMemorySummary, type QuickMemorySessionResult as SessionResult } from './quick-memory/QuickMemorySummary'
+import { QuickMemorySummary } from './quick-memory/QuickMemorySummary'
+import type { QuickMemorySessionResult as SessionResult } from '../../features/practice/quickMemorySession'
 import { useQuickMemoryModeSession } from './quick-memory/useQuickMemoryModeSession'
 import { useQuickMemorySession } from '../../composables/practice/quick-memory/useQuickMemorySession'
 import {

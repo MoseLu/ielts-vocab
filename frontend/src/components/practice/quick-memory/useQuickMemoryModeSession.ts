@@ -5,7 +5,7 @@ import {
   syncQuickMemoryRecordsToBackend,
 } from '../../../lib/quickMemorySync'
 import type { QuickMemoryRecordState } from '../../../lib/quickMemory'
-import type { QuickMemorySessionResult as SessionResult } from './QuickMemorySummary'
+import type { QuickMemorySessionResult as SessionResult } from '../../../features/practice/quickMemorySession'
 
 const QUICK_MEMORY_PENDING_SYNC_RETRY_MS = 15000
 

@@ -3,7 +3,6 @@ import {
   loadBookProgressSnapshot,
   loadChapterProgressSnapshot,
   persistBookProgressSnapshot,
-  persistChapterProgressSnapshot,
 } from './progressStorage'
 import { STORAGE_KEYS } from '../../constants'
 

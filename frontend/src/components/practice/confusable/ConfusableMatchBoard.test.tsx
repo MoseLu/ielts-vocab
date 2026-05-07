@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 import { ConfusableMatchBoard, type ConfusableBoardGroup } from './ConfusableMatchBoard'
-import type { MatchCard, MatchWord } from '../confusableMatch'
+import type { MatchCard, MatchWord } from '../../../features/practice/confusableMatch'
 
 function createWord(overrides: Partial<MatchWord> = {}): MatchWord {
   return {

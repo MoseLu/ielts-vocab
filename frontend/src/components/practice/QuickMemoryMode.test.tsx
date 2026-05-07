@@ -41,6 +41,7 @@ vi.mock('../../hooks/useAIChat', () => ({
 vi.mock('../../lib', () => ({
   apiFetch: (...args: unknown[]) => apiFetchMock(...args),
 }))
+vi.mock('../../lib/apiClient', () => ({ apiFetch: (...args: unknown[]) => apiFetchMock(...args), buildApiUrl: (path: string) => path }))
 vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({ showToast: showToastMock }),
 }))

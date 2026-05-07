@@ -1,4 +1,4 @@
-import type { WrongWordRecord } from '../../features/vocabulary/wrongWordsStore'
+import type { WrongWordRecord } from '../vocabulary/wrongWordsStore'
 import type { LearnerProfile as BackendLearnerProfile } from '../../lib/schemas'
 import type { SmartWordStatsStore } from '../../lib/smartMode'
 import type { PracticeMode, SmartDimension, Word } from './types'

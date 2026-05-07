@@ -8,25 +8,16 @@ import { useToast } from '../../contexts'
 import { apiFetch } from '../../lib'
 import { Modal, Textarea } from '../ui'
 import type { Word } from './types'
+import {
+  MAX_CONFUSABLE_CUSTOM_GROUPS,
+  MAX_CONFUSABLE_CUSTOM_WORDS_PER_GROUP,
+  parseConfusableCustomDraft,
+  type CustomConfusableChapter,
+  type ParsedConfusableDraft,
+} from '../../features/practice/confusableCustomGroups'
 
-const MAX_GROUPS = 12
-const MAX_WORDS_PER_GROUP = 8
-const WORD_TOKEN_RE = /[A-Za-z]+(?:[-'][A-Za-z]+)*/g
-const GROUP_CONTINUATION_RE = /[，,;；、/]\s*$/
-
-export interface CustomConfusableChapter {
-  id: number | string
-  title: string
-  word_count?: number
-  group_count?: number
-  is_custom?: boolean
-}
-
-export interface ParsedConfusableDraft {
-  groups: string[][]
-  groupCount: number
-  issues: string[]
-}
+export { parseConfusableCustomDraft }
+export type { CustomConfusableChapter, ParsedConfusableDraft }
 
 interface CreateCustomConfusableResponse {
   created_count?: number
@@ -45,67 +36,6 @@ interface ConfusableCustomGroupsModalProps {
   initialWords?: string[]
   onCreated?: (chapters: CustomConfusableChapter[]) => void
   onUpdated?: (chapter: CustomConfusableChapter, words: Word[]) => void
-}
-
-export function parseConfusableCustomDraft(draft: string): ParsedConfusableDraft {
-  const issues: string[] = []
-  const groups: string[][] = []
-  const rawSections = draft
-    .split(/\r?\n\s*\r?\n/g)
-    .map(section => section.trim())
-    .filter(Boolean)
-
-  const parseGroupWords = (rawGroup: string): string[] => {
-    const tokens = rawGroup.match(WORD_TOKEN_RE) ?? []
-    const seen = new Set<string>()
-    const words: string[] = []
-
-    tokens.forEach(token => {
-      const normalized = token.trim().toLowerCase()
-      if (!normalized || seen.has(normalized)) return
-      seen.add(normalized)
-      words.push(normalized)
-    })
-
-    return words
-  }
-
-  rawSections.forEach(section => {
-    const sectionLines = section
-      .split(/\r?\n/)
-      .map(line => line.trim())
-      .filter(Boolean)
-
-    const shouldMergeAsSingleGroup =
-      sectionLines.length === 1 ||
-      sectionLines.every(line => (line.match(WORD_TOKEN_RE) ?? []).length <= 1) ||
-      sectionLines.some(line => GROUP_CONTINUATION_RE.test(line))
-
-    const rawGroups = shouldMergeAsSingleGroup ? [section] : sectionLines
-
-    rawGroups.forEach(rawGroup => {
-      const words = parseGroupWords(rawGroup)
-      const groupIndex = groups.length + 1
-
-      if (words.length < 2) {
-        issues.push(`第 ${groupIndex} 组至少需要 2 个不同单词`)
-      } else if (words.length > MAX_WORDS_PER_GROUP) {
-        issues.push(`第 ${groupIndex} 组最多支持 ${MAX_WORDS_PER_GROUP} 个单词`)
-      }
-
-      groups.push(words)
-    })
-  })
-
-  if (groups.length > MAX_GROUPS) {
-    issues.push(`一次最多创建 ${MAX_GROUPS} 组易混词`)
-  }
-
-  return {
-    groups,
-    groupCount: groups.length,
-    issues,
-  }
 }
 
 export default function ConfusableCustomGroupsModal({
@@ -247,13 +177,13 @@ export default function ConfusableCustomGroupsModal({
 
         <div className="confusable-custom-meta">
           <span>{parsedDraft.groupCount || 0} 组草稿</span>
-          <span>每组 2-{MAX_WORDS_PER_GROUP} 个单词</span>
-          <span>一次最多 {MAX_GROUPS} 组</span>
+          <span>每组 2-{MAX_CONFUSABLE_CUSTOM_WORDS_PER_GROUP} 个单词</span>
+          <span>一次最多 {MAX_CONFUSABLE_CUSTOM_GROUPS} 组</span>
         </div>
 
         <div className="confusable-custom-preview">
           {parsedDraft.groups.length > 0 ? (
-            parsedDraft.groups.slice(0, MAX_GROUPS).map((group, index) => (
+            parsedDraft.groups.slice(0, MAX_CONFUSABLE_CUSTOM_GROUPS).map((group, index) => (
               <div key={`${index}-${group.join('-')}`} className="confusable-custom-preview-row">
                 <div className="confusable-custom-preview-head">
                   <span className="confusable-custom-preview-label">第 {index + 1} 组</span>

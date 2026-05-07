@@ -1,5 +1,5 @@
-import type { MatchCard, MatchWord } from '../confusableMatch'
-import { getSelectionHint, type ActiveLine } from './confusableMatchPageHelpers'
+import type { MatchCard, MatchWord } from '../../../features/practice/confusableMatch'
+import { getSelectionHint, type ActiveLine } from '../../../features/practice/confusableMatchPagePresentation'
 import {
   buildConfusableContrastNote,
   buildWordDiffParts,

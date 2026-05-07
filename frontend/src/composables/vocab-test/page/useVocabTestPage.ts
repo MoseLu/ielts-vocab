@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Word } from '../../../components/practice/types'
-import { playWordAudio, shuffleArray } from '../../../components/practice/utils'
+import type { Word } from '../../../features/practice/types'
+import { playWordAudio } from '../../../features/practice/audio/practiceAudio'
+import { shuffleArray } from '../../../features/practice/practiceOptions'
 import { apiFetch } from '../../../lib'
 
 const TEST_WORD_COUNT = 20

@@ -1,10 +1,9 @@
+import { apiFetch } from './apiClient'
 import {
   GameCampaignAttemptResponseSchema,
   GameCampaignStartResponseSchema,
   GameCampaignStateSchema,
   GameThemeCatalogSchema,
-  apiFetch,
-  safeParse,
   type GameCampaignAttemptResponse,
   type GameCampaignDimension,
   type GameCampaignStartResponse,
@@ -13,7 +12,8 @@ import {
   type GameLevelKind,
   type GameNodeType,
   type Word,
-} from './index'
+} from './schemas'
+import { safeParse } from './validation'
 
 interface GamePracticeScope {
   bookId?: string | null

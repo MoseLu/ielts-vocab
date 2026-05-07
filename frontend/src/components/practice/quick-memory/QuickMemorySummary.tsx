@@ -1,10 +1,7 @@
 import type { PracticeMode, Word } from '../types'
+import type { QuickMemorySessionResult } from '../../../features/practice/quickMemorySession'
 
-export interface QuickMemorySessionResult {
-  wordIdx: number
-  choice: 'known' | 'unknown'
-  wasFuzzy: boolean
-}
+export type { QuickMemorySessionResult }
 
 function formatSessionDuration(seconds: number): string {
   const safeSeconds = Math.max(0, Math.round(seconds))

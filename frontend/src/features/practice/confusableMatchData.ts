@@ -1,4 +1,4 @@
-import { apiFetch, buildBookPracticePath } from '../../../lib'
+import { apiFetch, buildBookPracticePath } from '../../lib'
 import {
   buildMatchGroups,
   buildRoundCards,
@@ -7,13 +7,15 @@ import {
   resolveRoundGroupKeys,
   type MatchCard,
   type MatchProgressSnapshot,
-} from '../confusableMatch'
-import { persistChapterSnapshot, readStoredChapterSnapshot } from './confusableMatchPageHelpers'
-import type { Chapter, ProgressData, Word } from '../types'
+} from './confusableMatch'
+import { persistChapterSnapshot, readStoredChapterSnapshot } from './confusableMatchStorage'
+import type { Chapter, ProgressData, Word } from './types'
 
 type NavigateFn = (path: string, options?: { replace?: boolean }) => void
 
-export type ChapterProgressResponse = { chapter_progress?: Record<string, ProgressData | MatchProgressSnapshot> }
+export type ChapterProgressResponse = {
+  chapter_progress?: Record<string, ProgressData | MatchProgressSnapshot>
+}
 type ChapterWordsResponse = { chapter?: Chapter; words?: Word[] }
 type ChaptersResponse = { chapters?: Chapter[] }
 
@@ -116,7 +118,7 @@ export function buildConfusableMatchSnapshot({
   isCompleted: boolean
   answeredWordKeys: Set<string>
   roundGroupKeys: string[]
-}) {
+}): MatchProgressSnapshot {
   return {
     current_index: answeredCount,
     correct_count: correctCount,
@@ -137,7 +139,7 @@ export function persistConfusableMatchProgress({
   bookId: string
   chapterId: string
   snapshot: MatchProgressSnapshot
-}) {
+}): MatchProgressSnapshot {
   persistChapterSnapshot(bookId, chapterId, snapshot)
   void apiFetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
     method: 'POST',

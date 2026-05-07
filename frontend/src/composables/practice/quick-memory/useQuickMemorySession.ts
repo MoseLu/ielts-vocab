@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { apiFetch } from '../../../lib'
 import { flushStudySessionOnPageHide } from '../../../hooks/useAIChat'
-import { persistChapterProgressSnapshot } from '../../../components/practice/progressStorage'
-import type { QuickMemorySessionResult } from '../../../components/practice/quick-memory/QuickMemorySummary'
+import { persistChapterProgressSnapshot } from '../../../features/practice/progressStorage'
+import type { QuickMemorySessionResult } from '../../../features/practice/quickMemorySession'
 
 interface QuickMemorySessionLifecycleArgs {
   bookId: string | null

@@ -1,13 +1,13 @@
-import { DEFAULT_SETTINGS } from '../../../../constants'
-import { readAppSettingsFromStorage } from '../../../../lib/appSettings'
-import { playWordAudio as playPracticeWordAudio } from '../../utils.audio'
+import { DEFAULT_SETTINGS } from '../../../constants'
+import { readAppSettingsFromStorage } from '../../../lib/appSettings'
+import { playWordAudio as playPracticeWordAudio } from '../audio/practiceAudio'
 import type {
   GameCampaignDimension,
   GameCampaignNode,
   GameCampaignWord,
   GameLevelKind,
   Word,
-} from '../../../../lib'
+} from '../../../lib'
 
 export const LEVEL_KIND_LABELS: Record<GameLevelKind, string> = {
   spelling: '会写',
