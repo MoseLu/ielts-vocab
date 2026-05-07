@@ -135,5 +135,27 @@ describe('PracticePageLoadingState review errors', () => {
     expect(screen.getByText('到期复习暂时打不开')).toBeInTheDocument()
     expect(screen.getByText('加载到期复习失败，请刷新后重试。')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '重新加载' })).toBeInTheDocument()
+    expect(screen.getByTitle('切换模式')).toBeInTheDocument()
+  })
+
+  it('keeps the mode switch visible when listening materials are missing', () => {
+    render(
+      <PracticePageLoadingState
+        navigate={vi.fn()}
+        mode="listening"
+        bookId="wrong_words_3"
+        chapterId="wrong_word_3_m"
+        currentChapterTitle="M 组错词"
+        noListeningPresets
+        reviewMode={false}
+        reviewQueueError={null}
+        quickMemoryReviewQueueResolved={false}
+      />,
+    )
+
+    expect(screen.getByText('当前词表暂无可用听音辨析')).toBeInTheDocument()
+    expect(screen.getByTitle('切换模式')).toBeInTheDocument()
+    expect(screen.queryByTitle('单词列表')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('设置')).not.toBeInTheDocument()
   })
 })

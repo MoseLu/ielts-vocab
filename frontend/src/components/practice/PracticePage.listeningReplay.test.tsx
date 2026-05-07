@@ -5,6 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PracticePage from './PracticePage'
 
 const apiFetchMock = vi.fn()
+const backgroundPracticeWrites = new Set(['/api/ai/quick-memory/sync', '/api/ai/practice/game/attempt'])
+function apiClientFetchMock(url: string, ...args: unknown[]) {
+  if (backgroundPracticeWrites.has(String(url))) return Promise.resolve({})
+  return apiFetchMock(url, ...args)
+}
 const fetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const playWordAudioMock = vi.fn()
@@ -57,8 +62,17 @@ vi.mock('../../lib', async () => {
   }
 })
 
-vi.mock('./utils', async () => {
-  const actual = await vi.importActual<typeof import('./utils')>('./utils')
+vi.mock('../../lib/apiClient', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/apiClient')>('../../lib/apiClient')
+  return {
+    ...actual,
+    apiFetch: (...args: [string, ...unknown[]]) => apiClientFetchMock(...args),
+    buildApiUrl: (path: string) => path,
+  }
+})
+
+vi.mock('../../features/practice/audio/practiceAudio', async () => {
+  const actual = await vi.importActual<typeof import('../../features/practice/audio/practiceAudio')>('../../features/practice/audio/practiceAudio')
   return {
     ...actual,
     playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
@@ -161,6 +175,7 @@ describe('PracticePage listening replay', () => {
 
     fetchMock.mockResolvedValue({ json: async () => ({ vocabulary }) })
     apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/vocabulary/day/1') return fetch(url).then(response => response.json())
       if (url === '/api/ai/learner-profile') return Promise.resolve({})
       if (url === '/api/progress') return Promise.resolve({})
       if (url === '/api/ai/wrong-words/sync') return Promise.resolve({})

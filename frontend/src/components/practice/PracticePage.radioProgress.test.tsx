@@ -44,6 +44,15 @@ const controlsHookValue = {
 
 vi.stubGlobal('fetch', vi.fn())
 
+async function apiFetchFixture(url: string, ...args: unknown[]) {
+  const requestUrl = String(url)
+  if (/^\/api\/books\/[^/]+\/chapters$/.test(requestUrl) || requestUrl.startsWith('/api/books/word-list?')) {
+    const response = await fetch(requestUrl)
+    return response.json()
+  }
+  return apiFetchMock(url, ...args)
+}
+
 vi.mock('../../lib/smartMode', () => ({
   loadSmartStats: vi.fn(() => ({})),
   loadSmartStatsFromBackend: vi.fn(),
@@ -54,7 +63,7 @@ vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')
   return {
     ...actual,
-    apiFetch: (...args: unknown[]) => apiFetchMock(...args),
+    apiFetch: apiFetchFixture,
     buildApiUrl: (path: string) => path,
   }
 })
@@ -129,7 +138,7 @@ describe('PracticePage radio progress sync', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&include_dictionary=0&chapter_id=1') {
         return Promise.resolve({
           ok: true,
           json: async () => ({
