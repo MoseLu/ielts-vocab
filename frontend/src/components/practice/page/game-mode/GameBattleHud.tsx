@@ -6,7 +6,7 @@ import {
   NODE_TYPE_LABELS,
   getChallengeStep,
   getWaveNumber,
-} from './gameData'
+} from '../../../../features/practice/gameMode/gameData'
 
 const LEVEL_TACTICS: Record<GameLevelKind, { tower: string; threat: string; objective: string }> = {
   definition: {
