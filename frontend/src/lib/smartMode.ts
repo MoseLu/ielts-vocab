@@ -1,7 +1,7 @@
 // ── Smart Mode Adaptive Logic ─────────────────────────────────────────────────
 
 import { STORAGE_KEYS } from '../constants'
-import { apiFetch } from './index'
+import { apiFetch } from './apiClient'
 // Tracks per-word proficiency across three dimensions:
 //   音 (listening)  - 听音选义
 //   意 (meaning)    - 默写模式

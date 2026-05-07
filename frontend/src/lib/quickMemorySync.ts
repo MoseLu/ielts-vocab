@@ -1,4 +1,4 @@
-import { apiFetch } from './index'
+import { apiFetch } from './apiClient'
 import {
   getQuickMemoryStorageKey,
   mergeQuickMemoryRecordsByLastSeen,

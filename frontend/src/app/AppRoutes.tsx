@@ -1,10 +1,9 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth, useToast } from '../contexts'
 import AuthPage from '../components/auth/page/AuthPage'
 import CreateCustomBookPage from '../components/books/page/CreateCustomBookPage'
 import ErrorsPage from '../components/errors/page/ErrorsPage'
-import PracticePage from '../components/practice/PracticePage'
 import Toast from '../components/ui/Toast'
 import { Loading } from '../components/ui/Loading'
 import { ScrollToTop } from './ScrollToTop'
@@ -21,10 +20,11 @@ import StatsPage from '../components/stats/page/StatsPage'
 import TermsPage from '../components/terms/page/TermsPage'
 import VocabBookPage from '../components/books/page/VocabBookPage'
 import VocabTestPage from '../components/vocab-test/page/VocabTestPage'
-import { prdUiAsset } from '../components/practice/page/game-mode/prdUiAssets'
-import { GAME_THEME_SELECT_CARD_URLS } from '../lib/gameThemeCardAssets'
 import type { PracticeMode as HeaderPracticeMode } from '../components/layout/navigation/Header'
-import type { PracticeMode as PracticePageMode } from '../components/practice/types'
+import { GameRouteElement, DEFAULT_GAME_THEME_ID } from './GameRouteElement'
+import { PracticeRouteElement } from './PracticeRouteElement'
+import { preloadGameRouteAssets } from './routeAssetsPreload'
+import { AuthenticatedRoute, GuestOnlyRoute } from './routeGuards'
 
 const AIChatPanel = lazy(() => import('../components/ai-chat/page/AIChatPanel'))
 const ExamAttemptPage = lazy(() => import('../components/exams/page/ExamAttemptPage'))
@@ -42,56 +42,9 @@ interface AppRoutesProps {
 
 const SPECIAL_PAGES = ['/login', '/register', '/forgot-password', '/terms', '/404']
 const CHROME_DEFER_MS = 1200
-const DEFAULT_GAME_THEME_ID = 'study-campus'
-
-function GuestOnlyRoute({
-  isAuthenticated,
-  children,
-}: {
-  isAuthenticated: boolean
-  children: React.ReactNode
-}) {
-  return isAuthenticated ? <Navigate to="/plan" replace /> : <>{children}</>
-}
-
-function AuthenticatedRoute({
-  isAuthenticated,
-  children,
-}: {
-  isAuthenticated: boolean
-  children: React.ReactNode
-}) {
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
-}
 
 function RouteFallback() {
   return <Loading fullScreen />
-}
-
-function preloadImage(href: string, type?: string) {
-  if (typeof document === 'undefined' || !href) return
-  const existing = Array.from(
-    document.head.querySelectorAll<HTMLLinkElement>('link[rel="preload"][as="image"]'),
-  ).some(link => link.href === new URL(href, window.location.href).href)
-  if (existing) return
-  const link = document.createElement('link')
-  link.rel = 'preload'
-  link.as = 'image'
-  link.href = href
-  if (type) link.type = type
-  document.head.appendChild(link)
-}
-
-function preloadGameRouteAssets(pathname: string) {
-  if (pathname === '/game/themes') {
-    GAME_THEME_SELECT_CARD_URLS.forEach(url => preloadImage(url, 'image/webp'))
-  }
-  if (pathname.includes('/mission')) {
-    preloadImage(prdUiAsset.templates.wordMission, 'image/avif')
-  }
-  if (pathname === '/game' || /^\/game\/themes\/[^/]+$/.test(pathname)) {
-    preloadImage(prdUiAsset.templates.wordChainMap, 'image/avif')
-  }
 }
 
 function ChromeSlot({
@@ -102,77 +55,10 @@ function ChromeSlot({
   return <Suspense fallback={null}>{children}</Suspense>
 }
 
-const PRACTICE_ROUTE_QUERY_MODES = new Set<PracticePageMode>([
-  'smart',
-  'listening',
-  'meaning',
-  'dictation',
-  'follow',
-  'radio',
-  'quickmemory',
-])
-
 function normalizeHeaderMode(mode: string): HeaderPracticeMode {
   return ['smart', 'listening', 'meaning', 'dictation', 'follow', 'radio'].includes(mode)
     ? (mode as HeaderPracticeMode)
     : 'smart'
-}
-
-function normalizePracticeRouteMode(value: string | null): PracticePageMode | null {
-  return PRACTICE_ROUTE_QUERY_MODES.has(value as PracticePageMode)
-    ? value as PracticePageMode
-    : null
-}
-
-function PracticeRouteElement({
-  isAuthenticated,
-  user,
-  currentDay,
-  mode,
-  onModeChange,
-  onDayChange,
-  showToast,
-}: {
-  isAuthenticated: boolean
-  user: unknown
-  currentDay: number | null
-  mode: string
-  onModeChange: (mode: string) => void
-  onDayChange: (day: number) => void
-  showToast: (message: string, type?: 'info' | 'success' | 'error') => void
-}) {
-  const location = useLocation()
-  const searchParams = new URLSearchParams(location.search)
-  const routeMode = normalizePracticeRouteMode(searchParams.get('mode'))
-
-  useEffect(() => {
-    if (!routeMode || routeMode === mode) return
-    onModeChange(routeMode)
-  }, [mode, onModeChange, routeMode])
-
-  if (searchParams.get('mode') === 'game') {
-    searchParams.delete('mode')
-    const query = searchParams.toString()
-    return <Navigate to={`/game${query ? `?${query}` : ''}`} replace />
-  }
-
-  return (
-    <AuthenticatedRoute isAuthenticated={isAuthenticated}>
-      <PracticePage
-        user={user ?? undefined}
-        currentDay={currentDay ?? undefined}
-        mode={routeMode ?? (mode as PracticePageMode)}
-        onModeChange={nextMode => onModeChange(nextMode)}
-        onDayChange={onDayChange}
-        showToast={showToast}
-      />
-    </AuthenticatedRoute>
-  )
-}
-
-function GameRouteElement({ surface }: { surface: 'map' | 'mission' }) {
-  const { themeId } = useParams()
-  return <GameCampaignPage surface={surface} themeId={themeId} />
 }
 
 export function AppRoutes({

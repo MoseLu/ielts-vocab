@@ -18,6 +18,7 @@ Use this folder for documents that describe the system structure itself.
 ## Current Specs
 
 - `backend-layered-architecture.md`: backend layer map, capability modules, data flow, and dependency rules.
+- `frontend-boundaries.md`: web, mobile, and shared client-core boundary rules for frontend architecture work.
 - `service-ownership-matrix.md`: first-pass authoritative write ownership and service decomposition matrix.
 - `service-table-boundary-audit.md`: Wave 4 table-level ownership audit, including read-only and transitional shared access.
 - `gateway-service-contracts.md`: gateway-to-service contract skeleton for the first extraction wave.
