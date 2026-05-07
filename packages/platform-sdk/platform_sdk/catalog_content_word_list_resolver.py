@@ -24,6 +24,7 @@ from platform_sdk.learning_core_favorites_support import (
 
 PRACTICE_METADATA_BOOK_IDS = ('ielts_reading_premium', 'ielts_listening_premium')
 PRACTICE_METADATA_FIELDS = ('group_key', 'listening_confusables', 'examples')
+_practice_metadata_lookup_cache: dict[str, dict] | None = None
 
 
 def _chapter_id_matches(value: Any, chapter_id: Any) -> bool:
@@ -63,6 +64,10 @@ def _practice_metadata_score(word: dict) -> tuple[int, int, int, int]:
 
 
 def _build_practice_metadata_lookup() -> dict[str, dict]:
+    global _practice_metadata_lookup_cache
+    if _practice_metadata_lookup_cache is not None:
+        return _practice_metadata_lookup_cache
+
     lookup: dict[str, dict] = {}
     for book_id in PRACTICE_METADATA_BOOK_IDS:
         try:
@@ -76,6 +81,7 @@ def _build_practice_metadata_lookup() -> dict[str, dict]:
             existing = lookup.get(word_key)
             if existing is None or _practice_metadata_score(source_word) > _practice_metadata_score(existing):
                 lookup[word_key] = source_word
+    _practice_metadata_lookup_cache = lookup
     return lookup
 
 
