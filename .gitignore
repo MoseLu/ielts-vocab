@@ -43,6 +43,10 @@ gcm-diagnose.log
 # Build outputs
 dist/
 build/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/android/local.properties
 
 # Temporary files
 *.tmp

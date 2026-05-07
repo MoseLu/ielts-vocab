@@ -5,10 +5,18 @@ type NativeAudioCaptureModule = {
   configureSession: () => Promise<void>
   removeListeners: (count: number) => void
   startPcmCapture: () => Promise<void>
-  stopPcmCapture: () => Promise<void>
+  stopPcmCapture: () => Promise<NativeAudioCaptureResult | null>
 }
 
 const nativeModule = NativeModules.IeltsAudioCapture as NativeAudioCaptureModule | undefined
+
+export type NativeAudioCaptureResult = {
+  durationSeconds?: number
+  fileUri?: string
+  mimeType?: string
+  name?: string
+  path?: string
+}
 
 export const audioCaptureEvents = nativeModule ? new NativeEventEmitter(nativeModule) : null
 
@@ -21,6 +29,6 @@ export async function startNativePcmCapture(): Promise<void> {
   await nativeModule.startPcmCapture()
 }
 
-export async function stopNativePcmCapture(): Promise<void> {
-  await nativeModule?.stopPcmCapture?.()
+export async function stopNativePcmCapture(): Promise<NativeAudioCaptureResult | null> {
+  return nativeModule?.stopPcmCapture?.() ?? null
 }
