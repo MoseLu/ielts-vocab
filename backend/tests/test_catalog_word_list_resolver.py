@@ -73,6 +73,7 @@ def test_custom_wrong_word_book_list_hydrates_paid_listening_metadata(monkeypatc
         {'word': 'butter', 'phonetic': '/bʌtə/', 'pos': 'n.', 'definition': '黄油'},
     ]
 
+    monkeypatch.setattr(word_list_resolver, '_practice_metadata_lookup_cache', None)
     monkeypatch.setattr(word_list_resolver, '_current_user_id', lambda: 7)
     monkeypatch.setattr(word_list_resolver, 'get_vocab_book', lambda book_id: None)
     monkeypatch.setattr(
