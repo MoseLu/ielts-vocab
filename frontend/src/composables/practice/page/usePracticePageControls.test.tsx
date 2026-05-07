@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import type { Dispatch, SetStateAction } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AppSettings, LastState, Word, WordStatuses } from '../../../components/practice/types'
+import type { AppSettings, LastState, Word, WordStatuses } from '../../../features/practice/types'
 import { usePracticePageControls } from './usePracticePageControls'
 
 const apiFetchMock = vi.fn(() => Promise.resolve(undefined))

@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type { LastState, Word, WordStatuses } from '../../../components/practice/types'
-import { buildWrongWordsQueue } from '../../../components/practice/page/practicePageHelpers'
+import type { LastState, Word, WordStatuses } from '../../../features/practice/types'
+import { buildWrongWordsQueue } from '../../../features/practice/practiceSessionHelpers'
 import {
   resolvePracticeGroupWindow,
   sliceQueueForPracticeGroup,

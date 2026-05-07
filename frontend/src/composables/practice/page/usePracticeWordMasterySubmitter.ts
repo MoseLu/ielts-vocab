@@ -4,7 +4,7 @@ import { recordEbbinghausPracticeResult } from '../../../lib/ebbinghausReview'
 import { buildPracticeResultCommand } from '../../../lib/practiceResult/adapters'
 import { applyPracticeResult } from '../../../lib/practiceResult/sink'
 import type { PracticeRuntimeId } from '../../../lib/practiceResult/modeContracts'
-import type { PracticeMode, SmartDimension, Word } from '../../../components/practice/types'
+import type { PracticeMode, SmartDimension, Word } from '../../../features/practice/types'
 
 type MasteryDimension = SmartDimension | 'speaking'
 type MasteryResult = 'correct' | 'wrong' | 'skipped'

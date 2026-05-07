@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import type { PracticeMode, Word, WordListActionControls } from '../../../components/practice/types'
+import type { PracticeMode, Word, WordListActionControls } from '../../../features/practice/types'
 import { useFavoriteWords, useFamiliarWords } from '../../../features/vocabulary/hooks'
 
 type ToastType = 'success' | 'error' | 'info'

@@ -4,7 +4,7 @@ import { readPracticeResultOutbox } from '../../../lib/practiceResult/outbox'
 import { submitWordMasteryAttempt } from '../../../lib/gamePractice'
 import { recordEbbinghausPracticeResult } from '../../../lib/ebbinghausReview'
 import { usePracticeWordMasterySubmitter } from './usePracticeWordMasterySubmitter'
-import type { Word } from '../../../components/practice/types'
+import type { Word } from '../../../features/practice/types'
 
 vi.mock('../../../lib/gamePractice', () => ({
   submitWordMasteryAttempt: vi.fn(),

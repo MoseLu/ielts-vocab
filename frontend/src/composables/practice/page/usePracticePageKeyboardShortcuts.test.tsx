@@ -2,7 +2,7 @@ import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 import { usePracticePageKeyboardShortcuts } from './usePracticePageKeyboardShortcuts'
-import type { PracticeMode } from '../../../components/practice/types'
+import type { PracticeMode } from '../../../features/practice/types'
 
 const openGlobalWordSearchMock = vi.fn()
 const dispatchPreviousMock = vi.fn()
@@ -20,13 +20,13 @@ vi.mock('../../../components/layout/navigation/globalWordSearchEvents', () => ({
   openGlobalWordSearch: (...args: unknown[]) => openGlobalWordSearchMock(...args),
 }))
 
-vi.mock('../../../components/practice/page/practiceGlobalShortcutEvents', () => ({
+vi.mock('../../../features/practice/practiceGlobalShortcutEvents', () => ({
   dispatchPracticeGlobalShortcutPrevious: (...args: unknown[]) => dispatchPreviousMock(...args),
   dispatchPracticeGlobalShortcutNext: (...args: unknown[]) => dispatchNextMock(...args),
   dispatchPracticeGlobalShortcutReplay: (...args: unknown[]) => dispatchReplayMock(...args),
 }))
 
-vi.mock('../../../components/practice/utils', () => ({
+vi.mock('../../../features/practice/audio/practiceAudio', () => ({
   playExampleAudio: (...args: unknown[]) => playExampleAudioMock(...args),
 }))
 

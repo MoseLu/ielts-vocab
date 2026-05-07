@@ -6,7 +6,7 @@ import type {
   ProgressData,
   Word,
   WordStatuses,
-} from '../../../components/practice/types'
+} from '../../../features/practice/types'
 
 function getResumeLabels(mode: PracticeMode) {
   switch (mode) {

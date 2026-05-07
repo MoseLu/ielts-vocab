@@ -11,9 +11,9 @@ import {
 import { apiFetch } from '../../../lib'
 import { submitWordMasteryAttempt } from '../../../lib/gamePractice'
 import { loadSmartStats } from '../../../lib/smartMode'
-import { updateErrorReviewRoundResults, type ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
-import { resolveWrongWordDimensionForPractice } from '../../../components/practice/page/practicePageHelpers'
-import type { QuickMemoryRecordState, SmartDimension, PracticeMode, Word } from '../../../components/practice/types'
+import { updateErrorReviewRoundResults, type ErrorReviewRoundResults } from '../../../features/practice/errorReviewSession'
+import { resolveWrongWordDimensionForPractice } from '../../../features/practice/practiceSessionHelpers'
+import type { QuickMemoryRecordState, SmartDimension, PracticeMode, Word } from '../../../features/practice/types'
 
 interface UsePracticePageWrongWordActionsParams {
   user: unknown
