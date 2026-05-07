@@ -194,9 +194,12 @@ def _remote_headers_match(remote_headers: dict, desired_headers: dict[str, str])
 def _get_existing_object_meta(bucket, object_key: str, relative_path: str):
     last_exc: Exception | None = None
     retry_attempts = _upload_retry_attempts()
+    lookup = getattr(bucket, 'head_object', None)
+    if not callable(lookup):
+        lookup = bucket.get_object_meta
     for attempt in range(1, retry_attempts + 1):
         try:
-            return bucket.get_object_meta(object_key)
+            return lookup(object_key)
         except (KeyError, oss_exceptions.NoSuchKey, oss_exceptions.NotFound):
             return None
         except Exception as exc:

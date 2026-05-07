@@ -35,8 +35,19 @@ class _FakeBucket:
         object_headers['ETag'] = hashlib.md5(body).hexdigest()
         self.objects[key] = {'body': body, 'headers': object_headers}
 
-    def get_object_meta(self, key):
+    def head_object(self, key):
         return self.objects[key]
+
+    def get_object_meta(self, key):
+        stored = self.objects[key]
+        headers = stored['headers']
+        return {
+            'body': stored['body'],
+            'headers': {
+                'Content-Length': headers['Content-Length'],
+                'ETag': headers['ETag'],
+            },
+        }
 
 
 def test_frontend_asset_upload_gzips_text_assets(tmp_path, monkeypatch):
