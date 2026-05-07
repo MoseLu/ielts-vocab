@@ -29,4 +29,27 @@ describe('speech session reducer', () => {
     assert.equal(high.level, 1)
     assert.equal(low.level, 0)
   })
+
+  it('keeps the recording state while the socket finishes connecting', () => {
+    const recording = reduceSpeechSession(initialSpeechSessionState, {
+      type: 'start_recording',
+      recognitionId: 9,
+    })
+    const connecting = reduceSpeechSession(recording, { type: 'connect' })
+    const ready = reduceSpeechSession(connecting, { type: 'ready' })
+
+    assert.equal(connecting.status, 'recording')
+    assert.equal(ready.status, 'recording')
+  })
+
+  it('keeps recording stoppable when transcription fails mid-capture', () => {
+    const recording = reduceSpeechSession(initialSpeechSessionState, {
+      type: 'start_recording',
+      recognitionId: 10,
+    })
+    const failed = reduceSpeechSession(recording, { type: 'error', message: 'socket unavailable' })
+
+    assert.equal(failed.status, 'recording')
+    assert.equal(failed.error, 'socket unavailable')
+  })
 })
