@@ -17,6 +17,36 @@ def _task_map(payload: dict) -> dict[str, dict]:
     return {item['kind']: item for item in items}
 
 
+def _create_cached_due_plan(user_id: int, *, plan_date: str, generated_at: datetime) -> UserHomeTodoPlan:
+    plan = UserHomeTodoPlan(
+        user_id=user_id,
+        plan_date=plan_date,
+        pending_count=1,
+        completed_count=0,
+        carry_over_count=0,
+        last_generated_at=generated_at,
+    )
+    db.session.add(plan)
+    db.session.flush()
+    item = UserHomeTodoItem(
+        plan_id=plan.id,
+        task_key='due-review',
+        kind='due-review',
+        status='pending',
+        priority=10,
+        title='到期复习',
+        description='先完成今天的复习队列',
+        badge='1 个待复习',
+        carry_over_count=0,
+    )
+    item.set_action({'kind': 'due-review', 'task': 'due-review', 'cta_label': '去复习'})
+    item.set_steps([])
+    item.set_evidence({})
+    db.session.add(item)
+    db.session.commit()
+    return plan
+
+
 def test_build_home_todos_response_rolls_previous_pending_items_into_today_plan(app, monkeypatch):
     now = datetime(2026, 4, 16, 4, 0, 0)
     signals = {
@@ -231,6 +261,70 @@ def test_build_home_todos_response_sanitizes_speaking_copy_for_home_todo(app, mo
     assert speaking['steps'][1]['label'] == '1 句英文主动表达'
     assert '证据' not in speaking['description']
     assert all('证据' not in step['label'] for step in speaking['steps'])
+
+
+def test_build_home_todos_response_reuses_recent_plan_without_learning_core(app, monkeypatch):
+    now = datetime(2026, 4, 16, 4, 0, 0)
+    monkeypatch.setenv('AI_HOME_TODO_PLAN_CACHE_SECONDS', '900')
+    monkeypatch.setattr(ai_home_todo_application, 'utc_now_naive', lambda: now)
+    monkeypatch.setattr(
+        ai_home_todo_application,
+        'fetch_learning_core_home_todo_signals',
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('learning-core should not be called')),
+    )
+
+    with app.app_context():
+        user = _create_user()
+        _create_cached_due_plan(
+            user.id,
+            plan_date='2026-04-16',
+            generated_at=now - timedelta(minutes=4),
+        )
+
+        payload, status = ai_home_todo_application.build_home_todos_response(
+            user.id,
+            target_date='2026-04-16',
+        )
+
+    assert status == 200
+    assert payload['date'] == '2026-04-16'
+    assert payload['summary']['pending_count'] == 1
+    assert _task_map(payload)['due-review']['title'] == '到期复习'
+
+
+def test_build_home_todos_response_serves_stale_plan_when_learning_core_times_out(app, monkeypatch):
+    now = datetime(2026, 4, 16, 4, 0, 0)
+    monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
+    monkeypatch.delenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', raising=False)
+    monkeypatch.setenv('AI_HOME_TODO_PLAN_CACHE_SECONDS', '1')
+    monkeypatch.setattr(ai_home_todo_application, 'utc_now_naive', lambda: now)
+    monkeypatch.setattr(
+        ai_home_todo_application,
+        'fetch_learning_core_home_todo_signals',
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError('learning-core timed out')),
+    )
+    monkeypatch.setattr(
+        ai_home_todo_application,
+        'build_learning_core_home_todo_signals_payload',
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('legacy fallback should stay disabled')),
+    )
+
+    with app.app_context():
+        user = _create_user()
+        _create_cached_due_plan(
+            user.id,
+            plan_date='2026-04-16',
+            generated_at=now - timedelta(hours=2),
+        )
+
+        payload, status = ai_home_todo_application.build_home_todos_response(
+            user.id,
+            target_date='2026-04-16',
+        )
+
+    assert status == 200
+    assert payload['date'] == '2026-04-16'
+    assert _task_map(payload)['due-review']['badge'] == '1 个待复习'
 
 
 def test_build_home_todos_response_returns_strict_boundary_when_learning_core_is_unavailable(monkeypatch):

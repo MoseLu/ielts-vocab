@@ -23,6 +23,7 @@ const HOME_LEARNING_STATS_OPTIONS = {
   pollIntervalMs: 0,
   blockInitialQuickMemoryReconcile: false,
   blockOnLearnerProfile: false,
+  skipInitialQuickMemoryReconcile: true,
 } as const
 
 function buildTodoTaskEntryPath(task: DailyPlanTask): string {

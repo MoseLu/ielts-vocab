@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime
 
+from flask import has_app_context
 from platform_sdk.cross_service_boundary import run_with_legacy_cross_service_fallback
 from platform_sdk.learning_core_home_todo_signals_application import (
     build_learning_core_home_todo_signals_payload,
 )
 from platform_sdk.learning_core_internal_client import fetch_learning_core_home_todo_signals
+from platform_sdk.local_time_support import resolve_local_day_window, utc_now_naive
 from platform_sdk.ai_home_todo_task_builders import (
     TASK_ORDER,
     TASK_PRIORITY,
@@ -18,6 +21,8 @@ from platform_sdk.ai_home_todo_task_builders import (
 )
 from service_models.ai_execution_models import UserHomeTodoItem, UserHomeTodoPlan, db
 
+DEFAULT_PLAN_CACHE_SECONDS = 900
+
 
 def _validate_target_date(target_date: str | None) -> str | None:
     if not target_date:
@@ -27,6 +32,23 @@ def _validate_target_date(target_date: str | None) -> str | None:
     except ValueError:
         return None
     return target_date
+
+
+def _plan_cache_seconds() -> int:
+    raw_value = (os.environ.get('AI_HOME_TODO_PLAN_CACHE_SECONDS') or '').strip()
+    if not raw_value:
+        return DEFAULT_PLAN_CACHE_SECONDS
+    try:
+        return max(0, int(raw_value))
+    except ValueError:
+        return DEFAULT_PLAN_CACHE_SECONDS
+
+
+def _resolve_plan_date(target_date: str | None, now_utc: datetime) -> str:
+    if target_date:
+        return target_date
+    date_str, _start_dt, _end_dt = resolve_local_day_window(None, now_utc)
+    return date_str
 
 
 def _serialize_summary(plan: UserHomeTodoPlan) -> dict:
@@ -122,6 +144,25 @@ def _serialize_plan_payload(plan: UserHomeTodoPlan, items: list[UserHomeTodoItem
     }
 
 
+def _cached_plan_payload(
+    user_id: int,
+    *,
+    plan_date: str,
+    now_utc: datetime,
+    max_age_seconds: int | None,
+) -> tuple[dict, int] | None:
+    if not has_app_context():
+        return None
+    plan = UserHomeTodoPlan.query.filter_by(user_id=user_id, plan_date=plan_date).one_or_none()
+    if plan is None or plan.last_generated_at is None:
+        return None
+    if max_age_seconds is not None:
+        age_seconds = (now_utc - plan.last_generated_at).total_seconds()
+        if age_seconds < 0 or age_seconds > max_age_seconds:
+            return None
+    return _serialize_plan_payload(plan, ranked_items(list(plan.items))), 200
+
+
 def _refresh_home_todo_plan(user_id: int, signals: dict) -> tuple[dict, int]:
     plan_date = str(signals.get('date') or '').strip()
     if not plan_date:
@@ -181,12 +222,34 @@ def build_home_todos_response(
     normalized_date = _validate_target_date(target_date)
     if target_date and not normalized_date:
         return {'error': 'date must be YYYY-MM-DD'}, 400
+    now_utc = utc_now_naive()
+    plan_date = _resolve_plan_date(normalized_date, now_utc)
+    cache_seconds = _plan_cache_seconds()
+    cached = _cached_plan_payload(
+        user_id,
+        plan_date=plan_date,
+        now_utc=now_utc,
+        max_age_seconds=cache_seconds if cache_seconds > 0 else None,
+    ) if cache_seconds > 0 else None
+    if cached is not None:
+        return cached
 
     def primary() -> tuple[dict, int]:
-        signals = fetch_learning_core_home_todo_signals(
-            user_id,
-            target_date=normalized_date,
-        )
+        try:
+            signals = fetch_learning_core_home_todo_signals(
+                user_id,
+                target_date=normalized_date,
+            )
+        except Exception:
+            stale_cached = _cached_plan_payload(
+                user_id,
+                plan_date=plan_date,
+                now_utc=utc_now_naive(),
+                max_age_seconds=None,
+            )
+            if stale_cached is not None:
+                return stale_cached
+            raise
         return _refresh_home_todo_plan(user_id, signals)
 
     def fallback() -> tuple[dict, int]:

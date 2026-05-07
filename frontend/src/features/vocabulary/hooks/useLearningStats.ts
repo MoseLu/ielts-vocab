@@ -221,6 +221,7 @@ export interface UseLearningStatsOptions {
   pollIntervalMs?: number
   blockInitialQuickMemoryReconcile?: boolean
   blockOnLearnerProfile?: boolean
+  skipInitialQuickMemoryReconcile?: boolean
 }
 
 interface LearningStatsResponse {
@@ -251,6 +252,7 @@ export function useLearningStats(
     pollIntervalMs = 60_000,
     blockInitialQuickMemoryReconcile = true,
     blockOnLearnerProfile = true,
+    skipInitialQuickMemoryReconcile = false,
   } = options
   const lastFetchStartedAtRef = useRef(0)
   const hasResolvedInitialFetchRef = useRef(false)
@@ -349,14 +351,14 @@ export function useLearningStats(
     }
 
     try {
-      const reconcilePromise = blockInitialQuickMemoryReconcile
+      const reconcilePromise = blockInitialQuickMemoryReconcile || skipInitialQuickMemoryReconcile
         ? null
         : reconcileQuickMemoryRecordsWithBackend({
             skipIfLocalEmpty: true,
             minIntervalMs: 15_000,
           }).catch(() => ({ uploadedCount: 0 }))
 
-      if (blockInitialQuickMemoryReconcile) {
+      if (blockInitialQuickMemoryReconcile && !skipInitialQuickMemoryReconcile) {
         await reconcileQuickMemoryRecordsWithBackend({
           skipIfLocalEmpty: true,
           minIntervalMs: 15_000,
@@ -423,6 +425,7 @@ export function useLearningStats(
     blockOnLearnerProfile,
     fetchLearnerProfile,
     fetchStatsPayload,
+    skipInitialQuickMemoryReconcile,
     userId,
   ])
 
