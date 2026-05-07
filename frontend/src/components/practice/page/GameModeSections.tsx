@@ -5,7 +5,7 @@ export {
   buildGameScope,
   buildWordPayload,
   getChallengeStep,
-} from './game-mode/gameData'
+} from '../../../features/practice/gameMode/gameData'
 export {
   SpeakingMissionScreen,
   WordMissionScreen,

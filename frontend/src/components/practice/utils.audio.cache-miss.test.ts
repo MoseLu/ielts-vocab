@@ -64,13 +64,13 @@ describe('practice audio cache miss handling', () => {
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
-      signal: expect.anything(),
+      timeoutMs: 1_500,
     }))
     expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=missing-word&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
-      signal: expect.anything(),
+      timeoutMs: 1_500,
     }))
 
     stopAudio()
@@ -98,13 +98,13 @@ describe('practice audio cache miss handling', () => {
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
-      signal: expect.anything(),
+      timeoutMs: 1_500,
     }))
     expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=cache-flaky&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
-      signal: expect.anything(),
+      timeoutMs: 1_500,
     }))
 
     stopAudio()

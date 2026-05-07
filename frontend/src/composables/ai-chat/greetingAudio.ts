@@ -2,7 +2,7 @@ import {
   playManagedAudioBuffer,
   stopManagedAudio,
   warmupManagedAudio,
-} from '../../components/practice/utils.audio.playback'
+} from '../../features/practice/audio/utils.audio.playback'
 import { apiRequest } from '../../lib'
 
 const AI_GREETING_TTS_PAYLOAD = {

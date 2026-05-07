@@ -7,7 +7,7 @@ import { WordMissionScreen } from './GameModeSections'
 const playWordAudioMock = vi.fn(() => Promise.resolve(true))
 const speechSynthesisSpeakMock = vi.fn()
 
-vi.mock('../utils.audio', () => ({
+vi.mock('../../../features/practice/audio/practiceAudio', () => ({
   playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
 }))
 
