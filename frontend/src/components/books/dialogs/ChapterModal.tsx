@@ -10,9 +10,8 @@ import { apiFetch } from '../../../lib'
 import type { BookEntryMode } from '../../../lib'
 import { Skeleton } from '../../ui'
 import { Scrollbar } from '../../ui/Scrollbar'
-import ConfusableCustomGroupsModal, {
-  type CustomConfusableChapter,
-} from '../../practice/ConfusableCustomGroupsModal'
+import ConfusableCustomGroupsModal from '../../practice/ConfusableCustomGroupsModal'
+import type { CustomConfusableChapter } from '../../../features/practice/confusableCustomGroups'
 
 const MODE_META: Record<string, { label: string; title: string }> = {
   ...CHAPTER_PRACTICE_MODE_META,
