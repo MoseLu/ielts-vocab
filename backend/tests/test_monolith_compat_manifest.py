@@ -22,9 +22,12 @@ def test_monolith_compat_route_groups_are_explicit_and_stable():
         'books',
         'ai',
         'notes',
+        'exams',
+        'exam-attempts',
         'tts',
         'tts-admin',
         'admin',
+        'ops',
     ]
     assert [group.url_prefix for group in MONOLITH_COMPAT_ROUTE_GROUPS] == [
         '/api/auth',
@@ -34,9 +37,12 @@ def test_monolith_compat_route_groups_are_explicit_and_stable():
         '/api/books',
         '/api/ai',
         '/api/notes',
+        '/api/exams',
+        '/api/exam-attempts',
         '/api/tts',
         '/api/tts',
         '/api/admin',
+        '/api/ops',
     ]
 
 
@@ -47,10 +53,10 @@ def test_monolith_compat_manifest_describes_blueprint_surface():
     assert descriptions[0]['blueprint'] == 'auth'
     assert descriptions[0]['probe_path'] == '/api/auth/me'
     assert descriptions[0]['surface_kind'] == 'browser'
-    assert descriptions[-2]['blueprint'] == 'tts_admin_legacy'
-    assert descriptions[-2]['probe_path'] == '/api/tts/books-summary'
-    assert descriptions[-2]['surface_kind'] == 'rollback'
-    assert descriptions[-1]['blueprint'] == 'admin'
+    rollback_description = next(item for item in descriptions if item['blueprint'] == 'tts_admin_legacy')
+    assert rollback_description['probe_path'] == '/api/tts/books-summary'
+    assert rollback_description['surface_kind'] == 'rollback'
+    assert descriptions[-1]['blueprint'] == 'ops'
     assert descriptions[0]['has_init_hook'] == 'yes'
     assert descriptions[1]['has_init_hook'] == 'no'
 
@@ -65,9 +71,12 @@ def test_monolith_compat_route_group_resolver_defaults_to_all_groups():
         'books',
         'ai',
         'notes',
+        'exams',
+        'exam-attempts',
         'tts',
         'tts-admin',
         'admin',
+        'ops',
     ]
     assert monolith_compat_surface_names() == ['browser', 'rollback', 'all']
     assert resolve_monolith_compat_route_groups_for_surface(MONOLITH_COMPAT_SURFACE_KIND_ALL) == MONOLITH_COMPAT_ROUTE_GROUPS
@@ -79,8 +88,11 @@ def test_monolith_compat_route_group_resolver_defaults_to_all_groups():
         'books',
         'ai',
         'notes',
+        'exams',
+        'exam-attempts',
         'tts',
         'admin',
+        'ops',
     ]
     assert [group.name for group in resolve_monolith_compat_route_groups_for_surface(MONOLITH_COMPAT_SURFACE_KIND_ROLLBACK)] == [
         'tts-admin',

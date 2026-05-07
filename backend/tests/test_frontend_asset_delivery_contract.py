@@ -175,6 +175,7 @@ def test_release_artifact_path_builds_with_and_uploads_oss_assets():
     assert 'artifact_upload_started=' in workflow
     assert 'FRONTEND_ASSET_OSS_PUBLIC_BASE_URL' in workflow
     assert 'FRONTEND_ASSET_OSS_PREFIX' in workflow
+    assert 'FRONTEND_ASSET_OSS_CORS_ORIGINS' in workflow
     assert 'FRONTEND_ASSET_OSS_CONNECT_TIMEOUT_SECONDS' in workflow
     assert 'FRONTEND_ASSET_OSS_UPLOAD_RETRY_ATTEMPTS' in workflow
     assert 'AXI_ALIYUN_OSS_ACCESS_KEY_ID' in workflow
@@ -252,6 +253,91 @@ def test_frontend_asset_public_header_verification_requires_long_lived_cache(mon
         assert 'missing long-lived immutable cache headers' in str(exc)
     else:
         raise AssertionError('expected public header verification to fail')
+
+
+def test_frontend_asset_public_header_verification_requires_cors(monkeypatch):
+    upload_module = _load_upload_module()
+    seen_origins = []
+
+    class FakeHeaders:
+        def __init__(self, cors_origin=''):
+            self.cors_origin = cors_origin
+
+        def get(self, key, default=None):
+            values = {
+                'Content-Disposition': 'inline',
+                'Cache-Control': 'public, max-age=31536000, immutable',
+                'Access-Control-Allow-Origin': self.cors_origin,
+                'Access-Control-Allow-Methods': 'GET, HEAD',
+            }
+            return values.get(key, default)
+
+    class FakeResponse:
+        def __init__(self, cors_origin=''):
+            self.headers = FakeHeaders(cors_origin)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+    def fake_urlopen(req, timeout):
+        seen_origins.append(req.headers.get('Origin', ''))
+        return FakeResponse()
+
+    monkeypatch.setenv('FRONTEND_ASSET_BASE_URL', 'https://static.example.com/base')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_CORS_ORIGINS', 'https://axiomaticworld.com')
+    monkeypatch.setattr(upload_module.request, 'urlopen', fake_urlopen)
+
+    try:
+        upload_module.verify_public_delivery_headers([
+            ('assets/index.js', 'projects/ielts-vocab/frontend-assets/assets/index.js'),
+        ])
+    except SystemExit as exc:
+        assert 'missing browser-load CORS headers' in str(exc)
+    else:
+        raise AssertionError('expected public CORS verification to fail')
+
+    assert seen_origins == ['', 'https://axiomaticworld.com']
+
+
+def test_frontend_asset_public_header_verification_accepts_matching_cors(monkeypatch):
+    upload_module = _load_upload_module()
+
+    class FakeHeaders:
+        def __init__(self, origin):
+            self.origin = origin
+
+        def get(self, key, default=None):
+            values = {
+                'Content-Disposition': 'inline',
+                'Cache-Control': 'public, max-age=31536000, immutable',
+                'Access-Control-Allow-Origin': self.origin,
+                'Access-Control-Allow-Methods': 'GET, HEAD',
+            }
+            return values.get(key, default)
+
+    class FakeResponse:
+        def __init__(self, origin=''):
+            self.headers = FakeHeaders(origin)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+    def fake_urlopen(req, timeout):
+        return FakeResponse(req.headers.get('Origin', ''))
+
+    monkeypatch.setenv('FRONTEND_ASSET_BASE_URL', 'https://static.example.com/base')
+    monkeypatch.setenv('FRONTEND_ASSET_OSS_CORS_ORIGINS', 'https://axiomaticworld.com')
+    monkeypatch.setattr(upload_module.request, 'urlopen', fake_urlopen)
+
+    upload_module.verify_public_delivery_headers([
+        ('assets/index.js', 'projects/ielts-vocab/frontend-assets/assets/index.js'),
+    ])
 
 
 def test_frontend_asset_upload_retries_transient_put_failures(tmp_path, monkeypatch):

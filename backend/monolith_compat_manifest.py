@@ -16,6 +16,7 @@ from routes.speech import speech_bp
 from routes.tts import tts_admin_bp, tts_bp
 from routes.vocabulary import vocabulary_bp
 from platform_sdk.admin_ops_transport import ops_bp
+from platform_sdk.exam_transport import exam_attempt_bp, exam_bp
 
 
 @dataclass(frozen=True)
@@ -80,6 +81,20 @@ MONOLITH_COMPAT_ROUTE_GROUPS: tuple[MonolithCompatRouteGroup, ...] = (
         blueprint=notes_bp,
         rationale='legacy notes browser compatibility surface',
         probe_path='/api/notes',
+    ),
+    MonolithCompatRouteGroup(
+        name='exams',
+        url_prefix='/api/exams',
+        blueprint=exam_bp,
+        rationale='legacy learner exam browser compatibility surface',
+        probe_path='/api/exams',
+    ),
+    MonolithCompatRouteGroup(
+        name='exam-attempts',
+        url_prefix='/api/exam-attempts',
+        blueprint=exam_attempt_bp,
+        rationale='legacy learner exam-attempt browser compatibility surface',
+        probe_path='/api/exams',
     ),
     MonolithCompatRouteGroup(
         name='tts',
@@ -158,6 +173,7 @@ def resolve_monolith_compat_probe_path(route_groups: tuple[MonolithCompatRouteGr
         'tts',
         'auth',
         'notes',
+        'exams',
         'ai',
         'progress',
         'vocabulary',

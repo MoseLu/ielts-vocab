@@ -60,6 +60,70 @@ def _ensure_wrong_word_dimension_state_column() -> None:
     db.session.commit()
 
 
+def _ensure_chapter_progress_resume_columns() -> None:
+    """Backfill resumable chapter-progress columns on existing SQLite files."""
+    inspector = inspect(db.engine)
+    try:
+        columns = {column['name'] for column in inspector.get_columns('user_chapter_progress')}
+    except Exception:
+        return
+
+    statements: list[str] = []
+    if 'session_current_index' not in columns:
+        statements.append(
+            'ALTER TABLE user_chapter_progress '
+            'ADD COLUMN session_current_index INTEGER NOT NULL DEFAULT 0'
+        )
+    if 'session_answered_words' not in columns:
+        statements.append('ALTER TABLE user_chapter_progress ADD COLUMN session_answered_words TEXT')
+    if 'session_queue_words' not in columns:
+        statements.append('ALTER TABLE user_chapter_progress ADD COLUMN session_queue_words TEXT')
+
+    if not statements:
+        return
+
+    for statement in statements:
+        db.session.execute(text(statement))
+    db.session.commit()
+
+
+def _ensure_custom_book_metadata_columns() -> None:
+    """Backfill custom-book metadata columns on existing SQLite files."""
+    inspector = inspect(db.engine)
+    try:
+        table_names = set(inspector.get_table_names())
+    except Exception:
+        return
+
+    statements: list[str] = []
+    if 'custom_books' in table_names:
+        columns = {column['name'] for column in inspector.get_columns('custom_books')}
+        if 'education_stage' not in columns:
+            statements.append('ALTER TABLE custom_books ADD COLUMN education_stage VARCHAR(50)')
+        if 'exam_type' not in columns:
+            statements.append('ALTER TABLE custom_books ADD COLUMN exam_type VARCHAR(50)')
+        if 'ielts_skill' not in columns:
+            statements.append('ALTER TABLE custom_books ADD COLUMN ielts_skill VARCHAR(50)')
+        if 'share_enabled' not in columns:
+            statements.append('ALTER TABLE custom_books ADD COLUMN share_enabled BOOLEAN NOT NULL DEFAULT 0')
+        if 'chapter_word_target' not in columns:
+            statements.append('ALTER TABLE custom_books ADD COLUMN chapter_word_target INTEGER NOT NULL DEFAULT 15')
+
+    if 'custom_book_words' in table_names:
+        columns = {column['name'] for column in inspector.get_columns('custom_book_words')}
+        if 'is_incomplete' not in columns:
+            statements.append('ALTER TABLE custom_book_words ADD COLUMN is_incomplete BOOLEAN NOT NULL DEFAULT 0')
+        if 'sort_order' not in columns:
+            statements.append('ALTER TABLE custom_book_words ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0')
+
+    if not statements:
+        return
+
+    for statement in statements:
+        db.session.execute(text(statement))
+    db.session.commit()
+
+
 def _ensure_admin_user() -> None:
     """Create an admin user if not exists. Credentials must be set via environment variables."""
     admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
@@ -105,6 +169,8 @@ def configure_monolith_compat_runtime(app: Flask, *, migrate) -> None:
         bootstrap_monolith_schema(bind=db.engine, metadata=db.metadata)
         _ensure_quick_memory_context_columns()
         _ensure_wrong_word_dimension_state_column()
+        _ensure_chapter_progress_resume_columns()
+        _ensure_custom_book_metadata_columns()
         ensure_word_catalog_memory_note_column(engine=db.engine, session=db.session)
         _ensure_admin_user()
 
