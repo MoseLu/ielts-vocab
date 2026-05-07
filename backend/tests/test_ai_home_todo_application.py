@@ -294,10 +294,16 @@ def test_build_home_todos_response_reuses_recent_plan_without_learning_core(app,
 
 def test_build_home_todos_response_serves_stale_plan_when_learning_core_times_out(app, monkeypatch):
     now = datetime(2026, 4, 16, 4, 0, 0)
+    refresh_calls = []
     monkeypatch.setenv('CURRENT_SERVICE_NAME', 'ai-execution-service')
     monkeypatch.delenv('ALLOW_LEGACY_CROSS_SERVICE_FALLBACK', raising=False)
     monkeypatch.setenv('AI_HOME_TODO_PLAN_CACHE_SECONDS', '1')
     monkeypatch.setattr(ai_home_todo_application, 'utc_now_naive', lambda: now)
+    monkeypatch.setattr(
+        ai_home_todo_application,
+        '_refresh_stale_plan_in_background',
+        lambda *args, **kwargs: refresh_calls.append((args, kwargs)),
+    )
     monkeypatch.setattr(
         ai_home_todo_application,
         'fetch_learning_core_home_todo_signals',
@@ -325,6 +331,7 @@ def test_build_home_todos_response_serves_stale_plan_when_learning_core_times_ou
     assert status == 200
     assert payload['date'] == '2026-04-16'
     assert _task_map(payload)['due-review']['badge'] == '1 个待复习'
+    assert refresh_calls
 
 
 def test_build_home_todos_response_returns_strict_boundary_when_learning_core_is_unavailable(monkeypatch):

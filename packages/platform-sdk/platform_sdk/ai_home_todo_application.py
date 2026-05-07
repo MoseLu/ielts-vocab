@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import logging
 import os
+import threading
 from datetime import datetime
 
-from flask import has_app_context
+from flask import current_app, has_app_context
 from platform_sdk.cross_service_boundary import run_with_legacy_cross_service_fallback
 from platform_sdk.learning_core_home_todo_signals_application import (
     build_learning_core_home_todo_signals_payload,
@@ -22,6 +24,8 @@ from platform_sdk.ai_home_todo_task_builders import (
 from service_models.ai_execution_models import UserHomeTodoItem, UserHomeTodoPlan, db
 
 DEFAULT_PLAN_CACHE_SECONDS = 900
+_BACKGROUND_REFRESH_LOCK = threading.Lock()
+_BACKGROUND_REFRESH_KEYS: set[tuple[int, str]] = set()
 
 
 def _validate_target_date(target_date: str | None) -> str | None:
@@ -163,6 +167,52 @@ def _cached_plan_payload(
     return _serialize_plan_payload(plan, ranked_items(list(plan.items))), 200
 
 
+def _refresh_stale_plan_worker(
+    app,
+    key: tuple[int, str],
+    user_id: int,
+    *,
+    target_date: str | None,
+) -> None:
+    try:
+        with app.app_context():
+            signals = fetch_learning_core_home_todo_signals(user_id, target_date=target_date)
+            _refresh_home_todo_plan(user_id, signals)
+    except Exception as exc:
+        logging.warning(
+            '[HomeTodos] background refresh failed: user_id=%s plan_date=%s error=%s',
+            user_id,
+            key[1],
+            exc,
+        )
+    finally:
+        with _BACKGROUND_REFRESH_LOCK:
+            _BACKGROUND_REFRESH_KEYS.discard(key)
+
+
+def _refresh_stale_plan_in_background(
+    user_id: int,
+    *,
+    plan_date: str,
+    target_date: str | None,
+) -> None:
+    if not has_app_context():
+        return
+    key = (user_id, plan_date)
+    with _BACKGROUND_REFRESH_LOCK:
+        if key in _BACKGROUND_REFRESH_KEYS:
+            return
+        _BACKGROUND_REFRESH_KEYS.add(key)
+    app = current_app._get_current_object()
+    thread = threading.Thread(
+        target=_refresh_stale_plan_worker,
+        args=(app, key, user_id),
+        kwargs={'target_date': target_date},
+        daemon=True,
+    )
+    thread.start()
+
+
 def _refresh_home_todo_plan(user_id: int, signals: dict) -> tuple[dict, int]:
     plan_date = str(signals.get('date') or '').strip()
     if not plan_date:
@@ -233,6 +283,19 @@ def build_home_todos_response(
     ) if cache_seconds > 0 else None
     if cached is not None:
         return cached
+    stale_cached = _cached_plan_payload(
+        user_id,
+        plan_date=plan_date,
+        now_utc=now_utc,
+        max_age_seconds=None,
+    ) if cache_seconds > 0 else None
+    if stale_cached is not None:
+        _refresh_stale_plan_in_background(
+            user_id,
+            plan_date=plan_date,
+            target_date=normalized_date,
+        )
+        return stale_cached
 
     def primary() -> tuple[dict, int]:
         try:
