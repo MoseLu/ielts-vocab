@@ -85,6 +85,7 @@ export function Field({
   onChangeText,
   placeholder,
   secureTextEntry,
+  style,
   value,
 }: {
   keyboardType?: KeyboardTypeOptions
@@ -92,6 +93,7 @@ export function Field({
   onChangeText: (value: string) => void
   placeholder: string
   secureTextEntry?: boolean
+  style?: StyleProp<any>
   value: string
 }) {
   return (
@@ -103,7 +105,7 @@ export function Field({
       placeholder={placeholder}
       scrollEnabled={false}
       secureTextEntry={secureTextEntry}
-      style={[styles.input, multiline ? styles.textarea : null]}
+      style={[styles.input, multiline ? styles.textarea : null, style]}
       value={value}
     />
   )

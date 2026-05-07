@@ -1,15 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Text } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import {
   BrainCircuit,
   BookOpen,
-  ChevronRight,
   CheckCircle2,
   Headphones,
   Keyboard,
   Mic,
-  PlayCircle,
-  Radio,
   Sparkles,
   TriangleAlert,
   Volume2,
@@ -80,6 +77,7 @@ export function PracticeScreen({ options }: { options?: NavigateOptions }) {
   const startedAtRef = useRef(Date.now())
 
   const currentWord = queue[index]
+  const completed = queue.length > 0 && index >= queue.length
   const optionsForWord = useMemo(
     () => currentWord ? buildPracticeOptions(currentWord, queue) : [],
     [currentWord, queue],
@@ -186,7 +184,7 @@ export function PracticeScreen({ options }: { options?: NavigateOptions }) {
     setIndex(nextIndex)
   }
 
-  const progress = queue.length ? Math.min(100, ((index + (currentWord ? 0 : 1)) / queue.length) * 100) : 0
+  const progress = queue.length ? Math.min(100, (index / queue.length) * 100) : 0
 
   return (
     <ScreenScroll hideHeader title="练习" subtitle="基础模式原生闭环：答题、进度、错词、复习和跟读录音。">
@@ -326,6 +324,17 @@ export function PracticeScreen({ options }: { options?: NavigateOptions }) {
               <Text style={styles.exampleHint}>{currentWord.examples[0]?.zh || ''}</Text>
             </View>
           ) : null}
+        </Card>
+      ) : completed ? (
+        <Card>
+          <Heading>本轮完成</Heading>
+          <Meta>{queue.length} 个词已过一遍，下一轮可换模式继续压强。</Meta>
+          <Row>
+            <Pill label={`对 ${correctCount}`} />
+            <Pill label={`错 ${wrongCount}`} />
+            <Pill label={`音量 ${Math.round(speechState.level * 100)}%`} />
+          </Row>
+          <PrimaryButton label="再来一轮" onPress={() => void startPractice(mode, chapterId)} />
         </Card>
       ) : (
         <Card>

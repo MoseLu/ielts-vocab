@@ -109,11 +109,11 @@ export function StatsScreen({ navigate }: { navigate: Navigate }) {
           <Heading>模式分布</Heading>
           <BarChart3 color={theme.colors.muted} size={20} />
         </View>
-        {modeBreakdown.length ? modeBreakdown.slice(0, 6).map(item => {
+        {modeBreakdown.length ? modeBreakdown.slice(0, 6).map((item, index) => {
           const mode = String(item.mode ?? '')
           const value = numberValue(item, ['words_studied', 'count', 'sessions'])
           return (
-            <View key={mode || Math.random()} style={styles.modeRow}>
+            <View key={`${mode}-${index}`} style={styles.modeRow}>
               <View style={styles.modeLabelRow}>
                 <Text style={styles.modeLabel}>{PRACTICE_MODE_LABELS[mode as keyof typeof PRACTICE_MODE_LABELS] || mode || '练习'}</Text>
                 <Text style={styles.modeValue}>{value}</Text>

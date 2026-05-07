@@ -26,9 +26,10 @@ function shortText(value: string, limit = 72): string {
 }
 
 function makeCustomWord(line: string): MobileWord {
-  const [word, definition = ''] = line.split(/[,，\t]/)
+  const [rawWord, definition = ''] = line.split(/[,，\t]/)
+  const word = rawWord?.trim() || 'custom'
   return {
-    word: word.trim(),
+    word,
     definition: definition.trim(),
     phonetic: '',
     pos: '',
@@ -138,7 +139,7 @@ export function BooksScreen({ navigate, options }: { navigate: Navigate; options
         </View>
         <View style={styles.searchShell}>
           <Search color={theme.colors.muted} size={19} />
-          <Field value={search} onChangeText={setSearch} placeholder="搜索词书" />
+          <Field style={styles.searchInput} value={search} onChangeText={setSearch} placeholder="搜索词书" />
           <Pressable accessibilityRole="button" style={styles.searchButton} onPress={() => refreshBooks(search)}>
             <Text style={styles.searchButtonText}>搜索</Text>
           </Pressable>
@@ -406,6 +407,13 @@ const styles = StyleSheet.create({
   searchButtonText: {
     color: theme.colors.textInverse,
     fontWeight: '900',
+  },
+  searchInput: {
+    borderWidth: 0,
+    flex: 1,
+    marginBottom: 0,
+    minHeight: 44,
+    paddingHorizontal: 0,
   },
   searchShell: {
     alignItems: 'center',
