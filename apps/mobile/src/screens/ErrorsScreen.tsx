@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Text } from 'react-native'
 import { buildCsv, type WrongWord } from '@ielts-vocab/app-core'
 import { clearWrongWord, createCustomBook, loadWrongWords } from '../api/learnerApi'
 import { Body, Card, Field, Heading, Meta, PrimaryButton, Row, ScreenScroll, StatusText } from '../components/primitives'
+import { DecoratedEmptyState } from '../components/stickers'
 import type { Navigate } from '../navigation/types'
 
 export function ErrorsScreen({ navigate }: { navigate: Navigate }) {
@@ -79,7 +79,15 @@ export function ErrorsScreen({ navigate }: { navigate: Navigate }) {
           </Row>
         </Card>
       ))}
-      {!loading && !words.length ? <Text>暂无错词。</Text> : null}
+      {!loading && !words.length ? (
+        <DecoratedEmptyState
+          actionLabel="开始基础练习"
+          description="错词清空是个好信号，可以继续做一轮基础训练巩固记忆。"
+          onAction={() => navigate('practice', { mode: 'smart' })}
+          sticker="wrongWordSticky"
+          title="暂无错词"
+        />
+      ) : null}
     </ScreenScroll>
   )
 }

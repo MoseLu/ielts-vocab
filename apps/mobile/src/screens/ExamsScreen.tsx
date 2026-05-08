@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Text } from 'react-native'
 import { stripHtml, type ExamPaperDetail, type ExamPaperSummary, type ExamQuestion } from '@ielts-vocab/app-core'
 import { createExamAttempt, loadExamPaper, loadExamPapers, saveExamResponses, submitExamAttempt } from '../api/learnerApi'
 import { mobileApiClient } from '../api/mobileApi'
 import { Body, Card, Field, Heading, Meta, PrimaryButton, ScreenScroll, StatusText } from '../components/primitives'
+import { DecoratedEmptyState } from '../components/stickers'
 import type { NativeAudioCaptureResult } from '../native/NativeAudioBridge'
 import { useMobileSpeechRecognition } from '../speech/useMobileSpeechRecognition'
 
@@ -151,7 +151,13 @@ export function ExamsScreen() {
           </Card>
         ))
       )}
-      {!loading && !papers.length ? <Text>暂无真题。</Text> : null}
+      {!loading && !papers.length ? (
+        <DecoratedEmptyState
+          description="真题同步后会出现在这里，口语题也会沿用移动端录音能力。"
+          sticker="scrollNote"
+          title="暂无真题"
+        />
+      ) : null}
     </ScreenScroll>
   )
 }

@@ -24,6 +24,7 @@ import { Pressable, ScrollView, Text, TextInput, View, type StyleProp, type View
 import { FeatureWishSchema, parseArray, type FeatureWish } from '@ielts-vocab/app-core'
 import { mobileApiClient } from '../api/mobileApi'
 import { StatusText } from '../components/primitives'
+import { DecoratedEmptyState } from '../components/stickers'
 import type { Navigate } from '../navigation/types'
 import { useSession } from '../state/SessionContext'
 import { theme } from '../theme'
@@ -192,7 +193,7 @@ export function ProfileSettingsScreen({ navigate }: { goBack?: () => void; navig
       </SurfaceCard>
 
       <SurfaceCard style={styles.settingGroup}>
-        <SettingRow Icon={Info} label="关于 IELTS Vocab" value="当前已是最新版本" />
+        <SettingRow Icon={Info} label="关于雅思冲刺" value="当前已是最新版本" />
         <SettingRow Icon={MessageCircle} label="意见反馈" onPress={() => navigate('profileFeedback')} />
       </SurfaceCard>
 
@@ -357,10 +358,11 @@ export function ProfileFeedbackScreen({ navigate }: { goBack?: () => void; navig
             </View>
           ))
         ) : (
-          <View style={styles.emptyWish}>
-            <MessageCircle color={theme.colors.textTertiary} size={22} strokeWidth={2.1} />
-            <Text style={styles.emptyWishText}>还没有提交过反馈</Text>
-          </View>
+          <DecoratedEmptyState
+            description="提交第一个愿望后，这里会展示进展和票数。"
+            sticker="catTutorReading"
+            title="还没有提交过反馈"
+          />
         )}
       </SurfaceCard>
     </ScrollView>

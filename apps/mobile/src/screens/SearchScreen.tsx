@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { stripHtml, type MobileWord } from '@ielts-vocab/app-core'
 import { loadWordDetails, saveWordNote, searchWords } from '../api/learnerApi'
 import { Body, Card, Field, Heading, Meta, PrimaryButton, StatusText } from '../components/primitives'
+import { DecoratedEmptyState } from '../components/stickers'
 import type { Navigate, NavigateOptions } from '../navigation/types'
 import { theme } from '../theme'
 
@@ -103,10 +104,11 @@ export function SearchScreen({
         ))}
 
         {hasSearched && !loading && !error && !words.length ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>没有找到结果</Text>
-            <Text style={styles.emptyText}>换个词再试试，或者直接查看已保存的词条笔记。</Text>
-          </View>
+          <DecoratedEmptyState
+            description="换个词再试试，或者直接查看已保存的词条笔记。"
+            sticker="ieltsPaper"
+            title="没有找到结果"
+          />
         ) : null}
 
         {details ? (

@@ -4,11 +4,11 @@ import { theme } from '../theme'
 export const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
-    backgroundColor: theme.colors.accent,
+    backgroundColor: theme.colors.primary,
     borderRadius: 28,
     height: 56,
     justifyContent: 'center',
-    shadowColor: theme.colors.accent,
+    shadowColor: theme.colors.primary,
     shadowOffset: { height: 8, width: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 16,
@@ -141,7 +141,7 @@ export const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: theme.colors.accent,
+    backgroundColor: theme.colors.primary,
     borderRadius: theme.radius.control,
     flexDirection: 'row',
     gap: theme.spacing.sm,
@@ -170,7 +170,7 @@ export const styles = StyleSheet.create({
   secondaryButton: {
     alignItems: 'center',
     backgroundColor: theme.colors.accentSoft,
-    borderColor: 'rgba(255,126,54,0.22)',
+    borderColor: 'rgba(255,159,67,0.22)',
     borderRadius: theme.radius.control,
     borderWidth: 1,
     justifyContent: 'center',

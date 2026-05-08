@@ -3,6 +3,7 @@ import { Bot, Sparkles } from 'lucide-react-native'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { askAi } from '../api/learnerApi'
 import { StatusText } from '../components/primitives'
+import { DecoratedEmptyState } from '../components/stickers'
 import type { Navigate } from '../navigation/types'
 import { theme } from '../theme'
 
@@ -67,10 +68,11 @@ export function AIChatScreen(_props: { goBack?: () => void; navigate: Navigate }
                 <Text style={styles.answerText}>{answer}</Text>
               </View>
             ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyTitle}>现在就能开始问</Text>
-                <Text style={styles.emptyText}>输入问题后，回答会占满中间对话区，不会再只挤在半屏上。</Text>
-              </View>
+              <DecoratedEmptyState
+                description="输入问题后，回答会占满中间对话区，不会再只挤在半屏上。"
+                sticker="aiLetter"
+                title="现在就能开始问"
+              />
             )}
           </ScrollView>
 
