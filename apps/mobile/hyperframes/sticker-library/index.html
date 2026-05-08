@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IELTS Sticker Library Preview</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #fffdfc;
+      }
+
+      #sticker-library-preview {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f5f9e2;
+        color: #5a3a26;
+        font-family: "Nunito", "Inter", system-ui, sans-serif;
+      }
+
+      .scene-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        padding: 92px 72px 80px;
+        gap: 30px;
+      }
+
+      .title {
+        z-index: 3;
+        margin: 0;
+        font-size: 58px;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        z-index: 3;
+        max-width: 760px;
+        margin: -14px 0 0;
+        color: #6f7d43;
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1.35;
+      }
+
+      .room {
+        position: relative;
+        flex: 1;
+        min-height: 1040px;
+        overflow: visible;
+        border: 4px solid #dcebcf;
+        border-radius: 54px;
+        background: #fffdfc;
+      }
+
+      .room::after {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 270px;
+        border-top: 4px solid #e8b3c3;
+        border-radius: 0 0 48px 48px;
+        background: #f7cad6;
+        content: "";
+      }
+
+      .sticker {
+        position: absolute;
+        z-index: 3;
+        object-fit: contain;
+        filter: drop-shadow(0 14px 18px rgba(90, 58, 38, 0.12));
+      }
+
+      .cat {
+        left: 120px;
+        top: 390px;
+        width: 360px;
+      }
+
+      .window {
+        left: 300px;
+        top: 170px;
+        width: 470px;
+        opacity: 0.92;
+      }
+
+      .letter {
+        right: 105px;
+        top: 95px;
+        width: 170px;
+        transform: rotate(8deg);
+      }
+
+      .leaf {
+        left: 230px;
+        top: 235px;
+        width: 116px;
+        opacity: 0.84;
+        transform: rotate(-18deg);
+      }
+
+      .flower {
+        right: 118px;
+        top: 580px;
+        width: 106px;
+        transform: rotate(10deg);
+      }
+
+      .paper {
+        left: 560px;
+        top: 475px;
+        width: 180px;
+        transform: rotate(-8deg);
+      }
+
+      .sticky {
+        right: 126px;
+        top: 760px;
+        width: 160px;
+        transform: rotate(7deg);
+      }
+
+      .desk {
+        position: absolute;
+        z-index: 2;
+        right: 35px;
+        bottom: 40px;
+        left: 35px;
+        height: 310px;
+        border-radius: 54px;
+        background: #f7cad6;
+      }
+
+      .mode-row {
+        position: absolute;
+        z-index: 4;
+        right: 62px;
+        bottom: 76px;
+        left: 62px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 24px;
+      }
+
+      .mode {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 150px;
+        border-radius: 44px;
+        background: rgba(255, 255, 255, 0.68);
+      }
+
+      .mode img {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+      }
+
+      .agreement {
+        position: relative;
+        z-index: 3;
+        min-height: 320px;
+        overflow: visible;
+        border: 4px solid #dcebcf;
+        border-radius: 48px 48px 42px 42px;
+        background: #ffffff;
+        padding: 82px 56px 46px;
+      }
+
+      .agreement-cat {
+        position: absolute;
+        right: 118px;
+        top: -130px;
+        width: 190px;
+      }
+
+      .agreement-leaf {
+        position: absolute;
+        left: 70px;
+        top: -62px;
+        width: 130px;
+        height: 130px;
+        background: url("./assets/leaf-sprig.png") center / contain no-repeat;
+        transform: rotate(-10deg);
+      }
+
+      .agreement-button {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 150px;
+        border: 5px solid #a9c86e;
+        border-radius: 999px;
+        background: #d8ed9e;
+        font-size: 30px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .agreement-button-mark {
+        width: 210px;
+        height: 18px;
+        border-radius: 999px;
+        background: rgba(90, 58, 38, 0.22);
+      }
+
+      .agreement-citrus {
+        position: absolute;
+        right: 94px;
+        top: -36px;
+        width: 108px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="sticker-library-preview"
+      data-composition-id="sticker-library-preview"
+      data-start="0"
+      data-duration="4"
+      data-track-index="0"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="scene-content">
+        <h1 class="title">IELTS Sticker Library</h1>
+        <p class="subtitle">雅思学习绘本风格资产母版：猫咪导师、词卡、听力、错词、AI 信件和协议弹窗。</p>
+
+        <section class="room">
+          <img class="sticker window" src="./assets/study-window.png" data-layout-ignore />
+          <img class="sticker leaf" src="./assets/leaf-sprig.png" data-layout-ignore />
+          <img class="sticker letter" src="./assets/ai-letter.png" data-layout-ignore />
+          <img class="sticker flower" src="./assets/flower-small.png" data-layout-ignore />
+          <img class="sticker paper" src="./assets/ielts-paper.png" data-layout-ignore />
+          <img class="sticker sticky" src="./assets/wrong-word-sticky.png" data-layout-ignore />
+          <img class="sticker cat" src="./assets/cat-tutor-idle.png" data-layout-ignore />
+          <div class="desk"></div>
+          <div class="mode-row">
+            <div class="mode"><img src="./assets/vocab-card-stack.png" data-layout-ignore /></div>
+            <div class="mode"><img src="./assets/review-clock.png" data-layout-ignore /></div>
+            <div class="mode"><img src="./assets/recording-mic.png" data-layout-ignore /></div>
+            <div class="mode"><img src="./assets/headset.png" data-layout-ignore /></div>
+            <div class="mode"><img src="./assets/treasure-chest.png" data-layout-ignore /></div>
+          </div>
+        </section>
+
+        <section class="agreement">
+          <img class="agreement-cat" src="./assets/cat-agreement.png" data-layout-ignore />
+          <div class="agreement-leaf" data-layout-ignore></div>
+          <div class="agreement-button">
+            <div class="agreement-button-mark" data-layout-ignore></div>
+            <img class="agreement-citrus" src="./assets/citrus-corner.png" data-layout-ignore />
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="../login-runner/gsap.min.js"></script>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.to(".cat", { y: -12, scale: 1.015, duration: 1.2, repeat: 2, yoyo: true, ease: "sine.inOut" }, 0);
+      tl.to(".letter", { rotation: -5, duration: 1, repeat: 3, yoyo: true, ease: "sine.inOut" }, 0);
+      tl.to(".leaf", { x: 14, y: -10, rotation: -24, duration: 1.4, repeat: 2, yoyo: true, ease: "sine.inOut" }, 0.1);
+      tl.to(".agreement-cat", { y: -8, duration: 1.1, repeat: 2, yoyo: true, ease: "sine.inOut" }, 0.2);
+      window.__timelines["sticker-library-preview"] = tl;
+    </script>
+  </body>
+</html>
