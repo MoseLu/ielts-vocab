@@ -36,6 +36,7 @@ module.exports = {
           'IELTS_MOBILE_DEV_HOST',
           'IELTS_MOBILE_API_BASE_URL',
           'IELTS_MOBILE_SPEECH_BASE_URL',
+          'IELTS_MOBILE_WECHAT_UNIVERSAL_LINK',
         ],
       },
     ],

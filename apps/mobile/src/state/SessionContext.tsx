@@ -1,35 +1,34 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { CORE_STORAGE_KEYS, readJson, UserSchema, type AppUser } from '@ielts-vocab/app-core'
+import type { AppUser } from '@ielts-vocab/app-core'
 import { mobileApiClient, mobileAuthClient } from '../api/mobileApi'
+import { hydrateStoredSession } from './sessionHydration'
 import { asyncAppStorage } from '../storage/mobileStorage'
 
 type SessionContextValue = {
   isAuthenticated: boolean
+  isHydrating: boolean
   isLoading: boolean
   login: (identifier: string, password: string) => Promise<void>
   logout: () => Promise<void>
   user: AppUser | null
+  wechatLogin: (code: string, state?: string) => Promise<void>
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isHydrating, setIsHydrating] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     let active = true
     async function hydrateSession() {
-      const cachedUser = await readJson<AppUser | null>(asyncAppStorage, CORE_STORAGE_KEYS.authUser, null)
-      if (active && cachedUser) setUser(cachedUser)
       try {
-        const payload = await mobileApiClient.json<{ user?: unknown }>('/api/auth/me')
-        const parsedUser = UserSchema.safeParse(payload.user)
-        if (active) setUser(parsedUser.success ? parsedUser.data : null)
-      } catch {
-        if (active && !cachedUser) setUser(null)
+        const hydratedUser = await hydrateStoredSession(asyncAppStorage, mobileApiClient)
+        if (active) setUser(hydratedUser)
       } finally {
-        if (active) setIsLoading(false)
+        if (active) setIsHydrating(false)
       }
     }
     void hydrateSession()
@@ -40,6 +39,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<SessionContextValue>(() => ({
     isAuthenticated: Boolean(user),
+    isHydrating,
     isLoading,
     async login(identifier, password) {
       setIsLoading(true)
@@ -60,7 +60,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
     },
     user,
-  }), [isLoading, user])
+    async wechatLogin(code, state) {
+      setIsLoading(true)
+      try {
+        const session = await mobileAuthClient.wechatLogin(code, state)
+        setUser(session.user)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+  }), [isHydrating, isLoading, user])
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
