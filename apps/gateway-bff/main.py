@@ -243,15 +243,18 @@ def get_word_audio_proxy(
             return _audio_content_response(payload, source='oss')
     if cache_only == '1':
         return JSONResponse(status_code=404, content={'error': 'word audio cache miss'})
+    generate_payload = {
+        'text': request_info['word'],
+        'provider': request_info['provider'],
+        'model': request_info['model'].split('@', 1)[0],
+        'voice_id': request_info['voice'],
+        'content_mode': 'word',
+    }
+    if request_info.get('phonetic'):
+        generate_payload['phonetic'] = request_info['phonetic']
     return _proxy_generic_tts_response(
         generate_tts_audio(
-            {
-                'text': request_info['word'],
-                'provider': request_info['provider'],
-                'model': request_info['model'].split('@', 1)[0],
-                'voice_id': request_info['voice'],
-                'content_mode': 'word',
-            },
+            generate_payload,
             headers=build_forward_headers(request, target_service_name='tts-media-service'),
         )
     )

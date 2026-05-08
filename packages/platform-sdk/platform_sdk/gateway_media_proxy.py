@@ -34,14 +34,12 @@ from platform_sdk.word_tts_runtime_adapter import (
     normalize_word_key,
     word_tts_cache_path,
 )
+from platform_sdk import word_audio_phonetic_identity as phonetic_identity
 from services.word_tts import azure_default_model, azure_word_voice
 
-DEFAULT_TTS_MEDIA_SERVICE_URL = 'http://127.0.0.1:8105'
-DEFAULT_ASR_SERVICE_URL = 'http://127.0.0.1:8106'
-_AUDIO_BYTES_HEADER = 'X-Audio-Bytes'
-_AUDIO_CACHE_KEY_HEADER = 'X-Audio-Cache-Key'
-_AUDIO_OSS_URL_HEADER = 'X-Audio-Oss-Url'
-_AUDIO_SOURCE_HEADER = 'X-Audio-Source'
+DEFAULT_TTS_MEDIA_SERVICE_URL, DEFAULT_ASR_SERVICE_URL = 'http://127.0.0.1:8105', 'http://127.0.0.1:8106'
+_AUDIO_BYTES_HEADER, _AUDIO_CACHE_KEY_HEADER = 'X-Audio-Bytes', 'X-Audio-Cache-Key'
+_AUDIO_OSS_URL_HEADER, _AUDIO_SOURCE_HEADER = 'X-Audio-Oss-Url', 'X-Audio-Source'
 _MEDIA_ID_HEADER = 'X-Media-Id'
 
 def tts_media_service_url() -> str:
@@ -51,18 +49,19 @@ def tts_media_service_url() -> str:
 def asr_service_url() -> str:
     return (os.environ.get('ASR_SERVICE_URL') or DEFAULT_ASR_SERVICE_URL).rstrip('/')
 
+
 def validate_sentence(sentence: str) -> str:
     resolved = (sentence or '').strip()
     if not resolved:
         raise HTTPException(status_code=400, detail='sentence is required')
     return resolved
 
-
 def normalize_word_audio_pronunciation_mode(value: str | None) -> str:
     normalized = (value or '').strip().lower()
     if normalized in {'word-segmented', 'phonetic-segments', 'phonetic_segments'}:
         return 'word-segmented'
     return 'word'
+
 
 def resolve_normal_word_audio_identity() -> tuple[str, str, str]:
     return 'azure', f'{azure_default_model()}@{_CURRENT_WORD_CACHE_TAG}', azure_word_voice()
@@ -81,15 +80,16 @@ def resolve_word_audio_request(word: str, pronunciation_mode: str | None = None)
         provider, model, voice = resolve_normal_word_audio_identity()
     if resolved_mode == 'word' and provider == 'azure' and normalized in _RYAN_WORD_AUDIO_OVERRIDES:
         voice = _RYAN_WORD_AUDIO_VOICE
+    phonetic = phonetic_identity.explicit_word_audio_phonetic(raw) if resolved_mode == 'word' else ''
+    if phonetic:
+        model = phonetic_identity.apply_phonetic_audio_identity(model, phonetic)
     file_name = word_tts_cache_path(Path('word_tts_cache'), normalized, model, voice).name
     return {
         'word': raw,
         'normalized_word': normalized,
-        'provider': provider,
-        'model': model,
-        'voice': voice,
-        'file_name': file_name,
-        'pronunciation_mode': resolved_mode,
+        'provider': provider, 'model': model,
+        'voice': voice, 'file_name': file_name,
+        'pronunciation_mode': resolved_mode, 'phonetic': phonetic,
     }
 
 
@@ -120,6 +120,8 @@ def resolve_word_audio_request_candidates(
         })
 
     append_candidate(primary['model'], primary['voice'])
+    if primary.get('phonetic'):
+        return candidates
     if primary['pronunciation_mode'] != 'word-segmented':
         if primary['provider'] != 'azure':
             return candidates
