@@ -64,9 +64,9 @@ def _store_uploaded_images(*, current_user, wish_id: int, files) -> tuple[list[d
                 content_type=content_type,
             ))
         except ValueError as exc:
-            return [], {'error': str(exc)}, 400
+            return [], ({'error': str(exc)}, 400)
         except RuntimeError as exc:
-            return [], {'error': str(exc)}, 503
+            return [], ({'error': str(exc)}, 503)
     return stored_images, None
 
 
@@ -93,6 +93,7 @@ def create_feature_wish_response(current_user, payload: dict | None, form, files
     )
     stored_images, image_error = _store_uploaded_images(current_user=current_user, wish_id=wish.id, files=files)
     if image_error is not None:
+        feature_wish_repository.delete_wish(wish)
         return image_error
     if stored_images:
         wish = feature_wish_repository.replace_images(wish=wish, images=stored_images)

@@ -179,3 +179,40 @@ def test_resolve_object_metadata_falls_back_to_get_object_headers_when_head_omit
     assert metadata.content_type == 'audio/mpeg'
     assert metadata.cache_key == 'oss:sample.mp3:7:etag-1'
     assert seen['closed'] is True
+
+
+def test_put_object_bytes_retries_transient_upload_errors(monkeypatch):
+    calls = []
+    sleeps = []
+
+    class FakePutResult:
+        etag = 'etag-2'
+
+    class FakeBucket:
+        bucket_name = 'bucket'
+
+        def sign_url(self, method, object_key, expires, slash_safe=True):
+            return f'https://oss.example.com/{object_key}?signature=1'
+
+        def put_object(self, object_key, body, headers=None):
+            calls.append((object_key, body, headers or {}))
+            if len(calls) == 1:
+                raise TimeoutError('read timed out')
+            return FakePutResult()
+
+    monkeypatch.setattr(aliyun_oss, 'get_bucket', lambda **kwargs: FakeBucket())
+    monkeypatch.setattr(aliyun_oss.time, 'sleep', lambda seconds: sleeps.append(seconds))
+    monkeypatch.setenv('OSS_PUT_OBJECT_MAX_ATTEMPTS', '2')
+    monkeypatch.setenv('OSS_PUT_OBJECT_RETRY_DELAY_MS', '25')
+
+    metadata = aliyun_oss.put_object_bytes(
+        object_key='feature-wishes/full-sample.jpg',
+        body=b'JPEGDATA',
+        content_type='image/jpeg',
+    )
+
+    assert metadata is not None
+    assert metadata.object_key == 'feature-wishes/full-sample.jpg'
+    assert metadata.content_type == 'image/jpeg'
+    assert len(calls) == 2
+    assert sleeps == [0.025]
