@@ -1,4 +1,4 @@
-from models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, db
+from models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, UserOAuthIdentity, db
 
 
 __all__ = [
@@ -6,5 +6,6 @@ __all__ = [
     'RateLimitBucket',
     'RevokedToken',
     'User',
+    'UserOAuthIdentity',
     'db',
 ]

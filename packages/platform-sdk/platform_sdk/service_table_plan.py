@@ -69,6 +69,7 @@ ADMIN_OPS_EXAM_TABLES = frozenset({
 
 IDENTITY_SERVICE_TABLES = frozenset({
     'users',
+    'user_oauth_identities',
     'email_verification_codes',
     'rate_limit_buckets',
     'revoked_tokens',

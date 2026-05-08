@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import secrets
 from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
@@ -10,7 +12,9 @@ from platform_sdk.identity_rate_limit_runtime import (
     check_rate_limit_with_redis,
     reset_rate_limit_with_redis,
 )
-from service_models.identity_models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, db
+from service_models.identity_models import EmailVerificationCode, RateLimitBucket, RevokedToken, User, UserOAuthIdentity, db
+
+WECHAT_PROVIDER = 'wechat'
 
 
 def get_user(user_id: int | None) -> User | None:
@@ -44,6 +48,90 @@ def create_user(*, username: str, email: str | None, password: str):
     queue_user_registered_event(user, session=db.session)
     db.session.commit()
     return user
+
+
+def get_oauth_identity_by_openid(provider: str, openid: str):
+    if not provider or not openid:
+        return None
+    return UserOAuthIdentity.query.filter_by(provider=provider, openid=openid).first()
+
+
+def get_oauth_identity_by_unionid(provider: str, unionid: str | None):
+    if not provider or not unionid:
+        return None
+    return UserOAuthIdentity.query.filter_by(provider=provider, unionid=unionid).first()
+
+
+def find_oauth_identity(provider: str, *, openid: str, unionid: str | None = None):
+    return get_oauth_identity_by_unionid(provider, unionid) or get_oauth_identity_by_openid(provider, openid)
+
+
+def _oauth_username(provider: str, subject: str) -> str:
+    digest = hashlib.sha256(f'{provider}:{subject}'.encode('utf-8')).hexdigest()[:12]
+    base = f'{provider}_{digest}'
+    candidate = base
+    suffix = 1
+    while get_user_by_username(candidate):
+        suffix += 1
+        candidate = f'{base}_{suffix}'
+    return candidate
+
+
+def _apply_oauth_profile(identity, *, openid: str, unionid: str | None, nickname: str, avatar_url: str) -> None:
+    identity.openid = openid
+    identity.unionid = unionid or identity.unionid
+    identity.nickname = nickname or identity.nickname
+    identity.avatar_url = avatar_url or identity.avatar_url
+
+
+def create_or_update_wechat_user(
+    *,
+    openid: str,
+    unionid: str | None = None,
+    nickname: str = '',
+    avatar_url: str = '',
+):
+    identity = find_oauth_identity(WECHAT_PROVIDER, openid=openid, unionid=unionid)
+    if identity:
+        user = identity.user or get_user(identity.user_id)
+        _apply_oauth_profile(
+            identity,
+            openid=openid,
+            unionid=unionid,
+            nickname=nickname,
+            avatar_url=avatar_url,
+        )
+        if user and avatar_url and not user.avatar_url:
+            user.avatar_url = avatar_url
+            sync_admin_projected_user_snapshot(user, session=db.session)
+        db.session.add(identity)
+        db.session.commit()
+        return user, False
+
+    user = User(email=None, username=_oauth_username(WECHAT_PROVIDER, unionid or openid))
+    user.set_password(secrets.token_urlsafe(32))
+    if avatar_url:
+        user.avatar_url = avatar_url
+    db.session.add(user)
+    db.session.flush()
+    queue_user_registered_event(user, session=db.session)
+    db.session.add(UserOAuthIdentity(
+        user_id=user.id,
+        provider=WECHAT_PROVIDER,
+        openid=openid,
+        unionid=unionid or None,
+        nickname=nickname or None,
+        avatar_url=avatar_url or None,
+    ))
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        existing = find_oauth_identity(WECHAT_PROVIDER, openid=openid, unionid=unionid)
+        if existing:
+            return existing.user or get_user(existing.user_id), False
+        raise
+    return user, True
 
 
 def commit_user(user) -> None:

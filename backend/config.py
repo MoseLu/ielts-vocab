@@ -214,5 +214,11 @@ class Config:
     LOGIN_MAX_ATTEMPTS = 10
     LOGIN_LOCKOUT_MINUTES = 15
 
+    # WeChat mobile login. AppSecret must stay server-side.
+    WECHAT_LOGIN_ENABLED = _getenv('WECHAT_LOGIN_ENABLED', 'false').lower() == 'true'
+    WECHAT_MOBILE_APP_ID = _getenv('WECHAT_MOBILE_APP_ID')
+    WECHAT_MOBILE_APP_SECRET = _getenv('WECHAT_MOBILE_APP_SECRET')
+    WECHAT_HTTP_TIMEOUT_SECONDS = max(1, int(_getenv('WECHAT_HTTP_TIMEOUT_SECONDS', '5') or '5'))
+
     # Request body size limit (DoS protection)
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH_BYTES', str(10 * 1024 * 1024)))

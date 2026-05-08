@@ -19,6 +19,7 @@ from platform_sdk.identity_session_application import (
 )
 from platform_sdk.identity_session_support import clear_auth_cookies, set_auth_cookies
 from platform_sdk.identity_session_support import make_mobile_token_payload
+from platform_sdk.identity_wechat_application import perform_mobile_wechat_login
 from routes.middleware import admin_required, optional_token_required, token_required
 
 
@@ -51,6 +52,15 @@ def login():
 @identity_auth_bp.route('/mobile/login', methods=['POST'])
 def mobile_login():
     payload, status, user_id = perform_login(_app(), request, request.get_json() or {})
+    if user_id is None:
+        return jsonify(payload), status
+    token_payload = make_mobile_token_payload(_app(), user_id)
+    return jsonify({**payload, **token_payload}), status
+
+
+@identity_auth_bp.route('/mobile/wechat-login', methods=['POST'])
+def mobile_wechat_login():
+    payload, status, user_id = perform_mobile_wechat_login(_app(), request, request.get_json() or {})
     if user_id is None:
         return jsonify(payload), status
     token_payload = make_mobile_token_payload(_app(), user_id)
