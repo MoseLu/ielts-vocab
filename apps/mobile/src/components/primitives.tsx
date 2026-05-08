@@ -33,7 +33,7 @@ export function ScreenScroll({
     >
       {hideHeader ? null : (
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>IELTS Vocab</Text>
+          <Text style={styles.eyebrow}>雅思冲刺</Text>
           <Text style={styles.title}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
@@ -213,9 +213,9 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.colors.accentSoft,
+    backgroundColor: theme.colors.primarySoft,
     borderRadius: theme.radius.pill,
-    color: theme.colors.accentDark,
+    color: theme.colors.primaryDark,
     fontSize: theme.typography.caption,
     fontWeight: '800',
     marginBottom: theme.spacing.xs,
