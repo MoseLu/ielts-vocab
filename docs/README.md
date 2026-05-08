@@ -48,6 +48,7 @@ docs/
 ### Architecture
 
 - [architecture-audit.md](./architecture/audits/architecture-audit.md)
+- [multi-client-monorepo.md](./architecture/multi-client-monorepo.md)
 - [2026-03-28-tts-batch-generation-design.md](./architecture/specs/2026-03-28-tts-batch-generation-design.md)
 - [architecture-spec-template.md](./architecture/specs/templates/architecture-spec-template.md)
 

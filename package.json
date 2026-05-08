@@ -14,6 +14,8 @@
     "check:file-lines": "node scripts/check-file-line-limits.mjs",
     "check:design-tokens": "node scripts/check-design-token-usage.mjs",
     "check:style-discipline": "node scripts/check-style-discipline.mjs",
+    "app-core:test": "pnpm --dir packages/app-core test",
+    "app-core:typecheck": "pnpm --dir packages/app-core typecheck",
     "lint": "pnpm --dir frontend lint",
     "mobile:android": "pnpm --dir apps/mobile android",
     "mobile:ios": "pnpm --dir apps/mobile ios",
@@ -24,6 +26,7 @@
     "test:coverage": "pnpm --dir frontend test:coverage",
     "test:watch": "pnpm --dir frontend test:watch",
     "test:e2e": "pnpm --dir frontend test:e2e",
+    "verify:clients": "pnpm mobile:typecheck && pnpm mobile:test && pnpm app-core:typecheck && pnpm app-core:test",
     "verify:repo-guards": "pnpm --dir frontend verify:repo-guards"
   }
 }

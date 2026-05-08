@@ -225,7 +225,7 @@
   - `pytest backend/tests/test_source_text_integrity.py -q`
   - `pnpm build`
 - Manual smoke:
-  - Login as `admin` / `admin123`.
+  - Login as `admin` / `admin123456`.
   - Complete one correct and one wrong answer in smart, listening, meaning, dictation, follow, quickmemory chapter, due review, errors, game, and match.
   - For each smoke, capture `traceId` and verify `scripts/inspect-practice-result-trace.py` can explain every changed plane.
 
