@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雅思冲刺 Login Runner</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f5f9e2;
+        overflow: hidden;
+      }
+
+      #login-runner {
+        position: relative;
+        width: 720px;
+        height: 920px;
+        overflow: hidden;
+        background: #f5f9e2;
+        color: #5a2e1b;
+        font-family: "Nunito", "Inter", sans-serif;
+      }
+
+      .scene-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        width: 100%;
+        height: 100%;
+        padding: 42px 0 0;
+        gap: 0;
+      }
+
+      .sky {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+
+      .orange {
+        position: absolute;
+        width: 72px;
+        height: 72px;
+        z-index: 2;
+        opacity: 0.82;
+      }
+
+      .orange.large {
+        width: 118px;
+        height: 118px;
+      }
+
+      .orange.small {
+        width: 58px;
+        height: 58px;
+      }
+
+      .orange-1 {
+        left: 96px;
+        top: 20px;
+      }
+
+      .orange-2 {
+        right: -34px;
+        top: 24px;
+      }
+
+      .orange-3 {
+        left: -28px;
+        top: 300px;
+      }
+
+      .orange-4 {
+        right: 68px;
+        top: 392px;
+      }
+
+      .runner-sprite {
+        position: absolute;
+        left: 88px;
+        bottom: 132px;
+        z-index: 6;
+        width: 545px;
+        aspect-ratio: 545 / 406;
+        background-image: url("./assets/runner-sprite.png");
+        background-repeat: no-repeat;
+        background-position: 0% 0%;
+        background-size: 4360px 406px;
+        transform-origin: 50% 74%;
+      }
+
+      .ground-motion {
+        position: absolute;
+        right: 0;
+        bottom: 68px;
+        left: 0;
+        z-index: 8;
+        height: 118px;
+        overflow: hidden;
+      }
+
+      .ground-strip {
+        position: absolute;
+        left: -720px;
+        top: 0;
+        width: 1440px;
+        height: 118px;
+      }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="login-runner"
+      data-composition-id="login-runner"
+      data-start="0"
+      data-duration="4"
+      data-track-index="0"
+      data-width="720"
+      data-height="920"
+    >
+      <div class="scene-content">
+        <svg class="sky" viewBox="0 0 720 920" data-layout-ignore>
+          <rect width="720" height="920" fill="#F5F9E2" />
+          <g class="hill-layer">
+            <rect y="360" width="720" height="560" fill="#EDF7CB" />
+            <path d="M0 426c72-48 130-18 196-42 78-28 128-78 226-36 92 40 178-2 298-28v600H0z" fill="#EDF7CB" />
+            <path d="M0 624c92-52 181-15 274-30 104-17 161-55 264-8 66 30 118 18 182-2v336H0z" fill="#DDF2AE" />
+            <path d="M0 710c184-48 338-13 720-38v248H0z" fill="#CFE88D" />
+          </g>
+        </svg>
+
+        <svg class="orange orange-1" viewBox="0 0 120 120" data-layout-ignore>
+          <circle cx="60" cy="64" r="43" fill="#FFE5C4" />
+          <circle cx="58" cy="67" r="33" fill="#FF9F43" />
+          <path d="M34 60c8-20 27-31 49-24 23 7 33 32 23 52-18 17-49 17-67-1-7-7-9-17-5-27z" fill="#FFA94D" />
+          <path d="M58 30c9-17 30-23 46-11-4 22-25 32-46 23z" fill="#8BBE52" />
+          <path d="M66 33c11-7 22-10 34-11" fill="none" stroke="#5D8336" stroke-linecap="round" stroke-width="4" />
+          <path d="M39 58c7-9 17-15 30-17" fill="none" stroke="#FFD89E" stroke-linecap="round" stroke-width="5" />
+        </svg>
+        <svg class="orange large orange-2" viewBox="0 0 120 120" data-layout-ignore>
+          <circle cx="60" cy="64" r="43" fill="#FFE5C4" />
+          <circle cx="58" cy="67" r="33" fill="#FF9F43" />
+          <path d="M34 60c8-20 27-31 49-24 23 7 33 32 23 52-18 17-49 17-67-1-7-7-9-17-5-27z" fill="#FFA94D" />
+          <path d="M58 30c9-17 30-23 46-11-4 22-25 32-46 23z" fill="#8BBE52" />
+          <path d="M66 33c11-7 22-10 34-11" fill="none" stroke="#5D8336" stroke-linecap="round" stroke-width="4" />
+          <path d="M39 58c7-9 17-15 30-17" fill="none" stroke="#FFD89E" stroke-linecap="round" stroke-width="5" />
+        </svg>
+        <svg class="orange small orange-3" viewBox="0 0 120 120" data-layout-ignore>
+          <circle cx="60" cy="64" r="43" fill="#FFE5C4" />
+          <circle cx="58" cy="67" r="33" fill="#FF9F43" />
+          <path d="M34 60c8-20 27-31 49-24 23 7 33 32 23 52-18 17-49 17-67-1-7-7-9-17-5-27z" fill="#FFA94D" />
+          <path d="M58 30c9-17 30-23 46-11-4 22-25 32-46 23z" fill="#8BBE52" />
+          <path d="M66 33c11-7 22-10 34-11" fill="none" stroke="#5D8336" stroke-linecap="round" stroke-width="4" />
+          <path d="M39 58c7-9 17-15 30-17" fill="none" stroke="#FFD89E" stroke-linecap="round" stroke-width="5" />
+        </svg>
+        <svg class="orange small orange-4" viewBox="0 0 120 120" data-layout-ignore>
+          <circle cx="60" cy="64" r="43" fill="#FFE5C4" />
+          <circle cx="58" cy="67" r="33" fill="#FF9F43" />
+          <path d="M34 60c8-20 27-31 49-24 23 7 33 32 23 52-18 17-49 17-67-1-7-7-9-17-5-27z" fill="#FFA94D" />
+          <path d="M58 30c9-17 30-23 46-11-4 22-25 32-46 23z" fill="#8BBE52" />
+          <path d="M66 33c11-7 22-10 34-11" fill="none" stroke="#5D8336" stroke-linecap="round" stroke-width="4" />
+          <path d="M39 58c7-9 17-15 30-17" fill="none" stroke="#FFD89E" stroke-linecap="round" stroke-width="5" />
+        </svg>
+
+        <div class="runner-sprite" data-layout-ignore></div>
+
+        <div class="ground-motion" data-layout-ignore>
+          <svg class="ground-strip" viewBox="0 0 1440 118">
+            <g id="ground-strip">
+              <g opacity="0.76">
+                <path d="M30 88h88M188 76h72M324 94h104M522 81h86M700 96h95M902 78h88M1090 92h122M1290 82h90" stroke="#79A947" stroke-linecap="round" stroke-width="5" />
+                <g fill="#FFFFFF" stroke="#79A947" stroke-linecap="round" stroke-width="4">
+                  <g transform="translate(76 56)"><path d="M0 40C8 20 20 8 38 0M3 40C-9 22-25 13-43 10" fill="none" /><circle cx="43" cy="-2" r="8" stroke="none" /></g>
+                  <g transform="translate(262 68)"><path d="M0 36C8 18 18 7 32 0M4 36C-7 21-18 13-34 11" fill="none" /><circle cx="37" cy="-2" r="7" stroke="none" /></g>
+                  <g transform="translate(472 54)"><path d="M0 42C10 22 24 8 42 0M3 42C-12 23-28 14-48 11" fill="none" /><circle cx="48" cy="-3" r="8" stroke="none" /></g>
+                  <g transform="translate(648 70)"><path d="M0 34C8 17 17 7 31 0M3 34C-8 20-20 12-36 9" fill="none" /><circle cx="35" cy="-2" r="7" stroke="none" /></g>
+                  <g transform="translate(860 58)"><path d="M0 40C8 20 20 8 38 0M3 40C-9 22-25 13-43 10" fill="none" /><circle cx="43" cy="-2" r="8" stroke="none" /></g>
+                  <g transform="translate(1048 66)"><path d="M0 36C8 18 18 7 32 0M4 36C-7 21-18 13-34 11" fill="none" /><circle cx="37" cy="-2" r="7" stroke="none" /></g>
+                  <g transform="translate(1236 55)"><path d="M0 42C10 22 24 8 42 0M3 42C-12 23-28 14-48 11" fill="none" /><circle cx="48" cy="-3" r="8" stroke="none" /></g>
+                </g>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <script src="./gsap.min.js"></script>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const duration = 4;
+      const cellWidth = 545;
+      const fps = 30;
+      const totalFrames = duration * fps;
+      const gait = [
+        { frame: 0, y: 5 },
+        { frame: 1, y: 3 },
+        { frame: 2, y: -5 },
+        { frame: 3, y: -9 },
+        { frame: 4, y: -6 },
+        { frame: 5, y: 3 },
+        { frame: 6, y: 5 },
+        { frame: 7, y: 0 },
+      ];
+      const frameHold = 5;
+      const tl = gsap.timeline({ paused: true });
+
+      for (let i = 0; i < totalFrames; i += 1) {
+        const pose = gait[Math.floor(i / frameHold) % gait.length];
+        tl.set(
+          ".runner-sprite",
+          { backgroundPositionX: `-${pose.frame * cellWidth}px`, y: pose.y },
+          i / fps,
+        );
+      }
+      tl.to(".ground-strip", { x: 720, duration, ease: "none" }, 0);
+
+      window.__timelines["login-runner"] = tl;
+    </script>
+  </body>
+</html>
