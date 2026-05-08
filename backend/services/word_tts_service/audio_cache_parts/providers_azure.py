@@ -189,13 +189,16 @@ def normalize_azure_ipa(phonetic: str | None) -> str:
         return ''
     if len(value) >= 2 and value[0] in '/[' and value[-1] in '/]':
         value = value[1:-1]
-    value = value.replace('(', '').replace(')', '')
     value = value.replace('·', '.')
     value = value.replace("'", 'ˈ')
-    value = value.replace('（', '').replace('）', '')
     value = re.sub(r'\s+', ' ', value)
     value = value.strip().strip('/').strip()
     return value
+
+
+def is_azure_tts_phonetic_safe(phonetic: str | None) -> bool:
+    value = normalize_azure_ipa(phonetic)
+    return bool(value) and not re.search(r'[()（）{}]|ᵊ', value)
 
 
 def azure_word_trailing_break_ms() -> str:
@@ -415,6 +418,8 @@ def build_azure_ssml(
     resolved_phonetic = normalize_azure_ipa(phonetic)
     if not resolved_phonetic and resolved_mode == 'word' and use_lookup_phonetic:
         resolved_phonetic = lookup_azure_word_phonetic(text)
+    if resolved_phonetic and not is_azure_tts_phonetic_safe(resolved_phonetic):
+        resolved_phonetic = ''
 
     if resolved_phonetic and is_segmented_azure_content_mode(content_mode):
         syllables = split_azure_ipa_syllables(resolved_phonetic)

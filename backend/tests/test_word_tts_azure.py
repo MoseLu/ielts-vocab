@@ -83,6 +83,24 @@ def test_normalize_azure_ipa_converts_ascii_stress_marks():
     assert word_tts.normalize_azure_ipa("/'bʊklɪsts/") == 'ˈbʊklɪsts'
 
 
+def test_normalize_azure_ipa_preserves_optional_markers():
+    assert word_tts.normalize_azure_ipa('/trænˈzækʃ(ə)n/') == 'trænˈzækʃ(ə)n'
+
+
+def test_build_azure_ssml_skips_uncertain_optional_phonetic(monkeypatch):
+    monkeypatch.setenv('AZURE_TTS_WORD_LEADING_BREAK_MS', '')
+
+    ssml = word_tts.build_azure_ssml(
+        'transaction',
+        'en-GB-LibbyNeural',
+        content_mode='word',
+        phonetic='/trænˈzækʃ(ə)n/',
+    )
+
+    assert '<phoneme' not in ssml
+    assert 'transaction' in ssml
+
+
 def test_split_azure_ipa_syllables_respects_explicit_boundaries():
     assert word_tts.split_azure_ipa_syllables('/æn.əˈlɪt.ɪk.əl.li/') == [
         'æn',
@@ -136,7 +154,8 @@ def test_lookup_azure_word_phonetic_reads_manual_overrides(monkeypatch):
     monkeypatch.setattr(word_tts, '_AZURE_WORD_PRONUNCIATION_LOOKUP', None)
 
     assert word_tts.lookup_azure_word_phonetic('participant') == 'pɑːˈtɪsɪpənt'
-    assert word_tts.lookup_azure_word_phonetic('manufacturer') == 'ˌmænjuˈfæktʃɚɹɚ'
+    assert word_tts.lookup_azure_word_phonetic('manufacturer') == 'ˌmænjuˈfæktʃɚ(ɹ)ɚ'
+    assert word_tts.is_azure_tts_phonetic_safe('/ˌmænjuˈfæktʃɚ(ɹ)ɚ/') is False
 
 
 def test_providers_azure_lookup_word_phonetic_uses_identity_normalizer(monkeypatch):

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import sys
 from pathlib import Path
 
 
+UNSAFE_TTS_PHONETIC_RE = re.compile(r'[()（）{}]|ᵊ')
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_PATH = REPO_ROOT / 'backend'
 if str(BACKEND_PATH) not in sys.path:
@@ -22,6 +24,17 @@ def explicit_word_audio_phonetic(word: str) -> str:
         return ''
 
 
-def apply_phonetic_audio_identity(model: str, phonetic: str) -> str:
+def is_tts_phonetic_safe(phonetic: str | None) -> bool:
+    value = (phonetic or '').strip()
+    return bool(value) and not UNSAFE_TTS_PHONETIC_RE.search(value)
+
+
+def apply_phonetic_audio_identity(model: str, phonetic: str, tag: str = 'ipa') -> str:
     digest = hashlib.md5(f'ipa:{phonetic}'.encode('utf-8')).hexdigest()[:8]
-    return f'{model}@ipa-{digest}'
+    return f'{model}@{tag}-{digest}'
+
+
+def apply_tts_phonetic_audio_identity(model: str, phonetic: str) -> tuple[str, str]:
+    if is_tts_phonetic_safe(phonetic):
+        return apply_phonetic_audio_identity(model, phonetic), phonetic
+    return apply_phonetic_audio_identity(model, phonetic, 'ipa-review'), ''

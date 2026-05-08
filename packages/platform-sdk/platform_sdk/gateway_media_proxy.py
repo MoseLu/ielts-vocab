@@ -82,7 +82,7 @@ def resolve_word_audio_request(word: str, pronunciation_mode: str | None = None)
         voice = _RYAN_WORD_AUDIO_VOICE
     phonetic = phonetic_identity.explicit_word_audio_phonetic(raw) if resolved_mode == 'word' else ''
     if phonetic:
-        model = phonetic_identity.apply_phonetic_audio_identity(model, phonetic)
+        model, phonetic = phonetic_identity.apply_tts_phonetic_audio_identity(model, phonetic)
     file_name = word_tts_cache_path(Path('word_tts_cache'), normalized, model, voice).name
     return {
         'word': raw,
@@ -120,7 +120,7 @@ def resolve_word_audio_request_candidates(
         })
 
     append_candidate(primary['model'], primary['voice'])
-    if primary.get('phonetic'):
+    if primary.get('phonetic') or '@ipa-review-' in primary['model']:
         return candidates
     if primary['pronunciation_mode'] != 'word-segmented':
         if primary['provider'] != 'azure':

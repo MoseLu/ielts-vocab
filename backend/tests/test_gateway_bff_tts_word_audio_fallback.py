@@ -133,6 +133,36 @@ def test_resolve_word_audio_request_uses_phonetic_specific_identity(monkeypatch)
     assert candidates[0]['file_name'].startswith('the rest of-azure-rest:test@azure-word-v6')
 
 
+def test_resolve_word_audio_request_reviews_uncertain_phonetic(monkeypatch):
+    module = _load_gateway_media_proxy_module()
+
+    monkeypatch.setattr(
+        module,
+        'resolve_normal_word_audio_identity',
+        lambda: (
+            'azure',
+            'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+            'en-GB-LibbyNeural',
+        ),
+    )
+    monkeypatch.setattr(
+        module.phonetic_identity,
+        'explicit_word_audio_phonetic',
+        lambda word: '/trænˈzækʃ(ə)n/' if word == 'transaction' else '',
+    )
+    monkeypatch.setattr(
+        module,
+        'word_tts_cache_path',
+        lambda base, normalized, model, voice: Path(f'{normalized}-{model}-{voice}.mp3'),
+    )
+
+    candidates = module.resolve_word_audio_request_candidates('transaction')
+
+    assert len(candidates) == 1
+    assert candidates[0]['phonetic'] == ''
+    assert '@ipa-review-' in candidates[0]['model']
+
+
 def test_gateway_word_audio_metadata_proxy_returns_upstream_payload(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
