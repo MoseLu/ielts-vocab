@@ -17,6 +17,7 @@ import { ActivityIndicator, BackHandler, Pressable, SafeAreaView, StatusBar, Sty
 import { useSession } from '../state/SessionContext'
 import { AIChatScreen } from '../screens/AIChatScreen'
 import { BooksScreen } from '../screens/BooksScreen'
+import { CustomBookScreen } from '../screens/CustomBookScreen'
 import { ErrorsScreen } from '../screens/ErrorsScreen'
 import { ExamsScreen } from '../screens/ExamsScreen'
 import { HomeScreen } from '../screens/HomeScreen'
@@ -45,6 +46,12 @@ type HeaderAction = {
   onPress: () => void
 }
 
+type TabIconProps = {
+  Icon: LucideIcon
+  primary: boolean
+  selected: boolean
+}
+
 type RouteAction =
   | { entry: RouteEntry; type: 'navigate' }
   | { type: 'back' }
@@ -58,6 +65,7 @@ const screens: Array<{
 }> = [
   { component: HomeScreen, headerTitle: '雅思冲刺', Icon: Home, key: 'home', label: '首页' },
   { component: BooksScreen, Icon: BookOpen, key: 'books', label: '词书' },
+  { component: CustomBookScreen, headerTitle: '自定义词书', Icon: BookOpen, key: 'customBook', label: '自定义词书' },
   { component: PracticeScreen, Icon: SquarePen, key: 'practice', label: '练习' },
   { component: ErrorsScreen, headerTitle: '错词本', Icon: SquarePen, key: 'errors', label: '错词' },
   { component: StatsScreen, headerTitle: '学习统计', Icon: BarChart3, key: 'stats', label: '统计' },
@@ -96,6 +104,19 @@ function buildHeaderActions(screen: ScreenKey, navigate: Navigate): HeaderAction
     actions.push({ Icon: Settings, label: '设置', onPress: () => navigate('profileSettings') })
   }
   return actions
+}
+
+function TabIcon({ Icon, primary, selected }: TabIconProps) {
+  return (
+    <View style={[styles.tabIconBox, primary ? styles.tabIconBoxPrimary : null, selected ? styles.tabIconBoxSelected : null]}>
+      <Icon
+        color={selected ? theme.colors.textInverse : primary ? theme.colors.accentDark : theme.colors.muted}
+        fill={selected ? 'rgba(255, 255, 255, 0.2)' : 'none'}
+        size={primary ? 24 : 22}
+        strokeWidth={selected || primary ? 2.6 : 2.1}
+      />
+    </View>
+  )
 }
 
 function routeReducer(state: RouteState, action: RouteAction): RouteState {
@@ -234,18 +255,19 @@ function MainTabs() {
         <View style={styles.tabBar}>
           {tabs.map(item => {
             const active = item.key === routeState.current.screen
-            const iconColor = active ? theme.colors.accent : theme.colors.muted
+            const primary = item.key === 'practice'
             return (
               <Pressable
                 accessibilityRole="button"
+                accessibilityState={{ selected: active }}
                 key={item.key}
                 onPress={() => navigate(item.key)}
-                style={styles.tabButton}
+                style={[styles.tabButton, primary ? styles.tabButtonPrimary : null]}
               >
-                <View style={[styles.tabIconBox, active ? styles.tabIconBoxActive : null]}>
-                  <item.Icon color={iconColor} size={24} strokeWidth={active ? 2.7 : 2.2} />
-                </View>
-                <Text style={[styles.tabLabel, active ? styles.tabLabelActive : null]}>{item.label}</Text>
+                <TabIcon Icon={item.Icon} primary={primary} selected={active} />
+                <Text style={[styles.tabLabel, primary ? styles.tabLabelPrimary : null, active ? styles.tabLabelActive : null]}>
+                  {item.label}
+                </Text>
               </Pressable>
             )
           })}
@@ -256,8 +278,8 @@ function MainTabs() {
 }
 
 export function RootNavigator() {
-  const { isAuthenticated, isLoading } = useSession()
-  if (isLoading) {
+  const { isAuthenticated, isHydrating } = useSession()
+  if (isHydrating) {
     return (
       <>
         <StatusBar backgroundColor={theme.colors.background} barStyle="dark-content" />
@@ -331,14 +353,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tabBar: {
-    backgroundColor: theme.colors.surfaceElevated,
-    borderColor: theme.colors.border,
+    backgroundColor: '#F7CAD6',
+    borderColor: '#E8B3C3',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     borderTopWidth: 1,
     flexDirection: 'row',
     gap: theme.spacing.xs,
     paddingHorizontal: theme.spacing.sm,
-    paddingBottom: theme.spacing.sm,
-    paddingTop: theme.spacing.sm,
+    paddingBottom: 10,
+    paddingTop: 8,
     shadowColor: theme.colors.shadow,
     shadowOffset: { height: -4, width: 0 },
     shadowOpacity: 0.07,
@@ -349,19 +373,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: theme.radius.control,
     flex: 1,
+    gap: 1,
     justifyContent: 'center',
-    minHeight: 56,
-    paddingVertical: theme.spacing.xs,
+    minHeight: 48,
+    paddingVertical: 2,
+  },
+  tabButtonPrimary: {
+    backgroundColor: theme.colors.surfaceElevated,
+    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    marginTop: -18,
+    minHeight: 68,
+    shadowColor: '#B86D83',
+    shadowOffset: { height: 5, width: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 9,
+    elevation: 6,
   },
   tabIconBox: {
     alignItems: 'center',
     borderRadius: theme.radius.card,
-    height: 32,
+    height: 28,
     justifyContent: 'center',
-    width: 32,
+    width: 28,
   },
-  tabIconBoxActive: {
-    backgroundColor: theme.colors.accentSoft,
+  tabIconBoxPrimary: {
+    backgroundColor: '#FFF8ED',
+    borderColor: '#5A3A26',
+    borderRadius: 22,
+    borderWidth: 2,
+    height: 42,
+    width: 42,
+  },
+  tabIconBoxSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primaryDark,
+    borderWidth: 1,
+    shadowColor: theme.colors.primaryDark,
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.16,
+    shadowRadius: 4,
+    elevation: 2,
   },
   tabHeader: {
     flexDirection: 'row',
@@ -382,7 +434,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 16,
   },
+  tabLabelPrimary: {
+    color: theme.colors.accentDark,
+  },
   tabLabelActive: {
-    color: theme.colors.accent,
+    color: theme.colors.primaryDark,
+    fontWeight: '800',
   },
 })

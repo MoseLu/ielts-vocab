@@ -31,6 +31,21 @@ export type ExamResponseDraft = {
   durationSeconds?: number | null
 }
 
+export type ProgressSnapshot = Record<string, unknown> & {
+  accuracy?: number | null
+  book_id?: string
+  chapter_id?: string | number
+  completed_chapters?: number
+  correct_count?: number
+  current_index?: number
+  is_completed?: boolean
+  progress_percent?: number
+  total_chapters?: number
+  total_words?: number
+  words_learned?: number
+  wrong_count?: number
+}
+
 function query(params: Record<string, string | number | boolean | null | undefined>): string {
   const search = new URLSearchParams()
   Object.entries(params).forEach(([key, value]) => {
@@ -38,6 +53,28 @@ function query(params: Record<string, string | number | boolean | null | undefin
   })
   const value = search.toString()
   return value ? `?${value}` : ''
+}
+
+function normalizeProgressMap(value: unknown, idKey: 'book_id' | 'chapter_id'): Record<string, ProgressSnapshot> {
+  const result: Record<string, ProgressSnapshot> = {}
+  const put = (key: string, snapshot: unknown) => {
+    if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return
+    result[key] = snapshot as ProgressSnapshot
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach(item => {
+      if (!item || typeof item !== 'object') return
+      const key = (item as ProgressSnapshot)[idKey]
+      if (key != null) put(String(key), item)
+    })
+    return result
+  }
+
+  if (value && typeof value === 'object') {
+    Object.entries(value as Record<string, unknown>).forEach(([key, snapshot]) => put(key, snapshot))
+  }
+  return result
 }
 
 export async function loadHomeTodos(): Promise<HomeTodoPayload> {
@@ -62,6 +99,11 @@ export async function loadMyBookIds(): Promise<string[]> {
   return Array.isArray(payload.book_ids) ? payload.book_ids.map(String) : []
 }
 
+export async function loadBookProgressMap(): Promise<Record<string, ProgressSnapshot>> {
+  const payload = await mobileApiClient.json<{ progress?: unknown }>('/api/books/progress')
+  return normalizeProgressMap(payload.progress, 'book_id')
+}
+
 export async function addMyBook(bookId: string) {
   return mobileApiClient.json('/api/books/my', {
     method: 'POST',
@@ -72,6 +114,13 @@ export async function addMyBook(bookId: string) {
 export async function loadChapters(bookId: string): Promise<MobileChapter[]> {
   const payload = await mobileApiClient.json<{ chapters?: unknown[] }>(`/api/books/${bookId}/chapters`)
   return parseArray(MobileChapterSchema, payload.chapters)
+}
+
+export async function loadChapterProgressMap(bookId: string): Promise<Record<string, ProgressSnapshot>> {
+  const payload = await mobileApiClient.json<{ chapter_progress?: unknown; progress?: unknown }>(
+    `/api/books/${bookId}/chapters/progress`,
+  )
+  return normalizeProgressMap(payload.chapter_progress ?? payload.progress, 'chapter_id')
 }
 
 export async function loadChapterWords(bookId: string, chapterId?: string | number | null): Promise<MobileWord[]> {

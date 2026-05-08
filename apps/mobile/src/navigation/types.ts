@@ -3,6 +3,7 @@ import type { PracticeMode } from '@ielts-vocab/app-core'
 export type ScreenKey =
   | 'home'
   | 'books'
+  | 'customBook'
   | 'practice'
   | 'errors'
   | 'stats'

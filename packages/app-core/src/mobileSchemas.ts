@@ -49,6 +49,12 @@ export const MobileBookSchema = z.object({
   total_words: z.number().optional().default(0),
   word_count: z.number().optional(),
   practice_mode: OptionalStringSchema,
+  current_index: z.number().optional().default(0),
+  completed_chapters: z.number().optional().default(0),
+  total_chapters: z.number().optional().default(0),
+  progress_percent: z.number().optional().default(0),
+  is_completed: z.boolean().optional().default(false),
+  updated_at: OptionalStringSchema,
 })
 export type MobileBook = z.infer<typeof MobileBookSchema>
 
@@ -58,6 +64,14 @@ export const MobileChapterSchema = z.object({
   word_count: z.number().optional().default(0),
   group_count: z.number().optional(),
   is_custom: z.boolean().optional().default(false),
+  current_index: z.number().optional().default(0),
+  words_learned: z.number().optional().default(0),
+  correct_count: z.number().optional().default(0),
+  wrong_count: z.number().optional().default(0),
+  accuracy: z.number().nullable().optional(),
+  progress_percent: z.number().optional().default(0),
+  is_completed: z.boolean().optional().default(false),
+  updated_at: OptionalStringSchema,
 })
 export type MobileChapter = z.infer<typeof MobileChapterSchema>
 
@@ -73,10 +87,20 @@ export const WrongWordSchema = MobileWordSchema.extend({
 export type WrongWord = z.infer<typeof WrongWordSchema>
 
 export const LearningStatsPayloadSchema = z.object({
+  daily: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+  books: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+  modes: z.array(z.string()).optional().default([]),
   summary: z.record(z.string(), z.unknown()).optional().default({}),
   alltime: z.record(z.string(), z.unknown()).optional().default({}),
   mode_breakdown: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+  pie_chart: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+  chapter_breakdown: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+  chapter_mode_stats: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+  wrong_top10: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+  history_wrong_top10: z.array(z.record(z.string(), z.unknown())).optional().default([]),
+  pending_wrong_top10: z.array(z.record(z.string(), z.unknown())).optional().default([]),
   wrong_words: z.record(z.string(), z.unknown()).optional().default({}),
+  use_fallback: z.boolean().optional().default(false),
 })
 export type LearningStatsPayload = z.infer<typeof LearningStatsPayloadSchema>
 
