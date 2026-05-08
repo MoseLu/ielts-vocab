@@ -225,6 +225,7 @@ def test_known_premium_phonetic_regressions_stay_fixed():
         'instruments': '/ˈɪnstrəmənts/',
         'quantities': '/ˈkwɒntɪtɪz/',
         'recruits': '/rɪˈkruːts/',
+        'refractory': '/ɹɪˈfɹæk.təɹ.i/',
         'stadiums': '/ˈsteɪdiəmz/',
         'structures': '/ˈstrʌktʃəz/',
         'the amount of': '/ðiː əˈmaʊnt əv/',
