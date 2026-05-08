@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 import services.books_catalog_service as books_catalog_service
 import services.word_memory_note_file_generation as word_memory_note_file_generation
 import services.word_memory_note_enrichment as word_memory_note_enrichment
@@ -232,6 +234,22 @@ def test_memory_note_enrichment_rejects_missing_definition_anchor(app, monkeypat
         assert stats['enriched'] == 0
         assert stats['failed'] == 1
         assert stats['failed_words'] == ['stout']
+
+
+def test_memory_note_enrichment_rejects_illogical_word_chain_story():
+    seed = {
+        'display_word': 'universe',
+        'normalized_word': 'universe',
+        'definitions': ['宇宙'],
+        'is_phrase': False,
+    }
+
+    with pytest.raises(ValueError, match='formulaic'):
+        word_memory_note_enrichment._sanitize_memory_note_payload(seed, {
+            'word': 'universe',
+            'badge': '串记',
+            'text': '未来去宇宙（universe）上大学（university）是普遍的（universal）',
+        })
 
 
 def test_definition_anchor_accepts_core_phrase_meaning():
