@@ -52,6 +52,32 @@ def test_build_follow_read_payload_splits_multiword_phonetic_groups():
     _assert_monotonic_timeline(payload['segments'], payload['estimated_duration_ms'])
 
 
+def test_build_follow_read_payload_uses_corrected_phrase_phonetics():
+    cases = [
+        (
+            'the rest of',
+            '/ðə rest əv/',
+            [('the', 'ðə'), ('rest', 'rest'), ('of', 'əv')],
+        ),
+        (
+            'write about',
+            '/raɪt əˈbaʊt/',
+            [('write', 'raɪt'), ('a', 'ə'), ('bout', 'ˈbaʊt')],
+        ),
+        (
+            'in front of you',
+            '/ɪn frʌnt əv juː/',
+            [('in', 'ɪn'), ('front', 'frʌnt'), ('of', 'əv'), ('you', 'juː')],
+        ),
+    ]
+
+    for word, phonetic, expected in cases:
+        payload = build_follow_read_payload(word=word, phonetic=phonetic)
+
+        assert [(segment['letters'], segment['phonetic']) for segment in payload['segments']] == expected
+        _assert_monotonic_timeline(payload['segments'], payload['estimated_duration_ms'])
+
+
 def test_build_follow_read_payload_uses_science_override_segments():
     payload = build_follow_read_payload(
         word='science',
