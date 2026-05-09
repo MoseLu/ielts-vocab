@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { WordDetailResponseSchema, type WordDetailResponse, type WordSearchResult } from '../../../lib'
-import { buildWordMemoryNote } from './globalWordMemoryNote'
+import { buildMemoryRelatedCandidates, buildWordMemoryNote } from './globalWordMemoryNote'
 
 function buildResult(overrides: Partial<WordSearchResult> = {}): WordSearchResult {
   return {
@@ -127,5 +127,21 @@ describe('buildWordMemoryNote', () => {
 
     expect(note.badge).toBe('词根词缀')
     expect(note.text).toContain('责任')
+  })
+
+  it('filters unrelated listening distractors from memory related words', () => {
+    const candidates = buildMemoryRelatedCandidates(buildResult({
+      word: 'racism',
+      definition: '种族主义；种族歧视',
+      listening_confusables: [
+        { word: 'races', phonetic: '/ˈreɪsɪz/', pos: 'n.', definition: '比赛' },
+        { word: 'racial', phonetic: '/ˈreɪʃ(ə)l/', pos: 'adj.', definition: '种族的' },
+        { word: 'recipes', phonetic: '/ˈresəpiz/', pos: 'n.', definition: '食谱；配方' },
+        { word: 'rack', phonetic: '/ræk/', pos: 'n.', definition: '行李架' },
+        { word: 'race', phonetic: '/reɪs/', pos: 'n.', definition: '赛跑；竞争；种族' },
+      ],
+    }))
+
+    expect(candidates.map(candidate => candidate.word)).toEqual(['races', 'racial', 'race'])
   })
 })
