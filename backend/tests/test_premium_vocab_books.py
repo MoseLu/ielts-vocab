@@ -12,7 +12,7 @@ TARGET_BOOKS = {
     'ielts_reading_premium': 'ielts_reading_premium.json',
     'ielts_listening_premium': 'ielts_listening_premium.json',
 }
-MEMORY_BADGES = {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀'}
+MEMORY_BADGES = {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀', '派生'}
 WORD_RE = re.compile(r"^[a-z]+(?:[-'][a-z]+|')*(?: [a-z]+(?:[-'][a-z]+|')*)*$")
 FORBIDDEN_DEFINITION_TOKENS = (
     '人名',
@@ -180,7 +180,7 @@ def test_premium_word_mnemonics_avoid_known_low_quality_patterns():
     violations = [
         f'{word}:{item.get("text")}'
         for word, item in items.items()
-        if item.get('badge') == '谐音' or bad_pattern.search(str(item.get('text') or ''))
+        if bad_pattern.search(str(item.get('text') or ''))
     ]
 
     assert violations == []

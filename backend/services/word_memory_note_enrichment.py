@@ -200,7 +200,7 @@ def _sanitize_memory_note_payload(word_seed: dict, raw_item: dict) -> dict:
         raise ValueError('memory note payload must be an object')
 
     badge = str(raw_item.get('badge') or '').strip() or '联想'
-    if badge not in {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀'}:
+    if badge not in {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀', '派生'}:
         badge = '联想'
 
     text = _normalize_note_text(raw_item.get('text') or raw_item.get('note') or '')
