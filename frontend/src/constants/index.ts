@@ -64,6 +64,7 @@ export const DEFAULT_SETTINGS = {
   reviewLimitCustomized: false,
   darkMode: false,
   fontSize: 'medium',
+  themeColor: 'orange',
 } as const
 
 // Practice settings

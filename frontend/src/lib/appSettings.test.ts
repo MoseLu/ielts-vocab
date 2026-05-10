@@ -39,4 +39,22 @@ describe('normalizeAppSettings', () => {
       reviewLimitCustomized: true,
     })
   })
+
+  it('defaults the global theme color to logo orange', () => {
+    expect(normalizeAppSettings({ themeColor: 'pink' })).toMatchObject({
+      themeColor: 'orange',
+    })
+  })
+
+  it('preserves the alternate green theme color', () => {
+    expect(normalizeAppSettings({ themeColor: 'green' })).toMatchObject({
+      themeColor: 'green',
+    })
+  })
+
+  it('accepts the macOS-style tag colors', () => {
+    expect(normalizeAppSettings({ themeColor: 'purple' })).toMatchObject({
+      themeColor: 'purple',
+    })
+  })
 })
