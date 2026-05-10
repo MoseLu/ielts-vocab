@@ -119,6 +119,8 @@ describe('ChapterModal', () => {
     expect(screen.getByRole('img', { name: '章节完成率 40%，模式正确率：速记模式 80%，听写模式 0%' })).toBeInTheDocument()
     expect(screen.getByText('完成率')).toBeInTheDocument()
     expect(screen.getByText('40%')).toBeInTheDocument()
+    expect(container.querySelectorAll('.chapter-mode-table-row')).toHaveLength(3)
+    expect(container.querySelector('.chapter-mode-table-section')?.textContent).toBe('模式正确率')
     expect(screen.getByTitle('速记模式正确率 80%')).toBeInTheDocument()
     expect(screen.getByTitle('听写模式正确率 0%')).toBeInTheDocument()
     expect(screen.queryByText('记 10词')).toBeNull()
