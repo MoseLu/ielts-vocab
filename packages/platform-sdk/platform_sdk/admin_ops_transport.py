@@ -34,6 +34,13 @@ def _load_admin_user_management_support():
 
 
 @lru_cache(maxsize=1)
+def _load_admin_asset_management_support():
+    from platform_sdk.admin_asset_management_application import build_asset_words_response
+
+    return build_asset_words_response
+
+
+@lru_cache(maxsize=1)
 def _load_word_feedback_support():
     from platform_sdk.admin_word_feedback_application import (
         build_word_feedback_list_response,
@@ -119,6 +126,15 @@ def set_admin(current_user, user_id):
         user_id,
         request.get_json() or {},
     )
+    return jsonify(payload), status
+
+
+@admin_bp.route('/assets/words', methods=['GET'])
+@admin_required
+def get_asset_words(current_user):
+    del current_user
+    build_asset_words_response = _load_admin_asset_management_support()
+    payload, status = build_asset_words_response(request.args)
     return jsonify(payload), status
 
 

@@ -12,11 +12,19 @@ export default function AdminDashboard() {
     overview,
     users,
     feedbackItems,
+    assetItems,
     feedbackTotal,
+    assetTotal,
+    assetSummary,
     total,
     page,
     pages,
+    assetPage,
+    assetPages,
     search,
+    assetSearch,
+    assetBookId,
+    assetMnemonicStatus,
     sort,
     order,
     selectedUser,
@@ -28,10 +36,12 @@ export default function AdminDashboard() {
     detailWrongWordsSort,
     loading,
     feedbackLoading,
+    assetLoading,
     overviewLoading,
     error,
     setTab,
     setSearch,
+    setAssetSearch,
     setIsFullscreen,
     setDetailTab,
     setDetailDateFrom,
@@ -43,6 +53,11 @@ export default function AdminDashboard() {
     handleSearchClear,
     handleSort,
     handlePageChange,
+    handleAssetSearchSubmit,
+    handleAssetSearchClear,
+    handleAssetBookChange,
+    handleAssetMnemonicStatusChange,
+    handleAssetPageChange,
     handleSelectUser,
     closeDetail,
     dismissError,
@@ -56,23 +71,38 @@ export default function AdminDashboard() {
         overviewLoading={overviewLoading}
         users={users}
         feedbackItems={feedbackItems}
+        assetItems={assetItems}
         feedbackTotal={feedbackTotal}
+        assetTotal={assetTotal}
+        assetSummary={assetSummary}
         total={total}
         page={page}
         pages={pages}
+        assetPage={assetPage}
+        assetPages={assetPages}
         search={search}
+        assetSearch={assetSearch}
+        assetBookId={assetBookId}
+        assetMnemonicStatus={assetMnemonicStatus}
         sort={sort}
         order={order}
         currentUserId={currentUserId}
         currentUserAvatarUrl={currentUser?.avatar_url ?? null}
         loading={loading}
         feedbackLoading={feedbackLoading}
+        assetLoading={assetLoading}
         error={error}
         onDismissError={dismissError}
         onTabChange={setTab}
         onSearchSubmit={handleSearchSubmit}
         onSearchClear={handleSearchClear}
         onSearchChange={setSearch}
+        onAssetSearchSubmit={handleAssetSearchSubmit}
+        onAssetSearchClear={handleAssetSearchClear}
+        onAssetSearchChange={setAssetSearch}
+        onAssetBookChange={handleAssetBookChange}
+        onAssetMnemonicStatusChange={handleAssetMnemonicStatusChange}
+        onAssetPageChange={handleAssetPageChange}
         onSort={handleSort}
         onPageChange={handlePageChange}
         onSelectUser={handleSelectUser}

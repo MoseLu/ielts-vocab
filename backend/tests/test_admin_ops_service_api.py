@@ -185,6 +185,46 @@ def test_admin_ops_service_submits_and_lists_word_feedback(monkeypatch, tmp_path
     assert list_response.json()['items'][0]['feedback_type_labels'] == ['翻译不准', '音频发音问题']
 
 
+def test_admin_ops_service_lists_paid_book_assets(monkeypatch, tmp_path):
+    _configure_admin_env(monkeypatch, tmp_path)
+    module = _load_admin_ops_service_module('admin_ops_service_asset_routes')
+    client = TestClient(module.app)
+    _, admin_token = _create_admin_token(module.admin_ops_flask_app)
+
+    response = client.get(
+        '/api/admin/assets/words'
+        '?book_id=ielts_reading_premium'
+        '&search=accommodation'
+        '&mnemonic_status=with_mnemonic'
+        '&per_page=5',
+        headers=_auth_headers(admin_token),
+    )
+    invalid_response = client.get(
+        '/api/admin/assets/words?book_id=ielts_ultimate',
+        headers=_auth_headers(admin_token),
+    )
+
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload['total'] >= 1
+    assert payload['items'][0]['book_id'] == 'ielts_reading_premium'
+    assert set(payload['items'][0]['source_book_ids']) == {
+        'ielts_reading_premium',
+        'ielts_listening_premium',
+    }
+    assert payload['items'][0]['word'].lower() == 'accommodation'
+    assert payload['items'][0]['has_mnemonic'] is True
+    assert 'accommodate' in payload['items'][0]['memory_text']
+    assert payload['summary']['total_words'] == 5493
+    assert payload['summary']['with_mnemonic'] == 5493
+    assert payload['summary']['missing_mnemonic'] == 0
+    assert [item['id'] for item in payload['book_options']] == [
+        'ielts_reading_premium',
+        'ielts_listening_premium',
+    ]
+    assert invalid_response.status_code == 400
+
+
 def test_admin_ops_service_records_and_lists_frontend_error_logs(monkeypatch, tmp_path):
     _configure_admin_env(monkeypatch, tmp_path)
     module = _load_admin_ops_service_module('admin_ops_service_frontend_error_logs')
