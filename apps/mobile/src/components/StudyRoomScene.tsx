@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
 import { X, type LucideIcon } from 'lucide-react-native'
 import { CompanionCatArt, ScrollNote } from './CompanionDecor'
+import { Card } from './primitives'
 import { StickerLayer, studyRoomFeedbackStickerSlots, studyRoomStickerSlots } from './stickers'
 import { styles } from './StudyRoomScene.styles'
 import type { NavigateOptions, ScreenKey } from '../navigation/types'
@@ -165,26 +166,35 @@ export function StudyRoomScene({
         caption={`${plan.examDateLabel}考试，今日建议先清复习，再补新词。弱项：${plan.weakAreas.join(' / ')}。`}
       />
 
-      <View style={styles.planTicket}>
-        <View>
-          <Text style={styles.ticketEyebrow}>今日房间任务</Text>
-          <Text style={styles.ticketTitle}>{progress ? `学习进度 ${progress}%` : '从第一组新词开始'}</Text>
+      <Card style={styles.bigBoard} stickers={[
+        { key: 'leafSprig', width: 90, height: 80, left: -25, top: -25, zIndex: 10, rotateDeg: -20 },
+        { key: 'lemonCorner', width: 70, height: 70, right: -15, bottom: -15, zIndex: 10 }
+      ]}>
+        <View style={styles.boardHeader}>
+          <Text style={styles.boardTitle}>改变从这里开始</Text>
+          <Text style={styles.boardSubtitle}>选择一条计划开始改变吧~</Text>
         </View>
-        <Pressable accessibilityRole="button" onPress={() => onNavigate('practice', { mode: 'smart' })} style={styles.ticketButton}>
-          <Text style={styles.ticketButtonText}>开始</Text>
-        </Pressable>
-      </View>
-
-      {todos.slice(0, 3).map((todo, index) => (
-        <Pressable accessibilityRole="button" key={`${todo.title}-${index}`} onPress={() => onTodoPress(index)} style={styles.todoTicket}>
-          <Text style={styles.todoIndex}>{String(index + 1).padStart(2, '0')}</Text>
-          <View style={styles.todoCopy}>
-            <Text numberOfLines={1} style={styles.todoTitle}>{todo.title || '学习任务'}</Text>
-            <Text numberOfLines={2} style={styles.todoSubtitle}>{todo.subtitle || '系统推荐的下一步学习动作。'}</Text>
+        <View style={styles.planTicket}>
+          <View>
+            <Text style={styles.ticketEyebrow}>今日房间任务</Text>
+            <Text style={styles.ticketTitle}>{progress ? `学习进度 ${progress}%` : '从第一组新词开始'}</Text>
           </View>
-          <Text style={styles.todoCta}>{todo.ctaLabel}</Text>
-        </Pressable>
-      ))}
+          <Pressable accessibilityRole="button" onPress={() => onNavigate('practice', { mode: 'smart' })} style={styles.ticketButton}>
+            <Text style={styles.ticketButtonText}>选择计划</Text>
+          </Pressable>
+        </View>
+
+        {todos.slice(0, 3).map((todo, index) => (
+          <Pressable accessibilityRole="button" key={`${todo.title}-${index}`} onPress={() => onTodoPress(index)} style={styles.todoTicket}>
+            <Text style={styles.todoIndex}>{String(index + 1).padStart(2, '0')}</Text>
+            <View style={styles.todoCopy}>
+              <Text numberOfLines={1} style={styles.todoTitle}>{todo.title || '学习任务'}</Text>
+              <Text numberOfLines={2} style={styles.todoSubtitle}>{todo.subtitle || '系统推荐的下一步学习动作。'}</Text>
+            </View>
+            <Text style={styles.todoCta}>{todo.ctaLabel}</Text>
+          </Pressable>
+        ))}
+      </Card>
 
       <Modal animationType="slide" onRequestClose={() => setActiveObject(null)} transparent visible={Boolean(activeObject)}>
         <View style={styles.modalRoot}>

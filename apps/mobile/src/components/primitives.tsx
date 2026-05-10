@@ -11,6 +11,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native'
+import { StickerLayer, type StickerSlot, type StickerKey, Sticker } from './stickers'
 import { theme } from '../theme'
 
 export function ScreenScroll({
@@ -43,8 +44,13 @@ export function ScreenScroll({
   )
 }
 
-export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.card, style]}>{children}</View>
+export function Card({ children, style, stickers }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; stickers?: StickerSlot[] }) {
+  return (
+    <View style={[styles.card, style]}>
+      {stickers ? <StickerLayer slots={stickers} /> : null}
+      {children}
+    </View>
+  )
 }
 
 export function PrimaryButton({
@@ -52,11 +58,13 @@ export function PrimaryButton({
   label,
   onPress,
   tone = 'primary',
+  sticker,
 }: {
   disabled?: boolean
   label: string
   onPress: () => void
   tone?: 'primary' | 'danger' | 'neutral' | 'accent'
+  sticker?: StickerKey
 }) {
   const toneStyle =
     tone === 'danger'
@@ -75,6 +83,11 @@ export function PrimaryButton({
       <Text style={[styles.buttonText, tone === 'neutral' ? styles.darkButtonText : null]}>
         {label}
       </Text>
+      {sticker ? (
+        <View style={styles.buttonStickerWrap}>
+          <Sticker height={56} keyName={sticker} width={56} />
+        </View>
+      ) : null}
     </Pressable>
   )
 }
@@ -160,16 +173,25 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.control,
-    minHeight: 48,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.pill,
+    borderWidth: 2,
+    elevation: 2,
     justifyContent: 'center',
+    minHeight: 48,
     marginTop: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
     shadowColor: theme.colors.shadow,
     shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
+  buttonStickerWrap: {
+    bottom: -8,
+    position: 'absolute',
+    right: -8,
+    transform: [{ rotate: '10deg' }],
+    zIndex: 10,
   },
   buttonText: {
     color: theme.colors.textInverse,
@@ -178,16 +200,16 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: theme.colors.surfaceElevated,
-    borderColor: theme.colors.borderStrong,
+    borderColor: theme.colors.border,
     borderRadius: theme.radius.card,
-    borderWidth: 1,
+    borderWidth: 2,
+    elevation: 2,
     marginBottom: theme.spacing.md,
     padding: theme.spacing.lg,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
   },
   danger: {
     backgroundColor: theme.colors.danger,
@@ -224,19 +246,19 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: theme.colors.surfaceElevated,
-    borderColor: theme.colors.borderStrong,
+    borderColor: theme.colors.border,
     borderRadius: theme.radius.card,
-    borderWidth: 1,
+    borderWidth: 2,
+    elevation: 2,
     marginBottom: theme.spacing.md,
     marginTop: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
   },
   heading: {
     color: theme.colors.text,
@@ -247,12 +269,12 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: theme.colors.surfaceElevated,
     borderColor: theme.colors.border,
-    borderRadius: theme.radius.control,
-    borderWidth: 1,
+    borderRadius: theme.radius.pill,
+    borderWidth: 2,
     color: theme.colors.text,
     fontSize: theme.typography.body,
-    minHeight: 48,
     marginBottom: theme.spacing.sm,
+    minHeight: 48,
     paddingHorizontal: theme.spacing.md,
   },
   meta: {
@@ -300,6 +322,7 @@ const styles = StyleSheet.create({
     maxWidth: 320,
   },
   textarea: {
+    borderRadius: theme.radius.card,
     minHeight: 92,
     paddingTop: theme.spacing.sm,
     textAlignVertical: 'top',
