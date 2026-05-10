@@ -11,22 +11,37 @@ export interface MyBook {
 }
 
 export function useMyBooks() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading = false } = useAuth()
+  const userId = user?.id ?? null
   const [myBookIds, setMyBookIds] = useState<Set<string>>(new Set())
   const [myBooks, setMyBooks] = useState<MyBook[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchMyBooks = useCallback(async () => {
-    if (!user) { setMyBookIds(new Set()); setLoading(false); return }
+    if (authLoading) {
+      setLoading(true)
+      return
+    }
+
+    if (!userId) {
+      setMyBookIds(new Set())
+      setError(null)
+      setLoading(false)
+      return
+    }
+
     try {
-      const data = await apiFetch<{ book_ids?: string[] }>('/api/books/my')
+      setLoading(true)
+      setError(null)
+      const data = await apiFetch<{ book_ids?: string[] }>('/api/books/my', { cache: 'no-store' })
       setMyBookIds(new Set(data.book_ids || []))
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch my books')
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [authLoading, userId])
 
   useEffect(() => {
     fetchMyBooks()
@@ -61,5 +76,5 @@ export function useMyBooks() {
     }
   }, [])
 
-  return { myBookIds, myBooks, loading, resolveMyBooks, addBook, removeBook }
+  return { myBookIds, myBooks, loading, error, refetch: fetchMyBooks, resolveMyBooks, addBook, removeBook }
 }

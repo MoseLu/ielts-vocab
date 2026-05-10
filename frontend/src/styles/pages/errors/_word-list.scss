@@ -170,6 +170,21 @@
     flex-wrap: wrap;
 }
 
+.errors-item-definition.word-meaning-groups {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--size-6) var(--size-10);
+    width: auto;
+}
+
+.errors-item-definition .word-meaning-group {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--size-6);
+    max-width: 100%;
+}
+
 .errors-item-focus-note {
     display: inline-flex;
     align-items: center;
@@ -346,5 +361,4 @@
         min-height: 100%;
     }
 }
-
 

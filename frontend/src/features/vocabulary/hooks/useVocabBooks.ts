@@ -28,30 +28,31 @@ export function useVocabBooks() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        setLoading(true)
-        const raw = await apiFetch<unknown>(API_BASE)
+  const fetchBooks = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const raw = await apiFetch<unknown>(API_BASE, { cache: 'no-store' })
 
-        // Validate API response with Zod
-        const result = safeParse(BooksListResponseSchema, raw)
-        if (!result.success) {
-          throw new Error('词书数据格式错误')
-        }
-
-        setBooks(result.data.books as Book[])
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch books')
-      } finally {
-        setLoading(false)
+      // Validate API response with Zod
+      const result = safeParse(BooksListResponseSchema, raw)
+      if (!result.success) {
+        throw new Error('词书数据格式错误')
       }
-    }
 
-    fetchBooks()
+      setBooks(result.data.books as Book[])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch books')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  return { books, loading, error }
+  useEffect(() => {
+    void fetchBooks()
+  }, [fetchBooks])
+
+  return { books, loading, error, refetch: fetchBooks }
 }
 
 export function useBookWords(bookId: string, page = 1, perPage = 100) {
@@ -152,33 +153,44 @@ export function useBookProgress(bookId: string) {
 }
 
 export function useAllBookProgress() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading = false } = useAuth()
+  const userId = user?.id ?? null
   const [progressMap, setProgressMap] = useState<Record<string, VocabBookProgress>>({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) {
+  const fetchProgress = useCallback(async () => {
+    if (authLoading) {
+      setLoading(true)
+      return
+    }
+
+    if (!userId) {
+      setProgressMap({})
+      setError(null)
       setLoading(false)
       return
     }
 
-    const fetchProgress = async () => {
-      try {
-        const raw = await apiFetch<unknown>(`${API_BASE}/progress`)
+    try {
+      setLoading(true)
+      setError(null)
+      const raw = await apiFetch<unknown>(`${API_BASE}/progress`, { cache: 'no-store' })
 
-        const result = safeParse(z.object({ progress: ProgressMapSchema }), raw)
-        if (result.success) {
-          setProgressMap(result.data.progress)
-        }
-      } catch {
-        // No progress found
-      } finally {
-        setLoading(false)
+      const result = safeParse(z.object({ progress: ProgressMapSchema }), raw)
+      if (result.success) {
+        setProgressMap(result.data.progress)
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch progress')
+    } finally {
+      setLoading(false)
     }
+  }, [authLoading, userId])
 
-    fetchProgress()
-  }, [user])
+  useEffect(() => {
+    void fetchProgress()
+  }, [fetchProgress])
 
-  return { progressMap, loading }
+  return { progressMap, loading, error, refetch: fetchProgress }
 }
