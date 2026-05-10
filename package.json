@@ -8,7 +8,7 @@
     }
   },
   "scripts": {
-    "dev": "pnpm --dir frontend dev",
+    "dev": "bash scripts/run-mac-local-app.sh dev",
     "build": "pnpm --dir frontend build",
     "check:docs": "node scripts/check-doc-links.mjs",
     "check:file-lines": "node scripts/check-file-line-limits.mjs",
@@ -21,7 +21,7 @@
     "mobile:ios": "pnpm --dir apps/mobile ios",
     "mobile:test": "pnpm --dir apps/mobile test",
     "mobile:typecheck": "pnpm --dir apps/mobile typecheck",
-    "preview": "pnpm --dir frontend preview",
+    "preview": "bash scripts/run-mac-local-app.sh preview",
     "test": "pnpm --dir frontend test",
     "test:coverage": "pnpm --dir frontend test:coverage",
     "test:watch": "pnpm --dir frontend test:watch",

@@ -139,11 +139,15 @@ pnpm install
 pnpm dev
 ```
 
+在 macOS 上，`pnpm dev` 会通过本地生成的 `IELTS Vocab Dev.app` 启动 Vite，日志写到 `logs/runtime/mac-app/dev.*.log`。如需回到普通终端启动，可临时设置 `IELTS_DISABLE_MAC_APP=1`。
+
 前端预览：
 
 ```bash
 pnpm preview
 ```
+
+在 macOS 上，`pnpm preview` 会通过本地生成的 `IELTS Vocab Preview.app` 启动 Vite preview，生产构建和部署脚本不受影响。
 
 兼容 monolith 入口仅保留给迁移/回归参考，不再是默认浏览器 API 路径：
 
