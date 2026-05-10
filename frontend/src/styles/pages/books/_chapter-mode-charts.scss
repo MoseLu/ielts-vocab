@@ -1,0 +1,140 @@
+.chapter-mode-charts {
+    --chapter-mode-series-1: var(--accent);
+    --chapter-mode-series-2: var(--info);
+    --chapter-mode-series-3: var(--success);
+    --chapter-mode-series-4: var(--warning);
+    --chapter-mode-series-5: var(--tone-indigo);
+    --chapter-mode-series-6: var(--accent-secondary);
+    --chapter-chart-track: color-mix(in srgb, var(--text-secondary) var(--mix-14), transparent);
+
+    display: grid;
+    gap: var(--size-8);
+}
+
+.chapter-mode-chart-panel {
+    display: grid;
+    gap: var(--size-7);
+    padding: var(--size-8);
+    border: var(--size-1) solid var(--surface-border-strong);
+    border-radius: var(--size-8);
+    background: color-mix(in srgb, var(--surface-elevated) var(--mix-94), var(--surface-muted));
+}
+
+.chapter-mode-completion {
+    display: grid;
+    grid-template-columns: var(--size-42) minmax(0, 1fr) var(--size-34);
+    align-items: center;
+    gap: var(--size-6);
+    min-width: 0;
+}
+
+.chapter-mode-completion span {
+    font-size: var(--size-10);
+    font-weight: 700;
+    color: var(--chapter-dashboard-muted, var(--text-secondary));
+}
+
+.chapter-mode-completion strong {
+    justify-self: end;
+    font-size: var(--size-14);
+    line-height: 1;
+    color: var(--chapter-dashboard-text, var(--text-primary));
+}
+
+.chapter-mode-completion > i {
+    height: var(--size-8);
+    min-width: 0;
+    border-radius: var(--radius-pill);
+    background: var(--chapter-chart-track);
+    overflow: hidden;
+}
+
+.chapter-mode-completion > i::before {
+    content: '';
+    display: block;
+    width: var(--chapter-completion-percent, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--chapter-card-tone, var(--accent));
+}
+
+.chapter-mode-compare {
+    display: grid;
+    gap: var(--size-5);
+    min-width: 0;
+}
+
+.chapter-mode-compare-title {
+    font-size: var(--size-10);
+    font-weight: 800;
+    color: var(--chapter-dashboard-muted, var(--text-secondary));
+}
+
+.chapter-mode-row {
+    --chapter-mode-color: var(--info);
+    --chapter-mode-percent: 0%;
+
+    display: grid;
+    grid-template-columns: var(--size-36) minmax(0, 1fr) var(--size-34);
+    align-items: center;
+    gap: var(--size-6);
+    min-width: 0;
+}
+
+.chapter-mode-row-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--size-4);
+    min-width: 0;
+    font-size: var(--size-10);
+    font-weight: 800;
+    color: var(--chapter-dashboard-text, var(--text-primary));
+}
+
+.chapter-mode-row-label i {
+    width: var(--size-7);
+    height: var(--size-7);
+    border-radius: 50%;
+    background: var(--chapter-mode-color);
+    flex-shrink: 0;
+}
+
+.chapter-mode-row-label span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chapter-mode-row-track {
+    height: var(--size-10);
+    min-width: 0;
+    border-radius: var(--radius-pill);
+    background: var(--chapter-chart-track);
+    overflow: hidden;
+}
+
+.chapter-mode-row-track i {
+    display: block;
+    width: var(--chapter-mode-percent);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--chapter-mode-color);
+}
+
+.chapter-mode-row strong {
+    justify-self: end;
+    font-size: var(--size-10);
+    color: var(--chapter-dashboard-muted, var(--text-secondary));
+    font-weight: 800;
+}
+
+.chapter-mode-empty {
+    min-height: var(--size-34);
+    display: grid;
+    place-items: center;
+    border: var(--size-1) dashed var(--surface-border-strong);
+    border-radius: var(--size-8);
+    color: var(--chapter-dashboard-faint, var(--text-tertiary));
+    font-size: var(--size-10);
+    font-weight: 700;
+}

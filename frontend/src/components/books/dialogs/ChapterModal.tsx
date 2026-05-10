@@ -12,6 +12,7 @@ import { Skeleton } from '../../ui'
 import { Scrollbar } from '../../ui/Scrollbar'
 import ConfusableCustomGroupsModal from '../../practice/ConfusableCustomGroupsModal'
 import type { CustomConfusableChapter } from '../../../features/practice/confusableCustomGroups'
+import ChapterModeCharts from './ChapterModeCharts'
 
 const MODE_META: Record<string, { label: string; title: string }> = {
   ...CHAPTER_PRACTICE_MODE_META,
@@ -296,34 +297,27 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   const renderCard = (chapter: Chapter, isInSection: boolean) => {
     const isCurrent = chapter.id === currentChapterId
     const progressRecord = chapterProgress[chapter.id] ?? chapterProgress[String(chapter.id)]
-    const hasStarted = !!progressRecord && progressRecord.words_learned > 0
-
-    const modeBadges = Object.entries(MODE_META)
-      .map(([modeKey, meta]) => {
-        const record = progressRecord?.modes?.[modeKey]
-        return record ? { modeKey, meta, record } : null
-      })
-      .filter(Boolean) as { modeKey: string; meta: typeof MODE_META[string]; record: ChapterModeData }[]
-
-    const hasModeData = modeBadges.length > 0
-    const allCompleted = hasModeData && modeBadges.every(item => item.record.is_completed)
-    const isCompleted = allCompleted || (!hasModeData && !!progressRecord?.is_completed)
-    const chapterProgressPercent = hasModeData
-      ? progressRecord?.accuracy ?? 0
-      : chapter.word_count
-        ? Math.round(((progressRecord?.words_learned ?? 0) / chapter.word_count) * 100)
-        : 0
     const displayCount = isConfusableBook ? chapter.group_count ?? 0 : chapter.word_count ?? 0
     const displayUnit = isConfusableBook ? '组' : '词'
-
-    const getAccuracyClass = (accuracy: number) => (
-      accuracy >= 80 ? 'mode-badge-high' : accuracy >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
-    )
+    const progressTotal = isConfusableBook ? chapter.group_count ?? chapter.word_count ?? 0 : chapter.word_count ?? 0
+    const learnedCount = Math.max(0, progressRecord?.words_learned ?? 0)
+    const modeRecords = Object.values(progressRecord?.modes ?? {})
+    const hasStarted = learnedCount > 0 || modeRecords.some(record => (record.correct_count ?? 0) + (record.wrong_count ?? 0) > 0)
+    const hasModeData = modeRecords.length > 0
+    const allCompleted = hasModeData && modeRecords.every(record => record.is_completed)
+    const isCoverageComplete = progressTotal > 0 && learnedCount >= progressTotal
+    const isCompleted = allCompleted || isCoverageComplete || (!hasModeData && !!progressRecord?.is_completed)
+    const chapterProgressPercent = isCompleted
+      ? 100
+      : progressTotal
+        ? Math.min(100, Math.round((learnedCount / progressTotal) * 100))
+        : 0
+    const accuracyText = `正确率 ${progressRecord?.accuracy ?? 0}%`
 
     return (
       <div
         key={chapter.id}
-        className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : ''}`}
+        className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : hasStarted ? ' in-progress' : ' not-started'}`}
         onClick={() => handleSelect(chapter)}
       >
         {chapter.is_custom && (
@@ -331,34 +325,21 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         )}
         <div className="chapter-card-name">{getCardLabel(chapter, isInSection)}</div>
 
-        {hasModeData && (
-          <div className="chapter-mode-badges">
-            {modeBadges.map(({ modeKey, meta, record }) => (
-              <span
-                key={modeKey}
-                className={`mode-badge mode-badge--${modeKey} ${getAccuracyClass(record.accuracy)}`}
-                title={`${meta.title}：${record.accuracy}%${record.is_completed ? ' 已完成' : ''}`}
-              >
-                {meta.label} {record.accuracy}%{record.is_completed ? ' 已完成' : ''}
-              </span>
-            ))}
-          </div>
-        )}
+        <ChapterModeCharts
+          modeMeta={MODE_META}
+          modes={progressRecord?.modes}
+          completionPercent={chapterProgressPercent}
+        />
 
         <div className="chapter-card-footer">
           <span className="chapter-card-count">{displayCount} {displayUnit}</span>
           {isCompleted ? (
-            <span className="chapter-status-done">已完成 {progressRecord?.accuracy ?? 0}%</span>
+            <span className="chapter-status-done">{hasModeData ? '已完成' : `已完成 · ${accuracyText}`}</span>
           ) : hasStarted ? (
-            <span className="chapter-status-progress">{progressRecord?.accuracy ?? 0}%</span>
+            <span className="chapter-status-progress">{hasModeData ? '学习中' : `学习中 · ${accuracyText}`}</span>
           ) : (
             <span className="chapter-status-todo">未开始</span>
           )}
-        </div>
-
-        <div className="chapter-card-progress">
-          <progress className="chapter-card-progress-bar" value={chapterProgressPercent} max={100} />
-          <span className="chapter-card-progress-text">{chapterProgressPercent}%</span>
         </div>
 
         {isCurrent && <div className="chapter-card-current-dot" />}
