@@ -360,15 +360,11 @@ kbd {
     overflow: hidden auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable both-edges;
-    padding: var(--size-72) calc(var(--space-lg) + var(--size-2)) calc(var(--space-2xl) + var(--size-8));
+    padding: clamp(var(--size-40), 8vh, var(--size-72)) calc(var(--space-lg) + var(--size-2)) calc(var(--space-2xl) + var(--size-8));
     background: var(--bg-secondary);
 }
 
-.qm-summary-title {
-    font-size: var(--size-210);
-    font-weight: 800;
-    color: var(--text-primary);
-}
+.qm-summary-title { max-width: 100%; font-size: clamp(var(--size-32), 4vw, var(--size-44)); font-weight: 800; line-height: 1.05; color: var(--text-primary); text-align: center; }
 
 .qm-summary-stats {
     display: flex;
@@ -436,10 +432,7 @@ kbd {
     background: color-mix(in srgb, var(--warning) var(--mix-10), transparent);
 }
 
-.qm-summary-actions {
-    display: flex;
-    gap: var(--size-16);
-}
+.qm-summary-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--size-16); }
 
 .qm-btn-restart,
 .qm-btn-mode {
@@ -487,8 +480,7 @@ kbd {
 }
 .qm-btn-next-chapter:hover { background: var(--accent-dark); transform: translateY(calc(var(--size-1) * -1)); }
 
-/* Accuracy stat in summary */
-.qm-stat-num { font-size: var(--size-28); font-weight: 800; line-height: 1; }
+.qm-summary .qm-stat-num { font-size: clamp(var(--size-30), 3.4vw, var(--size-42)); font-weight: 800; line-height: 1; }
 
 .qm-empty { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - var(--size-48)); font-size: var(--size-18); color: var(--text-tertiary); }
 
@@ -497,4 +489,7 @@ kbd {
     .qm-word { font-size: var(--size-30); }
     .qm-btn  { padding: var(--size-12) var(--size-12); font-size: var(--size-14); }
     .qm-definition { font-size: var(--size-16); }
+    .qm-summary { gap: var(--size-20); padding-inline: var(--space-md); }
+    .qm-summary-actions { width: 100%; }
+    .qm-summary-actions > button { flex: 1 1 var(--size-148); }
 }

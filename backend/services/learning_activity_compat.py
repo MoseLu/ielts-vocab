@@ -16,6 +16,16 @@ class CompatBookProgress:
     is_completed: bool
     updated_at: datetime | None
 
+    def to_dict(self):
+        return {
+            'book_id': self.book_id,
+            'current_index': int(self.current_index or 0),
+            'correct_count': int(self.correct_count or 0),
+            'wrong_count': int(self.wrong_count or 0),
+            'is_completed': bool(self.is_completed),
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
 
 @dataclass(frozen=True)
 class CompatChapterProgress:
