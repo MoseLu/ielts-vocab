@@ -17,6 +17,7 @@ Use this folder for documents that describe the system structure itself.
 
 ## Current Specs
 
+- `Architecture.md`: 完整的系统架构总览 — 微服务拓扑、服务间通信、代码分层、数据库、前端架构、部署架构和迁移状态。
 - `backend-layered-architecture.md`: backend layer map, capability modules, data flow, and dependency rules.
 - `frontend-boundaries.md`: web, mobile, and shared client-core boundary rules for frontend architecture work.
 - `multi-client-monorepo.md`: monorepo, app boundary, shared package, and commit rules for Web, mobile, and future mini-program clients.

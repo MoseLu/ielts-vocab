@@ -12,6 +12,7 @@ SKIP_PARTS = {
     '.omc',
     '__pycache__',
     '.pytest_cache',
+    '.venv',
     'output',
     'test-results',
     'tts_cache',
