@@ -6,6 +6,7 @@ from platform_sdk.learning_stats_modes_support import (
 from platform_sdk.practice_mode_registry import (
     PRACTICE_MODE_KEYS,
     get_practice_mode_label,
+    normalize_practice_mode_or_custom,
     normalize_profile_practice_mode,
     sort_profile_practice_modes,
 )
@@ -30,6 +31,8 @@ def test_practice_mode_registry_covers_browser_modes_and_shared_aliases():
     assert normalize_profile_practice_mode('five-dimension-game') == 'game'
     assert normalize_learning_mode('quick-memory') == 'quickmemory'
     assert normalize_learning_mode('follow') == 'follow'
+    assert normalize_learning_mode('local_storage_migration_v1_once') == ''
+    assert normalize_practice_mode_or_custom('local_storage_migration_v1_once', default=None) is None
 
 
 def test_practice_mode_registry_keeps_consistent_labels_candidates_and_sorting():

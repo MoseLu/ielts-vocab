@@ -105,6 +105,10 @@ def _raw_mode_text(value) -> str:
     return value.strip().lower()
 
 
+def _is_internal_migration_mode(value: str) -> bool:
+    return value.startswith('local_storage_migration_')
+
+
 def normalize_practice_mode(value) -> str:
     mode = _raw_mode_text(value)
     if not mode:
@@ -123,6 +127,8 @@ def normalize_practice_mode_or_custom(
         return default
     raw_mode = value.strip()
     if not raw_mode:
+        return default
+    if _is_internal_migration_mode(raw_mode):
         return default
     normalized = normalize_practice_mode(raw_mode)
     return normalized or raw_mode[:max_length]

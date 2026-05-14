@@ -147,6 +147,29 @@ def get_book_chapter_count(book_id, user_id: int | None = None):
     return base_count
 
 
+def get_book_chapter_word_count(book_id, chapter_id, user_id: int | None = None):
+    chapter_key = str(chapter_id or '').strip()
+    if not chapter_key:
+        return 0
+    if books_favorites_service._is_favorites_book(book_id):
+        return books_favorites_service._favorite_word_count(user_id) if chapter_key == '1' else 0
+
+    custom_book = get_custom_book_for_user(user_id, book_id)
+    if custom_book:
+        for chapter in custom_book.chapters:
+            if str(chapter.id) == chapter_key:
+                return max(0, int(chapter.word_count or len(chapter.words)))
+        return 0
+
+    chapters_data = load_book_chapters(book_id)
+    if not chapters_data:
+        return 0
+    for chapter in chapters_data.get('chapters') or []:
+        if str(chapter.get('id')) == chapter_key:
+            return max(0, int(chapter.get('word_count') or 0))
+    return 0
+
+
 def get_book_group_count(book_id, user_id: int | None = None):
     if get_custom_book_for_user(user_id, book_id):
         return 0

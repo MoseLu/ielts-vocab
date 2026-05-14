@@ -37,11 +37,17 @@ _KNOWN_LEARNING_MODES = {
 }
 
 
+def _is_internal_migration_mode(value: str) -> bool:
+    return value.startswith('local_storage_migration_')
+
+
 def normalize_learning_mode(value) -> str:
     if value is None:
         return ''
     raw_value = str(value).strip().lower()
     if not raw_value:
+        return ''
+    if _is_internal_migration_mode(raw_value):
         return ''
     normalized = normalize_practice_mode(raw_value) or raw_value
     if normalized in _KNOWN_LEARNING_MODES:
