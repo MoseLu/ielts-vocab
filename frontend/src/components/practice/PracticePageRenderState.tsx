@@ -19,7 +19,7 @@ interface PracticePageRenderStateProps extends Omit<ContentProps, 'currentWord' 
   correctCount: number
   wrongCount: number
   errorReviewRound: number
-  sessionDurationSeconds: number
+  sessionDurationSeconds: number | null
   errorRoundResults: CompletedProps['errorRoundResults']
   practiceGroup: CompletedProps['practiceGroup']
   onContinueErrorReview: () => void
@@ -104,7 +104,13 @@ export function PracticePageRenderState({
 
   return (
     <>
-      <PracticePageContent {...contentProps} mode={mode} currentWord={currentWord} />
+      <PracticePageContent
+        {...contentProps}
+        mode={mode}
+        currentWord={currentWord}
+        practiceGroup={practiceGroup}
+        onContinueChapterGroup={onContinueChapterGroup}
+      />
       <PracticeResumeOverlay
         isOpen={resumePromptOpen}
         message={resumeMessage}

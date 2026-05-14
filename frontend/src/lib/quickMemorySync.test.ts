@@ -13,7 +13,7 @@ import {
 
 const apiFetchMock = vi.fn()
 
-vi.mock('./index', () => ({
+vi.mock('./apiClient', () => ({
   apiFetch: (...args: unknown[]) => apiFetchMock(...args),
 }))
 

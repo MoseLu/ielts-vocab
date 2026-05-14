@@ -165,6 +165,67 @@ describe('ChapterModal', () => {
     expect(screen.queryByText('学习中')).toBeNull()
   })
 
+  it('keeps server-completed chapters complete even when another mode is unfinished', async () => {
+    mockChapterResponses(
+      [{ id: 'wrong_words_1_a', title: 'A', word_count: 50 }],
+      {
+        wrong_words_1_a: {
+          is_completed: true,
+          words_learned: 20,
+          accuracy: 95,
+          modes: {
+            quickmemory: {
+              mode: 'quickmemory',
+              correct_count: 20,
+              wrong_count: 1,
+              accuracy: 95,
+              is_completed: true,
+            },
+            meaning: {
+              mode: 'meaning',
+              correct_count: 1,
+              wrong_count: 0,
+              accuracy: 100,
+              is_completed: false,
+            },
+          },
+        },
+      },
+    )
+
+    render(
+      <ChapterModal
+        book={{ id: 'wrong_words_1', title: '错词本', word_count: 50, is_custom_book: true }}
+        progress={{ current_index: 50 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    expect(await screen.findAllByText('已完成')).toHaveLength(1)
+    expect(screen.queryByText('学习中')).toBeNull()
+  })
+
+  it('derives completed chapter cards from whole-book coverage when chapter snapshots are absent', async () => {
+    mockChapterResponses([
+      { id: 'wrong_words_1_a', title: 'A', word_count: 10 },
+      { id: 'wrong_words_1_b', title: 'B', word_count: 12 },
+      { id: 'wrong_words_1_c', title: 'C', word_count: 8 },
+    ])
+
+    render(
+      <ChapterModal
+        book={{ id: 'wrong_words_1', title: '错词本', word_count: 30, is_custom_book: true }}
+        progress={{ current_index: 30 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    expect(await screen.findAllByText(/已完成/)).toHaveLength(3)
+    expect(screen.queryByText('未开始')).toBeNull()
+  })
+
   it('uses a full-height skeleton inside the modal body while chapters are loading', () => {
     apiFetchMock.mockImplementation(() => new Promise(() => {}))
 

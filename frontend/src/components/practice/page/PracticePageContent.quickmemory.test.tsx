@@ -124,6 +124,9 @@ function buildProps() {
     handleOptionSelect: vi.fn(),
     handleMeaningRecallSubmit: vi.fn(),
     handleContinueReview: vi.fn(),
+    practiceGroup: null,
+    chapterQueueWords: [],
+    onContinueChapterGroup: vi.fn(),
   }
 }
 

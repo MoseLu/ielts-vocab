@@ -256,7 +256,18 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     return chapters[chapters.length - 1]?.id ?? null
   }, [chapters, currentIndex])
 
+  const chapterStartIndexById = useMemo(() => {
+    const startIndexById: Record<string, number> = {}
+    let accumulated = 0
+    for (const chapter of chapters) {
+      startIndexById[String(chapter.id)] = accumulated
+      accumulated += chapter.word_count ?? 0
+    }
+    return startIndexById
+  }, [chapters])
+
   const renderUnits = useMemo(() => buildRenderUnits(groupBySection(chapters)), [chapters])
+  const hasAnyChapterProgress = Object.keys(chapterProgress).length > 0
 
   const handleSelect = (chapter: Chapter) => {
     let startIndex = 0
@@ -300,13 +311,16 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     const displayCount = isConfusableBook ? chapter.group_count ?? 0 : chapter.word_count ?? 0
     const displayUnit = isConfusableBook ? '组' : '词'
     const progressTotal = isConfusableBook ? chapter.group_count ?? chapter.word_count ?? 0 : chapter.word_count ?? 0
-    const learnedCount = Math.max(0, progressRecord?.words_learned ?? 0)
+    const bookCoverageLearnedCount = hasAnyChapterProgress
+      ? 0
+      : Math.max(0, Math.min(progressTotal, currentIndex - (chapterStartIndexById[String(chapter.id)] ?? 0)))
+    const learnedCount = Math.max(0, progressRecord?.words_learned ?? 0, bookCoverageLearnedCount)
     const modeRecords = Object.values(progressRecord?.modes ?? {})
     const hasStarted = learnedCount > 0 || modeRecords.some(record => (record.correct_count ?? 0) + (record.wrong_count ?? 0) > 0)
     const hasModeData = modeRecords.length > 0
     const allCompleted = hasModeData && modeRecords.every(record => record.is_completed)
     const isCoverageComplete = progressTotal > 0 && learnedCount >= progressTotal
-    const isCompleted = allCompleted || isCoverageComplete || (!hasModeData && !!progressRecord?.is_completed)
+    const isCompleted = !!progressRecord?.is_completed || allCompleted || isCoverageComplete
     const chapterProgressPercent = isCompleted
       ? 100
       : progressTotal

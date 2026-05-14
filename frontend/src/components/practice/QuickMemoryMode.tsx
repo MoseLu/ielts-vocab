@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
 import { playWordAudio, prepareWordAudioPlayback, preloadWordAudioBatch, stopAudio } from './utils'
 import { useToast } from '../../contexts/ToastContext'
@@ -40,6 +40,9 @@ export default function QuickMemoryMode({
   reviewMode,
   reviewHasMore,
   onContinueReview,
+  chapterGroup,
+  chapterQueueWords,
+  onContinueChapterGroup,
   buildChapterPath,
   onModeChange,
   onNavigate,
@@ -75,7 +78,13 @@ export default function QuickMemoryMode({
   const continueReviewInFlightRef = useRef(false)
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
-  const queueWords = queue.map(queueIndex => vocabulary[queueIndex]?.word).filter((word): word is string => Boolean(word))
+  const queueWords = useMemo(
+    () => queue.map(queueIndex => vocabulary[queueIndex]?.word).filter((word): word is string => Boolean(word)),
+    [queue, vocabulary],
+  )
+  const showProgressSaveError = useCallback(() => {
+    showToast('进度保存失败，请检查网络连接', 'error')
+  }, [showToast])
   wordRef.current = currentWord
 
   const {
@@ -107,6 +116,8 @@ export default function QuickMemoryMode({
     index,
     queueWords,
     queueLength: queue.length,
+    chapterGroup,
+    chapterQueueWords,
     reviewMode,
     results,
     resultsRef,
@@ -120,7 +131,7 @@ export default function QuickMemoryMode({
     flushPendingRecordSync,
     completeCurrentSession,
     syncSessionSnapshot,
-    showSaveError: () => showToast('进度保存失败，请检查网络连接', 'error'),
+    showSaveError: showProgressSaveError,
   })
 
   useEffect(() => {
@@ -386,6 +397,8 @@ export default function QuickMemoryMode({
         reviewMode={reviewMode}
         reviewHasMore={reviewHasMore}
         onContinueReview={onContinueReview ? handleContinueReview : undefined}
+        chapterGroup={chapterGroup}
+        onContinueChapterGroup={onContinueChapterGroup}
         buildChapterPath={buildChapterPath}
         sessionDurationSeconds={completedSessionDurationSecondsRef.current}
         onRestart={handleRestart}

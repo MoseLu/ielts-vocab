@@ -394,6 +394,7 @@ function PracticePageContainer({
         handleMeaningRecallSubmit, handleFollowReadEvaluated, handleContinueReview,
         noListeningPresets, reviewQueueError, quickMemoryReviewQueueResolved,
         correctCount, wrongCount, errorReviewRound, practiceGroup,
+        chapterQueueWords: chapterQueueWordsRef.current,
       }}
       mode={practiceMode}
       loadingMode={requestedPracticeMode === 'listening' && isCustomPracticeScope && noListeningPresets ? 'meaning' : practiceMode}

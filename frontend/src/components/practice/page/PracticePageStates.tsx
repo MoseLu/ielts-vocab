@@ -204,6 +204,9 @@ interface PracticePageQuickMemoryLayoutProps extends Omit<SharedLayoutProps, 'sp
   reviewOffset: number
   reviewHasMore: boolean
   onContinueReview?: () => void
+  chapterGroup?: PracticeGroupWindow | null
+  chapterQueueWords?: string[]
+  onContinueChapterGroup?: () => void
   onWrongWord: (word: Word) => void
   onQuickMemoryRecordChange: (word: Word, record: {
     status: 'known' | 'unknown'
@@ -246,6 +249,9 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
     reviewOffset,
     reviewHasMore,
     onContinueReview,
+    chapterGroup,
+    chapterQueueWords,
+    onContinueChapterGroup,
     onWrongWord,
     onQuickMemoryRecordChange,
     initialIndex,
@@ -285,7 +291,7 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
         <SettingsPanel showSettings={showPracticeSettings} onClose={onSettingsToggle} />
       )}
       <QuickMemoryMode
-        key={`quickmemory-${practiceBookId ?? 'day'}-${practiceChapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}-${reviewMode ? `review-${reviewOffset}` : 'default'}`}
+        key={`quickmemory-${practiceBookId ?? 'day'}-${practiceChapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}-${reviewMode ? `review-${reviewOffset}` : `group-${chapterGroup?.start ?? 0}-${chapterGroup?.end ?? queue.length}`}`}
         vocabulary={vocabulary}
         queue={queue}
         settings={settings}
@@ -296,6 +302,9 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
         errorMode={errorMode}
         reviewHasMore={reviewMode ? reviewHasMore : false}
         onContinueReview={reviewMode ? onContinueReview : undefined}
+        chapterGroup={chapterGroup}
+        chapterQueueWords={chapterQueueWords}
+        onContinueChapterGroup={onContinueChapterGroup}
         buildChapterPath={buildChapterPath}
         onModeChange={onModeChange}
         onNavigate={navigate}

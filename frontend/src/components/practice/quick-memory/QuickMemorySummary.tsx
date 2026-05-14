@@ -1,5 +1,6 @@
 import type { PracticeMode, Word } from '../types'
 import type { QuickMemorySessionResult } from '../../../features/practice/quickMemorySession'
+import type { PracticeGroupWindow } from '../../../composables/practice/page/practicePageGrouping'
 
 export type { QuickMemorySessionResult }
 
@@ -23,6 +24,8 @@ interface QuickMemorySummaryProps {
   reviewMode?: boolean
   reviewHasMore?: boolean
   onContinueReview?: () => void
+  chapterGroup?: PracticeGroupWindow | null
+  onContinueChapterGroup?: () => void
   buildChapterPath?: (chapterId: string | number) => string
   sessionDurationSeconds?: number | null
   onRestart: () => void
@@ -40,6 +43,8 @@ export function QuickMemorySummary({
   reviewMode,
   reviewHasMore,
   onContinueReview,
+  chapterGroup,
+  onContinueChapterGroup,
   buildChapterPath,
   sessionDurationSeconds,
   onRestart,
@@ -57,6 +62,9 @@ export function QuickMemorySummary({
   const sessionDurationText = sessionDurationSeconds != null
     ? formatSessionDuration(sessionDurationSeconds)
     : null
+  const chapterGroupRemaining = !reviewMode && chapterGroup?.groupSize && chapterGroup.end < chapterGroup.total
+    ? chapterGroup.total - chapterGroup.end
+    : 0
 
   return (
     <div className="qm-summary">
@@ -123,11 +131,25 @@ export function QuickMemorySummary({
         </div>
       )}
 
+      {chapterGroupRemaining > 0 && (
+        <div className="qm-summary-section">
+          <div className="qm-summary-section-title">本章进度</div>
+          <p>当前分组已完成，还可以继续练习 {chapterGroupRemaining} 个本章单词。</p>
+        </div>
+      )}
+
       <div className="qm-summary-actions">
         <button className="qm-btn-restart" onClick={onRestart}>再来一轮</button>
         {reviewHasMore && onContinueReview ? (
           <button className="qm-btn-next-chapter" onClick={onContinueReview}>
             下一组复习
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        ) : chapterGroupRemaining > 0 && onContinueChapterGroup ? (
+          <button className="qm-btn-next-chapter" onClick={onContinueChapterGroup}>
+            继续下一组（还有 {chapterGroupRemaining} 个）
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
               <path d="M9 18l6-6-6-6" />
             </svg>

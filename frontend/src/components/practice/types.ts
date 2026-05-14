@@ -15,6 +15,7 @@ import type {
   WordPlaybackHandler,
   WordStatuses,
 } from '../../features/practice/types'
+import type { PracticeGroupWindow } from '../../composables/practice/page/practicePageGrouping'
 
 export type {
   AppSettings,
@@ -51,6 +52,9 @@ export interface QuickMemoryModeProps {
   errorMode?: boolean
   reviewHasMore?: boolean
   onContinueReview?: () => void
+  chapterGroup?: PracticeGroupWindow | null
+  chapterQueueWords?: string[]
+  onContinueChapterGroup?: () => void
   buildChapterPath?: (chapterId: string | number) => string
   onModeChange: (mode: PracticeMode) => void
   onNavigate: (path: string) => void
