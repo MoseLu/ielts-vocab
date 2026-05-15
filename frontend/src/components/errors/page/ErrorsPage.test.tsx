@@ -16,23 +16,29 @@ const hooksState = vi.hoisted(() => ({
         phonetic: '/a/',
         pos: 'n.',
         definition: 'alpha definition',
-        wrong_count: 6,
+        wrong_count: 8,
         first_wrong_at: '2026-04-07T02:00:00.000Z',
-        meaning_wrong: 3,
-        meaning_pass_streak: 2,
-        recognition_pass_streak: 1,
+        listening_wrong: 1,
+        meaning_wrong: 1,
+        listening_pass_streak: 1,
+        meaning_pass_streak: 1,
+        recognition_pass_streak: 0,
         ebbinghaus_streak: 1,
         ebbinghaus_target: 5,
         dimension_states: {
           recognition: {
-            history_wrong: 3,
-            pass_streak: 1,
-            last_pass_at: '2026-04-07T07:00:00.000Z',
+            history_wrong: 6,
+            pass_streak: 0,
           },
           meaning: {
-            history_wrong: 3,
-            pass_streak: 2,
+            history_wrong: 1,
+            pass_streak: 1,
             last_pass_at: '2026-04-07T06:00:00.000Z',
+          },
+          listening: {
+            history_wrong: 1,
+            pass_streak: 1,
+            last_pass_at: '2026-04-07T07:00:00.000Z',
           },
         },
       },
@@ -118,23 +124,29 @@ describe('ErrorsPage', () => {
         phonetic: '/a/',
         pos: 'n.',
         definition: 'alpha definition',
-        wrong_count: 6,
+        wrong_count: 8,
         first_wrong_at: '2026-04-07T02:00:00.000Z',
-        meaning_wrong: 3,
-        meaning_pass_streak: 2,
-        recognition_pass_streak: 1,
+        listening_wrong: 1,
+        meaning_wrong: 1,
+        listening_pass_streak: 1,
+        meaning_pass_streak: 1,
+        recognition_pass_streak: 0,
         ebbinghaus_streak: 1,
         ebbinghaus_target: 5,
         dimension_states: {
           recognition: {
-            history_wrong: 3,
-            pass_streak: 1,
-            last_pass_at: '2026-04-07T07:00:00.000Z',
+            history_wrong: 6,
+            pass_streak: 0,
           },
           meaning: {
-            history_wrong: 3,
-            pass_streak: 2,
+            history_wrong: 1,
+            pass_streak: 1,
             last_pass_at: '2026-04-07T06:00:00.000Z',
+          },
+          listening: {
+            history_wrong: 1,
+            pass_streak: 1,
+            last_pass_at: '2026-04-07T07:00:00.000Z',
           },
         },
       },
@@ -219,46 +231,56 @@ describe('ErrorsPage', () => {
     expect(screen.queryByText('暂无错词')).not.toBeInTheDocument()
   })
 
-  it('uses action-oriented labels for problem-type filters', () => {
-    render(
-      <MemoryRouter>
-        <ErrorsPage />
-      </MemoryRouter>,
-    )
+  it('uses a dropdown with action-oriented labels for problem-type filters', () => {
+    hooksState.wrongWords.words = hooksState.wrongWords.words.map(word => word.word === 'gamma' ? { ...word, first_wrong_at: '2026-04-07T05:00:00.000Z' } : word)
+    render(<MemoryRouter><ErrorsPage /></MemoryRouter>)
 
-    expect(screen.getByRole('tab', { name: /速记模式/ })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /默写模式/ })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /听音选义/ })).toBeInTheDocument()
+    const modeSelect = screen.getByRole('combobox', { name: '错词模式筛选' })
+    expect(modeSelect).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /速记模式/ })).not.toBeInTheDocument()
+    fireEvent.click(modeSelect)
+    expect(screen.getByRole('option', { name: /速记模式/ })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /默写模式/ })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /听音选义/ })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('option', { name: /听音选义/ }))
+
+    expect(screen.getByLabelText('选择 gamma')).toBeInTheDocument()
+    expect(screen.queryByLabelText('选择 alpha')).not.toBeInTheDocument()
   })
 
   it('keeps wrong words in the list and lets learners select them for review', () => {
-    render(
-      <MemoryRouter>
-        <ErrorsPage />
-      </MemoryRouter>,
-    )
+    const { container } = render(<MemoryRouter><ErrorsPage /></MemoryRouter>)
 
     expect(screen.queryByTitle('移出未过错词')).not.toBeInTheDocument()
     expect(screen.getByLabelText('选择 alpha')).toBeInTheDocument()
     expect(screen.queryByText('加入复习')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '词头' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: '词尾' })).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getAllByText('错词本进度').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('长期复习').length).toBeGreaterThan(0)
-    expect(screen.getByText('今天移出 2 项')).toBeInTheDocument()
+    expect(screen.queryByText('TODO')).not.toBeInTheDocument()
+    expect(screen.queryByText(/还需处理/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/先做/)).not.toBeInTheDocument()
+    expect(screen.queryByText('需答对 1 次')).not.toBeInTheDocument()
+    expect(screen.queryByText(/已处理 \d+ 项/)).not.toBeInTheDocument()
+    expect(screen.getAllByText('速记模式').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('错6').length).toBeGreaterThan(0)
+    expect(screen.queryByText('连对 0/4')).not.toBeInTheDocument()
+    expect(screen.queryByText('清错推进中')).not.toBeInTheDocument()
+    expect(screen.queryByText(/待清完成/)).not.toBeInTheDocument()
+    expect(container.querySelector('.errors-stage-pill')).toBeNull()
   })
 
-  it('offers quick date filters so learners can focus on today’s new wrong words', () => {
+  it('defaults date filters to today so learners start on today’s wrong words', () => {
     render(
       <MemoryRouter>
         <ErrorsPage />
       </MemoryRouter>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: '只看今天新错词' }))
-
+    expect(screen.getByRole('textbox', { name: '起始日期' })).toHaveValue('2026-04-07')
+    expect(screen.getByRole('textbox', { name: '结束日期' })).toHaveValue('2026-04-07')
     expect(screen.getByLabelText('选择 alpha')).toBeInTheDocument()
-    expect(screen.getByLabelText('选择 beta')).toBeInTheDocument()
+    expect(screen.queryByLabelText('选择 beta')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('选择 gamma')).not.toBeInTheDocument()
   })
 
@@ -306,6 +328,7 @@ describe('ErrorsPage', () => {
     expect(filterMain).not.toBeNull()
     expect(filterActions).not.toBeNull()
     expect(dimShell).not.toBeNull()
+    expect(within(filterMain as HTMLElement).getByRole('combobox', { name: '错词模式筛选' })).toBeInTheDocument()
     expect(within(filterMain as HTMLElement).getByLabelText('错次区间')).toBeInTheDocument()
     expect(within(filterActions as HTMLElement).getByRole('button', { name: '只看今天新错词' })).toBeInTheDocument()
     expect(within(filterActions as HTMLElement).getByRole('button', { name: '最近 7 天' })).toBeInTheDocument()
@@ -338,7 +361,7 @@ describe('ErrorsPage', () => {
     expect(screen.queryByLabelText('选择 mist')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('选择 toast')).not.toBeInTheDocument()
     expect(screen.queryByText('错词按这个顺序推进')).not.toBeInTheDocument()
-    expect(screen.queryByText('错词本进度')).not.toBeInTheDocument()
+    expect(screen.queryByText('TODO')).not.toBeInTheDocument()
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: '词尾' }))
@@ -366,9 +389,8 @@ describe('ErrorsPage', () => {
     fireEvent.change(screen.getByLabelText('结束日期'), {
       target: { value: '2026-04-07' },
     })
-    fireEvent.change(screen.getByLabelText('错次区间'), {
-      target: { value: '6-10' },
-    })
+    fireEvent.click(screen.getByRole('combobox', { name: '错次区间' }))
+    fireEvent.click(screen.getByRole('option', { name: '6~10 次' }))
     fireEvent.click(screen.getByLabelText('选择 alpha'))
 
     const reviewButton = screen.getByRole('button', { name: '开始复习（1词）' })

@@ -33,10 +33,10 @@ export function describeWrongWordDimension(
   return {
     label: WRONG_WORD_DIMENSION_LABELS[dimension],
     detail: `累计错 ${historyWrong} 次`,
-    status: progress.pending ? `还差 ${progress.remaining} 次过关` : '这一项已过关',
+    status: progress.pending ? '待处理' : '这一项已处理',
     title: progress.pending
-      ? `${WRONG_WORD_DIMENSION_TITLES[dimension]}：累计错 ${historyWrong} 次，还差 ${progress.remaining} 次连续答对就能转成已过关`
-      : `${WRONG_WORD_DIMENSION_TITLES[dimension]}：累计错 ${historyWrong} 次，目前这一项已经过关`,
+      ? `${WRONG_WORD_DIMENSION_TITLES[dimension]}：累计错 ${historyWrong} 次，再答对一次即可从待清里移出`
+      : `${WRONG_WORD_DIMENSION_TITLES[dimension]}：累计错 ${historyWrong} 次，目前这一项已经处理`,
     pending: progress.pending,
   }
 }
