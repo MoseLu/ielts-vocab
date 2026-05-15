@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from '../constants'
+import { buildLearningScope, type LearningScopeInput } from './learningScope'
 
 export interface QuickMemoryRecordState {
   status: 'known' | 'unknown'
@@ -10,6 +11,9 @@ export interface QuickMemoryRecordState {
   fuzzyCount: number
   bookId?: string
   chapterId?: string
+  scopeKey?: string
+  scopeType?: string
+  originScope?: Record<string, unknown>
 }
 
 export type QuickMemoryRecordMap = Record<string, QuickMemoryRecordState>
@@ -19,6 +23,7 @@ export type QuickMemoryRecordInput = Partial<QuickMemoryRecordState> & {
 }
 
 type QuickMemoryStorageUserId = string | number | null | undefined
+type QuickMemoryRecordContext = LearningScopeInput
 
 export const QUICK_MEMORY_REVIEW_INTERVALS_DAYS = [1, 1, 4, 7, 14, 30] as const
 export const QUICK_MEMORY_MASTERY_TARGET = QUICK_MEMORY_REVIEW_INTERVALS_DAYS.length
@@ -68,11 +73,20 @@ function readStoredAuthUserId(): string | null {
   }
 }
 
-export function getQuickMemoryStorageKey(userId?: QuickMemoryStorageUserId): string {
+function scopeStorageSuffix(scope?: LearningScopeInput): string {
+  if (!scope) return ''
+  return `:scope:${encodeURIComponent(buildLearningScope(scope).scopeKey)}`
+}
+
+export function getQuickMemoryStorageKey(
+  userId?: QuickMemoryStorageUserId,
+  scope?: LearningScopeInput,
+): string {
   const resolvedUserId = normalizeStorageUserId(userId) ?? readStoredAuthUserId()
-  return resolvedUserId
+  const baseKey = resolvedUserId
     ? `${STORAGE_KEYS.QUICK_MEMORY_RECORDS}:${resolvedUserId}`
     : STORAGE_KEYS.QUICK_MEMORY_RECORDS
+  return `${baseKey}${scopeStorageSuffix(scope)}`
 }
 
 function normalizeQuickMemoryRecord(value: unknown): QuickMemoryRecordState | null {
@@ -104,6 +118,11 @@ function normalizeQuickMemoryRecord(value: unknown): QuickMemoryRecordState | nu
     fuzzyCount: asNonNegativeNumber(raw.fuzzyCount),
     bookId: typeof raw.bookId === 'string' && raw.bookId.trim() ? raw.bookId.trim() : undefined,
     chapterId: typeof raw.chapterId === 'string' && raw.chapterId.trim() ? raw.chapterId.trim() : undefined,
+    scopeKey: typeof raw.scopeKey === 'string' && raw.scopeKey.trim() ? raw.scopeKey.trim() : undefined,
+    scopeType: typeof raw.scopeType === 'string' && raw.scopeType.trim() ? raw.scopeType.trim() : undefined,
+    originScope: raw.originScope && typeof raw.originScope === 'object' && !Array.isArray(raw.originScope)
+      ? raw.originScope as Record<string, unknown>
+      : undefined,
   }
 }
 
@@ -121,9 +140,12 @@ export function nextQuickMemoryReviewTimestamp(knownCount: number, now = Date.no
   return dueDate.getTime()
 }
 
-export function readQuickMemoryRecordsFromStorage(userId?: QuickMemoryStorageUserId): QuickMemoryRecordMap {
+export function readQuickMemoryRecordsFromStorage(
+  userId?: QuickMemoryStorageUserId,
+  scope?: LearningScopeInput,
+): QuickMemoryRecordMap {
   try {
-    const raw = JSON.parse(localStorage.getItem(getQuickMemoryStorageKey(userId)) || '{}')
+    const raw = JSON.parse(localStorage.getItem(getQuickMemoryStorageKey(userId, scope)) || '{}')
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
 
     const normalized: QuickMemoryRecordMap = {}
@@ -140,8 +162,12 @@ export function readQuickMemoryRecordsFromStorage(userId?: QuickMemoryStorageUse
   }
 }
 
-export function writeQuickMemoryRecordsToStorage(records: QuickMemoryRecordMap): QuickMemoryRecordMap {
-  const storageKey = getQuickMemoryStorageKey()
+export function writeQuickMemoryRecordsToStorage(
+  records: QuickMemoryRecordMap,
+  userId?: QuickMemoryStorageUserId,
+  scope?: LearningScopeInput,
+): QuickMemoryRecordMap {
+  const storageKey = getQuickMemoryStorageKey(userId, scope)
   localStorage.setItem(storageKey, JSON.stringify(records))
   if (storageKey !== STORAGE_KEYS.QUICK_MEMORY_RECORDS) {
     localStorage.removeItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS)
@@ -176,8 +202,8 @@ export function updateQuickMemoryRecord(
   word: string,
   choice: 'known' | 'unknown',
   isFuzzy: boolean,
-  nowOrContext: number | { bookId?: string; chapterId?: string } = Date.now(),
-  maybeContext?: { bookId?: string; chapterId?: string },
+  nowOrContext: number | QuickMemoryRecordContext = Date.now(),
+  maybeContext?: QuickMemoryRecordContext,
 ): {
   records: QuickMemoryRecordMap
   record: QuickMemoryRecordState | null
@@ -190,6 +216,14 @@ export function updateQuickMemoryRecord(
   }
 
   const existing = records[key]
+  const scope = buildLearningScope({
+    scopeKey: context?.scopeKey ?? existing?.scopeKey,
+    scopeType: context?.scopeType ?? existing?.scopeType,
+    originScope: context?.originScope ?? existing?.originScope,
+    bookId: context?.bookId ?? existing?.bookId,
+    chapterId: context?.chapterId ?? existing?.chapterId,
+    day: context?.day,
+  })
   const knownCount = choice === 'known'
     ? (existing?.knownCount ?? 0) + 1
     : 0
@@ -204,8 +238,11 @@ export function updateQuickMemoryRecord(
     unknownCount,
     fuzzyCount,
     nextReview: nextQuickMemoryReviewTimestamp(knownCount, now),
-    bookId: context?.bookId ?? existing?.bookId,
-    chapterId: context?.chapterId ?? existing?.chapterId,
+    bookId: scope.bookId,
+    chapterId: scope.chapterId,
+    scopeKey: scope.scopeKey,
+    scopeType: scope.scopeType,
+    originScope: scope.originScope,
   }
 
   return {
@@ -241,6 +278,9 @@ export function resetQuickMemoryRecord(
     nextReview: nextQuickMemoryReviewTimestamp(0, now),
     bookId: existing?.bookId,
     chapterId: existing?.chapterId,
+    scopeKey: existing?.scopeKey,
+    scopeType: existing?.scopeType,
+    originScope: existing?.originScope,
   }
 
   return {

@@ -8,6 +8,7 @@ import {
   writeQuickMemoryRecordsToStorage,
   type QuickMemoryRecordState,
 } from '../../lib/quickMemory'
+import { buildLearningScope, type LearningScope } from '../../lib/learningScope'
 import {
   reconcileQuickMemoryRecordsWithBackend,
   syncQuickMemoryRecordsToBackend,
@@ -26,8 +27,8 @@ import {
 const TIMER_SECONDS = 4
 const QUICK_MEMORY_PLAYBACK_OPTIONS = { sourcePreference: 'buffer' as const }
 const QUICK_MEMORY_PRELOAD_OPTIONS = { includeBuffer: true, sourcePreference: 'buffer' as const }
-function syncRecordToBackend(word: string, record: QuickMemoryRecordState): void {
-  void syncQuickMemoryRecordsToBackend([{ word, record }]).catch(() => {})
+function syncRecordToBackend(word: string, record: QuickMemoryRecordState, scope: LearningScope): void {
+  void syncQuickMemoryRecordsToBackend([{ word, record }], scope).catch(() => {})
 }
 
 export default function QuickMemoryMode({
@@ -82,6 +83,7 @@ export default function QuickMemoryMode({
     () => queue.map(queueIndex => vocabulary[queueIndex]?.word).filter((word): word is string => Boolean(word)),
     [queue, vocabulary],
   )
+  const quickMemoryScope = useMemo(() => buildLearningScope({ bookId, chapterId }), [bookId, chapterId])
   const showProgressSaveError = useCallback(() => {
     showToast('进度保存失败，请检查网络连接', 'error')
   }, [showToast])
@@ -107,6 +109,7 @@ export default function QuickMemoryMode({
     pendingRecordSyncRef,
     recordSyncInFlightRef,
     recordSyncPromiseRef,
+    quickMemoryScope,
   })
 
   useQuickMemorySession({
@@ -178,20 +181,17 @@ export default function QuickMemoryMode({
     setPhase('reveal')
 
     const { records, record } = updateQuickMemoryRecord(
-      readQuickMemoryRecordsFromStorage(),
+      readQuickMemoryRecordsFromStorage(undefined, quickMemoryScope),
       answeredWord?.word ?? '',
       picked,
       isFuzzy,
-      {
-        bookId: bookId ?? undefined,
-        chapterId: chapterId ?? (answeredWord?.chapter_id != null ? String(answeredWord.chapter_id) : undefined),
-      },
+      quickMemoryScope,
     )
-    writeQuickMemoryRecordsToStorage(records)
+    writeQuickMemoryRecordsToStorage(records, undefined, quickMemoryScope)
     const wordKey = (answeredWord?.word ?? '').toLowerCase()
     if (wordKey && record) {
       pendingRecordSyncRef.current[wordKey] = record
-      syncRecordToBackend(wordKey, record)
+      syncRecordToBackend(wordKey, record, quickMemoryScope)
     }
     if (answeredWord && record) {
       onQuickMemoryRecordChange?.(answeredWord, record)
@@ -224,6 +224,7 @@ export default function QuickMemoryMode({
     onQuickMemoryRecordChange,
     onWrongWord,
     prepareLearningSession,
+    quickMemoryScope,
     revisitedSet,
     settings,
     syncSessionSnapshot,

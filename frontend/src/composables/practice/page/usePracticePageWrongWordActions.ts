@@ -10,6 +10,7 @@ import {
 } from '../../../features/vocabulary/wrongWordsStore'
 import { apiFetch } from '../../../lib'
 import { submitWordMasteryAttempt } from '../../../lib/gamePractice'
+import { buildLearningScope } from '../../../lib/learningScope'
 import { loadSmartStats } from '../../../lib/smartMode'
 import { updateErrorReviewRoundResults, type ErrorReviewRoundResults } from '../../../features/practice/errorReviewSession'
 import { resolveWrongWordDimensionForPractice } from '../../../features/practice/practiceSessionHelpers'
@@ -39,6 +40,7 @@ export function usePracticePageWrongWordActions({
   errorRoundResultsRef,
 }: UsePracticePageWrongWordActionsParams) {
   const saveWrongWord = useCallback((word: Word) => {
+    const scope = buildLearningScope({ bookId, chapterId })
     const dimension = resolveWrongWordDimensionForPractice(mode, smartDimension)
     const nextWords = addWrongWordToList(
       readWrongWordsFromStorage(userId),
@@ -59,6 +61,9 @@ export function usePracticePageWrongWordActions({
         sourceMode: mode,
         bookId: bookId ?? undefined,
         chapterId: chapterId ?? undefined,
+        scopeKey: scope.scopeKey,
+        scopeType: scope.scopeType,
+        originScope: scope.originScope,
         words: [{
           ...syncedWord,
           listeningCorrect: smartStats?.listening.correct ?? syncedWord.listening_correct ?? 0,
@@ -73,6 +78,7 @@ export function usePracticePageWrongWordActions({
   }, [bookId, chapterId, mode, smartDimension, userId])
 
   const handleQuickMemoryRecordChange = useCallback((word: Word, record: QuickMemoryRecordState) => {
+    const scope = buildLearningScope({ bookId, chapterId })
     const currentWrongWords = readWrongWordsFromStorage(userId)
     const previousWrongWord = currentWrongWords.find(
       item => item.word.trim().toLowerCase() === word.word.trim().toLowerCase(),
@@ -119,6 +125,9 @@ export function usePracticePageWrongWordActions({
           sourceMode: 'quickmemory',
           bookId: bookId ?? undefined,
           chapterId: chapterId ?? undefined,
+          scopeKey: scope.scopeKey,
+          scopeType: scope.scopeType,
+          originScope: scope.originScope,
           words: [nextWrongWord],
         }),
       }).catch(() => {})
@@ -131,6 +140,7 @@ export function usePracticePageWrongWordActions({
 
   const recordErrorReviewOutcome = useCallback((word: Word, wasCorrect: boolean) => {
     if (!errorMode) return
+    const scope = buildLearningScope({ bookId, chapterId })
 
     const reviewDimension = resolveWrongWordDimensionForPractice(mode, smartDimension)
     errorRoundResultsRef.current = updateErrorReviewRoundResults(
@@ -166,6 +176,9 @@ export function usePracticePageWrongWordActions({
           sourceMode: mode,
           bookId: bookId ?? undefined,
           chapterId: chapterId ?? undefined,
+          scopeKey: scope.scopeKey,
+          scopeType: scope.scopeType,
+          originScope: scope.originScope,
           words: [nextWrongWord],
         }),
       }).catch(() => {})

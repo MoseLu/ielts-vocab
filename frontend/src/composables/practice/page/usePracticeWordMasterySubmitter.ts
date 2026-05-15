@@ -65,22 +65,27 @@ export function usePracticeWordMasterySubmitter({
           sourceMode: input.analyticsMode,
           bookId,
           chapterId,
+          scopeKey: command.scopeKey,
+          scopeType: command.scopeType,
+          originScope: command.originScope,
           occurredAt: command.occurredAt,
         })
       },
-      wordMastery: () => submitWordMasteryAttempt({
-        bookId,
-        chapterId,
-        word: currentWord.word,
-        dimension: input.dimension,
-        passed: input.passed,
-        sourceMode: input.analyticsMode,
-        entry: errorMode ? 'error-review' : 'practice',
-        task: errorMode ? 'error-review' : undefined,
-        wordPayload: currentWord,
-        traceId: command.traceId,
-        idempotencyKey: command.idempotencyKey,
-      }),
+      wordMastery: async () => {
+        await submitWordMasteryAttempt({
+          bookId,
+          chapterId,
+          word: currentWord.word,
+          dimension: input.dimension,
+          passed: input.passed,
+          sourceMode: input.analyticsMode,
+          entry: errorMode ? 'error-review' : 'practice',
+          task: errorMode ? 'error-review' : undefined,
+          wordPayload: currentWord,
+          traceId: command.traceId,
+          idempotencyKey: command.idempotencyKey,
+        })
+      },
     })
   }, [bookId, chapterId, currentDay, currentWord, errorMode, sessionIdRef, userId])
 }

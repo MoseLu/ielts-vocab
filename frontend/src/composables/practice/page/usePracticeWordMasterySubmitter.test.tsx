@@ -79,6 +79,8 @@ describe('usePracticeWordMasterySubmitter', () => {
       sourceMode: 'smart',
       bookId: 'book-1',
       chapterId: '2',
+      scopeKey: 'chapter:book-1:2',
+      scopeType: 'chapter',
     }))
     await waitFor(() => expect(readPracticeResultOutbox('7')[0]).toMatchObject({ status: 'acked' }))
     expect(vi.mocked(submitWordMasteryAttempt).mock.calls[0]?.[0]).toMatchObject({
@@ -86,7 +88,7 @@ describe('usePracticeWordMasterySubmitter', () => {
       dimension: 'meaning',
       sourceMode: 'smart',
       traceId: 'practice:11111111-2222-4333-8444-555555555555',
-      idempotencyKey: 'practice:42:smart:book-1-chapter-2:abandon:meaning:0',
+      idempotencyKey: 'practice:42:smart:chapter-book-1-2:abandon:meaning:0',
     })
   })
 

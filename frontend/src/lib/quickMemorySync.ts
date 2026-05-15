@@ -1,4 +1,5 @@
 import { apiFetch } from './apiClient'
+import { buildLearningScope, type LearningScopeInput } from './learningScope'
 import {
   getQuickMemoryStorageKey,
   mergeQuickMemoryRecordsByLastSeen,
@@ -18,7 +19,7 @@ export interface QuickMemoryReconcileResult {
   uploadedCount: number
 }
 
-interface QuickMemorySyncOptions {
+export interface QuickMemorySyncOptions extends LearningScopeInput {
   keepalive?: boolean
   source?: string
   sourceMode?: string
@@ -34,8 +35,13 @@ function normalizeWordKey(word: string): string {
   return word.trim().toLowerCase()
 }
 
-function getPendingSyncStorageKey(): string {
-  return `${getQuickMemoryStorageKey()}:pending_sync`
+function getPendingSyncStorageKey(scope?: LearningScopeInput): string {
+  return `${getQuickMemoryStorageKey(undefined, scope)}:pending_sync`
+}
+
+function resolveSyncScope(options: QuickMemorySyncOptions = {}): LearningScopeInput | undefined {
+  if (options.scopeKey || options.bookId || options.chapterId || options.day != null) return options
+  return undefined
 }
 
 function mergeRecordMap(base: QuickMemoryRecordMap, incoming: QuickMemoryRecordMap): QuickMemoryRecordMap {
@@ -62,9 +68,9 @@ function normalizeSyncEntries(records: QuickMemorySyncEntry[]): QuickMemorySyncE
   return Object.entries(normalized).map(([word, record]) => ({ word, record }))
 }
 
-function readPendingSyncRecords(): QuickMemoryRecordMap {
+function readPendingSyncRecords(scope?: LearningScopeInput): QuickMemoryRecordMap {
   try {
-    const raw = JSON.parse(localStorage.getItem(getPendingSyncStorageKey()) || '{}')
+    const raw = JSON.parse(localStorage.getItem(getPendingSyncStorageKey(scope)) || '{}')
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
     const inputs = Object.entries(raw as Record<string, unknown>).map(([word, value]) => ({
       word,
@@ -76,8 +82,8 @@ function readPendingSyncRecords(): QuickMemoryRecordMap {
   }
 }
 
-function writePendingSyncRecords(records: QuickMemoryRecordMap): void {
-  const storageKey = getPendingSyncStorageKey()
+function writePendingSyncRecords(records: QuickMemoryRecordMap, scope?: LearningScopeInput): void {
+  const storageKey = getPendingSyncStorageKey(scope)
   if (Object.keys(records).length === 0) {
     localStorage.removeItem(storageKey)
     return
@@ -85,16 +91,16 @@ function writePendingSyncRecords(records: QuickMemoryRecordMap): void {
   localStorage.setItem(storageKey, JSON.stringify(records))
 }
 
-function persistPendingSyncEntries(entries: QuickMemorySyncEntry[]): void {
-  const pending = readPendingSyncRecords()
+function persistPendingSyncEntries(entries: QuickMemorySyncEntry[], scope?: LearningScopeInput): void {
+  const pending = readPendingSyncRecords(scope)
   writePendingSyncRecords(mergeRecordMap(
     pending,
     Object.fromEntries(entries.map(({ word, record }) => [word, record])),
-  ))
+  ), scope)
 }
 
-function clearPendingSyncEntries(entries: QuickMemorySyncEntry[]): void {
-  const pending = readPendingSyncRecords()
+function clearPendingSyncEntries(entries: QuickMemorySyncEntry[], scope?: LearningScopeInput): void {
+  const pending = readPendingSyncRecords(scope)
   let changed = false
   entries.forEach(({ word, record }) => {
     const pendingRecord = pending[word]
@@ -103,7 +109,7 @@ function clearPendingSyncEntries(entries: QuickMemorySyncEntry[]): void {
       changed = true
     }
   })
-  if (changed) writePendingSyncRecords(pending)
+  if (changed) writePendingSyncRecords(pending, scope)
 }
 
 function clearServerSyncedPendingRecords(serverLastSeenByWord: Map<string, number>): void {
@@ -118,11 +124,33 @@ function clearServerSyncedPendingRecords(serverLastSeenByWord: Map<string, numbe
   if (changed) writePendingSyncRecords(pending)
 }
 
+function withScope(record: QuickMemoryRecordState, options: QuickMemorySyncOptions): QuickMemoryRecordState {
+  const scope = buildLearningScope({
+    scopeKey: options.scopeKey ?? record.scopeKey,
+    scopeType: options.scopeType ?? record.scopeType,
+    originScope: options.originScope ?? record.originScope,
+    bookId: options.bookId ?? record.bookId,
+    chapterId: options.chapterId ?? record.chapterId,
+    day: options.day,
+  })
+  return {
+    ...record,
+    bookId: scope.bookId ?? record.bookId,
+    chapterId: scope.chapterId ?? record.chapterId,
+    scopeKey: scope.scopeKey,
+    scopeType: scope.scopeType,
+    originScope: scope.originScope,
+  }
+}
+
 function buildQuickMemorySyncRecord(word: string, record: QuickMemoryRecordState) {
   return {
     word: normalizeWordKey(word),
     bookId: record.bookId,
     chapterId: record.chapterId,
+    scopeKey: record.scopeKey,
+    scopeType: record.scopeType,
+    originScope: record.originScope,
     status: record.status,
     firstSeen: record.firstSeen,
     lastSeen: record.lastSeen,
@@ -139,8 +167,13 @@ export async function syncQuickMemoryRecordsToBackend(
 ): Promise<void> {
   const entries = normalizeSyncEntries(records)
   if (!entries.length) return
+  const scopedEntries = entries.map(({ word, record }) => ({
+    word,
+    record: withScope(record, options),
+  }))
+  const pendingScope = resolveSyncScope(options)
 
-  persistPendingSyncEntries(entries)
+  persistPendingSyncEntries(scopedEntries, pendingScope)
 
   await apiFetch('/api/ai/quick-memory/sync', {
     method: 'POST',
@@ -148,16 +181,17 @@ export async function syncQuickMemoryRecordsToBackend(
     body: JSON.stringify({
       source: options.source ?? 'quickmemory',
       sourceMode: options.sourceMode ?? 'quickmemory',
-      records: entries.map(({ word, record }) => buildQuickMemorySyncRecord(word, record)),
+      records: scopedEntries.map(({ word, record }) => buildQuickMemorySyncRecord(word, record)),
     }),
   })
-  clearPendingSyncEntries(entries)
+  clearPendingSyncEntries(scopedEntries, pendingScope)
 }
 
 export async function retryPendingQuickMemorySync(
-  options: { keepalive?: boolean } = {},
+  options: QuickMemorySyncOptions = {},
 ): Promise<QuickMemoryReconcileResult> {
-  const pending = readPendingSyncRecords()
+  const pendingScope = resolveSyncScope(options)
+  const pending = readPendingSyncRecords(pendingScope)
   const entries = Object.entries(pending).map(([word, record]) => ({ word, record }))
   if (entries.length === 0) return { uploadedCount: 0 }
 

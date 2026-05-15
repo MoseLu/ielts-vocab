@@ -4,6 +4,7 @@ import {
   retryPendingQuickMemorySync,
   syncQuickMemoryRecordsToBackend,
 } from '../../../lib/quickMemorySync'
+import type { LearningScope } from '../../../lib/learningScope'
 import type { QuickMemoryRecordState } from '../../../lib/quickMemory'
 import type { QuickMemorySessionResult as SessionResult } from '../../../features/practice/quickMemorySession'
 
@@ -23,6 +24,7 @@ interface QuickMemoryModeSessionArgs {
   pendingRecordSyncRef: React.MutableRefObject<Record<string, QuickMemoryRecordState>>
   recordSyncInFlightRef: React.MutableRefObject<boolean>
   recordSyncPromiseRef: React.MutableRefObject<Promise<void> | null>
+  quickMemoryScope: LearningScope
 }
 
 function summarizeResults(results: SessionResult[]) {
@@ -47,6 +49,7 @@ export function useQuickMemoryModeSession({
   pendingRecordSyncRef,
   recordSyncInFlightRef,
   recordSyncPromiseRef,
+  quickMemoryScope,
 }: QuickMemoryModeSessionArgs) {
   useEffect(() => {
     bookIdRef.current = bookId
@@ -92,7 +95,7 @@ export function useQuickMemoryModeSession({
 
     const syncTask = syncQuickMemoryRecordsToBackend(
       pendingEntries.map(([word, record]) => ({ word, record })),
-      { keepalive },
+      { ...quickMemoryScope, keepalive },
     ).catch(() => {
       pendingRecordSyncRef.current = {
         ...Object.fromEntries(pendingEntries),
@@ -104,7 +107,7 @@ export function useQuickMemoryModeSession({
     })
     recordSyncPromiseRef.current = syncTask
     return syncTask
-  }, [pendingRecordSyncRef, recordSyncInFlightRef, recordSyncPromiseRef])
+  }, [pendingRecordSyncRef, quickMemoryScope, recordSyncInFlightRef, recordSyncPromiseRef])
 
   const accumulateCompletedDuration = useCallback((durationSeconds: number) => {
     completedSessionDurationSecondsRef.current = Math.max(
@@ -122,7 +125,7 @@ export function useQuickMemoryModeSession({
   useEffect(() => {
     const retryPendingSync = () => {
       if (document.visibilityState === 'hidden') return
-      void retryPendingQuickMemorySync().catch(() => {})
+      void retryPendingQuickMemorySync(quickMemoryScope).catch(() => {})
     }
     const timerId = window.setInterval(retryPendingSync, QUICK_MEMORY_PENDING_SYNC_RETRY_MS)
     window.addEventListener('online', retryPendingSync)
@@ -130,7 +133,7 @@ export function useQuickMemoryModeSession({
       window.clearInterval(timerId)
       window.removeEventListener('online', retryPendingSync)
     }
-  }, [])
+  }, [quickMemoryScope])
 
   const prepareLearningSession = useCallback(async (activityAt = Date.now()) => {
     const summary = summarizeResults(resultsRef.current)

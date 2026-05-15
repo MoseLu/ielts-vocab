@@ -17,6 +17,9 @@ export interface QuickMemoryRecord {
   fuzzyCount: number
   bookId?: string
   chapterId?: string
+  scopeKey?: string
+  scopeType?: string
+  originScope?: Record<string, unknown>
 }
 
 export type QuickMemoryRecords = Record<string, QuickMemoryRecord>
