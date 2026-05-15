@@ -5,71 +5,31 @@
     align-items: flex-end;
 }
 
-.errors-stage-row {
-    display: flex;
-    gap: var(--size-8);
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-.errors-stage-pill {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--size-24);
-    padding: 0 var(--size-10);
-    border-radius: var(--radius-full);
-    font-size: var(--size-12);
-    font-weight: 700;
-}
-
-.errors-stage-pill--neutral {
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-}
-
-.errors-stage-pill--warning {
-    background: var(--warning-bg);
-    color: var(--warning);
-}
-
-.errors-stage-pill--accent,
-.errors-stage-pill--today {
-    background: color-mix(in srgb, var(--accent) var(--mix-12), var(--bg-color));
-    color: var(--accent);
-}
-
-.errors-stage-pill--success {
-    background: var(--success-bg);
-    color: var(--success);
-}
-
 .errors-stage-note {
     font-size: var(--size-14);
     color: var(--text-secondary);
 }
 
 .errors-item-compact-row {
-    --errors-bottom-card-height: var(--size-76);
+    --errors-bottom-card-height: var(--size-82);
 }
 
 .errors-item-meters {
-    display: flex;
+    display: contents;
     align-items: stretch;
     gap: var(--size-10);
-    flex: 0 0 auto;
-    flex-wrap: wrap;
 }
 
 .errors-meter {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    min-width: var(--size-176);
+    justify-content: space-between;
+    min-width: 0;
     min-height: var(--errors-bottom-card-height);
     padding: var(--size-10) var(--size-12);
     border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
-    background: var(--bg-secondary);
+    background: color-mix(in srgb, var(--bg-secondary) var(--mix-76), var(--bg-color));
 }
 
 .errors-meter-head {
@@ -126,19 +86,17 @@
 }
 
 .errors-item-dim-tracks {
-    display: flex;
+    display: contents;
     align-items: stretch;
     gap: var(--size-10);
-    flex: 1 1 var(--size-260);
-    min-width: 0;
-    flex-wrap: wrap;
 }
 
 .errors-dim-track {
     display: flex;
     align-items: center;
+    justify-content: center;
     min-height: var(--errors-bottom-card-height);
-    padding: var(--size-8) var(--size-12);
+    padding: var(--size-10) var(--size-12);
     border: var(--size-1) solid var(--border);
     border-radius: var(--radius-md);
     background: var(--bg-color);
@@ -146,10 +104,12 @@
 }
 
 .errors-dim-track.is-pending {
+    border-color: color-mix(in srgb, var(--warning) var(--mix-20), var(--border));
     background: color-mix(in srgb, var(--warning-bg) var(--mix-82), var(--bg-color));
 }
 
 .errors-dim-track.is-cleared {
+    border-color: color-mix(in srgb, var(--success) var(--mix-18), var(--border));
     background: color-mix(in srgb, var(--success-bg) var(--mix-82), var(--bg-color));
 }
 
@@ -161,7 +121,9 @@
 .errors-dim-track-head {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--size-8);
+    width: 100%;
     font-size: var(--size-12);
     color: var(--text-secondary);
     flex-wrap: wrap;
@@ -177,21 +139,15 @@
         align-items: stretch;
     }
 
-    .errors-stage-row {
-        justify-content: flex-start;
-    }
-
     .errors-item-meters {
         width: 100%;
     }
 
     .errors-meter {
-        flex: 1 1 var(--size-140);
+        min-width: 0;
     }
 
     .errors-item-dim-tracks {
         width: 100%;
     }
 }
-
-

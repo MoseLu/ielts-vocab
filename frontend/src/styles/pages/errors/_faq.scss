@@ -108,4 +108,37 @@
     line-height: 1.6;
 }
 
+@media (max-width: 560px) {
+    .errors-faq-card {
+        padding: var(--size-8);
+    }
+
+    .errors-faq-list {
+        flex-direction: row;
+        gap: var(--size-6);
+        overflow-x: auto;
+        padding-bottom: var(--size-2);
+        scrollbar-width: none;
+    }
+
+    .errors-faq-list::-webkit-scrollbar {
+        display: none;
+    }
+
+    .errors-faq-item {
+        flex: 0 0 min(var(--size-260), 76vw);
+    }
+
+    .errors-faq-question {
+        min-height: var(--size-42);
+        padding: var(--size-8) var(--size-10);
+        gap: var(--size-8);
+    }
+
+    .errors-faq-question-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
 

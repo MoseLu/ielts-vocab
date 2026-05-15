@@ -1,12 +1,11 @@
-import type { CSSProperties } from 'react'
 import {
   type WrongWordCollectionScope,
   type WrongWordDimension,
   type WrongWordRecord,
   getWrongWordActiveCount,
 } from '../../../features/vocabulary/wrongWordsStore'
-import WordMeaningGroups from '../../ui/WordMeaningGroups'
 import { formatWrongWordOccurrenceDate } from '../../../features/vocabulary/wrongWordsFilters'
+import { parseWordMeaningGroups } from '../../../lib/wordMeaning'
 import { normalizeWrongWordKey } from './errorsPageHelpers'
 import { buildWrongWordCardModel } from './errorsPageProgress'
 
@@ -29,113 +28,61 @@ export function ErrorsWordItem({
   const wordKey = normalizeWrongWordKey(word.word)
   const checked = selectedWordKeySet.has(wordKey)
   const progress = buildWrongWordCardModel(word)
-  const bookCompactValue = progress.historyDimensionCount > 0
-    ? `${progress.clearedDimensionCount}/${progress.historyDimensionCount} 项`
-    : '暂无问题项'
-  const bookCompactNote = progress.pendingDimensionCount > 0
-    ? `待清 ${progress.pendingDimensionCount} 项`
-    : '错词本已清空'
-  const reviewCompactValue = word.ebbinghaus_completed
-    ? '已完成'
-    : (progress.reviewTarget > 0 ? `${progress.reviewStreak}/${progress.reviewTarget}` : '未开始')
-  const reviewCompactNote = word.ebbinghaus_completed
-    ? '长期复习稳定'
-    : (
-        progress.reviewTarget > 0
-          ? `还差 ${progress.reviewRemaining} 次`
-          : '清错后进入'
-      )
-  const compactFocusLabel = progress.focusLabel ?? progress.statusLabel
+  const activeWrongCount = getWrongWordActiveCount(word, scope)
+  const meaningGroups = parseWordMeaningGroups({ definition: word.definition, pos: word.pos })
+  const meaningText = meaningGroups
+    .map(group => group.meaningText)
+    .filter(Boolean)
+    .join('；') || '暂无释义'
+  const posLabel = Array.from(new Set(
+    meaningGroups.map(group => group.posLabel).filter(Boolean),
+  )).join(' / ')
+  const checklistClassName = `errors-item-checklist${progress.dimensions.length > 3 ? ' is-dense' : ''}`
 
   return (
-    <div className="errors-item">
-      <div className="errors-item-main">
-        <div className="errors-item-head">
-          <div className="errors-item-word-row">
-            <span className="errors-item-word">{word.word}</span>
-            <span className="errors-item-total-count">
-              {scope === 'pending'
-                ? `待清错次×${getWrongWordActiveCount(word, 'pending')}`
-                : `累计错次×${getWrongWordActiveCount(word, 'history')}`}
-            </span>
-          </div>
-
-          <div className="errors-stage-row">
-            <span className={`errors-stage-pill errors-stage-pill--${progress.statusTone}`}>
-              {progress.statusLabel}
-            </span>
-            {progress.isTodayNew && (
-              <span className="errors-stage-pill errors-stage-pill--today">今日新入</span>
-            )}
-            {progress.feedbackLabel && (
-              <span className="errors-stage-pill errors-stage-pill--accent">
-                {progress.feedbackLabel}
-              </span>
-            )}
-          </div>
+    <div className={`errors-item${checked ? ' is-selected' : ''}`}>
+      <section className="errors-item-card errors-item-card--word">
+        <div className="errors-item-word-line errors-item-word-line--head">
+          <span className="errors-item-word">{word.word}</span>
+          <span className="errors-item-count-badge">错{activeWrongCount}</span>
         </div>
 
-        <div className="errors-item-subline">
+        <div className="errors-item-word-line">
           {word.phonetic && <span className="errors-item-phonetic">{word.phonetic}</span>}
-          {collectedOn && <span className="errors-item-date">收录于 {collectedOn}</span>}
-          <WordMeaningGroups
-            className="errors-item-definition"
-            definition={word.definition}
-            pos={word.pos}
-            size="sm"
-          />
-          <span className="errors-item-focus-note" title={progress.statusDescription}>
-            {compactFocusLabel}
-          </span>
         </div>
 
-        <div className="errors-item-compact-row">
-          <div className="errors-item-meters">
-            <div className="errors-meter" title={progress.bookProgressNote}>
-              <div className="errors-meter-head">
-                <span>错词本进度</span>
-                <strong>{bookCompactValue}</strong>
-              </div>
-              <div className="errors-meter-bar">
-                <span
-                  className={`errors-meter-fill errors-meter-fill--${progress.statusTone}`}
-                  style={{ '--progress-percent': `${progress.bookProgressPercent}%` } as CSSProperties}
-                />
-              </div>
-              <div className="errors-meter-note">{bookCompactNote}</div>
-            </div>
+        <div className="errors-item-word-line errors-item-word-line--meaning">
+          <span className="errors-item-meaning">{meaningText}</span>
+          {posLabel && (
+            <span className="errors-item-pos-badge">{posLabel}</span>
+          )}
+        </div>
 
-            <div className="errors-meter" title={progress.reviewProgressNote}>
-              <div className="errors-meter-head">
-                <span>长期复习</span>
-                <strong>{reviewCompactValue}</strong>
-              </div>
-              <div className="errors-meter-bar">
-                <span
-                  className={`errors-meter-fill ${word.ebbinghaus_completed ? 'errors-meter-fill--success' : 'errors-meter-fill--accent'}`}
-                  style={{ '--progress-percent': `${progress.reviewProgressPercent}%` } as CSSProperties}
-                />
-              </div>
-              <div className="errors-meter-note">{reviewCompactNote}</div>
-            </div>
-          </div>
+        <div className="errors-item-word-line">
+          {collectedOn && <span className="errors-item-date">收录于 {collectedOn}</span>}
+        </div>
+      </section>
 
-          <div className="errors-item-dim-tracks">
+      <section className="errors-item-card errors-item-card--todo">
+        {progress.dimensions.length > 0 ? (
+          <div className={checklistClassName}>
             {progress.dimensions.map(dimension => (
               <div
                 key={dimension.dimension}
-                className={`errors-dim-track${dimension.pending ? ' is-pending' : ' is-cleared'}${dimFilter === dimension.dimension ? ' is-highlighted' : ''}`}
+                className={`errors-item-check-row ${dimension.pending ? 'is-pending' : 'is-cleared'}${dimFilter === dimension.dimension ? ' is-highlighted' : ''}`}
                 title={dimension.detail}
               >
-                <div className="errors-dim-track-head">
-                  <span>{dimension.label}</span>
-                  <strong>{dimension.headline}</strong>
-                </div>
+                <span className="errors-item-check-mark" aria-hidden="true">
+                  {dimension.pending ? '' : '✓'}
+                </span>
+                <span className="errors-item-check-label">{dimension.label}</span>
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        ) : (
+          <div className="errors-item-todo-empty">暂无模式维度</div>
+        )}
+      </section>
 
       <label className={`errors-item-select${checked ? ' errors-item-select--checked' : ''}`}>
         <input
