@@ -53,6 +53,22 @@ def _clone_listening_confusables(value) -> list[dict]:
     ]
 
 
+@functools.lru_cache(maxsize=1)
+def _load_phonetic_overrides_once() -> dict[str, str]:
+    path = _vocabulary_data_dir() / 'phonetic_overrides.json'
+    try:
+        payload = json.loads(path.read_text(encoding='utf-8'))
+    except Exception:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    return {
+        str(word).strip().lower(): str(phonetic).strip()
+        for word, phonetic in payload.items()
+        if str(word).strip() and str(phonetic).strip()
+    }
+
+
 def _copy_vocab_entry(word: dict, **extra_fields) -> dict:
     item = {
         'word': str(word.get('word') or '').strip(),
@@ -63,6 +79,9 @@ def _copy_vocab_entry(word: dict, **extra_fields) -> dict:
         'listening_confusables': _clone_listening_confusables(word.get('listening_confusables')),
         'examples': _clone_vocab_examples(word.get('examples')),
     }
+    override = _load_phonetic_overrides_once().get(item['word'].lower())
+    if override:
+        item['phonetic'] = override
     item.update(extra_fields)
     return item
 
@@ -213,6 +232,7 @@ def _clear_quick_memory_vocab_catalog_cache() -> None:
     _build_quick_memory_vocab_catalog_snapshot_once.cache_clear()
     _build_book_quick_memory_vocab_lookup_once.cache_clear()
     _build_lightweight_quick_memory_vocab_lookup_once.cache_clear()
+    _load_phonetic_overrides_once.cache_clear()
 
 
 def get_global_vocab_pool() -> list:
