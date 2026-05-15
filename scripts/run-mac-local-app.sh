@@ -182,7 +182,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var stdoutHandle: FileHandle?
     private var stderrHandle: FileHandle?
     private var didLoadApp = false
-    private var backendStartupCompleted = false
     private var startedAt = Date()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -300,7 +299,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         task.standardError = stderrHandle
         task.terminationHandler = { [weak self] process in
             self?.writeLog("backend_launcher_exited status=\(process.terminationStatus)")
-            DispatchQueue.main.async { self?.backendStartupCompleted = process.terminationStatus == 0 }
         }
 
         do {
@@ -350,7 +348,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func checkServices() {
         guard !didLoadApp,
-              backendStartupCompleted,
               let appURL = config["IELTS_LOCAL_APP_URL"],
               let frontendURL = URL(string: appURL),
               let apiHealthURL = config["IELTS_LOCAL_APP_API_HEALTH_URL"] else {
