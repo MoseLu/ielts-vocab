@@ -6,6 +6,11 @@ from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custo
 from platform_sdk.quick_memory_schedule_support import resolve_quick_memory_next_review_ms
 from services import ai_quick_memory_repository, ai_smart_word_stat_repository
 from services.learning_attempt_service import ensure_wrong_word_failure
+from services.learning_scope_support import resolve_learning_scope
+from services.scoped_quick_memory_service import (
+    upsert_global_quick_memory_projection,
+    upsert_scoped_quick_memory_record,
+)
 from services.ai_metric_tracking_service import record_smart_dimension_delta_event
 from services.study_sessions import normalize_chapter_id
 from services.word_mastery_service import update_word_mastery_attempt
@@ -93,41 +98,32 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
             record_payload.get('nextReview', 0),
         )
 
-        existing = ai_quick_memory_repository.get_user_quick_memory_record(user_id, word)
-        previous_snapshot = _quick_memory_snapshot(existing) if existing else None
-
-        if existing:
-            # Only overwrite if client data is newer.
-            if _safe_non_negative_int(record_payload.get('lastSeen')) >= (existing.last_seen or 0):
-                if record_book_id is not None:
-                    existing.book_id = record_book_id
-                if record_chapter_id is not None:
-                    existing.chapter_id = record_chapter_id
-                existing.status = record_payload.get('status', existing.status)
-                existing.first_seen = record_payload.get('firstSeen', existing.first_seen)
-                existing.last_seen = record_last_seen
-                existing.known_count = record_known_count
-                existing.unknown_count = record_payload.get('unknownCount', existing.unknown_count)
-                existing.next_review = canonical_next_review
-                if record_payload.get('fuzzyCount') is not None:
-                    existing.fuzzy_count = max(existing.fuzzy_count or 0, record_payload['fuzzyCount'])
-        else:
-            existing = ai_quick_memory_repository.create_user_quick_memory_record(
-                user_id,
-                word,
-                book_id=record_book_id,
-                chapter_id=record_chapter_id,
-                status=record_payload.get('status', 'unknown'),
-                first_seen=record_payload.get('firstSeen', 0),
-                last_seen=record_last_seen,
-                known_count=record_known_count,
-                unknown_count=record_payload.get('unknownCount', 0),
-                next_review=canonical_next_review,
-                fuzzy_count=record_payload.get('fuzzyCount', 0),
-            )
+        scope = resolve_learning_scope(
+            payload,
+            record_payload,
+            book_id=record_book_id,
+            chapter_id=record_chapter_id,
+        )
+        existing, previous_snapshot, current_snapshot = upsert_scoped_quick_memory_record(
+            user_id=user_id,
+            word=word,
+            scope=scope,
+            record_payload=record_payload,
+            record_last_seen=record_last_seen,
+            record_known_count=record_known_count,
+            canonical_next_review=canonical_next_review,
+        )
+        upsert_global_quick_memory_projection(
+            user_id=user_id,
+            word=word,
+            scope=scope,
+            record_payload=record_payload,
+            record_last_seen=record_last_seen,
+            record_known_count=record_known_count,
+            canonical_next_review=canonical_next_review,
+        )
 
         if source:
-            current_snapshot = _quick_memory_snapshot(existing)
             if previous_snapshot != current_snapshot:
                 status = current_snapshot['status']
                 from services.learning_events import record_learning_event
@@ -172,6 +168,7 @@ def sync_quick_memory_response(user_id: int, body: dict | None) -> tuple[dict, i
                         word=word,
                         dimension='recognition',
                         word_payload=record_payload,
+                        scope=scope,
                     )
     try:
         ai_quick_memory_repository.commit()

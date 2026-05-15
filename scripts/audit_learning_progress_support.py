@@ -271,7 +271,9 @@ def summarize_catalog(catalog: dict) -> list[dict]:
 
 
 def build_word_sets(learning_rows: dict[str, list[dict]]) -> dict:
-    quick_all = {key(row.get('word')) for row in learning_rows['quick'] if key(row.get('word'))}
+    quick_source = learning_rows.get('quick_scoped') or learning_rows['quick']
+    wrong_source = learning_rows.get('wrong_scoped') or learning_rows['wrong']
+    quick_all = {key(row.get('word')) for row in quick_source if key(row.get('word'))}
     smart_all = {
         key(row.get('word')) for row in learning_rows['smart']
         if key(row.get('word')) and sum(i(row.get(name)) for name in (
@@ -279,11 +281,11 @@ def build_word_sets(learning_rows: dict[str, list[dict]]) -> dict:
             'meaning_wrong', 'dictation_correct', 'dictation_wrong',
         )) > 0
     }
-    wrong_all = {key(row.get('word')) for row in learning_rows['wrong'] if key(row.get('word'))}
+    wrong_all = {key(row.get('word')) for row in wrong_source if key(row.get('word'))}
     mastery_all = {key(row.get('word')) for row in learning_rows['mastery'] if key(row.get('word'))}
     by_context: dict[tuple[str, str], set[str]] = defaultdict(set)
     game_context: dict[tuple[str, str], set[str]] = defaultdict(set)
-    for row in learning_rows['quick']:
+    for row in quick_source:
         if clean(row.get('book_id')) and clean(row.get('chapter_id')) and key(row.get('word')):
             by_context[(clean(row.get('book_id')), clean(row.get('chapter_id')))].add(key(row.get('word')))
     for row in learning_rows['mastery']:
@@ -312,8 +314,10 @@ def audit(username: str, engines) -> dict:
         'sessions': table_rows(engines['learning'], 'user_study_sessions', user_id),
         'events': table_rows(engines['learning'], 'user_learning_events', user_id),
         'quick': table_rows(engines['learning'], 'user_quick_memory_records', user_id),
+        'quick_scoped': table_rows(engines['learning'], 'user_scoped_quick_memory_records', user_id),
         'smart': table_rows(engines['learning'], 'user_smart_word_stats', user_id),
         'wrong': table_rows(engines['learning'], 'user_wrong_words', user_id),
+        'wrong_scoped': table_rows(engines['learning'], 'user_scoped_wrong_words', user_id),
         'mastery': table_rows(engines['learning'], 'user_word_mastery_states', user_id),
         'game_wrong': table_rows(engines['learning'], 'user_game_wrong_words', user_id),
     }
@@ -418,6 +422,12 @@ def build_report(user: dict, catalog: dict, learning: dict, issues: list[dict]) 
             'issues_by_type': dict(sorted(counts.items())),
             'issues_by_severity': dict(sorted(severities.items())),
             'raw_rows': {name: len(rows_) for name, rows_ in learning.items()},
+            'canonical_rows': {
+                'quick_memory_scoped': len(learning.get('quick_scoped') or []),
+                'quick_memory_legacy': len(learning.get('quick') or []),
+                'wrong_words_scoped': len(learning.get('wrong_scoped') or []),
+                'wrong_words_legacy': len(learning.get('wrong') or []),
+            },
         },
         'books': summarize_catalog(catalog),
         'issues': sorted(issues, key=lambda item: (item['severity'], item['type'], item['book_id'], item['chapter_id'], item['mode'])),
@@ -456,7 +466,7 @@ def render_markdown(report: dict, issue_limit: int = 80) -> str:
         lines.append(f'| {name} | {count} |')
     for name, count in summary['issues_by_type'].items():
         lines.append(f'| {name} | {count} |')
-    ww = report['wrong_words']
+    ww, canonical = report['wrong_words'], summary.get('canonical_rows') or {}
     lines += [
         '',
         '## 错词本专项',
@@ -464,6 +474,7 @@ def render_markdown(report: dict, issue_limit: int = 80) -> str:
         f"- 词书：`{ww['book_id']}`；book.word_count={ww['book_word_count']}",
         f"- 源错词：rows={ww['source_rows']}，unique={ww['source_unique']}",
         f"- 目录章节：{ww['catalog_chapters']}；系统 A-Z unique={ww['system_unique']}；legacy unique={ww['legacy_unique']}",
+        f"- canonical/legacy 行：quick={canonical.get('quick_memory_scoped', 0)}/{canonical.get('quick_memory_legacy', 0)}，wrong={canonical.get('wrong_words_scoped', 0)}/{canonical.get('wrong_words_legacy', 0)}",
         '',
         '## 词书概览',
         '',
@@ -484,7 +495,6 @@ def write_outputs(report: dict, output_dir: Path | None, fmt: str, issue_limit: 
     output_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     base = output_dir / f"luo-learning-progress-audit-{stamp}"
-    if 'json' in fmt:
-        (base.with_suffix('.json')).write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+    if 'json' in fmt: (base.with_suffix('.json')).write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     if 'markdown' in fmt or 'md' in fmt:
         (base.with_suffix('.md')).write_text(render_markdown(report, issue_limit), encoding='utf-8')

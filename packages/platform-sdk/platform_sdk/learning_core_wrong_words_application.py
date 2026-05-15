@@ -29,6 +29,8 @@ from platform_sdk.learning_event_support import record_learning_event
 from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
 from platform_sdk.study_session_support import normalize_chapter_id
 from services.learning_attempt_service import extract_wrong_word_dimension_attempts
+from services.learning_scope_support import resolve_learning_scope
+from services.scoped_wrong_word_service import get_or_create_scoped_wrong_word_record
 from services.wrong_word_custom_book_service import sync_wrong_word_custom_book
 from services.word_mastery_service import update_word_mastery_attempt
 
@@ -391,11 +393,13 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
     source_mode = normalize_practice_mode_or_custom(source_mode_raw, default=None)
     book_id = payload.get('bookId') or None
     chapter_id = normalize_chapter_id(payload.get('chapterId'))
+    scope = resolve_learning_scope(payload, book_id=book_id, chapter_id=chapter_id)
 
     if not isinstance(words, list):
         return {'error': 'words must be an array'}, 400
 
     record_cache: dict[str, UserWrongWord] = {}
+    scoped_record_cache: dict[str, object] = {}
     processed_words: set[str] = set()
     updated = 0
     for word_payload in words:
@@ -403,8 +407,19 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
         if not word_value:
             continue
 
+        scoped_record = get_or_create_scoped_wrong_word_record(
+            user_id,
+            word_value,
+            word_payload,
+            scope=scope,
+            record_cache=scoped_record_cache,
+        )
+        previous_wrong_count, current_wrong_count, state_changed, attempts = _apply_wrong_word_snapshot(
+            scoped_record,
+            word_payload,
+        )
         record = _get_or_create_wrong_word_record(user_id, word_value, word_payload, record_cache)
-        previous_wrong_count, current_wrong_count, state_changed, attempts = _apply_wrong_word_snapshot(record, word_payload)
+        _, _, projection_changed, _ = _apply_wrong_word_snapshot(record, word_payload)
         wrong_delta = max(0, current_wrong_count - previous_wrong_count)
         for dimension, passed in attempts:
             update_word_mastery_attempt(
@@ -435,13 +450,15 @@ def sync_learning_core_wrong_words_response(user_id: int, body: dict | None) -> 
                     wrong_count=wrong_delta,
                     payload={
                         'wrong_count': current_wrong_count,
-                        'definition': record.definition or '',
-                        'dimension_states': json.loads(record.dimension_state or '{}'),
+                        'definition': scoped_record.definition or '',
+                        'dimension_states': json.loads(scoped_record.dimension_state or '{}'),
+                        'scope_key': scope.scope_key,
+                        'scope_type': scope.scope_type,
                     },
                 )
             except Exception as exc:
                 logging.warning('[LEARNING_CORE] failed to record wrong-word event: %s', exc)
-        if state_changed:
+        if projection_changed:
             queue_wrong_word_updated_event(record)
         if word_value not in processed_words:
             processed_words.add(word_value)

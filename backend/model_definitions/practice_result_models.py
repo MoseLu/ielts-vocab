@@ -7,7 +7,7 @@ class UserPracticeResultCommand(db.Model):
     idempotency_key = db.Column(db.String(240), nullable=False)
     mode = db.Column(db.String(40), nullable=False, index=True)
     dimension = db.Column(db.String(40), nullable=False, default='', index=True)
-    scope_key = db.Column(db.String(180), nullable=False, default='global', index=True)
+    scope_key = db.Column(db.String(180), nullable=False, default='user', index=True)
     word = db.Column(db.String(100), nullable=False, default='', index=True)
     status = db.Column(db.String(20), nullable=False, default='processing', index=True)
     command_json = db.Column(db.Text, nullable=False)

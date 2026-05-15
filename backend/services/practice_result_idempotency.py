@@ -6,6 +6,7 @@ from collections.abc import Callable
 from sqlalchemy.exc import IntegrityError
 
 from service_models.learning_core_models import UserPracticeResultCommand, db
+from services.learning_scope_support import resolve_learning_scope
 
 
 def canonical_command_json(payload: dict | None) -> str:
@@ -21,17 +22,7 @@ def load_result_json(value: str | None) -> dict:
 
 
 def scope_key_from_payload(payload: dict | None) -> str:
-    data = payload if isinstance(payload, dict) else {}
-    book_id = str(data.get('bookId') or data.get('book_id') or '').strip()
-    chapter_id = str(data.get('chapterId') or data.get('chapter_id') or '').strip()
-    day = data.get('day')
-    if book_id and chapter_id:
-        return f'{book_id}:chapter:{chapter_id}'
-    if book_id:
-        return f'{book_id}:book'
-    if day is not None:
-        return f'day:{day}'
-    return 'global'
+    return resolve_learning_scope(payload).scope_key
 
 
 def resolve_attempt_metadata(payload: dict | None) -> tuple[str | None, str | None]:

@@ -8,9 +8,10 @@ from models import (
     _summarize_wrong_word_dimension_states,
 )
 from platform_sdk.practice_mode_registry import normalize_practice_mode_or_custom
-from services import ai_wrong_word_repository
+from services import ai_wrong_word_repository, scoped_wrong_word_repository
 from services.learning_activity_service import rebuild_learning_activity_rollups, record_learning_activity
 from services.learning_events import record_learning_event
+from services.learning_scope_support import LearningScope, resolve_learning_scope
 from services.study_sessions import normalize_chapter_id
 
 
@@ -127,10 +128,12 @@ def ensure_wrong_word_failure(
     word: str,
     dimension: str,
     word_payload: dict | None = None,
+    scope: LearningScope | None = None,
 ) -> bool:
     if dimension not in WRONG_WORD_DIMENSIONS:
         return False
     payload = word_payload if isinstance(word_payload, dict) else {}
+    resolved_scope = scope or resolve_learning_scope(payload)
     record = ai_wrong_word_repository.get_user_wrong_word(user_id, word)
     if record is None:
         record = ai_wrong_word_repository.create_user_wrong_word(
@@ -140,6 +143,26 @@ def ensure_wrong_word_failure(
             pos=payload.get('pos'),
             definition=payload.get('definition'),
         )
+    scoped_record = scoped_wrong_word_repository.get_user_scoped_wrong_word(
+        user_id,
+        scope_key=resolved_scope.scope_key,
+        word=word,
+    )
+    if scoped_record is None:
+        scoped_record = scoped_wrong_word_repository.create_user_scoped_wrong_word(
+            user_id,
+            word,
+            scope=resolved_scope,
+            phonetic=payload.get('phonetic'),
+            pos=payload.get('pos'),
+            definition=payload.get('definition'),
+        )
+    _apply_wrong_word_failure(record, dimension)
+    _apply_wrong_word_failure(scoped_record, dimension)
+    return True
+
+
+def _apply_wrong_word_failure(record, dimension: str) -> None:
     states = _build_wrong_word_dimension_states(record)
     states[dimension]['history_wrong'] = _safe_int(states[dimension].get('history_wrong')) + 1
     states[dimension]['pass_streak'] = 0
@@ -149,7 +172,6 @@ def ensure_wrong_word_failure(
     record.meaning_wrong = states['meaning']['history_wrong']
     record.dictation_wrong = states['dictation']['history_wrong']
     record.dimension_state = json.dumps(states, ensure_ascii=False)
-    return True
 
 
 def extract_wrong_word_dimension_attempts(previous_states: dict, current_states: dict) -> list[tuple[str, bool]]:

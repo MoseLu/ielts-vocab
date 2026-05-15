@@ -14,6 +14,7 @@ from service_models.learning_core_models import (
     UserLearningModeRollup,
     UserLearningUserRollup,
     UserQuickMemoryRecord,
+    UserScopedQuickMemoryRecord,
     UserStudySession,
     UserWrongWord,
     db,
@@ -66,6 +67,7 @@ def _collect_user_ids() -> list[int]:
     for model in (
         UserStudySession,
         UserLearningEvent,
+        UserScopedQuickMemoryRecord,
         UserQuickMemoryRecord,
         UserWrongWord,
         UserChapterModeProgress,
@@ -225,7 +227,9 @@ def _backfill_events(user_ids: list[int], summary: dict) -> None:
 
 def _backfill_quick_memory(user_ids: list[int], summary: dict) -> None:
     snapshots: dict[tuple[int, str, str], dict] = {}
-    for row in _scoped_query(UserQuickMemoryRecord, user_ids).all():
+    scoped_rows = _scoped_query(UserScopedQuickMemoryRecord, user_ids).all()
+    source_rows = scoped_rows or _scoped_query(UserQuickMemoryRecord, user_ids).all()
+    for row in source_rows:
         review_count = max(
             1,
             _safe_int(row.known_count) + _safe_int(row.unknown_count) + _safe_int(row.fuzzy_count),

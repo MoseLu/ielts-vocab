@@ -71,6 +71,7 @@ def test_game_attempt_idempotency_replays_without_double_applying(client, app):
         ).all()
         assert len(command_rows) == 1
         assert command_rows[0].status == 'applied'
+        assert command_rows[0].scope_key == 'chapter:ielts_reading_premium:1'
         mastery = UserWordMasteryState.query.filter_by(word=word['word']).one()
         assert mastery.dimension_states()['recognition']['attempt_count'] == 1
         events = UserLearningEvent.query.filter_by(

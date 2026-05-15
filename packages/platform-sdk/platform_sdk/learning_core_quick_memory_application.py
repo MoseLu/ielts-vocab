@@ -8,6 +8,8 @@ from platform_sdk.ai_vocab_catalog_application import (
 from platform_sdk.learning_repository_adapters import quick_memory_record_repository
 from platform_sdk.local_time_support import utc_naive_to_epoch_ms, utc_now_naive
 from platform_sdk.quick_memory_schedule_support import load_and_normalize_quick_memory_records
+from services import scoped_quick_memory_repository
+from services.learning_scope_support import resolve_learning_scope
 from platform_sdk.study_session_support import normalize_chapter_id
 
 REVIEW_QUEUE_FULL_CONTEXT_RESOLVE_LIMIT = 500
@@ -80,8 +82,22 @@ def _build_review_queue_payload(
     context_map: dict[tuple[str, str], dict] = {}
     has_scope_filter = book_id_filter is not None or chapter_id_filter is not None
     try:
-        raw_rows = _load_quick_memory_rows(user_id, resolve_context=False)
-    except TypeError:
+        if has_scope_filter:
+            review_scope = resolve_learning_scope(book_id=book_id_filter, chapter_id=chapter_id_filter)
+            raw_rows = load_and_normalize_quick_memory_records(
+                user_id,
+                list_records=lambda uid: scoped_quick_memory_repository.list_user_scoped_quick_memory_records(
+                    uid,
+                    scope_key=review_scope.scope_key,
+                ),
+                commit=scoped_quick_memory_repository.commit,
+                resolve_vocab_context=None,
+            )
+            if not raw_rows:
+                raw_rows = _load_quick_memory_rows(user_id, resolve_context=False)
+        else:
+            raw_rows = _load_quick_memory_rows(user_id, resolve_context=False)
+    except (RuntimeError, TypeError):
         raw_rows = _load_quick_memory_rows(user_id)
     rows = sorted(
         [row for row in raw_rows if (row.next_review or 0) > 0],
@@ -129,12 +145,7 @@ def _build_review_queue_payload(
         )
         fallback_item = None
         if not vocab_item:
-            if has_scope_filter and not _matches_review_scope(
-                stored_book_id,
-                stored_chapter_id,
-                book_id_filter=book_id_filter,
-                chapter_id_filter=chapter_id_filter,
-            ):
+            if has_scope_filter:
                 continue
             if pool_by_word is None:
                 pool_by_word = {

@@ -329,7 +329,7 @@ def update_word_mastery_attempt(
     if normalized_dimension not in WORD_MASTERY_DIMENSIONS:
         raise ValueError('invalid mastery dimension')
     normalized_word = normalize_word_text(word)
-    source_maps = build_legacy_source_maps(user_id, [word]) if seed_legacy else {}
+    source_maps = build_legacy_source_maps(user_id, [word], book_id=book_id, chapter_id=chapter_id, day=day) if seed_legacy else {}
     record = get_or_create_word_mastery_state(
         user_id,
         word=word,
