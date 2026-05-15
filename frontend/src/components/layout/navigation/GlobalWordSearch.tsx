@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import GlobalWordSearchDetailPanel from './GlobalWordSearchDetailPanel'
 import { useGlobalWordSearch } from '../../../composables/layout/navigation/useGlobalWordSearch'
 
@@ -17,6 +18,12 @@ export default function GlobalWordSearch() {
     handleQueryChange,
     handleQuickPickWord,
   } = useGlobalWordSearch()
+
+  useEffect(() => {
+    if (!isOpen) return
+    document.body.classList.add('has-global-word-search')
+    return () => document.body.classList.remove('has-global-word-search')
+  }, [isOpen])
 
   if (!isOpen) return null
 

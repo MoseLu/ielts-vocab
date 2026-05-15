@@ -1,8 +1,9 @@
 .ai-fab {
-  --ai-fab-mobile-bottom: var(--size-16);
+  --ai-fab-bottom: var(--size-16);
+  --ai-fab-mobile-bottom: var(--ai-fab-bottom);
   position: fixed;
   right: var(--size-10);
-  bottom: var(--size-10);
+  bottom: calc(var(--ai-fab-bottom) + env(safe-area-inset-bottom, 0px));
   z-index: var(--layer-topmost);
   width: var(--size-44);
   height: var(--size-44);
@@ -20,7 +21,15 @@
 }
 
 .ai-fab--nav-offset {
-  --ai-fab-mobile-bottom: calc(var(--size-56) + var(--size-12));
+  --ai-fab-bottom: calc(var(--size-64) + var(--size-14));
+  --ai-fab-mobile-bottom: var(--ai-fab-bottom);
+}
+
+@media (max-height: 640px) {
+  .ai-fab--nav-offset {
+    --ai-fab-bottom: var(--size-112);
+    --ai-fab-mobile-bottom: var(--ai-fab-bottom);
+  }
 }
 
 .ai-fab:hover {
@@ -38,15 +47,17 @@
 }
 
 .ai-panel {
-  --ai-panel-mobile-bottom: var(--size-12);
+  --ai-panel-bottom: var(--size-24);
+  --ai-panel-mobile-bottom: var(--ai-panel-bottom);
   --ai-panel-surface: color-mix(in srgb, var(--bg-color) var(--mix-92), var(--bg-secondary));
   --ai-panel-surface-accent: color-mix(in srgb, var(--accent-light) var(--mix-28), var(--bg-color));
   position: fixed;
   right: var(--size-24);
-  bottom: var(--size-24);
+  bottom: calc(var(--ai-panel-bottom) + env(safe-area-inset-bottom, 0px));
   z-index: var(--layer-topmost);
   width: min(var(--size-380), calc(100vw - var(--size-32)));
-  height: min(var(--size-620), calc(100vh - var(--size-48)));
+  height: min(var(--size-620), calc(100dvh - var(--ai-panel-bottom) - var(--size-24) - env(safe-area-inset-bottom, 0px)));
+  max-height: calc(100dvh - var(--ai-panel-bottom) - var(--size-24) - env(safe-area-inset-bottom, 0px));
   background: linear-gradient(
     180deg,
     var(--ai-panel-surface-accent) 0%,
@@ -64,7 +75,8 @@
 }
 
 .ai-panel--nav-offset {
-  --ai-panel-mobile-bottom: calc(var(--size-56) + var(--size-12));
+  --ai-panel-bottom: calc(var(--size-64) + var(--size-12));
+  --ai-panel-mobile-bottom: var(--ai-panel-bottom);
 }
 
 .ai-panel--fullscreen {
@@ -411,4 +423,3 @@
   cursor: pointer;
   transition: var(--motion-transition-interactive-fast);
 }
-

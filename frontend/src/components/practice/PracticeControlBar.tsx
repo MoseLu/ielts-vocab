@@ -107,7 +107,7 @@ export default function PracticeControlBar({
           hasStaticContextLabel ? (
             <button
               type="button"
-              className="practice-ctrl-icon-btn practice-mode-btn"
+              className="practice-ctrl-icon-btn practice-mode-btn practice-context-btn"
               title={contextLabel}
               disabled
             >
@@ -119,7 +119,7 @@ export default function PracticeControlBar({
               offset={10}
               panelClassName="popover-ctx-panel"
               trigger={
-                <button className="practice-ctrl-icon-btn practice-mode-btn" title="切换章节">
+                <button className="practice-ctrl-icon-btn practice-mode-btn practice-context-btn" title="切换章节">
                   <span className="practice-mode-label">{contextLabel}</span>
                   <svg className="practice-ctx-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="6 9 12 15 18 9" />
@@ -197,7 +197,7 @@ export default function PracticeControlBar({
           offset={10}
           panelClassName="popover-mode-panel"
           trigger={
-            <button className="practice-ctrl-icon-btn practice-mode-btn" title="切换模式">
+            <button className="practice-ctrl-icon-btn practice-mode-btn practice-mode-switch-btn" title="切换模式">
               <span className="practice-mode-label">{PRACTICE_CONTROL_MODE_LABELS[mode as PracticeMode] || mode}</span>
               <svg className="practice-ctx-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="6 9 12 15 18 9" />

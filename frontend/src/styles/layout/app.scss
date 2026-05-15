@@ -273,6 +273,6 @@ body,
 
     .page-content {
         padding: var(--size-10);
-        padding-bottom: calc(var(--size-56) + var(--size-10));
+        padding-bottom: calc(var(--size-112) + env(safe-area-inset-bottom, 0px));
     }
 }

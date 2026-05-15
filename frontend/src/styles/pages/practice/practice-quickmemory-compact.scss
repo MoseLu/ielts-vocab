@@ -1,0 +1,112 @@
+/* Quick memory: short viewport compression */
+
+@media (max-height: 640px) {
+    .qm-root {
+        padding: var(--size-12) var(--size-14) calc(var(--size-96) + env(safe-area-inset-bottom, 0px));
+        scroll-padding-block: var(--size-12) calc(var(--size-96) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .qm-stage {
+        margin-block: 0;
+    }
+
+    .qm-progress-track {
+        height: var(--size-5);
+        margin-bottom: var(--size-6);
+    }
+
+    .qm-progress-label {
+        margin-bottom: var(--size-10);
+        font-size: var(--size-12);
+    }
+
+    .qm-card {
+        padding: var(--size-20) var(--size-24);
+        gap: var(--size-12);
+    }
+
+    .qm-card-toolbar {
+        gap: var(--size-8);
+    }
+
+    .qm-card-toolbar__icon-btn {
+        width: var(--size-36);
+        height: var(--size-36);
+    }
+
+    .qm-countdown-ring {
+        width: var(--size-44);
+        margin-bottom: calc(var(--size-8) * -1);
+    }
+
+    .qm-word {
+        font-size: clamp(var(--size-30), 5vw, var(--size-44));
+    }
+
+    .qm-hint,
+    .qm-key-hints {
+        display: none;
+    }
+
+    .qm-choice-row {
+        gap: var(--size-12);
+        margin-top: 0;
+    }
+
+    .qm-btn,
+    .qm-btn-prev,
+    .qm-btn-next {
+        padding: var(--size-12) var(--size-16);
+        font-size: var(--size-16);
+    }
+
+    .qm-result-badge {
+        min-height: var(--size-32);
+        padding: var(--size-6) var(--size-14);
+        font-size: var(--size-14);
+    }
+
+    .qm-phonetic {
+        font-size: var(--size-15);
+    }
+
+    .qm-definition {
+        font-size: var(--size-16);
+        line-height: 1.4;
+    }
+
+    .qm-nav-row {
+        margin-top: 0;
+    }
+}
+
+@media (max-height: 560px) {
+    .qm-root {
+        padding-top: var(--size-8);
+    }
+
+    .qm-card {
+        padding: var(--size-14) var(--size-18);
+        gap: var(--size-8);
+    }
+
+    .qm-progress-label {
+        margin-bottom: var(--size-8);
+    }
+
+    .qm-card-toolbar__icon-btn {
+        width: var(--size-32);
+        height: var(--size-32);
+    }
+
+    .qm-choice-row {
+        gap: var(--size-8);
+    }
+
+    .qm-btn,
+    .qm-btn-prev,
+    .qm-btn-next {
+        padding: var(--size-10) var(--size-12);
+        font-size: var(--size-14);
+    }
+}

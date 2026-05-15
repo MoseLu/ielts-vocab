@@ -13,6 +13,12 @@
     overflow: hidden;
 }
 
+body.has-global-word-search .ai-fab,
+body.has-global-word-search .ai-panel {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .global-word-search-panel {
     width: min(var(--size-680), calc(100vw - var(--size-20)));
     max-height: calc(100dvh - var(--size-20));
@@ -149,4 +155,3 @@
     }
 
 }
-
