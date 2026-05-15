@@ -25,20 +25,6 @@ function LeftSidebar() {
       path: '/plan',
     },
     {
-      key: 'game',
-      label: '\u4e94\u7ef4\u95ef\u5173',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M4 19h16"></path>
-          <path d="M5 19l2.5-9 4.5 4 4-8 3 13"></path>
-          <circle cx="7.5" cy="10" r="1.2"></circle>
-          <circle cx="12" cy="14" r="1.2"></circle>
-          <circle cx="16" cy="6" r="1.2"></circle>
-        </svg>
-      ),
-      path: '/game',
-    },
-    {
       key: 'errors',
       label: '\u9519\u8bcd\u672c',
       icon: (

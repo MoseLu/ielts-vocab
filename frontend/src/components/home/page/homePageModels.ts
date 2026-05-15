@@ -3,7 +3,6 @@ import { getPracticeModeLabel } from '../../../constants/practiceModes'
 import {
   getWrongWordDimensionLabel,
   WRONG_WORD_DIMENSION_LABELS,
-  WRONG_WORD_PENDING_REVIEW_TARGET,
 } from '../../../features/vocabulary/wrongWordsStore'
 import { QUICK_MEMORY_REVIEW_INTERVALS_DAYS } from '../../../lib/quickMemory'
 import type { Book, BookProgress } from '../../../types'
@@ -226,19 +225,19 @@ export function buildStudyGuidanceSection({
         title: '错词怎么减少',
         badge: errorTask?.status === 'completed'
           ? '今日待清已空'
-          : (weakestDimension ? `${weakestDimensionLabel} 优先处理` : `连续 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次才会消掉`),
-        description: `错词不会直接删除。哪一项能力答错了，就要把这一项连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次，它才会从待清里消掉。`,
+          : (weakestDimension ? `${weakestDimensionLabel} 优先处理` : '错过维度待处理'),
+        description: '错词不会直接删除。哪一项能力答错了，就要把这一项在错词复习里答对一次，它才会从待清里移出。',
         facts: [
           `当前：${errorTask?.badge ?? '看待清范围'}`,
           `优先：${weakestDimensionLabel}`,
-          `门槛：连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次`,
+          '门槛：错过的维度各过一次',
         ],
         sections: [
           {
             label: '怎么记入',
             items: [
               `${allWrongDimensionLabels} 这些能力维度会分开记录，不会互相抵消。`,
-              `只要某一项还没连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次，这一项就还算“没清掉”。`,
+              '只要某一项错过且还没答对过一次，这一项就还算“没清掉”。',
             ],
           },
           {
@@ -247,7 +246,7 @@ export function buildStudyGuidanceSection({
               weakestDimension
                 ? `你现在应该先处理 ${weakestDimensionLabel}，因为这是你最近最容易丢分的一项。`
                 : '同一个词如果同时卡在几项能力上，就要一项一项地清。',
-              `同一项连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次后，只会消掉这一项错误，不会顺带把其他项一起清掉。`,
+              '同一项答对一次后，只会移出这一项待清，不会顺带把其他项一起清掉。',
             ],
           },
           {
@@ -271,7 +270,7 @@ export function buildStudyGuidanceSection({
         facts: [
           `当前：${reviewBadge}`,
           `频次：${reviewCadence}`,
-          `复习库：${alltime?.qm_word_total ? `${alltime.qm_word_total} 词` : '从五维复习累计'}`,
+          `复习库：${alltime?.qm_word_total ? `${alltime.qm_word_total} 词` : '从复习记录累计'}`,
         ],
         sections: [
           {
@@ -293,7 +292,7 @@ export function buildStudyGuidanceSection({
           {
             label: '还要注意',
             items: [
-              '到期复习会进入五维链路，但完成口径仍以今天到期窗口清零为准。',
+              '到期复习会进入基础复习链路，但完成口径仍以今天到期窗口清零为准。',
               '所以“今日复习完成”只代表今天这一步做完了，不代表这个词已经没有漏洞。',
             ],
           },
@@ -302,12 +301,12 @@ export function buildStudyGuidanceSection({
       },
       {
         id: 'mode-metrics',
-        eyebrow: '五维防线',
+        eyebrow: '能力维度',
         title: '每个维度看什么',
         badge: weakestModeAccuracy == null
           ? weakestModeLabel
           : `${formatPercentLabel(weakestModeAccuracy, weakestModeLabel)} 当前弱项`,
-        description: '五维防线不需要平均刷。先补准确率最低的维度，再让词书主线继续推进，效率更高。',
+        description: '能力维度不需要平均刷。先补准确率最低的维度，再让词书主线继续推进，效率更高。',
         facts: [
           `弱项：${weakestModeLabel}`,
           `准确率：${formatPercentLabel(weakestModeAccuracy, '画像同步中')}`,
@@ -460,7 +459,7 @@ export function buildTaskGuidanceSteps(
 
   if (task.kind === 'due-review') {
     return buildStepItems(task, [
-      '进入五维复习任务，只处理到期这一组。',
+      '进入到期复习任务，只处理到期这一组。',
       `先完成 ${task.badge}，每个词都要做到能立刻回想释义。`,
       '完成标准：到期数量归零，回到首页后这一项才会自动勾选。',
     ])
@@ -469,10 +468,10 @@ export function buildTaskGuidanceSteps(
   if (task.kind === 'error-review') {
     const dimensionLabel = extractQuotedLabel(task.description)
     return buildStepItems(task, [
-      '进入错维回流任务，只看待清范围。',
+      '进入错词清理任务，只看待清范围。',
       dimensionLabel
         ? `先刷 ${dimensionLabel} 这一维，再补其他维度。`
-        : '先把当前待清错词连续刷过一轮。',
+        : '先把当前待清错词过一轮。',
       '完成标准：待清错词数量下降到 0，首页才会自动勾选。',
     ])
   }

@@ -60,25 +60,16 @@ export function useStatsPage() {
   const displayStreak = learnerProfile?.summary.streak_days ?? alltime?.streak_days ?? '--'
   const ebbRateCaption = ebbinghausRateCaption(alltime)
   const ebbSummaryHelp = ebbinghausSummaryHelp(alltime)
-  const normalizedModes = useMemo(() => sortStatsModeFilters(modes), [modes])
-  const normalizedModeBreakdown = useMemo(() => sortStatsModes(modeBreakdown), [modeBreakdown])
-  const normalizedPieChart = useMemo(() => sortStatsModes(pieChart), [pieChart])
+  const visibleModes = useMemo(() => modes.filter(item => item !== 'game'), [modes])
+  const visibleModeBreakdown = useMemo(() => modeBreakdown.filter(item => item.mode !== 'game'), [modeBreakdown])
+  const visiblePieChart = useMemo(() => pieChart.filter(item => item.mode !== 'game'), [pieChart])
+  const normalizedModes = useMemo(() => sortStatsModeFilters(visibleModes), [visibleModes])
+  const normalizedModeBreakdown = useMemo(() => sortStatsModes(visibleModeBreakdown), [visibleModeBreakdown])
+  const normalizedPieChart = useMemo(() => sortStatsModes(visiblePieChart), [visiblePieChart])
   const weakestModeLabel = useMemo(() => {
     const weakestMode = alltime?.weakest_mode
-    return weakestMode && isKnownStatsMode(weakestMode) ? weakestMode : null
+    return weakestMode && weakestMode !== 'game' && isKnownStatsMode(weakestMode) ? weakestMode : null
   }, [alltime?.weakest_mode])
-  const gameCampaignStats = useMemo(() => {
-    const modeStat = modeBreakdown.find(item => item.mode === 'game') ?? null
-    const pieStat = pieChart.find(item => item.mode === 'game') ?? null
-    if (!modeStat && !pieStat && !modes.includes('game')) return null
-    return {
-      label: '五维闯关',
-      wordsStudied: modeStat?.words_studied ?? pieStat?.value ?? 0,
-      sessions: modeStat?.sessions ?? pieStat?.sessions ?? 0,
-      accuracy: modeStat?.accuracy ?? null,
-      durationSeconds: modeStat?.duration_seconds ?? 0,
-    }
-  }, [modeBreakdown, modes, pieChart])
 
   const hasChartData = useMemo(() => {
     return daily.some(item => {
@@ -141,7 +132,6 @@ export function useStatsPage() {
     ebbRateCaption,
     ebbSummaryHelp,
     weakestModeLabel,
-    gameCampaignStats,
     hasChartData,
     ebbStages,
     isInitialLoading,

@@ -126,7 +126,7 @@ def build_due_review_task(signals: dict, *, carry_over_count: int) -> dict:
         completion_source=_completion_source(completed=completed, completed_today=done_today),
         action={
             'kind': 'due-review',
-            'cta_label': '进入五维复习',
+            'cta_label': '进入到期复习',
             'task': 'due-review',
             'mode': None,
             'book_id': None,
@@ -167,7 +167,7 @@ def build_error_review_task(signals: dict, *, carry_over_count: int) -> dict:
         completion_source=_completion_source(completed=completed, completed_today=done_today),
         action={
             'kind': 'error-review',
-            'cta_label': '清理错维回流',
+            'cta_label': '清理错词',
             'task': 'error-review',
             'mode': None,
             'book_id': None,

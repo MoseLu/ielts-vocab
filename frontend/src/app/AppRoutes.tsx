@@ -10,7 +10,7 @@ import { ScrollToTop } from './ScrollToTop'
 import LeftSidebar from '../components/layout/navigation/LeftSidebar'
 import AdminDashboard from '../components/admin/page/AdminDashboard'
 import ExamsLibraryPage from '../components/exams/page/ExamsLibraryPage'
-import GameCampaignPage from '../components/game/page/GameCampaignPage'
+import GameComingSoonPage from '../components/game/page/GameComingSoonPage'
 import HomePage from '../components/home/page/HomePage'
 import LearningJournalPage from '../components/journal/page/LearningJournalPage'
 import NotFoundPage from '../components/not-found/page/NotFoundPage'
@@ -21,9 +21,7 @@ import TermsPage from '../components/terms/page/TermsPage'
 import VocabBookPage from '../components/books/page/VocabBookPage'
 import VocabTestPage from '../components/vocab-test/page/VocabTestPage'
 import type { PracticeMode as HeaderPracticeMode } from '../components/layout/navigation/Header'
-import { GameRouteElement, DEFAULT_GAME_THEME_ID } from './GameRouteElement'
 import { PracticeRouteElement } from './PracticeRouteElement'
-import { preloadGameRouteAssets } from './routeAssetsPreload'
 import { AuthenticatedRoute, GuestOnlyRoute } from './routeGuards'
 
 const AIChatPanel = lazy(() => import('../components/ai-chat/page/AIChatPanel'))
@@ -77,6 +75,7 @@ export function AppRoutes({
   const isPracticeSurface = isPractice || isGame || isExamAttemptSurface || isLegacySpeakingRoute
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
   const shouldShowBottomNav = Boolean(user) && !isPracticeSurface && !isSpecialPage
+  const shouldOffsetFloatingChrome = shouldShowBottomNav || isPracticeSurface || location.pathname === '/vocab-test'
   const [chromeReady, setChromeReady] = useState(false)
 
   useEffect(() => {
@@ -99,10 +98,6 @@ export function AppRoutes({
       window.clearTimeout(timerId)
     }
   }, [isPracticeSurface, isSpecialPage, user])
-
-  useEffect(() => {
-    preloadGameRouteAssets(location.pathname)
-  }, [location.pathname])
 
   if (isLoading) {
     return <Loading fullScreen />
@@ -204,42 +199,10 @@ export function AppRoutes({
                   )}
                 />
                 <Route
-                  path="/game"
+                  path="/game/*"
                   element={(
                     <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <GameCampaignPage surface="map" themeId={DEFAULT_GAME_THEME_ID} />
-                    </AuthenticatedRoute>
-                  )}
-                />
-                <Route
-                  path="/game/themes"
-                  element={(
-                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <GameCampaignPage surface="themes" />
-                    </AuthenticatedRoute>
-                  )}
-                />
-                <Route
-                  path="/game/themes/:themeId"
-                  element={(
-                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <GameRouteElement surface="map" />
-                    </AuthenticatedRoute>
-                  )}
-                />
-                <Route
-                  path="/game/themes/:themeId/mission"
-                  element={(
-                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <GameRouteElement surface="mission" />
-                    </AuthenticatedRoute>
-                  )}
-                />
-                <Route
-                  path="/game/mission"
-                  element={(
-                    <AuthenticatedRoute isAuthenticated={Boolean(user)}>
-                      <GameCampaignPage surface="mission" themeId={DEFAULT_GAME_THEME_ID} />
+                      <GameComingSoonPage />
                     </AuthenticatedRoute>
                   )}
                 />
@@ -350,7 +313,7 @@ export function AppRoutes({
       )}
       {user && !isSpecialPage && chromeReady && (
         <ChromeSlot>
-          <AIChatPanel avoidBottomNav={shouldShowBottomNav} />
+          <AIChatPanel avoidBottomNav={shouldOffsetFloatingChrome} />
         </ChromeSlot>
       )}
     </div>

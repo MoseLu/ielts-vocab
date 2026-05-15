@@ -50,7 +50,7 @@ describe('buildGuidedStudySummary', () => {
     expect(summary.primaryAction.kind).toBe('due-review')
     expect(summary.primaryAction.task).toBe('due-review')
     expect(summary.primaryAction.mode).toBeUndefined()
-    expect(summary.primaryAction.ctaLabel).toBe('进入五维复习')
+    expect(summary.primaryAction.ctaLabel).toBe('进入到期复习')
     expect(summary.steps[0].status).toBe('current')
     expect(summary.steps[1].status).toBe('ready')
     expect(summary.steps[2].status).toBe('ready')

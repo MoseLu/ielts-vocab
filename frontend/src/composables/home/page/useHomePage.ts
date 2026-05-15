@@ -36,22 +36,39 @@ function buildTodoTaskEntryPath(task: DailyPlanTask): string {
   }
   const taskKey = action.task || action.kind
   const params = new URLSearchParams()
-  if (taskKey === 'due-review') {
-    params.set('review', 'due')
-    if (action.mode) params.set('mode', action.mode)
+  const appendPracticeScope = () => {
     if (action.book_id) params.set('book', action.book_id)
     if (action.chapter_id !== null && action.chapter_id !== undefined && action.chapter_id !== '') {
       params.set('chapter', String(action.chapter_id))
     }
+  }
+  const appendPracticeMode = () => {
+    if (action.mode && action.mode !== 'game') params.set('mode', action.mode)
+  }
+
+  if (taskKey === 'due-review') {
+    params.set('review', 'due')
+    appendPracticeMode()
+    appendPracticeScope()
     return `/practice?${params.toString()}`
   }
-  params.set('task', taskKey)
-  if (action.dimension) params.set('dimension', action.dimension)
-  if (action.book_id) params.set('book', action.book_id)
-  if (action.chapter_id !== null && action.chapter_id !== undefined && action.chapter_id !== '') {
-    params.set('chapter', String(action.chapter_id))
+
+  if (taskKey === 'error-review') {
+    params.set('mode', 'errors')
+    params.set('scope', 'pending')
+    if (action.dimension) params.set('dim', action.dimension)
+    appendPracticeScope()
+    return `/practice?${params.toString()}`
   }
-  return `/game?${params.toString()}`
+
+  if (taskKey === 'continue-book') {
+    appendPracticeMode()
+    appendPracticeScope()
+    const query = params.toString()
+    return query ? `/practice?${query}` : '/books'
+  }
+
+  return '/game'
 }
 
 export function useHomePage() {

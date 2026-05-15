@@ -5,9 +5,6 @@ import { vi } from 'vitest'
 import { AppRoutes } from './AppRoutes'
 
 const showToastMock = vi.fn()
-const gameCampaignPageMock = vi.fn((props: { surface?: 'themes' | 'map' | 'mission'; themeId?: string }) => (
-  <div>game-campaign-page {props.surface}</div>
-))
 const practicePageMock = vi.fn((props: {
   user?: { id: number; username: string }
   mode?: string
@@ -37,8 +34,8 @@ vi.mock('../contexts', () => ({
 vi.mock('../components/practice/PracticePage', () => ({
   default: (props: unknown) => practicePageMock(props),
 }))
-vi.mock('../components/game/page/GameCampaignPage', () => ({
-  default: (props: { surface?: 'themes' | 'map' | 'mission'; themeId?: string }) => gameCampaignPageMock(props),
+vi.mock('../components/game/page/GameComingSoonPage', () => ({
+  default: () => <div>game-coming-soon-page</div>,
 }))
 
 vi.mock('../components/ai-chat/page/AIChatPanel', () => ({ default: () => null }))
@@ -68,7 +65,6 @@ describe('AppRoutes practice route', () => {
   beforeEach(() => {
     showToastMock.mockReset()
     practicePageMock.mockClear()
-    gameCampaignPageMock.mockClear()
   })
 
   it('renders the sidebar shell immediately on authenticated app routes', () => {
@@ -101,7 +97,7 @@ describe('AppRoutes practice route', () => {
     )
 
     expect(screen.queryByTestId('left-sidebar')).toBeNull()
-    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
     expect(container.querySelector('.practice-fullscreen')).toBeTruthy()
     expect(container.querySelector('.app-body')).toBeFalsy()
   })
@@ -119,7 +115,7 @@ describe('AppRoutes practice route', () => {
     )
 
     expect(screen.queryByTestId('left-sidebar')).toBeNull()
-    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
     expect(container.querySelector('.practice-fullscreen')).toBeTruthy()
     expect(container.querySelector('.app-body')).toBeFalsy()
   })
@@ -165,7 +161,7 @@ describe('AppRoutes practice route', () => {
     expect(onModeChange).toHaveBeenCalledWith('quickmemory')
   })
 
-  it('mounts the independent game campaign page on /game', async () => {
+  it('shows the coming soon placeholder on /game', async () => {
     render(
       <MemoryRouter initialEntries={['/game?book=book-1&chapter=2']}>
         <AppRoutes
@@ -177,15 +173,11 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
-    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({
-      surface: 'map',
-      themeId: 'study-campus',
-    })
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 
-  it('keeps the themed catalog available away from the main game entry', async () => {
+  it('shows the coming soon placeholder on the game theme catalog route', async () => {
     render(
       <MemoryRouter initialEntries={['/game/themes']}>
         <AppRoutes
@@ -197,12 +189,11 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
-    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({ surface: 'themes' })
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 
-  it('mounts a themed game map on /game/themes/:themeId', async () => {
+  it('shows the coming soon placeholder on a themed game map route', async () => {
     render(
       <MemoryRouter initialEntries={['/game/themes/study-campus?page=2']}>
         <AppRoutes
@@ -214,15 +205,11 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
-    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({
-      surface: 'map',
-      themeId: 'study-campus',
-    })
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 
-  it('mounts a themed game mission route', async () => {
+  it('shows the coming soon placeholder on a themed game mission route', async () => {
     render(
       <MemoryRouter initialEntries={['/game/themes/science-tech/mission']}>
         <AppRoutes
@@ -234,15 +221,11 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
-    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({
-      surface: 'mission',
-      themeId: 'science-tech',
-    })
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 
-  it('mounts the independent game mission page on /game/mission', async () => {
+  it('shows the coming soon placeholder on /game/mission', async () => {
     render(
       <MemoryRouter initialEntries={['/game/mission?book=book-1&chapter=2']}>
         <AppRoutes
@@ -254,15 +237,11 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
-    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({
-      surface: 'mission',
-      themeId: 'study-campus',
-    })
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 
-  it('redirects /practice?mode=game into /game', async () => {
+  it('redirects /practice?mode=game into the coming soon placeholder', async () => {
     render(
       <MemoryRouter initialEntries={['/practice?mode=game&book=book-1']}>
         <AppRoutes
@@ -274,11 +253,7 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText(/game-campaign-page/)).toBeInTheDocument()
-    expect(gameCampaignPageMock.mock.calls[0]?.[0]).toMatchObject({
-      surface: 'map',
-      themeId: 'study-campus',
-    })
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
     expect(practicePageMock).not.toHaveBeenCalled()
   })
 })

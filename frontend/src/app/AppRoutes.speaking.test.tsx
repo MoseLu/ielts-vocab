@@ -5,8 +5,6 @@ import { vi } from 'vitest'
 
 import { AppRoutes } from './AppRoutes'
 
-const gameCampaignPageMock = vi.fn(() => <div>game-campaign-page</div>)
-
 vi.mock('../contexts', () => ({
   useAuth: () => ({
     user: { id: 7, username: 'tester', is_admin: false },
@@ -20,8 +18,8 @@ vi.mock('../contexts', () => ({
   }),
 }))
 
-vi.mock('../components/game/page/GameCampaignPage', () => ({
-  default: () => gameCampaignPageMock(),
+vi.mock('../components/game/page/GameComingSoonPage', () => ({
+  default: () => <div>game-coming-soon-page</div>,
 }))
 
 vi.mock('../components/ai-chat/page/AIChatPanel', () => ({ default: () => null }))
@@ -48,11 +46,7 @@ vi.mock('../components/ui/Loading', () => ({ Loading: () => null }))
 vi.mock('../components/vocab-test/page/VocabTestPage', () => ({ default: () => null }))
 
 describe('AppRoutes speaking route', () => {
-  beforeEach(() => {
-    gameCampaignPageMock.mockClear()
-  })
-
-  it('redirects the legacy /speaking route into the game campaign page', async () => {
+  it('redirects the legacy /speaking route into the coming soon placeholder', async () => {
     render(
       <MemoryRouter initialEntries={['/speaking']}>
         <AppRoutes
@@ -64,6 +58,6 @@ describe('AppRoutes speaking route', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('game-campaign-page')).toBeInTheDocument()
+    expect(await screen.findByText('game-coming-soon-page')).toBeInTheDocument()
   })
 })

@@ -376,7 +376,7 @@ describe('HomePage', () => {
 
     await user.click(screen.getByRole('button', { name: '去清错词' }))
 
-    expect(navigationState.navigate).toHaveBeenCalledWith('/game?task=error-review&dimension=meaning')
+    expect(navigationState.navigate).toHaveBeenCalledWith('/practice?mode=errors&scope=pending&dim=meaning')
   })
 
   it('routes continue-book todos with book and chapter scope', async () => {
@@ -394,7 +394,7 @@ describe('HomePage', () => {
 
     await user.click(screen.getByRole('button', { name: '继续词书' }))
 
-    expect(navigationState.navigate).toHaveBeenCalledWith('/game?task=continue-book&book=book-1&chapter=2')
+    expect(navigationState.navigate).toHaveBeenCalledWith('/practice?book=book-1&chapter=2')
   })
 
   it('shows an explicit fallback when home todos fail instead of using learner profile tasks', () => {

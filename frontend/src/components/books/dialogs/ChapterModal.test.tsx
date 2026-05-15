@@ -268,7 +268,7 @@ describe('ChapterModal', () => {
     expect(screen.queryByText('120 词')).toBeNull()
   })
 
-  it('reports the independent game entry when the user switches to 游戏闯关', async () => {
+  it('does not offer the game entry inside the chapter selector', async () => {
     mockChapterResponses([{ id: 1, title: 'Unit 1', word_count: 30 }])
     const onSelectChapter = vi.fn()
     const user = userEvent.setup()
@@ -282,18 +282,17 @@ describe('ChapterModal', () => {
       />,
     )
 
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: '游戏闯关' })).toBeInTheDocument()
-    })
+    expect(await screen.findByText('Unit 1')).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: '游戏闯关' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist', { name: '学习入口' })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('tab', { name: '游戏闯关' }))
-    await user.click(await screen.findByText('Unit 1'))
+    await user.click(screen.getByText('Unit 1'))
 
     expect(onSelectChapter).toHaveBeenCalledWith(
       expect.objectContaining({ id: 1, title: 'Unit 1' }),
       0,
-      'game',
     )
+    expect(onSelectChapter.mock.calls[0]).toHaveLength(2)
   })
 
   it('offers an edit entry for existing custom books', async () => {

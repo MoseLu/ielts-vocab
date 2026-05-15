@@ -259,7 +259,7 @@ export function buildGuidedStudySummary({
       task: 'due-review',
       title: '先完成到期复习，再开始今天的新词',
       description: `${dueReviewCount} 个单词已经到复习点。先把艾宾浩斯复习清掉，新词学习才不会越学越乱。`,
-      ctaLabel: '进入五维复习',
+      ctaLabel: '进入到期复习',
       badge: `${dueReviewCount} 词到期`,
       tone: 'accent',
     }
@@ -273,7 +273,7 @@ export function buildGuidedStudySummary({
         : `${pendingWrongWordCount} 个错词还在待清，先清错再推进新词会更稳。`,
       ctaLabel: recommendedWrongDimension?.count
         ? `先清${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}`
-        : '清理错维回流',
+        : '清理错词',
       badge: `${pendingWrongWordCount} 个待清理`,
       dimension: recommendedWrongDimension?.count ? recommendedWrongDimension.dimension : undefined,
       tone: 'error',
@@ -327,7 +327,7 @@ export function buildGuidedStudySummary({
       action: {
         kind: 'due-review',
         task: 'due-review',
-        ctaLabel: '进入五维复习',
+        ctaLabel: '进入到期复习',
         disabled: dueReviewCount <= 0,
       },
     },
@@ -351,7 +351,7 @@ export function buildGuidedStudySummary({
         task: 'error-review',
         ctaLabel: recommendedWrongDimension?.count
           ? `清${WRONG_WORD_DIMENSION_LABELS[recommendedWrongDimension.dimension]}`
-          : '清理错维回流',
+          : '清理错词',
         dimension: recommendedWrongDimension?.count ? recommendedWrongDimension.dimension : undefined,
         disabled: pendingWrongWordCount <= 0,
       },
