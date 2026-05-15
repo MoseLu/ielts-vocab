@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { apiFetch } from '../../../lib'
-import { MicroLoading } from '../../ui'
+import { ConfirmDialog, MicroLoading } from '../../ui'
 
 interface FeatureWishImage {
   id: number
@@ -160,6 +160,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
   const [draftContent, setDraftContent] = useState('')
   const [draftFiles, setDraftFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [deleteWish, setDeleteWish] = useState<FeatureWish | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadWishes = useCallback(async (searchTerm: string) => {
@@ -241,8 +242,14 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
     }
   }
 
-  const handleDelete = async (wish: FeatureWish) => {
-    if (!window.confirm(`确认删除 bug：${wish.title}？`)) return
+  const requestDelete = (wish: FeatureWish) => {
+    setDeleteWish(wish)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteWish) return
+    const wish = deleteWish
+    setDeleteWish(null)
     setSubmitting(true)
     setError('')
     try {
@@ -303,7 +310,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
                     </IconButton>
                   )}
                   {selectedWish.can_delete && (
-                    <IconButton label={`删除 bug：${selectedWish.title}`} className="feature-wish-detail__delete" onClick={() => void handleDelete(selectedWish)} disabled={submitting}>
+                    <IconButton label={`删除 bug：${selectedWish.title}`} className="feature-wish-detail__delete" onClick={() => requestDelete(selectedWish)} disabled={submitting}>
                       <DeleteIcon />
                     </IconButton>
                   )}
@@ -349,7 +356,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
                       </IconButton>
                     )}
                     {wish.can_delete && (
-                      <IconButton label={`删除 bug：${wish.title}`} className="feature-wish-card__delete" onClick={() => void handleDelete(wish)} disabled={submitting}>
+                      <IconButton label={`删除 bug：${wish.title}`} className="feature-wish-card__delete" onClick={() => requestDelete(wish)} disabled={submitting}>
                         <DeleteIcon />
                       </IconButton>
                     )}
@@ -389,6 +396,18 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          isOpen={deleteWish !== null}
+          onClose={() => setDeleteWish(null)}
+          onConfirm={() => {
+            void handleDeleteConfirm()
+          }}
+          title="确认删除 bug"
+          message={deleteWish ? `确认删除 bug：${deleteWish.title}？删除后将无法恢复。` : ''}
+          confirmText="删除"
+          variant="danger"
+        />
       </div>
     </div>
   )

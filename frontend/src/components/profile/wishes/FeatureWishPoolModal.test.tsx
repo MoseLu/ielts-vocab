@@ -85,8 +85,7 @@ describe('FeatureWishPoolModal', () => {
     })
   })
 
-  it('lets admins delete a wish and refreshes the list', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  it('lets admins delete a wish through the built-in confirm dialog and refreshes the list', async () => {
     apiFetchMock
       .mockResolvedValueOnce(wishesResponse)
       .mockResolvedValueOnce({ message: 'bug 已删除' })
@@ -97,12 +96,14 @@ describe('FeatureWishPoolModal', () => {
 
     fireEvent.click(screen.getByLabelText('删除 bug：错题清单自动整理'))
 
+    expect(screen.getByRole('dialog', { name: '确认删除 bug' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '删除' }))
+
     await waitFor(() => {
       expect(apiFetchMock).toHaveBeenCalledWith('/api/feature-wishes/1', { method: 'DELETE' })
     })
     await waitFor(() => {
       expect(apiFetchMock).toHaveBeenLastCalledWith('/api/feature-wishes')
     })
-    confirmSpy.mockRestore()
   })
 })
