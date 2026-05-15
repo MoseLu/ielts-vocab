@@ -136,13 +136,13 @@ describe('Header', () => {
         id: 'wrong-words',
         eyebrow: '错词本',
         title: '错词怎么减少',
-        badge: '连续答对 4 次',
+        badge: '错过维度各过一次',
         description: '错词要按能力项分别清理。',
         facts: ['当前：12 词待清'],
         sections: [
           {
             label: '怎么变少',
-            items: ['同一项连续答对 4 次后才会从待清里消掉。'],
+            items: ['同一项答对一次后才会从待清里移出。'],
           },
         ],
         tone: 'error',

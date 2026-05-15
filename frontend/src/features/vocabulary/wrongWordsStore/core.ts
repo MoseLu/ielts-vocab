@@ -313,16 +313,12 @@ export function withDerivedFields(base: Omit<WrongWordRecord, 'wrong_count' | 'p
   const summary = summarizeDimensionStates(base.dimension_states)
 
   const pendingDimensions = WRONG_WORD_DIMENSIONS.filter(
-    dimension => (base.dimension_states[dimension]?.pass_streak ?? 0) < WRONG_WORD_PENDING_REVIEW_TARGET,
+    dimension => isDimensionPendingState(base.dimension_states[dimension]),
   )
   const wordMasteryStatus: WrongWordRecord['word_mastery_status'] =
-    pendingDimensions.length === 0
+    summary.historyDimensionCount > 0 && pendingDimensions.length === 0
       ? 'passed'
-      : WRONG_WORD_DIMENSIONS.every(dimension => (base.dimension_states[dimension]?.pass_streak ?? 0) >= 1)
-        ? WRONG_WORD_DIMENSIONS.some(dimension => (base.dimension_states[dimension]?.pass_streak ?? 0) > 1)
-          ? 'in_review'
-          : 'unlocked'
-        : 'new'
+      : 'new'
 
   return {
     ...base,

@@ -280,7 +280,7 @@ def test_wrong_words_sync_preserves_history_but_allows_pending_clear(client, app
             'dimension_states': {
                 'meaning': {
                     'history_wrong': 2,
-                    'pass_streak': 4,
+                    'pass_streak': 1,
                     'last_pass_at': '2026-04-02T09:00:00+00:00',
                 },
             },
@@ -300,7 +300,7 @@ def test_wrong_words_sync_preserves_history_but_allows_pending_clear(client, app
     assert word['pending_dimension_count'] == 0
     assert word['meaning_wrong'] == 2
     assert word['meaning_pending'] is False
-    assert word['meaning_pass_streak'] == 4
+    assert word['meaning_pass_streak'] == 1
 
 
 def test_wrong_words_sync_deduplicates_same_word_within_one_request(client, app):

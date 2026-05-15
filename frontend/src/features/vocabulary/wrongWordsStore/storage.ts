@@ -102,7 +102,11 @@ export async function loadWrongWords({
     const response = await fetchRemote()
     const remoteWords = Array.isArray(response.words) ? response.words : []
     const merged = mergeWrongWordLists(remoteWords, localWords)
-    writeWrongWordsToStorage(merged, userId)
+    try {
+      writeWrongWordsToStorage(merged, userId)
+    } catch {
+      // Large production wrong-word lists may exceed localStorage quota.
+    }
     return merged
   } catch {
     return localWords

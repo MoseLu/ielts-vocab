@@ -22,7 +22,7 @@ class GuardedSQLAlchemy(SQLAlchemy):
 db = GuardedSQLAlchemy()
 
 WRONG_WORD_DIMENSIONS = ('recognition', 'meaning', 'listening', 'speaking', 'dictation')
-WRONG_WORD_PENDING_REVIEW_TARGET = 4
+WRONG_WORD_PENDING_REVIEW_TARGET = 1
 
 
 def _iso_utc(dt: datetime | None) -> str | None:
