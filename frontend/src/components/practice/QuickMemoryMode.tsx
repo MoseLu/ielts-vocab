@@ -60,6 +60,7 @@ export default function QuickMemoryMode({
   const [choice, setChoice] = useState<'known' | 'unknown' | null>(null)
   const [results, setResults] = useState<SessionResult[]>([])
   const [done, setDone] = useState(false)
+  const [completedSessionDurationSeconds, setCompletedSessionDurationSeconds] = useState<number | null>(null)
   const [revisitedSet, setRevisitedSet] = useState<Set<number>>(new Set())
   const resultsRef = useRef<SessionResult[]>([])
   const countdownRef = useRef(TIMER_SECONDS)
@@ -135,6 +136,7 @@ export default function QuickMemoryMode({
     completeCurrentSession,
     syncSessionSnapshot,
     showSaveError: showProgressSaveError,
+    onCompletedSessionDurationChange: setCompletedSessionDurationSeconds,
   })
 
   useEffect(() => {
@@ -156,6 +158,7 @@ export default function QuickMemoryMode({
     setDone(false)
     setRevisitedSet(new Set())
     completedSessionDurationSecondsRef.current = null
+    setCompletedSessionDurationSeconds(null)
     sessionLoggedRef.current = false
     resetCurrentSessionSegment()
   }, [bookId, chapterId, initialIndex, onIndexChange, queue.length, resetCurrentSessionSegment])
@@ -282,19 +285,18 @@ export default function QuickMemoryMode({
   }, [])
 
   const handleNext = useCallback(async () => {
-    await prepareLearningSession()
     stopAudio()
     const next = index + 1
     if (next >= queue.length) {
-      completedSessionDurationSecondsRef.current = await completeCurrentSession()
       setDone(true)
       return
     }
+    await prepareLearningSession()
     setIndex(next)
     onIndexChange?.(next)
     setPhase('question')
     setChoice(null)
-  }, [completeCurrentSession, index, onIndexChange, prepareLearningSession, queue.length])
+  }, [index, onIndexChange, prepareLearningSession, queue.length])
 
   const handlePrev = useCallback(async () => {
     if (index === 0) return
@@ -363,6 +365,7 @@ export default function QuickMemoryMode({
     resultsRef.current = []
     setRevisitedSet(new Set())
     completedSessionDurationSecondsRef.current = null
+    setCompletedSessionDurationSeconds(null)
     sessionLoggedRef.current = false
     resetCurrentSessionSegment()
     setDone(false)
@@ -401,7 +404,7 @@ export default function QuickMemoryMode({
         chapterGroup={chapterGroup}
         onContinueChapterGroup={onContinueChapterGroup}
         buildChapterPath={buildChapterPath}
-        sessionDurationSeconds={completedSessionDurationSecondsRef.current}
+        sessionDurationSeconds={completedSessionDurationSeconds}
         onRestart={handleRestart}
         onModeChange={onModeChange}
         onNavigate={onNavigate}

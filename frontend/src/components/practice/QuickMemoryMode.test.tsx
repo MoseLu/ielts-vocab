@@ -325,7 +325,7 @@ describe('QuickMemoryMode', () => {
   it('retries failed quick-memory record sync while the practice page stays open', async () => {
     vi.useFakeTimers()
     let syncAttempts = 0
-    const pendingKey = `${getQuickMemoryStorageKey(1)}:pending_sync`
+    const pendingKey = `${getQuickMemoryStorageKey(1, { scopeKey: 'user' })}:pending_sync`
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/ai/quick-memory') return Promise.resolve({ records: [] })
       if (url !== '/api/ai/quick-memory/sync') return Promise.resolve({})

@@ -33,6 +33,7 @@ interface QuickMemorySessionLifecycleArgs {
     wrongCount?: number
   }) => void
   showSaveError: () => void
+  onCompletedSessionDurationChange?: (seconds: number) => void
 }
 
 const PROGRESS_SYNC_RETRY_MS = 15000
@@ -103,6 +104,7 @@ export function useQuickMemorySession({
   completeCurrentSession,
   syncSessionSnapshot,
   showSaveError,
+  onCompletedSessionDurationChange,
 }: QuickMemorySessionLifecycleArgs) {
   const progressSyncStateRef = useRef<Record<ProgressSyncKind, ProgressSyncState>>({
     'partial-progress': createProgressSyncState(),
@@ -235,16 +237,21 @@ export function useQuickMemorySession({
     })
     void completeCurrentSession().then(totalDurationSeconds => {
       completedSessionDurationSecondsRef.current = totalDurationSeconds
+      onCompletedSessionDurationChange?.(totalDurationSeconds)
+    }).catch(() => {
+      showSaveError()
     })
   }, [
     completeCurrentSession,
     completedSessionDurationSecondsRef,
     done,
     flushPendingRecordSync,
+    onCompletedSessionDurationChange,
     queueLength,
     results,
     resultsRef,
     sessionLoggedRef,
+    showSaveError,
     syncSessionSnapshot,
   ])
 
