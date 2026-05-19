@@ -37,6 +37,8 @@ export function usePracticeScopedWordsLoader({
   chapterGroupStartRef,
   chapterQueueWordsRef,
   wordsLearnedBaselineRef,
+  chapterCorrectBaselineRef,
+  chapterWrongBaselineRef,
   uniqueAnsweredRef,
   errorProgressHydratedRef,
   beginSession,
@@ -92,6 +94,8 @@ export function usePracticeScopedWordsLoader({
       chapterGroupStartRef,
       chapterQueueWordsRef,
       wordsLearnedBaselineRef,
+      chapterCorrectBaselineRef,
+      chapterWrongBaselineRef,
       uniqueAnsweredRef,
       setVocabulary,
       setQueue,
@@ -167,6 +171,8 @@ export function usePracticeScopedWordsLoader({
     isCustomPracticeScope,
     chapterGroupStartRef,
     chapterQueueWordsRef,
+    chapterCorrectBaselineRef,
+    chapterWrongBaselineRef,
     errorProgressHydratedRef,
     mode,
     navigate,
@@ -387,6 +393,8 @@ function applyLoadedWords(
     chapterGroupStartRef: shared.chapterGroupStartRef,
     chapterQueueWordsRef: shared.chapterQueueWordsRef,
     wordsLearnedBaselineRef: shared.wordsLearnedBaselineRef,
+    chapterCorrectBaselineRef: shared.chapterCorrectBaselineRef,
+    chapterWrongBaselineRef: shared.chapterWrongBaselineRef,
     uniqueAnsweredRef: shared.uniqueAnsweredRef,
     setVocabulary: shared.setVocabulary,
     setQueue: shared.setQueue,
@@ -443,6 +451,8 @@ type SharedScopedLoadOptions = Pick<
   | 'chapterGroupStartRef'
   | 'chapterQueueWordsRef'
   | 'wordsLearnedBaselineRef'
+  | 'chapterCorrectBaselineRef'
+  | 'chapterWrongBaselineRef'
   | 'uniqueAnsweredRef'
   | 'setVocabulary'
   | 'setQueue'

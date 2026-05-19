@@ -51,6 +51,8 @@ export interface UsePracticePageDataParams {
   chapterGroupStartRef: MutableRefObject<number>
   chapterQueueWordsRef: MutableRefObject<string[]>
   wordsLearnedBaselineRef: MutableRefObject<number>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   uniqueAnsweredRef: MutableRefObject<Set<string>>
   errorProgressHydratedRef: MutableRefObject<boolean>
   errorRoundResultsRef: MutableRefObject<ErrorReviewRoundResults>

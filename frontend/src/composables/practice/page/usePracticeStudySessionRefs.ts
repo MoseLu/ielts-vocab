@@ -15,6 +15,8 @@ export interface PracticeStudySessionRefs {
   radioInteractionRef: React.MutableRefObject<boolean>
   radioWordsStudiedRef: React.MutableRefObject<number>
   wordsLearnedBaselineRef: React.MutableRefObject<number>
+  chapterCorrectBaselineRef: React.MutableRefObject<number>
+  chapterWrongBaselineRef: React.MutableRefObject<number>
   uniqueAnsweredRef: React.MutableRefObject<Set<string>>
   sessionUniqueWordsRef: React.MutableRefObject<Set<string>>
   sessionBookIdRef: React.MutableRefObject<string | null>
@@ -57,6 +59,8 @@ export function usePracticeStudySessionRefs({
     radioInteractionRef: useRef(false),
     radioWordsStudiedRef: useRef(0),
     wordsLearnedBaselineRef: useRef(0),
+    chapterCorrectBaselineRef: useRef(0),
+    chapterWrongBaselineRef: useRef(0),
     uniqueAnsweredRef: useRef<Set<string>>(new Set()),
     sessionUniqueWordsRef: useRef<Set<string>>(new Set()),
     sessionBookIdRef: useRef<string | null>(practiceBookId),

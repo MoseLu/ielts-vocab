@@ -43,6 +43,8 @@ function createParams(overrides: Partial<Parameters<typeof usePracticePageContro
     computeChapterWordsLearned: vi.fn(() => 0),
     correctCountRef: { current: 0 },
     wrongCountRef: { current: 0 },
+    chapterCorrectBaselineRef: { current: 0 },
+    chapterWrongBaselineRef: { current: 0 },
     uniqueAnsweredRef: { current: new Set<string>() },
     chapterGroupStartRef: { current: 0 },
     chapterQueueWordsRef: { current: [] },
@@ -185,6 +187,46 @@ describe('usePracticePageControls saveProgress', () => {
     expect(JSON.parse(localStorage.getItem('chapter_progress') || '{}')['book-1_chapter-1']).toMatchObject({
       current_index: 2,
       queue_words: ['alpha', 'beta', 'gamma', 'delta'],
+    })
+  })
+
+  it('stores grouped chapter progress with cumulative chapter counts', () => {
+    const { result } = renderHook(() => usePracticePageControls(createParams({
+      mode: 'dictation',
+      bookId: 'wrong_words_3',
+      chapterId: 'wrong_words_3_m',
+      queue: [2, 3],
+      queueIndex: 1,
+      vocabulary: [
+        { ...createWord(), word: 'mock' },
+        { ...createWord(), word: 'model' },
+        { ...createWord(), word: 'module' },
+        { ...createWord(), word: 'modify' },
+      ],
+      uniqueAnsweredRef: { current: new Set(['module', 'modify']) },
+      chapterGroupStartRef: { current: 2 },
+      chapterQueueWordsRef: { current: ['mock', 'model', 'module', 'modify'] },
+      chapterCorrectBaselineRef: { current: 2 },
+      chapterWrongBaselineRef: { current: 0 },
+      computeChapterWordsLearned: vi.fn(() => 4),
+    })))
+
+    act(() => {
+      result.current.saveProgress(1, 1)
+    })
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/books/wrong_words_3/chapters/wrong_words_3_m/progress', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'dictation',
+        current_index: 4,
+        correct_count: 3,
+        wrong_count: 1,
+        is_completed: true,
+        words_learned: 4,
+        answered_words: ['module', 'modify'],
+        queue_words: ['mock', 'model', 'module', 'modify'],
+      }),
     })
   })
 

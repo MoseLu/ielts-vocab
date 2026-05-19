@@ -70,6 +70,8 @@ export function usePracticePageSession({
     sessionChapterIdRef: refs.sessionChapterIdRef,
     radioWordsStudiedRef: refs.radioWordsStudiedRef,
     wordsLearnedBaselineRef: refs.wordsLearnedBaselineRef,
+    chapterCorrectBaselineRef: refs.chapterCorrectBaselineRef,
+    chapterWrongBaselineRef: refs.chapterWrongBaselineRef,
     uniqueAnsweredRef: refs.uniqueAnsweredRef,
     sessionUniqueWordsRef: refs.sessionUniqueWordsRef,
     beginSession,

@@ -16,6 +16,10 @@ interface UsePracticeChapterGroupControlsParams {
   queueRef: MutableRefObject<number[]>
   chapterGroupStartRef: MutableRefObject<number>
   chapterQueueWordsRef: MutableRefObject<string[]>
+  correctCountRef: MutableRefObject<number>
+  wrongCountRef: MutableRefObject<number>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   completedSessionDurationSecondsRef: MutableRefObject<number | null>
   beginSession: (context?: { bookId?: string | null; chapterId?: string | null }) => void
   setPracticeGroup: Dispatch<SetStateAction<PracticeGroupWindow | null>>
@@ -44,6 +48,10 @@ export function usePracticeChapterGroupControls({
   queueRef,
   chapterGroupStartRef,
   chapterQueueWordsRef,
+  correctCountRef,
+  wrongCountRef,
+  chapterCorrectBaselineRef,
+  chapterWrongBaselineRef,
   completedSessionDurationSecondsRef,
   beginSession,
   setPracticeGroup,
@@ -72,6 +80,8 @@ export function usePracticeChapterGroupControls({
     if (!nextGroup || !nextQueue.length || nextGroup.start <= practiceGroup.start) return
 
     chapterGroupStartRef.current = nextGroup.start
+    chapterCorrectBaselineRef.current += correctCountRef.current
+    chapterWrongBaselineRef.current += wrongCountRef.current
     setPracticeGroup(nextGroup)
     queueRef.current = nextQueue
     setQueue(nextQueue)
@@ -97,6 +107,10 @@ export function usePracticeChapterGroupControls({
     chapterId,
     chapterGroupStartRef,
     chapterQueueWordsRef,
+    correctCountRef,
+    wrongCountRef,
+    chapterCorrectBaselineRef,
+    chapterWrongBaselineRef,
     completedSessionDurationSecondsRef,
     practiceGroup,
     queueRef,

@@ -21,6 +21,8 @@ interface UsePracticeChapterProgressResetParams {
   showToast?: (message: string, type?: 'success' | 'error' | 'info') => void
   chapterGroupStartRef: MutableRefObject<number>
   chapterQueueWordsRef: MutableRefObject<string[]>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   queueRef: MutableRefObject<number[]>
   setQueue: Dispatch<SetStateAction<number[]>>
   setQueueIndex: Dispatch<SetStateAction<number>>
@@ -37,6 +39,8 @@ export function usePracticeChapterProgressReset({
   showToast,
   chapterGroupStartRef,
   chapterQueueWordsRef,
+  chapterCorrectBaselineRef,
+  chapterWrongBaselineRef,
   queueRef,
   setQueue,
   setQueueIndex,
@@ -65,6 +69,8 @@ export function usePracticeChapterProgressReset({
     }
 
     chapterGroupStartRef.current = firstGroup?.start ?? 0
+    chapterCorrectBaselineRef.current = 0
+    chapterWrongBaselineRef.current = 0
     setPracticeGroup(firstGroup)
     setQueue(resetQueue)
     queueRef.current = resetQueue
@@ -84,6 +90,8 @@ export function usePracticeChapterProgressReset({
     chapterId,
     chapterGroupStartRef,
     chapterQueueWordsRef,
+    chapterCorrectBaselineRef,
+    chapterWrongBaselineRef,
     mode,
     queue,
     queueRef,

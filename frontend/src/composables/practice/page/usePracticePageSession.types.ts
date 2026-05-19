@@ -29,6 +29,8 @@ export interface UsePracticePageSessionResult {
   sessionChapterIdRef: MutableRefObject<string | null>
   radioWordsStudiedRef: MutableRefObject<number>
   wordsLearnedBaselineRef: MutableRefObject<number>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   uniqueAnsweredRef: MutableRefObject<Set<string>>
   sessionUniqueWordsRef: MutableRefObject<Set<string>>
   beginSession: (context?: { bookId?: string | null; chapterId?: string | null }) => void

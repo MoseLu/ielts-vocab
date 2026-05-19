@@ -23,6 +23,8 @@ interface UsePracticeProgressPersistenceParams {
   computeChapterWordsLearned: (cap: number) => number
   correctCountRef: MutableRefObject<number>
   wrongCountRef: MutableRefObject<number>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   uniqueAnsweredRef: MutableRefObject<Set<string>>
   chapterGroupStartRef: MutableRefObject<number>
   chapterQueueWordsRef: MutableRefObject<string[]>
@@ -44,6 +46,8 @@ export function usePracticeProgressPersistence({
   computeChapterWordsLearned,
   correctCountRef,
   wrongCountRef,
+  chapterCorrectBaselineRef,
+  chapterWrongBaselineRef,
   uniqueAnsweredRef,
   chapterGroupStartRef,
   chapterQueueWordsRef,
@@ -106,8 +110,12 @@ export function usePracticeProgressPersistence({
     if (bookId && chapterId) {
       const answeredWords = Array.from(uniqueAnsweredRef.current)
       const wordsLearned = computeChapterWordsLearned(vocabulary.length)
+      const cumulativeCorrect = chapterCorrectBaselineRef.current + correct
+      const cumulativeWrong = chapterWrongBaselineRef.current + wrong
       const chapterProgress = {
         ...progressData,
+        correct_count: cumulativeCorrect,
+        wrong_count: cumulativeWrong,
         words_learned: wordsLearned,
         answered_words: answeredWords,
         queue_words: chapterQueueWords,
@@ -123,8 +131,8 @@ export function usePracticeProgressPersistence({
           method: 'POST',
           body: JSON.stringify({
             mode,
-            correct_count: correct,
-            wrong_count: wrong,
+            correct_count: cumulativeCorrect,
+            wrong_count: cumulativeWrong,
             is_completed: progressData.is_completed ?? false,
           }),
         }).catch(() => {})
@@ -159,6 +167,8 @@ export function usePracticeProgressPersistence({
     hasValidCurrentDay,
     chapterGroupStartRef,
     chapterQueueWordsRef,
+    chapterCorrectBaselineRef,
+    chapterWrongBaselineRef,
     mode,
     queue,
     queueIndex,

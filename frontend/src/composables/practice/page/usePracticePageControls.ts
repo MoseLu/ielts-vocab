@@ -42,6 +42,8 @@ interface UsePracticePageControlsParams {
   computeChapterWordsLearned: (cap: number) => number
   correctCountRef: MutableRefObject<number>
   wrongCountRef: MutableRefObject<number>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   uniqueAnsweredRef: MutableRefObject<Set<string>>
   chapterGroupStartRef: MutableRefObject<number>
   chapterQueueWordsRef: MutableRefObject<string[]>
@@ -100,6 +102,8 @@ export function usePracticePageControls({
   computeChapterWordsLearned,
   correctCountRef,
   wrongCountRef,
+  chapterCorrectBaselineRef,
+  chapterWrongBaselineRef,
   uniqueAnsweredRef,
   chapterGroupStartRef,
   chapterQueueWordsRef,
@@ -137,6 +141,8 @@ export function usePracticePageControls({
     computeChapterWordsLearned,
     correctCountRef,
     wrongCountRef,
+    chapterCorrectBaselineRef,
+    chapterWrongBaselineRef,
     uniqueAnsweredRef,
     chapterGroupStartRef,
     chapterQueueWordsRef,
@@ -162,6 +168,8 @@ export function usePracticePageControls({
     showToast,
     chapterGroupStartRef,
     chapterQueueWordsRef,
+    chapterCorrectBaselineRef,
+    chapterWrongBaselineRef,
     queueRef,
     setQueue,
     setQueueIndex,
