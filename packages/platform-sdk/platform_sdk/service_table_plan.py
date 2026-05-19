@@ -92,6 +92,8 @@ LEARNING_CORE_SERVICE_TABLES = frozenset({
     'user_study_sessions',
     'user_learning_events',
     'user_quick_memory_records',
+    'user_scoped_quick_memory_records',
+    'user_scoped_wrong_words',
     'user_smart_word_stats',
     'user_game_energy_states',
     'user_game_session_states',

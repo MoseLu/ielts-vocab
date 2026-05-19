@@ -118,6 +118,9 @@ def test_learning_core_migration_runner_converts_chapter_ids_to_strings(tmp_path
         }
         assert isinstance(chapter_progress_columns['chapter_id'], sa.String)
         assert isinstance(chapter_mode_columns['chapter_id'], sa.String)
+        table_names = set(inspector.get_table_names())
+        assert 'user_scoped_quick_memory_records' in table_names
+        assert 'user_scoped_wrong_words' in table_names
 
         with engine.connect() as connection:
             chapter_id_value = connection.execute(
