@@ -27,6 +27,14 @@ DASHSCOPE_REALTIME_WS_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/realtime'
 DASHSCOPE_FILE_WS_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/inference'
 DEFAULT_REALTIME_ASR_MODEL = 'qwen3-asr-flash-realtime'
 DEFAULT_FILE_ASR_MODEL = 'qwen3-asr-flash'
+DEFAULT_ASR_PROVIDER = 'auto'
+DEFAULT_LOCAL_ASR_MODEL_PATH = (
+    '/Volumes/时光杂货铺/迁移文件夹/models/mlx/whisper-large-v3-turbo-q4'
+)
+DEFAULT_LOCAL_ASR_BINARY = (
+    '/Users/mose/Documents/Codex/2026-05-18/ltx-video-13b-0-9-8/'
+    '.venv-mlx-ltx/bin/mlx_audio.stt.generate'
+)
 
 BENIGN_WS_ERROR_SNIPPETS = (
     'already closed',
@@ -64,6 +72,38 @@ class RealtimeSessionState(TypedDict):
 
 def get_dashscope_api_key() -> str:
     return os.environ.get('DASHSCOPE_API_KEY', '').strip()
+
+
+def resolve_asr_provider() -> str:
+    provider = os.environ.get('ASR_PROVIDER', DEFAULT_ASR_PROVIDER).strip().lower()
+    if provider in {'auto', 'local', 'dashscope'}:
+        return provider
+    print(f"[Speech] ASR_PROVIDER={provider} is unsupported; falling back to auto")
+    return DEFAULT_ASR_PROVIDER
+
+
+def resolve_local_asr_model_path() -> str:
+    return os.environ.get('LOCAL_ASR_MODEL_PATH', DEFAULT_LOCAL_ASR_MODEL_PATH).strip()
+
+
+def resolve_local_asr_binary() -> str:
+    return os.environ.get('LOCAL_ASR_BINARY', DEFAULT_LOCAL_ASR_BINARY).strip()
+
+
+def resolve_local_asr_language() -> str:
+    language = os.environ.get('LOCAL_ASR_LANGUAGE') or os.environ.get('ASR_LANGUAGE', 'auto')
+    normalized = language.strip().lower()
+    if normalized in {'auto', 'zh', 'en'}:
+        return normalized
+    return 'auto'
+
+
+def resolve_local_asr_timeout_seconds() -> int:
+    raw_value = os.environ.get('LOCAL_ASR_TIMEOUT_SECONDS', '180').strip()
+    try:
+        return max(5, int(raw_value))
+    except ValueError:
+        return 180
 
 
 def resolve_file_asr_model() -> str:

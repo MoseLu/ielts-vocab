@@ -19,7 +19,7 @@ def _load_asr_service_module():
     return module
 
 
-def test_asr_service_ready_uses_dashscope_configuration(monkeypatch):
+def test_asr_service_ready_uses_upload_transcription_configuration(monkeypatch):
     monkeypatch.setenv('DASHSCOPE_API_KEY', 'test-key')
 
     module = _load_asr_service_module()
@@ -32,7 +32,7 @@ def test_asr_service_ready_uses_dashscope_configuration(monkeypatch):
         'status': 'ready',
         'service': 'asr-service',
         'version': '0.1.0',
-        'dependencies': {'dashscope_api_key': True},
+        'dependencies': {'upload_transcription': True},
     }
 
 
