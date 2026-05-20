@@ -87,8 +87,7 @@ export function usePracticeProgressPersistence({
 
     const chapterDone = Boolean(
       chapterId
-      && vocabulary.length > 0
-      && uniqueAnsweredRef.current.size >= vocabulary.length
+      && chapterQueueLength > 0
       && chapterCurrentIndex >= chapterQueueLength,
     )
     const progressData = {
@@ -109,7 +108,10 @@ export function usePracticeProgressPersistence({
 
     if (bookId && chapterId) {
       const answeredWords = Array.from(uniqueAnsweredRef.current)
-      const wordsLearned = computeChapterWordsLearned(vocabulary.length)
+      const wordsLearned = Math.min(
+        chapterQueueLength,
+        Math.max(computeChapterWordsLearned(vocabulary.length), chapterCurrentIndex),
+      )
       const cumulativeCorrect = chapterCorrectBaselineRef.current + correct
       const cumulativeWrong = chapterWrongBaselineRef.current + wrong
       const chapterProgress = {

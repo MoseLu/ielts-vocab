@@ -165,6 +165,42 @@ describe('ChapterModal', () => {
     expect(screen.queryByText('学习中')).toBeNull()
   })
 
+  it('does not round an incomplete chapter up to 100 percent', async () => {
+    mockChapterResponses(
+      [{ id: 'wrong_words_3_m', title: 'M', word_count: 169 }],
+      {
+        wrong_words_3_m: {
+          is_completed: false,
+          words_learned: 168,
+          accuracy: 67,
+          modes: {
+            quickmemory: {
+              mode: 'quickmemory',
+              correct_count: 58,
+              wrong_count: 30,
+              accuracy: 66,
+              is_completed: false,
+            },
+          },
+        },
+      },
+    )
+
+    render(
+      <ChapterModal
+        book={{ id: 'wrong_words_3', title: '错词本', word_count: 169, is_custom_book: true }}
+        progress={{ current_index: 168 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    expect(await screen.findByText('99%')).toBeInTheDocument()
+    expect(screen.getByText('学习中')).toBeInTheDocument()
+    expect(screen.queryByText('已完成')).toBeNull()
+    expect(screen.queryByText('100%')).toBeNull()
+  })
+
   it('keeps server-completed chapters complete even when another mode is unfinished', async () => {
     mockChapterResponses(
       [{ id: 'wrong_words_1_a', title: 'A', word_count: 50 }],

@@ -48,6 +48,7 @@ interface ChapterModeData {
 
 interface ChapterProgress {
   is_completed: boolean
+  current_index?: number
   words_learned: number
   accuracy?: number
   modes?: Record<string, ChapterModeData>
@@ -300,7 +301,12 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     const bookCoverageLearnedCount = hasAnyChapterProgress
       ? 0
       : Math.max(0, Math.min(progressTotal, currentIndex - (chapterStartIndexById[String(chapter.id)] ?? 0)))
-    const learnedCount = Math.max(0, progressRecord?.words_learned ?? 0, bookCoverageLearnedCount)
+    const learnedCount = Math.max(
+      0,
+      progressRecord?.words_learned ?? 0,
+      progressRecord?.current_index ?? 0,
+      bookCoverageLearnedCount,
+    )
     const modeRecords = Object.values(progressRecord?.modes ?? {})
     const hasStarted = learnedCount > 0 || modeRecords.some(record => (record.correct_count ?? 0) + (record.wrong_count ?? 0) > 0)
     const hasModeData = modeRecords.length > 0
@@ -310,7 +316,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     const chapterProgressPercent = isCompleted
       ? 100
       : progressTotal
-        ? Math.min(100, Math.round((learnedCount / progressTotal) * 100))
+        ? Math.min(99, Math.floor((learnedCount / progressTotal) * 100))
         : 0
     const accuracyText = `正确率 ${progressRecord?.accuracy ?? 0}%`
 

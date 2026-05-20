@@ -230,6 +230,44 @@ describe('usePracticePageControls saveProgress', () => {
     })
   })
 
+  it('marks a resumed grouped chapter complete when the full chapter queue reaches the end', () => {
+    const { result } = renderHook(() => usePracticePageControls(createParams({
+      mode: 'quickmemory',
+      bookId: 'wrong_words_3',
+      chapterId: 'wrong_words_3_m',
+      queue: [167, 168],
+      queueIndex: 1,
+      vocabulary: Array.from({ length: 169 }, (_, index) => ({
+        ...createWord(),
+        word: `m-word-${index}`,
+      })),
+      uniqueAnsweredRef: { current: new Set(['m-word-167', 'm-word-168']) },
+      chapterGroupStartRef: { current: 167 },
+      chapterQueueWordsRef: { current: Array.from({ length: 169 }, (_, index) => `m-word-${index}`) },
+      chapterCorrectBaselineRef: { current: 58 },
+      chapterWrongBaselineRef: { current: 30 },
+      computeChapterWordsLearned: vi.fn(() => 167),
+    })))
+
+    act(() => {
+      result.current.saveProgress(2, 0)
+    })
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/books/wrong_words_3/chapters/wrong_words_3_m/progress', {
+      method: 'POST',
+      body: expect.stringContaining('"current_index":169'),
+    })
+    const body = JSON.parse((apiFetchMock.mock.calls[0][1] as { body: string }).body)
+    expect(body).toMatchObject({
+      mode: 'quickmemory',
+      current_index: 169,
+      correct_count: 60,
+      wrong_count: 30,
+      is_completed: true,
+      words_learned: 169,
+    })
+  })
+
   it('can reset an interrupted chapter back to the first word', async () => {
     const { result } = renderHook(() => usePracticePageControls(createParams({
       mode: 'dictation',
