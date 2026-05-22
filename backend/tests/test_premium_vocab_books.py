@@ -220,6 +220,7 @@ def test_known_premium_phonetic_regressions_stay_fixed():
     for word, phonetic in {
         'abuse': '/əˈbjuːz/',
         'arising': '/əˈraɪzɪŋ/',
+        'button': '/ˈbʌtən/',
         'elementary': '/ˌelɪˈmentəri/',
         'herbs': '/hɜːbz/',
         'history': '/ˈhɪstəri/',
