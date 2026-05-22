@@ -1,7 +1,7 @@
 import React from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ErrorsPage from './ErrorsPage'
 import { getWrongWordsReviewSelectionStorageKey } from '../../../features/vocabulary/wrongWordsStore'
 
@@ -71,6 +71,12 @@ describe('ErrorsPage selected filtered actions', () => {
     apiFetchMock.mockResolvedValue({ words: [] })
     navigateMock.mockReset()
     localStorage.clear()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2026-04-07T08:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('starts review from selected words inside the active prefix search', async () => {
@@ -97,6 +103,6 @@ describe('ErrorsPage selected filtered actions', () => {
 
     const storedWords = JSON.parse(localStorage.getItem(getWrongWordsReviewSelectionStorageKey()) ?? '[]')
     expect(storedWords).toEqual(['due', 'demand'])
-    expect(navigateMock).toHaveBeenCalledWith('/practice?mode=errors&scope=pending&selection=manual')
+    expect(navigateMock).toHaveBeenCalledWith('/practice?mode=errors&scope=pending&startDate=2026-04-07&endDate=2026-04-07&selection=manual')
   })
 })

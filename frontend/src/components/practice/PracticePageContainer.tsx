@@ -25,7 +25,7 @@ function PracticePageContainer({
 }: PracticePageProps) {
   const navigate = useNavigate()
   const userId = readUserId(user)
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const bookId = searchParams.get('book')
   const chapterId = searchParams.get('chapter')
   const errorMode = searchParams.get('mode') === 'errors'
@@ -33,6 +33,18 @@ function PracticePageContainer({
   const reviewModeParam = searchParams.get('mode') ?? ''
   const requestedPracticeMode: PracticeMode = reviewMode ? (['smart', 'listening', 'meaning', 'dictation', 'follow', 'radio', 'quickmemory'].includes(reviewModeParam) ? reviewModeParam as PracticeMode : 'quickmemory') : (mode ?? 'smart')
   const practiceBookId = reviewMode ? (bookId ?? null) : bookId, practiceChapterId = reviewMode ? (chapterId ?? null) : chapterId
+  const handlePracticeModeChange = (nextMode: PracticeMode) => {
+    onModeChange?.(nextMode)
+    if (!reviewMode) return
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.set('review', 'due')
+    if (nextMode === 'quickmemory') {
+      nextSearchParams.delete('mode')
+    } else {
+      nextSearchParams.set('mode', nextMode)
+    }
+    setSearchParams(nextSearchParams, { replace: true })
+  }
   const {
     backendLearnerProfile, bookChapters, chapterGroupStartRef, chapterQueueWordsRef,
     correctCount, correctIndex, currentChapterTitle, errorProgressHydratedRef,
@@ -56,7 +68,7 @@ function PracticePageContainer({
   } = usePracticePageState()
   const resolvedPracticeBookId = reviewMode ? (bookId ?? reviewContext?.book_id ?? null) : bookId, resolvedPracticeChapterId = reviewMode ? (chapterId ?? reviewContext?.chapter_id ?? null) : chapterId
   const { isCustomPracticeScope, practiceMode, handleCustomListeningFallback } = useCustomListeningFallback({
-    requestedPracticeMode, currentDay, bookId, chapterId, resolvedPracticeBookId, resolvedPracticeChapterId, reviewMode, errorMode, showToast, onModeChange,
+    requestedPracticeMode, currentDay, bookId, chapterId, resolvedPracticeBookId, resolvedPracticeChapterId, reviewMode, errorMode, showToast, onModeChange: handlePracticeModeChange,
   })
 
   const {
@@ -390,7 +402,7 @@ function PracticePageContainer({
       {...{
         navigate, currentDay, bookId, chapterId, errorMode, vocabulary,
         currentChapterTitle, bookChapters, showWordList, setShowWordList,
-        showPracticeSettings, setShowPracticeSettings, onModeChange, onDayChange,
+        showPracticeSettings, setShowPracticeSettings, onModeChange: handlePracticeModeChange, onDayChange,
         buildChapterPath, queue, queueIndex, wordStatuses, settings, radioQuickSettings,
         handleRadioSettingChange, markRadioSessionInteraction, handleRadioProgressChange,
         markFollowSessionInteraction, completeFollowSession, isCurrentSessionActive,
