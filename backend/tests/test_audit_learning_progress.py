@@ -154,6 +154,33 @@ def test_markdown_report_contains_chinese_summary(tmp_path, monkeypatch):
     assert '源错词：rows=2，unique=2' in markdown
 
 
+def test_audit_merges_scoped_and_legacy_quick_memory_context(tmp_path, monkeypatch):
+    identity = _engine(tmp_path, 'identity')
+    learning = _engine(tmp_path, 'learning')
+    catalog = _engine(tmp_path, 'catalog')
+    _seed_identity(identity)
+    _seed_learning(learning)
+    _seed_catalog(catalog)
+    _exec(learning, 'CREATE TABLE user_scoped_quick_memory_records (user_id INTEGER, word TEXT, book_id TEXT, chapter_id TEXT)')
+    _insert(catalog, 'custom_books', id='scoped_gap', user_id=3, title='混合 scoped/legacy', word_count=2)
+    _insert(catalog, 'custom_book_chapters', id='sg1', book_id='scoped_gap', title='SG', word_count=2, sort_order=1)
+    _insert(catalog, 'custom_book_words', id=6, chapter_id='sg1', word='alpha', sort_order=1)
+    _insert(catalog, 'custom_book_words', id=7, chapter_id='sg1', word='beta', sort_order=2)
+    _insert(learning, 'user_scoped_quick_memory_records', user_id=3, word='alpha', book_id='scoped_gap', chapter_id='sg1')
+    _insert(learning, 'user_quick_memory_records', user_id=3, word='beta', book_id='scoped_gap', chapter_id='sg1')
+    audit_support._TABLE_CACHE.clear()
+    monkeypatch.setattr(audit_support, 'load_static_catalog', lambda: {})
+
+    report = audit_support.audit('luo', {'identity': identity, 'learning': learning, 'catalog': catalog})
+
+    assert any(
+        issue['type'] == 'display_mismatch'
+        and issue['book_id'] == 'scoped_gap'
+        and issue['chapter_id'] == 'sg1'
+        for issue in report['issues']
+    )
+
+
 def test_sql_guard_rejects_non_select_statement():
     with pytest.raises(ValueError):
         audit_support.ensure_select('UPDATE user_wrong_words SET word = word')

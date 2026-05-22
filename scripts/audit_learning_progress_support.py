@@ -271,8 +271,8 @@ def summarize_catalog(catalog: dict) -> list[dict]:
 
 
 def build_word_sets(learning_rows: dict[str, list[dict]]) -> dict:
-    quick_source = learning_rows.get('quick_scoped') or learning_rows['quick']
-    wrong_source = learning_rows.get('wrong_scoped') or learning_rows['wrong']
+    quick_source = list({(clean(r.get('book_id')), clean(r.get('chapter_id')), key(r.get('word'))): r for rows_ in (learning_rows['quick'], learning_rows.get('quick_scoped') or []) for r in rows_ if key(r.get('word'))}.values())
+    wrong_source = list({(clean(r.get('book_id')), clean(r.get('chapter_id')), key(r.get('word'))): r for rows_ in (learning_rows['wrong'], learning_rows.get('wrong_scoped') or []) for r in rows_ if key(r.get('word'))}.values())
     quick_all = {key(row.get('word')) for row in quick_source if key(row.get('word'))}
     smart_all = {
         key(row.get('word')) for row in learning_rows['smart']

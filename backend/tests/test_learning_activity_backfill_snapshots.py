@@ -7,6 +7,7 @@ from models import (
     User,
     UserLearningChapterRollup,
     UserQuickMemoryRecord,
+    UserScopedQuickMemoryRecord,
     UserStudySession,
     db,
 )
@@ -101,6 +102,48 @@ def test_quick_memory_backfill_uses_unique_words_as_snapshot(app):
         ).one()
         assert rollup.items_studied == 3
         assert rollup.review_count == 3
+        assert rollup.words_learned == 3
+        assert rollup.current_index == 3
+        assert rollup.is_completed is True
+
+
+def test_quick_memory_backfill_uses_legacy_records_to_fill_scoped_gaps(app):
+    with app.app_context():
+        user = _create_user('learning-backfill-quick-scoped-gap')
+        _create_custom_chapter(user)
+        for index, word in enumerate(['alpha', 'beta']):
+            db.session.add(UserScopedQuickMemoryRecord(
+                user_id=user.id,
+                scope_key='chapter:custom_snapshot_book:custom_snapshot_book_1',
+                scope_type='chapter',
+                book_id='custom_snapshot_book',
+                chapter_id='custom_snapshot_book_1',
+                word=word,
+                status='known',
+                last_seen=1_777_577_000_000 + index,
+                known_count=1,
+            ))
+        for index, word in enumerate(['beta', 'gamma']):
+            db.session.add(UserQuickMemoryRecord(
+                user_id=user.id,
+                word=word,
+                book_id='custom_snapshot_book',
+                chapter_id='custom_snapshot_book_1',
+                status='known',
+                last_seen=1_777_577_000_100 + index,
+                known_count=1,
+            ))
+        db.session.commit()
+
+        backfill_learning_activity_rollups(user_ids=[user.id])
+
+        rollup = UserLearningChapterRollup.query.filter_by(
+            user_id=user.id,
+            book_id='custom_snapshot_book',
+            mode='quickmemory',
+            chapter_id='custom_snapshot_book_1',
+        ).one()
+        assert rollup.items_studied == 3
         assert rollup.words_learned == 3
         assert rollup.current_index == 3
         assert rollup.is_completed is True

@@ -228,7 +228,28 @@ def _backfill_events(user_ids: list[int], summary: dict) -> None:
 def _backfill_quick_memory(user_ids: list[int], summary: dict) -> None:
     snapshots: dict[tuple[int, str, str], dict] = {}
     scoped_rows = _scoped_query(UserScopedQuickMemoryRecord, user_ids).all()
-    source_rows = scoped_rows or _scoped_query(UserQuickMemoryRecord, user_ids).all()
+    source_rows = list(scoped_rows)
+    seen_scoped = {
+        (
+            row.user_id,
+            str(row.book_id or '').strip(),
+            str(row.chapter_id or '').strip(),
+            _word_key(row.word),
+        )
+        for row in scoped_rows
+        if _word_key(row.word)
+    }
+    for row in _scoped_query(UserQuickMemoryRecord, user_ids).all():
+        scope_key = (
+            row.user_id,
+            str(row.book_id or '').strip(),
+            str(row.chapter_id or '').strip(),
+            _word_key(row.word),
+        )
+        if scope_key in seen_scoped:
+            continue
+        source_rows.append(row)
+        seen_scoped.add(scope_key)
     for row in source_rows:
         review_count = max(
             1,
