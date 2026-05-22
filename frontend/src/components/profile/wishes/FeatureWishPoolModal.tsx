@@ -2,6 +2,13 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import { createPortal } from 'react-dom'
 import { apiFetch } from '../../../lib'
 import { ConfirmDialog, MicroLoading } from '../../ui'
+import {
+  WISH_STATUS_OPTIONS,
+  editableStatusValue,
+  statusLabel,
+  statusTone,
+  type FeatureWishEditableStatus,
+} from './featureWishStatus'
 
 interface FeatureWishImage {
   id: number
@@ -16,10 +23,12 @@ interface FeatureWish {
   username: string
   title: string
   content: string
+  status: string
   created_at: string | null
   updated_at: string | null
   can_edit: boolean
   can_delete: boolean
+  can_update_status?: boolean
   images: FeatureWishImage[]
 }
 
@@ -134,6 +143,14 @@ function formatDateTime(value: string | null) {
   })
 }
 
+function StatusBadge({ status }: { status: string | null | undefined }) {
+  return (
+    <span className={`feature-wish-status-badge feature-wish-status-badge--${statusTone(status)}`}>
+      {statusLabel(status)}
+    </span>
+  )
+}
+
 function WishMedia({ wish, detail = false }: { wish: FeatureWish; detail?: boolean }) {
   const image = wish.images[0]
   if (!image) {
@@ -145,6 +162,31 @@ function WishMedia({ wish, detail = false }: { wish: FeatureWish; detail?: boole
       src={detail ? image.full_url : image.thumbnail_url}
       alt=""
     />
+  )
+}
+
+function StatusSelect({
+  wish,
+  disabled,
+  onChange,
+}: {
+  wish: FeatureWish
+  disabled: boolean
+  onChange: (wish: FeatureWish, status: FeatureWishEditableStatus) => void
+}) {
+  if (!wish.can_update_status) return null
+  return (
+    <select
+      aria-label={`设置 bug 状态：${wish.title}`}
+      className="feature-wish-status-select"
+      disabled={disabled}
+      value={editableStatusValue(wish.status)}
+      onChange={event => onChange(wish, event.target.value as FeatureWishEditableStatus)}
+    >
+      {WISH_STATUS_OPTIONS.map(option => (
+        <option key={option.value} value={option.value}>{option.label}</option>
+      ))}
+    </select>
   )
 }
 
@@ -264,6 +306,26 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
     }
   }
 
+  const handleStatusChange = async (wish: FeatureWish, status: FeatureWishEditableStatus) => {
+    if (status === editableStatusValue(wish.status)) return
+    setSubmitting(true)
+    setError('')
+    try {
+      const data = await apiFetch<FeatureWishMutationResponse>(`/api/feature-wishes/${wish.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      setWishes(current => current.map(item => (item.id === data.wish.id ? data.wish : item)))
+      setSelectedWish(current => (current?.id === data.wish.id ? data.wish : current))
+      setEditingWish(current => (current?.id === data.wish.id ? data.wish : current))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'bug 状态更新失败')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const modal = (
     <div className="feature-wish-modal-overlay" onClick={event => event.target === event.currentTarget && onClose()}>
       <div className="feature-wish-modal" role="dialog" aria-modal="true" aria-label="Bug反馈">
@@ -292,7 +354,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
 
         <div className="feature-wish-modal__body">
           {selectedWish ? (
-            <div className="feature-wish-detail">
+            <div className={`feature-wish-detail feature-wish-detail--${statusTone(selectedWish.status)}`}>
               <div className="feature-wish-detail__header">
                 <IconButton label="返回 bug 列表" className="feature-wish-detail__back" onClick={() => setSelectedWish(null)}>
                   <BackIcon />
@@ -300,10 +362,12 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
                 <div className="feature-wish-detail__heading">
                   <div className="feature-wish-detail__title">{selectedWish.title}</div>
                   <div className="feature-wish-detail__meta">
-                    {formatDateTime(selectedWish.created_at)} · {selectedWish.username}
+                    <StatusBadge status={selectedWish.status} />
+                    <span>{formatDateTime(selectedWish.created_at)} · {selectedWish.username}</span>
                   </div>
                 </div>
                 <div className="feature-wish-detail__actions">
+                  <StatusSelect wish={selectedWish} disabled={submitting} onChange={handleStatusChange} />
                   {selectedWish.can_edit && (
                     <IconButton label={`编辑 bug：${selectedWish.title}`} className="feature-wish-detail__edit" onClick={() => openForm('edit', selectedWish)}>
                       <EditIcon />
@@ -337,7 +401,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
           ) : (
             <div className="feature-wish-grid">
               {wishes.map(wish => (
-                <article key={wish.id} className="feature-wish-card">
+                <article key={wish.id} className={`feature-wish-card feature-wish-card--${statusTone(wish.status)}`}>
                   <div className="feature-wish-card__media">
                     <WishMedia wish={wish} />
                     <IconButton label={`展开 bug：${wish.title}`} className="feature-wish-card__expand" onClick={() => setSelectedWish(wish)}>
@@ -349,17 +413,23 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
                     <p>{wish.content}</p>
                   </div>
                   <div className="feature-wish-card__footer">
-                    <span>{formatDateTime(wish.created_at)} · {wish.username}</span>
-                    {wish.can_edit && (
-                      <IconButton label={`编辑 bug：${wish.title}`} className="feature-wish-card__edit" onClick={() => openForm('edit', wish)}>
-                        <EditIcon />
-                      </IconButton>
-                    )}
-                    {wish.can_delete && (
-                      <IconButton label={`删除 bug：${wish.title}`} className="feature-wish-card__delete" onClick={() => requestDelete(wish)} disabled={submitting}>
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
+                    <div className="feature-wish-card__meta">
+                      <StatusBadge status={wish.status} />
+                      <span>{formatDateTime(wish.created_at)} · {wish.username}</span>
+                    </div>
+                    <div className="feature-wish-card__actions">
+                      <StatusSelect wish={wish} disabled={submitting} onChange={handleStatusChange} />
+                      {wish.can_edit && (
+                        <IconButton label={`编辑 bug：${wish.title}`} className="feature-wish-card__edit" onClick={() => openForm('edit', wish)}>
+                          <EditIcon />
+                        </IconButton>
+                      )}
+                      {wish.can_delete && (
+                        <IconButton label={`删除 bug：${wish.title}`} className="feature-wish-card__delete" onClick={() => requestDelete(wish)} disabled={submitting}>
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </div>
                   </div>
                 </article>
               ))}

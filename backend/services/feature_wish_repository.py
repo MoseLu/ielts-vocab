@@ -49,6 +49,12 @@ def update_wish(*, wish: FeatureWish, title: str, content: str) -> FeatureWish:
     return wish
 
 
+def update_wish_status(*, wish: FeatureWish, status: str) -> FeatureWish:
+    wish.status = status
+    db.session.commit()
+    return wish
+
+
 def delete_wish(wish: FeatureWish) -> None:
     db.session.delete(wish)
     db.session.commit()

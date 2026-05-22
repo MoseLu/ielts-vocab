@@ -235,6 +235,11 @@ async def feature_wish_detail_proxy(wish_id: int, request: Request):
     return await _proxy_admin_ops_request(request, f'/api/feature-wishes/{wish_id}')
 
 
+@browser_compat_router.patch('/api/feature-wishes/{wish_id}/status')
+async def feature_wish_status_proxy(wish_id: int, request: Request):
+    return await _proxy_admin_ops_request(request, f'/api/feature-wishes/{wish_id}/status')
+
+
 @browser_compat_router.post('/api/ops/frontend-error-logs')
 async def frontend_error_logs_proxy(request: Request):
     return await _proxy_admin_ops_request(request, '/api/ops/frontend-error-logs')

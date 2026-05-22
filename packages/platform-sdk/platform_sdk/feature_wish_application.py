@@ -5,6 +5,7 @@ from services import feature_wish_repository
 
 
 MAX_IMAGES_PER_WISH = 3
+VALID_WISH_STATUSES = {'open', 'planned', 'done'}
 
 
 def _normalize_text(value, *, max_length: int) -> str:
@@ -39,6 +40,10 @@ def _read_body(payload: dict | None, form) -> tuple[str, str]:
     title = _normalize_text(source.get('title'), max_length=120)
     content = _normalize_text(source.get('content'), max_length=1200)
     return title, content
+
+
+def _read_status(payload: dict | None) -> str:
+    return _normalize_text((payload or {}).get('status'), max_length=20).lower()
 
 
 def _validate_wish_text(title: str, content: str) -> tuple[dict, int] | None:
@@ -128,6 +133,26 @@ def update_feature_wish_response(current_user, wish_id: int, payload: dict | Non
         wish = feature_wish_repository.replace_images(wish=wish, images=stored_images)
     return {
         'message': 'bug 已更新',
+        'wish': _wish_payload(
+            wish,
+            viewer_user_id=int(current_user.id),
+            viewer_is_admin=bool(current_user.is_admin),
+        ),
+    }, 200
+
+
+def update_feature_wish_status_response(current_user, wish_id: int, payload: dict | None) -> tuple[dict, int]:
+    if not bool(current_user.is_admin):
+        return {'error': '只有管理员可以设置 bug 状态'}, 403
+    wish = feature_wish_repository.get_wish(wish_id)
+    if wish is None:
+        return {'error': 'bug 不存在'}, 404
+    status = _read_status(payload)
+    if status not in VALID_WISH_STATUSES:
+        return {'error': 'bug 状态不支持'}, 400
+    wish = feature_wish_repository.update_wish_status(wish=wish, status=status)
+    return {
+        'message': 'bug 状态已更新',
         'wish': _wish_payload(
             wish,
             viewer_user_id=int(current_user.id),

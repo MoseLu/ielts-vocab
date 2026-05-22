@@ -175,6 +175,49 @@ def test_feature_wish_admin_can_delete_any_wish(monkeypatch, tmp_path):
     assert admin_list.json()['total'] == 0
 
 
+def test_feature_wish_admin_can_mark_wish_done(monkeypatch, tmp_path):
+    _configure_admin_env(monkeypatch, tmp_path)
+    module = _load_admin_ops_service_module('admin_ops_service_feature_wish_status')
+    client = TestClient(module.app)
+    users = _seed_users(module.admin_ops_flask_app)
+    learner_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['learner']))
+    admin_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['admin']))
+
+    created = client.post(
+        '/api/feature-wishes',
+        headers=learner_headers,
+        json={'title': '完成态 bug', 'content': '管理员确认修复后标记完成'},
+    )
+    wish_id = created.json()['wish']['id']
+
+    blocked = client.patch(
+        f'/api/feature-wishes/{wish_id}/status',
+        headers=learner_headers,
+        json={'status': 'done'},
+    )
+    invalid = client.patch(
+        f'/api/feature-wishes/{wish_id}/status',
+        headers=admin_headers,
+        json={'status': 'closed'},
+    )
+    marked = client.patch(
+        f'/api/feature-wishes/{wish_id}/status',
+        headers=admin_headers,
+        json={'status': 'done'},
+    )
+    admin_list = client.get('/api/feature-wishes', headers=admin_headers)
+
+    assert created.status_code == 201
+    assert created.json()['wish']['status'] == 'open'
+    assert created.json()['wish']['can_update_status'] is False
+    assert blocked.status_code == 403
+    assert invalid.status_code == 400
+    assert marked.status_code == 200
+    assert marked.json()['wish']['status'] == 'done'
+    assert marked.json()['wish']['can_update_status'] is True
+    assert admin_list.json()['items'][0]['status'] == 'done'
+
+
 def test_feature_wish_image_upload_creates_resized_oss_variants(monkeypatch, tmp_path):
     _configure_admin_env(monkeypatch, tmp_path)
     module = _load_admin_ops_service_module('admin_ops_service_feature_wish_images')

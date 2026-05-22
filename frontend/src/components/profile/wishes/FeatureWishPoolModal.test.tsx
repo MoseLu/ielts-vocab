@@ -16,10 +16,12 @@ const wishesResponse = {
       username: 'admin',
       title: '错题清单自动整理',
       content: '练习结束后生成错词复盘清单',
+      status: 'open',
       created_at: '2026-04-30T01:24:00',
       updated_at: '2026-04-30T01:24:00',
       can_edit: true,
       can_delete: true,
+      can_update_status: true,
       images: [{
         id: 10,
         thumbnail_url: 'https://oss.example.com/thumb.png',
@@ -33,10 +35,12 @@ const wishesResponse = {
       username: 'learner',
       title: '口语主题筛选',
       content: '按口语场景筛选词汇',
+      status: 'done',
       created_at: '2026-04-29T13:10:00',
       updated_at: '2026-04-29T13:10:00',
       can_edit: false,
       can_delete: false,
+      can_update_status: false,
       images: [],
     },
   ],
@@ -58,6 +62,8 @@ describe('FeatureWishPoolModal', () => {
     expect(cards).toHaveLength(2)
     expect(cards[0].querySelector('.feature-wish-card__media img')).not.toBeNull()
     expect(cards[0].querySelector('.feature-wish-card__expand')).not.toBeNull()
+    expect(cards[0].querySelector('.feature-wish-status-badge')?.textContent).toBe('待评估')
+    expect(cards[1].classList.contains('feature-wish-card--done')).toBe(true)
     expect(cards[0].querySelector('.feature-wish-card__footer .feature-wish-card__edit')).not.toBeNull()
     expect(cards[1].querySelector('.feature-wish-card__footer .feature-wish-card__edit')).toBeNull()
   })
@@ -104,6 +110,30 @@ describe('FeatureWishPoolModal', () => {
     })
     await waitFor(() => {
       expect(apiFetchMock).toHaveBeenLastCalledWith('/api/feature-wishes')
+    })
+  })
+
+  it('lets admins update a wish status to completed from the card', async () => {
+    const doneWish = { ...wishesResponse.items[0], status: 'done' }
+    apiFetchMock
+      .mockResolvedValueOnce(wishesResponse)
+      .mockResolvedValueOnce({ message: 'bug 状态已更新', wish: doneWish })
+
+    const { baseElement } = render(<FeatureWishPoolModal onClose={vi.fn()} />)
+    await screen.findByText('错题清单自动整理')
+
+    fireEvent.change(screen.getByLabelText('设置 bug 状态：错题清单自动整理'), { target: { value: 'done' } })
+
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/feature-wishes/1/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'done' }),
+      })
+    })
+    await waitFor(() => {
+      const firstCard = baseElement.querySelector('.feature-wish-card') as HTMLElement
+      expect(firstCard.classList.contains('feature-wish-card--done')).toBe(true)
     })
   })
 })
