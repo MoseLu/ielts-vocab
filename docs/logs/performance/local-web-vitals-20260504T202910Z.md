@@ -71,4 +71,4 @@
 
 ## 原始数据
 
-- JSON: /Volumes/code/projects/ielts-vocab/docs/logs/performance/local-web-vitals-20260504T202910Z.json
+- JSON: /Volumes/code/projects/projects/ielts-vocab/docs/logs/performance/local-web-vitals-20260504T202910Z.json
