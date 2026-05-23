@@ -1,6 +1,6 @@
 // ── Tests for src/lib/smartMode.ts ──────────────────────────────────────────
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 import {
   loadSmartStats,
   recordWordResult,
@@ -15,6 +15,10 @@ const SMART_KEY = 'smart_word_stats'
 beforeEach(() => {
   localStorage.clear()
   vi.clearAllMocks()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 // ── loadSmartStats ────────────────────────────────────────────────────────────
@@ -72,6 +76,15 @@ describe('recordWordResult', () => {
     const stats = loadSmartStats()
     expect(stats['cherry'].listening.correct).toBe(2)
     expect(stats['cherry'].listening.wrong).toBe(1)
+  })
+
+  it('does not block result recording when local storage is full', () => {
+    const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota exceeded', 'QuotaExceededError')
+    })
+
+    expect(() => recordWordResult('quota-word', 'meaning', true)).not.toThrow()
+    expect(setItem).toHaveBeenCalled()
   })
 })
 

@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from '../constants'
 import { buildLearningScope, type LearningScopeInput } from './learningScope'
+import { setStorageJsonSafely } from './storage'
 
 export interface QuickMemoryRecordState {
   status: 'known' | 'unknown'
@@ -168,8 +169,8 @@ export function writeQuickMemoryRecordsToStorage(
   scope?: LearningScopeInput,
 ): QuickMemoryRecordMap {
   const storageKey = getQuickMemoryStorageKey(userId, scope)
-  localStorage.setItem(storageKey, JSON.stringify(records))
-  if (storageKey !== STORAGE_KEYS.QUICK_MEMORY_RECORDS) {
+  const written = setStorageJsonSafely(storageKey, records)
+  if (written && storageKey !== STORAGE_KEYS.QUICK_MEMORY_RECORDS) {
     localStorage.removeItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS)
   }
   return records

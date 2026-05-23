@@ -1,4 +1,5 @@
 import type { PracticeResultCommand } from './types'
+import { setStorageJsonSafely } from '../storage'
 
 export type PracticeResultOutboxStatus = 'pending' | 'sending' | 'acked' | 'failed'
 
@@ -15,6 +16,9 @@ export interface PracticeResultOutboxEntry {
 
 const OUTBOX_KEY_PREFIX = 'practice_result_outbox:user:'
 const DEFAULT_RETRY_DELAY_MS = 1_000
+const MAX_ACTIVE_OUTBOX_ENTRIES = 60
+const MAX_ACKED_OUTBOX_ENTRIES = 20
+const QUOTA_FALLBACK_ACTIVE_ENTRIES = 20
 
 export function getPracticeResultOutboxStorageKey(userScope: string | number): string {
   return `${OUTBOX_KEY_PREFIX}${String(userScope)}`
@@ -31,8 +35,26 @@ function readEntries(userScope: string): PracticeResultOutboxEntry[] {
   }
 }
 
+function newestFirst(entries: PracticeResultOutboxEntry[]): PracticeResultOutboxEntry[] {
+  return [...entries].sort((left, right) => right.updatedAt - left.updatedAt)
+}
+
+function compactEntries(
+  entries: PracticeResultOutboxEntry[],
+  activeLimit = MAX_ACTIVE_OUTBOX_ENTRIES,
+  ackedLimit = MAX_ACKED_OUTBOX_ENTRIES,
+): PracticeResultOutboxEntry[] {
+  const active = newestFirst(entries.filter(entry => entry.status !== 'acked')).slice(0, activeLimit)
+  const acked = newestFirst(entries.filter(entry => entry.status === 'acked')).slice(0, ackedLimit)
+  return [...active, ...acked].sort((left, right) => left.createdAt - right.createdAt)
+}
+
 function writeEntries(userScope: string, entries: PracticeResultOutboxEntry[]): void {
-  localStorage.setItem(getPracticeResultOutboxStorageKey(userScope), JSON.stringify(entries))
+  const storageKey = getPracticeResultOutboxStorageKey(userScope)
+  const compacted = compactEntries(entries)
+  if (setStorageJsonSafely(storageKey, compacted)) return
+
+  setStorageJsonSafely(storageKey, compactEntries(entries, QUOTA_FALLBACK_ACTIVE_ENTRIES, 0))
 }
 
 function upsertEntry(

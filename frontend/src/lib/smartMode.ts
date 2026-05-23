@@ -2,6 +2,7 @@
 
 import { STORAGE_KEYS } from '../constants'
 import { apiFetch } from './apiClient'
+import { setStorageJsonSafely } from './storage'
 // Tracks per-word proficiency across three dimensions:
 //   音 (listening)  - 听音选义
 //   意 (meaning)    - 默写模式
@@ -55,7 +56,7 @@ export function recordWordResult(
   } else {
     stats[wordKey][dimension].wrong++
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(stats))
+  setStorageJsonSafely(STORAGE_KEY, stats)
 }
 
 // Mastery for a single dimension: 0 = never tried, 0.5 = 50% accuracy, 1 = perfect
@@ -145,7 +146,7 @@ function _loadPendingSync(): PendingSync[] {
 }
 
 function _savePendingSync(pending: PendingSync[]): void {
-  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending))
+  setStorageJsonSafely(PENDING_SYNC_KEY, pending)
 }
 
 function _mergePendingIntoStats(pending: PendingSync[], stats: SmartWordStatsStore): SmartWordStatsStore {
@@ -272,7 +273,7 @@ export async function loadSmartStatsFromBackend(): Promise<void> {
         changed = true
       }
     }
-    if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(local))
+    if (changed) setStorageJsonSafely(STORAGE_KEY, local)
   } catch {
     // Non-critical
   }

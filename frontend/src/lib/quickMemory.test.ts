@@ -1,3 +1,4 @@
+import { afterEach, vi } from 'vitest'
 import {
   getQuickMemoryStorageKey,
   QUICK_MEMORY_MASTERY_TARGET,
@@ -24,6 +25,10 @@ describe('quickMemory', () => {
 
   beforeEach(() => {
     localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('resets the consecutive known count when the learner gets a word wrong', () => {
@@ -102,6 +107,15 @@ describe('quickMemory', () => {
 
     expect(localStorage.getItem(getQuickMemoryStorageKey(2))).not.toBeNull()
     expect(localStorage.getItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS)).toBeNull()
+  })
+
+  it('returns current records when quick-memory storage is full', () => {
+    const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota exceeded', 'QuotaExceededError')
+    })
+
+    expect(writeQuickMemoryRecordsToStorage(sampleRecord)).toBe(sampleRecord)
+    expect(setItem).toHaveBeenCalled()
   })
 
   it('isolates quick-memory records between different users', () => {

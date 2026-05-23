@@ -121,6 +121,7 @@ def test_learning_core_migration_runner_converts_chapter_ids_to_strings(tmp_path
         table_names = set(inspector.get_table_names())
         assert 'user_scoped_quick_memory_records' in table_names
         assert 'user_scoped_wrong_words' in table_names
+        assert 'user_practice_result_commands' in table_names
 
         with engine.connect() as connection:
             chapter_id_value = connection.execute(

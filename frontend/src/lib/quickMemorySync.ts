@@ -1,5 +1,6 @@
 import { apiFetch } from './apiClient'
 import { buildLearningScope, type LearningScopeInput } from './learningScope'
+import { setStorageJsonSafely } from './storage'
 import {
   getQuickMemoryStorageKey,
   mergeQuickMemoryRecordsByLastSeen,
@@ -88,7 +89,7 @@ function writePendingSyncRecords(records: QuickMemoryRecordMap, scope?: Learning
     localStorage.removeItem(storageKey)
     return
   }
-  localStorage.setItem(storageKey, JSON.stringify(records))
+  setStorageJsonSafely(storageKey, records)
 }
 
 function persistPendingSyncEntries(entries: QuickMemorySyncEntry[], scope?: LearningScopeInput): void {

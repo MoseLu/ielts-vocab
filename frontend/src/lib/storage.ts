@@ -12,6 +12,23 @@ export function setStorageItem<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value))
 }
 
+export function trySetStorageItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function setStorageJsonSafely<T>(key: string, value: T): boolean {
+  try {
+    return trySetStorageItem(key, JSON.stringify(value))
+  } catch {
+    return false
+  }
+}
+
 export function removeStorageItem(key: string): void {
   localStorage.removeItem(key)
 }

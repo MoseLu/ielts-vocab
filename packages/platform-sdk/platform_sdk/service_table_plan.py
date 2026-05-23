@@ -98,6 +98,7 @@ LEARNING_CORE_SERVICE_TABLES = frozenset({
     'user_game_energy_states',
     'user_game_session_states',
     'user_game_wrong_words',
+    'user_practice_result_commands',
     'user_word_mastery_states',
 }) | LEARNING_CORE_EVENTING_TABLES
 
