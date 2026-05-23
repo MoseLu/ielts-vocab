@@ -2,6 +2,33 @@
 
 All notable product, runtime, and operational changes are recorded here.
 
+## [1.2.4] - 2026-05-23
+
+### Fixed
+- Kept Ebbinghaus due-review answers moving under browser storage pressure by bounding the practice-result outbox and making smart-mode plus quick-memory local writes quota-safe.
+- Added the missing `user_practice_result_commands` ownership to the learning-core split schema so idempotent practice-attempt writes no longer fail when the service database is bootstrapped from migrations.
+- Restored split projection closeout by verifying admin, notes, and AI projections against their canonical owner sources and adding a repair path that upserts missing rows and prunes stale derived projection keys.
+- Preserved scoped quick-memory and wrong-word completion state across production-style learning-state repairs.
+
+### Operations
+- Released and verified the storage-pressure hotfix in production, including split-service schema migration, post-switch smoke, and learning-core log checks.
+- Repaired production Wave 5 projection drift from the release path and completed release closeout successfully.
+
+### Validation
+- Verified focused backend schema, idempotency, projection, and release-closeout tests; frontend practice-result, smart-mode, and quick-memory quota tests; frontend lint; file-line guards; and production smoke/closeout.
+
+## [1.2.3] - 2026-05-10
+
+### Added
+- Added the local Mac app launcher path, admin asset management dashboard, theme color preferences, and richer chapter progress charts.
+- Refreshed the mobile study-room visuals and regenerated premium mnemonic data for the production vocabulary catalog.
+
+### Fixed
+- Recovered home book data after startup gaps and validated the relevant frontend recovery flows.
+
+### Validation
+- Verified focused frontend unit coverage and frontend build for the `v1.2.3` release line.
+
 ## [1.2.2] - 2026-05-07
 
 ### Fixed
