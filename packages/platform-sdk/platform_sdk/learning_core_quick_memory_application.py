@@ -126,9 +126,12 @@ def _build_review_queue_payload(
         })
 
     resolve_all = len(candidates) <= REVIEW_QUEUE_FULL_CONTEXT_RESOLVE_LIMIT or limit is None
-    selected_candidates = candidates if resolve_all else candidates[offset:offset + limit]
+    selected_candidates = candidates if resolve_all else candidates[offset:]
+    scan_end_offset = len(candidates) if resolve_all else offset
 
-    for candidate in selected_candidates:
+    for index, candidate in enumerate(selected_candidates, start=0 if resolve_all else offset):
+        if not resolve_all:
+            scan_end_offset = index + 1
         row = candidate['row']
         stored_book_id = candidate['stored_book_id']
         stored_chapter_id = candidate['stored_chapter_id']
@@ -183,6 +186,8 @@ def _build_review_queue_payload(
 
         (due_words if item['dueState'] == 'due' else upcoming_words).append(item)
         _update_context_map(context_map, item)
+        if not resolve_all and len(due_words) + len(upcoming_words) >= limit:
+            break
 
     if not resolve_all:
         context_map = {}
@@ -213,6 +218,7 @@ def _build_review_queue_payload(
         due_count_override=sum(1 for candidate in candidates if candidate['due_state'] == 'due') if not resolve_all else None,
         upcoming_count_override=sum(1 for candidate in candidates if candidate['due_state'] == 'upcoming') if not resolve_all else None,
         total_count_override=len(candidates) if not resolve_all else None,
+        next_offset_override=scan_end_offset if not resolve_all else None,
     )
 
 
@@ -291,13 +297,14 @@ def _serialize_review_queue(
     due_count_override: int | None = None,
     upcoming_count_override: int | None = None,
     total_count_override: int | None = None,
+    next_offset_override: int | None = None,
 ) -> dict:
     combined_words = due_words + upcoming_words
     selected = combined_words if preselected else (
         combined_words[offset:offset + limit] if limit is not None else combined_words[offset:]
     )
     total_count = total_count_override if total_count_override is not None else len(combined_words)
-    next_offset = offset + len(selected)
+    next_offset = next_offset_override if next_offset_override is not None else offset + len(selected)
     has_more = next_offset < total_count
     contexts = sorted(
         context_map.values(),

@@ -8,6 +8,7 @@ SKIP_PARTS = {
     'node_modules',
     'dist',
     '.git',
+    '.cache',
     '.minimax',
     '.omc',
     '__pycache__',
