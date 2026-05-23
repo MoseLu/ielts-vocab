@@ -124,6 +124,9 @@ vi.mock('./OptionsMode', () => ({
         <button type="button" data-testid="answer-guise" onClick={() => onOptionSelect(findOptionIndex('guise'))}>
           answer-guise
         </button>
+        <button type="button" data-testid="answer-correct" onClick={() => onOptionSelect(correctIndex)}>
+          answer-correct
+        </button>
       </div>
     )
   },
@@ -210,5 +213,57 @@ describe('PracticePage listening replay', () => {
       await Promise.resolve()
     })
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guy', 'guise'])
+  })
+
+  it('plays the correct listening word after choosing the right option', async () => {
+    vi.useFakeTimers()
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
+
+    const vocabulary = [
+      {
+        word: 'guide',
+        phonetic: '/gaid/',
+        pos: 'n.',
+        definition: '向导',
+        listening_confusables: [
+          { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+          { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+          { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+        ],
+      },
+      { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+      { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+      { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+    ]
+
+    fetchMock.mockResolvedValue({ json: async () => ({ vocabulary }) })
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/vocabulary/day/1') return fetch(url).then(response => response.json())
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/progress') return Promise.resolve({})
+      throw new Error(`Unexpected url: ${url}`)
+    })
+
+    render(
+      <MemoryRouter>
+        <PracticePage currentDay={1} mode="listening" onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await flushRender()
+    expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:4')
+
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+    await flushRender()
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('answer-correct'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guide'])
   })
 })

@@ -142,6 +142,9 @@ export function usePracticePageAnswerActions({
 
     setSelectedAnswer(idx)
     setShowResult(true)
+    if (shouldReplayListeningPrompt && currentWord) {
+      playWord(selectedOptionWord || currentWord.word)
+    }
     await commitAnswerResult(true, {
       dimension,
       analyticsMode: mode ?? 'smart',
