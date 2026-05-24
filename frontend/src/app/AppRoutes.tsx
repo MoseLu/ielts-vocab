@@ -15,6 +15,7 @@ import HomePage from '../components/home/page/HomePage'
 import LearningJournalPage from '../components/journal/page/LearningJournalPage'
 import NotFoundPage from '../components/not-found/page/NotFoundPage'
 import ConfusableMatchPage from '../components/practice/ConfusableMatchPage'
+import GlobalBugScreenshotShortcut from '../components/profile/wishes/GlobalBugScreenshotShortcut'
 import ProfilePage from '../components/profile/page/ProfilePage'
 import StatsPage from '../components/stats/page/StatsPage'
 import TermsPage from '../components/terms/page/TermsPage'
@@ -296,6 +297,7 @@ export function AppRoutes({
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} />}
+      {user && <GlobalBugScreenshotShortcut />}
       {user && !isSpecialPage && chromeReady && (
         <ChromeSlot>
           <SelectionWordLookup />

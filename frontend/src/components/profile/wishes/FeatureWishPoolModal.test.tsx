@@ -136,4 +136,24 @@ describe('FeatureWishPoolModal', () => {
       expect(firstCard.classList.contains('feature-wish-card--done')).toBe(true)
     })
   })
+
+  it('opens the create form with an initial screenshot already attached', async () => {
+    const screenshot = new File(['shot'], 'bug-screenshot-initial.png', { type: 'image/png' })
+
+    render(<FeatureWishPoolModal initialDraftFiles={[screenshot]} onClose={vi.fn()} />)
+    await screen.findByText('错题清单自动整理')
+
+    expect(screen.getByText('bug-screenshot-initial.png')).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('bug 标题'), { target: { value: '全局截图问题' } })
+    fireEvent.change(screen.getByPlaceholderText('bug 内容'), { target: { value: '快捷键截图后提交' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
+
+    await waitFor(() => {
+      const submitCall = apiFetchMock.mock.calls.find(([url, options]) => {
+        return url === '/api/feature-wishes' && (options as { method?: string } | undefined)?.method === 'POST'
+      })
+      const body = submitCall?.[1]?.body as FormData
+      expect(body.getAll('images')).toEqual([screenshot])
+    })
+  })
 })

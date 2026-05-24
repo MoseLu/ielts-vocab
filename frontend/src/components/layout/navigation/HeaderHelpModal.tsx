@@ -5,6 +5,7 @@ import { type HeaderHelpFaqItem, usePlanHelpFaqItems } from './helpContentRegist
 
 const HELP_SHORTCUTS: ReadonlyArray<{ key: string; description: string }> = [
   { key: 'Shift + Q', description: '打开单词搜索' },
+  { key: 'Shift + Z', description: '截图并新建 Bug反馈' },
   { key: '1 - 4', description: '选择答案选项' },
   { key: '5', description: '不知道（跳过）' },
   { key: '空格', description: '重新播放发音' },
