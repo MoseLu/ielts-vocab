@@ -29,6 +29,14 @@ function renderShortcut() {
   )
 }
 
+async function dragScreenshotSelection() {
+  const selector = await screen.findByRole('dialog', { name: '选择截图区域' })
+  fireEvent.pointerDown(selector, { clientX: 20, clientY: 30, pointerId: 1 })
+  fireEvent.pointerMove(selector, { clientX: 200, clientY: 150, pointerId: 1 })
+  fireEvent.pointerUp(selector, { clientX: 200, clientY: 150, pointerId: 1 })
+  return selector
+}
+
 describe('GlobalBugScreenshotShortcut', () => {
   beforeEach(() => {
     apiFetchMock.mockReset()
@@ -39,6 +47,7 @@ describe('GlobalBugScreenshotShortcut', () => {
     createObjectUrlMock.mockReturnValue('blob:bug-screenshot')
     Object.defineProperty(URL, 'createObjectURL', { value: createObjectUrlMock, configurable: true })
     Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectUrlMock, configurable: true })
+    Object.defineProperty(window, 'PointerEvent', { value: MouseEvent, configurable: true })
   })
 
   it('previews a global shortcut screenshot before opening the bug form', async () => {
@@ -47,8 +56,10 @@ describe('GlobalBugScreenshotShortcut', () => {
 
     renderShortcut()
     fireEvent.keyDown(window, { key: 'Z', shiftKey: true })
+    await dragScreenshotSelection()
 
     expect(await screen.findByRole('dialog', { name: '截图预览' })).toBeInTheDocument()
+    expect(captureScreenAsPngFile).toHaveBeenCalledWith({ x: 20, y: 30, width: 180, height: 120 })
     expect(screen.getByAltText('Bug截图预览')).toHaveAttribute('src', 'blob:bug-screenshot')
 
     fireEvent.click(screen.getByRole('button', { name: '是' }))
@@ -66,6 +77,7 @@ describe('GlobalBugScreenshotShortcut', () => {
 
     renderShortcut()
     fireEvent.keyDown(window, { key: 'Z', shiftKey: true })
+    await dragScreenshotSelection()
     await screen.findByRole('dialog', { name: '截图预览' })
     fireEvent.click(screen.getByRole('button', { name: '否' }))
 
@@ -84,6 +96,18 @@ describe('GlobalBugScreenshotShortcut', () => {
 
     fireEvent.keyDown(screen.getByLabelText('feedback title'), { key: 'Z', shiftKey: true })
 
+    expect(screen.queryByRole('dialog', { name: '选择截图区域' })).not.toBeInTheDocument()
+    expect(captureScreenAsPngFile).not.toHaveBeenCalled()
+  })
+
+  it('cancels the selection overlay with escape before capturing', async () => {
+    renderShortcut()
+
+    fireEvent.keyDown(window, { key: 'Z', shiftKey: true })
+    expect(await screen.findByRole('dialog', { name: '选择截图区域' })).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    expect(screen.queryByRole('dialog', { name: '选择截图区域' })).not.toBeInTheDocument()
     expect(captureScreenAsPngFile).not.toHaveBeenCalled()
   })
 })

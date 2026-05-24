@@ -1,3 +1,44 @@
+.bug-screenshot-selector-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-modal);
+  cursor: crosshair;
+  background: color-mix(in srgb, var(--surface-code) var(--mix-8), transparent);
+  user-select: none;
+  touch-action: none;
+}
+
+.bug-screenshot-selector__box {
+  position: absolute;
+  border: var(--size-2) dashed var(--text-inverse);
+  background: color-mix(in srgb, var(--surface-elevated) var(--mix-8), transparent);
+  box-shadow:
+    0 0 0 100vmax color-mix(in srgb, var(--surface-code) var(--mix-34), transparent),
+    0 0 var(--size-8) color-mix(in srgb, var(--surface-code) var(--mix-26), transparent);
+  pointer-events: none;
+}
+
+.bug-screenshot-selector__cancel {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: var(--layer-raised);
+  width: var(--size-40);
+  height: var(--size-40);
+  display: inline-grid;
+  place-items: center;
+  border: var(--size-1) solid color-mix(in srgb, var(--text-inverse) var(--mix-58), transparent);
+  border-radius: 50%;
+  color: var(--text-inverse);
+  background: color-mix(in srgb, var(--surface-code) var(--mix-68), transparent);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+}
+
+.bug-screenshot-selector__cancel:hover {
+  background: color-mix(in srgb, var(--surface-code) var(--mix-84), transparent);
+}
+
 .bug-screenshot-preview-overlay {
   position: fixed;
   inset: 0;
