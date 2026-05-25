@@ -102,7 +102,6 @@ ensure_runtime() {
   PATH="${runtime_prefix}/bin:${PATH}"
   export PATH
   require_command python
-  require_command pnpm
   require_command curl
   require_command lsof
 }
@@ -235,11 +234,11 @@ else
 fi
 
 if [[ "${skip_frontend_build}" != "true" ]]; then
-  pnpm --dir "${root}/frontend" build
+  "${root}/scripts/run-mac-runtime-command.sh" pnpm --dir "${root}/frontend" build
 else
   log 'Skipping frontend build and reusing existing dist.'
 fi
-start_background 'frontend-preview' "${frontend_out}" "${frontend_err}" env CI=1 node "${root}/frontend/node_modules/vite/bin/vite.js" preview --host 127.0.0.1 --port "${frontend_port}"
+start_background 'frontend-preview' "${frontend_out}" "${frontend_err}" "${root}/scripts/run-mac-runtime-command.sh" env CI=1 node "${root}/frontend/node_modules/vite/bin/vite.js" preview --host 127.0.0.1 --port "${frontend_port}"
 wait_http_ready 'preview login' "http://127.0.0.1:${frontend_port}/login"
 wait_http_ready 'preview api proxy' "http://127.0.0.1:${frontend_port}/api/books/stats"
 

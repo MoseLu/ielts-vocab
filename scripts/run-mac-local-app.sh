@@ -5,6 +5,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "${script_dir}/.." && pwd)"
 mode="${1:-dev}"
 runtime_prefix="${IELTS_MAC_RUNTIME_PREFIX:-$HOME/.local/share/micromamba/envs/ielts-mac-runtime}"
+workspace_node_runtime_prefix="${WORKSPACE_NODE22_RUNTIME_PREFIX:-$HOME/.local/share/micromamba/envs/workspace-node22-runtime}"
 
 case "${mode}" in
   dev|preview)
@@ -44,10 +45,10 @@ run_direct() {
   cd "${root}/frontend"
   case "${mode}" in
     dev)
-      exec node "${vite_bin}"
+      exec "${root}/scripts/run-mac-runtime-command.sh" node "${vite_bin}"
       ;;
     preview)
-      exec node "${vite_bin}" preview
+      exec "${root}/scripts/run-mac-runtime-command.sh" node "${vite_bin}" preview
       ;;
   esac
 }
@@ -97,7 +98,7 @@ write_app_bundle() {
 
   mkdir -p "${macos_dir}" "${resources_dir}"
   write_app_icon "${resources_dir}"
-  node_path="$([[ -x "${runtime_prefix}/bin/node" ]] && printf '%s' "${runtime_prefix}/bin/node" || command -v node 2>/dev/null || true)"
+  node_path="$([[ -x "${workspace_node_runtime_prefix}/bin/node" ]] && printf '%s' "${workspace_node_runtime_prefix}/bin/node" || command -v node 2>/dev/null || true)"
 
   cat > "${plist}" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -438,7 +439,7 @@ SWIFT
     printf 'IELTS_LOCAL_APP_TITLE=%s\n' "${app_title}"
     printf 'IELTS_LOCAL_APP_ROOT=%s\n' "${root}"
     printf 'IELTS_LOCAL_APP_URL=%s\n' "$(mode_url)"
-    printf 'IELTS_LOCAL_APP_API_HEALTH_URL=http://127.0.0.1:5001/ready\n'
+    printf 'IELTS_LOCAL_APP_API_HEALTH_URL=http://127.0.0.1:8000/ready\n'
     printf 'IELTS_MAC_RUNTIME_PREFIX=%s\n' "${runtime_prefix}"
     if [[ -n "${node_path}" ]]; then
       printf 'IELTS_LOCAL_APP_NODE=%s\n' "${node_path}"
@@ -481,7 +482,8 @@ fi
 
 label="$(mode_label)"
 url="$(mode_url)"
-api_url="http://127.0.0.1:5001/ready"
+api_url="http://127.0.0.1:8000/ready"
+"${root}/scripts/run-mac-runtime-command.sh" true
 app_bundle="$(write_app_bundle "${label}")"
 
 if [[ "${IELTS_MAC_LOCAL_APP_DRY_RUN:-0}" == "1" ]]; then
