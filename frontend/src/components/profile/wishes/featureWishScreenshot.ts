@@ -1,6 +1,6 @@
 import html2canvas from 'html2canvas'
 
-const REMOVED_OVERLAYS_SELECTOR = '.bug-screenshot-preview-overlay, .bug-screenshot-selector-overlay'
+const REMOVED_OVERLAYS_SELECTOR = '.bug-screenshot-selector-overlay, .bug-screenshot-tray'
 const UNSUPPORTED_MEDIA_SELECTOR = 'video, iframe, canvas'
 
 export interface ScreenshotCaptureRect {

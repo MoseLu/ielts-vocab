@@ -34,7 +34,13 @@ async function dragScreenshotSelection() {
   fireEvent.pointerDown(selector, { clientX: 20, clientY: 30, pointerId: 1 })
   fireEvent.pointerMove(selector, { clientX: 200, clientY: 150, pointerId: 1 })
   fireEvent.pointerUp(selector, { clientX: 200, clientY: 150, pointerId: 1 })
-  return selector
+}
+
+async function captureWithShortcut(file: File) {
+  vi.mocked(captureScreenAsPngFile).mockResolvedValueOnce(file)
+  fireEvent.keyDown(window, { key: 'Z', shiftKey: true })
+  await dragScreenshotSelection()
+  await screen.findByRole('region', { name: '截图篮' })
 }
 
 describe('GlobalBugScreenshotShortcut', () => {
@@ -44,46 +50,64 @@ describe('GlobalBugScreenshotShortcut', () => {
     vi.mocked(captureScreenAsPngFile).mockReset()
     createObjectUrlMock.mockReset()
     revokeObjectUrlMock.mockReset()
-    createObjectUrlMock.mockReturnValue('blob:bug-screenshot')
+    createObjectUrlMock.mockImplementation((file: File) => `blob:${file.name}`)
     Object.defineProperty(URL, 'createObjectURL', { value: createObjectUrlMock, configurable: true })
     Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectUrlMock, configurable: true })
     Object.defineProperty(window, 'PointerEvent', { value: MouseEvent, configurable: true })
   })
 
-  it('previews a global shortcut screenshot before opening the bug form', async () => {
+  it('adds selected screenshots to the tray before opening the bug form', async () => {
     const screenshot = new File(['shot'], 'bug-screenshot-global.png', { type: 'image/png' })
-    vi.mocked(captureScreenAsPngFile).mockResolvedValue(screenshot)
 
     renderShortcut()
-    fireEvent.keyDown(window, { key: 'Z', shiftKey: true })
-    await dragScreenshotSelection()
+    await captureWithShortcut(screenshot)
 
-    expect(await screen.findByRole('dialog', { name: '截图预览' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: '截图篮' })).toBeInTheDocument()
+    expect(screen.getByText('截图 1/3')).toBeInTheDocument()
     expect(captureScreenAsPngFile).toHaveBeenCalledWith({ x: 20, y: 30, width: 180, height: 120 })
-    expect(screen.getByAltText('Bug截图预览')).toHaveAttribute('src', 'blob:bug-screenshot')
+    expect(screen.getByAltText('截图 1')).toHaveAttribute('src', 'blob:bug-screenshot-global.png')
 
-    fireEvent.click(screen.getByRole('button', { name: '是' }))
+    fireEvent.click(screen.getByRole('button', { name: '提交反馈' }))
 
     expect(await screen.findByText('bug-screenshot-global.png')).toBeInTheDocument()
-    expect(revokeObjectUrlMock).toHaveBeenCalledWith('blob:bug-screenshot')
     await waitFor(() => {
       expect(apiFetchMock).toHaveBeenCalledWith('/api/feature-wishes')
     })
   })
 
-  it('closes the preview without creating a bug form when declined', async () => {
-    const screenshot = new File(['shot'], 'bug-screenshot-declined.png', { type: 'image/png' })
-    vi.mocked(captureScreenAsPngFile).mockResolvedValue(screenshot)
-
+  it('keeps appending screenshots to the same tray up to three files', async () => {
     renderShortcut()
-    fireEvent.keyDown(window, { key: 'Z', shiftKey: true })
+    await captureWithShortcut(new File(['one'], 'bug-1.png', { type: 'image/png' }))
+    fireEvent.click(screen.getByRole('button', { name: '继续截图' }))
+    vi.mocked(captureScreenAsPngFile).mockResolvedValueOnce(new File(['two'], 'bug-2.png', { type: 'image/png' }))
     await dragScreenshotSelection()
-    await screen.findByRole('dialog', { name: '截图预览' })
-    fireEvent.click(screen.getByRole('button', { name: '否' }))
+    await screen.findByText('截图 2/3')
+    fireEvent.click(screen.getByRole('button', { name: '继续截图' }))
+    vi.mocked(captureScreenAsPngFile).mockResolvedValueOnce(new File(['three'], 'bug-3.png', { type: 'image/png' }))
+    await dragScreenshotSelection()
 
-    expect(screen.queryByRole('dialog', { name: '截图预览' })).not.toBeInTheDocument()
-    expect(screen.queryByText('bug-screenshot-declined.png')).not.toBeInTheDocument()
-    expect(revokeObjectUrlMock).toHaveBeenCalledWith('blob:bug-screenshot')
+    await waitFor(() => {
+      expect(screen.getByText('截图 3/3')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('button', { name: '已满' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: '提交反馈' }))
+
+    expect(await screen.findByText('bug-1.png')).toBeInTheDocument()
+    expect(screen.getByText('bug-2.png')).toBeInTheDocument()
+    expect(screen.getByText('bug-3.png')).toBeInTheDocument()
+  })
+
+  it('allows deleting one screenshot and then capturing another', async () => {
+    renderShortcut()
+    await captureWithShortcut(new File(['one'], 'bug-delete.png', { type: 'image/png' }))
+
+    fireEvent.click(screen.getByRole('button', { name: '删除截图：bug-delete.png' }))
+
+    expect(screen.queryByRole('region', { name: '截图篮' })).not.toBeInTheDocument()
+    expect(revokeObjectUrlMock).toHaveBeenCalledWith('blob:bug-delete.png')
+    await captureWithShortcut(new File(['next'], 'bug-next.png', { type: 'image/png' }))
+    expect(await screen.findByText('截图 1/3')).toBeInTheDocument()
   })
 
   it('does not capture when shift z is typed into an editable field', () => {

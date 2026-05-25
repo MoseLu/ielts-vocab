@@ -1,12 +1,15 @@
-import { type CSSProperties, type PointerEvent as ReactPointerEvent, useEffect, useState } from 'react'
+import { type CSSProperties, type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useToast } from '../../../contexts'
 import FeatureWishPoolModal from './FeatureWishPoolModal'
 import { captureScreenAsPngFile, type ScreenshotCaptureRect } from './featureWishScreenshot'
 
 const MIN_SELECTION_SIZE = 8
+const MAX_SCREENSHOTS = 3
+let screenshotIdCounter = 0
 
-interface ScreenshotPreview {
+interface ScreenshotItem {
+  id: string
   file: File
   url: string
 }
@@ -44,13 +47,28 @@ function rectFromDrag(drag: SelectionDrag): ScreenshotCaptureRect {
   }
 }
 
+function revokeScreenshots(items: ScreenshotItem[]) {
+  items.forEach(item => URL.revokeObjectURL(item.url))
+}
+
 export default function GlobalBugScreenshotShortcut() {
   const { showToast } = useToast()
-  const [preview, setPreview] = useState<ScreenshotPreview | null>(null)
-  const [bugFile, setBugFile] = useState<File | null>(null)
+  const [screenshots, setScreenshots] = useState<ScreenshotItem[]>([])
+  const screenshotsRef = useRef<ScreenshotItem[]>([])
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackInitialFiles, setFeedbackInitialFiles] = useState<File[]>([])
+  const [feedbackKey, setFeedbackKey] = useState(0)
   const [capturing, setCapturing] = useState(false)
   const [selecting, setSelecting] = useState(false)
   const [selectionDrag, setSelectionDrag] = useState<SelectionDrag | null>(null)
+
+  useEffect(() => {
+    screenshotsRef.current = screenshots
+  }, [screenshots])
+
+  useEffect(() => {
+    return () => revokeScreenshots(screenshotsRef.current)
+  }, [])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -61,23 +79,42 @@ export default function GlobalBugScreenshotShortcut() {
         setSelectionDrag(null)
         return
       }
-      if (event.repeat || capturing || preview || bugFile || selecting) return
+      if (event.repeat || capturing || selecting) return
       if (!isBugScreenshotShortcut(event)) return
 
       event.preventDefault()
       event.stopImmediatePropagation()
+      if (screenshotsRef.current.length >= MAX_SCREENSHOTS) {
+        showToast('最多添加 3 张截图', 'info')
+        return
+      }
       setSelecting(true)
     }
 
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [bugFile, capturing, preview, selecting])
+  }, [capturing, selecting, showToast])
 
   const captureSelection = (rect: ScreenshotCaptureRect) => {
+    if (screenshotsRef.current.length >= MAX_SCREENSHOTS) {
+      showToast('最多添加 3 张截图', 'info')
+      return
+    }
     setCapturing(true)
     void captureScreenAsPngFile(rect)
       .then(file => {
-        setPreview({ file, url: URL.createObjectURL(file) })
+        const item = {
+          id: `${Date.now()}-${screenshotIdCounter++}-${file.name}-${file.size}`,
+          file,
+          url: URL.createObjectURL(file),
+        }
+        setScreenshots(current => {
+          if (current.length >= MAX_SCREENSHOTS) {
+            URL.revokeObjectURL(item.url)
+            return current
+          }
+          return [...current, item]
+        })
       })
       .catch(err => {
         showToast(err instanceof Error ? err.message : '截图失败，请稍后重试', 'error')
@@ -126,16 +163,39 @@ export default function GlobalBugScreenshotShortcut() {
     captureSelection(rect)
   }
 
-  const closePreview = () => {
-    if (preview) URL.revokeObjectURL(preview.url)
-    setPreview(null)
+  const startSelection = () => {
+    if (capturing) return
+    if (screenshots.length >= MAX_SCREENSHOTS) {
+      showToast('最多添加 3 张截图', 'info')
+      return
+    }
+    setSelecting(true)
   }
 
-  const confirmCreateBug = () => {
-    if (!preview) return
-    const file = preview.file
-    closePreview()
-    setBugFile(file)
+  const removeScreenshot = (id: string) => {
+    setScreenshots(current => {
+      const target = current.find(item => item.id === id)
+      if (target) URL.revokeObjectURL(target.url)
+      return current.filter(item => item.id !== id)
+    })
+  }
+
+  const clearScreenshots = () => {
+    setScreenshots(current => {
+      revokeScreenshots(current)
+      return []
+    })
+  }
+
+  const openFeedback = () => {
+    if (screenshots.length === 0) return
+    setFeedbackInitialFiles(screenshots.map(item => item.file))
+    setFeedbackKey(key => key + 1)
+    setFeedbackOpen(true)
+  }
+
+  const handleDraftSubmitSuccess = () => {
+    clearScreenshots()
   }
 
   const selectionRect = selectionDrag ? rectFromDrag(selectionDrag) : null
@@ -175,27 +235,43 @@ export default function GlobalBugScreenshotShortcut() {
         </div>,
         document.body,
       )}
-      {preview && createPortal(
-        <div className="bug-screenshot-preview-overlay" role="dialog" aria-modal="true" aria-label="截图预览">
-          <div className="bug-screenshot-preview">
-            <div className="bug-screenshot-preview__header">
-              <strong>截图预览</strong>
-              <span>是否新建 bug 提交条目？</span>
-            </div>
-            <img className="bug-screenshot-preview__image" src={preview.url} alt="Bug截图预览" />
-            <div className="bug-screenshot-preview__actions">
-              <button type="button" onClick={closePreview}>否</button>
-              <button type="button" onClick={confirmCreateBug}>是</button>
-            </div>
+      {screenshots.length > 0 && !feedbackOpen && createPortal(
+        <section className="bug-screenshot-tray" role="region" aria-label="截图篮">
+          <div className="bug-screenshot-tray__header">
+            <strong>截图 {screenshots.length}/{MAX_SCREENSHOTS}</strong>
+            <button type="button" onClick={clearScreenshots}>清空</button>
           </div>
-        </div>,
+          <div className="bug-screenshot-tray__thumbs">
+            {screenshots.map((item, index) => (
+              <div key={item.id} className="bug-screenshot-tray__thumb">
+                <img src={item.url} alt={`截图 ${index + 1}`} />
+                <button
+                  type="button"
+                  aria-label={`删除截图：${item.file.name}`}
+                  onClick={() => removeScreenshot(item.id)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="bug-screenshot-tray__actions">
+            <button type="button" onClick={startSelection} disabled={capturing || screenshots.length >= MAX_SCREENSHOTS}>
+              {screenshots.length >= MAX_SCREENSHOTS ? '已满' : '继续截图'}
+            </button>
+            <button type="button" onClick={openFeedback}>
+              提交反馈
+            </button>
+          </div>
+        </section>,
         document.body,
       )}
-      {bugFile && (
+      {feedbackOpen && (
         <FeatureWishPoolModal
-          key={`${bugFile.name}-${bugFile.lastModified}`}
-          initialDraftFiles={[bugFile]}
-          onClose={() => setBugFile(null)}
+          key={feedbackKey}
+          initialDraftFiles={feedbackInitialFiles}
+          onDraftSubmitSuccess={handleDraftSubmitSuccess}
+          onClose={() => setFeedbackOpen(false)}
         />
       )}
     </>

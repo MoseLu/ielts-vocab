@@ -139,8 +139,9 @@ describe('FeatureWishPoolModal', () => {
 
   it('opens the create form with an initial screenshot already attached', async () => {
     const screenshot = new File(['shot'], 'bug-screenshot-initial.png', { type: 'image/png' })
+    const onDraftSubmitSuccess = vi.fn()
 
-    render(<FeatureWishPoolModal initialDraftFiles={[screenshot]} onClose={vi.fn()} />)
+    render(<FeatureWishPoolModal initialDraftFiles={[screenshot]} onDraftSubmitSuccess={onDraftSubmitSuccess} onClose={vi.fn()} />)
     await screen.findByText('错题清单自动整理')
 
     expect(screen.getByText('bug-screenshot-initial.png')).toBeInTheDocument()
@@ -154,6 +155,9 @@ describe('FeatureWishPoolModal', () => {
       })
       const body = submitCall?.[1]?.body as FormData
       expect(body.getAll('images')).toEqual([screenshot])
+    })
+    await waitFor(() => {
+      expect(onDraftSubmitSuccess).toHaveBeenCalled()
     })
   })
 })

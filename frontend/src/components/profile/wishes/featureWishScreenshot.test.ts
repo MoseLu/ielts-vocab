@@ -64,11 +64,12 @@ describe('featureWishScreenshot', () => {
     const file = await captureScreenAsPngFile()
     const options = vi.mocked(html2canvas).mock.calls[0]?.[1]
     const clonedDocument = document.implementation.createHTMLDocument()
-    clonedDocument.body.innerHTML = '<div class="bug-screenshot-selector-overlay"></div><main><input /></main>'
+    clonedDocument.body.innerHTML = '<div class="bug-screenshot-selector-overlay"></div><section class="bug-screenshot-tray"></section><main><input /></main>'
 
     options?.onclone?.(clonedDocument)
 
     expect(file.type).toBe('image/png')
     expect(clonedDocument.body.querySelector('.bug-screenshot-selector-overlay')).toBeNull()
+    expect(clonedDocument.body.querySelector('.bug-screenshot-tray')).toBeNull()
   })
 })

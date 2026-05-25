@@ -51,6 +51,7 @@ interface FeatureWishDeleteResponse {
 interface FeatureWishPoolModalProps {
   onClose: () => void
   initialDraftFiles?: File[]
+  onDraftSubmitSuccess?: () => void
 }
 
 type FormMode = 'create' | 'edit'
@@ -134,7 +135,11 @@ function StatusSelect({
   )
 }
 
-export default function FeatureWishPoolModal({ onClose, initialDraftFiles = [] }: FeatureWishPoolModalProps) {
+export default function FeatureWishPoolModal({
+  onClose,
+  initialDraftFiles = [],
+  onDraftSubmitSuccess,
+}: FeatureWishPoolModalProps) {
   const [wishes, setWishes] = useState<FeatureWish[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -218,9 +223,11 @@ export default function FeatureWishPoolModal({ onClose, initialDraftFiles = [] }
         method: formMode === 'edit' ? 'PUT' : 'POST',
         body,
       })
+      const createdWish = formMode === 'create'
       closeForm()
       if (selectedWish && data.wish.id === selectedWish.id) setSelectedWish(data.wish)
       await loadWishes(search)
+      if (createdWish) onDraftSubmitSuccess?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'bug 保存失败')
     } finally {
