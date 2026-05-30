@@ -18,7 +18,7 @@
     "@react-native-async-storage/async-storage": "^2.2.0",
     "lucide-react-native": "^1.14.0",
     "react": "19.1.0",
-    "react-native": "0.81.5",
+    "react-native": "0.85.3",
     "react-native-svg": "^15.15.4",
     "react-native-video": "6.19.2",
     "react-native-wechat-lib": "3.0.4",
