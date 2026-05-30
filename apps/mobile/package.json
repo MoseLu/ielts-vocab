@@ -38,7 +38,7 @@
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.14",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.3",
     "typescript": "^5.9.3"
   }
 }
