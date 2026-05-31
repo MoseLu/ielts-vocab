@@ -65,7 +65,7 @@ def test_resolve_monolith_compat_route_groups_script_plain_output_is_csv(capsys)
     output = capsys.readouterr().out.strip()
 
     assert exit_code == 0
-    assert output == 'auth,progress,vocabulary,speech,books,ai,notes,tts,admin'
+    assert output == 'auth,progress,vocabulary,speech,books,ai,notes,exams,exam-attempts,tts,admin,ops'
 
 
 def test_resolve_monolith_compat_route_groups_script_accepts_explicit_route_groups(capsys):

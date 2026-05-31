@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { QuickMemoryModeProps, Word } from './types'
 import { playWordAudio, prepareWordAudioPlayback, preloadWordAudioBatch, stopAudio } from './utils'
 import { useToast } from '../../contexts/ToastContext'
@@ -8,14 +8,15 @@ import {
   writeQuickMemoryRecordsToStorage,
   type QuickMemoryRecordState,
 } from '../../lib/quickMemory'
+import { buildLearningScope, type LearningScope } from '../../lib/learningScope'
 import {
   reconcileQuickMemoryRecordsWithBackend,
   syncQuickMemoryRecordsToBackend,
 } from '../../lib/quickMemorySync'
-import { QuickMemoryCountdownRing } from './quick-memory/QuickMemoryCountdownRing'
-import { QuickMemorySummary, type QuickMemorySessionResult as SessionResult } from './quick-memory/QuickMemorySummary'
-import { useQuickMemoryModeSession } from './quick-memory/useQuickMemoryModeSession'
-import { useQuickMemorySession } from '../../composables/practice/quick-memory/useQuickMemorySession'
+import { QuickMemoryCard } from './quick-memory/QuickMemoryCard'
+import { QuickMemorySummary } from './quick-memory/QuickMemorySummary'
+import type { QuickMemoryModeVariant, QuickMemorySessionResult as SessionResult } from '../../features/practice/quickMemorySession'
+import { useQuickMemoryModeRuntime } from './quick-memory/useQuickMemoryModeRuntime'
 import {
   PRACTICE_GLOBAL_SHORTCUT_NEXT_EVENT,
   PRACTICE_GLOBAL_SHORTCUT_PREVIOUS_EVENT,
@@ -23,10 +24,22 @@ import {
 } from './page/practiceGlobalShortcutEvents'
 
 const TIMER_SECONDS = 4
+const TEST_HIDE_KNOWN_AFTER_MS = 2500
+const TEST_AUTO_UNKNOWN_AFTER_MS = 4000
 const QUICK_MEMORY_PLAYBACK_OPTIONS = { sourcePreference: 'buffer' as const }
 const QUICK_MEMORY_PRELOAD_OPTIONS = { includeBuffer: true, sourcePreference: 'buffer' as const }
-function syncRecordToBackend(word: string, record: QuickMemoryRecordState): void {
-  void syncQuickMemoryRecordsToBackend([{ word, record }]).catch(() => {})
+type RevealOptions = { countAsActivity?: boolean; shouldPlayRevealAudio?: boolean; isFuzzy?: boolean }
+
+function syncRecordToBackend(
+  word: string,
+  record: QuickMemoryRecordState,
+  scope: LearningScope,
+  modeVariant: QuickMemoryModeVariant,
+): void {
+  void syncQuickMemoryRecordsToBackend(
+    [{ word, record }],
+    { ...scope, sourceMode: modeVariant },
+  ).catch(() => {})
 }
 
 export default function QuickMemoryMode({
@@ -39,6 +52,9 @@ export default function QuickMemoryMode({
   reviewMode,
   reviewHasMore,
   onContinueReview,
+  chapterGroup,
+  chapterQueueWords,
+  onContinueChapterGroup,
   buildChapterPath,
   onModeChange,
   onNavigate,
@@ -47,85 +63,79 @@ export default function QuickMemoryMode({
   initialIndex,
   onIndexChange,
   favoriteSlot,
+  modeVariant = 'quickmemory',
 }: QuickMemoryModeProps) {
+  const isTestMode = modeVariant === 'test'
   const { showToast } = useToast()
   const [index, setIndex] = useState(0)
   const [phase, setPhase] = useState<'question' | 'reveal'>('question')
   const [countdown, setCountdown] = useState(TIMER_SECONDS)
   const [choice, setChoice] = useState<'known' | 'unknown' | null>(null)
+  const [questionReady, setQuestionReady] = useState(!isTestMode)
+  const [knownChoiceAvailable, setKnownChoiceAvailable] = useState(true)
+  const [revealWasFuzzy, setRevealWasFuzzy] = useState(false)
   const [results, setResults] = useState<SessionResult[]>([])
   const [done, setDone] = useState(false)
+  const [completedSessionDurationSeconds, setCompletedSessionDurationSeconds] = useState<number | null>(null)
   const [revisitedSet, setRevisitedSet] = useState<Set<number>>(new Set())
-  const resultsRef = useRef<SessionResult[]>([])
   const countdownRef = useRef(TIMER_SECONDS)
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
+  const hideKnownTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const autoUnknownTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const questionTokenRef = useRef(0)
   const chosenRef = useRef(false)
   const wordRef = useRef<Word | undefined>(undefined)
-  const sessionStartRef = useRef(0)
-  const sessionLastActiveAtRef = useRef(0)
-  const completedSessionDurationSecondsRef = useRef<number | null>(null)
-  const bookIdRef = useRef<string | null>(bookId)
-  const chapterIdRef = useRef<string | null>(chapterId)
-  const sessionIdRef = useRef<number | null>(null)
-  const sessionLoggedRef = useRef(false)
-  const pendingRecordSyncRef = useRef<Record<string, QuickMemoryRecordState>>({})
-  const recordSyncInFlightRef = useRef(false)
-  const recordSyncPromiseRef = useRef<Promise<void> | null>(null)
   const continueReviewInFlightRef = useRef(false)
 
   const currentWord: Word | undefined = vocabulary[queue[index]]
-  const queueWords = queue.map(queueIndex => vocabulary[queueIndex]?.word).filter((word): word is string => Boolean(word))
+  const queueWords = useMemo(
+    () => queue.map(queueIndex => vocabulary[queueIndex]?.word).filter((word): word is string => Boolean(word)),
+    [queue, vocabulary],
+  )
+  const quickMemoryScope = useMemo(() => buildLearningScope({ bookId, chapterId }), [bookId, chapterId])
+  const showProgressSaveError = useCallback(() => {
+    showToast('进度保存失败，请检查网络连接', 'error')
+  }, [showToast])
   wordRef.current = currentWord
 
   const {
-    completeCurrentSession,
+    completedSessionDurationSecondsRef,
     flushPendingRecordSync,
+    pendingRecordSyncRef,
     prepareLearningSession,
     resetCurrentSessionSegment,
-    syncSessionSnapshot,
-  } = useQuickMemoryModeSession({
-    bookId,
-    chapterId,
-    bookIdRef,
-    chapterIdRef,
     resultsRef,
-    sessionStartRef,
-    sessionLastActiveAtRef,
-    completedSessionDurationSecondsRef,
-    sessionIdRef,
     sessionLoggedRef,
-    pendingRecordSyncRef,
-    recordSyncInFlightRef,
-    recordSyncPromiseRef,
-  })
-
-  useQuickMemorySession({
+    syncSessionSnapshot,
+  } = useQuickMemoryModeRuntime({
+    modeVariant,
     bookId,
     chapterId,
     done,
     index,
     queueWords,
     queueLength: queue.length,
+    chapterGroup,
+    chapterQueueWords,
     reviewMode,
     results,
-    resultsRef,
-    sessionStartRef,
-    sessionLastActiveAtRef,
-    completedSessionDurationSecondsRef,
-    bookIdRef,
-    chapterIdRef,
-    sessionIdRef,
-    sessionLoggedRef,
-    flushPendingRecordSync,
-    completeCurrentSession,
-    syncSessionSnapshot,
-    showSaveError: () => showToast('进度保存失败，请检查网络连接', 'error'),
+    quickMemoryScope,
+    showSaveError: showProgressSaveError,
+    onCompletedSessionDurationChange: setCompletedSessionDurationSeconds,
   })
+
+  const clearQuestionTimers = useCallback(() => {
+    clearInterval(timerRef.current)
+    clearTimeout(hideKnownTimerRef.current)
+    clearTimeout(autoUnknownTimerRef.current)
+    hideKnownTimerRef.current = undefined
+    autoUnknownTimerRef.current = undefined
+  }, [])
 
   useEffect(() => {
     if (queue.length === 0) return
     stopAudio()
-    clearInterval(timerRef.current)
+    clearQuestionTimers()
     const startIndex =
       initialIndex != null && initialIndex > 0 && initialIndex < queue.length
         ? initialIndex
@@ -136,20 +146,26 @@ export default function QuickMemoryMode({
     setCountdown(TIMER_SECONDS)
     countdownRef.current = TIMER_SECONDS
     setChoice(null)
+    setQuestionReady(!isTestMode)
+    setKnownChoiceAvailable(true)
+    setRevealWasFuzzy(false)
     setResults([])
     resultsRef.current = []
     setDone(false)
     setRevisitedSet(new Set())
     completedSessionDurationSecondsRef.current = null
+    setCompletedSessionDurationSeconds(null)
     sessionLoggedRef.current = false
     resetCurrentSessionSegment()
-  }, [bookId, chapterId, initialIndex, onIndexChange, queue.length, resetCurrentSessionSegment])
+  }, [bookId, chapterId, clearQuestionTimers, initialIndex, isTestMode, modeVariant, onIndexChange, queue.length, resetCurrentSessionSegment])
 
-  const reveal = useCallback(async (picked: 'known' | 'unknown', countAsActivity = true, shouldPlayRevealAudio = countAsActivity) => {
+  const reveal = useCallback(async (picked: 'known' | 'unknown', options: RevealOptions = {}) => {
     if (chosenRef.current) return
     chosenRef.current = true
-    clearInterval(timerRef.current)
+    clearQuestionTimers()
     stopAudio()
+    const countAsActivity = options.countAsActivity ?? true
+    const shouldPlayRevealAudio = options.shouldPlayRevealAudio ?? (countAsActivity && !isTestMode)
     const answeredWord = currentWord
     if (shouldPlayRevealAudio && answeredWord) {
       void playWordAudio(answeredWord.word, settings, () => {}, QUICK_MEMORY_PLAYBACK_OPTIONS)
@@ -160,26 +176,24 @@ export default function QuickMemoryMode({
       await prepareLearningSession(actionAt)
     }
 
-    const isFuzzy = revisitedSet.has(index)
+    const isFuzzy = options.isFuzzy ?? revisitedSet.has(index)
 
     setChoice(picked)
+    setRevealWasFuzzy(isFuzzy)
     setPhase('reveal')
 
     const { records, record } = updateQuickMemoryRecord(
-      readQuickMemoryRecordsFromStorage(),
+      readQuickMemoryRecordsFromStorage(undefined, quickMemoryScope),
       answeredWord?.word ?? '',
       picked,
       isFuzzy,
-      {
-        bookId: bookId ?? undefined,
-        chapterId: chapterId ?? (answeredWord?.chapter_id != null ? String(answeredWord.chapter_id) : undefined),
-      },
+      quickMemoryScope,
     )
-    writeQuickMemoryRecordsToStorage(records)
+    writeQuickMemoryRecordsToStorage(records, undefined, quickMemoryScope)
     const wordKey = (answeredWord?.word ?? '').toLowerCase()
     if (wordKey && record) {
       pendingRecordSyncRef.current[wordKey] = record
-      syncRecordToBackend(wordKey, record)
+      syncRecordToBackend(wordKey, record, quickMemoryScope, modeVariant)
     }
     if (answeredWord && record) {
       onQuickMemoryRecordChange?.(answeredWord, record)
@@ -204,18 +218,7 @@ export default function QuickMemoryMode({
       onWrongWord(answeredWord)
     }
 
-  }, [
-    bookId,
-    chapterId,
-    currentWord,
-    index,
-    onQuickMemoryRecordChange,
-    onWrongWord,
-    prepareLearningSession,
-    revisitedSet,
-    settings,
-    syncSessionSnapshot,
-  ])
+  }, [clearQuestionTimers, currentWord, index, isTestMode, modeVariant, onQuickMemoryRecordChange, onWrongWord, prepareLearningSession, quickMemoryScope, revisitedSet, settings, syncSessionSnapshot])
 
   const beginAutoUnknownReveal = useCallback(() => {
     if (chosenRef.current) return
@@ -223,7 +226,28 @@ export default function QuickMemoryMode({
   }, [reveal])
 
   const startQuestionCountdown = useCallback(() => {
-    clearInterval(timerRef.current)
+    clearQuestionTimers()
+    setQuestionReady(true)
+    setCountdown(TIMER_SECONDS)
+    countdownRef.current = TIMER_SECONDS
+    if (isTestMode) {
+      const startedAt = Date.now()
+      timerRef.current = setInterval(() => {
+        const elapsedSeconds = (Date.now() - startedAt) / 1000
+        const nextCountdown = Math.max(Math.ceil(TIMER_SECONDS - elapsedSeconds), 0)
+        countdownRef.current = nextCountdown
+        setCountdown(nextCountdown)
+        if (nextCountdown === 0) clearInterval(timerRef.current)
+      }, 250)
+      hideKnownTimerRef.current = setTimeout(() => {
+        if (!chosenRef.current) setKnownChoiceAvailable(false)
+      }, TEST_HIDE_KNOWN_AFTER_MS)
+      autoUnknownTimerRef.current = setTimeout(() => {
+        if (!chosenRef.current) beginAutoUnknownReveal()
+      }, TEST_AUTO_UNKNOWN_AFTER_MS)
+      return
+    }
+
     timerRef.current = setInterval(() => {
       const nextCountdown = Math.max(countdownRef.current - 1, 0)
       countdownRef.current = nextCountdown
@@ -233,15 +257,21 @@ export default function QuickMemoryMode({
         beginAutoUnknownReveal()
       }
     }, 1000)
-  }, [beginAutoUnknownReveal])
+  }, [beginAutoUnknownReveal, clearQuestionTimers, isTestMode])
 
   useEffect(() => {
     if (phase !== 'question' || !currentWord) return
 
+    const questionToken = questionTokenRef.current + 1
+    questionTokenRef.current = questionToken
+    const activeWord = currentWord.word
     chosenRef.current = false
     setCountdown(TIMER_SECONDS)
     countdownRef.current = TIMER_SECONDS
-    clearInterval(timerRef.current)
+    setQuestionReady(!isTestMode)
+    setKnownChoiceAvailable(true)
+    setRevealWasFuzzy(false)
+    clearQuestionTimers()
     void prepareWordAudioPlayback(currentWord.word, QUICK_MEMORY_PRELOAD_OPTIONS)
 
     const upcomingWords = queue
@@ -252,12 +282,27 @@ export default function QuickMemoryMode({
       void preloadWordAudioBatch(upcomingWords, upcomingWords.length, QUICK_MEMORY_PRELOAD_OPTIONS)
     }
 
-    startQuestionCountdown()
-
-    return () => {
-      clearInterval(timerRef.current)
+    if (isTestMode) {
+      const startAfterAudio = () => {
+        if (
+          !chosenRef.current
+          && questionTokenRef.current === questionToken
+          && wordRef.current?.word === activeWord
+        ) {
+          startQuestionCountdown()
+        }
+      }
+      void playWordAudio(activeWord, settings, startAfterAudio, QUICK_MEMORY_PLAYBACK_OPTIONS).then(started => {
+        if (!started) startAfterAudio()
+      })
+      return () => { questionTokenRef.current += 1; clearQuestionTimers() }
     }
-  }, [currentWord?.word, index, phase, queue, reviewMode, startQuestionCountdown, vocabulary])
+
+    startQuestionCountdown()
+    return () => {
+      clearQuestionTimers()
+    }
+  }, [clearQuestionTimers, currentWord?.word, index, isTestMode, phase, queue, reviewMode, settings, startQuestionCountdown, vocabulary])
 
   useEffect(() => {
     void reconcileQuickMemoryRecordsWithBackend().catch(() => {})
@@ -265,28 +310,32 @@ export default function QuickMemoryMode({
 
   useEffect(() => () => {
     stopAudio()
-    clearInterval(timerRef.current)
-  }, [])
+    clearQuestionTimers()
+  }, [clearQuestionTimers])
 
   const handleNext = useCallback(async () => {
-    await prepareLearningSession()
     stopAudio()
+    clearQuestionTimers()
     const next = index + 1
     if (next >= queue.length) {
-      completedSessionDurationSecondsRef.current = await completeCurrentSession()
       setDone(true)
       return
     }
+    await prepareLearningSession()
     setIndex(next)
     onIndexChange?.(next)
     setPhase('question')
     setChoice(null)
-  }, [completeCurrentSession, index, onIndexChange, prepareLearningSession, queue.length])
+    setQuestionReady(!isTestMode)
+    setKnownChoiceAvailable(true)
+    setRevealWasFuzzy(false)
+  }, [clearQuestionTimers, index, isTestMode, onIndexChange, prepareLearningSession, queue.length])
 
   const handlePrev = useCallback(async () => {
     if (index === 0) return
     await prepareLearningSession()
     stopAudio()
+    clearQuestionTimers()
     const prev = index - 1
     setRevisitedSet(current => {
       const nextSet = new Set(current)
@@ -297,34 +346,42 @@ export default function QuickMemoryMode({
     onIndexChange?.(prev)
     setPhase('question')
     setChoice(null)
-  }, [index, onIndexChange, prepareLearningSession])
+    setQuestionReady(!isTestMode)
+    setKnownChoiceAvailable(true)
+    setRevealWasFuzzy(false)
+  }, [clearQuestionTimers, index, isTestMode, onIndexChange, prepareLearningSession])
 
   const replayCurrentWord = useCallback(() => {
     if (!wordRef.current) return
-    clearInterval(timerRef.current)
+    clearQuestionTimers()
     setCountdown(TIMER_SECONDS)
     countdownRef.current = TIMER_SECONDS
     if (phase === 'question') {
       stopAudio()
+      const replayToken = questionTokenRef.current + 1
+      questionTokenRef.current = replayToken
       const replayWord = wordRef.current.word
+      setQuestionReady(!isTestMode)
+      setKnownChoiceAvailable(true)
       void playWordAudio(replayWord, settings, () => {
-        if (!chosenRef.current && wordRef.current?.word === replayWord) {
+        if (!chosenRef.current && questionTokenRef.current === replayToken && wordRef.current?.word === replayWord) {
           startQuestionCountdown()
         }
       }, QUICK_MEMORY_PLAYBACK_OPTIONS).then(started => {
-        if (!started && !chosenRef.current && wordRef.current?.word === replayWord) {
+        if (!started && !chosenRef.current && questionTokenRef.current === replayToken && wordRef.current?.word === replayWord) {
           startQuestionCountdown()
         }
       })
       return
     }
     void playWordAudio(wordRef.current.word, settings, () => {}, QUICK_MEMORY_PLAYBACK_OPTIONS)
-  }, [phase, settings, startQuestionCountdown])
+  }, [clearQuestionTimers, isTestMode, phase, settings, startQuestionCountdown])
 
   useEffect(() => {
     const handlePreviousShortcut = () => { void handlePrev() }
     const handleNextShortcut = () => {
       if (phase === 'question') {
+        if (isTestMode && (!questionReady || !knownChoiceAvailable)) return
         void reveal('known')
         return
       }
@@ -338,22 +395,27 @@ export default function QuickMemoryMode({
       window.removeEventListener(PRACTICE_GLOBAL_SHORTCUT_NEXT_EVENT, handleNextShortcut)
       window.removeEventListener(PRACTICE_GLOBAL_SHORTCUT_REPLAY_EVENT, replayCurrentWord)
     }
-  }, [phase, reveal, handlePrev, handleNext, replayCurrentWord])
+  }, [handleNext, handlePrev, isTestMode, knownChoiceAvailable, phase, questionReady, replayCurrentWord, reveal])
 
   const handleRestart = useCallback(() => {
     stopAudio()
+    clearQuestionTimers()
     setIndex(0)
     onIndexChange?.(0)
     setPhase('question')
     setChoice(null)
+    setQuestionReady(!isTestMode)
+    setKnownChoiceAvailable(true)
+    setRevealWasFuzzy(false)
     setResults([])
     resultsRef.current = []
     setRevisitedSet(new Set())
     completedSessionDurationSecondsRef.current = null
+    setCompletedSessionDurationSeconds(null)
     sessionLoggedRef.current = false
     resetCurrentSessionSegment()
     setDone(false)
-  }, [onIndexChange, resetCurrentSessionSegment])
+  }, [clearQuestionTimers, isTestMode, onIndexChange, resetCurrentSessionSegment])
 
   const handleContinueReview = useCallback(async () => {
     if (!onContinueReview || continueReviewInFlightRef.current) return
@@ -385,8 +447,11 @@ export default function QuickMemoryMode({
         reviewMode={reviewMode}
         reviewHasMore={reviewHasMore}
         onContinueReview={onContinueReview ? handleContinueReview : undefined}
+        chapterGroup={chapterGroup}
+        onContinueChapterGroup={onContinueChapterGroup}
         buildChapterPath={buildChapterPath}
-        sessionDurationSeconds={completedSessionDurationSecondsRef.current}
+        sessionDurationSeconds={completedSessionDurationSeconds}
+        modeVariant={modeVariant}
         onRestart={handleRestart}
         onModeChange={onModeChange}
         onNavigate={onNavigate}
@@ -394,67 +459,37 @@ export default function QuickMemoryMode({
     )
   }
 
+  if (!currentWord) {
+    return <div className="qm-empty">暂无单词</div>
+  }
+
   const progress = (index / queue.length) * 100
   const replayWordHint = '点击右上角喇叭或按 Tab 重播发音'
 
   return (
-    <div className="qm-root">
-      <div className="qm-stage">
-        <div className="qm-progress-track">
-          <div className="qm-progress-fill" style={{ '--progress-percent': `${progress}%` } as CSSProperties} />
-        </div>
-        <div className="qm-progress-label">{index + 1} / {queue.length}</div>
-        <div className={`qm-card ${phase === 'reveal' ? 'qm-card--reveal' : ''}`}>
-          <div className="qm-card-toolbar">
-            {favoriteSlot ? <div className="qm-card-toolbar__side">{favoriteSlot}</div> : null}
-            <div className="qm-card-toolbar__audio-group">
-              <button type="button" className="qm-card-toolbar__icon-btn" onClick={replayCurrentWord} aria-label="重播发音" title={replayWordHint}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
-              </button>
-            </div>
-          </div>
-          {phase === 'question' && (
-            <>
-              {countdown > 0 && <div className="qm-countdown-ring"><QuickMemoryCountdownRing seconds={countdown} total={TIMER_SECONDS} /></div>}
-              <div className="qm-word">{currentWord.word}</div>
-              <p className="qm-hint">你认识这个单词吗？</p>
-              <div className="qm-choice-row">
-                <button className="qm-btn qm-btn--unknown" onClick={() => { void reveal('unknown') }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  不认识
-                </button>
-                <button className="qm-btn qm-btn--known" onClick={() => { void reveal('known') }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  认识
-                </button>
-              </div>
-              <div className="qm-key-hints">
-                {index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
-                <span className="qm-key-hint"><kbd>→</kbd> 认识</span>
-                <span className="qm-key-hint">点右上角喇叭或 <kbd>Tab</kbd> 重播发音</span>
-              </div>
-            </>
-          )}
-          {phase === 'reveal' && currentWord && (
-            <>
-              <div className={`qm-result-badge ${choice === 'known' ? 'qm-badge--known' : 'qm-badge--unknown'}${revisitedSet.has(index) ? ' qm-badge--fuzzy' : ''}`}>
-                {choice === 'known' ? '✓ 认识' : '✗ 不认识'}
-                {revisitedSet.has(index) && <span className="qm-badge-fuzzy-tag">模糊</span>}
-              </div>
-              <div className="qm-word">{currentWord.word}</div>
-              {currentWord.phonetic && <div className="qm-phonetic">{currentWord.phonetic}</div>}
-              <div className="qm-definition-line">{currentWord.pos && <span className="qm-pos">{currentWord.pos.toLowerCase()}</span>}<span className="qm-definition">{currentWord.definition}</span></div>
-              <div className="qm-nav-row">
-                {index > 0 && <button className="qm-btn-prev" onClick={() => { void handlePrev() }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>上一个</button>}
-                <button className="qm-btn-next" onClick={() => { void handleNext() }}>
-                  {index + 1 < queue.length ? <span className="qm-btn-next-inner">下一个<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg></span> : '查看结果'}
-                </button>
-              </div>
-              <div className="qm-key-hints">{index > 0 && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}<span className="qm-key-hint"><kbd>→</kbd> 下一个</span><span className="qm-key-hint">点右上角喇叭或 <kbd>Tab</kbd> 重播发音</span></div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+    <QuickMemoryCard
+      modeVariant={modeVariant}
+      phase={phase}
+      countdown={countdown}
+      totalSeconds={TIMER_SECONDS}
+      progressPercent={progress}
+      currentPosition={index + 1}
+      totalCount={queue.length}
+      currentWord={currentWord}
+      choice={choice}
+      wasFuzzy={revealWasFuzzy}
+      questionReady={questionReady}
+      knownChoiceAvailable={knownChoiceAvailable}
+      favoriteSlot={favoriteSlot}
+      replayWordHint={replayWordHint}
+      canGoPrev={index > 0}
+      isLast={index + 1 >= queue.length}
+      onReplay={replayCurrentWord}
+      onKnown={() => { void reveal('known') }}
+      onFamiliar={() => { void reveal('unknown', { isFuzzy: true }) }}
+      onUnknown={() => { void reveal('unknown') }}
+      onPrev={() => { void handlePrev() }}
+      onNext={() => { void handleNext() }}
+    />
   )
 }

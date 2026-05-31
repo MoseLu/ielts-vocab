@@ -189,6 +189,18 @@ const CONTRACTS = {
     resumePolicy: 'backend-progress-with-local-cache',
     answerCentric: true,
   },
+  test: {
+    id: 'test',
+    runtimeKind: 'practice',
+    route: '/practice',
+    queueSource: 'canonical-word-list',
+    dimensionResolver: 'fixed-recognition',
+    writes: ['quickMemory', 'session', 'progress', 'chapterModeProgress', 'wrongWordsOnUnknown', 'wordMastery'],
+    progressPolicy: 'book-or-chapter-progress',
+    sessionPolicy: 'quickmemory-session',
+    resumePolicy: 'backend-progress-with-local-cache',
+    answerCentric: true,
+  },
   errors: {
     id: 'errors',
     runtimeKind: 'review-overlay',

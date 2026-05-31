@@ -133,5 +133,5 @@ export function getWrongWordDimensionLabel(
   return getWrongWordDimensionModeLabel(dimension, fallback)
 }
 
-export const WRONG_WORD_PENDING_REVIEW_TARGET = 4
+export const WRONG_WORD_PENDING_REVIEW_TARGET = 1
 export const WRONG_WORD_ERROR_REVIEW_TARGET = WRONG_WORD_PENDING_REVIEW_TARGET

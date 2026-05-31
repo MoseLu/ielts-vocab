@@ -11,15 +11,12 @@ import { STORAGE_KEYS } from '../../constants'
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const practiceControlBarMock = vi.fn(() => <div data-testid="practice-control-bar" />)
-const fetchMock = vi.fn()
 const toggleFavoriteMock = vi.fn()
 const useFavoriteWordsMock = vi.fn(() => ({
   isFavorite: (word: string) => word === 'beta',
   isPending: () => false,
   toggleFavorite: (...args: unknown[]) => toggleFavoriteMock(...args),
 }))
-
-vi.stubGlobal('fetch', fetchMock)
 
 vi.mock('../../hooks/useSpeechRecognition', () => ({
   useSpeechRecognition: () => ({
@@ -145,7 +142,6 @@ describe('PracticePage quick-memory review mode', () => {
     apiFetchMock.mockReset()
     startSessionMock.mockClear()
     practiceControlBarMock.mockClear()
-    fetchMock.mockReset()
     toggleFavoriteMock.mockReset()
     vi.mocked(loadSmartStatsFromBackend).mockClear()
     localStorage.clear()
@@ -237,21 +233,15 @@ describe('PracticePage quick-memory review mode', () => {
           },
         })
       }
-      return Promise.reject(new Error(`Unexpected url: ${url}`))
-    })
-
-    fetchMock.mockImplementation((url: string) => {
       if (url === '/api/books/book-a/chapters') {
         return Promise.resolve({
-          json: () => Promise.resolve({
-            chapters: [
-              { id: '65', title: '第65章', word_count: 64 },
-              { id: '66', title: '第66章', word_count: 66 },
-            ],
-          }),
+          chapters: [
+            { id: '65', title: '第65章', word_count: 64 },
+            { id: '66', title: '第66章', word_count: 66 },
+          ],
         })
       }
-      return Promise.reject(new Error(`Unexpected fetch url: ${url}`))
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
     })
 
     render(
@@ -261,7 +251,7 @@ describe('PracticePage quick-memory review mode', () => {
     )
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith('/api/books/book-a/chapters')
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/books/book-a/chapters')
     })
 
     await waitFor(() => {

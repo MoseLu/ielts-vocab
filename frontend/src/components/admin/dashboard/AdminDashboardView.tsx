@@ -1,7 +1,11 @@
 import { PageSkeleton, SegmentedControl } from '../../ui'
 import { AdminTableSkeleton, MiniBarChart, StatCard } from './AdminDashboardPrimitives'
+import { AdminAssetsPanel } from './AdminAssetsPanel'
 import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 import {
+  type AdminAssetMnemonicStatus,
+  type AdminAssetSummary,
+  type AdminAssetWord,
   bookLabels,
   fmtDate,
   fmtDateTime,
@@ -20,23 +24,38 @@ interface AdminDashboardViewProps {
   overviewLoading: boolean
   users: AdminUser[]
   feedbackItems: AdminWordFeedback[]
+  assetItems: AdminAssetWord[]
   feedbackTotal: number
+  assetTotal: number
+  assetSummary: AdminAssetSummary | null
   total: number
   page: number
   pages: number
+  assetPage: number
+  assetPages: number
   search: string
+  assetSearch: string
+  assetBookId: string
+  assetMnemonicStatus: AdminAssetMnemonicStatus
   sort: string
   order: 'asc' | 'desc'
   currentUserId?: number
   currentUserAvatarUrl?: string | null
   loading: boolean
   feedbackLoading: boolean
+  assetLoading: boolean
   error: string
   onDismissError: () => void
   onTabChange: (value: AdminTab) => void
   onSearchSubmit: () => void
   onSearchClear: () => void
   onSearchChange: (value: string) => void
+  onAssetSearchSubmit: () => void
+  onAssetSearchClear: () => void
+  onAssetSearchChange: (value: string) => void
+  onAssetBookChange: (value: string) => void
+  onAssetMnemonicStatusChange: (value: AdminAssetMnemonicStatus) => void
+  onAssetPageChange: (page: number) => void
   onSort: (column: string) => void
   onPageChange: (page: number) => void
   onSelectUser: (userId: number) => void
@@ -72,23 +91,38 @@ export function AdminDashboardView({
   overviewLoading,
   users,
   feedbackItems,
+  assetItems,
   feedbackTotal,
+  assetTotal,
+  assetSummary,
   total,
   page,
   pages,
+  assetPage,
+  assetPages,
   search,
+  assetSearch,
+  assetBookId,
+  assetMnemonicStatus,
   sort,
   order,
   currentUserId,
   currentUserAvatarUrl,
   loading,
   feedbackLoading,
+  assetLoading,
   error,
   onDismissError,
   onTabChange,
   onSearchSubmit,
   onSearchClear,
   onSearchChange,
+  onAssetSearchSubmit,
+  onAssetSearchClear,
+  onAssetSearchChange,
+  onAssetBookChange,
+  onAssetMnemonicStatusChange,
+  onAssetPageChange,
   onSort,
   onPageChange,
   onSelectUser,
@@ -110,6 +144,7 @@ export function AdminDashboardView({
           { value: 'overview', label: '平台概览' },
           { value: 'users', label: '用户管理', badge: total },
           { value: 'feedback', label: '问题反馈' },
+          { value: 'assets', label: '资产管理', badge: assetTotal || undefined },
         ]}
       />
 
@@ -356,6 +391,26 @@ export function AdminDashboardView({
             )}
           </div>
         </div>
+      )}
+
+      {tab === 'assets' && (
+        <AdminAssetsPanel
+          assets={assetItems}
+          total={assetTotal}
+          page={assetPage}
+          pages={assetPages}
+          search={assetSearch}
+          bookId={assetBookId}
+          mnemonicStatus={assetMnemonicStatus}
+          summary={assetSummary}
+          loading={assetLoading}
+          onSearchSubmit={onAssetSearchSubmit}
+          onSearchClear={onAssetSearchClear}
+          onSearchChange={onAssetSearchChange}
+          onBookChange={onAssetBookChange}
+          onMnemonicStatusChange={onAssetMnemonicStatusChange}
+          onPageChange={onAssetPageChange}
+        />
       )}
     </div>
   )

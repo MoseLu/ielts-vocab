@@ -10,9 +10,9 @@ import { apiFetch } from '../../../lib'
 import type { BookEntryMode } from '../../../lib'
 import { Skeleton } from '../../ui'
 import { Scrollbar } from '../../ui/Scrollbar'
-import ConfusableCustomGroupsModal, {
-  type CustomConfusableChapter,
-} from '../../practice/ConfusableCustomGroupsModal'
+import ConfusableCustomGroupsModal from '../../practice/ConfusableCustomGroupsModal'
+import type { CustomConfusableChapter } from '../../../features/practice/confusableCustomGroups'
+import ChapterModeCharts from './ChapterModeCharts'
 
 const MODE_META: Record<string, { label: string; title: string }> = {
   ...CHAPTER_PRACTICE_MODE_META,
@@ -48,6 +48,7 @@ interface ChapterModeData {
 
 interface ChapterProgress {
   is_completed: boolean
+  current_index?: number
   words_learned: number
   accuracy?: number
   modes?: Record<string, ChapterModeData>
@@ -80,17 +81,6 @@ interface ChapterModalSkeletonProps {
 type RenderUnit =
   | { kind: 'flat'; chapters: Chapter[] }
   | { kind: 'section'; label: string; wordCount: number; groupCount: number; chapters: Chapter[] }
-
-const ENTRY_MODE_META: Record<BookEntryMode, { title: string; description: string }> = {
-  practice: {
-    title: '常规练习',
-    description: '进入单项训练模式，按你选择的练习方式推进。',
-  },
-  game: {
-    title: '游戏闯关',
-    description: '进入独立的五维闯关入口，在同一词上串联认义听说写。',
-  },
-}
 
 function findPartSeparatorIndex(title: string): number {
   const match = title.match(/\s+[·•]\s+Part\s+/i)
@@ -195,7 +185,6 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCustomModal, setShowCustomModal] = useState(false)
-  const [entryMode, setEntryMode] = useState<BookEntryMode>('practice')
   const { bodyRef, count: skeletonCount } = useResponsiveChapterSkeletonCount({
     rowMinHeight: 156,
     gap: 10,
@@ -205,8 +194,6 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   const currentIndex = progress?.current_index || 0
   const isConfusableBook = String(book.id) === 'ielts_confusable_match'
   const isCustomBook = !!book.is_custom_book && !isConfusableBook
-  const supportsGameEntry = !isConfusableBook && book.practice_mode !== 'match'
-  const activeEntryMode: BookEntryMode = supportsGameEntry ? entryMode : 'practice'
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -256,7 +243,18 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     return chapters[chapters.length - 1]?.id ?? null
   }, [chapters, currentIndex])
 
+  const chapterStartIndexById = useMemo(() => {
+    const startIndexById: Record<string, number> = {}
+    let accumulated = 0
+    for (const chapter of chapters) {
+      startIndexById[String(chapter.id)] = accumulated
+      accumulated += chapter.word_count ?? 0
+    }
+    return startIndexById
+  }, [chapters])
+
   const renderUnits = useMemo(() => buildRenderUnits(groupBySection(chapters)), [chapters])
+  const hasAnyChapterProgress = Object.keys(chapterProgress).length > 0
 
   const handleSelect = (chapter: Chapter) => {
     let startIndex = 0
@@ -265,7 +263,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
       startIndex += currentChapter.word_count ?? 0
     }
 
-    onSelectChapter(chapter, startIndex, activeEntryMode)
+    onSelectChapter(chapter, startIndex)
   }
 
   const handleContinue = () => {
@@ -297,34 +295,35 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   const renderCard = (chapter: Chapter, isInSection: boolean) => {
     const isCurrent = chapter.id === currentChapterId
     const progressRecord = chapterProgress[chapter.id] ?? chapterProgress[String(chapter.id)]
-    const hasStarted = !!progressRecord && progressRecord.words_learned > 0
-
-    const modeBadges = Object.entries(MODE_META)
-      .map(([modeKey, meta]) => {
-        const record = progressRecord?.modes?.[modeKey]
-        return record ? { modeKey, meta, record } : null
-      })
-      .filter(Boolean) as { modeKey: string; meta: typeof MODE_META[string]; record: ChapterModeData }[]
-
-    const hasModeData = modeBadges.length > 0
-    const allCompleted = hasModeData && modeBadges.every(item => item.record.is_completed)
-    const isCompleted = allCompleted || (!hasModeData && !!progressRecord?.is_completed)
-    const chapterProgressPercent = hasModeData
-      ? progressRecord?.accuracy ?? 0
-      : chapter.word_count
-        ? Math.round(((progressRecord?.words_learned ?? 0) / chapter.word_count) * 100)
-        : 0
     const displayCount = isConfusableBook ? chapter.group_count ?? 0 : chapter.word_count ?? 0
     const displayUnit = isConfusableBook ? '组' : '词'
-
-    const getAccuracyClass = (accuracy: number) => (
-      accuracy >= 80 ? 'mode-badge-high' : accuracy >= 60 ? 'mode-badge-mid' : 'mode-badge-low'
+    const progressTotal = isConfusableBook ? chapter.group_count ?? chapter.word_count ?? 0 : chapter.word_count ?? 0
+    const bookCoverageLearnedCount = hasAnyChapterProgress
+      ? 0
+      : Math.max(0, Math.min(progressTotal, currentIndex - (chapterStartIndexById[String(chapter.id)] ?? 0)))
+    const learnedCount = Math.max(
+      0,
+      progressRecord?.words_learned ?? 0,
+      progressRecord?.current_index ?? 0,
+      bookCoverageLearnedCount,
     )
+    const modeRecords = Object.values(progressRecord?.modes ?? {})
+    const hasStarted = learnedCount > 0 || modeRecords.some(record => (record.correct_count ?? 0) + (record.wrong_count ?? 0) > 0)
+    const hasModeData = modeRecords.length > 0
+    const allCompleted = hasModeData && modeRecords.every(record => record.is_completed)
+    const isCoverageComplete = progressTotal > 0 && learnedCount >= progressTotal
+    const isCompleted = !!progressRecord?.is_completed || allCompleted || isCoverageComplete
+    const chapterProgressPercent = isCompleted
+      ? 100
+      : progressTotal
+        ? Math.min(99, Math.floor((learnedCount / progressTotal) * 100))
+        : 0
+    const accuracyText = `正确率 ${progressRecord?.accuracy ?? 0}%`
 
     return (
       <div
         key={chapter.id}
-        className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : ''}`}
+        className={`chapter-card${isCurrent ? ' current' : ''}${isCompleted ? ' completed' : hasStarted ? ' in-progress' : ' not-started'}`}
         onClick={() => handleSelect(chapter)}
       >
         {chapter.is_custom && (
@@ -332,34 +331,21 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         )}
         <div className="chapter-card-name">{getCardLabel(chapter, isInSection)}</div>
 
-        {hasModeData && (
-          <div className="chapter-mode-badges">
-            {modeBadges.map(({ modeKey, meta, record }) => (
-              <span
-                key={modeKey}
-                className={`mode-badge mode-badge--${modeKey} ${getAccuracyClass(record.accuracy)}`}
-                title={`${meta.title}：${record.accuracy}%${record.is_completed ? ' 已完成' : ''}`}
-              >
-                {meta.label} {record.accuracy}%{record.is_completed ? ' 已完成' : ''}
-              </span>
-            ))}
-          </div>
-        )}
+        <ChapterModeCharts
+          modeMeta={MODE_META}
+          modes={progressRecord?.modes}
+          completionPercent={chapterProgressPercent}
+        />
 
         <div className="chapter-card-footer">
           <span className="chapter-card-count">{displayCount} {displayUnit}</span>
           {isCompleted ? (
-            <span className="chapter-status-done">已完成 {progressRecord?.accuracy ?? 0}%</span>
+            <span className="chapter-status-done">{hasModeData ? '已完成' : `已完成 · ${accuracyText}`}</span>
           ) : hasStarted ? (
-            <span className="chapter-status-progress">{progressRecord?.accuracy ?? 0}%</span>
+            <span className="chapter-status-progress">{hasModeData ? '学习中' : `学习中 · ${accuracyText}`}</span>
           ) : (
             <span className="chapter-status-todo">未开始</span>
           )}
-        </div>
-
-        <div className="chapter-card-progress">
-          <progress className="chapter-card-progress-bar" value={chapterProgressPercent} max={100} />
-          <span className="chapter-card-progress-text">{chapterProgressPercent}%</span>
         </div>
 
         {isCurrent && <div className="chapter-card-current-dot" />}
@@ -382,25 +368,6 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
           <div className="chapter-modal-info">
             <h2 className="chapter-modal-title">{book.title}</h2>
             <p className="chapter-modal-subtitle">{subtitle}</p>
-            {supportsGameEntry && (
-              <>
-                <div className="chapter-entry-switch" role="tablist" aria-label="学习入口">
-                  {(Object.entries(ENTRY_MODE_META) as [BookEntryMode, { title: string; description: string }][]).map(([mode, meta]) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      role="tab"
-                      aria-selected={activeEntryMode === mode}
-                      className={`chapter-entry-switch__option${activeEntryMode === mode ? ' is-active' : ''}`}
-                      onClick={() => setEntryMode(mode)}
-                    >
-                      {meta.title}
-                    </button>
-                  ))}
-                </div>
-                <p className="chapter-entry-note">{ENTRY_MODE_META[activeEntryMode].description}</p>
-              </>
-            )}
           </div>
           <div className="chapter-modal-actions">
             {isCustomBook && (
@@ -421,7 +388,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
             )}
             {currentIndex > 0 && (
               <button className="chapter-continue-btn" onClick={handleContinue}>
-                {activeEntryMode === 'game' ? '继续闯关' : '继续学习'}
+                继续学习
               </button>
             )}
             <button className="chapter-modal-close" onClick={onClose}>

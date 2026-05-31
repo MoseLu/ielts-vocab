@@ -10,16 +10,16 @@ import {
 import { DEFAULT_SETTINGS } from '../../../constants'
 import { readAppSettingsFromStorage } from '../../../lib/appSettings'
 import { useAuth, useToast } from '../../../contexts'
-import type { Word } from '../../practice/types'
+import type { Word } from '../../../features/practice/types'
 import { playExampleAudio, stopAudio } from '../../practice/utils'
 import { playWordAudio } from '../../practice/utils.audio'
-import { resolveWordPlaybackSettings, SLOW_WORD_PLAYBACK_OPTIONS } from '../../practice/wordPlayback'
+import { resolveWordPlaybackSettings, SLOW_WORD_PLAYBACK_OPTIONS } from '../../../features/practice/wordPlayback'
 import { useFavoriteWords } from '../../../features/vocabulary/hooks'
 import ExampleAudioIcon from '../../ui/ExampleAudioIcon'
 import WordMeaningGroups from '../../ui/WordMeaningGroups'
 import GlobalWordSearchActionRail from './GlobalWordSearchActionRail'
 import WordFeedbackModal from './WordFeedbackModal'
-import { buildWordMemoryNote } from './globalWordMemoryNote'
+import { buildMemoryRelatedCandidates, buildWordMemoryNote } from './globalWordMemoryNote'
 import { WORD_NOTE_LIMIT } from './globalWordSearchDetailUtils'
 import {
   buildNoteStatusLabel,
@@ -63,7 +63,7 @@ export default function GlobalWordSearchDetailPanel({
   const resolvedPos = detailData?.pos || result.pos
   const resolvedDefinition = detailData?.definition || summaryDefinition
   const memoryNote = buildWordMemoryNote({ detailData, result })
-  const memoryCandidates = result.listening_confusables?.slice(0, 6) ?? []
+  const memoryCandidates = buildMemoryRelatedCandidates(result)
   const primaryExampleText = detailExamples[0]?.en?.trim() ?? ''
 
   const noteStatusLabel = useMemo(() => buildNoteStatusLabel(noteStatus), [noteStatus])

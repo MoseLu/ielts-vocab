@@ -2,7 +2,7 @@ import { startTransition, useCallback, useEffect, useMemo, useRef, useState } fr
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useToast } from '../../../contexts'
 import { buildBookPracticePath } from '../../../lib'
-import type { Chapter, Word, WordStatuses } from '../../../components/practice/types'
+import type { Chapter, Word, WordStatuses } from '../../../features/practice/types'
 import {
   buildMatchGroups,
   buildRoundCards,
@@ -11,18 +11,18 @@ import {
   resolveRoundGroupKeys,
   type MatchCard,
   type MatchGroup,
-} from '../../../components/practice/confusableMatch'
+} from '../../../features/practice/confusableMatch'
 import {
-  clearStoredChapterSnapshot,
   measureLine,
   type ActiveLine,
-} from '../../../components/practice/confusable/confusableMatchPageHelpers'
+} from '../../../features/practice/confusableMatchPagePresentation'
+import { clearStoredChapterSnapshot } from '../../../features/practice/confusableMatchStorage'
 import {
   buildConfusableMatchSnapshot,
   loadConfusableMatchPageData,
   persistConfusableMatchProgress,
-} from '../../../components/practice/confusable/confusableMatchPageData'
-import type { CustomConfusableChapter } from '../../../components/practice/ConfusableCustomGroupsModal'
+} from '../../../features/practice/confusableMatchData'
+import type { CustomConfusableChapter } from '../../../features/practice/confusableCustomGroups'
 
 const MATCH_GROUPS_PER_ROUND = 1
 const MATCH_SUCCESS_DELAY = 900

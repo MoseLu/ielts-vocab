@@ -22,6 +22,10 @@ from platform_sdk.learning_core_favorites_support import (
     _serialize_favorite_words,
 )
 
+PRACTICE_METADATA_BOOK_IDS = ('ielts_reading_premium', 'ielts_listening_premium')
+PRACTICE_METADATA_FIELDS = ('group_key', 'listening_confusables', 'examples')
+_practice_metadata_lookup_cache: dict[str, dict] | None = None
+
 
 def _chapter_id_matches(value: Any, chapter_id: Any) -> bool:
     try:
@@ -43,6 +47,69 @@ def _copy_word(word: dict, *, source_order: int, fallback_chapter_id: Any = None
         'source_order': source_order,
         'chapter_id': chapter_id,
     }
+
+
+def _practice_metadata_score(word: dict) -> tuple[int, int, int, int]:
+    confusables = word.get('listening_confusables')
+    examples = word.get('examples')
+    definition = str(word.get('definition') or '')
+    confusable_count = len(confusables) if isinstance(confusables, list) else 0
+    example_count = len(examples) if isinstance(examples, list) else 0
+    return (
+        1 if confusable_count >= 3 else 0,
+        confusable_count,
+        example_count,
+        len(definition),
+    )
+
+
+def _build_practice_metadata_lookup() -> dict[str, dict]:
+    global _practice_metadata_lookup_cache
+    if _practice_metadata_lookup_cache is not None:
+        return _practice_metadata_lookup_cache
+
+    lookup: dict[str, dict] = {}
+    for book_id in PRACTICE_METADATA_BOOK_IDS:
+        try:
+            source_words = load_book_vocabulary(book_id) or []
+        except Exception:
+            continue
+        for source_word in source_words:
+            word_key = normalize_word_key(source_word.get('word'))
+            if not word_key:
+                continue
+            existing = lookup.get(word_key)
+            if existing is None or _practice_metadata_score(source_word) > _practice_metadata_score(existing):
+                lookup[word_key] = source_word
+    _practice_metadata_lookup_cache = lookup
+    return lookup
+
+
+def _merge_practice_metadata(word: dict, metadata: dict | None) -> dict:
+    if not metadata:
+        return word
+
+    enriched = dict(word)
+    for field in PRACTICE_METADATA_FIELDS:
+        value = metadata.get(field)
+        if value and not enriched.get(field):
+            enriched[field] = value
+    for field in ('phonetic', 'pos', 'definition'):
+        if not enriched.get(field) and metadata.get(field):
+            enriched[field] = metadata.get(field)
+    return enriched
+
+
+def _enrich_words_with_practice_metadata(words: list[dict]) -> list[dict]:
+    if not words:
+        return words
+    lookup = _build_practice_metadata_lookup()
+    if not lookup:
+        return words
+    return [
+        _merge_practice_metadata(word, lookup.get(normalize_word_key(word.get('word'))))
+        for word in words
+    ]
 
 
 def _dictionary_from_words(words: list[dict]) -> list[dict]:
@@ -155,6 +222,8 @@ def _book_word_list(
             word for word in raw_words
             if _chapter_id_matches(word.get('chapter_id'), chapter_id)
         ]
+    if custom_book:
+        raw_words = _enrich_words_with_practice_metadata(raw_words)
 
     words = [
         _copy_word(word, source_order=index, fallback_chapter_id=chapter_id)
@@ -177,20 +246,22 @@ def _selected_word_list(selected_words: list[str]) -> tuple[dict, int]:
     return _build_payload(book=None, chapter=None, words=words), 200
 
 
+def _row_value(row, key: str, default=None):
+    return row.get(key, default) if isinstance(row, dict) else getattr(row, key, default)
+
+
 def _row_to_wrong_word(row) -> dict:
-    if isinstance(row, dict):
-        return {
-            'word': row.get('word', ''),
-            'phonetic': row.get('phonetic', ''),
-            'pos': row.get('pos', ''),
-            'definition': row.get('definition', ''),
-        }
-    return {
-        'word': getattr(row, 'word', ''),
-        'phonetic': getattr(row, 'phonetic', ''),
-        'pos': getattr(row, 'pos', ''),
-        'definition': getattr(row, 'definition', ''),
+    word = {
+        'word': _row_value(row, 'word', ''),
+        'phonetic': _row_value(row, 'phonetic', ''),
+        'pos': _row_value(row, 'pos', ''),
+        'definition': _row_value(row, 'definition', ''),
     }
+    for field in PRACTICE_METADATA_FIELDS:
+        value = _row_value(row, field)
+        if value:
+            word[field] = value
+    return word
 
 
 def _row_id_value(row) -> int:
@@ -230,6 +301,7 @@ def _wrong_selection_word_list(selected_words: list[str] | None) -> tuple[dict, 
             rows,
             key=_row_id_value,
         )]
+    raw_words = _enrich_words_with_practice_metadata(raw_words)
 
     words = [
         _copy_word(word, source_order=index, fallback_chapter_id='wrong-selection')

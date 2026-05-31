@@ -8,7 +8,13 @@ from service_models.learning_core_models import (
     UserWordMasteryState,
     db,
 )
-from services import ai_smart_word_stat_repository, ai_wrong_word_repository, quick_memory_record_repository
+from services import (
+    ai_smart_word_stat_repository,
+    ai_wrong_word_repository,
+    quick_memory_record_repository,
+    scoped_quick_memory_repository,
+    scoped_wrong_word_repository,
+)
 from services.ai_vocab_catalog_service import _get_global_vocab_pool
 from services.books_catalog_query_service import load_book_vocabulary
 from services.books_progress_service import build_chapter_words_response
@@ -65,7 +71,7 @@ def scope_key(*, book_id: str | None, chapter_id: str | None, day: int | None) -
         return f'book:{book_id}'
     if day is not None:
         return f'day:{day}'
-    return 'global'
+    return 'user'
 
 
 def safe_int(value, default: int = 0) -> int:
@@ -255,12 +261,36 @@ def _legacy_speaking_signal_map(user_id: int, word_keys: list[str]) -> dict[str,
     return signals
 
 
-def build_legacy_source_maps(user_id: int, words: list[str]) -> dict:
+def build_legacy_source_maps(
+    user_id: int,
+    words: list[str],
+    *,
+    book_id: str | None = None,
+    chapter_id: str | None = None,
+    day: int | None = None,
+) -> dict:
     word_keys = [normalize_word_key(word) for word in words if normalize_word_key(word)]
     word_key_set = set(word_keys)
+    scoped_scope_key = scope_key(book_id=book_id, chapter_id=chapter_id, day=day) if (
+        book_id or day is not None
+    ) else None
+    if scoped_scope_key:
+        quick_memory_source = scoped_quick_memory_repository.list_user_scoped_quick_memory_records_for_words(
+            user_id,
+            scope_key=scoped_scope_key,
+            words=word_keys,
+        )
+        wrong_source = scoped_wrong_word_repository.list_user_scoped_wrong_words_for_words(
+            user_id,
+            scope_key=scoped_scope_key,
+            words=word_keys,
+        )
+    else:
+        quick_memory_source = quick_memory_record_repository.list_user_quick_memory_records_for_words(user_id, words)
+        wrong_source = ai_wrong_word_repository.list_user_wrong_words(user_id)
     quick_memory_rows = {
         normalize_word_key(row.word): row
-        for row in quick_memory_record_repository.list_user_quick_memory_records_for_words(user_id, words)
+        for row in quick_memory_source
         if normalize_word_key(row.word) in word_key_set
     }
     smart_rows = {
@@ -270,7 +300,7 @@ def build_legacy_source_maps(user_id: int, words: list[str]) -> dict:
     }
     wrong_rows = {
         normalize_word_key(row.word): row
-        for row in ai_wrong_word_repository.list_user_wrong_words(user_id)
+        for row in wrong_source
         if normalize_word_key(row.word) in word_key_set
     }
     return {

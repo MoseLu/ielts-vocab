@@ -5,7 +5,7 @@ import type {
 } from '../../../lib'
 import { NODE_STATUS_LABELS, NODE_TYPE_LABELS, getChallengeStep } from './GameModeSections'
 import { gameAsset } from './game-mode/gameAssets'
-import { LEVEL_KIND_LABELS, getLevelKind } from './game-mode/gameData'
+import { LEVEL_KIND_LABELS, getLevelKind } from '../../../features/practice/gameMode/gameData'
 
 const FALLBACK_REWARDS = {
   coins: 0,

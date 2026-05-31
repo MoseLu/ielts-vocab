@@ -34,6 +34,13 @@ def _load_admin_user_management_support():
 
 
 @lru_cache(maxsize=1)
+def _load_admin_asset_management_support():
+    from platform_sdk.admin_asset_management_application import build_asset_words_response
+
+    return build_asset_words_response
+
+
+@lru_cache(maxsize=1)
 def _load_word_feedback_support():
     from platform_sdk.admin_word_feedback_application import (
         build_word_feedback_list_response,
@@ -59,6 +66,7 @@ def _load_feature_wish_support():
         create_feature_wish_response,
         delete_feature_wish_response,
         list_feature_wishes_response,
+        update_feature_wish_status_response,
         update_feature_wish_response,
     )
 
@@ -67,6 +75,7 @@ def _load_feature_wish_support():
         create_feature_wish_response,
         update_feature_wish_response,
         delete_feature_wish_response,
+        update_feature_wish_status_response,
     )
 
 
@@ -122,6 +131,15 @@ def set_admin(current_user, user_id):
     return jsonify(payload), status
 
 
+@admin_bp.route('/assets/words', methods=['GET'])
+@admin_required
+def get_asset_words(current_user):
+    del current_user
+    build_asset_words_response = _load_admin_asset_management_support()
+    payload, status = build_asset_words_response(request.args)
+    return jsonify(payload), status
+
+
 @admin_bp.route('/word-feedback', methods=['GET'])
 @admin_required
 def get_word_feedback(current_user):
@@ -165,7 +183,7 @@ def submit_word_feedback(current_user):
 @feature_wishes_bp.route('', methods=['GET'])
 @token_required
 def list_feature_wishes(current_user):
-    list_feature_wishes_response, _, _, _ = _load_feature_wish_support()
+    list_feature_wishes_response, _, _, _, _ = _load_feature_wish_support()
     payload, status = list_feature_wishes_response(current_user, request.args)
     return jsonify(payload), status
 
@@ -173,7 +191,7 @@ def list_feature_wishes(current_user):
 @feature_wishes_bp.route('', methods=['POST'])
 @token_required
 def create_feature_wish(current_user):
-    _, create_feature_wish_response, _, _ = _load_feature_wish_support()
+    _, create_feature_wish_response, _, _, _ = _load_feature_wish_support()
     payload, status = create_feature_wish_response(
         current_user,
         request.get_json(silent=True),
@@ -186,7 +204,7 @@ def create_feature_wish(current_user):
 @feature_wishes_bp.route('/<int:wish_id>', methods=['PUT'])
 @token_required
 def update_feature_wish(current_user, wish_id):
-    _, _, update_feature_wish_response, _ = _load_feature_wish_support()
+    _, _, update_feature_wish_response, _, _ = _load_feature_wish_support()
     payload, status = update_feature_wish_response(
         current_user,
         wish_id,
@@ -197,9 +215,21 @@ def update_feature_wish(current_user, wish_id):
     return jsonify(payload), status
 
 
+@feature_wishes_bp.route('/<int:wish_id>/status', methods=['PATCH'])
+@token_required
+def update_feature_wish_status(current_user, wish_id):
+    _, _, _, _, update_feature_wish_status_response = _load_feature_wish_support()
+    payload, status = update_feature_wish_status_response(
+        current_user,
+        wish_id,
+        request.get_json(silent=True),
+    )
+    return jsonify(payload), status
+
+
 @feature_wishes_bp.route('/<int:wish_id>', methods=['DELETE'])
 @token_required
 def delete_feature_wish(current_user, wish_id):
-    _, _, _, delete_feature_wish_response = _load_feature_wish_support()
+    _, _, _, delete_feature_wish_response, _ = _load_feature_wish_support()
     payload, status = delete_feature_wish_response(current_user, wish_id)
     return jsonify(payload), status

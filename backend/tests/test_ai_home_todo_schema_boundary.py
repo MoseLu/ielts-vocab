@@ -86,8 +86,11 @@ def test_ai_migration_runner_drops_home_todo_identity_user_fk(tmp_path, monkeypa
 
     result = module.migrate_service_schema('ai-execution-service', env_file=env_path)
 
-    assert result['version_after'] == 'ai_execution_service_0002'
-    assert [patch['revision'] for patch in result['applied_patches']] == ['ai_execution_service_0002']
+    assert result['version_after'] == 'ai_execution_service_0003'
+    assert [patch['revision'] for patch in result['applied_patches']] == [
+        'ai_execution_service_0002',
+        'ai_execution_service_0003',
+    ]
 
     engine = sa.create_engine(f'sqlite:///{database_path.as_posix()}')
     try:

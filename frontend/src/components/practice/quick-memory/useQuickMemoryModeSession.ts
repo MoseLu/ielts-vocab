@@ -4,12 +4,17 @@ import {
   retryPendingQuickMemorySync,
   syncQuickMemoryRecordsToBackend,
 } from '../../../lib/quickMemorySync'
+import type { LearningScope } from '../../../lib/learningScope'
 import type { QuickMemoryRecordState } from '../../../lib/quickMemory'
-import type { QuickMemorySessionResult as SessionResult } from './QuickMemorySummary'
+import type {
+  QuickMemoryModeVariant,
+  QuickMemorySessionResult as SessionResult,
+} from '../../../features/practice/quickMemorySession'
 
 const QUICK_MEMORY_PENDING_SYNC_RETRY_MS = 15000
 
 interface QuickMemoryModeSessionArgs {
+  modeVariant: QuickMemoryModeVariant
   bookId: string | null
   chapterId: string | null
   bookIdRef: React.MutableRefObject<string | null>
@@ -23,6 +28,7 @@ interface QuickMemoryModeSessionArgs {
   pendingRecordSyncRef: React.MutableRefObject<Record<string, QuickMemoryRecordState>>
   recordSyncInFlightRef: React.MutableRefObject<boolean>
   recordSyncPromiseRef: React.MutableRefObject<Promise<void> | null>
+  quickMemoryScope: LearningScope
 }
 
 function summarizeResults(results: SessionResult[]) {
@@ -34,6 +40,7 @@ function summarizeResults(results: SessionResult[]) {
 }
 
 export function useQuickMemoryModeSession({
+  modeVariant,
   bookId,
   chapterId,
   bookIdRef,
@@ -47,6 +54,7 @@ export function useQuickMemoryModeSession({
   pendingRecordSyncRef,
   recordSyncInFlightRef,
   recordSyncPromiseRef,
+  quickMemoryScope,
 }: QuickMemoryModeSessionArgs) {
   useEffect(() => {
     bookIdRef.current = bookId
@@ -68,7 +76,7 @@ export function useQuickMemoryModeSession({
     if (sessionIdRef.current == null || sessionStartRef.current <= 0) return
     AIChat.updateStudySessionSnapshot({
       sessionId: sessionIdRef.current,
-      mode: 'quickmemory',
+      mode: modeVariant,
       bookId: bookIdRef.current,
       chapterId: chapterIdRef.current,
       startedAt: sessionStartRef.current,
@@ -77,7 +85,7 @@ export function useQuickMemoryModeSession({
       correctCount: patch.correctCount,
       wrongCount: patch.wrongCount,
     })
-  }, [bookIdRef, chapterIdRef, sessionIdRef, sessionLastActiveAtRef, sessionStartRef])
+  }, [bookIdRef, chapterIdRef, modeVariant, sessionIdRef, sessionLastActiveAtRef, sessionStartRef])
 
   const flushPendingRecordSync = useCallback((keepalive = false) => {
     if (recordSyncInFlightRef.current) {
@@ -92,7 +100,7 @@ export function useQuickMemoryModeSession({
 
     const syncTask = syncQuickMemoryRecordsToBackend(
       pendingEntries.map(([word, record]) => ({ word, record })),
-      { keepalive },
+      { ...quickMemoryScope, keepalive, sourceMode: modeVariant },
     ).catch(() => {
       pendingRecordSyncRef.current = {
         ...Object.fromEntries(pendingEntries),
@@ -104,7 +112,7 @@ export function useQuickMemoryModeSession({
     })
     recordSyncPromiseRef.current = syncTask
     return syncTask
-  }, [pendingRecordSyncRef, recordSyncInFlightRef, recordSyncPromiseRef])
+  }, [modeVariant, pendingRecordSyncRef, quickMemoryScope, recordSyncInFlightRef, recordSyncPromiseRef])
 
   const accumulateCompletedDuration = useCallback((durationSeconds: number) => {
     completedSessionDurationSecondsRef.current = Math.max(
@@ -122,7 +130,7 @@ export function useQuickMemoryModeSession({
   useEffect(() => {
     const retryPendingSync = () => {
       if (document.visibilityState === 'hidden') return
-      void retryPendingQuickMemorySync().catch(() => {})
+      void retryPendingQuickMemorySync({ ...quickMemoryScope, sourceMode: modeVariant }).catch(() => {})
     }
     const timerId = window.setInterval(retryPendingSync, QUICK_MEMORY_PENDING_SYNC_RETRY_MS)
     window.addEventListener('online', retryPendingSync)
@@ -130,7 +138,7 @@ export function useQuickMemoryModeSession({
       window.clearInterval(timerId)
       window.removeEventListener('online', retryPendingSync)
     }
-  }, [])
+  }, [modeVariant, quickMemoryScope])
 
   const prepareLearningSession = useCallback(async (activityAt = Date.now()) => {
     const summary = summarizeResults(resultsRef.current)
@@ -140,7 +148,7 @@ export function useQuickMemoryModeSession({
         sessionId: sessionIdRef.current,
         startedAt: sessionStartRef.current,
         lastActiveAt: sessionLastActiveAtRef.current,
-        mode: 'quickmemory',
+        mode: modeVariant,
         bookId: bookIdRef.current,
         chapterId: chapterIdRef.current,
         wordsStudied: summary.wordsStudied,
@@ -171,7 +179,7 @@ export function useQuickMemoryModeSession({
     sessionLastActiveAtRef.current = activityAt
     sessionLoggedRef.current = false
     sessionIdRef.current = await AIChat.startSession({
-      mode: 'quickmemory',
+      mode: modeVariant,
       bookId: bookIdRef.current,
       chapterId: chapterIdRef.current,
     }, {
@@ -182,6 +190,7 @@ export function useQuickMemoryModeSession({
     accumulateCompletedDuration,
     bookIdRef,
     chapterIdRef,
+    modeVariant,
     resultsRef,
     sessionIdRef,
     sessionLastActiveAtRef,
@@ -201,7 +210,7 @@ export function useQuickMemoryModeSession({
     if (typeof AIChat.finalizeStudySessionSegment === 'function') {
       finalized = await AIChat.finalizeStudySessionSegment({
         sessionId: sessionIdRef.current,
-        mode: 'quickmemory',
+        mode: modeVariant,
         bookId: bookIdRef.current,
         chapterId: chapterIdRef.current,
         wordsStudied: summary.wordsStudied,
@@ -225,7 +234,7 @@ export function useQuickMemoryModeSession({
         await AIChat.cancelSession(sessionIdRef.current)
       } else {
         await AIChat.logSession({
-          mode: 'quickmemory',
+          mode: modeVariant,
           bookId: bookIdRef.current,
           chapterId: chapterIdRef.current,
           wordsStudied: summary.wordsStudied,
@@ -251,6 +260,7 @@ export function useQuickMemoryModeSession({
     bookIdRef,
     chapterIdRef,
     completedSessionDurationSecondsRef,
+    modeVariant,
     resetCurrentSessionSegment,
     resultsRef,
     sessionIdRef,

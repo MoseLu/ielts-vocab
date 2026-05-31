@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { WRONG_WORD_PENDING_REVIEW_TARGET } from '../../../features/vocabulary/wrongWordsStore'
 import { Card } from '../../ui'
 
 interface ErrorsFAQItem {
@@ -12,7 +11,7 @@ const FAQ_ITEMS: ErrorsFAQItem[] = [
   {
     key: 'scope',
     question: '待清错词和累计错词有什么区别？',
-    answer: `答错过就会留在累计错词里；某一类问题还没连续答对 ${WRONG_WORD_PENDING_REVIEW_TARGET} 次之前，也会继续留在待清错词。`,
+    answer: '答错过就会留在累计错词里；待清错词只看当前还有哪些问题类型没处理完，右侧维度清单不是把一个词拆成多组次数任务。',
   },
   {
     key: 'selection',

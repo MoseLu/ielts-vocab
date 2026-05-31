@@ -4,7 +4,7 @@ import { recordEbbinghausPracticeResult } from '../../../lib/ebbinghausReview'
 import { buildPracticeResultCommand } from '../../../lib/practiceResult/adapters'
 import { applyPracticeResult } from '../../../lib/practiceResult/sink'
 import type { PracticeRuntimeId } from '../../../lib/practiceResult/modeContracts'
-import type { PracticeMode, SmartDimension, Word } from '../../../components/practice/types'
+import type { PracticeMode, SmartDimension, Word } from '../../../features/practice/types'
 
 type MasteryDimension = SmartDimension | 'speaking'
 type MasteryResult = 'correct' | 'wrong' | 'skipped'
@@ -65,22 +65,27 @@ export function usePracticeWordMasterySubmitter({
           sourceMode: input.analyticsMode,
           bookId,
           chapterId,
+          scopeKey: command.scopeKey,
+          scopeType: command.scopeType,
+          originScope: command.originScope,
           occurredAt: command.occurredAt,
         })
       },
-      wordMastery: () => submitWordMasteryAttempt({
-        bookId,
-        chapterId,
-        word: currentWord.word,
-        dimension: input.dimension,
-        passed: input.passed,
-        sourceMode: input.analyticsMode,
-        entry: errorMode ? 'error-review' : 'practice',
-        task: errorMode ? 'error-review' : undefined,
-        wordPayload: currentWord,
-        traceId: command.traceId,
-        idempotencyKey: command.idempotencyKey,
-      }),
+      wordMastery: async () => {
+        await submitWordMasteryAttempt({
+          bookId,
+          chapterId,
+          word: currentWord.word,
+          dimension: input.dimension,
+          passed: input.passed,
+          sourceMode: input.analyticsMode,
+          entry: errorMode ? 'error-review' : 'practice',
+          task: errorMode ? 'error-review' : undefined,
+          wordPayload: currentWord,
+          traceId: command.traceId,
+          idempotencyKey: command.idempotencyKey,
+        })
+      },
     })
   }, [bookId, chapterId, currentDay, currentWord, errorMode, sessionIdRef, userId])
 }

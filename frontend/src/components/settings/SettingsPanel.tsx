@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { DEFAULT_SETTINGS } from '../../constants'
 import { normalizeAppSettings, readAppSettingsFromStorage, writeAppSettingsToStorage } from '../../lib/appSettings'
+import { applyThemeColor, normalizeThemeColor, THEME_COLOR_OPTIONS, type ThemeColor } from '../../lib/themeColor'
 
 type TabType = 'answer' | 'sound' | 'display' | 'review'
 
@@ -20,6 +21,7 @@ interface AppSettings {
   dictationMode: boolean
   darkMode: boolean
   fontSize: string
+  themeColor: ThemeColor
   showPhonetic: boolean
   showPos: boolean
   reviewInterval: string
@@ -46,6 +48,7 @@ const defaultSettings: AppSettings = {
   dictationMode: false,
   darkMode: false,
   fontSize: 'medium',
+  themeColor: DEFAULT_SETTINGS.themeColor,
   showPhonetic: true,
   showPos: true,
   reviewInterval: DEFAULT_SETTINGS.reviewInterval,
@@ -65,6 +68,7 @@ function normalizeSettingsPanelState(value: unknown): AppSettings {
     reviewInterval: String(normalizedReviewSettings.reviewInterval ?? defaultSettings.reviewInterval),
     reviewLimit: String(normalizedReviewSettings.reviewLimit ?? defaultSettings.reviewLimit),
     reviewLimitCustomized: normalizedReviewSettings.reviewLimitCustomized === true,
+    themeColor: normalizeThemeColor(normalizedReviewSettings.themeColor),
   }
 }
 
@@ -76,7 +80,8 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.darkMode ? 'dark' : 'light')
     document.documentElement.setAttribute('data-font-size', settings.fontSize || 'medium')
-  }, [settings.darkMode, settings.fontSize])
+    applyThemeColor(settings.themeColor)
+  }, [settings.darkMode, settings.fontSize, settings.themeColor])
 
   useEffect(() => {
     if (!showSettings) return
@@ -123,6 +128,9 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
     }
     if (key === 'fontSize') {
       document.documentElement.setAttribute('data-font-size', String(value))
+    }
+    if (key === 'themeColor') {
+      applyThemeColor(value)
     }
   }
 
@@ -320,6 +328,31 @@ function SettingsPanel({ showSettings, onClose }: SettingsPanelProps) {
             {/* Display Settings */}
             {activeTab === 'display' && (
             <div className="settings-panel active">
+                <div className="settings-item settings-item--theme-color">
+                  <div className="settings-item-info">
+                    <div className="settings-item-title">主题色</div>
+                    <div className="settings-item-desc">选择应用高亮色</div>
+                  </div>
+                  <div className="settings-theme-options" role="radiogroup" aria-label="主题色">
+                    {THEME_COLOR_OPTIONS.map(option => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={settings.themeColor === option.value}
+                        aria-label={option.description}
+                        title={option.label}
+                        className={`settings-theme-option ${settings.themeColor === option.value ? 'active' : ''}`}
+                        onClick={() => updateSetting('themeColor', option.value)}
+                      >
+                        <span
+                          className="settings-theme-swatch"
+                          style={{ '--settings-theme-swatch': `var(--theme-swatch-${option.value})` } as React.CSSProperties}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="settings-item">
                   <div className="settings-item-info">
                     <div className="settings-item-title">深色模式</div>

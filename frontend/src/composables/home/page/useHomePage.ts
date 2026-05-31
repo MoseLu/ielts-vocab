@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useHomeTodos } from '../../../features/home/hooks/useHomeTodos'
 import {
@@ -26,6 +26,9 @@ const HOME_LEARNING_STATS_OPTIONS = {
   skipInitialQuickMemoryReconcile: true,
 } as const
 
+const HOME_BOOK_DATA_RECOVERY_DELAY_MS = 900
+const HOME_BOOK_DATA_RECOVERY_LIMIT = 8
+
 function buildTodoTaskEntryPath(task: DailyPlanTask): string {
   const action = task.action
   if (action.kind === 'add-book' || action.task === 'add-book') {
@@ -33,22 +36,39 @@ function buildTodoTaskEntryPath(task: DailyPlanTask): string {
   }
   const taskKey = action.task || action.kind
   const params = new URLSearchParams()
-  if (taskKey === 'due-review') {
-    params.set('review', 'due')
-    if (action.mode) params.set('mode', action.mode)
+  const appendPracticeScope = () => {
     if (action.book_id) params.set('book', action.book_id)
     if (action.chapter_id !== null && action.chapter_id !== undefined && action.chapter_id !== '') {
       params.set('chapter', String(action.chapter_id))
     }
+  }
+  const appendPracticeMode = () => {
+    if (action.mode && action.mode !== 'game') params.set('mode', action.mode)
+  }
+
+  if (taskKey === 'due-review') {
+    params.set('review', 'due')
+    appendPracticeMode()
+    appendPracticeScope()
     return `/practice?${params.toString()}`
   }
-  params.set('task', taskKey)
-  if (action.dimension) params.set('dimension', action.dimension)
-  if (action.book_id) params.set('book', action.book_id)
-  if (action.chapter_id !== null && action.chapter_id !== undefined && action.chapter_id !== '') {
-    params.set('chapter', String(action.chapter_id))
+
+  if (taskKey === 'error-review') {
+    params.set('mode', 'errors')
+    params.set('scope', 'pending')
+    if (action.dimension) params.set('dim', action.dimension)
+    appendPracticeScope()
+    return `/practice?${params.toString()}`
   }
-  return `/game?${params.toString()}`
+
+  if (taskKey === 'continue-book') {
+    appendPracticeMode()
+    appendPracticeScope()
+    const query = params.toString()
+    return query ? `/practice?${query}` : '/books'
+  }
+
+  return '/game'
 }
 
 export function useHomePage() {
@@ -56,9 +76,26 @@ export function useHomePage() {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showChapterModal, setShowChapterModal] = useState(false)
 
-  const { books, loading: booksLoading } = useVocabBooks()
-  const { progressMap, loading: progressLoading } = useAllBookProgress()
-  const { myBookIds, loading: myBooksLoading, addBook, removeBook } = useMyBooks()
+  const {
+    books,
+    loading: booksLoading,
+    error: booksError,
+    refetch: refetchBooks,
+  } = useVocabBooks()
+  const {
+    progressMap,
+    loading: progressLoading,
+    error: progressError,
+    refetch: refetchProgress,
+  } = useAllBookProgress()
+  const {
+    myBookIds,
+    loading: myBooksLoading,
+    error: myBooksError,
+    refetch: refetchMyBooks,
+    addBook,
+    removeBook,
+  } = useMyBooks()
   const { learnerProfile, alltime } = useLearningStats(7, 'all', 'all', HOME_LEARNING_STATS_OPTIONS)
   const {
     primaryItems,
@@ -71,6 +108,7 @@ export function useHomePage() {
   })
 
   const isInitialLoading = booksLoading || progressLoading || myBooksLoading
+  const hasBookDataError = Boolean(booksError || progressError || myBooksError)
 
   const bookCards = useMemo(() => (
     buildStudyBookCards(
@@ -161,6 +199,53 @@ export function useHomePage() {
     event.stopPropagation()
     removeBook(bookId)
   }, [removeBook])
+
+  const [bookDataRecoveryAttempts, setBookDataRecoveryAttempts] = useState(0)
+  const recoverBookData = useCallback(() => {
+    void refetchBooks()
+    void refetchProgress()
+    void refetchMyBooks()
+  }, [refetchBooks, refetchMyBooks, refetchProgress])
+
+  useEffect(() => {
+    if (!hasBookDataError) {
+      setBookDataRecoveryAttempts(0)
+      return
+    }
+
+    if (isInitialLoading || bookDataRecoveryAttempts >= HOME_BOOK_DATA_RECOVERY_LIMIT) return
+
+    const retryTimer = window.setTimeout(() => {
+      recoverBookData()
+      setBookDataRecoveryAttempts(value => value + 1)
+    }, HOME_BOOK_DATA_RECOVERY_DELAY_MS)
+
+    return () => {
+      window.clearTimeout(retryTimer)
+    }
+  }, [bookDataRecoveryAttempts, hasBookDataError, isInitialLoading, recoverBookData])
+
+  useEffect(() => {
+    if (!hasBookDataError) return
+
+    const refetchOnVisible = () => {
+      recoverBookData()
+      setBookDataRecoveryAttempts(0)
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refetchOnVisible()
+    }
+
+    window.addEventListener('focus', refetchOnVisible)
+    window.addEventListener('pageshow', refetchOnVisible)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', refetchOnVisible)
+      window.removeEventListener('pageshow', refetchOnVisible)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [hasBookDataError, recoverBookData])
 
   const reviewTask = taskMap['due-review']
   const errorTask = taskMap['error-review']

@@ -351,6 +351,59 @@
     color: var(--text-inverse);
 }
 
+.settings-item--theme-color {
+    align-items: flex-start;
+}
+
+.settings-theme-options {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--size-6);
+    min-width: var(--size-220);
+}
+
+.settings-theme-option {
+    width: var(--size-24);
+    height: var(--size-24);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--radius-full);
+    background: transparent;
+    padding: var(--size-3);
+    cursor: pointer;
+    transition: var(--motion-transition-interactive-fast);
+}
+
+.settings-theme-option:hover,
+.settings-theme-option.active {
+    background: var(--surface-hover);
+    outline: var(--size-1) solid var(--border-strong);
+    outline-offset: var(--size-1);
+}
+
+.settings-theme-swatch {
+    width: var(--size-14);
+    height: var(--size-14);
+    border: var(--size-1) solid var(--border-strong);
+    border-radius: var(--radius-full);
+    background: var(--settings-theme-swatch);
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .settings-item--theme-color {
+        flex-direction: column;
+        gap: var(--size-10);
+    }
+    .settings-theme-options {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
 /* Range Slider */
 .settings-slider {
     appearance: none;
@@ -422,4 +475,3 @@
 .settings-panel.active {
     display: block;
 }
-

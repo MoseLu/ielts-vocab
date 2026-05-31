@@ -3,6 +3,9 @@
 import jwt
 from datetime import datetime, timedelta
 
+import platform_sdk.identity_wechat_application as wechat_application
+from models import UserOAuthIdentity
+
 
 def make_token(app, user_id):
     """Generate a valid JWT for the given user."""
@@ -340,6 +343,60 @@ class TestMobileAuth:
         me = client.get('/api/auth/me', headers=auth_header(login['access_token']))
         assert me.status_code == 200
         assert me.get_json()['authenticated'] is False
+
+
+class TestWechatLogin:
+    def test_mobile_wechat_login_requires_code(self, client):
+        res = client.post('/api/auth/mobile/wechat-login', json={})
+
+        assert res.status_code == 400
+        assert 'code' in res.get_json()['error']
+
+    def test_mobile_wechat_login_creates_and_reuses_user(self, client, app, monkeypatch):
+        app.config.update({
+            'WECHAT_LOGIN_ENABLED': True,
+            'WECHAT_MOBILE_APP_ID': 'wx-test-app',
+            'WECHAT_MOBILE_APP_SECRET': 'wx-test-secret',
+            'WECHAT_HTTP_TIMEOUT_SECONDS': 1,
+        })
+
+        def fake_exchange(flask_app, code):
+            assert flask_app is app
+            assert code == 'auth-code'
+            return {
+                'access_token': 'wechat-access',
+                'openid': 'wechat-openid',
+                'unionid': 'wechat-unionid',
+            }
+
+        def fake_userinfo(flask_app, access_token, openid):
+            assert flask_app is app
+            assert access_token == 'wechat-access'
+            assert openid == 'wechat-openid'
+            return {
+                'openid': 'wechat-openid',
+                'unionid': 'wechat-unionid',
+                'nickname': '微信用户',
+                'headimgurl': 'https://example.com/avatar.jpg',
+            }
+
+        monkeypatch.setattr(wechat_application, 'exchange_wechat_code', fake_exchange)
+        monkeypatch.setattr(wechat_application, 'fetch_wechat_userinfo', fake_userinfo)
+
+        first = client.post('/api/auth/mobile/wechat-login', json={'code': 'auth-code'})
+        second = client.post('/api/auth/mobile/wechat-login', json={'code': 'auth-code'})
+
+        assert first.status_code == 200
+        assert second.status_code == 200
+        first_payload = first.get_json()
+        second_payload = second.get_json()
+        assert first_payload['access_token']
+        assert first_payload['refresh_token']
+        assert first_payload['user']['id'] == second_payload['user']['id']
+        with app.app_context():
+            identity = UserOAuthIdentity.query.filter_by(provider='wechat', openid='wechat-openid').one()
+            assert identity.user_id == first_payload['user']['id']
+            assert UserOAuthIdentity.query.count() == 1
 
 
 class TestMe:

@@ -5,6 +5,7 @@ import {
   getWrongWordsStorageKey,
   getWrongWordDimensionHistoryWrong,
   isWrongWordPendingInDimension,
+  loadWrongWords,
   WRONG_WORD_ERROR_REVIEW_TARGET,
   readWrongWordsFromStorage,
   type WrongWordRecord,
@@ -30,7 +31,7 @@ describe('wrongWordsStore review mastery', () => {
     }
   }
 
-  it('keeps the word in the wrong-word list after reaching the error-review target', () => {
+  it('keeps history while clearing the pending recognition dimension after one pass', () => {
     const words = [makeWord({ recognition_pass_streak: WRONG_WORD_ERROR_REVIEW_TARGET - 1 })]
 
     const result = applyWrongWordReviewResult(words, 'alpha', true, 'recognition')
@@ -120,6 +121,8 @@ describe('wrongWordsStore review mastery', () => {
 
     expect(reviewed.words[0].dimension_states.speaking.pass_streak).toBe(1)
     expect(reviewed.words[0].dimension_states.speaking.history_wrong).toBe(1)
+    expect(reviewed.words[0].pending_dimensions).not.toContain('speaking')
+    expect(isWrongWordPendingInDimension(reviewed.words[0], 'speaking')).toBe(false)
   })
 
   it('isolates wrong-word storage by authenticated user id', () => {
@@ -145,5 +148,21 @@ describe('wrongWordsStore review mastery', () => {
 
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 'luo' }))
     expect(getWrongWordsProgressStorageKey()).toBe('wrong_words_progress:user:luo')
+  })
+
+  it('keeps remote wrong words visible when local persistence exceeds quota', async () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota exceeded')
+    })
+
+    const words = await loadWrongWords({
+      user: { id: 3 },
+      fetchRemote: async () => ({
+        words: [makeWord({ word: 'remote-word' })],
+      }),
+    })
+
+    expect(words.map(word => word.word)).toEqual(['remote-word'])
+    setItem.mockRestore()
   })
 })

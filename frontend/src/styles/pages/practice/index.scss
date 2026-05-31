@@ -9,6 +9,8 @@
 @use './practice-radio';
 @use './practice-follow';
 @use './practice-quickmemory';
+@use './practice-quickmemory-test';
+@use './practice-quickmemory-compact';
 @use './practice-complete';
 @use './practice-game';
 @use './practice-resume-overlay';
@@ -17,4 +19,3 @@
 @use './practice-wordlist';
 @use './practice-wordlist-actions';
 @use './practice-wordlist-detail';
-

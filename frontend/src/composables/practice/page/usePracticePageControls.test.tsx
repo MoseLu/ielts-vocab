@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import type { Dispatch, SetStateAction } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AppSettings, LastState, Word, WordStatuses } from '../../../components/practice/types'
+import type { AppSettings, LastState, Word, WordStatuses } from '../../../features/practice/types'
 import { usePracticePageControls } from './usePracticePageControls'
 
 const apiFetchMock = vi.fn(() => Promise.resolve(undefined))
@@ -43,6 +43,8 @@ function createParams(overrides: Partial<Parameters<typeof usePracticePageContro
     computeChapterWordsLearned: vi.fn(() => 0),
     correctCountRef: { current: 0 },
     wrongCountRef: { current: 0 },
+    chapterCorrectBaselineRef: { current: 0 },
+    chapterWrongBaselineRef: { current: 0 },
     uniqueAnsweredRef: { current: new Set<string>() },
     chapterGroupStartRef: { current: 0 },
     chapterQueueWordsRef: { current: [] },
@@ -186,6 +188,93 @@ describe('usePracticePageControls saveProgress', () => {
       current_index: 2,
       queue_words: ['alpha', 'beta', 'gamma', 'delta'],
     })
+  })
+
+  it('stores grouped chapter progress with cumulative chapter counts', () => {
+    const { result } = renderHook(() => usePracticePageControls(createParams({
+      mode: 'dictation',
+      bookId: 'wrong_words_3',
+      chapterId: 'wrong_words_3_m',
+      queue: [2, 3],
+      queueIndex: 1,
+      vocabulary: [
+        { ...createWord(), word: 'mock' },
+        { ...createWord(), word: 'model' },
+        { ...createWord(), word: 'module' },
+        { ...createWord(), word: 'modify' },
+      ],
+      uniqueAnsweredRef: { current: new Set(['module', 'modify']) },
+      chapterGroupStartRef: { current: 2 },
+      chapterQueueWordsRef: { current: ['mock', 'model', 'module', 'modify'] },
+      chapterCorrectBaselineRef: { current: 2 },
+      chapterWrongBaselineRef: { current: 0 },
+      computeChapterWordsLearned: vi.fn(() => 4),
+    })))
+
+    act(() => {
+      result.current.saveProgress(1, 1)
+    })
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/books/wrong_words_3/chapters/wrong_words_3_m/progress', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'dictation',
+        current_index: 4,
+        correct_count: 3,
+        wrong_count: 1,
+        is_completed: true,
+        words_learned: 4,
+        answered_words: ['module', 'modify'],
+        queue_words: ['mock', 'model', 'module', 'modify'],
+      }),
+    })
+  })
+
+  it('marks a resumed grouped chapter complete when the full chapter queue reaches the end', () => {
+    const { result } = renderHook(() => usePracticePageControls(createParams({
+      mode: 'quickmemory',
+      bookId: 'wrong_words_3',
+      chapterId: 'wrong_words_3_m',
+      queue: [167, 168],
+      queueIndex: 1,
+      vocabulary: Array.from({ length: 169 }, (_, index) => ({
+        ...createWord(),
+        word: `m-word-${index}`,
+      })),
+      uniqueAnsweredRef: { current: new Set(['m-word-167', 'm-word-168']) },
+      chapterGroupStartRef: { current: 167 },
+      chapterQueueWordsRef: { current: Array.from({ length: 169 }, (_, index) => `m-word-${index}`) },
+      chapterCorrectBaselineRef: { current: 58 },
+      chapterWrongBaselineRef: { current: 30 },
+      computeChapterWordsLearned: vi.fn(() => 167),
+    })))
+
+    act(() => {
+      result.current.saveProgress(2, 0)
+    })
+
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/books/wrong_words_3/chapters/wrong_words_3_m/progress', {
+      method: 'POST',
+      body: expect.stringContaining('"current_index":169'),
+    })
+    const body = JSON.parse((apiFetchMock.mock.calls[0][1] as { body: string }).body)
+    expect(body).toMatchObject({
+      mode: 'quickmemory',
+      current_index: 169,
+      correct_count: 60,
+      wrong_count: 30,
+      is_completed: true,
+      words_learned: 169,
+    })
+  })
+
+  it('preserves test mode while building the next chapter path', () => {
+    const { result } = renderHook(() => usePracticePageControls(createParams({
+      mode: 'test',
+      practiceBookId: 'book 1',
+    })))
+
+    expect(result.current.buildChapterPath('chapter 2')).toBe('/practice?book=book%201&chapter=chapter%202&mode=test')
   })
 
   it('can reset an interrupted chapter back to the first word', async () => {

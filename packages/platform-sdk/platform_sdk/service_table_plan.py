@@ -69,6 +69,7 @@ ADMIN_OPS_EXAM_TABLES = frozenset({
 
 IDENTITY_SERVICE_TABLES = frozenset({
     'users',
+    'user_oauth_identities',
     'email_verification_codes',
     'rate_limit_buckets',
     'revoked_tokens',
@@ -91,10 +92,13 @@ LEARNING_CORE_SERVICE_TABLES = frozenset({
     'user_study_sessions',
     'user_learning_events',
     'user_quick_memory_records',
+    'user_scoped_quick_memory_records',
+    'user_scoped_wrong_words',
     'user_smart_word_stats',
     'user_game_energy_states',
     'user_game_session_states',
     'user_game_wrong_words',
+    'user_practice_result_commands',
     'user_word_mastery_states',
 }) | LEARNING_CORE_EVENTING_TABLES
 

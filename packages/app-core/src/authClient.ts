@@ -28,9 +28,22 @@ export class MobileAuthClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: identifier, password }),
     })
+    return this.storeSessionResponse(response, '登录失败')
+  }
+
+  async wechatLogin(code: string, state?: string): Promise<MobileAuthSession> {
+    const response = await this.fetchImpl(`${this.apiBaseUrl}/api/auth/mobile/wechat-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, state }),
+    })
+    return this.storeSessionResponse(response, '微信登录失败')
+  }
+
+  private async storeSessionResponse(response: Response, fallbackMessage: string): Promise<MobileAuthSession> {
     const payload = await response.json()
     if (!response.ok) {
-      throw new Error(payload?.error || '登录失败')
+      throw new Error(payload?.error || fallbackMessage)
     }
     const session = MobileAuthSessionSchema.parse(payload)
     await this.tokenStorage.setTokens({

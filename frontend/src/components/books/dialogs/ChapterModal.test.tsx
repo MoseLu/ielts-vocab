@@ -44,6 +44,14 @@ vi.mock('../../ui/Scrollbar', () => ({
   ),
 }))
 
+function mockChapterResponses(chapters: unknown[], chapterProgress: Record<string, unknown> = {}) {
+  apiFetchMock.mockImplementation((url: unknown) => Promise.resolve(
+    typeof url === 'string' && url.endsWith('/chapters/progress')
+      ? { chapter_progress: chapterProgress }
+      : { chapters },
+  ))
+}
+
 describe('ChapterModal', () => {
   beforeEach(() => {
     Object.defineProperty(window, 'innerWidth', {
@@ -59,19 +67,12 @@ describe('ChapterModal', () => {
 
     apiFetchMock.mockReset()
     navigateMock.mockReset()
-    vi.mocked(global.fetch).mockReset()
   })
 
-  it('keeps chapter word count visible when mode badges exist', async () => {
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        chapters: [{ id: 1, title: 'Unit 1', word_count: 30 }],
-      }),
-    } as Response)
-
-    apiFetchMock.mockResolvedValue({
-      chapter_progress: {
+  it('prioritizes chapter completion and vertical mode accuracy comparison', async () => {
+    mockChapterResponses(
+      [{ id: 1, title: 'Unit 1', word_count: 30 }],
+      {
         1: {
           is_completed: false,
           words_learned: 12,
@@ -82,12 +83,26 @@ describe('ChapterModal', () => {
               correct_count: 8,
               wrong_count: 2,
               accuracy: 80,
-              is_completed: true,
+              is_completed: false,
+            },
+            meaning: {
+              mode: 'meaning',
+              correct_count: 0,
+              wrong_count: 0,
+              accuracy: 0,
+              is_completed: false,
+            },
+            dictation: {
+              mode: 'dictation',
+              correct_count: 0,
+              wrong_count: 3,
+              accuracy: 0,
+              is_completed: false,
             },
           },
         },
       },
-    })
+    )
 
     const { container } = render(
       <ChapterModal
@@ -101,10 +116,154 @@ describe('ChapterModal', () => {
     await waitFor(() => {
       expect(container.querySelector('.chapter-card-count')?.textContent).toContain('30')
     })
+    expect(screen.getByRole('img', { name: '章节完成率 40%，模式正确率：速记模式 80%，听写模式 0%' })).toBeInTheDocument()
+    expect(screen.getByText('完成率')).toBeInTheDocument()
+    expect(screen.getByText('40%')).toBeInTheDocument()
+    expect(container.querySelectorAll('.chapter-mode-table-row')).toHaveLength(3)
+    expect(container.querySelector('.chapter-mode-table-section')?.textContent).toBe('模式正确率')
+    expect(screen.getByTitle('速记模式正确率 80%')).toBeInTheDocument()
+    expect(screen.getByTitle('听写模式正确率 0%')).toBeInTheDocument()
+    expect(screen.queryByText('记 10词')).toBeNull()
+    expect(screen.queryByText('未覆盖 17词')).toBeNull()
+    expect(screen.getAllByText('学习中')).toHaveLength(1)
+    expect(screen.queryByText('已学 40%')).toBeNull()
+    expect(screen.queryByTitle('默写模式正确率 0%')).toBeNull()
+  })
+
+  it('marks a chapter complete when learned coverage reaches the chapter total', async () => {
+    mockChapterResponses(
+      [{ id: 1, title: 'Unit 1', word_count: 50 }],
+      {
+        1: {
+          is_completed: false,
+          words_learned: 50,
+          accuracy: 92,
+          modes: {
+            quickmemory: {
+              mode: 'quickmemory',
+              correct_count: 46,
+              wrong_count: 4,
+              accuracy: 92,
+              is_completed: false,
+            },
+          },
+        },
+      },
+    )
+
+    render(
+      <ChapterModal
+        book={{ id: 'book-1', title: 'Test Book', word_count: 50 }}
+        progress={{ current_index: 50 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    expect(await screen.findAllByText('已完成')).toHaveLength(1)
+    expect(screen.queryByText('已学 100%')).toBeNull()
+    expect(screen.queryByText('学习中')).toBeNull()
+  })
+
+  it('does not round an incomplete chapter up to 100 percent', async () => {
+    mockChapterResponses(
+      [{ id: 'wrong_words_3_m', title: 'M', word_count: 169 }],
+      {
+        wrong_words_3_m: {
+          is_completed: false,
+          words_learned: 168,
+          accuracy: 67,
+          modes: {
+            quickmemory: {
+              mode: 'quickmemory',
+              correct_count: 58,
+              wrong_count: 30,
+              accuracy: 66,
+              is_completed: false,
+            },
+          },
+        },
+      },
+    )
+
+    render(
+      <ChapterModal
+        book={{ id: 'wrong_words_3', title: '错词本', word_count: 169, is_custom_book: true }}
+        progress={{ current_index: 168 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    expect(await screen.findByText('99%')).toBeInTheDocument()
+    expect(screen.getByText('学习中')).toBeInTheDocument()
+    expect(screen.queryByText('已完成')).toBeNull()
+    expect(screen.queryByText('100%')).toBeNull()
+  })
+
+  it('keeps server-completed chapters complete even when another mode is unfinished', async () => {
+    mockChapterResponses(
+      [{ id: 'wrong_words_1_a', title: 'A', word_count: 50 }],
+      {
+        wrong_words_1_a: {
+          is_completed: true,
+          words_learned: 20,
+          accuracy: 95,
+          modes: {
+            quickmemory: {
+              mode: 'quickmemory',
+              correct_count: 20,
+              wrong_count: 1,
+              accuracy: 95,
+              is_completed: true,
+            },
+            meaning: {
+              mode: 'meaning',
+              correct_count: 1,
+              wrong_count: 0,
+              accuracy: 100,
+              is_completed: false,
+            },
+          },
+        },
+      },
+    )
+
+    render(
+      <ChapterModal
+        book={{ id: 'wrong_words_1', title: '错词本', word_count: 50, is_custom_book: true }}
+        progress={{ current_index: 50 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    expect(await screen.findAllByText('已完成')).toHaveLength(1)
+    expect(screen.queryByText('学习中')).toBeNull()
+  })
+
+  it('derives completed chapter cards from whole-book coverage when chapter snapshots are absent', async () => {
+    mockChapterResponses([
+      { id: 'wrong_words_1_a', title: 'A', word_count: 10 },
+      { id: 'wrong_words_1_b', title: 'B', word_count: 12 },
+      { id: 'wrong_words_1_c', title: 'C', word_count: 8 },
+    ])
+
+    render(
+      <ChapterModal
+        book={{ id: 'wrong_words_1', title: '错词本', word_count: 30, is_custom_book: true }}
+        progress={{ current_index: 30 }}
+        onClose={() => {}}
+        onSelectChapter={() => {}}
+      />,
+    )
+
+    expect(await screen.findAllByText(/已完成/)).toHaveLength(3)
+    expect(screen.queryByText('未开始')).toBeNull()
   })
 
   it('uses a full-height skeleton inside the modal body while chapters are loading', () => {
-    vi.mocked(global.fetch).mockImplementation(() => new Promise(() => {}))
+    apiFetchMock.mockImplementation(() => new Promise(() => {}))
 
     const { container } = render(
       <ChapterModal
@@ -123,17 +282,10 @@ describe('ChapterModal', () => {
   })
 
   it('shows confusable chapters in groups instead of words', async () => {
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        chapters: [
-          { id: 1, title: '音近词辨析 01', word_count: 120, group_count: 60 },
-          { id: 2, title: '音近词辨析 02', word_count: 120, group_count: 60 },
-        ],
-      }),
-    } as Response)
-
-    apiFetchMock.mockResolvedValue({ chapter_progress: {} })
+    mockChapterResponses([
+      { id: 1, title: '音近词辨析 01', word_count: 120, group_count: 60 },
+      { id: 2, title: '音近词辨析 02', word_count: 120, group_count: 60 },
+    ])
 
     render(
       <ChapterModal
@@ -152,15 +304,8 @@ describe('ChapterModal', () => {
     expect(screen.queryByText('120 词')).toBeNull()
   })
 
-  it('reports the independent game entry when the user switches to 游戏闯关', async () => {
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        chapters: [{ id: 1, title: 'Unit 1', word_count: 30 }],
-      }),
-    } as Response)
-
-    apiFetchMock.mockResolvedValue({ chapter_progress: {} })
+  it('does not offer the game entry inside the chapter selector', async () => {
+    mockChapterResponses([{ id: 1, title: 'Unit 1', word_count: 30 }])
     const onSelectChapter = vi.fn()
     const user = userEvent.setup()
 
@@ -173,29 +318,22 @@ describe('ChapterModal', () => {
       />,
     )
 
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: '游戏闯关' })).toBeInTheDocument()
-    })
+    expect(await screen.findByText('Unit 1')).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: '游戏闯关' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist', { name: '学习入口' })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('tab', { name: '游戏闯关' }))
     await user.click(screen.getByText('Unit 1'))
 
     expect(onSelectChapter).toHaveBeenCalledWith(
       expect.objectContaining({ id: 1, title: 'Unit 1' }),
       0,
-      'game',
     )
+    expect(onSelectChapter.mock.calls[0]).toHaveLength(2)
   })
 
   it('offers an edit entry for existing custom books', async () => {
     const user = userEvent.setup()
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        chapters: [{ id: 'custom_1_1', title: '第1章', word_count: 20 }],
-      }),
-    } as Response)
-    apiFetchMock.mockResolvedValue({ chapter_progress: {} })
+    mockChapterResponses([{ id: 'custom_1_1', title: '第1章', word_count: 20 }])
 
     render(
       <ChapterModal
@@ -212,16 +350,10 @@ describe('ChapterModal', () => {
   })
 
   it('uses the server distinct total for custom book subtitles', async () => {
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        chapters: [
-          { id: 'wrong_words_1_a', title: 'A', word_count: 20 },
-          { id: 'wrong_words_1_manual', title: 'STR', word_count: 5 },
-        ],
-      }),
-    } as Response)
-    apiFetchMock.mockResolvedValue({ chapter_progress: {} })
+    mockChapterResponses([
+      { id: 'wrong_words_1_a', title: 'A', word_count: 20 },
+      { id: 'wrong_words_1_manual', title: 'STR', word_count: 5 },
+    ])
 
     render(
       <ChapterModal

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth, useToast } from '../../../contexts'
 import { LoginSchema, RegisterSchema, useForm } from '../../../lib'
+import { getLocalAppDefaultLogin } from '../../../lib/localApp'
 
 export type AuthRouteMode = 'login' | 'register' | 'forgot'
 
@@ -36,7 +37,8 @@ export function useAuthPage() {
     }
   }, [mode])
 
-  const loginForm = useForm({ schema: LoginSchema })
+  const loginInitialValues = useMemo(() => getLocalAppDefaultLogin() ?? undefined, [])
+  const loginForm = useForm({ schema: LoginSchema, initialValues: loginInitialValues })
   const registerForm = useForm({ schema: RegisterSchema })
 
   const handleLoginSubmit = loginForm.handleSubmit(async values => {

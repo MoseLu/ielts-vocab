@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PREMIUM_WORD_MNEMONICS_PATH = REPO_ROOT / 'vocabulary_data' / 'premium_word_mnemonics.json'
-MEMORY_NOTE_BADGES = {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀'}
+MEMORY_NOTE_BADGES = {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀', '派生'}
+LOW_QUALITY_TEXT_PATTERN = re.compile(
+    r'词形尾巴|固定表达整体记|'
+    r'落到“[^”]+”这个意思上|核心落在“[^”]+”这个意思上|'
+    r'看成完整词形|常落在“[^”]+”|'
+    r'使用场景，再回到例句里确认|放进“[^”]+”的语境里，再用例句加深印象|'
+    r'发音像|音似|听起来像|屎|撒尿|耳光'
+)
 _CACHE: dict | None = None
 _CACHE_PATH: Path | None = None
 _CACHE_MTIME: float | None = None
@@ -23,6 +31,10 @@ def _candidate_words(word: str) -> list[str]:
     candidates.extend([f'{word}ed', f'{word}s', f'{word}ing'])
     seen = set()
     return [item for item in candidates if not (item in seen or seen.add(item))]
+
+
+def is_low_quality_mnemonic_text(text: str | None) -> bool:
+    return bool(LOW_QUALITY_TEXT_PATTERN.search(str(text or '').strip()))
 
 
 def clear_premium_mnemonic_cache() -> None:
@@ -74,6 +86,8 @@ def get_premium_word_mnemonic(word: str | None) -> dict | None:
     badge = str(item.get('badge') or '').strip()
     text = str(item.get('text') or '').strip()
     if badge not in MEMORY_NOTE_BADGES or not text:
+        return None
+    if is_low_quality_mnemonic_text(text):
         return None
 
     return {

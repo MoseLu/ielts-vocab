@@ -11,6 +11,8 @@ import { EmptyState, PageSkeleton, SegmentedControl, UnderlineTabs } from '../..
 import { useErrorsPage, type WrongCountRange } from '../../../composables/errors/page/useErrorsPage'
 import { ErrorsFAQCard } from './ErrorsFAQCard'
 import { ErrorsCustomBookExportModal } from './ErrorsCustomBookExportModal'
+import { ErrorsDatePicker } from './ErrorsDatePicker'
+import { ErrorsFilterSelect } from './ErrorsFilterSelect'
 import { ErrorsSearchWordItem } from './ErrorsSearchWordItem'
 import { ErrorsWordItem } from './ErrorsWordItem'
 import { downloadWrongWordsCsvExport } from './errorsWordExport'
@@ -93,7 +95,68 @@ export default function ErrorsPage() {
       : searchMode === 'suffix'
         ? `词尾匹配“${appliedSearch}”`
         : `搜索“${appliedSearch}”`
-
+  const dimFilterOptions: Array<{
+    value: 'all' | WrongWordDimension
+    label: string
+    disabled?: boolean
+    title?: string
+  }> = [
+    { value: 'all', label: `全部模式（${scopeWords.length}）` },
+    ...WRONG_WORD_DIMENSIONS.map(dimension => {
+      const count = dimCounts[dimension]
+      return {
+        value: dimension,
+        label: `${WRONG_WORD_DIMENSION_LABELS[dimension]}（${count}）`,
+        disabled: count === 0,
+        title: WRONG_WORD_DIMENSION_TITLES[dimension],
+      }
+    }),
+  ]
+  const menuActionLabel = (label: string, inMenu: boolean) => (inMenu ? `更多操作：${label}` : undefined)
+  const renderSecondaryActionButtons = (inMenu = false) => (
+    <>
+      <button
+        className="errors-clear-btn"
+        aria-label={menuActionLabel('全选结果', inMenu)}
+        disabled={filteredWords.length === 0 || allFilteredSelected}
+        onClick={selectFilteredWords}
+      >
+        全选结果
+      </button>
+      <button
+        className="errors-clear-btn"
+        aria-label={menuActionLabel('全选当前页', inMenu)}
+        disabled={paginatedWords.length === 0 || allPaginatedSelected}
+        onClick={selectPaginatedWords}
+      >
+        全选当前页
+      </button>
+      <button
+        className="errors-clear-btn"
+        aria-label={menuActionLabel('导出已勾选 CSV', inMenu)}
+        disabled={actionSelectedWords.length === 0}
+        onClick={() => downloadWrongWordsCsvExport(actionSelectedWords)}
+      >
+        导出已勾选 CSV
+      </button>
+      <button
+        className="errors-clear-btn"
+        aria-label={menuActionLabel('保存到自定义词书', inMenu)}
+        disabled={actionSelectedWordCount === 0}
+        onClick={customBookExport.open}
+      >
+        保存到自定义词书
+      </button>
+      <button
+        className="errors-clear-btn"
+        aria-label={menuActionLabel('清空选择', inMenu)}
+        disabled={selectedWordCount === 0}
+        onClick={clearSelectedWords}
+      >
+        清空选择
+      </button>
+    </>
+  )
   const toolbar = (
     <div className="errors-toolbar">
       <UnderlineTabs
@@ -116,41 +179,13 @@ export default function ErrorsPage() {
           >
             开始复习（{actionSelectedWordCount}词）
           </button>
-          <button
-            className="errors-clear-btn"
-            disabled={filteredWords.length === 0 || allFilteredSelected}
-            onClick={selectFilteredWords}
-          >
-            全选结果
-          </button>
-          <button
-            className="errors-clear-btn"
-            disabled={paginatedWords.length === 0 || allPaginatedSelected}
-            onClick={selectPaginatedWords}
-          >
-            全选当前页
-          </button>
-          <button
-            className="errors-clear-btn"
-            disabled={actionSelectedWords.length === 0}
-            onClick={() => downloadWrongWordsCsvExport(actionSelectedWords)}
-          >
-            导出已勾选 CSV
-          </button>
-          <button
-            className="errors-clear-btn"
-            disabled={actionSelectedWordCount === 0}
-            onClick={customBookExport.open}
-          >
-            保存到自定义词书
-          </button>
-          <button
-            className="errors-clear-btn"
-            disabled={selectedWordCount === 0}
-            onClick={clearSelectedWords}
-          >
-            清空选择
-          </button>
+          <div className="errors-secondary-actions">{renderSecondaryActionButtons()}</div>
+          <details className="errors-actions-menu">
+            <summary className="errors-actions-menu-trigger">更多操作</summary>
+            <div className="errors-actions-menu-list">
+              {renderSecondaryActionButtons(true)}
+            </div>
+          </details>
         </div>
       )}
     </div>
@@ -241,57 +276,58 @@ export default function ErrorsPage() {
 
             <div className="errors-filter-panel">
               <div className="errors-filter-panel-main">
-                <label className="errors-filter-field">
+                <div className="errors-filter-field errors-mode-filter-field">
+                  <span className="errors-filter-label">问题类型</span>
+                  <ErrorsFilterSelect
+                    ariaLabel="错词模式筛选"
+                    value={dimFilter}
+                    options={dimFilterOptions}
+                    className="errors-mode-filter-select"
+                    onChange={setDimFilter}
+                  />
+                </div>
+
+                <div className="errors-filter-field">
                   <span className="errors-filter-label">起始日期</span>
-                  <input
-                    aria-label="起始日期"
-                    className="errors-filter-input"
-                    type="date"
+                  <ErrorsDatePicker
+                    ariaLabel="起始日期"
                     value={startDate}
-                    onChange={event => setStartDate(event.target.value)}
+                    onChange={setStartDate}
                   />
-                </label>
+                </div>
 
-                <label className="errors-filter-field">
+                <div className="errors-filter-field">
                   <span className="errors-filter-label">结束日期</span>
-                  <input
-                    aria-label="结束日期"
-                    className="errors-filter-input"
-                    type="date"
+                  <ErrorsDatePicker
+                    ariaLabel="结束日期"
                     value={endDate}
-                    onChange={event => setEndDate(event.target.value)}
+                    onChange={setEndDate}
                   />
-                </label>
+                </div>
 
-                <label className="errors-filter-field errors-filter-field--compact errors-filter-field--inline">
+                <div className="errors-filter-field errors-filter-field--compact">
                   <span className="errors-filter-label">{scope === 'pending' ? '待清错次' : '累计错次'}</span>
-                  <select
-                    aria-label="错次区间"
-                    className="errors-filter-select"
+                  <ErrorsFilterSelect
+                    ariaLabel="错次区间"
                     value={wrongCountRange}
-                    onChange={event => setWrongCountRange(event.target.value as WrongCountRange)}
-                  >
-                    {WRONG_COUNT_RANGE_OPTIONS.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={WRONG_COUNT_RANGE_OPTIONS}
+                    onChange={setWrongCountRange}
+                  />
+                </div>
               </div>
 
               <div className="errors-filter-panel-actions">
                 <div className="errors-filter-shortcuts" role="group" aria-label="日期快捷筛选">
                   <button
                     type="button"
-                    className="errors-clear-btn"
+                    className="errors-filter-chip"
                     onClick={applyTodayDateRange}
                   >
                     只看今天新错词
                   </button>
                   <button
                     type="button"
-                    className="errors-clear-btn"
+                    className="errors-filter-chip"
                     onClick={() => applyRecentDaysDateRange(7)}
                   >
                     最近 7 天
@@ -300,7 +336,7 @@ export default function ErrorsPage() {
 
                 <button
                   type="button"
-                  className="errors-filter-reset"
+                  className="errors-filter-chip errors-filter-reset"
                   disabled={!canResetFilters}
                   onClick={resetFilters}
                 >
@@ -311,23 +347,6 @@ export default function ErrorsPage() {
 
             <div className="errors-dim-filter-row">
               <div className="errors-dim-filter-shell">
-                <SegmentedControl
-                  className="errors-dim-filter"
-                  ariaLabel="错词维度筛选"
-                  value={dimFilter}
-                  onChange={value => setDimFilter(value as 'all' | WrongWordDimension)}
-                  options={[
-                    { value: 'all', label: '全部', badge: scopeWords.length },
-                    ...WRONG_WORD_DIMENSIONS.map(dimension => ({
-                      value: dimension,
-                      label: WRONG_WORD_DIMENSION_LABELS[dimension],
-                      badge: dimCounts[dimension] > 0 ? dimCounts[dimension] : undefined,
-                      disabled: dimCounts[dimension] === 0,
-                      title: WRONG_WORD_DIMENSION_TITLES[dimension],
-                    })),
-                  ]}
-                />
-
                 <div className="errors-dim-filter-tools">
                   <form
                     className="errors-search-form"

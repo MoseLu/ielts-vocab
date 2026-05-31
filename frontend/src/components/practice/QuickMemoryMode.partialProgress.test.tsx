@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import QuickMemoryMode from './QuickMemoryMode'
@@ -83,6 +83,105 @@ describe('QuickMemoryMode partial chapter progress', () => {
         }),
       })
     })
+  })
+
+  it('does not repost the same partial snapshot across incidental rerenders', async () => {
+    const user = userEvent.setup()
+    const vocabulary = [
+      { word: 'apple', phonetic: '/apple/', pos: 'n.', definition: 'fruit' },
+      { word: 'banana', phonetic: '/banana/', pos: 'n.', definition: 'fruit' },
+    ]
+    const progressUrl = '/api/books/book-1/chapters/1/progress'
+    const progressCalls = () => apiFetchMock.mock.calls.filter(([url]) => url === progressUrl)
+    const renderSubject = (favoriteSlot?: React.ReactNode) => (
+      <QuickMemoryMode
+        vocabulary={vocabulary}
+        queue={[0, 1]}
+        settings={{}}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        favoriteSlot={favoriteSlot}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />
+    )
+
+    const { container, rerender } = render(renderSubject())
+
+    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await waitFor(() => expect(container.querySelector('.qm-btn-next')).not.toBeNull())
+    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+
+    await waitFor(() => {
+      expect(progressCalls()).toHaveLength(1)
+    })
+
+    await act(async () => {
+      rerender(renderSubject(<span>saved</span>))
+    })
+
+    expect(progressCalls()).toHaveLength(1)
+  })
+
+  it('keeps grouped chapter progress open after a quick-memory batch completes', async () => {
+    const user = userEvent.setup()
+    const onContinueChapterGroup = vi.fn()
+    const vocabulary = [
+      { word: 'apple', phonetic: '/apple/', pos: 'n.', definition: 'fruit' },
+      { word: 'banana', phonetic: '/banana/', pos: 'n.', definition: 'fruit' },
+      { word: 'cherry', phonetic: '/cherry/', pos: 'n.', definition: 'fruit' },
+    ]
+    const { container } = render(
+      <QuickMemoryMode
+        vocabulary={vocabulary}
+        queue={[0]}
+        settings={{}}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }, { id: '2', title: 'Chapter 2' }]}
+        chapterGroup={{ start: 0, end: 1, total: 3, groupSize: 1 }}
+        chapterQueueWords={['apple', 'banana', 'cherry']}
+        onContinueChapterGroup={onContinueChapterGroup}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await user.click(container.querySelector('.qm-btn--known') as HTMLButtonElement)
+    await waitFor(() => expect(container.querySelector('.qm-btn-next')).not.toBeNull())
+    await user.click(container.querySelector('.qm-btn-next') as HTMLButtonElement)
+
+    await waitFor(() => {
+      expect(container.querySelector('.qm-summary')).not.toBeNull()
+      expect(screen.getByText('当前分组已完成，还可以继续练习 2 个本章单词。')).toBeInTheDocument()
+    })
+
+    const progressCall = apiFetchMock.mock.calls.find(([url]) => url === '/api/books/book-1/chapters/1/progress')
+    const progressBody = JSON.parse(String((progressCall?.[1] as { body?: string })?.body ?? '{}'))
+    expect(progressBody).toMatchObject({
+      mode: 'quickmemory',
+      current_index: 1,
+      correct_count: 1,
+      wrong_count: 0,
+      words_learned: 1,
+      is_completed: false,
+      queue_words: ['apple', 'banana', 'cherry'],
+    })
+
+    const modeProgressCall = apiFetchMock.mock.calls.find(([url]) => url === '/api/books/book-1/chapters/1/mode-progress')
+    const modeProgressBody = JSON.parse(String((modeProgressCall?.[1] as { body?: string })?.body ?? '{}'))
+    expect(modeProgressBody).toMatchObject({
+      mode: 'quickmemory',
+      correct_count: 1,
+      wrong_count: 0,
+      is_completed: false,
+    })
+
+    await user.click(screen.getByRole('button', { name: /继续下一组/ }))
+    expect(onContinueChapterGroup).toHaveBeenCalledTimes(1)
   })
 
   it('does not sync an empty partial snapshot when resuming at a saved index', async () => {

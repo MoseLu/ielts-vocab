@@ -26,18 +26,14 @@ class UserWrongWord(db.Model):
     def to_dict(self):
         dimension_states = _build_wrong_word_dimension_states(self)
         summary = _summarize_wrong_word_dimension_states(dimension_states)
-        if all(dimension_states[dimension]['pass_streak'] >= WRONG_WORD_PENDING_REVIEW_TARGET for dimension in WRONG_WORD_DIMENSIONS):
+        if summary['history_dimension_count'] > 0 and summary['pending_dimension_count'] == 0:
             word_mastery_status = 'passed'
-        elif all(dimension_states[dimension]['pass_streak'] >= 1 for dimension in WRONG_WORD_DIMENSIONS):
-            word_mastery_status = 'in_review' if any(
-                dimension_states[dimension]['pass_streak'] > 1 for dimension in WRONG_WORD_DIMENSIONS
-            ) else 'unlocked'
         else:
             word_mastery_status = 'new'
         pending_dimensions = [
             dimension
             for dimension in WRONG_WORD_DIMENSIONS
-            if dimension_states[dimension]['pass_streak'] < WRONG_WORD_PENDING_REVIEW_TARGET
+            if _is_wrong_word_dimension_pending(dimension_states[dimension])
         ]
         return {
             'id': self.id,

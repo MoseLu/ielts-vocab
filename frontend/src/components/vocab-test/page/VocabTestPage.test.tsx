@@ -5,10 +5,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import VocabTestPage from './VocabTestPage'
-import { playWordAudio } from '../../practice/utils'
+import { playWordAudio } from '../../../features/practice/audio/practiceAudio'
 
-vi.mock('../../practice/utils', async () => {
-  const actual = await vi.importActual<typeof import('../../practice/utils')>('../../practice/utils')
+vi.mock('../../../features/practice/audio/practiceAudio', async () => {
+  const actual = await vi.importActual<typeof import('../../../features/practice/audio/practiceAudio')>('../../../features/practice/audio/practiceAudio')
   return {
     ...actual,
     playWordAudio: vi.fn(),

@@ -38,40 +38,48 @@ PRACTICE_MODE_DEFINITIONS = (
         profile_rank=2,
     ),
     PracticeModeDefinition(
+        key='test',
+        label='测试模式',
+        short_label='测试',
+        aliases=('audio-test', 'audio_test'),
+        stats_rank=3,
+        profile_rank=3,
+    ),
+    PracticeModeDefinition(
         key='listening',
         label='听音选义',
         short_label='听音选义',
-        stats_rank=3,
-        profile_rank=3,
+        stats_rank=4,
+        profile_rank=4,
     ),
     PracticeModeDefinition(
         key='meaning',
         label='默写模式',
         short_label='默写模式',
-        stats_rank=4,
-        profile_rank=4,
+        stats_rank=5,
+        profile_rank=5,
     ),
     PracticeModeDefinition(
         key='dictation',
         label='听写',
         short_label='听写',
-        stats_rank=5,
-        profile_rank=5,
+        stats_rank=6,
+        profile_rank=6,
     ),
     PracticeModeDefinition(
         key='radio',
         label='随身听',
         short_label='随身听',
         aliases=('choice', 'select', 'selection'),
-        stats_rank=6,
-        profile_rank=6,
+        stats_rank=7,
+        profile_rank=7,
     ),
     PracticeModeDefinition(
         key='errors',
         label='错词强化',
         short_label='错词强化',
-        stats_rank=7,
-        profile_rank=7,
+        stats_rank=8,
+        profile_rank=8,
     ),
     PracticeModeDefinition(
         key='speaking',
@@ -105,6 +113,10 @@ def _raw_mode_text(value) -> str:
     return value.strip().lower()
 
 
+def _is_internal_migration_mode(value: str) -> bool:
+    return value.startswith('local_storage_migration_')
+
+
 def normalize_practice_mode(value) -> str:
     mode = _raw_mode_text(value)
     if not mode:
@@ -123,6 +135,8 @@ def normalize_practice_mode_or_custom(
         return default
     raw_mode = value.strip()
     if not raw_mode:
+        return default
+    if _is_internal_migration_mode(raw_mode):
         return default
     normalized = normalize_practice_mode(raw_mode)
     return normalized or raw_mode[:max_length]

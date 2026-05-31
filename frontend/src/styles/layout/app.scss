@@ -205,13 +205,13 @@ body,
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--size-10);
+    gap: var(--size-3);
     background: transparent;
     border: none;
     cursor: pointer;
     color: var(--text-tertiary);
-    transition: color var(--transition-fast);
-    padding: var(--size-10) 0;
+    transition: color var(--transition-fast), background var(--transition-fast);
+    padding: var(--size-5) 0;
 }
 
 .bottom-nav-item:active {
@@ -223,21 +223,42 @@ body,
 }
 
 .bottom-nav-icon {
-    width: var(--size-22);
-    height: var(--size-22);
+    width: var(--size-30);
+    height: var(--size-30);
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: var(--radius-10);
+    color: inherit;
+    transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+    background: var(--accent);
+    color: var(--text-inverse);
+    box-shadow: 0 var(--size-2) var(--size-6) rgba(var(--accent-rgb), var(--alpha-24));
+}
+
+.bottom-nav-item--primary .bottom-nav-icon {
+    background: var(--accent-light);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 var(--size-1) rgba(var(--accent-rgb), var(--alpha-18));
+}
+
+.bottom-nav-item--primary.active .bottom-nav-icon {
+    background: var(--accent);
+    color: var(--text-inverse);
 }
 
 .bottom-nav-icon svg {
-    width: 100%;
-    height: 100%;
+    width: var(--size-20);
+    height: var(--size-20);
 }
 
 .bottom-nav-label {
     font-size: var(--size-10);
     font-weight: 600;
+    line-height: var(--size-12);
 }
 
 /* Show bottom nav on mobile/tablet, adjust body padding */
@@ -252,8 +273,6 @@ body,
 
     .page-content {
         padding: var(--size-10);
-        padding-bottom: calc(var(--size-64) + var(--size-10));
+        padding-bottom: calc(var(--size-112) + env(safe-area-inset-bottom, 0px));
     }
 }
-
-

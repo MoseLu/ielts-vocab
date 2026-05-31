@@ -7,6 +7,9 @@ react {
 }
 
 def enableProguardInReleaseBuilds = false
+def mobileEnvironment = System.getenv("IELTS_MOBILE_ENV") ?: "prod"
+def usesCleartextTraffic = mobileEnvironment == "dev" ? "true" : "false"
+def cleartextTrafficResValue = usesCleartextTraffic
 
 android {
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -21,6 +24,7 @@ android {
         versionCode 1
         versionName '0.1.0'
         manifestPlaceholders = [usesCleartextTraffic: "true"]
+        resValue "bool", "mobile_cleartext_traffic_permitted", "true"
     }
     signingConfigs {
         debug {
@@ -35,7 +39,8 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            manifestPlaceholders = [usesCleartextTraffic: "false"]
+            manifestPlaceholders = [usesCleartextTraffic: usesCleartextTraffic]
+            resValue "bool", "mobile_cleartext_traffic_permitted", cleartextTrafficResValue
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"

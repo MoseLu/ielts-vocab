@@ -21,6 +21,7 @@ from services.auth_session_service import (
     set_auth_cookies as _service_set_auth_cookies,
     update_avatar as _service_update_avatar,
 )
+from platform_sdk.identity_wechat_application import perform_mobile_wechat_login as _service_perform_mobile_wechat_login
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -53,6 +54,15 @@ def login():
 @auth_bp.route('/mobile/login', methods=['POST'])
 def mobile_login():
     payload, status, user_id = _service_perform_login(_app, request, request.get_json() or {})
+    if user_id is None:
+        return jsonify(payload), status
+    token_payload = _service_make_mobile_token_payload(_app, user_id)
+    return jsonify({**payload, **token_payload}), status
+
+
+@auth_bp.route('/mobile/wechat-login', methods=['POST'])
+def mobile_wechat_login():
+    payload, status, user_id = _service_perform_mobile_wechat_login(_app, request, request.get_json() or {})
     if user_id is None:
         return jsonify(payload), status
     token_payload = _service_make_mobile_token_payload(_app, user_id)

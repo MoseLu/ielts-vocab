@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Word } from '../../../components/practice/types'
+import type { Word } from '../../practice/types'
 import { apiFetch } from '../../../lib'
 
 type ToastType = 'success' | 'error' | 'info'

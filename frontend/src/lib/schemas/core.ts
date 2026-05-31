@@ -19,6 +19,7 @@ export const PracticeModeSchema = z.enum([
   'follow',
   'radio',
   'quickmemory',
+  'test',
   'errors',
 ])
 export type PracticeMode = z.infer<typeof PracticeModeSchema>
@@ -200,6 +201,7 @@ const fontSizeValues = z.union([
   z.literal('medium'),
   z.literal('large'),
 ])
+const themeColorValues = z.enum(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'])
 
 export const AppSettingsSchema = z.object({
   shuffle: z.boolean().optional(),
@@ -212,6 +214,7 @@ export const AppSettingsSchema = z.object({
   reviewLimitCustomized: z.boolean().optional(),
   darkMode: z.boolean().optional(),
   fontSize: fontSizeValues.optional(),
+  themeColor: themeColorValues.optional(),
 })
 export type AppSettings = z.infer<typeof AppSettingsSchema>
 

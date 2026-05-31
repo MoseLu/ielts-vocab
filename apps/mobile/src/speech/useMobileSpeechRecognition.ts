@@ -3,7 +3,7 @@ import { PermissionsAndroid, Platform } from 'react-native'
 import { io, type Socket } from 'socket.io-client'
 import { initialSpeechSessionState, reduceSpeechSession } from '@ielts-vocab/app-core'
 import { mobileApiClient } from '../api/mobileApi'
-import { apiBaseUrl } from '../config'
+import { speechBaseUrl } from '../config'
 import {
   audioCaptureEvents,
   configureNativeAudioSession,
@@ -72,7 +72,7 @@ export function useMobileSpeechRecognition(language = 'en') {
     if (!token) throw new Error('请先登录')
     disconnectSocket()
     dispatch({ type: 'connect' })
-    const socket: SpeechSocket = io(`${apiBaseUrl}/speech`, {
+    const socket: SpeechSocket = io(`${speechBaseUrl}/speech`, {
       auth: { token },
       path: '/socket.io',
       reconnection: true,
@@ -157,9 +157,10 @@ export function useMobileSpeechRecognition(language = 'en') {
 
   const stop = useCallback(async () => {
     dispatch({ type: 'stop_recording' })
-    await stopNativePcmCapture()
+    const capture = await stopNativePcmCapture()
     socketRef.current?.emit('commit_audio_buffer')
     socketRef.current?.emit('stop_recognition')
+    return capture
   }, [])
 
   return {

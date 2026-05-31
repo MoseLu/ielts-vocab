@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useFavoriteWords } from './useFavoriteWords'
-import type { Word } from '../../../components/practice/types'
+import type { Word } from '../../practice/types'
 
 const apiFetchMock = vi.fn()
 

@@ -42,9 +42,9 @@ export function reduceSpeechSession(
 ): SpeechSessionState {
   switch (event.type) {
     case 'connect':
-      return { ...state, error: '', status: 'connecting' }
+      return { ...state, error: '', status: state.status === 'recording' ? 'recording' : 'connecting' }
     case 'ready':
-      return { ...state, error: '', status: 'ready' }
+      return { ...state, error: '', status: state.status === 'recording' ? 'recording' : 'ready' }
     case 'start_recording':
       return {
         ...initialSpeechSessionState,
@@ -60,7 +60,12 @@ export function reduceSpeechSession(
     case 'final':
       return { ...state, finalText: event.text, level: 0, status: 'completed' }
     case 'error':
-      return { ...state, error: event.message, level: 0, status: 'error' }
+      return {
+        ...state,
+        error: event.message,
+        level: 0,
+        status: state.status === 'recording' ? 'recording' : 'error',
+      }
     case 'reset':
       return initialSpeechSessionState
   }

@@ -38,7 +38,7 @@ ensure_micromamba() {
   trap - EXIT
 }
 
-create_runtime_env() {
+ensure_runtime_env() {
   if [[ -d "${runtime_prefix}" ]]; then
     return 0
   fi
@@ -64,8 +64,14 @@ install_python_packages() {
 
 prepare_pnpm() {
   log 'Enabling pnpm via corepack'
-  MAMBA_ROOT_PREFIX="${mamba_root}" "${mamba_bin}" run -n "${runtime_env}" \
-    bash -lc 'corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm --version >/dev/null'
+  if [[ -x "${runtime_prefix}/bin/corepack" ]]; then
+    if "${runtime_prefix}/bin/corepack" enable && "${runtime_prefix}/bin/corepack" prepare pnpm@9.0.0 --activate; then
+      "${runtime_prefix}/bin/pnpm" --version >/dev/null
+      return 0
+    fi
+  fi
+  "${runtime_prefix}/bin/npm" install -g --prefix "${runtime_prefix}" --force pnpm@9.0.0
+  "${runtime_prefix}/bin/pnpm" --version >/dev/null
 }
 
 print_summary() {
@@ -75,7 +81,7 @@ print_summary() {
 }
 
 ensure_micromamba
-create_runtime_env
+ensure_runtime_env
 install_python_packages
 prepare_pnpm
 print_summary

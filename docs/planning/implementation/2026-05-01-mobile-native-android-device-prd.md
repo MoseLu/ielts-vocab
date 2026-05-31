@@ -6,7 +6,7 @@ Last updated: 2026-05-01
 
 The mobile v1 goal is to turn the existing React/Vite learning product into a native Android and iOS app without wrapping the Web UI in a WebView. The current implementation already has the first mobile slice: `apps/mobile`, `packages/app-core`, mobile token auth, and mobile ASR Socket.IO support. This PRD records the Android-first real-device milestone.
 
-The first device target is `M2012K10C`, Android 13, SDK 33, connected through adb. The delivery target for this milestone is a debug Android build that installs on that device and can complete the learner smoke path: login, basic API reads, practice screen entry, microphone permission, native PCM capture, and speech Socket.IO connection with a mobile Bearer token.
+The first device target is `M2012K10C`, Android 13, SDK 33, connected through adb. The delivery target for this milestone is a debug Android build that installs on that device and can complete the learner smoke path: login, basic API reads, practice screen entry, microphone permission, native PCM capture, and speech Socket.IO connection with mobile access-token auth.
 
 ## Product Requirements
 
@@ -14,8 +14,8 @@ The first device target is `M2012K10C`, Android 13, SDK 33, connected through ad
 - The app must be native React Native UI, not a WebView shell.
 - The first screen after login must expose the learner tabs: plan, books, practice, stats, AI, and profile.
 - The Android debug build must install on the connected device using local Gradle wrapper commands.
-- The test account for the first smoke pass is `admin / admin123`.
-- The app must be able to target both local split runtime and production gateway. Production defaults to `https://axiomaticworld.com`; dev targets local API ingress through `adb reverse tcp:8000 tcp:8000`.
+- The test account for the first smoke pass is `admin / admin123456`.
+- The app must be able to target both local split runtime and production gateway. Production defaults to `https://axiomaticworld.com`; dev targets the Mac's Wi-Fi IP on ports `8000` and `5001`, with `adb reverse` reserved only as a temporary fallback for isolated debugging.
 - Speech capture must request microphone permission, emit `16kHz` mono `PCM16` frames, show recording level, and forward frames to the existing ASR Socket.IO contract.
 - API and speech errors must be visible in the UI without native crashes, white screens, or stuck loading states.
 
@@ -45,11 +45,11 @@ The first device target is `M2012K10C`, Android 13, SDK 33, connected through ad
 ## Real-Device Smoke Plan
 
 1. Confirm device: `adb devices -l`.
-2. For local API smoke, run `adb reverse tcp:8000 tcp:8000` and `adb reverse tcp:5001 tcp:5001`; otherwise use the production default.
+2. For local API smoke, use the Mac Wi-Fi IP for `:8000` and `:5001`; if Wi-Fi routing is unavailable, use `adb reverse` only as a temporary fallback.
 3. Build/install debug APK through `apps/mobile/android/gradlew :app:installDebug`.
 4. Launch `com.axiomaticworld.ieltsvocab/.MainActivity`.
 5. Verify no native crash through `adb logcat -b crash`.
-6. Login with `admin / admin123`.
+6. Login with `admin / admin123456`.
 7. Open plan/books/stats and confirm at least one API-backed screen returns data or an explicit service error.
 8. Open practice, request microphone permission, start recording, and confirm the level changes from native audio input.
 9. Confirm speech Socket.IO uses mobile Bearer auth and either returns ASR events or a clear service error.

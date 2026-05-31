@@ -8,6 +8,7 @@ export const PracticeModeSchema = z.enum([
   'follow',
   'radio',
   'quickmemory',
+  'test',
   'errors',
 ])
 export type PracticeMode = z.infer<typeof PracticeModeSchema>

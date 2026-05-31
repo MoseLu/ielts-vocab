@@ -5,6 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PracticePage from './PracticePage'
 
 const apiFetchMock = vi.fn()
+const backgroundPracticeWrites = new Set(['/api/ai/quick-memory/sync', '/api/ai/practice/game/attempt'])
+function apiClientFetchMock(url: string, ...args: unknown[]) {
+  if (backgroundPracticeWrites.has(String(url))) return Promise.resolve({})
+  return apiFetchMock(url, ...args)
+}
 const fetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const playWordAudioMock = vi.fn()
@@ -57,8 +62,17 @@ vi.mock('../../lib', async () => {
   }
 })
 
-vi.mock('./utils', async () => {
-  const actual = await vi.importActual<typeof import('./utils')>('./utils')
+vi.mock('../../lib/apiClient', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/apiClient')>('../../lib/apiClient')
+  return {
+    ...actual,
+    apiFetch: (...args: [string, ...unknown[]]) => apiClientFetchMock(...args),
+    buildApiUrl: (path: string) => path,
+  }
+})
+
+vi.mock('../../features/practice/audio/practiceAudio', async () => {
+  const actual = await vi.importActual<typeof import('../../features/practice/audio/practiceAudio')>('../../features/practice/audio/practiceAudio')
   return {
     ...actual,
     playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
@@ -109,6 +123,9 @@ vi.mock('./OptionsMode', () => ({
         </button>
         <button type="button" data-testid="answer-guise" onClick={() => onOptionSelect(findOptionIndex('guise'))}>
           answer-guise
+        </button>
+        <button type="button" data-testid="answer-correct" onClick={() => onOptionSelect(correctIndex)}>
+          answer-correct
         </button>
       </div>
     )
@@ -161,6 +178,7 @@ describe('PracticePage listening replay', () => {
 
     fetchMock.mockResolvedValue({ json: async () => ({ vocabulary }) })
     apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/vocabulary/day/1') return fetch(url).then(response => response.json())
       if (url === '/api/ai/learner-profile') return Promise.resolve({})
       if (url === '/api/progress') return Promise.resolve({})
       if (url === '/api/ai/wrong-words/sync') return Promise.resolve({})
@@ -195,5 +213,57 @@ describe('PracticePage listening replay', () => {
       await Promise.resolve()
     })
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guy', 'guise'])
+  })
+
+  it('plays the correct listening word after choosing the right option', async () => {
+    vi.useFakeTimers()
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
+
+    const vocabulary = [
+      {
+        word: 'guide',
+        phonetic: '/gaid/',
+        pos: 'n.',
+        definition: '向导',
+        listening_confusables: [
+          { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+          { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+          { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+        ],
+      },
+      { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+      { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+      { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+    ]
+
+    fetchMock.mockResolvedValue({ json: async () => ({ vocabulary }) })
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/vocabulary/day/1') return fetch(url).then(response => response.json())
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/progress') return Promise.resolve({})
+      throw new Error(`Unexpected url: ${url}`)
+    })
+
+    render(
+      <MemoryRouter>
+        <PracticePage currentDay={1} mode="listening" onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await flushRender()
+    expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:4')
+
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+    await flushRender()
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('answer-correct'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide', 'guide'])
   })
 })

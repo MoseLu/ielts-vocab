@@ -5,7 +5,7 @@ import {
   fetchFollowReadWord,
   type FollowReadPayload,
   type FollowReadSegment,
-} from './followReadApi'
+} from '../../features/practice/audio/followReadApi'
 import {
   getPracticeAudioSnapshot,
   playPracticeAudio,

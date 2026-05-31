@@ -39,7 +39,26 @@
     }
 
     .practice-mode-btn {
+        min-width: 0;
+        max-width: var(--size-160);
+        justify-content: space-between;
         padding-inline: var(--size-10);
+    }
+
+    .practice-context-btn {
+        max-width: clamp(var(--size-108), 30vw, var(--size-160));
+    }
+
+    .practice-mode-switch-btn {
+        max-width: clamp(var(--size-96), 25vw, var(--size-132));
+    }
+
+    .practice-mode-label {
+        display: inline-block;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .practice-ctrl-icon-btn svg {
@@ -247,7 +266,16 @@
     }
 
     .practice-mode-btn {
+        max-width: var(--size-120);
         padding-inline: var(--size-10);
+    }
+
+    .practice-context-btn {
+        max-width: var(--size-112);
+    }
+
+    .practice-mode-switch-btn {
+        max-width: var(--size-104);
     }
 
     .practice-ctrl-icon-btn svg {
@@ -336,5 +364,4 @@
         padding-bottom: calc(var(--size-6) + env(safe-area-inset-bottom));
     }
 }
-
 

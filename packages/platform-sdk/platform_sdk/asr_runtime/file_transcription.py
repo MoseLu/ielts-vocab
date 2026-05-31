@@ -6,7 +6,13 @@ from pathlib import Path
 
 import dashscope
 
-from .base import ASRServiceError, get_dashscope_api_key, resolve_file_asr_model
+from .base import (
+    ASRServiceError,
+    get_dashscope_api_key,
+    resolve_asr_provider,
+    resolve_file_asr_model,
+)
+from .local_transcription import local_asr_available, transcribe_via_local_mlx
 
 
 def _detect_uploaded_audio_suffix(audio_file) -> tuple[str, str]:
@@ -85,20 +91,34 @@ def _transcribe_via_qwen_flash(audio_path: str, model: str) -> str:
 def transcribe_uploaded_audio(audio_file) -> str:
     if audio_file is None:
         raise ASRServiceError('未收到音频文件', status_code=400)
-    if not get_dashscope_api_key():
-        raise ASRServiceError('API密钥未配置', status_code=500)
 
     suffix, content_type = _detect_uploaded_audio_suffix(audio_file)
-    model = resolve_file_asr_model()
+    provider = resolve_asr_provider()
 
     print("\n=== Speech Recognition Request ===")
-    print(f"Model: {model}")
+    print(f"Provider: {provider}")
     print(f"File suffix: {suffix}, Content-Type: {content_type}")
 
     temp_path = _save_uploaded_audio(audio_file, suffix)
     try:
+        if provider in {'auto', 'local'}:
+            try:
+                text = transcribe_via_local_mlx(temp_path)
+                print('Recognition complete via local MLX')
+                if text:
+                    print(f"Recognized text: '{text}'")
+                return text
+            except ASRServiceError:
+                if provider == 'local':
+                    raise
+                print('Local ASR unavailable or failed; trying DashScope fallback')
+
+        if not get_dashscope_api_key():
+            raise ASRServiceError('API密钥未配置', status_code=500)
+        model = resolve_file_asr_model()
+        print(f"Model: {model}")
         text = _transcribe_via_qwen_flash(temp_path, model)
-        print('Recognition complete')
+        print('Recognition complete via DashScope')
         if text:
             print(f"Recognized text: '{text}'")
         return text
@@ -107,3 +127,12 @@ def transcribe_uploaded_audio(audio_file) -> str:
             os.unlink(temp_path)
         except OSError:
             pass
+
+
+def upload_transcription_available() -> bool:
+    provider = resolve_asr_provider()
+    if provider == 'local':
+        return local_asr_available()
+    if provider == 'dashscope':
+        return bool(get_dashscope_api_key())
+    return local_asr_available() or bool(get_dashscope_api_key())

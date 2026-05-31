@@ -98,11 +98,18 @@ def main() -> int:
         env_file=env_file,
     )
     if runtime == 'split':
-        if not args.verify_only:
-            raise SystemExit('split runtime only supports --verify-only')
         from platform_sdk.wave5_projection_split_verification import collect_split_runtime_status
 
+        bootstrap_summary = None
+        if not args.verify_only:
+            from platform_sdk.wave5_projection_split_bootstrap import (
+                bootstrap_split_runtime_projections,
+            )
+
+            bootstrap_summary = bootstrap_split_runtime_projections(env_file=env_file)
         result = collect_split_runtime_status(env_file=env_file)
+        result['bootstrap_ran'] = not args.verify_only
+        result['bootstrap'] = bootstrap_summary
     else:
         result = _run_monolith_runtime(bootstrap=not args.verify_only)
         result['runtime'] = 'monolith'

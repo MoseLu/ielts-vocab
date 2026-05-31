@@ -4,7 +4,7 @@ import { readPracticeResultOutbox } from '../../../lib/practiceResult/outbox'
 import { submitWordMasteryAttempt } from '../../../lib/gamePractice'
 import { recordEbbinghausPracticeResult } from '../../../lib/ebbinghausReview'
 import { usePracticeWordMasterySubmitter } from './usePracticeWordMasterySubmitter'
-import type { Word } from '../../../components/practice/types'
+import type { Word } from '../../../features/practice/types'
 
 vi.mock('../../../lib/gamePractice', () => ({
   submitWordMasteryAttempt: vi.fn(),
@@ -79,6 +79,8 @@ describe('usePracticeWordMasterySubmitter', () => {
       sourceMode: 'smart',
       bookId: 'book-1',
       chapterId: '2',
+      scopeKey: 'chapter:book-1:2',
+      scopeType: 'chapter',
     }))
     await waitFor(() => expect(readPracticeResultOutbox('7')[0]).toMatchObject({ status: 'acked' }))
     expect(vi.mocked(submitWordMasteryAttempt).mock.calls[0]?.[0]).toMatchObject({
@@ -86,7 +88,7 @@ describe('usePracticeWordMasterySubmitter', () => {
       dimension: 'meaning',
       sourceMode: 'smart',
       traceId: 'practice:11111111-2222-4333-8444-555555555555',
-      idempotencyKey: 'practice:42:smart:book-1-chapter-2:abandon:meaning:0',
+      idempotencyKey: 'practice:42:smart:chapter-book-1-2:abandon:meaning:0',
     })
   })
 

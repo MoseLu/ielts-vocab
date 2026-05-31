@@ -13,6 +13,11 @@ import {
 } from '../../features/vocabulary/wrongWordsStore'
 
 const apiFetchMock = vi.fn()
+const backgroundPracticeWrites = new Set(['/api/ai/quick-memory/sync', '/api/ai/practice/game/attempt'])
+function apiClientFetchMock(url: string, ...args: unknown[]) {
+  if (backgroundPracticeWrites.has(String(url))) return Promise.resolve({})
+  return apiFetchMock(url, ...args)
+}
 const startSessionMock = vi.fn().mockResolvedValue(null)
 const useFavoriteWordsMock = vi.fn(() => ({
   isFavorite: () => false,
@@ -86,8 +91,17 @@ vi.mock('../../lib', async () => {
   }
 })
 
-vi.mock('./utils', async () => {
-  const actual = await vi.importActual<typeof import('./utils')>('./utils')
+vi.mock('../../lib/apiClient', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/apiClient')>('../../lib/apiClient')
+  return {
+    ...actual,
+    apiFetch: (...args: [string, ...unknown[]]) => apiClientFetchMock(...args),
+    buildApiUrl: (path: string) => path,
+  }
+})
+
+vi.mock('../../features/practice/practiceOptions', async () => {
+  const actual = await vi.importActual<typeof import('../../features/practice/practiceOptions')>('../../features/practice/practiceOptions')
   return {
     ...actual,
     shuffleArray: <T,>(items: T[]): T[] => [...items].reverse(),
@@ -390,6 +404,41 @@ describe('PracticePage error mode', () => {
     await waitFor(() => {
       expect(screen.getByTestId('options-mode')).toHaveTextContent('current:beta')
     }, { timeout: 2500 })
+  })
+
+  it('falls back from listening for wrong-word books without listening presets', async () => {
+    const showToast = vi.fn()
+    const onModeChange = vi.fn()
+    const words = [
+      { word: 'alpha', phonetic: '/a/', pos: 'n.', definition: 'alpha definition' },
+      { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta definition' },
+    ]
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/books/wrong_words_3/chapters') {
+        return Promise.resolve({ chapters: [{ id: 'wrong_word_3_m', title: '错词本' }] })
+      }
+      if (url === '/api/books/wrong_words_3/chapters/progress') {
+        return Promise.resolve({ chapter_progress: {} })
+      }
+      if (url === '/api/books/familiar/status') return Promise.resolve({ words: [] })
+      if (String(url).startsWith('/api/books/word-list?')) return Promise.resolve({ words })
+      throw new Error(`Unexpected url: ${url}`)
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/practice?book=wrong_words_3&chapter=wrong_word_3_m']}>
+        <PracticePage user={{ id: 42 }} mode="listening" showToast={showToast} onModeChange={onModeChange} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('options-mode')).toHaveTextContent('current:alpha')
+    })
+    expect(onModeChange).toHaveBeenCalledWith('meaning')
+    expect(showToast).toHaveBeenCalledWith('当前词表没有听音题素材，已自动切换到词义模式。', 'info')
+    expect(screen.queryByText('当前词表暂无可用听音辨析')).toBeNull()
   })
 
   it('pushes weak words and trap strategy into the AI context during error review', async () => {

@@ -1,3 +1,4 @@
+import { afterEach, vi } from 'vitest'
 import {
   getQuickMemoryStorageKey,
   QUICK_MEMORY_MASTERY_TARGET,
@@ -24,6 +25,10 @@ describe('quickMemory', () => {
 
   beforeEach(() => {
     localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('resets the consecutive known count when the learner gets a word wrong', () => {
@@ -104,6 +109,15 @@ describe('quickMemory', () => {
     expect(localStorage.getItem(STORAGE_KEYS.QUICK_MEMORY_RECORDS)).toBeNull()
   })
 
+  it('returns current records when quick-memory storage is full', () => {
+    const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota exceeded', 'QuotaExceededError')
+    })
+
+    expect(writeQuickMemoryRecordsToStorage(sampleRecord)).toBe(sampleRecord)
+    expect(setItem).toHaveBeenCalled()
+  })
+
   it('isolates quick-memory records between different users', () => {
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 2 }))
     writeQuickMemoryRecordsToStorage(sampleRecord)
@@ -126,6 +140,29 @@ describe('quickMemory', () => {
 
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 3 }))
     expect(Object.keys(readQuickMemoryRecordsFromStorage())).toEqual(['beta'])
+  })
+
+  it('isolates quick-memory records between different learning scopes', () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 2 }))
+    const scopeA = { bookId: 'book-1', chapterId: '1' }
+    const scopeB = { bookId: 'book-2', chapterId: '1' }
+
+    writeQuickMemoryRecordsToStorage(sampleRecord, undefined, scopeA)
+    writeQuickMemoryRecordsToStorage({
+      beta: {
+        status: 'unknown',
+        firstSeen: 4000,
+        lastSeen: 5000,
+        knownCount: 0,
+        unknownCount: 1,
+        nextReview: 6000,
+        fuzzyCount: 0,
+      },
+    }, undefined, scopeB)
+
+    expect(Object.keys(readQuickMemoryRecordsFromStorage(undefined, scopeA))).toEqual(['alpha'])
+    expect(Object.keys(readQuickMemoryRecordsFromStorage(undefined, scopeB))).toEqual(['beta'])
+    expect(getQuickMemoryStorageKey(2, scopeA)).toContain('chapter%3Abook-1%3A1')
   })
 
   it('ignores the legacy global quick-memory cache when a user is known', () => {

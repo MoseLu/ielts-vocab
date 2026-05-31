@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ErrorsPage from './ErrorsPage'
 
 const navigateMock = vi.fn()
@@ -57,6 +57,8 @@ describe('ErrorsPage custom book export', () => {
     apiFetchMock.mockReset()
     navigateMock.mockReset()
     localStorage.clear()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2026-04-07T08:00:00.000Z'))
     apiFetchMock.mockImplementation((url: string) => {
       if (url.startsWith('/api/ai/wrong-words?')) return Promise.resolve({ words: [] })
       if (url === '/api/books/custom-books') {
@@ -73,6 +75,10 @@ describe('ErrorsPage custom book export', () => {
       }
       return Promise.resolve({})
     })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('appends selected wrong words to an existing custom book and opens quick memory', async () => {

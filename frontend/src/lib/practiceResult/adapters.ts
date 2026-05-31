@@ -1,4 +1,5 @@
 import { buildPracticeIdempotencyKey } from './commandKeys'
+import { buildLearningScope } from '../learningScope'
 import { getPracticeModeContract, type PracticeRuntimeId } from './modeContracts'
 import { normalizePracticeTraceId } from './trace'
 import type {
@@ -24,27 +25,18 @@ interface BuildPracticeResultCommandInput {
   attemptIndex?: number
 }
 
-function scopeKey(progressScope: PracticeResultProgressScope | undefined): string {
-  if (!progressScope) return 'global'
-  if (progressScope.bookId && progressScope.chapterId != null) {
-    return `${progressScope.bookId}:chapter:${progressScope.chapterId}`
-  }
-  if (progressScope.bookId) return `${progressScope.bookId}:book`
-  if (progressScope.day != null) return `day:${progressScope.day}`
-  return 'global'
-}
-
 export function buildPracticeResultCommand(input: BuildPracticeResultCommandInput): PracticeResultCommand {
   const contract = getPracticeModeContract(input.mode)
   const sessionId = input.session?.sessionId ?? null
   const localSessionId = input.session?.localSessionId ?? `${input.mode}:${input.route}`
+  const scope = buildLearningScope(input.progressScope)
   return {
     traceId: normalizePracticeTraceId(input.traceId),
     idempotencyKey: buildPracticeIdempotencyKey({
       sessionId,
       localSessionId,
       mode: input.mode,
-      scopeKey: scopeKey(input.progressScope),
+      scopeKey: scope.scopeKey,
       wordKey: input.word,
       dimension: input.dimension,
       attemptIndex: input.attemptIndex ?? 0,
@@ -52,6 +44,9 @@ export function buildPracticeResultCommand(input: BuildPracticeResultCommandInpu
     userScope: String(input.userScope),
     route: input.route,
     mode: input.mode,
+    scopeKey: scope.scopeKey,
+    scopeType: scope.scopeType,
+    originScope: scope.originScope,
     dimension: input.dimension,
     word: input.word,
     wordPayload: input.wordPayload,

@@ -1,5 +1,5 @@
+import type { CSSProperties } from 'react'
 import {
-  type CSSProperties,
   AdminDetailTab,
   buildSessionContent,
   buildSessionWordSample,

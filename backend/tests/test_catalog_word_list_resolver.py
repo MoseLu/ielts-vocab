@@ -65,6 +65,62 @@ def test_custom_import_rejects_unknown_words_and_word_list_stays_aligned(monkeyp
         assert str(word['chapter_id']) == str(dictionary_entry['chapter_id'])
 
 
+def test_custom_wrong_word_book_list_hydrates_paid_listening_metadata(monkeypatch):
+    custom_book = SimpleNamespace(id='wrong_words_7')
+    listening_confusables = [
+        {'word': 'better', 'phonetic': '/betə/', 'pos': 'adj.', 'definition': '更好的'},
+        {'word': 'bitter', 'phonetic': '/bɪtə/', 'pos': 'adj.', 'definition': '苦的'},
+        {'word': 'butter', 'phonetic': '/bʌtə/', 'pos': 'n.', 'definition': '黄油'},
+    ]
+
+    monkeypatch.setattr(word_list_resolver, '_practice_metadata_lookup_cache', None)
+    monkeypatch.setattr(word_list_resolver, '_current_user_id', lambda: 7)
+    monkeypatch.setattr(word_list_resolver, 'get_vocab_book', lambda book_id: None)
+    monkeypatch.setattr(
+        word_list_resolver.custom_book_catalog_service,
+        'get_custom_book_for_user',
+        lambda user_id, book_id: custom_book if book_id == 'wrong_words_7' else None,
+    )
+    monkeypatch.setattr(
+        word_list_resolver.custom_book_catalog_service,
+        'serialize_custom_book_summary',
+        lambda book: {'id': book.id, 'title': '错词本'},
+    )
+    monkeypatch.setattr(
+        word_list_resolver,
+        'load_book_chapters',
+        lambda book_id: {
+            'chapters': [{'id': 'wrong_words_7_b', 'title': 'B', 'word_count': 1}],
+        } if book_id == 'wrong_words_7' else {'chapters': []},
+    )
+
+    def fake_load_book_vocabulary(book_id):
+        if book_id == 'wrong_words_7':
+            return [{'word': 'beta', 'chapter_id': 'wrong_words_7_b', 'definition': 'custom beta'}]
+        if book_id == 'ielts_reading_premium':
+            return [{
+                'word': 'beta',
+                'phonetic': '/ˈbiːtə/',
+                'pos': 'n.',
+                'definition': 'beta source',
+                'listening_confusables': listening_confusables,
+            }]
+        return []
+
+    monkeypatch.setattr(word_list_resolver, 'load_book_vocabulary', fake_load_book_vocabulary)
+
+    payload, status = word_list_resolver.build_word_list_response(
+        scope='book',
+        book_id='wrong_words_7',
+        chapter_id='wrong_words_7_b',
+    )
+
+    assert status == 200
+    assert payload['words'][0]['word'] == 'beta'
+    assert payload['words'][0]['listening_confusables'] == listening_confusables
+    assert payload['dictionary'][0]['listening_confusables'] == listening_confusables
+
+
 def test_custom_book_word_list_returns_more_than_one_hundred_words(monkeypatch, tmp_path):
     client, headers = _catalog_client(monkeypatch, tmp_path, 'catalog-word-list-large')
     create_response = client.post(
@@ -181,3 +237,35 @@ def test_wrong_selection_word_list_falls_back_to_first_wrong_order(monkeypatch, 
     assert status == 200
     assert [word['word'] for word in payload['words']] == ['ability', 'academic']
     assert [word['source_order'] for word in payload['words']] == [0, 1]
+
+
+def test_wrong_selection_word_list_preserves_listening_metadata(monkeypatch, tmp_path):
+    listening_confusables = [
+        {'word': 'better', 'phonetic': '/betə/', 'pos': 'adj.', 'definition': '更好的'},
+        {'word': 'bitter', 'phonetic': '/bɪtə/', 'pos': 'adj.', 'definition': '苦的'},
+        {'word': 'butter', 'phonetic': '/bʌtə/', 'pos': 'n.', 'definition': '黄油'},
+    ]
+
+    monkeypatch.setattr(word_list_resolver, '_current_user_id', lambda: 7)
+    monkeypatch.setattr(word_list_resolver, 'load_book_vocabulary', lambda book_id: [])
+    monkeypatch.setattr(
+        word_list_resolver,
+        'build_wrong_words_response',
+        lambda user_id, detail_mode=None: ({
+            'words': [{
+                'id': 1,
+                'word': 'beta',
+                'phonetic': '/ˈbiːtə/',
+                'pos': 'n.',
+                'definition': 'beta source',
+                'listening_confusables': listening_confusables,
+            }],
+        }, 200),
+        raising=False,
+    )
+
+    payload, status = word_list_resolver.build_word_list_response(scope='wrong-selection')
+
+    assert status == 200
+    assert payload['words'][0]['listening_confusables'] == listening_confusables
+    assert payload['dictionary'][0]['listening_confusables'] == listening_confusables

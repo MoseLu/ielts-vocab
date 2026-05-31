@@ -1,5 +1,7 @@
 export * from './apiClient'
 export * from './authClient'
+export * from './mobileSchemas'
+export * from './practiceEngine'
 export * from './schemas'
 export * from './speechSession'
 export * from './storage'

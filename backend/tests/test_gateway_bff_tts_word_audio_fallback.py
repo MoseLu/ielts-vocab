@@ -102,6 +102,91 @@ def test_resolve_normal_word_audio_request_candidates_include_legacy_cache_ident
     ]
 
 
+def test_resolve_word_audio_request_uses_phonetic_specific_identity(monkeypatch):
+    module = _load_gateway_media_proxy_module()
+
+    monkeypatch.setattr(
+        module,
+        'resolve_normal_word_audio_identity',
+        lambda: (
+            'azure',
+            'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+            'en-GB-LibbyNeural',
+        ),
+    )
+    monkeypatch.setattr(
+        module.phonetic_identity,
+        'explicit_word_audio_phonetic',
+        lambda word: '/ðə rest əv/' if word == 'the rest of' else '',
+    )
+    monkeypatch.setattr(
+        module,
+        'word_tts_cache_path',
+        lambda base, normalized, model, voice: Path(f'{normalized}-{model}-{voice}.mp3'),
+    )
+
+    candidates = module.resolve_word_audio_request_candidates('the rest of')
+
+    assert len(candidates) == 1
+    assert candidates[0]['phonetic'] == '/ðə rest əv/'
+    assert '@ipa-' in candidates[0]['model']
+    assert candidates[0]['file_name'].startswith('the rest of-azure-rest:test@azure-word-v6')
+
+
+def test_resolve_word_audio_request_uses_tts_specific_phonetic_override(monkeypatch):
+    module = _load_gateway_media_proxy_module()
+
+    monkeypatch.setattr(
+        module,
+        'resolve_normal_word_audio_identity',
+        lambda: (
+            'azure',
+            'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+            'en-GB-LibbyNeural',
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        'word_tts_cache_path',
+        lambda base, normalized, model, voice: Path(f'{normalized}-{model}-{voice}.mp3'),
+    )
+
+    request = module.resolve_word_audio_request('scenery')
+
+    assert request['phonetic'] == '/ˈsiː.nə.ri/'
+    assert '@ipa-8ff96fc1' in request['model']
+
+
+def test_resolve_word_audio_request_reviews_uncertain_phonetic(monkeypatch):
+    module = _load_gateway_media_proxy_module()
+
+    monkeypatch.setattr(
+        module,
+        'resolve_normal_word_audio_identity',
+        lambda: (
+            'azure',
+            'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+            'en-GB-LibbyNeural',
+        ),
+    )
+    monkeypatch.setattr(
+        module.phonetic_identity,
+        'explicit_word_audio_phonetic',
+        lambda word: '/trænˈzækʃ(ə)n/' if word == 'transaction' else '',
+    )
+    monkeypatch.setattr(
+        module,
+        'word_tts_cache_path',
+        lambda base, normalized, model, voice: Path(f'{normalized}-{model}-{voice}.mp3'),
+    )
+
+    candidates = module.resolve_word_audio_request_candidates('transaction')
+
+    assert len(candidates) == 1
+    assert candidates[0]['phonetic'] == ''
+    assert '@ipa-review-' in candidates[0]['model']
+
+
 def test_gateway_word_audio_metadata_proxy_returns_upstream_payload(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
@@ -205,3 +290,50 @@ def test_gateway_get_word_audio_proxy_prefers_cached_legacy_normal_audio(monkeyp
     assert response.content == b'ID3LEGACY'
     assert response.headers['x-audio-source'] == 'oss'
     assert response.headers['x-audio-cache-key'] == 'oss:bread-legacy-libby.mp3:9:etag-1'
+
+
+def test_gateway_get_word_audio_proxy_passes_explicit_phonetic_on_cache_miss(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app)
+    seen: dict[str, object] = {}
+
+    class FakeResponse:
+        status_code = 200
+        content = b'ID3GENERATED'
+        headers = {'content-type': 'audio/mpeg', 'X-Audio-Bytes': '12'}
+
+    monkeypatch.setattr(
+        module,
+        '_resolve_word_audio_request_candidates',
+        lambda word, pronunciation_mode=None: [{
+            'word': word,
+            'normalized_word': 'the rest of',
+            'provider': 'azure',
+            'model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer@ipa-fc48b90b',
+            'voice': 'en-GB-LibbyNeural',
+            'file_name': 'the-rest-of-ipa.mp3',
+            'pronunciation_mode': 'word',
+            'phonetic': '/ðə rest əv/',
+        }],
+    )
+    monkeypatch.setattr(module, 'fetch_word_audio_content', lambda **kwargs: None)
+
+    def fake_generate_tts_audio(payload, **kwargs):
+        seen['payload'] = payload
+        seen.update(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr(module, 'generate_tts_audio', fake_generate_tts_audio)
+
+    response = client.get('/api/tts/word-audio', params={'w': 'the rest of'})
+
+    assert response.status_code == 200
+    assert response.content == b'ID3GENERATED'
+    assert seen['payload'] == {
+        'text': 'the rest of',
+        'provider': 'azure',
+        'model': 'azure-rest:test',
+        'voice_id': 'en-GB-LibbyNeural',
+        'content_mode': 'word',
+        'phonetic': '/ðə rest əv/',
+    }

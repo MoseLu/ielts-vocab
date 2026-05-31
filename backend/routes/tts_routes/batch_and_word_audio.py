@@ -270,11 +270,11 @@ def _explicit_word_audio_phonetic(word: str) -> str | None:
         return None
 
 
-def _apply_phonetic_audio_identity(model: str, phonetic: str | None) -> str:
+def _apply_phonetic_audio_identity(model: str, phonetic: str | None, tag: str = 'ipa') -> str:
     if not phonetic:
         return model
     digest = hashlib.md5(f'ipa:{phonetic}'.encode('utf-8')).hexdigest()[:8]
-    return f'{model}@ipa-{digest}'
+    return f'{model}@{tag}-{digest}'
 
 
 @tts_bp.route('/word-audio', methods=['GET'])
@@ -286,6 +286,7 @@ def get_word_audio():
     """
     from services.word_tts import (
         _strip_word_tts_strategy_tag,
+        is_azure_tts_phonetic_safe,
         normalize_word_key,
         synthesize_word_to_bytes,
         word_tts_cache_path,
@@ -305,12 +306,17 @@ def get_word_audio():
 
     key = normalize_word_key(raw)
     identity_candidates = _resolve_word_audio_identity_candidates(pronunciation_mode)
+    provider, model, voice, content_mode = identity_candidates[0]
     explicit_phonetic = _explicit_word_audio_phonetic(raw)
+    tts_phonetic = explicit_phonetic
+    if explicit_phonetic and provider == 'azure' and not is_azure_tts_phonetic_safe(explicit_phonetic):
+        tts_phonetic = None
     if explicit_phonetic:
-        provider, model, voice, content_mode = identity_candidates[0]
         identity_candidates = [(
             provider,
-            _apply_phonetic_audio_identity(model, explicit_phonetic),
+            _apply_phonetic_audio_identity(
+                model, tts_phonetic or explicit_phonetic, 'ipa' if tts_phonetic else 'ipa-review',
+            ),
             voice,
             content_mode,
         )]
@@ -399,7 +405,7 @@ def get_word_audio():
                 voice,
                 provider=provider,
                 content_mode=content_mode,
-                phonetic=explicit_phonetic,
+                phonetic=tts_phonetic,
             )
             write_bytes_atomically(path, audio_bytes)
         except Exception as exc:

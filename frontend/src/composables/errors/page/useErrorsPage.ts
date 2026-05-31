@@ -77,11 +77,12 @@ function readWrongWordsPageSize(): number {
 
 export function useErrorsPage() {
   const navigate = useNavigate()
+  const [defaultDate] = useState(() => formatDateInput(new Date()))
   const [activeTab, setActiveTab] = useState<ActiveTab>('words')
   const [scope, setScope] = useState<WrongWordCollectionScope>('pending')
   const [dimFilter, setDimFilter] = useState<DimFilter>('all')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [startDate, setStartDate] = useState(defaultDate)
+  const [endDate, setEndDate] = useState(defaultDate)
   const [wrongCountRange, setWrongCountRange] = useState<WrongCountRange>('all')
   const [searchText, setSearchText] = useState('')
   const [searchMode, setSearchMode] = useState<WrongWordSearchMode | null>(null)
@@ -181,6 +182,7 @@ export function useErrorsPage() {
     || Boolean(endDate)
     || wrongCountRange !== 'all'
     || Boolean(appliedSearch)
+  const isDefaultDateRange = startDate === defaultDate && endDate === defaultDate
   const selectedWordKeySet = useMemo(() => new Set(selectedWordKeys), [selectedWordKeys])
   const selectedWords = useMemo(() => {
     return words.filter(word => selectedWordKeySet.has(normalizeWrongWordKey(word.word)))
@@ -208,7 +210,12 @@ export function useErrorsPage() {
   const pageStartIndex = filteredWords.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1
   const pageEndIndex = Math.min(currentPage * pageSize, filteredWords.length)
 
-  const canResetFilters = hasActiveFilters || Boolean(searchText) || searchMode != null
+  const canResetFilters = !isDefaultDateRange
+    || dimFilter !== 'all'
+    || wrongCountRange !== 'all'
+    || Boolean(appliedSearch)
+    || Boolean(searchText)
+    || searchMode != null
   const normalizedSearchText = useMemo(() => normalizeWrongWordSearchTerm(searchText), [searchText])
   const searchModeActionText = normalizedSearchText || appliedSearch
   const canApplySearchMode = Boolean(searchModeActionText)
@@ -337,15 +344,15 @@ export function useErrorsPage() {
     searchRequestIdRef.current += 1
     remoteSearchTermRef.current = ''
     setDimFilter('all')
-    setStartDate('')
-    setEndDate('')
+    setStartDate(defaultDate)
+    setEndDate(defaultDate)
     setWrongCountRange('all')
     setSearchText('')
     setSearchMode(null)
     setAppliedSearch('')
     setRemoteSearchWords([])
     setSearchLoading(false)
-  }, [])
+  }, [defaultDate])
 
   const applyTodayDateRange = useCallback(() => {
     const today = formatDateInput(new Date())

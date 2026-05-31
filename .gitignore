@@ -43,6 +43,10 @@ gcm-diagnose.log
 # Build outputs
 dist/
 build/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/android/local.properties
 
 # Temporary files
 *.tmp
@@ -87,3 +91,6 @@ vocabulary_data/*.lock
 vocabulary_data/*.json.bak
 vocabulary_data/vocabulary_examples.json
 录音文件生成记录/
+
+# Static reference materials kept under the product tree but not tracked
+reference-materials/raw/

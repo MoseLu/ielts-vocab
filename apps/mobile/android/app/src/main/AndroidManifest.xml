@@ -6,7 +6,10 @@
     <application
         android:name=".MainApplication"
         android:allowBackup="false"
-        android:label="IELTS Vocab"
+        android:icon="@mipmap/ic_launcher"
+        android:label="雅思冲刺"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="${usesCleartextTraffic}"
         android:supportsRtl="true">
@@ -22,5 +25,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".wxapi.WXEntryActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:noHistory="true"
+            android:taskAffinity="${applicationId}" />
     </application>
 </manifest>

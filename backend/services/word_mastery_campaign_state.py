@@ -207,7 +207,13 @@ def build_game_practice_state(
         day=normalized_day,
     )
     word_keys = [normalize_word_text(item.get('word')) for item in vocabulary if normalize_word_text(item.get('word'))]
-    source_maps = build_legacy_source_maps(user_id, word_keys)
+    source_maps = build_legacy_source_maps(
+        user_id,
+        word_keys,
+        book_id=scope_book_id,
+        chapter_id=scope_chapter_id,
+        day=scope_day,
+    )
     record_map = {
         normalize_word_key(record.word): record
         for record in existing_records

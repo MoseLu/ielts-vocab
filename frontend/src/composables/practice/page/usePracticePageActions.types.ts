@@ -9,8 +9,8 @@ import type {
   Word,
   WordPlaybackHandler,
   WordStatuses,
-} from '../../../components/practice/types'
-import type { ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
+} from '../../../features/practice/types'
+import type { ErrorReviewRoundResults } from '../../../features/practice/errorReviewSession'
 
 export interface UsePracticePageActionsParams {
   user: unknown

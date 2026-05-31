@@ -9,7 +9,7 @@ const fetchFollowReadWordMock = vi.fn()
 const evaluateFollowReadPronunciationMock = vi.fn()
 const fetchMock = vi.fn()
 
-vi.mock('./followReadApi', () => ({
+vi.mock('../../features/practice/audio/followReadApi', () => ({
   fetchFollowReadWord: (...args: unknown[]) => fetchFollowReadWordMock(...args),
 }))
 

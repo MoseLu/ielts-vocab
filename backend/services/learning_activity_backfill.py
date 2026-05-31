@@ -14,10 +14,12 @@ from service_models.learning_core_models import (
     UserLearningModeRollup,
     UserLearningUserRollup,
     UserQuickMemoryRecord,
+    UserScopedQuickMemoryRecord,
     UserStudySession,
     UserWrongWord,
     db,
 )
+from services.books_structure_service import get_book_chapter_word_count
 from services.local_time import utc_naive_to_local_date_key
 from services.learning_activity_service import (
     normalize_learning_mode,
@@ -49,6 +51,10 @@ def _epoch_ms_to_datetime(value) -> datetime | None:
     return datetime.utcfromtimestamp(milliseconds / 1000)
 
 
+def _word_key(value) -> str:
+    return str(value or '').strip().lower()
+
+
 def _normalize_user_ids(user_ids) -> list[int] | None:
     if user_ids is None:
         return None
@@ -61,6 +67,7 @@ def _collect_user_ids() -> list[int]:
     for model in (
         UserStudySession,
         UserLearningEvent,
+        UserScopedQuickMemoryRecord,
         UserQuickMemoryRecord,
         UserWrongWord,
         UserChapterModeProgress,
@@ -103,6 +110,19 @@ def _record(summary: dict, **kwargs) -> None:
     ))
 
 
+def _chapter_word_total(cache: dict, *, user_id: int, book_id: str, chapter_id: str) -> int:
+    key = (user_id, book_id, chapter_id)
+    if key not in cache:
+        cache[key] = get_book_chapter_word_count(book_id, chapter_id, user_id=user_id)
+    return cache[key]
+
+
+def _snapshot_words(raw_count: int, total: int) -> int:
+    if total > 0:
+        return min(_safe_int(raw_count), total)
+    return _safe_int(raw_count)
+
+
 def _session_date_lookup(user_ids: list[int]) -> dict[tuple[int, str, str, str], str]:
     lookup: dict[tuple[int, str, str, str], tuple[datetime, str]] = {}
     for row in _scoped_query(UserStudySession, user_ids).all():
@@ -121,6 +141,7 @@ def _session_date_lookup(user_ids: list[int]) -> dict[tuple[int, str, str, str],
 
 
 def _backfill_sessions(user_ids: list[int], summary: dict) -> None:
+    snapshots: dict[tuple[int, str, str, str], dict] = {}
     for row in _scoped_query(UserStudySession, user_ids).all():
         _record(
             summary,
@@ -133,7 +154,33 @@ def _backfill_sessions(user_ids: list[int], summary: dict) -> None:
             duration_delta=_safe_int(row.duration_seconds),
             session_delta=1,
         )
+        mode = normalize_learning_mode(row.mode)
+        book_id = str(row.book_id or '').strip()
+        chapter_id = str(row.chapter_id or '').strip()
+        words_studied = _safe_int(row.words_studied)
+        if mode and book_id and chapter_id and words_studied > 0:
+            key = (row.user_id, book_id, mode, chapter_id)
+            occurred_at = row.ended_at or row.started_at
+            snapshot = snapshots.setdefault(key, {'words': 0, 'occurred_at': occurred_at})
+            snapshot['words'] = max(snapshot['words'], words_studied)
+            if occurred_at and (snapshot['occurred_at'] is None or occurred_at > snapshot['occurred_at']):
+                snapshot['occurred_at'] = occurred_at
         summary['study_sessions'] += 1
+    totals: dict[tuple[int, str, str], int] = {}
+    for (user_id, book_id, mode, chapter_id), snapshot in snapshots.items():
+        total = _chapter_word_total(totals, user_id=user_id, book_id=book_id, chapter_id=chapter_id)
+        words_learned = _snapshot_words(snapshot['words'], total)
+        _record(
+            summary,
+            user_id=user_id,
+            book_id=book_id,
+            mode=mode,
+            chapter_id=chapter_id,
+            occurred_at=snapshot['occurred_at'],
+            current_index=words_learned,
+            words_learned=words_learned,
+            is_completed=total > 0 and words_learned >= total,
+        )
 
 
 def _backfill_events(user_ids: list[int], summary: dict) -> None:
@@ -179,22 +226,71 @@ def _backfill_events(user_ids: list[int], summary: dict) -> None:
 
 
 def _backfill_quick_memory(user_ids: list[int], summary: dict) -> None:
+    snapshots: dict[tuple[int, str, str], dict] = {}
+    scoped_rows = _scoped_query(UserScopedQuickMemoryRecord, user_ids).all()
+    source_rows = list(scoped_rows)
+    seen_scoped = {
+        (
+            row.user_id,
+            str(row.book_id or '').strip(),
+            str(row.chapter_id or '').strip(),
+            _word_key(row.word),
+        )
+        for row in scoped_rows
+        if _word_key(row.word)
+    }
     for row in _scoped_query(UserQuickMemoryRecord, user_ids).all():
+        scope_key = (
+            row.user_id,
+            str(row.book_id or '').strip(),
+            str(row.chapter_id or '').strip(),
+            _word_key(row.word),
+        )
+        if scope_key in seen_scoped:
+            continue
+        source_rows.append(row)
+        seen_scoped.add(scope_key)
+    for row in source_rows:
         review_count = max(
             1,
             _safe_int(row.known_count) + _safe_int(row.unknown_count) + _safe_int(row.fuzzy_count),
         )
+        occurred_at = _epoch_ms_to_datetime(row.last_seen)
         _record(
             summary,
             user_id=row.user_id,
             book_id=row.book_id,
             mode='quickmemory',
             chapter_id=row.chapter_id,
-            occurred_at=_epoch_ms_to_datetime(row.last_seen),
+            occurred_at=occurred_at,
             item_delta=1,
             review_delta=review_count,
         )
+        book_id = str(row.book_id or '').strip()
+        chapter_id = str(row.chapter_id or '').strip()
+        word = _word_key(row.word)
+        if book_id and chapter_id and word:
+            key = (row.user_id, book_id, chapter_id)
+            snapshot = snapshots.setdefault(key, {'words': set(), 'occurred_at': occurred_at})
+            snapshot['words'].add(word)
+            if occurred_at and (snapshot['occurred_at'] is None or occurred_at > snapshot['occurred_at']):
+                snapshot['occurred_at'] = occurred_at
         summary['quick_memory_records'] += 1
+    totals: dict[tuple[int, str, str], int] = {}
+    for (user_id, book_id, chapter_id), snapshot in snapshots.items():
+        total = _chapter_word_total(totals, user_id=user_id, book_id=book_id, chapter_id=chapter_id)
+        words_learned = _snapshot_words(len(snapshot['words']), total)
+        _record(
+            summary,
+            user_id=user_id,
+            book_id=book_id,
+            mode='quickmemory',
+            chapter_id=chapter_id,
+            occurred_at=snapshot['occurred_at'],
+            current_index=words_learned,
+            words_learned=words_learned,
+            is_completed=total > 0 and words_learned >= total,
+        )
 
 
 def _backfill_wrong_words(user_ids: list[int], summary: dict) -> None:

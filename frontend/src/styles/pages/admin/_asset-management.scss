@@ -1,0 +1,300 @@
+@use '../../utils/mixins' as *;
+
+.admin-assets {
+  min-width: 0;
+}
+
+.admin-assets-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--size-8);
+}
+
+.admin-assets-toolbar-main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: var(--size-8);
+  min-width: 0;
+}
+
+.admin-assets-toolbar .admin-assets-search {
+  flex: 1 1 var(--size-320);
+  max-width: var(--size-420);
+  @include input-control(
+    var(--size-40),
+    0 var(--size-14),
+    var(--radius-10),
+    var(--size-1) solid var(--border-subtle),
+    var(--surface-muted),
+    var(--text-primary),
+    var(--size-14)
+  );
+}
+
+.admin-assets-toolbar .admin-filter-select {
+  min-width: var(--size-160);
+  @include input-control(
+    var(--size-40),
+    0 var(--size-12),
+    var(--radius-10),
+    var(--size-1) solid var(--border-subtle),
+    var(--surface-muted),
+    var(--text-primary),
+    var(--size-14)
+  );
+  cursor: pointer;
+}
+
+.admin-assets-toolbar .admin-search-btn {
+  @include accent-button(
+    var(--size-40),
+    0 var(--size-16),
+    var(--radius-10),
+    var(--accent),
+    var(--text-inverse),
+    none,
+    var(--size-14),
+    700
+  );
+}
+
+.admin-assets-toolbar .admin-search-clear {
+  @include control-button(
+    var(--size-40),
+    0 var(--size-14),
+    var(--radius-10),
+    var(--size-1) solid var(--border-subtle),
+    var(--surface-muted),
+    var(--text-secondary),
+    var(--size-14),
+    600
+  );
+}
+
+.admin-assets-toolbar .admin-search-input,
+.admin-assets-toolbar .admin-filter-select,
+.admin-assets-toolbar .admin-search-btn,
+.admin-assets-toolbar .admin-search-clear {
+  box-sizing: border-box;
+  height: var(--size-40);
+  line-height: 1.2;
+}
+
+.admin-total-hint {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-left: auto;
+  min-height: var(--size-40);
+  display: flex;
+  align-items: center;
+}
+
+.admin-assets-table {
+  min-width: var(--size-1080);
+  white-space: normal;
+  table-layout: fixed;
+}
+
+.admin-assets-table thead tr {
+  background: var(--surface-muted);
+}
+
+.admin-assets-table th,
+.admin-assets-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.admin-assets-table th {
+  padding: var(--size-14) var(--size-12);
+}
+
+.admin-assets-table td {
+  padding: var(--size-16) var(--size-12);
+}
+
+.admin-assets-table th:nth-child(1),
+.admin-assets-table td:nth-child(1) {
+  width: var(--size-156);
+}
+
+.admin-assets-table th:nth-child(2),
+.admin-assets-table td:nth-child(2) {
+  width: var(--size-160);
+}
+
+.admin-assets-table th:nth-child(3),
+.admin-assets-table td:nth-child(3) {
+  width: var(--size-240);
+}
+
+.admin-assets-table th:nth-child(4),
+.admin-assets-table td:nth-child(4) {
+  width: var(--size-120);
+}
+
+.admin-assets-table th:nth-child(5),
+.admin-assets-table td:nth-child(5) {
+  width: auto;
+}
+
+.admin-asset-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-4);
+  min-width: 0;
+  text-align: center;
+}
+
+.admin-asset-definition,
+.admin-asset-memory-text {
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+.admin-asset-memory-cell {
+  text-align: left !important;
+}
+
+.admin-asset-memory-text {
+  display: block;
+  max-width: var(--size-560);
+  margin-inline: auto;
+}
+
+.admin-asset-meta em,
+.admin-asset-missing {
+  font-style: normal;
+  font-size: var(--size-12);
+  color: var(--text-tertiary);
+}
+
+.admin-asset-word {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.admin-asset-meta span {
+  color: var(--text-secondary);
+}
+
+.admin-asset-definition {
+  color: var(--text-secondary);
+}
+
+.admin-asset-memory-badge {
+  width: fit-content;
+  padding: var(--size-2) var(--size-8);
+  border-radius: var(--radius-pill);
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: var(--size-12);
+  font-weight: 700;
+  margin-inline: auto;
+}
+
+.admin-pagination-ellipsis {
+  color: var(--text-tertiary);
+  padding: 0 var(--size-4);
+}
+
+@media (max-width: 1180px) {
+  .admin-assets-toolbar {
+    align-items: stretch;
+  }
+
+  .admin-assets-toolbar-main {
+    width: 100%;
+  }
+
+  .admin-assets-toolbar .admin-assets-search,
+  .admin-assets-toolbar .admin-filter-select {
+    max-width: none;
+  }
+
+  .admin-total-hint {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-assets-toolbar .admin-assets-search,
+  .admin-assets-toolbar .admin-filter-select,
+  .admin-assets-toolbar .admin-search-btn,
+  .admin-assets-toolbar .admin-search-clear {
+    width: 100%;
+    max-width: none;
+  }
+
+  .admin-assets-table {
+    min-width: 0;
+  }
+
+  .admin-assets-table thead {
+    display: none;
+  }
+
+  .admin-assets-table,
+  .admin-assets-table tbody,
+  .admin-assets-table tr,
+  .admin-assets-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-assets-table-wrap {
+    overflow: visible;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .admin-assets-table tbody {
+    display: grid;
+    gap: var(--size-10);
+  }
+
+  .admin-assets-table tbody tr {
+    padding: var(--size-10);
+    border: var(--size-1) solid var(--border);
+    border-radius: var(--size-10);
+    background: var(--surface-base);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .admin-assets-table td {
+    padding: var(--size-8) 0;
+    border-bottom: var(--size-1) solid var(--border-subtle);
+    background: transparent !important;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-assets-table td:first-child {
+    padding-top: 0;
+  }
+
+  .admin-assets-table td:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .admin-assets-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: var(--size-4);
+    font-size: var(--size-12);
+    font-weight: 700;
+    letter-spacing: 0;
+    color: var(--text-tertiary);
+    text-align: center;
+  }
+}

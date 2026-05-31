@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { STORAGE_KEYS } from '../constants'
 import {
   getQuickMemoryStorageKey,
@@ -13,7 +13,7 @@ import {
 
 const apiFetchMock = vi.fn()
 
-vi.mock('./index', () => ({
+vi.mock('./apiClient', () => ({
   apiFetch: (...args: unknown[]) => apiFetchMock(...args),
 }))
 
@@ -23,6 +23,10 @@ describe('quickMemorySync', () => {
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify({ id: 42 }))
     apiFetchMock.mockReset()
     resetQuickMemorySyncStateForTests()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('pushes newer local quick-memory records back to the backend before stats consumers read stale totals', async () => {
@@ -180,5 +184,38 @@ describe('quickMemorySync', () => {
       sourceMode: 'meaning',
       records: [expect.objectContaining({ word: 'alpha' })],
     })
+  })
+
+  it('still posts current records when pending local persistence is full', async () => {
+    const originalSetItem = localStorage.setItem.bind(localStorage)
+    const record = {
+      status: 'known' as const,
+      firstSeen: 1000,
+      lastSeen: 5000,
+      knownCount: 2,
+      unknownCount: 0,
+      nextReview: 9000,
+      fuzzyCount: 0,
+    }
+    vi.spyOn(localStorage, 'setItem').mockImplementation(function setItem(
+      key: string,
+      value: string,
+    ) {
+      if (key.includes(':pending_sync')) {
+        throw new DOMException('quota exceeded', 'QuotaExceededError')
+      }
+      originalSetItem(key, value)
+    })
+    apiFetchMock.mockResolvedValueOnce({})
+
+    await expect(syncQuickMemoryRecordsToBackend([{ word: 'Alpha', record }])).resolves.toBeUndefined()
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      '/api/ai/quick-memory/sync',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('"word":"alpha"'),
+      }),
+    )
   })
 })

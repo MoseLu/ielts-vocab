@@ -1,9 +1,10 @@
 # Project Notes
-Last updated: 2026-05-06 23:40:00 +08:00
+Last updated: 2026-05-07 21:04:03 +08:00
 
 ## Repo Summary
-- IELTS vocabulary learning web app with React 19 + TypeScript + Vite on the frontend and Flask + SQLite on the backend.
-- Main scopes: `frontend/` for the frontend package, build configs, source, and e2e coverage; `backend/` for APIs and persistence; `vocabulary_data/` for book assets; and `docs/` for durable plans, audits, and runbooks.
+- IELTS vocabulary learning monorepo with Web, React Native mobile, shared TypeScript client core, and Flask / split-service backend surfaces.
+- Main scopes: `frontend/` for the Web package; `apps/mobile/` for React Native Android/iOS; `packages/app-core/` for cross-client contracts and pure logic; `backend/` for APIs and persistence; `services/` plus `apps/gateway-bff/` for split runtime services; `vocabulary_data/` for book assets; and `docs/` for durable plans, audits, and runbooks.
+- Keep future clients in `apps/*`: use `apps/miniprogram/` for a WeChat mini-program when that work starts, and only add `apps/ios/` if iOS stops sharing the React Native app.
 - Runtime now treats split backend as the canonical local path: preview UI on `3002`, browser API ingress on `8000`, downstream services on `8101-8108`, and speech Socket.IO on `5001`.
 
 ## Working Agreements
@@ -13,6 +14,7 @@ Last updated: 2026-05-06 23:40:00 +08:00
 - Keep tracked hand-edited text files at `<= 500` lines unless they are covered by the checked-in oversize baseline.
 - Treat `vocabulary_data/**` and `pnpm-lock.yaml` as generated artifacts that are exempt from the `500`-line cap.
 - Keep `pnpm check:file-lines` and `pnpm lint` green before submit; `pnpm build` and `pnpm test` now run the guardrail bundle automatically.
+- Keep `pnpm verify:clients` green before mobile or shared-client submits.
 - Keep `pytest backend/tests/test_source_text_integrity.py -q` green after backend or text-heavy edits.
 - Treat the remote cloud chain as canonical for domain/runtime bugs: `axiomaticworld.com -> nginx(:443/:80) -> active HTTP slot gateway-bff(:18000|:28000) -> downstream services(:18101-18108|:28101-28108)`, with `/socket.io` proxied to ASR Socket.IO on `:5001`.
 - Use the local split runtime only for reproduction: preview UI on `3002`, browser API ingress on `8000`, downstream services on `8101-8108`, and speech Socket.IO on `5001`.
@@ -81,7 +83,9 @@ Last updated: 2026-05-06 23:40:00 +08:00
 - `.github/workflows/ci.yml` runs both the file-line script and ESLint explicitly before frontend tests/build so the rule is enforced in CI, not just locally.
 
 ## Technology Stack
-- Frontend: React 19 + TypeScript + Vite
+- Web: React 19 + TypeScript + Vite
+- Mobile: React Native under `apps/mobile`, with Android and iOS owned by the same app unless a future native split is explicitly chosen
+- Shared client core: `packages/app-core` for platform-neutral schemas, API clients, auth/session contracts, and practice logic
 - Styling: SCSS + CSS variables
 - Validation: Zod runtime schemas in `frontend/src/lib/schemas.ts`
 - Backend: Python Flask + SQLite
@@ -124,6 +128,10 @@ backend/
 
 apps/
 - gateway-bff/             # Canonical browser ingress on :8000
+- mobile/                  # React Native Android/iOS app
+
+packages/
+- app-core/                # Shared platform-neutral TypeScript client contracts and logic
 
 services/
 - */main.py                # Split backend services on :8101-8108
@@ -174,6 +182,13 @@ pnpm build
 pnpm preview
 pnpm test:e2e
 
+# Mobile and shared client core
+pnpm mobile:typecheck
+pnpm mobile:test
+pnpm app-core:typecheck
+pnpm app-core:test
+pnpm verify:clients
+
 # Backend
 cd backend
 pip install -r requirements.txt
@@ -190,7 +205,7 @@ pip install -r requirements.txt
 
 ## Test Account
 - Dedicated test account for local/manual verification: username `admin`
-- Password: `admin123`
+- Password: `admin123456`
 
 ## Production SSH Access
 - Production SSH connection metadata is already tracked in `backend/.env`; when Codex needs remote access, read `PROD_SSH_HOST`, `PROD_SSH_USER`, and `PROD_SSH_KEY_PATH` or `PROD_SSH_PRIVATE_KEY_PATH` from that file first instead of assuming the local shell has no credentials.

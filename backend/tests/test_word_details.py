@@ -182,7 +182,7 @@ class TestWordDetails:
                 'quit': {
                     'word': 'quit',
                     'badge': '词根词缀',
-                    'text': '把 quit 看成完整词形，记住它常落在“停止；离开”的动作上。',
+                    'text': 'quit 比 quiet 少一个 e，e 退出队伍，记“停止；离开”。',
                     'book_ids': ['ielts_reading_premium'],
                     'source': 'premium_word_mnemonics',
                 },
@@ -196,7 +196,7 @@ class TestWordDetails:
         assert res.status_code == 200
         data = res.get_json()
         assert data['memory']['badge'] == '词根词缀'
-        assert data['memory']['text'] == '把 quit 看成完整词形，记住它常落在“停止；离开”的动作上。'
+        assert data['memory']['text'] == 'quit 比 quiet 少一个 e，e 退出队伍，记“停止；离开”。'
         assert data['memory']['source'] == 'premium_word_mnemonics'
 
     def test_word_details_premium_json_matches_simple_inflections(self, client, monkeypatch, tmp_path):
@@ -210,7 +210,7 @@ class TestWordDetails:
                 'estimated': {
                     'word': 'estimated',
                     'badge': '词根词缀',
-                    'text': '先抓 estimated 的词形尾巴，再把它落到“估计的”这个意思上。',
+                    'text': 'estimated 带 -ed，常作形容词表示“估计的；预计的”。',
                     'book_ids': ['ielts_reading_premium'],
                     'source': 'premium_word_mnemonics',
                 },

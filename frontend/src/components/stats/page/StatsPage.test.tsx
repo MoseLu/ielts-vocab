@@ -119,7 +119,7 @@ describe('StatsPage', () => {
       total_sessions: 3,
       accuracy: 90,
     }
-    hooksState.learningStats.modes = ['radio', 'smart', 'unknown']
+    hooksState.learningStats.modes = ['radio', 'smart', 'game', 'unknown']
     hooksState.learningStats.modeBreakdown = [
       {
         mode: 'radio',
@@ -143,10 +143,22 @@ describe('StatsPage', () => {
         attempts: 24,
         avg_words_per_session: 8,
       },
+      {
+        mode: 'game',
+        words_studied: 9,
+        correct_count: 6,
+        wrong_count: 3,
+        duration_seconds: 300,
+        sessions: 1,
+        accuracy: 67,
+        attempts: 9,
+        avg_words_per_session: 9,
+      },
     ]
     hooksState.learningStats.pieChart = [
       { mode: 'radio', value: 18, sessions: 2 },
       { mode: 'smart', value: 24, sessions: 3 },
+      { mode: 'game', value: 9, sessions: 1 },
     ]
     hooksState.learningStats.historyWrongTop10 = [
       { word: 'alpha', wrong_count: 5, phonetic: '/ˈalfə/', pos: 'n.', meaning_wrong: 5 },
@@ -226,6 +238,8 @@ describe('StatsPage', () => {
     expect(screen.getByText('总学习时长')).toBeInTheDocument()
     expect(screen.getAllByText('2小时').length).toBeGreaterThan(0)
     expect(screen.getAllByText('随身听').length).toBeGreaterThan(0)
+    expect(screen.queryByText('五维闯关')).not.toBeInTheDocument()
+    expect(screen.queryByText('五维战役独立统计')).not.toBeInTheDocument()
     expect(screen.queryByText('选择模式')).not.toBeInTheDocument()
     expect(screen.getAllByText('怎么算')).toHaveLength(3)
     expect(screen.getByText(/第一次进入速记记忆队列/)).toBeInTheDocument()

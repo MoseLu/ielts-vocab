@@ -33,6 +33,7 @@ class FeatureWish(db.Model):
             'images': [image.to_dict() for image in self.images],
             'can_edit': viewer_user_id is not None and int(viewer_user_id) == int(self.user_id),
             'can_delete': bool(viewer_is_admin),
+            'can_update_status': bool(viewer_is_admin),
         }
 
 

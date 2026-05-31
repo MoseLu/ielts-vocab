@@ -4,6 +4,7 @@ import {
   writeQuickMemoryRecordsToStorage,
   type QuickMemoryRecordState,
 } from './quickMemory'
+import { buildLearningScope } from './learningScope'
 import { syncQuickMemoryRecordsToBackend } from './quickMemorySync'
 
 interface EbbinghausWordPayload {
@@ -18,6 +19,9 @@ interface RecordEbbinghausPracticeResultInput {
   sourceMode?: string | null
   bookId?: string | null
   chapterId?: string | number | null
+  scopeKey?: string | null
+  scopeType?: string | null
+  originScope?: Record<string, unknown> | null
   occurredAt?: number
 }
 
@@ -41,28 +45,35 @@ export function recordEbbinghausPracticeResult({
   sourceMode,
   bookId,
   chapterId,
+  scopeKey,
+  scopeType,
+  originScope,
   occurredAt,
 }: RecordEbbinghausPracticeResultInput): QuickMemoryRecordState | null {
   const wordText = resolveWordText(word)
   if (!wordText.trim()) return null
+  const scope = buildLearningScope({
+    scopeKey,
+    scopeType,
+    originScope,
+    bookId,
+    chapterId: resolveChapterId(word, chapterId),
+  })
 
   const { records, record } = updateQuickMemoryRecord(
-    readQuickMemoryRecordsFromStorage(),
+    readQuickMemoryRecordsFromStorage(undefined, scope),
     wordText,
     passed ? 'known' : 'unknown',
     false,
     occurredAt ?? Date.now(),
-    {
-      bookId: bookId ?? undefined,
-      chapterId: resolveChapterId(word, chapterId),
-    },
+    scope,
   )
-  writeQuickMemoryRecordsToStorage(records)
+  writeQuickMemoryRecordsToStorage(records, undefined, scope)
   if (!record) return null
 
   void syncQuickMemoryRecordsToBackend(
     [{ word: wordText, record }],
-    { source: 'practice', sourceMode: sourceMode ?? undefined },
+    { ...scope, source: 'practice', sourceMode: sourceMode ?? undefined },
   ).catch(() => {})
   return record
 }

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 const CLASSIC_PRACTICE_MODES = new Set([
   'smart',
   'quickmemory',
+  'test',
   'listening',
   'meaning',
   'dictation',

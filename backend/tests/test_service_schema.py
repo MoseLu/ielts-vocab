@@ -23,6 +23,7 @@ def test_identity_service_bootstrap_includes_identity_eventing_tables():
 
     assert table_names == {
         'users',
+        'user_oauth_identities',
         'email_verification_codes',
         'rate_limit_buckets',
         'revoked_tokens',
@@ -41,6 +42,7 @@ def test_learning_core_bootstrap_includes_non_owned_tables():
     assert 'custom_books' in table_names
     assert 'custom_book_chapters' in table_names
     assert 'custom_book_words' in table_names
+    assert 'user_practice_result_commands' in table_names
     assert 'learning_core_outbox_events' in table_names
     assert 'learning_core_inbox_events' in table_names
     assert 'user_word_notes' not in table_names

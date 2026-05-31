@@ -1,4 +1,4 @@
-import type { MatchWord } from '../confusableMatch'
+import type { MatchWord } from '../../../features/practice/confusableMatch'
 
 const GROUP_ACCENTS = [
   'var(--accent)',

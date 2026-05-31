@@ -1,26 +1,46 @@
 import type { ReactNode } from 'react'
-import type { QuickMemoryRecordState } from '../../lib/quickMemory'
+import type {
+  AppSettings,
+  Chapter,
+  LastState,
+  OptionItem,
+  PracticeMode,
+  QuickMemoryRecordChangeHandler,
+  RadioQuickSettings,
+  SmartDimension,
+  SpellingSubmitSource,
+  ToastType,
+  Word,
+  WordListActionControls,
+  WordPlaybackHandler,
+  WordStatuses,
+} from '../../features/practice/types'
+import type { QuickMemoryModeVariant } from '../../features/practice/quickMemorySession'
+import type { PracticeGroupWindow } from '../../composables/practice/page/practicePageGrouping'
 
-export type { QuickMemoryRecordState } from '../../lib/quickMemory'
-
-// ── Types for Practice Components ────────────────────────────────────────────────
-
-export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'follow' | 'radio' | 'quickmemory'
-export type SpellingSubmitSource = 'button' | 'enter'
-
-// ── Quick Memory — DHP + Ebbinghaus spaced repetition ──────────────────────
-export interface QuickMemoryRecord {
-  status: 'known' | 'unknown'
-  firstSeen: number       // epoch ms
-  lastSeen: number        // epoch ms
-  knownCount: number
-  unknownCount: number
-  nextReview: number      // epoch ms — Ebbinghaus-derived next review time
-  fuzzyCount: number      // times user went back and re-answered (indicates uncertainty)
-  bookId?: string
-  chapterId?: string
-}
-export type QuickMemoryRecords = Record<string, QuickMemoryRecord>  // key = word
+export type {
+  AppSettings,
+  Chapter,
+  LastState,
+  ListeningConfusableCandidate,
+  OptionItem,
+  PracticeMode,
+  ProgressData,
+  QuickMemoryRecord,
+  QuickMemoryRecords,
+  QuickMemoryRecordState,
+  RadioQuickSettings,
+  SmartDimension,
+  SpellingSubmitSource,
+  ToastType,
+  Word,
+  WordExample,
+  WordListActionControls,
+  WordPlaybackHandler,
+  WordPlaybackOptions,
+  WordStatus,
+  WordStatuses,
+} from '../../features/practice/types'
 
 export interface QuickMemoryModeProps {
   vocabulary: Word[]
@@ -33,116 +53,20 @@ export interface QuickMemoryModeProps {
   errorMode?: boolean
   reviewHasMore?: boolean
   onContinueReview?: () => void
+  chapterGroup?: PracticeGroupWindow | null
+  chapterQueueWords?: string[]
+  onContinueChapterGroup?: () => void
   buildChapterPath?: (chapterId: string | number) => string
   onModeChange: (mode: PracticeMode) => void
   onNavigate: (path: string) => void
-  /** Called with each word the user marks as "unknown" — adds it to the error book */
   onWrongWord: (word: Word) => void
-  /** Called after each quick-memory answer so the parent can react to mastery changes */
-  onQuickMemoryRecordChange?: (word: Word, record: QuickMemoryRecordState) => void
-  /** Saved queue position to resume from (e.g. after pause+exit in error mode) */
+  onQuickMemoryRecordChange?: QuickMemoryRecordChangeHandler
   initialIndex?: number
-  /** Called whenever the user advances or goes back, so the parent can persist position */
   onIndexChange?: (index: number) => void
   favoriteSlot?: ReactNode
+  modeVariant?: QuickMemoryModeVariant
 }
 
-// Which dimension smart mode is testing for the current word
-export type SmartDimension = 'listening' | 'meaning' | 'dictation'
-
-export type ToastType = 'info' | 'success' | 'error'
-
-export interface WordExample {
-  en: string
-  zh: string
-}
-
-export interface ListeningConfusableCandidate {
-  word: string
-  phonetic: string
-  pos: string
-  definition: string
-  group_key?: string
-}
-
-export interface Word {
-  word: string
-  phonetic: string
-  pos: string
-  definition: string
-  group_key?: string
-  listening_confusables?: ListeningConfusableCandidate[]
-  book_id?: string
-  book_title?: string
-  chapter_id?: number | string
-  chapter_title?: string
-  dueState?: 'due' | 'upcoming'
-  nextReview?: number
-  examples?: WordExample[]
-}
-
-export interface ProgressData {
-  current_index: number
-  correct_count: number
-  wrong_count: number
-  is_completed: boolean
-  /** 本章已覆盖的不重复词汇数（≤章节词表长度），与 correct+wrong 答题次数分离 */
-  words_learned?: number
-  /** 恢复进度用：本轮已答过的词（小写） */
-  answered_words?: string[]
-  /** 恢复进度用：保存练习队列顺序，防止重新洗牌后进度失效 */
-  queue_words?: string[]
-  updatedAt?: string
-  updated_at?: string
-}
-
-export interface AppSettings {
-  shuffle?: boolean
-  repeatWrong?: boolean
-  playbackSpeed?: string
-  volume?: string
-  interval?: string
-  reviewInterval?: string
-  reviewLimit?: string
-  [key: string]: unknown
-}
-
-export interface WordPlaybackOptions {
-  playbackSpeed?: string
-}
-
-export type WordPlaybackHandler = (word: string, options?: WordPlaybackOptions) => void
-
-export interface OptionItem {
-  definition: string
-  pos: string
-  word?: string
-  phonetic?: string
-  display_mode?: 'definition' | 'word'
-}
-
-export interface LastState {
-  qi: number
-  cc: number
-  wc: number
-  prevWord: Word | null
-}
-
-export type WordStatus = 'correct' | 'wrong'
-
-export interface WordStatuses {
-  [vocabIdx: number]: WordStatus
-}
-
-export interface Chapter {
-  id: number | string
-  title: string
-  word_count?: number
-  group_count?: number
-  is_custom?: boolean
-}
-
-// Props interfaces for components
 export interface PracticePageProps {
   user?: unknown
   currentDay?: number
@@ -150,13 +74,6 @@ export interface PracticePageProps {
   showToast?: (message: string, type?: ToastType) => void
   onModeChange?: (mode: PracticeMode) => void
   onDayChange?: (day: number) => void
-}
-
-export interface RadioQuickSettings {
-  playbackSpeed: string
-  playbackCount: string
-  loopMode: boolean
-  interval: string
 }
 
 export interface PracticeControlBarProps {
@@ -177,18 +94,10 @@ export interface PracticeControlBarProps {
   onNavigate: (path: string) => void
   buildChapterPath?: (chapterId: string | number) => string
   onExitHome?: () => void
-  // Radio mode quick settings
+  showWordListAction?: boolean
+  showSettingsAction?: boolean
   radioQuickSettings?: RadioQuickSettings
   onRadioSettingChange?: (key: keyof RadioQuickSettings, value: string | boolean) => void
-}
-
-export interface WordListActionControls {
-  isFavorite: (word: string | null | undefined) => boolean
-  isFavoritePending: (word: string | null | undefined) => boolean
-  onFavoriteToggle: (word: Word) => void
-  isFamiliar: (word: string | null | undefined) => boolean
-  isFamiliarPending: (word: string | null | undefined) => boolean
-  onFamiliarToggle: (word: Word) => void
 }
 
 export interface WordListPanelProps {

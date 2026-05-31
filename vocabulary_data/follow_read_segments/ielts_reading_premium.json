@@ -59981,14 +59981,14 @@
         }
       ]
     },
-    "the rest of|rest": {
+    "the rest of|ðə rest əv": {
       "word": "the rest of",
-      "phonetic": "rest",
+      "phonetic": "ðə rest əv",
       "segments": [
         {
           "letters": "the",
-          "phonetic": "the",
-          "audio_phonetic": "the"
+          "phonetic": "ðə",
+          "audio_phonetic": "ðə"
         },
         {
           "letters": "rest",
@@ -59997,8 +59997,8 @@
         },
         {
           "letters": "of",
-          "phonetic": "of",
-          "audio_phonetic": "of"
+          "phonetic": "əv",
+          "audio_phonetic": "əv"
         }
       ]
     },

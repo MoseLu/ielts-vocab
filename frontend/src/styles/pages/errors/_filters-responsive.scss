@@ -1,0 +1,78 @@
+/* Error book filters: narrow viewport behavior */
+
+@media (max-width: 768px) {
+    .errors-filter-panel,
+    .errors-dim-filter-shell,
+    .errors-dim-filter-tools {
+        grid-template-columns: 1fr;
+    }
+
+    .errors-dim-filter-row {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+        gap: var(--size-8);
+    }
+
+    .errors-filter-panel-main,
+    .errors-filter-panel-actions,
+    .errors-dim-filter-shell,
+    .errors-dim-filter-tools,
+    .errors-search-form {
+        width: 100%;
+    }
+
+    .errors-filter-panel-main {
+        grid-template-columns: 1fr;
+    }
+
+    .errors-search-mode-group {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        white-space: normal;
+    }
+
+    .errors-filter-select-popup {
+        max-height: min(var(--size-240), calc(100dvh - var(--size-136)));
+    }
+
+    .errors-filter-select-menu {
+        max-height: min(var(--size-220), calc(100dvh - var(--size-150)));
+    }
+}
+
+@media (max-width: 560px) {
+    .errors-filter-panel {
+        gap: var(--size-8);
+        padding: var(--size-10);
+    }
+
+    .errors-filter-panel-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--size-8);
+    }
+
+    .errors-mode-filter-field {
+        grid-column: 1 / -1;
+    }
+
+    .errors-filter-field--compact {
+        max-width: none;
+    }
+
+    .errors-filter-panel-actions {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .errors-filter-panel-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    .errors-filter-chip {
+        flex: 0 0 auto;
+        min-height: var(--size-32);
+    }
+}

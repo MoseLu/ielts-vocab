@@ -46,21 +46,18 @@ describe('navigation entry routes', () => {
     expect(screen.getByTestId('location-probe')).toHaveTextContent('/plan')
   })
 
-  it('routes the left sidebar game item to the game campaign page', async () => {
-    const user = userEvent.setup()
+  it('hides the left sidebar game item while five-dimensional mode is closed', () => {
     renderWithRouter(<LeftSidebar />)
 
-    await user.click(screen.getByRole('button', { name: '五维闯关' }))
-
-    expect(screen.getByTestId('location-probe')).toHaveTextContent('/game')
+    expect(screen.queryByRole('button', { name: '五维闯关' })).not.toBeInTheDocument()
   })
 
-  it('routes the bottom nav game item to the game campaign page', async () => {
+  it('routes the bottom nav practice item to the foundational practice page', async () => {
     const user = userEvent.setup()
     renderWithRouter(<BottomNav />)
 
-    await user.click(screen.getByRole('button', { name: '闯关' }))
+    await user.click(screen.getByRole('button', { name: '练习' }))
 
-    expect(screen.getByTestId('location-probe')).toHaveTextContent('/game')
+    expect(screen.getByTestId('location-probe')).toHaveTextContent('/practice')
   })
 })

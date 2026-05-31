@@ -1,5 +1,6 @@
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from '../constants'
 import type { AppSettings } from '../types'
+import { normalizeThemeColor } from './themeColor'
 
 const VALID_REVIEW_INTERVALS = new Set(['1', '3', '7'])
 export const APP_SETTINGS_CHANGED_EVENT = 'app-settings-changed'
@@ -34,6 +35,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
   normalized.reviewLimit = explicitReviewLimit
     ? validReviewLimit
     : DEFAULT_SETTINGS.reviewLimit
+  normalized.themeColor = normalizeThemeColor(candidate.themeColor ?? normalized.themeColor)
 
   return normalized
 }

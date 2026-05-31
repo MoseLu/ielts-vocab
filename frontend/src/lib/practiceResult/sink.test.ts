@@ -102,4 +102,41 @@ describe('practice result sink', () => {
       lastError: 'session unavailable',
     })
   })
+
+  it('continues applying handlers when outbox storage is full', async () => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota exceeded', 'QuotaExceededError')
+    })
+    const handledPlanes: string[] = []
+    const command = buildPracticeResultCommand({
+      userScope: 7,
+      route: '/practice',
+      mode: 'smart',
+      dimension: 'meaning',
+      word: 'abandon',
+      result: 'correct',
+    })
+
+    const result = await applyPracticeResult(command, {
+      progress: () => { handledPlanes.push('progress') },
+      session: () => { handledPlanes.push('session') },
+      quickMemory: () => { handledPlanes.push('quickMemory') },
+      wordMastery: () => { handledPlanes.push('wordMastery') },
+      smartStats: () => { handledPlanes.push('smartStats') },
+      wrongWordsOnFailure: () => { handledPlanes.push('wrongWordsOnFailure') },
+      modePerformance: () => { handledPlanes.push('modePerformance') },
+    })
+
+    expect(result.planes.every(plane => plane.status === 'ok')).toBe(true)
+    expect(handledPlanes).toEqual([
+      'progress',
+      'session',
+      'quickMemory',
+      'wordMastery',
+      'smartStats',
+      'wrongWordsOnFailure',
+      'modePerformance',
+    ])
+    expect(readPracticeResultOutbox('7')).toEqual([])
+  })
 })

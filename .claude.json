@@ -4,6 +4,11 @@
       "command": "pnpm",
       "args": ["dlx", "chrome-devtools-mcp@latest", "--headless"],
       "description": "Chrome DevTools - 控制浏览器、截图、执行脚本"
+    },
+    "mac-bridge": {
+      "command": "packages/mac-bridge-mcp/.venv/bin/python",
+      "args": ["packages/mac-bridge-mcp/server.py"],
+      "description": "Mac 本地应用桥接 - 检查服务状态、读取日志、启停 Mac 应用"
     }
   }
 }

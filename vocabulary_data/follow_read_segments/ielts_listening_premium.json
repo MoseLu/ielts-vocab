@@ -33697,29 +33697,29 @@
         }
       ]
     },
-    "in front of you|ɪn frʌnt əv": {
+    "in front of you|ɪn frʌnt əv juː": {
       "word": "in front of you",
-      "phonetic": "ɪn frʌnt əv",
+      "phonetic": "ɪn frʌnt əv juː",
       "segments": [
         {
           "letters": "in",
-          "phonetic": "in",
-          "audio_phonetic": "in"
+          "phonetic": "ɪn",
+          "audio_phonetic": "ɪn"
         },
         {
           "letters": "front",
-          "phonetic": "ɪn frʌnt əv",
-          "audio_phonetic": "ɪn frʌnt əv"
+          "phonetic": "frʌnt",
+          "audio_phonetic": "frʌnt"
         },
         {
           "letters": "of",
-          "phonetic": "of",
-          "audio_phonetic": "of"
+          "phonetic": "əv",
+          "audio_phonetic": "əv"
         },
         {
           "letters": "you",
-          "phonetic": "you",
-          "audio_phonetic": "you"
+          "phonetic": "juː",
+          "audio_phonetic": "juː"
         }
       ]
     },
@@ -66214,14 +66214,14 @@
         }
       ]
     },
-    "the rest of|rest": {
+    "the rest of|ðə rest əv": {
       "word": "the rest of",
-      "phonetic": "rest",
+      "phonetic": "ðə rest əv",
       "segments": [
         {
           "letters": "the",
-          "phonetic": "the",
-          "audio_phonetic": "the"
+          "phonetic": "ðə",
+          "audio_phonetic": "ðə"
         },
         {
           "letters": "rest",
@@ -66230,8 +66230,8 @@
         },
         {
           "letters": "of",
-          "phonetic": "of",
-          "audio_phonetic": "of"
+          "phonetic": "əv",
+          "audio_phonetic": "əv"
         }
       ]
     },
@@ -72742,9 +72742,9 @@
         }
       ]
     },
-    "write about|raɪt": {
+    "write about|raɪt əˈbaʊt": {
       "word": "write about",
-      "phonetic": "raɪt",
+      "phonetic": "raɪt əˈbaʊt",
       "segments": [
         {
           "letters": "write",
@@ -72752,9 +72752,15 @@
           "audio_phonetic": "raɪt"
         },
         {
-          "letters": "about",
-          "phonetic": "about",
-          "audio_phonetic": "about"
+          "letters": "a",
+          "phonetic": "ə",
+          "audio_phonetic": "ə",
+          "fallback_text": "uh"
+        },
+        {
+          "letters": "bout",
+          "phonetic": "ˈbaʊt",
+          "audio_phonetic": "baʊt"
         }
       ]
     },

@@ -19,14 +19,14 @@ from platform_sdk.runtime_env import load_split_service_env
 from platform_sdk.service_app import create_service_shell_app
 from platform_sdk.asr_runtime import (
     ASRServiceError,
-    get_dashscope_api_key,
     transcribe_uploaded_audio,
+    upload_transcription_available,
 )
 
 load_split_service_env(service_name='asr-service')
 
-def _dashscope_api_key_configured() -> bool:
-    return bool(get_dashscope_api_key())
+def _upload_transcription_configured() -> bool:
+    return upload_transcription_available()
 
 
 class UploadedAudioAdapter:
@@ -43,7 +43,7 @@ class UploadedAudioAdapter:
 app = create_service_shell_app(
     service_name='asr-service',
     version='0.1.0',
-    readiness_checks={'dashscope_api_key': _dashscope_api_key_configured},
+    readiness_checks={'upload_transcription': _upload_transcription_configured},
     extra_health={'speech_namespace': '/speech'},
 )
 

@@ -1,36 +1,24 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition'
-import { setGlobalLearningContext } from '../../../contexts/AIChatContext'
 import { loadSmartStats, chooseSmartDimension } from '../../../lib/smartMode'
 import { readWrongWordsFromStorage } from '../../../features/vocabulary/wrongWordsStore'
-import { buildLearnerProfile, mergeLearnerProfileWithBackend } from '../../../components/practice/learnerProfile'
+import { buildLearnerProfile, mergeLearnerProfileWithBackend } from '../../../features/practice/learnerProfile'
 import {
   buildPresetListeningOptions,
-  prepareWordAudioPlayback,
-  preloadWordAudioBatch,
   generateOptions,
-  playWordAudio as playWordUtil,
-  stopAudio as stopAudioUtil,
-} from '../../../components/practice/utils'
-import { normalizeOptionWordKey } from '../../../components/practice/page/practicePageHelpers'
+} from '../../../features/practice/practiceOptions'
+import { normalizeOptionWordKey } from '../../../features/practice/practiceSessionHelpers'
 import type {
   AppSettings,
   OptionItem,
   PracticeMode,
   SmartDimension,
   Word,
-} from '../../../components/practice/types'
+} from '../../../features/practice/types'
 import type { LearnerProfile as BackendLearnerProfile } from '../../../lib/schemas'
-
-const PRACTICE_AUTOPLAY_PRELOAD_OPTIONS = { includeBuffer: true, sourcePreference: 'buffer' as const }
-const PRACTICE_AUTOPLAY_PLAYBACK_OPTIONS = { sourcePreference: 'buffer' as const }
-
-function shouldUseBufferAutoplay(mode: PracticeMode | undefined, smartDimension: SmartDimension): boolean {
-  return mode === 'listening'
-    || mode === 'dictation'
-    || (mode === 'smart' && (smartDimension === 'listening' || smartDimension === 'dictation'))
-}
+import { usePracticePageAudioEffects } from './usePracticePageAudioEffects'
+import { usePracticeGlobalLearningContext } from './usePracticeGlobalLearningContext'
 
 interface UsePracticePageEffectsParams {
   userId: string | number | null
@@ -107,16 +95,9 @@ export function usePracticePageEffects({
   showToast,
   handleSpellingInputChange,
 }: UsePracticePageEffectsParams): UsePracticePageEffectsResult {
-  const autoPlayTimerRef = useRef<number | null>(null)
-  const autoPlayStartedKeyRef = useRef<string | null>(null)
   const interactionStateKeyRef = useRef<string | null>(null)
   const currentOptionsWordKey = normalizeOptionWordKey(currentWord?.word)
   const choiceOptionsReady = currentOptionsWordKey != null && currentOptionsWordKey === optionsWordKey
-  const upcomingWords = queue
-    .slice(queueIndex + 1, queueIndex + 4)
-    .map(index => vocabulary[index]?.word?.trim())
-    .filter((word): word is string => Boolean(word))
-  const upcomingWordsKey = upcomingWords.join('|')
 
   const {
     isConnected: speechConnected,
@@ -139,6 +120,33 @@ export function usePracticePageEffects({
     onError: (error: string) => {
       showToast?.(`识别失败: ${error}`, 'error')
     },
+  })
+
+  usePracticePageAudioEffects({
+    currentWord,
+    mode,
+    queue,
+    queueIndex,
+    settings,
+    smartDimension,
+    vocabulary,
+  })
+
+  usePracticeGlobalLearningContext({
+    backendLearnerProfile,
+    bookId,
+    chapterId,
+    correctCount,
+    currentChapterTitle,
+    currentWord,
+    errorMode,
+    mode,
+    queueIndex,
+    queueLength: queue.length,
+    smartDimension,
+    userId,
+    vocabulary,
+    wrongCount,
   })
 
   useLayoutEffect(() => {
@@ -262,153 +270,6 @@ export function usePracticePageEffects({
     smartDimension,
     userId,
     vocabulary,
-  ])
-
-  useEffect(() => {
-    if (mode === 'quickmemory') return
-    const activeWord = currentWord?.word?.trim()
-    if (!activeWord) return
-
-    const preloadOptions = shouldUseBufferAutoplay(mode, smartDimension)
-      ? PRACTICE_AUTOPLAY_PRELOAD_OPTIONS
-      : undefined
-    void prepareWordAudioPlayback(activeWord, preloadOptions).catch(() => {})
-    if (upcomingWords.length) {
-      void preloadWordAudioBatch(upcomingWords, upcomingWords.length, preloadOptions).catch(() => {})
-    }
-  }, [currentWord?.word, mode, smartDimension, upcomingWordsKey, upcomingWords.length])
-
-  useEffect(() => {
-    if (!currentWord) return
-    const shouldAutoPlay = shouldUseBufferAutoplay(mode, smartDimension)
-    if (!shouldAutoPlay) return
-
-    const isDictation = mode === 'dictation' || (mode === 'smart' && smartDimension === 'dictation')
-    if (isDictation && currentWord.examples?.[0]?.en) return
-
-    if (autoPlayTimerRef.current != null) {
-      window.clearTimeout(autoPlayTimerRef.current)
-      autoPlayTimerRef.current = null
-    }
-
-    const autoPlayKey = `${mode}:${smartDimension}:${queueIndex}:${currentWord.word}`
-    if (autoPlayStartedKeyRef.current === autoPlayKey) return
-
-    let cancelled = false
-    autoPlayTimerRef.current = window.setTimeout(() => {
-      autoPlayTimerRef.current = null
-      void (async () => {
-        const prepared = await prepareWordAudioPlayback(currentWord.word, PRACTICE_AUTOPLAY_PRELOAD_OPTIONS).catch(() => false)
-        if (cancelled || !prepared) return
-        autoPlayStartedKeyRef.current = autoPlayKey
-        playWordUtil(currentWord.word, settings, undefined, PRACTICE_AUTOPLAY_PLAYBACK_OPTIONS)
-      })()
-    }, 280)
-
-    return () => {
-      cancelled = true
-      if (autoPlayTimerRef.current != null) {
-        window.clearTimeout(autoPlayTimerRef.current)
-        autoPlayTimerRef.current = null
-      }
-    }
-  }, [currentWord, mode, queueIndex, settings, smartDimension])
-
-  useEffect(() => {
-    autoPlayStartedKeyRef.current = null
-    return () => {
-      stopAudioUtil()
-      if (autoPlayTimerRef.current != null) {
-        window.clearTimeout(autoPlayTimerRef.current)
-        autoPlayTimerRef.current = null
-      }
-    }
-  }, [currentWord?.word, mode, queueIndex])
-
-  useEffect(() => {
-    const accuracy = correctCount + wrongCount > 0
-      ? Math.round((correctCount / (correctCount + wrongCount)) * 100)
-      : undefined
-    const wrongWords = readWrongWordsFromStorage(userId)
-    const localLearnerProfile = buildLearnerProfile({
-      vocabulary,
-      currentWord,
-      mode,
-      smartDimension,
-      smartStats: loadSmartStats(),
-      wrongWords,
-    })
-    const learnerProfile = mergeLearnerProfileWithBackend({
-      localProfile: localLearnerProfile,
-      backendProfile: backendLearnerProfile,
-      vocabulary,
-      wrongWords,
-    })
-
-    if (!currentWord) {
-      if (vocabulary.length > 0) {
-        setGlobalLearningContext({
-          currentWord: undefined,
-          sessionCompleted: true,
-          sessionProgress: queue.length,
-          totalWords: vocabulary.length,
-          wordsCompleted: correctCount + wrongCount,
-          sessionAccuracy: accuracy,
-          practiceMode: mode as string,
-          mode: errorMode ? 'review' : 'learning',
-          currentBook: bookId ?? undefined,
-          currentChapter: chapterId ?? undefined,
-          currentChapterTitle: currentChapterTitle || undefined,
-          currentFocusDimension: learnerProfile.activeDimension,
-          weakestDimension: learnerProfile.weakestDimension,
-          weakDimensionOrder: learnerProfile.weakDimensionOrder,
-          weakFocusWords: learnerProfile.weakFocusWords,
-          recentWrongWords: learnerProfile.recentWrongWords,
-          trapStrategy: learnerProfile.trapStrategy,
-          priorityDistractorWords: learnerProfile.priorityWords.map(word => word.word),
-        })
-      }
-      return
-    }
-
-    setGlobalLearningContext({
-      currentWord: currentWord.word,
-      currentPhonetic: currentWord.phonetic,
-      currentPos: currentWord.pos,
-      currentDefinition: currentWord.definition,
-      practiceMode: mode as string,
-      mode: errorMode ? 'review' : 'learning',
-      sessionProgress: queueIndex + 1,
-      totalWords: vocabulary.length,
-      wordsCompleted: correctCount + wrongCount,
-      sessionAccuracy: accuracy,
-      sessionCompleted: false,
-      currentBook: bookId ?? undefined,
-      currentChapter: chapterId ?? undefined,
-      currentChapterTitle: currentChapterTitle || undefined,
-      currentFocusDimension: learnerProfile.activeDimension,
-      weakestDimension: learnerProfile.weakestDimension,
-      weakDimensionOrder: learnerProfile.weakDimensionOrder,
-      weakFocusWords: learnerProfile.weakFocusWords,
-      recentWrongWords: learnerProfile.recentWrongWords,
-      trapStrategy: learnerProfile.trapStrategy,
-      priorityDistractorWords: learnerProfile.priorityWords.map(word => word.word),
-    })
-  }, [
-    backendLearnerProfile,
-    bookId,
-    chapterId,
-    correctCount,
-    currentChapterTitle,
-    currentWord,
-    errorMode,
-    mode,
-    queue.length,
-    queueIndex,
-    smartDimension,
-    userId,
-    vocabulary,
-    wrongCount,
   ])
 
   return {

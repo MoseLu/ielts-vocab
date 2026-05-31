@@ -12,6 +12,7 @@
 - 日志与总结：支持学习日志、主题聚合、每日总结和相关导出能力。
 - 语音能力：HTTP API 与实时语音识别拆分为独立进程，支持 Socket.IO 语音链路。
 - 管理与运维：支持管理员能力、TTS 生成、启动脚本、生产式本地代理链路和提交日志归档。
+- 静态参考资料：`reference-materials/raw/` 下保留 IELTS PDF / 音频等非代码资料，目录本身已忽略，不进入 Git 跟踪。
 
 ## 技术栈
 
@@ -60,6 +61,7 @@ docs/
 
 scripts/                    # 守卫脚本与仓库工具
 vocabulary_data/            # 词书与词汇数据
+reference-materials/        # 静态参考资料说明与本地 raw 资源
 AGENTS.md                   # 仓库级工作约束
 MILESTONE.md                # 里程碑总览
 TODO.md                     # 当前任务清单
@@ -139,11 +141,15 @@ pnpm install
 pnpm dev
 ```
 
+在 macOS 上，`pnpm dev` 会通过本地生成的 `IELTS Vocab Dev.app` 启动 Vite，日志写到 `logs/runtime/mac-app/dev.*.log`。如需回到普通终端启动，可临时设置 `IELTS_DISABLE_MAC_APP=1`。
+
 前端预览：
 
 ```bash
 pnpm preview
 ```
+
+在 macOS 上，`pnpm preview` 会通过本地生成的 `IELTS Vocab Preview.app` 启动 Vite preview，生产构建和部署脚本不受影响。
 
 兼容 monolith 入口仅保留给迁移/回归参考，不再是默认浏览器 API 路径：
 

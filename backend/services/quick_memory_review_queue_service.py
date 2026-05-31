@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from services.learning_scope_support import resolve_learning_scope
+
 
 def parse_review_queue_options(args, *, normalize_chapter_id, now_ms: int) -> dict:
     try:
@@ -42,6 +44,7 @@ def build_review_queue_payload(
     load_user_quick_memory_records,
     resolve_quick_memory_vocab_entry,
     get_global_vocab_pool,
+    load_user_scoped_quick_memory_records=None,
 ) -> dict:
     window_end_ms = now_ms + within_days * 86400000
     pool_by_word: dict[str, dict] | None = None
@@ -49,8 +52,16 @@ def build_review_queue_payload(
     due_words = []
     upcoming_words = []
     context_map: dict[tuple[str, str], dict] = {}
+    has_scope_filter = book_id_filter is not None or chapter_id_filter is not None
+    if has_scope_filter and load_user_scoped_quick_memory_records is not None:
+        review_scope = resolve_learning_scope(book_id=book_id_filter, chapter_id=chapter_id_filter)
+        source_rows = load_user_scoped_quick_memory_records(user_id, review_scope.scope_key)
+        if not source_rows:
+            source_rows = load_user_quick_memory_records(user_id)
+    else:
+        source_rows = load_user_quick_memory_records(user_id)
     rows = sorted(
-        [row for row in load_user_quick_memory_records(user_id) if (row.next_review or 0) > 0],
+        [row for row in source_rows if (row.next_review or 0) > 0],
         key=lambda row: row.next_review or 0,
     )
 
@@ -58,7 +69,6 @@ def build_review_queue_payload(
         word_key = (row.word or '').strip().lower()
         stored_book_id = (row.book_id or '').strip() or None
         stored_chapter_id = normalize_chapter_id(row.chapter_id)
-        has_scope_filter = book_id_filter is not None or chapter_id_filter is not None
         lookup_book_id = (
             book_id_filter
             if book_id_filter is not None
@@ -76,6 +86,8 @@ def build_review_queue_payload(
         )
         fallback_item = None
         if not vocab_item:
+            if has_scope_filter and load_user_scoped_quick_memory_records is not None:
+                continue
             if has_scope_filter and not _matches_review_scope(
                 stored_book_id,
                 stored_chapter_id,

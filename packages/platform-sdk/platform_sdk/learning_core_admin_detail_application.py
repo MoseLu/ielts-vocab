@@ -10,6 +10,24 @@ from platform_sdk.learning_core_personalization_repository_adapter import (
     list_user_favorite_words,
 )
 from platform_sdk.learning_repository_adapters import learning_event_repository
+from services.learning_activity_service import (
+    list_book_rollup_compat_rows,
+    list_chapter_rollup_compat_rows,
+)
+
+
+def _merge_book_progress_records(base_records, override_records):
+    merged = {record.book_id: record for record in base_records}
+    for record in override_records:
+        merged[record.book_id] = record
+    return list(merged.values())
+
+
+def _merge_chapter_progress_records(base_records, override_records):
+    merged = {(record.book_id, str(record.chapter_id)): record for record in base_records}
+    for record in override_records:
+        merged[(record.book_id, str(record.chapter_id))] = record
+    return list(merged.values())
 
 
 def _parse_dt(value, *, fallback: datetime) -> datetime:
@@ -21,8 +39,12 @@ def _parse_dt(value, *, fallback: datetime) -> datetime:
 
 
 def list_internal_admin_book_progress_response(user_id: int) -> tuple[dict, int]:
+    rows = _merge_book_progress_records(
+        list_user_book_progress_rows(user_id),
+        list_book_rollup_compat_rows(user_id),
+    )
     return {
-        'progress': [row.to_dict() for row in list_user_book_progress_rows(user_id)],
+        'progress': [row.to_dict() for row in rows],
     }, 200
 
 
@@ -42,7 +64,10 @@ def list_internal_admin_chapter_progress_response(user_id: int, args) -> tuple[d
         except (TypeError, ValueError):
             return {'error': 'limit must be an integer'}, 400
 
-    rows = list_user_chapter_progress_rows(user_id, book_id=book_id)
+    rows = _merge_chapter_progress_records(
+        list_user_chapter_progress_rows(user_id, book_id=book_id),
+        list_chapter_rollup_compat_rows(user_id, book_id=book_id),
+    )
     rows.sort(key=lambda row: row.updated_at or datetime.min, reverse=True)
     if limit is not None:
         rows = rows[:limit]

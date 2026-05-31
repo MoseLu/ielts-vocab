@@ -4,7 +4,6 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PracticePage from './PracticePage'
 import { chooseSmartDimension } from '../../lib/smartMode'
-
 const apiFetchMock = vi.fn()
 const fetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
@@ -18,9 +17,15 @@ const useFavoriteWordsMock = vi.fn(() => ({
   isPending: () => false,
   toggleFavorite: vi.fn(),
 }))
-
 vi.stubGlobal('fetch', fetchMock)
-
+const fetchFixturePatterns = [/^\/api\/vocabulary\/day\//, /^\/api\/books\/word-list\?/, /^\/api\/books\/[^/]+\/chapters$/]
+const backgroundPracticeWrites = new Set(['/api/ai/quick-memory/sync', '/api/ai/practice/game/attempt'])
+async function apiFetchFixture(url: string, ...args: unknown[]) {
+  const requestUrl = String(url)
+  if (fetchFixturePatterns.some(pattern => pattern.test(requestUrl))) return (await fetch(requestUrl)).json()
+  if (backgroundPracticeWrites.has(requestUrl)) return {}
+  return apiFetchMock(url, ...args)
+}
 vi.mock('../../hooks/useSpeechRecognition', () => ({
   useSpeechRecognition: () => ({
     isConnected: false,
@@ -29,11 +34,9 @@ vi.mock('../../hooks/useSpeechRecognition', () => ({
     stopRecording: vi.fn(),
   }),
 }))
-
 vi.mock('../../contexts/AIChatContext', () => ({
   setGlobalLearningContext: vi.fn(),
 }))
-
 vi.mock('../../lib/smartMode', () => ({
   loadSmartStats: vi.fn(() => ({})),
   recordWordResult: vi.fn(),
@@ -42,7 +45,6 @@ vi.mock('../../lib/smartMode', () => ({
   syncSmartStatsToBackend: vi.fn(),
   loadSmartStatsFromBackend: vi.fn(),
 }))
-
 vi.mock('../../hooks/useAIChat', () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   recordModeAnswer: vi.fn(),
@@ -55,7 +57,6 @@ vi.mock('../../hooks/useAIChat', () => ({
   touchStudySessionActivity: vi.fn(),
   updateStudySessionSnapshot: vi.fn(),
 }))
-
 vi.mock('../../features/vocabulary/hooks', async () => {
   const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')
   return {
@@ -63,18 +64,23 @@ vi.mock('../../features/vocabulary/hooks', async () => {
     useFavoriteWords: (...args: unknown[]) => useFavoriteWordsMock(...args),
   }
 })
-
 vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')
   return {
     ...actual,
-    apiFetch: (...args: unknown[]) => apiFetchMock(...args),
+    apiFetch: apiFetchFixture,
     buildApiUrl: (path: string) => path,
   }
 })
-
-vi.mock('./utils', async () => {
-  const actual = await vi.importActual<typeof import('./utils')>('./utils')
+vi.mock('../../lib/apiClient', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/apiClient')>('../../lib/apiClient')
+  return {
+    ...actual,
+    apiFetch: apiFetchFixture,
+  }
+})
+vi.mock('../../features/practice/audio/practiceAudio', async () => {
+  const actual = await vi.importActual<typeof import('../../features/practice/audio/practiceAudio')>('../../features/practice/audio/practiceAudio')
   return {
     ...actual,
     playWordAudio: (...args: unknown[]) => playWordAudioMock(...args),
@@ -84,31 +90,24 @@ vi.mock('./utils', async () => {
     stopAudio: (...args: unknown[]) => stopAudioMock(...args),
   }
 })
-
 vi.mock('./PracticeControlBar', () => ({
   default: () => <div data-testid="practice-control-bar" />,
 }))
-
 vi.mock('./WordListPanel', () => ({
   default: () => null,
 }))
-
 vi.mock('./RadioMode', () => ({
   default: () => null,
 }))
-
 vi.mock('./DictationMode', () => ({
   default: () => null,
 }))
-
 vi.mock('./QuickMemoryMode', () => ({
   default: () => null,
 }))
-
 vi.mock('../settings/SettingsPanel', () => ({
   default: () => null,
 }))
-
 vi.mock('../ui', async () => {
   const actual = await vi.importActual<typeof import('../ui')>('../ui')
   return {
@@ -116,7 +115,6 @@ vi.mock('../ui', async () => {
     PageSkeleton: () => <div data-testid="page-skeleton" />,
   }
 })
-
 vi.mock('./OptionsMode', () => ({
   default: ({
     currentWord,
@@ -151,7 +149,6 @@ vi.mock('./OptionsMode', () => ({
     </div>
   ),
 }))
-
 describe('PracticePage listening options loading', () => {
   async function flushRender() {
     await act(async () => {
@@ -160,7 +157,6 @@ describe('PracticePage listening options loading', () => {
       await Promise.resolve()
     })
   }
-
   beforeEach(() => {
     apiFetchMock.mockReset()
     fetchMock.mockReset()
@@ -173,14 +169,11 @@ describe('PracticePage listening options loading', () => {
     vi.mocked(chooseSmartDimension).mockReturnValue('meaning')
     localStorage.clear()
   })
-
   afterEach(() => {
     vi.useRealTimers()
   })
-
   it('uses preloaded listening confusables instead of fetching similar words per question', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
-
     const vocabulary = [
       {
         word: 'unsupported',
@@ -214,23 +207,18 @@ describe('PracticePage listening options loading', () => {
       { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
       { word: 'guild', phonetic: '/gild/', pos: 'n.', definition: '协会' },
     ]
-
     fetchMock.mockResolvedValue({
       json: async () => ({ vocabulary }),
     })
-
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/ai/learner-profile') {
         return Promise.resolve({})
       }
-
       if (url === '/api/progress') {
         return Promise.resolve({})
       }
-
       throw new Error(`Unexpected url: ${url}`)
     })
-
     render(
       <MemoryRouter>
         <PracticePage
@@ -241,28 +229,21 @@ describe('PracticePage listening options loading', () => {
         />
       </MemoryRouter>,
     )
-
     await flushRender()
     expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:')
-
     fireEvent.click(screen.getByRole('button', { name: 'answer-correct' }))
-
     await act(async () => {
       await new Promise(resolve => setTimeout(resolve, 1300))
     })
-
     await waitFor(() => {
       expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guy:')
     })
-
     expect(
       apiFetchMock.mock.calls.every(([url]) => !String(url).includes('/api/ai/similar-words')),
     ).toBe(true)
   })
-
   it('falls back to meaning mode for custom-book chapters without listening presets', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
-
     const onModeChange = vi.fn()
     const showToast = vi.fn()
     const chapterWords = [
@@ -271,7 +252,6 @@ describe('PracticePage listening options loading', () => {
       { word: 'facility', phonetic: '/fəˈsɪləti/', pos: 'n.', definition: '设施' },
       { word: 'liability', phonetic: '/ˌlaɪəˈbɪləti/', pos: 'n.', definition: '责任' },
     ]
-
     fetchMock.mockImplementation((url: string) => Promise.resolve({
       json: async () => (
         url === '/api/books/custom_1/chapters'
@@ -284,13 +264,11 @@ describe('PracticePage listening options loading', () => {
           : { words: chapterWords }
       ),
     }))
-
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/ai/learner-profile') return Promise.resolve({})
       if (url === '/api/books/custom_1/chapters/progress') return Promise.resolve({ chapter_progress: {} })
       throw new Error(`Unexpected url: ${url}`)
     })
-
     render(
       <MemoryRouter initialEntries={['/practice?book=custom_1&chapter=custom_1_2']}>
         <PracticePage
@@ -302,22 +280,17 @@ describe('PracticePage listening options loading', () => {
         />
       </MemoryRouter>,
     )
-
     await waitFor(() => {
       expect(screen.getByTestId('options-mode')).toHaveAttribute('data-mode', 'meaning')
       expect(screen.getByTestId('options-state')).toHaveTextContent('loading:ability')
     })
-
     expect(onModeChange).toHaveBeenCalledWith('meaning')
-    expect(showToast).toHaveBeenCalledWith('自定义词书当前章节没有听音题素材，已自动切换到词义模式。', 'info')
+    expect(showToast).toHaveBeenCalledWith('当前词表没有听音题素材，已自动切换到词义模式。', 'info')
     expect(screen.queryByText('当前词表暂无可用听音辨析')).toBeNull()
   })
-
   it('does not interrupt auto-play when learner profile resolves after playback starts', async () => {
     vi.useFakeTimers()
-
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
-
     const vocabulary = [
       {
         word: 'guide',
@@ -334,28 +307,22 @@ describe('PracticePage listening options loading', () => {
       { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
       { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
     ]
-
     let resolveProfile: ((value: unknown) => void) | null = null
     const profilePromise = new Promise(resolve => {
       resolveProfile = resolve
     })
-
     fetchMock.mockResolvedValue({
       json: async () => ({ vocabulary }),
     })
-
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/ai/learner-profile') {
         return profilePromise
       }
-
       if (url === '/api/progress') {
         return Promise.resolve({})
       }
-
       throw new Error(`Unexpected url: ${url}`)
     })
-
     render(
       <MemoryRouter>
         <PracticePage
@@ -366,33 +333,26 @@ describe('PracticePage listening options loading', () => {
         />
       </MemoryRouter>,
     )
-
     await flushRender()
     expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:')
-
     act(() => {
       vi.advanceTimersByTime(300)
     })
     await flushRender()
-
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
     expect(playWordAudioMock).toHaveBeenCalledWith('guide', expect.anything(), undefined, { sourcePreference: 'buffer' })
     const stopCallsAfterFirstPlayback = stopAudioMock.mock.calls.length
-
     await act(async () => {
       resolveProfile?.({})
       await Promise.resolve()
       await Promise.resolve()
     })
-
     expect(playWordAudioMock.mock.calls.map(call => call[0])).toEqual(['guide'])
     expect(stopAudioMock.mock.calls.length).toBe(stopCallsAfterFirstPlayback)
   })
-
   it('commits smart mode with the resolved dimension immediately', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
     vi.mocked(chooseSmartDimension).mockReturnValue('listening')
-
     const vocabulary = [
       {
         word: 'guide',
@@ -409,17 +369,14 @@ describe('PracticePage listening options loading', () => {
       { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
       { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
     ]
-
     fetchMock.mockResolvedValue({
       json: async () => ({ vocabulary }),
     })
-
     apiFetchMock.mockImplementation((url: string) => {
       if (url === '/api/ai/learner-profile') return Promise.resolve({})
       if (url === '/api/progress') return Promise.resolve({})
       throw new Error(`Unexpected url: ${url}`)
     })
-
     render(
       <MemoryRouter>
         <PracticePage
@@ -430,18 +387,15 @@ describe('PracticePage listening options loading', () => {
         />
       </MemoryRouter>,
     )
-
     await waitFor(() => {
       expect(screen.getByTestId('options-mode')).toHaveAttribute('data-mode', 'smart')
       expect(screen.getByTestId('options-mode')).toHaveAttribute('data-smart-dimension', 'listening')
     })
   })
-
   it('shows chapter completion summary with session duration after finishing a chapter', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-04-07T00:00:00.000Z'))
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
-
     const vocabulary = [{
       word: 'guide',
       phonetic: '/gaid/',
@@ -453,7 +407,6 @@ describe('PracticePage listening options loading', () => {
         { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
       ],
     }]
-
     fetchMock.mockImplementation((url: string) => Promise.resolve({
       json: async () => (url === '/api/books/book-1/chapters'
         ? { chapters: [{ id: '1', title: 'Chapter 1' }] }
@@ -466,7 +419,6 @@ describe('PracticePage listening options loading', () => {
       if (url === '/api/books/book-1/chapters/1/mode-progress') return Promise.resolve({})
       throw new Error(`Unexpected url: ${url}`)
     })
-
     render(
       <MemoryRouter initialEntries={['/practice?book=book-1&chapter=1']}>
         <PracticePage
@@ -477,7 +429,6 @@ describe('PracticePage listening options loading', () => {
         />
       </MemoryRouter>,
     )
-
     await flushRender()
     expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:')
     fireEvent.click(screen.getByRole('button', { name: 'answer-correct' }))
@@ -487,7 +438,6 @@ describe('PracticePage listening options loading', () => {
       await Promise.resolve()
       await Promise.resolve()
     })
-
     expect(screen.getByText('本轮完成')).toBeInTheDocument()
     expect(screen.getByText('本章练习')).toBeInTheDocument()
     expect(screen.getByText('1分5秒')).toBeInTheDocument()

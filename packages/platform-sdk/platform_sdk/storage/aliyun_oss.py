@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import re
 import threading
@@ -15,11 +16,41 @@ SAFE_OSS_SEGMENT_RE = re.compile(r'[^a-z0-9]+')
 DEFAULT_SIGNED_URL_EXPIRES_SECONDS = 3600
 DEFAULT_METADATA_CACHE_TTL_SECONDS = 300
 DEFAULT_CONNECT_TIMEOUT_SECONDS = 10
+DEFAULT_PUT_OBJECT_MAX_ATTEMPTS = 3
+DEFAULT_PUT_OBJECT_RETRY_DELAY_MS = 300
 
 _CLIENT_LOCK = threading.Lock()
 _METADATA_CACHE_LOCK = threading.Lock()
 _OSS_BUCKETS: dict[tuple[str, str, str, str, str], oss2.Bucket] = {}
 _OBJECT_METADATA_CACHE: dict[str, tuple[float, "StoredObjectMetadata | None"]] = {}
+
+
+def _put_object_with_retries(bucket: oss2.Bucket, object_key: str, body: bytes, headers: dict[str, str]):
+    max_attempts = env_int('OSS_PUT_OBJECT_MAX_ATTEMPTS', DEFAULT_PUT_OBJECT_MAX_ATTEMPTS)
+    retry_delay_ms = env_int('OSS_PUT_OBJECT_RETRY_DELAY_MS', DEFAULT_PUT_OBJECT_RETRY_DELAY_MS)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return bucket.put_object(object_key, body, headers=headers)
+        except Exception as exc:
+            if attempt >= max_attempts:
+                logging.warning(
+                    'OSS put_object failed after %s attempts: object_key=%s byte_length=%s content_type=%s error=%s',
+                    max_attempts,
+                    object_key,
+                    len(body),
+                    headers.get('Content-Type', ''),
+                    exc,
+                )
+                return None
+            logging.warning(
+                'OSS put_object attempt %s/%s failed, retrying: object_key=%s error=%s',
+                attempt,
+                max_attempts,
+                object_key,
+                exc,
+            )
+            time.sleep((retry_delay_ms / 1000) * attempt)
+    return None
 
 
 @dataclass(frozen=True)
@@ -415,9 +446,8 @@ def put_object_bytes(
         return None
 
     headers = {'Content-Type': content_type}
-    try:
-        result = bucket.put_object(object_key, body, headers=headers)
-    except Exception:
+    result = _put_object_with_retries(bucket, object_key, body, headers)
+    if result is None:
         return None
 
     etag = getattr(result, 'etag', None) or getattr(result, 'crc', None)

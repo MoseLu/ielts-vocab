@@ -1,6 +1,7 @@
 export const CANONICAL_PRACTICE_MODES = [
   'smart',
   'quickmemory',
+  'test',
   'listening',
   'meaning',
   'dictation',
@@ -27,6 +28,11 @@ const PRACTICE_MODE_META: Record<CanonicalPracticeMode, PracticeModeMeta> = {
     label: '速记模式',
     description: '快速判断词义并进入复习链',
     shortLabel: '记',
+  },
+  test: {
+    label: '测试模式',
+    description: '只听发音判断熟悉度',
+    shortLabel: '测',
   },
   listening: {
     label: '听音选义',
@@ -93,6 +99,7 @@ export const HEADER_PRACTICE_MODE_DESCRIPTIONS = buildPracticeModeRecord(HEADER_
 export const PRACTICE_CONTROL_MODES = [
   'smart',
   'quickmemory',
+  'test',
   'listening',
   'meaning',
   'dictation',
@@ -105,6 +112,7 @@ export const PRACTICE_CONTROL_MODE_LABELS = buildPracticeModeRecord(PRACTICE_CON
 export const STATS_MODE_ORDER = [
   'smart',
   'quickmemory',
+  'test',
   'listening',
   'meaning',
   'dictation',
@@ -114,6 +122,7 @@ export const STATS_MODE_ORDER = [
 
 export const CHAPTER_PRACTICE_MODES = [
   'quickmemory',
+  'test',
   'listening',
   'meaning',
   'dictation',
@@ -205,12 +214,15 @@ const MODE_ALIAS_TO_KEY: Record<string, CanonicalPracticeMode> = {
   '智能练习': 'smart',
   '智能学习': 'smart',
   quickmemory: 'quickmemory',
+  test: 'test',
   recognition: 'quickmemory',
   '速记模式': 'quickmemory',
   '速记模式（会认）': 'quickmemory',
   '快速记忆': 'quickmemory',
   '看词认义': 'quickmemory',
   '看词认义（会认）': 'quickmemory',
+  '测试模式': 'test',
+  '听音测试': 'test',
   listening: 'listening',
   '听音选义': 'listening',
   '听音选义（会辨）': 'listening',

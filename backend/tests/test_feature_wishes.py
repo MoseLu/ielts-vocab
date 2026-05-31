@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import jwt
+import pytest
 from fastapi.testclient import TestClient
 
 from models import User, db
@@ -174,6 +175,49 @@ def test_feature_wish_admin_can_delete_any_wish(monkeypatch, tmp_path):
     assert admin_list.json()['total'] == 0
 
 
+def test_feature_wish_admin_can_mark_wish_done(monkeypatch, tmp_path):
+    _configure_admin_env(monkeypatch, tmp_path)
+    module = _load_admin_ops_service_module('admin_ops_service_feature_wish_status')
+    client = TestClient(module.app)
+    users = _seed_users(module.admin_ops_flask_app)
+    learner_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['learner']))
+    admin_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['admin']))
+
+    created = client.post(
+        '/api/feature-wishes',
+        headers=learner_headers,
+        json={'title': '完成态 bug', 'content': '管理员确认修复后标记完成'},
+    )
+    wish_id = created.json()['wish']['id']
+
+    blocked = client.patch(
+        f'/api/feature-wishes/{wish_id}/status',
+        headers=learner_headers,
+        json={'status': 'done'},
+    )
+    invalid = client.patch(
+        f'/api/feature-wishes/{wish_id}/status',
+        headers=admin_headers,
+        json={'status': 'closed'},
+    )
+    marked = client.patch(
+        f'/api/feature-wishes/{wish_id}/status',
+        headers=admin_headers,
+        json={'status': 'done'},
+    )
+    admin_list = client.get('/api/feature-wishes', headers=admin_headers)
+
+    assert created.status_code == 201
+    assert created.json()['wish']['status'] == 'open'
+    assert created.json()['wish']['can_update_status'] is False
+    assert blocked.status_code == 403
+    assert invalid.status_code == 400
+    assert marked.status_code == 200
+    assert marked.json()['wish']['status'] == 'done'
+    assert marked.json()['wish']['can_update_status'] is True
+    assert admin_list.json()['items'][0]['status'] == 'done'
+
+
 def test_feature_wish_image_upload_creates_resized_oss_variants(monkeypatch, tmp_path):
     _configure_admin_env(monkeypatch, tmp_path)
     module = _load_admin_ops_service_module('admin_ops_service_feature_wish_images')
@@ -223,3 +267,74 @@ def test_feature_wish_image_upload_creates_resized_oss_variants(monkeypatch, tmp
     assert any('/thumb-' in item[0] for item in uploaded)
     assert any('/full-' in item[0] for item in uploaded)
     assert too_many.status_code == 400
+
+
+def test_feature_wish_image_upload_failure_does_not_leave_empty_card(monkeypatch, tmp_path):
+    _configure_admin_env(monkeypatch, tmp_path)
+    module = _load_admin_ops_service_module('admin_ops_service_feature_wish_upload_failure')
+    client = TestClient(module.app)
+    users = _seed_users(module.admin_ops_flask_app)
+    learner_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['learner']))
+
+    monkeypatch.setattr(
+        'platform_sdk.feature_wish_image_storage.put_object_bytes',
+        lambda **_: None,
+    )
+
+    response = client.post(
+        '/api/feature-wishes',
+        headers=learner_headers,
+        data={'title': '图片没有显示', 'content': '上传失败时不应该留下无图卡片'},
+        files=[('images', ('wish.png', _png_bytes(), 'image/png'))],
+    )
+    wish_list = client.get('/api/feature-wishes', headers=learner_headers)
+
+    assert response.status_code == 503
+    assert response.json()['error'] == 'OSS 图片上传失败'
+    assert wish_list.status_code == 200
+    assert wish_list.json()['items'] == []
+
+
+def test_feature_wish_image_upload_failure_removes_partial_thumb(monkeypatch):
+    from platform_sdk import feature_wish_image_storage as storage
+
+    uploaded: list[str] = []
+    deleted: list[str] = []
+
+    class Stored:
+        provider = 'aliyun-oss'
+        bucket_name = 'test-bucket'
+        byte_length = 7
+        content_type = 'image/png'
+        cache_key = 'cache'
+        signed_url = 'https://oss.example.com/object.png?signature=1'
+
+        def __init__(self, object_key: str):
+            self.object_key = object_key
+
+    def fake_put_object_bytes(*, object_key, **kwargs):
+        uploaded.append(object_key)
+        if '/full-' in object_key:
+            return None
+        return Stored(object_key)
+
+    def fake_delete_object(*, object_key, **kwargs):
+        deleted.append(object_key)
+        return True
+
+    monkeypatch.setattr(storage, 'put_object_bytes', fake_put_object_bytes)
+    monkeypatch.setattr(storage, 'delete_object', fake_delete_object)
+
+    with pytest.raises(RuntimeError, match='OSS 图片上传失败'):
+        storage.store_feature_wish_image(
+            user_id=7,
+            wish_id=12,
+            filename='wish.png',
+            body=_png_bytes(),
+            content_type='image/png',
+        )
+
+    assert len(uploaded) == 2
+    assert '/thumb-' in uploaded[0]
+    assert '/full-' in uploaded[1]
+    assert deleted == [uploaded[0]]

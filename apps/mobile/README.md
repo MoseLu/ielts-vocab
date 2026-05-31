@@ -5,6 +5,7 @@ React Native learner app for Android and iOS. This app does not embed the Web UI
 ## Runtime Contracts
 
 - API base URL defaults to `https://axiomaticworld.com`.
+- `android:dev` resolves the Mac's active Wi-Fi IP at build time and points the dev app to `http://<ip>:8000` plus `http://<ip>:5001`; set `IELTS_MOBILE_DEV_HOST` to override it.
 - Authentication uses `/api/auth/mobile/login`, `/api/auth/mobile/refresh`, and `/api/auth/mobile/logout`.
 - Browser cookie auth remains a Web-only contract.
 - Speech uses Socket.IO namespace `/speech` plus mobile Bearer token auth.

@@ -1,7 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import FavoriteToggleButton from '../FavoriteToggleButton'
-import PracticeControlBar from '../PracticeControlBar'
 import type {
   AppSettings,
   Chapter,
@@ -18,7 +17,6 @@ import type {
   WordStatuses,
 } from '../types'
 import PracticePronunciationButton from './PracticePronunciationButton'
-import SettingsPanel from '../../settings/SettingsPanel'
 import {
   PracticePageQuickMemoryLayout,
   PracticePageRadioLayout,
@@ -28,6 +26,8 @@ import {
   PracticePageFollowLayout,
   PracticePageOptionsLayout,
 } from './PracticePageModeLayouts'
+import type { PracticeGroupWindow } from '../../../composables/practice/page/practicePageGrouping'
+import type { ReviewQueueSummary } from '../../../features/practice/practiceSessionHelpers'
 
 interface PracticePageContentProps {
   mode?: PracticeMode
@@ -59,7 +59,7 @@ interface PracticePageContentProps {
   completeFollowSession: () => Promise<void>
   isCurrentSessionActive: (at?: number) => boolean
   reviewMode: boolean
-  reviewSummary: { has_more?: boolean } | null
+  reviewSummary: ReviewQueueSummary | null
   reviewOffset: number
   saveWrongWord: (word: Word) => void
   handleQuickMemoryRecordChange: (word: Word, record: QuickMemoryRecordState) => void
@@ -96,6 +96,9 @@ interface PracticePageContentProps {
   handleMeaningRecallSubmit: (source?: SpellingSubmitSource) => void
   handleFollowReadEvaluated: (passed: boolean) => Promise<void>
   handleContinueReview: () => void
+  practiceGroup: PracticeGroupWindow | null
+  chapterQueueWords: string[]
+  onContinueChapterGroup: () => void
 }
 
 export function PracticePageContent({
@@ -165,6 +168,9 @@ export function PracticePageContent({
   handleMeaningRecallSubmit,
   handleFollowReadEvaluated,
   handleContinueReview,
+  practiceGroup,
+  chapterQueueWords,
+  onContinueChapterGroup,
 }: PracticePageContentProps) {
   const progress = Math.min((queueIndex + 1) / Math.max(queue.length, 1), 1)
   const activeStageWord = mode === 'radio'
@@ -177,7 +183,7 @@ export function PracticePageContent({
       onClick={onFavoriteToggle}
     />
   )
-  const speakingButton = mode === 'quickmemory'
+  const speakingButton = mode === 'quickmemory' || mode === 'test'
     ? undefined
     : (
       <PracticePronunciationButton
@@ -229,7 +235,7 @@ export function PracticePageContent({
     )
   }
 
-  if (mode === 'quickmemory') {
+  if (mode === 'quickmemory' || mode === 'test') {
     return (
       <PracticePageQuickMemoryLayout
         {...baseLayoutProps}
@@ -240,6 +246,9 @@ export function PracticePageContent({
         reviewOffset={reviewOffset}
         reviewHasMore={reviewMode ? Boolean(reviewSummary?.has_more) : false}
         onContinueReview={reviewMode ? handleContinueReview : undefined}
+        chapterGroup={practiceGroup}
+        chapterQueueWords={chapterQueueWords}
+        onContinueChapterGroup={onContinueChapterGroup}
         onWrongWord={saveWrongWord}
         onQuickMemoryRecordChange={handleQuickMemoryRecordChange}
         initialIndex={queueIndex}

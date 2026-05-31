@@ -5,10 +5,12 @@ load_split_module_files(
     __file__,
     (
         'model_definitions/core_models.py',
+        'model_definitions/identity_oauth_models.py',
         'model_definitions/learning_hierarchy_models.py',
         'model_definitions/word_preference_models.py',
         'model_definitions/word_detail_models.py',
         'model_definitions/study_models.py',
+        'model_definitions/scoped_learning_state_models.py',
         'model_definitions/word_mastery_models.py',
         'model_definitions/practice_result_models.py',
         'model_definitions/ai_runtime_models.py',

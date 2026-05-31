@@ -134,6 +134,7 @@ jobs:
           FRONTEND_ASSET_OSS_ENABLED: ${{ vars.FRONTEND_ASSET_OSS_ENABLED }}
           FRONTEND_ASSET_OSS_PUBLIC_BASE_URL: ${{ vars.FRONTEND_ASSET_OSS_PUBLIC_BASE_URL }}
           FRONTEND_ASSET_OSS_PREFIX: ${{ vars.FRONTEND_ASSET_OSS_PREFIX }}
+          FRONTEND_ASSET_OSS_CORS_ORIGINS: ${{ vars.FRONTEND_ASSET_OSS_CORS_ORIGINS }}
           FRONTEND_ASSET_OSS_CONNECT_TIMEOUT_SECONDS: ${{ vars.FRONTEND_ASSET_OSS_CONNECT_TIMEOUT_SECONDS }}
           FRONTEND_ASSET_OSS_UPLOAD_RETRY_ATTEMPTS: ${{ vars.FRONTEND_ASSET_OSS_UPLOAD_RETRY_ATTEMPTS }}
           AXI_ALIYUN_OSS_ACCESS_KEY_ID: ${{ secrets.AXI_ALIYUN_OSS_ACCESS_KEY_ID }}
@@ -173,8 +174,24 @@ jobs:
           artifact_upload_started="$(date +%s)"
           artifact_size="$(du -h "${ARTIFACT_PATH}" | awk '{print $1}')"
           echo "Uploading release artifact (${artifact_size}) with rsync --partial --progress"
-          rsync --partial --progress "${ARTIFACT_PATH}" \
-            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/ielts-vocab-release.tgz"
+          artifact_uploaded=false
+          for attempt in 1 2 3; do
+            echo "Release artifact upload attempt ${attempt}/3"
+            if timeout --signal=TERM --kill-after=15s 90s \
+              rsync --partial --progress --timeout=60 "${ARTIFACT_PATH}" \
+              "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/ielts-vocab-release.tgz"; then
+              artifact_uploaded=true
+              break
+            fi
+            if [[ "${attempt}" -lt 3 ]]; then
+              echo "Release artifact upload stalled; retrying in 5s"
+              sleep 5
+            fi
+          done
+          if [[ "${artifact_uploaded}" != true ]]; then
+            echo "::error::Release artifact upload failed after 3 attempts"
+            exit 1
+          fi
           artifact_upload_elapsed="$(( $(date +%s) - artifact_upload_started ))"
           echo "Release artifact upload finished in ${artifact_upload_elapsed}s"
           scp \

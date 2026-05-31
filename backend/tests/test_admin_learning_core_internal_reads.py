@@ -11,7 +11,19 @@ from platform_sdk.learning_core_admin_detail_internal_client import (
     AdminFavoriteWordSnapshot,
     AdminLearningEventSnapshot,
 )
-from models import User, UserBookProgress, UserChapterProgress, UserLearningEvent, db
+from platform_sdk.learning_core_admin_detail_application import (
+    list_internal_admin_book_progress_response,
+    list_internal_admin_chapter_progress_response,
+)
+from models import (
+    User,
+    UserBookProgress,
+    UserChapterProgress,
+    UserLearningBookRollup,
+    UserLearningChapterRollup,
+    UserLearningEvent,
+    db,
+)
 
 
 def _create_user(*, username: str) -> User:
@@ -20,6 +32,62 @@ def _create_user(*, username: str) -> User:
     db.session.add(user)
     db.session.commit()
     return user
+
+
+def test_learning_core_admin_progress_reads_include_rollup_rows(app):
+    with app.app_context():
+        user = _create_user(username='admin-detail-rollup-progress-user')
+        observed_at = datetime(2026, 4, 12, 9, 30, 0)
+        db.session.add_all([
+            UserBookProgress(
+                user_id=user.id,
+                book_id='rollup-book',
+                current_index=2,
+                correct_count=1,
+                wrong_count=1,
+                is_completed=False,
+            ),
+            UserLearningBookRollup(
+                user_id=user.id,
+                book_id='rollup-book',
+                current_index=120,
+                correct_count=90,
+                wrong_count=10,
+                is_completed=True,
+                last_activity_at=observed_at,
+            ),
+            UserLearningChapterRollup(
+                user_id=user.id,
+                book_id='rollup-book',
+                mode='quickmemory',
+                chapter_id='7',
+                current_index=50,
+                words_learned=50,
+                correct_count=40,
+                wrong_count=10,
+                is_completed=True,
+                last_activity_at=observed_at,
+            ),
+        ])
+        db.session.commit()
+
+        book_payload, book_status = list_internal_admin_book_progress_response(user.id)
+        chapter_payload, chapter_status = list_internal_admin_chapter_progress_response(
+            user.id,
+            {'book_id': 'rollup-book'},
+        )
+
+        assert book_status == 200
+        book_rows = [row for row in book_payload['progress'] if row['book_id'] == 'rollup-book']
+        assert len(book_rows) == 1
+        assert book_rows[0]['current_index'] == 120
+        assert book_rows[0]['is_completed'] is True
+        assert chapter_status == 200
+        chapter_rows = chapter_payload['chapter_progress']
+        assert len(chapter_rows) == 1
+        assert chapter_rows[0]['chapter_id'] == 7
+        assert chapter_rows[0]['words_learned'] == 50
+        assert chapter_rows[0]['is_completed'] is True
 
 
 def test_admin_detail_book_and_chapter_reads_prefer_learning_core_internal_client(app, monkeypatch):

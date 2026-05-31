@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from '../constants'
-import { apiFetch } from './index'
+import { apiFetch } from './apiClient'
 
 const MIGRATION_TASK = 'local_storage_migration_v1_once'
 const SMART_PENDING_KEY = 'smart_word_stats_pending'

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 from io import BytesIO
 
-from platform_sdk.storage.aliyun_oss import build_service_object_key, put_object_bytes, sanitize_segment
+from platform_sdk.storage.aliyun_oss import build_service_object_key, delete_object, put_object_bytes, sanitize_segment
 
 
 ALLOWED_IMAGE_TYPES = {
@@ -29,7 +30,8 @@ def _extension(content_type: str, filename: str) -> str:
 def _thumbnail_body(body: bytes, content_type: str) -> bytes:
     try:
         from PIL import Image
-    except Exception:
+    except Exception as exc:
+        logging.warning('Feature wish thumbnail compression unavailable: %s', exc)
         return body
 
     output = BytesIO()
@@ -43,7 +45,8 @@ def _thumbnail_body(body: bytes, content_type: str) -> bytes:
                 'image/gif': 'GIF',
             }.get(content_type, 'PNG')
             image.save(output, format=save_format)
-    except Exception:
+    except Exception as exc:
+        logging.warning('Feature wish thumbnail compression failed: %s', exc)
         return body
     return output.getvalue() or body
 
@@ -82,8 +85,11 @@ def store_feature_wish_image(
     )
     thumb_body = _thumbnail_body(body, normalized_type)
     thumb = put_object_bytes(object_key=thumb_key, body=thumb_body, content_type=normalized_type)
+    if thumb is None:
+        raise RuntimeError('OSS 图片上传失败')
     full = put_object_bytes(object_key=full_key, body=body, content_type=normalized_type)
-    if thumb is None or full is None:
+    if full is None:
+        delete_object(object_key=thumb.object_key)
         raise RuntimeError('OSS 图片上传失败')
     return {
         'original_filename': sanitize_segment(filename.rsplit('.', 1)[0] if filename else 'image'),

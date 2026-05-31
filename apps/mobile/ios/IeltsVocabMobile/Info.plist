@@ -3,7 +3,27 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDisplayName</key>
-  <string>IELTS Vocab</string>
+  <string>雅思冲刺</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleURLName</key>
+      <string>weixin</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>wx30125ac6333945cb</string>
+      </array>
+    </dict>
+  </array>
+  <key>LSApplicationQueriesSchemes</key>
+  <array>
+    <string>weixin</string>
+    <string>wechat</string>
+    <string>weixinULAPI</string>
+    <string>weixinURLParamsAPI</string>
+  </array>
   <key>NSMicrophoneUsageDescription</key>
   <string>用于跟读练习、语音识别和口语评分。</string>
   <key>NSAppTransportSecurity</key>

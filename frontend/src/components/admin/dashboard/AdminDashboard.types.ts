@@ -68,6 +68,32 @@ export interface AdminWordFeedback {
   updated_at: string | null
 }
 
+export interface AdminAssetWord {
+  id: string
+  book_id: string
+  book_title: string
+  source_book_ids: string[]
+  source_book_titles: string[]
+  chapter_id: string
+  chapter_title: string
+  word: string
+  normalized_word: string
+  phonetic: string
+  pos: string
+  definition: string
+  memory_badge: string
+  memory_text: string
+  memory_source: string
+  memory_updated_at: string | null
+  has_mnemonic: boolean
+}
+
+export interface AdminAssetSummary {
+  total_words: number
+  with_mnemonic: number
+  missing_mnemonic: number
+}
+
 export interface Overview {
   total_users: number
   active_users_today: number
@@ -154,9 +180,10 @@ export interface UserDetail {
   }>
 }
 
-export type AdminTab = 'overview' | 'users' | 'feedback'
+export type AdminTab = 'overview' | 'users' | 'feedback' | 'assets'
 export type AdminDetailTab = 'progress' | 'favorite_words' | 'wrong_words' | 'sessions' | 'chart' | 'chapter_daily'
 export type WrongWordsSort = 'last_error' | 'wrong_count'
+export type AdminAssetMnemonicStatus = 'all' | 'with_mnemonic' | 'missing_mnemonic'
 
 export const modeLabels: Record<string, string> = PRACTICE_MODE_LABELS
 

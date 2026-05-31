@@ -1,12 +1,12 @@
 import { useEffect } from 'react'
-import { playExampleAudio } from '../../../components/practice/utils'
-import type { AppSettings, PracticeMode, SmartDimension, Word, WordPlaybackHandler } from '../../../components/practice/types'
+import { playExampleAudio } from '../../../features/practice/audio/practiceAudio'
+import type { AppSettings, PracticeMode, SmartDimension, Word, WordPlaybackHandler } from '../../../features/practice/types'
 import { openGlobalWordSearch } from '../../../components/layout/navigation/globalWordSearchEvents'
 import {
   dispatchPracticeGlobalShortcutNext,
   dispatchPracticeGlobalShortcutPrevious,
   dispatchPracticeGlobalShortcutReplay,
-} from '../../../components/practice/page/practiceGlobalShortcutEvents'
+} from '../../../features/practice/practiceGlobalShortcutEvents'
 
 interface UsePracticePageKeyboardShortcutsParams {
   mode?: PracticeMode
@@ -51,7 +51,7 @@ export function usePracticePageKeyboardShortcuts({
       const tagName = target?.tagName
       const isEditableTarget = tagName === 'INPUT' || tagName === 'TEXTAREA' || target?.isContentEditable === true
       const isSpellingInput = tagName === 'INPUT' && target?.classList.contains('spelling-input')
-      const usesModeShortcutBridge = mode === 'quickmemory' || mode === 'radio'
+      const usesModeShortcutBridge = mode === 'quickmemory' || mode === 'test' || mode === 'radio'
       const supportsChoiceShortcuts =
         mode === 'listening' || (mode === 'smart' && smartDimension === 'listening')
       const exampleSentence = currentWord?.examples?.[0]?.en?.trim() ?? ''

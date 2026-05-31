@@ -9,6 +9,8 @@
     justify-content: center;
     gap: var(--space-lg);
     padding: var(--space-xl);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 /* Header */
@@ -444,3 +446,44 @@
 }
 .result-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .result-btn:not(.primary):hover { background: var(--bg-secondary); color: var(--text-primary); }
+
+@media (max-height: 640px) {
+    .vocab-test {
+        justify-content: flex-start;
+        gap: var(--size-12);
+        padding: var(--size-12) var(--size-16) calc(var(--size-96) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .vocab-test-header {
+        width: min(100%, var(--size-640));
+    }
+
+    .vocab-test-card {
+        width: min(100%, var(--size-640));
+        gap: var(--size-12);
+        padding: var(--size-16);
+    }
+
+    .vocab-test-audio {
+        width: var(--size-56);
+        height: var(--size-56);
+    }
+
+    .vocab-test-audio svg {
+        width: var(--size-24);
+        height: var(--size-24);
+    }
+
+    .vocab-test-options {
+        gap: var(--size-8);
+    }
+
+    .vocab-test-option {
+        padding: var(--size-10) var(--size-12);
+        line-height: 1.35;
+    }
+
+    .vocab-test-actions {
+        gap: var(--size-8);
+    }
+}

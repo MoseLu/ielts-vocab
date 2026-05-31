@@ -17,6 +17,7 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from services.premium_vocab_cleanup import normalize_premium_word
+from services.premium_word_mnemonic_catalog import is_low_quality_mnemonic_text
 from services.word_detail_llm_client import DISABLE_FALLBACK_PROVIDER
 from services.word_memory_note_llm_client import request_memory_note_batch
 
@@ -126,7 +127,7 @@ def _sanitize_item(seed: dict, raw_item: dict) -> dict:
         raise ValueError(f'memory note too long for {seed["normalized_word"]}')
     if not CJK_RE.search(text):
         raise ValueError(f'memory note missing Chinese cue for {seed["normalized_word"]}')
-    if GENERIC_PATTERN.search(text):
+    if GENERIC_PATTERN.search(text) or is_low_quality_mnemonic_text(text):
         raise ValueError(f'memory note is generic for {seed["normalized_word"]}')
     return {
         'word': seed['normalized_word'],

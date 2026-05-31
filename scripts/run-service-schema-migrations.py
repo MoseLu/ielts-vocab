@@ -4,6 +4,7 @@ import argparse
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
 import os
 from pathlib import Path
 from urllib.parse import quote_plus
@@ -28,7 +29,9 @@ from platform_sdk.service_migration_plan import (
     iter_service_migration_service_names,
 )
 from platform_sdk.service_model_registry import resolve_service_db
+from platform_sdk.service_schema_identity_boundary import drop_identity_user_foreign_keys
 from platform_sdk.service_schema import bootstrap_service_schema
+from platform_sdk.service_table_plan import get_service_bootstrap_table_names
 from services.storage_boundary_guard import validate_split_service_storage_boundary
 
 
@@ -306,29 +309,20 @@ def _apply_learning_core_progress_resume_patch(connection: sa.engine.Connection)
 
 
 def _apply_ai_home_todo_plan_user_fk_patch(connection: sa.engine.Connection) -> list[str]:
-    inspector = sa.inspect(connection)
-    if 'user_home_todo_plans' not in inspector.get_table_names():
-        return []
+    return drop_identity_user_foreign_keys(
+        connection,
+        table_names=('user_home_todo_plans',),
+    )
 
-    matching_fks = [
-        fk for fk in inspector.get_foreign_keys('user_home_todo_plans')
-        if fk.get('referred_table') == 'users'
-        and fk.get('constrained_columns') == ['user_id']
-    ]
-    if not matching_fks:
-        return []
 
-    ops = _migration_ops(connection)
-    changes: list[str] = []
-    for fk in matching_fks:
-        fk_name = fk.get('name')
-        if not fk_name:
-            continue
-        with ops.batch_alter_table('user_home_todo_plans') as batch_op:
-            batch_op.drop_constraint(fk_name, type_='foreignkey')
-        changes.append(f'user_home_todo_plans.{fk_name}')
-
-    return changes
+def _apply_cross_service_identity_user_fk_patch(
+    service_name: str,
+    connection: sa.engine.Connection,
+) -> list[str]:
+    return drop_identity_user_foreign_keys(
+        connection,
+        table_names=get_service_bootstrap_table_names(service_name),
+    )
 
 
 SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
@@ -353,6 +347,11 @@ SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
             description='Add custom book word import sort order.',
             apply=_apply_custom_book_word_sort_order_patch,
         ),
+        SchemaPatch(
+            revision='learning_core_service_0006',
+            description='Remove cross-service identity user FKs.',
+            apply=partial(_apply_cross_service_identity_user_fk_patch, 'learning-core-service'),
+        ),
     ),
     'catalog-content-service': (
         SchemaPatch(
@@ -365,12 +364,29 @@ SERVICE_PATCHES: dict[str, tuple[SchemaPatch, ...]] = {
             description='Add custom book word import sort order.',
             apply=_apply_custom_book_word_sort_order_patch,
         ),
+        SchemaPatch(
+            revision='catalog_content_service_0004',
+            description='Remove cross-service identity user FKs.',
+            apply=partial(_apply_cross_service_identity_user_fk_patch, 'catalog-content-service'),
+        ),
+    ),
+    'notes-service': (
+        SchemaPatch(
+            revision='notes_service_0002',
+            description='Remove cross-service identity user FKs.',
+            apply=partial(_apply_cross_service_identity_user_fk_patch, 'notes-service'),
+        ),
     ),
     'ai-execution-service': (
         SchemaPatch(
             revision='ai_execution_service_0002',
             description='Remove identity user FK from home todo plans.',
             apply=_apply_ai_home_todo_plan_user_fk_patch,
+        ),
+        SchemaPatch(
+            revision='ai_execution_service_0003',
+            description='Remove remaining cross-service identity user FKs.',
+            apply=partial(_apply_cross_service_identity_user_fk_patch, 'ai-execution-service'),
         ),
     ),
 }

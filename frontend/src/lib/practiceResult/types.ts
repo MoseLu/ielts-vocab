@@ -22,6 +22,9 @@ export interface PracticeResultCommand {
   userScope: string
   route: string
   mode: PracticeRuntimeId
+  scopeKey: string
+  scopeType: string
+  originScope: Record<string, unknown>
   dimension: string
   word: string
   wordPayload?: Record<string, unknown> | null

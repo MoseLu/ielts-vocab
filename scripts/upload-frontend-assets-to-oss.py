@@ -26,6 +26,7 @@ DEFAULT_UPLOAD_RETRY_ATTEMPTS = 4
 DEFAULT_CONNECT_TIMEOUT_SECONDS = 60
 CONTENT_SHA256_META_HEADER = 'x-oss-meta-sha256'
 FRONTEND_ASSET_CACHE_CONTROL = 'public, max-age=31536000, immutable'
+DEFAULT_CORS_ORIGINS = ('https://axiomaticworld.com', 'https://www.axiomaticworld.com')
 
 
 def _enabled() -> bool:
@@ -103,6 +104,20 @@ def _verify_public_headers_enabled() -> bool:
 def _public_asset_url(relative_path: str) -> str:
     public_base = _public_base_url()
     return f'{public_base}/{relative_path.lstrip("/")}'
+
+
+def _public_cors_origins() -> list[str]:
+    raw = (
+        os.environ.get('FRONTEND_ASSET_OSS_CORS_ORIGINS')
+        or os.environ.get('CORS_ORIGINS')
+        or ','.join(DEFAULT_CORS_ORIGINS)
+    )
+    origins: list[str] = []
+    for value in raw.split(','):
+        origin = value.strip().rstrip('/')
+        if origin and origin not in origins:
+            origins.append(origin)
+    return origins
 
 
 def _prepared_body_and_headers(path: Path, body: bytes) -> tuple[bytes, dict[str, str]]:
@@ -331,6 +346,33 @@ def verify_public_delivery_headers(uploaded_assets: list[tuple[str, str]]) -> No
                 f'relative_path={relative_path} object_key={object_key} '
                 f'cache_control={cache_control or "<empty>"}'
             )
+        for origin in _public_cors_origins():
+            cors_request = request.Request(
+                url,
+                method='HEAD',
+                headers={'Origin': origin},
+            )
+            try:
+                with request.urlopen(cors_request, timeout=10) as response:
+                    allowed_origin = (response.headers.get('Access-Control-Allow-Origin') or '').strip()
+                    allowed_methods = (response.headers.get('Access-Control-Allow-Methods') or '').upper()
+            except URLError as exc:
+                raise SystemExit(
+                    'Failed to verify frontend asset CORS headers: '
+                    f'relative_path={relative_path} origin={origin}'
+                ) from exc
+            if allowed_origin not in {'*', origin}:
+                raise SystemExit(
+                    'Frontend OSS asset is missing browser-load CORS headers: '
+                    f'relative_path={relative_path} object_key={object_key} '
+                    f'origin={origin} access_control_allow_origin={allowed_origin or "<empty>"}'
+                )
+            if allowed_methods and 'GET' not in allowed_methods and '*' not in allowed_methods:
+                raise SystemExit(
+                    'Frontend OSS asset CORS methods do not allow browser GET: '
+                    f'relative_path={relative_path} object_key={object_key} '
+                    f'origin={origin} access_control_allow_methods={allowed_methods or "<empty>"}'
+                )
         checked += 1
     print(f'[frontend-assets] public_header_checked={checked} public_base={public_base}', flush=True)
 

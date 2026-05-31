@@ -1,7 +1,15 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { apiFetch } from '../../../lib'
-import { MicroLoading } from '../../ui'
+import { ConfirmDialog, MicroLoading } from '../../ui'
+import { BackIcon, CloseIcon, DeleteIcon, EditIcon, ExpandIcon, PlusIcon } from './FeatureWishIcons'
+import {
+  WISH_STATUS_OPTIONS,
+  editableStatusValue,
+  statusLabel,
+  statusTone,
+  type FeatureWishEditableStatus,
+} from './featureWishStatus'
 
 interface FeatureWishImage {
   id: number
@@ -16,10 +24,12 @@ interface FeatureWish {
   username: string
   title: string
   content: string
+  status: string
   created_at: string | null
   updated_at: string | null
   can_edit: boolean
   can_delete: boolean
+  can_update_status?: boolean
   images: FeatureWishImage[]
 }
 
@@ -40,6 +50,8 @@ interface FeatureWishDeleteResponse {
 
 interface FeatureWishPoolModalProps {
   onClose: () => void
+  initialDraftFiles?: File[]
+  onDraftSubmitSuccess?: () => void
 }
 
 type FormMode = 'create' | 'edit'
@@ -64,64 +76,6 @@ function IconButton({
   )
 }
 
-function ExpandIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <polyline points="15 3 21 3 21 9" />
-      <polyline points="9 21 3 21 3 15" />
-      <line x1="21" y1="3" x2="14" y2="10" />
-      <line x1="3" y1="21" x2="10" y2="14" />
-    </svg>
-  )
-}
-
-function EditIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-    </svg>
-  )
-}
-
-function DeleteIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <path d="M3 6h18" />
-      <path d="M8 6V4h8v2" />
-      <path d="M6 6l1 14h10l1-14" />
-      <path d="M10 11v5" />
-      <path d="M14 11v5" />
-    </svg>
-  )
-}
-
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  )
-}
-
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  )
-}
-
-function PlusIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  )
-}
-
 function formatDateTime(value: string | null) {
   if (!value) return '时间未知'
   const date = new Date(value)
@@ -132,6 +86,14 @@ function formatDateTime(value: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function StatusBadge({ status }: { status: string | null | undefined }) {
+  return (
+    <span className={`feature-wish-status-badge feature-wish-status-badge--${statusTone(status)}`}>
+      {statusLabel(status)}
+    </span>
+  )
 }
 
 function WishMedia({ wish, detail = false }: { wish: FeatureWish; detail?: boolean }) {
@@ -148,18 +110,48 @@ function WishMedia({ wish, detail = false }: { wish: FeatureWish; detail?: boole
   )
 }
 
-export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalProps) {
+function StatusSelect({
+  wish,
+  disabled,
+  onChange,
+}: {
+  wish: FeatureWish
+  disabled: boolean
+  onChange: (wish: FeatureWish, status: FeatureWishEditableStatus) => void
+}) {
+  if (!wish.can_update_status) return null
+  return (
+    <select
+      aria-label={`设置 bug 状态：${wish.title}`}
+      className="feature-wish-status-select"
+      disabled={disabled}
+      value={editableStatusValue(wish.status)}
+      onChange={event => onChange(wish, event.target.value as FeatureWishEditableStatus)}
+    >
+      {WISH_STATUS_OPTIONS.map(option => (
+        <option key={option.value} value={option.value}>{option.label}</option>
+      ))}
+    </select>
+  )
+}
+
+export default function FeatureWishPoolModal({
+  onClose,
+  initialDraftFiles = [],
+  onDraftSubmitSuccess,
+}: FeatureWishPoolModalProps) {
   const [wishes, setWishes] = useState<FeatureWish[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedWish, setSelectedWish] = useState<FeatureWish | null>(null)
-  const [formMode, setFormMode] = useState<FormMode | null>(null)
+  const [formMode, setFormMode] = useState<FormMode | null>(initialDraftFiles.length > 0 ? 'create' : null)
   const [editingWish, setEditingWish] = useState<FeatureWish | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
   const [draftContent, setDraftContent] = useState('')
-  const [draftFiles, setDraftFiles] = useState<File[]>([])
+  const [draftFiles, setDraftFiles] = useState<File[]>(() => initialDraftFiles.slice(0, 3))
   const [submitting, setSubmitting] = useState(false)
+  const [deleteWish, setDeleteWish] = useState<FeatureWish | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadWishes = useCallback(async (searchTerm: string) => {
@@ -231,9 +223,11 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
         method: formMode === 'edit' ? 'PUT' : 'POST',
         body,
       })
+      const createdWish = formMode === 'create'
       closeForm()
       if (selectedWish && data.wish.id === selectedWish.id) setSelectedWish(data.wish)
       await loadWishes(search)
+      if (createdWish) onDraftSubmitSuccess?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'bug 保存失败')
     } finally {
@@ -241,8 +235,14 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
     }
   }
 
-  const handleDelete = async (wish: FeatureWish) => {
-    if (!window.confirm(`确认删除 bug：${wish.title}？`)) return
+  const requestDelete = (wish: FeatureWish) => {
+    setDeleteWish(wish)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteWish) return
+    const wish = deleteWish
+    setDeleteWish(null)
     setSubmitting(true)
     setError('')
     try {
@@ -252,6 +252,26 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
       await loadWishes(search)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'bug 删除失败')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleStatusChange = async (wish: FeatureWish, status: FeatureWishEditableStatus) => {
+    if (status === editableStatusValue(wish.status)) return
+    setSubmitting(true)
+    setError('')
+    try {
+      const data = await apiFetch<FeatureWishMutationResponse>(`/api/feature-wishes/${wish.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      setWishes(current => current.map(item => (item.id === data.wish.id ? data.wish : item)))
+      setSelectedWish(current => (current?.id === data.wish.id ? data.wish : current))
+      setEditingWish(current => (current?.id === data.wish.id ? data.wish : current))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'bug 状态更新失败')
     } finally {
       setSubmitting(false)
     }
@@ -285,7 +305,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
 
         <div className="feature-wish-modal__body">
           {selectedWish ? (
-            <div className="feature-wish-detail">
+            <div className={`feature-wish-detail feature-wish-detail--${statusTone(selectedWish.status)}`}>
               <div className="feature-wish-detail__header">
                 <IconButton label="返回 bug 列表" className="feature-wish-detail__back" onClick={() => setSelectedWish(null)}>
                   <BackIcon />
@@ -293,17 +313,19 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
                 <div className="feature-wish-detail__heading">
                   <div className="feature-wish-detail__title">{selectedWish.title}</div>
                   <div className="feature-wish-detail__meta">
-                    {formatDateTime(selectedWish.created_at)} · {selectedWish.username}
+                    <StatusBadge status={selectedWish.status} />
+                    <span>{formatDateTime(selectedWish.created_at)} · {selectedWish.username}</span>
                   </div>
                 </div>
                 <div className="feature-wish-detail__actions">
+                  <StatusSelect wish={selectedWish} disabled={submitting} onChange={handleStatusChange} />
                   {selectedWish.can_edit && (
                     <IconButton label={`编辑 bug：${selectedWish.title}`} className="feature-wish-detail__edit" onClick={() => openForm('edit', selectedWish)}>
                       <EditIcon />
                     </IconButton>
                   )}
                   {selectedWish.can_delete && (
-                    <IconButton label={`删除 bug：${selectedWish.title}`} className="feature-wish-detail__delete" onClick={() => void handleDelete(selectedWish)} disabled={submitting}>
+                    <IconButton label={`删除 bug：${selectedWish.title}`} className="feature-wish-detail__delete" onClick={() => requestDelete(selectedWish)} disabled={submitting}>
                       <DeleteIcon />
                     </IconButton>
                   )}
@@ -330,7 +352,7 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
           ) : (
             <div className="feature-wish-grid">
               {wishes.map(wish => (
-                <article key={wish.id} className="feature-wish-card">
+                <article key={wish.id} className={`feature-wish-card feature-wish-card--${statusTone(wish.status)}`}>
                   <div className="feature-wish-card__media">
                     <WishMedia wish={wish} />
                     <IconButton label={`展开 bug：${wish.title}`} className="feature-wish-card__expand" onClick={() => setSelectedWish(wish)}>
@@ -342,17 +364,23 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
                     <p>{wish.content}</p>
                   </div>
                   <div className="feature-wish-card__footer">
-                    <span>{formatDateTime(wish.created_at)} · {wish.username}</span>
-                    {wish.can_edit && (
-                      <IconButton label={`编辑 bug：${wish.title}`} className="feature-wish-card__edit" onClick={() => openForm('edit', wish)}>
-                        <EditIcon />
-                      </IconButton>
-                    )}
-                    {wish.can_delete && (
-                      <IconButton label={`删除 bug：${wish.title}`} className="feature-wish-card__delete" onClick={() => void handleDelete(wish)} disabled={submitting}>
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
+                    <div className="feature-wish-card__meta">
+                      <StatusBadge status={wish.status} />
+                      <span>{formatDateTime(wish.created_at)} · {wish.username}</span>
+                    </div>
+                    <div className="feature-wish-card__actions">
+                      <StatusSelect wish={wish} disabled={submitting} onChange={handleStatusChange} />
+                      {wish.can_edit && (
+                        <IconButton label={`编辑 bug：${wish.title}`} className="feature-wish-card__edit" onClick={() => openForm('edit', wish)}>
+                          <EditIcon />
+                        </IconButton>
+                      )}
+                      {wish.can_delete && (
+                        <IconButton label={`删除 bug：${wish.title}`} className="feature-wish-card__delete" onClick={() => requestDelete(wish)} disabled={submitting}>
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </div>
                   </div>
                 </article>
               ))}
@@ -389,6 +417,18 @@ export default function FeatureWishPoolModal({ onClose }: FeatureWishPoolModalPr
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          isOpen={deleteWish !== null}
+          onClose={() => setDeleteWish(null)}
+          onConfirm={() => {
+            void handleDeleteConfirm()
+          }}
+          title="确认删除 bug"
+          message={deleteWish ? `确认删除 bug：${deleteWish.title}？删除后将无法恢复。` : ''}
+          confirmText="删除"
+          variant="danger"
+        />
       </div>
     </div>
   )

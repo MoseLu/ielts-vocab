@@ -6,7 +6,7 @@ import { vi } from 'vitest'
 import PracticePage from './PracticePage'
 import { QUICK_MEMORY_MASTERY_TARGET } from '../../lib/quickMemory'
 import { STORAGE_KEYS } from '../../constants'
-import { getWrongWordsStorageKey } from '../../features/vocabulary/wrongWordsStore'
+import { getWrongWordsStorageKey, WRONG_WORD_ERROR_REVIEW_TARGET } from '../../features/vocabulary/wrongWordsStore'
 
 const apiFetchMock = vi.fn()
 const startSessionMock = vi.fn().mockResolvedValue(null)
@@ -432,7 +432,7 @@ describe('PracticePage quick-memory review mode pagination', () => {
         wrong_count: 2,
         pending_wrong_count: 0,
         recognition_pending: false,
-        recognition_pass_streak: 4,
+        recognition_pass_streak: WRONG_WORD_ERROR_REVIEW_TARGET,
       }),
     ])
   })

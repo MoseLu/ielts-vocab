@@ -1,12 +1,12 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type { LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../components/practice/types'
+import type { LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../features/practice/types'
 import { loadSmartStats, buildSmartQueue } from '../../../lib/smartMode'
-import { shuffleArray } from '../../../components/practice/utils'
+import { shuffleArray } from '../../../features/practice/practiceOptions'
 import {
   buildWrongWordsQueue,
   createResetProgressState,
   filterVocabularyForMode,
-} from '../../../components/practice/page/practicePageHelpers'
+} from '../../../features/practice/practiceSessionHelpers'
 import {
   resolvePracticeGroupWindow,
   sliceQueueForPracticeGroup,
@@ -63,6 +63,8 @@ interface ApplyScopedWordsLoadOptions {
   chapterGroupStartRef: MutableRefObject<number>
   chapterQueueWordsRef: MutableRefObject<string[]>
   wordsLearnedBaselineRef: MutableRefObject<number>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   uniqueAnsweredRef: MutableRefObject<Set<string>>
   setVocabulary: Dispatch<SetStateAction<Word[]>>
   setQueue: Dispatch<SetStateAction<number[]>>
@@ -94,6 +96,8 @@ export function applyScopedWordsLoad({
   chapterGroupStartRef,
   chapterQueueWordsRef,
   wordsLearnedBaselineRef,
+  chapterCorrectBaselineRef,
+  chapterWrongBaselineRef,
   uniqueAnsweredRef,
   setVocabulary,
   setQueue,
@@ -149,6 +153,8 @@ export function applyScopedWordsLoad({
     queueLength: nextQueue.length,
     groupStart: practiceGroup?.start ?? 0,
     wordsLearnedBaselineRef,
+    chapterCorrectBaselineRef,
+    chapterWrongBaselineRef,
     uniqueAnsweredRef,
     setResumeProgress,
     setQueueIndex,
@@ -207,6 +213,8 @@ interface ResetScopedProgressOptions {
   queueLength: number
   groupStart: number
   wordsLearnedBaselineRef: MutableRefObject<number>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   uniqueAnsweredRef: MutableRefObject<Set<string>>
   setResumeProgress: Dispatch<SetStateAction<ProgressData | null>>
   setQueueIndex: Dispatch<SetStateAction<number>>
@@ -224,6 +232,8 @@ function resetScopedProgress({
   queueLength,
   groupStart,
   wordsLearnedBaselineRef,
+  chapterCorrectBaselineRef,
+  chapterWrongBaselineRef,
   uniqueAnsweredRef,
   setResumeProgress,
   setQueueIndex,
@@ -239,13 +249,22 @@ function resetScopedProgress({
     setCorrectCount(0)
     setWrongCount(0)
     wordsLearnedBaselineRef.current = 0
+    chapterCorrectBaselineRef.current = 0
+    chapterWrongBaselineRef.current = 0
     uniqueAnsweredRef.current = new Set()
     return
   }
 
+  const rawCurrentIndex = Math.max(0, Number(progress.current_index) || 0)
+  const startsAfterCompletedGroup = Boolean(chapterId && groupStart > 0 && rawCurrentIndex <= groupStart)
+  chapterCorrectBaselineRef.current = startsAfterCompletedGroup ? Math.max(0, Number(progress.correct_count) || 0) : 0
+  chapterWrongBaselineRef.current = startsAfterCompletedGroup ? Math.max(0, Number(progress.wrong_count) || 0) : 0
+
   const restored = createResetProgressState(queueLength, {
     ...progress,
     current_index: Math.max(0, progress.current_index - groupStart),
+    correct_count: startsAfterCompletedGroup ? 0 : progress.correct_count,
+    wrong_count: startsAfterCompletedGroup ? 0 : progress.wrong_count,
   }, chapterId, words.length)
   setQueueIndex(restored.queueIndex)
   setCorrectCount(restored.correctCount)

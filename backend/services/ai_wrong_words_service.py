@@ -20,8 +20,10 @@ from services.ai_custom_books_service import (
 )
 from services.learning_activity_service import rebuild_learning_activity_rollups, record_learning_activity
 from services.learning_attempt_service import extract_wrong_word_dimension_attempts
+from services.learning_scope_support import resolve_learning_scope
 from services.ai_route_support_service import _decorate_wrong_words_with_quick_memory_progress
 from services.learning_events import record_learning_event
+from services.scoped_wrong_word_service import get_or_create_scoped_wrong_word_record
 from services.study_sessions import normalize_chapter_id
 from services.wrong_word_custom_book_service import sync_wrong_word_custom_book
 from services.word_mastery_service import update_word_mastery_attempt
@@ -174,11 +176,13 @@ def sync_wrong_words_response(user_id: int, body: dict | None) -> tuple[dict, in
     source_mode = normalize_practice_mode_or_custom(source_mode_raw, default=None)
     book_id = payload.get('bookId') or None
     chapter_id = normalize_chapter_id(payload.get('chapterId'))
+    scope = resolve_learning_scope(payload, book_id=book_id, chapter_id=chapter_id)
 
     if not isinstance(words, list):
         return {'error': 'words must be an array'}, 400
 
     record_cache: dict[str, UserWrongWord] = {}
+    scoped_record_cache: dict[str, object] = {}
     processed_words: set[str] = set()
     touched_scopes: set[tuple[str, str, str]] = set()
     updated = 0
@@ -187,8 +191,16 @@ def sync_wrong_words_response(user_id: int, body: dict | None) -> tuple[dict, in
         if not word_value:
             continue
 
+        scoped_record = get_or_create_scoped_wrong_word_record(
+            user_id,
+            word_value,
+            word_payload,
+            scope=scope,
+            record_cache=scoped_record_cache,
+        )
+        previous_wrong_count, current_wrong_count, attempts = _apply_wrong_word_snapshot(scoped_record, word_payload)
         record = _get_or_create_wrong_word_record(user_id, word_value, word_payload, record_cache)
-        previous_wrong_count, current_wrong_count, attempts = _apply_wrong_word_snapshot(record, word_payload)
+        _apply_wrong_word_snapshot(record, word_payload)
         wrong_delta = max(0, current_wrong_count - previous_wrong_count)
         for dimension, passed in attempts:
             update_word_mastery_attempt(
@@ -218,11 +230,13 @@ def sync_wrong_words_response(user_id: int, body: dict | None) -> tuple[dict, in
                 wrong_count=wrong_delta,
                 payload={
                     'wrong_count': current_wrong_count,
-                    'definition': record.definition or '',
-                    'dimension_states': json.loads(record.dimension_state or '{}'),
+                    'definition': scoped_record.definition or '',
+                    'dimension_states': json.loads(scoped_record.dimension_state or '{}'),
+                    'scope_key': scope.scope_key,
+                    'scope_type': scope.scope_type,
                 },
             )
-            scope = record_learning_activity(
+            activity_scope = record_learning_activity(
                 user_id=user_id,
                 book_id=book_id,
                 mode=source_mode,
@@ -230,7 +244,7 @@ def sync_wrong_words_response(user_id: int, body: dict | None) -> tuple[dict, in
                 wrong_word_delta=wrong_delta,
                 rebuild_rollups=False,
             )
-            touched_scopes.add((scope['book_id'], scope['mode'], scope['chapter_id']))
+            touched_scopes.add((activity_scope['book_id'], activity_scope['mode'], activity_scope['chapter_id']))
         if word_value not in processed_words:
             processed_words.add(word_value)
             updated += 1

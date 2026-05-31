@@ -5,6 +5,7 @@ import type { AppSettings } from '../types'
 import { DEFAULT_SETTINGS } from '../constants'
 import { safeParse, AppSettingsSchema } from '../lib'
 import { readAppSettingsFromStorage, writeAppSettingsToStorage } from '../lib/appSettings'
+import { applyThemeColor } from '../lib/themeColor'
 
 interface SettingsContextValue {
   settings: AppSettings
@@ -30,6 +31,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       'data-font-size',
       settings.fontSize || 'medium'
     )
+    applyThemeColor(settings.themeColor)
   }, [settings])
 
   const updateSetting = useCallback(<K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {

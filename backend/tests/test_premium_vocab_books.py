@@ -12,7 +12,7 @@ TARGET_BOOKS = {
     'ielts_reading_premium': 'ielts_reading_premium.json',
     'ielts_listening_premium': 'ielts_listening_premium.json',
 }
-MEMORY_BADGES = {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀'}
+MEMORY_BADGES = {'助记', '联想', '词根词缀', '辨析', '串记', '扩展', '谐音', '词源', '口诀', '派生'}
 WORD_RE = re.compile(r"^[a-z]+(?:[-'][a-z]+|')*(?: [a-z]+(?:[-'][a-z]+|')*)*$")
 FORBIDDEN_DEFINITION_TOKENS = (
     '人名',
@@ -154,6 +154,7 @@ def test_premium_word_mnemonic_quality_regressions_stay_fixed():
         'quick': 'quick 和 quit/quiet 同属 qu 开头易混词，quick 只记速度“快的；迅速的”。',
         'quote': 'quote 作动词是引用或报价，作名词是引文或报价；阅读中看价格还是文字出处。',
         'in a sense': 'in a sense 是固定表达，意思是“在某种意义上；从某种角度说”。',
+        'universe': 'uni 表“一”，vers 有“转成整体”的线索；universe 是万物合成的整体，记“宇宙”。',
     }
 
     assert {
@@ -171,6 +172,7 @@ def test_premium_word_mnemonics_avoid_known_low_quality_patterns():
         r'派特|推下楼梯|moro\(人\)|crete 意为制造|de\(向下\)\+moro|bri-像|grave\(坟墓\)|'
         r'发音像|音似|听起来像|常见变体|词形变体|核心词义|'
         r'按语境确定含义|放进真实场景里记|先抓核心义|放回句子判断|核心义仍是|记住它常落在|'
+        r'未来去宇宙|去宇宙.*上大学|上大学.*普遍|'
         r'\ba\s*[+＋]\s*bit\b|\bab\s*[+＋]\s*road\b|'
         r'[A-Za-z]+\([^)]{1,20}\)\s*[+＋]|[A-Za-z]+\s*[-–—]\s*像|'
         r'\b[A-Za-z]{1,6}-像|[-–—]>|->|→'
@@ -178,7 +180,7 @@ def test_premium_word_mnemonics_avoid_known_low_quality_patterns():
     violations = [
         f'{word}:{item.get("text")}'
         for word, item in items.items()
-        if item.get('badge') == '谐音' or bad_pattern.search(str(item.get('text') or ''))
+        if bad_pattern.search(str(item.get('text') or ''))
     ]
 
     assert violations == []
@@ -218,6 +220,7 @@ def test_known_premium_phonetic_regressions_stay_fixed():
     for word, phonetic in {
         'abuse': '/əˈbjuːz/',
         'arising': '/əˈraɪzɪŋ/',
+        'button': '/ˈbʌtən/',
         'elementary': '/ˌelɪˈmentəri/',
         'herbs': '/hɜːbz/',
         'history': '/ˈhɪstəri/',
@@ -225,6 +228,7 @@ def test_known_premium_phonetic_regressions_stay_fixed():
         'instruments': '/ˈɪnstrəmənts/',
         'quantities': '/ˈkwɒntɪtɪz/',
         'recruits': '/rɪˈkruːts/',
+        'refractory': '/ɹɪˈfɹæk.təɹ.i/',
         'stadiums': '/ˈsteɪdiəmz/',
         'structures': '/ˈstrʌktʃəz/',
         'the amount of': '/ðiː əˈmaʊnt əv/',

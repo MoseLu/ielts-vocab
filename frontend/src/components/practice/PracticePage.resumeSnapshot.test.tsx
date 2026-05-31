@@ -40,6 +40,15 @@ const controlsHookValue = {
 
 vi.stubGlobal('fetch', vi.fn())
 
+async function apiFetchFixture(url: string, ...args: unknown[]) {
+  const requestUrl = String(url)
+  if (/^\/api\/books\/[^/]+\/chapters$/.test(requestUrl) || requestUrl.startsWith('/api/books/word-list?') || requestUrl.startsWith('/api/vocabulary/day/')) {
+    const response = await fetch(requestUrl)
+    return response.json()
+  }
+  return apiFetchMock(url, ...args)
+}
+
 vi.mock('../../lib/smartMode', () => ({
   loadSmartStats: vi.fn(() => ({})),
   loadSmartStatsFromBackend: vi.fn(),
@@ -50,7 +59,7 @@ vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')
   return {
     ...actual,
-    apiFetch: (...args: unknown[]) => apiFetchMock(...args),
+    apiFetch: apiFetchFixture,
     buildApiUrl: (path: string) => path,
   }
 })
@@ -130,7 +139,7 @@ describe('PracticePage remote resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&include_dictionary=0&chapter_id=1') {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -188,7 +197,7 @@ describe('PracticePage remote resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&include_dictionary=0&chapter_id=1') {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -337,7 +346,7 @@ describe('PracticePage remote resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&include_dictionary=0&chapter_id=1') {
         fetchCount += 1
         if (fetchCount === 1) {
           return Promise.resolve({ ok: true, json: async () => ({ words: chapterWords }) } as Response)
@@ -394,7 +403,7 @@ describe('PracticePage remote resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/word-list?scope=book&book_id=book-1&chapter_id=1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&include_dictionary=0&chapter_id=1') {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -458,7 +467,7 @@ describe('PracticePage remote resume snapshot', () => {
       if (url === '/api/books/book-1/chapters') {
         return Promise.resolve({ ok: true, json: async () => ({ chapters: [{ id: 1, title: 'Chapter 1' }] }) } as Response)
       }
-      if (url === '/api/books/word-list?scope=book&book_id=book-1') {
+      if (url === '/api/books/word-list?scope=book&book_id=book-1&include_dictionary=0') {
         return Promise.resolve({ ok: true, json: async () => ({ words: bookWords }) } as Response)
       }
       return Promise.reject(new Error(`Unexpected fetch: ${url}`))
@@ -479,7 +488,7 @@ describe('PracticePage remote resume snapshot', () => {
     await waitFor(() => {
       expect(screen.getByTestId('current-word')).toHaveTextContent('alpha')
     })
-    expect(requestedUrls).toContain('/api/books/word-list?scope=book&book_id=book-1')
+    expect(requestedUrls).toContain('/api/books/word-list?scope=book&book_id=book-1&include_dictionary=0')
     expect(requestedUrls.some(url => url.includes('/words?per_page=100'))).toBe(false)
   })
 })

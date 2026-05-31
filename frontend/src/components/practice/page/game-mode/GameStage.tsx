@@ -1,12 +1,19 @@
-import { useCallback, useState } from 'react'
-import { useSpeechRecognition } from '../../../../hooks/useSpeechRecognition'
-import type { GameCampaignNode, GameCampaignWord, GameLevelKind } from '../../../../lib'
+import type { GameCampaignNode } from '../../../../lib'
 import PracticePronunciationButton from '../PracticePronunciationButton'
-import { BattleTopHud, BossTopHud, ObjectivePanel, ThreatRoute } from './GameBattleHud'
+import { BossTopHud } from './GameBattleHud'
 import { prdMobileSceneBackdrop, prdSceneBackdropForKind } from './GamePrdUi'
 import { GameTemplateDebugLayer } from './GameTemplateDebugLayer'
+import { SpeakingRecorder } from './GameSpeakingRecorder'
+import {
+  BattleBanner,
+  ChoiceGrid,
+  DimensionDefenseStrip,
+  MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT,
+  WordMissionWave,
+  WordScene,
+  missionSlotStyle,
+} from './GameWordMissionParts'
 import { gameAsset } from './gameAssets'
-import { type GameTemplateLayoutId, layoutSlotStyle, responsiveLayoutSlotStyle } from './gameTemplateLayout'
 import {
   LEVEL_KIND_LABELS,
   NODE_STATUS_LABELS,
@@ -15,10 +22,9 @@ import {
   buildExampleChallenge,
   buildListeningWordChoices,
   getLevelKind,
-  getWaveNumber,
   normalizeAnswer,
   playGameWordAudio,
-} from './gameData'
+} from '../../../../features/practice/gameMode/gameData'
 
 type AttemptMeta = {
   inputMode?: string
@@ -26,249 +32,6 @@ type AttemptMeta = {
   boostType?: string
 }
 
-const WORD_DIMENSION_ITEMS: Array<{ kind: GameLevelKind; dimension: keyof GameCampaignWord['dimension_states'] }> = [
-  { kind: 'speaking', dimension: 'recognition' },
-  { kind: 'definition', dimension: 'meaning' },
-  { kind: 'spelling', dimension: 'dictation' },
-  { kind: 'pronunciation', dimension: 'speaking' },
-  { kind: 'example', dimension: 'listening' },
-]
-
-function BattleBanner({
-  tone,
-  message,
-}: {
-  tone: 'success' | 'warning'
-  message: string
-}) {
-  return <div className={`practice-game-mode__banner is-${tone}`}>{message}</div>
-}
-
-function ChoiceGrid({
-  choices,
-  selectedChoice,
-  onSelectChoice,
-}: {
-  choices: Array<{ key: string; label: string; meta: string; correct: boolean }>
-  selectedChoice: string | null
-  onSelectChoice: (value: string) => void
-}) {
-  return (
-    <div className="practice-game-mode__choice-grid">
-      {choices.map(choice => (
-        <button
-          key={choice.key}
-          type="button"
-          className={`practice-game-mode__choice${selectedChoice === choice.key ? ' is-selected' : ''}`}
-          onClick={() => onSelectChoice(choice.key)}
-        >
-          <strong>{choice.label}</strong>
-          <span>{choice.meta}</span>
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function DimensionDefenseStrip({
-  word,
-  activeKind,
-}: {
-  word: GameCampaignWord
-  activeKind: GameLevelKind
-}) {
-  const completedCount = WORD_DIMENSION_ITEMS.filter(item => (
-    (word.dimension_states[item.dimension]?.pass_streak ?? 0) >= 1
-  )).length
-
-  return (
-    <section className="practice-game-mode__dimension-defense" aria-label="当前词五维防线">
-      <div className="practice-game-mode__dimension-defense-head">
-        <span>当前词五维防线</span>
-        <strong>{completedCount}/5</strong>
-      </div>
-      <div className="practice-game-mode__dimension-defense-row">
-        {WORD_DIMENSION_ITEMS.map(item => {
-          const passStreak = word.dimension_states[item.dimension]?.pass_streak ?? 0
-          const statusKey = item.kind === activeKind ? 'active' : passStreak >= 1 ? 'passed' : 'locked'
-          const status = statusKey === 'active' ? '当前' : statusKey === 'passed' ? '已过' : '待解锁'
-          return (
-            <span key={item.kind} className={`practice-game-mode__dimension-chip is-${statusKey}`}>
-              <span className="practice-game-mode__dimension-chip-core" aria-hidden="true" />
-              <strong>{LEVEL_KIND_LABELS[item.kind]}</strong>
-              <small>{status}</small>
-            </span>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-function sceneAssetForLevel(levelKind: GameLevelKind, variant: 'mission' | 'refill' = 'mission') { return prdSceneBackdropForKind(levelKind, variant) }
-
-const MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT: Record<string, string> = {
-  'mission.hud': 'mobileMission.hud', 'mission.route': 'mobileMission.route',
-  'mission.objective': 'mobileMission.objective', 'mission.answerPanel': 'mobileMission.answerPanel',
-  'refill.hud': 'mobileMission.hud', 'refill.list': 'mobileMission.route',
-  'refill.objective': 'mobileMission.objective', 'refill.answerPanel': 'mobileMission.answerPanel',
-}
-
-function missionSlotStyle(layoutId: GameTemplateLayoutId, slotId: string) {
-  const mobileSlotId = MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[slotId]
-  if (!mobileSlotId) return layoutSlotStyle(layoutId, slotId)
-  return responsiveLayoutSlotStyle(layoutId, slotId, 'mobileWordMission', mobileSlotId)
-}
-
-function WordScene({
-  node,
-  word,
-  levelKind,
-  layoutId,
-  sceneVariant = 'mission',
-  onExitToMap,
-}: {
-  node: GameCampaignNode
-  word: GameCampaignWord
-  levelKind: GameLevelKind
-  layoutId: Extract<GameTemplateLayoutId, 'wordMission' | 'refillState'>
-  sceneVariant?: 'mission' | 'refill'
-  onExitToMap?: () => void
-}) {
-  const image = word.image
-  const showSceneImage = image.status === 'ready' && Boolean(image.url)
-  const [hudSlot, routeSlot, objectiveSlot] = layoutId === 'refillState'
-    ? ['refill.hud', 'refill.list', 'refill.objective']
-    : ['mission.hud', 'mission.route', 'mission.objective']
-
-  return (
-    <div className={`practice-game-mode__scene practice-game-mode__scene--${levelKind} is-${image.status}`}>
-      <picture aria-hidden="true">
-        <source media="(max-width: 640px)" srcSet={prdMobileSceneBackdrop()} />
-        <img src={sceneAssetForLevel(levelKind, sceneVariant)} alt="" className="practice-game-mode__scene-backdrop" />
-      </picture>
-      <GameTemplateDebugLayer layoutId={layoutId} mobileLayoutId="mobileWordMission" />
-      {showSceneImage ? <img src={image.url ?? undefined} alt={image.alt} className="practice-game-mode__scene-image" /> : null}
-      <div className="practice-game-mode__scene-overlay" />
-      <BattleTopHud
-        node={node}
-        word={word}
-        levelKind={levelKind}
-        onExitToMap={onExitToMap}
-        slotId={hudSlot}
-        mobileSlotId={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[hudSlot]}
-        slotStyle={missionSlotStyle(layoutId, hudSlot)}
-      />
-      <ThreatRoute
-        slotId={routeSlot}
-        mobileSlotId={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[routeSlot]}
-        slotStyle={missionSlotStyle(layoutId, routeSlot)}
-      />
-      <ObjectivePanel
-        word={word}
-        levelKind={levelKind}
-        slotId={objectiveSlot}
-        mobileSlotId={MOBILE_MISSION_SLOT_BY_DESKTOP_SLOT[objectiveSlot]}
-        slotStyle={missionSlotStyle(layoutId, objectiveSlot)}
-      />
-      <div className="practice-game-mode__coach-line">
-        <img src={gameAsset.character.robot} alt="" aria-hidden="true" />
-        <span>{image.status === 'ready' ? '图像情报已同步。' : image.status === 'failed' ? '图像情报缺失，使用基础战场。' : '图像情报生成中，先守住当前波。'}</span>
-      </div>
-      <div className="practice-game-mode__scene-caption">
-        <strong>{word.definition}</strong>
-        <span>{word.pos || 'IELTS vocabulary'} · {LEVEL_KIND_LABELS[levelKind]}</span>
-      </div>
-    </div>
-  )
-}
-
-function SpeakingRecorder({
-  targetWord,
-  prompt,
-  disabled,
-  onEvaluated,
-}: {
-  targetWord: string
-  prompt: string
-  disabled: boolean
-  onEvaluated: (passed: boolean, transcript: string) => void
-}) {
-  const [transcript, setTranscript] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const {
-    isConnected,
-    isRecording,
-    isProcessing,
-    startRecording,
-    stopRecording,
-  } = useSpeechRecognition({
-    enabled: true,
-    language: 'en',
-    enableVad: true,
-    autoStop: true,
-    onPartial: text => {
-      setTranscript(text)
-      setError(null)
-    },
-    onResult: text => {
-      const normalizedTranscript = normalizeAnswer(text)
-      setTranscript(text)
-      onEvaluated(
-        normalizedTranscript.includes(normalizeAnswer(targetWord)),
-        normalizedTranscript,
-      )
-    },
-    onError: message => setError(message),
-  })
-
-  const lowerError = String(error || '').toLowerCase()
-  const micIcon = error
-    ? (lowerError.includes('permission') || error.includes('权限')
-      ? gameAsset.mic.permissionFail
-      : gameAsset.mic.disconnected)
-    : isProcessing
-      ? gameAsset.mic.recognizing
-      : isRecording
-        ? gameAsset.mic.recording
-        : !isConnected
-          ? gameAsset.mic.disconnected
-          : gameAsset.mic.idle
-
-  const handleToggle = useCallback(async () => {
-    if (disabled || isProcessing) return
-    if (isRecording) {
-      stopRecording()
-      return
-    }
-    setTranscript('')
-    setError(null)
-    await startRecording()
-  }, [disabled, isProcessing, isRecording, startRecording, stopRecording])
-
-  return (
-    <div className="practice-game-speaking">
-      <div className="practice-game-speaking__status">
-        <img src={micIcon} alt="" aria-hidden="true" className="practice-game-speaking__icon" />
-        <strong>{isProcessing ? '识别中' : isRecording ? '录音中' : error ? '录音异常' : !isConnected ? '语音未连接' : '准备录音'}</strong>
-      </div>
-      <p>{prompt}</p>
-      <div className="practice-game-speaking__transcript">
-        {transcript || '点击录音后，说一句包含目标词的英文短句。'}
-      </div>
-      {error ? <div className="practice-game-mode__error">{error}</div> : null}
-      <button
-        type="button"
-        className={`practice-game-mode__action${isRecording ? ' is-recording' : ''}`}
-        onClick={() => void handleToggle()}
-        disabled={disabled || (!isConnected && !isRecording) || isProcessing}
-      >
-        {isProcessing ? '识别中...' : isRecording ? '结束录音' : '开始录音'}
-      </button>
-      {!isConnected && !isRecording ? <small>语音服务未连接，暂时不能录音。</small> : null}
-    </div>
-  )
-}
 
 export function WordMissionScreen({
   node,
@@ -337,7 +100,7 @@ export function WordMissionScreen({
             <span className="practice-game-mode__sheet-eyebrow">{LEVEL_KIND_LABELS[levelKind]}</span>
             <strong>{LEVEL_KIND_LABELS[levelKind]}</strong>
           </div>
-          <span className="practice-game-mode__sheet-wave">第 {getWaveNumber(word)}/4 波</span>
+          <WordMissionWave word={word} />
         </div>
 
         {levelKind === 'spelling' ? (

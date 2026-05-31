@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import type { PracticeMode, Word, WordListActionControls } from '../../../components/practice/types'
+import type { PracticeMode, Word, WordListActionControls } from '../../../features/practice/types'
 import { useFavoriteWords, useFamiliarWords } from '../../../features/vocabulary/hooks'
 
 type ToastType = 'success' | 'error' | 'info'
@@ -31,7 +31,7 @@ export function usePracticePageWordActions({
   currentChapterTitle,
   showToast,
 }: UsePracticePageWordActionsParams) {
-  const activeQueueIndex = mode === 'quickmemory' || mode === 'radio' ? favoriteQueueIndex : queueIndex
+  const activeQueueIndex = mode === 'quickmemory' || mode === 'test' || mode === 'radio' ? favoriteQueueIndex : queueIndex
   const actionWord = vocabulary[queue[activeQueueIndex]] ?? currentWord
   const favoriteState = useFavoriteWords({ userId, vocabulary, showToast })
   const familiarState = useFamiliarWords({ userId, vocabulary, showToast })

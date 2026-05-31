@@ -6,6 +6,7 @@ load_split_module_files(
     (
         'admin_routes/overview.py',
         'admin_routes/user_management.py',
+        'admin_routes/asset_management.py',
     ),
     globals(),
 )

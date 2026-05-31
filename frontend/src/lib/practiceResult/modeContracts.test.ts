@@ -20,6 +20,7 @@ describe('practice result mode contracts', () => {
       'follow',
       'radio',
       'quickmemory',
+      'test',
       'errors',
       'quickmemory-review',
       'game',
@@ -75,6 +76,11 @@ describe('practice result mode contracts', () => {
       'wordMastery',
     ]))
     expect(chapter.progressPolicy).toBe('book-or-chapter-progress')
+    expect(getPracticeModeContract('test')).toMatchObject({
+      dimensionResolver: 'fixed-recognition',
+      sessionPolicy: 'quickmemory-session',
+      progressPolicy: 'book-or-chapter-progress',
+    })
     expect(dueReview.queueSource).toBe('quick-memory-review-queue')
     expect(dueReview.progressPolicy).toBe('no-chapter-progress')
     expect(dueReview.writes).not.toContain('progress')
@@ -116,6 +122,7 @@ describe('practice result mode contracts', () => {
 
   it('resolves visible routes to exactly one runtime contract', () => {
     expect(resolvePracticeRuntimeId({ route: '/practice', mode: 'meaning' })).toBe('meaning')
+    expect(resolvePracticeRuntimeId({ route: '/practice', mode: 'test' })).toBe('test')
     expect(resolvePracticeRuntimeId({ route: '/practice', review: 'due' })).toBe('quickmemory-review')
     expect(resolvePracticeRuntimeId({ route: '/practice', mode: 'errors' })).toBe('errors')
     expect(resolvePracticeRuntimeId({ route: '/practice', mode: 'game' })).toBe('game')

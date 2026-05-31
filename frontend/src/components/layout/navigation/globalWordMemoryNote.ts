@@ -11,6 +11,7 @@ type BuildWordMemoryNoteParams = {
 }
 
 type RootSegment = NonNullable<WordDetailResponse['root']>['segments'][number]
+type MemoryRelatedCandidate = NonNullable<WordSearchResult['listening_confusables']>[number]
 
 const SPECIAL_HOMOPHONE_WORDS: Record<string, string> = {
   animal: '安妮猫',
@@ -110,8 +111,50 @@ function trimDefinition(value: string | null | undefined): string {
   return primary.length > 18 ? `${primary.slice(0, 18)}…` : primary
 }
 
+function buildKnownFamilyWords(normalizedWord: string): Set<string> {
+  const related = new Set<string>()
+  if (normalizedWord.endsWith('ism') && normalizedWord.length > 4) {
+    const stem = normalizedWord.slice(0, -3)
+    const base = stem.endsWith('c') ? `${stem}e` : stem
+    for (const value of [base, `${base}s`, `${stem}ial`, `${stem}ially`, `${stem}ist`, `${stem}ists`]) {
+      related.add(value)
+    }
+  }
+  return related
+}
+
+function cjkBigrams(value: string | null | undefined): Set<string> {
+  const cues = new Set<string>()
+  const matches = String(value ?? '').match(/[\u4e00-\u9fff]{2,}/gu) ?? []
+  for (const match of matches) {
+    for (let index = 0; index < match.length - 1; index += 1) {
+      cues.add(match.slice(index, index + 2))
+    }
+  }
+  return cues
+}
+
+function sharesDefinitionCue(targetDefinition: string, candidateDefinition: string | undefined): boolean {
+  const candidateText = String(candidateDefinition ?? '')
+  return [...cjkBigrams(targetDefinition)].some(cue => candidateText.includes(cue))
+}
+
+export function buildMemoryRelatedCandidates(
+  result: WordSearchResult,
+  limit = 6,
+): MemoryRelatedCandidate[] {
+  const candidates = result.listening_confusables ?? []
+  const familyWords = buildKnownFamilyWords(normalizeWord(result.word))
+  if (familyWords.size === 0) return candidates.slice(0, limit)
+
+  return candidates.filter(candidate => {
+    const candidateWord = normalizeWord(candidate.word)
+    return familyWords.has(candidateWord) || sharesDefinitionCue(result.definition, candidate.definition)
+  }).slice(0, limit)
+}
+
 function buildConfusableSuffix(result: WordSearchResult): string {
-  const candidate = result.listening_confusables?.[0]
+  const candidate = buildMemoryRelatedCandidates(result, 1)[0]
   if (!candidate || candidate.word.trim().toLowerCase() === result.word.trim().toLowerCase()) {
     return ''
   }

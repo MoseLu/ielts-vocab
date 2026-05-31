@@ -193,6 +193,32 @@ def test_gateway_feature_wish_edit_proxy_routes_to_admin_ops_service(monkeypatch
     assert captured['path'] == '/api/feature-wishes/12'
 
 
+def test_gateway_feature_wish_status_proxy_routes_to_admin_ops_service(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app, base_url='https://axiomaticworld.com')
+    captured: dict[str, object] = {}
+
+    async def fake_proxy_browser_request(**kwargs):
+        captured.update(kwargs)
+        return browser_routes.Response(
+            b'{"message":"ok"}',
+            status_code=200,
+            media_type='application/json',
+        )
+
+    monkeypatch.setattr(browser_routes, 'proxy_browser_request', fake_proxy_browser_request)
+
+    response = client.patch(
+        '/api/feature-wishes/12/status',
+        headers={'Authorization': 'Bearer admin-token'},
+        json={'status': 'done'},
+    )
+
+    assert response.status_code == 200
+    assert captured['base_url'] == browser_routes.admin_ops_service_url()
+    assert captured['path'] == '/api/feature-wishes/12/status'
+
+
 def test_gateway_feature_wish_delete_proxy_routes_to_admin_ops_service(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app, base_url='https://axiomaticworld.com')

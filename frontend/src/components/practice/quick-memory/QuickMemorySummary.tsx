@@ -1,10 +1,11 @@
 import type { PracticeMode, Word } from '../types'
+import type {
+  QuickMemoryModeVariant,
+  QuickMemorySessionResult,
+} from '../../../features/practice/quickMemorySession'
+import type { PracticeGroupWindow } from '../../../composables/practice/page/practicePageGrouping'
 
-export interface QuickMemorySessionResult {
-  wordIdx: number
-  choice: 'known' | 'unknown'
-  wasFuzzy: boolean
-}
+export type { QuickMemorySessionResult }
 
 function formatSessionDuration(seconds: number): string {
   const safeSeconds = Math.max(0, Math.round(seconds))
@@ -26,8 +27,11 @@ interface QuickMemorySummaryProps {
   reviewMode?: boolean
   reviewHasMore?: boolean
   onContinueReview?: () => void
+  chapterGroup?: PracticeGroupWindow | null
+  onContinueChapterGroup?: () => void
   buildChapterPath?: (chapterId: string | number) => string
   sessionDurationSeconds?: number | null
+  modeVariant?: QuickMemoryModeVariant
   onRestart: () => void
   onModeChange: (mode: PracticeMode) => void
   onNavigate: (path: string) => void
@@ -43,8 +47,11 @@ export function QuickMemorySummary({
   reviewMode,
   reviewHasMore,
   onContinueReview,
+  chapterGroup,
+  onContinueChapterGroup,
   buildChapterPath,
   sessionDurationSeconds,
+  modeVariant = 'quickmemory',
   onRestart,
   onModeChange,
   onNavigate,
@@ -60,6 +67,10 @@ export function QuickMemorySummary({
   const sessionDurationText = sessionDurationSeconds != null
     ? formatSessionDuration(sessionDurationSeconds)
     : null
+  const chapterGroupRemaining = !reviewMode && chapterGroup?.groupSize && chapterGroup.end < chapterGroup.total
+    ? chapterGroup.total - chapterGroup.end
+    : 0
+  const fuzzyLabel = modeVariant === 'test' ? '不熟悉' : '模糊'
 
   return (
     <div className="qm-summary">
@@ -76,7 +87,7 @@ export function QuickMemorySummary({
         {fuzzy.length > 0 && (
           <div className="qm-stat qm-stat-fuzzy">
             <span className="qm-stat-num">{fuzzy.length}</span>
-            <span className="qm-stat-label">模糊</span>
+            <span className="qm-stat-label">{fuzzyLabel}</span>
           </div>
         )}
         <div className="qm-stat">
@@ -93,7 +104,7 @@ export function QuickMemorySummary({
 
       {fuzzy.length > 0 && (
         <div className="qm-summary-section">
-          <div className="qm-summary-section-title">模糊单词（回退重答）</div>
+          <div className="qm-summary-section-title">{fuzzyLabel}单词</div>
           <div className="qm-summary-word-list">
             {fuzzy.map(result => {
               const word = vocabulary[queue[result.wordIdx]]
@@ -126,6 +137,13 @@ export function QuickMemorySummary({
         </div>
       )}
 
+      {chapterGroupRemaining > 0 && (
+        <div className="qm-summary-section">
+          <div className="qm-summary-section-title">本章进度</div>
+          <p>当前分组已完成，还可以继续练习 {chapterGroupRemaining} 个本章单词。</p>
+        </div>
+      )}
+
       <div className="qm-summary-actions">
         <button className="qm-btn-restart" onClick={onRestart}>再来一轮</button>
         {reviewHasMore && onContinueReview ? (
@@ -135,11 +153,18 @@ export function QuickMemorySummary({
               <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
+        ) : chapterGroupRemaining > 0 && onContinueChapterGroup ? (
+          <button className="qm-btn-next-chapter" onClick={onContinueChapterGroup}>
+            继续下一组（还有 {chapterGroupRemaining} 个）
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
         ) : nextChapter && bookId ? (
           <button
             className="qm-btn-next-chapter"
             onClick={() => onNavigate(
-              buildChapterPath?.(nextChapter.id) ?? `/practice?book=${bookId}&chapter=${nextChapter.id}&mode=quickmemory`,
+              buildChapterPath?.(nextChapter.id) ?? `/practice?book=${bookId}&chapter=${nextChapter.id}&mode=${modeVariant}`,
             )}
           >
             {reviewMode ? '下一章节复习' : '下一章节'}

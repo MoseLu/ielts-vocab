@@ -61,6 +61,7 @@ export interface AppSettings {
   reviewLimitCustomized?: boolean
   darkMode?: boolean
   fontSize?: string
+  themeColor?: 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'gray'
   [key: string]: unknown
 }
 

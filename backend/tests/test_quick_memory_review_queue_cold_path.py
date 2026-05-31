@@ -390,6 +390,36 @@ def test_platform_review_queue_skips_global_pool_when_lookup_hits(monkeypatch):
     assert payload['words'][0]['dueState'] == 'due'
 
 
+def test_platform_review_queue_fills_limited_page_after_stale_candidates(monkeypatch):
+    now_ms = 10_000
+    rows = [
+        _build_row(word='stale-a', next_review=now_ms - 4),
+        _build_row(word='stale-b', next_review=now_ms - 3),
+        _build_row(word='alpha', next_review=now_ms - 2),
+        _build_row(word='beta', next_review=now_ms - 1),
+    ]
+    monkeypatch.setattr(learning_core_quick_memory, 'REVIEW_QUEUE_FULL_CONTEXT_RESOLVE_LIMIT', 1)
+    monkeypatch.setattr(learning_core_quick_memory, '_load_quick_memory_rows', lambda _user_id: rows)
+
+    def resolve_vocab_entry(word_key: str, *, book_id: str | None = None, chapter_id: str | None = None):
+        if word_key in {'alpha', 'beta'}:
+            return _build_vocab_entry(word=word_key)
+        return None
+
+    monkeypatch.setattr(learning_core_quick_memory, 'resolve_quick_memory_vocab_entry', resolve_vocab_entry)
+    monkeypatch.setattr(learning_core_quick_memory, 'get_global_vocab_pool', lambda: [])
+
+    payload = learning_core_quick_memory._build_review_queue_payload(
+        user_id=1, limit=2, offset=0, within_days=3, due_only=True,
+        book_id_filter=None, chapter_id_filter=None, now_ms=now_ms,
+    )
+
+    assert [word['word'] for word in payload['words']] == ['alpha', 'beta']
+    assert payload['summary']['due_count'] == 4
+    assert payload['summary']['returned_count'] == 2
+    assert payload['summary']['has_more'] is False
+
+
 def test_platform_review_queue_uses_filtered_scope_when_record_context_differs(monkeypatch):
     now_ms = 10_000
     entries = [

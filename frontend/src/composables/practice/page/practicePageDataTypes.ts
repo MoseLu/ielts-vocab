@@ -1,7 +1,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type { Chapter, LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../components/practice/types'
-import type { ErrorReviewRoundResults } from '../../../components/practice/errorReviewSession'
-import type { ReviewQueueContext, ReviewQueueSummary } from '../../../components/practice/page/practicePageHelpers'
+import type { Chapter, LastState, PracticeMode, ProgressData, Word, WordStatuses } from '../../../features/practice/types'
+import type { ErrorReviewRoundResults } from '../../../features/practice/errorReviewSession'
+import type { ReviewQueueContext, ReviewQueueSummary } from '../../../features/practice/practiceSessionHelpers'
 import type { LearnerProfile as BackendLearnerProfile } from '../../../lib/schemas'
 import type { PracticeGroupWindow } from './practicePageGrouping'
 
@@ -51,6 +51,8 @@ export interface UsePracticePageDataParams {
   chapterGroupStartRef: MutableRefObject<number>
   chapterQueueWordsRef: MutableRefObject<string[]>
   wordsLearnedBaselineRef: MutableRefObject<number>
+  chapterCorrectBaselineRef: MutableRefObject<number>
+  chapterWrongBaselineRef: MutableRefObject<number>
   uniqueAnsweredRef: MutableRefObject<Set<string>>
   errorProgressHydratedRef: MutableRefObject<boolean>
   errorRoundResultsRef: MutableRefObject<ErrorReviewRoundResults>
