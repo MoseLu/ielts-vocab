@@ -48,7 +48,7 @@ def test_catalog_content_migration_backfills_custom_book_word_sort_order(tmp_pat
 
     result = module.migrate_service_schema('catalog-content-service', env_file=env_path)
 
-    assert result['version_after'] == 'catalog_content_service_0003'
+    assert result['version_after'] == 'catalog_content_service_0004'
     engine = sa.create_engine(f'sqlite:///{database_path.as_posix()}')
     try:
         with engine.connect() as connection:
