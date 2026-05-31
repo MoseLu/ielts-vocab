@@ -30,6 +30,7 @@ type SheetState = 'mode' | 'scope' | null
 const MODE_HINTS: Record<PracticeMode, string> = {
   smart: '按当前词书和复习状态智能出题',
   quickmemory: '快速认词，写入复习队列',
+  test: '听音判断熟悉度，写入复习队列',
   listening: '听音辨义，训练反应速度',
   meaning: '看中文，主动拼出英文',
   dictation: '听音写词，抓住拼写细节',

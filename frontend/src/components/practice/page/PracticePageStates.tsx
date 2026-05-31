@@ -5,6 +5,7 @@ import PracticeControlBar from '../PracticeControlBar'
 import WordListPanel from '../WordListPanel'
 import RadioMode from '../RadioMode'
 import QuickMemoryMode from '../QuickMemoryMode'
+import TestMode from '../TestMode'
 import SettingsPanel from '../../settings/SettingsPanel'
 import type { PracticeGroupWindow } from '../../../composables/practice/page/practicePageGrouping'
 export { PracticePageCompletedState } from './PracticePageCompletedState'
@@ -42,11 +43,11 @@ export function PracticePagePauseOverlay({
         {mode !== 'radio' && (
           <div className="practice-pause-stats">
             <span className="practice-pause-stat">
-              {mode === 'quickmemory'
+              {mode === 'quickmemory' || mode === 'test'
                 ? <>共 <strong>{queue.length}</strong> 个单词</>
                 : <>第 <strong>{queueIndex}</strong> / {queue.length} 个单词</>}
             </span>
-            {mode !== 'quickmemory' && (correctCount > 0 || wrongCount > 0) && (
+            {mode !== 'quickmemory' && mode !== 'test' && (correctCount > 0 || wrongCount > 0) && (
               <span className="practice-pause-sub">
                 <span className="practice-pause-correct">正确 {correctCount}</span>
                 <span className="practice-pause-wrong">错误 {wrongCount}</span>
@@ -257,6 +258,7 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
     initialIndex,
     onIndexChange,
   } = props
+  const MemoryModeComponent = mode === 'test' ? TestMode : QuickMemoryMode
   return (
     <div className="practice-session-layout">
       <PracticeControlBar
@@ -290,8 +292,8 @@ export function PracticePageQuickMemoryLayout(props: PracticePageQuickMemoryLayo
       {showPracticeSettings && (
         <SettingsPanel showSettings={showPracticeSettings} onClose={onSettingsToggle} />
       )}
-      <QuickMemoryMode
-        key={`quickmemory-${practiceBookId ?? 'day'}-${practiceChapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}-${reviewMode ? `review-${reviewOffset}` : `group-${chapterGroup?.start ?? 0}-${chapterGroup?.end ?? queue.length}`}`}
+      <MemoryModeComponent
+        key={`${mode ?? 'quickmemory'}-${practiceBookId ?? 'day'}-${practiceChapterId ?? currentDay ?? 'all'}-${errorMode ? 'errors' : 'normal'}-${reviewMode ? `review-${reviewOffset}` : `group-${chapterGroup?.start ?? 0}-${chapterGroup?.end ?? queue.length}`}`}
         vocabulary={vocabulary}
         queue={queue}
         settings={settings}

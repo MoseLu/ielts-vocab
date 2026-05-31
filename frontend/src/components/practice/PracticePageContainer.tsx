@@ -31,7 +31,7 @@ function PracticePageContainer({
   const errorMode = searchParams.get('mode') === 'errors'
   const reviewMode = searchParams.get('review') === 'due'
   const reviewModeParam = searchParams.get('mode') ?? ''
-  const requestedPracticeMode: PracticeMode = reviewMode ? (['smart', 'listening', 'meaning', 'dictation', 'follow', 'radio', 'quickmemory'].includes(reviewModeParam) ? reviewModeParam as PracticeMode : 'quickmemory') : (mode ?? 'smart')
+  const requestedPracticeMode: PracticeMode = reviewMode ? (['smart', 'listening', 'meaning', 'dictation', 'follow', 'radio', 'quickmemory', 'test'].includes(reviewModeParam) ? reviewModeParam as PracticeMode : 'quickmemory') : (mode ?? 'smart')
   const practiceBookId = reviewMode ? (bookId ?? null) : bookId, practiceChapterId = reviewMode ? (chapterId ?? null) : chapterId
   const handlePracticeModeChange = (nextMode: PracticeMode) => {
     onModeChange?.(nextMode)

@@ -51,7 +51,7 @@ export function usePracticePageKeyboardShortcuts({
       const tagName = target?.tagName
       const isEditableTarget = tagName === 'INPUT' || tagName === 'TEXTAREA' || target?.isContentEditable === true
       const isSpellingInput = tagName === 'INPUT' && target?.classList.contains('spelling-input')
-      const usesModeShortcutBridge = mode === 'quickmemory' || mode === 'radio'
+      const usesModeShortcutBridge = mode === 'quickmemory' || mode === 'test' || mode === 'radio'
       const supportsChoiceShortcuts =
         mode === 'listening' || (mode === 'smart' && smartDimension === 'listening')
       const exampleSentence = currentWord?.examples?.[0]?.en?.trim() ?? ''

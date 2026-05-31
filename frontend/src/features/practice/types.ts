@@ -2,7 +2,7 @@ import type { QuickMemoryRecordState } from '../../lib/quickMemory'
 
 export type { QuickMemoryRecordState } from '../../lib/quickMemory'
 
-export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'follow' | 'radio' | 'quickmemory'
+export type PracticeMode = 'smart' | 'listening' | 'meaning' | 'dictation' | 'follow' | 'radio' | 'quickmemory' | 'test'
 export type SpellingSubmitSource = 'button' | 'enter'
 export type SmartDimension = 'listening' | 'meaning' | 'dictation'
 export type ToastType = 'info' | 'success' | 'error'

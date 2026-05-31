@@ -183,7 +183,7 @@ export function PracticePageContent({
       onClick={onFavoriteToggle}
     />
   )
-  const speakingButton = mode === 'quickmemory'
+  const speakingButton = mode === 'quickmemory' || mode === 'test'
     ? undefined
     : (
       <PracticePronunciationButton
@@ -235,7 +235,7 @@ export function PracticePageContent({
     )
   }
 
-  if (mode === 'quickmemory') {
+  if (mode === 'quickmemory' || mode === 'test') {
     return (
       <PracticePageQuickMemoryLayout
         {...baseLayoutProps}

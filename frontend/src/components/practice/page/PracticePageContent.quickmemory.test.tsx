@@ -47,9 +47,8 @@ const vocabulary: Word[] = [
   { word: 'beta', phonetic: '/b/', pos: 'n.', definition: 'beta def' },
 ]
 
-function buildProps() {
+function buildProps(practiceMode: PracticeMode = 'quickmemory') {
   const navigate = vi.fn()
-  const practiceMode: PracticeMode = 'quickmemory'
   const smartDimension: SmartDimension = 'meaning'
   const radioQuickSettings: RadioQuickSettings = {
     playbackSpeed: '1',
@@ -135,6 +134,13 @@ describe('PracticePageContent quick-memory recording support', () => {
     render(<PracticePageContent {...buildProps()} />)
 
     expect(screen.getByTestId('favorite-toggle')).toBeInTheDocument()
+    expect(screen.queryByTestId('pronunciation-entry')).toBeNull()
+  })
+
+  it('routes audio-first test mode through the memory layout without pronunciation entry', () => {
+    render(<PracticePageContent {...buildProps('test')} />)
+
+    expect(screen.getByTestId('quickmemory-layout')).toBeInTheDocument()
     expect(screen.queryByTestId('pronunciation-entry')).toBeNull()
   })
 })

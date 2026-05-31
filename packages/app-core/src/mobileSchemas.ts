@@ -6,6 +6,7 @@ const IdSchema = z.union([z.string(), z.number()])
 export const PRACTICE_MODES = [
   'smart',
   'quickmemory',
+  'test',
   'listening',
   'meaning',
   'dictation',

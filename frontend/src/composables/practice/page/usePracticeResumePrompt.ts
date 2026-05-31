@@ -18,6 +18,8 @@ function getResumeLabels(mode: PracticeMode) {
       return { context: '听音', action: '继续练习' }
     case 'quickmemory':
       return { context: '快记', action: '继续练习' }
+    case 'test':
+      return { context: '测试', action: '继续测试' }
     case 'meaning':
       return { context: '释义', action: '继续练习' }
     case 'radio':

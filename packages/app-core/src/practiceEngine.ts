@@ -19,6 +19,7 @@ export type PracticeProgressSnapshot = {
 export const PRACTICE_MODE_LABELS: Record<PracticeMode, string> = {
   smart: '智能模式',
   quickmemory: '速记模式',
+  test: '测试模式',
   listening: '听音选义',
   meaning: '默写模式',
   dictation: '听写模式',
@@ -66,7 +67,7 @@ export function evaluatePracticeAnswer(
   mode: PracticeMode,
   answer: string,
 ): PracticeResult {
-  if (mode === 'quickmemory') {
+  if (mode === 'quickmemory' || mode === 'test') {
     const correct = answer === 'known'
     return {
       correct,
@@ -126,7 +127,7 @@ export function buildWrongWordRecord(word: MobileWord, mode: PracticeMode): Wron
       ? 'dictation'
       : mode === 'follow'
         ? 'speaking'
-        : mode === 'quickmemory'
+        : mode === 'quickmemory' || mode === 'test'
           ? 'recognition'
           : 'meaning'
   return {

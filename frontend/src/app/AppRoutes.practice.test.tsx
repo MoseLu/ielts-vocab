@@ -161,6 +161,26 @@ describe('AppRoutes practice route', () => {
     expect(onModeChange).toHaveBeenCalledWith('quickmemory')
   })
 
+  it('honors the independent audio-first test mode from the route query', () => {
+    const onModeChange = vi.fn()
+
+    render(
+      <MemoryRouter initialEntries={['/practice?book=custom_1&chapter=custom_1_2&mode=test']}>
+        <AppRoutes
+          mode="listening"
+          currentDay={1}
+          onModeChange={onModeChange}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(practicePageMock.mock.calls[0]?.[0]).toMatchObject({
+      mode: 'test',
+    })
+    expect(onModeChange).toHaveBeenCalledWith('test')
+  })
+
   it('shows the coming soon placeholder on /game', async () => {
     render(
       <MemoryRouter initialEntries={['/game?book=book-1&chapter=2']}>

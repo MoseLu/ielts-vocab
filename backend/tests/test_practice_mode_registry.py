@@ -18,6 +18,7 @@ def test_practice_mode_registry_covers_browser_modes_and_shared_aliases():
         'game',
         'smart',
         'quickmemory',
+        'test',
         'listening',
         'meaning',
         'dictation',
@@ -26,6 +27,7 @@ def test_practice_mode_registry_covers_browser_modes_and_shared_aliases():
         'speaking',
     )
     assert normalize_stats_mode('quick_memory') == 'quickmemory'
+    assert normalize_stats_mode('audio-test') == 'test'
     assert normalize_stats_mode('choice') == 'radio'
     assert normalize_stats_mode('five-dimension-game') == 'game'
     assert normalize_profile_practice_mode('five-dimension-game') == 'game'
@@ -43,4 +45,4 @@ def test_practice_mode_registry_keeps_consistent_labels_candidates_and_sorting()
     assert stats_mode_candidates('radio') == ['choice', 'radio', 'select', 'selection']
     assert stats_mode_candidates('custom-mode') == ['custom-mode']
     assert sort_stats_modes(['meaning', 'radio', 'game']) == ['game', 'meaning', 'radio']
-    assert sort_profile_practice_modes(['quickmemory', 'game', 'smart']) == ['game', 'smart', 'quickmemory']
+    assert sort_profile_practice_modes(['test', 'quickmemory', 'game', 'smart']) == ['game', 'smart', 'quickmemory', 'test']

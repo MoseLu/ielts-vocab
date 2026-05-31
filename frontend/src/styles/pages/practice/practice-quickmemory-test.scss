@@ -1,0 +1,30 @@
+.qm-audio-prompt svg {
+    width: var(--size-44);
+    height: var(--size-44);
+}
+
+.qm-btn--familiar {
+    color: var(--warning);
+    border-color: var(--warning);
+    background: color-mix(in srgb, var(--warning) var(--mix-12), transparent);
+}
+
+.qm-btn--familiar:hover {
+    background: var(--warning);
+    color: var(--text-inverse);
+    transform: translateY(calc(var(--size-1) * -1));
+}
+
+.qm-btn:disabled,
+.qm-btn:disabled:hover {
+    opacity: var(--alpha-52);
+    cursor: wait;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (max-width: 480px) {
+    .qm-card--test .qm-choice-row {
+        gap: var(--size-8);
+    }
+}

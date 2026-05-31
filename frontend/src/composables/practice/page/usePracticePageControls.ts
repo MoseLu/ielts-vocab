@@ -199,10 +199,11 @@ export function usePracticePageControls({
     if (!practiceBookId) return '/practice'
     const encodedBookId = encodeURIComponent(practiceBookId)
     const encodedChapterId = encodeURIComponent(String(nextChapterId))
+    const memoryModeQuery = mode === 'quickmemory' || mode === 'test' ? `&mode=${mode}` : ''
     return reviewMode
-      ? `/practice?review=due&book=${encodedBookId}&chapter=${encodedChapterId}`
-      : `/practice?book=${encodedBookId}&chapter=${encodedChapterId}`
-  }, [practiceBookId, reviewMode])
+      ? `/practice?review=due&book=${encodedBookId}&chapter=${encodedChapterId}${memoryModeQuery}`
+      : `/practice?book=${encodedBookId}&chapter=${encodedChapterId}${memoryModeQuery}`
+  }, [mode, practiceBookId, reviewMode])
 
   const handleContinueErrorReview = useCallback(() => {
     const nextRoundWords = buildNextErrorReviewWords(vocabulary, errorRoundResultsRef.current)

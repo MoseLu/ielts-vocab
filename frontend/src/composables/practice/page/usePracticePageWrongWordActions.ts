@@ -104,6 +104,7 @@ export function usePracticePageWrongWordActions({
     const nextWrongWord = nextWords.find(
       item => item.word.trim().toLowerCase() === word.word.trim().toLowerCase(),
     )
+    const recognitionSourceMode = mode === 'test' ? 'test' : 'quickmemory'
     const recognitionCleared = isWrongWordPendingInDimension(previousWrongWord, 'recognition')
       && !isWrongWordPendingInDimension(nextWrongWord ?? {}, 'recognition')
 
@@ -114,7 +115,7 @@ export function usePracticePageWrongWordActions({
         word: word.word,
         dimension: 'recognition',
         passed: record.status === 'known',
-        sourceMode: 'quickmemory',
+        sourceMode: recognitionSourceMode,
         entry: 'due-review',
         task: 'due-review',
         wordPayload: word,
@@ -122,7 +123,7 @@ export function usePracticePageWrongWordActions({
       apiFetch('/api/ai/wrong-words/sync', {
         method: 'POST',
         body: JSON.stringify({
-          sourceMode: 'quickmemory',
+          sourceMode: recognitionSourceMode,
           bookId: bookId ?? undefined,
           chapterId: chapterId ?? undefined,
           scopeKey: scope.scopeKey,
@@ -136,7 +137,7 @@ export function usePracticePageWrongWordActions({
     if (recognitionCleared) {
       showToast?.(`${word.word} 的「${WRONG_WORD_DIMENSION_LABELS.recognition}」已从待清错词移出`, 'success')
     }
-  }, [bookId, chapterId, showToast, user, userId])
+  }, [bookId, chapterId, mode, showToast, user, userId])
 
   const recordErrorReviewOutcome = useCallback((word: Word, wasCorrect: boolean) => {
     if (!errorMode) return

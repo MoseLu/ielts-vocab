@@ -15,6 +15,10 @@ interface UsePracticeStudySessionLifecycleParams {
   refs: PracticeStudySessionRefs
 }
 
+function isQuickMemorySessionMode(mode?: string | null): boolean {
+  return mode === 'quickmemory' || mode === 'test'
+}
+
 export function usePracticeStudySessionLifecycle({
   mode,
   errorMode,
@@ -143,7 +147,7 @@ export function usePracticeStudySessionLifecycle({
     const sessionMode = activeSessionModeRef.current
     const sessionBookId = sessionBookIdRef.current
     const sessionChapterId = sessionChapterIdRef.current
-    if (sessionMode === 'quickmemory') {
+    if (isQuickMemorySessionMode(sessionMode)) {
       if (markRoundCompleted) {
         sessionLoggedRef.current = true
       }
@@ -265,7 +269,7 @@ export function usePracticeStudySessionLifecycle({
   ])
 
   const prepareSessionForLearningAction = useCallback(async (activityAt = Date.now()) => {
-    if (effectiveSessionModeRef.current === 'quickmemory') return
+    if (isQuickMemorySessionMode(effectiveSessionModeRef.current)) return
 
     const stats = {
       wordsStudied: getCurrentSegmentWordsStudied(),
@@ -352,7 +356,7 @@ export function usePracticeStudySessionLifecycle({
     if (
       previousMode !== nextMode
       && sessionStartRef.current > 0
-      && activeSessionModeRef.current !== 'quickmemory'
+      && !isQuickMemorySessionMode(activeSessionModeRef.current)
       && !sessionLoggedRef.current
     ) {
       void closeActiveSegment({ syncStats: true, accumulateIntoCompletedRef: false })
@@ -376,7 +380,7 @@ export function usePracticeStudySessionLifecycle({
 
   useEffect(() => {
     const handlePageHide = () => {
-      if (currentModeRef.current === 'quickmemory') return
+      if (isQuickMemorySessionMode(currentModeRef.current)) return
       if (sessionLoggedRef.current || sessionStartRef.current <= 0) return
       AIChat.flushStudySessionOnPageHide({
         mode: effectiveSessionModeRef.current,
@@ -405,7 +409,7 @@ export function usePracticeStudySessionLifecycle({
   ])
 
   const beginSession = useCallback((context?: { bookId?: string | null; chapterId?: string | null }) => {
-    if (sessionStartRef.current > 0 && !sessionLoggedRef.current && activeSessionModeRef.current !== 'quickmemory') {
+    if (sessionStartRef.current > 0 && !sessionLoggedRef.current && !isQuickMemorySessionMode(activeSessionModeRef.current)) {
       void closeActiveSegment({ syncStats: true, accumulateIntoCompletedRef: false })
     }
 

@@ -12,6 +12,7 @@ const PRACTICE_ROUTE_QUERY_MODES = new Set<PracticeMode>([
   'follow',
   'radio',
   'quickmemory',
+  'test',
 ])
 
 function normalizePracticeRouteMode(value: string | null): PracticeMode | null {

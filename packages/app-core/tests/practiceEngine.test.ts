@@ -44,6 +44,9 @@ describe('mobile practice engine', () => {
 
     const wrong = buildWrongWordRecord(word, 'listening')
     assert.equal(wrong.mistake_type, 'listening')
+    assert.equal(buildWrongWordRecord(word, 'test').mistake_type, 'recognition')
+    assert.equal(evaluatePracticeAnswer(word, 'test', 'known').correct, true)
+    assert.equal(evaluatePracticeAnswer(word, 'test', 'unknown').correct, false)
 
     const quick = buildQuickMemorySyncRecord(word, false, 1000)
     assert.equal(quick.unknownCount, 1)

@@ -47,7 +47,7 @@ export function usePracticePageAudioEffects({
   const upcomingWordsKey = upcomingWords.join('|')
 
   useEffect(() => {
-    if (mode === 'quickmemory') return
+    if (mode === 'quickmemory' || mode === 'test') return
     const activeWord = currentWord?.word?.trim()
     if (!activeWord) return
 

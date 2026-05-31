@@ -31,7 +31,7 @@ export function usePracticePageWordActions({
   currentChapterTitle,
   showToast,
 }: UsePracticePageWordActionsParams) {
-  const activeQueueIndex = mode === 'quickmemory' || mode === 'radio' ? favoriteQueueIndex : queueIndex
+  const activeQueueIndex = mode === 'quickmemory' || mode === 'test' || mode === 'radio' ? favoriteQueueIndex : queueIndex
   const actionWord = vocabulary[queue[activeQueueIndex]] ?? currentWord
   const favoriteState = useFavoriteWords({ userId, vocabulary, showToast })
   const familiarState = useFamiliarWords({ userId, vocabulary, showToast })

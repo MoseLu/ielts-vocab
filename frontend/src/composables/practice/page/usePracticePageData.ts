@@ -52,7 +52,7 @@ export function usePracticePageData(params: UsePracticePageDataParams) {
   })
 
   useEffect(() => {
-    if (mode !== 'quickmemory' && Object.keys(loadSmartStats()).length === 0) {
+    if (mode !== 'quickmemory' && mode !== 'test' && Object.keys(loadSmartStats()).length === 0) {
       void loadSmartStatsFromBackend()
     }
   }, [mode])

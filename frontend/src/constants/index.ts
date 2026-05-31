@@ -11,6 +11,7 @@ export const PRACTICE_MODES = {
   FOLLOW: 'follow',
   RADIO: 'radio',
   QUICK_MEMORY: 'quickmemory',
+  TEST: 'test',
 } as const
 
 export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRACTICE_MODES], string> = {
@@ -21,6 +22,7 @@ export const PRACTICE_MODE_NAMES: Record<typeof PRACTICE_MODES[keyof typeof PRAC
   [PRACTICE_MODES.FOLLOW]: PRACTICE_MODE_LABELS.follow,
   [PRACTICE_MODES.RADIO]: PRACTICE_MODE_LABELS.radio,
   [PRACTICE_MODES.QUICK_MEMORY]: PRACTICE_MODE_LABELS.quickmemory,
+  [PRACTICE_MODES.TEST]: PRACTICE_MODE_LABELS.test,
 }
 
 // LocalStorage keys

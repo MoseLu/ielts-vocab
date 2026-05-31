@@ -68,7 +68,7 @@ export function resolveWrongWordDimensionForPractice(
   mode?: PracticeMode,
   smartDimension?: SmartDimension,
 ): WrongWordDimension {
-  if (mode === 'quickmemory') return 'recognition'
+  if (mode === 'quickmemory' || mode === 'test') return 'recognition'
   if (mode === 'listening') return 'listening'
   if (mode === 'follow') return 'speaking'
   if (mode === 'dictation') return 'dictation'

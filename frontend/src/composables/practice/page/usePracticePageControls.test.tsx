@@ -268,6 +268,15 @@ describe('usePracticePageControls saveProgress', () => {
     })
   })
 
+  it('preserves test mode while building the next chapter path', () => {
+    const { result } = renderHook(() => usePracticePageControls(createParams({
+      mode: 'test',
+      practiceBookId: 'book 1',
+    })))
+
+    expect(result.current.buildChapterPath('chapter 2')).toBe('/practice?book=book%201&chapter=chapter%202&mode=test')
+  })
+
   it('can reset an interrupted chapter back to the first word', async () => {
     const { result } = renderHook(() => usePracticePageControls(createParams({
       mode: 'dictation',
