@@ -1,5 +1,8 @@
 import type { PracticeMode, Word } from '../types'
-import type { QuickMemorySessionResult } from '../../../features/practice/quickMemorySession'
+import type {
+  QuickMemoryModeVariant,
+  QuickMemorySessionResult,
+} from '../../../features/practice/quickMemorySession'
 import type { PracticeGroupWindow } from '../../../composables/practice/page/practicePageGrouping'
 
 export type { QuickMemorySessionResult }
@@ -28,6 +31,7 @@ interface QuickMemorySummaryProps {
   onContinueChapterGroup?: () => void
   buildChapterPath?: (chapterId: string | number) => string
   sessionDurationSeconds?: number | null
+  modeVariant?: QuickMemoryModeVariant
   onRestart: () => void
   onModeChange: (mode: PracticeMode) => void
   onNavigate: (path: string) => void
@@ -47,6 +51,7 @@ export function QuickMemorySummary({
   onContinueChapterGroup,
   buildChapterPath,
   sessionDurationSeconds,
+  modeVariant = 'quickmemory',
   onRestart,
   onModeChange,
   onNavigate,
@@ -65,6 +70,7 @@ export function QuickMemorySummary({
   const chapterGroupRemaining = !reviewMode && chapterGroup?.groupSize && chapterGroup.end < chapterGroup.total
     ? chapterGroup.total - chapterGroup.end
     : 0
+  const fuzzyLabel = modeVariant === 'test' ? '不熟悉' : '模糊'
 
   return (
     <div className="qm-summary">
@@ -81,7 +87,7 @@ export function QuickMemorySummary({
         {fuzzy.length > 0 && (
           <div className="qm-stat qm-stat-fuzzy">
             <span className="qm-stat-num">{fuzzy.length}</span>
-            <span className="qm-stat-label">模糊</span>
+            <span className="qm-stat-label">{fuzzyLabel}</span>
           </div>
         )}
         <div className="qm-stat">
@@ -98,7 +104,7 @@ export function QuickMemorySummary({
 
       {fuzzy.length > 0 && (
         <div className="qm-summary-section">
-          <div className="qm-summary-section-title">模糊单词（回退重答）</div>
+          <div className="qm-summary-section-title">{fuzzyLabel}单词</div>
           <div className="qm-summary-word-list">
             {fuzzy.map(result => {
               const word = vocabulary[queue[result.wordIdx]]
@@ -158,7 +164,7 @@ export function QuickMemorySummary({
           <button
             className="qm-btn-next-chapter"
             onClick={() => onNavigate(
-              buildChapterPath?.(nextChapter.id) ?? `/practice?book=${bookId}&chapter=${nextChapter.id}&mode=quickmemory`,
+              buildChapterPath?.(nextChapter.id) ?? `/practice?book=${bookId}&chapter=${nextChapter.id}&mode=${modeVariant}`,
             )}
           >
             {reviewMode ? '下一章节复习' : '下一章节'}

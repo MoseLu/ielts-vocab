@@ -15,6 +15,7 @@ import type {
   WordPlaybackHandler,
   WordStatuses,
 } from '../../features/practice/types'
+import type { QuickMemoryModeVariant } from '../../features/practice/quickMemorySession'
 import type { PracticeGroupWindow } from '../../composables/practice/page/practicePageGrouping'
 
 export type {
@@ -63,6 +64,7 @@ export interface QuickMemoryModeProps {
   initialIndex?: number
   onIndexChange?: (index: number) => void
   favoriteSlot?: ReactNode
+  modeVariant?: QuickMemoryModeVariant
 }
 
 export interface PracticePageProps {

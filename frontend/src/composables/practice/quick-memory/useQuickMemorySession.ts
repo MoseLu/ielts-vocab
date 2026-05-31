@@ -2,10 +2,14 @@ import { useCallback, useEffect, useRef } from 'react'
 import { apiFetch } from '../../../lib'
 import { flushStudySessionOnPageHide } from '../../../hooks/useAIChat'
 import { persistChapterProgressSnapshot } from '../../../features/practice/progressStorage'
-import type { QuickMemorySessionResult } from '../../../features/practice/quickMemorySession'
+import type {
+  QuickMemoryModeVariant,
+  QuickMemorySessionResult,
+} from '../../../features/practice/quickMemorySession'
 import type { PracticeGroupWindow } from '../page/practicePageGrouping'
 
 interface QuickMemorySessionLifecycleArgs {
+  modeVariant: QuickMemoryModeVariant
   bookId: string | null
   chapterId: string | null
   done: boolean
@@ -82,6 +86,7 @@ function resolveChapterProgressScope(
 }
 
 export function useQuickMemorySession({
+  modeVariant,
   bookId,
   chapterId,
   done,
@@ -156,7 +161,7 @@ export function useQuickMemorySession({
       if (sessionLoggedRef.current || sessionStartRef.current <= 0) return
       const summary = summarizeResults(resultsRef.current)
       flushStudySessionOnPageHide({
-        mode: 'quickmemory',
+        mode: modeVariant,
         bookId: bookIdRef.current,
         chapterId: chapterIdRef.current,
         wordsStudied: summary.wordsStudied,
@@ -176,6 +181,7 @@ export function useQuickMemorySession({
     sessionIdRef,
     sessionLoggedRef,
     sessionStartRef,
+    modeVariant,
   ])
 
   useEffect(() => {
@@ -195,7 +201,7 @@ export function useQuickMemorySession({
     postProgressSnapshot(
       'completed-progress',
       `/api/books/${bookId}/chapters/${chapterId}/progress`,
-      { mode: 'quickmemory', ...progressData },
+      { mode: modeVariant, ...progressData },
       showSaveError,
     )
 
@@ -203,7 +209,7 @@ export function useQuickMemorySession({
       'completed-mode-progress',
       `/api/books/${bookId}/chapters/${chapterId}/mode-progress`,
       {
-        mode: 'quickmemory',
+        mode: modeVariant,
         correct_count: progressData.correct_count,
         wrong_count: progressData.wrong_count,
         is_completed: progressData.is_completed,
@@ -221,6 +227,7 @@ export function useQuickMemorySession({
     results,
     reviewMode,
     showSaveError,
+    modeVariant,
   ])
 
   useEffect(() => {
@@ -273,7 +280,7 @@ export function useQuickMemorySession({
     postProgressSnapshot(
       'partial-progress',
       `/api/books/${bookId}/chapters/${chapterId}/progress`,
-      { mode: 'quickmemory', ...partialProgress },
+      { mode: modeVariant, ...partialProgress },
       showSaveError,
     )
   }, [
@@ -289,6 +296,7 @@ export function useQuickMemorySession({
     results,
     reviewMode,
     showSaveError,
+    modeVariant,
   ])
 
   useEffect(() => {
