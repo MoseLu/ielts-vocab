@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '../../../contexts'
 import GlobalBugScreenshotShortcut from './GlobalBugScreenshotShortcut'
@@ -41,6 +42,17 @@ async function captureWithShortcut(file: File) {
   fireEvent.keyDown(window, { key: 'Z', shiftKey: true })
   await dragScreenshotSelection()
   await screen.findByRole('region', { name: '截图篮' })
+}
+
+function deferredFile(file: File) {
+  let resolveFile: (value: File) => void = () => {}
+  const promise = new Promise<File>(resolve => {
+    resolveFile = resolve
+  })
+  return {
+    promise,
+    resolve: () => resolveFile(file),
+  }
 }
 
 describe('GlobalBugScreenshotShortcut', () => {
@@ -108,6 +120,79 @@ describe('GlobalBugScreenshotShortcut', () => {
     expect(revokeObjectUrlMock).toHaveBeenCalledWith('blob:bug-delete.png')
     await captureWithShortcut(new File(['next'], 'bug-next.png', { type: 'image/png' }))
     expect(await screen.findByText('截图 1/3')).toBeInTheDocument()
+  })
+
+  it('allows dragging the screenshot tray to a new viewport position', async () => {
+    renderShortcut()
+    await captureWithShortcut(new File(['one'], 'bug-draggable.png', { type: 'image/png' }))
+
+    const tray = await screen.findByRole('region', { name: '截图篮' })
+    Object.defineProperty(tray, 'getBoundingClientRect', {
+      value: () => ({
+        bottom: 660,
+        height: 160,
+        left: 600,
+        right: 920,
+        top: 500,
+        width: 320,
+        x: 600,
+        y: 500,
+        toJSON: () => {},
+      }),
+      configurable: true,
+    })
+
+    const dragHandle = screen.getByLabelText('拖拽移动截图篮')
+    fireEvent.pointerDown(dragHandle, { button: 0, clientX: 640, clientY: 540, pointerId: 9 })
+    fireEvent.pointerMove(document, { clientX: 260, clientY: 210, pointerId: 9 })
+    fireEvent.pointerUp(document, { clientX: 260, clientY: 210, pointerId: 9 })
+
+    expect(tray).toHaveStyle({
+      bottom: 'auto',
+      left: '220px',
+      right: 'auto',
+      top: '170px',
+    })
+  })
+
+  it('opens a larger preview from the screenshot thumbnail', async () => {
+    renderShortcut()
+    await captureWithShortcut(new File(['preview'], 'bug-preview.png', { type: 'image/png' }))
+
+    fireEvent.click(screen.getByRole('button', { name: '预览截图：bug-preview.png' }))
+
+    expect(await screen.findByRole('dialog', { name: '截图预览' })).toBeInTheDocument()
+    expect(screen.getByAltText('截图预览：bug-preview.png')).toHaveAttribute('src', 'blob:bug-preview.png')
+    expect(document.querySelector('.bug-screenshot-preview__header')).toHaveTextContent('bug-preview.png')
+    expect(document.querySelector('.bug-screenshot-preview__image-stage')).toContainElement(screen.getByAltText('截图预览：bug-preview.png'))
+
+    fireEvent.click(screen.getByRole('button', { name: '关闭截图预览' }))
+
+    expect(screen.queryByRole('dialog', { name: '截图预览' })).not.toBeInTheDocument()
+  })
+
+  it('hides the screenshot tray while selecting and generating another capture', async () => {
+    renderShortcut()
+    await captureWithShortcut(new File(['one'], 'bug-first.png', { type: 'image/png' }))
+
+    fireEvent.click(screen.getByRole('button', { name: '继续截图' }))
+
+    expect(screen.queryByRole('region', { name: '截图篮' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: '选择截图区域' })).toBeInTheDocument()
+
+    const pendingCapture = deferredFile(new File(['two'], 'bug-second.png', { type: 'image/png' }))
+    vi.mocked(captureScreenAsPngFile).mockReturnValueOnce(pendingCapture.promise)
+    await dragScreenshotSelection()
+
+    expect(screen.queryByRole('dialog', { name: '选择截图区域' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: '截图篮' })).not.toBeInTheDocument()
+
+    await act(async () => {
+      pendingCapture.resolve()
+      await pendingCapture.promise
+    })
+
+    expect(await screen.findByText('截图 2/3')).toBeInTheDocument()
   })
 
   it('does not capture when shift z is typed into an editable field', () => {

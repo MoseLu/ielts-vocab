@@ -1,8 +1,9 @@
 import html2canvas from 'html2canvas'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { canCaptureScreen, captureScreenAsPngFile } from './featureWishScreenshot'
 
 const getDisplayMediaMock = vi.fn()
+const canvasDrawImageMock = vi.fn()
 
 vi.mock('html2canvas', () => ({
   default: vi.fn(),
@@ -25,10 +26,25 @@ describe('featureWishScreenshot', () => {
     vi.mocked(html2canvas).mockReset()
     vi.mocked(html2canvas).mockResolvedValue(createMockCanvas())
     getDisplayMediaMock.mockReset()
+    canvasDrawImageMock.mockReset()
+    Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+      value: () => ({ drawImage: canvasDrawImageMock }),
+      configurable: true,
+    })
+    Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+      value(callback: BlobCallback) {
+        callback(new Blob(['png'], { type: 'image/png' }))
+      },
+      configurable: true,
+    })
     Object.defineProperty(navigator, 'mediaDevices', {
       value: { getDisplayMedia: getDisplayMediaMock },
       configurable: true,
     })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('captures the current app page without opening the browser screen picker', async () => {
@@ -41,35 +57,72 @@ describe('featureWishScreenshot', () => {
     expect(getDisplayMediaMock).not.toHaveBeenCalled()
     expect(html2canvas).toHaveBeenCalledWith(document.body, expect.objectContaining({
       allowTaint: false,
+      backgroundColor: expect.any(String),
+      foreignObjectRendering: true,
       height: expect.any(Number),
       useCORS: true,
       width: expect.any(Number),
+      x: 0,
+      y: 0,
     }))
   })
 
   it('captures only the selected viewport rectangle when provided', async () => {
+    const renderedCanvas = createMockCanvas()
+    renderedCanvas.width = 2048
+    renderedCanvas.height = 1536
+    vi.mocked(html2canvas).mockResolvedValueOnce(renderedCanvas)
+
     const file = await captureScreenAsPngFile({ x: 10, y: 20, width: 120, height: 90 })
+    const options = vi.mocked(html2canvas).mock.calls[0]?.[1]
+    const scaleX = renderedCanvas.width / Number(options?.width)
+    const scaleY = renderedCanvas.height / Number(options?.height)
+    const cropWidth = Math.round(120 * scaleX)
+    const cropHeight = Math.round(90 * scaleY)
 
     expect(file.name).toMatch(/^bug-page-screenshot-\d+\.png$/)
     expect(html2canvas).toHaveBeenCalledWith(document.body, expect.objectContaining({
-      height: 90,
-      width: 120,
-      x: 10,
-      y: 20,
+      foreignObjectRendering: true,
+      x: 0,
+      y: 0,
     }))
+    expect(canvasDrawImageMock).toHaveBeenCalledWith(
+      renderedCanvas,
+      Math.round(11 * scaleX),
+      Math.round(21 * scaleY),
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      cropWidth,
+      cropHeight,
+    )
     expect(getDisplayMediaMock).not.toHaveBeenCalled()
+  })
+
+  it('falls back from unsupported modern computed background colors', async () => {
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      backgroundColor: 'color(srgb 1 1 1)',
+    } as CSSStyleDeclaration)
+
+    await captureScreenAsPngFile()
+
+    expect(html2canvas).toHaveBeenCalledWith(document.body, expect.objectContaining({
+      backgroundColor: '#ffffff',
+    }))
   })
 
   it('removes screenshot overlays from the cloned document before rendering', async () => {
     const file = await captureScreenAsPngFile()
     const options = vi.mocked(html2canvas).mock.calls[0]?.[1]
     const clonedDocument = document.implementation.createHTMLDocument()
-    clonedDocument.body.innerHTML = '<div class="bug-screenshot-selector-overlay"></div><section class="bug-screenshot-tray"></section><main><input /></main>'
+    clonedDocument.body.innerHTML = '<header class="header"></header><div class="bug-screenshot-selector-overlay"></div><section class="bug-screenshot-tray"></section><main><input /></main>'
 
     options?.onclone?.(clonedDocument)
 
     expect(file.type).toBe('image/png')
     expect(clonedDocument.body.querySelector('.bug-screenshot-selector-overlay')).toBeNull()
     expect(clonedDocument.body.querySelector('.bug-screenshot-tray')).toBeNull()
+    expect(clonedDocument.body.querySelector<HTMLElement>('.header')?.style.boxShadow).toBe('none')
   })
 })

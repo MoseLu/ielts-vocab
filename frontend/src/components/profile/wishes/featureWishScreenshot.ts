@@ -2,6 +2,10 @@ import html2canvas from 'html2canvas'
 
 const REMOVED_OVERLAYS_SELECTOR = '.bug-screenshot-selector-overlay, .bug-screenshot-tray'
 const UNSUPPORTED_MEDIA_SELECTOR = 'video, iframe, canvas'
+const FALLBACK_CAPTURE_BACKGROUND = '#ffffff'
+const UNSUPPORTED_COLOR_FUNCTION = /\b(?:color|color-mix|lab|lch|oklab|oklch)\(/
+const FOREIGN_OBJECT_CROP_ALIGNMENT = 1
+const FIXED_HEADER_SELECTOR = '.header'
 
 export interface ScreenshotCaptureRect {
   x: number
@@ -86,6 +90,39 @@ function replaceUnsafeMedia(root: ParentNode) {
   })
 }
 
+function removeForeignObjectRenderingArtifacts(root: ParentNode) {
+  root.querySelectorAll<HTMLElement>(FIXED_HEADER_SELECTOR).forEach(header => {
+    header.style.boxShadow = 'none'
+  })
+}
+
+function getCaptureBackgroundColor() {
+  const color = getComputedStyle(document.body).backgroundColor.trim()
+  if (!color || UNSUPPORTED_COLOR_FUNCTION.test(color)) {
+    return FALLBACK_CAPTURE_BACKGROUND
+  }
+  return color
+}
+
+function cropCanvas(canvas: HTMLCanvasElement, rect: ScreenshotCaptureRect, sourceWidth: number, sourceHeight: number) {
+  const scaleX = canvas.width / sourceWidth
+  const scaleY = canvas.height / sourceHeight
+  const cropWidth = Math.max(1, Math.round(rect.width * scaleX))
+  const cropHeight = Math.max(1, Math.round(rect.height * scaleY))
+  const cropX = Math.min(canvas.width - cropWidth, Math.round((rect.x + FOREIGN_OBJECT_CROP_ALIGNMENT) * scaleX))
+  const cropY = Math.min(canvas.height - cropHeight, Math.round((rect.y + FOREIGN_OBJECT_CROP_ALIGNMENT) * scaleY))
+  const croppedCanvas = document.createElement('canvas')
+  const context = croppedCanvas.getContext('2d')
+  if (!context) {
+    throw new Error('截图裁剪失败')
+  }
+
+  croppedCanvas.width = cropWidth
+  croppedCanvas.height = cropHeight
+  context.drawImage(canvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
+  return croppedCanvas
+}
+
 export function canCaptureScreen() {
   return typeof document !== 'undefined'
     && typeof HTMLCanvasElement !== 'undefined'
@@ -117,31 +154,29 @@ export async function captureScreenAsPngFile(rect?: ScreenshotCaptureRect) {
   const viewportWidth = Math.max(1, Math.round(window.innerWidth || document.documentElement.clientWidth))
   const viewportHeight = Math.max(1, Math.round(window.innerHeight || document.documentElement.clientHeight))
   const normalizedRect = normalizeCaptureRect(rect)
-  const width = normalizedRect?.width ?? viewportWidth
-  const height = normalizedRect?.height ?? viewportHeight
-  const x = window.scrollX + (normalizedRect?.x ?? 0)
-  const y = window.scrollY + (normalizedRect?.y ?? 0)
   const canvas = await html2canvas(document.body, {
     allowTaint: false,
-    backgroundColor: getComputedStyle(document.body).backgroundColor || null,
-    height,
+    backgroundColor: getCaptureBackgroundColor(),
+    foreignObjectRendering: true,
+    height: viewportHeight,
     ignoreElements: element => element.matches(REMOVED_OVERLAYS_SELECTOR),
     logging: false,
     onclone: clonedDocument => {
       clonedDocument.body.querySelectorAll(REMOVED_OVERLAYS_SELECTOR).forEach(node => node.remove())
       copyFormValues(document.body, clonedDocument.body)
       replaceUnsafeMedia(clonedDocument.body)
+      removeForeignObjectRenderingArtifacts(clonedDocument.body)
     },
     scrollX: window.scrollX,
     scrollY: window.scrollY,
     useCORS: true,
-    width,
-    windowHeight: Math.max(document.documentElement.scrollHeight, viewportHeight),
-    windowWidth: Math.max(document.documentElement.scrollWidth, viewportWidth),
-    x,
-    y,
+    width: viewportWidth,
+    windowHeight: viewportHeight,
+    windowWidth: viewportWidth,
+    x: 0,
+    y: 0,
   })
 
-  const blob = await canvasToPngBlob(canvas)
+  const blob = await canvasToPngBlob(normalizedRect ? cropCanvas(canvas, normalizedRect, viewportWidth, viewportHeight) : canvas)
   return new File([blob], `bug-page-screenshot-${Date.now()}.png`, { type: 'image/png' })
 }
