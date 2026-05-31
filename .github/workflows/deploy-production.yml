@@ -174,8 +174,23 @@ jobs:
           artifact_upload_started="$(date +%s)"
           artifact_size="$(du -h "${ARTIFACT_PATH}" | awk '{print $1}')"
           echo "Uploading release artifact (${artifact_size}) with rsync --partial --progress"
-          rsync --partial --progress "${ARTIFACT_PATH}" \
-            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/ielts-vocab-release.tgz"
+          artifact_uploaded=false
+          for attempt in 1 2 3; do
+            echo "Release artifact upload attempt ${attempt}/3"
+            if rsync --partial --progress --timeout=60 "${ARTIFACT_PATH}" \
+              "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/ielts-vocab-release.tgz"; then
+              artifact_uploaded=true
+              break
+            fi
+            if [[ "${attempt}" -lt 3 ]]; then
+              echo "Release artifact upload stalled; retrying in 5s"
+              sleep 5
+            fi
+          done
+          if [[ "${artifact_uploaded}" != true ]]; then
+            echo "::error::Release artifact upload failed after 3 attempts"
+            exit 1
+          fi
           artifact_upload_elapsed="$(( $(date +%s) - artifact_upload_started ))"
           echo "Release artifact upload finished in ${artifact_upload_elapsed}s"
           scp \
