@@ -76,7 +76,7 @@ export function AppRoutes({
   const isPracticeSurface = isPractice || isGame || isExamAttemptSurface || isLegacySpeakingRoute
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
   const shouldShowBottomNav = Boolean(user) && !isPracticeSurface && !isSpecialPage
-  const shouldOffsetFloatingChrome = shouldShowBottomNav || isPracticeSurface || location.pathname === '/vocab-test'
+  const shouldOffsetFloatingChrome = shouldShowBottomNav
   const [chromeReady, setChromeReady] = useState(false)
 
   useEffect(() => {

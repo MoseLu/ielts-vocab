@@ -5,6 +5,9 @@ import { vi } from 'vitest'
 import { AppRoutes } from './AppRoutes'
 
 const showToastMock = vi.fn()
+const aiChatPanelMock = vi.fn((props: { avoidBottomNav?: boolean }) => (
+  <div data-testid="ai-chat-panel" data-avoid-bottom-nav={String(Boolean(props.avoidBottomNav))} />
+))
 const practicePageMock = vi.fn((props: {
   user?: { id: number; username: string }
   mode?: string
@@ -38,7 +41,9 @@ vi.mock('../components/game/page/GameComingSoonPage', () => ({
   default: () => <div>game-coming-soon-page</div>,
 }))
 
-vi.mock('../components/ai-chat/page/AIChatPanel', () => ({ default: () => null }))
+vi.mock('../components/ai-chat/page/AIChatPanel', () => ({
+  default: (props: { avoidBottomNav?: boolean }) => aiChatPanelMock(props),
+}))
 vi.mock('../components/layout/navigation/GlobalWordSearch', () => ({ default: () => null }))
 vi.mock('../components/layout/navigation/BottomNav', () => ({ default: () => null }))
 vi.mock('../components/layout/navigation/Header', () => ({ default: () => null }))
@@ -64,6 +69,7 @@ vi.mock('../components/vocab-test/page/VocabTestPage', () => ({ default: () => n
 describe('AppRoutes practice route', () => {
   beforeEach(() => {
     showToastMock.mockReset()
+    aiChatPanelMock.mockClear()
     practicePageMock.mockClear()
   })
 
@@ -139,6 +145,22 @@ describe('AppRoutes practice route', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'practice-page' }))
     expect(showToastMock).toHaveBeenCalledWith('favorite-clicked', 'success')
+  })
+
+  it('does not offset AI chat on fullscreen practice surfaces without bottom nav', async () => {
+    render(
+      <MemoryRouter initialEntries={['/practice']}>
+        <AppRoutes
+          mode="meaning"
+          currentDay={1}
+          onModeChange={vi.fn()}
+          onDayChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByTestId('ai-chat-panel', undefined, { timeout: 2000 }))
+      .toHaveAttribute('data-avoid-bottom-nav', 'false')
   })
 
   it('honors a classic practice mode from the route query', () => {
