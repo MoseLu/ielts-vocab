@@ -135,6 +135,8 @@ jobs:
           LEVEL: ${{ steps.version.outputs.level }}
         run: |
           set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag already exists: $TAG"
           else
