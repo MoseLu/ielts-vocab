@@ -1,6 +1,7 @@
 /* Page: Profile */
 
 @use './wishes' as *;
+@use './bug-screenshot' as *;
 
 .profile-page {
     /* padding managed by .page-content wrapper */
@@ -283,5 +284,4 @@
     padding: 0 var(--space-xl);
     font-size: var(--size-14);
 }
-
 

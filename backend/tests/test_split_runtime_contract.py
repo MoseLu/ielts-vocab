@@ -37,8 +37,8 @@ def test_start_project_uses_split_runtime_as_default_backend_path():
     assert 'http://127.0.0.1:${monolith_compat_backend_port}' in start_project
     assert 'http://127.0.0.1:${gateway_port}' in start_project
     assert 'Legacy backend/app.py on port ${monolith_compat_backend_port} is compatibility-only.' in start_project
-    assert 'pnpm --dir "${root}/frontend" build' in start_project
-    assert 'node "${root}/frontend/node_modules/vite/bin/vite.js" preview' in start_project
+    assert '"${root}/scripts/run-mac-runtime-command.sh" pnpm --dir "${root}/frontend" build' in start_project
+    assert '"${root}/scripts/run-mac-runtime-command.sh" env CI=1 node "${root}/frontend/node_modules/vite/bin/vite.js" preview' in start_project
     assert '--use-monolith-compatibility' in start_monolith_compat
     assert 'start-project.sh' in start_monolith_compat
     assert 'ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES' not in start_microservices

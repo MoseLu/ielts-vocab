@@ -19,7 +19,7 @@ def test_dev_and_preview_scripts_launch_mac_local_app_only():
 
     assert frontend_manifest['scripts']['dev'] == 'bash ../scripts/run-mac-local-app.sh dev'
     assert frontend_manifest['scripts']['preview'] == 'bash ../scripts/run-mac-local-app.sh preview'
-    assert frontend_manifest['scripts']['build'] == 'pnpm run verify:repo-guards && vite build'
+    assert frontend_manifest['scripts']['build'] == "bash ../scripts/run-mac-runtime-command.sh bash -c 'pnpm run verify:repo-guards && vite build'"
 
 
 def test_mac_local_app_launcher_keeps_vite_inside_generated_app_bundle():
@@ -33,6 +33,14 @@ def test_mac_local_app_launcher_keeps_vite_inside_generated_app_bundle():
     assert 'IELTS_DISABLE_MAC_APP' in launcher
     assert 'IELTS_MAC_LOCAL_APP_DRY_RUN' in launcher
     assert 'IELTS_LOCAL_APP_NODE' in launcher
+    assert 'run-mac-runtime-command.sh' in launcher
     assert '[nodeCommand, viteBin, "preview"]' in launcher
     assert 'IELTS_LOCAL_APP_API_HEALTH_URL=http://127.0.0.1:8000/ready' in launcher
     assert 'logs/runtime/mac-app' in launcher
+
+
+def test_mac_runtime_delegates_frontend_node_to_workspace_runtime():
+    runtime_command = _read('scripts/run-mac-runtime-command.sh')
+
+    assert 'WORKSPACE_NODE22_RUNNER:-/Volumes/code/workspace/scripts/run-node22-command.sh' in runtime_command
+    assert 'exec "${runner}" "$@"' in runtime_command
