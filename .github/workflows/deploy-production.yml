@@ -177,7 +177,8 @@ jobs:
           artifact_uploaded=false
           for attempt in 1 2 3; do
             echo "Release artifact upload attempt ${attempt}/3"
-            if rsync --partial --progress --timeout=60 "${ARTIFACT_PATH}" \
+            if timeout --signal=TERM --kill-after=15s 90s \
+              rsync --partial --progress --timeout=60 "${ARTIFACT_PATH}" \
               "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/ielts-vocab-release.tgz"; then
               artifact_uploaded=true
               break
