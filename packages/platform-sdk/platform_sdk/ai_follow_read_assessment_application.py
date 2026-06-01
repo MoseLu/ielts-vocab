@@ -63,7 +63,9 @@ def _normalize_follow_read_error(exc: SpeakingAssessmentError) -> tuple[str, int
     normalized = message.lower()
     if any(marker in normalized for marker in _DASHSCOPE_FREE_TIER_EXHAUSTED_MARKERS):
         return _DASHSCOPE_FREE_TIER_EXHAUSTED_MESSAGE, 503
-    return message, exc.status_code
+    if message == '没有检测到有效跟读，请重试': return '没有检测到有效跟读，请重试', exc.status_code
+    if message == '逐音素评分对齐失败，请重新跟读': return '逐音素评分对齐失败，请重新跟读', exc.status_code
+    return '跟读评分暂时不可用，请稍后重试', 503
 
 
 def resolve_follow_read_score_band(score: int | float) -> tuple[str, bool]:

@@ -247,7 +247,7 @@ def _generate_word_audio_cache_response(request: Request, payload: dict, provide
         status_code = getattr(exc, 'status_code', 500)
         if not isinstance(status_code, int) or status_code < 400 or status_code >= 600:
             status_code = 500
-        return JSONResponse(status_code=status_code, content={'error': f'TTS error: {exc}'})
+        return JSONResponse(status_code=status_code, content={'error': 'TTS generation failed'})
 
 
 app = create_service_app(

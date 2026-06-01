@@ -68,7 +68,7 @@ def strip_tags(value: str) -> str:
 
 
 def strip_page_markup(value: str) -> list[str]:
-    value = re.sub(r'<script.*?</script>|<style.*?</style>', ' ', value, flags=re.S)
+    value = re.sub(r'<script.*?</script>|<style.*?</style>', ' ', value, flags=re.S | re.I)
     value = re.sub(r'<[^>]+>', '\n', value)
     return [normalize_term(line) for line in html.unescape(value).splitlines() if normalize_term(line)]
 
