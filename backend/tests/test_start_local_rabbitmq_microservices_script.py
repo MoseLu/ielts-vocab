@@ -13,8 +13,11 @@ def test_start_local_rabbitmq_microservices_script_uses_project_owned_runtime_di
 
     assert 'rabbitmq-server' in script
     assert 'rabbitmq-diagnostics' in script
+    assert 'require_command epmd' in script
+    assert 'epmd -daemon' in script
     assert 'listeners.tcp.default = ${port}' in script
     assert 'management.tcp.port = 15679' in script
+    assert 'ielts_vocab_local@localhost' in script
     assert 'RABBITMQ_NODE_PORT' in script
     assert 'RABBITMQ_CONFIG_FILE="${config_base}"' in script
     assert 'rabbitmq-server -detached' in script

@@ -9,7 +9,7 @@ runtime_prefix="${IELTS_MAC_RUNTIME_PREFIX:-$HOME/.local/share/micromamba/envs/i
 runtime_dir="${root}/logs/runtime/rabbitmq-microservices-mac"
 config_base="${runtime_dir}/rabbitmq"
 config_path="${config_base}.conf"
-node_name="${IELTS_RABBITMQ_NODE_NAME:-ielts_vocab_local}"
+node_name="${IELTS_RABBITMQ_NODE_NAME:-ielts_vocab_local@localhost}"
 dist_port="${IELTS_RABBITMQ_DIST_PORT:-25679}"
 log_base="${runtime_dir}/log"
 db_base="${runtime_dir}/db"
@@ -49,6 +49,7 @@ wait_ready() {
 mkdir -p "${runtime_dir}" "${log_base}" "${db_base}"
 require_command rabbitmq-server
 require_command rabbitmq-diagnostics
+require_command epmd
 
 cat > "${config_path}" <<EOF
 listeners.tcp.default = ${port}
@@ -62,6 +63,8 @@ export RABBITMQ_NODENAME="${node_name}"
 export RABBITMQ_CONFIG_FILE="${config_base}"
 export RABBITMQ_LOG_BASE="${log_base}"
 export RABBITMQ_MNESIA_BASE="${db_base}"
+
+epmd -daemon
 
 if rabbitmq-diagnostics -q ping >/dev/null 2>&1; then
   log "RabbitMQ already ready on amqp://guest:guest@${bind_host}:${port}/%2F"
