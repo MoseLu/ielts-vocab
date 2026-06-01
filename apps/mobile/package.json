@@ -17,7 +17,7 @@
     "@ielts-vocab/app-core": "workspace:*",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "lucide-react-native": "^1.14.0",
-    "react": "19.1.0",
+    "react": "19.2.6",
     "react-native": "0.81.5",
     "react-native-svg": "^15.15.4",
     "react-native-video": "6.19.2",
@@ -36,7 +36,7 @@
     "@react-native/typescript-config": "^0.81.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.0",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.15",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
