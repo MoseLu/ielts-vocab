@@ -1,4 +1,5 @@
 import { WORD_MEANING_POS_RE } from '../../lib/wordMeaning'
+import { isInflectedListeningDistractor, isStrongListeningDistractor } from './listeningInflections'
 import type { ListeningConfusableCandidate, OptionItem, Word } from './types'
 
 export interface GenerateOptionsConfig {
@@ -323,6 +324,10 @@ export function buildPresetListeningOptions(
   candidates: ListeningOptionSource[],
 ): { options: OptionItem[]; correctIndex: number } {
   const normalizedCurrentWord = normalizeWordAnswer(currentWord.word)
+  const knownWordKeys = new Set([
+    normalizedCurrentWord,
+    ...candidates.map(candidate => normalizeWordAnswer(candidate.word)).filter(Boolean),
+  ])
   const distractors: Array<{ candidate: ListeningOptionSource; index: number }> = []
   const seenWords = new Set<string>()
 
@@ -331,6 +336,7 @@ export function buildPresetListeningOptions(
     if (!normalizedCandidateWord || normalizedCandidateWord === normalizedCurrentWord || seenWords.has(normalizedCandidateWord)) {
       continue
     }
+    if (isInflectedListeningDistractor(candidate, knownWordKeys)) continue
     seenWords.add(normalizedCandidateWord)
     distractors.push({ candidate, index })
   }
@@ -365,6 +371,9 @@ export function generateOptions(
   const currentWordKey = currentWord.word.trim().toLowerCase()
   const currentDefinitionKey = normalizeMeaningText(currentWord.definition)
   const currentListeningFamilyKey = isListeningMode ? normalizeListeningFamilyKey(currentWord) : ''
+  const knownListeningWordKeys = isListeningMode
+    ? new Set(allWords.map(word => normalizeWordAnswer(word.word)).filter(Boolean))
+    : new Set<string>()
   const getCandidateKey = (word: Word): string => (
     isMeaningMode
       ? word.word.trim().toLowerCase()
@@ -383,6 +392,7 @@ export function generateOptions(
 
     if (!wordKey || !definitionKey || (isListeningMode && !listeningFamilyKey)) return false
     if (wordKey === currentWordKey) return false
+    if (isListeningMode && isInflectedListeningDistractor(word, knownListeningWordKeys)) return false
     if (isListeningMode && listeningFamilyKey === currentListeningFamilyKey) return false
 
     if (isMeaningMode) {
@@ -405,12 +415,16 @@ export function generateOptions(
 
   let distractorWords: Word[] = []
   if (isListeningMode && candidates.length >= 3) {
-    distractorWords = candidates
+    const rankedListeningCandidates = candidates
       .map(word => ({
         word,
         score: listeningDistractorScore(currentWord, word, priorityWordMap.get(word.word.trim().toLowerCase())),
       }))
       .sort((left, right) => right.score - left.score)
+    const strongListeningCandidates = rankedListeningCandidates.filter(item => (
+      isStrongListeningDistractor(currentWord, item.word)
+    ))
+    distractorWords = (strongListeningCandidates.length >= 3 ? strongListeningCandidates : rankedListeningCandidates)
       .slice(0, 3)
       .map(item => item.word)
   } else if (priorityWordMap.size > 0 && candidates.length >= 3) {

@@ -6,6 +6,11 @@ from services import listening_confusables as listening_service
 def test_get_preset_listening_confusables_prefers_high_value_then_legacy(monkeypatch):
     monkeypatch.setattr(
         listening_service,
+        'load_allowed_ielts_word_keys',
+        lambda: {'strict', 'strike', 'string', 'stock', 'street'},
+    )
+    monkeypatch.setattr(
+        listening_service,
         'load_high_value_listening_confusable_index',
         lambda: {
             'strict': [
@@ -36,6 +41,44 @@ def test_get_preset_listening_confusables_prefers_high_value_then_legacy(monkeyp
     ]
 
 
+def test_get_preset_listening_confusables_filters_inflected_forms(monkeypatch):
+    monkeypatch.setattr(
+        listening_service,
+        'load_allowed_ielts_word_keys',
+        lambda: {'quit', 'quits', 'quitting', 'quitted', 'quiet', 'quota', 'quite'},
+    )
+    monkeypatch.setattr(
+        listening_service,
+        'load_high_value_listening_confusable_index',
+        lambda: {
+            'quit': [
+                {'word': 'quits', 'phonetic': '/kwɪts/', 'pos': 'v.', 'definition': '退出'},
+                {'word': 'quitting', 'phonetic': '/ˈkwɪtɪŋ/', 'pos': 'v.', 'definition': '离开；“quit”的现在分词'},
+                {'word': 'quiet', 'phonetic': '/ˈkwaɪət/', 'pos': 'adj.', 'definition': '安静的'},
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        listening_service,
+        'load_listening_confusable_index',
+        lambda: {
+            'quit': [
+                {'word': 'quitted', 'phonetic': '/ˈkwɪtɪd/', 'pos': 'v.', 'definition': '离开；“quit”的过去式和过去分词'},
+                {'word': 'quota', 'phonetic': '/ˈkwəʊtə/', 'pos': 'n.', 'definition': '配额'},
+                {'word': 'quite', 'phonetic': '/kwaɪt/', 'pos': 'adv.', 'definition': '相当'},
+            ]
+        },
+    )
+
+    result = listening_service.get_preset_listening_confusables('quit', limit=4)
+
+    assert [candidate['word'] for candidate in result] == [
+        'quiet',
+        'quota',
+        'quite',
+    ]
+
+
 def test_attach_preset_listening_confusables_uses_merged_candidates(monkeypatch):
     monkeypatch.setattr(
         listening_service,
@@ -57,7 +100,12 @@ def test_attach_preset_listening_confusables_uses_merged_candidates(monkeypatch)
     ]
 
 
-def test_get_preset_listening_confusables_skips_legacy_when_high_value_is_complete(monkeypatch):
+def test_get_preset_listening_confusables_uses_legacy_when_high_value_inflections_are_filtered(monkeypatch):
+    monkeypatch.setattr(
+        listening_service,
+        'load_allowed_ielts_word_keys',
+        lambda: {'semester', 'seminar', 'seminars', 'segment', 'seawater', 'signature'},
+    )
     monkeypatch.setattr(
         listening_service,
         'load_high_value_listening_confusable_index',
@@ -84,8 +132,9 @@ def test_get_preset_listening_confusables_skips_legacy_when_high_value_is_comple
 
     assert [candidate['word'] for candidate in result] == [
         'seminar',
-        'seminars',
         'segment',
+        'seawater',
+        'signature',
     ]
 
 
@@ -93,7 +142,7 @@ def test_get_preset_listening_confusables_filters_out_non_ielts_candidates(monke
     monkeypatch.setattr(
         listening_service,
         'load_allowed_ielts_word_keys',
-        lambda: {'quiet', 'quits'},
+        lambda: {'quiet', 'quits', 'quota', 'quite'},
     )
     monkeypatch.setattr(
         listening_service,
@@ -118,7 +167,31 @@ def test_get_preset_listening_confusables_filters_out_non_ielts_candidates(monke
 
     result = listening_service.get_preset_listening_confusables('quit', limit=4)
 
-    assert [candidate['word'] for candidate in result] == ['quiet', 'quits']
+    assert [candidate['word'] for candidate in result] == ['quiet', 'quota', 'quite']
+
+
+def test_attach_preset_listening_confusables_prefers_strong_confusables(monkeypatch):
+    monkeypatch.setattr(
+        listening_service,
+        'get_preset_listening_confusables',
+        lambda word, limit=None: [
+            {'word': 'guild', 'phonetic': '/gild/', 'pos': 'n.', 'definition': '协会'},
+            {'word': 'guy', 'phonetic': '/gai/', 'pos': 'n.', 'definition': '家伙'},
+            {'word': 'guise', 'phonetic': '/gaiz/', 'pos': 'n.', 'definition': '伪装'},
+            {'word': 'guile', 'phonetic': '/gail/', 'pos': 'n.', 'definition': '狡诈'},
+        ],
+    )
+
+    entry = listening_service.attach_preset_listening_confusables(
+        {'word': 'guide', 'phonetic': '/gaid/', 'pos': 'n.', 'definition': '向导'},
+        limit=3,
+    )
+
+    assert [candidate['word'] for candidate in entry['listening_confusables']] == [
+        'guise',
+        'guile',
+        'guy',
+    ]
 
 
 def test_rank_preset_listening_confusables_prioritizes_closer_distractors():

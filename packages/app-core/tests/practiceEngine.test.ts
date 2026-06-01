@@ -61,4 +61,33 @@ describe('mobile practice engine', () => {
     assert.ok(options.includes('动态的'))
     assert.match(buildCsv([{ word: 'a,b', definition: '"quoted"' }]), /"a,b"/)
   })
+
+  it('skips inflected distractors when building listening options', () => {
+    const listeningWord: MobileWord = {
+      ...word,
+      word: 'guide',
+      phonetic: '/gaid/',
+      definition: '向导',
+    }
+    const options = buildPracticeOptions(listeningWord, [
+      listeningWord,
+      { ...word, word: 'guiding', definition: '引导；“guide”的现在分词' },
+      { ...word, word: 'guided', definition: '有指导的；“guide”的过去式和过去分词' },
+      { ...word, word: 'guides', definition: '向导；“guide”的复数' },
+      { ...word, word: 'guy', phonetic: '/gai/', definition: '家伙' },
+      { ...word, word: 'guise', phonetic: '/gaiz/', definition: '伪装' },
+      { ...word, word: 'guile', phonetic: '/gail/', definition: '狡诈' },
+      { ...word, word: 'guild', phonetic: '/gild/', definition: '协会' },
+    ])
+
+    assert.equal(options.length, 4)
+    assert.ok(options.includes('向导'))
+    assert.ok(options.includes('家伙'))
+    assert.ok(options.includes('伪装'))
+    assert.ok(options.includes('狡诈'))
+    assert.ok(!options.includes('引导；“guide”的现在分词'))
+    assert.ok(!options.includes('有指导的；“guide”的过去式和过去分词'))
+    assert.ok(!options.includes('向导；“guide”的复数'))
+    assert.ok(!options.includes('协会'))
+  })
 })

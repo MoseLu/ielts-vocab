@@ -14,6 +14,7 @@ _allowed_ielts_word_keys_cache: set[str] | None = None
 _phonetic_overrides_cache: dict[str, str] | None = None
 _HIGH_VALUE_ONLY_THRESHOLD = 3
 _EXCLUDED_IELTS_CONFUSABLE_BOOK_IDS = {'ielts_confusable_match'}
+_LISTENING_INFLECTION_DEFINITION_RE = re.compile(r'(?:复数|现在分词|过去式|过去分词|第三人称单数|\bpl\.)', re.IGNORECASE)
 
 
 def _repo_root() -> Path:
@@ -118,6 +119,51 @@ def _load_confusable_index_file(path: Path) -> dict[str, list[dict]]:
             index[key] = candidates
 
     return index
+
+
+def _listening_inflection_base_keys(word: str | None) -> list[str]:
+    key = normalize_listening_confusable_key(word)
+    if not key or ' ' in key:
+        return []
+
+    keys: set[str] = set()
+
+    def add(value: str) -> None:
+        normalized = normalize_listening_confusable_key(value)
+        if normalized and normalized != key:
+            keys.add(normalized)
+
+    if key.endswith('ies') and len(key) > 4:
+        add(f'{key[:-3]}y')
+    if key.endswith('ves') and len(key) > 4:
+        add(f'{key[:-3]}f')
+        add(f'{key[:-3]}fe')
+    if re.search(r'(?:ches|shes|xes|zes|ses|oes)$', key) and len(key) > 4:
+        add(key[:-2])
+    if key.endswith('s') and len(key) > 3 and not re.search(r'(?:ss|us|is)$', key):
+        add(key[:-1])
+    if key.endswith('ing') and len(key) > 5:
+        stem = key[:-3]
+        add(stem)
+        add(f'{stem}e')
+        if len(stem) > 2 and stem[-1] == stem[-2]:
+            add(stem[:-1])
+    if key.endswith('ied') and len(key) > 4:
+        add(f'{key[:-3]}y')
+    if key.endswith('ed') and len(key) > 4:
+        stem = key[:-2]
+        add(stem)
+        add(f'{stem}e')
+        if len(stem) > 2 and stem[-1] == stem[-2]:
+            add(stem[:-1])
+
+    return list(keys)
+
+
+def _is_inflected_listening_candidate(candidate: dict, known_keys: set[str]) -> bool:
+    if _LISTENING_INFLECTION_DEFINITION_RE.search(str(candidate.get('definition') or '')):
+        return True
+    return any(base_key in known_keys for base_key in _listening_inflection_base_keys(candidate.get('word')))
 
 
 def load_listening_confusable_index() -> dict[str, list[dict]]:
@@ -227,14 +273,27 @@ def load_allowed_ielts_word_keys() -> set[str]:
     return _allowed_ielts_word_keys_cache
 
 
-def _filter_candidates_to_ielts_vocab(candidates: list[dict]) -> list[dict]:
+def _filter_candidates_to_ielts_vocab(candidates: list[dict], *, target_key: str = '') -> list[dict]:
     allowed = load_allowed_ielts_word_keys()
+    known_keys = set(allowed)
+    if target_key:
+        known_keys.add(target_key)
+    known_keys.update(
+        normalize_listening_confusable_key(candidate.get('word'))
+        for candidate in candidates
+        if normalize_listening_confusable_key(candidate.get('word'))
+    )
     if not allowed:
-        return candidates
+        return [
+            dict(candidate)
+            for candidate in candidates
+            if not _is_inflected_listening_candidate(candidate, known_keys)
+        ]
     return [
         dict(candidate)
         for candidate in candidates
         if normalize_listening_confusable_key(candidate.get('word')) in allowed
+        and not _is_inflected_listening_candidate(candidate, known_keys)
     ]
 
 
@@ -245,13 +304,14 @@ def get_preset_listening_confusables(word: str | None, limit: int | None = None)
 
     high_value_candidates = _filter_candidates_to_ielts_vocab(
         load_high_value_listening_confusable_index().get(key, []),
+        target_key=key,
     )
     if len(high_value_candidates) >= _HIGH_VALUE_ONLY_THRESHOLD:
         candidates = _merge_confusable_candidates(high_value_candidates)
     else:
         candidates = _merge_confusable_candidates(
             high_value_candidates,
-            _filter_candidates_to_ielts_vocab(load_listening_confusable_index().get(key, [])),
+            _filter_candidates_to_ielts_vocab(load_listening_confusable_index().get(key, []), target_key=key),
         )
     if limit is not None:
         candidates = candidates[:max(0, int(limit))]

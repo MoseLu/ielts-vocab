@@ -26,6 +26,7 @@ interface UsePracticePageEffectsParams {
   smartDimension: SmartDimension
   setSmartDimension: Dispatch<SetStateAction<SmartDimension>>
   vocabulary: Word[]
+  listeningOptionPool?: Word[]
   queue: number[]
   queueIndex: number
   currentWord: Word | undefined
@@ -68,6 +69,7 @@ export function usePracticePageEffects({
   smartDimension,
   setSmartDimension,
   vocabulary,
+  listeningOptionPool = [],
   queue,
   queueIndex,
   currentWord,
@@ -220,19 +222,32 @@ export function usePracticePageEffects({
         vocabulary,
         wrongWords,
       })
+      const listeningCandidates = listeningOptionPool.length ? listeningOptionPool : vocabulary
       if (hasCompleteListeningPresets) {
-        applyGeneratedOptions(buildPresetListeningOptions(currentWord, presetListeningWords))
+        const presetOptions = buildPresetListeningOptions(currentWord, presetListeningWords)
+        if (presetOptions.options.length >= 4) {
+          applyGeneratedOptions(presetOptions)
+        } else {
+          applyGeneratedOptions(generateOptions(
+            currentWord,
+            [currentWord, ...presetListeningWords, ...listeningCandidates, ...learnerProfile.priorityWords],
+            {
+              mode: 'listening',
+              priorityWords: [...presetListeningWords, ...learnerProfile.priorityWords],
+            },
+          ))
+        }
       } else if (presetListeningWords.length > 0) {
         applyGeneratedOptions(generateOptions(
           currentWord,
-          [currentWord, ...presetListeningWords, ...vocabulary, ...learnerProfile.priorityWords],
+          [currentWord, ...presetListeningWords, ...listeningCandidates, ...learnerProfile.priorityWords],
           {
             mode: 'listening',
             priorityWords: [...presetListeningWords, ...learnerProfile.priorityWords],
           },
         ))
       } else {
-        applyGeneratedOptions(generateOptions(currentWord, [currentWord, ...vocabulary, ...learnerProfile.priorityWords], {
+        applyGeneratedOptions(generateOptions(currentWord, [currentWord, ...listeningCandidates, ...learnerProfile.priorityWords], {
           mode: 'listening',
           priorityWords: learnerProfile.priorityWords,
         }))
@@ -269,6 +284,7 @@ export function usePracticePageEffects({
     settings.volume,
     smartDimension,
     userId,
+    listeningOptionPool,
     vocabulary,
   ])
 

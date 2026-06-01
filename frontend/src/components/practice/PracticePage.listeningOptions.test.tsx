@@ -242,6 +242,52 @@ describe('PracticePage listening options loading', () => {
       apiFetchMock.mock.calls.every(([url]) => !String(url).includes('/api/ai/similar-words')),
     ).toBe(true)
   })
+
+  it('falls back to generated distractors when all preset listening confusables are inflected forms', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
+    const vocabulary = [
+      {
+        word: 'guide',
+        phonetic: '/gaid/',
+        pos: 'n.',
+        definition: '向导',
+        listening_confusables: [
+          { word: 'guiding', phonetic: '/ˈgaɪdɪŋ/', pos: 'v.', definition: '引导；“guide”的现在分词' },
+          { word: 'guided', phonetic: '/ˈgaɪdɪd/', pos: 'v.', definition: '有指导的；“guide”的过去式和过去分词' },
+          { word: 'guides', phonetic: '/gaɪdz/', pos: 'n.', definition: '向导；“guide”的复数' },
+        ],
+      },
+      { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+      { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+      { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+      { word: 'guild', phonetic: '/gild/', pos: 'n.', definition: '协会' },
+    ]
+    fetchMock.mockResolvedValue({
+      json: async () => ({ vocabulary }),
+    })
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/progress') return Promise.resolve({})
+      throw new Error(`Unexpected url: ${url}`)
+    })
+    render(
+      <MemoryRouter>
+        <PracticePage currentDay={1} mode="listening" onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:')
+    })
+    expect(screen.getByTestId('options-state')).toHaveTextContent('向导')
+    expect(screen.getByTestId('options-state')).toHaveTextContent('家伙')
+    expect(screen.getByTestId('options-state')).toHaveTextContent('伪装')
+    expect(screen.getByTestId('options-state')).toHaveTextContent('狡诈')
+    expect(screen.getByTestId('options-state')).not.toHaveTextContent('现在分词')
+    expect(screen.getByTestId('options-state')).not.toHaveTextContent('过去式')
+    expect(screen.getByTestId('options-state')).not.toHaveTextContent('复数')
+    expect(screen.getByTestId('options-state')).not.toHaveTextContent('协会')
+  })
+
   it('falls back to meaning mode for custom-book chapters without listening presets', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
     const onModeChange = vi.fn()

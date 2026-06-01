@@ -49,6 +49,7 @@ export function usePracticePageState() {
   const [errorReviewRound, setErrorReviewRound] = useState(1)
   const [smartDimension, setSmartDimension] = useState<SmartDimension>('meaning')
   const vocabRef = useRef<Word[]>([])
+  const listeningOptionPoolRef = useRef<Word[]>([])
   const queueRef = useRef<number[]>([])
   const chapterGroupStartRef = useRef(0)
   const chapterQueueWordsRef = useRef<string[]>([])
@@ -72,6 +73,7 @@ export function usePracticePageState() {
     errorRoundResultsRef,
     favoriteQueueIndex,
     lastState,
+    listeningOptionPoolRef,
     noListeningPresets,
     options,
     optionsWordKey,

@@ -260,22 +260,22 @@ describe('PracticePage listening mode switch', () => {
         definition: '禁止',
         listening_confusables: [
           { word: 'fee', phonetic: '/fiː/', pos: 'n.', definition: '费用' },
-          { word: 'feelings', phonetic: '/ˈfiːlɪŋz/', pos: 'n.', definition: '情感；感觉；“feeling”的复数' },
+          { word: 'ferry', phonetic: '/ˈferi/', pos: 'n.', definition: '轮渡' },
         ],
       },
       { word: 'fee', phonetic: '/fiː/', pos: 'n.', definition: '费用' },
-      { word: 'feelings', phonetic: '/ˈfiːlɪŋz/', pos: 'n.', definition: '情感；感觉；“feeling”的复数' },
+      { word: 'ferry', phonetic: '/ˈferi/', pos: 'n.', definition: '轮渡' },
     ]
     const expandedVocabulary = [
       {
         ...limitedVocabulary[0],
         listening_confusables: [
           ...limitedVocabulary[0].listening_confusables,
-          { word: 'feed', phonetic: '/fiːd/', pos: 'v.', definition: '吃；喂；“feed”的现在分词；饲养；给食；' },
+          { word: 'fable', phonetic: '/ˈfeɪbəl/', pos: 'n.', definition: '寓言；故事' },
         ],
       },
       ...limitedVocabulary.slice(1),
-      { word: 'feed', phonetic: '/fiːd/', pos: 'v.', definition: '吃；喂；“feed”的现在分词；饲养；给食；' },
+      { word: 'fable', phonetic: '/ˈfeɪbəl/', pos: 'n.', definition: '寓言；故事' },
     ]
 
     generateOptionsMock
@@ -336,7 +336,7 @@ describe('PracticePage listening mode switch', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId('options-state')).toHaveTextContent('ready:ban:禁止|费用|情感；感觉；“feeling”的复数')
+      expect(screen.getByTestId('options-state')).toHaveTextContent('ready:ban:禁止|费用|轮渡')
     })
 
     await act(async () => {
@@ -347,7 +347,7 @@ describe('PracticePage listening mode switch', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('options-state')).toHaveTextContent(
-        'ready:ban:禁止|费用|情感；感觉；“feeling”的复数|吃；喂；“feed”的现在分词；饲养；给食；',
+        'ready:ban:禁止|费用|轮渡|寓言；故事',
       )
     })
     expect(generateOptionsMock).toHaveBeenCalledTimes(2)
