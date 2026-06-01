@@ -22,7 +22,10 @@ from platform_sdk.ai_speaking_assessment_application import (
     get_speaking_assessment_response,
     list_speaking_history_response,
 )
-from platform_sdk.ai_follow_read_assessment_application import evaluate_follow_read_response
+from platform_sdk.ai_follow_read_assessment_application import (
+    evaluate_follow_read_response,
+    explain_follow_read_response,
+)
 
 
 @ai_bp.route('/greet', methods=['POST'])
@@ -125,6 +128,12 @@ def speaking_evaluate(current_user):
 @token_required
 def follow_read_evaluate(current_user):
     return evaluate_follow_read_response(current_user, request.form, request.files)
+
+
+@ai_bp.route('/follow-read/explain', methods=['POST'])
+@token_required
+def follow_read_explain(current_user):
+    return explain_follow_read_response(current_user, request.get_json(silent=True) or {})
 
 
 @ai_bp.route('/speaking/history', methods=['GET'])
