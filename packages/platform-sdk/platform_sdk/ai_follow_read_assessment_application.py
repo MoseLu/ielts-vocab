@@ -116,7 +116,7 @@ def _segment_status_from_score(score: int) -> str:
 
 def _normalize_segment_score(value) -> int:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise SpeakingAssessmentError('评分模型缺少逐音标分数', status_code=502)
+        raise SpeakingAssessmentError('逐音素评分暂不可用，请重新跟读', status_code=502)
     return max(0, min(100, int(round(float(value)))))
 
 
@@ -178,7 +178,7 @@ def _segment_weight(segment) -> int:
 
 def _weighted_segment_score(segment_feedback: list[dict], segments) -> int:
     if not segment_feedback:
-        raise SpeakingAssessmentError('评分模型缺少逐音标评分', status_code=502)
+        raise SpeakingAssessmentError('逐音素评分暂不可用，请重新跟读', status_code=502)
     weights = [_segment_weight(segment) for segment in (segments or segment_feedback)]
     if len(weights) != len(segment_feedback):
         weights = [_segment_weight(item.get('text')) for item in segment_feedback]
@@ -223,7 +223,7 @@ def _normalize_segment_feedback(payload: dict, *, segments: list) -> list[dict]:
         return list(feedback_by_key.values())[:12]
     missing = [text for text in expected_texts if _normalize_alignment_key(text) not in feedback_by_key]
     if missing:
-        raise SpeakingAssessmentError('评分模型缺少完整分段反馈', status_code=502)
+        raise SpeakingAssessmentError('逐音素评分暂不可用，请重新跟读', status_code=502)
     return [feedback_by_key[_normalize_alignment_key(text)] for text in expected_texts][:12]
 
 

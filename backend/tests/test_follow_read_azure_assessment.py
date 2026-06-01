@@ -108,10 +108,23 @@ def test_azure_follow_read_pilot_word_flag_uses_manifest(monkeypatch, tmp_path):
     assert azure.is_azure_follow_read_pilot_word('phenomenon') is False
 
 
+def test_azure_follow_read_pilot_defaults_on_when_credentials_exist(monkeypatch, tmp_path):
+    pilot_path = tmp_path / 'pilot.json'
+    pilot_path.write_text(json.dumps({'words': ['nearly']}), encoding='utf-8')
+    monkeypatch.setenv('FOLLOW_READ_AZURE_PILOT_WORDS_PATH', str(pilot_path))
+    monkeypatch.delenv('FOLLOW_READ_AZURE_PILOT_ENABLED', raising=False)
+    monkeypatch.setenv('AZURE_SPEECH_KEY', 'test-key')
+    monkeypatch.setenv('AZURE_SPEECH_REGION', 'eastus')
+    azure.reset_azure_follow_read_pilot_cache()
+
+    assert azure.is_azure_follow_read_pilot_word('nearly') is True
+
+
 def test_follow_read_assessment_pilot_manifest_has_100_words():
     payload = json.loads(Path('vocabulary_data/follow_read_assessment_pilot.json').read_text(encoding='utf-8'))
 
     assert payload['assessment_version'] == 'azure-pilot-v1'
     assert len(payload['words']) == 100
     assert len(set(payload['words'])) == 100
+    assert 'nearly' in payload['words']
     assert all(word.isalpha() for word in payload['words'])

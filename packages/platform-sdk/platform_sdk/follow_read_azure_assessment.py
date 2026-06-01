@@ -49,6 +49,10 @@ def _truthy_env(name: str, default: str = '') -> bool:
     return (os.environ.get(name, default) or '').strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
+def _has_azure_speech_credentials() -> bool:
+    return bool((os.environ.get('AZURE_SPEECH_KEY') or '').strip() and (os.environ.get('AZURE_SPEECH_REGION') or '').strip())
+
+
 def _pilot_path() -> Path:
     configured = (os.environ.get('FOLLOW_READ_AZURE_PILOT_WORDS_PATH') or '').strip()
     return Path(configured).resolve() if configured else _DEFAULT_PILOT_PATH
@@ -71,7 +75,9 @@ def reset_azure_follow_read_pilot_cache() -> None:
 
 
 def is_azure_follow_read_pilot_word(word: str) -> bool:
-    if not _truthy_env('FOLLOW_READ_AZURE_PILOT_ENABLED'):
+    configured = os.environ.get('FOLLOW_READ_AZURE_PILOT_ENABLED')
+    enabled = _truthy_env('FOLLOW_READ_AZURE_PILOT_ENABLED') if configured is not None else _has_azure_speech_credentials()
+    if not enabled:
         return False
     return str(word or '').strip().lower() in _load_pilot_words(str(_pilot_path()))
 
