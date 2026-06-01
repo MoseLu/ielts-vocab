@@ -306,7 +306,7 @@ class TestBookChapters:
         chapters = res.get_json()['chapters']
 
         assert chapters[0]['title'] == '第1章 0001-0100'
-        assert chapters[-1]['title'] == '第93章 9201-9248'
+        assert chapters[92]['title'] == '第93章 9201-9248' and chapters[93]['title'].startswith('补充词汇 ')
         assert all(not re.fullmatch(r"\?\d+\?\s+\d{4}-\d{4}", chapter['title']) for chapter in chapters)
 
     def test_get_9400_extended_chapter_words(self, client):
