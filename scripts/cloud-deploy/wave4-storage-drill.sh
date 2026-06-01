@@ -35,7 +35,10 @@ DRILL_EXECUTE_ROLLBACK="${DRILL_EXECUTE_ROLLBACK:-false}"
 
 bool_is_true() {
   local raw="${1:-false}"
-  [[ "${raw,,}" == "true" ]]
+  case "${raw}" in
+    [Tt][Rr][Uu][Ee]) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 
@@ -145,7 +148,7 @@ run_example_audio_validation() {
   if bool_is_true "${DRILL_EXAMPLE_AUDIO_VERBOSE}"; then
     args+=("--verbose")
   fi
-  run_python_script "scripts/validate_example_audio_oss_parity.py" "${args[@]}"
+  run_python_script "scripts/validate_example_audio_oss_parity.py" ${args[@]+"${args[@]}"}
 }
 
 
@@ -173,7 +176,7 @@ run_word_audio_validation() {
   if bool_is_true "${DRILL_WORD_AUDIO_VERBOSE}"; then
     args+=("--verbose")
   fi
-  run_python_script "scripts/validate_word_audio_oss_parity.py" "${args[@]}"
+  run_python_script "scripts/validate_word_audio_oss_parity.py" ${args[@]+"${args[@]}"}
 }
 
 

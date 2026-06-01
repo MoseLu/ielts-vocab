@@ -94,7 +94,7 @@ require_command() {
 
 ensure_runtime() {
   if [[ ! -x "${runtime_prefix}/bin/python" ]]; then
-    "${setup_script}"
+    bash "${setup_script}"
   fi
   PATH="${runtime_prefix}/bin:${PATH}"
   export PATH
@@ -172,12 +172,12 @@ mkdir -p "${runtime_dir}"
 [[ -f "${backend_env}" ]] || { printf '[ERROR] Missing backend env file: %s\n' "${backend_env}" >&2; exit 1; }
 [[ -f "${microservices_env}" ]] || { printf '[ERROR] Missing microservices env file: %s\n' "${microservices_env}" >&2; exit 1; }
 
-"${postgres_script}" "${root}"
+bash "${postgres_script}" "${root}"
 if [[ "${skip_redis}" != "true" ]]; then
-  "${redis_script}" "${root}"
+  bash "${redis_script}" "${root}"
 fi
 if [[ "${skip_rabbit}" != "true" ]]; then
-  "${rabbit_script}" "${root}"
+  bash "${rabbit_script}" "${root}"
 fi
 
 python "${root}/scripts/run-service-schema-migrations.py" --env-file "${microservices_env}"

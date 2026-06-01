@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-default_runner="/Volumes/code/workspace/scripts/run-node22-command.sh"
-runner="${WORKSPACE_NODE22_RUNNER:-${default_runner}}"
+runner="${WORKSPACE_NODE22_RUNNER:-/Volumes/code/workspace/scripts/run-node22-command.sh}"
 
 if [[ "${CI:-}" == "true" && -z "${WORKSPACE_NODE22_RUNNER:-}" ]]; then
   exec "$@"

@@ -163,7 +163,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${PROD_SSH_HOST}" >> ~/.ssh/known_hosts
 
-      - name: Upload deployment scripts
+      - name: Upload deployment artifact and scripts
         shell: bash
         env:
           PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
@@ -173,12 +173,15 @@ jobs:
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "rm -rf '${remote_tmp}' && mkdir -p '${remote_tmp}'"
           artifact_upload_started="$(date +%s)"
           artifact_size="$(du -h "${ARTIFACT_PATH}" | awk '{print $1}')"
-          echo "Uploading release artifact (${artifact_size}) with rsync --partial --progress"
+          upload_attempt_timeout_seconds=900
+          rsync_io_timeout_seconds=300
+          echo "Uploading release artifact (${artifact_size}) with rsync --partial --append-verify --progress"
+          echo "Upload attempt timeout: ${upload_attempt_timeout_seconds}s; rsync I/O timeout: ${rsync_io_timeout_seconds}s"
           artifact_uploaded=false
           for attempt in 1 2 3; do
             echo "Release artifact upload attempt ${attempt}/3"
-            if timeout --signal=TERM --kill-after=15s 90s \
-              rsync --partial --progress --timeout=60 "${ARTIFACT_PATH}" \
+            if timeout --signal=TERM --kill-after=15s "${upload_attempt_timeout_seconds}s" \
+              rsync --partial --append-verify --progress --timeout="${rsync_io_timeout_seconds}" "${ARTIFACT_PATH}" \
               "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/ielts-vocab-release.tgz"; then
               artifact_uploaded=true
               break

@@ -4,7 +4,7 @@ Last updated: 2026-04-10 23:20:00 +08:00
 ## 目标定位
 - [进行中] 下一阶段后端目标不再是“长期保持微服务风格的分层模块化单体”，而是以当前单体为迁移源，升级为标准化微服务体系。
 - [进行中] 当前 `5000` 主 Flask 应用继续作为过渡期 gateway / BFF 和核心编排层存在，但它是迁移中的过渡角色，不是最终架构终点。
-- [进行中] 当前已拆出的 [speech_service.py](/F:/enterprise-workspace/projects/ielts-vocab/backend/speech_service.py) 继续作为第一批独立服务样板，用来验证独立部署、独立健康检查、代理转发和服务契约。
+- [进行中] 当前已拆出的 [speech_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/speech_service.py) 继续作为第一批独立服务样板，用来验证独立部署、独立健康检查、代理转发和服务契约。
 - [进行中] 所有新增后端代码仍需遵守 `route -> application service -> domain/provider -> repository/models`，避免在迁移期一边拆服务、一边重新把耦合写回主应用。
 
 ## 平台前置项
@@ -64,11 +64,11 @@ Last updated: 2026-04-10 23:20:00 +08:00
 - [已完成] 主后端 HTTP 入口已切换为 `waitress + Flask app` 模式，运行时已经具备“应用逻辑”和“HTTP 服务进程”分层的基础形态。
 - [已完成] 项目自有本地 PostgreSQL cluster 已在 `55432` 跑通，并为 `identity / learning-core / catalog-content / ai-execution / notes / tts-media / asr / admin-ops` 建立独立数据库与 role。
 - [已完成] split service 现在会自动加载 `backend/.env` 和 `backend/.env.microservices.local`，不再依赖手工 export 环境变量。
-- [已完成] 已新增 [start-microservices.ps1](/F:/enterprise-workspace/projects/ielts-vocab/start-microservices.ps1)，可一键拉起 `gateway-bff + 所有后端微服务 + ASR Socket.IO`，并在启动期间预占目标端口，避免 Windows 动态端口抢占后续服务端口。
-- [已完成] 已新增原子迁移清单 [backend-microservices-atomic-todo.md](/F:/enterprise-workspace/projects/ielts-vocab/docs/planning/backend-microservices-atomic-todo.md) 作为后续持续执行基线。
+- [已完成] 已新增 [start-microservices.ps1](/Volumes/code/workspace/products/ielts-vocab/start-microservices.ps1)，可一键拉起 `gateway-bff + 所有后端微服务 + ASR Socket.IO`，并在启动期间预占目标端口，避免 Windows 动态端口抢占后续服务端口。
+- [已完成] 已新增原子迁移清单 [backend-microservices-atomic-todo.md](/Volumes/code/workspace/products/ielts-vocab/docs/planning/backend-microservices-atomic-todo.md) 作为后续持续执行基线。
 - [已完成] 已新增共享服务表归属清单与 schema bootstrap：各 split service 不再对整套 SQLAlchemy 模型执行全局 `db.create_all()`。
-- [已完成] 已新增 [migrate-sqlite-to-microservice-postgres.py](/F:/enterprise-workspace/projects/ielts-vocab/scripts/migrate-sqlite-to-microservice-postgres.py)，并把当前 SQLite 数据同步到各服务 PostgreSQL 数据库。
-- [已完成] 已新增 [internal_service_auth.py](/F:/enterprise-workspace/projects/ielts-vocab/packages/platform-sdk/platform_sdk/internal_service_auth.py)，`gateway-bff` 现在会为下游服务注入内部身份头和短时内部 JWT。
+- [已完成] 已新增 [migrate-sqlite-to-microservice-postgres.py](/Volumes/code/workspace/products/ielts-vocab/scripts/migrate-sqlite-to-microservice-postgres.py)，并把当前 SQLite 数据同步到各服务 PostgreSQL 数据库。
+- [已完成] 已新增 [internal_service_auth.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/internal_service_auth.py)，`gateway-bff` 现在会为下游服务注入内部身份头和短时内部 JWT。
 - [已完成] `identity / notes / admin-ops / ai-execution / vocabulary` 的 split runtime 入口已切到 `platform-sdk` 自有 transport，不再直接引用 `routes.auth / routes.notes / routes.admin / routes.ai / routes.vocabulary`。
 - [已完成] `gateway-bff` 的 `/ready` 已接入关键下游服务探测，不再只代表网关进程自身可用。
 - [进行中] `identity / notes / admin-ops / learning-core / catalog-content` 的 application 或 transport 编排层已迁到 `platform-sdk` 自有模块；`identity` session/cookie/email helper、`catalog-content` 目录/词书/例句/详情/词表分页/易混自定义 wrapper、`learning-core` 词书库/进度/收藏/熟词 wrapper、`notes` 单词笔记写入 wrapper 已脱离高层 backend service 模块。`ai-execution` 现在也已切到 `platform-sdk/ai_routes` 本地 transport，`context/profile`、`assistant`、`custom-books`、`practice` 入口都已落到 `platform-sdk` 本地 application，且 `prompt/text/metric/summary helper`、`learning context`、`assistant memory`、`related notes recall`、`tool input validation`、`tool execution helper`、`session logging/review queue`、`wrong-words`、`quick-memory/smart-stats` sync、词汇池查询和 listening confusables 索引也都已落到本地实现；`platform-sdk` 已不再直接依赖 `services.ai_*`、`services.auth_session_helpers`、`services.books_catalog_service`、`services.books_confusable_service`、`services.books_progress_service`、`services.books_favorites_service`、`services.books_familiar_service`。剩余主要耦合点已收敛到底层 repository、provider/LLM adapter 和共享 learner-profile/stat helper。

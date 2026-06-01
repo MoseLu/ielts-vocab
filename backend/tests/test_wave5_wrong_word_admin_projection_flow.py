@@ -108,6 +108,12 @@ def _dimension_states(*, wrong_count: int, last_wrong_at: str, pass_streak: int 
             'last_wrong_at': None,
             'last_pass_at': None,
         },
+        'speaking': {
+            'history_wrong': 0,
+            'pass_streak': 0,
+            'last_wrong_at': None,
+            'last_pass_at': None,
+        },
         'dictation': {
             'history_wrong': 0,
             'pass_streak': 0,

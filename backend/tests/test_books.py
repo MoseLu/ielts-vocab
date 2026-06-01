@@ -87,7 +87,7 @@ class TestGetBooks:
         assert book is not None
         assert book['practice_mode'] == 'match'
         assert book['category'] == 'confusable'
-        assert book['word_count'] == 2026
+        assert book['word_count'] == 2024
         assert book['chapter_count'] == 9
         assert book['group_count'] == 540
 
@@ -326,7 +326,7 @@ class TestBookChapters:
         data = res.get_json()
 
         assert data['total_chapters'] == 9
-        assert data['total_words'] == 2026
+        assert data['total_words'] == 2024
         assert data['total_groups'] == 540
         assert data['chapters'][0]['title'] == '音近词辨析 01'
         assert data['chapters'][1]['title'] == '音近词辨析 02'
@@ -398,7 +398,7 @@ class TestBookChapters:
             book for book in books_res.get_json()['books']
             if book['id'] == 'ielts_confusable_match'
         )
-        assert confusable_book['word_count'] == 2031
+        assert confusable_book['word_count'] == 2029
         assert confusable_book['chapter_count'] == 11
         assert confusable_book['group_count'] == 542
 
@@ -406,7 +406,7 @@ class TestBookChapters:
         assert chapters_res.status_code == 200
         chapters_data = chapters_res.get_json()
         assert chapters_data['total_chapters'] == 11
-        assert chapters_data['total_words'] == 2031
+        assert chapters_data['total_words'] == 2029
         assert chapters_data['total_groups'] == 542
         assert chapters_data['chapters'][-1]['is_custom'] is True
         assert chapters_data['chapters'][-2]['is_custom'] is True

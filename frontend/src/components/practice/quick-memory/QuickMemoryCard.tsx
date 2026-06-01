@@ -95,7 +95,6 @@ export function QuickMemoryCard({
   onNext,
 }: QuickMemoryCardProps) {
   const isTestMode = modeVariant === 'test'
-  const choicesDisabled = isTestMode && !questionReady
   const resultLabel = choice === 'known'
     ? '✓ 认识'
     : wasFuzzy && isTestMode
@@ -104,7 +103,7 @@ export function QuickMemoryCard({
   const keyHints = (
     <div className="qm-key-hints">
       {canGoPrev && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
-      {phase === 'question' && (!isTestMode || knownChoiceAvailable) && (
+      {phase === 'question' && (!isTestMode || (questionReady && knownChoiceAvailable)) && (
         <span className="qm-key-hint"><kbd>→</kbd> 认识</span>
       )}
       {phase === 'reveal' && <span className="qm-key-hint"><kbd>→</kbd> 下一个</span>}
@@ -134,23 +133,27 @@ export function QuickMemoryCard({
                 ? countdown > 0 && <div className="qm-countdown-ring"><QuickMemoryCountdownRing seconds={countdown} total={totalSeconds} /></div>
                 : <div className="qm-audio-prompt"><SpeakerIcon /></div>}
               <p className="qm-hint">听完发音后判断熟悉度</p>
-              <div className="qm-choice-row">
-                {knownChoiceAvailable && (
-                  <button className="qm-btn qm-btn--known" onClick={onKnown} disabled={choicesDisabled}>
-                    <CheckIcon />
-                    认识
-                  </button>
-                )}
-                <button className="qm-btn qm-btn--familiar" onClick={onFamiliar} disabled={choicesDisabled}>
-                  <CheckIcon />
-                  不熟悉
-                </button>
-                <button className="qm-btn qm-btn--unknown" onClick={onUnknown} disabled={choicesDisabled}>
-                  <CrossIcon />
-                  不认识
-                </button>
-              </div>
-              {keyHints}
+              {questionReady && (
+                <>
+                  <div className="qm-choice-row">
+                    {knownChoiceAvailable && (
+                      <button className="qm-btn qm-btn--known" onClick={onKnown}>
+                        <CheckIcon />
+                        认识
+                      </button>
+                    )}
+                    <button className="qm-btn qm-btn--familiar" onClick={onFamiliar}>
+                      <CheckIcon />
+                      不熟悉
+                    </button>
+                    <button className="qm-btn qm-btn--unknown" onClick={onUnknown}>
+                      <CrossIcon />
+                      不认识
+                    </button>
+                  </div>
+                  {keyHints}
+                </>
+              )}
             </>
           )}
           {phase === 'question' && !isTestMode && (
