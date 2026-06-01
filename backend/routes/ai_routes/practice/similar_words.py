@@ -12,6 +12,16 @@ def _load_similarity_route_support():
     return get_global_vocab_pool, list_preset_listening_confusables, rank_preset_listening_confusables
 
 
+def _get_global_vocab_pool():
+    get_global_vocab_pool, _, _ = _load_similarity_route_support()
+    return get_global_vocab_pool()
+
+
+def get_preset_listening_confusables(word: str | None, limit: int | None = None) -> list[dict]:
+    _, list_preset_listening_confusables, _ = _load_similarity_route_support()
+    return list_preset_listening_confusables(word, limit=limit)
+
+
 def _levenshtein(a: str, b: str) -> int:
     m, n = len(a), len(b)
     dp = list(range(n + 1))
@@ -130,8 +140,8 @@ def _confusability_score(
 def get_similar_words(current_user: User):
     del current_user
     (
-        get_global_vocab_pool,
-        list_preset_listening_confusables,
+        _,
+        _,
         rank_preset_listening_confusables,
     ) = _load_similarity_route_support()
     target_word = (request.args.get('word') or '').strip()
@@ -144,7 +154,7 @@ def get_similar_words(current_user: User):
     target_group_key = request.args.get('group_key', '')
     n = min(int(request.args.get('n', 10)), 20)
 
-    pool = get_global_vocab_pool()
+    pool = _get_global_vocab_pool()
     tw_lower = target_word.lower()
     target_definition_norm = _normalize_meaning_text(target_definition)
     target_family_key = _normalize_listening_family_key(target_word, target_group_key)
@@ -158,7 +168,7 @@ def get_similar_words(current_user: User):
             'pos': target_pos,
             'definition': target_definition,
         },
-        list_preset_listening_confusables(target_word, limit=n * 2),
+        get_preset_listening_confusables(target_word, limit=n * 2),
     )
     for preset_word in ranked_preset_words:
         candidate_word = (preset_word.get('word') or '').strip()
