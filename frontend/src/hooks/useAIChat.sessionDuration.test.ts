@@ -60,7 +60,7 @@ describe('study session idle duration cap', () => {
     expect(body.durationCappedByActivity).toBe(true)
   })
 
-  it('uses the same idle cap for pagehide session flushes', () => {
+  it('uses the same idle cap for pagehide session flushes', async () => {
     const sendBeaconMock = vi.fn(() => false)
     const mockFetch = vi.fn(() =>
       Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })),
@@ -86,6 +86,8 @@ describe('study session idle duration cap', () => {
       })
 
       expect(sendBeaconMock).toHaveBeenCalledWith('/api/ai/log-session', expect.any(Blob))
+      await Promise.resolve()
+      await Promise.resolve()
       expect(mockFetch).toHaveBeenCalledWith('/api/ai/log-session', expect.objectContaining({ keepalive: true }))
       const body = JSON.parse(mockFetch.mock.calls[0][1].body as string)
       expect(body.durationSeconds).toBe(EXPECTED_DURATION_SECONDS)

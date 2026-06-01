@@ -17,7 +17,7 @@ const hooksState = vi.hoisted(() => ({
         pos: 'n.',
         definition: '阿尔法',
         wrong_count: 6,
-        first_wrong_at: '2026-04-07T02:00:00.000Z',
+        first_wrong_at: '2026-04-10T02:00:00.000Z',
         meaning_wrong: 3,
       },
       {
@@ -26,7 +26,7 @@ const hooksState = vi.hoisted(() => ({
         pos: 'n.',
         definition: '贝塔',
         wrong_count: 5,
-        first_wrong_at: '2026-04-07T04:00:00.000Z',
+        first_wrong_at: '2026-04-10T04:00:00.000Z',
         meaning_wrong: 2,
       },
     ],
