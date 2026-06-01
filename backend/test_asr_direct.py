@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 import subprocess
 from pathlib import Path
@@ -11,6 +12,10 @@ import imageio_ffmpeg
 env_path = Path(__file__).parent / '.env'
 load_dotenv(env_path)
 
+if __name__ != '__main__' and 'pytest' in sys.modules:
+    import pytest
+    pytest.skip("Manual DashScope ASR script; run directly with ASR_TEST_AUDIO_PATH.", allow_module_level=True)
+
 # Configure DashScope
 dashscope.api_key = os.environ.get('DASHSCOPE_API_KEY', '')
 dashscope.base_websocket_api_url = 'wss://dashscope.aliyuncs.com/api-ws/v1/inference'
@@ -19,7 +24,10 @@ dashscope.base_websocket_api_url = 'wss://dashscope.aliyuncs.com/api-ws/v1/infer
 FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
 
 # Test audio file
-audio_file = r'C:\Users\12081\Documents\录音\录音 (4).m4a'
+audio_file = os.environ.get(
+    'ASR_TEST_AUDIO_PATH',
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_audio', 'recording.m4a'),
+)
 
 print("Testing DashScope ASR with audio file...")
 print(f"Audio file: {audio_file}")
