@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import Body, File, Header, HTTPException, Query, Request, UploadFile
+from fastapi import Body, File, Header, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
 
 
@@ -242,6 +242,10 @@ def get_word_audio_proxy(
         if payload is not None:
             return _audio_content_response(payload, source='oss')
     if cache_only == '1':
+        if request.headers.get('x-audio-cache-probe') == '1':
+            response = Response(status_code=204)
+            response.headers['X-Audio-Source'] = 'missing'
+            return response
         return JSONResponse(status_code=404, content={'error': 'word audio cache miss'})
     generate_payload = {
         'text': request_info['word'],
@@ -249,6 +253,9 @@ def get_word_audio_proxy(
         'model': request_info['model'].split('@', 1)[0],
         'voice_id': request_info['voice'],
         'content_mode': 'word',
+        'word_audio_file_name': request_info['file_name'],
+        'word_audio_model': request_info['model'],
+        'word_audio_voice': request_info['voice'],
     }
     if request_info.get('phonetic'):
         generate_payload['phonetic'] = request_info['phonetic']

@@ -261,7 +261,7 @@ describe('PracticePage quick-memory review countdown', () => {
       'alpha',
       expect.anything(),
       expect.any(Function),
-      { sourcePreference: 'buffer' },
+      { sourcePreference: 'generated' },
     )
     expect(startSessionMock).toHaveBeenCalledTimes(1)
   })

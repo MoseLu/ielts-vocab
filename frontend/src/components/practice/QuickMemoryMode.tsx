@@ -26,7 +26,7 @@ import {
 const TIMER_SECONDS = 4
 const TEST_HIDE_KNOWN_AFTER_MS = 2500
 const TEST_AUTO_UNKNOWN_AFTER_MS = 4000
-const QUICK_MEMORY_PLAYBACK_OPTIONS = { sourcePreference: 'buffer' as const }
+const QUICK_MEMORY_PLAYBACK_OPTIONS = { sourcePreference: 'generated' as const }
 const QUICK_MEMORY_PRELOAD_OPTIONS = { includeBuffer: true, sourcePreference: 'buffer' as const }
 type RevealOptions = { countAsActivity?: boolean; shouldPlayRevealAudio?: boolean; isFuzzy?: boolean }
 
@@ -172,10 +172,6 @@ export default function QuickMemoryMode({
     }
 
     const actionAt = Date.now()
-    if (countAsActivity) {
-      await prepareLearningSession(actionAt)
-    }
-
     const isFuzzy = options.isFuzzy ?? revisitedSet.has(index)
 
     setChoice(picked)
@@ -207,17 +203,21 @@ export default function QuickMemoryMode({
       : [...prevResults, entry]
     resultsRef.current = nextResults
     setResults(nextResults)
+
+    if (picked === 'unknown' && answeredWord) {
+      onWrongWord(answeredWord)
+    }
+
+    if (countAsActivity) {
+      await prepareLearningSession(actionAt)
+    }
+
     syncSessionSnapshot({
       ...(countAsActivity ? { activeAt: actionAt } : {}),
       wordsStudied: nextResults.length,
       correctCount: nextResults.filter(result => result.choice === 'known').length,
       wrongCount: nextResults.filter(result => result.choice === 'unknown').length,
     })
-
-    if (picked === 'unknown' && answeredWord) {
-      onWrongWord(answeredWord)
-    }
-
   }, [clearQuestionTimers, currentWord, index, isTestMode, modeVariant, onQuickMemoryRecordChange, onWrongWord, prepareLearningSession, quickMemoryScope, revisitedSet, settings, syncSessionSnapshot])
 
   const beginAutoUnknownReveal = useCallback(() => {

@@ -303,8 +303,8 @@ def test_gateway_get_word_audio_proxy_generates_audio_on_cache_miss(monkeypatch)
         'text': 'hello',
         'provider': 'azure',
         'model': 'azure-rest:test',
-        'voice_id': 'en-GB-LibbyNeural',
-        'content_mode': 'word',
+        'voice_id': 'en-GB-LibbyNeural', 'content_mode': 'word',
+        'word_audio_file_name': 'hello.mp3', 'word_audio_model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer', 'word_audio_voice': 'en-GB-LibbyNeural',
     }
 
 
@@ -352,8 +352,8 @@ def test_gateway_get_word_audio_proxy_ignores_segmented_query_on_cache_miss(monk
         'text': 'phenomenon',
         'provider': 'azure',
         'model': 'azure-rest:test',
-        'voice_id': 'en-GB-RyanNeural',
-        'content_mode': 'word',
+        'voice_id': 'en-GB-RyanNeural', 'content_mode': 'word',
+        'word_audio_file_name': 'phenomenon.mp3', 'word_audio_model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer', 'word_audio_voice': 'en-GB-RyanNeural',
     }
 
 

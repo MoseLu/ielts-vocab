@@ -187,6 +187,39 @@ def test_resolve_word_audio_request_reviews_uncertain_phonetic(monkeypatch):
     assert '@ipa-review-' in candidates[0]['model']
 
 
+def test_media_upstream_calls_ignore_env_proxy_settings(monkeypatch):
+    module = _load_gateway_media_proxy_module()
+    captured_client_kwargs: list[dict[str, object]] = []
+
+    class FakeResponse:
+        status_code = 200
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            captured_client_kwargs.append(kwargs)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def request(self, *args, **kwargs):
+            return FakeResponse()
+
+    monkeypatch.setattr(module.httpx, 'Client', FakeClient)
+
+    module.call_media_upstream(
+        service_name='tts-media-service',
+        method='GET',
+        base_url='http://127.0.0.1:8105',
+        path='/v1/media/follow-read-word',
+        unavailable_detail='tts media service unavailable',
+    )
+
+    assert captured_client_kwargs[0]['trust_env'] is False
+
+
 def test_gateway_word_audio_metadata_proxy_returns_upstream_payload(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
@@ -335,5 +368,8 @@ def test_gateway_get_word_audio_proxy_passes_explicit_phonetic_on_cache_miss(mon
         'model': 'azure-rest:test',
         'voice_id': 'en-GB-LibbyNeural',
         'content_mode': 'word',
+        'word_audio_file_name': 'the-rest-of-ipa.mp3',
+        'word_audio_model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer@ipa-fc48b90b',
+        'word_audio_voice': 'en-GB-LibbyNeural',
         'phonetic': '/ðə rest əv/',
     }

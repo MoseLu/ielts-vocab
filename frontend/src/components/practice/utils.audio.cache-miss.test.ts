@@ -16,6 +16,8 @@ class TestAudio {
   volume = 1
   playbackRate = 1
   currentTime = 0
+  paused = true
+  ended = false
   readyState = 4
   onended: (() => void) | null = null
   onerror: (() => void) | null = null
@@ -63,13 +65,13 @@ describe('practice audio cache miss handling', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=missing-word&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
+      headers: { 'Cache-Control': 'no-cache', 'X-Audio-Cache-Probe': '1' },
       timeoutMs: 1_500,
     }))
     expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=missing-word&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
+      headers: { 'Cache-Control': 'no-cache', 'X-Audio-Cache-Probe': '1' },
       timeoutMs: 1_500,
     }))
 
@@ -97,14 +99,59 @@ describe('practice audio cache miss handling', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=cache-flaky&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
+      headers: { 'Cache-Control': 'no-cache', 'X-Audio-Cache-Probe': '1' },
       timeoutMs: 1_500,
     }))
     expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=cache-flaky&cache_only=1', expect.objectContaining({
       method: 'GET',
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
+      headers: { 'Cache-Control': 'no-cache', 'X-Audio-Cache-Probe': '1' },
       timeoutMs: 1_500,
+    }))
+
+    stopAudio()
+  })
+
+  it('generates word audio when playback explicitly allows cache-miss generation', async () => {
+    const audioBuffer = new Uint8Array([1, 2, 3]).buffer
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/api/tts/word-audio?w=generated-word') {
+        return {
+          ok: true,
+          headers: new Headers({ 'X-Audio-Bytes': '3', 'X-Audio-Cache-Key': 'generated-key' }),
+          arrayBuffer: async () => audioBuffer,
+        }
+      }
+      return { ok: false, headers: new Headers(), arrayBuffer: async () => new ArrayBuffer(0) }
+    })
+
+    Object.defineProperty(globalThis, 'fetch', { value: fetchMock, writable: true })
+    Object.defineProperty(globalThis, 'Audio', { value: TestAudio as unknown as typeof Audio, writable: true })
+    Object.defineProperty(globalThis.URL, 'createObjectURL', { value: vi.fn(() => 'blob:generated'), writable: true })
+    Object.defineProperty(globalThis.URL, 'revokeObjectURL', { value: vi.fn(), writable: true })
+
+    const started = await playWordAudio('generated-word', { playbackSpeed: '1', volume: '100' }, undefined, { sourcePreference: 'generated' })
+    await flushAudioWork()
+
+    expect(started).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/tts/word-audio?w=generated-word&cache_only=1', expect.objectContaining({
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache', 'X-Audio-Cache-Probe': '1' },
+      timeoutMs: 1_500,
+    }))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/tts/word-audio?w=generated-word&cache_only=1', expect.objectContaining({
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache', 'X-Audio-Cache-Probe': '1' },
+      timeoutMs: 1_500,
+    }))
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/tts/word-audio?w=generated-word', expect.objectContaining({
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+      timeoutMs: 12_000,
     }))
 
     stopAudio()

@@ -49,6 +49,36 @@ def test_gateway_head_word_audio_proxy_treats_transient_cache_errors_as_miss(mon
     assert 'x-audio-bytes' not in response.headers
 
 
+def test_gateway_get_word_audio_cache_probe_treats_cache_miss_as_empty_response(monkeypatch):
+    module = _load_gateway_module()
+    client = TestClient(module.app)
+
+    monkeypatch.setattr(
+        module,
+        '_resolve_word_audio_request_candidates',
+        lambda word, pronunciation_mode=None: [{
+            'word': word,
+            'normalized_word': 'hello',
+            'provider': 'azure',
+            'model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+            'voice': 'en-GB-LibbyNeural',
+            'file_name': 'hello.mp3',
+            'pronunciation_mode': 'word',
+        }],
+    )
+    monkeypatch.setattr(module, 'fetch_word_audio_content', lambda **kwargs: None)
+
+    response = client.get(
+        '/api/tts/word-audio',
+        params={'w': 'hello', 'cache_only': '1'},
+        headers={'X-Audio-Cache-Probe': '1'},
+    )
+
+    assert response.status_code == 204
+    assert response.headers['x-audio-source'] == 'missing'
+    assert response.content == b''
+
+
 def test_gateway_get_word_audio_proxy_generates_audio_after_transient_cache_failure(monkeypatch):
     module = _load_gateway_module()
     client = TestClient(module.app)
@@ -95,4 +125,7 @@ def test_gateway_get_word_audio_proxy_generates_audio_after_transient_cache_fail
         'model': 'azure-rest:test',
         'voice_id': 'en-GB-LibbyNeural',
         'content_mode': 'word',
+        'word_audio_file_name': 'hello.mp3',
+        'word_audio_model': 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+        'word_audio_voice': 'en-GB-LibbyNeural',
     }

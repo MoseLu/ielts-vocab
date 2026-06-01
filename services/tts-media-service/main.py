@@ -7,7 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from fastapi import Body, HTTPException, Query, Request
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -155,6 +155,101 @@ def _resolve_word_audio_metadata(*, file_name: str, model: str, voice: str):
     )
 
 
+def _word_audio_local_cache_path(file_name: str | None) -> Path | None:
+    resolved = (file_name or '').strip()
+    if not resolved or Path(resolved).name != resolved or not resolved.endswith('.mp3'):
+        return None
+    cache_dir = BACKEND_PATH / 'word_tts_cache'
+    cache_dir.mkdir(exist_ok=True)
+    return cache_dir / resolved
+
+
+def _valid_local_word_audio_path(file_name: str | None) -> Path | None:
+    path = _word_audio_local_cache_path(file_name)
+    if path is None or not path.exists():
+        return None
+    if runtime.is_probably_valid_mp3_file(path):
+        return path
+    runtime.remove_invalid_cached_audio(path)
+    return None
+
+
+def _local_word_audio_metadata(file_name: str):
+    path = _valid_local_word_audio_path(file_name)
+    if path is None:
+        return None
+    return {
+        'media_id': f'local:{path.name}',
+        'cache_hit': True,
+        'provider': 'local-cache',
+        'bucket_name': None,
+        'object_key': str(path),
+        'content_type': 'audio/mpeg',
+        'byte_length': path.stat().st_size,
+        'cache_key': runtime.local_cache_key(path),
+        'signed_url': None,
+        'signed_url_expires_at': None,
+    }
+
+
+def _local_word_audio_response(path: Path) -> Response:
+    response = Response(path.read_bytes(), media_type='audio/mpeg')
+    response.headers[_AUDIO_BYTES_HEADER] = str(path.stat().st_size)
+    response.headers[_AUDIO_CACHE_KEY_HEADER] = runtime.local_cache_key(path)
+    response.headers[_MEDIA_ID_HEADER] = f'local:{path.name}'
+    return response
+
+
+def _generate_word_audio_cache_response(request: Request, payload: dict, provider: str):
+    content_mode = str((payload or {}).get('content_mode') or '').strip().lower()
+    if content_mode not in {'word', 'word-segmented', 'phonetic-segments'}:
+        return None
+    path = _word_audio_local_cache_path(str((payload or {}).get('word_audio_file_name') or ''))
+    if path is None:
+        return None
+    cached_path = _valid_local_word_audio_path(path.name)
+    if cached_path is not None:
+        return _local_word_audio_response(cached_path)
+    text = str(payload.get('text') or '').strip()
+    voice = str(payload.get('word_audio_voice') or payload.get('voice_id') or '').strip()
+    cache_model = str(payload.get('word_audio_model') or payload.get('model') or '').strip()
+    synthesis_model = str(payload.get('model') or cache_model).split('@', 1)[0].strip()
+    phonetic = str(payload.get('phonetic') or '').strip() or None
+    try:
+        speed = float(payload.get('speed', 1.0))
+    except (TypeError, ValueError):
+        return JSONResponse(status_code=400, content={'error': 'invalid speed'})
+    try:
+        with tts_media_flask_app.app_context():
+            audio_bytes = runtime.synthesize_word_to_bytes(
+                text,
+                synthesis_model,
+                voice,
+                provider=provider,
+                speed=speed,
+                content_mode=content_mode,
+                phonetic=phonetic,
+            )
+        runtime.write_bytes_atomically(path, audio_bytes)
+        _record_tts_media_materialization(
+            request,
+            media_kind='word-audio',
+            media_id=path.name,
+            tts_provider=provider,
+            storage_provider='local-cache',
+            model=cache_model or synthesis_model,
+            voice=voice,
+            byte_length=len(audio_bytes),
+            generated_at=datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).replace(tzinfo=None),
+        )
+        return _local_word_audio_response(path)
+    except Exception as exc:
+        status_code = getattr(exc, 'status_code', 500)
+        if not isinstance(status_code, int) or status_code < 400 or status_code >= 600:
+            status_code = 500
+        return JSONResponse(status_code=status_code, content={'error': f'TTS error: {exc}'})
+
+
 app = create_service_app(
     service_name='tts-media-service',
     version='0.1.0',
@@ -179,6 +274,9 @@ def get_tts_voices(provider: str | None = Query(default=None)) -> dict:
 def generate_tts_audio(request: Request, payload: dict = Body(...)):
     provider = runtime.requested_tts_provider(payload)
     if provider != 'minimax':
+        word_audio_response = _generate_word_audio_cache_response(request, payload, provider)
+        if word_audio_response is not None:
+            return word_audio_response
         return runtime.generate_non_minimax_speech(
             payload,
             provider_override=provider,
@@ -199,7 +297,10 @@ def get_word_audio_metadata(
     expires_seconds = _signed_url_expires_seconds()
     metadata = _resolve_word_audio_metadata(file_name=file_name, model=model, voice=voice)
     if metadata is None:
-        raise HTTPException(status_code=404, detail='word audio object not found')
+        local_metadata = _local_word_audio_metadata(file_name)
+        if local_metadata is None:
+            raise HTTPException(status_code=404, detail='word audio object not found')
+        return local_metadata
     return {
         'media_id': metadata.object_key,
         'cache_hit': True,
@@ -230,7 +331,10 @@ def get_word_audio_content(
         metadata_cache_ttl_seconds=_metadata_cache_ttl_seconds(),
     )
     if payload is None:
-        raise HTTPException(status_code=404, detail='word audio payload not found')
+        local_path = _valid_local_word_audio_path(file_name)
+        if local_path is None:
+            raise HTTPException(status_code=404, detail='word audio payload not found')
+        return _local_word_audio_response(local_path)
     response = Response(payload.body, media_type=payload.content_type or 'application/octet-stream')
     response.headers[_AUDIO_BYTES_HEADER] = str(payload.byte_length)
     if payload.cache_key:

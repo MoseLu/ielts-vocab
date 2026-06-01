@@ -118,7 +118,7 @@ describe('TestMode', () => {
   it('starts with audio only and waits for playback completion before timing choices', async () => {
     renderTestMode()
 
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'generated' })
     expect(screen.queryByText('within')).toBeNull()
     expect(screen.queryByText('/wɪˈðɪn/')).toBeNull()
     expect(screen.queryByText('inside')).toBeNull()
@@ -183,6 +183,30 @@ describe('TestMode', () => {
     expect(JSON.parse(String((syncCall?.[1] as { body?: string })?.body ?? '{}'))).toMatchObject({
       source: 'quickmemory',
       sourceMode: 'test',
+    })
+  })
+
+  it('shows the reveal UI after one known click while session start is pending', async () => {
+    let resolveSession: (sessionId: number) => void = () => {}
+    startSessionMock.mockImplementationOnce(() => new Promise<number>(resolve => {
+      resolveSession = resolve
+    }))
+    renderTestMode()
+    completeInitialAudio()
+
+    await act(async () => {
+      screen.getByRole('button', { name: '认识' }).click()
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('✓ 认识')).toBeInTheDocument()
+    expect(screen.getByText('within')).toBeInTheDocument()
+    expect(screen.getByText('inside')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '认识' })).toBeNull()
+
+    await act(async () => {
+      resolveSession(1)
+      await Promise.resolve()
     })
   })
 })

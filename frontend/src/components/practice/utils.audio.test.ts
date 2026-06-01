@@ -122,7 +122,7 @@ function expectWordAudioFetchCall(
   expect(fetchMock).toHaveBeenNthCalledWith(index, url, expect.objectContaining({
     method,
     cache: 'no-store',
-    headers: { 'Cache-Control': 'no-cache' },
+    headers: url.includes('cache_only=1') ? { 'Cache-Control': 'no-cache', 'X-Audio-Cache-Probe': '1' } : { 'Cache-Control': 'no-cache' },
   }))
 }
 describe('practice audio cache', () => {
