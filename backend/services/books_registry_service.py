@@ -90,7 +90,7 @@ VOCAB_BOOKS = [
         'color': '#22C55E',
         'category': 'confusable',
         'level': 'advanced',
-        'word_count': 2026,
+        'word_count': 2024,
         'file': 'ielts_confusable_match.json',
         'study_type': 'ielts',
         'has_chapters': True,
