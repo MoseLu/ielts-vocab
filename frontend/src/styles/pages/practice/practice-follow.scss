@@ -1,83 +1,100 @@
 .practice-session-layout--follow {
-    background: var(--bg-color);
+    background: var(--bg-secondary);
 }
 
 .follow-mode {
     display: flex;
     flex: 1;
     min-height: 0;
+    height: 100%;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--size-28);
-    padding: clamp(var(--size-28), 4.2vw, var(--size-42)) clamp(var(--size-30), 5vw, var(--size-56)) clamp(var(--size-36), 6.2vw, var(--size-50));
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: var(--size-24);
+    padding: calc(var(--space-xl) + var(--size-8)) calc(var(--space-lg) + var(--size-2)) calc(var(--space-xl) + var(--size-8) + env(safe-area-inset-bottom, 0px));
+    background: var(--bg-secondary);
     color: var(--text-primary);
     overflow: hidden auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable both-edges;
+    scroll-padding-block: var(--size-24) calc(var(--size-24) + env(safe-area-inset-bottom, 0px));
 }
 
 .follow-stage {
-    width: min(100%, var(--practice-shell-max-width, var(--size-860)));
-    display: block;
+    width: 100%;
+    max-width: var(--practice-compact-max-width, var(--size-630));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: center;
+    margin-block: auto;
 }
 
 .follow-media-slot {
     display: none;
 }
 
+.follow-progress-track {
+    width: 100%;
+    height: var(--size-6);
+    background: var(--border);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--size-12);
+}
+
+.follow-progress-fill {
+    width: var(--progress-percent, 0%);
+    height: 100%;
+    background: var(--accent);
+    border-radius: var(--radius-full);
+    transition: width 0.35s ease;
+}
+
+.follow-progress-label {
+    margin-bottom: calc(var(--space-xl) + var(--size-2));
+    color: var(--text-tertiary);
+    font-size: var(--size-14);
+    font-weight: 500;
+}
+
 .follow-focus-panel {
     width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: var(--size-24);
-    padding: clamp(var(--size-32), 4.2vw, var(--size-36)) clamp(var(--size-28), 4vw, var(--size-34));
-    border-radius: var(--size-36);
-    background: var(--surface-elevated);
-    border: var(--size-1) solid var(--surface-border-strong);
-    box-shadow: var(--shadow-panel);
+    align-items: center;
+    gap: var(--size-22);
+    padding: var(--size-48) var(--size-42) var(--size-42);
+    border-radius: var(--radius-xl);
+    background: var(--bg-color);
+    border: var(--size-1) solid var(--border);
+    box-shadow: var(--shadow-lg);
+    animation: followCardIn 0.22s ease;
 }
 
-.follow-panel-top,
+@keyframes followCardIn {
+    from { opacity: 0; transform: translateY(var(--size-12)); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 .follow-controls {
     display: flex;
     align-items: center;
 }
 
-.follow-panel-top {
-    display: grid;
-    grid-template-columns: minmax(var(--size-96), 1fr) auto minmax(var(--size-96), 1fr);
-    gap: var(--size-12);
-    margin-bottom: var(--size-18);
-}
-
-.follow-mode-kicker {
-    justify-self: start;
-}
-
-.follow-progress {
-    justify-self: center;
-}
-
-.follow-mode-kicker,
-.follow-progress {
-    color: var(--text-tertiary);
-    font-size: var(--size-14);
-    font-weight: 700;
-    letter-spacing: 0;
-}
-
 .follow-favorite-slot {
-    min-width: var(--size-42);
+    width: 100%;
     display: flex;
     justify-content: flex-end;
+    margin-bottom: calc(var(--size-8) * -1);
 }
 
 .follow-word-row {
     max-width: 100%;
-    font-size: var(--size-72);
-    line-height: 1.08;
+    font-size: clamp(var(--size-44), 6.6vw, var(--size-64));
+    line-height: 1.1;
     font-weight: 800;
-    letter-spacing: 0;
+    letter-spacing: 0.01em;
     color: var(--text-primary);
     text-align: center;
     overflow-wrap: anywhere;
@@ -85,15 +102,27 @@
 
 .follow-word-part {
     color: inherit;
-    transition: color 0.18s ease, background 0.18s ease;
+    transition: color 0.18s ease;
 }
 
-.follow-word-part.is-past {
+.follow-word-part.is-past:not(.is-good):not(.is-ok):not(.is-weak) {
     color: var(--text-secondary);
 }
 
-.follow-word-part.is-active {
+.follow-word-part.is-active:not(.is-good):not(.is-ok):not(.is-weak) {
     color: var(--accent);
+}
+
+.follow-word-part.is-good {
+    color: var(--success);
+}
+
+.follow-word-part.is-ok {
+    color: var(--warning);
+}
+
+.follow-word-part.is-weak {
+    color: var(--error);
 }
 
 .follow-phonetic-row {
@@ -101,12 +130,12 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--size-8);
-    min-height: var(--size-42);
+    min-height: var(--size-34);
     align-items: center;
 }
 
 .follow-phonetic-chip {
-    min-height: var(--size-32);
+    min-height: var(--size-30);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -132,19 +161,37 @@
 
 .follow-definition-row {
     margin: 0 auto;
-    width: min(100%, var(--size-760));
-    padding-top: var(--size-20);
-    border-top: var(--size-1) solid var(--border);
+    width: 100%;
+    padding-top: 0;
+    border-top: none;
     color: var(--text-secondary);
     font-size: var(--size-18);
     line-height: 1.7;
     justify-content: center;
 }
 
+.follow-definition-row.word-meaning-groups {
+    align-items: center;
+    text-align: center;
+}
+
+.follow-definition-row .word-meaning-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 100%;
+    row-gap: var(--size-4);
+}
+
+.follow-definition-row .word-meaning-group__text {
+    text-align: center;
+}
+
 .follow-status-line,
 .follow-recording-note {
     margin: 0 auto;
-    width: min(100%, var(--size-760));
+    width: 100%;
     color: var(--text-tertiary);
     font-size: var(--size-14);
     text-align: center;
@@ -186,15 +233,104 @@
     color: var(--error);
 }
 
+.follow-waveform {
+    width: min(100%, var(--size-560));
+    height: var(--size-64);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--size-14);
+    border-radius: var(--radius-full);
+    background: var(--bg-secondary);
+    border: var(--size-1) solid var(--border);
+}
+
+.follow-waveform canvas {
+    display: block;
+    width: 100%;
+    height: var(--size-42);
+}
+
+.follow-score-card {
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--size-12);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    text-align: center;
+    box-shadow: none;
+}
+
+.follow-score-card__summary {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--size-12);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: center;
+}
+
+.follow-score-card--pass {
+    color: var(--success);
+}
+
+.follow-score-card--near_pass {
+    color: var(--warning);
+}
+
+.follow-score-card--needs_work {
+    color: var(--error);
+}
+
+.follow-score-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--size-10);
+    flex: 0 0 auto;
+    font-weight: 800;
+    color: currentColor;
+}
+
+.follow-score-card__header strong {
+    width: var(--size-46);
+    height: var(--size-46);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: var(--surface-elevated);
+    color: currentColor;
+    font-size: var(--size-22);
+    box-shadow: var(--shadow-sm);
+}
+
+.follow-score-card__text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    text-align: left;
+}
+
 .follow-controls {
     justify-content: center;
     gap: var(--size-14);
-    width: min(100%, var(--size-760));
-    padding: var(--size-10);
-    border-radius: var(--radius-full);
-    background: var(--surface-elevated);
-    border: var(--size-1) solid var(--surface-border-strong);
-    box-shadow: var(--shadow-sm);
+    width: 100%;
+    margin-top: var(--size-8);
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
 .follow-nav-btn,
@@ -285,16 +421,20 @@
 @media (max-width: 860px) {
     .follow-mode {
         justify-content: flex-start;
-        padding: var(--size-16) var(--size-14) calc(var(--size-100) + env(safe-area-inset-bottom));
+        padding: var(--size-16) var(--size-14) calc(var(--size-16) + env(safe-area-inset-bottom));
+    }
+
+    .follow-stage {
+        margin-block: 0;
+    }
+
+    .follow-progress-label {
+        margin-bottom: var(--size-16);
     }
 
     .follow-focus-panel {
-        border-radius: var(--size-26);
-        padding: var(--size-30) var(--size-20);
-    }
-
-    .follow-panel-top {
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        padding: var(--size-30) var(--size-20) var(--size-28);
+        gap: var(--size-16);
     }
 
     .follow-word-row {
@@ -303,24 +443,24 @@
 
     .follow-definition-row,
     .follow-status-line,
-    .follow-recording-note {
+    .follow-recording-note,
+    .follow-waveform,
+    .follow-score-card {
         width: 100%;
+    }
+
+    .follow-score-card {
+        align-items: flex-start;
+        flex-direction: column;
+        text-align: left;
     }
 
     .follow-controls {
         display: grid;
-        grid-template-columns:
-            minmax(var(--size-72), 1fr)
-            minmax(var(--size-104), 1.1fr)
-            minmax(var(--size-104), 1.1fr)
-            minmax(var(--size-72), 1fr);
-        position: fixed;
-        left: var(--size-12);
-        right: var(--size-12);
-        bottom: calc(var(--size-12) + env(safe-area-inset-bottom));
-        width: auto;
+        grid-template-columns: repeat(auto-fit, minmax(var(--size-86), 1fr));
+        position: static;
+        width: 100%;
         gap: var(--size-8);
-        z-index: var(--layer-sticky);
     }
 
     .follow-nav-btn {

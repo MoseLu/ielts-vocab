@@ -1,0 +1,83 @@
+.follow-score-card__summary small {
+    color: var(--text-tertiary);
+    font-size: var(--size-12);
+    white-space: nowrap;
+}
+
+.follow-score-details {
+    width: 100%;
+    display: grid;
+    gap: var(--size-12);
+    padding: var(--size-14);
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+    border: var(--size-1) solid var(--border);
+    color: var(--text-primary);
+}
+
+.follow-score-dimensions,
+.follow-phoneme-details {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--size-8);
+}
+
+.follow-score-dimensions span {
+    padding: var(--size-5) var(--size-9);
+    border-radius: var(--radius-full);
+    background: var(--surface-elevated);
+    color: var(--text-secondary);
+    font-size: var(--size-12);
+}
+
+.follow-phoneme-detail {
+    min-width: var(--size-64);
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    gap: var(--size-4) var(--size-8);
+    padding: var(--size-8) var(--size-10);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+    border: var(--size-1) solid var(--border);
+}
+
+.follow-phoneme-detail strong,
+.follow-phoneme-detail span {
+    color: currentColor;
+}
+
+.follow-phoneme-detail small {
+    grid-column: 1 / -1;
+    color: var(--text-tertiary);
+    font-size: var(--size-11);
+}
+
+.follow-phoneme-detail.is-good {
+    color: var(--success);
+    border-color: rgba(var(--success-rgb), var(--alpha-24));
+}
+
+.follow-phoneme-detail.is-ok {
+    color: var(--warning);
+    border-color: var(--warning);
+}
+
+.follow-phoneme-detail.is-weak {
+    color: var(--error);
+    border-color: rgba(var(--error-rgb), var(--alpha-24));
+}
+
+@media (max-width: 860px) {
+    .follow-score-card__summary {
+        align-items: flex-start;
+        flex-direction: column;
+        text-align: left;
+    }
+
+    .follow-score-dimensions,
+    .follow-phoneme-details {
+        justify-content: flex-start;
+    }
+}
