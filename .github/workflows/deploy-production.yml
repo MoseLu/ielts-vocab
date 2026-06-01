@@ -234,3 +234,28 @@ jobs:
           smoke_host="${PROD_SMOKE_HOST:-axiomaticworld.com}"
           remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; cleanup(){ run_privileged rm -rf '${REMOTE_TMP}'; }; trap cleanup EXIT; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' SMOKE_HOST='${smoke_host}' bash '${REMOTE_TMP}/deploy-release-artifact.sh' '${REMOTE_TMP}/ielts-vocab-release.tgz' '${COMMIT_SHA}'"
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "${remote_cmd}"
+
+      - name: Close deployed feature wish tickets
+        shell: bash
+        env:
+          FEATURE_WISH_CLOSEOUT_ENABLED: ${{ vars.FEATURE_WISH_CLOSEOUT_ENABLED }}
+          FEATURE_WISH_API_BASE: ${{ vars.FEATURE_WISH_API_BASE }}
+          FEATURE_WISH_API_TOKEN: ${{ secrets.FEATURE_WISH_API_TOKEN }}
+        run: |
+          if [[ "${FEATURE_WISH_CLOSEOUT_ENABLED:-}" != "true" ]]; then
+            echo "Feature wish closeout is disabled"
+            exit 0
+          fi
+          if [[ -z "${FEATURE_WISH_API_TOKEN:-}" ]]; then
+            echo "FEATURE_WISH_API_TOKEN is empty; skipping feature wish closeout"
+            exit 0
+          fi
+          ticket_ids="$(python3 scripts/ops/feature-wish-workflow.py extract --rev HEAD)"
+          if [[ -z "${ticket_ids}" ]]; then
+            echo "No feature_wish tickets found on deployed commit"
+            exit 0
+          fi
+          while IFS= read -r ticket_id; do
+            [[ -n "${ticket_id}" ]] || continue
+            python3 scripts/ops/feature-wish-workflow.py mark --id "${ticket_id}" --status done
+          done <<< "${ticket_ids}"
