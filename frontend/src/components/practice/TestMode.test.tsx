@@ -122,12 +122,12 @@ describe('TestMode', () => {
     expect(screen.queryByText('within')).toBeNull()
     expect(screen.queryByText('/wɪˈðɪn/')).toBeNull()
     expect(screen.queryByText('inside')).toBeNull()
-    expect(screen.getByRole('button', { name: '认识' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '不熟悉' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '不认识' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: '认识' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '不熟悉' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '不认识' })).toBeNull()
 
     await act(async () => { await vi.advanceTimersByTimeAsync(5000) })
-    expect(screen.getByRole('button', { name: '认识' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '认识' })).toBeNull()
     expect(screen.queryByText('✗ 不认识')).toBeNull()
 
     completeInitialAudio()
