@@ -2,6 +2,20 @@
 
 All notable product, runtime, and operational changes are recorded here.
 
+## [1.2.6] - 2026-06-01
+
+### Fixed
+- Kept listening-choice distractors genuinely confusable by excluding inflection-only forms such as `-ing`, `-ed`, and plural variants while preserving close sound-alike and spelling-alike options.
+- Allowed missing word audio to be generated without blocking quick recall, with cache fallback coverage for gateway and TTS media paths.
+- Kept local internal service calls off ambient proxy settings so readiness and AI execution clients stay on the local runtime path.
+- Tightened frontend TypeScript boundaries for exam workspaces, selection lookup CSS variables, managed audio error handling, game word payloads, and legacy storage migration tests.
+
+### Operations
+- Tied release closeout to deployed feature-wish tickets so shipped requests can be marked consistently after production deployment.
+
+### Validation
+- Verified listening-choice, word-audio fallback, feature-wish workflow, frontend typecheck, frontend build, repo guards, and release-risk test coverage before release.
+
 ## [1.2.4] - 2026-05-23
 
 ### Fixed
