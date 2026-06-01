@@ -134,7 +134,7 @@ def test_follow_read_payload_requires_complete_segment_feedback():
         }, ['phe', 'no'])
     except ai_follow_read_assessment_application.SpeakingAssessmentError as exc:
         assert exc.status_code == 502
-        assert '完整分段反馈' in str(exc)
+        assert str(exc) == '逐音素评分暂不可用，请重新跟读'
     else:
         raise AssertionError('expected missing segment feedback to fail')
 
