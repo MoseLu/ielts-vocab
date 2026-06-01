@@ -92,7 +92,7 @@ Enable it with production environment configuration:
 
 - `FEATURE_WISH_CLOSEOUT_ENABLED=true`
 - `FEATURE_WISH_API_BASE=https://axiomaticworld.com`
-- `FEATURE_WISH_API_TOKEN=<admin bearer token secret>`
+- `FEATURE_WISH_API_TOKEN=<admin API token secret>`
 
 The closeout step scans the deployed commit for `Ticket: feature_wish:<id>` and
 PATCHes each ticket to `done`. If the variables or token are absent, the step
