@@ -267,7 +267,6 @@ export function useCreateCustomBookPage() {
       }
 
       const incompleteCount = created.book?.incomplete_word_count ?? 0
-      const createdCount = Math.max(1, created.created_count ?? chapters.filter(chapter => chapter.entries.length > 0).length)
       const successMessage = isEditMode
         ? (
             incompleteCount > 0

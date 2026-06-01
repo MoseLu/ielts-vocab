@@ -185,7 +185,7 @@ function buildListeningBlocks(section: ExamSection): WorkspaceBlock[] {
   ]
 
   return ranges
-    .map((range, index) => {
+    .map<WorkspaceBlock | null>((range, index) => {
       const questions = section.questions.filter(question => {
         const number = normalizeQuestionNumber(question)
         return number >= range.start && number <= range.end
@@ -209,7 +209,7 @@ function buildListeningBlocks(section: ExamSection): WorkspaceBlock[] {
         trackTitle: track?.title || range.label,
       }
     })
-    .filter((item): item is WorkspaceBlock => Boolean(item))
+    .filter((item): item is WorkspaceBlock => item !== null)
 }
 
 function buildReadingBlocks(section: ExamSection): WorkspaceBlock[] {

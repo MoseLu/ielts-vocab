@@ -5,7 +5,7 @@ import { Scrollbar } from '../../ui/Scrollbar'
 import { useHeader } from '../../../composables/layout/navigation/useHeader'
 import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 import HeaderHelpModal from './HeaderHelpModal'
-import type { HeaderProps, PracticeMode } from './Header.types'
+import type { HeaderProps } from './Header.types'
 
 export type { HeaderProps, PracticeMode, User } from './Header.types'
 

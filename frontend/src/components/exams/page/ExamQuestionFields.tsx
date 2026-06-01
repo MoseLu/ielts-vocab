@@ -145,7 +145,7 @@ export function ExamQuestionFields({
       {renderObjectiveFeedback(question, response)}
       {question.questionType === 'writing_prompt' && renderWritingFeedback(response)}
 
-      {!disabled && question.questionType !== 'speaking_prompt' && (
+      {!disabled && (
         <div className="exam-question-fields__hint">输入后会自动保存。</div>
       )}
     </div>

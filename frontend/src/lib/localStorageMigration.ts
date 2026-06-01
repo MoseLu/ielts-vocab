@@ -111,7 +111,7 @@ function normalizeChapterProgress(value: unknown): unknown[] {
         ...raw,
       }
     })
-    .filter((record): record is Record<string, unknown> => record !== null)
+    .filter(record => record !== null)
 }
 
 function normalizeDayProgress(value: unknown): unknown[] {

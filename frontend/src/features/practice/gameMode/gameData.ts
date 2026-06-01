@@ -181,7 +181,10 @@ export function buildWordPayload(word: GameCampaignWord | null | undefined) {
     definition: word.definition,
     chapter_id: word.chapter_id ?? undefined,
     chapter_title: word.chapter_title ?? undefined,
-    listening_confusables: word.listening_confusables,
+    listening_confusables: word.listening_confusables?.map(candidate => ({
+      ...candidate,
+      group_key: candidate.group_key ?? undefined,
+    })),
     examples: word.examples,
   } satisfies Partial<Word>
 }
