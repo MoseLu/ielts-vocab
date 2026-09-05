@@ -181,6 +181,7 @@ def test_release_artifact_path_builds_with_and_uploads_oss_assets():
     assert "cat > '${remote_tmp}/ielts-vocab-release.tgz'" not in workflow
     assert 'artifact_upload_started=' in workflow
     assert 'FRONTEND_ASSET_OSS_PUBLIC_BASE_URL' in workflow
+    assert 'PUBLIC_WEB_ORIGINS' in workflow
     assert 'FRONTEND_ASSET_OSS_PREFIX' in workflow
     assert 'FRONTEND_ASSET_OSS_CORS_ORIGINS' in workflow
     assert 'FRONTEND_ASSET_OSS_CONNECT_TIMEOUT_SECONDS' in workflow

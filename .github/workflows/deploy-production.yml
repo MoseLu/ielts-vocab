@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 45
     environment:
       name: production
-      url: https://axiomaticworld.com
+      url: ${{ vars.PROD_PUBLIC_URL || 'https://axiomaticworld.com' }}
     permissions:
       contents: read
     steps:
@@ -131,6 +131,7 @@ jobs:
         env:
           FRONTEND_ASSET_BASE_URL: ${{ vars.FRONTEND_ASSET_BASE_URL }}
           VITE_ASSET_BASE_URL: ${{ vars.VITE_ASSET_BASE_URL }}
+          PUBLIC_WEB_ORIGINS: ${{ vars.PUBLIC_WEB_ORIGINS }}
           FRONTEND_ASSET_OSS_ENABLED: ${{ vars.FRONTEND_ASSET_OSS_ENABLED }}
           FRONTEND_ASSET_OSS_PUBLIC_BASE_URL: ${{ vars.FRONTEND_ASSET_OSS_PUBLIC_BASE_URL }}
           FRONTEND_ASSET_OSS_PREFIX: ${{ vars.FRONTEND_ASSET_OSS_PREFIX }}
@@ -232,10 +233,12 @@ jobs:
           PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
           PROD_APP_HOME: ${{ vars.PROD_APP_HOME }}
           PROD_SMOKE_HOST: ${{ vars.PROD_SMOKE_HOST }}
+          IELTS_PUBLIC_HOST: ${{ vars.IELTS_PUBLIC_HOST }}
         run: |
           app_home="${PROD_APP_HOME:-/opt/ielts-vocab}"
-          smoke_host="${PROD_SMOKE_HOST:-axiomaticworld.com}"
-          remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; cleanup(){ run_privileged rm -rf '${REMOTE_TMP}'; }; trap cleanup EXIT; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' SMOKE_HOST='${smoke_host}' bash '${REMOTE_TMP}/deploy-release-artifact.sh' '${REMOTE_TMP}/ielts-vocab-release.tgz' '${COMMIT_SHA}'"
+          public_host="${IELTS_PUBLIC_HOST:-axiomaticworld.com}"
+          smoke_host="${PROD_SMOKE_HOST:-${public_host}}"
+          remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; cleanup(){ run_privileged rm -rf '${REMOTE_TMP}'; }; trap cleanup EXIT; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' IELTS_PUBLIC_HOST='${public_host}' SMOKE_HOST='${smoke_host}' bash '${REMOTE_TMP}/deploy-release-artifact.sh' '${REMOTE_TMP}/ielts-vocab-release.tgz' '${COMMIT_SHA}'"
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "${remote_cmd}"
 
       - name: Close deployed feature wish tickets

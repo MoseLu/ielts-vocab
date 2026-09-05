@@ -2,6 +2,8 @@
 
 一个面向 IELTS 词汇学习的全栈 Web 应用，包含词书学习、多练习模式、AI 助手、学习日志、每日总结、学习画像，以及独立语音识别服务。
 
+生产域名通过 `IELTS_PUBLIC_HOST` / `PROD_SMOKE_HOST` 配置。当前默认值保留 `axiomaticworld.com` 以兼容旧环境；多项目部署时使用 `ielts.axiomaticworld.com` 等项目子域名，不占用父域名根入口。
+
 ## 当前能力
 
 - 词书学习：支持词书、章节、单词详情、收藏/熟词/易混词等学习入口。

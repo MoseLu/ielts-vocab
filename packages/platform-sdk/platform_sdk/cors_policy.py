@@ -54,7 +54,8 @@ def build_cors_origins(environ: Mapping[str, str] | None = None) -> list[str]:
             raise ValueError('CORS_ORIGINS=* is not allowed when APP_ENV is production or COOKIE_SECURE=true')
         return ['*']
 
-    defaults = list(PUBLIC_WEB_ORIGINS)
+    configured_public = _split_csv(active_env.get('PUBLIC_WEB_ORIGINS', ''))
+    defaults = configured_public or list(PUBLIC_WEB_ORIGINS)
     include_local_defaults = (
         not production_like
         or _env_flag(active_env, 'CORS_INCLUDE_LOCAL_DEV_ORIGINS')

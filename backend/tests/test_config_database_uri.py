@@ -61,6 +61,7 @@ def _clear_database_env(monkeypatch):
         'ENV',
         'COOKIE_SECURE',
         'CORS_ORIGINS',
+        'PUBLIC_WEB_ORIGINS',
         'CORS_INCLUDE_LOCAL_DEV_ORIGINS',
         'ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES',
         'ALLOW_SHARED_SPLIT_SERVICE_SQLITE',
@@ -254,6 +255,16 @@ def test_development_cors_defaults_keep_local_preview_origins(monkeypatch):
     assert 'https://axiomaticworld.com' in config.Config.CORS_ORIGINS
     assert 'http://127.0.0.1:3002' in config.Config.CORS_ORIGINS
     assert 'http://localhost:5173' in config.Config.CORS_ORIGINS
+
+
+def test_secure_runtime_uses_project_public_web_origins(monkeypatch):
+    _clear_database_env(monkeypatch)
+    monkeypatch.setenv('COOKIE_SECURE', 'true')
+    monkeypatch.setenv('PUBLIC_WEB_ORIGINS', 'https://ielts.axiomaticworld.com')
+
+    config = _reload_config(monkeypatch)
+
+    assert config.Config.CORS_ORIGINS == ['https://ielts.axiomaticworld.com']
 
 
 def test_secure_runtime_rejects_wildcard_cors(monkeypatch):
