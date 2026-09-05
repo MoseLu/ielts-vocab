@@ -164,7 +164,7 @@ class Config:
     # origins are explicitly re-enabled for a controlled diagnostic session.
     CORS_ORIGINS = _build_cors_origins()
 
-    # Reverse-proxy handling for the documented natapp -> nginx -> Flask chain.
+    # Reverse-proxy handling for the documented project-domain -> nginx -> Flask chain.
     TRUST_PROXY_HEADERS = os.environ.get('TRUST_PROXY_HEADERS', 'true').lower() == 'true'
     PROXY_FIX_X_FOR = int(os.environ.get('PROXY_FIX_X_FOR', '2'))
     PROXY_FIX_X_PROTO = int(os.environ.get('PROXY_FIX_X_PROTO', '1'))

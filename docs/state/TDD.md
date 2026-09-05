@@ -135,7 +135,7 @@ test -f PRD.md && test -f TDD.md && test -f INDEX.md && test -f MILESTONE.md && 
 | Word-audio missing blocks quick recall | Asset pipeline miss | Cache fallback through gateway + TTS media paths | `CHANGELOG 1.2.6` regression coverage |
 | Ambient proxy settings hijack internal service calls | `HTTP_PROXY` / `HTTPS_PROXY` env leakage | Force internal clients to ignore ambient proxy | `CHANGELOG 1.2.6` regression coverage |
 | Mobile MAESTRO smoke fails on CI | Maestro infra drift | `bash apps/mobile/scripts/run-maestro-e2e.sh smoke` is the gate; pin Maestro version in `apps/mobile` |
-| `axiomaticworld.com` proxy chain breaks | `ERR_SSL_PROTOCOL_ERROR` or `502` from local | Walk `natapp -> nginx :80 -> vite preview :3002 -> gateway-bff :8000` end-to-end before declaring green | `nginx.conf.example` walkthrough |
+| Project-domain proxy chain breaks | `ERR_SSL_PROTOCOL_ERROR` or `502` from local | Walk `nginx :80 -> vite preview :3002 -> gateway-bff :8000` end-to-end before declaring green | `nginx.conf.example` walkthrough |
 
 ## 6. Test Data and Seeding
 

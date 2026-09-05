@@ -86,8 +86,7 @@ start-microservices.sh      # split backend 默认启动脚本
 生产式本地代理链路：
 
 ```text
-https://axiomaticworld.com
--> natapp
+https://ielts.axiomaticworld.com（旧环境可继续使用 axiomaticworld.com）
 -> local :80
 -> nginx
 -> vite preview :3002

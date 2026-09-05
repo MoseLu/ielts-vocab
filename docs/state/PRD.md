@@ -14,7 +14,7 @@ Last updated: 2026-06-08
 - **Canonical path**: `/Volumes/code/workspace/products/ielts-vocab`
 - **Workspace position**: `products/` partition (non-Axi owner = solo product)
 - **Public surface**:
-  - Production-like local proxy: `https://axiomaticworld.com` → natapp → local nginx → Vite preview
+  - Production-like local proxy: local nginx → Vite preview; public project origin is `https://ielts.axiomaticworld.com` (root-domain compatibility remains during migration)
   - Browser API: `http://127.0.0.1:8000` (gateway-bff) and split services `127.0.0.1:8101-8108`
   - Realtime ASR: `http://127.0.0.1:5001` (Socket.IO)
 

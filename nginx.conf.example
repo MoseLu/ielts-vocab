@@ -1,9 +1,9 @@
-# ── 推荐 nginx 配置（适用于 natapp + vite preview + split backend 架构）──
+# ── 推荐 nginx 配置（适用于项目子域名 + vite preview + split backend 架构）──
 # 参考此文件配置你本机的 nginx
 
 server {
     listen 80;
-    server_name axiomaticworld.com;
+    server_name ielts.axiomaticworld.com axiomaticworld.com;
 
     # 增大请求体上限（头像上传等）
     client_max_body_size 10m;

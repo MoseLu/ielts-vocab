@@ -85,8 +85,7 @@ start-microservices.sh      # split backend 默认启动脚本
 生产式本地代理链路：
 
 ```text
-https://axiomaticworld.com
--> natapp
+https://ielts.axiomaticworld.com (旧环境可继续使用 axiomaticworld.com)
 -> local :80
 -> nginx
 -> vite preview :3002
@@ -95,7 +94,7 @@ https://axiomaticworld.com
 -> /socket.io -> asr-socketio :5001
 ```
 
-如果遇到域名访问异常、`ERR_SSL_PROTOCOL_ERROR`、Socket.IO 失败或 `/api` 表现与本地开发不一致，优先检查这条整链路，而不是只看前端页面代码。
+如果遇到项目域名访问异常、`ERR_SSL_PROTOCOL_ERROR`、Socket.IO 失败或 `/api` 表现与本地开发不一致，优先检查这条整链路，而不是只看前端页面代码。
 
 ## 快速开始
 
