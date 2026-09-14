@@ -376,7 +376,11 @@ def save_book_progress(current_user):
 @learning_core_bp.route('/api/books/<book_id>/chapters/progress', methods=['GET'])
 @token_required
 def get_chapter_progress(current_user, book_id):
-    payload, status = build_chapter_progress_response(current_user.id, book_id)
+    payload, status = build_chapter_progress_response(
+        current_user.id,
+        book_id,
+        mode=request.args.get('mode'),
+    )
     return jsonify(payload), status
 
 

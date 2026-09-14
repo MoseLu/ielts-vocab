@@ -45,7 +45,10 @@ vi.mock('../components/ai-chat/page/AIChatPanel', () => ({
   default: (props: { avoidBottomNav?: boolean }) => aiChatPanelMock(props),
 }))
 vi.mock('../components/layout/navigation/GlobalWordSearch', () => ({ default: () => null }))
-vi.mock('../components/layout/navigation/BottomNav', () => ({ default: () => null }))
+vi.mock('../components/layout/navigation/SelectionWordLookup', () => ({ default: () => null }))
+vi.mock('../components/layout/navigation/BottomNav', () => ({
+  default: () => <nav data-testid="bottom-nav" />,
+}))
 vi.mock('../components/layout/navigation/Header', () => ({ default: () => null }))
 vi.mock('../components/layout/navigation/LeftSidebar', () => ({
   default: () => <aside data-testid="left-sidebar" className="left-sidebar" />,
@@ -68,12 +71,13 @@ vi.mock('../components/vocab-test/page/VocabTestPage', () => ({ default: () => n
 
 describe('AppRoutes practice route', () => {
   beforeEach(() => {
+    vi.useRealTimers()
     showToastMock.mockReset()
     aiChatPanelMock.mockClear()
     practicePageMock.mockClear()
   })
 
-  it('renders the sidebar shell immediately on authenticated app routes', () => {
+  it('renders the sidebar shell immediately on authenticated app routes', async () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/plan']}>
         <AppRoutes
@@ -88,6 +92,7 @@ describe('AppRoutes practice route', () => {
     expect(screen.getByTestId('left-sidebar')).toBeInTheDocument()
     expect(container.querySelector('.app-body')).toBeTruthy()
     expect(container.querySelector('.practice-fullscreen')).toBeFalsy()
+    expect(await screen.findByTestId('bottom-nav')).toBeInTheDocument()
   })
 
   it('does not render the sidebar shell on fullscreen practice surfaces', async () => {
@@ -147,7 +152,7 @@ describe('AppRoutes practice route', () => {
     expect(showToastMock).toHaveBeenCalledWith('favorite-clicked', 'success')
   })
 
-  it('does not offset AI chat on fullscreen practice surfaces without bottom nav', async () => {
+  it('keeps bottom navigation available on practice surfaces', async () => {
     render(
       <MemoryRouter initialEntries={['/practice']}>
         <AppRoutes
@@ -159,8 +164,9 @@ describe('AppRoutes practice route', () => {
       </MemoryRouter>,
     )
 
+    expect(await screen.findByTestId('bottom-nav', undefined, { timeout: 2000 })).toBeInTheDocument()
     expect(await screen.findByTestId('ai-chat-panel', undefined, { timeout: 2000 }))
-      .toHaveAttribute('data-avoid-bottom-nav', 'false')
+      .toHaveAttribute('data-avoid-bottom-nav', 'true')
   })
 
   it('honors a classic practice mode from the route query', () => {

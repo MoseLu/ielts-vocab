@@ -1,11 +1,15 @@
-import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import LearningJournalPage from './LearningJournalPage'
 
 const apiFetchMock = vi.fn()
-const todayString = () => new Date().toISOString().slice(0, 10)
+const tiptapMockState = vi.hoisted(() => ({
+  config: null as { onUpdate?: (value: { editor: { getHTML: () => string } }) => void } | null,
+  listeners: new Map<string, EventListener>(),
+}))
 
 vi.mock('../../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../../lib')>('../../../lib')
@@ -15,19 +19,59 @@ vi.mock('../../../lib', async () => {
   }
 })
 
-describe('LearningJournalPage markdown rendering', () => {
+vi.mock('@tiptap/react', () => ({
+  EditorContent: ({ className }: { className?: string }) => (
+    <div className={className}>
+      <div className="journal-editor-content" />
+    </div>
+  ),
+  useEditor: (config: { content?: string; onUpdate?: (value: { editor: { getHTML: () => string } }) => void }) => {
+    tiptapMockState.config = config
+    return ({
+      commands: { setContent: vi.fn() },
+      getHTML: () => config.content || '<p></p>',
+      view: {
+        dom: {
+          addEventListener: vi.fn((type: string, handler: EventListener) => {
+            tiptapMockState.listeners.set(type, handler)
+          }),
+          removeEventListener: vi.fn((type: string) => {
+            tiptapMockState.listeners.delete(type)
+          }),
+        },
+      },
+    })
+  },
+}))
+
+const todayEntry = {
+  id: 1,
+  date: '2026-06-03',
+  content: '# 你好\n\n今天复习了 attention。',
+  polished_content: null,
+  created_at: '2026-06-03T04:00:00',
+  updated_at: '2026-06-03T04:31:00',
+}
+
+const journalHistoryStyles = readFileSync(
+  resolve(process.cwd(), 'src/styles/pages/journal/_journal-history.scss'),
+  'utf-8',
+)
+
+describe('LearningJournalPage diary view', () => {
   beforeEach(() => {
     apiFetchMock.mockReset()
+    tiptapMockState.config = null
+    tiptapMockState.listeners.clear()
     vi.spyOn(window, 'alert').mockImplementation(() => {})
   })
 
-  it('shows a page loading gate before the first summary payload resolves', async () => {
-    let resolveSummaries: ((value: { summaries: never[] }) => void) | null = null
-
+  it('shows a page loading gate before the today entry resolves', async () => {
+    let resolveToday: ((value: { entry: null }) => void) | null = null
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/notes/summaries') {
+      if (url === '/api/notes/journal/today') {
         return new Promise(resolve => {
-          resolveSummaries = resolve
+          resolveToday = resolve
         })
       }
       return Promise.reject(new Error(`Unexpected url: ${url}`))
@@ -36,96 +80,42 @@ describe('LearningJournalPage markdown rendering', () => {
     const { container } = render(<LearningJournalPage />)
 
     expect(container.querySelector('.page-skeleton--journal')).not.toBeNull()
-    expect(container.querySelector('.journal-page')).not.toBeNull()
-    expect(container.querySelector('.journal-page .journal-page-skeleton')).not.toBeNull()
+    resolveToday?.({ entry: null })
 
-    resolveSummaries?.({ summaries: [] })
-
-    await waitFor(() => {
-      expect(container.querySelector('.journal-page')).not.toBeNull()
-    })
+    await screen.findByRole('tab', { name: '今日复盘' })
   })
 
-  it('renders the selected summary as markdown html without date filters', async () => {
+  it('renders the today diary entry and keeps the old summary tabs out', async () => {
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/notes/summaries') {
-        return Promise.resolve({
-          summaries: [
-            {
-              id: 1,
-              date: '2026-03-26',
-              content: '# Title\n\n## Overview\n\n| Item | Data |\n| --- | --- |\n| Mode | Radio |\n\n- First point',
-              generated_at: '2026-03-26T14:28:00',
-            },
-          ],
-        })
+      if (url === '/api/notes/journal/today') {
+        return Promise.resolve({ entry: todayEntry })
       }
-      if (url === '/api/ai/learner-profile?date=2026-03-26') {
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    const { container } = render(<LearningJournalPage />)
+
+    expect(await screen.findByRole('tab', { name: '今日复盘' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '历史笔记' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: '每日总结' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: '问答历史' })).not.toBeInTheDocument()
+    expect(container.querySelector('.journal-doc-shell--today')).not.toBeNull()
+    expect(container.querySelector('.journal-doc-body h1')?.textContent).toContain('你好')
+    expect(screen.getByRole('button', { name: '编辑今日复盘' })).toBeInTheDocument()
+  })
+
+  it('renders diary images as capped top attachments', async () => {
+    const user = userEvent.setup()
+    const imageMarkdown = Array.from({ length: 4 }, (_, index) => (
+      `![image-${index + 1}](data:image/png;base64,card${index + 1})`
+    )).join('\n')
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/notes/journal/today') {
         return Promise.resolve({
-          date: '2026-03-26',
-          summary: {
-            date: '2026-03-26',
-            today_words: 20,
-            today_accuracy: 85,
-            today_duration_seconds: 1200,
-            today_sessions: 2,
-            streak_days: 5,
-            weakest_mode: 'meaning',
-            weakest_mode_label: '默写模式',
-            weakest_mode_accuracy: 68,
-            due_reviews: 3,
-            trend_direction: 'improving',
+          entry: {
+            ...todayEntry,
+            content: `# 你好\n\n${imageMarkdown}`,
           },
-          dimensions: [
-            {
-              dimension: 'meaning',
-              label: '默写模式',
-              correct: 8,
-              wrong: 4,
-              attempts: 12,
-              accuracy: 67,
-              weakness: 0.3333,
-            },
-          ],
-          focus_words: [
-            {
-              word: 'kind',
-              definition: 'type',
-              wrong_count: 3,
-              dominant_dimension: 'meaning',
-              dominant_dimension_label: '默写模式',
-              dominant_wrong: 2,
-              focus_score: 8,
-            },
-          ],
-          repeated_topics: [
-            {
-              title: 'kind of vs a kind of',
-              count: 2,
-              word_context: 'kind',
-              latest_answer: '...',
-              latest_at: '2026-03-26T14:28:00',
-            },
-          ],
-          next_actions: ['优先复习 3 个已到期的速记单词。'],
-          memory_system: {},
-          mode_breakdown: [],
-          activity_summary: {
-            total_events: 0,
-            study_sessions: 0,
-            quick_memory_reviews: 0,
-            wrong_word_records: 0,
-            assistant_questions: 0,
-            chapter_updates: 0,
-            books_touched: 0,
-            chapters_touched: 0,
-            words_touched: 0,
-            total_duration_seconds: 0,
-            correct_count: 0,
-            wrong_count: 0,
-          },
-          activity_source_breakdown: [],
-          recent_activity: [],
         })
       }
       return Promise.reject(new Error(`Unexpected url: ${url}`))
@@ -133,41 +123,74 @@ describe('LearningJournalPage markdown rendering', () => {
 
     const { container } = render(<LearningJournalPage />)
 
-    await waitFor(() => {
-      expect(container.querySelector('.journal-doc-body h1, .journal-doc-body h2, .journal-doc-body ul')).not.toBeNull()
-    })
+    expect(await screen.findByText('图片附件')).toBeInTheDocument()
+    expect(container.querySelector('.journal-today-stack')).not.toBeNull()
+    const imagePanel = container.querySelector('.journal-image-panel')
+    const body = container.querySelector('.journal-doc-body')
+    expect(imagePanel).not.toBeNull()
+    expect(body).not.toBeNull()
+    expect(imagePanel!.compareDocumentPosition(body!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(container.querySelectorAll('.journal-image-card:not(.journal-image-card--add)')).toHaveLength(3)
+    expect(screen.getByText('3/3')).toBeInTheDocument()
+    expect(body?.textContent).not.toContain('image-1')
 
-    expect(container.querySelector('.journal-doc-shell--summary .journal-doc-sidebar')).toBeNull()
-    expect(container.querySelector('.journal-doc-body h1, .journal-doc-body h2')).not.toBeNull()
-    expect(container.querySelector('#journal-start-date')).toBeNull()
-    expect(container.querySelector('#journal-end-date')).toBeNull()
-    expect(screen.queryByText(/# Title/)).not.toBeInTheDocument()
-    expect(container.querySelector('.journal-generate-btn')).toBeNull()
-    expect(container.querySelector('.journal-regen-btn')).not.toBeNull()
-    expect(await screen.findByText('统一学习画像')).toBeInTheDocument()
-    expect(await screen.findByText('kind of vs a kind of')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '预览图片 1' }))
+
+    expect(await screen.findByRole('dialog', { name: '日记图片预览' })).toBeInTheDocument()
+    expect(screen.getByAltText('日记图片预览 1')).toHaveAttribute('src', 'data:image/png;base64,card1')
+
+    await user.click(screen.getByRole('button', { name: '关闭日记图片预览' }))
+
+    expect(screen.queryByRole('dialog', { name: '日记图片预览' })).not.toBeInTheDocument()
   })
 
-  it('renders note answers as markdown html in the history pane', async () => {
-    const user = userEvent.setup()
-
+  it('does not render the insert-image context menu after reaching the image limit', async () => {
+    const imageMarkdown = Array.from({ length: 3 }, (_, index) => (
+      `![image-${index + 1}](data:image/png;base64,card${index + 1})`
+    )).join('\n')
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/notes/summaries') {
-        return Promise.resolve({ summaries: [] })
-      }
-      if (url.startsWith('/api/notes?')) {
+      if (url === '/api/notes/journal/today') {
         return Promise.resolve({
-          notes: [
+          entry: {
+            ...todayEntry,
+            content: `# 你好\n\n${imageMarkdown}`,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected url: ${url}`))
+    })
+
+    const user = userEvent.setup()
+    render(<LearningJournalPage />)
+    await user.click(await screen.findByRole('button', { name: '编辑今日复盘' }))
+
+    await waitFor(() => expect(tiptapMockState.listeners.has('contextmenu')).toBe(true))
+    tiptapMockState.listeners.get('contextmenu')?.(new MouseEvent('contextmenu', { clientX: 10, clientY: 20, cancelable: true }))
+
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(screen.queryByText('插入图片')).not.toBeInTheDocument()
+  })
+
+  it('loads history entries after switching to the history tab', async () => {
+    const user = userEvent.setup()
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/notes/journal/today') {
+        return Promise.resolve({ entry: todayEntry })
+      }
+      if (url.startsWith('/api/notes/journal?')) {
+        return Promise.resolve({
+          entries: [
             {
-              id: 1,
-              question: 'How should I remember attention?',
-              answer: '## Tips\n\n- Break it into syllables\n- Review it in a sentence',
-              word_context: 'attention',
-              created_at: '2026-03-26T14:28:00',
+              ...todayEntry,
+              id: 2,
+              date: '2026-06-02',
+              content: [
+                '昨天记录了 listening practice。',
+                '![image-1](data:image/png;base64,history1)',
+                '![image-2](data:image/png;base64,history2)',
+              ].join('\n\n'),
             },
           ],
-          total: 1,
-          per_page: 20,
           has_more: false,
         })
       }
@@ -175,195 +198,118 @@ describe('LearningJournalPage markdown rendering', () => {
     })
 
     const { container } = render(<LearningJournalPage />)
-    const tabs = await screen.findAllByRole('tab')
-    await user.click(tabs[1])
+    await user.click(await screen.findByRole('tab', { name: '历史笔记' }))
 
-    await waitFor(() => {
-      expect(container.querySelector('.journal-note-detail-answer h2, .journal-note-detail-answer ul')).not.toBeNull()
-    })
+    await screen.findByText('2026-06-02')
+    expect(screen.getByText('更新 04:31')).toBeInTheDocument()
+    expect(screen.queryByText('2026-06-03 04:31')).not.toBeInTheDocument()
+    expect(container.querySelector('.journal-date-range-field')).not.toBeNull()
+    expect(container.querySelector('#journal-start-date')).toHaveAttribute('type', 'text')
+    expect(container.querySelector('#journal-start-date')).toHaveAttribute('placeholder', '开始日期')
+    expect(container.querySelector('#journal-start-date')).toHaveAttribute('readonly')
+    expect(container.querySelector('#journal-end-date')).toHaveAttribute('type', 'text')
+    expect(container.querySelector('#journal-end-date')).toHaveAttribute('placeholder', '结束日期')
+    expect(container.querySelector('#journal-end-date')).toHaveAttribute('readonly')
+    expect(container.querySelector('.journal-date-range-field')?.textContent).not.toContain('开始日期')
+    expect(container.querySelector('.journal-date-range-field')?.textContent).not.toContain('结束日期')
+    await user.click(screen.getByLabelText('开始日期'))
+    const pickerDialog = screen.getByRole('dialog', { name: '选择日记日期范围' })
+    expect(pickerDialog).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '上星期' })).toBeInTheDocument()
+    expect(screen.getAllByText(/2026年/)).not.toHaveLength(0)
+    const historyRequestsBeforeDraftEdit = apiFetchMock.mock.calls.filter(([url]) => (
+      typeof url === 'string' && url.startsWith('/api/notes/journal?')
+    )).length
+    await user.type(within(pickerDialog).getByPlaceholderText('开始日期'), '2026/06/01')
+    expect(apiFetchMock.mock.calls.filter(([url]) => (
+      typeof url === 'string' && url.startsWith('/api/notes/journal?')
+    ))).toHaveLength(historyRequestsBeforeDraftEdit)
+    await user.click(screen.getByRole('button', { name: '好的' }))
+    await waitFor(() => expect(apiFetchMock.mock.calls.filter(([url]) => (
+      typeof url === 'string' && url.startsWith('/api/notes/journal?')
+    )).length).toBeGreaterThan(historyRequestsBeforeDraftEdit))
+    const preview = container.querySelector('.journal-history-card__preview')
+    expect(preview?.textContent).toContain('listening practice')
+    expect(preview?.textContent).not.toContain('[图片]')
+    const cardImages = container.querySelectorAll('.journal-history-card__image img')
+    expect(cardImages).toHaveLength(2)
+    expect(cardImages[0]).toHaveAttribute('src', 'data:image/png;base64,history1')
 
-    expect(container.querySelector('#journal-start-date')).not.toBeNull()
-    expect(container.querySelector('#journal-end-date')).not.toBeNull()
-    expect(screen.queryByText(/## Tips/)).not.toBeInTheDocument()
+    await user.click(container.querySelector('.journal-history-card')!)
+    await screen.findByText('2026-06-02 笔记')
+    const detailImages = container.querySelectorAll('.journal-history-detail-images img')
+    expect(detailImages).toHaveLength(2)
+    expect(detailImages[1]).toHaveAttribute('src', 'data:image/png;base64,history2')
   })
 
-  it('shows generate action only when no summary exists', async () => {
+  it('keeps history cards compact instead of stretching a single row', () => {
+    expect(journalHistoryStyles).toMatch(/\.journal-doc-shell--history\s*\{[^}]*align-content:\s*start;/s)
+    expect(journalHistoryStyles).toMatch(/\.journal-history-grid\s*\{[^}]*align-items:\s*start;/s)
+    expect(journalHistoryStyles).toMatch(/\.journal-history-card\s*\{[^}]*align-self:\s*start;/s)
+  })
+
+  it('saves edited recap content and can request polish', async () => {
+    const user = userEvent.setup()
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/notes/summaries') {
-        return Promise.resolve({ summaries: [] })
+      if (url === '/api/notes/journal/today') {
+        return Promise.resolve({ entry: todayEntry })
+      }
+      if (url === '/api/notes/journal') {
+        return Promise.resolve({
+          entry: { ...todayEntry, content: '更新后的内容' },
+        })
+      }
+      if (url === '/api/notes/journal/polish') {
+        return Promise.resolve({ polished: '润色后的内容' })
       }
       return Promise.reject(new Error(`Unexpected url: ${url}`))
     })
 
-    const { container } = render(<LearningJournalPage />)
+    render(<LearningJournalPage />)
+    await user.click(await screen.findByRole('button', { name: '编辑今日复盘' }))
+    tiptapMockState.config?.onUpdate?.({ editor: { getHTML: () => '<p>今天完成了听力复习。</p>' } })
+    await new Promise(resolve => window.setTimeout(resolve, 2100))
 
     await waitFor(() => {
-      expect(container.querySelector('.journal-generate-btn')).not.toBeNull()
+      expect(apiFetchMock).toHaveBeenCalledWith(
+        '/api/notes/journal',
+        expect.objectContaining({ method: 'POST' }),
+      )
     })
-    expect(container.querySelector('.journal-regen-btn')).toBeNull()
-  })
-
-  it('renders summary generation progress from the dedicated job api', async () => {
-    const user = userEvent.setup()
-    const jobDate = todayString()
-
-    apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/notes/summaries') {
-        return Promise.resolve({ summaries: [] })
-      }
-      if (url === '/api/notes/summaries/generate-jobs') {
-        return Promise.resolve({
-          job_id: 'job-1',
-          date: jobDate,
-          status: 'queued',
-          progress: 4,
-          message: 'Preparing summary...',
-          estimated_chars: 800,
-          generated_chars: 0,
-          summary: null,
-          error: null,
-        })
-      }
-      if (url === '/api/notes/summaries/generate-jobs/job-1') {
-        return Promise.resolve({
-          job_id: 'job-1',
-          date: jobDate,
-          status: 'running',
-          progress: 42,
-          message: 'Generating body...',
-          estimated_chars: 800,
-          generated_chars: 336,
-          summary: null,
-          error: null,
-        })
-      }
-      return Promise.reject(new Error(`Unexpected url: ${url}`))
-    })
-
-    const { container } = render(<LearningJournalPage />)
-
-    const generateButton = await waitFor(() => {
-      const button = container.querySelector<HTMLButtonElement>('.journal-generate-btn')
-      expect(button).not.toBeNull()
-      return button
-    })
-    await user.click(generateButton!)
+    await user.click(await screen.findByRole('button', { name: 'AI 润色' }))
 
     await waitFor(() => {
-      const headerProgress = container.querySelector('.journal-summary-progress')
-      const panelProgress = container.querySelector('.journal-summary-progress-panel')
-
-      expect(headerProgress?.textContent).toContain('42%')
-      expect(headerProgress?.textContent).toContain('Generating body...')
-      expect(panelProgress?.textContent).toContain('42%')
-      expect(panelProgress?.textContent).toContain('Generating body...')
-    })
-  })
-
-  it('applies completed summaries returned by the job api', async () => {
-    const user = userEvent.setup()
-    const jobDate = todayString()
-
-    apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/notes/summaries') {
-        return Promise.resolve({ summaries: [] })
-      }
-      if (url === '/api/notes/summaries/generate-jobs') {
-        return Promise.resolve({
-          job_id: 'job-complete',
-          date: jobDate,
-          status: 'queued',
-          progress: 5,
-          message: 'Preparing summary...',
-          estimated_chars: 800,
-          generated_chars: 0,
-          summary: null,
-          error: null,
-        })
-      }
-      if (url === '/api/notes/summaries/generate-jobs/job-complete') {
-        return Promise.resolve({
-          job_id: 'job-complete',
-          date: jobDate,
-          status: 'completed',
-          progress: 100,
-          message: 'Completed',
-          estimated_chars: 800,
-          generated_chars: 812,
-          summary: {
-            id: 5,
-            date: jobDate,
-            content: '# Summary',
-            generated_at: '2026-03-30T12:30:00',
-          },
-          error: null,
-        })
-      }
-      return Promise.reject(new Error(`Unexpected url: ${url}`))
+      expect(apiFetchMock).toHaveBeenCalledWith(
+        '/api/notes/journal/polish',
+        expect.objectContaining({ method: 'POST' }),
+      )
     })
 
-    const { container } = render(<LearningJournalPage />)
+    const dialog = await screen.findByRole('dialog', { name: 'AI 润色预览' })
+    expect(dialog).toHaveTextContent('确认润色结果后再应用到今天的日记正文。')
+    expect(screen.getByRole('button', { name: '继续润色' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '拒绝' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '接受修改' })).toBeInTheDocument()
+  }, 8000)
 
-    const generateButton = await waitFor(() => {
-      const button = container.querySelector<HTMLButtonElement>('.journal-generate-btn')
-      expect(button).not.toBeNull()
-      return button
-    })
-    await user.click(generateButton!)
-
-    await waitFor(() => {
-      expect(container.querySelector('.journal-doc-title')?.textContent).toContain(jobDate)
-    })
-  })
-
-  it('surfaces job polling errors in the page instead of using alert', async () => {
-    const user = userEvent.setup()
+  it('shows feedback instead of silently ignoring polish on empty content', async () => {
     const alertSpy = vi.spyOn(window, 'alert')
-    const jobDate = todayString()
-
+    const user = userEvent.setup()
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/notes/summaries') {
-        return Promise.resolve({ summaries: [] })
-      }
-      if (url === '/api/notes/summaries/generate-jobs') {
-        return Promise.resolve({
-          job_id: 'job-2',
-          date: jobDate,
-          status: 'queued',
-          progress: 3,
-          message: 'Preparing summary...',
-          estimated_chars: 800,
-          generated_chars: 0,
-          summary: null,
-          error: null,
-        })
-      }
-      if (url === '/api/notes/summaries/generate-jobs/job-2') {
-        return Promise.resolve({
-          job_id: 'job-2',
-          date: jobDate,
-          status: 'failed',
-          progress: 45,
-          message: 'Generation failed.',
-          estimated_chars: 800,
-          generated_chars: 250,
-          summary: null,
-          error: 'Try again in 5 minutes',
-        })
+      if (url === '/api/notes/journal/today') {
+        return Promise.resolve({ entry: { ...todayEntry, content: '' } })
       }
       return Promise.reject(new Error(`Unexpected url: ${url}`))
     })
 
-    const { container } = render(<LearningJournalPage />)
+    render(<LearningJournalPage />)
+    await user.click(await screen.findByRole('button', { name: '编辑今日复盘' }))
+    await user.click(await screen.findByRole('button', { name: 'AI 润色' }))
 
-    const generateButton = await waitFor(() => {
-      const button = container.querySelector<HTMLButtonElement>('.journal-generate-btn')
-      expect(button).not.toBeNull()
-      return button
-    })
-    await user.click(generateButton!)
-
-    await screen.findByText('Try again in 5 minutes')
-    expect(alertSpy).not.toHaveBeenCalled()
+    expect(alertSpy).toHaveBeenCalledWith('请先写一点内容再润色')
+    expect(apiFetchMock).not.toHaveBeenCalledWith(
+      '/api/notes/journal/polish',
+      expect.anything(),
+    )
   })
 })

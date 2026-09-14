@@ -46,18 +46,20 @@ def _request_json(
     source_service_name: str = AI_EXECUTION_SERVICE_NAME,
     is_admin: bool = False,
 ) -> tuple[dict, int]:
-    response = requests.request(
-        method,
-        f'{learning_core_service_url()}{path}',
-        params=params,
-        json=json_body,
-        headers=_internal_headers_for_user(
-            user_id,
-            source_service_name=source_service_name,
-            is_admin=is_admin,
-        ),
-        timeout=DEFAULT_TIMEOUT_SECONDS,
-    )
+    with requests.Session() as session:
+        session.trust_env = False
+        response = session.request(
+            method,
+            f'{learning_core_service_url()}{path}',
+            params=params,
+            json=json_body,
+            headers=_internal_headers_for_user(
+                user_id,
+                source_service_name=source_service_name,
+                is_admin=is_admin,
+            ),
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+        )
     try:
         payload = response.json()
     except ValueError:

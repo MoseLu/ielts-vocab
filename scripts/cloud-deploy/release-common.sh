@@ -9,7 +9,7 @@ VENV_DIR="${VENV_DIR:-${APP_HOME}/venv}"
 WEB_ROOT="${WEB_ROOT:-/var/www/ielts-vocab}"
 BACKEND_ENV_FILE="${BACKEND_ENV_FILE:-/etc/ielts-vocab/backend.env}"
 MICROSERVICES_ENV_FILE="${MICROSERVICES_ENV_FILE:-/etc/ielts-vocab/microservices.env}"
-SMOKE_HOST="${SMOKE_HOST:-axiomaticworld.com}"
+IELTS_PUBLIC_HOST="${IELTS_PUBLIC_HOST:-axiomaticworld.com}"; SMOKE_HOST="${SMOKE_HOST:-${IELTS_PUBLIC_HOST}}"
 RELEASE_RETENTION_COUNT="${RELEASE_RETENTION_COUNT:-5}"
 DEPLOY_RUNTIME_DIR="${DEPLOY_RUNTIME_DIR:-/run/ielts-vocab}"
 DEPLOY_LOCK_FILE="${DEPLOY_LOCK_FILE:-${DEPLOY_RUNTIME_DIR}/deploy.lock}"
@@ -19,22 +19,11 @@ DEPLOY_BUILD_MEMORY_MAX="${DEPLOY_BUILD_MEMORY_MAX:-1536M}"
 DEPLOY_BUILD_NICE="${DEPLOY_BUILD_NICE:-15}"
 DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB="${DEPLOY_BUILD_NODE_MAX_OLD_SPACE_MB:-512}"
 DEPLOY_BUILD_NPM_JOBS="${DEPLOY_BUILD_NPM_JOBS:-1}"
+DEPLOY_GIT_FETCH_TIMEOUT_SECONDS="${DEPLOY_GIT_FETCH_TIMEOUT_SECONDS:-45}"
 RELEASE_ARTIFACT_ENV_FILE="${RELEASE_ARTIFACT_ENV_FILE:-.release-artifact.env}"
 
-HTTP_SERVICE_UNITS=(
-  "gateway-bff"
-  "identity-service"
-  "learning-core-service"
-  "catalog-content-service"
-  "ai-execution-service"
-  "tts-media-service"
-  "asr-service"
-  "notes-service"
-  "admin-ops-service"
-)
-SINGLE_INSTANCE_CORE_UNITS=(
-  "asr-socketio"
-)
+HTTP_SERVICE_UNITS=("gateway-bff" "identity-service" "learning-core-service" "catalog-content-service" "ai-execution-service" "tts-media-service" "asr-service" "notes-service" "admin-ops-service")
+SINGLE_INSTANCE_CORE_UNITS=("asr-socketio")
 CORE_SERVICE_UNITS=("${HTTP_SERVICE_UNITS[@]}" "${SINGLE_INSTANCE_CORE_UNITS[@]}")
 WAVE5_WORKER_UNITS=("core-eventing-worker" "notes-domain-worker" "ai-execution-domain-worker" "admin-ops-domain-worker")
 REPLACED_GROUP_WORKER_UNITS=("identity-outbox-publisher" "learning-core-outbox-publisher" "tts-media-outbox-publisher" "ai-execution-outbox-publisher" "ai-wrong-word-projection-worker" "ai-daily-summary-projection-worker" "notes-outbox-publisher" "notes-study-session-projection-worker" "notes-wrong-word-projection-worker" "notes-prompt-run-projection-worker" "admin-user-projection-worker" "admin-study-session-projection-worker" "admin-daily-summary-projection-worker" "admin-prompt-run-projection-worker" "admin-tts-media-projection-worker" "admin-wrong-word-projection-worker")
@@ -48,13 +37,9 @@ fail() {
   exit 1
 }
 
-require_command() {
-  command -v "$1" >/dev/null 2>&1 || fail "Missing required command: $1"
-}
+require_command() { command -v "$1" >/dev/null 2>&1 || fail "Missing required command: $1"; }
 
-require_file() {
-  [[ -f "$1" ]] || fail "Missing required file: $1"
-}
+require_file() { [[ -f "$1" ]] || fail "Missing required file: $1"; }
 
 source "${BASH_SOURCE[0]%/*}/http-slot-common.sh"
 
@@ -93,14 +78,22 @@ prepare_repository_root() {
 }
 
 fetch_git_commit() {
-  local git_ref="${1:?git ref is required}"
-  if [[ "${git_ref}" =~ ^[0-9a-f]{7,40}$ ]]; then
-    git -C "${REPOSITORY_ROOT}" fetch --tags origin "${git_ref}" >/dev/null 2>&1
-    git -C "${REPOSITORY_ROOT}" rev-parse --verify "FETCH_HEAD^{commit}"
-    return 0
+  local git_ref="${1:?git ref is required}" fetch_ref="" rev_ref="" commit_sha="" status=0
+  fetch_ref="refs/heads/${git_ref}:refs/remotes/origin/${git_ref}"
+  rev_ref="refs/remotes/origin/${git_ref}^{commit}"
+  if [[ "${git_ref}" =~ ^[0-9a-f]{40}$ ]]; then
+    fetch_ref="${git_ref}"; rev_ref="FETCH_HEAD^{commit}"
+  elif [[ "${git_ref}" =~ ^[0-9a-f]{7,39}$ ]]; then
+    fetch_ref="HEAD"; rev_ref="${git_ref}^{commit}"
   fi
-  git -C "${REPOSITORY_ROOT}" fetch --tags origin "refs/heads/${git_ref}:refs/remotes/origin/${git_ref}" >/dev/null 2>&1
-  git -C "${REPOSITORY_ROOT}" rev-parse --verify "refs/remotes/origin/${git_ref}^{commit}"
+  env GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes -o ServerAliveInterval=10 -o ServerAliveCountMax=2}" timeout "${DEPLOY_GIT_FETCH_TIMEOUT_SECONDS}" \
+    git -C "${REPOSITORY_ROOT}" fetch --tags origin "${fetch_ref}" >/dev/null || status=$?
+  if (( status != 0 )); then
+    printf '[%s] ERROR: git fetch for %s failed or timed out after %ss (status %s)\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${git_ref}" "${DEPLOY_GIT_FETCH_TIMEOUT_SECONDS}" "${status}" >&2
+    return "${status}"
+  fi
+  commit_sha="$(git -C "${REPOSITORY_ROOT}" rev-parse --verify "${rev_ref}")" || { printf '[%s] ERROR: git ref %s was fetched but did not resolve to a single commit\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${git_ref}" >&2; return 1; }
+  printf '%s\n' "${commit_sha}"
 }
 
 ensure_python_runtime() {
@@ -206,6 +199,14 @@ resolve_frontend_asset_base() {
   printf '%s\n' "${asset_base}"
 }
 
+require_frontend_asset_base() {
+  local asset_base="${1:-}" context="${2:-frontend build}" required="${3:-false}"
+  [[ "${ALLOW_EMPTY_FRONTEND_ASSET_BASE:-false}" =~ ^(1|true|TRUE|yes|YES)$ ]] && return 0
+  if [[ -z "${asset_base}" && "${required}" =~ ^(1|true|TRUE|yes|YES)$ ]]; then
+    fail "${context} requires FRONTEND_ASSET_BASE_URL or FRONTEND_ASSET_OSS_PUBLIC_BASE_URL; set ALLOW_EMPTY_FRONTEND_ASSET_BASE=true only for non-production artifacts"
+  fi
+}
+
 install_release_python_dependencies() {
   local release_dir="${1:?release dir is required}"
   ensure_python_runtime
@@ -230,6 +231,7 @@ build_release_frontend() {
   [[ -f "${MICROSERVICES_ENV_FILE}" ]] && source "${MICROSERVICES_ENV_FILE}"
   set +a
   asset_base="$(resolve_frontend_asset_base)"
+  require_frontend_asset_base "${asset_base}" "deploy frontend build" "${FRONTEND_ASSET_OSS_ENABLED:-false}"
   log "Installing workspace dependencies under deploy resource limits"
   run_deploy_job "node-install" env \
     CI=1 \

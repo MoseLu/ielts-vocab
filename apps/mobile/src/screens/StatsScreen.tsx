@@ -1,17 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { BarChart3, Brain, ChevronRight, Clock3, Layers3, Sparkles, type LucideIcon } from 'lucide-react-native'
+import { Pressable, Text, View } from 'react-native'
 import { PRACTICE_MODE_LABELS } from '@ielts-vocab/app-core'
 import { loadLearnerProfile, loadLearningStats } from '../api/learnerApi'
 import { Card, Heading, Meta, ScreenScroll, StatusText } from '../components/primitives'
+import type { Navigate, NavigateOptions } from '../navigation/types'
 import { theme } from '../theme'
+import { styles } from './StatsScreen.styles'
 
 type AnyRecord = Record<string, unknown>
+type StatsSection = NonNullable<NavigateOptions['statsSection']>
 const chartColors = ['#FF7E36', '#45C48A', '#55A6FF', '#8B7CF6', '#F36B9A', '#F59E0B', '#14B8A6']
 
 function recordValue(source: AnyRecord | undefined, key: string): AnyRecord {
   const value = source?.[key]
   return value && typeof value === 'object' && !Array.isArray(value) ? value as AnyRecord : {}
 }
+
 function numberValue(source: AnyRecord | undefined, keys: string[]): number {
   for (const key of keys) {
     const value = source?.[key]
@@ -58,6 +63,7 @@ function shortDate(value: unknown): string {
 function SummaryMetric({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.metricCard}>
+      <View style={styles.metricGlow} />
       <Text style={styles.metricValue}>{value}</Text>
       <Text style={styles.metricLabel}>{label}</Text>
     </View>
@@ -93,18 +99,18 @@ function ModeChart({ modeBreakdown, pieChart }: { modeBreakdown: AnyRecord[]; pi
   return (
     <>
       <View style={styles.stackBar}>
-        {rows.map((item, index) => {
-          const value = numberValue(item, ['value', 'words_studied', 'attempts', 'sessions'])
-          return <View key={`${String(item.mode)}-${index}`} style={[styles.stackSlice, { backgroundColor: chartColors[index % chartColors.length], flex: Math.max(1, value) }]} />
-        })}
+        {rows.map((item, index) => (
+          <View
+            key={`${String(item.mode)}-${index}`}
+            style={[styles.stackSlice, { backgroundColor: chartColors[index % chartColors.length], flex: Math.max(1, numberValue(item, ['value', 'words_studied', 'attempts', 'sessions'])) }]}
+          />
+        ))}
       </View>
       {modeBreakdown.slice(0, 7).map((item, index) => (
         <View key={`${String(item.mode)}-legend-${index}`} style={styles.legendRow}>
           <View style={[styles.legendDot, { backgroundColor: chartColors[index % chartColors.length] }]} />
           <Text style={styles.legendName}>{labelForMode(item.mode)}</Text>
-          <Text style={styles.legendValue}>
-            {fmtInt(numberValue(item, ['words_studied', 'value']))} 词 · {fmtPct(numberValue(item, ['accuracy']))}
-          </Text>
+          <Text style={styles.legendValue}>{fmtInt(numberValue(item, ['words_studied', 'value']))} 词 · {fmtPct(numberValue(item, ['accuracy']))}</Text>
         </View>
       ))}
     </>
@@ -112,7 +118,7 @@ function ModeChart({ modeBreakdown, pieChart }: { modeBreakdown: AnyRecord[]; pi
 }
 
 function ChapterChart({ rows }: { rows: AnyRecord[] }) {
-  const data = rows.slice(0, 6)
+  const data = rows.slice(0, 8)
   const maxWords = Math.max(1, ...data.map(item => numberValue(item, ['words_learned', 'words_studied', 'correct'])))
   if (!data.length) return <Meta>章节练习完成后会显示章节分布。</Meta>
   return (
@@ -123,9 +129,7 @@ function ChapterChart({ rows }: { rows: AnyRecord[] }) {
         return (
           <View key={`${title}-${index}`} style={styles.chapterRow}>
             <Text numberOfLines={1} style={styles.chapterName}>{title}</Text>
-            <View style={styles.chapterTrack}>
-              <View style={[styles.chapterFill, { width: `${Math.max(5, (words / maxWords) * 100)}%` }]} />
-            </View>
+            <View style={styles.chapterTrack}><View style={[styles.chapterFill, { width: `${Math.max(5, (words / maxWords) * 100)}%` }]} /></View>
             <Text style={styles.chapterValue}>{fmtInt(words)}</Text>
           </View>
         )
@@ -144,9 +148,7 @@ function EbbinghausChart({ alltime }: { alltime: AnyRecord }) {
         return (
           <View key={`${String(item.stage)}-${index}`} style={styles.stageRow}>
             <Text style={styles.stageName}>{numberValue(item, ['interval_days'])}天</Text>
-            <View style={styles.stageTrack}>
-              <View style={[styles.stageFill, { width: `${Math.max(4, Math.min(100, value))}%` }]} />
-            </View>
+            <View style={styles.stageTrack}><View style={[styles.stageFill, { width: `${Math.max(4, Math.min(100, value))}%` }]} /></View>
             <Text style={styles.stageValue}>{fmtPct(value)}</Text>
           </View>
         )
@@ -164,7 +166,20 @@ function ProfileRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function StatsScreen() {
+function DetailEntry({ Icon, label, meta, onPress }: { Icon: LucideIcon; label: string; meta: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityLabel={`统计详情-${label}`} accessibilityRole="button" onPress={onPress} style={styles.detailEntry} testID={`stats.detail.${label}`}>
+      <View style={styles.detailIcon}><Icon color={theme.colors.primaryDark} size={19} strokeWidth={2.4} /></View>
+      <View style={styles.detailCopy}>
+        <Text style={styles.detailLabel}>{label}</Text>
+        <Text numberOfLines={1} style={styles.detailMeta}>{meta}</Text>
+      </View>
+      <ChevronRight color={theme.colors.textTertiary} size={18} strokeWidth={2.2} />
+    </Pressable>
+  )
+}
+
+function useStatsData() {
   const [stats, setStats] = useState<AnyRecord>({})
   const [profile, setProfile] = useState<AnyRecord>({})
   const [loading, setLoading] = useState(true)
@@ -182,318 +197,100 @@ export function StatsScreen() {
 
   const summary = recordValue(stats, 'summary')
   const alltime = recordValue(stats, 'alltime')
-  const daily = arrayValue(stats, 'daily')
   const modeBreakdown = arrayValue(stats, 'mode_breakdown')
-  const pieChart = arrayValue(stats, 'pie_chart')
-  const chapterBreakdown = arrayValue(stats, 'chapter_breakdown')
   const profileSummary = recordValue(profile, 'summary')
-  const focusWords = arrayValue(profile, 'focus_words').slice(0, 8)
-  const repeatedTopics = arrayValue(profile, 'repeated_topics').slice(0, 4)
-
   const todayNew = numberValue(alltime, ['today_new_words'])
   const todayReview = numberValue(alltime, ['today_review_words'])
-  const todayWords = numberValue(alltime, ['today_words', 'today_total_words']) || todayNew + todayReview
-  const todayAccuracy = numberValue(alltime, ['today_accuracy']) || numberValue(profileSummary, ['today_accuracy'])
-  const totalLearned = numberValue(alltime, ['total_words', 'learned_words']) || numberValue(summary, ['learned_words'])
-  const totalReviewed = numberValue(alltime, ['alltime_review_words', 'total_review_words'])
-  const streakDays = numberValue(profileSummary, ['streak_days']) || numberValue(alltime, ['streak_days'])
-  const totalSessions = useMemo(
-    () => modeBreakdown.reduce((sum, item) => sum + numberValue(item, ['sessions']), 0) || numberValue(summary, ['total_sessions']),
-    [modeBreakdown, summary],
-  )
+  return {
+    alltime,
+    chapterBreakdown: arrayValue(stats, 'chapter_breakdown'),
+    daily: arrayValue(stats, 'daily'),
+    error,
+    focusWords: arrayValue(profile, 'focus_words').slice(0, 8),
+    loading,
+    modeBreakdown,
+    pieChart: arrayValue(stats, 'pie_chart'),
+    profileSummary,
+    repeatedTopics: arrayValue(profile, 'repeated_topics').slice(0, 4),
+    streakDays: numberValue(profileSummary, ['streak_days']) || numberValue(alltime, ['streak_days']),
+    todayAccuracy: numberValue(alltime, ['today_accuracy']) || numberValue(profileSummary, ['today_accuracy']),
+    todayNew,
+    todayReview,
+    todayWords: numberValue(alltime, ['today_words', 'today_total_words']) || todayNew + todayReview,
+    totalLearned: numberValue(alltime, ['total_words', 'learned_words']) || numberValue(summary, ['learned_words']),
+    totalReviewed: numberValue(alltime, ['alltime_review_words', 'total_review_words']),
+    totalSessions: useMemo(() => modeBreakdown.reduce((sum, item) => sum + numberValue(item, ['sessions']), 0) || numberValue(summary, ['total_sessions']), [modeBreakdown, summary]),
+  }
+}
 
+export function StatsScreen({ navigate }: { navigate: Navigate }) {
+  const data = useStatsData()
+  const details: Array<{ Icon: LucideIcon; key: StatsSection; label: string; meta: string }> = [
+    { Icon: BarChart3, key: 'modes', label: '练习模式', meta: `${fmtInt(data.totalSessions)} 轮练习的分布与正确率` },
+    { Icon: Clock3, key: 'history', label: '学习记录', meta: '查看近 7 天学习节奏' },
+    { Icon: Layers3, key: 'chapters', label: '章节分布', meta: `${data.chapterBreakdown.length} 个章节的学习进度` },
+    { Icon: Brain, key: 'ebbinghaus', label: '记忆曲线', meta: `按时复习率 ${fmtPct(numberValue(data.alltime, ['ebbinghaus_rate']))}` },
+    { Icon: Sparkles, key: 'profile', label: '学习画像', meta: '薄弱模式、重点词和重复主题' },
+  ]
   return (
     <ScreenScroll hideHeader title="学习统计">
-      <StatusText error={error} loading={loading} />
-      <Card>
-        <View style={styles.sectionHead}>
-          <View>
-            <Meta>Web 同源指标</Meta>
-            <Heading>学习概览</Heading>
-          </View>
-        </View>
+      <StatusText error={data.error} loading={data.loading} />
+      <Card style={styles.heroCard}>
+        <Meta>今日摘要</Meta>
+        <Heading>先看最需要的四个数字</Heading>
         <View style={styles.metricGrid}>
-          <SummaryMetric label="今日学习新词" value={fmtInt(todayNew)} />
-          <SummaryMetric label="今日复习词" value={fmtInt(todayReview)} />
-          <SummaryMetric label="今日学过单词" value={fmtInt(todayWords)} />
-          <SummaryMetric label="今日学习时长" value={fmtDuration(numberValue(alltime, ['today_duration_seconds']))} />
-          <SummaryMetric label="今日答题正确率" value={fmtPct(todayAccuracy)} />
-          <SummaryMetric label="累计学习新词" value={fmtInt(totalLearned)} />
-          <SummaryMetric label="累计复习词" value={fmtInt(totalReviewed)} />
-          <SummaryMetric label="总学习时长" value={fmtDuration(numberValue(alltime, ['duration_seconds']))} />
-          <SummaryMetric label="连续学习天数" value={`${fmtInt(streakDays)} 天`} />
+          <SummaryMetric label="今日学过" value={`${fmtInt(data.todayWords)} 词`} />
+          <SummaryMetric label="今日用时" value={fmtDuration(numberValue(data.alltime, ['today_duration_seconds']))} />
+          <SummaryMetric label="正确率" value={fmtPct(data.todayAccuracy)} />
+          <SummaryMetric label="连续学习" value={`${fmtInt(data.streakDays)} 天`} />
         </View>
+        <Text style={styles.heroMeta}>累计新词 {fmtInt(data.totalLearned)} · 累计复习 {fmtInt(data.totalReviewed)}</Text>
       </Card>
-
-      <Card>
-        <View style={styles.sectionHead}>
-          <Heading>模式占比与各模式统计</Heading>
-          <Text style={styles.sectionMeta}>{fmtInt(totalSessions)} 轮</Text>
+      <Card style={styles.detailCard}>
+        <Heading>深入查看</Heading>
+        <Meta>把图表放到二级页面，首页只保留轻量入口。</Meta>
+        <View style={styles.detailList}>
+          {details.map(item => <DetailEntry {...item} key={item.key} onPress={() => navigate('statsDetail', { statsSection: item.key })} />)}
         </View>
-        <ModeChart modeBreakdown={modeBreakdown} pieChart={pieChart} />
-      </Card>
-
-      <Card>
-        <View style={styles.sectionHead}>
-          <Heading>学习记录</Heading>
-          <Text style={styles.sectionMeta}>近 7 天</Text>
-        </View>
-        <DailyChart rows={daily} />
-      </Card>
-
-      <Card>
-        <View style={styles.sectionHead}>
-          <Heading>章节学习分布</Heading>
-          <Text style={styles.sectionMeta}>{chapterBreakdown.length} 章</Text>
-        </View>
-        <ChapterChart rows={chapterBreakdown} />
-      </Card>
-
-      <Card>
-        <View style={styles.sectionHead}>
-          <Heading>艾宾浩斯曲线</Heading>
-          <Text style={styles.sectionMeta}>按时率 {fmtPct(numberValue(alltime, ['ebbinghaus_rate']))}</Text>
-        </View>
-        <EbbinghausChart alltime={alltime} />
-      </Card>
-
-      <Card>
-        <View style={styles.sectionHead}>
-          <Heading>统一学习画像</Heading>
-        </View>
-        <ProfileRow label="连续学习" value={`${fmtInt(streakDays)} 天`} />
-        <ProfileRow label="薄弱模式" value={String(profileSummary.weakest_mode_label ?? profileSummary.weakest_mode ?? '')} />
-        <ProfileRow label="主要模式" value={String(profileSummary.dominant_mode_label ?? profileSummary.dominant_mode ?? '')} />
-        {focusWords.length ? (
-          <View style={styles.wordStrip}>
-            {focusWords.map(item => <Text key={String(item.word)} style={styles.wordChip}>{String(item.word)}</Text>)}
-          </View>
-        ) : null}
-        {repeatedTopics.length ? (
-          <View style={styles.topicBox}>
-            {repeatedTopics.map(item => <Text key={String(item.topic ?? item.name)} style={styles.topicText}>{String(item.topic ?? item.name)}</Text>)}
-          </View>
-        ) : null}
       </Card>
     </ScreenScroll>
   )
 }
 
-const styles = StyleSheet.create({
-  chapterFill: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.pill,
-    height: '100%',
-  },
-  chapterList: {
-    gap: theme.spacing.sm,
-  },
-  chapterName: {
-    color: theme.colors.text,
-    flex: 1,
-    fontSize: theme.typography.caption,
-    fontWeight: '900',
-  },
-  chapterRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  chapterTrack: {
-    backgroundColor: theme.colors.surfaceInset,
-    borderRadius: theme.radius.pill,
-    flex: 1,
-    height: 8,
-    overflow: 'hidden',
-  },
-  chapterValue: {
-    color: theme.colors.muted,
-    fontSize: theme.typography.caption,
-    fontWeight: '800',
-    width: 36,
-  },
-  dailyBar: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.pill,
-    bottom: 0,
-    position: 'absolute',
-    width: '100%',
-  },
-  dailyBarWrap: {
-    backgroundColor: theme.colors.surfaceInset,
-    borderRadius: theme.radius.pill,
-    flex: 1,
-    marginVertical: theme.spacing.xs,
-    overflow: 'hidden',
-    width: 16,
-  },
-  dailyChart: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    height: 140,
-    justifyContent: 'space-between',
-  },
-  dailyColumn: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  dailyDate: {
-    color: theme.colors.muted,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  dailyValue: {
-    color: theme.colors.text,
-    fontSize: 11,
-    fontWeight: '900',
-  },
-  legendDot: {
-    borderRadius: theme.radius.pill,
-    height: 9,
-    width: 9,
-  },
-  legendName: {
-    color: theme.colors.text,
-    flex: 1,
-    fontSize: theme.typography.caption,
-    fontWeight: '900',
-  },
-  legendRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
-  },
-  legendValue: {
-    color: theme.colors.muted,
-    fontSize: theme.typography.caption,
-    fontWeight: '800',
-  },
-  metricCard: {
-    backgroundColor: theme.colors.surfaceInset,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.card,
-    borderWidth: 1,
-    flexBasis: '48%',
-    flexGrow: 1,
-    minHeight: 92,
-    padding: theme.spacing.md,
-  },
-  metricGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  metricLabel: {
-    color: theme.colors.muted,
-    fontSize: theme.typography.caption,
-    fontWeight: '800',
-    lineHeight: 18,
-    marginTop: theme.spacing.xs,
-  },
-  metricValue: {
-    color: theme.colors.text,
-    fontSize: 19,
-    fontWeight: '900',
-  },
-  profileLabel: {
-    color: theme.colors.text,
-    fontSize: theme.typography.label,
-    fontWeight: '900',
-  },
-  profileRow: {
-    alignItems: 'center',
-    borderBottomColor: theme.colors.border,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.sm,
-  },
-  profileValue: {
-    color: theme.colors.muted,
-    flex: 1,
-    fontSize: theme.typography.label,
-    fontWeight: '700',
-    textAlign: 'right',
-  },
-  sectionHead: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.sm,
-  },
-  sectionMeta: {
-    color: theme.colors.muted,
-    fontSize: theme.typography.caption,
-    fontWeight: '900',
-  },
-  stackBar: {
-    borderRadius: theme.radius.pill,
-    flexDirection: 'row',
-    height: 16,
-    overflow: 'hidden',
-  },
-  stackSlice: {
-    height: '100%',
-  },
-  stageFill: {
-    backgroundColor: theme.colors.success,
-    borderRadius: theme.radius.pill,
-    height: '100%',
-  },
-  stageList: {
-    gap: theme.spacing.sm,
-  },
-  stageName: {
-    color: theme.colors.text,
-    fontSize: theme.typography.caption,
-    fontWeight: '900',
-    width: 38,
-  },
-  stageRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  stageTrack: {
-    backgroundColor: theme.colors.surfaceInset,
-    borderRadius: theme.radius.pill,
-    flex: 1,
-    height: 9,
-    overflow: 'hidden',
-  },
-  stageValue: {
-    color: theme.colors.muted,
-    fontSize: theme.typography.caption,
-    fontWeight: '800',
-    width: 42,
-  },
-  topicBox: {
-    backgroundColor: theme.colors.surfaceInset,
-    borderRadius: theme.radius.card,
-    gap: theme.spacing.xs,
-    marginTop: theme.spacing.md,
-    padding: theme.spacing.md,
-  },
-  topicText: {
-    color: theme.colors.muted,
-    fontSize: theme.typography.caption,
-    lineHeight: 19,
-  },
-  wordChip: {
-    backgroundColor: theme.colors.accentSoft,
-    borderRadius: theme.radius.pill,
-    color: theme.colors.accentDark,
-    fontSize: theme.typography.caption,
-    fontWeight: '800',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-  },
-  wordStrip: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.xs,
-    marginTop: theme.spacing.md,
-  },
-})
+export function StatsDetailScreen({ options }: { options?: NavigateOptions }) {
+  const data = useStatsData()
+  const section = options?.statsSection ?? 'modes'
+  const titles: Record<StatsSection, string> = {
+    chapters: '章节学习分布',
+    ebbinghaus: '艾宾浩斯曲线',
+    history: '近 7 天学习记录',
+    modes: '模式占比与统计',
+    profile: '统一学习画像',
+  }
+  return (
+    <ScreenScroll hideHeader title={titles[section]}>
+      <StatusText error={data.error} loading={data.loading} />
+      <Card>
+        <View style={styles.sectionHead}>
+          <Heading>{titles[section]}</Heading>
+          {section === 'modes' ? <Text style={styles.sectionMeta}>{fmtInt(data.totalSessions)} 轮</Text> : null}
+          {section === 'chapters' ? <Text style={styles.sectionMeta}>{data.chapterBreakdown.length} 章</Text> : null}
+          {section === 'ebbinghaus' ? <Text style={styles.sectionMeta}>按时率 {fmtPct(numberValue(data.alltime, ['ebbinghaus_rate']))}</Text> : null}
+        </View>
+        {section === 'modes' ? <ModeChart modeBreakdown={data.modeBreakdown} pieChart={data.pieChart} /> : null}
+        {section === 'history' ? <DailyChart rows={data.daily} /> : null}
+        {section === 'chapters' ? <ChapterChart rows={data.chapterBreakdown} /> : null}
+        {section === 'ebbinghaus' ? <EbbinghausChart alltime={data.alltime} /> : null}
+        {section === 'profile' ? (
+          <>
+            <ProfileRow label="连续学习" value={`${fmtInt(data.streakDays)} 天`} />
+            <ProfileRow label="薄弱模式" value={String(data.profileSummary.weakest_mode_label ?? data.profileSummary.weakest_mode ?? '')} />
+            <ProfileRow label="主要模式" value={String(data.profileSummary.dominant_mode_label ?? data.profileSummary.dominant_mode ?? '')} />
+            {data.focusWords.length ? <View style={styles.wordStrip}>{data.focusWords.map(item => <Text key={String(item.word)} style={styles.wordChip}>{String(item.word)}</Text>)}</View> : null}
+            {data.repeatedTopics.length ? <View style={styles.topicBox}>{data.repeatedTopics.map(item => <Text key={String(item.topic ?? item.name)} style={styles.topicText}>{String(item.topic ?? item.name)}</Text>)}</View> : null}
+          </>
+        ) : null}
+      </Card>
+    </ScreenScroll>
+  )
+}

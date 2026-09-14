@@ -25,7 +25,7 @@ def explicit_word_audio_phonetic(word: str) -> str:
     if override:
         return override
     try:
-        from services import phonetic_lookup_service
+        from platform_sdk.phonetic_lookup_adapter import phonetic_lookup_service
 
         normalized = phonetic_lookup_service.normalize_word_key(word)
         phonetic = phonetic_lookup_service.load_phonetic_overrides().get(normalized, '')

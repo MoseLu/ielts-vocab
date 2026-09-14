@@ -3,13 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
-    "android:dev": "IELTS_MOBILE_ENV=dev react-native run-android",
-    "android:prod": "IELTS_MOBILE_ENV=prod react-native run-android",
+    "android": "react-native run-android --no-packager",
+    "android:dev": "IELTS_MOBILE_ENV=dev react-native run-android --no-packager",
+    "android:dev:one-shot": "IELTS_MOBILE_ENV=dev react-native run-android",
+    "android:prod": "IELTS_MOBILE_ENV=prod react-native run-android --no-packager",
+    "android:prod:one-shot": "IELTS_MOBILE_ENV=prod react-native run-android",
+    "e2e:android": "bash scripts/run-maestro-e2e.sh all",
+    "e2e:smoke": "bash scripts/run-maestro-e2e.sh smoke",
     "ios": "react-native run-ios",
     "lint": "eslint src --ext .ts,.tsx",
+    "metro": "react-native start --port 8081",
+    "metro:reset": "react-native start --port 8081 --reset-cache",
     "start": "react-native start",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

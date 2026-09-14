@@ -88,7 +88,7 @@ for port in "${ports_to_cleanup[@]}"; do
   stop_port_listener "${port}"
 done
 
-"${start_script}" --project-root "${root}" --skip-frontend-checks &
+bash "${start_script}" --project-root "${root}" --skip-frontend-checks &
 startup_pid=$!
 
 wait_http_ready 'http://127.0.0.1:8000/health'

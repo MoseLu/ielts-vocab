@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { useSpeechRecognition } from '../../../../hooks/useSpeechRecognition'
+import { useSpeechRecognition } from '../../../../hooks'
 import { normalizeAnswer } from '../../../../features/practice/gameMode/gameData'
 import { gameAsset } from './gameAssets'
 

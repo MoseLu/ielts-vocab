@@ -99,7 +99,7 @@ export function ExamsScreen() {
           <Card>
             <Heading>{paper.title}</Heading>
             <Meta>{paper.collectionTitle} · {paper.examKind}</Meta>
-            <PrimaryButton label="返回试卷列表" tone="neutral" onPress={() => setPaper(null)} />
+            <PrimaryButton label="返回试卷列表" tone="neutral" onPress={() => setPaper(null)} testID="exams.backToList" />
           </Card>
           {questions.map(question => (
             <Card key={question.id}>
@@ -111,6 +111,7 @@ export function ExamsScreen() {
                   label={`${choice.key}. ${stripHtml(choice.contentHtml)}`}
                   tone={responses[question.id] === choice.key ? 'primary' : 'neutral'}
                   onPress={() => setResponses(prev => ({ ...prev, [question.id]: choice.key }))}
+                  testID={`exams.choice.${question.id}.${choice.key}`}
                 />
               ))}
               {!question.choices.length ? (
@@ -119,6 +120,7 @@ export function ExamsScreen() {
                   onChangeText={value => setResponses(prev => ({ ...prev, [question.id]: value }))}
                   placeholder="输入答案"
                   multiline
+                  testID={`exams.answer.${question.id}`}
                 />
               ) : null}
               {question.questionType === 'speaking_prompt' ? (
@@ -138,7 +140,7 @@ export function ExamsScreen() {
             </Card>
           ))}
           <Card>
-            <PrimaryButton label="保存并提交" onPress={() => void saveAndSubmit().catch(err => setError(err.message))} />
+            <PrimaryButton label="保存并提交" onPress={() => void saveAndSubmit().catch(err => setError(err.message))} testID="exams.submit" />
             {result ? <Meta>{result}</Meta> : null}
           </Card>
         </>
@@ -147,7 +149,7 @@ export function ExamsScreen() {
           <Card key={item.id}>
             <Heading>{item.title}</Heading>
             <Meta>{item.collectionTitle} · {item.examKind}</Meta>
-            <PrimaryButton label="打开试卷" onPress={() => void openPaper(item.id)} />
+            <PrimaryButton label="打开试卷" onPress={() => void openPaper(item.id)} testID={`exams.paper.${item.id}`} />
           </Card>
         ))
       )}

@@ -1,12 +1,11 @@
 import { useLearningJournalPage } from '../../../composables/journal/page/useLearningJournalPage'
 import {
   formatDateTime,
-  toPlainTextSnippet,
 } from '../../../composables/journal/page/journalPageUtils'
-import DailySummaryDocument from '../documents/DailySummaryDocument'
-import QaHistoryDocument from '../documents/QaHistoryDocument'
+import TodayNotesDocument from '../documents/TodayNotesDocument'
+import HistoryNotesDocument from '../documents/HistoryNotesDocument'
 import JournalWorkspace from '../layout/JournalWorkspace'
-import { JournalNotesActions, JournalSummaryActions } from './JournalPageActions'
+import { JournalNotesActions, TodayNotesActions } from './JournalPageActions'
 import { PageSkeleton } from '../../ui'
 import { Page } from '../../layout'
 
@@ -15,40 +14,35 @@ export default function LearningJournalPage() {
     tab,
     startDate,
     endDate,
-    notes,
-    notesLoading,
-    notesError,
-    notesTotal,
-    memoryTopics,
-    cursorStack,
-    hasMore,
+    todayEntry,
+    editMode,
+    polishing,
+    polishedPreview,
+    historyEntries,
+    historyLoading,
+    historyError,
+    historyHasMore,
+    selectedEntry,
     exporting,
-    selectedSummary,
-    selectedNote,
-    summaryLoading,
-    summaryError,
-    summaryProfile,
-    summaryProfileLoading,
-    generatingDate,
-    summaryTargetDate,
-    summaryProgress,
-    isInitialSummaryLoading,
-    isInitialNotesLoading,
     exportLabel,
-    generateLoadingText,
+    isInitialTodayLoading,
     setStartDate,
     setEndDate,
+    setEditMode,
     handleTabChange,
-    resetNoteDateFilters,
-    generateSummary,
-    exportSummaries,
+    resetDateFilters,
+    saveJournalEntry,
+    setTodayDraftContent,
+    polishContent,
+    acceptPolish,
+    rejectPolish,
+    loadMoreHistory,
+    selectEntry,
+    backToList,
     exportNotes,
-    setSelectedNoteId,
-    goToPreviousNotesPage,
-    goToNextNotesPage,
   } = useLearningJournalPage()
 
-  if (isInitialSummaryLoading || isInitialNotesLoading) {
+  if (isInitialTodayLoading) {
     return (
       <Page className="journal-page">
         <PageSkeleton
@@ -64,7 +58,7 @@ export default function LearningJournalPage() {
     <JournalWorkspace
       activeTab={tab}
       onTabChange={handleTabChange}
-      actions={tab === 'notes' ? (
+      actions={tab === 'history' ? (
         <JournalNotesActions
           startDate={startDate}
           endDate={endDate}
@@ -72,48 +66,42 @@ export default function LearningJournalPage() {
           exportLabel={exportLabel}
           onStartDateChange={setStartDate}
           onEndDateChange={setEndDate}
-          onResetDates={resetNoteDateFilters}
+          onResetDates={resetDateFilters}
           onExport={exportNotes}
         />
       ) : (
-        <JournalSummaryActions
-          selectedSummaryDate={selectedSummary?.date ?? null}
-          summaryTargetDate={summaryTargetDate}
-          generatingDate={generatingDate}
-          exporting={exporting}
-          exportLabel={exportLabel}
-          generateLoadingText={generateLoadingText}
-          summaryProgress={summaryProgress}
-          onGenerate={generateSummary}
-          onExport={exportSummaries}
+        <TodayNotesActions
+          editMode={editMode}
+          polishing={polishing}
+          onToggleEdit={() => setEditMode(!editMode)}
+          onPolish={polishContent}
         />
       )}
     >
-      {tab === 'summaries' ? (
-        <DailySummaryDocument
-          summary={selectedSummary}
-          learnerProfile={summaryProfile}
-          learnerProfileLoading={summaryProfileLoading}
-          summaryLoading={summaryLoading}
-          summaryError={summaryError}
-          summaryProgress={summaryProgress}
+      {tab === 'today' ? (
+        <TodayNotesDocument
+          entry={todayEntry}
+          editMode={editMode}
+          polishing={polishing}
+          polishedPreview={polishedPreview}
+          onSave={saveJournalEntry}
+          onDraftChange={setTodayDraftContent}
+          onPolish={polishContent}
+          onAcceptPolish={acceptPolish}
+          onRejectPolish={rejectPolish}
           formatDateTime={formatDateTime}
         />
       ) : (
-        <QaHistoryDocument
-          notes={notes}
-          memoryTopics={memoryTopics}
-          notesLoading={notesLoading}
-          notesError={notesError}
-          notesTotal={notesTotal}
-          selectedNote={selectedNote}
-          cursorStack={cursorStack}
-          hasMore={hasMore}
-          onSelectNote={setSelectedNoteId}
-          onPreviousPage={goToPreviousNotesPage}
-          onNextPage={goToNextNotesPage}
+        <HistoryNotesDocument
+          entries={historyEntries}
+          loading={historyLoading}
+          error={historyError}
+          hasMore={historyHasMore}
+          selectedEntry={selectedEntry}
+          onSelectEntry={selectEntry}
+          onLoadMore={loadMoreHistory}
+          onBack={backToList}
           formatDateTime={formatDateTime}
-          toPlainTextSnippet={toPlainTextSnippet}
         />
       )}
     </JournalWorkspace>

@@ -36,7 +36,7 @@ done
 setup_script="${root}/scripts/setup-mac-runtime.sh"
 backend_env="${root}/backend/.env"
 microservices_env="${root}/backend/.env.microservices.local"
-runtime_dir="${root}/logs/runtime/microservices-mac"
+runtime_dir="${root}/logs/runtime/app-services-mac"
 postgres_script="${root}/scripts/start-local-postgres-microservices.sh"
 redis_script="${root}/scripts/start-local-redis-microservices.sh"
 rabbit_script="${root}/scripts/start-local-rabbitmq-microservices.sh"
@@ -82,7 +82,7 @@ replaced_worker_names=(
 )
 
 log() {
-  printf '[microservices-mac] %s\n' "$1"
+  printf '[app-services-mac] %s\n' "$1"
 }
 
 require_command() {
@@ -94,7 +94,7 @@ require_command() {
 
 ensure_runtime() {
   if [[ ! -x "${runtime_prefix}/bin/python" ]]; then
-    "${setup_script}"
+    bash "${setup_script}"
   fi
   PATH="${runtime_prefix}/bin:${PATH}"
   export PATH
@@ -172,12 +172,12 @@ mkdir -p "${runtime_dir}"
 [[ -f "${backend_env}" ]] || { printf '[ERROR] Missing backend env file: %s\n' "${backend_env}" >&2; exit 1; }
 [[ -f "${microservices_env}" ]] || { printf '[ERROR] Missing microservices env file: %s\n' "${microservices_env}" >&2; exit 1; }
 
-"${postgres_script}" "${root}"
+bash "${postgres_script}" "${root}"
 if [[ "${skip_redis}" != "true" ]]; then
-  "${redis_script}" "${root}"
+  bash "${redis_script}" "${root}"
 fi
 if [[ "${skip_rabbit}" != "true" ]]; then
-  "${rabbit_script}" "${root}"
+  bash "${rabbit_script}" "${root}"
 fi
 
 python "${root}/scripts/run-service-schema-migrations.py" --env-file "${microservices_env}"

@@ -42,6 +42,12 @@ def test_start_project_uses_split_runtime_as_default_backend_path():
     assert '--use-monolith-compatibility' in start_monolith_compat
     assert 'start-project.sh' in start_monolith_compat
     assert 'ALLOW_SHARED_SPLIT_SERVICE_SQLITE_SERVICES' not in start_microservices
+    assert 'bash "${setup_script}"' in start_project
+    assert 'bash "${microservices_script}" "${microservices_args[@]}"' in start_project
+    assert 'bash "${setup_script}"' in start_microservices
+    assert 'bash "${postgres_script}" "${root}"' in start_microservices
+    assert 'bash "${redis_script}" "${root}"' in start_microservices
+    assert 'bash "${rabbit_script}" "${root}"' in start_microservices
     assert 'core-eventing-worker' in start_microservices
     assert 'notes-domain-worker' in start_microservices
     assert 'ai-execution-domain-worker' in start_microservices

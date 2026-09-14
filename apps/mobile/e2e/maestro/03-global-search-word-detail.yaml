@@ -1,0 +1,13 @@
+appId: com.axiomaticworld.ieltsvocab
+---
+- runFlow: _login.yaml
+- tapOn:
+    id: header.search
+- extendedWaitUntil:
+    visible:
+      id: search.input
+    timeout: 10000
+- tapOn:
+    id: search.input
+- inputText: abandon
+- assertVisible: abandon

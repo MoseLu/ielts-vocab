@@ -35,7 +35,7 @@ def list_user_learning_events_in_window(
     )
 
 
-def find_latest_session_activity_at(
+def _session_activity_query(
     user_id: int,
     *,
     started_at: datetime,
@@ -43,7 +43,7 @@ def find_latest_session_activity_at(
     mode: str | None = None,
     book_id: str | None = None,
     chapter_id: str | None = None,
-) -> datetime | None:
+):
     query = (
         UserLearningEvent.query
         .filter(
@@ -67,7 +67,46 @@ def find_latest_session_activity_at(
             UserLearningEvent.chapter_id.is_(None),
         ))
 
-    event = query.order_by(
+    return query
+
+
+def list_session_activity_at(
+    user_id: int,
+    *,
+    started_at: datetime,
+    end_at: datetime,
+    mode: str | None = None,
+    book_id: str | None = None,
+    chapter_id: str | None = None,
+) -> list[datetime]:
+    events = _session_activity_query(
+        user_id,
+        started_at=started_at,
+        end_at=end_at,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+    ).order_by(UserLearningEvent.occurred_at.asc(), UserLearningEvent.id.asc()).all()
+    return [event.occurred_at for event in events if event.occurred_at is not None]
+
+
+def find_latest_session_activity_at(
+    user_id: int,
+    *,
+    started_at: datetime,
+    end_at: datetime,
+    mode: str | None = None,
+    book_id: str | None = None,
+    chapter_id: str | None = None,
+) -> datetime | None:
+    event = _session_activity_query(
+        user_id,
+        started_at=started_at,
+        end_at=end_at,
+        mode=mode,
+        book_id=book_id,
+        chapter_id=chapter_id,
+    ).order_by(
         UserLearningEvent.occurred_at.desc(),
         UserLearningEvent.id.desc(),
     ).first()

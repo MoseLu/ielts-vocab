@@ -1,0 +1,257 @@
+# IELTS 词汇
+最后更新：2026-06-07
+
+一个面向 IELTS 词汇学习的全栈 Web 应用，包含词书学习、多练习模式、AI 助手、学习日志、每日总结、学习画像，以及独立语音识别服务。
+
+生产域名通过 `IELTS_PUBLIC_HOST` / `PROD_SMOKE_HOST` 配置。当前默认值保留 `axiomaticworld.com` 以兼容旧环境；多项目部署时使用 `ielts.axiomaticworld.com` 等项目子域名，不占用父域名根入口。
+
+## 当前能力
+
+- 词书学习：支持词书、章节、单词详情、收藏/熟词/易混词等学习入口。
+- 基础练习闭环：支持 `smart`、`listening`、`meaning`、`dictation`、`follow`、`radio`、`quickmemory`、`errors`。
+- 统计与回炉：艾宾浩斯、错词本、跟读、听力、默写、听音选义、智能练习直接挂钩学习统计、模式表现和学习画像。
+- 高级独立模式：五维一体和 AI 口语评分属于独立高级学习链路，计划作为付费能力或 2.0 能力引入，不承接基础艾宾浩斯/错词本入口。
+- AI 助手：支持带上下文的问答、学习建议、错词分析、总结辅助和用户记忆注入。
+- 日志与总结：支持学习日志、主题聚合、每日总结和相关导出能力。
+- 语音能力：HTTP API 与实时语音识别拆分为独立进程，支持 Socket.IO 语音链路。
+- 管理与运维：支持管理员能力、TTS 生成、启动脚本、生产式本地代理链路和提交日志归档。
+- 静态参考资料：`reference-materials/raw/` 下保留 IELTS PDF / 音频等非代码资料，目录本身已忽略，不进入 Git 跟踪。
+
+## 技术栈
+
+- 前端：React 19 + TypeScript + Vite
+- 样式：SCSS + CSS Variables
+- 校验：Zod
+- 后端：Flask + FastAPI service wrappers + PostgreSQL split runtime
+- 实时：Flask-SocketIO + Socket.IO
+- 鉴权：HttpOnly Cookie + JWT refresh session
+- 语音：独立 `speech_service.py` + DashScope 相关适配
+
+## 仓库结构
+
+```text
+frontend/
+|- package.json              # 前端包清单
+|- vite.config.ts            # dev / preview / proxy 端口配置
+|- src/
+ - app/                    # 路由入口
+ - components/             # 页面与 UI 组件
+ - composables/            # 页面级组合逻辑
+ - contexts/               # Auth / Settings / Toast / AIChat
+ - features/               # 领域功能
+ - hooks/                  # 共享 hooks
+ - lib/                    # schema、工具与本地同步逻辑
+ - styles/                 # 页面样式
+ - tests/                  # 单元与集成测试
+
+backend/
+|- app.py                    # 兼容 monolith 入口，默认端口 5000
+|- speech_service.py         # 兼容语音服务入口，默认端口 5001
+|- models.py                 # 数据模型
+|- routes/                   # HTTP / Socket.IO 路由层
+|- services/                 # 服务层、仓储层、提供方适配层
+|- tests/                    # 后端测试
+|- README.md                 # 后端架构与层次说明
+|- API.md                    # API 索引
+
+docs/
+|- architecture/             # 架构说明与设计文档
+|- governance/               # UI / 产品治理记录
+|- milestone/               # 里程碑文档
+|- operations/               # 运维与工具文档
+|- planning/                 # 计划文档
+|- logs/submit/              # 提交批次日志
+
+scripts/                    # 守卫脚本与仓库工具
+vocabulary_data/            # 词书与词汇数据
+reference-materials/        # 静态参考资料说明与本地 raw 资源
+AGENTS.md                   # 仓库级工作约束
+MILESTONE.md                # 里程碑总览（已迁 docs/state/MILESTONE.md）
+TODO.md                     # 当前任务清单（已迁 docs/state/TODO.md）
+scripts/setup-mac-runtime.sh # macOS 本地 runtime 安装脚本
+start-project.sh            # 本地生产式启动脚本
+start-microservices.sh      # split backend 默认启动脚本
+```
+
+## 运行拓扑
+
+当前本地 canonical runtime 默认分成五组关键端口：
+
+- 前端开发：`http://127.0.0.1:3020`
+- 前端预览：`http://127.0.0.1:3002`
+- 浏览器 API 入口：`http://127.0.0.1:8000`
+- split services：`http://127.0.0.1:8101-8108`
+- 实时语音 Socket.IO：`http://127.0.0.1:5001`
+
+生产式本地代理链路：
+
+```text
+https://ielts.axiomaticworld.com（旧环境可继续使用 axiomaticworld.com）
+-> local :80
+-> nginx
+-> vite preview :3002
+-> /api -> gateway-bff :8000
+-> gateway-bff -> split services :8101-8108
+-> /socket.io -> asr-socketio :5001
+```
+
+如果遇到域名访问异常、`ERR_SSL_PROTOCOL_ERROR`、Socket.IO 失败或 `/api` 表现与本地开发不一致，优先检查这条整链路，而不是只看前端页面代码。
+
+## 快速开始
+
+### 1. 安装依赖
+
+macOS 本地 runtime：
+
+```bash
+./scripts/setup-mac-runtime.sh
+```
+
+前端依赖：
+
+```bash
+pnpm install
+```
+
+### 2. 一键启动
+
+```bash
+./start-project.sh
+```
+
+这个脚本会按当前约定启动：
+
+- gateway-bff
+- split backend services
+- ASR Socket.IO
+- Vite preview
+- 与本地代理链路配套的日志与健康检查
+
+### 3. 手动启动
+
+默认 split backend：
+
+```bash
+./start-microservices.sh
+```
+
+`scripts/setup-mac-runtime.sh` 会在用户目录下安装 `python/nodejs/postgresql/redis-server/rabbitmq-server`，并准备 `pnpm`。
+
+前端开发：
+
+```bash
+pnpm dev
+```
+
+在 macOS 上，`pnpm dev` 会通过本地生成的 `IELTS Vocab Dev.app` 启动 Vite，日志写到 `logs/runtime/mac-app/dev.*.log`。如需回到普通终端启动，可临时设置 `IELTS_DISABLE_MAC_APP=1`。
+
+前端预览：
+
+```bash
+pnpm preview
+```
+
+在 macOS 上，`pnpm preview` 会通过本地生成的 `IELTS Vocab Preview.app` 启动 Vite preview，生产构建和部署脚本不受影响。
+
+兼容 monolith 入口仅保留给迁移/回归参考，不再是默认浏览器 API 路径：
+
+```bash
+./start-monolith-compat.sh
+```
+
+如果要做更窄的 rollback 演练，可以直接用 surface 预设：
+
+```bash
+./start-monolith-compat.sh --monolith-compat-surface rollback
+```
+
+这个 preset 当前会收窄到 `tts-admin`，并把兼容链路的 readiness canary 切到 `/api/tts/books-summary`，不会再错误依赖 `/api/books/stats`。
+
+如果当前分支为了 `wave6c` 收尾而保持 dirty working tree，可以只对这条 compatibility drill 显式放宽 Git gate：
+
+```bash
+./start-monolith-compat.sh --monolith-compat-surface rollback --allow-dirty-compatibility-drill
+```
+
+启动后，建议再跑专门的 rollback drill 校验：
+
+```bash
+pwsh ./scripts/validate-wave6c-rollback-drill.ps1
+```
+
+如果宿主环境不允许绑定兼容 backend 的默认 `5000` 端口，可以显式换到别的本地端口，例如：
+
+```bash
+./start-monolith-compat.sh --monolith-compat-surface rollback --allow-dirty-compatibility-drill --monolith-compat-backend-port 5050
+```
+
+Wave 6C cutover 校验建议使用：
+
+```bash
+pwsh ./scripts/validate-wave6c-cutover.ps1 -SkipRemote
+```
+
+这个校验包会同时检查本地生产式链路和默认 browser compatibility route coverage；rollback-only 的 `tts-admin` 会单独作为信息摘要输出。
+
+## 常用命令
+
+根目录 workspace 命令：
+
+```bash
+pnpm dev
+pnpm build
+pnpm preview
+pnpm lint
+pnpm test
+pnpm test:e2e
+pnpm check:file-lines
+pnpm verify:repo-guards
+```
+
+后端常用命令：
+
+```bash
+pytest -q
+pytest backend/tests/test_source_text_integrity.py -q
+```
+
+## 质量守卫
+
+提交前至少建议通过：
+
+```bash
+pnpm check:file-lines
+pnpm lint
+pnpm build
+pnpm test
+pytest backend/tests/test_source_text_integrity.py -q
+```
+
+说明：
+
+- `pnpm build` 会自动触发前端仓库守卫。
+- `check-file-lines` 会拦截新的超长手工维护文件。
+- `test_source_text_integrity.py` 用于发现文本编码异常和常见乱码。
+
+## 主要接口
+
+- 浏览器入口：`gateway-bff -> /api/* -> services`
+- `/api/auth`：注册、登录、登出、当前用户、邮箱绑定与恢复
+- `/api/books`：词书、章节、单词详情、进度、熟词/收藏/易混词
+- `/api/ai`：AI 助手、学习统计、学习画像、错词、练习支撑、艾宾浩斯/速记同步
+- `/api/notes`：学习日志、总结、任务与导出
+- `/api/tts`：单词/句子音频与批量生成状态
+- `/api/admin`：管理员能力
+- `/socket.io`：独立 speech service 的实时语音链路
+
+## 参考文档
+
+- 仓库工作约束：[AGENTS.md](./AGENTS.md)
+- 后端总览：[backend/README.md](./backend/README.md)
+- 后端架构：[docs/architecture/backend-layered-architecture.md](./docs/architecture/backend-layered-architecture.md)
+- API 索引：[backend/API.md](./backend/API.md)
+- 文档目录说明：[docs/README.md](./docs/README.md)
+
+## License
+
+MIT

@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps -- sessionLoggedRef/sessionStartRef are read in cleanup for intentional behavior; exhaustive-deps does not model cleanup-ref semantics */
 import { useCallback, useEffect, useRef } from 'react'
 import { apiFetch } from '../../../lib'
-import { flushStudySessionOnPageHide } from '../../../hooks/useAIChat'
+import { flushStudySessionOnPageHide } from '../../../hooks'
 import { persistChapterProgressSnapshot } from '../../../features/practice/progressStorage'
 import type {
   QuickMemoryModeVariant,
@@ -299,6 +300,7 @@ export function useQuickMemorySession({
     modeVariant,
   ])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional cleanup-only effect
   useEffect(() => {
     return () => {
       flushPendingRecordSync(true)

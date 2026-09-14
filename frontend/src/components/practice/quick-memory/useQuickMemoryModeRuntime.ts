@@ -104,6 +104,7 @@ export function useQuickMemoryModeRuntime({
     completedSessionDurationSecondsRef,
     pendingRecordSyncRef,
     resultsRef,
+    sessionStartRef,
     sessionLoggedRef,
   }
 }

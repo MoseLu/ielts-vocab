@@ -164,6 +164,7 @@ export function LoginScreen() {
             contentContainerStyle={styles.accountContent}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
             <AccountLoginPane
               code={code}
@@ -223,26 +224,36 @@ export function LoginScreen() {
 
           <View style={styles.entryPanel}>
             <Pressable
+              accessibilityLabel="微信登录"
               accessibilityRole="button"
               disabled={isLoading}
               onPress={() => requestAuthTarget('wechat')}
               style={[styles.loginButton, styles.wechatButton]}
+              testID="login.wechat.entry"
             >
               <WechatIcon size={24} />
               <Text style={styles.wechatText}>微信登录</Text>
             </Pressable>
             <Pressable
+              accessibilityLabel="账号登录"
               accessibilityRole="button"
               disabled={isLoading}
               onPress={() => requestAuthTarget('account')}
               style={[styles.loginButton, styles.accountButton]}
+              testID="login.account.entry"
             >
               <UserRound color="#5A2E1B" size={22} strokeWidth={2.6} />
               <Text style={styles.accountText}>账号登录</Text>
             </Pressable>
             {notice ? <Text style={styles.notice}>{notice}</Text> : null}
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <Pressable accessibilityRole="checkbox" onPress={() => setAgreed(value => !value)} style={styles.agreementRow}>
+            <Pressable
+              accessibilityLabel="同意用户协议和隐私政策"
+              accessibilityRole="checkbox"
+              onPress={() => setAgreed(value => !value)}
+              style={styles.agreementRow}
+              testID="login.agreement.checkbox"
+            >
               <View style={[styles.checkbox, agreed ? styles.checkboxChecked : null]}>
                 {agreed ? <Check color="#FFFFFF" size={14} strokeWidth={3} /> : null}
               </View>

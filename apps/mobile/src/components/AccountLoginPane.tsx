@@ -62,7 +62,7 @@ export function AccountLoginPane({
 
   return (
     <View style={styles.panel}>
-      <Pressable accessibilityRole="button" onPress={onBack} style={styles.backButton}>
+      <Pressable accessibilityLabel="返回登录方式" accessibilityRole="button" onPress={onBack} style={styles.backButton} testID="login.account.back">
         <ArrowLeft color="#5F793A" size={22} strokeWidth={3} />
         <Text style={styles.backText}>返回</Text>
       </Pressable>
@@ -75,6 +75,7 @@ export function AccountLoginPane({
           placeholder="用户名"
           placeholderTextColor={theme.colors.textTertiary}
           style={styles.input}
+          testID="login.account.username"
           value={username}
         />
       ) : null}
@@ -84,6 +85,7 @@ export function AccountLoginPane({
         placeholder={mode === 'login' ? '用户名或邮箱' : '邮箱'}
         placeholderTextColor={theme.colors.textTertiary}
         style={styles.input}
+        testID="login.account.identifier"
         value={identifier}
       />
       {mode === 'forgot' ? (
@@ -93,6 +95,7 @@ export function AccountLoginPane({
           placeholder="验证码（留空则发送验证码）"
           placeholderTextColor={theme.colors.textTertiary}
           style={styles.input}
+          testID="login.account.code"
           value={code}
         />
       ) : null}
@@ -102,9 +105,10 @@ export function AccountLoginPane({
         placeholderTextColor={theme.colors.textTertiary}
         secureTextEntry
         style={styles.input}
+        testID="login.account.password"
         value={password}
       />
-      <Pressable disabled={isLoading} onPress={onSubmit} style={[styles.submitButton, isLoading ? styles.disabled : null]}>
+      <Pressable accessibilityLabel={submitLabel} disabled={isLoading} onPress={onSubmit} style={[styles.submitButton, isLoading ? styles.disabled : null]} testID="login.account.submit">
         {isLoading ? (
           <View style={styles.loadingRow}>
             <OrangeLoadingMark active size={28} />

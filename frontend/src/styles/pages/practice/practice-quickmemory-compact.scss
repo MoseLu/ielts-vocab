@@ -43,9 +43,38 @@
         font-size: clamp(var(--size-30), 5vw, var(--size-44));
     }
 
-    .qm-hint,
-    .qm-key-hints {
+    .qm-card:not(.qm-card--test) .qm-hint,
+    .qm-card:not(.qm-card--test) .qm-key-hints {
         display: none;
+    }
+
+    .qm-card--test {
+        padding: var(--size-16) var(--size-18);
+        gap: var(--size-10);
+    }
+
+    .qm-card--test .qm-hint {
+        font-size: var(--size-14);
+        text-align: center;
+    }
+
+    .qm-card--test .qm-key-hints {
+        gap: var(--size-6) var(--size-10);
+        row-gap: var(--size-6);
+    }
+
+    .qm-card--test .qm-key-hint {
+        font-size: var(--size-12);
+    }
+
+    .qm-card--test .qm-btn {
+        padding: var(--size-10) var(--size-12) var(--size-12);
+        gap: var(--size-4);
+    }
+
+    .qm-card--test .qm-audio-prompt {
+        width: var(--size-72);
+        height: var(--size-72);
     }
 
     .qm-choice-row {

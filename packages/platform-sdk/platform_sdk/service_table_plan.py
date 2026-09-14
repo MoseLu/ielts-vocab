@@ -147,6 +147,7 @@ NOTES_SERVICE_TABLES = frozenset({
     'user_learning_notes',
     'user_daily_summaries',
     'user_word_notes',
+    'user_journal_notes',
 }) | NOTES_EVENTING_TABLES
 
 AI_EXECUTION_SERVICE_TABLES = frozenset({

@@ -56,6 +56,7 @@ export interface UsePracticePageDataParams {
   uniqueAnsweredRef: MutableRefObject<Set<string>>
   errorProgressHydratedRef: MutableRefObject<boolean>
   errorRoundResultsRef: MutableRefObject<ErrorReviewRoundResults>
+  listeningOptionPoolRef: MutableRefObject<Word[]>
   beginSession: (context?: { bookId?: string | null; chapterId?: string | null }) => void
   onListeningModeFallback: () => void
 }

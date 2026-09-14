@@ -76,3 +76,16 @@ def test_asr_socketio_service_exposes_session_snapshot(monkeypatch):
     assert response.status_code == 200
     assert response.get_json()['session_id'] == 'speech-1'
     assert response.get_json()['snapshot']['final_transcript'] == 'hello world'
+
+
+def test_asr_socketio_service_uses_secure_cors_origin_policy(monkeypatch):
+    monkeypatch.setenv('COOKIE_SECURE', 'true')
+    monkeypatch.setenv('CORS_ORIGINS', 'https://axiomaticworld.com')
+    monkeypatch.delenv('CORS_INCLUDE_LOCAL_DEV_ORIGINS', raising=False)
+
+    module = _load_asr_socketio_module()
+
+    assert module.socketio.server.eio.cors_allowed_origins == [
+        'https://axiomaticworld.com',
+        'https://www.axiomaticworld.com',
+    ]

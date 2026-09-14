@@ -1,4 +1,4 @@
-import React, { type CSSProperties, type ReactNode } from 'react'
+import { type CSSProperties, type ReactNode } from 'react'
 
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg'
@@ -99,9 +99,10 @@ export function Skeleton({
   width,
   height,
 }: SkeletonProps) {
-  const style: CSSProperties = {}
-  if (width) style['--ui-skeleton-width' as string] = typeof width === 'number' ? `${width}px` : width
-  if (height) style['--ui-skeleton-height' as string] = typeof height === 'number' ? `${height}px` : height
+  const style = {
+    ...(width ? { '--ui-skeleton-width': typeof width === 'number' ? `${width}px` : width } : {}),
+    ...(height ? { '--ui-skeleton-height': typeof height === 'number' ? `${height}px` : height } : {}),
+  } as CSSProperties
 
   return (
     <div

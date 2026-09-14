@@ -28,7 +28,7 @@ def _decode_with_wave(path: str) -> list[int]:
             sample_width = reader.getsampwidth()
             frame_rate = reader.getframerate()
             raw = reader.readframes(min(reader.getnframes(), frame_rate * _MAX_SECONDS))
-    except (wave.Error, OSError) as exc:
+    except (EOFError, wave.Error, OSError) as exc:
         raise AcousticFallbackError('audio decode failed') from exc
     if sample_width != 2:
         raise AcousticFallbackError('unsupported wav sample width')
@@ -166,27 +166,91 @@ def _duration_seconds(samples: list[int]) -> float:
     return len(samples) / _SAMPLE_RATE
 
 
-def _score_without_reference(user_samples: list[int]) -> dict:
+def analyze_follow_read_audio_signal(audio_path: str) -> dict:
+    samples = _decode_audio(audio_path)
+    if not samples:
+        raise AcousticFallbackError('empty user audio')
+    trimmed = _trim_silence(samples)
+    peak = max((abs(sample) for sample in samples), default=0) / 32768.0
+    rms = math.sqrt(sum(sample * sample for sample in samples) / len(samples)) / 32768.0
+    return {
+        'duration_seconds': _duration_seconds(samples),
+        'voiced_seconds': _duration_seconds(trimmed),
+        'peak': peak,
+        'rms': rms,
+        'feature_count': len(_frame_features(samples)),
+    }
+
+
+def _segment_status(score: int) -> str:
+    if score >= 80:
+        return 'good'
+    if score >= 60:
+        return 'ok'
+    return 'weak'
+
+
+def _segment_comment(status: str, text: str) -> str:
+    if status == 'good':
+        return f'{text} 与参考音频比较接近，可以保持这个发音。'
+    if status == 'ok':
+        return f'{text} 基本接近，建议放慢后再读两遍，重点稳定音长和口型。'
+    return f'{text} 与参考音频差异较明显，先单独练这一段，再连回完整单词。'
+
+
+def _build_segment_feedback(*, score: int, weak_segments: list[str], segment_texts: list[str] | None) -> list[dict]:
+    weak_set = {segment.lower() for segment in weak_segments}
+    fallback_status = _segment_status(score)
+    source_segments = [item.strip()[:40] for item in (segment_texts or []) if item.strip()]
+    if not source_segments:
+        source_segments = weak_segments
+    feedback = []
+    for text in source_segments[:12]:
+        status = 'weak' if text.lower() in weak_set else fallback_status
+        feedback.append({'text': text, 'status': status, 'comment': _segment_comment(status, text)})
+    return feedback
+
+
+def _score_without_reference(user_samples: list[int], *, segment_texts: list[str] | None) -> dict:
     duration = _duration_seconds(user_samples)
     features = _frame_features(user_samples)
     score = 60 if duration >= 0.4 and features else 35
     summary = 'AI 评分暂不可用，已完成基础录音检查；缺少参考音频，无法进行发音相似度比对。'
-    return _build_payload(score=score, confidence='low', summary=summary, weak_segments=['reference'])
+    return _build_payload(
+        score=score,
+        confidence='low',
+        summary=summary,
+        weak_segments=['reference'],
+        segment_texts=segment_texts,
+    )
 
 
-def _build_payload(*, score: int, confidence: str, summary: str, weak_segments: list[str]) -> dict:
+def _build_payload(
+    *,
+    score: int,
+    confidence: str,
+    summary: str,
+    weak_segments: list[str],
+    segment_texts: list[str] | None = None,
+) -> dict:
+    normalized_score = max(0, min(85, int(round(score))))
     return {
-        'score': max(0, min(85, int(round(score)))),
+        'score': normalized_score,
         'transcript': '',
         'feedback': {
             'summary': summary,
-            'stress': '基础评分仅比较录音轮廓，暂不判断具体重音。',
-            'vowel': '基础评分无法稳定定位单个元音问题。',
-            'consonant': '基础评分无法稳定定位单个辅音问题。',
-            'ending': '基础评分无法稳定判断词尾细节。',
-            'rhythm': '请尽量贴近参考音频的时长和节奏。',
+            'stress': '基础评分主要比较录音轮廓；请先对照示范确认主重音，再重读红色或黄色字母段。',
+            'vowel': '基础评分不能精确定位单个元音；请把标色分段里的元音读完整，不要压短或中断。',
+            'consonant': '基础评分不能精确定位单个辅音；请慢读每个分段，确保开头和中间辅音清楚送出。',
+            'ending': '读到词尾后停半拍再结束录音，避免最后一个音被吞掉。',
+            'rhythm': '请尽量贴近参考音频的时长和停顿，先慢速完整读一遍，再恢复正常速度。',
         },
         'weak_segments': weak_segments[:4],
+        'segment_feedback': _build_segment_feedback(
+            score=normalized_score,
+            weak_segments=weak_segments[:4],
+            segment_texts=segment_texts,
+        ),
         'provider': FALLBACK_PROVIDER,
         'model': FALLBACK_MODEL,
         'confidence': confidence,
@@ -199,20 +263,21 @@ def score_follow_read_acoustic_fallback(
     reference_audio_path: str | None,
     word: str,
     phonetic: str | None,
+    segment_texts: list[str] | None = None,
 ) -> dict:
     _ = word, phonetic
     user_samples = _decode_audio(audio_path)
     if not user_samples:
         raise AcousticFallbackError('empty user audio')
     if not reference_audio_path:
-        return _score_without_reference(user_samples)
+        return _score_without_reference(user_samples, segment_texts=segment_texts)
     reference_samples = _decode_audio(reference_audio_path)
     if not reference_samples:
-        return _score_without_reference(user_samples)
+        return _score_without_reference(user_samples, segment_texts=segment_texts)
     user_features = _frame_features(user_samples)
     reference_features = _frame_features(reference_samples)
     if not user_features or not reference_features:
-        return _score_without_reference(user_samples)
+        return _score_without_reference(user_samples, segment_texts=segment_texts)
 
     distance = _dtw_distance(user_features, reference_features)
     acoustic_score = max(0.0, 100.0 - distance * 350.0)
@@ -227,4 +292,10 @@ def score_follow_read_acoustic_fallback(
         weak_segments.append('rhythm')
     confidence = 'medium' if score >= 70 and duration_similarity >= 0.75 else 'low'
     summary = 'AI 评分暂不可用，已使用参考音频完成基础声学相似度评分。'
-    return _build_payload(score=score, confidence=confidence, summary=summary, weak_segments=weak_segments)
+    return _build_payload(
+        score=score,
+        confidence=confidence,
+        summary=summary,
+        weak_segments=weak_segments,
+        segment_texts=segment_texts,
+    )

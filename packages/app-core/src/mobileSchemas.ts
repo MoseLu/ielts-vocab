@@ -80,11 +80,13 @@ export const WrongWordSchema = MobileWordSchema.extend({
   wrong_count: z.number().optional().default(1),
   last_error_at: OptionalStringSchema,
   mistake_type: OptionalStringSchema,
+  pending_dimensions: z.array(z.string()).optional().default([]),
+  dimension_states: z.record(z.string(), z.record(z.string(), z.unknown())).optional().default({}),
   recognition_pass_streak: z.number().optional().default(0),
   ebbinghaus_streak: z.number().optional().default(0),
   ebbinghaus_remaining: z.number().optional().default(0),
   ebbinghaus_completed: z.boolean().optional().default(false),
-})
+}).passthrough()
 export type WrongWord = z.infer<typeof WrongWordSchema>
 
 export const LearningStatsPayloadSchema = z.object({
@@ -152,6 +154,16 @@ export const JournalSummarySchema = z.object({
   created_at: OptionalStringSchema,
 })
 export type JournalSummary = z.infer<typeof JournalSummarySchema>
+
+export const JournalEntrySchema = z.object({
+  id: IdSchema.optional(),
+  date: OptionalStringSchema,
+  content: OptionalStringSchema,
+  polished_content: OptionalStringSchema,
+  created_at: OptionalStringSchema,
+  updated_at: OptionalStringSchema,
+})
+export type JournalEntry = z.infer<typeof JournalEntrySchema>
 
 export const LearningNoteSchema = z.object({
   id: IdSchema.optional(),

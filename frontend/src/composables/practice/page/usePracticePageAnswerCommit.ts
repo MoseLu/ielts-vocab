@@ -1,5 +1,5 @@
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react'
-import { recordModeAnswer } from '../../../hooks/useAIChat'
+import { recordModeAnswer } from '../../../hooks'
 import { recordWordResult } from '../../../lib/smartMode'
 import type { PracticeMode, SmartDimension, Word, WordStatuses } from '../../../features/practice/types'
 

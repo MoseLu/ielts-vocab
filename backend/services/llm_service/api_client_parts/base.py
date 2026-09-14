@@ -5,8 +5,25 @@ import json
 import time
 
 # Read .env directly to bypass MCP proxy env var interception
-_BACKEND_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-_ENV_FILE = os.path.join(_BACKEND_DIR, '.env')
+def _find_backend_env_file(start_file: str = __file__) -> str:
+    configured = (os.environ.get('BACKEND_ENV_FILE') or '').strip()
+    if configured:
+        return configured
+
+    current = os.path.abspath(os.path.dirname(start_file))
+    while True:
+        candidate = os.path.join(current, '.env')
+        if os.path.basename(current) == 'backend' and os.path.exists(candidate):
+            return candidate
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+
+    return os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env')
+
+
+_ENV_FILE = _find_backend_env_file()
 
 def _load_env():
     env = {}

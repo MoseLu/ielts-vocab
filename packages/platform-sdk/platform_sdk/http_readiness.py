@@ -12,6 +12,7 @@ def make_http_readiness_check(*, base_url: str, path: str = '/ready', timeout_se
             response = httpx.get(
                 f'{normalized_base}{normalized_path}',
                 timeout=max(0.1, timeout_seconds),
+                trust_env=False,
             )
         except httpx.HTTPError:
             return False

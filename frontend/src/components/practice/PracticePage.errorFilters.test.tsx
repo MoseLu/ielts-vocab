@@ -18,40 +18,19 @@ const useFavoriteWordsMock = vi.fn(() => ({
   toggleFavorite: vi.fn(),
 }))
 
-vi.mock('../../hooks/useSpeechRecognition', () => ({
-  useSpeechRecognition: () => ({
+vi.mock('../../hooks', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await vi.importActual<any>('../../hooks')
+  return {
+    ...actual,
+    useSpeechRecognition: () => ({
     isConnected: false,
     isRecording: false,
     startRecording: vi.fn(),
     stopRecording: vi.fn(),
-  }),
-}))
-
-vi.mock('../../contexts/AIChatContext', () => ({
-  setGlobalLearningContext: vi.fn(),
-}))
-
-vi.mock('../../lib/smartMode', () => ({
-  loadSmartStats: vi.fn(() => ({})),
-  recordWordResult: vi.fn(),
-  chooseSmartDimension: vi.fn(() => 'meaning'),
-  buildSmartQueue: vi.fn(() => []),
-  syncSmartStatsToBackend: vi.fn(),
-  loadSmartStatsFromBackend: vi.fn(),
-}))
-
-vi.mock('../../hooks/useAIChat', () => ({
-  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
-  recordModeAnswer: vi.fn(),
-  resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
-    data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
-  logSession: vi.fn(),
-  startSession: (...args: unknown[]) => startSessionMock(...args),
-  cancelSession: vi.fn(),
-  flushStudySessionOnPageHide: vi.fn(),
-  touchStudySessionActivity: vi.fn(),
-  updateStudySessionSnapshot: vi.fn(),
-}))
+  })
+  }
+})
 
 vi.mock('../../features/vocabulary/hooks', async () => {
   const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')

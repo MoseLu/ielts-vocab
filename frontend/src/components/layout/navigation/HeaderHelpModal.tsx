@@ -85,7 +85,10 @@ export default function HeaderHelpModal({
     }
   }, [onClose])
 
-  const routeFaqItems = pathname === '/plan' ? planHelpFaqItems : []
+  const routeFaqItems = useMemo(
+    () => (pathname === '/plan' ? planHelpFaqItems : []),
+    [pathname, planHelpFaqItems],
+  )
 
   useEffect(() => {
     if (!normalizedQuery) return

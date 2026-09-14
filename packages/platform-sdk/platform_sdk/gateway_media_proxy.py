@@ -171,7 +171,7 @@ def call_media_upstream(
             raise HTTPException(status_code=503, detail=f'{service_name} circuit open') from exc
 
         try:
-            with httpx.Client(timeout=policy.build_timeout(), follow_redirects=False) as client:
+            with httpx.Client(timeout=policy.build_timeout(), follow_redirects=False, trust_env=False) as client:
                 response = client.request(
                     method,
                     f'{base_url}{path}',

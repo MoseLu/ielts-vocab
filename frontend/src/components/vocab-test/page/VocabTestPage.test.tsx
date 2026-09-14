@@ -102,6 +102,89 @@ describe('VocabTestPage', () => {
     expect(playWordAudio).toHaveBeenCalledTimes(1)
   })
 
+  it('selects answer options with digit keyboard shortcuts before answering', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ words: sampleWords }),
+    } as Response)
+
+    render(
+      <MemoryRouter>
+        <VocabTestPage />
+      </MemoryRouter>,
+    )
+
+    await flushQuestionLoad()
+
+    const options = screen.getAllByRole('button').filter(button => (
+      button.classList.contains('vocab-test-option')
+    ))
+    const firstClassBeforeSelect = options[0].className
+    const stopAtDocument = (event: KeyboardEvent) => event.stopImmediatePropagation()
+
+    document.addEventListener('keydown', stopAtDocument, true)
+    fireEvent.keyDown(document, { key: '1' })
+    document.removeEventListener('keydown', stopAtDocument, true)
+
+    expect(options[0]).toBeDisabled()
+    expect(options[0].className).not.toBe(firstClassBeforeSelect)
+
+    const firstClassAfterSelect = options[0].className
+    fireEvent.keyDown(document, { key: '2' })
+
+    expect(options[0].className).toBe(firstClassAfterSelect)
+  })
+
+  it('accepts physical digit and numpad shortcut codes for all rendered options', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ words: sampleWords }),
+    } as Response)
+
+    render(
+      <MemoryRouter>
+        <VocabTestPage />
+      </MemoryRouter>,
+    )
+
+    await flushQuestionLoad()
+
+    const options = screen.getAllByRole('button').filter(button => (
+      button.classList.contains('vocab-test-option')
+    ))
+    const fourthClassBeforeSelect = options[3].className
+
+    fireEvent.keyDown(window, { key: 'Unidentified', code: 'Numpad4' })
+
+    expect(options[3]).toBeDisabled()
+    expect(options[3].className).not.toBe(fourthClassBeforeSelect)
+  })
+
+  it('does not select a vocab-test answer when a numeric key is typed in editable content', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ words: sampleWords }),
+    } as Response)
+
+    render(
+      <MemoryRouter>
+        <VocabTestPage />
+        <input aria-label="scratch input" />
+      </MemoryRouter>,
+    )
+
+    await flushQuestionLoad()
+
+    const options = screen.getAllByRole('button').filter(button => (
+      button.classList.contains('vocab-test-option')
+    ))
+    const input = screen.getByLabelText('scratch input')
+
+    fireEvent.keyDown(input, { key: '1' })
+
+    expect(options[0]).not.toBeDisabled()
+  })
+
   it('keeps rendered quiz controls covered by the design-token stylesheet', () => {
     const stylesheet = readFileSync(
       resolve(__dirname, '../../../styles/pages/vocab-test/index.scss'),

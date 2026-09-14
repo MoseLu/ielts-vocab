@@ -119,7 +119,20 @@ def collect_summary_source_data(user_id: int, target_date: str):
         descending=False,
     )
     wrong_words = notes_summary_context_repository.list_wrong_words(user_id, limit=50)
-    return learning_notes, sessions, wrong_words, prompt_runs
+    manual_recap = find_manual_recap(user_id, target_date)
+    return learning_notes, sessions, wrong_words, prompt_runs, manual_recap
+
+
+def find_manual_recap(user_id: int, target_date: str) -> dict | None:
+    try:
+        from models import UserJournalNote
+    except ImportError:
+        return None
+    entry = UserJournalNote.query.filter_by(user_id=user_id, date=target_date).first()
+    content = str(getattr(entry, 'content', '') or '').strip() if entry else ''
+    if not content:
+        return None
+    return {'date': target_date, 'content': content[:4000]}
 
 
 def format_duration(seconds: int) -> str:
@@ -313,6 +326,7 @@ def build_summary_prompt(
     topic_insights: list[dict] | None = None,
     learner_profile: dict | None = None,
     prompt_runs=None,
+    manual_recap: dict | None = None,
 ) -> str:
     prompt_runs = list(prompt_runs or [])
     prompt_parts = [f"请为 {target_date} 生成学习总结。", ""]
@@ -340,6 +354,11 @@ def build_summary_prompt(
                 for item in learning_snapshot['today_mode_breakdown']
             )
             prompt_parts.append(f"- 今日模式表现：{mode_summary}")
+
+    if manual_recap and manual_recap.get('content'):
+        prompt_parts.append("")
+        prompt_parts.append("### 用户手动复盘")
+        prompt_parts.append(str(manual_recap['content'])[:4000])
 
     if sessions:
         prompt_parts.append("### 当天练习记录")
@@ -390,6 +409,7 @@ def build_summary_prompt(
 
     prompt_parts.append("")
     prompt_parts.append("### 生成要求")
+    prompt_parts.append("- 如果存在用户手动复盘，必须优先围绕复盘内容和学习指标生成，不要忽略用户自己的判断。")
     prompt_parts.append("- 请把当天学习内容、学习指标、重复提问主题和易错词联系起来分析。")
     prompt_parts.append("- 后续建议必须具体到下一步动作，优先结合最弱模式、重复困惑点和错词。")
 

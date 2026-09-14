@@ -16,6 +16,8 @@ const sessionHookValue = {
   wrongCountRef: { current: 0 },
   completedSessionDurationSecondsRef: { current: null },
   wordsLearnedBaselineRef: { current: 0 },
+  chapterCorrectBaselineRef: { current: 0 },
+  chapterWrongBaselineRef: { current: 0 },
   uniqueAnsweredRef: { current: new Set<string>() },
   beginSession: vi.fn(),
   prepareSessionForLearningAction: vi.fn(async () => {}),
@@ -129,6 +131,8 @@ describe('PracticePage remote resume snapshot', () => {
     controlsHookValue.resetChapterProgress.mockReset()
     sessionHookValue.beginSession.mockReset()
     sessionHookValue.settings = { shuffle: false }
+    sessionHookValue.chapterCorrectBaselineRef.current = 0
+    sessionHookValue.chapterWrongBaselineRef.current = 0
     vi.mocked(fetch).mockReset()
     localStorage.clear()
   })

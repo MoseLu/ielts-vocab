@@ -244,7 +244,7 @@ def _build_favorites_book_payload(user_id: int | None) -> dict | None:
 
 def _favorite_phonetic_lookup(records) -> dict[str, str]:
     try:
-        from services import phonetic_lookup_service
+        from platform_sdk.phonetic_lookup_adapter import phonetic_lookup_service
     except Exception:
         return {}
 

@@ -1,6 +1,6 @@
 import type { FollowReadPayload, FollowReadSegment } from './followReadApi'
 
-export type WordAudioSourcePreference = 'url' | 'buffer'
+export type WordAudioSourcePreference = 'url' | 'buffer' | 'generated'
 
 export interface PracticeAudioRequestContext {
   requestId?: string

@@ -2,27 +2,10 @@ import os
 import re
 from urllib.parse import quote_plus
 
+from platform_sdk.cors_policy import build_cors_origins
 from services.storage_boundary_guard import (
     current_service_name,
     validate_split_service_storage_boundary,
-)
-
-
-DEFAULT_CORS_ORIGINS = (
-    'https://axiomaticworld.com',
-    'http://axiomaticworld.com',
-    'https://www.axiomaticworld.com',
-    'http://www.axiomaticworld.com',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:3020',
-    'http://127.0.0.1:3020',
-    'http://localhost:3002',
-    'http://127.0.0.1:3002',
-    'http://localhost:4173',
-    'http://127.0.0.1:4173',
 )
 
 
@@ -44,18 +27,7 @@ def _getenv(name: str, default: str = '') -> str:
 
 
 def _build_cors_origins() -> list[str]:
-    raw_value = os.environ.get('CORS_ORIGINS', '')
-    configured = [origin.strip() for origin in raw_value.split(',') if origin.strip()]
-
-    if '*' in configured:
-        return ['*']
-
-    merged: list[str] = []
-    for origin in [*configured, *DEFAULT_CORS_ORIGINS]:
-        if origin and origin not in merged:
-            merged.append(origin)
-
-    return merged
+    return build_cors_origins(os.environ)
 
 
 def _resolve_sqlite_db_path(base_dir: str) -> str:
@@ -188,11 +160,11 @@ class Config:
     COOKIE_HTTPONLY = True
 
     # Allowed frontend origins for CORS / Socket.IO.
-    # Environment overrides are merged with the standard local/dev origins
-    # so a production domain does not accidentally lock out localhost preview.
+    # Secure runtimes keep the production web origins only unless local dev
+    # origins are explicitly re-enabled for a controlled diagnostic session.
     CORS_ORIGINS = _build_cors_origins()
 
-    # Reverse-proxy handling for the documented natapp -> nginx -> Flask chain.
+    # Reverse-proxy handling for the documented project-domain -> nginx -> Flask chain.
     TRUST_PROXY_HEADERS = os.environ.get('TRUST_PROXY_HEADERS', 'true').lower() == 'true'
     PROXY_FIX_X_FOR = int(os.environ.get('PROXY_FIX_X_FOR', '2'))
     PROXY_FIX_X_PROTO = int(os.environ.get('PROXY_FIX_X_PROTO', '1'))

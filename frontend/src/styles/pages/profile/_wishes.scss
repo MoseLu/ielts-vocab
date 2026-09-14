@@ -118,7 +118,7 @@
 
   position: relative;
   display: flex;
-  min-height: var(--size-280);
+  min-height: calc(var(--size-260) + var(--size-8));
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-color);
@@ -157,7 +157,7 @@
 
 .feature-wish-card__media {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--bg-tertiary);
 }

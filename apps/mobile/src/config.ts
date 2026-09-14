@@ -1,6 +1,7 @@
 export type MobileEnvironment = 'dev' | 'staging' | 'prod'
 
-const PROD_BASE_URL = 'https://axiomaticworld.com'
+const PROD_BASE_URL =
+  process.env.IELTS_MOBILE_PROD_BASE_URL?.trim() || 'https://axiomaticworld.com'
 const DEV_API_PORT = 8000
 const DEV_SPEECH_PORT = 5001
 

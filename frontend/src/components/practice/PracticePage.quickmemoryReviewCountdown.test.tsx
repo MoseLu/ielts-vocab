@@ -33,43 +33,19 @@ const useFamiliarWordsMock = vi.fn(() => ({
   toggleFamiliar: vi.fn(),
 }))
 
-vi.mock('../../hooks/useSpeechRecognition', () => ({
-  useSpeechRecognition: () => ({
+vi.mock('../../hooks', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await vi.importActual<any>('../../hooks')
+  return {
+    ...actual,
+    useSpeechRecognition: () => ({
     isConnected: false,
     isRecording: false,
     startRecording: vi.fn(),
     stopRecording: vi.fn(),
-  }),
-}))
-
-vi.mock('../../contexts/AIChatContext', () => ({
-  setGlobalLearningContext: vi.fn(),
-}))
-
-vi.mock('../../lib/smartMode', () => ({
-  loadSmartStats: vi.fn(() => ({})),
-  recordWordResult: vi.fn(),
-  chooseSmartDimension: vi.fn(() => 'meaning'),
-  buildSmartQueue: vi.fn(() => []),
-  syncSmartStatsToBackend: vi.fn(),
-  loadSmartStatsFromBackend: vi.fn(),
-}))
-
-vi.mock('../../hooks/useAIChat', () => ({
-  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
-  prepareStudySessionForLearningAction: undefined,
-  finalizeStudySessionSegment: undefined,
-  isStudySessionActive: undefined,
-  recordModeAnswer: vi.fn(),
-  resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
-    data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
-  logSession: (...args: unknown[]) => logSessionMock(...args),
-  startSession: (...args: unknown[]) => startSessionMock(...args),
-  cancelSession: (...args: unknown[]) => cancelSessionMock(...args),
-  flushStudySessionOnPageHide: vi.fn(),
-  touchStudySessionActivity: vi.fn(),
-  updateStudySessionSnapshot: vi.fn(),
-}))
+  })
+  }
+})
 
 vi.mock('../../features/vocabulary/hooks', async () => {
   const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')
@@ -261,7 +237,7 @@ describe('PracticePage quick-memory review countdown', () => {
       'alpha',
       expect.anything(),
       expect.any(Function),
-      { sourcePreference: 'buffer' },
+      { sourcePreference: 'generated' },
     )
     expect(startSessionMock).toHaveBeenCalledTimes(1)
   })

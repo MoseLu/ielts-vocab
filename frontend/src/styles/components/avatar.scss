@@ -216,13 +216,12 @@
     cursor: not-allowed;
 }
 
-/* User avatar image in header button */
+/* User avatar image — shared fallback sizing (header uses .user-btn rules) */
 .user-avatar-img {
     width: var(--size-28);
     height: var(--size-28);
     border-radius: var(--radius-full);
     object-fit: cover;
-    border: var(--size-2) solid var(--accent);
 }
 
 /* User dropdown header section */

@@ -58,7 +58,7 @@ export function usePracticePageAudioEffects({
     if (upcomingWords.length) {
       void preloadWordAudioBatch(upcomingWords, upcomingWords.length, preloadOptions).catch(() => {})
     }
-  }, [currentWord?.word, mode, smartDimension, upcomingWordsKey, upcomingWords.length])
+  }, [currentWord?.word, mode, smartDimension, upcomingWords, upcomingWordsKey, upcomingWords.length])
 
   useEffect(() => {
     if (!currentWord) return

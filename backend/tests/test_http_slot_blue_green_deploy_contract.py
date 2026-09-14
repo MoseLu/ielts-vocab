@@ -63,6 +63,7 @@ def test_deploy_release_uses_single_release_switch_and_stops_http_slots():
     assert current_index < upstream_index < record_index < restart_index < stop_slots_index < smoke_index
     assert 'Activating single-release deployment' in script
     assert 'Attempting rollback to previous single-release deployment' in script
+    assert 'require_command timeout' in script
     assert 'record_single_release_activation "${previous_current}"' in script
     assert 'start_http_slot_services "${target_slot}"' not in script
     assert 'activate_http_slot_release "${target_slot}"' not in script

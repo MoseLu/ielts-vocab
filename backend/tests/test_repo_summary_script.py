@@ -33,7 +33,7 @@ def test_repo_summary_bootstrap_creates_canonical_docs(tmp_path):
     assert payload['created_files'] == ['AGENTS.md', 'MILESTONE.md', 'TODO.md']
     assert (tmp_path / 'docs' / 'todo').is_dir()
     assert (tmp_path / 'docs' / 'agents').is_dir()
-    assert (tmp_path / 'docs' / 'milestones').is_dir()
+    assert (tmp_path / 'docs' / 'milestone').is_dir()
     assert 'Last updated:' in (tmp_path / 'AGENTS.md').read_text(encoding='utf-8')
 
 

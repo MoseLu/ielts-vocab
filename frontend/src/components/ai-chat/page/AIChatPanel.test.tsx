@@ -22,21 +22,23 @@ let latestSpeechOptions:
   }
   | null = null
 
-vi.mock('../../../hooks/useAIChat', () => ({
-  useAIChat: () => useAIChatMock(),
-}))
-
-vi.mock('../../../hooks/useSpeechRecognition', () => ({
-  useSpeechRecognition: (options: {
-    onResult?: (text: string) => void
-    onPartial?: (text: string) => void
-    onError?: (error: string) => void
-    onLevel?: (level: number) => void
-  }) => {
-    latestSpeechOptions = options
-    return useSpeechRecognitionMock(options)
-  },
-}))
+vi.mock('../../../hooks', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await vi.importActual<any>('../../../hooks')
+  return {
+    ...actual,
+    useAIChat: () => useAIChatMock(),
+    useSpeechRecognition: (options: {
+      onResult?: (text: string) => void
+      onPartial?: (text: string) => void
+      onError?: (error: string) => void
+      onLevel?: (level: number) => void
+    }) => {
+      latestSpeechOptions = options
+      return useSpeechRecognitionMock(options)
+    },
+  }
+})
 
 vi.mock('../../ui/Scrollbar', () => ({
   Scrollbar: ({

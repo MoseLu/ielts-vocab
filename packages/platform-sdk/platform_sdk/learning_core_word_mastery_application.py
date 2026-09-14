@@ -113,6 +113,7 @@ def post_learning_core_word_mastery_attempt_response(user_id: int, body: dict | 
             task=str(payload.get('task') or '').strip() or None,
             client_attempt_id=str(payload.get('clientAttemptId') or payload.get('client_attempt_id') or '').strip() or None,
             trace_id=str(payload.get('traceId') or payload.get('trace_id') or '').strip() or None,
+            emit_dimension_event=bool(payload.get('emitDimensionEvent', payload.get('emit_dimension_event', True))),
         )
 
         game_state = build_game_practice_state(

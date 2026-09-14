@@ -21,13 +21,32 @@ export type StickerKey =
   | 'leafSprig'
   | 'lemonCorner'
   | 'micBubble'
+  | 'practiceModeDictation'
+  | 'practiceModeFollow'
+  | 'practiceModeListening'
+  | 'practiceModeMeaning'
+  | 'practiceModeQuickMemory'
+  | 'practiceModeRadio'
+  | 'practiceModeSmart'
+  | 'practiceModeTest'
   | 'recordingMic'
   | 'reviewClock'
   | 'scrollNote'
   | 'studyWindow'
+  | 'studyBadgePractice'
+  | 'studyBadgeTodo'
+  | 'studyBadgeWrong'
+  | 'studyDecorBanner'
+  | 'studyDecorMascot'
+  | 'studyHeroBoard'
+  | 'studyLoungeRoom'
   | 'tapePin'
   | 'treasureBox'
   | 'treasureChest'
+  | 'uiCardFrameLarge'
+  | 'uiCardFrameSmall'
+  | 'uiSectionTitlePlaque'
+  | 'uiScreenPaperBg'
   | 'vocabCardStack'
   | 'wrongWordSticky'
   | 'wrongWordKit'
@@ -50,7 +69,7 @@ export type StickerSlot = {
 export type StickerMeta = {
   fileName: string
   height: number
-  role: 'character' | 'empty' | 'object' | 'plant'
+  role: 'background' | 'character' | 'empty' | 'object' | 'plant'
   width: number
 }
 
@@ -81,13 +100,32 @@ export const stickerCatalog: Record<StickerKey, StickerMeta> = {
   leafSprig: { fileName: 'leaf-sprig.png', height: 210, role: 'plant', width: 240 },
   lemonCorner: { fileName: 'lemon-corner.png', height: 210, role: 'object', width: 240 },
   micBubble: { fileName: 'mic-bubble.png', height: 300, role: 'object', width: 300 },
+  practiceModeDictation: { fileName: 'practice-mode-dictation.png', height: 360, role: 'object', width: 360 },
+  practiceModeFollow: { fileName: 'practice-mode-follow.png', height: 360, role: 'object', width: 360 },
+  practiceModeListening: { fileName: 'practice-mode-listening.png', height: 360, role: 'object', width: 360 },
+  practiceModeMeaning: { fileName: 'practice-mode-meaning.png', height: 360, role: 'object', width: 360 },
+  practiceModeQuickMemory: { fileName: 'practice-mode-quickmemory.png', height: 360, role: 'object', width: 360 },
+  practiceModeRadio: { fileName: 'practice-mode-radio.png', height: 360, role: 'object', width: 360 },
+  practiceModeSmart: { fileName: 'practice-mode-smart.png', height: 360, role: 'object', width: 360 },
+  practiceModeTest: { fileName: 'practice-mode-test.png', height: 360, role: 'object', width: 360 },
   recordingMic: { fileName: 'recording-mic.png', height: 360, role: 'object', width: 360 },
   reviewClock: { fileName: 'review-clock.png', height: 300, role: 'object', width: 300 },
   scrollNote: { fileName: 'scroll-note.png', height: 240, role: 'object', width: 300 },
   studyWindow: { fileName: 'study-window.png', height: 360, role: 'object', width: 360 },
+  studyBadgePractice: { fileName: 'study-badge-practice.png', height: 675, role: 'object', width: 612 },
+  studyBadgeTodo: { fileName: 'study-badge-todo.png', height: 989, role: 'object', width: 865 },
+  studyBadgeWrong: { fileName: 'study-badge-wrong.png', height: 997, role: 'object', width: 815 },
+  studyDecorBanner: { fileName: 'study-decor-banner.png', height: 819, role: 'object', width: 467 },
+  studyDecorMascot: { fileName: 'study-decor-mascot.png', height: 225, role: 'character', width: 228 },
+  studyHeroBoard: { fileName: 'study-hero-board.png', height: 1114, role: 'object', width: 1391 },
+  studyLoungeRoom: { fileName: 'study-lounge-room.png', height: 1024, role: 'object', width: 1536 },
   tapePin: { fileName: 'tape-pin.png', height: 360, role: 'object', width: 360 },
   treasureBox: { fileName: 'treasure-box.png', height: 300, role: 'object', width: 300 },
   treasureChest: { fileName: 'treasure-chest.png', height: 360, role: 'object', width: 360 },
+  uiCardFrameLarge: { fileName: 'ui-card-frame-large.png', height: 1920, role: 'object', width: 1080 },
+  uiCardFrameSmall: { fileName: 'ui-card-frame-small.png', height: 284, role: 'object', width: 900 },
+  uiSectionTitlePlaque: { fileName: 'ui-section-title-plaque.png', height: 284, role: 'object', width: 900 },
+  uiScreenPaperBg: { fileName: 'ui-screen-paper-bg.png', height: 2732, role: 'background', width: 1536 },
   vocabCardStack: { fileName: 'vocab-card-stack.png', height: 360, role: 'object', width: 360 },
   wrongWordSticky: { fileName: 'wrong-word-sticky.png', height: 360, role: 'object', width: 360 },
   wrongWordKit: { fileName: 'wrong-word-kit.png', height: 300, role: 'object', width: 300 },

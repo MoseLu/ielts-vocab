@@ -38,6 +38,12 @@ export {
   STUDY_SESSION_IDLE_GRACE_MS,
 }
 
+const ACTIVITY_EVENT_NAMES = ['pointerdown', 'keydown', 'touchstart'] as const
+const ACTIVITY_WRITE_THROTTLE_MS = 1000
+
+let activityTrackingInstalled = false
+let lastRecordedUserActivityAt = 0
+
 export async function startSession(
   ctx?: StudySessionContext,
   options?: {
@@ -121,6 +127,33 @@ export function updateStudySessionSnapshot(patch: SessionSnapshotPatch): void {
 export function touchStudySessionActivity(sessionId?: number | null, activeAt = Date.now()): void {
   updateStudySessionSnapshot({ sessionId, activeAt })
 }
+
+export function recordStudySessionUserActivity(activeAt = Date.now()): void {
+  const snapshot = readActiveStudySessionSnapshot()
+  if (!snapshot) return
+  if (
+    activeAt >= lastRecordedUserActivityAt
+    && activeAt - lastRecordedUserActivityAt < ACTIVITY_WRITE_THROTTLE_MS
+  ) return
+  lastRecordedUserActivityAt = activeAt
+  updateStudySessionSnapshot({ sessionId: snapshot.sessionId, activeAt })
+}
+
+export function installStudySessionActivityTracking(): void {
+  if (activityTrackingInstalled || typeof window === 'undefined') return
+  activityTrackingInstalled = true
+
+  ACTIVITY_EVENT_NAMES.forEach(eventName => {
+    window.addEventListener(eventName, () => recordStudySessionUserActivity(), { passive: true })
+  })
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') recordStudySessionUserActivity()
+    })
+  }
+}
+
+installStudySessionActivityTracking()
 
 export function isStudySessionActive(data: {
   sessionId?: number | null

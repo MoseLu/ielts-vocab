@@ -85,6 +85,7 @@ def pronunciation_check_response(current_user, body: dict | None):
             'bookId': book_id,
             'chapterId': chapter_id,
             'wordPayload': {'word': word},
+            'emitDimensionEvent': False,
         })
         result['mastery_state'] = mastery_payload.get('mastery_state') or mastery_payload.get('state')
     except Exception as exc:

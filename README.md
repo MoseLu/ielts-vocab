@@ -2,6 +2,8 @@
 
 一个面向 IELTS 词汇学习的全栈 Web 应用，包含词书学习、多练习模式、AI 助手、学习日志、每日总结、学习画像，以及独立语音识别服务。
 
+生产域名通过 `IELTS_PUBLIC_HOST` / `PROD_SMOKE_HOST` 配置。当前默认值保留 `axiomaticworld.com` 以兼容旧环境；多项目部署时使用 `ielts.axiomaticworld.com` 等项目子域名，不占用父域名根入口。
+
 ## 当前能力
 
 - 词书学习：支持词书、章节、单词详情、收藏/熟词/易混词等学习入口。
@@ -54,7 +56,7 @@ backend/
 docs/
 - architecture/             # 架构说明与设计文档
 - governance/               # UI / 产品治理记录
-- milestones/               # 里程碑文档
+- milestone/               # 里程碑文档
 - operations/               # 运维与工具文档
 - planning/                 # 计划文档
 - logs/submit/              # 提交批次日志
@@ -83,8 +85,7 @@ start-microservices.sh      # split backend 默认启动脚本
 生产式本地代理链路：
 
 ```text
-https://axiomaticworld.com
--> natapp
+https://ielts.axiomaticworld.com (旧环境可继续使用 axiomaticworld.com)
 -> local :80
 -> nginx
 -> vite preview :3002
@@ -93,7 +94,7 @@ https://axiomaticworld.com
 -> /socket.io -> asr-socketio :5001
 ```
 
-如果遇到域名访问异常、`ERR_SSL_PROTOCOL_ERROR`、Socket.IO 失败或 `/api` 表现与本地开发不一致，优先检查这条整链路，而不是只看前端页面代码。
+如果遇到项目域名访问异常、`ERR_SSL_PROTOCOL_ERROR`、Socket.IO 失败或 `/api` 表现与本地开发不一致，优先检查这条整链路，而不是只看前端页面代码。
 
 ## 快速开始
 

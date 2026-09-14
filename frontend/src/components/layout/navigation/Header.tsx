@@ -5,7 +5,7 @@ import { Scrollbar } from '../../ui/Scrollbar'
 import { useHeader } from '../../../composables/layout/navigation/useHeader'
 import { staticAssetUrl } from '../../../lib/staticAssetUrl'
 import HeaderHelpModal from './HeaderHelpModal'
-import type { HeaderProps, PracticeMode } from './Header.types'
+import type { HeaderProps } from './Header.types'
 
 export type { HeaderProps, PracticeMode, User } from './Header.types'
 
@@ -171,12 +171,19 @@ function Header({
               offset={10}
               panelClassName="popover-user-panel"
               trigger={
-                <button className="user-btn" title={user.username || user.email}>
-                  {user.avatar_url ? (
-                    <img src={user.avatar_url} alt="avatar" className="user-avatar-img" />
-                  ) : (
-                    <img src={staticAssetUrl('/default-avatar.jpg')} alt="avatar" className="user-avatar-img" />
-                  )}
+                <button
+                  type="button"
+                  className="user-btn"
+                  title={user.username || user.email}
+                  aria-label={user.username || user.email || '用户菜单'}
+                >
+                  <span className="user-avatar-frame" aria-hidden="true">
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt="" className="user-avatar-img" />
+                    ) : (
+                      <img src={staticAssetUrl('/default-avatar.jpg')} alt="" className="user-avatar-img" />
+                    )}
+                  </span>
                 </button>
               }
             >

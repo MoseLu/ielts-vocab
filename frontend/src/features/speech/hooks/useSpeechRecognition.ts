@@ -323,6 +323,8 @@ export function useSpeechRecognition({
     syncProcessingState,
     enableRealtimeRecognition,
     isCurrentRecognitionEvent,
+    enableVad,
+    requestRecordedAudioFallback,
   ])
   const startRecording = useCallback(async () => {
     if (enableRealtimeRecognition && !socketRef.current?.connected) {
@@ -435,6 +437,7 @@ export function useSpeechRecognition({
     resetAudioLevel,
     setupBrowserRecognition,
     syncProcessingState,
+    uploadRecordedAudio,
   ])
   const stopRecording = useCallback(() => {
     if (!isRecordingRef.current && !isProcessingRef.current) return
@@ -487,6 +490,7 @@ export function useSpeechRecognition({
     enableVad,
     enableBrowserRecognition,
     enableRealtimeRecognition,
+    clearAutoStopTimeout,
   ])
   return { isConnected, isRecording, isProcessing, isReady, startRecording, stopRecording }
 }

@@ -91,3 +91,11 @@ Object.defineProperty(globalThis, 'fetch', {
   writable: true,
   configurable: true,
 })
+
+if (typeof document.elementFromPoint !== 'function') {
+  Object.defineProperty(document, 'elementFromPoint', {
+    value: () => document.body,
+    writable: true,
+    configurable: true,
+  })
+}

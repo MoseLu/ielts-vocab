@@ -4,7 +4,7 @@ This directory is the single style entry for the frontend.
 
 The root entry is:
 
-- [index.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/index.scss)
+- [index.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/index.scss)
 
 Import order is fixed and must stay:
 
@@ -22,7 +22,7 @@ Base tokens, theme variables, reset, typography, spacing, radius, shadow, z-inde
 
 Primary file:
 
-- [base.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/base.scss)
+- [base.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/base.scss)
 
 When changing:
 
@@ -35,9 +35,9 @@ Global shell and navigation only.
 
 Files:
 
-- [app.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/layout/app.scss)
-- [header-base.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/layout/header-base.scss)
-- [header-selectors.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/layout/header-selectors.scss)
+- [app.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/layout/app.scss)
+- [header-base.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/layout/header-base.scss)
+- [header-selectors.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/layout/header-selectors.scss)
 
 When changing:
 
@@ -50,17 +50,17 @@ Reusable component styling.
 
 Files:
 
-- [avatar.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/avatar.scss)
-- [complete.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/complete.scss)
-- [dropdowns.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/dropdowns.scss)
-- [empty-state.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/empty-state.scss)
-- [global-word-search-detail.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/global-word-search-detail.scss)
-- [global-word-search.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/global-word-search.scss)
-- [popover.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/popover.scss)
-- [scrollbar.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/scrollbar.scss)
-- [settings.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/settings.scss)
-- [toast.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/toast.scss)
-- [ui-primitives.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/components/ui-primitives.scss)
+- [avatar.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/avatar.scss)
+- [complete.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/complete.scss)
+- [dropdowns.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/dropdowns.scss)
+- [empty-state.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/empty-state.scss)
+- [global-word-search-detail.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/global-word-search-detail.scss)
+- [global-word-search.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/global-word-search.scss)
+- [popover.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/popover.scss)
+- [scrollbar.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/scrollbar.scss)
+- [settings.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/settings.scss)
+- [toast.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/toast.scss)
+- [ui-primitives.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/components/ui-primitives.scss)
 
 When changing:
 
@@ -74,31 +74,31 @@ Page composition and page-scoped visuals.
 
 Current files:
 
-- [admin.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/admin.scss)
-- [ai-chat.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/ai-chat.scss)
-- [auth.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/auth.scss)
-- [chapter-modal.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/chapter-modal.scss)
-- [day-card.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/day-card.scss)
-- [errors.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/errors.scss)
-- [home-banner.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/home-banner.scss)
-- [home-sections.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/home-sections.scss)
-- [journal.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/journal.scss)
-- [plan-modal.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/plan-modal.scss)
-- [practice-complete.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-complete.scss)
-- [practice-dictation.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-dictation.scss)
-- [practice-layout.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-layout.scss)
-- [practice-options.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-options.scss)
-- [practice-quickmemory.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-quickmemory.scss)
-- [practice-radio.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-radio.scss)
-- [practice-spelling.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-spelling.scss)
-- [practice-wordlist.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-wordlist.scss)
-- [profile.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/profile.scss)
-- [stats.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/stats.scss)
-- [study-center.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/study-center.scss)
-- [vocab-book-grid.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/vocab-book-grid.scss)
-- [vocab-cards.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/vocab-cards.scss)
-- [vocab-filters.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/vocab-filters.scss)
-- [vocab-test.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/vocab-test.scss)
+- [admin.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/admin.scss)
+- [ai-chat.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/ai-chat.scss)
+- [auth.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/auth.scss)
+- [chapter-modal.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/chapter-modal.scss)
+- [day-card.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/day-card.scss)
+- [errors.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/errors.scss)
+- [home-banner.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/home-banner.scss)
+- [home-sections.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/home-sections.scss)
+- [journal.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/journal.scss)
+- [plan-modal.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/plan-modal.scss)
+- [practice-complete.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-complete.scss)
+- [practice-dictation.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-dictation.scss)
+- [practice-layout.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-layout.scss)
+- [practice-options.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-options.scss)
+- [practice-quickmemory.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-quickmemory.scss)
+- [practice-radio.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-radio.scss)
+- [practice-spelling.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-spelling.scss)
+- [practice-wordlist.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-wordlist.scss)
+- [profile.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/profile.scss)
+- [stats.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/stats.scss)
+- [study-center.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/study-center.scss)
+- [vocab-book-grid.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/vocab-book-grid.scss)
+- [vocab-cards.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/vocab-cards.scss)
+- [vocab-filters.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/vocab-filters.scss)
+- [vocab-test.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/vocab-test.scss)
 
 When changing:
 
@@ -114,9 +114,9 @@ Last-loaded utility layer.
 
 Files:
 
-- [\_mixins.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/utils/_mixins.scss)
-- [utilities.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/utils/utilities.scss)
-- [responsive.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/utils/responsive.scss)
+- [\_mixins.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/utils/_mixins.scss)
+- [utilities.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/utils/utilities.scss)
+- [responsive.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/utils/responsive.scss)
 
 When changing:
 
@@ -147,26 +147,26 @@ Before adding new page rules, check whether one of these existing mixins already
 
 Current mixin entry:
 
-- [\_mixins.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/utils/_mixins.scss)
+- [\_mixins.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/utils/_mixins.scss)
 
 Current pages already using them:
 
-- [admin.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/admin.scss)
-- [errors.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/errors.scss)
-- [journal.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/journal.scss)
-- [practice-complete.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/practice-complete.scss)
-- [stats.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/stats.scss)
-- [study-center.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/study-center.scss)
-- [vocab-book-grid.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/vocab-book-grid.scss)
-- [vocab-cards.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/pages/vocab-cards.scss)
+- [admin.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/admin.scss)
+- [errors.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/errors.scss)
+- [journal.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/journal.scss)
+- [practice-complete.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/practice-complete.scss)
+- [stats.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/stats.scss)
+- [study-center.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/study-center.scss)
+- [vocab-book-grid.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/vocab-book-grid.scss)
+- [vocab-cards.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/pages/vocab-cards.scss)
 
 ## How to find the right file
 
 If you want to change:
 
-- Theme color, spacing, radius, shadow: start in [base.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/base.scss)
-- Light/dark semantic surface tokens: start in [base.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/base.scss)
-- Header, page shell, top-level spacing: start in [app.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/layout/app.scss) or [header-base.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/layout/header-base.scss)
+- Theme color, spacing, radius, shadow: start in [base.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/base.scss)
+- Light/dark semantic surface tokens: start in [base.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/base.scss)
+- Header, page shell, top-level spacing: start in [app.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/layout/app.scss) or [header-base.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/layout/header-base.scss)
 - Reusable widget styling: check `components/`
 - A single route/page look: check `pages/`
 - Helper classes or last-layer overrides: check `utils/`
@@ -176,7 +176,7 @@ If you want to change:
 - Do not reintroduce `index.css`.
 - Do not use inline `style={{ ... }}` in TSX for normal visual styling.
 - Prefer tokens over raw values.
-- Outside [base.scss](/F:/enterprise-workspace/projects/ielts-vocab/frontend/src/styles/base.scss), do not introduce raw `#hex`, raw `rgb(...)` / `rgba(...)` / `hsl(...)`, `color: white`, or `color-mix(... white)`.
+- Outside [base.scss](/Volumes/code/workspace/products/ielts-vocab/frontend/src/styles/base.scss), do not introduce raw `#hex`, raw `rgb(...)` / `rgba(...)` / `hsl(...)`, `color: white`, or `color-mix(... white)`.
 - If a themed page needs special colors, define page-scoped semantic CSS variables near the page root first, then consume those variables in descendants instead of scattering one-off color values.
 - Prefer pure orange accent surfaces over gradients unless explicitly approved.
 - Spacing rhythm is `10px` based unless a token defines otherwise.

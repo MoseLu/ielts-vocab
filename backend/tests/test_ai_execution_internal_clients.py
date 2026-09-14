@@ -7,6 +7,7 @@ from platform_sdk import (
     ai_assistant_application,
     ai_assistant_tool_support,
     ai_learning_stats_application,
+    learning_core_internal_client,
     ai_metric_support,
     ai_progress_sync_application,
     ai_related_notes_support,
@@ -14,6 +15,36 @@ from platform_sdk import (
     ai_wrong_words_application,
 )
 from platform_sdk.notes_internal_client import LearningNoteSnapshot
+
+
+def test_learning_core_internal_client_ignores_environment_proxy(monkeypatch):
+    captured: dict[str, object] = {}
+
+    class FakeSession:
+        trust_env = True
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def request(self, method, url, **kwargs):
+            captured['trust_env'] = self.trust_env
+            captured['url'] = url
+            return SimpleNamespace(status_code=200, json=lambda: {'records': []})
+
+    monkeypatch.setenv('HTTP_PROXY', 'http://127.0.0.1:9')
+    monkeypatch.setattr(learning_core_internal_client.requests, 'Session', FakeSession)
+    monkeypatch.setattr(learning_core_internal_client, '_internal_headers_for_user', lambda *args, **kwargs: {})
+
+    response = learning_core_internal_client.fetch_learning_core_quick_memory_records_response(17)
+
+    assert response == {'records': []}
+    assert captured == {
+        'trust_env': False,
+        'url': 'http://127.0.0.1:8102/internal/learning/quick-memory',
+    }
 
 
 def test_persist_ask_response_uses_internal_service_clients(app, monkeypatch):

@@ -1,7 +1,6 @@
-import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import LearningJournalPage from './LearningJournalPage'
 
 const apiFetchMock = vi.fn()
@@ -14,74 +13,59 @@ vi.mock('../../../lib', async () => {
   }
 })
 
-describe('LearningJournalPage memory topics', () => {
+vi.mock('@tiptap/react', () => ({
+  EditorContent: ({ className }: { className?: string }) => (
+    <div className={className}>
+      <div className="journal-editor-content" />
+    </div>
+  ),
+  useEditor: (config: { content?: string }) => ({
+    commands: { setContent: vi.fn() },
+    getHTML: () => config.content || '<p></p>',
+    view: {
+      dom: {
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    },
+  }),
+}))
+
+describe('LearningJournalPage history notebook', () => {
   beforeEach(() => {
     apiFetchMock.mockReset()
   })
 
-  it('uses backend memory topics to render note memory cues beyond the current page', async () => {
+  it('opens a historical diary entry from the notebook list', async () => {
     const user = userEvent.setup()
-
     apiFetchMock.mockImplementation((url: string) => {
-      if (url === '/api/notes/summaries') {
-        return Promise.resolve({ summaries: [] })
+      if (url === '/api/notes/journal/today') {
+        return Promise.resolve({ entry: null })
       }
-      if (url.startsWith('/api/notes?')) {
+      if (url.startsWith('/api/notes/journal?')) {
         return Promise.resolve({
-          notes: [
+          entries: [
             {
               id: 2,
-              question: 'kind of 和 a kind of 还是分不清',
-              answer: '## Tips\n\n- 看句法位置',
-              word_context: 'kind',
-              created_at: '2026-03-30T10:00:00',
+              date: '2026-06-02',
+              content: '## 昨日复盘\n\n- 复习 kind of',
+              polished_content: null,
+              created_at: '2026-06-02T10:00:00',
+              updated_at: '2026-06-02T10:30:00',
             },
           ],
-          total: 3,
-          per_page: 20,
           has_more: false,
-          memory_topics: [
-            {
-              key: 'word:kind',
-              title: 'kind of 和 a kind of',
-              count: 3,
-              word_context: 'kind',
-              latest_answer: '第三次解释',
-              latest_at: '2026-03-30T10:00:00',
-              note_ids: [1, 2, 3],
-              follow_up_hint: '这个问题已经重复出现，AI 应主动追问是否还需要进一步辨析。',
-              related_notes: [
-                {
-                  id: 1,
-                  question: 'Earlier memory question',
-                  answer: '第一次解释',
-                  word_context: 'kind',
-                  created_at: '2026-03-29T10:00:00',
-                },
-                {
-                  id: 3,
-                  question: 'Another older question',
-                  answer: '第二次解释',
-                  word_context: 'kind',
-                  created_at: '2026-03-28T10:00:00',
-                },
-              ],
-            },
-          ],
         })
       }
       return Promise.reject(new Error(`Unexpected url: ${url}`))
     })
 
     const { container } = render(<LearningJournalPage />)
-    const tabs = await screen.findAllByRole('tab')
-    await user.click(tabs[1])
+    await user.click(await screen.findByRole('tab', { name: '历史笔记' }))
+    await user.click(await screen.findByText('2026-06-02'))
 
-    await waitFor(() => {
-      expect(container.querySelector('.journal-note-detail-answer')).not.toBeNull()
-    })
-
-    expect(screen.getByText('当前主题已追问 3 次')).toBeInTheDocument()
-    expect(screen.getByText('Earlier memory question')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '返回列表' })).toBeInTheDocument()
+    expect(container.querySelector('.journal-doc-title')?.textContent).toContain('2026-06-02 笔记')
+    expect(container.querySelector('.journal-doc-body h2')?.textContent).toContain('昨日复盘')
   })
 })

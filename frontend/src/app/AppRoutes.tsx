@@ -74,8 +74,9 @@ export function AppRoutes({
   const isExamAttemptSurface = /^\/exams\/\d+$/.test(location.pathname)
   const isLegacySpeakingRoute = location.pathname === '/speaking'
   const isPracticeSurface = isPractice || isGame || isExamAttemptSurface || isLegacySpeakingRoute
+  const shouldHideBottomNav = isGame || isExamAttemptSurface || isLegacySpeakingRoute
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
-  const shouldShowBottomNav = Boolean(user) && !isPracticeSurface && !isSpecialPage
+  const shouldShowBottomNav = Boolean(user) && !shouldHideBottomNav && !isSpecialPage
   const shouldOffsetFloatingChrome = shouldShowBottomNav
   const [chromeReady, setChromeReady] = useState(false)
 

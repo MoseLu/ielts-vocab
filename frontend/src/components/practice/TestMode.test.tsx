@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import React from 'react'
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 import TestMode from './TestMode'
 import type { AppSettings, Word } from './types'
@@ -35,7 +37,12 @@ vi.mock('./utils', () => ({
   stopAudio: (...args: unknown[]) => stopAudioMock(...args),
 }))
 
-vi.mock('../../hooks/useAIChat', () => ({
+vi.mock('../../hooks', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await vi.importActual<any>('../../hooks')
+  return {
+    ...actual,
+    useAIChat: () => ({
   PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
   prepareStudySessionForLearningAction: undefined,
   finalizeStudySessionSegment: undefined,
@@ -46,7 +53,9 @@ vi.mock('../../hooks/useAIChat', () => ({
   flushStudySessionOnPageHide: (...args: unknown[]) => flushStudySessionOnPageHideMock(...args),
   touchStudySessionActivity: (...args: unknown[]) => touchStudySessionActivityMock(...args),
   updateStudySessionSnapshot: (...args: unknown[]) => updateStudySessionSnapshotMock(...args),
-}))
+}),
+  }
+})
 
 vi.mock('../../lib', () => ({
   apiFetch: (...args: unknown[]) => apiFetchMock(...args),
@@ -118,23 +127,35 @@ describe('TestMode', () => {
   it('starts with audio only and waits for playback completion before timing choices', async () => {
     renderTestMode()
 
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'generated' })
     expect(screen.queryByText('within')).toBeNull()
     expect(screen.queryByText('/wɪˈðɪn/')).toBeNull()
     expect(screen.queryByText('inside')).toBeNull()
-    expect(screen.getByRole('button', { name: '认识' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '不熟悉' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '不认识' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /快捷键: 1 认识/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /快捷键: 2 不熟悉/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /快捷键: 3 不认识/ })).toBeNull()
+    expect(screen.getByText('听完发音后判断熟悉度')).toBeInTheDocument()
+    // 听的阶段不显示快捷键预览,避免在按钮未就绪时给用户"看得到按不到"的提示
+    expect(screen.queryByText('快捷键: 1')).toBeNull()
+    expect(screen.queryByText('快捷键: 2')).toBeNull()
+    expect(screen.queryByText('快捷键: 3')).toBeNull()
+    expect(screen.queryByRole('button', { name: /快捷键: 1 认识/ })).toBeNull()
 
     await act(async () => { await vi.advanceTimersByTimeAsync(5000) })
-    expect(screen.getByRole('button', { name: '认识' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /快捷键: 1 认识/ })).toBeNull()
     expect(screen.queryByText('✗ 不认识')).toBeNull()
 
     completeInitialAudio()
     expect(screen.getByText('4')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '认识' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: '不熟悉' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: '不认识' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /快捷键: 1 认识/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /快捷键: 2 不熟悉/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /快捷键: 3 不认识/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /快捷键: 1 认识/ })).toHaveTextContent('认识')
+    expect(screen.getByRole('button', { name: /快捷键: 2 不熟悉/ })).toHaveTextContent('不熟悉')
+    expect(screen.getByRole('button', { name: /快捷键: 3 不认识/ })).toHaveTextContent('不认识')
+    expect(screen.getAllByText('快捷键: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('快捷键: 2').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('快捷键: 3').length).toBeGreaterThan(0)
   })
 
   it('hides known after 2.5 seconds and auto reveals unknown after 4 seconds', async () => {
@@ -142,9 +163,9 @@ describe('TestMode', () => {
     completeInitialAudio()
 
     await act(async () => { await vi.advanceTimersByTimeAsync(2500) })
-    expect(screen.queryByRole('button', { name: '认识' })).toBeNull()
-    expect(screen.getByRole('button', { name: '不熟悉' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: '不认识' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: /快捷键: 1 认识/ })).toBeNull()
+    expect(screen.getByRole('button', { name: /快捷键: 2 不熟悉/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /快捷键: 3 不认识/ })).toBeEnabled()
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1500)
@@ -163,7 +184,7 @@ describe('TestMode', () => {
     completeInitialAudio()
 
     await act(async () => {
-      screen.getByRole('button', { name: '不熟悉' }).click()
+      screen.getByRole('button', { name: /快捷键: 2 不熟悉/ }).click()
       await Promise.resolve()
     })
 
@@ -184,5 +205,110 @@ describe('TestMode', () => {
       source: 'quickmemory',
       sourceMode: 'test',
     })
+  })
+
+  it('selects test-mode choices with numeric shortcuts only while unanswered', async () => {
+    const { onWrongWord } = renderTestMode()
+    completeInitialAudio()
+
+    await act(async () => {
+      fireEvent.keyDown(window, { key: '1', code: 'Digit1' })
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('✓ 认识')).toBeInTheDocument()
+    expect(screen.getByText('within')).toBeInTheDocument()
+
+    await act(async () => {
+      fireEvent.keyDown(window, { key: '3', code: 'Digit3' })
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('✓ 认识')).toBeInTheDocument()
+    expect(onWrongWord).not.toHaveBeenCalled()
+  })
+
+  it('ignores numeric shortcuts from editable targets in test mode', async () => {
+    const { onWrongWord } = renderTestMode()
+    completeInitialAudio()
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+
+    await act(async () => {
+      fireEvent.keyDown(input, { key: '3', code: 'Digit3' })
+      await Promise.resolve()
+    })
+
+    expect(screen.getByRole('button', { name: /快捷键: 3 不认识/ })).toBeEnabled()
+    expect(screen.queryByText('✗ 不认识')).toBeNull()
+    expect(onWrongWord).not.toHaveBeenCalled()
+    input.remove()
+  })
+
+  it('keeps shortcuts aligned after the known choice expires in test mode', async () => {
+    const { onWrongWord } = renderTestMode()
+    completeInitialAudio()
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(2500) })
+    expect(screen.queryByRole('button', { name: /快捷键: 1 认识/ })).toBeNull()
+
+    await act(async () => {
+      fireEvent.keyDown(window, { key: '1', code: 'Digit1' })
+      await Promise.resolve()
+    })
+    expect(screen.queryByText('✓ 认识')).toBeNull()
+
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'Unidentified', code: 'Numpad3' })
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('✗ 不认识')).toBeInTheDocument()
+    expect(onWrongWord).toHaveBeenCalledWith(vocabulary[0])
+  })
+
+  it('shows the reveal UI after one known click while session start is pending', async () => {
+    let resolveSession: (sessionId: number) => void = () => {}
+    startSessionMock.mockImplementationOnce(() => new Promise<number>(resolve => {
+      resolveSession = resolve
+    }))
+    renderTestMode()
+    completeInitialAudio()
+
+    await act(async () => {
+      screen.getByRole('button', { name: /快捷键: 1 认识/ }).click()
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('✓ 认识')).toBeInTheDocument()
+    expect(screen.getByText('within')).toBeInTheDocument()
+    expect(screen.getByText('inside')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /快捷键: 1 认识/ })).toBeNull()
+
+    await act(async () => {
+      resolveSession(1)
+      await Promise.resolve()
+    })
+  })
+
+  it('keeps compact-viewport shortcut hints visible in test mode', () => {
+    const compactStylesheet = readFileSync(
+      resolve(__dirname, '../../styles/pages/practice/practice-quickmemory-compact.scss'),
+      'utf8',
+    )
+    const testStylesheet = readFileSync(
+      resolve(__dirname, '../../styles/pages/practice/practice-quickmemory-test.scss'),
+      'utf8',
+    )
+
+    expect(compactStylesheet).toContain('.qm-card:not(.qm-card--test) .qm-key-hints')
+    expect(compactStylesheet).toContain('.qm-card--test .qm-btn')
+    expect(compactStylesheet).not.toContain('.qm-hint,\n    .qm-key-hints')
+    expect(testStylesheet).toContain('.qm-card--test .qm-btn-key')
+    // The "listening" phase no longer previews the shortcut row above the buttons
+    // (the user found it confusing — buttons not yet ready but hints already visible).
+    expect(testStylesheet).not.toContain('.qm-choice-shortcuts')
+    expect(testStylesheet).not.toContain('.qm-choice-shortcut-slot')
+    expect(compactStylesheet).not.toContain('.qm-choice-shortcuts')
   })
 })

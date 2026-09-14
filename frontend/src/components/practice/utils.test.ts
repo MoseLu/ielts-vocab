@@ -265,6 +265,30 @@ describe('generateOptions', () => {
 
     expect(distractorWords).toEqual(['powder', 'tower', 'poker'])
   })
+
+  it('filters inflected listening distractors from generated options', () => {
+    const words: import('./types').Word[] = [
+      { word: 'guide', phonetic: '/gaid/', definition: '向导', pos: 'n.' },
+      { word: 'guiding', phonetic: '/ˈgaɪdɪŋ/', definition: '引导；“guide”的现在分词', pos: 'v.' },
+      { word: 'guided', phonetic: '/ˈgaɪdɪd/', definition: '有指导的；“guide”的过去式和过去分词', pos: 'v.' },
+      { word: 'guides', phonetic: '/gaɪdz/', definition: '向导；“guide”的复数', pos: 'n.' },
+      { word: 'guy', phonetic: '/gai/', definition: '家伙', pos: 'n.' },
+      { word: 'guise', phonetic: '/gaiz/', definition: '伪装', pos: 'n.' },
+      { word: 'guile', phonetic: '/gail/', definition: '狡诈', pos: 'n.' },
+      { word: 'guild', phonetic: '/gild/', definition: '协会', pos: 'n.' },
+    ]
+
+    const { options, correctIndex } = generateOptions(words[0], words, 'listening')
+    const optionWords = options.map(option => option.word)
+
+    expect(options).toHaveLength(4)
+    expect(optionWords).toContain('guide')
+    expect(options[correctIndex].definition).toBe('向导')
+    expect(optionWords).not.toContain('guiding')
+    expect(optionWords).not.toContain('guided')
+    expect(optionWords).not.toContain('guides')
+    expect(optionWords).not.toContain('guild')
+  })
 })
 
 describe('normalizeWordAnswer', () => {

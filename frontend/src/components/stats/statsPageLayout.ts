@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps -- useBalancedStatsLayout receives a dynamic deps array from the caller, exhaustive-deps cannot statically verify it */
 import { useLayoutEffect, type RefObject } from 'react'
 import {
   buildMinWidthMediaQuery,
@@ -18,6 +19,8 @@ export function useBalancedStatsLayout({
   bottomRef: RefObject<HTMLDivElement>
   deps: unknown[]
 }) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- deps array is supplied by the caller
   useLayoutEffect(() => {
     const layoutEl = layoutRef.current
     const leftEl = leftRef.current

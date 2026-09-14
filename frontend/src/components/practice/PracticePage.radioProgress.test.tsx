@@ -115,6 +115,7 @@ vi.mock('./page/PracticePageContent', () => ({
   PracticePageContent: ({ onFavoriteWordIndexChange }: { onFavoriteWordIndexChange: (index: number) => void }) => {
     useEffect(() => {
       onFavoriteWordIndexChange(1)
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- test stub, intentionally fires once
     }, [])
     return <div>radio</div>
   },

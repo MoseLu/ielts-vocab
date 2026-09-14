@@ -3,6 +3,10 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { STORAGE_KEYS } from '../constants'
 import { setAuthAccessExpiry } from '../lib'
+import {
+  APP_STORAGE_SCHEMA_VERSION,
+  APP_STORAGE_SCHEMA_VERSION_KEY,
+} from '../lib/appStorageVersion'
 import { AuthProvider, useAuth } from './AuthContext'
 
 const apiFetchMock = vi.fn()
@@ -102,6 +106,43 @@ describe('AuthProvider', () => {
     expect(result.current.isAuthenticated).toBe(true)
     expect(result.current.user).toMatchObject(mockUser)
     expect(Number(localStorage.getItem(STORAGE_KEYS.AUTH_ACCESS_EXPIRES_AT))).toBeGreaterThan(Date.now())
+    expect(migrateLegacyLocalStorageMock).toHaveBeenCalledWith(mockUser)
+  })
+
+  it('resets stale release-scoped UI storage without clearing auth or pending sync data', async () => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(mockUser))
+    localStorage.setItem(STORAGE_KEYS.AUTH_ACCESS_EXPIRES_AT, String(Date.now() + 60000))
+    localStorage.setItem(STORAGE_KEYS.CURRENT_DAY, '2026-05-31')
+    localStorage.setItem(STORAGE_KEYS.CURRENT_MODE, 'smart')
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_STUDY_SESSION, JSON.stringify({ id: 'old-session' }))
+    localStorage.setItem('study_plan', JSON.stringify({ selected: true }))
+    localStorage.setItem('selected_book', 'old-book')
+    localStorage.setItem('selected_chapter', 'old-chapter')
+    localStorage.setItem('chapter_start_index', '12')
+    localStorage.setItem('active_study_session_skip_recovery_until', String(Date.now() + 60000))
+    localStorage.setItem('local_storage_migration_v1_done:user:1', '1')
+    localStorage.setItem('practice_result_outbox:user:1', JSON.stringify([{ id: 'pending' }]))
+    apiFetchMock.mockResolvedValueOnce({ user: mockUser, access_expires_in: 3600 })
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true)
+    })
+
+    expect(localStorage.getItem(STORAGE_KEYS.AUTH_USER)).not.toBeNull()
+    expect(localStorage.getItem(STORAGE_KEYS.AUTH_ACCESS_EXPIRES_AT)).not.toBeNull()
+    expect(localStorage.getItem('practice_result_outbox:user:1')).not.toBeNull()
+    expect(localStorage.getItem(STORAGE_KEYS.CURRENT_DAY)).toBeNull()
+    expect(localStorage.getItem(STORAGE_KEYS.CURRENT_MODE)).toBeNull()
+    expect(localStorage.getItem(STORAGE_KEYS.ACTIVE_STUDY_SESSION)).toBeNull()
+    expect(localStorage.getItem('study_plan')).toBeNull()
+    expect(localStorage.getItem('selected_book')).toBeNull()
+    expect(localStorage.getItem('selected_chapter')).toBeNull()
+    expect(localStorage.getItem('chapter_start_index')).toBeNull()
+    expect(localStorage.getItem('active_study_session_skip_recovery_until')).toBeNull()
+    expect(localStorage.getItem('local_storage_migration_v1_done:user:1')).toBeNull()
+    expect(localStorage.getItem(APP_STORAGE_SCHEMA_VERSION_KEY)).toBe(APP_STORAGE_SCHEMA_VERSION)
     expect(migrateLegacyLocalStorageMock).toHaveBeenCalledWith(mockUser)
   })
 

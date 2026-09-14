@@ -1,3 +1,22 @@
+import json
+import logging
+import requests
+
+try:
+    DEFAULT_MODEL
+except NameError:
+    from services.llm_service.api_client_parts.base import (
+        DEFAULT_MODEL,
+        _post_messages_request,
+        get_api_key_with_fallback,
+    )
+
+try:
+    _safe_json_parse
+except NameError:
+    from services.llm_service.api_client_parts.helpers import _safe_json_parse
+
+
 def chat(
     messages: list[dict],
     model: str = DEFAULT_MODEL,

@@ -167,7 +167,7 @@ export function usePracticePageKeyboardShortcuts({
     return () => window.removeEventListener('keydown', handleKey, true)
   }, [
     choiceOptionsReady,
-    currentWord?.word,
+    currentWord, currentWord?.word,
     handleOptionSelect,
     handleFavoriteToggle,
     handleGoBack,

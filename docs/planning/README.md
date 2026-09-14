@@ -11,11 +11,12 @@ Use this folder for product and execution-oriented plans.
 
 - [product-requirements-document.md](./product-requirements-document.md): current product baseline, goals, scope, and success criteria
 - [ui-redesign-plan.md](./ui-redesign-plan.md): phased UI polish plan for the current product surface
+- [mobile-visual-resource-list.md](./mobile-visual-resource-list.md): mobile hand-drawn visual resource inventory for page chrome, cards, controls, icons, and feedback states
 
 ## Rules
 
 - Keep plans time-bounded and actionable.
 - Keep product baseline docs focused on user problems, scope, journeys, and success metrics.
 - Move durable technical rationale into `docs/architecture/specs/`.
-- When a plan has been completed and the outcome matters across releases, add or update a milestone in `docs/milestones/`.
+- When a plan has been completed and the outcome matters across releases, add or update a milestone in `docs/milestone/`.
 - Start new engineering rollout plans from `implementation/templates/implementation-plan-template.md`.

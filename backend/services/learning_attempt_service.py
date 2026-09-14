@@ -57,6 +57,7 @@ def record_practice_attempt_fact(
     client_attempt_id: str | None = None,
     trace_id: str | None = None,
     payload: dict | None = None,
+    emit_dimension_event: bool = True,
 ) -> dict:
     normalized_mode = _normalize_mode(mode)
     normalized_book_id = _safe_positive_text(book_id)
@@ -89,7 +90,7 @@ def record_practice_attempt_fact(
         payload=event_payload,
     )
     dimension_event_type = _DIMENSION_EVENT_TYPE.get(normalized_dimension)
-    if dimension_event_type and dimension_event_type != 'quick_memory_review':
+    if emit_dimension_event and dimension_event_type and dimension_event_type != 'quick_memory_review':
         record_learning_event(
             user_id=user_id,
             event_type=dimension_event_type,

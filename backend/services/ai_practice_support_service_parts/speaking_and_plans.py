@@ -92,6 +92,7 @@ def pronunciation_check_response(current_user, body):
             book_id=book_id,
             chapter_id=chapter_id,
             word_payload={'word': word},
+            emit_dimension_event=False,
         )
         result['mastery_state'] = mastery_state
     except Exception as exc:

@@ -60,7 +60,7 @@ pnpm dev
 3. If needed, also verify the production-style proxy path:
 
 ```text
-https://axiomaticworld.com -> natapp -> local :80 -> nginx -> local :3002
+https://ielts.axiomaticworld.com -> local :80 -> nginx -> local :3002
 ```
 
 ## Practical Guidance
@@ -85,4 +85,4 @@ Make sure the frontend still binds to `3002`, or stop the conflicting process be
 
 ### Proxy-only failures
 
-If local Vite works but the public tunnel path fails, investigate the nginx or natapp layer before changing frontend code.
+If local Vite works but the public project-domain path fails, investigate the nginx layer before changing frontend code.

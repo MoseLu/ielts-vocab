@@ -4,6 +4,7 @@ import os
 
 from fastapi import APIRouter, Request, Response
 
+from platform_sdk.gateway_notes_journal_routes import register_notes_journal_routes
 from platform_sdk.http_proxy import proxy_browser_request
 
 
@@ -79,6 +80,15 @@ async def _proxy_admin_ops_request(request: Request, path: str) -> Response:
         base_url=admin_ops_service_url(),
         path=path,
         unavailable_detail='admin ops service unavailable',
+    )
+
+
+async def _proxy_notes_request(request: Request, path: str) -> Response:
+    return await _proxy_service_request(
+        request=request,
+        base_url=notes_service_url(),
+        path=path,
+        unavailable_detail='notes service unavailable',
     )
 
 
@@ -456,13 +466,10 @@ async def notes_generate_summary_job_proxy(job_id: str, request: Request):
 
 @browser_compat_router.get('/api/notes/export')
 async def notes_export_proxy(request: Request):
-    return await _proxy_service_request(
-        request=request,
-        base_url=notes_service_url(),
-        path='/api/notes/export',
-        unavailable_detail='notes service unavailable',
-    )
+    return await _proxy_notes_request(request, '/api/notes/export')
 
+
+register_notes_journal_routes(browser_compat_router, _proxy_notes_request)
 
 @browser_compat_router.api_route('/api/admin/{admin_path:path}', methods=['GET', 'POST'])
 async def admin_proxy(admin_path: str, request: Request):

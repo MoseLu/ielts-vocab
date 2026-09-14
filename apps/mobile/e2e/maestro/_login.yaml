@@ -1,0 +1,26 @@
+appId: com.axiomaticworld.ieltsvocab
+---
+- clearState
+- launchApp
+- tapOn:
+    point: 92%,94%
+- extendedWaitUntil:
+    visible:
+      id: login.agreement.checkbox
+    timeout: 30000
+- tapOn:
+    point: 92%,94%
+- tapOn:
+    id: login.agreement.checkbox
+- tapOn:
+    id: login.account.entry
+- extendedWaitUntil:
+    visible:
+      id: login.account.submit
+    timeout: 10000
+- tapOn:
+    id: login.account.submit
+- extendedWaitUntil:
+    visible:
+      id: screen.home
+    timeout: 30000

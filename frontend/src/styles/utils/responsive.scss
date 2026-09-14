@@ -9,9 +9,11 @@
         display: none;
     }
 
+    .header-toolbar {
+        --header-toolbar-control-size: var(--size-32);
+    }
+
     .user-btn {
-        width: var(--size-32);
-        height: var(--size-32);
         font-size: var(--size-12);
     }
 
@@ -123,6 +125,10 @@
 
     .logo-text {
         font-size: var(--size-16);
+    }
+
+    .header-toolbar {
+        --header-toolbar-control-size: var(--size-36);
     }
 
     .header-btn {

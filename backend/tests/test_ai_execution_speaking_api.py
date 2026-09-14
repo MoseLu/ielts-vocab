@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import io
+import math
 import uuid
+import wave
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -73,6 +76,22 @@ def _auth_headers(token: str) -> dict[str, str]:
         source_service_name='gateway-bff',
         env={'INTERNAL_SERVICE_JWT_SECRET_KEY': 'test-jwt-secret'},
     )
+
+
+def _build_tone_wav(*, seconds: float = 1.0, frequency: float = 440.0) -> bytes:
+    sample_rate = 16000
+    sample_count = int(sample_rate * seconds)
+    buffer = io.BytesIO()
+    with wave.open(buffer, 'wb') as writer:
+        writer.setnchannels(1)
+        writer.setsampwidth(2)
+        writer.setframerate(sample_rate)
+        frames = []
+        for index in range(sample_count):
+            sample = int(10000 * math.sin(2 * math.pi * frequency * index / sample_rate))
+            frames.append(sample.to_bytes(2, 'little', signed=True))
+        writer.writeframes(b''.join(frames))
+    return buffer.getvalue()
 
 
 def test_ai_execution_service_speaking_prompts_route(monkeypatch, tmp_path):
@@ -218,13 +237,17 @@ def test_ai_execution_service_follow_read_evaluate_records_speaking_attempt(monk
             'score': 76,
             'transcript': 'phenomenon',
             'feedback': {
-                'summary': 'Close but not passed.',
-                'stress': 'Stress is close.',
-                'vowel': 'Open the middle vowel.',
-                'consonant': 'Consonants are clear.',
-                'ending': 'Finish the final sound.',
-                'rhythm': 'Rhythm is steady.',
+                'summary': '已经接近通过，再把中段元音读饱满。',
+                'stress': '重音基本正确。',
+                'vowel': '中段元音偏短。',
+                'consonant': '辅音清晰。',
+                'ending': '尾音需要收完整。',
+                'rhythm': '节奏稳定。',
             },
+            'segment_feedback': [
+                {'text': 'phe', 'status': 'good', 'score': 88, 'comment': 'phe 起音清楚。'},
+                {'text': 'no', 'status': 'weak', 'score': 55, 'comment': 'no 需要重点重读，先单独练这一段，再连回完整单词。'},
+            ],
             'weak_segments': ['no'],
         }, 'qwen-audio-turbo'),
     )
@@ -247,10 +270,11 @@ def test_ai_execution_service_follow_read_evaluate_records_speaking_attempt(monk
             'bookId': 'book-1',
             'chapterId': '2',
             'durationSeconds': '4',
+            'segments': '[{"text":"phe","phonetic":"fə"},{"text":"no","phonetic":"nə"}]',
         },
         files={
-            'audio': ('user.webm', b'user-audio', 'audio/webm'),
-            'referenceAudio': ('reference.mp3', b'reference-audio', 'audio/mpeg'),
+            'audio': ('user.wav', _build_tone_wav(), 'audio/wav'),
+            'referenceAudio': ('reference.wav', _build_tone_wav(), 'audio/wav'),
         },
         headers=_auth_headers(token),
     )
@@ -261,6 +285,8 @@ def test_ai_execution_service_follow_read_evaluate_records_speaking_attempt(monk
     assert payload['band'] == 'near_pass'
     assert payload['passed'] is False
     assert payload['weakSegments'] == ['no']
+    assert payload['segmentFeedback'][1]['status'] == 'weak'
+    assert payload['segmentFeedback'][1]['score'] == 55
     assert recorded['event']['event_type'] == 'follow_read_pronunciation_check'
     assert recorded['event']['mode'] == 'follow'
     assert recorded['attempt']['data']['dimension'] == 'speaking'

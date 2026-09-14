@@ -128,7 +128,7 @@ describe('QuickMemoryMode audio behavior', () => {
     expect(screen.getByText('✗ 不认识')).toBeInTheDocument()
     expect(screen.getByText('prep.')).toBeInTheDocument()
     expect(screen.getAllByText('within')).toHaveLength(1)
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'generated' })
     expect(playSlowWordAudioMock).not.toHaveBeenCalled()
     expect(startSessionMock).toHaveBeenCalledTimes(1)
   })
@@ -153,7 +153,7 @@ describe('QuickMemoryMode audio behavior', () => {
     await act(async () => {
       screen.getByRole('button', { name: '认识' }).click()
     })
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'generated' })
     expect(playSlowWordAudioMock).not.toHaveBeenCalled()
   })
 
@@ -178,7 +178,7 @@ describe('QuickMemoryMode audio behavior', () => {
     })
 
     expect(prepareStudySessionMock).toHaveBeenCalled()
-    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'buffer' })
+    expect(playWordAudioMock).toHaveBeenCalledWith('within', settings, expect.any(Function), { sourcePreference: 'generated' })
 
     await act(async () => {
       resolvePrepare()
@@ -203,13 +203,13 @@ describe('QuickMemoryMode audio behavior', () => {
     })
 
     await waitFor(() => {
-      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function), { sourcePreference: 'buffer' })
+      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function), { sourcePreference: 'generated' })
     })
 
     playWordAudioMock.mockClear()
     await user.click(screen.getByRole('button', { name: '重播发音' }))
     await waitFor(() => {
-      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function), { sourcePreference: 'buffer' })
+      expect(playWordAudioMock).toHaveBeenCalledWith('apple', settings, expect.any(Function), { sourcePreference: 'generated' })
     })
 
     expect(stopAudioMock).toHaveBeenCalled()
