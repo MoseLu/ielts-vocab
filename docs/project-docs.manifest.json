@@ -175,12 +175,8 @@
     "agents": "AGENTS.md",
     "agentsZh": "AGENTS.zh-CN.md",
     "index": "INDEX.md",
-    "prd": "docs/state/PRD.md",
-    "tdd": "docs/state/TDD.md",
-    "todo": "docs/state/TODO.md",
-    "todoZh": "docs/state/TODO.zh-CN.md",
-    "milestone": "docs/state/MILESTONE.md",
-    "milestoneZh": "docs/state/MILESTONE.zh-CN.md",
+    "todo": "backend/TODO.md",
+    "milestone": "docs/project-audit-2026-03-31.md",
     "changelog": "docs/state/CHANGELOG.md",
     "changelogZh": "docs/state/CHANGELOG.zh-CN.md",
     "security": "docs/governance/SECURITY.md",
@@ -192,7 +188,7 @@
     "realtimeWaveform": "docs/architecture/specs/realtime_waveform.md",
     "realtimeWaveformEn": "docs/architecture/specs/realtime_waveform.en.md",
     "manifest": "docs/project-docs.manifest.json",
-    "verification": "docs/state/VERIFICATION.md"
+    "verification": "VERIFICATION.md"
   },
   "owners": {
     "product": "AxiomaticWorld solo owner",

@@ -1,7 +1,7 @@
 {
   "name": "ielts-vocab-workspace",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.33.2",
   "pnpm": {
     "overrides": {
       "rollup": "4.59.0"
