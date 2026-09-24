@@ -153,6 +153,17 @@ start_logged_process() {
   local stderr_log="${runtime_dir}/${name}.err.log"
   local pidfile="${runtime_dir}/${name}.pid"
 
+  # PRD-07 phase 2: rotate any prior logs over 50 MB before
+  # truncating. Keeps the file size bounded so Promtail can
+  # ingest the tail without paying the full history on every
+  # restart.
+  for log in "${stdout_log}" "${stderr_log}"; do
+    if [[ -f "${log}" ]] && (( $(stat -f%z "${log}" 2>/dev/null || echo 0) > 52428800 )); then
+      mv "${log}" "${log}.$(date +%Y%m%d-%H%M%S).rotated"
+      gzip -f "${log}."*.rotated 2>/dev/null || true
+    fi
+  done
+
   : > "${stdout_log}"
   : > "${stderr_log}"
   (
