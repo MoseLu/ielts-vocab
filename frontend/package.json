@@ -61,7 +61,7 @@
     "html2canvas": "^1.4.1",
     "marked": "^17.0.5",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "react-dom": "^19.2.8",
     "react-router-dom": "^7.13.1",
     "socket.io-client": "^4.8.3",
     "turndown": "^7.2.4",
