@@ -197,7 +197,7 @@
   },
   "verification": {
     "status": "verified",
-    "lastVerifiedAt": "2026-08-23",
+    "lastVerifiedAt": "2026-09-25",
     "commands": [
       "pnpm --dir frontend verify:repo-guards"
     ],

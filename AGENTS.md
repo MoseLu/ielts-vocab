@@ -303,3 +303,19 @@ The canonical change log lives at [`docs/state/CHANGELOG.md`](docs/state/CHANGEL
 - `speechSynthesis`: pronunciation playback
 - `localStorage`: auth, settings, progress, quick-memory caches
 - `WebSocket` / Socket.IO: realtime speech recognition
+
+## Boundaries
+
+- **可写范围**：`frontend/`、`backend/`、`packages/platform-sdk/`、`docs/`、根级 `AGENTS.md` / `README.md` / `README.zh-CN.md` / `CHANGE.md`。
+- **不可写**：`reference-materials/raw/`（静态 IELTS PDF / audio，由 `.gitignore` 排除的数据源）；工作区级 `references/*` 与 `foundation/workspace-governance/`。
+- **不要**在没有 owner 显式指令的情况下合 `main`、发布新 release、改 `nginx` 远端站点配置或动生产数据库。
+- **不要**把硬编码 JWT / API key / 用户邮箱写进 commit；产品 OAuth / 邮箱凭据由 `docs/governance/` 治理，本仓库不直接持有。
+- **不要**绕过 `gateway-bff` 让前端直接打到后端微服务；微服务只接受本机 loopback。
+
+## Request Defaults
+
+- 把用户最新一条消息视为当前事实。
+- 接手 / 零上下文 / 检查当前状态 / 是否可以开始后续开发按 ready 任务处理：先跑 `node /Volumes/code/workspace/scripts/workspace-project validate` + `pnpm --dir frontend verify:repo-guards`，再读本文件 + `README.md` / `README.zh-CN.md` + `docs/state/CHANGELOG.md`。
+- 修改 `frontend/**` → 至少 `pnpm --dir frontend typecheck` 与对应 Vitest 套件；修改 `backend/**` → `pytest` 在 `backend/tests` 下；改共享契约或 `gateway-bff` → 同步跑上下游服务冒烟。
+- 普通 ready 检查禁止 `workspace-project deps / consumers / profile`，除非用户明确要求跨项目契约分析。
+- 答复结尾不再列多个"下一步选项"；按 `Verification` 默认动作直接推进或报告。
