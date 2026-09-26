@@ -194,7 +194,6 @@ def _normalize_word_audio_pronunciation_mode(value: str | None) -> str:
         return 'word-segmented'
     return 'word'
 
-
 def _resolve_normal_word_audio_identity() -> tuple[str, str, str]:
     from services.word_tts import azure_default_model, azure_word_voice
 
@@ -203,7 +202,6 @@ def _resolve_normal_word_audio_identity() -> tuple[str, str, str]:
         f'{azure_default_model()}@{_CURRENT_WORD_CACHE_TAG}',
         azure_word_voice(),
     )
-
 
 def _resolve_word_audio_identity(pronunciation_mode: str) -> tuple[str, str, str, str]:
     if pronunciation_mode == 'word-segmented':
@@ -320,6 +318,8 @@ def get_word_audio():
             voice,
             content_mode,
         )]
+        if tts_phonetic:
+            identity_candidates.append((provider, model, voice, content_mode))
     provider, model, voice, content_mode = identity_candidates[0]
     cache_dir = _word_tts_dir()
     path = word_tts_cache_path(cache_dir, key, model, voice)
